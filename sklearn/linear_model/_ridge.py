@@ -1483,7 +1483,7 @@ class _RidgeGCV(LinearModel):
         is_clf=False,
         alpha_per_target=False,
     ):
-        self.alphas = np.asarray(alphas)
+        self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -1842,6 +1842,8 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
+        self.alphas = np.asarray(self.alphas)
+
         if np.any(self.alphas <= 0):
             raise ValueError(
                 "alphas must be strictly positive. Got {} containing some "
@@ -1977,7 +1979,7 @@ class _BaseRidgeCV(LinearModel):
         store_cv_values=False,
         alpha_per_target=False,
     ):
-        self.alphas = np.asarray(alphas)
+        self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
