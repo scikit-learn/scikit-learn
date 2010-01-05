@@ -74,6 +74,9 @@ class LibSvmClassificationResults:
             return int(label), prob_estimates
         return [p(x) for x in dataset]
 
+    def compact(self):
+        self.predictor.compact()
+
 class LibSvmClassificationModel(LibSvmModel):
     """
     A model for support vector classification.

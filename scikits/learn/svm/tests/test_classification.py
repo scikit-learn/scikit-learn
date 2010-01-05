@@ -205,5 +205,26 @@ class test_classification(NumpyTestCase):
                     except NotImplementedError:
                         self.assert_(fitargs[-1] is LibSvmPythonPredictor)
 
+    def check_python_predict(self):
+        traindata, testdata = self._make_basic_datasets()
+        kernel = LinearKernel()
+        cost = 10.0
+        weights = [(1, 10.0)]
+        model = LibSvmCClassificationModel(kernel, cost, weights)
+
+        refresults = model.fit(traindata)
+        results = model.fit(traindata, LibSvmPythonPredictor)
+
+        refv = refresults.predict_values(testdata)
+        v = results.predict_values(testdata)
+        self.assertEqual(len(refv), len(v))
+        for pred, refpred in zip(v, refv):
+            for key, value in refpred.iteritems():
+                assert_array_almost_equal(value, pred[key])
+
+        refp = refresults.predict(testdata)
+        p = results.predict(testdata)
+        assert_array_equal(p, refp)
+
 if __name__ == '__main__':
     NumpyTest().run()

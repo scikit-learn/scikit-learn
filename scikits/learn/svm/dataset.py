@@ -16,12 +16,8 @@ class LibSvmDataSet:
         for y, x in data:
             key = x.__array_interface__['data'][0]
             self.iddatamap[key] = x
-
-    def __iter__(self):
-        return self.data.__iter__()
-
-    def __len__(self):
-        return len(self.data)
+        self.__len__ = self.data.__len__
+        self.__iter__ = self.data.__iter__
 
     def getgamma(self):
         maxlen = 0
@@ -164,12 +160,9 @@ class LibSvmOneClassDataSet(LibSvmDataSet):
 class LibSvmTestDataSet:
     def __init__(self, origdata):
         self.data = map(lambda x: convert_to_svm_node(x), origdata)
-
-    def __len__(self):
-        return len(self.data)
-
-    def __iter__(self):
-        return self.data.__iter__()
+        self.__len__ = self.data.__len__
+        self.__iter__ = self.data.__iter__
+        self.__getitem__ = self.data.__getitem__
 
 def convert_to_svm_node(x):
     y = N.empty(len(x) + 1, dtype=libsvm.svm_node_dtype)

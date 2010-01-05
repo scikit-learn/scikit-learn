@@ -35,6 +35,9 @@ class LibSvmOneClassResults:
         """
         return [self.predictor.predict_values(x, 1)[0] for x in dataset]
 
+    def compact(self):
+        self.predictor.compact()
+
 class LibSvmOneClassModel(LibSvmModel):
     """
     A model for distribution estimation (one-class SVM).

@@ -44,6 +44,9 @@ class LibSvmRegressionResults:
         """
         return self.sigma
 
+    def compact(self):
+        self.predictor.compact()
+
 class LibSvmRegressionModel(LibSvmModel):
     ResultsType = LibSvmRegressionResults
 
