@@ -7,9 +7,9 @@ GAError = 'GA Error'
 def nop(x): return x
 def flip_coin(p): return (rv.random() < p)
 
-import random as whrandom
+import random
 
-def flip_coin2(p): return (whrandom.random() < p)
+def flip_coin2(p): return (random.random() < p)
 class empty_class: pass
 
 def shallow_clone(item):
@@ -48,7 +48,7 @@ def testflip():
 		a = random() < .5
 	e = time.clock()
 	print 'rv',e-b
-	from whrandom import random
+	from random import random
 	b = time.clock()
 	for i in range(10000): 
 		a = random() < .5
