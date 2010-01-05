@@ -1,0 +1,17 @@
+LIBRARY libsvm_.dll
+EXPORTS
+svm_train
+svm_cross_validation
+svm_save_model
+svm_load_model
+svm_get_svm_type
+svm_get_nr_class
+svm_get_labels
+svm_get_svr_probability
+svm_predict_values
+svm_predict
+svm_predict_probability
+svm_destroy_model
+svm_destroy_param
+svm_check_parameter
+svm_check_probability_model
