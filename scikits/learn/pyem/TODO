@@ -1,12 +1,12 @@
-# Last Change: Mon Jun 04 07:00 PM 2007 J
-
+# Last Change: Sat Jun 09 04:00 PM 2007 J
 
 Things which must be implemented for a 1.0 version (in importante order)
     - A classifier
     - handle rank 1 for 1d data
     - basic regularization
     - docstrings
-    - demo for pdf estimtation, discriminant analysis and clustering
+    - demo for pdf estimation, discriminant analysis and clustering
+    - scaling of data: maybe something to handle scaling internally ?
 
 Things which would be nice (after 1.0 version):
     - Bayes prior (hard, suppose MCMC)
