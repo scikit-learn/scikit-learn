@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Tue Jun 12 12:00 PM 2007 J
+# Last Change: Tue Jun 12 03:00 PM 2007 J
 """This module implements various basic functions related to multivariate
 gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
 
@@ -166,14 +166,6 @@ def _full_gauss_den(x, mu, va, log):
     d       = mu.size
     inva    = lin.inv(va)
     fac     = 1 / N.sqrt( (2*N.pi) ** d * N.fabs(lin.det(va)))
-
-    # # Slow version
-    # n       = N.size(x, 0)
-    # y       = N.zeros(n)
-    # for i in range(n):
-    #     y[i] = N.dot(x[i,:],
-    #              N.dot(inva, N.transpose(x[i,:])))
-    # y *= -0.5
 
     # we are using a trick with sum to "emulate" 
     # the matrix multiplication inva * x without any explicit loop

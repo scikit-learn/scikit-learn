@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Jun 12 11:00 AM 2007 J
+# Last Change: Tue Jun 12 09:00 PM 2007 J
 
 # For now, just test that all mode/dim execute correctly
 
@@ -11,6 +11,8 @@ import numpy as N
 set_package_path()
 from pyem import GMM, GM, EM
 restore_path()
+
+from testcommon import DEF_DEC
 
 def load_dataset(filename):
     from scipy.io import loadmat
@@ -161,6 +163,47 @@ class test_datasets(EmTest):
         assert_array_equal(gmm.gm.w, dic['w'])
         assert_array_equal(gmm.gm.mu, dic['mu'])
         assert_array_equal(gmm.gm.va, dic['va'])
+
+class test_log_domain(EmTest):
+    """This class tests whether the GMM works in log domain."""
+    def _test_common(self, d, k, mode):
+        dic = load_dataset('%s_%dd_%dk.mat' % (mode, d, k))
+
+        gm = GM.fromvalues(dic['w0'], dic['mu0'], dic['va0'])
+        gmm = GMM(gm, 'test')
+
+        a, na = gmm.compute_responsabilities(dic['data'])
+        la, nla = gmm.compute_log_responsabilities(dic['data'])
+
+        ta = N.log(a)
+        tna = N.log(na)
+        if not N.all(N.isfinite(ta)):
+            print "precision problem for %s, %dd, %dk, need fixing" % (mode, d, k)
+        else:
+            assert_array_almost_equal(ta, la, DEF_DEC)
+
+        if not N.all(N.isfinite(tna)):
+            print "precision problem for %s, %dd, %dk, need fixing" % (mode, d, k)
+        else:
+            assert_array_almost_equal(tna, nla, DEF_DEC)
+
+    def test_2d_diag(self, level = 1):
+        d = 2
+        k = 3
+        mode = 'diag'
+        self._test_common(d, k, mode)
+
+    def test_1d_full(self, level = 1):
+        d = 1
+        k = 4
+        mode = 'diag'
+        self._test_common(d, k, mode)
+
+    def test_2d_full(self, level = 1):
+        d = 2
+        k = 3
+        mode = 'full'
+        self._test_common(d, k, mode)
 
 if __name__ == "__main__":
     NumpyTest().run()

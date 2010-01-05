@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Tue Jun 12 11:00 AM 2007 J
+# Last Change: Tue Jun 12 08:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -159,13 +159,35 @@ class GMM(ExpMixtureModel):
         knowing the explicit data for the Gaussian model (w, mu, var): gamma(t,
         i) = P[state = i | observation = data(t); w, mu, va]
 
-        This is basically the E step of EM for GMM."""
+        This is basically the E step of EM for finite mixtures."""
         # compute the gaussian pdf
         tgd	= densities.multiple_gauss_den(data, self.gm.mu, self.gm.va)
         # multiply by the weight
         tgd	*= self.gm.w
         # Normalize to get a pdf
         gd	= tgd  / N.sum(tgd, axis=1)[:, N.newaxis]
+
+        return gd, tgd
+
+    def compute_log_responsabilities(self, data):
+        """Compute log responsabilities.
+        
+        Return normalized and non-normalized responsabilities for the model (in
+        the log domain)
+        
+        Note
+        ----
+        Computes the latent variable distribution (a posteriori probability)
+        knowing the explicit data for the Gaussian model (w, mu, var): gamma(t,
+        i) = P[state = i | observation = data(t); w, mu, va]
+
+        This is basically the E step of EM for finite mixtures."""
+        # compute the gaussian pdf
+        tgd	= densities.multiple_gauss_den(data, self.gm.mu, self.gm.va, log = True)
+        # multiply by the weight
+        tgd	+= N.log(self.gm.w)
+        # Normalize to get a pdf
+        gd	= tgd  - densities.logsumexp(tgd)[:, N.newaxis]
 
         return gd, tgd
 

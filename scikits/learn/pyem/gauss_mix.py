@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Jun 11 06:00 PM 2007 J
+# Last Change: Tue Jun 12 03:00 PM 2007 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 from numpy.random import randn, rand
 import numpy.linalg as lin
-import densities
+import densities as D
 import misc
 
 # Right now, two main usages of a Gaussian Model are possible
@@ -276,13 +276,13 @@ class GM:
         Ye  = []   
         if self.mode == 'diag':
             for i in range(self.k):
-                xe, ye  = densities.gauss_ell(self.mu[i, :], self.va[i, :], 
+                xe, ye  = D.gauss_ell(self.mu[i, :], self.va[i, :], 
                         dim, npoints, level)
                 Xe.append(xe)
                 Ye.append(ye)
         elif self.mode == 'full':
             for i in range(self.k):
-                xe, ye  = densities.gauss_ell(self.mu[i, :], 
+                xe, ye  = D.gauss_ell(self.mu[i, :], 
                         self.va[i*self.d:i*self.d+self.d, :], 
                         dim, npoints, level)
                 Xe.append(xe)
@@ -317,6 +317,7 @@ class GM:
             raise GmParamError("Unknown mode")
 
         return True
+
     @classmethod
     def gen_param(cls, d, nc, varmode = 'diag', spread = 1):
         """Generate random, valid parameters for a gaussian mixture model.
@@ -365,6 +366,27 @@ class GM:
     # #=======================
     # def _regularize(self):
     #     raise NotImplemented("No regularization")
+
+    def pdf(self, x, log = False):
+        """Computes the pdf of the model at given points.
+
+        :Parameters:
+            x : ndarray
+                points where to estimate the pdf. One row for one
+                multi-dimensional sample (eg to estimate the pdf at 100
+                different points in 10 dimension, data's shape should be (100,
+                20)).
+            log : bool
+                If true, returns the log pdf instead of the pdf.
+
+        :Returns:
+            y : ndarray
+                the pdf at points x."""
+        if log:
+            return D.logsumexp(N.sum(
+                    D.multiple_gauss_den(x, self.mu, self.va, log = True) * self.w, 1))
+        else:
+            return N.sum(D.multiple_gauss_den(x, self.mu, self.va) * self.w, 1)
 
     #=================
     # Plotting methods
@@ -572,7 +594,7 @@ class GM:
         # XXX refactor computing pdf
         dmu = self.mu[:, dim]
         dva = self._get_va(dim)
-        den = densities.multiple_gauss_den(xdata, dmu, dva) * self.w
+        den = D.multiple_gauss_den(xdata, dmu, dva) * self.w
         den = N.sum(den, 1)
         den = den.reshape(len(rangey), len(rangex))
 

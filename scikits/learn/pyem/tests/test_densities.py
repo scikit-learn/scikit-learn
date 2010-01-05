@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Jun 12 12:00 PM 2007 J
+# Last Change: Tue Jun 12 08:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
@@ -21,7 +21,7 @@ set_local_path()
 # import modules that are located in the same directory as this file.
 restore_path()
 
-DEF_DEC = 12
+from testcommon import DEF_DEC
 
 class TestDensities(NumpyTestCase):
     def _generate_test_data_1d(self):
