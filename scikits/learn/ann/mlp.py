@@ -68,16 +68,20 @@ class mlp:
                                 reshape(self.w2,(size(self.w2),)),
                                 reshape(self.b2,(size(self.b2),))])
 
-    def fwd(self,inputs):
+    def fwd(self,inputs,hid=False):
         """ Propagate values forward through the net.
         Inputs:
             inputs  - self.nin*1 vector of inputs
+            hid     - boolean specifying whether or not to return hidden
+                      unit activations, False by default
         """
         self.unpackwts()
+        
         z = tanh(array(matrix(inputs)*matrix(self.w1) + \
                        matrix(ones((len(inputs),1)))*matrix(self.b1)))
         o = array(matrix(z)*matrix(self.w2) + \
                   matrix(ones((len(z),1)))*matrix(self.b2))
+        
         if self.outfxn == 'linear':
             y = o
         elif self.outfxn == 'logistic':     # TODO: check for overflow here...
@@ -85,7 +89,11 @@ class mlp:
         elif self.outfxn == 'softmax':      # TODO: and here...
             tmp = exp(o)
             y = tmp/(sum(temp,1)*ones((1,self.nout)))
-        return y
+            
+        if hid:
+            return y,z
+        else:
+            return y
 
     def residuals(self,w,x,t):
         """ Calculate output error vectors for all input data points
@@ -101,6 +109,10 @@ class mlp:
             think it's necessary for the optimize.leastsq routine. I may 
             eliminate the fwd() fxn eventually and return the residuals 
             and outputs in a tuple.
+            
+        **N.B.B.** I think I may be able to get rid of this, with the new
+        implementation of the other error functions...I can tweak errfxn
+        to return the residuals, I think
         """
         if self.w_packed[0] != w[0]:      # make dependence on w explicit
             w_old = self.w_packed
@@ -122,47 +134,93 @@ class mlp:
         return sum(err**2,axis=1)
     
     def errfxn(self,w,x,t):
-        """ The standard 'squared-error' objective function; defined here 
-        so that it can be passed to the generic optimizers. Calculates the 
-        square of the error vectors over all inputs. 
-        
-        **N.B.** I have no idea if I'm doing this correctly for now.
+        """ Implementing 'canonical' error fxns for each of the output
+        activation fxns (see Nabney pp.123-128,156-158 for more info).
+        Borrowing heavily from the Netlab implementations for now.
         """
-        e = self.residuals(w,x,t)
-        return dot(e.transpose(),e)
+        from math import log
+        y = self.fwd(x)
+        if self.outfxn == 'linear':
+            # calculate & return SSE
+            return 0.5*sum(sum((y - t)**2,axis=1))
+        elif self.outfxn == 'logistic':
+            # calculate & return x-entropy
+            return -1.0*sum(sum(t*math.log(y,2)+(1-t)*math.log(1-y,2),axis=1))
+        elif self.outfxn == 'softmax':
+            # calculate & return entropy
+            return -1.0*sum(sum(t*math.log(y,2),axis=1))
+        else:
+            # this shouldn't happen...return SSE as a reasonable default
+            return 0.5*sum(sum((y - t)**2,axis=1))
+        
+    def errgrad(self,w,x,t):
+        """ Error gradient fxns for canonical error fxns (see above, and
+        Nabney pp.127-128,156-158)
+        ** Includes error-backpropagation (Netlab splits these fxns)
+        Inputs:
+            w   - weight vector (don't really know why I pass this around...)
+            x   - input patterns
+            t   - targets
+        Outputs:
+            g   - gradient
+        """
+        # get output and hidden activation patterns for a full forward pass
+        y,z = self.fwd(x,True)
+        outdeltas = y-t
+        # compute second-layer weight and bias gradients
+        w2grad = z.transpose()*outdeltas
+        b2grad = sum(outdeltas,axis=1)
+        # backpropagate
+        hiddeltas = outdeltas*self.w2
+        hiddeltas = hiddeltas*(1-z**2)
+        # compute first-layer weight and bias gradients
+        w1grad = x.transpose()*hiddeltas
+        b1grad = sum(hiddeltas,axis=1)
+        # pack into a single vector and return it
+        g = hstack([reshape(w1grad,(size(w1grad),)),
+                                reshape(b1grad,(size(b1grad),)),
+                                reshape(w2grad,(size(w2grad),)),
+                                reshape(b2,(size(b2grad),))])
+        return g
+        
+        
+    def train(self,x,t,alg):
+        """ Train a multilayer perceptron with a user-specified algorithm.
+        Inputs:
+            x   - matrix of input data
+            t   - matrix of target outputs
+            alg - training algorithm, one of {simplex,bfgs,ncg,leastsq}
+        Outputs:
+            w   - post-optimization weight vector
+        """
+        # N.B. doing nothing with the specified algorithm for now,
+        # just optimizing with the leastsq fxn in scipy.optimize
+        if alg == 'simplex':
+            from scipy.optimize import fmin
+            w = fmin(self.errfxn,self.w_packed,args=(x,t),full_output=True)
+        elif alg == 'bfgs':
+            from scipy.optimize import fmin_bfgs
+            w = fmin_bfgs(self.errfxn,self.w_packed,fprime=self.errgrad,\
+                          args=(x,t),full_output=True)
+        elif alg == 'ncg':
+            from scipy.optimize import fmin_ncg
+            w = fmin_ncg(self.errfxn,self.w_packed,self.errgrad,args=(x,t),\
+                         full_output=True)
+        else:
+            # leastsq, or undef'd algorithm, in which case use leastsq as
+            # a reasonable default
+            from scipy.optimize import leastsq
+            w = leastsq(self.residuals,self.w_packed,args=(x,t),\
+                        full_output=True)    
+        return w
 
-def mlptrain(net,x,t,alg):
-    """ Train a multilayer perceptron with a user-specified algorithm.
-    Inputs:
-        x   - matrix of input data
-        t   - matrix of target outputs
-        alg - training algorithm, can be "cg" (conjugate gradients), 
-              "qn" (quasi-newton), or "gd" (batch gradient descent)
-    """
-    # N.B. doing nothing with the specified algorithm for now,
-    # just optimizing with the leastsq fxn in scipy.optimize
-    if alg == 'simplex':
-        from scipy.optimize import fmin
-        w = fmin(net.errfxn,net.w_packed,args=(x,t),full_output=True)
-    elif alg == 'bfgs':
-        from scipy.optimize import fmin_bfgs
-        w = fmin_bfgs(net.errfxn,net.w_packed,args=(x,t),full_output=True)
-    elif alg == 'ncg':
-        from scipy.optimize import fmin_ncg
-        w = fmin_ncg(net.errfxn,net.w_packed,args=(x,t),full_output=True)
-    elif alg == 'leastsq':
-        from scipy.optimize import leastsq
-        w = leastsq(net.residuals,net.w_packed,args=(x,t),full_output=True)
-    else:
-        print 'Undefined error function. Using least-squares optimization'
-        from scipy.optimize import leastsq
-        w = leastsq(net.residuals,net.w_packed,args=(x,t),full_output=True)
-    #return (w[0],w[1:])
-    return w
-
-def mlptest(net,x,t):
-    e = t - net.fwd(x)
-    return array(sum(matrix(e)*matrix(e).T))
+    def test(self,x,t):
+        # ################################# #
+        # ### THIS NEEDS EXTENSIVE WORK ### #
+        # ### (i.e. do I even need it?) ### #
+        # ################################# #
+        e = t - self.fwd(x)
+        return array(sum(matrix(e)*matrix(e).T))
 
 def main():
     import os,sys,copy
@@ -180,8 +238,8 @@ def main():
     # See Nabney pp. 123-128, 156-159        #
     # ###################################### #
     from scipy.io import read_array, write_array
-    print "Creating 12-12-2 MLP with linear outputs...",
-    net = mlp(12,12,2,'linear')
+    print "Creating 12-5-2 MLP with linear outputs...",
+    net = mlp(12,5,2,'linear')
     net.packwts()
     w_init = copy.copy(net.w_packed)
     print "Done."
@@ -202,7 +260,7 @@ def main():
         opt = raw_input("Enter desired optimizer (simplex,bfgs,ncg,leastsq): ")
 
     print "Training net with "+opt+" optimizer...",
-    retval = mlptrain(net,trn_input,trn_targs,opt)
+    retval = net.train(trn_input,trn_targs,opt)
     net.w_packed = retval[0]
     print "Done."
     sys.stdout.flush()
