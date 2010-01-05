@@ -1,17 +1,17 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 09 01:00 PM 2007 J
+# Last Change: Sat Jul 21 03:00 PM 2007 J
 
 # Copyright (C) 2007 Cournapeau David <cournape@gmail.com>
 #
 
-descr   = """"""
+descr   = """A set of python modules for machine learning and data mining"""
 
 from os.path import join
 import os
 import sys
 
 DISTNAME            = 'scikits.learn' 
-DESCRIPTION         = 'A set of python modules for machine learning'
+DESCRIPTION         = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION    = descr
 MAINTAINER          = 'David Cournapeau',
 MAINTAINER_EMAIL    = 'david@ar.media.kyoto-u.ac.jp',
@@ -42,6 +42,7 @@ def configuration(parent_package='',top_path=None, package_name=DISTNAME):
         url = URL, 
         download_url = DOWNLOAD_URL,
         long_description = LONG_DESCRIPTION)
+    config.add_subpackage('scikits.learn.machine')
 
     return config
 
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         packages=setuptools.find_packages(),
         include_package_data = True,
         #package_data = {'scikits.pyaudiolab': data_files}, 
-        test_suite="scikits.learn", # for python setup.py test
+        test_suite="tester", # for python setup.py test
         zip_safe=True, # the package can run out of an .egg file
         #FIXME url, download_url, ext_modules
         classifiers = 
