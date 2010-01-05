@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Tue Jun 12 08:00 PM 2007 J
+# Last Change: Thu Jun 21 03:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -11,7 +11,6 @@ __docformat__ = 'restructuredtext'
 #   - which methods to avoid va shrinking to 0 ? There are several options, 
 #   not sure which ones are appropriates
 #   - improve EM trainer
-#   - online EM
 
 import numpy as N
 #import numpy.linalg as lin
@@ -186,61 +185,83 @@ class GMM(ExpMixtureModel):
         tgd	= densities.multiple_gauss_den(data, self.gm.mu, self.gm.va, log = True)
         # multiply by the weight
         tgd	+= N.log(self.gm.w)
-        # Normalize to get a pdf
+        # Normalize to get a (log) pdf
         gd	= tgd  - densities.logsumexp(tgd)[:, N.newaxis]
 
         return gd, tgd
+
+    def _update_em_diag(self, data, gamma, ngamma):
+        """Computes update of the Gaussian Mixture Model (M step) from the
+        responsabilities gamma and normalized responsabilities ngamma, for
+        diagonal models."""
+        #XXX: caching SS may decrease memory consumption
+        k = self.gm.k
+        d = self.gm.d
+        n = data.shape[0]
+        invn = 1.0/n
+
+        mu = N.zeros((k, d))
+        va = N.zeros((k, d))
+
+        for c in range(k):
+            x = N.dot(gamma.T[c:c+1, :], data)[0, :]
+            xx = N.dot(gamma.T[c:c+1, :], data ** 2)[0, :]
+
+            mu[c, :] = x / ngamma[c]
+            va[c, :] = xx  / ngamma[c] - mu[c, :] ** 2
+        w   = invn * ngamma
+
+        return w, mu, va
+
+    def _update_em_full(self, data, gamma, ngamma):
+        """Computes update of the Gaussian Mixture Model (M step) from the
+        responsabilities gamma and normalized responsabilities ngamma, for
+        full models."""
+        k = self.gm.k
+        d = self.gm.d
+        n = data.shape[0]
+        invn = 1.0/n
+
+        # In full mode, this is the bottleneck: the triple loop
+        # kills performances. This is pretty straightforward
+        # algebra, so computing it in C should not be too difficult. The
+        # real problem is to have valid covariance matrices, and to keep
+        # them positive definite, maybe with special storage... Not sure
+        # it really worth the risk
+        mu  = N.zeros((k, d))
+        va  = N.zeros((k*d, d))
+
+        #XXX: caching SS may decrease memory consumption
+        for c in range(k):
+            #x   = N.sum(N.outer(gamma[:, c], 
+            #            N.ones((1, d))) * data, axis = 0)
+            x = N.dot(gamma.T[c:c+1, :], data)[0, :]
+            xx = N.zeros((d, d))
+            
+            # This should be much faster than recursing on n...
+            for i in range(d):
+                for j in range(d):
+                    xx[i, j] = N.sum(data[:, i] * data[:, j] * gamma.T[c, :],
+                            axis = 0)
+
+            mu[c, :] = x / ngamma[c]
+            va[c*d:c*d+d, :] = xx  / ngamma[c] \
+                    - N.outer(mu[c, :], mu[c, :])
+        w   = invn * ngamma
+
+        return w, mu, va
 
     def update_em(self, data, gamma):
         """Computes update of the Gaussian Mixture Model (M step)
         from the a posteriori pdf, computed by gmm_posterior
         (E step).
         """
-        k = self.gm.k
-        d = self.gm.d
-        n = data.shape[0]
-        invn = 1.0/n
-        mGamma = N.sum(gamma, axis = 0)
+        ngamma = N.sum(gamma, axis = 0)
 
         if self.gm.mode == 'diag':
-            mu = N.zeros((k, d))
-            va = N.zeros((k, d))
-            gamma = gamma.T
-            for c in range(k):
-                x = N.dot(gamma[c:c+1, :], data)[0, :]
-                xx = N.dot(gamma[c:c+1, :], data ** 2)[0, :]
-
-                mu[c, :] = x / mGamma[c]
-                va[c, :] = xx  / mGamma[c] - mu[c, :] ** 2
-            w   = invn * mGamma
-
+            w, mu, va = self._update_em_diag(data, gamma, ngamma)
         elif self.gm.mode == 'full':
-            # In full mode, this is the bottleneck: the triple loop
-            # kills performances. This is pretty straightforward
-            # algebra, so computing it in C should not be too difficult. The
-            # real problem is to have valid covariance matrices, and to keep
-            # them positive definite, maybe with special storage... Not sure
-            # it really worth the risk
-            mu  = N.zeros((k, d))
-            va  = N.zeros((k*d, d))
-
-            gamma = gamma.transpose()
-            for c in range(k):
-                #x   = N.sum(N.outer(gamma[:, c], 
-                #            N.ones((1, d))) * data, axis = 0)
-                x = N.dot(gamma[c:c+1, :], data)[0, :]
-                xx = N.zeros((d, d))
-                
-                # This should be much faster than recursing on n...
-                for i in range(d):
-                    for j in range(d):
-                        xx[i, j] = N.sum(data[:, i] * data[:, j] * gamma[c, :],
-                                axis = 0)
-
-                mu[c, :] = x / mGamma[c]
-                va[c*d:c*d+d, :] = xx  / mGamma[c] \
-                        - N.outer(mu[c, :], mu[c, :])
-            w   = invn * mGamma
+            w, mu, va = self._update_em_full(data, gamma, ngamma)
         else:
             raise GmmParamError("varmode not recognized")
 
@@ -344,12 +365,13 @@ class EM:
         like    = N.zeros(maxiter)
 
         # Em computation, with computation of the likelihood
-        g, tgd      = model.compute_responsabilities(data)
-        like[0]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
+        g, tgd  = model.compute_responsabilities(data)
+        # TODO: do it in log domain instead
+        like[0] = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
         model.update_em(data, g)
         for i in range(1, maxiter):
-            g, tgd      = model.compute_responsabilities(data)
-            like[i]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
+            g, tgd  = model.compute_responsabilities(data)
+            like[i] = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
             model.update_em(data, g)
             if has_em_converged(like[i], like[i-1], thresh):
                 return like[0:i]
