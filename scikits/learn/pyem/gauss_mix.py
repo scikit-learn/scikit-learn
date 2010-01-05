@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Sat Jun 09 03:00 PM 2007 J
+# Last Change: Sat Jun 09 08:00 PM 2007 J
 
 # Module to implement GaussianMixture class.
 
@@ -151,8 +151,8 @@ class GM:
 
         return X
 
-    def conf_ellipses(self, dim = misc._DEF_VIS_DIM, npoints = misc._DEF_ELL_NP, \
-        level = misc._DEF_LEVEL):
+    def conf_ellipses(self, dim = misc.DEF_VIS_DIM, npoints = misc.DEF_ELL_NP,
+            level = misc.DEF_LEVEL):
         """Returns a list of confidence ellipsoids describing the Gmm
         defined by mu and va. Check densities.gauss_ell for details
 
@@ -262,8 +262,8 @@ class GM:
     #=================
     # Plotting methods
     #=================
-    def plot(self, dim = misc._DEF_VIS_DIM, npoints = misc._DEF_ELL_NP, 
-            level = misc._DEF_LEVEL):
+    def plot(self, dim = misc.DEF_VIS_DIM, npoints = misc.DEF_ELL_NP, 
+            level = misc.DEF_LEVEL):
         """Plot the ellipsoides directly for the model
         
         Returns a list of lines, so that their style can be modified. By default,
@@ -371,7 +371,7 @@ class GM:
 
         return retval
 
-    def density_on_grid(self, dim = misc._DEF_VIS_DIM, nx = 50, ny = 50,
+    def density_on_grid(self, dim = misc.DEF_VIS_DIM, nx = 50, ny = 50,
             maxlevel = 0.95):
         """Do all the necessary computation for contour plot of mixture's density.
         
@@ -401,7 +401,7 @@ class GM:
         V.extend(N.linspace(0, N.max(lden), 4).tolist())
         return X, Y, lden, N.array(V)
 
-    def _densityctr(self, xrange, yrange, dim = misc._DEF_VIS_DIM):
+    def _densityctr(self, xrange, yrange, dim = misc.DEF_VIS_DIM):
         """Helper function to compute density contours on a grid."""
         gr = N.meshgrid(xrange, yrange)
         X = gr[0].flatten()

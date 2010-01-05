@@ -1,12 +1,12 @@
-# Last Change: Sat Jun 09 12:00 PM 2007 J
+# Last Change: Sat Jun 09 07:00 PM 2007 J
 
 #========================================================
 # Constants used throughout the module (def args, etc...)
 #========================================================
 # This is the default dimension for representing confidence ellipses
-_DEF_VIS_DIM = [0, 1]
-_DEF_ELL_NP = 100
-_DEF_LEVEL = 0.39
+DEF_VIS_DIM = [0, 1]
+DEF_ELL_NP = 100
+DEF_LEVEL = 0.39
 #=====================================================================
 # "magic number", that is number used to control regularization and co
 # Change them at your risk !

@@ -1,11 +1,15 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Sat Jun 09 03:00 PM 2007 J
+# Last Change: Sat Jun 09 08:00 PM 2007 J
+"""This module implements various bsic functions related to multivariate
+gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
+
+__docformat__ = 'restructuredtext'
 
 import numpy as N
 import numpy.linalg as lin
-from numpy.random import randn
+#from numpy.random import randn
 from scipy.stats import chi2
 import misc
 
@@ -18,6 +22,7 @@ class DenError(Exception):
         message -- explanation of the error"""
     def __init__(self, message):
         self.message    = message
+        Exception.__init__(self)
     
     def __str__(self):
         return self.message
@@ -25,33 +30,50 @@ class DenError(Exception):
 # The following function do all the fancy stuff to check that parameters
 # are Ok, and call the right implementation if args are OK.
 def gauss_den(x, mu, va, log = False):
-    """ Compute multivariate Gaussian density at points x for 
+    """Compute multivariate Gaussian density at points x for 
     mean mu and variance va.
     
+    :Parameters:
+        x : ndarray
+            points where to estimate the pdf.  each row of the array is one
+            point of d dimension
+        mu : ndarray
+            mean of the pdf. Should have same dimension d than points in x.
+        va : ndarray
+            variance of the pdf. If va has d elements, va is interpreted as the
+            diagonal elements of the actual covariance matrix. Otherwise,
+            should be a dxd matrix (and positive definite).
+        log : boolean
+            if True, returns the log-pdf instead of the pdf.
+
+    :Returns:
+        pdf : ndarray
+            Returns a rank 1 array of the pdf at points x.
+
+    Notes
+    -----
     Vector are row vectors, except va which can be a matrix
-    (row vector variance for diagonal variance)
+    (row vector variance for diagonal variance)."""
     
-    If log is True, than the log density is returned 
-    (useful for underflow ?)"""
-    mu  = N.atleast_2d(mu)
-    va  = N.atleast_2d(va)
-    x   = N.atleast_2d(x)
+    lmu  = N.atleast_2d(mu)
+    lva  = N.atleast_2d(va)
+    lx   = N.atleast_2d(x)
     
     #=======================#
     # Checking parameters   #
     #=======================#
-    if len(N.shape(mu)) != 2:
+    if len(N.shape(lmu)) != 2:
         raise DenError("mu is not rank 2")
         
-    if len(N.shape(va)) != 2:
+    if len(N.shape(lva)) != 2:
         raise DenError("va is not rank 2")
         
-    if len(N.shape(x)) != 2:
+    if len(N.shape(lx)) != 2:
         raise DenError("x is not rank 2")
         
-    (n, d)      = x.shape
-    (dm0, dm1)  = mu.shape
-    (dv0, dv1)  = va.shape
+    d = N.shape(lx)[1]
+    (dm0, dm1) = N.shape(lmu)
+    (dv0, dv1) = N.shape(lva)
     
     # Check x and mu same dimension
     if dm0 != 1:
@@ -73,13 +95,13 @@ def gauss_den(x, mu, va, log = False):
     #===============#
     if d == 1:
         # scalar case
-        return _scalar_gauss_den(x[:, 0], mu[0, 0], va[0, 0], log)
+        return _scalar_gauss_den(lx[:, 0], lmu[0, 0], lva[0, 0], log)
     elif dv0 == 1:
         # Diagonal matrix case
-        return _diag_gauss_den(x, mu, va, log)
+        return _diag_gauss_den(lx, lmu, lva, log)
     elif dv1 == dv0:
         # full case
-        return  _full_gauss_den(x, mu, va, log)
+        return  _full_gauss_den(lx, lmu, lva, log)
     else:
         raise DenError("variance mode not recognized, this is a bug")
 
@@ -115,20 +137,20 @@ def _diag_gauss_den(x, mu, va, log):
     Call gauss_den instead"""
     # Diagonal matrix case
     d   = mu.size
-    n   = x.shape[0]
+    #n   = x.shape[0]
     if not log:
-        inva    = 1/va[0,0]
-        fac     = (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
-        y       =  (x[:,0] - mu[0,0]) ** 2 * inva * -0.5
+        inva = 1/va[0, 0]
+        fac = (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
+        y =  (x[:, 0] - mu[0, 0]) ** 2 * inva * -0.5
         for i in range(1, d):
-            inva    = 1/va[0,i]
-            fac     *= N.sqrt(inva)
-            y       += (x[:,i] - mu[0,i]) ** 2 * inva * -0.5
-        y   = fac * N.exp(y)
+            inva = 1/va[0, i]
+            fac *= N.sqrt(inva)
+            y += (x[:, i] - mu[0, i]) ** 2 * inva * -0.5
+        y = fac * N.exp(y)
     else:
-        y   = _scalar_gauss_den(x[:,0], mu[0,0], va[0,0], log)
+        y = _scalar_gauss_den(x[:, 0], mu[0, 0], va[0, 0], log)
         for i in range(1, d):
-            y    +=  _scalar_gauss_den(x[:,i], mu[0,i], va[0,i], log)
+            y +=  _scalar_gauss_den(x[:, i], mu[0, i], va[0, i], log)
     return y
 
 def _full_gauss_den(x, mu, va, log):
@@ -166,31 +188,46 @@ def _full_gauss_den(x, mu, va, log):
     return y
 
 # To get coordinatea of a confidence ellipse from multi-variate gaussian pdf
-def gauss_ell(mu, va, dim = misc._DEF_VIS_DIM, \
-        npoints = misc._DEF_ELL_NP, \
-        level = misc._DEF_LEVEL):
-    """ Given a mean and covariance for multi-variate
-    gaussian, returns npoints points for the ellipse
-    of confidence given by level (all points will be inside
-    the ellipsoides with a probability equal to level)
+def gauss_ell(mu, va, dim = misc.DEF_VIS_DIM, npoints = misc.DEF_ELL_NP, \
+        level = misc.DEF_LEVEL):
+    """Given a mean and covariance for multi-variate
+    gaussian, returns the coordinates of the confidense ellipsoid.
     
-    Returns the coordinate x and y of the ellipse"""
+    Compute npoints coordinates for the ellipse of confidence of given level
+    (all points will be inside the ellipsoides with a probability equal to
+    level).
+    
+    :Parameters:
+        mu : ndarray
+            mean of the pdf
+        va : ndarray
+            variance of the pdf
+        dim : sequence
+            sequences of two integers which represent the dimensions where to
+            project the ellipsoid.
+        npoints: int
+            number of points to generate for the ellipse.
+        level : float
+            level of confidence (between 0 and 1).
+
+    :Returns:
+        Returns the coordinate x and y of the ellipse."""
     if level >= 1 or level <= 0:
         raise ValueError("level should be a scale strictly between 0 and 1.""")
     
-    mu      = N.atleast_1d(mu)
-    va      = N.atleast_1d(va)
-    d       = mu.shape[0]
-    c       = N.array(dim)
+    mu = N.atleast_1d(mu)
+    va = N.atleast_1d(va)
+    d = N.shape(mu)[0]
+    c = N.array(dim)
 
     if N.any(c < 0) or N.any(c >= d):
         raise ValueError("dim elements should be >= 0 and < %d (dimension"\
                 " of the variance)" % d)
-    if mu.size == va.size:
+    if N.size(mu) == N.size(va):
         mode    = 'diag'
     else:
-        if va.ndim == 2:
-            if va.shape[0] == va.shape[1]:
+        if N.ndim(va) == 2:
+            if N.shape(va)[0] == N.shape(va)[1]:
                 mode    = 'full'
             else:
                 raise DenError("variance not square")
@@ -215,7 +252,7 @@ def gauss_ell(mu, va, dim = misc._DEF_VIS_DIM, \
         elps    = N.outer(mu, N.ones(npoints))
         elps    += N.dot(N.diag(N.sqrt(va)), circle)
     elif mode == 'full':
-        va  = va[c,:][:,c]
+        va  = va[c, :][:, c]
         # Method: compute the cholesky decomp of each cov matrix, that is
         # compute cova such as va = cova * cova' 
         # WARN: scipy is different than matlab here, as scipy computes a lower
@@ -227,22 +264,38 @@ def gauss_ell(mu, va, dim = misc._DEF_VIS_DIM, \
         elps    = N.outer(mu, N.ones(npoints))
         elps    += N.dot(cova, circle)
     else:
-        raise DenParam("var mode not recognized")
+        raise ValueError("var mode not recognized")
 
     return elps[0, :], elps[1, :]
 
 def multiple_gauss_den(data, mu, va):
     """Helper function to generate several Gaussian
-    pdf (different parameters) from the same data"""
-    mu  = N.atleast_2d(mu)
-    va  = N.atleast_2d(va)
+    pdf (different parameters) at the same points
 
-    K   = mu.shape[0]
-    n   = data.shape[0]
-    d   = mu.shape[1]
+    :Parameters:
+        data : ndarray
+            points where to estimate the pdfs (n,d).
+        mu : ndarray
+            mean of the pdf, of shape (k,d). One row of dimension d per
+            different component, the number of rows k being the number of
+            component
+        va : ndarray
+            variance of the pdf. One row per different component for diagonal
+            covariance (k, d), or d rows per component for full matrix pdf
+            (k*d,d).
+
+    :Returns:
+        Returns a (n, k) array, each column i being the pdf of the ith mean and
+        ith variance."""
+    mu = N.atleast_2d(mu)
+    va = N.atleast_2d(va)
+
+    K = N.shape(mu)[0]
+    n = N.shape(data)[0]
+    d = N.shape(mu)[1]
     
-    y   = N.zeros((K, n))
-    if mu.size == va.size:
+    y = N.zeros((K, n))
+    if N.size(mu) == N.size(va):
         for i in range(K):
             y[i] = gauss_den(data, mu[i, :], va[i, :])
         return y.T
@@ -252,39 +305,40 @@ def multiple_gauss_den(data, mu, va):
         return y.T
 
 if __name__ == "__main__":
-    import pylab
+    pass
+    ## import pylab
 
-    #=========================================
-    # Test plotting a simple diag 2d variance:
-    #=========================================
-    va  = N.array([5, 3])
-    mu  = N.array([2, 3])
+    ## #=========================================
+    ## # Test plotting a simple diag 2d variance:
+    ## #=========================================
+    ## va  = N.array([5, 3])
+    ## mu  = N.array([2, 3])
 
-    # Generate a multivariate gaussian of mean mu and covariance va
-    X       = randn(1e3, 2)
-    Yc      = N.dot(N.diag(N.sqrt(va)), X.transpose())
-    Yc      = Yc.transpose() + mu
+    ## # Generate a multivariate gaussian of mean mu and covariance va
+    ## X       = randn(1e3, 2)
+    ## Yc      = N.dot(N.diag(N.sqrt(va)), X.transpose())
+    ## Yc      = Yc.transpose() + mu
 
-    # Plotting
-    Xe, Ye  = gauss_ell(mu, va, npoints = 100)
-    pylab.figure()
-    pylab.plot(Yc[:, 0], Yc[:, 1], '.')
-    pylab.plot(Xe, Ye, 'r')
+    ## # Plotting
+    ## Xe, Ye  = gauss_ell(mu, va, npoints = 100)
+    ## pylab.figure()
+    ## pylab.plot(Yc[:, 0], Yc[:, 1], '.')
+    ## pylab.plot(Xe, Ye, 'r')
 
-    #=========================================
-    # Test plotting a simple full 2d variance:
-    #=========================================
-    va  = N.array([[0.2, 0.1],[0.1, 0.5]])
-    mu  = N.array([0, 3])
+    ## #=========================================
+    ## # Test plotting a simple full 2d variance:
+    ## #=========================================
+    ## va  = N.array([[0.2, 0.1],[0.1, 0.5]])
+    ## mu  = N.array([0, 3])
 
-    # Generate a multivariate gaussian of mean mu and covariance va
-    X       = randn(1e3, 2)
-    Yc      = N.dot(lin.cholesky(va), X.transpose())
-    Yc      = Yc.transpose() + mu
+    ## # Generate a multivariate gaussian of mean mu and covariance va
+    ## X       = randn(1e3, 2)
+    ## Yc      = N.dot(lin.cholesky(va), X.transpose())
+    ## Yc      = Yc.transpose() + mu
 
-    # Plotting
-    Xe, Ye  = gauss_ell(mu, va, npoints = 100, level=0.95)
-    pylab.figure()
-    pylab.plot(Yc[:, 0], Yc[:, 1], '.')
-    pylab.plot(Xe, Ye, 'r')
-    pylab.show()
+    ## # Plotting
+    ## Xe, Ye  = gauss_ell(mu, va, npoints = 100, level=0.95)
+    ## pylab.figure()
+    ## pylab.plot(Yc[:, 0], Yc[:, 1], '.')
+    ## pylab.plot(Xe, Ye, 'r')
+    ## pylab.show()
