@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Sep 11 05:00 PM 2006 J
+# Last Change: Fri Oct 06 05:00 PM 2006 J
 
 # TODO:
 #   - which methods to avoid va shrinking to 0 ? There are several options, 
@@ -83,9 +83,6 @@ class GMM(ExpMixtureModel):
             raise GmmParamError("mode " + str(mode) + " not recognized")
 
         self.gm.set_param(w, mu, va)
-        #self.gm.w   = w
-        #self.gm.mu  = mu
-        #self.gm.va  = va
 
     def init_random(self, data):
         """ Init the model at random."""
@@ -152,9 +149,9 @@ class GMM(ExpMixtureModel):
         mGamma  = N.sum(gamma, axis = 0)
 
         if self.gm.mode == 'diag':
-            mu  = N.zeros((k, d))
-            va  = N.zeros((k, d))
-            gamma   = gamma.transpose()
+            mu      = N.zeros((k, d))
+            va      = N.zeros((k, d))
+            gamma   = gamma.T
             for c in range(k):
                 x   = N.dot(gamma[c:c+1,:], data)[0,:]
                 xx  = N.dot(gamma[c:c+1,:], data ** 2)[0,:]
@@ -198,16 +195,18 @@ class EM:
     Not really useful yet"""
     def __init__(self):
         pass
-
-    def train(self, data, model, niter = 10):
+    
+    def train(self, data, model, maxiter = 10, thresh = 1e-5):
         """
-        Train a model using data, with niter iterations.
+        Train a model using data, and stops when the likelihood fails
+        behind a threshold, or when the number of iterations > niter, 
+        whichever comes first
 
         Args:
             - data:     contains the observed features, one row is one frame, ie one 
             observation of dimension d
             - model:    object of class Mixture
-            - niter:    number of iterations
+            - maxiter:  maximum number of iterations
 
         The model is trained, and its parameters updated accordingly.
 
@@ -219,17 +218,33 @@ class EM:
         model.init(data)
 
         # Likelihood is kept
-        like    = N.zeros(niter)
+        like    = N.zeros(maxiter)
 
         # Em computation, with computation of the likelihood
-        for i in range(niter):
+        g, tgd      = model.sufficient_statistics(data)
+        like[0]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
+        model.update_em(data, g)
+        for i in range(1, maxiter):
             g, tgd      = model.sufficient_statistics(data)
             like[i]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
             model.update_em(data, g)
+            if has_em_converged(like[i], like[i-1], thresh):
+                return like[0:i]
 
         return like
     
 # Misc functions
+def has_em_converged(like, plike, thresh):
+    """ given likelihood of current iteration like and previous
+    iteration plike, returns true is converged: based on comparison
+    of the slope of the likehood with thresh"""
+    diff    = N.abs(like - plike)
+    avg     = 0.5 * (N.abs(like) + N.abs(plike))
+    if diff / avg < thresh:
+        return True
+    else:
+        return False
+
 def multiple_gauss_den(data, mu, va):
     """Helper function to generate several Gaussian
     pdf (different parameters) from the same data"""
@@ -240,10 +255,11 @@ def multiple_gauss_den(data, mu, va):
     n   = data.shape[0]
     d   = data.shape[1]
     
-    y   = N.zeros((n, K))
+    y   = N.zeros((K, n))
     if mu.size == va.size:
         for i in range(K):
-            y[:, i] = densities.gauss_den(data, mu[i, :], va[i, :])
+            y[i] = densities.gauss_den(data, mu[i, :], va[i, :])
+        return y.T
     else:
         for i in range(K):
             y[:, i] = densities.gauss_den(data, mu[i, :], 

@@ -1,4 +1,4 @@
-# Last Change: Mon Aug 28 10:00 PM 2006 J
+# Last Change: Thu Oct 05 03:00 PM 2006 J
 
 Things which must be implemented for a 1.0 version (in importante order)
     - test for various length and model size 
@@ -10,6 +10,8 @@ Things which must be implemented for a 1.0 version (in importante order)
     - C implementation of Gaussian densities at least (partially done,
     but need integration into distutils + portable way of detecting/
     loading shared library with ctypes)
+    - numpy computations make huge difference between C and F storage: 
+    should review the code to see if the
 
 Things which would be nice:
     - Integrate libem (libem should be modified so

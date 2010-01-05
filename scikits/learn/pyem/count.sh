@@ -1,5 +1,5 @@
 #! /bin/sh
-# Last Change: Mon Sep 11 08:00 PM 2006 J
+# Last Change: Fri Oct 06 08:00 PM 2006 J
 
 n=0
 np=0
@@ -19,5 +19,5 @@ for i in $files; do
     let nc="$nc + $tp"
 done
 
-echo $nc
-echo $np
+echo "$nc lines of C code"
+echo "$np lines of python code"

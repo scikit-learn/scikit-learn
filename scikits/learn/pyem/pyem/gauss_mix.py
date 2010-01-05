@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Sep 11 05:00 PM 2006 J
+# Last Change: Tue Oct 03 06:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 

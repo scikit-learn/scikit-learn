@@ -26,3 +26,4 @@ exinfo.py
 blop
 *.prog
 *.prof
+test_storage.py

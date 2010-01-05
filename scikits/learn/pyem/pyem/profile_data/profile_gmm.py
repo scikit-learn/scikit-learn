@@ -2,15 +2,21 @@ import numpy as N
 from pyem import GM, GMM
 import copy
 
+from pyem._c_densities import gauss_den
+
 def bench1(mode = 'diag'):
     #===========================================
     # GMM of 20 comp, 20 dimension, 1e4 frames
     #===========================================
     d       = 15
     k       = 30
-    nframes = 1e5
+    nframes = 1e4
     niter   = 10
     mode    = 'diag'
+
+    print "============================================================="
+    print "(%d dim, %d components) GMM with %d iterations, for %d frames" \
+            % (d, k, niter, nframes)
 
     #+++++++++++++++++++++++++++++++++++++++++++
     # Create an artificial GMM model, samples it
@@ -49,9 +55,16 @@ def bench1(mode = 'diag'):
         gmm.update_em(data, g)
 
 if __name__ == "__main__":
-    import profile
-    profile.run('bench1()', 'gmmprof')
-    import pstats
-    p = pstats.Stats('gmmprof')
+    import hotshot, hotshot.stats
+    profile_file    = 'gmm.prof'
+    prof    = hotshot.Profile(profile_file, lineevents=1)
+    prof.runcall(bench1)
+    p = hotshot.stats.load(profile_file)
     print p.sort_stats('cumulative').print_stats(20)
+    prof.close()
+    # import profile
+    # profile.run('bench1()', 'gmmprof')
+    # import pstats
+    # p = pstats.Stats('gmmprof')
+    # print p.sort_stats('cumulative').print_stats(20)
 

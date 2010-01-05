@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Fri Sep 29 06:00 PM 2006 J
+# Last Change: Thu Oct 05 07:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -114,26 +114,16 @@ def _diag_gauss_den(x, mu, va, log):
     Call gauss_den instead"""
     # Diagonal matrix case
     d   = mu.size
+    n   = x.shape[0]
     if not log:
         inva    = 1/va[0,0]
         fac     = (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
         y       =  (x[:,0] - mu[0,0]) ** 2 * inva * -0.5
         for i in range(1, d):
             inva    = 1/va[0,i]
-            #fac     *= (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
             fac     *= N.sqrt(inva)
             y       += (x[:,i] - mu[0,i]) ** 2 * inva * -0.5
         y   = fac * N.exp(y)
-    #d   = mu.size
-    #n   = x.shape[0]
-    #if not log:
-    #    y   = N.zeros(n)
-    #    inva= 1/va
-    #    _gden.gden_diag(x.ctypes.data_as(POINTER(c_double)),
-    #        n, d,
-    #        mu.ctypes.data_as(POINTER(c_double)),
-    #        (inva).ctypes.data_as(POINTER(c_double)),
-    #        y.ctypes.data_as(POINTER(c_double)))
     else:
         y   = _scalar_gauss_den(x[:,0], mu[0,0], va[0,0], log)
         for i in range(1, d):
