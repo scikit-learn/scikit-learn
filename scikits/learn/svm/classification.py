@@ -1,13 +1,13 @@
+from ctypes import cast, POINTER, c_int, c_double
+import numpy as N
+
+from model import LibSvmModel
+import libsvm
+
 __all__ = [
     'LibSvmCClassificationModel',
     'LibSvmNuClassificationModel',
     ]
-
-import numpy as N
-from ctypes import cast, POINTER, c_int, c_double
-
-from model import LibSvmModel
-import libsvm
 
 class LibSvmClassificationResults:
     def __init__(self, model, dataset):

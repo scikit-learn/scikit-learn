@@ -1,14 +1,14 @@
+from ctypes import c_double, POINTER, cast
+import numpy as N
+
+import libsvm
+
 __all__ = [
     'LibSvmRegressionDataSet',
     'LibSvmClassificationDataSet',
     'LibSvmOneClassDataSet',
     'LibSvmTestDataSet'
     ]
-
-from ctypes import c_double, POINTER, cast
-import numpy as N
-
-import libsvm
 
 class LibSvmDataSet:
     def __init__(self, data):

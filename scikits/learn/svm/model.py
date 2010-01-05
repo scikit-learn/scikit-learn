@@ -1,16 +1,18 @@
-__all__ = [
-    'LibSvmModel'
-    ]
-
 from ctypes import *
-c_double_null_ptr = POINTER(c_double)()
-c_int_null_ptr = POINTER(c_int)()
 
 from kernel import *
 import libsvm
 
+__all__ = [
+    'LibSvmModel'
+    ]
+
+c_double_null_ptr = POINTER(c_double)()
+c_int_null_ptr = POINTER(c_int)()
+
 class LibSvmModel:
-    def __init__(self, kernel, tolerance=0.001, shrinking=True, cache_size=40):
+    def __init__(self, kernel,
+                 tolerance=0.001, shrinking=True, cache_size=40):
         """
         Parameters:
 

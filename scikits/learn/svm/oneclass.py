@@ -1,11 +1,11 @@
-__all__ = [
-    'LibSvmOneClassModel'
-    ]
-
 from ctypes import cast, POINTER, byref, c_double
 
 from model import LibSvmModel
 import libsvm
+
+__all__ = [
+    'LibSvmOneClassModel'
+    ]
 
 class LibSvmOneClassResults:
     def __init__(self, model, dataset):

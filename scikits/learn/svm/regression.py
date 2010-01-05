@@ -1,13 +1,13 @@
+from ctypes import cast, POINTER, c_double
+import numpy as N
+
+from model import LibSvmModel
+import libsvm
+
 __all__ = [
     'LibSvmEpsilonRegressionModel',
     'LibSvmNuRegressionModel'
     ]
-
-import numpy as N
-from ctypes import cast, POINTER, c_double
-
-from model import LibSvmModel
-import libsvm
 
 # XXX document why get_svr_probability could be useful
 

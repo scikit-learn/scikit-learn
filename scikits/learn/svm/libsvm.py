@@ -1,16 +1,4 @@
-__all__ = [
-    'svm_node_dtype',
-    'C_SVC',
-    'NU_SVC',
-    'ONE_CLASS',
-    'EPSILON_SVR',
-    'NU_SVR',
-    'LINEAR',
-    'POLY',
-    'RBF',
-    'SIGMOID',
-    'PRECOMPUTED'
-    ]
+import inspect
 
 import numpy as N
 from ctypes import c_int, c_double, POINTER, Structure, c_char_p
@@ -130,7 +118,6 @@ libsvm_api = {
     (None, [POINTER(svm_model)])
     }
 
-import inspect
 for f, (restype, argtypes) in libsvm_api.iteritems():
     func = getattr(_libsvm, f)
     func.restype = restype

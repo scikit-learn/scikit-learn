@@ -1,3 +1,7 @@
+import numpy as N
+
+import libsvm
+
 __all__ = [
     'LinearKernel',
     'PolynomialKernel',
@@ -6,10 +10,6 @@ __all__ = [
     'CustomKernel',
     'PrecomputedKernel'
     ]
-
-import numpy as N
-
-import libsvm
 
 class LinearKernel:
     def __init__(self):
