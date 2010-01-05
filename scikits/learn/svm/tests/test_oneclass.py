@@ -5,6 +5,7 @@ set_local_path('../..')
 from svm.dataset import LibSvmOneClassDataSet, LibSvmTestDataSet
 from svm.kernel import *
 from svm.oneclass import *
+from svm.predict import *
 restore_path()
 
 class test_oneclass(NumpyTestCase):
@@ -24,9 +25,8 @@ class test_oneclass(NumpyTestCase):
         return traindata, testdata
 
     def check_train(self):
-        ModelType = LibSvmOneClassModel
         traindata, testdata = self._make_basic_datasets()
-        model = ModelType(LinearKernel())
+        model = LibSvmOneClassModel(LinearKernel())
         results = model.fit(traindata)
         p = results.predict(testdata)
         assert_array_equal(p, [False, False, False, True])
@@ -55,6 +55,15 @@ class test_oneclass(NumpyTestCase):
             values = results.predict_values(testdata)
             for p, v in zip(pred, values):
                 self.assertEqual(v > 0, p)
+
+    def check_compact(self):
+        traindata, testdata = self._make_basic_datasets()
+        model = LibSvmOneClassModel(LinearKernel())
+        results = model.fit(traindata, LibSvmPythonPredictor)
+        refv = results.predict_values(testdata)
+        results.compact()
+        v = results.predict_values(testdata)
+        assert_array_equal(refv, v)
 
 if __name__ == '__main__':
     NumpyTest().run()

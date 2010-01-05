@@ -42,7 +42,7 @@ class LibSvmClassificationResults:
         For training data with nr_class classes, this function returns
         nr_class*(nr_class-1)/2 decision values in a dictionary for
         each item in the test dataset. The keys of the dictionary are
-        2-tuples, one for each combination of two class labels.
+        2-tuples, one for each permutation of two class labels.
         """
         n = self.nr_class * (self.nr_class - 1) / 2
         def p(v):

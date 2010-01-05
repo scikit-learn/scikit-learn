@@ -163,5 +163,15 @@ class test_regression(NumpyTestCase):
                     p = results.predict(testdata)
                     assert_array_almost_equal(refp, p)
 
+    def check_compact(self):
+        traindata, testdata = self._make_basic_datasets()
+        kernel = LinearKernel()
+        model = LibSvmEpsilonRegressionModel(LinearKernel())
+        results = model.fit(traindata, LibSvmPythonPredictor)
+        refp = results.predict(testdata)
+        results.compact()
+        p = results.predict(testdata)
+        assert_array_equal(refp, p)
+
 if __name__ == '__main__':
     NumpyTest().run()

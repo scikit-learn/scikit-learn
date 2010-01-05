@@ -33,7 +33,7 @@ class LibSvmOneClassResults:
         distribution, while a non-positive value indicates that is is
         not.
         """
-        return [self.predictor.predict_values(x, 1)[0] for x in dataset]
+        return [self.predictor.predict_values(x, 1) for x in dataset]
 
     def compact(self):
         self.predictor.compact()

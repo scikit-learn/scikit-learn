@@ -139,7 +139,7 @@ class test_classification(NumpyTestCase):
         refx = N.vstack([x1, x2])
         trndata = LibSvmClassificationDataSet(zip(reflabels, refx))
         testdata = LibSvmTestDataSet(refx)
-        return trndata, trndata1, trndata2, testdata
+        return trndata, testdata, trndata1, trndata2
 
     def _make_kernels(self):
         def kernelf(x, y, dot):
@@ -158,7 +158,7 @@ class test_classification(NumpyTestCase):
         return kernels
 
     def check_all(self):
-        trndata, trndata1, trndata2, testdata = self._make_datasets()
+        trndata, testdata, trndata1, trndata2 = self._make_datasets()
         kernels = self._make_kernels()
         weights = [(0, 2.0), (1, 5.0), (2, 3.0)]
         for kernel in kernels:
@@ -225,6 +225,21 @@ class test_classification(NumpyTestCase):
         refp = refresults.predict(testdata)
         p = results.predict(testdata)
         assert_array_equal(p, refp)
+
+    def check_compact(self):
+        traindata, testdata = self._make_basic_datasets()
+        kernel = LinearKernel()
+        cost = 10.0
+        weights = [(1, 10.0)]
+        model = LibSvmCClassificationModel(kernel, cost, weights)
+        results = model.fit(traindata, LibSvmPythonPredictor)
+        refvs = results.predict_values(testdata)
+        results.compact()
+        vs = results.predict_values(testdata)
+        print vs
+        for refv, v in zip(refvs, vs):
+            for key, value in refv.iteritems():
+                self.assertEqual(value, v[key])
 
 if __name__ == '__main__':
     NumpyTest().run()

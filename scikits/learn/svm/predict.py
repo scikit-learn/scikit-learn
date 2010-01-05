@@ -1,4 +1,5 @@
-from ctypes import POINTER, c_double, addressof
+from ctypes import POINTER, c_double, addressof, byref
+from itertools import izip
 import numpy as N
 
 from dataset import svm_node_dot
@@ -44,7 +45,10 @@ class LibSvmPredictor:
         v = N.empty((n,), dtype=N.float64)
         vptr = v.ctypes.data_as(POINTER(c_double))
         libsvm.svm_predict_values(self.model, xptr, vptr)
-        return v
+        if n == 1:
+            return v[0]
+        else:
+            return v
 
     def predict_probability(self, x, n):
         if not self.model.contents.param.probability:
@@ -88,6 +92,7 @@ class LibSvmPythonPredictor:
             ids = [int(modelc.SV[i][0].value) for i in range(modelc.l)]
             support_vectors = [dataset[id] for id in ids]
         self.support_vectors = support_vectors
+        self.is_compact = False
         libsvm.svm_destroy_model(model)
 
     def predict(self, x):
@@ -107,7 +112,7 @@ class LibSvmPythonPredictor:
         else:
             return self.predict_values(x, 1)
 
-    def predict_values(self, x, n):
+    def _predict_values_sparse(self, x, n):
         if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
             kvalue = N.empty((len(self.support_vectors),))
             for i, sv in enumerate(self.support_vectors):
@@ -121,12 +126,12 @@ class LibSvmPythonPredictor:
                     ci, cj = self.nSV[i], self.nSV[j]
                     coef1 = self.sv_coef[j - 1]
                     coef2 = self.sv_coef[i]
-                    sum = -self.rho[p]
+                    sum = 0.
                     for k in range(ci):
                         sum += coef1[si + k] * kvalue[si + k]
                     for k in range(cj):
                         sum += coef2[sj + k] * kvalue[sj + k]
-                    dec_values[p] = sum
+                    dec_values[p] = sum - self.rho[p]
                     p += 1
             return dec_values
         else:
@@ -135,8 +140,52 @@ class LibSvmPythonPredictor:
                 z += sv_coef * self.kernel(x, sv, svm_node_dot)
             return z
 
+    def _predict_values_compact(self, x, n):
+        if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
+            for i, sv in enumerate(self.support_vectors):
+                kvalue = N.empty((len(self.support_vectors),))
+                kvalue[i] = self.kernel(x, sv, svm_node_dot)
+            return kvalue - self.rho
+        else:
+            sv = self.support_vectors[0]
+            return self.kernel(x, sv, svm_node_dot) - self.rho
+
+    def predict_values(self, x, n):
+        if self.is_compact:
+            return self._predict_values_compact(x, n)
+        else:
+            return self._predict_values_sparse(x, n)
+
     def predict_probability(self, x, n):
         raise NotImplementedError
 
+    def _compact_svs(self, svs, coefs):
+        maxlen = 0
+        for sv in svs:
+            maxlen = N.maximum(maxlen, sv['index'].max())
+        csv = N.zeros((maxlen + 1,), libsvm.svm_node_dtype)
+        csv['index'][:-1] = N.arange(1, maxlen + 1)
+        csv['index'][-1] = -1
+        for coef, sv in izip(coefs, svs):
+            idx = sv['index'][:-1] - 1
+            csv['value'][idx] += coef*sv['value'][:-1]
+        return csv
+
     def compact(self):
-        raise NotImplementedError
+        if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
+            compact_support_vectors = []
+            for i in range(self.nr_class):
+                for j in range(i + 1, self.nr_class):
+                    si, sj = self.start[i], self.start[j]
+                    ci, cj = self.nSV[i], self.nSV[j]
+                    svi = self.support_vectors[si:si + ci]
+                    svj = self.support_vectors[sj:sj + cj]
+                    coef1 = self.sv_coef[j - 1][si:si + ci]
+                    coef2 = self.sv_coef[i][sj:sj + cj]
+                    csv = self._compact_svs(svi + svj, coef1 + coef2)
+                    compact_support_vectors.append(csv)
+            self.support_vectors = compact_support_vectors
+        else:
+            csv = self._compact_svs(self.support_vectors, self.sv_coef)
+            self.support_vectors = [csv]
+        self.is_compact = True
