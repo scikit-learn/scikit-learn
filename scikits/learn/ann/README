@@ -1,0 +1,12 @@
++-----------------------------------+
+|Artificial Neural Networks in SciPy|
++-----------------------------------+
+
+    fred.mailhot@gmail.com
+
+
+A "neural" network module for scipy, adding standard feedforward architectures
+(MLP and RBF), as well as some recurrent architectures (e.g. SRN) and
+optimization algorithms.
+
+
