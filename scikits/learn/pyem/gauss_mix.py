@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Jun 08 07:00 PM 2007 J
+# Last Change: Sat Jun 09 03:00 PM 2007 J
 
 # Module to implement GaussianMixture class.
 
@@ -7,7 +7,7 @@ import numpy as N
 from numpy.random import randn, rand
 import numpy.linalg as lin
 import densities
-from misc import _MAX_DBL_DEV
+import misc
 
 # Right now, two main usages of a Gaussian Model are possible
 #   - init a Gaussian Model with meta-parameters, and trains it
@@ -147,7 +147,8 @@ class GM:
 
         return X
 
-    def conf_ellipses(self, *args, **kargs):
+    def conf_ellipses(self, dim = misc._DEF_VIS_DIM, npoints = misc._DEF_ELL_NP, \
+        level = misc._DEF_LEVEL):
         """Returns a list of confidence ellipsoids describing the Gmm
         defined by mu and va. Check densities.gauss_ell for details
 
@@ -179,14 +180,14 @@ class GM:
         if self.mode == 'diag':
             for i in range(self.k):
                 xe, ye  = densities.gauss_ell(self.mu[i,:], self.va[i,:], 
-                        *args, **kargs)
+                        dim, npoints, level)
                 Xe.append(xe)
                 Ye.append(ye)
         elif self.mode == 'full':
             for i in range(self.k):
                 xe, ye  = densities.gauss_ell(self.mu[i,:], 
                         self.va[i*self.d:i*self.d+self.d,:], 
-                        *args, **kargs)
+                        dim, npoints, level)
                 Xe.append(xe)
                 Ye.append(ye)
 
@@ -253,7 +254,8 @@ class GM:
     #=================
     # Plotting methods
     #=================
-    def plot(self, *args, **kargs):
+    def plot(self, dim = misc._DEF_VIS_DIM, npoints = misc._DEF_ELL_NP, 
+            level = misc._DEF_LEVEL):
         """Plot the ellipsoides directly for the model
         
         Returns a list of lines, so that their style can be modified. By default,
@@ -266,7 +268,7 @@ class GM:
 
         assert self.d > 1
         k       = self.k
-        Xe, Ye  = self.conf_ellipses(*args, **kargs)
+        Xe, Ye  = self.conf_ellipses(dim, npoints, level)
         try:
             import pylab as P
             return [P.plot(Xe[i], Ye[i], 'r', label='_nolegend_')[0] for i in range(k)]
@@ -354,7 +356,8 @@ class GM:
 
         return retval
 
-    def density_on_grid(self, nx = 50, ny = 50, maxlevel = 0.95):
+    def density_on_grid(self, dim = misc._DEF_VIS_DIM, nx = 50, ny = 50,
+            maxlevel = 0.95):
         """Do all the necessary computation for contour plot of mixture's density.
         
         Returns X, Y, Z and V as expected by mpl contour function."""
@@ -368,33 +371,49 @@ class GM:
         # contribution to the pdf).
 
         # XXX: we need log pdf, not the pdf... this can save some computing
-        Xe, Ye = self.conf_ellipses(level = maxlevel)
+        Xe, Ye = self.conf_ellipses(level = maxlevel, dim = dim)
         ax = [N.min(Xe), N.max(Xe), N.min(Ye), N.max(Ye)]
 
         w = ax[1] - ax[0]
         h = ax[3] - ax[2]
         X, Y, den = self._densityctr(N.linspace(ax[0]-0.2*w, ax[1]+0.2*w, nx), \
-                N.linspace(ax[2]-0.2*h, ax[3]+0.2*h, ny))
+                N.linspace(ax[2]-0.2*h, ax[3]+0.2*h, ny), dim = dim)
         lden = N.log(den)
         V = [-5, -3, -1, -0.5, ]
         V.extend(N.linspace(0, N.max(lden), 4).tolist())
         return X, Y, lden, N.array(V)
 
-    def _densityctr(self, xrange, yrange):
+    def _densityctr(self, xrange, yrange, dim = misc._DEF_VIS_DIM):
         """Helper function to compute density contours on a grid."""
         gr = N.meshgrid(xrange, yrange)
         X = gr[0].flatten()
         Y = gr[1].flatten()
         xdata = N.concatenate((X[:, N.newaxis], Y[:, N.newaxis]), axis = 1)
         # XXX refactor computing pdf
-        d = densities.multiple_gauss_den(xdata, self.mu, self.va) * self.w
-        d = N.sum(d, 1)
-        d = d.reshape(len(yrange), len(xrange))
+        dmu = self.mu[:, dim]
+        dva = self._get_va(dim)
+        den = densities.multiple_gauss_den(xdata, dmu, dva) * self.w
+        den = N.sum(den, 1)
+        den = den.reshape(len(yrange), len(xrange))
 
         X = gr[0]
         Y = gr[1]
-        return X, Y, d
+        return X, Y, den
 
+    def _get_va(self, dim):
+        """Returns variance limited do dimension in dim."""
+        dim = N.array(dim)
+        if dim.any() < 0 or dim.any() >= self.d:
+            raise ValueError("dim elements should be between 0 and dimension"\
+                    " of the mixture.")
+        if self.mode == 'diag':
+            return self.va[:, dim]
+        elif self.mode == 'full':
+            tidx = N.array([N.array(dim) + i * self.d for i in range(self.k)])
+            tidx.flatten()
+            return self.va[tidx, dim]
+        else:
+            raise ValueError("Unkown mode")
     # Syntactic sugar
     def __repr__(self):
         repr    = ""
@@ -450,7 +469,7 @@ def check_gmm_param(w, mu, va):
     """
         
     # Check that w is valid
-    if N.fabs(N.sum(w, 0)  - 1) > _MAX_DBL_DEV:
+    if N.fabs(N.sum(w, 0)  - 1) > misc._MAX_DBL_DEV:
         raise GmParamError('weight does not sum to 1')
     
     if not len(w.shape) == 1:

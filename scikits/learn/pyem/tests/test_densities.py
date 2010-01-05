@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon May 28 01:00 PM 2007 J
+# Last Change: Sat Jun 09 02:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
@@ -13,6 +13,7 @@ import numpy as N
 
 set_package_path()
 from pyem.densities import gauss_den
+import pyem.densities
 restore_path()
 
 #Optional:
@@ -105,89 +106,15 @@ class test_c_implementation(TestDensities):
         self._generate_test_data_2d_full()
         self._check(level)
 
+class test_gauss_ell(NumpyTestCase):
+    def test_dim(self):
+        pyem.densities.gauss_ell([0, 1], [1, 2.], [0, 1])
+        try:
+            pyem.densities.gauss_ell([0, 1], [1, 2.], [0, 2])
+            raise AssertionError("this call should not succeed, bogus dim.")
+        except ValueError, e:
+            print "Call with bogus dim did not succeed, OK"
+
+
 if __name__ == "__main__":
     NumpyTest().run()
-
-# def generate_test_data(n, d, mode = 'diag', file='test.dat'):
-#     """Generate a set of data of dimension d, with n frames,
-#     that is input data, mean, var and output of gden, so that
-#     other implementations can be tested against"""
-#     mu  = randn(1, d)
-#     if mode == 'diag':
-#         va  = abs(randn(1, d))
-#     elif mode == 'full':
-#         va  = randn(d, d)
-#         va  = dot(va, va.transpose())
-# 
-#     input   = randn(n, d)
-#     output  = gauss_den(input, mu, va)
-# 
-#     import tables
-#     h5file  = tables.openFile(file, "w")
-# 
-#     h5file.createArray(h5file.root, 'input', input)
-#     h5file.createArray(h5file.root, 'mu', mu)
-#     h5file.createArray(h5file.root, 'va', va)
-#     h5file.createArray(h5file.root, 'output', output)
-# 
-#     h5file.close()
-# 
-# def test_gauss_den():
-#     """"""
-#     # import tables
-#     # import numpy as N
-#     # 
-#     # filename    = 'dendata.h5'
-# 
-#     # # # Dimension 1
-#     # # d   = 1
-#     # # mu  = 1.0
-#     # # va  = 2.0
-# 
-#     # # X   = randn(1e3, 1)
-# 
-#     # # Y   = gauss_den(X, mu, va)
-# 
-#     # # h5file      = tables.openFile(filename, "w")
-# 
-#     # # h5file.createArray(h5file.root, 'X', X)
-#     # # h5file.createArray(h5file.root, 'mu', mu)
-#     # # h5file.createArray(h5file.root, 'va', va)
-#     # # h5file.createArray(h5file.root, 'Y', Y)
-# 
-#     # # h5file.close()
-# 
-#     # # # Dimension 2, diag
-#     # # d   = 2
-#     # # mu  = N.array([1.0, -2.0])
-#     # # va  = N.array([1.0, 2.0])
-# 
-#     # # X   = randn(1e3, 2)
-# 
-#     # # Y   = gauss_den(X, mu, va)
-# 
-#     # # h5file      = tables.openFile(filename, "w")
-# 
-#     # # h5file.createArray(h5file.root, 'X', X)
-#     # # h5file.createArray(h5file.root, 'mu', mu)
-#     # # h5file.createArray(h5file.root, 'va', va)
-#     # # h5file.createArray(h5file.root, 'Y', Y)
-# 
-#     # # Dimension 2, full
-#     # d   = 2
-#     # mu  = N.array([[0.2, -1.0]])
-#     # va  = N.array([[1.2, 0.1], [0.1, 0.5]])
-# 
-#     # X   = randn(1e3, 2)
-# 
-#     # Y   = gauss_den(X, mu, va)
-# 
-#     # h5file      = tables.openFile(filename, "w")
-# 
-#     # h5file.createArray(h5file.root, 'X', X)
-#     # h5file.createArray(h5file.root, 'mu', mu)
-#     # h5file.createArray(h5file.root, 'va', va)
-#     # h5file.createArray(h5file.root, 'Y', Y)
-# 
-#     # h5file.close()
-# 

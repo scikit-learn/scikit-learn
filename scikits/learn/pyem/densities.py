@@ -1,12 +1,13 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Fri Jun 08 07:00 PM 2007 J
+# Last Change: Sat Jun 09 02:00 PM 2007 J
 
 import numpy as N
 import numpy.linalg as lin
 from numpy.random import randn
 from scipy.stats import chi2
+import misc
 
 # Error classes
 class DenError(Exception):
@@ -164,19 +165,28 @@ def _full_gauss_den(x, mu, va, log):
  
     return y
 
-# To plot a confidence ellipse from multi-variate gaussian pdf
-def gauss_ell(mu, va, dim = [0, 1], npoints = 100, level = 0.39):
+# To get coordinatea of a confidence ellipse from multi-variate gaussian pdf
+def gauss_ell(mu, va, dim = misc._DEF_VIS_DIM, \
+        npoints = misc._DEF_ELL_NP, \
+        level = misc._DEF_LEVEL):
     """ Given a mean and covariance for multi-variate
     gaussian, returns npoints points for the ellipse
     of confidence given by level (all points will be inside
     the ellipsoides with a probability equal to level)
     
     Returns the coordinate x and y of the ellipse"""
+    if level >= 1 or level <= 0:
+        raise ValueError("level should be a scale strictly between 0 and 1.""")
     
     mu      = N.atleast_1d(mu)
     va      = N.atleast_1d(va)
+    d       = mu.shape[0]
     c       = N.array(dim)
 
+    print c, d
+    if N.any(c < 0) or N.any(c >= d):
+        raise ValueError("dim elements should be >= 0 and < %d (dimension"\
+                " of the variance)" % d)
     if mu.size == va.size:
         mode    = 'diag'
     else:

@@ -1,6 +1,4 @@
-Last Change: Fri Aug 04 07:00 PM 2006 J
-
-Version 0.4.2
+Last Change: Sat Jun 09 12:00 PM 2007 J
 
 pyem is a python module build upon numpy and scipy
 (see http://www.scipy.org/) for learning mixtures models
@@ -10,16 +8,6 @@ Mixture Models are implemented. Included features:
  * computation of Gaussian pdf for multi-variate Gaussian
  random vectors (spherical, diagonal and full covariance matrices)
  * Sampling of Gaussian Mixtures Models
- * Confidence ellipsoides with probability (fixed level of 
- 0.39 for now)
+ * Confidence ellipsoides with probability at arbitrary level
  * Classic EM for Gaussian Mixture Models
  * K-mean based and random initialization for EM available
-
-Has been tested on the following platforms:
-
- * Ubuntu dapper, bi Xeon 3.2 Ghz, 2 Go RAM
- python 2.4 + pyrex, numpy 1.0.b2SVN + scipy 0.5.1SVN, uses atlas3-sse2
- * Ubuntu dapper, pentium M 1.2 ghz,. 512 Mo Ram
- python 2.4 + pyrex, numpy 1.0.b2SVN + scipy 0.5.1SVN, uses atlas3-sse2
- * Ubuntu dapper, minimac (ppc G4 1.42 Ghz, 1Gb RAM)
- python 2.4 + pyrex, numpy 1.0.b2SVN + scipy 0.5.1SVN, uses atlas3-sse2
