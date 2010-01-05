@@ -1,0 +1,7 @@
+# Last Change: Fri Jun 30 07:00 PM 2006 J
+
+# In more urgent order:
+
+1: test and benchmarks for various length and model size
+2: refactoring for Mixture models, having online mode, etc...
+3: for gaussian densities: compute level <-> confidence ellipses relationship with Chi2 model

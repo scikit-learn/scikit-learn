@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Mon May 29 01:00 PM 2006 J
+# Last Change: Fri Jun 30 06:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -371,5 +371,3 @@ if __name__ == "__main__":
     pylab.plot(Yc[:, 0], Yc[:, 1], '.')
     pylab.plot(Xe, Ye, 'r')
     pylab.show()
-
-    savefig('example.png')

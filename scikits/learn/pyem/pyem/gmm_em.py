@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu May 25 03:00 PM 2006 J
+# Last Change: Fri Jun 30 07:00 PM 2006 J
 
 # TODO:
 #   - interface with libem
@@ -34,6 +34,31 @@ class GmmParamError(GmmError):
     def __str__(self):
         return self.message
 
+# Base class for mixture models: a mixture model can be initialized, 
+# have parameters, have its parameters changed, have function to returns sufficient
+# statistics, generate data from the model, have the functions relative to EM
+class Mixture:
+    def __init__(self, np, prior):
+        self.np     = np
+        self.prior  = prior
+
+    def em_post(self):
+        pass
+
+    def em_update(self):
+        pass
+
+    # Check that the current state is consistent (such as priori weighting to 1, etc...)
+    def check_state(self):
+        pass
+
+    # Return npoints points generated from the model
+    def generate(self, npoints):
+        pass
+
+# The Gaussian Mixture
+class GMM(Mixture):
+    pass
 
 # Function to generate a GMM, or valid parameters for GMM
 def gen_rand_index(p, n):
