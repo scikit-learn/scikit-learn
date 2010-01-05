@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Oct 20 12:00 PM 2006 J
+# Last Change: Mon Oct 23 07:00 PM 2006 J
 
 #---------------------------------------------
 # This is not meant to be used yet !!!! I am 
@@ -135,7 +135,7 @@ class OnGMM(ExpMixtureModel):
 
         self.init   = init_methods[init]
 
-    def sufficient_statistics(self, frame, nu):
+    def compute_sufficient_statistics(self, frame, nu):
         """ sufficient_statistics(frame, nu)
         
         frame has to be rank 2 !"""
@@ -147,13 +147,12 @@ class OnGMM(ExpMixtureModel):
         self.cw	*= (1 - nu)
         self.cw += nu * gamma
 
-        return gamma
-
-    def update_em(self, frame, gamma, nu):
         for k in range(self.gm.k):
             self.cx[k]   = (1 - nu) * self.cx[k] + nu * frame * gamma[k]
             self.cxx[k]  = (1 - nu) * self.cxx[k] + nu * frame ** 2 * gamma[k]
 
+    def update_em(self):
+        for k in range(self.gm.k):
             self.cmu[k]  = self.cx[k] / self.cw[k]
             self.cva[k]  = self.cxx[k] / self.cw[k] - self.cmu[k] ** 2
     
@@ -209,8 +208,8 @@ if __name__ == '__main__':
 
     # object version of online EM
     for t in range(nframes):
-        gamma   = ogmm.sufficient_statistics(data[t:t+1, :], nu[t])
-        ogmm.update_em(data[t, :], gamma, nu[t])
+        ogmm.compute_sufficient_statistics(data[t:t+1, :], nu[t])
+        ogmm.update_em()
 
     ogmm.gm.set_param(ogmm.cw, ogmm.cmu, ogmm.cva)
 

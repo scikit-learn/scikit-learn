@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 20 12:00 PM 2006 J
+# Last Change: Mon Oct 23 07:00 PM 2006 J
 
 import copy
 
@@ -116,8 +116,8 @@ class test_on_off_eq(OnlineEmTest):
         ogmm.pva   = ogmm.cva.copy()
         for e in range(emiter):
             for t in range(nframes):
-                gamma   = ogmm.sufficient_statistics(self.data[t:t+1, :], nu[t])
-                ogmm.update_em(self.data[t, :], gamma, nu[t])
+                ogmm.compute_sufficient_statistics(self.data[t:t+1, :], nu[t])
+                ogmm.update_em()
 
             # Change pw args only a each epoch 
             ogmm.pw  = ogmm.cw.copy()
@@ -179,8 +179,8 @@ class test_on(OnlineEmTest):
             assert ogmm.pw is ogmm.cw
             assert ogmm.pmu is ogmm.cmu
             assert ogmm.pva is ogmm.cva
-            gamma   = ogmm.sufficient_statistics(self.data[t:t+1, :], nu[t])
-            ogmm.update_em(self.data[t, :], gamma, nu[t])
+            ogmm.compute_sufficient_statistics(self.data[t:t+1, :], nu[t])
+            ogmm.update_em()
 
         ogmm.gm.set_param(ogmm.cw, ogmm.cmu, ogmm.cva)
 
