@@ -1,7 +1,16 @@
-# Last Change: Fri Jun 30 07:00 PM 2006 J
+# Last Change: Wed Jul 12 05:00 PM 2006 J
 
-# In more urgent order:
+Things which must be implemented for a 1.0 version:
+    - test for various length and model size.
+    - refactoring with a class modelling mixture models.
+    - for Gaussian densities: compute level <-> confidence ellipses 
+    relationship with Chi2 model.
+    - C implementation of Gaussian densities at least.
+    - a small help/tutorial
 
-1: test and benchmarks for various length and model size
-2: refactoring for Mixture models, having online mode, etc...
-3: for gaussian densities: compute level <-> confidence ellipses relationship with Chi2 model
+Things which would be nice:
+    - Integrate libem (libem should be modified so
+    that it would be easy to package and distribute)
+    - On-line EM
+    - Other initialization schemes
+    - Other mixture models

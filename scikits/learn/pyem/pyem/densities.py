@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Fri Jun 30 06:00 PM 2006 J
+# Last Change: Thu Jul 13 03:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -210,6 +210,30 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100):
         raise DenParam("var mode not recognized")
 
     return elps[0, :], elps[1, :]
+
+def generate_test_data(n, d, mode = 'diag', file='test.dat'):
+    """Generate a set of data of dimension d, with n frames,
+    that is input data, mean, var and output of gden, so that
+    other implementations can be tested against"""
+    mu  = N.randn(1, d)
+    if mode == 'diag':
+        va  = abs(N.randn(1, d))
+    elif mode == 'full':
+        va  = N.randn(d, d)
+        va  = N.matrixmultiply(va, va.transpose())
+
+    input   = N.randn(n, d)
+    output  = gauss_den(input, mu, va)
+
+    import tables
+    h5file  = tables.openFile(file, "w")
+
+    h5file.createArray(h5file.root, 'input', input)
+    h5file.createArray(h5file.root, 'mu', mu)
+    h5file.createArray(h5file.root, 'va', va)
+    h5file.createArray(h5file.root, 'output', output)
+
+    h5file.close()
 
 def test_gauss_den():
     """"""

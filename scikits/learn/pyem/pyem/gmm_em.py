@@ -1,14 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Jun 30 07:00 PM 2006 J
-
-# TODO:
-#   - interface with libem
-#   - implements E and M in batch mode for mixtures, with special case for gmm 
-#   ( general EM should be outside this module. This one should be GMM specific, maybe)
-#   - implements E and M in online mode
-#   - python has list. Does it make sense to keep the h2m format for mean, va, when
-#   we can use list instead ?
-#   - a Gaussian Mixture Model should be a class, really !
+# Last Change: Thu Jul 13 02:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -440,7 +431,6 @@ def gmm_ellipses(mu, va, c = [0, 1], npoints = 100):
 
     return Xe, Ye
 
-import c_gmm
 def kmean(data, init, iter = 10):
     """Simple kmean implementation for EM
     
@@ -462,14 +452,14 @@ def kmean(data, init, iter = 10):
     for i in range(iter):
         # Compute the nearest neighbour for each obs
         # using the current code book
-        label   = c_gmm._vq(data, code)
+        label   = _vq(data, code)
         # Update the code by computing centroids using the new code book
         for j in range(k):
             code[j,:] = N.mean(data[N.where(label==j)]) 
 
     return code, label
 
-def _vq(data, code):
+def _py_vq(data, code):
     """ Please do not use directly. Use kmean instead"""
     # No attempt to be efficient has been made...
     (n, d)  = data.shape
@@ -482,6 +472,15 @@ def _vq(data, code):
 
     return label
     
+# Try to import pyrex function for vector quantization. If not available,
+# falls back on pure python implementation.
+try:
+    from c_gmm import _vq
+except:
+    print """c_gmm._vq not found, using pure python implementation instead.
+        Kmean will be REALLY slow"""
+    _vq = _py_vq
+
 # Test functions usable for now
 def test_kmean():
     X   = N.array([[3.0, 3], [4, 3], [4, 2],
@@ -671,18 +670,13 @@ def _bench1():
         print "update"
         w, mu, va   = gmm_update(X, g, d, k, mode)
 
-
-def benchmark():
-    import profile
-    profile.run('_bench1()', 'bench1prof')
-
 if __name__ == "__main__":
     #=============================
     # Simple GMM with 3 components
     #=============================
     import pylab as P
-    k       = 4
-    d       = 2
+    k       = 5
+    d       = 3
     mode    = 'diag'
 
     print "Generating the mixture"

@@ -1,0 +1,7 @@
+dist
+pyem/src/c_gmm.c
+MANIFEST
+build
+pyem/bench1prof
+pyem/diag.dat
+pyem/gdenprof
