@@ -73,8 +73,8 @@ class test_regression(NumpyTestCase):
             self.assert_(N.alltrue(diff < 1e-3))
 
     def check_cross_validate(self):
-        y = N.randn(100)
-        x = N.randn(len(y), 10)
+        y = N.random.randn(100)
+        x = N.random.randn(len(y), 10)
         traindata = LibSvmRegressionDataSet(zip(y, x))
         kernel = LinearKernel()
         model = LibSvmEpsilonRegressionModel(kernel)

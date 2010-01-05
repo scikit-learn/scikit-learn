@@ -102,7 +102,7 @@ class test_classification(NumpyTestCase):
 
     def check_cross_validate(self):
         labels = ([-1] * 50) + ([1] * 50)
-        x = N.randn(len(labels), 10)
+        x = N.random.randn(len(labels), 10)
         traindata = LibSvmClassificationDataSet(zip(labels, x))
         kernel = LinearKernel()
         model = LibSvmCClassificationModel(kernel)
