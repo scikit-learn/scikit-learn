@@ -89,4 +89,4 @@ def load():
             [('duration', '|S5'), ('waiting', 'int')])
     data['waiting']    = waiting
     data['duration']   = duration
-    return data
+    return {'data': data}

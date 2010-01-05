@@ -1,8 +1,9 @@
 #! /usr/bin/env python
-# Last Change: Fri Jun 08 11:00 AM 2007 J
+# Last Change: Tue Jul 17 04:00 PM 2007 J
 
 # This script generates a python file from the txt data
 import csv
+from scikits.learn.datasets.misc import dumpvar
 
 dataname = 'Oldfaithful.txt'
 f = open(dataname, 'r')
@@ -29,15 +30,7 @@ for i in range(len(duration)):
 waiting2 = [int(i) * 60 for i in waiting]
 
 # Write the data in oldfaitful.py
-a = open("oldfaithful.py", "w")
+a = open("../oldfaithful.py", "w")
 
-a.write("duration =  [\n")
-for i in range(len(duration2) - 1):
-	a.write("'%s', " % duration2[i])
-a.write("'%s']\n" % duration2[-1])
-
-a.write("waiting =  [\n")
-for i in range(len(waiting2) - 1):
-	a.write("%s, " % waiting2[i])
-a.write("%s]\n" % waiting2[-1])
-a.close()
+a.writelines(dumpvar(duration2, 'duration'))
+a.writelines(dumpvar(waiting2, 'waiting'))
