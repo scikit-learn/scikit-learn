@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Sat Jun 09 10:00 PM 2007 J
+# Last Change: Mon Jun 11 03:00 PM 2007 J
 """This module implements various basic functions related to multivariate
 gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
 
@@ -246,9 +246,9 @@ def gauss_ell(mu, va, dim = misc.DEF_VIS_DIM, npoints = misc.DEF_ELL_NP, \
     circle  = mahal * N.array([N.cos(theta), N.sin(theta)])
 
     # Get the dimension which we are interested in:
-    mu  = mu[dim]
+    mu  = mu[c]
     if mode == 'diag':
-        va      = va[dim]
+        va      = va[c]
         elps    = N.outer(mu, N.ones(npoints))
         elps    += N.dot(N.diag(N.sqrt(va)), circle)
     elif mode == 'full':

@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Sun Jun 10 06:00 PM 2007 J
+# Last Change: Mon Jun 11 01:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -20,7 +20,7 @@ from numpy.random import randn
 import densities
 #from kmean import kmean
 from scipy.cluster.vq import kmeans2 as kmean
-#from gauss_mix import GM
+from gauss_mix import GmParamError
 
 #from misc import _DEF_ALPHA, _MIN_DBL_DELTA, _MIN_INV_COND
 
@@ -91,13 +91,18 @@ class GMM(ExpMixtureModel):
         """ Init the model at random."""
         k   = self.gm.k
         d   = self.gm.d
+        w   = N.ones(k) / k
+        mu  = randn(k, d)
         if self.gm.mode == 'diag':
-            w   = N.ones(k) / k
-            mu  = randn(k, d)
             va  = N.fabs(randn(k, d))
         else:
-            raise GmmParamError("init_random not implemented for "
-                    "mode %s yet", self.gm.mode)
+            # If A is invertible, A'A is positive definite
+            va  = randn(k * d, d)
+            for i in range(k):
+                va[i*d:i*d+d]   = N.dot( va[i*d:i*d+d], 
+                    va[i*d:i*d+d].T)
+            #raise GmmParamError("init_random not implemented for "\
+            #        "mode %s yet" % self.gm.mode)
 
         self.gm.set_param(w, mu, va)
         
@@ -106,14 +111,12 @@ class GMM(ExpMixtureModel):
     def init_test(self, data):
         """Use values already in the model as initialization.
         
-        Useful for testing purpose when reproducability is necessary."""
+        Useful for testing purpose when reproducability is necessary. This does
+        nothing but checking that the mixture model has valid initial
+        values."""
+        # We have
         try:
-            if self.gm.check_state():
-                self.isinit = True
-            else:
-                raise GmParamError("the mixture is initialized, but the"\
-                        "parameters are not valid")
-
+            self.gm.check_state()
         except GmParamError, e:
             print "Model is not properly initalized, cannot init EM."
             raise "Message was %s" % str(e)

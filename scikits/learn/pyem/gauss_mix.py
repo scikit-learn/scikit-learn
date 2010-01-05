@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Sat Jun 09 10:00 PM 2007 J
+# Last Change: Mon Jun 11 03:00 PM 2007 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -296,27 +296,26 @@ class GM:
         to be positive definite.
         """
         if not self.is_valid:
-            raise GmParamError("""Parameters of the model has not been 
-                set yet, please set them using self.set_param()""")
-
-        if self.mode == 'full':
-            raise NotImplementedError, "not implemented for full mode yet"
-        
-        # # How to check w: if one component is negligeable, what shall
-        # # we do ?
-        # M   = N.max(self.w)
-        # m   = N.min(self.w)
-
-        # maxc    = m / M
+            raise GmParamError("Parameters of the model has not been"\
+                "set yet, please set them using self.set_param()")
 
         # Check condition number for cov matrix
-        cond    = N.zeros(self.k)
-        ava     = N.absolute(self.va)
-        for c in range(self.k):
-            cond[c] = N.amax(ava[c, :]) / N.amin(ava[c, :])
+        if self.mode == 'diag':
+            tinfo = N.finfo(self.va.dtype)
+            if N.any(self.va < tinfo.eps):
+                raise GmParamError("variances are singular")
+        elif self.mode == 'full':
+            try:
+                d = self.d
+                for i in range(self.k):
+                    N.linalg.cholesky(self.va[i*d:i*d+d, :])
+            except N.linalg.LinAlgError:
+                raise GmParamError("matrix %d is singular " % i)
 
-        print cond
+        else:
+            raise GmParamError("Unknown mode")
 
+        return True
     @classmethod
     def gen_param(cls, d, nc, varmode = 'diag', spread = 1):
         """Generate random, valid parameters for a gaussian mixture model.
@@ -341,13 +340,14 @@ class GM:
         -----
         This is a class method.
         """
-        w   = abs(randn(nc))
+        w   = N.abs(randn(nc))
         w   = w / sum(w, 0)
 
-        mu  = spread * randn(nc, d)
+        mu  = spread * N.sqrt(d) * randn(nc, d)
         if varmode == 'diag':
-            va  = abs(randn(nc, d))
+            va  = N.abs(randn(nc, d))
         elif varmode == 'full':
+            # If A is invertible, A'A is positive definite
             va  = randn(nc * d, d)
             for k in range(nc):
                 va[k*d:k*d+d]   = N.dot( va[k*d:k*d+d], 
@@ -509,7 +509,7 @@ class GM:
         return retval
 
     def density_on_grid(self, dim = misc.DEF_VIS_DIM, nx = 50, ny = 50,
-            maxlevel = 0.95):
+            maxlevel = 0.95, V = None):
         """Do all the necessary computation for contour plot of mixture's
         density.
         
@@ -556,8 +556,10 @@ class GM:
                 N.linspace(ax[2]-0.2*h, ax[3]+0.2*h, ny), dim = dim)
         lden = N.log(den)
         # XXX: how to find "good" values for level ?
-        V = [-5, -3, -1, -0.5, ]
-        V.extend(N.linspace(0, N.max(lden), 4).tolist())
+        if V is None:
+            #V = [-5, -3, -1, -0.5, ]
+            #V.extend(list(N.linspace(0, N.max(lden), 20)))
+            V = N.linspace(-5, N.max(lden), 20)
         return X, Y, lden, N.array(V)
 
     def _densityctr(self, rangex, rangey, dim = misc.DEF_VIS_DIM):
@@ -578,7 +580,8 @@ class GM:
         return X, Y, den
 
     def _get_va(self, dim):
-        """Returns variance limited do dimension in dim."""
+        """Returns variance limited do 2 dimension in tuple dim."""
+        assert len(dim) == 2
         dim = N.array(dim)
         if dim.any() < 0 or dim.any() >= self.d:
             raise ValueError("dim elements should be between 0 and dimension"\
@@ -586,9 +589,16 @@ class GM:
         if self.mode == 'diag':
             return self.va[:, dim]
         elif self.mode == 'full':
-            tidx = N.array([N.array(dim) + i * self.d for i in range(self.k)])
-            tidx.flatten()
-            return self.va[tidx, dim]
+            ld = dim.size
+            vaselid = N.empty((ld * self.k, ld), N.int)
+            for i in range(self.k):
+                vaselid[ld*i] = dim[0] + i * self.d
+                vaselid[ld*i+1] = dim[1] + i * self.d
+            vadid = N.empty((ld * self.k, ld), N.int)
+            for i in range(self.k):
+                vadid[ld*i] = dim
+                vadid[ld*i+1] = dim
+            return self.va[vaselid, vadid]
         else:
             raise ValueError("Unkown mode")
 
