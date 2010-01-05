@@ -70,8 +70,7 @@ class Model:
         x = (POINTER(libsvm.svm_node)*problem.l)()
         for i, (label, node) in enumerate(svm_data):
             y[i] = label
-            x[i] = cast(utils.addressof_array(node),
-                        POINTER(libsvm.svm_node))
+            x[i] = utils.array_as_ctype(node, libsvm.svm_node)
         problem.x = cast(addressof(x), POINTER(POINTER(libsvm.svm_node)))
         problem.y = cast(addressof(y), POINTER(c_double))
         return problem, x, y

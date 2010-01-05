@@ -26,6 +26,13 @@ class OneClassResults(Results):
         return int(v)
 
 class OneClassModel(Model):
+    """
+    A model for distribution estimation (one-class SVM).
+
+    See also: Scholkopf, et al.: Estimating the Support of a
+    High-Dimensional Distribution
+    """
+
     Results = OneClassResults
 
     def __init__(self, dtype, nu=0.5, **kwargs):

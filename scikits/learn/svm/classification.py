@@ -51,12 +51,30 @@ class ClassificationModel(Model):
         return self.results.predict_values(svm_data)
 
 class CSVCModel(ClassificationModel):
+    """
+    A model for C-SV classification.
+
+    See also:
+
+    - Hsu, et al.: A Practical Guide to Support Vector Classification
+    - Gunn: Support Vector Machines for Classification and Regression
+    """
+
     def __init__(self, dtype, cost=1.0, **kwargs):
         ClassificationModel.__init__(self, dtype, **kwargs)
         self.svm_type = libsvm.C_SVC
         self.cost = cost
 
 class NuSVCModel(ClassificationModel):
+    """
+    A model for nu-SV classification.
+
+    See also:
+
+    - Chen, et al.: A Tutorial on nu-Support Vector Machines
+    - Scholkopf, et al.: New Support Vector Algorithms
+    """
+
     def __init__(self, dtype, nu=0.5, **kwargs):
         ClassificationModel.__init__(self, dtype, **kwargs)
         self.svm_type = libsvm.NU_SVC

@@ -16,6 +16,17 @@ class RegressionResults(Results):
         return libsvm.svm_predict(self.model, xptr)
 
 class EpsilonSVRModel(Model):
+    """
+    A model for epsilon-SV regression.
+
+    See also:
+
+    - Smola, Scholkopf: A Tutorial on Support Vector Regression
+    - Gunn: Support Vector Machines for Classification and Regression
+    - Muller, Vapnik: Using Support Vector Machines for Time Series
+      Prediction
+    """
+
     Results = RegressionResults
 
     def __init__(self, dtype, cost=1.0, epsilon=0.1, **kwargs):
@@ -25,6 +36,12 @@ class EpsilonSVRModel(Model):
         self.epsilon = epsilon
 
 class NuSVRModel(Model):
+    """
+    A model for nu-SV regression.
+
+    See also: Scholkopf, et al.: New Support Vector Algorithms
+    """
+
     Results = RegressionResults
 
     def __init__(self, dtype, cost=1.0, nu=0.5, **kwargs):
