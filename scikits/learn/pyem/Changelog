@@ -1,9 +1,19 @@
+pyem (0.4) Fri, 14 Jul 2006 16:24:05 +0900
+
+	* put version to 0.4
+	* Heavy refactoring of EM and GMM into classes (see below)
+	* add a module gauss_mix, which implements Gaussian Mixtures.
+	* GMM is now a class, which is initialized using a Gaussian Mixture.
+	a GMM can be trained.
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.3) Thu, 13 Jul 2006 19:48:54 +0900
 
 	* put version to 0.3
 	* Refactoring kmean code into new module. 
 	* Refactoring tests code into test module. 
 	* Replace matrixmultiply and outerproduct calls by dot to use fast BLAS if
-	available.
+	available. Not everything is done yet
 
 -- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 

@@ -1,4 +1,4 @@
 #! /usr/bin/env python
-# Last Change: Thu Jul 13 07:00 PM 2006 J
+# Last Change: Fri Jul 14 04:00 PM 2006 J
 
-version = '0.3'
+version = '0.4'
