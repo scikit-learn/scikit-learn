@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jul 21 03:00 PM 2007 J
+# Last Change: Sat Jul 21 09:00 PM 2007 J
 
 # Copyright (C) 2007 Cournapeau David <cournape@gmail.com>
 #
@@ -28,7 +28,7 @@ from numpy.distutils.core import setup, Extension
 def configuration(parent_package='',top_path=None, package_name=DISTNAME):
     if os.path.exists('MANIFEST'): os.remove('MANIFEST')
     
-    pkg_prefix_dir = os.path.join('scikits', 'learn')
+    #pkg_prefix_dir = os.path.join('scikits', 'learn')
     ## Get the version
     #from scikits.pyaudiolab.info import __version__ as pyaudiolab_version
 
@@ -42,7 +42,7 @@ def configuration(parent_package='',top_path=None, package_name=DISTNAME):
         url = URL, 
         download_url = DOWNLOAD_URL,
         long_description = LONG_DESCRIPTION)
-    config.add_subpackage('scikits.learn.machine')
+    config.add_subpackage('scikits/learn')
 
     return config
 
@@ -50,7 +50,8 @@ if __name__ == "__main__":
     setup(configuration = configuration,
         install_requires='numpy', # can also add version specifiers      
         namespace_packages=['scikits'],
-        packages=setuptools.find_packages(),
+        #packages=setuptools.find_packages(),
+        packages=['scikits'],
         include_package_data = True,
         #package_data = {'scikits.pyaudiolab': data_files}, 
         test_suite="tester", # for python setup.py test

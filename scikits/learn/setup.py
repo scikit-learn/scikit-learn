@@ -4,9 +4,10 @@ def configuration(parent_package='',top_path=None):
     print "parent package is %s" % parent_package
     print "top path is %s" % top_path
     print "============================================="
-    config = Configuration('machine',parent_package,top_path)
-    config.add_subpackage('pyem')
-    config.add_subpackage('svm')
+    config = Configuration('',parent_package,top_path)
+    config.add_subpackage('utils')
+    config.add_subpackage('datasets')
+    config.add_subpackage('machine')
     #config.make_svn_version_py()  # installs __svn_version__.py
     #config.make_config_py()
     return config
