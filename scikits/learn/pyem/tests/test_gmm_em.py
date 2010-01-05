@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Jun 12 09:00 PM 2007 J
+# Last Change: Wed Jun 13 07:00 PM 2007 J
 
 # For now, just test that all mode/dim execute correctly
 
@@ -123,9 +123,9 @@ class test_datasets(EmTest):
         gmm = GMM(gm, 'test')
         EM().train(dic['data'], gmm)
 
-        assert_array_equal(gmm.gm.w, dic['w'])
-        assert_array_equal(gmm.gm.mu, dic['mu'])
-        assert_array_equal(gmm.gm.va, dic['va'])
+        assert_array_almost_equal(gmm.gm.w, dic['w'], DEF_DEC)
+        assert_array_almost_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
+        assert_array_almost_equal(gmm.gm.va, dic['va'], DEF_DEC)
 
     def test_1d_diag(self, level = 1):
         d = 1
@@ -137,9 +137,9 @@ class test_datasets(EmTest):
         gmm = GMM(gm, 'test')
         EM().train(dic['data'], gmm)
 
-        assert_array_equal(gmm.gm.w, dic['w'])
-        assert_array_equal(gmm.gm.mu, dic['mu'])
-        assert_array_equal(gmm.gm.va, dic['va'])
+        assert_array_equal(gmm.gm.w, dic['w'], DEF_DEC)
+        assert_array_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
+        assert_array_equal(gmm.gm.va, dic['va'], DEF_DEC)
 
     def test_2d_full(self, level = 1):
         d = 2
@@ -151,9 +151,9 @@ class test_datasets(EmTest):
         gmm = GMM(gm, 'test')
         EM().train(dic['data'], gmm)
 
-        assert_array_equal(gmm.gm.w, dic['w'])
-        assert_array_equal(gmm.gm.mu, dic['mu'])
-        assert_array_equal(gmm.gm.va, dic['va'])
+        assert_array_equal(gmm.gm.w, dic['w'], DEF_DEC)
+        assert_array_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
+        assert_array_equal(gmm.gm.va, dic['va'], DEF_DEC)
 
     def test_2d_diag(self, level = 1):
         d = 2
@@ -165,9 +165,9 @@ class test_datasets(EmTest):
         gmm = GMM(gm, 'test')
         EM().train(dic['data'], gmm)
 
-        assert_array_equal(gmm.gm.w, dic['w'])
-        assert_array_equal(gmm.gm.mu, dic['mu'])
-        assert_array_equal(gmm.gm.va, dic['va'])
+        assert_array__almost_equal(gmm.gm.w, dic['w'], DEF_DEC)
+        assert_array__almost_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
+        assert_array__almost_equal(gmm.gm.va, dic['va'], DEF_DEC)
 
 class test_log_domain(EmTest):
     """This class tests whether the GMM works in log domain."""
@@ -183,12 +183,12 @@ class test_log_domain(EmTest):
         ta = N.log(a)
         tna = N.log(na)
         if not N.all(N.isfinite(ta)):
-            print "precision problem for %s, %dd, %dk, need fixing" % (mode, d, k)
+            print "precision problem for %s, %dd, %dk, test need fixing" % (mode, d, k)
         else:
             assert_array_almost_equal(ta, la, DEF_DEC)
 
         if not N.all(N.isfinite(tna)):
-            print "precision problem for %s, %dd, %dk, need fixing" % (mode, d, k)
+            print "precision problem for %s, %dd, %dk, test need fixing" % (mode, d, k)
         else:
             assert_array_almost_equal(tna, nla, DEF_DEC)
 
