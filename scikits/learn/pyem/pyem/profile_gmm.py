@@ -9,7 +9,7 @@ def bench1(mode = 'diag'):
     d       = 20
     k       = 20
     nframes = 1e4
-    niter   = 1
+    niter   = 10
     mode    = 'diag'
 
     #+++++++++++++++++++++++++++++++++++++++++++
@@ -38,7 +38,6 @@ def bench1(mode = 'diag'):
     gm0 = copy.copy(lgm)
 
     # The actual EM, with likelihood computation
-    niter   = 10
     like    = N.zeros(niter)
 
     print "computing..."

@@ -5,10 +5,16 @@ PYREX	= python2.4-pyrexc
 
 PYTHONINC	= -I/usr/include/python2.4
 NUMPYINC	= -I/usr/lib/python2.4/site-packages/numpy/core/include
-OPTIMS		= -O3 -ffast-math -march=pentium4
+OPTIMS		= -O2 -ffast-math -march=pentium4
 WARN		= -W -Wall
 
 CFLAGS	= $(PYTHONINC) $(NUMPYINC) $(OPTIMS) $(WARN)
+
+libgden.so: c_gden.o
+	$(LD) -shared -o $@ $< -Wl,-soname,$@
+
+c_gden.o: c_gden.c
+	$(CC) -c $(CFLAGS) -fPIC $<
 
 c_gmm.so: c_gmm.o
 	$(LD) -shared -o $@ $< -Wl,-soname,$@

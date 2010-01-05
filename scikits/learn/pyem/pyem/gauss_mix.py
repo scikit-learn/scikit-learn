@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Aug 17 03:00 PM 2006 J
+# Last Change: Tue Aug 22 09:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
@@ -46,7 +46,7 @@ class GM:
         """Init a Gaussian model of k components, each component being a 
         d multi-variate Gaussian, with covariance matrix of style mode"""
         if mode not in self._cov_mod:
-            raise GmmParamError("mode %s not recognized" + str(mode))
+            raise GmParamError("mode %s not recognized" + str(mode))
 
         self.d      = d
         self.k      = k
@@ -67,13 +67,13 @@ class GM:
         """Set parameters of the model"""
         k, d, mode  = check_gmm_param(weights, mu, sigma)
         if not k == self.k:
-            raise GmmParamError("Number of given components is %d, expected %d" 
+            raise GmParamError("Number of given components is %d, expected %d" 
                     % (shape(k), shape(self.k)))
         if not d == self.d:
-            raise GmmParamError("Dimension of the given model is %d, expected %d" 
+            raise GmParamError("Dimension of the given model is %d, expected %d" 
                     % (shape(d), shape(self.d)))
         if not mode == self.mode:
-            raise GmmParamError("Given covariance mode is %s, expected %d"
+            raise GmParamError("Given covariance mode is %s, expected %d"
                     % (mode, self.mode))
         self.w  = weights
         self.mu = mu
@@ -84,7 +84,7 @@ class GM:
     def sample(self, nframes):
         """ Sample nframes frames from the model """
         if not self.is_valid:
-            raise GmmParamError("""Parameters of the model has not been 
+            raise GmParamError("""Parameters of the model has not been 
                 set yet, please set them using self.set_param()""")
 
         # State index (ie hidden var)
@@ -106,7 +106,7 @@ class GM:
                 tmpind      = N.where(S == s)[0]
                 X[tmpind]   = N.dot(X[tmpind], cho[s].transpose()) + self.mu[s]
         else:
-            raise GmmParamError('cov matrix mode not recognized, this is a bug !')
+            raise GmParamError('cov matrix mode not recognized, this is a bug !')
 
         return X
 
@@ -172,7 +172,7 @@ class GM:
                 va[k*d:k*d+d]   = N.dot( va[k*d:k*d+d], 
                     va[k*d:k*d+d].transpose())
         else:
-            raise GmmParamError('cov matrix mode not recognized')
+            raise GmParamError('cov matrix mode not recognized')
 
         return w, mu, va
 
@@ -219,32 +219,32 @@ def check_gmm_param(w, mu, va):
         
     # Check that w is valid
     if N.fabs(N.sum(w, 0)  - 1) > MAX_DEV:
-        raise GmmParamError('weight does not sum to 1')
+        raise GmParamError('weight does not sum to 1')
     
     if not len(w.shape) == 1:
-        raise GmmParamError('weight is not a vector')
+        raise GmParamError('weight is not a vector')
 
     # Check that mean and va have the same number of components
     K           = len(w)
 
     if N.ndim(mu) < 2:
         msg = "mu should be a K,d matrix, and a row vector if only 1 comp"
-        raise GmmParamError(msg)
+        raise GmParamError(msg)
     if N.ndim(va) < 2:
         msg = """va should be a K,d / K *d, d matrix, and a row vector if
         only 1 diag comp"""
-        raise GmmParamError(msg)
+        raise GmParamError(msg)
 
     (Km, d)     = mu.shape
     (Ka, da)    = va.shape
 
     if not K == Km:
         msg = "not same number of component in mean and weights"
-        raise GmmParamError(msg)
+        raise GmParamError(msg)
 
     if not d == da:
         msg = "not same number of dimensions in mean and variances"
-        raise GmmParamError(msg)
+        raise GmParamError(msg)
 
     if Km == Ka:
         mode = 'diag'
@@ -252,7 +252,7 @@ def check_gmm_param(w, mu, va):
         mode = 'full'
         if not Ka == Km*d:
             msg = "not same number of dimensions in mean and variances"
-            raise GmmParamError(msg)
+            raise GmParamError(msg)
         
     return K, d, mode
         

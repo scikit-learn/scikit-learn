@@ -1,8 +1,10 @@
-# Last Change: Fri Aug 04 11:00 PM 2006 J
+# Last Change: Tue Aug 22 10:00 PM 2006 J
 
 Things which must be implemented for a 1.0 version:
     - test for various length and model size.
     - a small help/tutorial
+    - use scipy.cluster.vq instead of custom kmeans algo (find
+    a way to get label from vq.kmeans)
 
 Things which would be nice:
     - C implementation of Gaussian densities at least.

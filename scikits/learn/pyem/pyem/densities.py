@@ -1,13 +1,12 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Thu Aug 17 03:00 PM 2006 J
+# Last Change: Tue Aug 22 08:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
 from numpy.random import randn
 from scipy.stats import chi2
-
 
 # Error classes
 class DenError(Exception):
@@ -103,6 +102,12 @@ def _scalar_gauss_den(x, mu, va, log):
 
     return y
     
+#from ctypes import cdll, c_uint, c_int, c_double, POINTER
+#_gden   = cdll.LoadLibrary('src/libgden.so')
+#_gden.gden_diag.restype     = c_int
+#_gden.gden_diag.argtypes    = [POINTER(c_double), c_uint, c_uint,
+#        POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+
 def _diag_gauss_den(x, mu, va, log):
     """ This function is the actual implementation
     of gaussian pdf in scalar case. It assumes all args
@@ -119,9 +124,20 @@ def _diag_gauss_den(x, mu, va, log):
         y       =  (x[:,0] - mu[0,0]) ** 2 * inva * -0.5
         for i in range(1, d):
             inva    = 1/va[0,i]
-            fac     *= (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
+            #fac     *= (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
+            fac     *= N.sqrt(inva)
             y       += (x[:,i] - mu[0,i]) ** 2 * inva * -0.5
         y   = fac * N.exp(y)
+    #d   = mu.size
+    #n   = x.shape[0]
+    #if not log:
+    #    y   = N.zeros(n)
+    #    inva= 1/va
+    #    _gden.gden_diag(x.ctypes.data_as(POINTER(c_double)),
+    #        n, d,
+    #        mu.ctypes.data_as(POINTER(c_double)),
+    #        (inva).ctypes.data_as(POINTER(c_double)),
+    #        y.ctypes.data_as(POINTER(c_double)))
     else:
         y   = _scalar_gauss_den(x[:,0], mu[0,0], va[0,0], log)
         for i in range(1, d):

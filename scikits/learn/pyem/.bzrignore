@@ -10,3 +10,5 @@ test.py
 profile_gmm_em.py
 data.h5
 gmmprof
+valgrind-python.supp
+valgrind-python.supp

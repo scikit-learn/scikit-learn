@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Aug 17 03:00 PM 2006 J
+# Last Change: Tue Aug 22 10:00 PM 2006 J
 
 import numpy as N
 
@@ -46,12 +46,22 @@ def _py_vq(data, code):
     
 # Try to import pyrex function for vector quantization. If not available,
 # falls back on pure python implementation.
+#%KMEANIMPORT%
 try:
-    from c_gmm import _vq
-except:
-    print """c_gmm._vq not found, using pure python implementation instead.
+    from scipy.cluster.vq import kmeans as kmean
+except ImportError:
+    try:
+        from c_gmm import _vq
+    except:
+        print """c_gmm._vq not found, using pure python implementation instead. 
         Kmean will be REALLY slow"""
-    _vq = _py_vq
+        _vq = _py_vq
+#try:
+#    from c_gmm import _vq
+#except:
+#    print """c_gmm._vq not found, using pure python implementation instead. 
+#    Kmean will be REALLY slow"""
+#    _vq = _py_vq
 
 # Test functions usable for now
 def test_kmean():

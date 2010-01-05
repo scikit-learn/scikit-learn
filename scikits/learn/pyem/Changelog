@@ -1,3 +1,12 @@
+pyem (0.5.2) Thu, 24 Aug 2006 19:42:28 +0900
+
+	* put version to 0.5.2
+	* Correct a bug with init method in GMM (change class method
+	to object method).
+	* modify the setup for a more flexible system
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.5.1) Thu, 17 Aug 2006 11:54:41 +0900
 
 	* put version to 0.5.1

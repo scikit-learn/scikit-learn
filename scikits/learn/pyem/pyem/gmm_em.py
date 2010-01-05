@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Aug 17 03:00 PM 2006 J
+# Last Change: Thu Aug 24 02:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -95,8 +95,6 @@ class GMM(ExpMixtureModel):
         self.gm.mu  = mu
         self.gm.va  = va
 
-    # Possible init methods
-    _init_methods = {'kmean': init_kmean, 'random' : init_random}
     # TODO: 
     #   - format of parameters ? For variances, list of variances matrix,
     #   keep the current format, have 3d matrices ?
@@ -107,10 +105,13 @@ class GMM(ExpMixtureModel):
         method for training init (kmean by default)"""
         self.gm = gm
 
-        if init not in self._init_methods:
+        # Possible init methods
+        init_methods = {'kmean': self.init_kmean, 'random' : self.init_random}
+
+        if init not in init_methods:
             raise GmmParamError('init method %s not recognized' + str(init))
 
-        GMM.init   = self._init_methods[init]
+        self.init   = init_methods[init]
 
     def sufficient_statistics(self, data):
         """ Return normalized and non-normalized sufficient statistics
@@ -285,6 +286,9 @@ if __name__ == "__main__":
     gmm.init(data)
     # Keep the initialized model for drawing
     gm0 = copy.copy(lgm)
+    print gm0.w
+    print gm0.mu
+    print gm0.va
 
     # The actual EM, with likelihood computation
     niter   = 10
@@ -329,6 +333,11 @@ if __name__ == "__main__":
         P.plot(Xe[i], Ye[i], 'r', label = '_nolegend_')
     P.legend(loc = 0)
 
+    #from scipy.cluster.vq import kmeans
+    #code    = kmeans(data, k)[0]
+    #print code
+    #P.plot(code[:,0], code[:, 1], 'oy')
+    #P.plot(gm0.mu[:,0], gm0.mu[:, 1], 'ok')
     P.subplot(2, 1, 2)
     P.plot(like)
     P.title('log likelihood')
