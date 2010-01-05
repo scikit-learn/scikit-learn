@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 12 11:00 PM 2006 J
+# Last Change: Thu Oct 19 07:00 PM 2006 J
 # TODO:
 #   - check how to handle cmd line build options with distutils and use
 #   it in the building process
@@ -34,8 +34,7 @@ def configuration(parent_package='',top_path=None, package_name='pyem'):
 if __name__ == "__main__":
     from numpy.distutils.core import setup
     #setup(**configuration(top_path='').todict())
-    setup(**configuration(top_path='',
-                          package_name='scipy.sandbox.pyem').todict())
+    setup(**configuration(top_path='',))
 # from distutils.core import setup, Extension
 # from pyem import version as pyem_version
 # 

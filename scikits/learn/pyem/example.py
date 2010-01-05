@@ -49,7 +49,7 @@ gmm.init(data)
 # Keep a copy for drawing later
 gm0 = copy.copy(lgm)
 
-# The actual EM, with likelihood computation. The treshold
+# The actual EM, with likelihood computation. The threshold
 # is compared to the (linearly appromixated) derivative of the likelihood
 em      = EM()
 like    = em.train(data, gmm, maxiter = 30, thresh = 1e-8)
@@ -60,6 +60,8 @@ like    = em.train(data, gmm, maxiter = 30, thresh = 1e-8)
 import pylab as P
 P.subplot(2, 1, 1)
 
+# Level is the confidence level for confidence ellipsoids: 1.0 means that
+# all points will be (almost surely) inside the ellipsoid
 level   = 0.8
 if not d == 1:
     P.plot(data[:, 0], data[:, 1], '.', label = '_nolegend_')

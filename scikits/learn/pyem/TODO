@@ -1,19 +1,12 @@
-# Last Change: Thu Oct 05 03:00 PM 2006 J
+# Last Change: Fri Oct 20 12:00 PM 2006 J
 
 Things which must be implemented for a 1.0 version (in importante order)
-    - test for various length and model size 
+    - A class for learning + a classifier
+    - test for various length and model size of gaussian densities/GM and GMM
     - a small help/tutorial
     - be complient with scipy module dev guidelines (DEVELOPERS.TXT)
-    - On-line EM
-    - use scipy.cluster.vq instead of custom kmeans algo (find
-    a way to get label from vq.kmeans: depends on scipy changes)
-    - C implementation of Gaussian densities at least (partially done,
-    but need integration into distutils + portable way of detecting/
-    loading shared library with ctypes)
-    - numpy computations make huge difference between C and F storage: 
-    should review the code to see if the
 
-Things which would be nice:
+Things which would be nice (after 1.0 version):
     - Integrate libem (libem should be modified so
     that it would be easy to package and distribute)
     - Other initialization schemes

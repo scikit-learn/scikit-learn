@@ -1,3 +1,12 @@
+pyem (0.5.4) Fri, 20 Oct 2006 12:52:01 +0900
+
+	* Bump to 0.5.4
+	* Online EM is basically implemented, with tests. The API
+	should be fixed to be choherent (lacks the Trainer Class, too).
+	The class is not imported by default, still (available as _OnGMM)
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.5.3) Thu, 12 Oct 2006 21:08:21 +0900
 
 	* Change the layout and setup.py for inclusion to scipy.

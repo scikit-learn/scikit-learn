@@ -1,5 +1,10 @@
 #! /usr/bin/env python
-# Last Change: Fri Sep 29 06:00 PM 2006 J
+# Last Change: Thu Oct 19 07:00 PM 2006 J
+
+# TODO:
+#   - having "fake tests" to check that all mode (scalar, diag and full) are
+#   executables
+#   - having a dataset to check against
 
 import sys
 from numpy.testing import *
@@ -8,8 +13,6 @@ import numpy as N
 
 set_package_path()
 from pyem.densities import gauss_den
-from pyem._c_densities import gauss_den as c_gauss_den
-
 restore_path()
 
 #Optional:
@@ -17,7 +20,9 @@ set_local_path()
 # import modules that are located in the same directory as this file.
 restore_path()
 
-class test_densities(NumpyTestCase):
+DEF_DEC = 12
+
+class TestDensities(NumpyTestCase):
     def _generate_test_data_1d(self):
         self.va     = 2.0
         self.mu     = 1.0
@@ -61,37 +66,44 @@ class test_densities(NumpyTestCase):
             0.00378789836599, 0.00015915297541, 
             0.00000253261067, 0.00000001526368])
 
-    def _check_py(self, level, decimal = 12):
+class test_py_implementation(TestDensities):
+    def _check(self, level, decimal = DEF_DEC):
         Y   = gauss_den(self.X, self.mu, self.va)
         assert_array_almost_equal(Y, self.Yt, decimal)
 
-    def _check_c(self, level, decimal = 12):
-        Y   = c_gauss_den(self.X, self.mu, self.va)
-        assert_array_almost_equal(Y, self.Yt, decimal)
-
-    def check_py_1d(self, level = 1):
-        self._generate_test_data_1d()
-        self._check_py(level)
-
-    def check_py_2d_diag(self, level = 1):
+    def check_2d_diag(self, level = 0):
         self._generate_test_data_2d_diag()
-        self._check_py(level)
+        self._check(level)
 
-    def check_py_2d_full(self, level = 1):
+    def check_2d_full(self, level = 0):
         self._generate_test_data_2d_full()
-        self._check_py(level)
-
-    def check_c_1d(self, level = 1):
+        self._check(level)
+    
+    def check_py_1d(self, level = 0):
         self._generate_test_data_1d()
-        self._check_c(level)
+        self._check(level)
 
-    def check_c_2d_diag(self, level = 1):
+class test_c_implementation(TestDensities):
+    def _check(self, level, decimal = DEF_DEC):
+        try:
+            from pyem._c_densities import gauss_den as c_gauss_den
+            Y   = c_gauss_den(self.X, self.mu, self.va)
+            assert_array_almost_equal(Y, self.Yt, decimal)
+        except ImportError, inst:
+            print "Error while importing C implementation, not tested"
+            print " -> (Import error was %s)" % inst 
+
+    def check_1d(self, level = 0):
+        self._generate_test_data_1d()
+        self._check(level)
+
+    def check_2d_diag(self, level = 0):
         self._generate_test_data_2d_diag()
-        self._check_c(level)
+        self._check(level)
 
-    def check_c_2d_full(self, level = 1):
+    def check_2d_full(self, level = 0):
         self._generate_test_data_2d_full()
-        self._check_c(level)
+        self._check(level)
 
 if __name__ == "__main__":
     NumpyTest().run()

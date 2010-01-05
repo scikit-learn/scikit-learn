@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Tue Oct 03 05:00 PM 2006 J
+# Last Change: Thu Oct 19 06:00 PM 2006 J
 
 # This module uses a C implementation through ctypes, for diagonal cases
 # TODO:
@@ -22,7 +22,7 @@ ctypes_major    = int(ctypes.__version__.split('.')[0])
 if ctypes_major < 1:
     msg =  "version of ctypes is %s, expected at least %s" \
             % (ctypes.__version__, '1.0.0')
-    raise Exception(msg)
+    raise ImportError(msg)
 
 # Requirements for diag gden
 _gden   = load_library('c_gden.so', __file__)
