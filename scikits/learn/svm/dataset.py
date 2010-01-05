@@ -1,4 +1,3 @@
-from ctypes import c_double, POINTER, cast
 import numpy as N
 
 import libsvm
@@ -24,17 +23,12 @@ class LibSvmDataSet:
     def precompute(self, kernel):
         return LibSvmPrecomputedDataSet(kernel, self.data)
 
-    def create_svm_problem(self):
-        problem = libsvm.svm_problem()
-        problem.l = len(self.data)
-        y = (c_double*problem.l)()
-        x = (POINTER(libsvm.svm_node)*problem.l)()
-        for i, (yi, xi) in enumerate(self.data):
-            y[i] = yi
-            x[i] = cast(xi.ctypes.data, POINTER(libsvm.svm_node))
-        problem.x = x
-        problem.y = y
-        return problem
+    def _create_svm_problem(self):
+        return libsvm.create_svm_problem(self.data)
+
+    def _update_svm_parameter(self, param):
+        # XXX we can handle gamma=None here
+        pass
 
 class LibSvmPrecomputedDataSet:
     def __init__(self, kernel, origdata=None):
@@ -125,6 +119,12 @@ class LibSvmPrecomputedDataSet:
         newdataset.iddatamap = newiddatamap
         newdataset.grammat = newgrammat
         return newdataset
+
+    def _create_svm_problem(self):
+        return libsvm.create_svm_problem(self.data)
+
+    def _update_svm_parameter(self, param):
+        param.kernel_type = libsvm.PRECOMPUTED
 
 class LibSvmRegressionDataSet(LibSvmDataSet):
     def __init__(self, origdata):

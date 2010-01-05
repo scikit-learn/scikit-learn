@@ -66,7 +66,7 @@ class LibSvmRegressionModel(LibSvmModel):
         error and the squared correlation coefficient.
         """
 
-        problem = dataset.create_svm_problem()
+        problem = dataset._create_svm_problem()
         target = N.empty((len(dataset.data),), dtype=N.float64)
         tp = cast(target.ctypes.data, POINTER(c_double))
         libsvm.svm_cross_validation(problem, self.param, nr_fold, tp)

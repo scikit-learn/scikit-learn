@@ -1,4 +1,4 @@
-from ctypes import *
+from ctypes import POINTER, c_double, c_int
 
 from kernel import *
 import libsvm
@@ -47,9 +47,10 @@ class LibSvmModel:
         self.param = param
 
     def fit(self, dataset):
-        problem = dataset.create_svm_problem()
-
+        problem = dataset._create_svm_problem()
+        dataset._update_svm_parameter(self.param)
         self._check_problem_param(problem, self.param)
+
         model = libsvm.svm_train(problem, self.param)
 
         # weights are no longer required, so remove to them as the
@@ -58,8 +59,12 @@ class LibSvmModel:
         model.contents.param.weight = c_double_null_ptr
         model.contents.param.weight_label = c_int_null_ptr
 
-        # results keep a refence to the dataset because the svm_model
-        # refers to some of its vectors as the support vectors
+        # results keep a reference to the dataset because the
+        # svm_model refers to some of its vectors as the support
+        # vectors
+        # XXX we can hide an id in the end of record marker so that we
+        # can figure out which support vectors to keep references to
+        # even when not using precomputed kernels
         return self.Results(model, dataset)
 
     def _check_problem_param(self, problem, param):

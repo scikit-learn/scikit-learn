@@ -1,7 +1,7 @@
 import inspect
 
+from ctypes import *
 import numpy as N
-from ctypes import c_int, c_double, POINTER, Structure, c_char_p
 
 _libsvm = N.ctypes_load_library('libsvm_', __file__)
 
@@ -123,6 +123,18 @@ for f, (restype, argtypes) in libsvm_api.iteritems():
     func.restype = restype
     func.argtypes = argtypes
     inspect.currentframe().f_locals[f] = func
+
+def create_svm_problem(data):
+    problem = svm_problem()
+    problem.l = len(data)
+    y = (c_double*problem.l)()
+    x = (POINTER(svm_node)*problem.l)()
+    for i, (yi, xi) in enumerate(data):
+        y[i] = yi
+        x[i] = cast(xi.ctypes.data, POINTER(svm_node))
+    problem.x = x
+    problem.y = y
+    return problem
 
 __all__ = [
     'svm_node_dtype',
