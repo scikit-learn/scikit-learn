@@ -1,3 +1,10 @@
+pyem (0.5) Fri, 04 Aug 2006 23:10:37 +0900
+
+	* put version to 0.5.0
+	* implement confidence interval using chi2
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.4) Fri, 04 Aug 2006 19:37:47 +0900
 
 	* put version to 0.4.2

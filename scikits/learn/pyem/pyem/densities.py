@@ -1,11 +1,13 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Fri Aug 04 07:00 PM 2006 J
+# Last Change: Fri Aug 04 11:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
 from numpy.random import randn
+from scipy.stats import chi2
+
 
 # Error classes
 class DenError(Exception):
@@ -163,15 +165,14 @@ def _full_gauss_den(x, mu, va, log):
     return y
 
 # To plot a confidence ellipse from multi-variate gaussian pdf
-def gauss_ell(mu, va, dim = [0, 1], npoints = 100):
+def gauss_ell(mu, va, dim = [0, 1], npoints = 100, level = 0.39):
     """ Given a mean and covariance for multi-variate
     gaussian, returns npoints points for the ellipse
-    of confidence 0.39
+    of confidence given by level (all points will be inside
+    the ellipsoides with a probability equal to level)
     
     Returns the coordinate x and y of the ellipse"""
     
-    # TODO: Get a confidence interval using the Chi2 distribution
-    # of points at a given mahalanobis distance...
     mu      = N.atleast_1d(mu)
     va      = N.atleast_1d(va)
     c       = N.array(dim)
@@ -187,11 +188,14 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100):
         else:
             raise DenError("mean and variance are not dim conformant")
 
-    level   = 0.39
+    # TODO: Get a confidence interval using the Chi2 distribution
+    # of points at a given mahalanobis distance...
+    chi22d  = chi2(2)
+    mahal   = N.sqrt(chi22d.ppf(level))
     
     # Generates a circle of npoints
     theta   = N.linspace(0, 2 * N.pi, npoints)
-    circle  = N.array([N.cos(theta), N.sin(theta)])
+    circle  = mahal * N.array([N.cos(theta), N.sin(theta)])
 
     # Get the dimension which we are interested in:
     mu  = mu[dim]
@@ -395,7 +399,7 @@ if __name__ == "__main__":
     Yc      = Yc.transpose() + mu
 
     # Plotting
-    Xe, Ye  = gauss_ell(mu, va, npoints = 100)
+    Xe, Ye  = gauss_ell(mu, va, npoints = 100, level=0.95)
     pylab.figure()
     pylab.plot(Yc[:, 0], Yc[:, 1], '.')
     pylab.plot(Xe, Ye, 'r')

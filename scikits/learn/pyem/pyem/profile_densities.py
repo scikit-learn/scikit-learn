@@ -1,4 +1,5 @@
 import numpy as N
+from numpy.random import randn
 import densities as D
 import tables
 
@@ -7,19 +8,19 @@ def bench1(mode = 'diag'):
     # Diag Gaussian of dimension 20
     #===========================================
     d       = 20
-    n       = 1e5
-    niter   = 1
+    n       = 1e4
+    niter   = 20
     mode    = 'diag'
 
     # Generate a model with k components, d dimensions
-    mu  = N.randn(1, d)
+    mu  = randn(1, d)
     if mode == 'diag':
-        va  = abs(N.randn(1, d))
+        va  = abs(randn(1, d))
     elif mode == 'full':
-        va  = N.randn(d, d)
-        va  = N.matrixmultiply(va, va.transpose())
+        va  = randn(d, d)
+        va  = N.dot(va, va.transpose())
 
-    X   = N.randn(n, d)
+    X   = randn(n, d)
     print "Compute %d times densities, %d dimension, %d frames" % (niter, d, n)
     for i in range(niter):
         Y   = D.gauss_den(X, mu, va)
