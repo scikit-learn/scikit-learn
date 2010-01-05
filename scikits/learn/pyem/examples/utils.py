@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 08:00 PM 2007 J
+# Last Change: Tue Jul 17 10:00 PM 2007 J
 
 # Various utilities for examples 
 
@@ -15,7 +15,7 @@ def get_faithful():
     data = oldfaithful.load()
     tmp1 = []
     tmp2 = []
-    for i in data:
+    for i in data['data']:
         if not (i[0] == 'L' or i[0] == 'M' or i[0] == 'S'):
             tmp1.append(i[0])
             tmp2.append(i[1])

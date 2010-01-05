@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Jul 02 07:00 PM 2007 J
+# Last Change: Tue Jul 17 11:00 PM 2007 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -243,10 +243,10 @@ class GM:
                 level of confidence (between 0 and 1).
 
         :Returns:
-            Xe : sequence
+            xe : sequence
                 a list of x coordinates for the ellipses (Xe[i] is the array
                 containing x coordinates of the ith Gaussian)
-            Ye : sequence
+            ye : sequence
                 a list of y coordinates for the ellipses.
 
         Examples
@@ -276,17 +276,17 @@ class GM:
         ye  = []   
         if self.mode == 'diag':
             for i in range(self.k):
-                xe, ye  = D.gauss_ell(self.mu[i, :], self.va[i, :], 
+                x, y  = D.gauss_ell(self.mu[i, :], self.va[i, :], 
                         dim, npoints, level)
-                xe.append(xe)
-                ye.append(ye)
+                xe.append(x)
+                ye.append(y)
         elif self.mode == 'full':
             for i in range(self.k):
-                xe, ye  = D.gauss_ell(self.mu[i, :], 
+                x, y  = D.gauss_ell(self.mu[i, :], 
                         self.va[i*self.d:i*self.d+self.d, :], 
                         dim, npoints, level)
-                xe.append(xe)
-                ye.append(ye)
+                xe.append(x)
+                ye.append(y)
 
         return xe, ye
     
