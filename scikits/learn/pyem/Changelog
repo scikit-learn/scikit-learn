@@ -1,0 +1,9 @@
+pyem (0.3) Thu, 13 Jul 2006 19:48:54 +0900
+
+	* put version to 0.3
+	* Refactoring kmean code into new module. 
+	* Refactoring tests code into test module. 
+	* Replace matrixmultiply and outerproduct calls by dot to use fast BLAS if
+	available.
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
