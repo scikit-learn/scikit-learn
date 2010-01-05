@@ -6,6 +6,7 @@ import scipy.stats.rv as rv
 import scipy.stats.stats as stats
 import pdb
 from Numeric import *
+from fastumath import *
 
 class selector:
 	def update(self,pop): pass

@@ -299,6 +299,7 @@ class float_gene(gene):
 		self._value = float(x)
 
 from Numeric import *
+from fastumath import *
 class log_float_gene(float_gene):
 	def __init__(self,bounds):
 		if len(bounds) !=2: raise GAError, 'float_gene: init expects a 2 element tuple of the fomr (min,max)'
