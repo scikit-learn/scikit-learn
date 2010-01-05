@@ -3,6 +3,7 @@
 # 2006/08/20
 
 import numpy as N
+import random
 from scipy.optimize import leastsq
 
 class rbf:
@@ -80,12 +81,8 @@ class rbf:
             (ii) set fixed variance from max dist between centers
             (iii) learn output weights using scipy's leastsq optimizer
         """
-        # set centers
-        self.centers = N.zeros((len(X)/10,X.shape[1]))
-        for i in range(len(X)):
-            if i%10 == 0:
-                self.centers[i/10] = X[i]
-        # set variance
+        # set centers & variance
+        self.centers = N.array(random.sample(X,len(X)/10))
         d_max = 0.0
         for i in self.centers:
             for j in self.centers:
