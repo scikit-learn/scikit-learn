@@ -65,3 +65,14 @@ from oneclass import *
 from dataset import *
 from kernel import *
 from predict import *
+
+from numpy.testing import NumpyTest
+test = NumpyTest().test
+
+def test_suite(*args):
+    # XXX: this is to avoid recursive call to itself. This is an horrible hack,
+    # I have no idea why infinite recursion happens otherwise.
+    if len(args) > 0:
+        import unittest
+        return unittest.TestSuite()
+    return NumpyTest().test(level = -10)
