@@ -4,6 +4,7 @@
 # For now, just test that all mode/dim execute correctly
 
 import sys
+import os 
 from numpy.testing import *
 
 import numpy as N
@@ -12,11 +13,15 @@ set_package_path()
 from pyem import GMM, GM, EM
 restore_path()
 
+set_local_path()
+# import modules that are located in the same directory as this file.
 from testcommon import DEF_DEC
+curpath = sys.path[0]
+restore_path()
 
 def load_dataset(filename):
     from scipy.io import loadmat
-    dic = loadmat(filename, squeeze_me = False)
+    dic = loadmat(os.path.join(curpath, filename), squeeze_me = False)
     dic['w0'] = dic['w0'].squeeze()
     dic['w'] = dic['w'].squeeze()
     dic['tw'] = dic['tw'].squeeze()

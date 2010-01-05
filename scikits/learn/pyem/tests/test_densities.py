@@ -19,9 +19,8 @@ restore_path()
 #Optional:
 set_local_path()
 # import modules that are located in the same directory as this file.
-restore_path()
-
 from testcommon import DEF_DEC
+restore_path()
 
 class TestDensities(NumpyTestCase):
     def _generate_test_data_1d(self):
@@ -106,21 +105,24 @@ class test_py_logsumexp(TestDensities):
         """This function checks that logsumexp works as expected."""
         # We check wether naive implementation would underflow, to be sure we
         # are actually testing something here.
-        N.seterr(under='raise')
+        errst = N.seterr(under='raise')
         try:
-            a = N.array([[-1000]])
-            self.naive_logsumexp(a)
-            raise AssertionError("expected to catch underflow, we should not be here")
-        except FloatingPointError, e:
-            print "Catching underflow, as expected"
-        assert pyem.densities.logsumexp(a) == -1000.
-        try:
-            a = N.array([[-1000, -1000, -1000]])
-            self.naive_logsumexp(a)
-            raise AssertionError("expected to catch underflow, we should not be here")
-        except FloatingPointError, e:
-            print "Catching underflow, as expected"
-        assert_array_almost_equal(pyem.densities.logsumexp(a), -998.90138771)
+            try:
+                a = N.array([[-1000]])
+                self.naive_logsumexp(a)
+                raise AssertionError("expected to catch underflow, we should not be here")
+            except FloatingPointError, e:
+                print "Catching underflow, as expected"
+            assert pyem.densities.logsumexp(a) == -1000.
+            try:
+                a = N.array([[-1000, -1000, -1000]])
+                self.naive_logsumexp(a)
+                raise AssertionError("expected to catch underflow, we should not be here")
+            except FloatingPointError, e:
+                print "Catching underflow, as expected"
+            assert_array_almost_equal(pyem.densities.logsumexp(a), -998.90138771)
+        finally:
+            N.seterr(under=errst['under'])
 
     def naive_logsumexp(self, data):
         return N.log(N.sum(N.exp(data), 1)) 
