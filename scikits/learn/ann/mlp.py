@@ -100,7 +100,6 @@ class mlp:
         activation fxns (see Nabney pp.123-128,156-158 for more info).
         Borrowing heavily from the Netlab implementations for now.
         """
-        from math import log
         y = self.fwd(x,w)
         if self.alg == 'leastsq':
             return sum(array(y-t)**2,axis=1)
@@ -109,10 +108,10 @@ class mlp:
             return 0.5*sum(sum(array(y-t)**2,axis=1))
         elif self.outfxn == 'logistic':
             # calculate & return x-entropy
-            return -1.0*sum(sum(t*math.log(y,2)+(1-t)*math.log(1-y,2),axis=1))
+            return -1.0*sum(sum(t*log2(y)+(1-t)*log2(1-y),axis=1))
         elif self.outfxn == 'softmax':
             # calculate & return entropy
-            return -1.0*sum(sum(t*math.log(y,2),axis=1))
+            return -1.0*sum(sum(t*log2(y),axis=1))
         else:
             # this shouldn't happen...return SSE as a reasonable default
             return 0.5*sum(sum((y - t)**2,axis=1))
