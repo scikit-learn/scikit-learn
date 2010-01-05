@@ -1,6 +1,0 @@
-ftp://ftp.ics.uci.edu/pub/machine-learning-databases/pendigits/pendigits-orig.tes.Z
-ftp://ftp.ics.uci.edu/pub/machine-learning-databases/pendigits/pendigits-orig.names
-ftp://ftp.ics.uci.edu/pub/machine-learning-databases/pendigits/pendigits-orig.tra.Z
-ftp://ftp.ics.uci.edu/pub/machine-learning-databases/pendigits/pendigits.names
-ftp://ftp.ics.uci.edu/pub/machine-learning-databases/pendigits/pendigits.tes
-ftp://ftp.ics.uci.edu/pub/machine-learning-databases/pendigits/pendigits.tra
