@@ -1,3 +1,11 @@
+pyem (0.5.6) Thu, 16 Nov 2006 21:02:02 +0900
+
+	* correct examples
+	* correct exceptions msg strings in gauss_mix, which 
+	were buggy
+	* add examples from website to the package, so that above errors
+	do not appear again
+
 pyem (0.5.6) Thu, 16 Nov 2006 14:18:19 +0900
 
 	* bump to 0.5.6

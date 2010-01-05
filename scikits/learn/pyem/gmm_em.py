@@ -374,7 +374,7 @@ def multiple_gauss_den(data, mu, va):
 
     K   = mu.shape[0]
     n   = data.shape[0]
-    d   = data.shape[1]
+    d   = mu.shape[1]
     
     y   = N.zeros((K, n))
     if mu.size == va.size:

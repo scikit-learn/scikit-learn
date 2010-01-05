@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Oct 23 07:00 PM 2006 J
+# Last Change: Thu Nov 16 09:00 PM 2006 J
 
 import copy
 
@@ -61,7 +61,7 @@ class test_on_off_eq(OnlineEmTest):
         self._create_model(d, k, mode, nframes, emiter)
         self._check(d, k, mode, nframes, emiter)
 
-    def check_2d(self, level = 2):
+    def check_2d(self, level = 1):
         d       = 2
         k       = 2
         mode    = 'diag'
@@ -72,7 +72,7 @@ class test_on_off_eq(OnlineEmTest):
         self._create_model(d, k, mode, nframes, emiter)
         self._check(d, k, mode, nframes, emiter)
 
-    def check_5d(self, level = 2):
+    def check_5d(self, level = 5):
         d       = 5
         k       = 2
         mode    = 'diag'

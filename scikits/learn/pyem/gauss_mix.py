@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Nov 09 06:00 PM 2006 J
+# Last Change: Thu Nov 16 08:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
@@ -82,10 +82,10 @@ class GM:
         k, d, mode  = check_gmm_param(weights, mu, sigma)
         if not k == self.k:
             raise GmParamError("Number of given components is %d, expected %d" 
-                    % (shape(k), shape(self.k)))
+                    % (k, self.k))
         if not d == self.d:
             raise GmParamError("Dimension of the given model is %d, expected %d" 
-                    % (shape(d), shape(self.d)))
+                    % (d, self.d))
         if not mode == self.mode and not d == 1:
             raise GmParamError("Given covariance mode is %s, expected %s"
                     % (mode, self.mode))
