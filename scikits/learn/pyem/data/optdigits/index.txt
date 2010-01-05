@@ -1,0 +1,9 @@
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/optdigits-orig.cv.Z
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/optdigits-orig.names
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/optdigits-orig.tra.Z
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/optdigits-orig.wdep.Z
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/optdigits-orig.windep.Z
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/optdigits.names
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/optdigits.tes
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/optdigits.tra
+ftp://ftp.ics.uci.edu/pub/machine-learning-databases/optdigits/readme.txt 

@@ -1,0 +1,95 @@
+1. Title of Database: Pen-Based Recognition of Handwritten Digits
+		Original, unnormalized version
+2. Source:
+	E. Alpaydin, Fevzi. Alimoglu
+	Department of Computer Engineering
+	Bogazici University, 80815 Istanbul Turkey
+	alpaydin@boun.edu.tr
+	September 1998
+
+3. Past Usage:
+	F. Alimoglu (1995) Combining Multiple Classifiers for Pen-Based
+	Handwritten Digit Recognition, 
+	MSc Thesis, Institute of Graduate Studies in Science and 
+	Engineering, Bogazici University.
+	http://www.cmpe.boun.edu.tr/~alimoglu/alimoglu.ps.gz
+
+	F. Alimoglu, E. Alpaydin, "Methods of Combining Multiple Classifiers 
+	Based on Different Representations for Pen-based Handwriting
+	Recognition," Proceedings of the Fifth Turkish Artificial 
+	Intelligence and Artificial Neural Networks Symposium (TAINN 96), 
+	June 1996, Istanbul, Turkey.
+	http://www.cmpe.boun.edu.tr/~alimoglu/tainn96.ps.gz
+
+	
+4. Relevant Information:
+
+	We create a digit database by collecting 250 samples from 44 writers.
+	The samples written by 30 writers are used for training,
+	cross-validation and writer dependent testing, and the digits 
+	written by the other 14 are used for writer independent testing. This
+	database is available in the UNIPEN format.
+
+	We use a WACOM PL-100V pressure sensitive tablet with an integrated 
+	LCD display and a cordless stylus. The input and display areas are
+	located in the same place. Attached to the serial port of an Intel 
+	486 based PC, it allows us to collect handwriting samples. The tablet
+	sends $x$ and $y$ tablet coordinates and pressure level values of the
+	pen at fixed time intervals (sampling rate) of 100 miliseconds. 
+
+	These writers are asked to write 250 digits in random order inside 
+	boxes of 500 by 500 tablet pixel resolution.  Subject are monitored 
+	only during the first entry screens. Each screen contains five boxes
+	with the digits to be written displayed above. Subjects are told to
+	write only inside these boxes.  If they make a mistake or are unhappy
+	with their writing, they are instructed to clear the content of a box 
+	by using an on-screen button. The first ten digits are ignored 
+	because most writers are not familiar with this type of input devices,
+	but subjects are not aware of this. 
+
+	In our study, we use only ($x, y$) coordinate information. The stylus
+	pressure level values are ignored. The raw data that we capture 
+	from the tablet consist of integer values between 0 and 500 
+	(tablet input box resolution). 
+
+	pendigits-orig contain original, unnormalized data. pendigits is the 
+	normalized and resampled version where all inputs are of the same
+	length. Here because of speed or the digit, feature vectors may be of
+	different lengths, e.g., '1' is shorter than '8'.
+
+5. Number of Instances
+	pendigits-orig.tra	Training	7494
+	pendigits-orig.tes	Testing		3498
+	
+	The way we used the dataset was to use first half of training for 
+	actual training, one-fourth for validation and one-fourth
+	for writer-dependent testing. The test set was used for 
+	writer-independent testing and is the actual quality measure.
+
+	pendigits.tra divides into
+		Actual training	set	3748
+		Validation		1873
+		Writer-dependent test	1873
+
+6. Number of Attributes
+	Input size depends on writing speed and time and is not fixed
+	+1 class attribute
+
+7. For Each Attribute:
+	The data is in the UNIPEN format. See
+	I. Guyon UNIPEN 1.0 Format Definition, 
+	ftp://ftp.cis.upenn.edu/pub/UNIPEN-pub/definition/unipen.def
+	1994
+
+8. Missing Attribute Values
+	None
+
+9. Class Distribution
+
+          classes
+          0    1    2    3    4    5    6    7    8    9
+tra     384  390  392  370  391  375  351  375  363  357 Tot 3748 
+cv      209  201  201  163  185  163  191  196  178  186 Tot 1873 
+wdep    187  188  187  186  204  182  178  207  178  176 Tot 1873 
+windep  363  364  364  336  364  335  336  364  336  336 Tot 3498 
+
