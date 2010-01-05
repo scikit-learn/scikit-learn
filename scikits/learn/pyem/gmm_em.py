@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Jun 22 05:00 PM 2007 J
+# Last Change: Sun Jul 01 05:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -22,6 +22,9 @@ from scipy.cluster.vq import kmeans2 as kmean
 from gauss_mix import GmParamError
 
 #from misc import _DEF_ALPHA, _MIN_DBL_DELTA, _MIN_INV_COND
+
+_PRIOR_COUNT = 0.05
+_COV_PRIOR = 0.1
 
 # Error classes
 class GmmError(Exception):
@@ -209,6 +212,7 @@ class GMM(ExpMixtureModel):
 
             mu[c, :] = x / ngamma[c]
             va[c, :] = xx  / ngamma[c] - mu[c, :] ** 2
+
         w   = invn * ngamma
 
         return w, mu, va
@@ -361,6 +365,11 @@ class EM:
         # Initialize the data (may do nothing depending on the model)
         model.init(data)
 
+        # Actual training
+        like = self._train_simple_em(data, model, maxiter, thresh)
+        return like
+    
+    def _train_simple_em(self, data, model, maxiter, thresh):
         # Likelihood is kept
         like    = N.zeros(maxiter)
 
@@ -376,8 +385,45 @@ class EM:
             if has_em_converged(like[i], like[i-1], thresh):
                 return like[0:i]
 
-        return like
-    
+class RegularizedEM:
+    # TODO: separate regularizer from EM class ?
+    def __init__(self, pcnt = _PRIOR_COUNT, pval = _COV_PRIOR):
+        """Create a regularized EM object.
+
+        Covariances matrices are regularized after the E step.
+
+        :Parameters:
+            pcnt : float
+                proportion of soft counts to be count as prior counts (e.g. if
+                you have 1000 samples and the prior_count is 0.1, than the
+                prior would "weight" 100 samples).
+            pval : float
+                value of the prior.
+        """
+        self.pcnt = pcnt
+        self.pval = pval
+
+    def train(self, data, model, maxiter = 20, thresh = 1e-5):
+        model.init(data)
+        regularize_full(model.gm.va, self.pcnt, self.pval * N.eye(model.gm.d))
+        # Likelihood is kept
+        like = N.empty(maxiter, N.float)
+
+        # Em computation, with computation of the likelihood
+        g, tgd  = model.compute_log_responsabilities(data)
+        g = N.exp(g)
+        like[0] = N.sum(densities.logsumexp(tgd), axis = 0)
+        model.update_em(data, g)
+        regularize_full(model.gm.va, self.pcnt, self.pval * N.eye(model.gm.d))
+        for i in range(1, maxiter):
+            g, tgd  = model.compute_log_responsabilities(data)
+            g = N.exp(g)
+            like[i] = N.sum(densities.logsumexp(tgd), axis = 0)
+            model.update_em(data, g)
+            regularize_full(model.gm.va, self.pcnt, self.pval * N.eye(model.gm.d))
+            if has_em_converged(like[i], like[i-1], thresh):
+                return like[0:i]
+
 # Misc functions
 def bic(lk, deg, n):
     """ Expects lk to be log likelihood """
@@ -393,6 +439,16 @@ def has_em_converged(like, plike, thresh):
         return True
     else:
         return False
+
+def regularize_full(va, np, prior):
+    """np * n is the number of prior counts (np is a proportion, and n is the
+    number of point)."""
+    d = va.shape[1]
+    k = va.shape[0] / d
+
+    for i in range(k):
+        va[i*d:i*d+d,:] *= 1. / (1 + np)
+        va[i*d:i*d+d,:] += np / (1. + np) * prior
 
 if __name__ == "__main__":
     pass

@@ -1,9 +1,8 @@
-# Last Change: Fri Jun 22 05:00 PM 2007 J
+# Last Change: Sun Jul 01 06:00 PM 2007 J
 
 Things which must be implemented for a 1.0 version (in importante order)
     - A classifier
     - handle rank 1 for 1d data
-    - basic regularization
     - demo for pdf estimation, discriminant analysis and clustering
     - scaling of data: maybe something to handle scaling internally ?
 
