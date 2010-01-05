@@ -86,7 +86,7 @@ class rbf:
         d_max = 0.0
         for i in self.centers:
             for j in self.centers:
-                tmp = N.sum(N.sqrt((i-j)**2))
+                tmp = N.sum(N.sqrt((i-j)**2),axis=0)
                 if tmp > d_max:
                     d_max = tmp
         self.variance = d_max/(2.0*len(X))
@@ -105,7 +105,7 @@ class rbf:
         Returns:
             sum-squared-error over all data
         """
-        return N.sum(self.err_fxn(self.wp,X,Y))
+        return N.sum(self.err_fxn(self.wp,X,Y),axis=0)
 
 def main():
     """ Build/train/test RBF net

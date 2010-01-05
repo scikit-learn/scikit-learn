@@ -118,7 +118,7 @@ class mlp:
         Returns:
             sum-squared-error over all data
         """
-        return N.sum(self.errfxn(self.wp,x,t))
+        return N.sum(self.errfxn(self.wp,x,t),axis=0)
 
 def main():
     """ Build/train/test MLP 
