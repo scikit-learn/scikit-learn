@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Mon Jul 02 06:00 PM 2007 J
+# Last Change: Thu Jul 12 04:00 PM 2007 J
 """This module implements various basic functions related to multivariate
 gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
 
@@ -115,7 +115,8 @@ def _scalar_gauss_den(x, mu, va, log):
     d       = mu.size
     inva    = 1/va
     fac     = (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
-    y       = ((x-mu) ** 2) * -0.5 * inva
+    inva    *= -0.5
+    y       = ((x-mu) ** 2) * inva
     if not log:
         y   = fac * N.exp(y)
     else:
@@ -123,12 +124,6 @@ def _scalar_gauss_den(x, mu, va, log):
 
     return y
     
-#from ctypes import cdll, c_uint, c_int, c_double, POINTER
-#_gden   = cdll.LoadLibrary('src/libgden.so')
-#_gden.gden_diag.restype     = c_int
-#_gden.gden_diag.argtypes    = [POINTER(c_double), c_uint, c_uint,
-#        POINTER(c_double), POINTER(c_double), POINTER(c_double)]
-
 def _diag_gauss_den(x, mu, va, log):
     """ This function is the actual implementation
     of gaussian pdf in scalar case. It assumes all args
@@ -139,15 +134,14 @@ def _diag_gauss_den(x, mu, va, log):
     d   = mu.size
     #n   = x.shape[0]
     if not log:
-        inva = 1/va[0, 0]
-        fac = (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
-        y =  (x[:, 0] - mu[0, 0]) ** 2 * inva * -0.5
-        for i in range(1, d):
-            inva = 1/va[0, i]
-            fac *= N.sqrt(inva)
-            y += (x[:, i] - mu[0, i]) ** 2 * inva * -0.5
-        y = fac * N.exp(y)
+        inva = 1/va[0]
+        fac = (2*N.pi) ** (-d/2.0) * N.prod(N.sqrt(inva))
+        inva *= -0.5
+        x = x - mu
+        x **= 2
+        y = fac * N.exp(N.dot(x, inva))
     else:
+        # XXX optimize log case as non log case above
         y = _scalar_gauss_den(x[:, 0], mu[0, 0], va[0, 0], log)
         for i in range(1, d):
             y +=  _scalar_gauss_den(x[:, i], mu[0, i], va[0, i], log)

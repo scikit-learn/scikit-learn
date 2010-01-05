@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Jun 12 08:00 PM 2007 J
+# Last Change: Thu Jul 12 04:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
@@ -66,6 +66,9 @@ class TestDensities(NumpyTestCase):
             0.00378789836599, 0.00015915297541, 
             0.00000253261067, 0.00000001526368])
 
+#=====================
+# Basic accuracy tests
+#=====================
 class test_py_implementation(TestDensities):
     def _test(self, level, decimal = DEF_DEC):
         Y   = gauss_den(self.X, self.mu, self.va)
@@ -99,6 +102,37 @@ class test_py_implementation(TestDensities):
         self._generate_test_data_1d()
         self._test_log(level)
 
+#=====================
+# Basic speed tests
+#=====================
+class test_speed(NumpyTestCase):
+    n = 1e5
+    niter = 10
+    cpud = 3.2e9
+    def _prepare(self, n, d, mode):
+        cls = self.__class__
+        x = 0.1 * N.random.randn(n, d)
+        mu = 0.1 * N.random.randn(d)
+        if mode == 'diag':
+            va = 0.1 * N.random.randn(d) ** 2
+        elif mode == 'full':
+            a = N.random.randn(d, d)
+            va = 0.1 * N.dot(a.T, a)
+        st = self.measure("gauss_den(x, mu, va)", cls.niter)
+        return st / cls.niter #* cls.cpud / n / d
+
+    def _bench(self, n, d, mode):
+        st = self._prepare(n, d, mode)
+        print "%d dimension, %d samples, %s mode: %8.2f " % (d, n, mode, st)
+
+    def test1(self, level = 5):
+        cls = self.__class__
+        for i in [1, 5, 10, 30]:
+            self._bench(cls.n, i, 'diag')
+
+#================
+# Logsumexp tests
+#================
 class test_py_logsumexp(TestDensities):
     """Class to compare logsumexp vs naive implementation."""
     def test_underlow(self):
@@ -110,17 +144,20 @@ class test_py_logsumexp(TestDensities):
             try:
                 a = N.array([[-1000]])
                 self.naive_logsumexp(a)
-                raise AssertionError("expected to catch underflow, we should not be here")
+                raise AssertionError("expected to catch underflow, we should"\
+                                     "not be here")
             except FloatingPointError, e:
                 print "Catching underflow, as expected"
             assert pyem.densities.logsumexp(a) == -1000.
             try:
                 a = N.array([[-1000, -1000, -1000]])
                 self.naive_logsumexp(a)
-                raise AssertionError("expected to catch underflow, we should not be here")
+                raise AssertionError("expected to catch underflow, we should"\
+                                     "not be here")
             except FloatingPointError, e:
                 print "Catching underflow, as expected"
-            assert_array_almost_equal(pyem.densities.logsumexp(a), -998.90138771)
+            assert_array_almost_equal(pyem.densities.logsumexp(a), 
+                                      -998.90138771)
         finally:
             N.seterr(under=errst['under'])
 
@@ -154,13 +191,16 @@ class test_py_logsumexp(TestDensities):
         a2 = self.naive_logsumexp(y)
         assert_array_almost_equal(a1, a2, DEF_DEC)
 
+#=======================
+# Test C implementation
+#=======================
 class test_c_implementation(TestDensities):
     def _test(self, level, decimal = DEF_DEC):
         try:
             from pyem._c_densities import gauss_den as c_gauss_den
             Y   = c_gauss_den(self.X, self.mu, self.va)
             assert_array_almost_equal(Y, self.Yt, decimal)
-        except ImportError, inst:
+        except Exception, inst:
             print "Error while importing C implementation, not tested"
             print " -> (Import error was %s)" % inst 
 
