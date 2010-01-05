@@ -1,7 +1,45 @@
 # /usr/bin/python
-# Last Change: Thu Aug 24 08:00 PM 2006 J
+# Last Change: Mon Aug 28 09:00 PM 2006 J
 
 import numpy as N
+
+def _py_vq(data, code):
+    """ Please do not use directly. Use kmean instead"""
+    # No attempt to be efficient has been made...
+    (n, d)  = data.shape
+    (k, d)  = code.shape
+
+    label   = N.zeros(n, int)
+    for i in range(n):
+        d           = N.sum((data[i, :] - code) ** 2, 1)
+        label[i]    = N.argmin(d)
+
+    return label
+    
+# Try to import pyrex function for vector quantization. If not available,
+# falls back on pure python implementation.
+#%KMEANIMPORT%
+#try:
+#    from scipy.cluster.vq import kmeans as kmean
+#except ImportError:
+#    try:
+#        from c_gmm import _vq
+#    except:
+#        print """c_gmm._vq not found, using pure python implementation instead. 
+#        Kmean will be REALLY slow"""
+#        _vq = _py_vq
+try:
+    from sccipy.cluster.vq import vq
+    print "using scipy.cluster.vq"
+    def _vq(*args, **kw): return vq(*args, **kw)[0]
+except ImportError:
+    try:
+        from c_gmm import _vq
+        print "using pyrex vq"
+    except ImportError:
+        print """c_gmm._vq not found, using pure python implementation instead. 
+        Kmean will be REALLY slow"""
+        _vq = _py_vq
 
 def kmean(data, init, iter = 10):
     """Simple kmean implementation for EM
@@ -30,38 +68,6 @@ def kmean(data, init, iter = 10):
             code[j,:] = N.mean(data[N.where(label==j)], axis=0) 
 
     return code, label
-
-def _py_vq(data, code):
-    """ Please do not use directly. Use kmean instead"""
-    # No attempt to be efficient has been made...
-    (n, d)  = data.shape
-    (k, d)  = code.shape
-
-    label   = N.zeros(n, int)
-    for i in range(n):
-        d           = N.sum((data[i, :] - code) ** 2, 1)
-        label[i]    = N.argmin(d)
-
-    return label
-    
-# Try to import pyrex function for vector quantization. If not available,
-# falls back on pure python implementation.
-#%KMEANIMPORT%
-#try:
-#    from scipy.cluster.vq import kmeans as kmean
-#except ImportError:
-#    try:
-#        from c_gmm import _vq
-#    except:
-#        print """c_gmm._vq not found, using pure python implementation instead. 
-#        Kmean will be REALLY slow"""
-#        _vq = _py_vq
-try:
-    from c_gmm import _vq
-except:
-    print """c_gmm._vq not found, using pure python implementation instead. 
-    Kmean will be REALLY slow"""
-    _vq = _py_vq
 
 # Test functions usable for now
 def test_kmean():

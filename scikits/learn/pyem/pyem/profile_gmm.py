@@ -42,6 +42,7 @@ def bench1(mode = 'diag'):
 
     print "computing..."
     for i in range(niter):
+        print "iter %d" % i
         g, tgd  = gmm.sufficient_statistics(data)
         like[i] = N.sum(N.log(N.sum(tgd, 1)))
         gmm.update_em(data, g)

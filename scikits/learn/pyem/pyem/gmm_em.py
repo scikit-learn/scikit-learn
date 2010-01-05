@@ -1,9 +1,14 @@
 # /usr/bin/python
-# Last Change: Thu Aug 24 02:00 PM 2006 J
+# Last Change: Mon Aug 28 05:00 PM 2006 J
+
+# TODO:
+#   - which methods to avoid va shrinking to 0 ?
+#   - online EM
 
 import numpy as N
 import numpy.linalg as lin
 from numpy.random import randn
+#import _c_densities as densities
 import densities
 from kmean import kmean
 from gauss_mix import GM
@@ -42,7 +47,7 @@ class MixtureModel:
 class ExpMixtureModel(MixtureModel):
     """Class to model mixture of exponential pdf (eg Gaussian, exponential, Laplace, 
     etc..). This is a special case because some parts of EM are common for those
-    modelsi..."""
+    models..."""
     pass
 
 class GMM(ExpMixtureModel):
@@ -150,10 +155,6 @@ class GMM(ExpMixtureModel):
             va  = N.zeros((k, d))
             gamma   = gamma.transpose()
             for c in range(k):
-                # x       = N.sum(N.outerproduct(gamma[:, k], 
-                #             N.ones((1, d))) * data)
-                # xx      = N.sum(N.outerproduct(gamma[:, k], 
-                #             N.ones((1, d))) * (data ** 2))
                 x   = N.dot(gamma[c:c+1,:], data)[0,:]
                 xx  = N.dot(gamma[c:c+1,:], data ** 2)[0,:]
 
@@ -222,6 +223,11 @@ class EM:
 
         return like
     
+class OnlineEM:
+    "An online EM trainer. "
+    def __init__(self):
+        raise GmmError("not implemented yet")
+
 # Misc functions
 def multiple_gauss_den(data, mu, va):
     """Helper function to generate several Gaussian
@@ -282,13 +288,10 @@ if __name__ == "__main__":
     print "Init a model for learning, with kmean for initialization"
     lgm = GM(d, k, mode)
     gmm = GMM(lgm, 'kmean')
-    
     gmm.init(data)
+
     # Keep the initialized model for drawing
     gm0 = copy.copy(lgm)
-    print gm0.w
-    print gm0.mu
-    print gm0.va
 
     # The actual EM, with likelihood computation
     niter   = 10

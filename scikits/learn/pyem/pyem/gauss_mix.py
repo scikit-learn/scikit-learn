@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Tue Aug 22 09:00 PM 2006 J
+# Last Change: Mon Aug 28 01:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
@@ -18,6 +18,12 @@ MAX_DEV = 1e-10
 #
 #   For now, we have to init with meta-parameters, and set 
 #   the parameters afterward. There should be a better way ?
+
+# TODO:
+#   - change bounds methods of GM class instanciations so that it cannot 
+#   be used as long as w, mu and va are not set
+#   - We have to use scipy now for chisquare pdf, so there may be other
+#   methods to be used, ie for implementing random index.
 class GmParamError:
     """Exception raised for errors in gmm params
 
@@ -178,6 +184,20 @@ class GM:
 
     gen_param = classmethod(gen_param)
 
+    def plot(self, *args, **kargs):
+        """Plot the ellipsoides directly for the model
+        
+        Returns a list of lines, so that their style can be modified. By default,
+        the style is red color, and nolegend for all of them"""
+        k       = self.k
+        Xe, Ye  = self.conf_ellipses(*args, **kargs)
+        try:
+            import pylab as P
+            return [P.plot(Xe[i], Ye[i], 'r', label='_nolegend_')[0] for i in range(k)]
+            #for i in range(k):
+            #    P.plot(Xe[i], Ye[i], 'r')
+        except ImportError:
+            raise GmParamError("matplotlib not found, cannot plot...")
 
 # Function to generate a random index: this is kept outside any class,
 # as the function can be useful for other
@@ -274,17 +294,16 @@ if __name__ == '__main__':
     # Sample nframes frames  from the model
     X   = gm.sample(nframes)
 
-    # Plot
+    # Plot the data
     import pylab as P
-
     P.plot(X[:, 0], X[:, 1], '.', label = '_nolegend_')
 
     # Real confidence ellipses with confidence level 
-    level       = 0.39
-    Xre, Yre    = gm.conf_ellipses(level = level)
-    P.plot(Xre[0], Yre[0], 'g', label = 'true confidence ellipsoides at level %.2f' % level)
-    for i in range(1,k):
-        P.plot(Xre[i], Yre[i], 'g', label = '_nolegend_')
+    level       = 0.50
+    h           = gm.plot(level=level)
+
+    # set the first ellipse label, which will appear in the legend
+    h[0].set_label('confidence ell at level ' + str(level))
 
     P.legend(loc = 0)
     P.show()

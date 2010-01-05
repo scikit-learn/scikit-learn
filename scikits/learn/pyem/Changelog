@@ -1,3 +1,10 @@
+pyem (0.5.2) Mon, 28 Aug 2006 13:20:13 +0900
+
+	* Add a plot method to Gm class, so that it is easier
+	to plot a GM model interactively (needs matplotlib)
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.5.2) Thu, 24 Aug 2006 19:42:28 +0900
 
 	* put version to 0.5.2

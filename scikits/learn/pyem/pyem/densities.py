@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Tue Aug 22 08:00 PM 2006 J
+# Last Change: Mon Aug 28 12:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin

@@ -12,3 +12,10 @@ data.h5
 gmmprof
 valgrind-python.supp
 valgrind-python.supp
+pyem/
+pyem/matcode/
+pyem/tmp/
+pyem/tmp/kmean.py
+pyem/tmp/blop.py
+pyem/tmp/
+pyem/tmp
