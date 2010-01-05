@@ -2,30 +2,34 @@ from numpy.testing import *
 import numpy as N
 
 set_local_path('../..')
-from svm.regression import *
-from svm.dataset import LibSvmRegressionDataSet
-from svm.dataset import LibSvmTestDataSet
+from svm.dataset import LibSvmRegressionDataSet, LibSvmTestDataSet
 from svm.kernel import *
+from svm.predict import *
+from svm.regression import *
 restore_path()
 
 class test_regression(NumpyTestCase):
     def check_basics(self):
         Model = LibSvmEpsilonRegressionModel
-        Kernel = LinearKernel()
-        Model(Kernel)
-        Model(Kernel, epsilon=0.1)
-        Model(Kernel, cost=1.0)
-        model = Model(Kernel, shrinking=False)
+        kernel = LinearKernel()
+        Model(kernel)
+        Model(kernel, epsilon=0.1)
+        Model(kernel, cost=1.0)
+        model = Model(kernel, shrinking=False)
         self.assert_(not model.shrinking)
 
         Model = LibSvmNuRegressionModel
-        Model(Kernel)
-        Model(Kernel, nu=0.5)
-        model = Model(Kernel, 0.5, cache_size=60, tolerance=0.005)
+        Model(kernel)
+        Model(kernel, nu=0.5)
+        model = Model(kernel, 0.5, cache_size=60, tolerance=0.005)
         self.assertEqual(model.cache_size, 60)
         self.assertAlmostEqual(model.tolerance, 0.005)
 
     def check_epsilon_train(self):
+        ModelType = LibSvmEpsilonRegressionModel
+        ResultType = LibSvmRegressionResults
+        PredictorType = LibSvmPredictor
+
         y = [10., 20., 30., 40.]
         x = [N.array([0, 0]),
              N.array([0, 1]),
@@ -33,15 +37,16 @@ class test_regression(NumpyTestCase):
              N.array([1, 1])]
         traindata = LibSvmRegressionDataSet(zip(y, x))
         testdata = LibSvmTestDataSet(x)
-
-        Model = LibSvmEpsilonRegressionModel
-        model = Model(LinearKernel())
-
-        results = model.fit(traindata)
+        model = ModelType(LinearKernel())
+        results = model.fit(traindata, ResultType, PredictorType)
         results.predict(testdata)
         results.get_svr_probability()
 
     def check_epsilon_more(self):
+        ModelType = LibSvmEpsilonRegressionModel
+        ResultType = LibSvmRegressionResults
+        PredictorType = LibSvmPredictor
+
         y = [0.0, 1.0, 1.0, 2.0]
         x = [N.array([0, 0]),
              N.array([0, 1]),
@@ -64,8 +69,8 @@ class test_regression(NumpyTestCase):
             ]
 
         for kernel, expected_y in zip(kernels, expected_ys):
-            model = LibSvmEpsilonRegressionModel(kernel, epsilon, cost)
-            results = model.fit(traindata)
+            model = ModelType(kernel, epsilon, cost)
+            results = model.fit(traindata, ResultType, PredictorType)
             predictions = results.predict(testdata)
             # look at differences instead of using assertAlmostEqual
             # due to slight differences between answers obtained on

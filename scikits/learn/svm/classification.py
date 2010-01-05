@@ -7,57 +7,42 @@ import libsvm
 __all__ = [
     'LibSvmCClassificationModel',
     'LibSvmNuClassificationModel',
+    'LibSvmClassificationResults'
     ]
 
 class LibSvmClassificationResults:
-    def __init__(self, model, dataset):
-        self.model = model
-        # keep a reference to the dataset here because the support
-        # vectors point to some or all of the vectors in the dataset
-        self.dataset = dataset
-        # XXX this is probably suboptimal when training many models
-        # that each only have a few support vectors. look at some
-        # options when we do memory optimization.
-
-        model = model.contents
-        self.nr_class = model.nr_class
-        self.labels = model.labels[:self.nr_class]
-        self.rho = model.rho[:self.nr_class*(self.nr_class-1)/2]
-        self.nSV = model.nSV[:self.nr_class]
-        sv_coef = N.empty((self.nr_class-1, model.l), dtype=N.float64)
-        for i, c in enumerate(model.sv_coef[:self.nr_class-1]):
-            sv_coef[i,:] = c[:model.l]
+    def __init__(self, model, traindataset, PredictorType):
+        modelc = model.contents
+        self.nr_class = modelc.nr_class
+        self.labels = modelc.labels[:self.nr_class]
+        nrho = self.nr_class * (self.nr_class - 1) / 2
+        self.rho = modelc.rho[:nrho]
+        self.nSV = modelc.nSV[:self.nr_class]
+        sv_coef = N.empty((self.nr_class - 1, modelc.l), dtype=N.float64)
+        for i, c in enumerate(modelc.sv_coef[:self.nr_class - 1]):
+            sv_coef[i,:] = c[:modelc.l]
         self.sv_coef = sv_coef
-
-    def __del__(self):
-        libsvm.svm_destroy_model(self.model)
+        self.predictor = PredictorType(model, traindataset)
 
     def predict(self, dataset):
         """
         This function does classification on a test vector x and
         returns the label of the predicted class.
         """
-        def p(x):
-            xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-            return int(libsvm.svm_predict(self.model, xptr))
-        return map(p, dataset.data)
+        return [self.predictor.predict(x) for x in dataset]
 
     def predict_values(self, dataset):
         """
-        This function does classification on a test vector x and
+        This function does classification on a test dataset and
         returns decision values.
 
         For training data with nr_class classes, this function returns
-        nr_class*(nr_class-1)/2 decision values in a dictionary. The
-        keys of the dictionary are 2-tuples, one for each combination
-        of two class labels.
+        nr_class*(nr_class-1)/2 decision values in a dictionary for
+        each item in the test dataset. The keys of the dictionary are
+        2-tuples, one for each combination of two class labels.
         """
-        def p(x):
-            xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-            n = self.nr_class*(self.nr_class-1)/2
-            v = N.empty((n,), dtype=N.float64)
-            vptr = cast(v.ctypes.data, POINTER(c_double))
-            libsvm.svm_predict_values(self.model, xptr, vptr)
+        n = self.nr_class * (self.nr_class - 1) / 2
+        def p(v):
             count = 0
             d = {}
             for i in range(len(self.labels)):
@@ -66,24 +51,25 @@ class LibSvmClassificationResults:
                     d[self.labels[j], self.labels[i]] = -v[count]
                     count += 1
             return d
-        return map(p, dataset.data)
+        vs = [self.predictor.predict_values(x, n) for x in dataset]
+        return [p(v) for v in vs]
 
     def predict_probability(self, dataset):
         """
-        This function does classification on a test vector x for a
+        This function does classification on a test dataset for a
         model with probability information.
 
-        This function returns a 2-tuple. The first item is the label
-        of the class with the highest probability. The second item is
-        a dictionary that associated labels with class probabilities.
+        This function returns a list of 2-tuples. The first item in
+        each tuple is the label of the class with the highest
+        probability. The second item is a dictionary that associated
+        labels with class probabilities.
         """
         def p(x):
-            xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-            prob_estimates = N.empty((self.nr_class,), dtype=N.float64)
-            peptr = cast(prob_estimates.ctypes.data, POINTER(c_double))
-            label = libsvm.svm_predict_probability(self.model, xptr, peptr)
-            return int(label), dict(zip(self.labels, prob_estimates))
-        return map(p, dataset.data)
+            n = self.nr_class
+            label, prob_estimates = \
+                self.predictor.predict_probability(x, self.nr_class)
+            return label, prob_estimates
+        return [p(x) for x in dataset]
 
 class LibSvmClassificationModel(LibSvmModel):
     """
@@ -105,7 +91,6 @@ class LibSvmClassificationModel(LibSvmModel):
     def __init__(self, kernel, weights, **kwargs):
         LibSvmModel.__init__(self, kernel, **kwargs)
         if weights is not None:
-            # XXX check whether labels need to be sorted
             self.weight_labels = N.empty((len(weights),), dtype=N.intp)
             self.weights = N.empty((len(weights),), dtype=N.float64)
             for i, (label, weight) in enumerate(weights):
@@ -120,8 +105,8 @@ class LibSvmClassificationModel(LibSvmModel):
 
     def cross_validate(self, dataset, nr_fold):
         """
-        Perform cross-validation to determine the suitability of
-        chosen model parameters.
+        Perform stratified cross-validation to determine the
+        suitability of chosen model parameters.
 
         Data are separated to nr_fold folds. Each fold is validated
         against a model trained using the data from the remaining
@@ -136,7 +121,9 @@ class LibSvmClassificationModel(LibSvmModel):
         libsvm.svm_cross_validation(problem, self.param, nr_fold, tp)
         total_correct = 0.
         for x, t in zip(dataset.data, target):
-            if x[0] == int(t): total_correct += 1
+            if x[0] == int(t):
+                total_correct += 1
+        # XXX also return results from folds in a list
         return 100.0 * total_correct / len(dataset.data)
 
 class LibSvmCClassificationModel(LibSvmClassificationModel):

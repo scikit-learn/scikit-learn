@@ -7,9 +7,6 @@ __all__ = [
     'LibSvmModel'
     ]
 
-c_double_null_ptr = POINTER(c_double)()
-c_int_null_ptr = POINTER(c_int)()
-
 class LibSvmModel:
     def __init__(self, kernel,
                  tolerance=0.001, shrinking=True, cache_size=40):
@@ -40,32 +37,18 @@ class LibSvmModel:
 
         # defaults for optional parameters
         param.nr_weight = 0
-        param.weight = c_double_null_ptr
-        param.weight_label = c_int_null_ptr
+        param.weight = POINTER(c_double)()
+        param.weight_label = POINTER(c_int)()
         param.probability = False
 
         self.param = param
 
-    def fit(self, dataset):
+    def fit(self, dataset, ResultType, PredictorType):
         problem = dataset._create_svm_problem()
         dataset._update_svm_parameter(self.param)
         self._check_problem_param(problem, self.param)
-
         model = libsvm.svm_train(problem, self.param)
-
-        # weights are no longer required, so remove to them as the
-        # data they point to might disappear
-        model.contents.param.nr_weight = 0
-        model.contents.param.weight = c_double_null_ptr
-        model.contents.param.weight_label = c_int_null_ptr
-
-        # results keep a reference to the dataset because the
-        # svm_model refers to some of its vectors as the support
-        # vectors
-        # XXX we can hide an id in the end of record marker so that we
-        # can figure out which support vectors to keep references to
-        # even when not using precomputed kernels
-        return self.Results(model, dataset)
+        return ResultType(model, dataset, PredictorType)
 
     def _check_problem_param(self, problem, param):
         error_msg = libsvm.svm_check_parameter(problem, param)

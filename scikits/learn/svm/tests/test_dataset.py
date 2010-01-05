@@ -45,6 +45,10 @@ class test_dataset(NumpyTestCase):
         data = [(1.0, N.arange(5))]
         dataset = LibSvmRegressionDataSet(data)
         self.assertAlmostEqual(dataset.gamma, 0.2)
+        self.assertEqual(len(dataset), len(data))
+        for i, x in enumerate(dataset):
+            self.assertEqual(data[i][0], x[0])
+            assert_array_equal(data[i][1], x[1]['value'][:-1])
 
     def check_classification(self):
         data = [(1, N.arange(4)), (2, N.arange(10))]
@@ -52,11 +56,18 @@ class test_dataset(NumpyTestCase):
         self.assertAlmostEqual(dataset.gamma, 0.1)
         self.assert_(1 in dataset.labels)
         self.assert_(2 in dataset.labels)
+        self.assertEqual(len(dataset), len(data))
+        for i, x in enumerate(dataset):
+            self.assertEqual(data[i][0], x[0])
+            assert_array_equal(data[i][1], x[1]['value'][:-1])
 
     def check_oneclass(self):
         data = [N.arange(2)]
         dataset = LibSvmOneClassDataSet(data)
         self.assertAlmostEqual(dataset.gamma, 0.5)
+        self.assertEqual(len(dataset), len(data))
+        for i, x in enumerate(dataset):
+            assert_array_equal(data[i], x[1]['value'][:-1])
 
 class test_svm_node_dot(NumpyTestCase):
     def check_dot(self):

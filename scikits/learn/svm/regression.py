@@ -6,33 +6,27 @@ import libsvm
 
 __all__ = [
     'LibSvmEpsilonRegressionModel',
-    'LibSvmNuRegressionModel'
+    'LibSvmNuRegressionModel',
+    'LibSvmRegressionResults'
     ]
 
 # XXX document why get_svr_probability could be useful
 
 class LibSvmRegressionResults:
-    def __init__(self, model, dataset):
-        self.model = model
-        self.dataset = dataset
-        model = model.contents
-        self.rho = model.rho[0]
-        self.sv_coef = model.sv_coef[0][:model.l]
-        if model.probA:
-            self.sigma = model.probA[0]
-
-    def __del__(self):
-        libsvm.svm_destroy_model(self.model)
+    def __init__(self, model, traindataset, PredictorType):
+        modelc = model.contents
+        self.rho = modelc.rho[0]
+        self.sv_coef = modelc.sv_coef[0][:modelc.l]
+        if modelc.probA:
+            self.sigma = modelc.probA[0]
+        self.predictor = PredictorType(model, traindataset)
 
     def predict(self, dataset):
         """
         This function does regression on a test vector x and returns
         the function value of x calculated using the model.
         """
-        def p(x):
-            xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-            return libsvm.svm_predict(self.model, xptr)
-        return map(p, dataset.data)
+        return [self.predictor.predict(x) for x in dataset]
 
     def get_svr_probability(self):
         """
@@ -55,8 +49,8 @@ class LibSvmRegressionModel(LibSvmModel):
 
     def cross_validate(self, dataset, nr_fold):
         """
-        Perform cross-validation to determine the suitability of
-        chosen model parameters.
+        Perform stratified cross-validation to determine the
+        suitability of chosen model parameters.
 
         Data are separated to nr_fold folds. Each fold is validated
         against a model trained using the data from the remaining

@@ -3,45 +3,50 @@ import numpy as N
 
 set_local_path('../..')
 from svm.classification import *
-from svm.dataset import LibSvmClassificationDataSet
-from svm.dataset import LibSvmTestDataSet
+from svm.dataset import LibSvmClassificationDataSet, LibSvmTestDataSet
 from svm.kernel import *
+from svm.predict import *
 restore_path()
 
 class test_classification(NumpyTestCase):
     def check_basics(self):
         Model = LibSvmCClassificationModel
-        Kernel = LinearKernel()
-        Model(Kernel)
-        Model(Kernel, cost=1.0)
+        kernel = LinearKernel()
+        Model(kernel)
+        Model(kernel, cost=1.0)
         weights = [(2, 10.0), (1, 20.0), (0, 30.0)]
-        Model(Kernel, weights=weights)
-        Model(Kernel, 1.0, weights)
-        Model(Kernel, cost=1.0, weights=weights)
+        Model(kernel, weights=weights)
+        Model(kernel, 1.0, weights)
+        Model(kernel, cost=1.0, weights=weights)
 
         Model = LibSvmNuClassificationModel
-        Model(Kernel)
-        Model(Kernel, nu=0.5)
-        Model(Kernel, weights=weights)
-        Model(Kernel, 0.5, weights)
+        Model(kernel)
+        Model(kernel, nu=0.5)
+        Model(kernel, weights=weights)
+        Model(kernel, 0.5, weights)
 
     def check_c_basics(self):
+        ModelType = LibSvmCClassificationModel
+        ResultType = LibSvmClassificationResults
+        PredictorType = LibSvmPredictor
+
         labels = [0, 1, 1, 2]
         x = [N.array([0, 0]),
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
         traindata = LibSvmClassificationDataSet(zip(labels, x))
-
-        Model = LibSvmCClassificationModel
-        model = Model(RBFKernel(traindata.gamma))
-        results = model.fit(traindata)
-
+        model = ModelType(RBFKernel(traindata.gamma))
+        results = model.fit(traindata, ResultType, PredictorType)
         testdata = LibSvmTestDataSet(x)
         results.predict(testdata)
         results.predict_values(testdata)
 
     def check_c_more(self):
+        ModelType = LibSvmCClassificationModel
+        ResultType = LibSvmClassificationResults
+        PredictorType = LibSvmPredictor
+
         labels = [0, 1, 1, 2]
         x = [N.array([0, 0]),
              N.array([0, 1]),
@@ -66,8 +71,8 @@ class test_classification(NumpyTestCase):
 
         for kernel, expected_rho, expected_error in \
             zip(kernels, expected_rhos, expected_errors):
-            model = LibSvmCClassificationModel(kernel, cost, weights)
-            results = model.fit(traindata)
+            model = ModelType(kernel, cost, weights)
+            results = model.fit(traindata, ResultType, PredictorType)
 
             self.assertEqual(results.labels, [0, 1, 2])
             #self.assertEqual(model.nSV, [1, 2, 1])
@@ -81,6 +86,10 @@ class test_classification(NumpyTestCase):
             self.assertEqual(N.sum(predictions != labels), expected_error)
 
     def check_c_probability(self):
+        ModelType = LibSvmCClassificationModel
+        ResultType = LibSvmClassificationResults
+        PredictorType = LibSvmPredictor
+
         labels = [0, 1, 1, 2]
         x = [N.array([0, 0]),
              N.array([0, 1]),
@@ -98,8 +107,8 @@ class test_classification(NumpyTestCase):
             ]
 
         for kernel in kernels:
-            model = LibSvmCClassificationModel(kernel, cost, weights)
-            results = model.fit(traindata)
+            model = ModelType(kernel, cost, weights)
+            results = model.fit(traindata, ResultType, PredictorType)
             results.predict_probability(testdata)
 
     def check_cross_validate(self):

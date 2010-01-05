@@ -3,6 +3,10 @@ import inspect
 from ctypes import *
 import numpy as N
 
+__all__ = [
+    'svm_node_dtype'
+    ]
+
 _libsvm = N.ctypes_load_library('libsvm_', __file__)
 
 svm_node_dtype = \
@@ -113,7 +117,8 @@ libsvm_api = {
     (c_double, [POINTER(svm_model)]),
     'svm_cross_validation' :
     (None,
-     [POINTER(svm_problem), POINTER(svm_parameter), c_int, POINTER(c_double)]),
+     [POINTER(svm_problem), POINTER(svm_parameter), c_int,
+      POINTER(c_double)]),
     'svm_destroy_model' :
     (None, [POINTER(svm_model)])
     }
@@ -135,17 +140,3 @@ def create_svm_problem(data):
     problem.x = x
     problem.y = y
     return problem
-
-__all__ = [
-    'svm_node_dtype',
-    'C_SVC',
-    'NU_SVC',
-    'ONE_CLASS',
-    'EPSILON_SVR',
-    'NU_SVR',
-    'LINEAR',
-    'POLY',
-    'RBF',
-    'SIGMOID',
-    'PRECOMPUTED'
-    ] + libsvm_api.keys()

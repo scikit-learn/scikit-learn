@@ -2,35 +2,40 @@ from numpy.testing import *
 import numpy as N
 
 set_local_path('../..')
-from svm.oneclass import *
-from svm.dataset import LibSvmOneClassDataSet
-from svm.dataset import LibSvmTestDataSet
+from svm.dataset import LibSvmOneClassDataSet, LibSvmTestDataSet
 from svm.kernel import *
+from svm.oneclass import *
+from svm.predict import *
 restore_path()
 
 class test_oneclass(NumpyTestCase):
     def check_basics(self):
-        Model = LibSvmOneClassModel
-        Kernel = LinearKernel()
-        Model(Kernel)
-        Model(Kernel, nu=1.0)
+        ModelType = LibSvmOneClassModel
+        kernel = LinearKernel()
+        ModelType(kernel)
+        ModelType(kernel, nu=1.0)
 
     def check_train(self):
+        ModelType = LibSvmOneClassModel
+        ResultType = LibSvmOneClassResults
+        PredictorType = LibSvmPredictor
+
         x = [N.array([0, 0]),
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
         traindata = LibSvmOneClassDataSet(x)
-
-        Model = LibSvmOneClassModel
-        model = Model(LinearKernel())
-        results = model.fit(traindata)
-
+        model = ModelType(LinearKernel())
+        results = model.fit(traindata, ResultType, PredictorType)
         testdata = LibSvmTestDataSet(x)
         results.predict(testdata)
         results.predict_values(testdata)
 
     def check_more(self):
+        ModelType = LibSvmOneClassModel
+        ResultType = LibSvmOneClassResults
+        PredictorType = LibSvmPredictor
+
         x = [N.array([0, 0]),
              N.array([0, 1]),
              N.array([1, 0]),
@@ -51,8 +56,8 @@ class test_oneclass(NumpyTestCase):
             ]
 
         for kernel, expected_pred in zip(kernels, expected_preds):
-            model = LibSvmOneClassModel(kernel, nu)
-            results = model.fit(traindata)
+            model = ModelType(kernel, nu)
+            results = model.fit(traindata, ResultType, PredictorType)
             pred = results.predict(testdata)
             self.assertEqual(results.predict(testdata), expected_pred)
             values = results.predict_values(testdata)
