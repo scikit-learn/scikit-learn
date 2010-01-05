@@ -1,7 +1,7 @@
 from model import Model
 from results import Results
-
 import libsvm
+import utils
 
 class RegressionResults(Results):
     def __init__(self, dtype, model):
@@ -12,7 +12,7 @@ class RegressionResults(Results):
 
     def predict(self, x):
         x = self.dtype.convert_test_data(x)
-        xptr = cast(utils.addressof_array(x), POINTER(libsvm.svm_node))
+        xptr = utils.array_as_ctype(x, libsvm.svm_node)
         return libsvm.svm_predict(self.model, xptr)
 
 class EpsilonSVRModel(Model):

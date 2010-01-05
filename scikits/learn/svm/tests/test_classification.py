@@ -17,6 +17,7 @@ class test_classification(NumpyTestCase):
         results = model.fit(data)
         for label, sample in data:
             assert_equal(results.predict(sample), label)
+            v = results.predict_values(sample)
 
     def check_nusvc(self):
         labels = [0, 1, 1, 2]
@@ -27,6 +28,7 @@ class test_classification(NumpyTestCase):
         results = model.fit(data)
         for label, sample in data:
             assert_equal(results.predict(sample), label)
+            v = results.predict_values(sample)
 
 if __name__ == '__main__':
     NumpyTest().run()

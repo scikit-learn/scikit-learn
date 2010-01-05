@@ -1,9 +1,11 @@
 __all__ = [
     'load_ctypes_library',
-    'addressof_array'
+    'addressof_array',
+    'array_as_ctype'
     ]
 
 import numpy as N
+import ctypes
 
 def load_ctypes_library(libname, loader_path):
     import sys, os
@@ -17,7 +19,6 @@ def load_ctypes_library(libname, loader_path):
     else:
         libdir = loader_path
     libpath = os.path.join(libdir, libname)
-    import ctypes
     if sys.platform == 'win32':
         return ctypes.cdll.load(libpath)
     else:
@@ -25,3 +26,6 @@ def load_ctypes_library(libname, loader_path):
 
 def addressof_array(a):
     return N.cast[N.intp](int(a.__array_data__[0], 16))
+
+def array_as_ctype(a, ctype):
+    return ctypes.cast(addressof_array(a), ctypes.POINTER(ctype))

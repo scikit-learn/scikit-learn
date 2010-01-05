@@ -1,7 +1,10 @@
 from model import Model
 from results import Results
-
 import libsvm
+import utils
+
+import numpy as N
+from ctypes import c_double
 
 # XXX classification models need weights
 
@@ -19,15 +22,15 @@ class ClassificationResults(Results):
 
     def predict(self, x):
         x = self.dtype.convert_test_data(x)
-        xptr = cast(utils.addressof_array(x), POINTER(libsvm.svm_node))
+        xptr = utils.array_as_ctype(x, libsvm.svm_node)
         return int(libsvm.svm_predict(self.model, xptr))
 
     def predict_values(self, x):
         x = self.dtype.convert_test_data(x)
         n = self.nr_class*(self.nr_class-1)/2
         v = N.empty((n,), dtype=N.float64)
-        xptr = cast(utils.addressof_array(x), POINTER(libsvm.svm_node))
-        vptr = cast(utils.addressof_array(v), POINTER(c_double))
+        xptr = utils.array_as_ctype(x, libsvm.svm_node)
+        vptr = utils.array_as_ctype(v, c_double)
         libsvm.svm_predict_values(self.model, xptr, vptr)
         count = 0
         d = {}
