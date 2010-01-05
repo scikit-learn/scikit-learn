@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Aug 21 12:00 PM 2006 J
+# Last Change: Fri Sep 29 07:00 PM 2006 J
 # TODO:
 #   - check how to handle cmd line build options with distutils and use
 #   it in the building process
@@ -12,6 +12,7 @@ from pyem import version as pyem_version
 # distutils does not update MANIFEST correctly, removes it
 import os
 if os.path.exists('MANIFEST'): os.remove('MANIFEST')
+from os.path import join
 
 import re
 
@@ -59,7 +60,8 @@ def do_subst_in_file(sourcefile, targetfile, dict):
 class SetupOption:
     def __init__(self):
         self.kmean      = 'py'
-        self.ext_modules= []
+        self.ext_modules= [Extension(join('pyem', 'c_gden'),
+                              sources=[join('pyem', 'src', 'c_gden.c')]) ]
         self.cmdclass   = {}
         self.subsdic     = {'%KMEANIMPORT%': []}
 
@@ -95,7 +97,7 @@ class SetupOption:
             #self.subsdic['%KMEANIMPORT%']   = pyrex_kmean
     def setup(self):
         self._config_kmean()
-        import time
+        #import time
         #do_subst_in_file('pyem/kmean.py.in', 'pyem/kmean.py', self.subsdic)
         setup(name      = DISTNAME,
             version     = VERSION,
@@ -103,7 +105,7 @@ class SetupOption:
             author      = AUTHOR,
             author_email= AUTHOR_EMAIL,
             url         = URL,
-            packages    = ['pyem'],
+            packages    = ['pyem', 'pyem.tests', 'pyem.profile_data'],
             ext_modules = self.ext_modules,
             cmdclass    = self.cmdclass)
 

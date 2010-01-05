@@ -23,3 +23,6 @@ matcode
 ../MSG
 MSG
 exinfo.py
+blop
+*.prog
+*.prof

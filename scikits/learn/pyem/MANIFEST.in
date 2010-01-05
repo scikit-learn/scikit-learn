@@ -3,4 +3,4 @@ include pyem/src/c_python.pxd
 include Changelog
 include TODO
 include LICENSE.txt
-exclude pyem/_c_densities.py
+#exclude pyem/_c_densities.py

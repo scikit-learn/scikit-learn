@@ -1,16 +1,16 @@
 import numpy as N
-from gmm_em import GM, GMM
+from pyem import GM, GMM
 import copy
 
 def bench1(mode = 'diag'):
     #===========================================
     # GMM of 20 comp, 20 dimension, 1e4 frames
     #===========================================
-    d       = 20
-    k       = 20
-    nframes = 1e4
+    d       = 15
+    k       = 30
+    nframes = 1e5
     niter   = 10
-    mode    = 'full'
+    mode    = 'diag'
 
     #+++++++++++++++++++++++++++++++++++++++++++
     # Create an artificial GMM model, samples it
@@ -18,8 +18,9 @@ def bench1(mode = 'diag'):
     print "Generating the mixture"
     # Generate a model with k components, d dimensions
     w, mu, va   = GM.gen_param(d, k, mode, spread = 3)
-    gm          = GM(d, k, mode)
-    gm.set_param(w, mu, va)
+    # gm          = GM(d, k, mode)
+    # gm.set_param(w, mu, va)
+    gm          = GM.fromvalues(w, mu, va)
 
     # Sample nframes frames  from the model
     data    = gm.sample(nframes)

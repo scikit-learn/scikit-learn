@@ -1,3 +1,9 @@
+pyem (0.5.2) Tue, 03 Oct 2006 18:28:13 +0900
+
+	* Update tests so that they work within the numpy test framework
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.5.2) Tue, 29 Aug 2006 14:53:49 +0900
 
 	* Add a class method to GM to create a model directly from

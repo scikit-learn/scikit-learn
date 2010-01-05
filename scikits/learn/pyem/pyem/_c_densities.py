@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Mon Aug 28 06:00 PM 2006 J
+# Last Change: Tue Oct 03 05:00 PM 2006 J
 
 # This module uses a C implementation through ctypes, for diagonal cases
 # TODO:
@@ -13,6 +13,27 @@ import numpy.linalg as lin
 from numpy.random import randn
 from scipy.stats import chi2
 import densities as D
+
+import ctypes
+from ctypes import cdll, c_uint, c_int, c_double, POINTER
+from numpy.ctypeslib import ndpointer, load_library
+
+ctypes_major    = int(ctypes.__version__.split('.')[0])
+if ctypes_major < 1:
+    msg =  "version of ctypes is %s, expected at least %s" \
+            % (ctypes.__version__, '1.0.0')
+    raise Exception(msg)
+
+# Requirements for diag gden
+_gden   = load_library('c_gden.so', __file__)
+arg1    = ndpointer(dtype='<f8')
+arg2    = c_uint
+arg3    = c_uint
+arg4    = ndpointer(dtype='<f8')
+arg5    = ndpointer(dtype='<f8')
+arg6    = ndpointer(dtype='<f8')
+_gden.gden_diag.argtypes    = [arg1, arg2, arg3, arg4, arg5, arg6]
+_gden.gden_diag.restype     = c_int
 
 # Error classes
 class DenError(Exception):
@@ -120,24 +141,34 @@ def _diag_gauss_den(x, mu, va, log):
     d   = mu.size
     n   = x.shape[0]
     if not log:
-        from ctypes import cdll, c_uint, c_int, c_double, POINTER
-        _gden   = cdll.LoadLibrary('src/libgden.so')
-        _gden.gden_diag.restype     = c_int
-        _gden.gden_diag.argtypes    = [POINTER(c_double), c_uint, c_uint,
-                POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+        y       = N.zeros(n)
+        vat     = va.copy()
+        # _gden.gden_diag(N.require(x, requirements = 'C'), n, d, 
+        #         N.require(mu, requirements = 'C'),
+        #         N.require(inva, requirements = 'C'),
+        #         N.require(y, requirements = 'C'))
+        x       = N.require(x, requirements = 'C')
+        mu      = N.require(mu, requirements = 'C')
+        vat     = N.require(vat, requirements = 'C')
+        y       = N.require(y, requirements = 'C')
+        _gden.gden_diag(x, n, d, mu, vat, y)
+        return y
+        # _gden.gden_diag.restype     = c_int
+        # _gden.gden_diag.argtypes    = [POINTER(c_double), c_uint, c_uint,
+        #         POINTER(c_double), POINTER(c_double), POINTER(c_double)]
 
-        y   = N.zeros(n)
-        inva= 1/va
-        _gden.gden_diag(x.ctypes.data_as(POINTER(c_double)),
-            n, d,
-            mu.ctypes.data_as(POINTER(c_double)),
-            inva.ctypes.data_as(POINTER(c_double)),
-            y.ctypes.data_as(POINTER(c_double)))
+        # y   = N.zeros(n)
+        # inva= 1/va
+        # _gden.gden_diag(x.ctypes.data_as(POINTER(c_double)),
+        #     n, d,
+        #     mu.ctypes.data_as(POINTER(c_double)),
+        #     inva.ctypes.data_as(POINTER(c_double)),
+        #     y.ctypes.data_as(POINTER(c_double)))
     else:
         y   = _scalar_gauss_den(x[:,0], mu[0,0], va[0,0], log)
         for i in range(1, d):
             y    +=  _scalar_gauss_den(x[:,i], mu[0,i], va[0,i], log)
-    return y
+        return y
 
 def _full_gauss_den(x, mu, va, log):
     """ This function is the actual implementation

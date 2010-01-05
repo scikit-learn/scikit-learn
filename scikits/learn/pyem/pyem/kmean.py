@@ -1,5 +1,8 @@
 # /usr/bin/python
-# Last Change: Tue Aug 29 12:00 PM 2006 J
+# Last Change: Thu Sep 28 01:00 PM 2006 J
+
+#TODO:
+#   - a demo for kmeans
 
 import numpy as N
 
@@ -69,39 +72,5 @@ def kmean(data, init, iter = 10):
 
     return code, label
 
-# Test functions usable for now
-def test_kmean():
-    X   = N.array([[3.0, 3], [4, 3], [4, 2],
-            [9, 2], [5, 1], [6, 2], [9, 4], 
-            [5, 2], [5, 4], [7, 4], [6, 5]])
-
-    initc   = N.concatenate(([[X[0]], [X[1]], [X[2]]])) 
-
-    codet1  = N.array([[3.0000, 3.0000],
-            [6.2000, 4.0000], 
-            [5.8000, 1.8000]])
-            
-    codet2  = N.array([[11.0/3, 8.0/3], 
-            [6.7500, 4.2500],
-            [6.2500, 1.7500]])
-
-    code    = initc.copy()
-
-    code1   = kmean(X, code, 1)[0]
-    code2   = kmean(X, code, 2)[0]
-
-    import numpy.testing as testing
-    try:
-        testing.assert_array_almost_equal(code1, codet1)
-        print "kmean test 1 succeded"
-    except AssertionError:
-        print "kmean test 1 failed"
-
-    try:
-        testing.assert_array_almost_equal(code2, codet2)
-        print "kmean test 2 succeded"
-    except AssertionError:
-        print "kmean test 2 failed"
-
 if __name__ == "__main__":
-    test_kmean()
+    pass
