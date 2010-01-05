@@ -16,7 +16,8 @@ it an evaluator class and you are in business.
 
 from ga_util import *
 import scipy.stats.rv as rv
-import Numeric, copy 
+import scipy.numeric as Numeric
+import copy 
 import tree
 
 class default_evaluator: 
