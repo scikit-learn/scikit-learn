@@ -93,7 +93,7 @@ class test_precomputed_dataset(NumpyTestCase):
             ]
         y = N.random.randn(10)
         x = N.random.randn(len(y), 10)
-        origdata = LibSvmRegressionDataSet(zip(y, x))
+        origdata = LibSvmRegressionDataSet(y, x)
 
         for kernel in kernels:
             # calculate expected Gram matrix
@@ -112,12 +112,12 @@ class test_precomputed_dataset(NumpyTestCase):
 
         y1 = N.random.randn(10)
         x1 = N.random.randn(len(y1), 10)
-        origdata = LibSvmRegressionDataSet(zip(y1, x1))
+        origdata = LibSvmRegressionDataSet(y1, x1)
         pcdata = origdata.precompute(kernel)
 
         y2 = N.random.randn(5)
         x2 = N.random.randn(len(y2), x1.shape[1])
-        moredata = LibSvmRegressionDataSet(zip(y2, x2))
+        moredata = LibSvmRegressionDataSet(y2, x2)
         morepcdata = pcdata.combine(moredata)
 
         expt_grammat = N.empty((len(y1) + len(y2),)*2)

@@ -32,7 +32,7 @@ class test_classification(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        traindata = LibSvmClassificationDataSet(zip(labels, x))
+        traindata = LibSvmClassificationDataSet(labels, x)
         testdata = LibSvmTestDataSet(x)
         return traindata, testdata
 
@@ -100,7 +100,7 @@ class test_classification(NumpyTestCase):
     def check_cross_validate(self):
         labels = ([-1] * 50) + ([1] * 50)
         x = N.random.randn(len(labels), 10)
-        traindata = LibSvmClassificationDataSet(zip(labels, x))
+        traindata = LibSvmClassificationDataSet(labels, x)
         kernel = LinearKernel()
         model = LibSvmCClassificationModel(kernel)
         nr_fold = 10
@@ -133,11 +133,11 @@ class test_classification(NumpyTestCase):
         x1 = N.random.randn(len(labels1), 10)
         labels2 = N.random.random_integers(0, 2, 10)
         x2 = N.random.randn(len(labels2), x1.shape[1])
-        trndata1 = LibSvmClassificationDataSet(zip(labels1, x1))
-        trndata2 = LibSvmClassificationDataSet(zip(labels2, x2))
+        trndata1 = LibSvmClassificationDataSet(labels1, x1)
+        trndata2 = LibSvmClassificationDataSet(labels2, x2)
         reflabels = N.concatenate([labels1, labels2])
         refx = N.vstack([x1, x2])
-        trndata = LibSvmClassificationDataSet(zip(reflabels, refx))
+        trndata = LibSvmClassificationDataSet(reflabels, refx)
         testdata = LibSvmTestDataSet(refx)
         return trndata, testdata, trndata1, trndata2
 

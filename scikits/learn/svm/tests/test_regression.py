@@ -32,7 +32,7 @@ class test_regression(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        traindata = LibSvmRegressionDataSet(zip(y, x))
+        traindata = LibSvmRegressionDataSet(y, x)
         testdata = LibSvmTestDataSet(x)
         model = ModelType(LinearKernel(), probability=True)
         results = model.fit(traindata)
@@ -45,7 +45,7 @@ class test_regression(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        traindata = LibSvmRegressionDataSet(zip(labels, x))
+        traindata = LibSvmRegressionDataSet(labels, x)
         testdata = LibSvmTestDataSet(x)
         return traindata, testdata
 
@@ -85,7 +85,7 @@ class test_regression(NumpyTestCase):
     def check_cross_validate(self):
         y = N.random.randn(100)
         x = N.random.randn(len(y), 10)
-        traindata = LibSvmRegressionDataSet(zip(y, x))
+        traindata = LibSvmRegressionDataSet(y, x)
         kernel = LinearKernel()
         model = LibSvmEpsilonRegressionModel(kernel)
         nr_fold = 10
@@ -108,11 +108,11 @@ class test_regression(NumpyTestCase):
         x1 = N.random.randn(len(y1), 10)
         y2 = N.random.randn(5)
         x2 = N.random.randn(len(y2), x1.shape[1])
-        trndata1 = LibSvmRegressionDataSet(zip(y1, x1))
-        trndata2 = LibSvmRegressionDataSet(zip(y2, x2))
+        trndata1 = LibSvmRegressionDataSet(y1, x1)
+        trndata2 = LibSvmRegressionDataSet(y2, x2)
         refy = N.concatenate([y1, y2])
         refx = N.vstack([x1, x2])
-        trndata = LibSvmRegressionDataSet(zip(refy, refx))
+        trndata = LibSvmRegressionDataSet(refy, refx)
         testdata = LibSvmTestDataSet(refx)
         return trndata, trndata1, trndata2, testdata
 
