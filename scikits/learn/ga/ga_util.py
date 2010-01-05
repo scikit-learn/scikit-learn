@@ -58,4 +58,4 @@ def testflip():
 
 def remove_NaN(z):
     from numpy import isnan, isinf, compress, logical_not
-    return compress(logical_not( isnan(z)+isinf(z)),z)
+    return compress(logical_not( isnan(z)+isinf(z)),z,axis=-1)

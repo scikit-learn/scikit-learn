@@ -520,7 +520,7 @@ class objective:
 
         time.sleep(self.wait)
 
-        return sum(genome.array())
+        return sum(genome.array(),axis=0)
 
 
 

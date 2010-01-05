@@ -40,7 +40,7 @@ class roulette_selector(selector):
                    (f_max <= 0 and f_min <= 0)):
             raise GAError, 'srs_selector requires all fitnesses values to be either strictly positive or strictly negative'
         if f_max == f_min: f = ones(shape(f),typecode = Float32)
-        self.dart_board = add.accumulate(f / sum(f))
+        self.dart_board = add.accumulate(f / sum(f,axis=0))
     def select(self,pop,cnt = 1):
         returns = []
         for i in range(cnt):
@@ -63,7 +63,7 @@ class srs_selector(selector):
         if not ( (f_max >= 0. and f_min >= 0.) or
                    (f_max <= 0. and f_min <= 0.)):
             raise GAError, 'srs_selector requires all fitnesses values to be either strictly positive or strictly negative - min %f, max %f' %(f_min,f_max)
-        f_avg = sum(f)/sz
+        f_avg = sum(f,axis=0)/sz
         if f_avg == 0.: e = ones(shape(f),typecode = Float32)
         else:
             if pop.min_or_max() == 'max': e = f/f_avg
@@ -75,7 +75,7 @@ class srs_selector(selector):
         choices = []
         for i in xrange(sz): choices = choices + [pop[i]] * int(garauntee[i])
         #now deal with the remainder
-        dart_board = add.accumulate(chance / sum(chance))
+        dart_board = add.accumulate(chance / sum(chance,axis=0))
         for i in range(len(choices),sz):
             dart = rv.random()
             idx = 0
