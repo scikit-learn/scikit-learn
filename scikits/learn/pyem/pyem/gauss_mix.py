@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Jul 14 05:00 PM 2006 J
+# Last Change: Fri Aug 04 07:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
@@ -194,7 +194,7 @@ def gen_rand_index(p, n):
     # different
     invcdf  = N.cumsum(p)
     uni     = rand(n)
-    index   = N.zeros(n)
+    index   = N.zeros(n, dtype=int)
 
     # This one should be a bit faster
     for k in range(len(p)-1, 0, -1):

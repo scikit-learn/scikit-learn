@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Jul 14 05:00 PM 2006 J
+# Last Change: Fri Aug 04 07:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -129,7 +129,7 @@ class GMM(ExpMixtureModel):
         # multiply by the weight
         tgd	*= self.gm.w
         # Normalize to get a pdf
-        gd	= tgd  / N.sum(tgd, axis=1)[:, N.NewAxis]
+        gd	= tgd  / N.sum(tgd, axis=1)[:, N.newaxis]
 
         return gd, tgd
 

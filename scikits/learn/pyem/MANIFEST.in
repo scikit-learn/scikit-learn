@@ -2,3 +2,4 @@ include pyem/src/c_numpy.pxd
 include pyem/src/c_python.pxd
 include Changelog
 include TODO
+include LICENSE.txt

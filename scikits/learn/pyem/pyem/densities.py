@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Fri Jul 14 05:00 PM 2006 J
+# Last Change: Fri Aug 04 07:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -146,13 +146,13 @@ def _full_gauss_den(x, mu, va, log):
     # n       = N.size(x, 0)
     # y       = N.zeros(n, float)
     # for i in range(n):
-    #     y[i] = N.matrixmultiply(x[i,:],
-    #              N.matrixmultiply(inva, N.transpose(x[i,:])))
+    #     y[i] = N.dot(x[i,:],
+    #              N.dot(inva, N.transpose(x[i,:])))
     # y *= -0.5
 
     # we are using a trick with sum to "emulate" 
     # the matrix multiplication inva * x without any explicit loop
-    y   = N.matrixmultiply((x-mu), inva)
+    y   = N.dot((x-mu), inva)
     y   = -0.5 * N.sum(y * (x-mu), 1)
 
     if not log:
@@ -197,8 +197,8 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100):
     mu  = mu[dim]
     if mode == 'diag':
         va      = va[dim]
-        elps    = N.outerproduct(mu, N.ones(npoints, float))
-        elps    += N.matrixmultiply(N.diag(N.sqrt(va)), circle)
+        elps    = N.outer(mu, N.ones(npoints, float))
+        elps    += N.dot(N.diag(N.sqrt(va)), circle)
     elif mode == 'full':
         va  = va[c,:][:,c]
         # Method: compute the cholesky decomp of each cov matrix, that is
@@ -209,8 +209,8 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100):
         #   - va = cova' * cova (matlab)
         # So take care when comparing results with matlab !
         cova    = lin.cholesky(va)
-        elps    = N.outerproduct(mu, N.ones(npoints, float))
-        elps    += N.matrixmultiply(cova, circle)
+        elps    = N.outer(mu, N.ones(npoints, float))
+        elps    += N.dot(cova, circle)
     else:
         raise DenParam("var mode not recognized")
 
@@ -225,7 +225,7 @@ def generate_test_data(n, d, mode = 'diag', file='test.dat'):
         va  = abs(randn(1, d))
     elif mode == 'full':
         va  = randn(d, d)
-        va  = matrixmultiply(va, va.transpose())
+        va  = dot(va, va.transpose())
 
     input   = randn(n, d)
     output  = gauss_den(input, mu, va)
@@ -374,7 +374,7 @@ if __name__ == "__main__":
 
     # Generate a multivariate gaussian of mean mu and covariance va
     X       = randn(1e3, 2)
-    Yc      = N.matrixmultiply(N.diag(N.sqrt(va)), X.transpose())
+    Yc      = N.dot(N.diag(N.sqrt(va)), X.transpose())
     Yc      = Yc.transpose() + mu
 
     # Plotting
@@ -391,7 +391,7 @@ if __name__ == "__main__":
 
     # Generate a multivariate gaussian of mean mu and covariance va
     X       = randn(1e3, 2)
-    Yc      = N.matrixmultiply(lin.cholesky(va), X.transpose())
+    Yc      = N.dot(lin.cholesky(va), X.transpose())
     Yc      = Yc.transpose() + mu
 
     # Plotting

@@ -1,5 +1,4 @@
 import numpy as N
-import tables
 from gmm_em import GM, GMM
 import copy
 
