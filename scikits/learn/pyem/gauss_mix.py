@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Tue Oct 03 06:00 PM 2006 J
+# Last Change: Thu Nov 09 06:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
@@ -7,9 +7,7 @@ import numpy as N
 from numpy.random import randn, rand
 import numpy.linalg as lin
 import densities
-
-MAX_DEV     = 1e-10
-MAX_COND    = 1e10
+from misc import _MAX_DBL_DEV
 
 # Right now, two main usages of a Gaussian Model are possible
 #   - init a Gaussian Model with meta-parameters, and trains it
@@ -17,9 +15,6 @@ MAX_COND    = 1e10
 #   of confidences. In this case, we would like to init it with
 #   known values of parameters. This can be done with the class method 
 #   fromval
-#
-#   For now, we have to init with meta-parameters, and set 
-#   the parameters afterward. There should be a better way ?
 
 # TODO:
 #   - change bounds methods of GM class instanciations so that it cannot 
@@ -48,16 +43,20 @@ class GM:
     """Gaussian Mixture class. This is a simple container class
     to hold Gaussian Mixture parameters (weights, mean, etc...).
     It can also draw itself (confidence ellipses) and samples itself.
-
-    Is initiated by giving dimension, number of components and 
-    covariance mode"""
+    """
 
     # I am not sure it is useful to have a spherical mode...
     _cov_mod    = ['diag', 'full']
 
+    #===============================
+    # Methods to construct a mixture
+    #===============================
     def __init__(self, d, k, mode = 'diag'):
-        """Init a Gaussian model of k components, each component being a 
-        d multi-variate Gaussian, with covariance matrix of style mode"""
+        """Init a Gaussian Mixture of k components, each component being a 
+        d multi-variate Gaussian, with covariance matrix of style mode.
+        
+        If you want to build a Gaussian Mixture with knowns weights, means
+        and variances, you can use GM.fromvalues method directly"""
         if mode not in self._cov_mod:
             raise GmParamError("mode %s not recognized" + str(mode))
 
@@ -116,6 +115,9 @@ class GM:
         res.set_param(weights, mu, sigma)
         return res
         
+    #=====================================================
+    # Fundamental facilities (sampling, confidence, etc..)
+    #=====================================================
     def sample(self, nframes):
         """ Sample nframes frames from the model """
         if not self.is_valid:
@@ -242,6 +244,15 @@ class GM:
 
     gen_param = classmethod(gen_param)
 
+    #=======================
+    # Regularization methods
+    #=======================
+    def _regularize(self):
+        raise NotImplemented("No regularization")
+
+    #=================
+    # Plotting methods
+    #=================
     def plot(self, *args, **kargs):
         """Plot the ellipsoides directly for the model
         
@@ -327,6 +338,22 @@ class GM:
         except ImportError:
             raise GmParamError("matplotlib not found, cannot plot...")
 
+    # Syntactic sugar
+    def __repr__(self):
+        repr    = ""
+        repr    += "Gaussian Mixture:\n"
+        repr    += " -> %d dimensions\n" % self.d
+        repr    += " -> %d components\n" % self.k
+        repr    += " -> %s covariance \n" % self.mode
+        if self.is_valid:
+            repr    += "Has initial values"""
+        else:
+            repr    += "Has no initial values yet"""
+        return repr
+
+    def __str__(self):
+        return self.__repr__()
+
 # Function to generate a random index: this is kept outside any class,
 # as the function can be useful for other
 def gen_rand_index(p, n):
@@ -366,7 +393,7 @@ def check_gmm_param(w, mu, va):
     """
         
     # Check that w is valid
-    if N.fabs(N.sum(w, 0)  - 1) > MAX_DEV:
+    if N.fabs(N.sum(w, 0)  - 1) > _MAX_DBL_DEV:
         raise GmParamError('weight does not sum to 1')
     
     if not len(w.shape) == 1:

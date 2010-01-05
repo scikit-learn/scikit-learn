@@ -1,12 +1,12 @@
-# Last Change: Fri Oct 20 12:00 PM 2006 J
+# Last Change: Thu Nov 09 06:00 PM 2006 J
 
 Things which must be implemented for a 1.0 version (in importante order)
-    - A class for learning + a classifier
-    - test for various length and model size of gaussian densities/GM and GMM
-    - a small help/tutorial
-    - be complient with scipy module dev guidelines (DEVELOPERS.TXT)
+    - A classifier
+    - basic regularization
 
 Things which would be nice (after 1.0 version):
+    - Bayes prior (hard, suppose MCMC)
+    - variational Bayes (hard ? Not sure yet)
     - Integrate libem (libem should be modified so
     that it would be easy to package and distribute)
     - Other initialization schemes

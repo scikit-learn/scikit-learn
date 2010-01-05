@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 19 07:00 PM 2006 J
+# Last Change: Thu Nov 09 06:00 PM 2006 J
 # TODO:
 #   - check how to handle cmd line build options with distutils and use
 #   it in the building process
@@ -16,14 +16,14 @@ VERSION     = pyem_version
 DESCRIPTION ='A python module for Expectation Maximization learning of mixtures pdf',
 AUTHOR      ='David Cournapeau',
 AUTHOR_EMAIL='david@ar.media.kyoto-u.ac.jp',
-URL         ='http://ar.media.kyoto-u.ac.jp/members/david',
+URL         ='http://ar.media.kyoto-u.ac.jp/members/david/softwares/pyem',
 
 def configuration(parent_package='',top_path=None, package_name='pyem'):
     from numpy.distutils.misc_util import Configuration
     config = Configuration(package_name,parent_package,top_path,
              version     = VERSION)
     config.add_data_dir('tests')
-    config.add_subpackage('profile_data')
+    config.add_data_dir('profile_data')
     config.add_extension('c_gden',
                          #define_macros=[('LIBSVM_EXPORTS', None),
                          #               ('LIBSVM_DLL', None)],
@@ -34,7 +34,8 @@ def configuration(parent_package='',top_path=None, package_name='pyem'):
 if __name__ == "__main__":
     from numpy.distutils.core import setup
     #setup(**configuration(top_path='').todict())
-    setup(**configuration(top_path='',))
+    #setup(**configuration(top_path=''))
+    setup(configuration=configuration)
 # from distutils.core import setup, Extension
 # from pyem import version as pyem_version
 # 

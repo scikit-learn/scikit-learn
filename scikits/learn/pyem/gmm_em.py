@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Tue Oct 24 06:00 PM 2006 J
+# Last Change: Thu Nov 16 02:00 PM 2006 J
 
 # TODO:
 #   - which methods to avoid va shrinking to 0 ? There are several options, 
@@ -14,6 +14,8 @@ from numpy.random import randn
 import densities
 from kmean import kmean
 from gauss_mix import GM
+
+from misc import _DEF_ALPHA, _MIN_DBL_DELTA, _MIN_INV_COND
 
 # Error classes
 class GmmError(Exception):
@@ -38,12 +40,9 @@ class GmmParamError:
 # sense to use inheritance for # interface specification in python, since its 
 # dynamic type systeme.
 
-# Anyway, a mixture class should encapsulates all details concerning a mixture model:
-#   - internal parameters for the pdfs
-#   - can compute sufficient statistics for EM
-#   - can sample a model
-#   - can generate random valid parameters for a new pdf (using class method)
-class MixtureModel:
+# Anyway, a mixture model class should encapsulates all details 
+# concerning getting sufficient statistics (SS), likelihood and bic.
+class MixtureModel(object):
     pass
 
 class ExpMixtureModel(MixtureModel):
@@ -90,7 +89,7 @@ class GMM(ExpMixtureModel):
         """ Init the model at random."""
         k   = self.gm.k
         d   = self.gm.d
-        if mode == 'diag':
+        if self.gm.mode == 'diag':
             w   = N.ones(k) / k
             mu  = randn(k, d)
             va  = N.fabs(randn(k, d))
@@ -120,6 +119,7 @@ class GMM(ExpMixtureModel):
 
         self.init   = init_methods[init]
         self.isinit = False
+        self.initst = init
 
     def sufficient_statistics(self, data):
         """ Return normalized and non-normalized sufficient statistics
@@ -168,7 +168,10 @@ class GMM(ExpMixtureModel):
         elif self.gm.mode == 'full':
             # In full mode, this is the bottleneck: the triple loop
             # kills performances. This is pretty straightforward
-            # algebra, so computing it in C should not be too difficult
+            # algebra, so computing it in C should not be too difficult. The
+            # real problem is to have valid covariance matrices, and to keep
+            # them positive definite, maybe with special storage... Not sure
+            # it really worth the risk
             mu  = N.zeros((k, d))
             va  = N.zeros((k*d, d))
 
@@ -239,6 +242,13 @@ class GMM(ExpMixtureModel):
         n   = N.shape(data)[0]
         return bic(lk, free_deg, n)
 
+    # syntactic sugar
+    def __repr__(self):
+        repre   = ""
+        repre   += "Gaussian Mixture Model\n"
+        repre   += " -> initialized by %s\n" % str(self.initst)
+        repre   += self.gm.__repr__()
+        return repre
 
 class EM:
     """An EM trainer. An EM trainer
@@ -265,6 +275,8 @@ class EM:
         Returns:
             likelihood (one value per iteration).
         """
+        if not isinstance(model, MixtureModel):
+            raise TypeError("expect a MixtureModel as a model")
 
         # Initialize the data (may do nothing depending on the model)
         model.init(data)
@@ -282,9 +294,62 @@ class EM:
             model.update_em(data, g)
             if has_em_converged(like[i], like[i-1], thresh):
                 return like[0:i]
+        # # Em computation, with computation of the likelihood
+        # g, tgd      = model.sufficient_statistics(data)
+        # like[0]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
+        # model.update_em(data, g)
+        # for i in range(1, maxiter):
+        #     print "=== Iteration %d ===" % i
+        #     isreg   = False
+        #     for j in range(model.gm.k):
+        #         va  = model.gm.va[j]
+        #         if va.any() < _MIN_INV_COND:
+        #             isreg   = True
+        #             print "\tregularization detected"
+        #             print "\t" + str(va)
+        #             model.gm.va[j]  = regularize_diag(va)
+        #             print "\t" + str(va) + ", " + str(model.gm.va[j])
+        #             print "\t" + str(gauss_den(data, model.gm.mu[j], model.gm.va[j]))
+        #             print "\tend regularization detected"
+        #             var = va
+        #         
+        #     g, tgd      = model.sufficient_statistics(data)
+        #     try:
+        #         assert not( (N.isnan(tgd)).any() )
+        #         if isreg:
+        #             print var
+        #     except AssertionError:
+        #         print "tgd is nan..."
+        #         print model.gm.va[13,:]
+        #         print 1/model.gm.va[13,:]
+        #         print densities.gauss_den(data, model.gm.mu[13], model.gm.va[13])
+        #         print N.isnan((multiple_gauss_den(data, model.gm.mu, model.gm.va))).any()
+        #         print "Exciting"
+        #         import sys
+        #         sys.exit(-1)
+        #     like[i]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
+        #     model.update_em(data, g)
+        #     assert not( model.gm.va.any() < 1e-6)
+        #     if has_em_converged(like[i], like[i-1], thresh):
+        #         return like[0:i]
 
         return like
     
+def regularize_diag(variance, alpha = _DEF_ALPHA):
+    delta   = N.sum(variance) / variance.size
+    if delta > _MIN_DBL_DELTA:
+        return variance + alpha * delta
+    else:
+        return variance + alpha * _MIN_DBL_DELTA
+
+def regularize_full(variance):
+    # Trace of a positive definite matrix is always > 0
+    delta   = N.trace(variance) / variance.shape[0]
+    if delta > _MIN_DBL_DELTA:
+        return variance + alpha * delta
+    else:
+        return variance + alpha * _MIN_DBL_DELTA
+
 # Misc functions
 def bic(lk, deg, n):
     """ Expects lk to be log likelihood """

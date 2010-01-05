@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Thu Oct 19 06:00 PM 2006 J
+# Last Change: Thu Nov 09 05:00 PM 2006 J
 
 # This module uses a C implementation through ctypes, for diagonal cases
 # TODO:
@@ -26,12 +26,12 @@ if ctypes_major < 1:
 
 # Requirements for diag gden
 _gden   = load_library('c_gden.so', __file__)
-arg1    = ndpointer(dtype='<f8')
+arg1    = ndpointer(dtype=N.float64)
 arg2    = c_uint
 arg3    = c_uint
-arg4    = ndpointer(dtype='<f8')
-arg5    = ndpointer(dtype='<f8')
-arg6    = ndpointer(dtype='<f8')
+arg4    = ndpointer(dtype=N.float64)
+arg5    = ndpointer(dtype=N.float64)
+arg6    = ndpointer(dtype=N.float64)
 _gden.gden_diag.argtypes    = [arg1, arg2, arg3, arg4, arg5, arg6]
 _gden.gden_diag.restype     = c_int
 

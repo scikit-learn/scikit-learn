@@ -1,3 +1,11 @@
+pyem (0.5.6) Thu, 16 Nov 2006 14:18:19 +0900
+
+	* bump to 0.5.6
+	* Add __str__ and __repr__ for GM and GMM classes
+	* Add regularization method (but not used yet).
+	* Change 'f<8' to N.float64 for ctype enabled densities
+	* Move 'Magic numbers' into a separated python file, misc.py
+
 pyem (0.5.5) Tue, 24 Oct 2006 18:30:54 +0900
 
 	* Fix a bug inmultiple_gaussian_den which prevents 

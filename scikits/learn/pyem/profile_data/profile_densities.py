@@ -1,7 +1,7 @@
 import numpy as N
 from numpy.random import randn
-from pyem import densities as D
-from pyem import _c_densities as DC
+from scipy.sandbox.pyem import densities as D
+from scipy.sandbox.pyem import _c_densities as DC
 #import tables
 
 def bench(func, mode = 'diag'):

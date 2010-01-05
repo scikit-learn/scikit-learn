@@ -1,8 +1,6 @@
 import numpy as N
-from pyem import GM, GMM
+from scipy.sandbox.pyem import GM, GMM
 import copy
-
-from pyem._c_densities import gauss_den
 
 def bench1(mode = 'diag'):
     #===========================================
@@ -10,7 +8,7 @@ def bench1(mode = 'diag'):
     #===========================================
     d       = 15
     k       = 30
-    nframes = 1e4
+    nframes = 1e5
     niter   = 10
     mode    = 'diag'
 
