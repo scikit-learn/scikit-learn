@@ -1,5 +1,5 @@
-__all__ = ['algorithm','ga_util','ga_list','gene','genome','language',
-           'population','scaling','selection','tree','tree_opt']
+__all__ = ['tree','algorithm','ga_util','ga_list','gene','genome','language',
+           'population','scaling','selection','tree_opt']
 
 for module in __all__:
     exec('import ' + module)           

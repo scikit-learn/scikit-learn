@@ -349,8 +349,10 @@ class frozen:
 		try: v2 = other.value()
 		except AttributeError: v2 = other
 		return cmp(v1,v2)
-		
-from tree import tree_node
+
+# not sure why this has to be fully qualified, but things are failing otherwise.
+# import tree		
+from scipy.ga.tree import tree_node
 class tree_gene(tree_node):
 	mr_bounds = (0,.1)
 	mutation_rate = .03
