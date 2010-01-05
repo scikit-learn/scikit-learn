@@ -2,7 +2,7 @@ from numpy.testing import *
 import numpy as N
 
 set_package_path()
-from preprocessing import scale, Scaler, nanscale, NanScaler
+from utils.preprocessing import scale, Scaler, nanscale, NanScaler
 restore_path()
 
 DEPS = N.finfo(N.float).eps
@@ -126,4 +126,4 @@ class test_Scaler(NumpyTestCase):
 
 
 if __name__ == "__main__":
-    NumpyTest('scikits.learn.utils.preprocessing').run()
+    NumpyTest().run()
