@@ -88,7 +88,7 @@ class gene:
 			try: del self.mutation_rate #remove local mrates and use gene classes mrate
 			except AttributeError: pass
 		elif(mrate=='adapt'): 
-			self.mutation_rate = rv.uniform(self.mr_bounds[0],self.mr_bounds[1])
+			self.mutation_rate = rv.uniform(self.mr_bounds[0],self.mr_bounds[1])[0]
 		else: 
 			self.__class__.mutation_rate = mrate
 
@@ -106,8 +106,10 @@ class gene:
 		return 0
 	def value(self):
 		"""Return the current value of the gene. """ 
-		try: return self._value
-		except AttributeError: raise GAError, 'gene not initialized'
+		try: 
+		    return self._value
+		except AttributeError: 
+		    raise GAError, 'gene not initialized'
 	def set_value(self,x):
 		""" Set the value of a gene. NO CHECKING!!!
 			Don't assign an incompatible value.
@@ -191,7 +193,7 @@ class list_gene_gaussian_mutator:
 		old = gene.index()
 		new = -1; f = -1
 		while not (0 <= new < size):
-			f = rv.normal(old,w) 
+			f = rv.norm(old,w)[0] 
 			new = round(f)
 			if(old == new and f > new): new = new + 1
 			if(old == new and f < new): new = new - 1
@@ -245,7 +247,7 @@ class list2_gene(list_gene):
 class float_gene_uniform_mutator:
 	""" randomly choose a value within the float_gene's bounds"""
 	def evaluate(self,gene):
-		return rv.uniform(gene.bounds[0],gene.bounds[1])
+		return rv.uniform(gene.bounds[0],gene.bounds[1])[0]
 
 class float_gene_gaussian_mutator:
 	""" 
@@ -265,10 +267,10 @@ class float_gene_gaussian_mutator:
 		dev = (gene.bounds[1]-gene.bounds[0]) * self.dev_width
 		new = gene.bounds[1]
 #		while not (gene.bounds[0] <= new < gene.bounds[1]):
-#			new = rv.normal(gene.value(),dev)
-#		new = rv.normal(gene.value(),dev)
+#			new = rv.norm(gene.value(),dev)[0]
+#		new = rv.norm(gene.value(),dev)[0]
 		#get the _value explicitly so mutator will work for log_float also
-		new = rv.normal(gene._value,dev)
+		new = rv.norm(gene._value,dev)[0]
 		if new > gene.bounds[1]: new = gene.bounds[1]
 		if new < gene.bounds[0]: new = gene.bounds[0]
 		return new
@@ -370,7 +372,7 @@ class tree_gene(tree_node):
 			try: del self.mutation_rate #remove local mrates and use gene classes mrate
 			except AttributeError: pass
 		elif(mrate=='adapt'): 
-			self.mutation_rate = rv.uniform(self.mr_bounds[0],self.mr_bounds[1])
+			self.mutation_rate = rv.uniform(self.mr_bounds[0],self.mr_bounds[1])[0]
 		else: 
 			self.__class__.mutation_rate = mrate
 		for child in self._children: child.set_mutation(mrate)

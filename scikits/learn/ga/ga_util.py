@@ -21,7 +21,7 @@ def shallow_clone(item):
 def my_std(s):
 #	try:
 		a = remove_NaN(s)
-		if len(a) > 1: return stats.stdev(a)
+		if len(a) > 1: return stats.std(a)
 		else: return 0.
 #	except: 
 #		import pdb
@@ -56,26 +56,6 @@ def testflip():
 	print 'wh',e-b
 
 
-#This causes a seg fault on windows (sometimes)...
 def remove_NaN(z):
-	#global INF, NEG_INF
-	INF = 1e300**2 		# These lines are the culprits 
-	NEG_INF = -1e300**3 # and they seem to interact strangly with pyGrad and pyPlot
-	front = 0; back = -1;
-	if(hasattr(z,'tolist')): ss = z.tolist()
-	else: ss = z
-	#if NEG_INF == 0.: NEG_INF = -1e300**3
-	#if INF == 0.: INF = 1e300**2
-	try: back = ss.index(NEG_INF)
-	except: pass
-		#import sys
-		#print 'error:',sys.exc_type,sys.exc_value, NEG_INF, type(ss)
-		#import pdb
-		#pdb.set_trace()
-	try: front = ss.index(INF)+1
-	except ValueError: pass	
-
-	#print front, back, NEG_INF	
-	if (front != 0 or back != -1): return ss[front:back]
-	else: return ss
-
+	from scipy import isnan, isinf, compress, logical_not
+	return compress(logical_not( isnan(z)+isinf(z)),z)
