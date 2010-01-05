@@ -27,7 +27,6 @@ class test_regression(NumpyTestCase):
 
     def check_epsilon_train(self):
         ModelType = LibSvmEpsilonRegressionModel
-
         y = [10., 20., 30., 40.]
         x = [N.array([0, 0]),
              N.array([0, 1]),
@@ -40,38 +39,46 @@ class test_regression(NumpyTestCase):
         results.predict(testdata)
         results.get_svr_probability()
 
-    def check_epsilon_more(self):
-        ModelType = LibSvmEpsilonRegressionModel
-
-        y = [0.0, 1.0, 1.0, 2.0]
+    def _make_basic_datasets(self):
+        labels = [0, 1.0, 1.0, 2.0]
         x = [N.array([0, 0]),
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        epsilon = 0.1
-        cost = 10.0
-        traindata = LibSvmRegressionDataSet(zip(y, x))
+        traindata = LibSvmRegressionDataSet(zip(labels, x))
         testdata = LibSvmTestDataSet(x)
+        return traindata, testdata
 
+    def _make_basic_kernels(self, gamma):
         kernels = [
             LinearKernel(),
-            PolynomialKernel(3, traindata.gamma, 0.0),
-            RBFKernel(traindata.gamma)
+            PolynomialKernel(3, gamma, 0.0),
+            RBFKernel(gamma)
             ]
+        return kernels
+
+    def check_epsilon_more(self):
+        ModelType = LibSvmEpsilonRegressionModel
+        epsilon = 0.1
+        cost = 10.0
+        modelargs = epsilon, cost
         expected_ys = [
             N.array([0.1, 1.0, 1.0, 1.9]),
             N.array([0.24611273, 0.899866638, 0.90006681, 1.90006681]),
             N.array([0.1, 1.0, 1.0, 1.9])
             ]
+        self._regression_basic(ModelType, modelargs, expected_ys)
 
+    def _regression_basic(self, ModelType, modelargs, expected_ys):
+        traindata, testdata = self._make_basic_datasets()
+        kernels = self._make_basic_kernels(traindata.gamma)
         for kernel, expected_y in zip(kernels, expected_ys):
-            model = ModelType(kernel, epsilon, cost)
+            args = (kernel,) + modelargs
+            model = ModelType(*args)
             results = model.fit(traindata)
             predictions = results.predict(testdata)
-            # look at differences instead of using assertAlmostEqual
-            # due to slight differences between answers obtained on
-            # Windows with MSVC 7.1 and on Fedora Core 5 with GCC
-            # 4.1.1.
+            # use differences instead of assertAlmostEqual due to
+            # compiler-dependent variations in these values
             diff = N.absolute(predictions - expected_y)
             self.assert_(N.alltrue(diff < 1e-3))
 
@@ -84,8 +91,17 @@ class test_regression(NumpyTestCase):
         nr_fold = 10
         mse, scc = model.cross_validate(traindata, nr_fold)
 
-    def check_nu_train(self):
-        pass
+    def check_nu_more(self):
+        ModelType = LibSvmNuRegressionModel
+        nu = 0.4
+        cost = 10.0
+        modelargs = nu, cost
+        expected_ys = [
+            N.array([0.0, 1.0, 1.0, 2.0]),
+            N.array([0.2307521, 0.7691364, 0.76930371, 1.769304]),
+            N.array([0.0, 1.0, 1.0, 2.0])
+            ]
+        self._regression_basic(ModelType, modelargs, expected_ys)
 
     def _make_datasets(self):
         y1 = N.random.randn(50)
