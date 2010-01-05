@@ -3,7 +3,8 @@ import numpy as N
 
 from svm.regression import *
 from svm.dataset import LibSvmRegressionDataSet
-from svm.kernel import LinearKernel
+from svm.dataset import LibSvmTestDataSet
+from svm.kernel import *
 
 class test_regression(NumpyTestCase):
     def check_basics(self):
@@ -15,7 +16,7 @@ class test_regression(NumpyTestCase):
         model = Model(Kernel, shrinking=False)
         self.assert_(not model.shrinking)
 
-    def check_epsilon(self):
+    def check_epsilon_train(self):
         y = [10., 20., 30., 40.]
         x = [N.array([0, 0]),
              N.array([0, 1]),
@@ -25,7 +26,14 @@ class test_regression(NumpyTestCase):
 
         Model = LibSvmEpsilonRegressionModel
         model = Model(LinearKernel())
-        model.fit(dataset)
+        results = model.fit(dataset)
+
+        testdata = LibSvmTestDataSet(x)
+        results.predict(testdata)
+        results.get_svr_probability()
+
+    def check_nu_train(self):
+        pass
 
 if __name__ == '__main__':
     NumpyTest().run()

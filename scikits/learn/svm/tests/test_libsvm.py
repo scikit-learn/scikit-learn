@@ -1,13 +1,9 @@
 from numpy.testing import *
-
-# XXX remove this
-import os, sys
-sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')))
-
-import svm.libsvm as libsvm
 import numpy as N
 
-class test_structs(NumpyTestCase):
+import svm.libsvm as libsvm
+
+class test_libsvm(NumpyTestCase):
     def check_svm_node(self):
         node = libsvm.svm_node()
         node = N.empty((), dtype=libsvm.svm_node_dtype)

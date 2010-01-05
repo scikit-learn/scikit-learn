@@ -1,34 +1,40 @@
 from numpy.testing import *
-
-# XXX remove this
-import os, sys
-sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')))
-
-import svm
 import numpy as N
 
-class test_classification(NumpyTestCase):
-    def check_csvc(self):
-        labels = [0, 1, 1, 2]
-        samples = [[0, 0], [0, 1], [1, 0], [1, 1]]
-        data = zip(labels, samples)
-        dtype = svm.LinearData()
-        model = svm.CSVCModel(dtype, cost=10.0)
-        results = model.fit(data)
-        for label, sample in data:
-            assert_equal(results.predict(sample), label)
-            v = results.predict_values(sample)
+from svm.classification import *
+from svm.dataset import LibSvmClassificationDataSet
+from svm.dataset import LibSvmTestDataSet
+from svm.kernel import *
 
-    def check_nusvc(self):
+class test_classification(NumpyTestCase):
+    def check_basics(self):
+        Model = LibSvmCClassificationModel
+        Kernel = LinearKernel()
+        Model(Kernel)
+        Model(Kernel, cost=1.0)
+        weights = [(2, 10.0), (1, 20.0), (0, 30.0)]
+        Model(Kernel, weights=weights)
+        Model(Kernel, 1.0, weights)
+        model = Model(Kernel, cost=1.0, weights=weights)
+
+    def check_c_train(self):
         labels = [0, 1, 1, 2]
-        samples = [[0, 0], [0, 1], [1, 0], [1, 1]]
-        data = zip(labels, samples)
-        dtype = svm.LinearData()
-        model = svm.NuSVCModel(dtype, nu=0.5)
-        results = model.fit(data)
-        for label, sample in data:
-            assert_equal(results.predict(sample), label)
-            v = results.predict_values(sample)
+        x = [N.array([0, 0]),
+             N.array([0, 1]),
+             N.array([1, 0]),
+             N.array([1, 1])]
+        traindata = LibSvmClassificationDataSet(zip(labels, x))
+
+        Model = LibSvmCClassificationModel
+        model = Model(RBFKernel(traindata.gamma))
+        results = model.fit(traindata)
+
+        testdata = LibSvmTestDataSet(x)
+        results.predict(testdata)
+        results.predict_values(testdata)
+
+    def check_nu_train(self):
+        pass
 
 if __name__ == '__main__':
     NumpyTest().run()

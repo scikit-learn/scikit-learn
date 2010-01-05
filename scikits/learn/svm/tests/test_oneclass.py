@@ -1,25 +1,31 @@
 from numpy.testing import *
-
-# XXX remove this
-import os, sys
-sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')))
-
-import svm
 import numpy as N
 
-class test_oneclass(NumpyTestCase):
-    def check_oneclass(self):
-        data = [[0, 0], [0, 1], [1, 0], [1, 1]]
-        dtype = svm.LinearOneClassData()
-        model = svm.OneClassModel(dtype, nu=0.5)
-        results = model.fit(data)
-        for sample in data:
-            print results.predict_values(sample)
+from svm.oneclass import *
+from svm.dataset import LibSvmOneClassDataSet
+from svm.dataset import LibSvmTestDataSet
+from svm.kernel import *
 
-        print results.predict_values([0.2, 0.2])
-        print results.predict_values([2., 2.])
-        print results.predict([0.2, 0.2])
-        print results.predict([2., 2.])
+class test_oneclass(NumpyTestCase):
+    def check_basics(self):
+        Model = LibSvmOneClassModel
+        Kernel = LinearKernel()
+        Model(Kernel)
+        Model(Kernel, nu=1.0)
+
+    def check_train(self):
+        x = [N.array([0, 0]),
+             N.array([0, 1]),
+             N.array([1, 0]),
+             N.array([1, 1])]
+        dataset = LibSvmOneClassDataSet(x)
+        
+        Model = LibSvmOneClassModel
+        model = Model(LinearKernel())
+        results = model.fit(dataset)
+
+        testdata = LibSvmTestDataSet(x)
+        results.predict(testdata)
 
 if __name__ == '__main__':
     NumpyTest().run()
