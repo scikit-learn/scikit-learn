@@ -8,3 +8,39 @@ Code will be checked into this repository periodically.
 For more information, see:
 
 http://students.ee.sun.ac.za/~albert/pylibsvm/
+
+
+To run the test suite, do the following:
+
+1. Build the libsvm_ library in the libsvm-2.82 directory.
+
+On Windows:
+
+Start the Visual Studio .NET 2003 Command Prompt
+cd libsvm-2.82
+nmake -f Makefile.win
+copy libsvm_.dll ..
+
+On Linux:
+
+cd libsvm-2.82
+scons
+cp libsvm_.so ..
+
+2. Run the tests in the tests directory.
+
+On Windows:
+
+cd tests
+set PYTHONPATH=..;..\..
+test_classification.py
+...
+test_all.py
+
+On Linux:
+
+cd tests
+export PYTHONPATH=..:../..
+python test_classification.py
+...
+python test_all.py
