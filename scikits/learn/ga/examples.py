@@ -13,38 +13,38 @@ def fitness_ex1(self):
     for g,d in pairs:
         diff = g - d
         score -= abs(diff)
-    return score        
-    
+    return score
+
 def ex1():
     """ This example illustrates the main steps in setting
         up a genetic optimization:
-        
+
           1. Specify the genes types used to encode your problem
           2. Group these genes into a genome.
              a.  Specify the fitness function that evaluates the genomes.
           3. Create a population of the genomes
           4. Specify the algorithm used to evolve the population
-          5.  
+          5.
     """
-    
-    # 1. First scpecify your genes.  To gene types are 
+
+    # 1. First scpecify your genes.  To gene types are
     #    currently supported, list_gene and float_gene
-    
+
     #    A list gene chooses its value from a list of values.
     #    The list can contain any type of object.
-    g1 = ga.gene.list_gene(['a','b','c','d'])    
+    g1 = ga.gene.list_gene(['a','b','c','d'])
     #    Float genes take on a continuous value between two
     #    bounds.
-    g2 = ga.gene.float_gene((-1.,1.))    
+    g2 = ga.gene.float_gene((-1.,1.))
     #    We'll replicate these genes several times to make a longer
     #    genome.
-    all_genes = g1.replicate(5) + g2.replicate(5)    
-    # 2.  Create a specialized "list_genome" (as opposed to tree_genome) 
+    all_genes = g1.replicate(5) + g2.replicate(5)
+    # 2.  Create a specialized "list_genome" (as opposed to tree_genome)
     #     class with the desired fitness function.
-    #     It's structure is defined by our gene list. 
+    #     It's structure is defined by our gene list.
     class this_genome(ga.genome.list_genome):
         pass
-    this_genome.performance = fitness_ex1            
+    this_genome.performance = fitness_ex1
     gnm = this_genome(all_genes)
 
     # 3.  Create a population of the genomes.
@@ -59,6 +59,6 @@ def ex1():
     galg.settings.update(settings)
     galg.evolve()
     print galg.pop.best()
-    
+
 if __name__ == '__main__':
-    ex1()    
+    ex1()

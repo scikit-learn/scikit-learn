@@ -4,7 +4,7 @@ import sys, thread, sync
 
 
 
-import remote_exec	
+import remote_exec
 
 import population
 
@@ -14,7 +14,7 @@ import population
 
 ######
 
-#I've got to lean up evaluate and initial in population so that 
+#I've got to lean up evaluate and initial in population so that
 
 #the incorporation of the parallel stuff is smoother.
 
@@ -28,81 +28,81 @@ import sys, thread, sync
 
 def array_round(x):
 
-	y = zeros(shape(x))
+    y = zeros(shape(x))
 
-	for i in range(len(x.flat)): 
+    for i in range(len(x.flat)):
 
-		y[i] = int(round(x[i]))
+        y[i] = int(round(x[i]))
 
-	return y
+    return y
 
 
 
 def divide_list(l,sections):
 
-		Ntot = len(l)
+    Ntot = len(l)
 
-		Nsec = float(sections)
+    Nsec = float(sections)
 
-		Neach = Ntot/Nsec
+    Neach = Ntot/Nsec
 
-		div_points = array_round(arange(0,Ntot,Neach)).tolist()		
+    div_points = array_round(arange(0,Ntot,Neach)).tolist()
 
-		if div_points[-1] != Ntot: div_points.append(Ntot)
+    if div_points[-1] != Ntot: div_points.append(Ntot)
 
-		sub_pops = []
+    sub_pops = []
 
-		st = div_points[0]
+    st = div_points[0]
 
-		for end in div_points[1:]:
+    for end in div_points[1:]:
 
-			sub_pops.append(l[st:end])
+        sub_pops.append(l[st:end])
 
-			st = end
+        st = end
 
-		return sub_pops	
+    return sub_pops
 
 
 
 class parallel_pop_initializer:
 
-	def evaluate(self,pop,settings = None):
+    def evaluate(self,pop,settings = None):
 
-		#only send the individuals out that need evaluation
+    #only send the individuals out that need evaluation
 
-		if len(pop):
+        if len(pop):
 
-			Nserv = len(pop.server_list)
+            Nserv = len(pop.server_list)
 
-			groups = divide_list(pop,Nserv)
+            groups = divide_list(pop,Nserv)
 
-			sys.setcheckinterval(10)
+            sys.setcheckinterval(10)
 
-			finished = sync.event()
+            finished = sync.event()
 
-			bar = sync.barrier(Nserv)
+            bar = sync.barrier(Nserv)
 
-			print '************',len(groups), len(pop.server_list), len(pop)
+            print '************',len(groups), len(pop.server_list), len(pop)
 
-			for i in range(len(groups)):
+            for i in range(len(groups)):
 
-				inputs = {'sub_pop':groups[i],'settings':settings, 'initializer':pop.initializer}
+                inputs = {'sub_pop':groups[i],'settings':settings, 'initializer':pop.initializer}
 
-				returns = ('sub_pop',)
+                returns = ('sub_pop',)
 
-				code = 'initializer.evaluate(sub_pop,settings)'
+                code = 'initializer.evaluate(sub_pop,settings)'
 
-				data_pack = (inputs,returns,code)
+                data_pack = (inputs,returns,code)
 
-				server = pop.server_list[i]
+                server = pop.server_list[i]
 
-				thread.start_new_thread(remote_thread_init,(bar,finished,server,data_pack))
+                thread.start_new_thread(remote_thread_init,(bar,finished,server,data_pack))
 
-			finished.wait()
+            finished.wait()
 
-			sys.setcheckinterval(10)
+            sys.setcheckinterval(10)
 
-#what is this?			for ind in pop: ind.evaluate(force)
+#what is this?                  for ind in pop: ind.evaluate(force)
 
 
 
@@ -114,385 +114,385 @@ def plen(obj): return len(cPickle.dumps(obj,1))
 
 class parallel_pop_evaluator:
 
-	def evaluate(self,pop,force = 0):
+    def evaluate(self,pop,force = 0):
 
-		import tree
+        import tree
 
-		#print '1',tree.ref()
+        #print '1',tree.ref()
 
-		#only send the individuals out that need evaluation
+        #only send the individuals out that need evaluation
 
-		if force:	
+        if force:
 
-			_eval_list = pop.data
+            _eval_list = pop.data
 
-		else:	
+        else:
 
-			_eval_list = filter(lambda x: not x.evaluated,pop)
+            _eval_list = filter(lambda x: not x.evaluated,pop)
 
-		#print '2',tree.ref()	
+        #print '2',tree.ref()
 
-		eval_list = pop.clone()
+        eval_list = pop.clone()
 
-		#print '3',tree.ref()
+        #print '3',tree.ref()
 
-		eval_list.data = _eval_list
+        eval_list.data = _eval_list
 
-		if len(eval_list):
+        if len(eval_list):
 
-			Nserv = len(pop.server_list)
+            Nserv = len(pop.server_list)
 
-			groups = divide_list(eval_list,Nserv)
+            groups = divide_list(eval_list,Nserv)
 
-			#print '4',tree.ref()
+            #print '4',tree.ref()
 
-			sys.setcheckinterval(10)
+            sys.setcheckinterval(10)
 
-			finished = sync.event()
+            finished = sync.event()
 
-			bar = sync.barrier(Nserv)
+            bar = sync.barrier(Nserv)
 
-			#print "EVAL LENGTH!!!", plen(pop.evaluator)
+            #print "EVAL LENGTH!!!", plen(pop.evaluator)
 
-			gr = groups[0]
+            gr = groups[0]
 
-			print "GROUP LENGTH!!!", plen(groups[0]), len(gr), 
+            print "GROUP LENGTH!!!", plen(groups[0]), len(gr),
 
-			#print "IND!!!", plen(gr[0]),plen(gr[0].root)
+            #print "IND!!!", plen(gr[0]),plen(gr[0].root)
 
-			#print '4.5',tree.ref()
+            #print '4.5',tree.ref()
 
-			for i in range(len(groups)):
+            for i in range(len(groups)):
 
-				inputs = {'sub_pop':groups[i], 'evaluator':pop.evaluator, 'force':force}
+                inputs = {'sub_pop':groups[i], 'evaluator':pop.evaluator, 'force':force}
 
-				returns = ('sub_pop',)
+                returns = ('sub_pop',)
 
-				code = 'evaluator.evaluate(sub_pop,force)'
+                code = 'evaluator.evaluate(sub_pop,force)'
 
-				data_pack = (inputs,returns,code)
+                data_pack = (inputs,returns,code)
 
-				server = pop.server_list[i]
+                server = pop.server_list[i]
 
-				thread.start_new_thread(remote_thread_eval,(bar,finished,server,data_pack))
+                thread.start_new_thread(remote_thread_eval,(bar,finished,server,data_pack))
 
-			#print '7',tree.ref()	
+            #print '7',tree.ref()
 
-			finished.wait()
+            finished.wait()
 
-			sys.setcheckinterval(10)
+            sys.setcheckinterval(10)
 
-#what is this?			for ind in pop: ind.evaluate(force)
+#what is this?                  for ind in pop: ind.evaluate(force)
 
-	"""
+    """
 
-	def evaluate(self,pop,force = 0):
+    def evaluate(self,pop,force = 0):
 
-		#only send the individuals out that need evaluation
+            #only send the individuals out that need evaluation
 
-		_eval_list = filter(lambda x: not x.evaluated,pop)
+            _eval_list = filter(lambda x: not x.evaluated,pop)
 
-		eval_list = pop.clone()
+            eval_list = pop.clone()
 
-		eval_list.data = _eval_list
+            eval_list.data = _eval_list
 
-		if len(eval_list):
+            if len(eval_list):
 
-			#finest grain possible
+                    #finest grain possible
 
-			groups = divide_list(eval_list,len(eval_list))
+                    groups = divide_list(eval_list,len(eval_list))
 
-			finished = sync.event()
+                    finished = sync.event()
 
-			bar = sync.barrier(groups)
+                    bar = sync.barrier(groups)
 
-			
 
-			sys.setcheckinterval(10)
 
-			Nserv = len(pop.server_list)
+                    sys.setcheckinterval(10)
 
-			idx = 0
+                    Nserv = len(pop.server_list)
 
-			while idx < len(groups):
+                    idx = 0
 
-				inputs = {'sub_pop':groups[idx], 'evaluator':pop.evaluator}
+                    while idx < len(groups):
 
-				returns = ('sub_pop',)
+                            inputs = {'sub_pop':groups[idx], 'evaluator':pop.evaluator}
 
-				code = 'evaluator.evaluate(sub_pop)'
+                            returns = ('sub_pop',)
 
-				data_pack = (inputs,returns,code)
+                            code = 'evaluator.evaluate(sub_pop)'
 
-				server = pop.server_list[i]
+                            data_pack = (inputs,returns,code)
 
-				thread.start_new_thread(remote_thread_eval,(bar,finished,server,data_pack))
+                            server = pop.server_list[i]
 
-			#for i in range(len(groups)):
+                            thread.start_new_thread(remote_thread_eval,(bar,finished,server,data_pack))
 
-			#	inputs = {'sub_pop':groups[i], 'evaluator':pop.evaluator}
+                    #for i in range(len(groups)):
 
-			#	returns = ('sub_pop',)
+                    #       inputs = {'sub_pop':groups[i], 'evaluator':pop.evaluator}
 
-			#	code = 'evaluator.evaluate(sub_pop)'
+                    #       returns = ('sub_pop',)
 
-			#	data_pack = (inputs,returns,code)
+                    #       code = 'evaluator.evaluate(sub_pop)'
 
-			#	server = pop.server_list[i]
+                    #       data_pack = (inputs,returns,code)
 
-			#	thread.start_new_thread(remote_thread,(bar,finished,server,data_pack))
+                    #       server = pop.server_list[i]
 
-			finished.wait()
+                    #       thread.start_new_thread(remote_thread,(bar,finished,server,data_pack))
 
-			sys.setcheckinterval(10)
+                    finished.wait()
 
-#what is this?			for ind in pop: ind.evaluate(force)
+                    sys.setcheckinterval(10)
 
-	"""
+#what is this?                  for ind in pop: ind.evaluate(force)
+
+    """
 
 
 
 def remote_thread_init(bar,finished,server,data_pack):
 
-	try:
+    try:
 
-		remote = remote_exec.remote_exec(server[0],server[1],0,1)
+        remote = remote_exec.remote_exec(server[0],server[1],0,1)
 
-		results = remote.run(data_pack)
+        results = remote.run(data_pack)
 
-		#assign the results from the returned data to the local individuals
+        #assign the results from the returned data to the local individuals
 
-		inputs = data_pack[0]
+        inputs = data_pack[0]
 
-		old = inputs['sub_pop']
+        old = inputs['sub_pop']
 
-		new = results['sub_pop']
+        new = results['sub_pop']
 
-		for i in range(len(old)):
+        for i in range(len(old)):
 
-			old[i].__dict__.update(new[i].__dict__)
+            old[i].__dict__.update(new[i].__dict__)
 
-	except IndexError:
+    except IndexError:
 
-		print 'error in %s,%d' %  server
+        print 'error in %s,%d' %  server
 
-	bar.enter()
+    bar.enter()
 
-	finished.post()
+    finished.post()
 
 
 
 def remote_thread_eval(bar,finished,server,data_pack):
 
-	import tree
+    import tree
 
-	try:
+    try:
 
-		#print '5',tree.ref()
+        #print '5',tree.ref()
 
-		remote = remote_exec.remote_exec(server[0],server[1],0,1)
+        remote = remote_exec.remote_exec(server[0],server[1],0,1)
 
-		results = remote.run(data_pack)
+        results = remote.run(data_pack)
 
-		#print '6',tree.ref()
+        #print '6',tree.ref()
 
-		#assign the results from the returned data to the local individuals
+        #assign the results from the returned data to the local individuals
 
-		inputs = data_pack[0]
+        inputs = data_pack[0]
 
-		old = inputs['sub_pop']
+        old = inputs['sub_pop']
 
-		new = results['sub_pop']
+        new = results['sub_pop']
 
-		for gnm in new:
+        for gnm in new:
 
-			gnm.root.delete_circulars()
+            gnm.root.delete_circulars()
 
-			del gnm.root
+            del gnm.root
 
-		#print '6.25',tree.ref()
+        #print '6.25',tree.ref()
 
-		for i in range(len(old)):
+        for i in range(len(old)):
 
-			old[i].__dict__.update(new[i].__dict__)
+            old[i].__dict__.update(new[i].__dict__)
 
 
 
-		#print '6.5',tree.ref()
+        #print '6.5',tree.ref()
 
-	except IndexError:
+    except IndexError:
 
-		print 'error in %s,%d' %  server
+        print 'error in %s,%d' %  server
 
-	"""
+    """
 
-	import sys
+    import sys
 
-	#r = new[0].root
+    #r = new[0].root
 
-	#print 'ref count',sys.getrefcount(r)
+    #print 'ref count',sys.getrefcount(r)
 
-	#print '6.75',tree.ref()		
+    #print '6.75',tree.ref()
 
-	#Huh??? Why do I need to delete the new genomes
+    #Huh??? Why do I need to delete the new genomes
 
-	#individually here?  Why aren't they garbage collected?
+    #individually here?  Why aren't they garbage collected?
 
-	indices = range(len(new))
+    indices = range(len(new))
 
-	indices.reverse()
+    indices.reverse()
 
-	for i in indices:
+    for i in indices:
 
-		del new[i]
+            del new[i]
 
-	#print 'ref count',sys.getrefcount(r)
+    #print 'ref count',sys.getrefcount(r)
 
-	#print '6.8',tree.ref()	
+    #print '6.8',tree.ref()
 
-	#r.delete_circulars()	
+    #r.delete_circulars()
 
-	#print 'ref count',sys.getrefcount(r)
+    #print 'ref count',sys.getrefcount(r)
 
-	#print '6.9',tree.ref()	
+    #print '6.9',tree.ref()
 
-	#del r
+    #del r
 
-	#print '6.95',tree.ref()	
+    #print '6.95',tree.ref()
 
-	"""
+    """
 
-	bar.enter()
+    bar.enter()
 
-	finished.post()
+    finished.post()
 
 
 
 class ga_parallel_pop(population.population):
 
-	parallel_evaluator = parallel_pop_evaluator()
+    parallel_evaluator = parallel_pop_evaluator()
 
-	parallel_initializer = parallel_pop_initializer()
+    parallel_initializer = parallel_pop_initializer()
 
-	def __init__(self,genome,size=1,server_list=None):
+    def __init__(self,genome,size=1,server_list=None):
 
-		"""Arguments:
-
-		
-
-		   genome -- a genome object.
-
-		   size -- number.  The population size.  The genome will be 
-
-		           replicated size times to fill the population.
-
-		   server_list -- a list of tuple pairs with machine names and
-
-		                  ports listed for the available servers
-
-		                  ex: [(ee.duke.edu,8000),('elsie.ee.duke.edu',8000)]        
-
-		"""
-
-		population.population.__init__(self,genome,size)
-
-		assert(server_list)
-
-		self.server_list = server_list
-
-	def initialize(self,settings = None):
-
-		"""This method **must** be called before a genetic algorithm 
-
-		   begins evolving the population.  It takes care of initializing
-
-		   the individual genomes, evaluating them, and scaling the population.
-
-		   It also clears and intializes the statistics for the population.
-
-		   
-
-		   Arguments:
-
-		
-
-		   settings -- dictionary of genetic algorithm parameters.  These
-
-		               are passed on to the genomes for initialization.
-
-		"""	
-
-		self.stats = {'current':{},'initial':{},'overall':{}}
-
-		self.stats['ind_evals'] = 0
+        """Arguments:
 
 
 
-		print "beigninning genome generation" 
+           genome -- a genome object.
 
-		b = time.clock()	
+           size -- number.  The population size.  The genome will be
 
-		self.parallel_initializer.evaluate(self,settings)
+                   replicated size times to fill the population.
 
-		e = time.clock()	
+           server_list -- a list of tuple pairs with machine names and
 
-		print "finished generation: ", e-b	
+                          ports listed for the available servers
 
-		self.touch(); 
+                          ex: [(ee.duke.edu,8000),('elsie.ee.duke.edu',8000)]
 
-		b = time.clock()	
+        """
 
-		self.evaluate()
+        population.population.__init__(self,genome,size)
 
-		e = time.clock()	
+        assert(server_list)
 
-		print "evaluation time: ", e-b	
+        self.server_list = server_list
 
-		self.scale()
+    def initialize(self,settings = None):
 
-		self.update_stats()
+        """This method **must** be called before a genetic algorithm
 
-		self.stats['initial']['avg'] = self.stats['current']['avg']
+           begins evolving the population.  It takes care of initializing
 
-		self.stats['initial']['max'] = self.stats['current']['max']
+           the individual genomes, evaluating them, and scaling the population.
 
-		self.stats['initial']['min'] = self.stats['current']['min']
+           It also clears and intializes the statistics for the population.
 
-		self.stats['initial']['dev'] = self.stats['current']['dev']
 
-	
 
-	def evaluate(self, force = 0):
+           Arguments:
 
-		""" call the parallel_evaluator instead of the evaluator directly
 
-		"""
 
-		self.selector.clear()
+           settings -- dictionary of genetic algorithm parameters.  These
 
-		self.parallel_evaluator.evaluate(self,force)
+                       are passed on to the genomes for initialization.
 
-		#self.post_evaluate()
+        """
 
-		#all of the remaining should be put in post eval...
+        self.stats = {'current':{},'initial':{},'overall':{}}
 
-		self.sort()
+        self.stats['ind_evals'] = 0
 
-		#this is a cluge to get eval count to work correctly
 
-		preval = self.stats['ind_evals']
 
-		for ind in self:  
+        print "beigninning genome generation"
 
-			self.stats['ind_evals'] = self.stats['ind_evals'] + ind.evals
+        b = time.clock()
 
-			ind.evals = 0		
+        self.parallel_initializer.evaluate(self,settings)
 
-		print 'evals: ', self.stats['ind_evals'] - preval
+        e = time.clock()
 
-		self.touch()
+        print "finished generation: ", e-b
 
-		self.evaluated = 1
+        self.touch();
+
+        b = time.clock()
+
+        self.evaluate()
+
+        e = time.clock()
+
+        print "evaluation time: ", e-b
+
+        self.scale()
+
+        self.update_stats()
+
+        self.stats['initial']['avg'] = self.stats['current']['avg']
+
+        self.stats['initial']['max'] = self.stats['current']['max']
+
+        self.stats['initial']['min'] = self.stats['current']['min']
+
+        self.stats['initial']['dev'] = self.stats['current']['dev']
+
+
+
+    def evaluate(self, force = 0):
+
+        """ call the parallel_evaluator instead of the evaluator directly
+
+        """
+
+        self.selector.clear()
+
+        self.parallel_evaluator.evaluate(self,force)
+
+        #self.post_evaluate()
+
+        #all of the remaining should be put in post eval...
+
+        self.sort()
+
+        #this is a cluge to get eval count to work correctly
+
+        preval = self.stats['ind_evals']
+
+        for ind in self:
+
+            self.stats['ind_evals'] = self.stats['ind_evals'] + ind.evals
+
+            ind.evals = 0
+
+        print 'evals: ', self.stats['ind_evals'] - preval
+
+        self.touch()
+
+        self.evaluated = 1
 
 
 
@@ -506,136 +506,136 @@ import time
 
 
 
-import socket			
+import socket
 
 
 
 class objective:
 
-	def __init__(self,wait=.01):
+    def __init__(self,wait=.01):
 
-		self.wait = wait
+        self.wait = wait
 
-	def evaluate(self,genome): 
+    def evaluate(self,genome):
 
-		time.sleep(self.wait)
+        time.sleep(self.wait)
 
-		return sum(genome.array())
+        return sum(genome.array())
 
 
 
 def test_pop(server_list,size=100,wait=.01):
 
-	obj = objective(wait)
+    obj = objective(wait)
 
-	the_gene = gene.float_gene((0,2.5))
+    the_gene = gene.float_gene((0,2.5))
 
-	genome = genome.list_genome(the_gene.replicate(5))
+    genome = genome.list_genome(the_gene.replicate(5))
 
-	genome.evaluator = obj
+    genome.evaluator = obj
 
-	pop = ga_parallel_pop(genome,size,server_list)
+    pop = ga_parallel_pop(genome,size,server_list)
 
-	print  '########### awaiting evaluation#############'
+    print  '########### awaiting evaluation#############'
 
-	pop.initialize()
+    pop.initialize()
 
-	print ' evaluation done!'
+    print ' evaluation done!'
 
-	print 'best:', pop.best()
+    print 'best:', pop.best()
 
-	print 'worst',pop.worst()
+    print 'worst',pop.worst()
 
 
 
 def gen_pop():
 
-	genome.list_genome.evaluator = objective()
+    genome.list_genome.evaluator = objective()
 
-	gene = gene.float_gene((0,2.5))
+    gene = gene.float_gene((0,2.5))
 
-	genome = genome.list_genome(gene.replicate(5))
+    genome = genome.list_genome(gene.replicate(5))
 
-	pop = ga_parallel_pop(genome,100,[(host,port),])
+    pop = ga_parallel_pop(genome,100,[(host,port),])
 
-	return pop
+    return pop
 
 
 
-	import parallel_pop,beowulf,os
+    import parallel_pop,beowulf,os
 
 
 
 def test_pop2(server_list,size=100,wait=.01):
 
-	import hmm_gnm,os
+    import hmm_gnm,os
 
-	genome = hmm_gnm.make_genome()
+    genome = hmm_gnm.make_genome()
 
-	#pop = ga_parallel_pop(genome,4,server_list)
+    #pop = ga_parallel_pop(genome,4,server_list)
 
-	global galg
+    global galg
 
-	#genome.target = targets[0]
+    #genome.target = targets[0]
 
-	pop = ga_parallel_pop(genome,1,server_list)
+    pop = ga_parallel_pop(genome,1,server_list)
 
-	galg = hmm_gnm.class_ga(pop)
+    galg = hmm_gnm.class_ga(pop)
 
-	galg.settings.update({ 'pop_size':6,'gens':2,'p_mutate':.03,
+    galg.settings.update({ 'pop_size':6,'gens':2,'p_mutate':.03,
 
-				    'dbase':os.environ['HOME'] + '/all_lift3', 'p_cross':0.9, 'p_replace':.6,
+                                'dbase':os.environ['HOME'] + '/all_lift3', 'p_cross':0.9, 'p_replace':.6,
 
-				    'p_deviation': -.001})
+                                'p_deviation': -.001})
 
-	galg.evolve()
+    galg.evolve()
 
 
 
-	print  '########### awaiting evaluation#############'
+    print  '########### awaiting evaluation#############'
 
-	pop.initialize()
+    pop.initialize()
 
-	print ' evaluation done!'
+    print ' evaluation done!'
 
-	print 'best:', pop.best()
+    print 'best:', pop.best()
 
-	print 'worst',pop.worst()
+    print 'worst',pop.worst()
 
-	
+
 
 import thread
 
 def test():
 
-	host = socket.gethostname()
+    host = socket.gethostname()
 
-	port = 8000
+    port = 8000
 
-	server_list = [(host,port),(host,port+1)]
+    server_list = [(host,port),(host,port+1)]
 
-	for server in server_list:
+    for server in server_list:
 
-		host,port = server
+        host,port = server
 
-		thread.start_new_thread(remote_exec.server,(host,port))
+        thread.start_new_thread(remote_exec.server,(host,port))
 
-	thread.start_new_thread(test_pop2,(server_list,))		
+    thread.start_new_thread(test_pop2,(server_list,))
 
-	
+
 
 def test2(machines=32,size=100,wait=.01):
 
-	import time
+    import time
 
-	t1 = time.time()
+    t1 = time.time()
 
-	#requires that servers are started on beowulf 1 and 2.
+    #requires that servers are started on beowulf 1 and 2.
 
-	import beowulf
+    import beowulf
 
-	server_list = beowulf.beowulf.servers[:machines]
+    server_list = beowulf.beowulf.servers[:machines]
 
-	thread.start_new_thread(test_pop,(server_list,size,wait))			
+    thread.start_new_thread(test_pop,(server_list,size,wait))
 
-	print 'total time:', time.time()-t1
+    print 'total time:', time.time()-t1

@@ -1,6 +1,6 @@
 """
 
-This module adds gradient optimization capabilities to the 
+This module adds gradient optimization capabilities to the
 
 standard genomes.  Basically this means that any problem set up
 
@@ -12,7 +12,7 @@ For purity sake, the grad and genome
 
 modules have been left totally separate.  It might have
 
-been just as easy to derive genomes directly from 
+been just as easy to derive genomes directly from
 
 grad.grad - and maybe that will happen in the future.
 
@@ -20,17 +20,17 @@ grad.grad - and maybe that will happen in the future.
 
 Caveats:
 
-	This has only be set up for list_genomes made up of 
+        This has only be set up for list_genomes made up of
 
-	floating point genes.  The tree_genomes just need to
+        floating point genes.  The tree_genomes just need to
 
-	be recoded here translating the pick_numbers functions
+        be recoded here translating the pick_numbers functions
 
-	from tree_opt.  
+        from tree_opt.
 
-	
 
-	genomes of discrete variable genes should be able to work also.
+
+        genomes of discrete variable genes should be able to work also.
 
 """
 
@@ -44,73 +44,72 @@ import genome
 
 class list_genome(genome.list_genome,grad.grad):
 
-	""" So far, grad_min, and grad_max only 
+    """ So far, grad_min, and grad_max only
 
-		work for float_genes.
+            work for float_genes.
 
-		Test:
+            Test:
 
-		#Test gradient optimization
+            #Test gradient optimization
 
-		>>> import ga_gnm, gene
+            >>> import ga_gnm, gene
 
-		>>> g = gene.float_gene((-1,1))
+            >>> g = gene.float_gene((-1,1))
 
-		>>> class simple_genome(ga_gnm.list_genome):
+            >>> class simple_genome(ga_gnm.list_genome):
 
-		...		def performance(self):
+            ...             def performance(self):
 
-		...			s = 0
+            ...                     s = 0
 
-		...			for i in self: s = s+ i
+            ...                     for i in self: s = s+ i
 
-		...			return s							
+            ...                     return s
 
-		>>> a = simple_genome(g.replicate(10))
+            >>> a = simple_genome(g.replicate(10))
 
-		>>> a.initialize()
+            >>> a.initialize()
 
-		>>> a.grad_opt(5)
+            >>> a.grad_opt(5)
 
-		33
+            33
 
-		>>> a
+            >>> a
 
-		[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+            [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-	"""
+    """
 
-	def grad_params(self):
+    def grad_params(self):
 
-		return self.get_values() # calls list__genome	get_values()
+        return self.get_values() # calls list__genome   get_values()
 
-	def set_grad_params(self,x):
+    def set_grad_params(self,x):
 
-		self.set_values(x) # calls list__genome	set_values()
+        self.set_values(x) # calls list__genome set_values()
 
-	#do we really need this?	
+    #do we really need this?
 
-	def grad_len(self):
+    def grad_len(self):
 
-		return len(self)
+        return len(self)
 
-	def grad_min(self):
+    def grad_min(self):
 
-		gmin = []
+        gmin = []
 
-		for flt_gene in self: 
+        for flt_gene in self:
 
-			gmin.append(flt_gene.bounds[0])	
+            gmin.append(flt_gene.bounds[0])
 
-		return gmin	
+        return gmin
 
-	def grad_max(self):
+    def grad_max(self):
 
-		gmax = []
+        gmax = []
 
-		for flt_gene in self: 
+        for flt_gene in self:
 
-			gmax.append(flt_gene.bounds[1])	
+            gmax.append(flt_gene.bounds[1])
 
-		return gmax	
-
+        return gmax
