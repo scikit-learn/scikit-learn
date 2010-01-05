@@ -373,7 +373,7 @@ class tree_genome(genome):
 			g.root.set_mutation(settings['p_mutate'])
 	def defaultize(self):
 		""" set the nodes to their default values"""
-		if self.root == None:
+		if self.root is None:
 			genome.initialize(self)
 		self.root.defaultize()		
 	def generate(self):

@@ -97,7 +97,7 @@ class base_tree_node:
 		cnt = 0
 		for child in self._children:
 			cnt = cnt + child.node_count(type)
-		if self.node_type == type or type == None:
+		if self.node_type == type or type is None:
 			cnt = cnt + 1
 		return cnt	
 	
@@ -147,7 +147,7 @@ class base_tree_node:
 			return res
 	def delete_circulars(self):
 		#if hasattr(self,'parent'):
-		#	if self.parent == None: print 'deleting root ciculars'
+		#	if self.parent is None: print 'deleting root ciculars'
 		base_tree_node.circular = base_tree_node.circular + 1
 		import sys
 		self.symbol_table = None	
