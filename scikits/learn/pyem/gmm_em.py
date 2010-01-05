@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Jul 02 04:00 PM 2007 J
+# Last Change: Mon Jul 02 07:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -45,6 +45,8 @@ class GmmParamError(GmmError):
         return self.message
 
 class MixtureModel(object):
+    """Class to model mixture """
+    # XXX: Is this really needed ?
     pass
 
 class ExpMixtureModel(MixtureModel):
@@ -59,12 +61,11 @@ class GMM(ExpMixtureModel):
     instanciated object can be sampled, trained by EM. """
     def init_kmean(self, data, niter = 5):
         """ Init the model with kmean."""
-        k       = self.gm.k
-        d       = self.gm.d
-        init    = data[0:k, :]
+        k = self.gm.k
+        d = self.gm.d
+        init = data[0:k, :]
 
-        # XXX: This is bogus initialization should do better (in kmean or here,
-        # do not know yet): should 
+        # XXX: This is bogus initialization should do better (in kmean with CV)
         (code, label)   = kmean(data, init, niter, minit = 'matrix')
 
         w   = N.ones(k) / k
@@ -89,10 +90,10 @@ class GMM(ExpMixtureModel):
 
     def init_random(self, data):
         """ Init the model at random."""
-        k   = self.gm.k
-        d   = self.gm.d
-        w   = N.ones(k) / k
-        mu  = randn(k, d)
+        k = self.gm.k
+        d = self.gm.d
+        w = N.ones(k) / k
+        mu = randn(k, d)
         if self.gm.mode == 'diag':
             va  = N.fabs(randn(k, d))
         else:
@@ -112,18 +113,12 @@ class GMM(ExpMixtureModel):
         Useful for testing purpose when reproducability is necessary. This does
         nothing but checking that the mixture model has valid initial
         values."""
-        # We have
         try:
             self.gm.check_state()
         except GmParamError, e:
             print "Model is not properly initalized, cannot init EM."
-            raise "Message was %s" % str(e)
+            raise ValueError("Message was %s" % str(e))
         
-    # TODO: 
-    #   - format of parameters ? For variances, list of variances matrix,
-    #   keep the current format, have 3d matrices ?
-    #   - To handle the different modes, we could do something "fancy" such as
-    #   replacing methods, to avoid checking cases everywhere and unconsistency.
     def __init__(self, gm, init = 'kmean'):
         """Initialize a mixture model.
         
@@ -183,7 +178,8 @@ class GMM(ExpMixtureModel):
 
         This is basically the E step of EM for finite mixtures."""
         # compute the gaussian pdf
-        tgd	= densities.multiple_gauss_den(data, self.gm.mu, self.gm.va, log = True)
+        tgd	= densities.multiple_gauss_den(data, self.gm.mu, 
+                                           self.gm.va, log = True)
         # multiply by the weight
         tgd	+= N.log(self.gm.w)
         # Normalize to get a (log) pdf
@@ -420,6 +416,33 @@ class RegularizedEM:
         self.pval = pval
 
     def train(self, data, model, maxiter = 20, thresh = 1e-5):
+        """Train a model using EM.
+
+        Train a model using data, and stops when the likelihood increase
+        between two consecutive iteration fails behind a threshold, or when the
+        number of iterations > niter, whichever comes first
+
+        :Parameters:
+            data : ndarray
+                contains the observed features, one row is one frame, ie one
+                observation of dimension d
+            model : GMM
+                GMM instance.
+            maxiter : int
+                maximum number of iterations
+            thresh : threshold
+                if the slope of the likelihood falls below this value, the
+                algorithm stops.
+
+        :Returns:
+            likelihood : ndarray
+                one value per iteration.
+
+        Note
+        ----
+        The model is trained, and its parameters updated accordingly, eg the
+        results are put in the GMM instance.
+        """
         mode = model.gm.mode
 
         # Build regularizer
@@ -476,7 +499,6 @@ def regularize_diag(va, np, prior):
     number of point).
     
     diagonal variance version"""
-    d = va.shape[1]
     k = va.shape[0]
 
     for i in range(k):
@@ -490,8 +512,8 @@ def regularize_full(va, np, prior):
     k = va.shape[0] / d
 
     for i in range(k):
-        va[i*d:i*d+d,:] *= 1. / (1 + np)
-        va[i*d:i*d+d,:] += np / (1. + np) * prior
+        va[i*d:i*d+d, :] *= 1. / (1 + np)
+        va[i*d:i*d+d, :] += np / (1. + np) * prior
 
 if __name__ == "__main__":
     pass

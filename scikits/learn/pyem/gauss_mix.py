@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Jul 02 06:00 PM 2007 J
+# Last Change: Mon Jul 02 07:00 PM 2007 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -96,11 +96,11 @@ class GM:
         elif mode == 'full':
             self.va  = N.zeros((k * d, d))
 
-        self.is_valid   = False
+        self.__is_valid   = False
         if d > 1:
-            self.is1d = False
+            self.__is1d = False
         else:
-            self.is1d = True
+            self.__is1d = True
 
     def set_param(self, weights, mu, sigma):
         """Set parameters of the model. 
@@ -147,7 +147,7 @@ class GM:
         self.mu = mu
         self.va = sigma
 
-        self.is_valid   = True
+        self.__is_valid   = True
 
     @classmethod
     def fromvalues(cls, weights, mu, sigma):
@@ -200,17 +200,17 @@ class GM:
         :Returns:
             samples : ndarray
                 samples in the format one sample per row (nframes, d)."""
-        if not self.is_valid:
+        if not self.__is_valid:
             raise GmParamError("""Parameters of the model has not been 
                 set yet, please set them using self.set_param()""")
 
         # State index (ie hidden var)
-        S   = gen_rand_index(self.w, nframes)
-        # standard gaussian
-        X   = randn(nframes, self.d)        
+        sti = gen_rand_index(self.w, nframes)
+        # standard gaussian samples
+        x   = randn(nframes, self.d)        
 
         if self.mode == 'diag':
-            X   = self.mu[S, :]  + X * N.sqrt(self.va[S, :])
+            x   = self.mu[sti, :]  + x * N.sqrt(self.va[sti, :])
         elif self.mode == 'full':
             # Faster:
             cho = N.zeros((self.k, self.va.shape[1], self.va.shape[1]))
@@ -220,13 +220,13 @@ class GM:
                 cho[i]  = lin.cholesky(self.va[i*self.d:i*self.d+self.d, :])
 
             for s in range(self.k):
-                tmpind      = N.where(S == s)[0]
-                X[tmpind]   = N.dot(X[tmpind], cho[s].transpose()) + self.mu[s]
+                tmpind      = N.where(sti == s)[0]
+                x[tmpind]   = N.dot(x[tmpind], cho[s].T) + self.mu[s]
         else:
             raise GmParamError("cov matrix mode not recognized, "\
                     "this is a bug !")
 
-        return X
+        return x
 
     def conf_ellipses(self, dim = misc.DEF_VIS_DIM, npoints = misc.DEF_ELL_NP, 
             level = misc.DEF_LEVEL):
@@ -264,31 +264,31 @@ class GM:
             Will plot samples X draw from the mixture model, and
             plot the ellipses of equi-probability from the mean with
             default level of confidence."""
-        if self.is1d:
+        if self.__is1d:
             raise ValueError("This function does not make sense for 1d "
                 "mixtures.")
 
-        if not self.is_valid:
+        if not self.__is_valid:
             raise GmParamError("""Parameters of the model has not been 
                 set yet, please set them using self.set_param()""")
 
-        Xe  = []
-        Ye  = []   
+        xe  = []
+        ye  = []   
         if self.mode == 'diag':
             for i in range(self.k):
                 xe, ye  = D.gauss_ell(self.mu[i, :], self.va[i, :], 
                         dim, npoints, level)
-                Xe.append(xe)
-                Ye.append(ye)
+                xe.append(xe)
+                ye.append(ye)
         elif self.mode == 'full':
             for i in range(self.k):
                 xe, ye  = D.gauss_ell(self.mu[i, :], 
                         self.va[i*self.d:i*self.d+self.d, :], 
                         dim, npoints, level)
-                Xe.append(xe)
-                Ye.append(ye)
+                xe.append(xe)
+                ye.append(ye)
 
-        return Xe, Ye
+        return xe, ye
     
     def check_state(self):
         """Returns true if the parameters of the model are valid. 
@@ -296,7 +296,7 @@ class GM:
         For Gaussian mixtures, this means weights summing to 1, and variances
         to be positive definite.
         """
-        if not self.is_valid:
+        if not self.__is_valid:
             raise GmParamError("Parameters of the model has not been"\
                 "set yet, please set them using self.set_param()")
 
@@ -383,7 +383,7 @@ class GM:
         else:
             return N.sum(D.multiple_gauss_den(x, self.mu, self.va) * self.w, 1)
 
-    def pdf_comp(self, x, comp, log = False):
+    def pdf_comp(self, x, cid, log = False):
         """Computes the pdf of the model at given points, at given component.
 
         :Parameters:
@@ -392,7 +392,7 @@ class GM:
                 multi-dimensional sample (eg to estimate the pdf at 100
                 different points in 10 dimension, data's shape should be (100,
                 20)).
-            comp: int
+            cid: int
                 the component index.
             log : bool
                 If true, returns the log pdf instead of the pdf.
@@ -401,16 +401,17 @@ class GM:
             y : ndarray
                 the pdf at points x."""
         if self.mode == 'diag':
-            va = self.va[c]
+            va = self.va[cid]
         elif self.mode == 'full':
-            va = self.va[c*self.d:(c+1)*self.d]
+            va = self.va[cid*self.d:(cid+1)*self.d]
         else:
             raise GmParamError("""var mode %s not supported""" % self.mode)
 
         if log:
-            D.gauss_den(x, self.mu[c], va, log = True) + N.log(self.w[c])
+            return D.gauss_den(x, self.mu[cid], va, log = True) \
+                   + N.log(self.w[cid])
         else:
-            return D.multiple_gauss_den(x, self.mu[c], va) * self.w[c]
+            return D.multiple_gauss_den(x, self.mu[cid], va) * self.w[cid]
 
     #=================
     # Plotting methods
@@ -442,19 +443,19 @@ class GM:
         :SeeAlso:
             conf_ellipses is used to compute the ellipses. Use this if you want
             to plot with something else than matplotlib."""
-        if self.is1d:
+        if self.__is1d:
             raise ValueError("This function does not make sense for 1d "
                 "mixtures.")
 
-        if not self.is_valid:
+        if not self.__is_valid:
             raise GmParamError("""Parameters of the model has not been 
                 set yet, please set them using self.set_param()""")
 
         k       = self.k
-        Xe, Ye  = self.conf_ellipses(dim, npoints, level)
+        xe, ye  = self.conf_ellipses(dim, npoints, level)
         try:
             import pylab as P
-            return [P.plot(Xe[i], Ye[i], 'r', label='_nolegend_')[0] for i in
+            return [P.plot(xe[i], ye[i], 'r', label='_nolegend_')[0] for i in
                     range(k)]
         except ImportError:
             raise GmParamError("matplotlib not found, cannot plot...")
@@ -479,37 +480,29 @@ class GM:
                 - h['gpdf'] is the line for the global pdf
                 - h['conf'] is a list of filling area
         """
-        if not self.is1d:
+        if not self.__is1d:
             raise ValueError("This function does not make sense for "\
                 "mixtures which are not unidimensional")
 
-        # This is not optimized at all, may be slow. Should not be
-        # difficult to make much faster, but it is late, and I am lazy
-        # XXX separete the computation from the plotting
-        if not self.d == 1:
-            raise GmParamError("the model is not one dimensional model")
         from scipy.stats import norm
-        nrm     = norm(0, 1)
-        pval    = N.sqrt(self.va[:, 0]) * nrm.ppf((1+level)/2)
+        pval    = N.sqrt(self.va[:, 0]) * norm(0, 1).ppf((1+level)/2)
 
         # Compute reasonable min/max for the normal pdf: [-mc * std, mc * std]
         # gives the range we are taking in account for each gaussian
         mc  = 3
         std = N.sqrt(self.va[:, 0])
-        m   = N.amin(self.mu[:, 0] - mc * std)
-        M   = N.amax(self.mu[:, 0] + mc * std)
+        mi  = N.amin(self.mu[:, 0] - mc * std)
+        ma  = N.amax(self.mu[:, 0] + mc * std)
 
         np  = 500
-        x   = N.linspace(m, M, np)
-        Yf  = N.zeros(np)
-        Yt  = N.zeros(np)
-
+        x   = N.linspace(mi, ma, np)
         # Prepare the dic of plot handles to return
         ks  = ['pdf', 'conf', 'gpdf']
         hp  = dict((i, []) for i in ks)
 
         # Compute the densities
-        y   = D.multiple_gauss_den(x[:, N.newaxis], self.mu, self.va, log = True) \
+        y   = D.multiple_gauss_den(x[:, N.newaxis], self.mu, self.va, \
+                                   log = True) \
               + N.log(self.w)
         yt  = self.pdf(x[:, N.newaxis])
 
@@ -526,11 +519,11 @@ class GM:
                     xc  = xc[:, N.where(xc<id2)[0]]
                     
                     # Compute the graph for filling
-                    Yf  = self.pdf_comp(xc, c)
+                    yf  = self.pdf_comp(xc, c)
                     xc  = N.concatenate(([xc[0]], xc, [xc[-1]]))
-                    Yf  = N.concatenate(([0], Yf, [0]))
-                    h   = P.fill(xc, Yf, 
-                            facecolor = 'b', alpha = 0.1, label='_nolegend_')
+                    yf  = N.concatenate(([0], yf, [0]))
+                    h   = P.fill(xc, yf, facecolor = 'b', alpha = 0.1, 
+                                 label='_nolegend_')
                     hp['conf'].extend(h)
             if gpdf:
                 h = P.plot(x, yt, 'r:', label='_nolegend_')
@@ -540,7 +533,7 @@ class GM:
             raise GmParamError("matplotlib not found, cannot plot...")
 
     def density_on_grid(self, dim = misc.DEF_VIS_DIM, nx = 50, ny = 50,
-            nl = 20, maxlevel = 0.95, V = None):
+            nl = 20, maxlevel = 0.95, v = None):
         """Do all the necessary computation for contour plot of mixture's
         density.
         
@@ -567,9 +560,9 @@ class GM:
         Note
         ----
         X, Y, Z and V are as expected by matplotlib contour function."""
-        if self.is1d:
+        if self.__is1d:
             raise ValueError("This function does not make sense for 1d "
-                "mixtures.")
+                             "mixtures.")
 
         # Ok, it is a bit gory. Basically, we want to compute the size of the
         # grid. We use conf_ellipse, which will return a couple of points for
@@ -579,40 +572,42 @@ class GM:
         # at a given point, one component is largely dominant for its
         # contribution to the pdf).
 
-        Xe, Ye = self.conf_ellipses(level = maxlevel, dim = dim)
-        ax = [N.min(Xe), N.max(Xe), N.min(Ye), N.max(Ye)]
+        xe, ye = self.conf_ellipses(level = maxlevel, dim = dim)
+        ax = [N.min(xe), N.max(xe), N.min(ye), N.max(ye)]
 
         w = ax[1] - ax[0]
         h = ax[3] - ax[2]
-        X, Y, lden = self._densityctr(N.linspace(ax[0]-0.2*w, ax[1]+0.2*w, nx), \
-                N.linspace(ax[2]-0.2*h, ax[3]+0.2*h, ny), dim = dim)
+        x, y, lden = self._densityctr(N.linspace(ax[0]-0.2*w, 
+                                                 ax[1]+0.2*w, nx), 
+                                      N.linspace(ax[2]-0.2*h, 
+                                                 ax[3]+0.2*h, ny), 
+                                      dim = dim)
         # XXX: how to find "good" values for level ?
-        if V is None:
-            V = N.linspace(-5, N.max(lden), nl)
-        return X, Y, lden, N.array(V)
+        if v is None:
+            v = N.linspace(-5, N.max(lden), nl)
+        return x, y, lden, N.array(v)
 
     def _densityctr(self, rangex, rangey, dim = misc.DEF_VIS_DIM):
         """Helper function to compute density contours on a grid."""
         gr = N.meshgrid(rangex, rangey)
-        X = gr[0].flatten()
-        Y = gr[1].flatten()
-        xdata = N.concatenate((X[:, N.newaxis], Y[:, N.newaxis]), axis = 1)
+        x = gr[0].flatten()
+        y = gr[1].flatten()
+        xdata = N.concatenate((x[:, N.newaxis], y[:, N.newaxis]), axis = 1)
         dmu = self.mu[:, dim]
         dva = self._get_va(dim)
         den = GM.fromvalues(self.w, dmu, dva).pdf(xdata, log = True)
         den = den.reshape(len(rangey), len(rangex))
 
-        X = gr[0]
-        Y = gr[1]
-        return X, Y, den
+        return gr[0], gr[1], den
 
     def _get_va(self, dim):
         """Returns variance limited do 2 dimension in tuple dim."""
         assert len(dim) == 2
         dim = N.array(dim)
         if dim.any() < 0 or dim.any() >= self.d:
-            raise ValueError("dim elements should be between 0 and dimension"\
-                    " of the mixture.")
+            raise ValueError("dim elements should be between 0 and dimension"
+                             " of the mixture.")
+
         if self.mode == 'diag':
             return self.va[:, dim]
         elif self.mode == 'full':
@@ -636,7 +631,7 @@ class GM:
         msg += " -> %d dimensions\n" % self.d
         msg += " -> %d components\n" % self.k
         msg += " -> %s covariance \n" % self.mode
-        if self.is_valid:
+        if self.__is_valid:
             msg += "Has initial values"""
         else:
             msg += "Has no initial values yet"""
@@ -694,11 +689,11 @@ def check_gmm_param(w, mu, va):
     if not len(w.shape) == 1:
         raise GmParamError('weight should be a rank 1 array')
 
-    if N.fabs(N.sum(w)  - 1) > misc._MAX_DBL_DEV:
+    if N.fabs(N.sum(w)  - 1) > misc.MAX_DBL_DEV:
         raise GmParamError('weight does not sum to 1')
     
     # Check that mean and va have the same number of components
-    K = len(w)
+    k = len(w)
 
     if N.ndim(mu) < 2:
         msg = "mu should be a K,d matrix, and a row vector if only 1 comp"
@@ -708,10 +703,10 @@ def check_gmm_param(w, mu, va):
         only 1 diag comp"""
         raise GmParamError(msg)
 
-    (Km, d)     = mu.shape
-    (Ka, da)    = va.shape
+    (km, d)     = mu.shape
+    (ka, da)    = va.shape
 
-    if not K == Km:
+    if not k == km:
         msg = "not same number of component in mean and weights"
         raise GmParamError(msg)
 
@@ -719,15 +714,15 @@ def check_gmm_param(w, mu, va):
         msg = "not same number of dimensions in mean and variances"
         raise GmParamError(msg)
 
-    if Km == Ka:
+    if km == ka:
         mode = 'diag'
     else:
         mode = 'full'
-        if not Ka == Km*d:
+        if not ka == km*d:
             msg = "not same number of dimensions in mean and variances"
             raise GmParamError(msg)
         
-    return K, d, mode
+    return k, d, mode
         
 if __name__ == '__main__':
     pass

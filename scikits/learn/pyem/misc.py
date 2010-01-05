@@ -1,4 +1,4 @@
-# Last Change: Mon Jul 02 04:00 PM 2007 J
+# Last Change: Mon Jul 02 06:00 PM 2007 J
 
 #========================================================
 # Constants used throughout the module (def args, etc...)
@@ -15,7 +15,7 @@ DEF_LEVEL = 0.39
 
 # max deviation allowed when comparing double (this is actually stupid,
 # I should actually use a number of decimals)
-_MAX_DBL_DEV    = 1e-10
+MAX_DBL_DEV    = 1e-10
 
 ## # max conditional number allowed
 ## _MAX_COND       = 1e8
