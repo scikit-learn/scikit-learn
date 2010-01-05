@@ -2,7 +2,7 @@
 #based on galib.
 #
 from ga_util import *
-import scipy.stats.stats as stats
+import scipy.stats as stats
 from Numeric import *
 from fastumath import *
 # if a score is less the 2 standard deviations below, the average, its score

@@ -1,6 +1,6 @@
 from ga_util import *
-import scipy.stats.stats as stats
-import scipy.stats.rv as rv
+import scipy.stats as stats
+rv = stats
 import scipy.dumb_shelve
 import string, pdb
 import os, sys, string

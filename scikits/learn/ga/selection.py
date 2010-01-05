@@ -2,8 +2,8 @@
 #based on galib. 
 #exception - these classes only work on the scaled fitness
 from ga_util import *
-import scipy.stats.rv as rv
-import scipy.stats.stats as stats
+import scipy.stats as rv
+stats = rv
 import pdb
 from Numeric import *
 from fastumath import *

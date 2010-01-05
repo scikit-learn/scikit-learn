@@ -1,6 +1,6 @@
 #base definitions for genetic algorithms
-import scipy.stats.rv as rv
-import scipy.stats.stats as stats
+import scipy.stats as rv
+stats = rv
 
 GAError = 'GA Error'
 

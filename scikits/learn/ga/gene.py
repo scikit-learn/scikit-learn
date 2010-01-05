@@ -13,7 +13,7 @@ history:
 """
 
 from ga_util import *
-import scipy.stats.rv as rv
+import scipy.stats as rv
 from whrandom import random
 import copy
 
