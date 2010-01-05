@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Mon Aug 28 12:00 PM 2006 J
+# Last Change: Tue Aug 29 04:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -204,8 +204,6 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100, level = 0.39):
         else:
             raise DenError("mean and variance are not dim conformant")
 
-    # TODO: Get a confidence interval using the Chi2 distribution
-    # of points at a given mahalanobis distance...
     chi22d  = chi2(2)
     mahal   = N.sqrt(chi22d.ppf(level))
     

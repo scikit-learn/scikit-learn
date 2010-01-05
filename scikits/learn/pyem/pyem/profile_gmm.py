@@ -10,7 +10,7 @@ def bench1(mode = 'diag'):
     k       = 20
     nframes = 1e4
     niter   = 10
-    mode    = 'diag'
+    mode    = 'full'
 
     #+++++++++++++++++++++++++++++++++++++++++++
     # Create an artificial GMM model, samples it
@@ -42,7 +42,7 @@ def bench1(mode = 'diag'):
 
     print "computing..."
     for i in range(niter):
-        print "iter %d" % i
+        print "iteration %d" % i
         g, tgd  = gmm.sufficient_statistics(data)
         like[i] = N.sum(N.log(N.sum(tgd, 1)))
         gmm.update_em(data, g)

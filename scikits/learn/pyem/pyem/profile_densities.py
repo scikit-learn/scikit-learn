@@ -46,6 +46,12 @@ def benchpy():
 def benchc():
     bench(DC.gauss_den)
 
+def benchpyfull():
+    bench(D.gauss_den, 'full')
+
+def benchcfull():
+    bench(DC.gauss_den, 'full')
+
 if __name__ == "__main__":
     import profile
     import pstats

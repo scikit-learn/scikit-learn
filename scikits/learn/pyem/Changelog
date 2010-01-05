@@ -1,3 +1,14 @@
+pyem (0.5.2) Tue, 29 Aug 2006 14:53:49 +0900
+
+	* Add a class method to GM to create a model directly from
+	w, mean and var values (uses decorator: python 2.4)
+	* Add a plot1d method to GM to plot a GM in one dimension (where
+	the confidence ell kind of plot does not make sense). This draws
+	each Gaussian pdf, fill the area on the confidence interval
+	(matplotlib is really cool)
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.5.2) Mon, 28 Aug 2006 13:20:13 +0900
 
 	* Add a plot method to Gm class, so that it is easier

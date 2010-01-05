@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Aug 28 01:00 PM 2006 J
+# Last Change: Tue Aug 29 08:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
@@ -8,13 +8,15 @@ from numpy.random import randn, rand
 import numpy.linalg as lin
 import densities
 
-MAX_DEV = 1e-10
+MAX_DEV     = 1e-10
+MAX_COND    = 1e10
 
 # Right now, two main usages of a Gaussian Model are possible
 #   - init a Gaussian Model with meta-parameters, and trains it
 #   - set-up a Gaussian Model to sample it, draw ellipsoides 
 #   of confidences. In this case, we would like to init it with
-#   known values of parameters.
+#   known values of parameters. This can be done with the class method 
+#   fromval
 #
 #   For now, we have to init with meta-parameters, and set 
 #   the parameters afterward. There should be a better way ?
@@ -24,6 +26,8 @@ MAX_DEV = 1e-10
 #   be used as long as w, mu and va are not set
 #   - We have to use scipy now for chisquare pdf, so there may be other
 #   methods to be used, ie for implementing random index.
+#   - there is no check on internal state of the GM, that is does w, mu and va values
+#   make sense (eg singular values)
 class GmParamError:
     """Exception raised for errors in gmm params
 
@@ -70,7 +74,9 @@ class GM:
         self.is_valid   = False
 
     def set_param(self, weights, mu, sigma):
-        """Set parameters of the model"""
+        """Set parameters of the model. Args should
+        be conformant with metparameters d and k given during
+        initialisation"""
         k, d, mode  = check_gmm_param(weights, mu, sigma)
         if not k == self.k:
             raise GmParamError("Number of given components is %d, expected %d" 
@@ -87,6 +93,26 @@ class GM:
 
         self.is_valid   = True
 
+    @classmethod
+    def fromvalues(cls, weights, mu, sigma):
+        """This class method can be used to create a GM model
+        directly from its parameters weights, mean and variance
+        
+        w, mu, va   = GM.gen_param(d, k)
+        gm  = GM(d, k)
+        gm.set_param(w, mu, va)
+
+        and
+        
+        w, mu, va   = GM.gen_param(d, k)
+        gm  = GM.fromvalue(w, mu, va)
+
+        Are equivalent """
+        k, d, mode  = check_gmm_param(weights, mu, sigma)
+        res = cls(d, k, mode)
+        res.set_param(weights, mu, sigma)
+        return res
+        
     def sample(self, nframes):
         """ Sample nframes frames from the model """
         if not self.is_valid:
@@ -139,6 +165,10 @@ class GM:
             Will plot samples X draw from the mixture model, and
             plot the ellipses of equi-probability from the mean with
             fixed level of confidence 0.39.  """
+        if not self.is_valid:
+            raise GmParamError("""Parameters of the model has not been 
+                set yet, please set them using self.set_param()""")
+
         Xe  = []
         Ye  = []   
         if self.mode == 'diag':
@@ -157,6 +187,31 @@ class GM:
 
         return Xe, Ye
     
+    def check_state(self):
+        """
+        """
+        if not self.is_valid:
+            raise GmParamError("""Parameters of the model has not been 
+                set yet, please set them using self.set_param()""")
+
+        if self.mode == 'full':
+            raise NotImplementedError, "not implemented for full mode yet"
+        
+        # # How to check w: if one component is negligeable, what shall
+        # # we do ?
+        # M   = N.max(self.w)
+        # m   = N.min(self.w)
+
+        # maxc    = m / M
+
+        # Check condition number for cov matrix
+        cond    = N.zeros(self.k)
+        ava     = N.absolute(self.va)
+        for c in range(self.k):
+            cond[c] = N.amax(ava[c,:]) / N.amin(ava[c,:])
+
+        print cond
+
     def gen_param(self, d, nc, varmode = 'diag', spread = 1):
         """Generate valid parameters for a gaussian mixture model.
         d is the dimension, nc the number of components, and varmode
@@ -188,7 +243,13 @@ class GM:
         """Plot the ellipsoides directly for the model
         
         Returns a list of lines, so that their style can be modified. By default,
-        the style is red color, and nolegend for all of them"""
+        the style is red color, and nolegend for all of them.
+        
+        Does not work for 1d"""
+        if not self.is_valid:
+            raise GmParamError("""Parameters of the model has not been 
+                set yet, please set them using self.set_param()""")
+
         k       = self.k
         Xe, Ye  = self.conf_ellipses(*args, **kargs)
         try:
@@ -196,6 +257,50 @@ class GM:
             return [P.plot(Xe[i], Ye[i], 'r', label='_nolegend_')[0] for i in range(k)]
             #for i in range(k):
             #    P.plot(Xe[i], Ye[i], 'r')
+        except ImportError:
+            raise GmParamError("matplotlib not found, cannot plot...")
+
+    def plot1d(self, level = 0.5):
+        """TODO: this is not documented"""
+        # This is not optimized at all, may be slow. Should not be
+        # difficult to make much faster, but it is late, and I am lazy
+        if not self.d == 1:
+            raise GmParamError("the model is not one dimensional model")
+        from scipy.stats import norm
+        nrm     = norm(0, 1)
+        pval    = N.sqrt(self.va[:,0]) * nrm.ppf((1+level)/2)
+
+        # Compute reasonable min/max for the normal pdf
+        mc  = 4
+        std = N.sqrt(self.va[:,0])
+        m   = N.amin(self.mu[:, 0] - 5 * std)
+        M   = N.amax(self.mu[:, 0] + 5 * std)
+
+        np  = 500
+        x   = N.linspace(m, M, np)
+        Yf  = N.zeros(np)
+        Yt  = N.zeros(np)
+        try:
+            import pylab as P
+            for c in range(self.k):
+                y   = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
+                        N.exp(-(x-self.mu[c][0])**2/(2*std[c]**2))
+                Yt  += y
+                P.plot(x, y, 'r:')
+                #P.axvspan(-pval[c] + self.mu[c][0], pval[c] + self.mu[c][0], 
+                #        facecolor = 'b', alpha = 0.2)
+                id1 = -pval[c] + self.mu[c]
+                id2 = pval[c] + self.mu[c]
+                xc  = x[:, N.where(x>id1)[0]]
+                xc  = xc[:, N.where(xc<id2)[0]]
+                Yf  = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
+                        N.exp(-(xc-self.mu[c][0])**2/(2*std[c]**2))
+                xc  = N.concatenate(([xc[0]], xc, [xc[-1]]))
+                Yf  = N.concatenate(([0], Yf, [0]))
+                P.fill(xc, Yf, facecolor = 'b', alpha = 0.2)
+                #P.fill([xc[0], xc[0], xc[-1], xc[-1]], 
+                #        [0, Yf[0], Yf[-1], 0], facecolor = 'b', alpha = 0.2)
+            P.plot(x, Yt, 'r')
         except ImportError:
             raise GmParamError("matplotlib not found, cannot plot...")
 
@@ -283,13 +388,14 @@ if __name__ == '__main__':
     #   - mode : mode of covariance matrices
     d       = 5
     k       = 4
+
+    # Now, drawing a model
     mode    = 'full'
     nframes = 1e3
 
     # Build a model with random parameters
     w, mu, va   = GM.gen_param(d, k, mode, spread = 3)
-    gm          = GM(d, k, mode)
-    gm.set_param(w, mu, va)
+    gm          = GM.fromvalues(w, mu, va)
 
     # Sample nframes frames  from the model
     X   = gm.sample(nframes)

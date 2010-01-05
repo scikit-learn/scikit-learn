@@ -1,8 +1,10 @@
 # /usr/bin/python
-# Last Change: Mon Aug 28 05:00 PM 2006 J
+# Last Change: Tue Aug 29 03:00 PM 2006 J
 
 # TODO:
-#   - which methods to avoid va shrinking to 0 ?
+#   - which methods to avoid va shrinking to 0 ? There are several options, not sure which
+#   ones are appropriates
+#   - improve EM trainer
 #   - online EM
 
 import numpy as N
@@ -163,22 +165,27 @@ class GMM(ExpMixtureModel):
             w   = invn * mGamma
 
         elif self.gm.mode == 'full':
+            # In full mode, this is the bottleneck: the triple loop
+            # kills performances. This is pretty straightforward
+            # algebra, so computing it in C should not be too difficult
             mu  = N.zeros((k, d))
             va  = N.zeros((k*d, d))
 
+            gamma   = gamma.transpose()
             for c in range(k):
-                x   = N.sum(N.outerproduct(gamma[:, c], 
-                            N.ones((1, d))) * data, axis = 0)
+                #x   = N.sum(N.outer(gamma[:, c], 
+                #            N.ones((1, d))) * data, axis = 0)
+                x   = N.dot(gamma[c:c+1,:], data)[0,:]
                 xx  = N.zeros((d, d))
                 
                 # This should be much faster than recursing on n...
                 for i in range(d):
                     for j in range(d):
-                        xx[i,j] = N.sum(data[:,i] * data[:,j] * gamma[:,c], axis = 0)
+                        xx[i,j] = N.sum(data[:,i] * data[:,j] * gamma[c,:], axis = 0)
 
                 mu[c,:] = x / mGamma[c]
                 va[c*d:c*d+d,:] = xx  / mGamma[c] - \
-                                    N.outerproduct(mu[c,:], mu[c,:])
+                                    N.outer(mu[c,:], mu[c,:])
             w   = invn * mGamma
         else:
             raise GmmParamError("varmode not recognized")
@@ -223,11 +230,6 @@ class EM:
 
         return like
     
-class OnlineEM:
-    "An online EM trainer. "
-    def __init__(self):
-        raise GmmError("not implemented yet")
-
 # Misc functions
 def multiple_gauss_den(data, mu, va):
     """Helper function to generate several Gaussian
@@ -265,7 +267,7 @@ if __name__ == "__main__":
     #   row of d elements
     k       = 3 
     d       = 2         
-    mode    = 'diag'        
+    mode    = 'full'        
     nframes = 1e3
 
     #+++++++++++++++++++++++++++++++++++++++++++

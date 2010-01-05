@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Aug 28 09:00 PM 2006 J
+# Last Change: Tue Aug 29 12:00 PM 2006 J
 
 import numpy as N
 
@@ -29,7 +29,7 @@ def _py_vq(data, code):
 #        Kmean will be REALLY slow"""
 #        _vq = _py_vq
 try:
-    from sccipy.cluster.vq import vq
+    from scipy.cluster.vq import vq
     print "using scipy.cluster.vq"
     def _vq(*args, **kw): return vq(*args, **kw)[0]
 except ImportError:
@@ -42,7 +42,7 @@ except ImportError:
         _vq = _py_vq
 
 def kmean(data, init, iter = 10):
-    """Simple kmean implementation for EM
+    """Simple kmean implementation for EM. Runs iter iterations.
     
     returns a tuple (code, label), where code are the final
     centroids, and label are the class label indec for each
