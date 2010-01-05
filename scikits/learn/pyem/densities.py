@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Tue Jun 12 03:00 PM 2007 J
+# Last Change: Sat Jun 30 04:00 PM 2007 J
 """This module implements various basic functions related to multivariate
 gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
 
@@ -261,7 +261,11 @@ def gauss_ell(mu, va, dim = misc.DEF_VIS_DIM, npoints = misc.DEF_ELL_NP, \
     return elps[0, :], elps[1, :]
 
 def logsumexp(x):
-    """Compute log(sum(exp(a), 1)) while avoiding underflow."""
+    """Compute log(sum(exp(x), 1)) while avoiding underflow.
+    
+    :Parameters:
+        x : ndarray
+            data in log domain to sum"""
     axis = 1
     mc = N.max(x, axis)
     return mc + N.log(N.sum(N.exp(x-mc[:, N.newaxis]), axis))
