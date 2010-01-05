@@ -2,7 +2,7 @@
 # ga - Genetic Algorithms
 #
 
-from pre___init__ import __doc__
+#from pre___init__ import __doc__
 
 import tree
 import algorithm

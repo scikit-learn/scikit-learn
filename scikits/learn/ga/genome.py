@@ -164,9 +164,9 @@ class list_genome_singlepoint_crossover:
 		#assume mom and dad are the same length
 		mom = parents[0]; dad = parents[1]
 		if(len(mom) > 1): 
-		    crosspoint = rv.randint(1,len(mom)-1)[0]
+		    crosspoint = rv.randint(1,len(mom)-1).rvs()[0]
 		else: 
-		    crosspoint = rv.randint(0,len(mom))[0]
+		    crosspoint = rv.randint(0,len(mom)).rvs()[0]
 		brother = (mom[:crosspoint] + dad[crosspoint:]).clone()
 		sister = (dad[:crosspoint] + mom[crosspoint:]).clone()
 		return brother, sister
