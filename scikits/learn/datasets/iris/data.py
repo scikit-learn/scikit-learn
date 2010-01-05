@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-# Last Change: Sun Jul 01 08:00 PM 2007 J
+# Last Change: Tue Jul 17 04:00 PM 2007 J
 
 # The code and descriptive text is copyrighted and offered under the terms of
 # the BSD License from the authors; see below. However, the actual dataset may
@@ -98,25 +98,45 @@ def load():
     """load the iris data and returns them.
     
     :returns:
-        data: recordarray
-            a record array of the data.
+        d : dict
+            contains the following values:
+            - 'data' : a record array with the actual data
+            - 'label' : label[i] = label index of data[i]
+            - 'class' : class[i] is the string corresponding to label index i.
+
+    Example
+    -------
+    
+    Let's say you are interested in the samples 10, 25, and 50, and want to
+    know their class name.
+
+    >>>> d = load()
+    >>>> ind = [10, 25, 50]
+    >>>> lind = d['label'][ind] # returns the label index of each sample
+    >>>> d['class'][lind] # returns the class name of each sample
+
     """
     import numpy
-    from iris import SL, SW, PL, PW, CLI
+    from iris import SL, SW, PL, PW, LABELS, LI2LN
     PW = numpy.array(PW).astype(numpy.float)
     PL = numpy.array(PL).astype(numpy.float)
     SW = numpy.array(SW).astype(numpy.float)
     SL = numpy.array(SL).astype(numpy.float)
     data    = {}
-    for i in CLI.items():
-        name = i[0][5:]
-        data[name] = numpy.empty(len(i[1]), [('petal width', numpy.int),\
-                        ('petal length', numpy.int),
-                        ('sepal width', numpy.int),
-                        ('sepal length', numpy.int)])
-        data[name]['petal width'] = numpy.round(PW[i[1]] * 10)
-        data[name]['petal length'] = numpy.round(PL[i[1]] * 10)
-        data[name]['sepal width'] = numpy.round(SW[i[1]] * 10)
-        data[name]['sepal length'] = numpy.round(SL[i[1]] * 10)
+    data['data'] = numpy.empty(len(PW), 
+                               [('petal width', numpy.int),
+                                ('petal length', numpy.int),
+                                ('sepal width', numpy.int),
+                                ('sepal length', numpy.int)])
+
+    data['data']['petal width'] = numpy.round(PW * 10)
+    data['data']['petal length'] = numpy.round(PL * 10)
+    data['data']['sepal width'] = numpy.round(SW * 10)
+    data['data']['sepal length'] = numpy.round(SL * 10)
+    data['label'] = numpy.array(LABELS).astype(numpy.int)
+    data['class'] = numpy.empty(len(LI2LN), 
+                                'S%d' % numpy.max([len(i) for i in LI2LN.values()]))
+    for i,c in LI2LN.items():
+        data['class'][i] = c
     
     return data
