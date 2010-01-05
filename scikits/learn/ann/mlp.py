@@ -17,10 +17,10 @@ class mlp:
         zero-mean Gaussian w/ variance is scaled by fan-in.
         Input:
             ni  - <int> # of inputs
-            nh  - <int> # of hidden & context units
+            nh  - <int> # of hidden units
             no  - <int> # of outputs
             f   - <str> output activation fxn
-            w   - <array dtype=Float> weight vector
+            w   - <array of float> vector of initial weights
         """
         if f not in self._outfxns:
             print "Undefined activation fxn. Using linear"

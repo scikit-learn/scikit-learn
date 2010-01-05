@@ -85,13 +85,22 @@ class srn:
         if w is not None:
             self.wp = w
         self.unpack()
+        
+        ### NEW ATTEMPT ###
+        z = N.array(N.ones(self.nh)*0.5)    # init to 0.5, it will be updated on-the-fly
+        o = N.zeros((x.shape[0],self.no))   # this will hold the non-squashed outputs
+        for i in range(len(x)):
+            z = N.tanh(N.dot(x[i],self.w1) + N.dot(z,self.wc) + self.b1)
+            o[i] = (N.dot(z,self.w2) + self.b2)[0]
+            
         # compute vector of context values for current weight matrix
-        c = N.tanh(N.dot(x,self.w1) + N.dot(N.ones((len(x),1)),self.b1))
-        c = N.vstack([c[1:],c[0]])
+        #c = N.tanh(N.dot(x,self.w1) + N.dot(N.ones((len(x),1)),self.b1))
+        #c = N.vstack([c[1:],c[0]])
         # compute vector of hidden unit values
-        z = N.tanh(N.dot(x,self.w1) + N.dot(c,self.wc) + N.dot(N.ones((len(x),1)),self.b1))
+        #z = N.tanh(N.dot(x,self.w1) + N.dot(c,self.wc) + N.dot(N.ones((len(x),1)),self.b1))
         # compute vector of net outputs
-        o = N.dot(z,self.w2) + N.dot(N.ones((len(z),1)),self.b2)
+        #o = N.dot(z,self.w2) + N.dot(N.ones((len(z),1)),self.b2)
+        
         # compute final output activations
         if self.outfxn == 'linear':
             y = o
@@ -101,7 +110,7 @@ class srn:
             tmp = N.exp(o)
             y = tmp/(N.sum(temp,1)*N.ones((1,self.no)))
             
-        return N.array(y)
+        return y
         
     def errfxn(self,w,x,t):
         """ Return vector of squared-errors for the leastsq optimizer
