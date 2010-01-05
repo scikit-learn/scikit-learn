@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Sat Jun 09 10:00 PM 2007 J
+# Last Change: Sun Jun 10 06:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -103,6 +103,21 @@ class GMM(ExpMixtureModel):
         
         self.isinit = True
 
+    def init_test(self, data):
+        """Use values already in the model as initialization.
+        
+        Useful for testing purpose when reproducability is necessary."""
+        try:
+            if self.gm.check_state():
+                self.isinit = True
+            else:
+                raise GmParamError("the mixture is initialized, but the"\
+                        "parameters are not valid")
+
+        except GmParamError, e:
+            print "Model is not properly initalized, cannot init EM."
+            raise "Message was %s" % str(e)
+        
     # TODO: 
     #   - format of parameters ? For variances, list of variances matrix,
     #   keep the current format, have 3d matrices ?
@@ -118,13 +133,12 @@ class GMM(ExpMixtureModel):
             gm : GM
                 the mixture model to train.
             init : string
-                initialization method to use.
-        
-        """
+                initialization method to use."""
         self.gm = gm
 
         # Possible init methods
-        init_methods = {'kmean': self.init_kmean, 'random' : self.init_random}
+        init_methods = {'kmean': self.init_kmean, 'random' : self.init_random,
+                'test': self.init_test}
 
         if init not in init_methods:
             raise GmmParamError('init method %s not recognized' + str(init))
