@@ -86,11 +86,12 @@ def load():
     """
     import numpy
     from german import feat, label
+    data = {}
     descr = [('feat' + str(i), numpy.int) for i in range(1, 25)]
     descr.append(('label', numpy.int))
-    data = numpy.empty(len(feat['feat1']), dtype = descr)
+    data['feat'] = numpy.empty(len(feat['feat1']), dtype = descr)
     for i in feat.keys():
-        data[i] = numpy.array(numpy.round([float(j) for j in feat[i]]))
+        data['feat'][i] = numpy.array(numpy.round([float(j) for j in feat[i]]))
     data['label'] = numpy.array([numpy.int(i) for i in label])
     
     return data
