@@ -1,4 +1,4 @@
-# Last Change: Thu Jun 28 06:00 PM 2007 J
+# Last Change: Mon Jul 02 04:00 PM 2007 J
 
 #========================================================
 # Constants used throughout the module (def args, etc...)
@@ -27,3 +27,18 @@ _MAX_DBL_DEV    = 1e-10
 ## # Default min delta for regularization
 ## _MIN_DBL_DELTA  = 1e-5
 ## 
+
+class curry:
+    def __init__(self, fun, *args, **kwargs):
+        self.fun = fun
+        self.pending = args[:]
+        self.kwargs = kwargs.copy()
+
+    def __call__(self, *args, **kwargs):
+        if kwargs and self.kwargs:
+            kw = self.kwargs.copy()
+            kw.update(kwargs)
+        else:
+            kw = kwargs or self.kwargs
+
+        return self.fun(*(self.pending + args), **kw)
