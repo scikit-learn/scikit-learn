@@ -43,7 +43,7 @@ class EmTest(NumpyTestCase):
 class test_full_run(EmTest):
     """This class only tests whether the algorithms runs. Do not check the
     results."""
-    def check_1d(self, level = 1):
+    def test_1d(self, level = 1):
         d       = 1
         k       = 2
         mode    = 'full'
@@ -52,7 +52,7 @@ class test_full_run(EmTest):
         #seed(1)
         self._create_model_and_run_em(d, k, mode, nframes)
 
-    def check_2d(self, level = 1):
+    def test_2d(self, level = 1):
         d       = 2
         k       = 2
         mode    = 'full'
@@ -61,7 +61,7 @@ class test_full_run(EmTest):
         #seed(1)
         self._create_model_and_run_em(d, k, mode, nframes)
 
-    def check_5d(self, level = 1):
+    def test_5d(self, level = 1):
         d       = 5
         k       = 3
         mode    = 'full'
@@ -71,9 +71,9 @@ class test_full_run(EmTest):
         self._create_model_and_run_em(d, k, mode, nframes)
 
 class test_diag_run(EmTest):
-    """This class only tests whether the algorithms runs. Do not check the
+    """This class only tests whether the algorithms runs. Do not test the
     results."""
-    def check_1d(self, level = 1):
+    def test_1d(self, level = 1):
         d       = 1
         k       = 2
         mode    = 'diag'
@@ -82,7 +82,7 @@ class test_diag_run(EmTest):
         #seed(1)
         self._create_model_and_run_em(d, k, mode, nframes)
 
-    def check_2d(self, level = 1):
+    def test_2d(self, level = 1):
         d       = 2
         k       = 2
         mode    = 'diag'
@@ -91,7 +91,7 @@ class test_diag_run(EmTest):
         #seed(1)
         self._create_model_and_run_em(d, k, mode, nframes)
 
-    def check_5d(self, level = 1):
+    def test_5d(self, level = 1):
         d       = 5
         k       = 3
         mode    = 'diag'
@@ -103,11 +103,11 @@ class test_diag_run(EmTest):
 class test_datasets(EmTest):
     """This class tests whether the EM algorithms works using pre-computed
     datasets."""
-    def check_1d_full(self, level = 1):
+    def test_1d_full(self, level = 1):
         d = 1
         k = 4
         mode = 'full'
-        # Data are exactly the same than in diagonal mode, just check that
+        # Data are exactly the same than in diagonal mode, just test that
         # calling full mode works even in 1d, even if it is kind of stupid to
         # do so
         dic = load_dataset('diag_1d_4k.mat')
@@ -120,7 +120,7 @@ class test_datasets(EmTest):
         assert_array_equal(gmm.gm.mu, dic['mu'])
         assert_array_equal(gmm.gm.va, dic['va'])
 
-    def check_1d_diag(self, level = 1):
+    def test_1d_diag(self, level = 1):
         d = 1
         k = 4
         mode = 'diag'
@@ -134,7 +134,7 @@ class test_datasets(EmTest):
         assert_array_equal(gmm.gm.mu, dic['mu'])
         assert_array_equal(gmm.gm.va, dic['va'])
 
-    def check_2d_full(self, level = 1):
+    def test_2d_full(self, level = 1):
         d = 2
         k = 3
         mode = 'full'
@@ -148,7 +148,7 @@ class test_datasets(EmTest):
         assert_array_equal(gmm.gm.mu, dic['mu'])
         assert_array_equal(gmm.gm.va, dic['va'])
 
-    def check_2d_diag(self, level = 1):
+    def test_2d_diag(self, level = 1):
         d = 2
         k = 3
         mode = 'diag'

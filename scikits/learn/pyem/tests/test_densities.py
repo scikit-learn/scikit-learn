@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jun 09 02:00 PM 2007 J
+# Last Change: Mon Jun 11 06:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
@@ -68,24 +68,24 @@ class TestDensities(NumpyTestCase):
             0.00000253261067, 0.00000001526368])
 
 class test_py_implementation(TestDensities):
-    def _check(self, level, decimal = DEF_DEC):
+    def _test(self, level, decimal = DEF_DEC):
         Y   = gauss_den(self.X, self.mu, self.va)
         assert_array_almost_equal(Y, self.Yt, decimal)
 
-    def check_2d_diag(self, level = 0):
+    def test_2d_diag(self, level = 0):
         self._generate_test_data_2d_diag()
-        self._check(level)
+        self._test(level)
 
-    def check_2d_full(self, level = 0):
+    def test_2d_full(self, level = 0):
         self._generate_test_data_2d_full()
-        self._check(level)
+        self._test(level)
     
-    def check_py_1d(self, level = 0):
+    def test_py_1d(self, level = 0):
         self._generate_test_data_1d()
-        self._check(level)
+        self._test(level)
 
 class test_c_implementation(TestDensities):
-    def _check(self, level, decimal = DEF_DEC):
+    def _test(self, level, decimal = DEF_DEC):
         try:
             from pyem._c_densities import gauss_den as c_gauss_den
             Y   = c_gauss_den(self.X, self.mu, self.va)
@@ -94,17 +94,17 @@ class test_c_implementation(TestDensities):
             print "Error while importing C implementation, not tested"
             print " -> (Import error was %s)" % inst 
 
-    def check_1d(self, level = 0):
+    def test_1d(self, level = 0):
         self._generate_test_data_1d()
-        self._check(level)
+        self._test(level)
 
-    def check_2d_diag(self, level = 0):
+    def test_2d_diag(self, level = 0):
         self._generate_test_data_2d_diag()
-        self._check(level)
+        self._test(level)
 
-    def check_2d_full(self, level = 0):
+    def test_2d_full(self, level = 0):
         self._generate_test_data_2d_full()
-        self._check(level)
+        self._test(level)
 
 class test_gauss_ell(NumpyTestCase):
     def test_dim(self):
