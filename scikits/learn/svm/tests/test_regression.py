@@ -65,7 +65,12 @@ class test_regression(NumpyTestCase):
             model = LibSvmEpsilonRegressionModel(kernel, epsilon, cost)
             results = model.fit(traindata)
             predictions = results.predict(testdata)
-            assert_array_almost_equal(predictions, expected_y)
+            # look at differences instead of using assertAlmostEqual
+            # due to slight differences between answers obtained on
+            # Windows with MSVC 7.1 and on Fedora Core 5 with GCC
+            # 4.1.1.
+            diff = N.absolute(predictions - expected_y)
+            self.assert_(N.alltrue(diff < 1e-3))
 
     def check_cross_validate(self):
         y = N.randn(100)
