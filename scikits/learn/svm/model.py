@@ -66,15 +66,13 @@ class LibSvmModel:
         for i, (yi, xi) in enumerate(dataset.data):
             y[i] = yi
             x[i] = cast(xi.ctypes.data, POINTER(libsvm.svm_node))
-        problem.x = cast(addressof(x), POINTER(POINTER(libsvm.svm_node)))
-        problem.y = cast(addressof(y), POINTER(c_double))
+        problem.x = x
+        problem.y = y
         self._check_problem_param(problem, self.param)
-        # XXX keep references to y and x inside problem, if ctypes allows
-        # it (need to confirm this)
-        return problem, y, x
+        return problem
 
     def fit(self, dataset):
-        problem, y, x = self._create_problem(dataset)
+        problem = self._create_problem(dataset)
 
         model = libsvm.svm_train(problem, self.param)
 
