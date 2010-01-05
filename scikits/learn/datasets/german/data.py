@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-# Last Change: Mon Jul 09 06:00 PM 2007 J
+# Last Change: Tue Jul 17 05:00 PM 2007 J
 
 # The code and descriptive text is copyrighted and offered under the terms of
 # the BSD License from the authors; see below. However, the actual dataset may
@@ -69,29 +69,39 @@ DESCRSHORT  = """"""
 DESCRLONG   = """"""
 
 NOTE        = """
-Number of Instances: 1000. 700 for class 1 (good credit) and 300 for class 2
+Number of Instances: 1000. 700 for class 0 (good credit) and 300 for class 1
 (bad credit).
 
 Number of Attributes: 24.
 
-label: -1 for good credit, +1 for bad credit
+label: 0 for good credit, +1 for bad credit
 """
 
 def load():
     """load the german data and returns them.
     
     :returns:
-        data: recordarray
-            a record array of the data.
+        data: dict
+            Contains the following values:
+                'data' : the actual data
+                'label' : label[i] is the label index of data[i]
+                'class' : class[label[i]] is the label name of data[i]
     """
     import numpy
     from german import feat, label
     data = {}
+    # Create the data
     descr = [('feat' + str(i), numpy.int) for i in range(1, 25)]
-    descr.append(('label', numpy.int))
-    data['feat'] = numpy.empty(len(feat['feat1']), dtype = descr)
+    data['data'] = numpy.empty(len(feat['feat1']), dtype = descr)
     for i in feat.keys():
-        data['feat'][i] = numpy.array(numpy.round([float(j) for j in feat[i]]))
-    data['label'] = numpy.array([numpy.int(i) for i in label])
+        data['data'][i] = numpy.array(numpy.round([float(j) for j in feat[i]]))
+    # Create the label
+    data['label'] = numpy.array([numpy.int(i) for i in label], numpy.int)
+    data['label'][data['label'] == -1] = 0
+    # Create the class
+    classes = ['good credit', 'bad credit']
+    data['class'] = numpy.empty(2, 'S%d' % numpy.max([len(i) for i in classes]))
+    data['class'][0] = 'good credit'
+    data['class'][1] = 'bad credit'
     
     return data
