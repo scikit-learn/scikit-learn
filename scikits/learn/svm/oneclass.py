@@ -7,11 +7,11 @@ __all__ = [
     ]
 
 class LibSvmOneClassResults:
-    def __init__(self, model, traindataset, PredictorType):
+    def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
         self.rho = modelc.rho[0]
         self.sv_coef = modelc.sv_coef[0][:modelc.l]
-        self.predictor = PredictorType(model, traindataset)
+        self.predictor = PredictorType(model, traindataset, kernel)
 
     def predict(self, dataset):
         """

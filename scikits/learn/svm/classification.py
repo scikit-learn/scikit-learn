@@ -11,7 +11,7 @@ __all__ = [
     ]
 
 class LibSvmClassificationResults:
-    def __init__(self, model, traindataset, PredictorType):
+    def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
         self.nr_class = modelc.nr_class
         self.labels = modelc.labels[:self.nr_class]
@@ -22,14 +22,14 @@ class LibSvmClassificationResults:
         for i, c in enumerate(modelc.sv_coef[:self.nr_class - 1]):
             sv_coef[i,:] = c[:modelc.l]
         self.sv_coef = sv_coef
-        self.predictor = PredictorType(model, traindataset)
+        self.predictor = PredictorType(model, traindataset, kernel)
 
     def predict(self, dataset):
         """
         This function does classification on a test vector x and
         returns the label of the predicted class.
         """
-        return [self.predictor.predict(x) for x in dataset]
+        return [int(self.predictor.predict(x)) for x in dataset]
 
     def predict_values(self, dataset):
         """
@@ -68,7 +68,7 @@ class LibSvmClassificationResults:
             n = self.nr_class
             label, prob_estimates = \
                 self.predictor.predict_probability(x, self.nr_class)
-            return label, prob_estimates
+            return int(label), prob_estimates
         return [p(x) for x in dataset]
 
 class LibSvmClassificationModel(LibSvmModel):

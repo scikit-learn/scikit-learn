@@ -91,5 +91,22 @@ class test_regression(NumpyTestCase):
     def check_nu_train(self):
         pass
 
+    def check_py_predictor(self):
+        ModelType = LibSvmEpsilonRegressionModel
+        ResultType = LibSvmRegressionResults
+        PredictorType = LibSvmPyPredictor
+
+        y = [0.0, 1.0, 1.0, 2.0]
+        x = [N.array([0, 0]),
+             N.array([0, 1]),
+             N.array([1, 0]),
+             N.array([1, 1])]
+        traindata = LibSvmRegressionDataSet(zip(y, x))
+        testdata = LibSvmTestDataSet(x)
+
+        model = ModelType(LinearKernel())
+        #results = model.fit(traindata, ResultType, PredictorType)
+        #print results.predict(testdata)
+
 if __name__ == '__main__':
     NumpyTest().run()

@@ -48,7 +48,7 @@ class LibSvmModel:
         dataset._update_svm_parameter(self.param)
         self._check_problem_param(problem, self.param)
         model = libsvm.svm_train(problem, self.param)
-        return ResultType(model, dataset, PredictorType)
+        return ResultType(model, dataset, self.kernel, PredictorType)
 
     def _check_problem_param(self, problem, param):
         error_msg = libsvm.svm_check_parameter(problem, param)

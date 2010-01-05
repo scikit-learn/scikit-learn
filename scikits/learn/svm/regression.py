@@ -13,13 +13,13 @@ __all__ = [
 # XXX document why get_svr_probability could be useful
 
 class LibSvmRegressionResults:
-    def __init__(self, model, traindataset, PredictorType):
+    def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
         self.rho = modelc.rho[0]
         self.sv_coef = modelc.sv_coef[0][:modelc.l]
         if modelc.probA:
             self.sigma = modelc.probA[0]
-        self.predictor = PredictorType(model, traindataset)
+        self.predictor = PredictorType(model, traindataset, kernel)
 
     def predict(self, dataset):
         """

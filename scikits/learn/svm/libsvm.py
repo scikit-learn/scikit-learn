@@ -12,7 +12,7 @@ _libsvm = N.ctypes_load_library('libsvm_', __file__)
 svm_node_dtype = \
     N.dtype({'names' : ['index', 'value'],
              'formats' : [N.intc, N.float64]},
-            align=1)
+            align=True)
 
 # svm types
 C_SVC = 0

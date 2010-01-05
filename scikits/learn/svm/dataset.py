@@ -69,6 +69,9 @@ class LibSvmPrecomputedDataSet:
                 grammat[i][j + 1] = 0, z
                 grammat[j][i + 1] = 0, z
 
+    def __getitem__(self, id):
+        return self.iddatamap[id]
+
     def getdata(self):
         return zip(map(lambda x: x[0], self.origdata), self.grammat)
     data = property(getdata)
