@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Sun Jul 01 06:00 PM 2007 J
+# Last Change: Mon Jul 02 04:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -11,15 +11,13 @@ __docformat__ = 'restructuredtext'
 #   - which methods to avoid va shrinking to 0 ? There are several options, 
 #   not sure which ones are appropriates
 #   - improve EM trainer
-
 import numpy as N
-#import numpy.linalg as lin
 from numpy.random import randn
 #import _c_densities as densities
 import densities
-#from kmean import kmean
 from scipy.cluster.vq import kmeans2 as kmean
 from gauss_mix import GmParamError
+from misc import curry
 
 #from misc import _DEF_ALPHA, _MIN_DBL_DELTA, _MIN_INV_COND
 
@@ -197,7 +195,7 @@ class GMM(ExpMixtureModel):
         """Computes update of the Gaussian Mixture Model (M step) from the
         responsabilities gamma and normalized responsabilities ngamma, for
         diagonal models."""
-        #XXX: caching SS may decrease memory consumption
+        #XXX: caching SS may decrease memory consumption, but is this possible ?
         k = self.gm.k
         d = self.gm.d
         n = data.shape[0]
@@ -422,23 +420,38 @@ class RegularizedEM:
         self.pval = pval
 
     def train(self, data, model, maxiter = 20, thresh = 1e-5):
+        mode = model.gm.mode
+
+        # Build regularizer
+        if mode == 'diag':
+            regularize = curry(regularize_diag, np = self.pcnt, prior =
+                    self.pval * N.ones(model.gm.d))
+        elif mode == 'full':
+            regularize = curry(regularize_full, np = self.pcnt, prior =
+                    self.pval * N.eye(model.gm.d))
+        else:
+            raise ValueError("unknown variance mode")
+
         model.init(data)
-        regularize_full(model.gm.va, self.pcnt, self.pval * N.eye(model.gm.d))
+        regularize(model.gm.va)
+
         # Likelihood is kept
         like = N.empty(maxiter, N.float)
 
         # Em computation, with computation of the likelihood
         g, tgd  = model.compute_log_responsabilities(data)
         g = N.exp(g)
-        like[0] = N.sum(densities.logsumexp(tgd), axis = 0)
         model.update_em(data, g)
-        regularize_full(model.gm.va, self.pcnt, self.pval * N.eye(model.gm.d))
+        regularize(model.gm.va)
+
+        like[0] = N.sum(densities.logsumexp(tgd), axis = 0)
         for i in range(1, maxiter):
             g, tgd  = model.compute_log_responsabilities(data)
             g = N.exp(g)
-            like[i] = N.sum(densities.logsumexp(tgd), axis = 0)
             model.update_em(data, g)
-            regularize_full(model.gm.va, self.pcnt, self.pval * N.eye(model.gm.d))
+            regularize(model.gm.va)
+
+            like[i] = N.sum(densities.logsumexp(tgd), axis = 0)
             if has_em_converged(like[i], like[i-1], thresh):
                 return like[0:i]
 
@@ -458,6 +471,18 @@ def has_em_converged(like, plike, thresh):
     else:
         return False
 
+def regularize_diag(va, np, prior):
+    """np * n is the number of prior counts (np is a proportion, and n is the
+    number of point).
+    
+    diagonal variance version"""
+    d = va.shape[1]
+    k = va.shape[0]
+
+    for i in range(k):
+        va[i] *= 1. / (1 + np)
+        va[i] += np / (1. + np) * prior
+
 def regularize_full(va, np, prior):
     """np * n is the number of prior counts (np is a proportion, and n is the
     number of point)."""
@@ -470,19 +495,3 @@ def regularize_full(va, np, prior):
 
 if __name__ == "__main__":
     pass
-    ## # #++++++++++++++++++
-    ## # # Export the figure
-    ## # #++++++++++++++++++
-    ## # F   = P.gcf()
-    ## # DPI = F.get_dpi()
-    ## # DefaultSize = F.get_size_inches()
-    ## # # the default is 100dpi for savefig:
-    ## # F.savefig("example1.png")
-
-    ## # # Now make the image twice as big, while keeping the fonts and all the
-    ## # # same size
-    ## # F.set_figsize_inches( (DefaultSize[0]*2, DefaultSize[1]*2) )
-    ## # Size = F.get_size_inches()
-    ## # print "Size in Inches", Size
-    ## # F.savefig("example2.png")
-    ## P.show()

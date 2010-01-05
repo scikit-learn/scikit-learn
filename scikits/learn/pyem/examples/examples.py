@@ -7,6 +7,12 @@ def ex2():
 def ex3():
     import basic_example3
 
+def pdfestim():
+    import pdfestimation
+
+def pdfestim1d():
+    import pdfestimation1d
+
 if __name__ == '__main__':
     ex1()
     ex2()

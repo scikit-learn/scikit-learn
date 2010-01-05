@@ -1,6 +1,13 @@
 #! /usr/bin/env python
-# Last Change: Sat Jun 09 04:00 PM 2007 J
+# Last Change: Mon Jul 02 03:00 PM 2007 J
 
+__doc__ = """This example shows how to do pdfestimation for one dimensional
+data. It estimates a Gaussian mixture model for several number of components,
+and it determines the "best" one according to the Bayesian Information
+Criterion.
+
+It uses old faitfhul waiting time as the one dimension data, and plots the best
+model as well as the BIC as a function of the number of component."""
 # Example of doing pdf estimation with EM algorithm. Requires matplotlib.
 import numpy as N
 from numpy.testing import set_package_path, restore_path
@@ -66,4 +73,3 @@ P.plot(N.arange(1, 8), bc, 'o:')
 P.xlabel("number of components")
 P.ylabel("BIC")
 print "According to the BIC, model with %d components is better" % (N.argmax(bc) + 1)
-P.show()

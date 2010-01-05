@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Wed Jun 27 05:00 PM 2007 J
+# Last Change: Mon Jul 02 02:00 PM 2007 J
 
 # Various utilities for examples 
 
@@ -8,7 +8,7 @@ from numpy.testing import set_package_path, restore_path
 
 # XXX: Bouah, hackish... Will go away once scipydata found its way
 set_package_path()
-from pyem.data import oldfaithful, pendigits
+from scikits.learn.datasets import oldfaithful, pendigits, iris
 restore_path()
 
 def get_faithful():

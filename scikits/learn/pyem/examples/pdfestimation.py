@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jun 09 07:00 PM 2007 J
+# Last Change: Mon Jul 02 03:00 PM 2007 J
 
 # Example of doing pdf estimation with EM algorithm. Requires matplotlib.
 import numpy as N
@@ -32,6 +32,7 @@ def cluster(data, k, mode = 'full'):
 # bc will contain a list of BIC values for each model trained
 bc = []
 mode = 'full'
+P.figure()
 for k in range(1, 5):
     # Train a model of k component, and plots isodensity curve
     P.subplot(2, 2, k)
@@ -45,4 +46,3 @@ for k in range(1, 5):
     P.ylabel('waiting time (scaled)')
 
 print "According to the BIC, model with %d components is better" % (N.argmax(bc) + 1)
-P.show()
