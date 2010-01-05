@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Oct 12 09:00 PM 2006 J
+# Last Change: Mon Oct 16 03:00 PM 2006 J
 
 #---------------------------------------------
 # This is not meant to be used yet !!!! I am 
@@ -11,7 +11,7 @@
 #   eg current frame depends on previous frame in some way.
 
 import numpy as N
-from numpy import repmat, mean
+from numpy import mean
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from gmm_em import ExpMixtureModel, GMM, EM, multiple_gauss_den
@@ -95,16 +95,12 @@ class OnGMM(ExpMixtureModel):
         return gamma
 
     def update_em(self, frame, gamma, nu):
-        cx  = self.cx
-        cxx = self.cxx
-        cmu = self.cmu
-        cva = self.cva
         for k in range(self.gm.k):
-            cx[k]   = (1 - nu) * cx[k] + nu * frame * gamma[k]
-            cxx[k]  = (1 - nu) * cxx[k] + nu * frame ** 2 * gamma[k]
+            self.cx[k]   = (1 - nu) * self.cx[k] + nu * frame * gamma[k]
+            self.cxx[k]  = (1 - nu) * self.cxx[k] + nu * frame ** 2 * gamma[k]
 
-            cmu[k]  = cx[k] / cw[k]
-            cva[k]  = cxx[k] / cw[k] - cmu[k] ** 2
+            self.cmu[k]  = self.cx[k] / self.cw[k]
+            self.cva[k]  = self.cxx[k] / self.cw[k] - self.cmu[k] ** 2
     
 if __name__ == "__main__":
     import copy
@@ -123,7 +119,7 @@ if __name__ == "__main__":
     d       = 1
     mode    = 'diag'
     nframes = int(1e3)
-    emiter  = 2
+    emiter  = 10
 
     #+++++++++++++++++++++++++++++++++++++++++++
     # Create an artificial GMM model, samples it
