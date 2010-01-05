@@ -2,7 +2,7 @@ __all__ = [
     'LibSvmOneClassModel'
     ]
 
-from ctypes import cast, POINTER
+from ctypes import cast, POINTER, byref, c_double
 
 from model import LibSvmModel
 import libsvm
@@ -17,15 +17,33 @@ class LibSvmOneClassResults:
 
     def __del__(self):
         libsvm.svm_destroy_model(self.model)
-    
+
     def predict(self, dataset):
+        """
+        This function returns a list of boolean values which indicate
+        whether the test vectors form part of the distribution.
+        """
         def p(x):
             xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-            # XXX maybe we want to cast return value to int
-            return libsvm.svm_predict(self.model, xptr)
+            return libsvm.svm_predict(self.model, xptr) > 0
         return map(p, dataset.data)
 
-    # XXX predict_values might also be useful
+    def predict_values(self, dataset):
+        """
+        This function returns a list of floating point values which
+        indicate whether the test vectors form part of the
+        distribution.
+
+        A positive value indicates that the test vector is part of the
+        distribution, while a non-positive value indicates that is is
+        not.
+        """
+        def p(x):
+            xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
+            v = c_double()
+            libsvm.svm_predict_values(self.model, xptr, byref(v))
+            return v.value
+        return map(p, dataset.data)
 
 class LibSvmOneClassModel(LibSvmModel):
     """
