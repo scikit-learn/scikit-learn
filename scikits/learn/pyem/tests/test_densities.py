@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jun 11 06:00 PM 2007 J
+# Last Change: Mon Jun 11 07:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
@@ -72,6 +72,10 @@ class test_py_implementation(TestDensities):
         Y   = gauss_den(self.X, self.mu, self.va)
         assert_array_almost_equal(Y, self.Yt, decimal)
 
+    def _test_log(self, level, decimal = DEF_DEC):
+        Y   = gauss_den(self.X, self.mu, self.va, log = True)
+        assert_array_almost_equal(N.exp(Y), self.Yt, decimal)
+
     def test_2d_diag(self, level = 0):
         self._generate_test_data_2d_diag()
         self._test(level)
@@ -80,9 +84,21 @@ class test_py_implementation(TestDensities):
         self._generate_test_data_2d_full()
         self._test(level)
     
-    def test_py_1d(self, level = 0):
+    def test_1d(self, level = 0):
         self._generate_test_data_1d()
         self._test(level)
+
+    def test_2d_diag_log(self, level = 0):
+        self._generate_test_data_2d_diag()
+        self._test_log(level)
+
+    def test_2d_full_log(self, level = 0):
+        self._generate_test_data_2d_full()
+        self._test_log(level)
+
+    def test_1d_log(self, level = 0):
+        self._generate_test_data_1d()
+        self._test_log(level)
 
 class test_c_implementation(TestDensities):
     def _test(self, level, decimal = DEF_DEC):

@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Mon Jun 11 03:00 PM 2007 J
+# Last Change: Mon Jun 11 07:00 PM 2007 J
 """This module implements various basic functions related to multivariate
 gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
 
@@ -119,7 +119,7 @@ def _scalar_gauss_den(x, mu, va, log):
     if not log:
         y   = fac * N.exp(y)
     else:
-        y   = y + log(fac)
+        y   += N.log(fac)
 
     return y
     
