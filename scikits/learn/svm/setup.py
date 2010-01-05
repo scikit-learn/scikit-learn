@@ -9,6 +9,7 @@ def configuration(parent_package='', top_path=None, package_name='svm'):
                                         ('LIBSVM_DLL', None)],
                          sources=[join('libsvm-2.82', 'svm.cpp')],
                          depends=[join('libsvm-2.82', 'svm.h')])
+    config.add_data_dir('tests')
     return config
 
 if __name__ == '__main__':

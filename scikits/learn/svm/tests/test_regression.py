@@ -80,7 +80,7 @@ class test_regression(NumpyTestCase):
             # use differences instead of assertAlmostEqual due to
             # compiler-dependent variations in these values
             diff = N.absolute(predictions - expected_y)
-            self.assert_(N.alltrue(diff < 1e-3))
+            self.assert_(N.alltrue(diff < 1e-3,axis=0))
 
     def check_cross_validate(self):
         y = N.random.randn(100)

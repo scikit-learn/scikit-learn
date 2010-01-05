@@ -165,7 +165,8 @@ class LibSvmTestDataSet:
             yield convert_to_svm_node(x)
 
     def is_array_data(self):
-        return isinstance(self.data, N.ndarray)
+        return isinstance(self.data, N.ndarray) and \
+            self.data.dtype in N.sctypes['float']
 
 def convert_to_svm_node(x):
     y = N.empty(len(x) + 1, dtype=libsvm.svm_node_dtype)
@@ -178,7 +179,7 @@ def convert_to_svm_node(x):
     else:
         y['index'][:-1] = N.arange(1,len(x) + 1)
         y['value'][:-1] = x
-    assert N.alltrue(y[:-1]['index'] >= 1), \
+    assert N.alltrue(y[:-1]['index'] >= 1,axis=0), \
         'indexes must be positive'
     assert len(x) == len(N.unique(y[:-1]['index'])), \
         'indexes must be unique'

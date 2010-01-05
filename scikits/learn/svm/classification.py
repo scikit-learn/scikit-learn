@@ -51,6 +51,7 @@ class LibSvmClassificationResults:
         """
         n = self.nr_class * (self.nr_class - 1) / 2
         def p(vv):
+            vv = N.atleast_1d(vv)
             d = {}
             labels = self.labels
             for v, (li, lj) in \

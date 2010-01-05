@@ -10,11 +10,17 @@ __all__ = [
     'LibSvmPythonPredictor'
     ]
 
+def is_classification_problem(svm_type):
+    return svm_type in [libsvm.C_SVC, libsvm.NU_SVC]
+
 class LibSvmPredictor:
     def __init__(self, model, dataset, kernel):
         self.model = model
         self.kernel = kernel
         modelc = model.contents
+        if is_classification_problem(modelc.param.svm_type) \
+                and modelc.nSV[0] == 0:
+            raise ValueError, 'model contains no support vectors'
         if modelc.param.kernel_type == libsvm.PRECOMPUTED:
             self.dataset = dataset
             self.sv_ids = [int(modelc.SV[i][0].value)
@@ -69,7 +75,10 @@ class LibSvmPythonPredictor:
         self.kernel = kernel
         modelc = model.contents
         self.svm_type = modelc.param.svm_type
-        if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
+        if is_classification_problem(self.svm_type) \
+                and modelc.nSV[0] == 0:
+            raise ValueError, 'model contains no support vectors'
+        if is_classification_problem(self.svm_type):
             self.nr_class = modelc.nr_class
             self.labels = N.array(modelc.labels[:self.nr_class])
             nrho = self.nr_class * (self.nr_class - 1) / 2
@@ -97,7 +106,7 @@ class LibSvmPythonPredictor:
         libsvm.svm_destroy_model(model)
 
     def predict(self, x):
-        if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
+        if is_classification_problem(self.svm_type):
             nr_class = self.nr_class
             n = nr_class * (nr_class - 1) / 2
             dec_values = self.predict_values(x, n)
@@ -117,7 +126,7 @@ class LibSvmPythonPredictor:
             return self.predict_values(x, 1)
 
     def _predict_values_sparse(self, x, n):
-        if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
+        if is_classification_problem(self.svm_type):
             kvalue = N.empty((len(self.support_vectors),))
             for i, sv in enumerate(self.support_vectors):
                 kvalue[i] = svm_node_dot(x, sv, self.kernel)
@@ -145,21 +154,26 @@ class LibSvmPythonPredictor:
             return z
 
     def _predict_values_compact(self, x, n):
-        if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
-            for i, sv in enumerate(self.support_vectors):
+        if is_classification_problem(self.svm_type):
+            for i, (sv, kernel) in \
+                    enumerate(izip(self.support_vectors, self.kernels)):
                 kvalue = N.empty((len(self.support_vectors),))
-                kvalue[i] = svm_node_dot(x, sv, self.kernel)
-            return kvalue - self.rho
+                kvalue[i] = svm_node_dot(x, sv, kernel)
+            kvalue -= self.rho
+            return kvalue
         else:
             sv = self.support_vectors[0]
-            return svm_node_dot(x, sv, self.kernel) - self.rho
+            kernel = self.kernels[0]
+            kvalue = svm_node_dot(x, sv, kernel) - self.rho
+            return kvalue
 
     def predict_values(self, x, n):
         if self.is_compact:
             if isinstance(x, N.ndarray) \
                     and x.dtype in N.sctypes['float']:
                 svvals = [sv['value'][:-1] for sv in self.support_vectors]
-                kvalues = [self.kernel(x[:,:len(sv)], sv) for sv in svvals]
+                kvalues = [kernel(x[:,:len(sv)], sv)
+                           for sv, kernel in izip(svvals, self.kernels)]
                 x = [kvalue - rho
                      for kvalue, rho in izip(kvalues, self.rho)]
                 return N.asarray(zip(*x))
@@ -184,8 +198,9 @@ class LibSvmPythonPredictor:
         return csv
 
     def compact(self):
-        if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
+        if is_classification_problem(self.svm_type):
             compact_support_vectors = []
+            kernels = []
             for i in range(self.nr_class):
                 for j in range(i + 1, self.nr_class):
                     si, sj = self.start[i], self.start[j]
@@ -194,10 +209,22 @@ class LibSvmPythonPredictor:
                     svj = self.support_vectors[sj:sj + cj]
                     coef1 = self.sv_coef[j - 1][si:si + ci]
                     coef2 = self.sv_coef[i][sj:sj + cj]
-                    csv = self._compact_svs(svi + svj, coef1 + coef2)
+                    svij = svi + svj
+                    coef12 = coef1 + coef2
+                    # Create a compacted kernel. This allows a kernel
+                    # that depends on some values that cannot be
+                    # calculated using from the compact representation
+                    # of the support vectors to calculate these
+                    # values before the time.
+                    kernels.append(self.kernel.compact(svij, coef12))
+                    csv = self._compact_svs(svij, coef12)
                     compact_support_vectors.append(csv)
             self.support_vectors = compact_support_vectors
+            self.kernel = None
+            self.kernels = kernels
         else:
             csv = self._compact_svs(self.support_vectors, self.sv_coef)
             self.support_vectors = [csv]
+            self.kernels = [self.kernel.compact()]
+            self.kernel = None
         self.is_compact = True
