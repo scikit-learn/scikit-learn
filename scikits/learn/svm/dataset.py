@@ -5,6 +5,7 @@ __all__ = [
     'LibSvmTestDataSet'
     ]
 
+from ctypes import c_double, POINTER, cast
 import numpy as N
 
 import libsvm
@@ -23,32 +24,95 @@ class LibSvmDataSet:
     def precompute(self, kernel):
         return LibSvmPrecomputedDataSet(kernel, self.data)
 
+    def create_svm_problem(self):
+        problem = libsvm.svm_problem()
+        problem.l = len(self.data)
+        y = (c_double*problem.l)()
+        x = (POINTER(libsvm.svm_node)*problem.l)()
+        for i, (yi, xi) in enumerate(self.data):
+            y[i] = yi
+            x[i] = cast(xi.ctypes.data, POINTER(libsvm.svm_node))
+        problem.x = x
+        problem.y = y
+        return problem
+
 class LibSvmPrecomputedDataSet:
-    def __init__(self, kernel, origdata):
+    def __init__(self, kernel, origdata=None):
         self.kernel = kernel
+        self.origdata = origdata
+        if origdata is None: return
 
-        # XXX look at using a list of vectors instead of a matrix when
-        # the size of the precomputed dataset gets huge. This should
-        # avoid problems with heap fragmentation, especially on
-        # Windows.
+        self.iddatamap = {}
 
+        # Create Gram matrix as a list of vectors that have extra
+        # entries for id and end of record marker.
         n = len(origdata)
-        # extra columns for id and end of record marker
-        grammat = N.empty((n, n+2), dtype=libsvm.svm_node_dtype)
-        # calculate Gram matrix
+        grammat = [N.empty((n+2,), dtype=libsvm.svm_node_dtype)
+                   for i in range(n)]
+        self.grammat = grammat
+
+        # Calculate Gram matrix. Refer to Kernel::kernel_precomputed
+        # in svm.cpp to see how this precomputed setup works.
         for i, (y1, x1) in enumerate(origdata):
-            # set id and end of record fields
-            grammat[i,0], grammat[i,-1] = (0, i), (-1, 0.0)
+            id = i + 1
+            # XXX possible numpy bug
+            #grammat[i][[0,-1]] = (0, id), (-1, 0.0)
+            grammat[i][0] = 0, id
+            grammat[i][-1] = -1, 0.0
             for j, (y2, x2) in enumerate(origdata[i:]):
                 # Gram matrix is symmetric, so calculate dot product
                 # once and store it in both required locations
                 z = kernel(x1, x2, svm_node_dot)
                 # fix index so we assign to the right place
                 j += i
-                grammat[i, j+1]['value'] = z
-                grammat[j, i+1]['value'] = z
-        self.grammat = grammat
-        self.data = zip(map(lambda x: x[0], origdata), grammat)
+                grammat[i][j+1] = 0, z
+                grammat[j][i+1] = 0, z
+            # Map id to original vector so that we can find it again
+            # after the model has been trained. libsvm essentially
+            # provides the ids of the support vectors.
+            self.iddatamap[id] = x1
+    
+    def getdata(self):
+        return zip(map(lambda x: x[0], self.origdata), self.grammat)
+    data = property(getdata)
+
+    def combine_inplace(self, dataset):
+        """
+        Combine this dataset with another dataset by calculating the
+        new part of the Gram matrix in place.
+        """
+        # XXX N.resize is our friend here
+        raise NotImplementedError
+
+    def combine(self, dataset):
+        """
+        Combine this dataset with another dataset by extending the
+        Gram matrix with the new inner products into a new matrix.
+        """
+        n = len(self.origdata) + len(dataset.data)
+        newgrammat = []
+
+        # copy original Gram matrix
+        for i in range(len(self.origdata)):
+            row = N.empty((n,), dtype=libsvm.svm_node_dtype)
+            row[:-1] = self.grammat[i]
+            newgrammat.append(row)
+
+        # copy id->vector map
+        newiddatamap = dict(self.iddatamap.items())
+
+        # prepare Gram matrix for new data
+        for i in range(len(dataset.data)):
+            id = i + len(self.origdata) + 1
+            row = N.empty((n,), dtype=libsvm.svm_node_dtype)
+            row[[0,-1]] = (0, id), (-1, 0.0)
+            newgrammat.append(row)
+            newiddatamap[id] = dataset.data[i][1]
+
+        newdataset = self.__class__(self.kernel)
+        newdataset.origdata = self.origdata + dataset.data
+        newdataset.iddatamap = newiddatamap
+        newdataset.grammat = newgrammat
 
 class LibSvmRegressionDataSet(LibSvmDataSet):
     def __init__(self, origdata):
@@ -75,7 +139,7 @@ class LibSvmTestDataSet:
 
 def convert_to_svm_node(x):
     y = N.empty(len(x)+1, dtype=libsvm.svm_node_dtype)
-    y[-1] = (-1, 0.)
+    y[-1] = -1, 0.
     if isinstance(x, dict):
         x = x.items()
     if isinstance(x, list):

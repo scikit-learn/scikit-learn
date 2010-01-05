@@ -130,7 +130,7 @@ class LibSvmClassificationModel(LibSvmModel):
         This function returns the percentage of data that was
         classified correctly over all the experiments.
         """
-        problem = self._create_problem(dataset)
+        problem = dataset.create_svm_problem()
         target = N.empty((len(dataset.data),), dtype=N.float64)
         tp = cast(target.ctypes.data, POINTER(c_double))
         libsvm.svm_cross_validation(problem, self.param, nr_fold, tp)

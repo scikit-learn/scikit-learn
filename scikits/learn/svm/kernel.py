@@ -3,17 +3,24 @@ __all__ = [
     'PolynomialKernel',
     'RBFKernel',
     'SigmoidKernel',
-    'CustomKernel'
+    'CustomKernel',
+    'PrecomputedKernel'
     ]
 
 import numpy as N
 
+import libsvm
+
 class LinearKernel:
+    def __init__(self):
+        self.kernel_type = libsvm.LINEAR
+
     def __call__(self, x, y, dot):
         return dot(x, y)
 
 class PolynomialKernel:
     def __init__(self, degree, gamma, coef0):
+        self.kernel_type = libsvm.POLY
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
@@ -31,6 +38,7 @@ class PolynomialKernel:
 
 class RBFKernel:
     def __init__(self, gamma):
+        self.kernel_type = libsvm.RBF
         self.gamma = gamma
 
     def __call__(self, x, y, dot):
@@ -39,6 +47,7 @@ class RBFKernel:
 
 class SigmoidKernel:
     def __init__(self, gamma, coef0):
+        self.kernel_type = libsvm.SIGMOID
         self.gamma = gamma
         self.coef0 = coef0
 
@@ -47,7 +56,12 @@ class SigmoidKernel:
 
 class CustomKernel:
     def __init__(self, f):
+        self.kernel_type = libsvm.PRECOMPUTED
         self.f = f
 
     def __call__(self, x, y, dot):
         return self.f(x, y, dot)
+
+class PrecomputedKernel:
+    def __init__(self):
+        self.kernel_type = libsvm.PRECOMPUTED

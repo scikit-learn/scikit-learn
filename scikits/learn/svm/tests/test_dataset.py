@@ -82,7 +82,7 @@ class test_precomputed_dataset(NumpyTestCase):
             RBFKernel(gamma),
             SigmoidKernel(gamma, coef0)
             ]
-        y = N.random.randn(20)
+        y = N.random.randn(10)
         x = N.random.randn(len(y), 10)
         origdata = LibSvmRegressionDataSet(zip(y, x))
 
@@ -94,8 +94,24 @@ class test_precomputed_dataset(NumpyTestCase):
                     expt_grammat[i, j] = kernel(xi, xj, N.dot)
             # get a new dataset containing the precomputed data
             pcdata = origdata.precompute(kernel)
-            actual_grammat = pcdata.grammat[:,1:-1]['value']
-            assert_array_almost_equal(actual_grammat, expt_grammat)
+            for i, row in enumerate(pcdata.grammat):
+                valuerow = row[1:-1]['value']
+                assert_array_almost_equal(valuerow, expt_grammat[i])
+
+    def check_combine(self):
+        kernel = LinearKernel()
+
+        y1 = N.random.randn(2)
+        x1 = N.random.randn(len(y1), 2)
+        origdata = LibSvmRegressionDataSet(zip(y1, x1))
+        pcdata = origdata.precompute(kernel)
+
+        y2 = N.random.randn(1)
+        x2 = N.random.randn(len(y2), x1.shape[1])
+        moredata = LibSvmRegressionDataSet(zip(y2, x2))
+
+        #pcdata.combine(moredata)
+        #pcdata.copy_and_extend(moredata)
 
 if __name__ == '__main__':
     NumpyTest().run()
