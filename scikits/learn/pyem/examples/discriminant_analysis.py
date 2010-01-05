@@ -11,6 +11,7 @@ mixtures, etc..."""
 
 import numpy as N
 import pylab as P
+import matplotlib as MPL
 
 from scipy.sandbox import pyem
 import utils
@@ -93,7 +94,10 @@ for i in cnames:
 # Plot the results
 #-----------------
 csym = {'setosa' : 's', 'versicolor' : 'x', 'virginica' : 'o'}
-P.figure()
+r = 50.
+P.figure(figsize = [600/r, 400/r])
+
+prop = MPL.font_manager.FontProperties(size='smaller')
 
 # Plot the learning data with the mixtures
 P.subplot(2, 1, 1)
@@ -104,6 +108,8 @@ for i in lmod.values():
 
 for i in cnames:
     P.plot(ldata[i][:, 0], ldata[i][:, 1], csym[i], label = i + ' (learning)')
+P.xlabel('sepal width')
+P.ylabel('petal width')
 P.legend(loc = 'best')
 
 # Plot the results on test dataset (green for correctly classified, red for
@@ -115,5 +121,7 @@ for i in cnames:
     if len(incorrect[i]) > 0:
         P.plot(tx[incorrect[i]], ty[incorrect[i]], 'r' + csym[i], 
                label = '%s (incorrectly classified)' % i)
-P.legend(loc = 'best')
-P.show()
+P.legend(loc = 'best', prop = prop)
+P.xlabel('sepal width')
+P.ylabel('petal width')
+P.savefig('dclass.png', dpi = 60)

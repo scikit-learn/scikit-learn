@@ -1,4 +1,4 @@
-# Last Change: Sat Jun 09 05:00 PM 2007 J
+# Last Change: Mon Jul 02 09:00 PM 2007 J
 
 # This makefile is used to build the pdf from the rest file and inlined code
 # from python examples
@@ -7,7 +7,7 @@ py2tex	= PYTHONPATH=/home/david/local/lib/python2.4/site-packages pygmentize -l 
 rst2tex	= PYTHONPATH=/home/david/local/lib/python2.4/site-packages rst2newlatex.py \
 		  --stylesheet-path base.tex --user-stylesheet user.tex 
 
-pytexfiles	= pyem.tex basic_example1.tex basic_example2.tex basic_example3.tex pdfestimation.tex
+pytexfiles	= pyem.tex basic_example1.tex basic_example2.tex basic_example3.tex pdfestimation.tex discriminant_analysis.tex
 
 SOURCEPATH	= $(PWD)
 
@@ -34,6 +34,9 @@ basic_example3.tex: ../examples/basic_example3.py
 	$(py2tex) $< > $@
 
 pdfestimation.tex: ../examples/pdfestimation.py
+	$(py2tex) $< > $@
+
+discriminant_analysis.tex: ../examples/discriminant_analysis.py
 	$(py2tex) $< > $@
 
 clean:
