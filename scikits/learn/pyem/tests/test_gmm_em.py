@@ -40,65 +40,65 @@ class EmTest(NumpyTestCase):
         em  = EM()
         lk  = em.train(data, gmm)
 
-#class test_full_run(EmTest):
-#    """This class only tests whether the algorithms runs. Do not check the
-#    results."""
-#    def check_1d(self, level = 1):
-#        d       = 1
-#        k       = 2
-#        mode    = 'full'
-#        nframes = int(1e2)
-#
-#        #seed(1)
-#        self._create_model_and_run_em(d, k, mode, nframes)
-#
-#    def check_2d(self, level = 1):
-#        d       = 2
-#        k       = 2
-#        mode    = 'full'
-#        nframes = int(1e2)
-#
-#        #seed(1)
-#        self._create_model_and_run_em(d, k, mode, nframes)
-#
-#    def check_5d(self, level = 1):
-#        d       = 5
-#        k       = 3
-#        mode    = 'full'
-#        nframes = int(1e2)
-#
-#        #seed(1)
-#        self._create_model_and_run_em(d, k, mode, nframes)
-#
-#class test_diag_run(EmTest):
-#    """This class only tests whether the algorithms runs. Do not check the
-#    results."""
-#    def check_1d(self, level = 1):
-#        d       = 1
-#        k       = 2
-#        mode    = 'diag'
-#        nframes = int(1e2)
-#
-#        #seed(1)
-#        self._create_model_and_run_em(d, k, mode, nframes)
-#
-#    def check_2d(self, level = 1):
-#        d       = 2
-#        k       = 2
-#        mode    = 'diag'
-#        nframes = int(1e2)
-#
-#        #seed(1)
-#        self._create_model_and_run_em(d, k, mode, nframes)
-#
-#    def check_5d(self, level = 1):
-#        d       = 5
-#        k       = 3
-#        mode    = 'diag'
-#        nframes = int(1e2)
-#
-#        #seed(1)
-#        self._create_model_and_run_em(d, k, mode, nframes)
+class test_full_run(EmTest):
+    """This class only tests whether the algorithms runs. Do not check the
+    results."""
+    def check_1d(self, level = 1):
+        d       = 1
+        k       = 2
+        mode    = 'full'
+        nframes = int(1e2)
+
+        #seed(1)
+        self._create_model_and_run_em(d, k, mode, nframes)
+
+    def check_2d(self, level = 1):
+        d       = 2
+        k       = 2
+        mode    = 'full'
+        nframes = int(1e2)
+
+        #seed(1)
+        self._create_model_and_run_em(d, k, mode, nframes)
+
+    def check_5d(self, level = 1):
+        d       = 5
+        k       = 3
+        mode    = 'full'
+        nframes = int(1e2)
+
+        #seed(1)
+        self._create_model_and_run_em(d, k, mode, nframes)
+
+class test_diag_run(EmTest):
+    """This class only tests whether the algorithms runs. Do not check the
+    results."""
+    def check_1d(self, level = 1):
+        d       = 1
+        k       = 2
+        mode    = 'diag'
+        nframes = int(1e2)
+
+        #seed(1)
+        self._create_model_and_run_em(d, k, mode, nframes)
+
+    def check_2d(self, level = 1):
+        d       = 2
+        k       = 2
+        mode    = 'diag'
+        nframes = int(1e2)
+
+        #seed(1)
+        self._create_model_and_run_em(d, k, mode, nframes)
+
+    def check_5d(self, level = 1):
+        d       = 5
+        k       = 3
+        mode    = 'diag'
+        nframes = int(1e2)
+
+        #seed(1)
+        self._create_model_and_run_em(d, k, mode, nframes)
 
 class test_datasets(EmTest):
     """This class tests whether the EM algorithms works using pre-computed
