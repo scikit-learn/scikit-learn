@@ -1,4 +1,5 @@
 from ctypes import POINTER, c_int, c_double
+from itertools import izip, repeat, chain
 import numpy as N
 
 from model import LibSvmModel
@@ -32,7 +33,11 @@ class LibSvmClassificationResults:
         This function does classification on a test vector x and
         returns the label of the predicted class.
         """
-        return [int(self.predictor.predict(x)) for x in dataset]
+        if self.predictor.is_compact and dataset.is_array_data():
+            return [int(x) for x in
+                    self.predictor.predict(dataset.data)]
+        else:
+            return [int(self.predictor.predict(x)) for x in dataset]
 
     def predict_values(self, dataset):
         """
@@ -45,16 +50,19 @@ class LibSvmClassificationResults:
         2-tuples, one for each permutation of two class labels.
         """
         n = self.nr_class * (self.nr_class - 1) / 2
-        def p(v):
-            count = 0
+        def p(vv):
             d = {}
-            for i in range(len(self.labels)):
-                for j in range(i + 1, len(self.labels)):
-                    d[self.labels[i], self.labels[j]] = v[count]
-                    d[self.labels[j], self.labels[i]] = -v[count]
-                    count += 1
+            labels = self.labels
+            for v, (li, lj) in \
+                    izip(vv, chain(*[izip(repeat(x), labels[i+1:])
+                                     for i, x in enumerate(labels[:-1])])):
+                d[li, lj] = v
+                d[lj, li] = -v
             return d
-        vs = [self.predictor.predict_values(x, n) for x in dataset]
+        if self.predictor.is_compact and dataset.is_array_data():
+            vs = self.predictor.predict_values(dataset.data, n)
+        else:
+            vs = [self.predictor.predict_values(x, n) for x in dataset]
         return [p(v) for v in vs]
 
     def predict_probability(self, dataset):

@@ -117,10 +117,10 @@ class test_regression(NumpyTestCase):
         return trndata, trndata1, trndata2, testdata
 
     def _make_kernels(self):
-        def kernelf(x, y, dot):
-            return dot(x, y)
-        def kernelg(x, y, dot):
-            return -dot(x, y)
+        def kernelf(x, y):
+            return N.dot(x, y.T)
+        def kernelg(x, y):
+            return -N.dot(x, y.T)
         kernels = [LinearKernel()]
         kernels += [RBFKernel(gamma)
                     for gamma in [-0.1, 0.2, 0.3]]

@@ -1,5 +1,5 @@
 from ctypes import POINTER, c_double, addressof, byref
-from itertools import izip
+from itertools import izip, repeat, chain
 import numpy as N
 
 from dataset import svm_node_dot
@@ -22,6 +22,7 @@ class LibSvmPredictor:
             self._transform_input = self._create_gramvec
         else:
             self._transform_input = lambda x: x
+        self.is_compact = False
 
     def __del__(self):
         libsvm.svm_destroy_model(self.model)
@@ -31,7 +32,7 @@ class LibSvmPredictor:
                           dtype=libsvm.svm_node_dtype)
         for sv_id in self.sv_ids:
             sv = self.dataset[sv_id]
-            gramvec[sv_id]['value'] = self.kernel(x, sv, svm_node_dot)
+            gramvec[sv_id]['value'] = svm_node_dot(x, sv, self.kernel)
         return gramvec
 
     def predict(self, x):
@@ -70,7 +71,7 @@ class LibSvmPythonPredictor:
         self.svm_type = modelc.param.svm_type
         if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
             self.nr_class = modelc.nr_class
-            self.labels = modelc.labels[:self.nr_class]
+            self.labels = N.array(modelc.labels[:self.nr_class])
             nrho = self.nr_class * (self.nr_class - 1) / 2
             self.rho = modelc.rho[:nrho]
             self.sv_coef = [modelc.sv_coef[i][:modelc.l]
@@ -97,18 +98,21 @@ class LibSvmPythonPredictor:
 
     def predict(self, x):
         if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
-            n = self.nr_class * (self.nr_class - 1) / 2
+            nr_class = self.nr_class
+            n = nr_class * (nr_class - 1) / 2
             dec_values = self.predict_values(x, n)
-            vote = N.zeros((self.nr_class,), N.intc)
-            pos = 0
-            for i in range(self.nr_class):
-                for j in range(i + 1, self.nr_class):
-                    if dec_values[pos] > 0:
-                        vote[i] += 1
-                    else:
-                        vote[j] += 1
-                    pos += 1
-            return self.labels[vote.argmax()]
+            dec_values = N.atleast_2d(dec_values)
+            vote = N.zeros((nr_class, dec_values.shape[0]), N.uint32)
+            classidx = range(nr_class)
+            for pos, (i, j) in \
+                    enumerate(chain(*[izip(repeat(idx), classidx[k+1:])
+                                      for k, idx in
+                                      enumerate(classidx[:-1])])):
+                ji = N.array((j, i))
+                decisions = N.array(N.sign(dec_values[:,pos]) > 0, N.int8)
+                chosen_classes = ji[decisions]
+                vote[chosen_classes,:] += 1
+            return self.labels[vote.argmax(axis=0)]
         else:
             return self.predict_values(x, 1)
 
@@ -116,7 +120,7 @@ class LibSvmPythonPredictor:
         if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
             kvalue = N.empty((len(self.support_vectors),))
             for i, sv in enumerate(self.support_vectors):
-                kvalue[i] = self.kernel(x, sv, svm_node_dot)
+                kvalue[i] = svm_node_dot(x, sv, self.kernel)
             p = 0
             dec_values = N.empty((n,))
             for i in range(self.nr_class):
@@ -136,23 +140,31 @@ class LibSvmPythonPredictor:
             return dec_values
         else:
             z = -self.rho
-            for sv_coef, sv in zip(self.sv_coef, self.support_vectors):
-                z += sv_coef * self.kernel(x, sv, svm_node_dot)
+            for sv_coef, sv in izip(self.sv_coef, self.support_vectors):
+                z += sv_coef * svm_node_dot(x, sv, self.kernel)
             return z
 
     def _predict_values_compact(self, x, n):
         if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
             for i, sv in enumerate(self.support_vectors):
                 kvalue = N.empty((len(self.support_vectors),))
-                kvalue[i] = self.kernel(x, sv, svm_node_dot)
+                kvalue[i] = svm_node_dot(x, sv, self.kernel)
             return kvalue - self.rho
         else:
             sv = self.support_vectors[0]
-            return self.kernel(x, sv, svm_node_dot) - self.rho
+            return svm_node_dot(x, sv, self.kernel) - self.rho
 
     def predict_values(self, x, n):
         if self.is_compact:
-            return self._predict_values_compact(x, n)
+            if isinstance(x, N.ndarray) \
+                    and x.dtype in N.sctypes['float']:
+                svvals = [sv['value'][:-1] for sv in self.support_vectors]
+                kvalues = [self.kernel(x[:,:len(sv)], sv) for sv in svvals]
+                x = [kvalue - rho
+                     for kvalue, rho in izip(kvalues, self.rho)]
+                return N.asarray(zip(*x))
+            else:
+                return self._predict_values_compact(x, n)
         else:
             return self._predict_values_sparse(x, n)
 

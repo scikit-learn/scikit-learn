@@ -63,7 +63,7 @@ class LibSvmPrecomputedDataSet:
             for j, (yj, xj) in enumerate(origdata[i:]):
                 # Gram matrix is symmetric, so calculate dot product
                 # once and store it in both required locations
-                z = self.kernel(xi, xj, svm_node_dot)
+                z = svm_node_dot(xi, xj, self.kernel)
                 # fix index so we assign to the right place
                 j += i
                 grammat[i][j + 1] = 0, z
@@ -112,7 +112,7 @@ class LibSvmPrecomputedDataSet:
         for i, (yi, xi) in enumerate(dataset.data):
             i += m
             for j, (yj, xj) in enumerate(self.origdata):
-                z = self.kernel(xi, xj, svm_node_dot)
+                z = svm_node_dot(xi, xj, self.kernel)
                 newgrammat[i][j + 1] = 0, z
                 newgrammat[j][i + 1] = 0, z
         for i, (yi, xi) in enumerate(dataset.data):
@@ -121,7 +121,7 @@ class LibSvmPrecomputedDataSet:
             newgrammat[k][0] = 0, id
             newiddatamap[id] = xi
             for j, (yj, xj) in enumerate(dataset.data[i:]):
-                z = self.kernel(xi, xj, svm_node_dot)
+                z = svm_node_dot(xi, xj, self.kernel)
                 j += k
                 newgrammat[k][j + 1] = 0, z
                 newgrammat[j][k + 1] = 0, z
@@ -156,11 +156,16 @@ class LibSvmOneClassDataSet(LibSvmDataSet):
         LibSvmDataSet.__init__(self, data)
 
 class LibSvmTestDataSet:
-    def __init__(self, origdata):
-        self.data = map(lambda x: convert_to_svm_node(x), origdata)
+    def __init__(self, data):
+        self.data = data
         self.__len__ = self.data.__len__
-        self.__iter__ = self.data.__iter__
-        self.__getitem__ = self.data.__getitem__
+
+    def __iter__(self):
+        for x in self.data:
+            yield convert_to_svm_node(x)
+
+    def is_array_data(self):
+        return isinstance(self.data, N.ndarray)
 
 def convert_to_svm_node(x):
     y = N.empty(len(x) + 1, dtype=libsvm.svm_node_dtype)
@@ -179,15 +184,10 @@ def convert_to_svm_node(x):
         'indexes must be unique'
     return y
 
-def svm_node_dot(x, y):
-    # associate node indexes with array indexes
-    xidx = dict(zip(x['index'][:-1],range(0,len(x))))
-    yidx = dict(zip(y['index'][:-1],range(0,len(y))))
-    # indexes in either vector
-    indexes = N.unique(N.hstack([x['index'],y['index']]))
-    z = 0.
-    for j in indexes:
-        if j in xidx and j in yidx:
-            # dot if index is present in both vectors
-            z += x['value'][xidx[j]] * y['value'][yidx[j]]
-    return z
+def svm_node_dot(x, y, kernel):
+    maxlen = N.maximum(x['index'].max(), y['index'].max()) + 1
+    tmpx = N.zeros((maxlen,), N.float64)
+    tmpy = N.zeros((maxlen,), N.float64)
+    tmpx[x['index'][:-1]] = x['value'][:-1]
+    tmpy[y['index'][:-1]] = y['value'][:-1]
+    return kernel(tmpx, tmpy)

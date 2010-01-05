@@ -29,7 +29,8 @@ class LibSvmRegressionResults:
         This function does regression on a test vector x and returns
         the function value of x calculated using the model.
         """
-        return [self.predictor.predict(x) for x in dataset]
+        z = [self.predictor.predict(x) for x in dataset]
+        return N.asarray(z).squeeze()
 
     def get_svr_probability(self):
         """

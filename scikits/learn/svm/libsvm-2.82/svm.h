@@ -1,6 +1,7 @@
 #ifndef _LIBSVM_H
 #define _LIBSVM_H
 
+#ifdef _WIN32
 #ifdef LIBSVM_DLL
 #ifdef LIBSVM_EXPORTS
 #define LIBSVM_API __declspec(dllexport)
@@ -10,6 +11,9 @@
 #else
 #define LIBSVM_API
 #endif /* LIBSVM_DLL */
+#else
+#define LIBSVM_API
+#endif /* _WIN32 */
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,6 +76,10 @@ LIBSVM_API void svm_destroy_param(struct svm_parameter *param);
 
 LIBSVM_API const char *svm_check_parameter(const struct svm_problem *prob, const struct svm_parameter *param);
 LIBSVM_API int svm_check_probability_model(const struct svm_model *model);
+
+LIBSVM_API void initlibsvm_()
+{
+}
 
 #ifdef __cplusplus
 }

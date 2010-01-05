@@ -7,7 +7,7 @@ __all__ = [
     'svm_node_dtype'
     ]
 
-_libsvm = N.ctypes_load_library('libsvm_', __file__)
+_libsvm = N.ctypeslib.load_library('libsvm_', __file__)
 
 svm_node_dtype = \
     N.dtype({'names' : ['index', 'value'],
