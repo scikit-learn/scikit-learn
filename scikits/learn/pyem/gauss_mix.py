@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Nov 16 08:00 PM 2006 J
+# Last Change: Mon Jun 04 07:00 PM 2007 J
 
 # Module to implement GaussianMixture class.
 
@@ -264,6 +264,7 @@ class GM:
             raise GmParamError("""Parameters of the model has not been 
                 set yet, please set them using self.set_param()""")
 
+        assert self.d > 1
         k       = self.k
         Xe, Ye  = self.conf_ellipses(*args, **kargs)
         try:
@@ -287,13 +288,15 @@ class GM:
         """
         # This is not optimized at all, may be slow. Should not be
         # difficult to make much faster, but it is late, and I am lazy
+        # XXX separete the computation from the plotting
         if not self.d == 1:
             raise GmParamError("the model is not one dimensional model")
         from scipy.stats import norm
         nrm     = norm(0, 1)
         pval    = N.sqrt(self.va[:,0]) * nrm.ppf((1+level)/2)
 
-        # Compute reasonable min/max for the normal pdf
+        # Compute reasonable min/max for the normal pdf: [-mc * std, mc * std]
+        # gives the range we are taking in account for each gaussian
         mc  = 3
         std = N.sqrt(self.va[:,0])
         m   = N.amin(self.mu[:, 0] - mc * std)
@@ -337,6 +340,17 @@ class GM:
             return hp
         except ImportError:
             raise GmParamError("matplotlib not found, cannot plot...")
+
+    def _get_component_pdf(self, x):
+        """Returns a list of pdf, one for each component. Summing them gives
+        the pdf of the mixture."""
+        std = N.sqrt(self.va[:,0])
+        retval = N.empty((x.size, self.k))
+        for c in range(self.k):
+            retval[:, c] = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
+                    N.exp(-(x-self.mu[c][0])**2/(2*std[c]**2))
+
+        return retval
 
     # Syntactic sugar
     def __repr__(self):
