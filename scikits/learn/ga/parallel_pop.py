@@ -1,5 +1,4 @@
 from Numeric import *
-from numpy.fastumath import *
 
 import sys, thread, sync
 

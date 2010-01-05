@@ -3,8 +3,7 @@
 #
 from ga_util import *
 import scipy.stats as stats
-from Numeric import *
-from numpy.fastumath import *
+from numpy import *
 # if a score is less the 2 standard deviations below, the average, its score
 # is arbitrarily set to zero
 class sigma_truncation_scaling:

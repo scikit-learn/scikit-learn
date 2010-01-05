@@ -5,8 +5,7 @@ from ga_util import *
 import scipy.stats as rv
 stats = rv
 import pdb
-from Numeric import *
-from numpy.fastumath import *
+from numpy import *
 
 class selector:
 	def update(self,pop): pass

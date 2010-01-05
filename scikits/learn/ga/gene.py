@@ -15,7 +15,9 @@ history:
 from ga_util import *
 import scipy.stats as rv
 from random import random
+from numpy import *
 import copy
+from scipy.ga.tree import tree_node
 
 class gene:
     """
@@ -302,8 +304,6 @@ class float_gene(gene):
         """ 
         self._value = float(x)
 
-from Numeric import *
-from numpy.fastumath import *
 class log_float_gene(float_gene):
     def __init__(self,bounds):
         if len(bounds) !=2: raise GAError, 'float_gene: init expects a 2 element tuple of the fomr (min,max)'
@@ -355,9 +355,6 @@ class frozen:
         except AttributeError: v2 = other
         return cmp(v1,v2)
 
-# not sure why this has to be fully qualified, but things are failing otherwise.
-# import tree       
-from scipy.ga.tree import tree_node
 class tree_gene(tree_node):
     mr_bounds = (0,.1)
     mutation_rate = .03
