@@ -74,6 +74,10 @@ class GM:
             self.va  = N.zeros((k * d, d))
 
         self.is_valid   = False
+        if d > 1:
+            self.is1d = False
+        else:
+            self.is1d = True
 
     def set_param(self, weights, mu, sigma):
         """Set parameters of the model. Args should
@@ -171,6 +175,10 @@ class GM:
             Will plot samples X draw from the mixture model, and
             plot the ellipses of equi-probability from the mean with
             fixed level of confidence 0.39.  """
+        if self.is1d:
+            raise ValueError("This function does not make sense for 1d "
+                "mixtures.")
+
         if not self.is_valid:
             raise GmParamError("""Parameters of the model has not been 
                 set yet, please set them using self.set_param()""")
@@ -262,11 +270,14 @@ class GM:
         the style is red color, and nolegend for all of them.
         
         Does not work for 1d"""
+        if self.is1d:
+            raise ValueError("This function does not make sense for 1d "
+                "mixtures.")
+
         if not self.is_valid:
             raise GmParamError("""Parameters of the model has not been 
                 set yet, please set them using self.set_param()""")
 
-        assert self.d > 1
         k       = self.k
         Xe, Ye  = self.conf_ellipses(dim, npoints, level)
         try:
@@ -288,6 +299,10 @@ class GM:
             - h['gpdf'] is the line for the global pdf
             - h['conf'] is a list of filling area
         """
+        if not self.is1d:
+            raise ValueError("This function does not make sense for "
+                "mixtures which are not unidimensional")
+
         # This is not optimized at all, may be slow. Should not be
         # difficult to make much faster, but it is late, and I am lazy
         # XXX separete the computation from the plotting
@@ -361,6 +376,9 @@ class GM:
         """Do all the necessary computation for contour plot of mixture's density.
         
         Returns X, Y, Z and V as expected by mpl contour function."""
+        if self.is1d:
+            raise ValueError("This function does not make sense for 1d "
+                "mixtures.")
 
         # Ok, it is a bit gory. Basically, we want to compute the size of the
         # grid. We use conf_ellipse, which will return a couple of points for
@@ -414,6 +432,7 @@ class GM:
             return self.va[tidx, dim]
         else:
             raise ValueError("Unkown mode")
+
     # Syntactic sugar
     def __repr__(self):
         repr    = ""

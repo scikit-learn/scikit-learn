@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Sat Jun 09 02:00 PM 2007 J
+# Last Change: Sat Jun 09 03:00 PM 2007 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -183,7 +183,6 @@ def gauss_ell(mu, va, dim = misc._DEF_VIS_DIM, \
     d       = mu.shape[0]
     c       = N.array(dim)
 
-    print c, d
     if N.any(c < 0) or N.any(c >= d):
         raise ValueError("dim elements should be >= 0 and < %d (dimension"\
                 " of the variance)" % d)
