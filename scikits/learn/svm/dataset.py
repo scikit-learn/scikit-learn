@@ -165,6 +165,9 @@ class LibSvmTestDataSet:
     def __init__(self, origdata):
         self.data = map(lambda x: convert_to_svm_node(x), origdata)
 
+    def __len__(self):
+        return len(self.data)
+
     def __iter__(self):
         return self.data.__iter__()
 

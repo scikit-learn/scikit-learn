@@ -10,100 +10,92 @@ restore_path()
 
 class test_classification(NumpyTestCase):
     def check_basics(self):
-        Model = LibSvmCClassificationModel
         kernel = LinearKernel()
-        Model(kernel)
-        Model(kernel, cost=1.0)
+        # C-SVC
+        ModelType = LibSvmCClassificationModel
+        ModelType(kernel)
+        ModelType(kernel, cost=1.0)
         weights = [(2, 10.0), (1, 20.0), (0, 30.0)]
-        Model(kernel, weights=weights)
-        Model(kernel, 1.0, weights)
-        Model(kernel, cost=1.0, weights=weights)
+        ModelType(kernel, weights=weights)
+        ModelType(kernel, 1.0, weights)
+        ModelType(kernel, cost=1.0, weights=weights)
+        # nu-SVC
+        ModelType = LibSvmNuClassificationModel
+        ModelType(kernel)
+        ModelType(kernel, nu=0.5)
+        ModelType(kernel, weights=weights)
+        ModelType(kernel, 0.5, weights)
 
-        Model = LibSvmNuClassificationModel
-        Model(kernel)
-        Model(kernel, nu=0.5)
-        Model(kernel, weights=weights)
-        Model(kernel, 0.5, weights)
+    def _make_basic_datasets(self):
+        labels = [0, 1, 1, 2]
+        x = [N.array([0, 0]),
+             N.array([0, 1]),
+             N.array([1, 0]),
+             N.array([1, 1])]
+        traindata = LibSvmClassificationDataSet(zip(labels, x))
+        testdata = LibSvmTestDataSet(x)
+        return traindata, testdata
 
     def check_c_basics(self):
-        ModelType = LibSvmCClassificationModel
-
-        labels = [0, 1, 1, 2]
-        x = [N.array([0, 0]),
-             N.array([0, 1]),
-             N.array([1, 0]),
-             N.array([1, 1])]
-        traindata = LibSvmClassificationDataSet(zip(labels, x))
-        model = ModelType(RBFKernel(traindata.gamma))
+        traindata, testdata = self._make_basic_datasets()
+        kernel = RBFKernel(traindata.gamma)
+        model = LibSvmCClassificationModel(kernel)
         results = model.fit(traindata)
-        testdata = LibSvmTestDataSet(x)
-        results.predict(testdata)
+        p = results.predict(testdata)
+        assert_array_equal(p, [1, 1, 1, 1])
         results.predict_values(testdata)
 
-    def check_c_more(self):
-        ModelType = LibSvmCClassificationModel
-
-        labels = [0, 1, 1, 2]
-        x = [N.array([0, 0]),
-             N.array([0, 1]),
-             N.array([1, 0]),
-             N.array([1, 1])]
-        traindata = LibSvmClassificationDataSet(zip(labels, x))
-        cost = 10.0
-        weights = [(1, 10.0)]
-        testdata = LibSvmTestDataSet(x)
-
+    def _make_basic_kernels(self, gamma):
         kernels = [
             LinearKernel(),
-            PolynomialKernel(3, traindata.gamma, 0.0),
-            RBFKernel(traindata.gamma)
+            PolynomialKernel(3, gamma, 0.0),
+            RBFKernel(gamma)
             ]
-        expected_rhos = [
-            [-0.999349, -1.0, -3.0],
-            [0.375, -1.0, -1.153547],
-            [0.671181, 0.0, -0.671133]
-            ]
-        expected_errors = [0, 1, 0]
+        return kernels
 
-        for kernel, expected_rho, expected_error in \
-            zip(kernels, expected_rhos, expected_errors):
-            model = ModelType(kernel, cost, weights)
+    def _classify_basic(self, ModelType,
+                        modelargs, expected_rhos, expected_ps):
+        traindata, testdata = self._make_basic_datasets()
+        kernels = self._make_basic_kernels(traindata.gamma)
+        for kernel, expected_rho, expected_p in \
+                zip(kernels, expected_rhos, expected_ps):
+            args = (kernel,) + modelargs
+            model = ModelType(*args)
             results = model.fit(traindata)
-
             self.assertEqual(results.labels, [0, 1, 2])
-            self.assertEqual(results.nSV, [1, 2, 1])
-
-            # use decimal=4 to suppress slight differences in values
-            # calculated for rho on Windows with MSVC 7.1 and on
-            # Fedora Core 4 with GCC 4.0.0.
+            # decimal=4 due to compiler-dependent variations in rho
             assert_array_almost_equal(results.rho, expected_rho, decimal=4)
+            p = N.array(results.predict(testdata))
+            assert_array_equal(p, expected_p)
 
-            predictions = N.array(results.predict(testdata))
-            self.assertEqual(N.sum(predictions != labels), expected_error)
+    def check_c_more(self):
+        cost = 10.0
+        weights = [(1, 10.0)]
+        modelargs = cost, weights
+        expected_rhos = [[-0.999349, -1.0, -3.0],
+                         [0.375, -1.0, -1.153547],
+                         [0.671181, 0.0, -0.671133]]
+        expected_ps = [[0, 1, 1, 2], [1, 1, 1, 2], [0, 1, 1, 2]]
+        self._classify_basic(LibSvmCClassificationModel,
+                             modelargs, expected_rhos, expected_ps)
 
     def check_c_probability(self):
-        ModelType = LibSvmCClassificationModel
-
-        labels = [0, 1, 1, 2]
-        x = [N.array([0, 0]),
-             N.array([0, 1]),
-             N.array([1, 0]),
-             N.array([1, 1])]
-        traindata = LibSvmClassificationDataSet(zip(labels, x))
+        traindata, testdata = self._make_basic_datasets()
+        nu = 0.5
         cost = 10.0
         weights = [(1, 10.0)]
-        testdata = LibSvmTestDataSet(x)
-
-        kernels = [
-            LinearKernel(),
-            PolynomialKernel(3, traindata.gamma, 0.0),
-            RBFKernel(traindata.gamma)
+        kernels = self._make_basic_kernels(traindata.gamma)
+        models = [
+            (LibSvmCClassificationModel, (cost, weights)),
+            (LibSvmNuClassificationModel, (nu, weights))
             ]
-
-        for kernel in kernels:
-            model = ModelType(kernel, cost, weights, True)
-            results = model.fit(traindata)
-            results.predict_probability(testdata)
+        for ModelType, modelargs in models:
+            for kernel in kernels:
+                args = (kernel,) + modelargs
+                kwargs = {'probability' : True}
+                model = ModelType(*args, **kwargs)
+                results = model.fit(traindata)
+                results.predict_probability(testdata)
 
     def check_cross_validate(self):
         labels = ([-1] * 50) + ([1] * 50)
@@ -116,8 +108,25 @@ class test_classification(NumpyTestCase):
         # XXX check cross-validation with and without probability
         # output enabled
 
-    def check_nu_train(self):
-        pass
+    def check_nu_basics(self):
+        traindata, testdata = self._make_basic_datasets()
+        kernel = RBFKernel(traindata.gamma)
+        model = LibSvmNuClassificationModel(kernel)
+        results = model.fit(traindata)
+        p = results.predict(testdata)
+        assert_array_equal(p, [0, 1, 1, 2])
+        v = results.predict_values(testdata)
+
+    def check_nu_more(self):
+        nu = 0.5
+        weights = [(1, 10.0)]
+        modelargs = nu, weights
+        expected_rhos = [[-1.0, -1.0, -3.0],
+                         [-1.0, -1.0, -1.15384846],
+                         [0.6712142, 0.0, -0.6712142]]
+        expected_ps = [[0, 1, 1, 2]] * 3
+        self._classify_basic(LibSvmNuClassificationModel,
+                             modelargs, expected_rhos, expected_ps)
 
     def _make_datasets(self):
         labels1 = N.random.random_integers(0, 2, 100)
