@@ -94,7 +94,7 @@ class test_regression(NumpyTestCase):
     def check_py_predictor(self):
         ModelType = LibSvmEpsilonRegressionModel
         ResultType = LibSvmRegressionResults
-        PredictorType = LibSvmPyPredictor
+        PredictorType = LibSvmPythonPredictor
 
         y = [0.0, 1.0, 1.0, 2.0]
         x = [N.array([0, 0]),
@@ -103,10 +103,8 @@ class test_regression(NumpyTestCase):
              N.array([1, 1])]
         traindata = LibSvmRegressionDataSet(zip(y, x))
         testdata = LibSvmTestDataSet(x)
-
         model = ModelType(LinearKernel())
-        #results = model.fit(traindata, ResultType, PredictorType)
-        #print results.predict(testdata)
+        results = model.fit(traindata, ResultType, PredictorType)
 
 if __name__ == '__main__':
     NumpyTest().run()

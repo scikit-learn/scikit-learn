@@ -7,8 +7,7 @@ __all__ = [
     'PolynomialKernel',
     'RBFKernel',
     'SigmoidKernel',
-    'CustomKernel',
-    'PrecomputedKernel'
+    'CustomKernel'
     ]
 
 class LinearKernel:
@@ -61,7 +60,3 @@ class CustomKernel:
 
     def __call__(self, x, y, dot):
         return self.f(x, y, dot)
-
-class PrecomputedKernel:
-    def __init__(self):
-        self.kernel_type = libsvm.PRECOMPUTED

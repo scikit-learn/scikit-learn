@@ -128,8 +128,7 @@ class test_precomputed(NumpyTestCase):
 
         pcdata12 = pcdata1.combine(data2)
         model = LibSvmEpsilonRegressionModel(kernel)
-        results = model.fit(pcdata12, ResultType,
-                            LibSvmPrecomputedPyPredictor)
+        results = model.fit(pcdata12, ResultType, LibSvmPythonPredictor)
 
         # reference model, calculated without involving the
         # precomputed Gram matrix

@@ -7,8 +7,7 @@ import libsvm
 __all__ = [
     'LibSvmPredictor',
     'LibSvmPrecomputedPredictor',
-    'LibSvmPyPredictor',
-    'LibSvmPrecomputedPyPredictor'
+    'LibSvmPythonPredictor'
     ]
 
 class LibSvmPredictor:
@@ -79,51 +78,31 @@ class LibSvmPrecomputedPredictor:
         label = libsvm.svm_predict_probability(self.model, gptr, peptr)
         return label, pe
 
-class LibSvmPyPredictor:
+class LibSvmPythonPredictor:
     def __init__(self, model, dataset, kernel):
         self.kernel = kernel
         modelc = model.contents
 
-        # XXX regression-only hack for now
         self.rho = modelc.rho[0]
         self.sv_coef = modelc.sv_coef[0][:modelc.l]
+        self.svm_type = modelc.param.svm_type
 
-        svptrs = [modelc.SV[i] for i in range(modelc.l)]
-        self.support_vectors = \
-            [dataset.iddatamap[addressof(svptr[0])] for svptr in svptrs]
-        libsvm.svm_destroy_model(model)
-
-    def predict(self, x):
-        # XXX regression-only hack for now
-        return self.predict_values(x, 1)
-
-    def predict_values(self, x, n):
-        z = -self.rho
-        # XXX possible optimization: izip
-        for sv_coef, sv in zip(self.sv_coef, self.support_vectors):
-            z += sv_coef * self.kernel(x, sv, svm_node_dot)
-        return z
-
-    def predict_probability(self, x, n):
-        raise NotImplementedError
-
-class LibSvmPrecomputedPyPredictor:
-    def __init__(self, model, dataset, kernel):
-        self.kernel = kernel
-        modelc = model.contents
-
-        # XXX regression-only hack for now
-        self.rho = modelc.rho[0]
-        self.sv_coef = modelc.sv_coef[0][:modelc.l]
-
-        ids = [int(modelc.SV[i][0].value) for i in range(modelc.l)]
-        support_vectors = [dataset[id] for id in ids]
+        if modelc.param.kernel_type != libsvm.PRECOMPUTED:
+            svptrs = [modelc.SV[i] for i in range(modelc.l)]
+            support_vectors = [dataset.iddatamap[addressof(svptr[0])]
+                               for svptr in svptrs]
+        else:
+            ids = [int(modelc.SV[i][0].value) for i in range(modelc.l)]
+            support_vectors = [dataset[id] for id in ids]
         self.support_vectors = support_vectors
+
         libsvm.svm_destroy_model(model)
 
     def predict(self, x):
-        # XXX regression-only hack for now
-        return self.predict_values(x, 1)
+        if self.svm_type in [libsvm.C_SVC, libsvm.NU_SVC]:
+            raise NotImplementedError
+        else:
+            return self.predict_values(x, 1)
 
     def predict_values(self, x, n):
         z = -self.rho
