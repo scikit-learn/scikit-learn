@@ -12,6 +12,10 @@ __all__ = [
 class LibSvmDataSet:
     def __init__(self, data):
         self.data = data
+        self.iddatamap = {}
+        for y, x in data:
+            key = x.__array_interface__['data'][0]
+            self.iddatamap[key] = x
 
     def __iter__(self):
         return self.data.__iter__()

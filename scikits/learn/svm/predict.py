@@ -1,4 +1,4 @@
-from ctypes import cast, POINTER, c_double
+from ctypes import cast, POINTER, c_double, addressof
 import numpy as N
 
 from dataset import svm_node_dot
@@ -80,23 +80,32 @@ class LibSvmPrecomputedPredictor:
         return label, pe
 
 class LibSvmPyPredictor:
-   def __init__(self, model, dataset, kernel):
+    def __init__(self, model, dataset, kernel):
         self.kernel = kernel
         modelc = model.contents
-        support_vectors = [modelc.SV[i] for i in range(modelc.l)]
-        # XXX need to map back from these support vector pointers to
-        # the original numpy arrays
+
+        # XXX regression-only hack for now
+        self.rho = modelc.rho[0]
+        self.sv_coef = modelc.sv_coef[0][:modelc.l]
+
+        svptrs = [modelc.SV[i] for i in range(modelc.l)]
+        self.support_vectors = \
+            [dataset.iddatamap[addressof(svptr[0])] for svptr in svptrs]
+        libsvm.svm_destroy_model(model)
+
+    def predict(self, x):
+        # XXX regression-only hack for now
+        return self.predict_values(x, 1)
+
+    def predict_values(self, x, n):
+        z = -self.rho
+        # XXX possible optimization: izip
+        for sv_coef, sv in zip(self.sv_coef, self.support_vectors):
+            z += sv_coef * self.kernel(x, sv, svm_node_dot)
+        return z
+
+    def predict_probability(self, x, n):
         raise NotImplementedError
-        #libsvm.svm_destroy_model(model)
-
-   def predict(self, x):
-        raise NotImplementedError
-
-   def predict_values(self, x, n):
-       raise NotImplementedError
-
-   def predict_probability(self, x, n):
-       raise NotImplementedError
 
 class LibSvmPrecomputedPyPredictor:
     def __init__(self, model, dataset, kernel):
