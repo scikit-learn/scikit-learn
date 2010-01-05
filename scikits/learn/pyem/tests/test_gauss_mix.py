@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Jun 12 03:00 PM 2007 J
+# Last Change: Mon Jul 02 05:00 PM 2007 J
 
 # For now, just test that all mode/dim execute correctly
 
@@ -69,6 +69,17 @@ class test_BasicFunc(NumpyTestCase):
         y1 = N.sum(multiple_gauss_den(x, mu, va) * w, 1)
         y2 = gm.pdf(x)
         assert_array_almost_equal(y1, y2)
+
+    def test_2d_diag_logpdf(self):
+        d = 2
+        w = N.array([0.4, 0.6])
+        mu = N.array([[0., 2], [-1, -2]])
+        va = N.array([[1, 0.5], [0.5, 1]])
+        x = N.random.randn(100, 2)
+        gm = GM.fromvalues(w, mu, va)
+        y1 = N.sum(multiple_gauss_den(x, mu, va) * w, 1)
+        y2 = gm.pdf(x, log = True)
+        assert_array_almost_equal(N.log(y1), y2)
 
 if __name__ == "__main__":
     NumpyTest().run()

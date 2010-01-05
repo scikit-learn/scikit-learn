@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Sat Jun 30 05:00 PM 2007 J
+# Last Change: Mon Jul 02 05:00 PM 2007 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -377,8 +377,9 @@ class GM:
             y : ndarray
                 the pdf at points x."""
         if log:
-            return D.logsumexp(N.sum(
-                    D.multiple_gauss_den(x, self.mu, self.va, log = True) * self.w, 1))
+            return D.logsumexp(
+                    D.multiple_gauss_den(x, self.mu, self.va, log = True)
+                        + N.log(self.w))
         else:
             return N.sum(D.multiple_gauss_den(x, self.mu, self.va) * self.w, 1)
 
@@ -512,19 +513,6 @@ class GM:
         except ImportError:
             raise GmParamError("matplotlib not found, cannot plot...")
 
-    def _get_component_pdf(self, x):
-        """Returns a list of pdf, one for each component. Summing them gives
-        the pdf of the mixture."""
-        # XXX: have a public function to compute the pdf at given points
-        # instead...
-        std = N.sqrt(self.va[:, 0])
-        retval = N.empty((x.size, self.k))
-        for c in range(self.k):
-            retval[:, c] = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
-                    N.exp(-(x-self.mu[c][0])**2/(2*std[c]**2))
-
-        return retval
-
     def density_on_grid(self, dim = misc.DEF_VIS_DIM, nx = 50, ny = 50,
             nl = 20, maxlevel = 0.95, V = None):
         """Do all the necessary computation for contour plot of mixture's
@@ -565,19 +553,15 @@ class GM:
         # at a given point, one component is largely dominant for its
         # contribution to the pdf).
 
-        # XXX: we need log pdf, not the pdf... this can save some computing
         Xe, Ye = self.conf_ellipses(level = maxlevel, dim = dim)
         ax = [N.min(Xe), N.max(Xe), N.min(Ye), N.max(Ye)]
 
         w = ax[1] - ax[0]
         h = ax[3] - ax[2]
-        X, Y, den = self._densityctr(N.linspace(ax[0]-0.2*w, ax[1]+0.2*w, nx), \
+        X, Y, lden = self._densityctr(N.linspace(ax[0]-0.2*w, ax[1]+0.2*w, nx), \
                 N.linspace(ax[2]-0.2*h, ax[3]+0.2*h, ny), dim = dim)
-        lden = N.log(den)
         # XXX: how to find "good" values for level ?
         if V is None:
-            #V = [-5, -3, -1, -0.5, ]
-            #V.extend(list(N.linspace(0, N.max(lden), 20)))
             V = N.linspace(-5, N.max(lden), nl)
         return X, Y, lden, N.array(V)
 
@@ -587,11 +571,9 @@ class GM:
         X = gr[0].flatten()
         Y = gr[1].flatten()
         xdata = N.concatenate((X[:, N.newaxis], Y[:, N.newaxis]), axis = 1)
-        # XXX refactor computing pdf
         dmu = self.mu[:, dim]
         dva = self._get_va(dim)
-        den = D.multiple_gauss_den(xdata, dmu, dva) * self.w
-        den = N.sum(den, 1)
+        den = GM.fromvalues(self.w, dmu, dva).pdf(xdata, log = True)
         den = den.reshape(len(rangey), len(rangex))
 
         X = gr[0]
@@ -723,34 +705,3 @@ def check_gmm_param(w, mu, va):
         
 if __name__ == '__main__':
     pass
-    ## # Meta parameters:
-    ## #   - k = number of components
-    ## #   - d = dimension
-    ## #   - mode : mode of covariance matrices
-    ## d       = 5
-    ## k       = 4
-
-    ## # Now, drawing a model
-    ## mode    = 'full'
-    ## nframes = 1e3
-
-    ## # Build a model with random parameters
-    ## w, mu, va   = GM.gen_param(d, k, mode, spread = 3)
-    ## gm          = GM.fromvalues(w, mu, va)
-
-    ## # Sample nframes frames  from the model
-    ## X   = gm.sample(nframes)
-
-    ## # Plot the data
-    ## import pylab as P
-    ## P.plot(X[:, 0], X[:, 1], '.', label = '_nolegend_')
-
-    ## # Real confidence ellipses with confidence level 
-    ## level       = 0.50
-    ## h           = gm.plot(level=level)
-
-    ## # set the first ellipse label, which will appear in the legend
-    ## h[0].set_label('confidence ell at level ' + str(level))
-
-    ## P.legend(loc = 0)
-    ## P.show()
