@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 16 09:00 PM 2006 J
+# Last Change: Wed Dec 06 09:00 PM 2006 J
 
 import copy
 
@@ -11,7 +11,7 @@ from numpy.random import seed
 
 set_package_path()
 from pyem import GM, GMM
-from pyem.online_em import OnGMM
+from pyem.online_em import OnGMM, OnGMM1d
 restore_path()
 
 # #Optional:
@@ -21,6 +21,7 @@ restore_path()
 
 # Error precision allowed (nb of decimals)
 AR_AS_PREC  = 12
+KM_ITER     = 5
 
 class OnlineEmTest(NumpyTestCase):
     def _create_model(self, d, k, mode, nframes, emiter):
@@ -38,7 +39,7 @@ class OnlineEmTest(NumpyTestCase):
         # Init the model
         lgm = GM(d, k, mode)
         gmm = GMM(lgm, 'kmean')
-        gmm.init(data)
+        gmm.init(data, niter = KM_ITER)
 
         self.gm0    = copy.copy(gmm.gm)
         # The actual EM, with likelihood computation
@@ -91,7 +92,7 @@ class test_on_off_eq(OnlineEmTest):
         ogm         = GM(d, k, mode)
         ogmm        = OnGMM(ogm, 'kmean')
         init_data   = self.data
-        ogmm.init(init_data)
+        ogmm.init(init_data, niter = KM_ITER)
 
         # Check that online kmean init is the same than kmean offline init
         ogm0    = copy.copy(ogm)
@@ -116,8 +117,8 @@ class test_on_off_eq(OnlineEmTest):
         ogmm.pva   = ogmm.cva.copy()
         for e in range(emiter):
             for t in range(nframes):
-                ogmm.compute_sufficient_statistics(self.data[t:t+1, :], nu[t])
-                ogmm.update_em()
+                ogmm.compute_sufficient_statistics_frame(self.data[t], nu[t])
+                ogmm.update_em_frame()
 
             # Change pw args only a each epoch 
             ogmm.pw  = ogmm.cw.copy()
@@ -147,12 +148,56 @@ class test_on(OnlineEmTest):
         d       = 1
         k       = 2
         mode    = 'diag'
-        nframes = int(1e3)
+        nframes = int(5e2)
         emiter  = 4
 
         self._create_model(d, k, mode, nframes, emiter)
         self._run_pure_online(d, k, mode, nframes)
     
+    def check_1d_imp(self):
+        d       = 1
+        k       = 2
+        mode    = 'diag'
+        nframes = int(5e2)
+        emiter  = 4
+
+        self._create_model(d, k, mode, nframes, emiter)
+        gmref   = self._run_pure_online(d, k, mode, nframes)
+        gmtest  = self._run_pure_online_1d(d, k, mode, nframes)
+    
+        assert_array_almost_equal(gmref.w, gmtest.w, AR_AS_PREC)
+        assert_array_almost_equal(gmref.mu, gmtest.mu, AR_AS_PREC)
+        assert_array_almost_equal(gmref.va, gmtest.va, AR_AS_PREC)
+
+    def _run_pure_online_1d(self, d, k, mode, nframes):
+        #++++++++++++++++++++++++++++++++++++++++
+        # Approximate the models with online EM
+        #++++++++++++++++++++++++++++++++++++++++
+        ogm     = GM(d, k, mode)
+        ogmm    = OnGMM1d(ogm, 'kmean')
+        init_data   = self.data[0:nframes / 20, :]
+        ogmm.init(init_data[:, 0])
+
+        # Forgetting param
+        ku		= 0.005
+        t0		= 200
+        lamb	= 1 - 1/(N.arange(-1, nframes-1) * ku + t0)
+        nu0		= 0.2
+        nu		= N.zeros((len(lamb), 1))
+        nu[0]	= nu0
+        for i in range(1, len(lamb)):
+            nu[i]	= 1./(1 + lamb[i] / nu[i-1])
+
+        # object version of online EM
+        for t in range(nframes):
+            # the assert are here to check we do not create copies
+            # unvoluntary for parameters
+            a, b, c = ogmm.compute_sufficient_statistics_frame(self.data[t, 0], nu[t])
+            ogmm.update_em_frame(a, b, c)
+
+        ogmm.gm.set_param(ogmm.cw, ogmm.cmu[:, N.newaxis], ogmm.cva[:, N.newaxis])
+
+        return ogmm.gm
     def _run_pure_online(self, d, k, mode, nframes):
         #++++++++++++++++++++++++++++++++++++++++
         # Approximate the models with online EM
@@ -179,10 +224,11 @@ class test_on(OnlineEmTest):
             assert ogmm.pw is ogmm.cw
             assert ogmm.pmu is ogmm.cmu
             assert ogmm.pva is ogmm.cva
-            ogmm.compute_sufficient_statistics(self.data[t:t+1, :], nu[t])
-            ogmm.update_em()
+            ogmm.compute_sufficient_statistics_frame(self.data[t], nu[t])
+            ogmm.update_em_frame()
 
         ogmm.gm.set_param(ogmm.cw, ogmm.cmu, ogmm.cva)
 
+        return ogmm.gm
 if __name__ == "__main__":
     NumpyTest().run()

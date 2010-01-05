@@ -1,11 +1,18 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 09 06:00 PM 2006 J
+# Last Change: Wed Dec 06 08:00 PM 2006 J
 # TODO:
 #   - check how to handle cmd line build options with distutils and use
 #   it in the building process
 
 """ pyem is a small python package to estimate Gaussian Mixtures Models
-from data, using Expectation Maximization"""
+from data, using Expectation Maximization.
+
+Maximum likelihood EM for mixture of Gaussian is implemented, with BIC computation
+for number of cluster assessment.
+
+There is also an experimental online EM version (the EM is updated for each new
+sample), and I plan to add Variational Bayes and/or MCMC support for Bayesian approach
+for estimating meta parameters of mixtures. """
 
 from os.path import join
 # This import from __init__ looks strange, should check whether there is no other way
@@ -28,6 +35,10 @@ def configuration(parent_package='',top_path=None, package_name='pyem'):
                          #define_macros=[('LIBSVM_EXPORTS', None),
                          #               ('LIBSVM_DLL', None)],
                          sources=[join('src', 'c_gden.c')])
+    config.add_extension('_rawden',
+                         #define_macros=[('LIBSVM_EXPORTS', None),
+                         #               ('LIBSVM_DLL', None)],
+                         sources=[join('src', 'pure_den.c')])
 
     return config
 
