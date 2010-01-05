@@ -6,24 +6,22 @@ __all__ = [
     'CustomKernel'
     ]
 
-class LinearKernel:
-    def __init__(self, dot):
-        self.dot = dot
+import numpy as N
 
-    def __call__(self, x, y):
-        return self.dot(x, y)
+class LinearKernel:
+    def __call__(self, x, y, dot):
+        return dot(x, y)
 
 class PolynomialKernel:
-    def __init__(self, degree, gamma, coef0, dot):
+    def __init__(self, degree, gamma, coef0):
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
-        self.dot = dot
 
-    def __call__(self, x, y):
-        base = self.gamma*self.dot(x, y) + self.coef0
+    def __call__(self, x, y, dot):
+        base = self.gamma*dot(x, y) + self.coef0
         tmp = base
-        ret = 1.
+        ret = 1.0
         t = self.degree
         while t > 0:
             if t % 2 == 1: ret *= tmp
@@ -32,27 +30,24 @@ class PolynomialKernel:
         return ret
 
 class RBFKernel:
-    def __init__(self, gamma, dot):
+    def __init__(self, gamma):
         self.gamma = gamma
-        self.dot = dot
 
-    def __call__(self, x, y):
-        z = self.dot(x, x) + self.dot(y, y) - 2*self.dot(x, y)
+    def __call__(self, x, y, dot):
+        z = dot(x, x) + dot(y, y) - 2*dot(x, y)
         return N.exp(-self.gamma*z)
 
 class SigmoidKernel:
-    def __init__(self, gamma, coef0, dot):
+    def __init__(self, gamma, coef0):
         self.gamma = gamma
         self.coef0 = coef0
-        self.dot = dot
 
-    def kernel_sigmoid(x, y, gamma, coef0):
-        return N.tanh(self.gamma*self.dot(x, y)+self.coef0)
+    def __call__(self, x, y, dot):
+        return N.tanh(self.gamma*dot(x, y)+self.coef0)
 
 class CustomKernel:
-    def __init__(self, f, dot):
+    def __init__(self, f):
         self.f = f
-        self.dot = dot
 
-    def __call__(self, x, y):
+    def __call__(self, x, y, dot):
         return self.f(x, y, dot)
