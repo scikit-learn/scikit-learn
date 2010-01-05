@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Jun 08 04:00 PM 2007 J
+# Last Change: Wed Jun 27 05:00 PM 2007 J
 
 # Various utilities for examples 
 
@@ -8,7 +8,7 @@ from numpy.testing import set_package_path, restore_path
 
 # XXX: Bouah, hackish... Will go away once scipydata found its way
 set_package_path()
-from pyem.data import oldfaithful
+from pyem.data import oldfaithful, pendigits
 restore_path()
 
 def get_faithful():
@@ -30,6 +30,13 @@ def get_faithful():
     duration = duration[:, N.newaxis]
 
     return N.concatenate((waiting, duration), 1)
+
+def get_pendigits():
+    """Return faithful data as a nx2 array, first column being duration, second
+    being waiting time."""
+    # Load faithful data, convert waiting into integer, remove L, M and S data
+    data = pendigits.load()
+    return data['training']['x'], data['training']['y']
 
 def scale(data):
     """ Scale data such as each col is in the range [0..1].
