@@ -51,11 +51,17 @@ for k in range(1, 8):
 
 mbic = N.argmax(bc)
 
-# Below is code to display a figure with histogram and best model (in the BIC sense)
-# pdf, with the BIC as a function of the number of components on the right.
+# Below is code to display a figure with histogram and best model (in the BIC
+# sense) pdf, with the BIC as a function of the number of components on the
+# right.
 P.figure(figsize = [12, 7])
+#---------------------------
+# histogram + pdf estimation
+#---------------------------
 P.subplot(1, 2, 1)
 h = gml[mbic].plot1d(gpdf=True)
+# You can manipulate the differents parts of the plot through the returned
+# handles
 h['gpdf'][0].set_linestyle('-')
 h['gpdf'][0].set_label('pdf of the mixture')
 h['pdf'][0].set_label('pdf of individual component')
@@ -68,6 +74,9 @@ P.legend(loc = 'best', prop = prop)
 P.hist(dt, 25, normed = 1, fill = False)
 P.xlabel('waiting time between consecutive eruption (in min)')
 
+#------------------------------------------
+# BIC as a function of number of components
+#------------------------------------------
 P.subplot(1, 2, 2)
 P.plot(N.arange(1, 8), bc, 'o:')
 P.xlabel("number of components")

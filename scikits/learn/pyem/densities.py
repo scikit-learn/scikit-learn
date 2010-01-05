@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Sat Jun 30 04:00 PM 2007 J
+# Last Change: Mon Jul 02 06:00 PM 2007 J
 """This module implements various basic functions related to multivariate
 gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
 
@@ -294,55 +294,19 @@ def multiple_gauss_den(data, mu, va, log = False):
     mu = N.atleast_2d(mu)
     va = N.atleast_2d(va)
 
-    K = N.shape(mu)[0]
+    k = N.shape(mu)[0]
     n = N.shape(data)[0]
     d = N.shape(mu)[1]
     
-    y = N.zeros((K, n))
+    y = N.zeros((k, n))
     if N.size(mu) == N.size(va):
-        for i in range(K):
+        for i in range(k):
             y[i] = gauss_den(data, mu[i, :], va[i, :], log)
         return y.T
     else:
-        for i in range(K):
+        for i in range(k):
             y[i] = gauss_den(data, mu[i, :], va[d*i:d*i+d, :], log)
         return y.T
 
 if __name__ == "__main__":
     pass
-    ## import pylab
-
-    ## #=========================================
-    ## # Test plotting a simple diag 2d variance:
-    ## #=========================================
-    ## va  = N.array([5, 3])
-    ## mu  = N.array([2, 3])
-
-    ## # Generate a multivariate gaussian of mean mu and covariance va
-    ## X       = randn(1e3, 2)
-    ## Yc      = N.dot(N.diag(N.sqrt(va)), X.transpose())
-    ## Yc      = Yc.transpose() + mu
-
-    ## # Plotting
-    ## Xe, Ye  = gauss_ell(mu, va, npoints = 100)
-    ## pylab.figure()
-    ## pylab.plot(Yc[:, 0], Yc[:, 1], '.')
-    ## pylab.plot(Xe, Ye, 'r')
-
-    ## #=========================================
-    ## # Test plotting a simple full 2d variance:
-    ## #=========================================
-    ## va  = N.array([[0.2, 0.1],[0.1, 0.5]])
-    ## mu  = N.array([0, 3])
-
-    ## # Generate a multivariate gaussian of mean mu and covariance va
-    ## X       = randn(1e3, 2)
-    ## Yc      = N.dot(lin.cholesky(va), X.transpose())
-    ## Yc      = Yc.transpose() + mu
-
-    ## # Plotting
-    ## Xe, Ye  = gauss_ell(mu, va, npoints = 100, level=0.95)
-    ## pylab.figure()
-    ## pylab.plot(Yc[:, 0], Yc[:, 1], '.')
-    ## pylab.plot(Xe, Ye, 'r')
-    ## pylab.show()
