@@ -2,10 +2,10 @@ from ga_util import *
 import scipy.stats as stats
 rv = stats
 #import scipy.io.dumb_shelve
-import string, pdb
-import os, sys, string
+import string
+import os, sys
 import time, pprint, types,copy
-import anydbm, dumbdbm
+import dumbdbm
 #import thread, sync
 if sys.platform != 'win32':
     import fcntl
