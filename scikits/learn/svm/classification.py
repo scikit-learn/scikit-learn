@@ -96,10 +96,11 @@ class LibSvmClassificationModel(LibSvmModel):
         if weights is not None:
             self.weight_labels = N.empty((len(weights),), dtype=N.intp)
             self.weights = N.empty((len(weights),), dtype=N.float64)
+            weights = weights[:]
+            weights.sort()
             for i, (label, weight) in enumerate(weights):
                 self.weight_labels[i] = label
                 self.weights[i] = weight
-
             self.param.nr_weight = len(weights)
             self.param.weight_label = \
                 cast(self.weight_labels.ctypes.data, POINTER(c_int))

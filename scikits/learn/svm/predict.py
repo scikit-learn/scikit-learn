@@ -47,6 +47,8 @@ class LibSvmPredictor:
         return v
 
     def predict_probability(self, x, n):
+        if not self.model.contents.param.probability:
+            raise ValueError, 'not a probability model'
         x = self._transform_input(x)
         xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
         pe = N.empty((n,), dtype=N.float64)
