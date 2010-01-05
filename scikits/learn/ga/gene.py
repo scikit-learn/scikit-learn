@@ -344,7 +344,6 @@ class frozen:
     def __rdiv__(self, other):
         try: return other.value() / self._value
         except AttributeError: return other / self._value
-    def __float__(self): return float(self._value)
     def __neg__(self): return -self._value
     def __cmp__(self, other):
         try:
