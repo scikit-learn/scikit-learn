@@ -1,16 +1,11 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 03:00 PM 2007 J
+# Last Change: Sat Jul 21 03:00 PM 2007 J
 
 from numpy.testing import *
 
 set_package_path()
-from examples.examples import ex1, ex2, ex3, pdfestim, pdfestim1d
+from pyem.examples.examples import ex1, ex2, ex3, pdfestim, pdfestim1d
 restore_path()
-
-# #Optional:
-# set_local_path()
-# # import modules that are located in the same directory as this file.
-# restore_path()
 
 class test_examples(NumpyTestCase):
     def test_ex1(self, level = 3):
