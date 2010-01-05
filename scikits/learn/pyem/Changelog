@@ -1,3 +1,11 @@
+pyem (0.4) Fri, 14 Jul 2006 17:49:57 +0900
+
+	* put version to 0.4.1
+	* change some import due to recent changes in 
+	numpy
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.4) Fri, 14 Jul 2006 16:24:05 +0900
 
 	* put version to 0.4

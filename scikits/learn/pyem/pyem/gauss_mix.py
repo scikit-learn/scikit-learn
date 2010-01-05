@@ -1,9 +1,10 @@
 # /usr/bin/python
-# Last Change: Fri Jul 14 03:00 PM 2006 J
+# Last Change: Fri Jul 14 05:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
 import numpy as N
+from numpy.random import randn, rand
 import numpy.linalg as lin
 import densities
 
@@ -89,7 +90,7 @@ class GM:
         # State index (ie hidden var)
         S   = gen_rand_index(self.w, nframes)
         # standard gaussian
-        X   = N.randn(nframes, self.d)        
+        X   = randn(nframes, self.d)        
 
         if self.mode == 'diag':
             X   = self.mu[S, :]  + X * N.sqrt(self.va[S,:])
@@ -163,14 +164,14 @@ class GM:
 
         Returns: w, mu, va
         """
-        w   = abs(N.randn(nc))
+        w   = abs(randn(nc))
         w   = w / sum(w)
 
-        mu  = spread * N.randn(nc, d)
+        mu  = spread * randn(nc, d)
         if varmode == 'diag':
-            va  = abs(N.randn(nc, d))
+            va  = abs(randn(nc, d))
         elif varmode == 'full':
-            va  = N.randn(nc * d, d)
+            va  = randn(nc * d, d)
             for k in range(nc):
                 va[k*d:k*d+d]   = N.dot( va[k*d:k*d+d], 
                     va[k*d:k*d+d].transpose())
@@ -192,7 +193,7 @@ def gen_rand_index(p, n):
     # TODO: check each value of inverse distribution is
     # different
     invcdf  = N.cumsum(p)
-    uni     = N.rand(n)
+    uni     = rand(n)
     index   = N.zeros(n)
 
     # This one should be a bit faster

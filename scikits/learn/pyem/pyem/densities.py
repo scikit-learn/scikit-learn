@@ -1,10 +1,11 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Thu Jul 13 04:00 PM 2006 J
+# Last Change: Fri Jul 14 05:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
+from numpy.random import randn
 
 # Error classes
 class DenError(Exception):
@@ -219,14 +220,14 @@ def generate_test_data(n, d, mode = 'diag', file='test.dat'):
     """Generate a set of data of dimension d, with n frames,
     that is input data, mean, var and output of gden, so that
     other implementations can be tested against"""
-    mu  = N.randn(1, d)
+    mu  = randn(1, d)
     if mode == 'diag':
-        va  = abs(N.randn(1, d))
+        va  = abs(randn(1, d))
     elif mode == 'full':
-        va  = N.randn(d, d)
-        va  = N.matrixmultiply(va, va.transpose())
+        va  = randn(d, d)
+        va  = matrixmultiply(va, va.transpose())
 
-    input   = N.randn(n, d)
+    input   = randn(n, d)
     output  = gauss_den(input, mu, va)
 
     import tables
@@ -251,7 +252,7 @@ def test_gauss_den():
     # # mu  = 1.0
     # # va  = 2.0
 
-    # # X   = N.randn(1e3, 1)
+    # # X   = randn(1e3, 1)
 
     # # Y   = gauss_den(X, mu, va)
 
@@ -269,7 +270,7 @@ def test_gauss_den():
     # # mu  = N.array([1.0, -2.0])
     # # va  = N.array([1.0, 2.0])
 
-    # # X   = N.randn(1e3, 2)
+    # # X   = randn(1e3, 2)
 
     # # Y   = gauss_den(X, mu, va)
 
@@ -285,7 +286,7 @@ def test_gauss_den():
     # mu  = N.array([[0.2, -1.0]])
     # va  = N.array([[1.2, 0.1], [0.1, 0.5]])
 
-    # X   = N.randn(1e3, 2)
+    # X   = randn(1e3, 2)
 
     # Y   = gauss_den(X, mu, va)
 
@@ -372,7 +373,7 @@ if __name__ == "__main__":
     mu  = N.array([2, 3])
 
     # Generate a multivariate gaussian of mean mu and covariance va
-    X       = N.randn(1e3, 2)
+    X       = randn(1e3, 2)
     Yc      = N.matrixmultiply(N.diag(N.sqrt(va)), X.transpose())
     Yc      = Yc.transpose() + mu
 
@@ -389,7 +390,7 @@ if __name__ == "__main__":
     mu  = N.array([0, 3])
 
     # Generate a multivariate gaussian of mean mu and covariance va
-    X       = N.randn(1e3, 2)
+    X       = randn(1e3, 2)
     Yc      = N.matrixmultiply(lin.cholesky(va), X.transpose())
     Yc      = Yc.transpose() + mu
 

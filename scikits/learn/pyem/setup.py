@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Jul 13 01:00 PM 2006 J
+# Last Change: Fri Jul 14 04:00 PM 2006 J
 """ pyem is a small python package to estimate Gaussian Mixtures Models
 from data, using Expectation Maximization"""
 from distutils.core import setup, Extension
@@ -11,7 +11,6 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 
 from numpy.distutils.misc_util import get_numpy_include_dirs
 NUMPYINC    = get_numpy_include_dirs()[0]
-print NUMPYINC
 
 # General variables:
 #   - DISTNAME: name of the distributed package
@@ -34,8 +33,7 @@ def setup_pyrex():
         url=URL,
         packages=['pyem'], 
         ext_modules=[Extension('pyem/c_gmm', ['pyem/src/c_gmm.pyx'], 
-            include_dirs=[NUMPYINC])],
-        data_files=['c_numpy.pxd', 'c_python.pxd'],
+            include_dirs=[NUMPYINC])],  
         cmdclass = {'build_ext': build_ext},
     )
 
@@ -53,7 +51,7 @@ def setup_nopyrex():
 try:
     from Pyrex.Distutils import build_ext
     setup_pyrex()
-except:
+except ImportError:
     print "Pyrex not found, C extension won't be available"
     setup_nopyrex()
 

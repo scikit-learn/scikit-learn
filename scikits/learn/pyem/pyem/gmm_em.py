@@ -1,8 +1,9 @@
 # /usr/bin/python
-# Last Change: Fri Jul 14 04:00 PM 2006 J
+# Last Change: Fri Jul 14 05:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
+from numpy.random import randn
 import densities
 from kmean import kmean
 from gauss_mix import GM
@@ -84,8 +85,8 @@ class GMM(ExpMixtureModel):
         d   = self.gm.d
         if mode == 'diag':
             w   = N.ones(k, float) / k
-            mu  = N.randn(k, d)
-            va  = N.fabs(N.randn(k, d))
+            mu  = randn(k, d)
+            va  = N.fabs(randn(k, d))
         else:
             raise GmmParamError("""init_random not implemented for
                     mode %s yet""", mode)
