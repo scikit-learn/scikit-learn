@@ -15,7 +15,7 @@ it an evaluator class and you are in business.
 """
 
 from ga_util import *
-import scipy.rv
+import scipy.stats.rv as rv
 import Numeric, copy 
 import tree
 
@@ -163,8 +163,8 @@ class list_genome_singlepoint_crossover:
 	def evaluate(self,parents):
 		#assume mom and dad are the same length
 		mom = parents[0]; dad = parents[1]
-		if(len(mom) > 1): crosspoint = scipy.rv.randint(1,len(mom)-1)
-		else: crosspoint = scipy.rv.randint(0,len(mom))
+		if(len(mom) > 1): crosspoint = rv.randint(1,len(mom)-1)
+		else: crosspoint = rv.randint(0,len(mom))
 		brother = (mom[:crosspoint] + dad[crosspoint:]).clone()
 		sister = (dad[:crosspoint] + mom[crosspoint:]).clone()
 		return brother, sister
@@ -246,7 +246,7 @@ class list_genome(genome,ga_list.ga_list):
 def dict_choice(dict):
 	tot = 0
 	for key in dict.keys(): tot = tot + len(dict[key])
-	index = scipy.rv.choice(xrange(0,tot))
+	index = rv.choice(xrange(0,tot))
 	for key in dict.keys(): 
 		if index >= len(dict[key]):
 			index = index - len(dict[key])
@@ -318,7 +318,7 @@ class tree_crossover:
 				msg = "chosen symbol not found in dad (%s tries)" % `tries`
 				raise SymbolError, msg
 			else: tried_sym.append(sym)	
-		node_b = scipy.rv.choice(bro.symbol_table[sym])
+		node_b = rv.choice(bro.symbol_table[sym])
 		idx = 0
 		try:
 			for child in node_a.get_parent().children():

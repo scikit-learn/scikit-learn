@@ -2,7 +2,8 @@
 #based on galib. 
 #exception - these classes only work on the scaled fitness
 from ga_util import *
-import scipy.rv,scipy.stats
+import scipy.stats.rv as rv
+import scipy.stats.stats as stats
 import pdb
 from Numeric import *
 
@@ -12,9 +13,9 @@ class selector:
 	def clear(self): pass
 class uniform_selector(selector):
 	def select(self,pop,cnt = 1):
-		if cnt == 1: return scipy.rv.choice(pop)
+		if cnt == 1: return rv.choice(pop)
 		res = []
-		for i in range(cnt): res.append(scipy.rv.choice(pop))
+		for i in range(cnt): res.append(rv.choice(pop))
 		return res
 
 class rank_selector(selector):
@@ -22,9 +23,9 @@ class rank_selector(selector):
 		pop.sort()
 		studliest = pop[0].fitness()
 		tied_for_first = filter(lambda x,y=studliest: x.fitness()==y,pop)
-		if cnt == 1: return scipy.rv.choice(tied_for_first)
+		if cnt == 1: return rv.choice(tied_for_first)
 		res = []
-		for i in range(cnt): res.append(scipy.rv.choice(tied_for_first))
+		for i in range(cnt): res.append(rv.choice(tied_for_first))
 		return res
 
 #scores must all be positive		
@@ -43,7 +44,7 @@ class roulette_selector(selector):
 	def select(self,pop,cnt = 1):
 		returns = []
 		for i in range(cnt):
-			dart = scipy.rv.random()
+			dart = rv.random()
 			idx = 0
 			#binary search would be faster
 			while dart > self.dart_board[idx]: idx = idx + 1
@@ -76,14 +77,14 @@ class srs_selector(selector):
 		#now deal with the remainder
 		dart_board = add.accumulate(chance / sum(chance))
 		for i in range(len(choices),sz):
-			 dart = scipy.rv.random()
+			 dart = rv.random()
 			 idx = 0
 			 while dart > dart_board[idx]: idx = idx + 1
 			 choices.append(pop[idx])
 		self.choices = choices			 
 	def select(self,pop,cnt = 1): #ignore the past in pop
 		res = []
-		for i in range(cnt): res.append(scipy.rv.choice(self.choices))
+		for i in range(cnt): res.append(rv.choice(self.choices))
 #		for chosen in res: self.choices.remove(chosen)
 		if cnt == 1: return res[0]
 		return res	

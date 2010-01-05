@@ -1,5 +1,7 @@
 from ga_util import *
-import scipy.stats, scipy.rv,scipy.dumb_shelve
+import scipy.stats.stats as stats
+import scipy.stats.rv as rv
+import scipy.dumb_shelve
 import string, pdb
 import os, sys, string
 import time, pprint, types,copy
@@ -53,8 +55,8 @@ class galg:
 		self.test_settings(self.settings)
 		self.gen = 0
 		sd = self.settings['rand_seed']; alg = self.settings['rand_alg']
-		if reseed: scipy.rv.initialize(seed = sd, algorithm = alg)
-		self.settings['seed_used'] = scipy.rv.initial_seed()
+		if reseed: rv.initialize(seed = sd, algorithm = alg)
+		self.settings['seed_used'] = rv.initial_seed()
 		self._print('initializing... seed = %d' % self.settings['seed_used'])
 		self.crossover = self.pop.model_genome.crossover # get the crossover op from the first genome
 		self.pop.settings = self.settings #should these be shared?
@@ -236,8 +238,8 @@ class m_galg(galg):
 		self.test_settings(self.settings)
 		self.gen = 0
 		sd = self.settings['rand_seed']; alg = self.settings['rand_alg']
-		scipy.rv.initialize(seed = sd, algorithm = alg)
-		self.settings['seed_used'] = scipy.rv.initial_seed()
+		rv.initialize(seed = sd, algorithm = alg)
+		self.settings['seed_used'] = rv.initial_seed()
 		self._print('initializing... seed = %d' % self.settings['seed_used'])
 		self.crossover = self.pop[0].crossover # get the crossover op from the first genome
 		self.pop.settings = self.settings

@@ -1,11 +1,11 @@
 #base definitions for genetic algorithms
-import scipy.rv
-import scipy.stats
+import scipy.stats.rv as rv
+import scipy.stats.stats as stats
 
 GAError = 'GA Error'
 
 def nop(x): return x
-def flip_coin(p): return (scipy.rv.random() < p)
+def flip_coin(p): return (rv.random() < p)
 
 import whrandom
 
@@ -21,14 +21,14 @@ def shallow_clone(item):
 def my_std(s):
 #	try:
 		a = remove_NaN(s)
-		if len(a) > 1: return scipy.stats.stdev(a)
+		if len(a) > 1: return stats.stdev(a)
 		else: return 0.
 #	except: 
 #		import pdb
 #		pdb.set_trace()
 def my_mean(s):
 	a = remove_NaN(s)
-	if len(a) > 1: return scipy.stats.mean(a)
+	if len(a) > 1: return stats.mean(a)
 	else: return 0.
 	
 def testflip():

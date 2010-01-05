@@ -6,7 +6,7 @@ import re, copy
 import scaling
 import selection
 import Numeric
-import scipy.stats
+import scipy.stats.stats as stats
 from ga_util import *
 import pdb
 

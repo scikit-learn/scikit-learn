@@ -13,7 +13,7 @@ history:
 """
 
 from ga_util import *
-import scipy.rv
+import scipy.stats.rv as rv
 from whrandom import random
 import copy
 
@@ -88,7 +88,7 @@ class gene:
 			try: del self.mutation_rate #remove local mrates and use gene classes mrate
 			except AttributeError: pass
 		elif(mrate=='adapt'): 
-			self.mutation_rate = scipy.rv.uniform(self.mr_bounds[0],self.mr_bounds[1])
+			self.mutation_rate = rv.uniform(self.mr_bounds[0],self.mr_bounds[1])
 		else: 
 			self.__class__.mutation_rate = mrate
 
@@ -155,7 +155,7 @@ class list_gene_uniform_mutator:
 	"""
 	def evaluate(self,gene): 
 		""" return a randomly chosen value from the genes allele set """
-		return scipy.rv.choice(gene.allele_set)
+		return rv.choice(gene.allele_set)
 class list_gene_gaussian_mutator:
 	""" 
 	This class chooses a new gene value from the allele set
@@ -191,7 +191,7 @@ class list_gene_gaussian_mutator:
 		old = gene.index()
 		new = -1; f = -1
 		while not (0 <= new < size):
-			f = scipy.rv.normal(old,w) 
+			f = rv.normal(old,w) 
 			new = round(f)
 			if(old == new and f > new): new = new + 1
 			if(old == new and f < new): new = new - 1
@@ -205,7 +205,7 @@ class list_gene_walk_mutator:
 	"""
 	def evaluate(self,gene):
 		old = gene.index()
-		move = scipy.rv.choice((-1,1))
+		move = rv.choice((-1,1))
 		return gene.allele_set[old + move]
 	
 class list_gene(gene):
@@ -245,7 +245,7 @@ class list2_gene(list_gene):
 class float_gene_uniform_mutator:
 	""" randomly choose a value within the float_gene's bounds"""
 	def evaluate(self,gene):
-		return scipy.rv.uniform(gene.bounds[0],gene.bounds[1])
+		return rv.uniform(gene.bounds[0],gene.bounds[1])
 
 class float_gene_gaussian_mutator:
 	""" 
@@ -265,10 +265,10 @@ class float_gene_gaussian_mutator:
 		dev = (gene.bounds[1]-gene.bounds[0]) * self.dev_width
 		new = gene.bounds[1]
 #		while not (gene.bounds[0] <= new < gene.bounds[1]):
-#			new = scipy.rv.normal(gene.value(),dev)
-#		new = scipy.rv.normal(gene.value(),dev)
+#			new = rv.normal(gene.value(),dev)
+#		new = rv.normal(gene.value(),dev)
 		#get the _value explicitly so mutator will work for log_float also
-		new = scipy.rv.normal(gene._value,dev)
+		new = rv.normal(gene._value,dev)
 		if new > gene.bounds[1]: new = gene.bounds[1]
 		if new < gene.bounds[0]: new = gene.bounds[0]
 		return new
@@ -367,7 +367,7 @@ class tree_gene(tree_node):
 			try: del self.mutation_rate #remove local mrates and use gene classes mrate
 			except AttributeError: pass
 		elif(mrate=='adapt'): 
-			self.mutation_rate = scipy.rv.uniform(self.mr_bounds[0],self.mr_bounds[1])
+			self.mutation_rate = rv.uniform(self.mr_bounds[0],self.mr_bounds[1])
 		else: 
 			self.__class__.mutation_rate = mrate
 		for child in self._children: child.set_mutation(mrate)
