@@ -27,7 +27,20 @@ cd libsvm-2.82
 scons
 cp libsvm_.so ..
 
-2. Run the tests in the tests directory.
+2. Install NumPy SVN r2780 or later.
+
+3. Install ctypes 0.9.9.6 or later.
+
+On Windows:
+
+http://sourceforge.net/project/showfiles.php?group_id=71702
+
+On Linux, one of:
+
+yum install python-ctypes
+apt-get install python-ctypes
+
+4. Run the tests in the tests directory.
 
 On Windows:
 
