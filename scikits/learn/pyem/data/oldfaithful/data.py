@@ -1,8 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007 David Cournapeau <cournape@gmail.com>
-
 # The code and descriptive text is copyrighted and offered under the terms of
 # the BSD License from the authors; see below. However, the actual dataset may
 # have a different origin and intellectual property status. See the SOURCE and
