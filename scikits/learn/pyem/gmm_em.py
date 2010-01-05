@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Jun 21 03:00 PM 2007 J
+# Last Change: Fri Jun 22 05:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
