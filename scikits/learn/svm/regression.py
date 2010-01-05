@@ -42,8 +42,6 @@ class LibSvmRegressionResults:
         return self.sigma
 
 class LibSvmRegressionModel(LibSvmModel):
-    Results = LibSvmRegressionResults
-
     def __init__(self, kernel, **kwargs):
         LibSvmModel.__init__(self, kernel, **kwargs)
 
