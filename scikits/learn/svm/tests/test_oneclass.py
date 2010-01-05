@@ -18,7 +18,7 @@ class test_oneclass(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        triandata = LibSvmOneClassDataSet(x)
+        traindata = LibSvmOneClassDataSet(x)
         
         Model = LibSvmOneClassModel
         model = Model(LinearKernel())

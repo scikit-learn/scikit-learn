@@ -3,8 +3,8 @@ __all__ = [
     ]
 
 from ctypes import *
-c_double_null_ptr = cast(0, POINTER(c_double))
-c_int_null_ptr = cast(0, POINTER(c_int))
+c_double_null_ptr = POINTER(c_double)()
+c_int_null_ptr = POINTER(c_int)()
 
 from kernel import *
 import libsvm
@@ -48,8 +48,11 @@ class LibSvmModel:
         param.cache_size = cache_size
         # set defaults for optional parameters
         param.nr_weight = 0
-        param.weight = None
-        param.weight_label = None
+        #param.weight = None
+        #param.weight_label = None
+        # XXX workaround for bug in ctypes 0.9.9.6
+        param.weight = c_double_null_ptr
+        param.weight_label = c_int_null_ptr
         param.probability = False
 
         self.param = param
@@ -73,9 +76,7 @@ class LibSvmModel:
         # as the data they point to might disappear when this object
         # is deallocated
         model.contents.param.nr_weight = 0
-        # XXX possible ctypes bug: setting these to None instead of
-        # the null pointers corrupts other parts of the svm_parameter
-        # struct contents
+        # XXX workaround for bug in ctypes 0.9.9.6
         #model.contents.param.weight = None
         #model.contents.param.weight_label = None
         model.contents.param.weight = c_double_null_ptr

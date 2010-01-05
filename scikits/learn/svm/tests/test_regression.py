@@ -58,7 +58,7 @@ class test_regression(NumpyTestCase):
             N.array([0.24611273, 0.899866638, 0.90006681, 1.90006681]),
             N.array([0.1, 1.0, 1.0, 1.9])
             ]
-        
+
         for kernel, expected_y in zip(kernels, expected_ys):
             model = LibSvmEpsilonRegressionModel(kernel, epsilon, cost)
             results = model.fit(traindata)
