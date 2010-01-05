@@ -4,6 +4,7 @@ from numpy.testing import *
 set_local_path('../..')
 
 from svm.dataset import *
+from svm.kernel import *
 from svm.dataset import convert_to_svm_node, svm_node_dot
 from svm.libsvm import svm_node_dtype
 
@@ -73,15 +74,28 @@ class test_svm_node_dot(NumpyTestCase):
         self.assertAlmostEqual(svm_node_dot(x, y), 4.)
 
 class test_precomputed_dataset(NumpyTestCase):
-    def check_foo(self):
-        y = N.random.randn(50)
-        x = N.random.randn(len(y), 1)
-        expected_dotprods = N.dot(x, N.transpose(x))
+    def check_precompute(self):
+        degree, gamma, coef0 = 4, 3.0, 2.0
+        kernels = [
+            LinearKernel(),
+            PolynomialKernel(degree, gamma, coef0),
+            RBFKernel(gamma),
+            SigmoidKernel(gamma, coef0)
+            ]
+        y = N.random.randn(20)
+        x = N.random.randn(len(y), 10)
         origdata = LibSvmRegressionDataSet(zip(y, x))
-        # get a new dataset containing the precomputed data
-        pcdata = origdata.precompute()
-        actual_dotprods = pcdata.grammat[:,1:-1]['value']
-        assert_array_almost_equal(actual_dotprods, expected_dotprods)
+
+        for kernel in kernels:
+            # calculate expected Gram matrix
+            expt_grammat = N.empty((len(y),)*2)
+            for i, xi in enumerate(x):
+                for j, xj in enumerate(x):
+                    expt_grammat[i, j] = kernel(xi, xj, N.dot)
+            # get a new dataset containing the precomputed data
+            pcdata = origdata.precompute(kernel)
+            actual_grammat = pcdata.grammat[:,1:-1]['value']
+            assert_array_almost_equal(actual_grammat, expt_grammat)
 
 if __name__ == '__main__':
     NumpyTest().run()

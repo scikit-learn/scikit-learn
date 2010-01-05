@@ -20,11 +20,13 @@ class LibSvmDataSet:
         return 1.0 / maxlen
     gamma = property(getgamma, 'Gamma parameter for RBF kernel')
 
-    def precompute(self):
-        return LibSvmPrecomputedDataSet(self.data)
+    def precompute(self, kernel):
+        return LibSvmPrecomputedDataSet(kernel, self.data)
 
 class LibSvmPrecomputedDataSet:
-    def __init__(self, origdata):
+    def __init__(self, kernel, origdata):
+        self.kernel = kernel
+
         # XXX look at using a list of vectors instead of a matrix when
         # the size of the precomputed dataset gets huge. This should
         # avoid problems with heap fragmentation, especially on
@@ -40,7 +42,7 @@ class LibSvmPrecomputedDataSet:
             for j, (y2, x2) in enumerate(origdata[i:]):
                 # Gram matrix is symmetric, so calculate dot product
                 # once and store it in both required locations
-                z = svm_node_dot(x1, x2)
+                z = kernel(x1, x2, svm_node_dot)
                 # fix index so we assign to the right place
                 j += i
                 grammat[i, j+1]['value'] = z
