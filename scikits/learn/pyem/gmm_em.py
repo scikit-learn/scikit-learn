@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Oct 23 06:00 PM 2006 J
+# Last Change: Tue Oct 24 06:00 PM 2006 J
 
 # TODO:
 #   - which methods to avoid va shrinking to 0 ? There are several options, 
@@ -318,10 +318,9 @@ def multiple_gauss_den(data, mu, va):
         return y.T
     else:
         for i in range(K):
-            y[:, i] = densities.gauss_den(data, mu[i, :], 
+            y[i] = densities.gauss_den(data, mu[i, :], 
                         va[d*i:d*i+d, :])
-
-    return y
+        return y.T
 
 if __name__ == "__main__":
     import copy

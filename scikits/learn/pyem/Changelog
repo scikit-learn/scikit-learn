@@ -1,3 +1,10 @@
+pyem (0.5.5) Tue, 24 Oct 2006 18:30:54 +0900
+
+	* Fix a bug inmultiple_gaussian_den which prevents 
+	full covariance mode to work in GMM.
+	* Add consistency tests in tests/test_gmm_em.py to avoid the 
+	above bug from being detected from now on.
+
 pyem (0.5.5) Mon, 23 Oct 2006 18:48:15 +0900
 
 	* Bump to 0.5.5
