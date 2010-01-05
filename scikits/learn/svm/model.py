@@ -3,6 +3,8 @@ __all__ = [
     ]
 
 from ctypes import *
+c_double_null_ptr = cast(0, POINTER(c_double))
+c_int_null_ptr = cast(0, POINTER(c_int))
 
 from kernel import *
 import libsvm
@@ -71,8 +73,13 @@ class LibSvmModel:
         # as the data they point to might disappear when this object
         # is deallocated
         model.contents.param.nr_weight = 0
-        model.contents.param.weight = None
-        model.contents.param.weight_label = None
+        # XXX possible ctypes bug: setting these to None instead of
+        # the null pointers corrupts other parts of the svm_parameter
+        # struct contents
+        #model.contents.param.weight = None
+        #model.contents.param.weight_label = None
+        model.contents.param.weight = c_double_null_ptr
+        model.contents.param.weight_label = c_int_null_ptr
 
         # results keep a refence to the dataset because the svm_model
         # refers to some of its vectors as the support vectors

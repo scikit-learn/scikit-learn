@@ -68,16 +68,22 @@ class LibSvmClassificationResults:
             return d
         return map(p, dataset.data)
 
-    def predict_probability(self, x):
+    def predict_probability(self, dataset):
         """
         This function does classification on a test vector x for a
         model with probability information.
 
         This function returns a 2-tuple. The first item is the label
         of the class with the highest probability. The second item is
-        a list of all the class probabilities.
+        a dictionary that associated labels with class probabilities.
         """
-        raise NotImplementedError
+        def p(x):
+            xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
+            prob_estimates = N.empty((self.nr_class,), dtype=N.float64)
+            peptr = cast(prob_estimates.ctypes.data, POINTER(c_double))
+            label = libsvm.svm_predict_probability(self.model, xptr, peptr)
+            return int(label), dict(zip(self.labels, prob_estimates))
+        return map(p, dataset.data)
 
 class LibSvmClassificationModel(LibSvmModel):
     """

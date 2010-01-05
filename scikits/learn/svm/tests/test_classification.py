@@ -64,13 +64,35 @@ class test_classification(NumpyTestCase):
             self.assertEqual(results.labels, [0, 1, 2])
             #self.assertEqual(model.nSV, [1, 2, 1])
 
-            # XXX decimal=4 to suppress slight differences in values
+            # use decimal=4 to suppress slight differences in values
             # calculated for rho on Windows with MSVC 7.1 and on
             # Fedora Core 4 with GCC 4.0.0.
             assert_array_almost_equal(results.rho, expected_rho, decimal=4)
 
             predictions = N.array(results.predict(testdata))
             self.assertEqual(N.sum(predictions != labels), expected_error)
+
+    def check_c_probability(self):
+        labels = [0, 1, 1, 2]
+        x = [N.array([0, 0]),
+             N.array([0, 1]),
+             N.array([1, 0]),
+             N.array([1, 1])]
+        traindata = LibSvmClassificationDataSet(zip(labels, x))
+        cost = 10.0
+        weights = [(1, 10.0)]
+        testdata = LibSvmTestDataSet(x)
+
+        kernels = [
+            LinearKernel(),
+            PolynomialKernel(3, traindata.gamma, 0.0),
+            RBFKernel(traindata.gamma)
+            ]
+
+        for kernel in kernels:
+            model = LibSvmCClassificationModel(kernel, cost, weights)
+            results = model.fit(traindata)
+            results.predict_probability(testdata)
 
     def check_nu_train(self):
         pass

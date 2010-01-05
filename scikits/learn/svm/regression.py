@@ -17,7 +17,8 @@ class LibSvmRegressionResults:
         model = model.contents
         self.rho = model.rho[0]
         self.sv_coef = model.sv_coef[0][:model.l]
-        self.sigma = model.probA[0]
+        if model.probA:
+            self.sigma = model.probA[0]
 
     def __del__(self):
         libsvm.svm_destroy_model(self.model)
