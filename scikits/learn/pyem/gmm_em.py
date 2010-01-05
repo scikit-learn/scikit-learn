@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Sun Jul 01 05:00 PM 2007 J
+# Last Change: Sun Jul 01 06:00 PM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -331,7 +331,7 @@ class EM:
     def __init__(self):
         pass
     
-    def train(self, data, model, maxiter = 10, thresh = 1e-5):
+    def train(self, data, model, maxiter = 10, thresh = 1e-5, log = False):
         """Train a model using EM.
 
         Train a model using data, and stops when the likelihood increase
@@ -366,7 +366,10 @@ class EM:
         model.init(data)
 
         # Actual training
-        like = self._train_simple_em(data, model, maxiter, thresh)
+        if log:
+            like = self._train_simple_em_log(data, model, maxiter, thresh)
+        else:
+            like = self._train_simple_em(data, model, maxiter, thresh)
         return like
     
     def _train_simple_em(self, data, model, maxiter, thresh):
@@ -382,6 +385,21 @@ class EM:
             g, tgd  = model.compute_responsabilities(data)
             like[i] = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
             model.update_em(data, g)
+            if has_em_converged(like[i], like[i-1], thresh):
+                return like[0:i]
+
+    def _train_simple_em_log(self, data, model, maxiter, thresh):
+        # Likelihood is kept
+        like    = N.zeros(maxiter)
+
+        # Em computation, with computation of the likelihood
+        g, tgd  = model.compute_log_responsabilities(data)
+        like[0] = N.sum(densities.logsumexp(tgd), axis = 0)
+        model.update_em(data, N.exp(g))
+        for i in range(1, maxiter):
+            g, tgd  = model.compute_log_responsabilities(data)
+            like[i] = N.sum(densities.logsumexp(tgd), axis = 0)
+            model.update_em(data, N.exp(g))
             if has_em_converged(like[i], like[i-1], thresh):
                 return like[0:i]
 

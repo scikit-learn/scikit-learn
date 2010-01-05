@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Wed Jun 13 07:00 PM 2007 J
+# Last Change: Sun Jul 01 06:00 PM 2007 J
 
 # For now, just test that all mode/dim execute correctly
 
@@ -110,6 +110,17 @@ class test_diag_run(EmTest):
 class test_datasets(EmTest):
     """This class tests whether the EM algorithms works using pre-computed
     datasets."""
+    def _test(self, dataset, log):
+        dic = load_dataset(dataset)
+
+        gm = GM.fromvalues(dic['w0'], dic['mu0'], dic['va0'])
+        gmm = GMM(gm, 'test')
+        EM().train(dic['data'], gmm, log = log)
+
+        assert_array_almost_equal(gmm.gm.w, dic['w'], DEF_DEC)
+        assert_array_almost_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
+        assert_array_almost_equal(gmm.gm.va, dic['va'], DEF_DEC)
+
     def test_1d_full(self, level = 1):
         d = 1
         k = 4
@@ -117,57 +128,36 @@ class test_datasets(EmTest):
         # Data are exactly the same than in diagonal mode, just test that
         # calling full mode works even in 1d, even if it is kind of stupid to
         # do so
-        dic = load_dataset('diag_1d_4k.mat')
-
-        gm = GM.fromvalues(dic['w0'], dic['mu0'], dic['va0'])
-        gmm = GMM(gm, 'test')
-        EM().train(dic['data'], gmm)
-
-        assert_array_almost_equal(gmm.gm.w, dic['w'], DEF_DEC)
-        assert_array_almost_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
-        assert_array_almost_equal(gmm.gm.va, dic['va'], DEF_DEC)
-
-    def test_1d_diag(self, level = 1):
-        d = 1
-        k = 4
-        mode = 'diag'
-        dic = load_dataset('diag_1d_4k.mat')
-
-        gm = GM.fromvalues(dic['w0'], dic['mu0'], dic['va0'])
-        gmm = GMM(gm, 'test')
-        EM().train(dic['data'], gmm)
-
-        assert_array_almost_equal(gmm.gm.w, dic['w'], DEF_DEC)
-        assert_array_almost_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
-        assert_array_almost_equal(gmm.gm.va, dic['va'], DEF_DEC)
+        filename = 'diag_1d_4k.mat'
+        self._test(filename, log = False)
 
     def test_2d_full(self, level = 1):
         d = 2
         k = 3
         mode = 'full'
-        dic = load_dataset('full_2d_3k.mat')
+        filename = 'full_2d_3k.mat'
+        self._test(filename, log = False)
 
-        gm = GM.fromvalues(dic['w0'], dic['mu0'], dic['va0'])
-        gmm = GMM(gm, 'test')
-        EM().train(dic['data'], gmm)
-
-        assert_array_almost_equal(gmm.gm.w, dic['w'], DEF_DEC)
-        assert_array_almost_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
-        assert_array_almost_equal(gmm.gm.va, dic['va'], DEF_DEC)
+    def test_2d_full_log(self, level = 1):
+        d = 2
+        k = 3
+        mode = 'full'
+        filename = 'full_2d_3k.mat'
+        self._test(filename, log = True)
 
     def test_2d_diag(self, level = 1):
         d = 2
         k = 3
         mode = 'diag'
-        dic = load_dataset('diag_2d_3k.mat')
+        filename = 'diag_2d_3k.mat'
+        self._test(filename, log = False)
 
-        gm = GM.fromvalues(dic['w0'], dic['mu0'], dic['va0'])
-        gmm = GMM(gm, 'test')
-        EM().train(dic['data'], gmm)
-
-        assert_array_almost_equal(gmm.gm.w, dic['w'], DEF_DEC)
-        assert_array_almost_equal(gmm.gm.mu, dic['mu'], DEF_DEC)
-        assert_array_almost_equal(gmm.gm.va, dic['va'], DEF_DEC)
+    def test_2d_diag_log(self, level = 1):
+        d = 2
+        k = 3
+        mode = 'diag'
+        filename = 'diag_2d_3k.mat'
+        self._test(filename, log = True)
 
 class test_log_domain(EmTest):
     """This class tests whether the GMM works in log domain."""
