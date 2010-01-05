@@ -27,16 +27,14 @@ __all__ = [
     ]
 
 import numpy as N
+from ctypes import c_int, c_double, POINTER, Structure, c_char_p
+
+_libsvm = N.ctypes_load_library('libsvm_', __file__)
 
 svm_node_dtype = \
     N.dtype({'names' : ['index', 'value'],
              'formats' : [N.intc, N.float64]},
             align=1)
-
-import utils
-_libsvm = utils.load_ctypes_library('libsvm_', __file__)
-
-from ctypes import c_int, c_double, POINTER, Structure, c_char_p
 
 # svm types
 C_SVC = 0
@@ -76,7 +74,8 @@ class svm_parameter(Structure):
         ('C', c_double),
         ('nr_weight', c_int),
         ('weight_label', POINTER(c_int)),
-        # parameter weight is weight*C, of C-SVC and nu-SVC
+        # parameter weight of C-SVC and nu-SVC
+        # actual weight of class is this weight * C
         ('weight', POINTER(c_double)),
         # parameter nu of nu-SVC, one-class SVM and nu-SVR
         ('nu', c_double),
@@ -99,8 +98,10 @@ class svm_problem(Structure):
 
 class svm_model(Structure):
     _fields_ = [
+        # parameters used to train the model
         ('param', svm_parameter),
         ('nr_class', c_int),
+        # el
         ('l', c_int),
         # support vectors (length el)
         ('SV', POINTER(POINTER(svm_node))),
@@ -110,9 +111,8 @@ class svm_model(Structure):
         ('rho', POINTER(c_double)),
         # length nr_class*(nr_class-1)/2 for classification
         # length 1 for regression
-        # length 0 for one-class
         ('probA', POINTER(c_double)),
-        # ??? for classification (length nr_class*(nr_class-1)/2)
+        # length nr_class*(nr_class-1)/2 for classification
         ('probB', POINTER(c_double)),
         # support vectors labels for classifcation (length nr_class)
         ('labels', POINTER(c_int)),
