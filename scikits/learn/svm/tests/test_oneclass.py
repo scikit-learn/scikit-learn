@@ -14,30 +14,29 @@ class test_oneclass(NumpyTestCase):
         ModelType(kernel)
         ModelType(kernel, nu=1.0)
 
+    def _make_basic_datasets(self):
+        x = [N.array([0, 0]),
+             N.array([0, 1]),
+             N.array([1, 0]),
+             N.array([1, 1])]
+        traindata = LibSvmOneClassDataSet(x)
+        testdata = LibSvmTestDataSet(x)
+        return traindata, testdata
+
     def check_train(self):
         ModelType = LibSvmOneClassModel
-        x = [N.array([0, 0]),
-             N.array([0, 1]),
-             N.array([1, 0]),
-             N.array([1, 1])]
-        traindata = LibSvmOneClassDataSet(x)
+        traindata, testdata = self._make_basic_datasets()
         model = ModelType(LinearKernel())
         results = model.fit(traindata)
-        testdata = LibSvmTestDataSet(x)
-        results.predict(testdata)
-        results.predict_values(testdata)
+        p = results.predict(testdata)
+        assert_array_equal(p, [False, False, False, True])
+        v = results.predict_values(testdata)
+        assert_array_equal(v, [-0.5, 0.0, 0.0, 0.5])
 
     def check_more(self):
+        traindata, testdata = self._make_basic_datasets()
         ModelType = LibSvmOneClassModel
-
-        x = [N.array([0, 0]),
-             N.array([0, 1]),
-             N.array([1, 0]),
-             N.array([1, 1])]
-        traindata = LibSvmOneClassDataSet(x)
         nu = 0.5
-        testdata = LibSvmTestDataSet(x)
-
         kernels = [
             LinearKernel(),
             PolynomialKernel(3, traindata.gamma, 0.0),
@@ -48,7 +47,6 @@ class test_oneclass(NumpyTestCase):
             [False, False, False, True],
             [True, False, False, False]
             ]
-
         for kernel, expected_pred in zip(kernels, expected_preds):
             model = ModelType(kernel, nu)
             results = model.fit(traindata)
