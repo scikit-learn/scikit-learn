@@ -129,7 +129,7 @@ class test_regression(NumpyTestCase):
             fitargs = [
                 (trndata, LibSvmPredictor),
                 (trndata, LibSvmPythonPredictor),
-                #(pctrndata, LibSvmPredictor),
+                (pctrndata, LibSvmPredictor),
                 (pctrndata, LibSvmPythonPredictor)
                 ]
             for model in models:

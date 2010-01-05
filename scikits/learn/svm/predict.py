@@ -15,12 +15,9 @@ class LibSvmPredictor:
         self.kernel = kernel
         modelc = model.contents
         if modelc.param.kernel_type == libsvm.PRECOMPUTED:
-            ids = [int(modelc.SV[i][0].value) for i in range(modelc.l)]
-            support_vectors = [dataset[id] for id in ids]
-            self.support_vectors = support_vectors
-            # fix support vector ids in precomputed data
-            for i in range(modelc.l):
-                modelc.SV[i][0].value = i
+            self.dataset = dataset
+            self.sv_ids = [int(modelc.SV[i][0].value)
+                           for i in range(modelc.l)]
             self._transform_input = self._create_gramvec
         else:
             self._transform_input = lambda x: x
@@ -29,10 +26,11 @@ class LibSvmPredictor:
         libsvm.svm_destroy_model(self.model)
 
     def _create_gramvec(self, x):
-        gramvec = N.zeros((self.model.contents.l,),
+        gramvec = N.zeros((len(self.dataset)+1,),
                           dtype=libsvm.svm_node_dtype)
-        for i, sv in enumerate(self.support_vectors):
-            gramvec[i]['value'] = self.kernel(x, sv, svm_node_dot)
+        for sv_id in self.sv_ids:
+            sv = self.dataset[sv_id]
+            gramvec[sv_id]['value'] = self.kernel(x, sv, svm_node_dot)
         return gramvec
 
     def predict(self, x):
