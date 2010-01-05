@@ -1,6 +1,7 @@
-pyem (0.5.2) Tue, 03 Oct 2006 18:28:13 +0900
+pyem (0.5.3) Tue, 03 Oct 2006 18:28:13 +0900
 
 	* Update tests so that they work within the numpy test framework
+	* Update version to 0.5.3
 
 -- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
 
