@@ -163,8 +163,9 @@ def _full_gauss_den(x, mu, va, log):
 
     # we are using a trick with sum to "emulate" 
     # the matrix multiplication inva * x without any explicit loop
-    y   = N.dot((x-mu), inva)
-    y   = -0.5 * N.sum(y * (x-mu), 1)
+    #y   = -0.5 * N.sum(N.dot((x-mu), inva) * (x-mu), 1)
+    y   = -0.5 * N.dot(N.dot((x-mu), inva) * (x-mu), 
+                       N.ones((mu.size, 1), x.dtype))[:, 0]
 
     if not log:
         y   = fac * N.exp(y)

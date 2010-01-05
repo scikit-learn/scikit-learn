@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Jul 12 04:00 PM 2007 J
+# Last Change: Thu Jul 12 05:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
@@ -28,10 +28,10 @@ class TestDensities(NumpyTestCase):
         self.mu     = 1.0
         self.X      = N.linspace(-2, 2, 10)[:, N.newaxis]
 
-        self.Yt     = N.array([0.02973257230591, 0.05512079811082, 0.09257745306945, 
-                0.14086453882683,
-                0.19418015562214, 0.24250166773127, 0.27436665745048, 0.28122547107069,
-                0.26114678964743, 0.21969564473386])
+        self.Yt     = N.array([0.02973257230591, 0.05512079811082,
+            0.09257745306945, 0.14086453882683, 0.19418015562214,
+            0.24250166773127, 0.27436665745048, 0.28122547107069,
+            0.26114678964743, 0.21969564473386])
 
     def _generate_test_data_2d_diag(self):
         #============================
@@ -44,10 +44,10 @@ class TestDensities(NumpyTestCase):
         self.X[:,0] = N.linspace(-2, 2, 10)
         self.X[:,1] = N.linspace(-1, 3, 10)
 
-        self.Yt  = N.array([0.01129091565384, 0.02025416837152, 0.03081845516786, 
-                0.03977576221540, 0.04354490552910, 0.04043592581117, 
-                0.03184994053539, 0.02127948225225, 0.01205937178755, 
-                0.00579694938623 ])
+        self.Yt  = N.array([0.01129091565384, 0.02025416837152,
+            0.03081845516786, 0.03977576221540, 0.04354490552910,
+            0.04043592581117, 0.03184994053539, 0.02127948225225,
+            0.01205937178755, 0.00579694938623 ])
 
 
     def _generate_test_data_2d_full(self):
@@ -106,11 +106,24 @@ class test_py_implementation(TestDensities):
 # Basic speed tests
 #=====================
 class test_speed(NumpyTestCase):
-    n = 1e5
-    niter = 10
-    cpud = 3.2e9
+    def __init__(self, *args, **kw):
+        NumpyTestCase.__init__(self, *args, **kw)
+        import sys
+        import re
+        try:
+            a = open('/proc/cpuinfo').readlines()
+            b = re.compile('cpu MHz')
+            c = [i for i in a if b.match(i)]
+            fcpu = float(c[0].split(':')[1])
+            self.fcpu = fcpu * 1e6
+            self.hascpu = True
+        except:
+            print "Could not read cpu frequency"
+            self.hascpu = False
+            self.fcpu = 0.
+
     def _prepare(self, n, d, mode):
-        cls = self.__class__
+        niter = 10
         x = 0.1 * N.random.randn(n, d)
         mu = 0.1 * N.random.randn(d)
         if mode == 'diag':
@@ -118,17 +131,22 @@ class test_speed(NumpyTestCase):
         elif mode == 'full':
             a = N.random.randn(d, d)
             va = 0.1 * N.dot(a.T, a)
-        st = self.measure("gauss_den(x, mu, va)", cls.niter)
-        return st / cls.niter #* cls.cpud / n / d
+        st = self.measure("gauss_den(x, mu, va)", niter)
+        return st / niter
 
     def _bench(self, n, d, mode):
         st = self._prepare(n, d, mode)
         print "%d dimension, %d samples, %s mode: %8.2f " % (d, n, mode, st)
-
+        if self.hascpu:
+            print "Cost per frame is %f; cost per sample is %f" % \
+                    (st * self.fcpu / n, st * self.fcpu / n / d)
+    
     def test1(self, level = 5):
         cls = self.__class__
-        for i in [1, 5, 10, 30]:
-            self._bench(cls.n, i, 'diag')
+        for n, d in [(1e5, 1), (1e5, 5), (1e5, 10), (1e5, 30), (1e4, 100)]:
+            self._bench(n, d, 'diag')
+        for n, d in [(1e4, 2), (1e4, 5), (1e4, 10), (5000, 40)]:
+            self._bench(n, d, 'full')
 
 #================
 # Logsumexp tests
