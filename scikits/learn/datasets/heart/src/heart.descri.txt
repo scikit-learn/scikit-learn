@@ -1,0 +1,37 @@
+.. vim:syntax=rest
+
+===================
+Dataset description
+===================
+
+    * number of examples : 270
+    * number of classes : 2. Absence (1) or presence (2) of heart disease:
+        ======= =============
+        Class	Nr.Examples
+        ======= =============
+        1	    150 ( 55.56%)
+        2	    120 ( 44.44%)
+        ======= =============
+    * number of attributes: This database contains 13 attributes (which have
+      been extracted from a larger set of 75). Attribute Information:
+
+      * age       
+      * sex       
+      * chest pain type  (4 values)       
+      * resting blood pressure  
+      * serum cholestoral in mg/dl      
+      * fasting blood sugar > 120 mg/dl       
+      * resting electrocardiographic results  (values 0,1,2) 
+      * maximum heart rate achieved  
+      * exercise induced angina    
+      * oldpeak = ST depression induced by exercise relative to rest   
+      * the slope of the peak exercise ST segment     
+      * number of major vessels (0-3) colored by flourosopy        
+      * thal: 3 = normal; 6 = fixed defect; 7 = reversable defect     
+    * Attributes types:
+
+      * Real: 	1,4,5,8,10,12
+      * Ordered:11,
+      * Binary: 2,6,9
+      * Nominal:7,3,13
+    * Missing values: none
