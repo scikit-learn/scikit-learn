@@ -1,9 +1,9 @@
 # /usr/bin/python
-# Last Change: Tue Aug 29 03:00 PM 2006 J
+# Last Change: Mon Sep 11 05:00 PM 2006 J
 
 # TODO:
-#   - which methods to avoid va shrinking to 0 ? There are several options, not sure which
-#   ones are appropriates
+#   - which methods to avoid va shrinking to 0 ? There are several options, 
+#   not sure which ones are appropriates
 #   - improve EM trainer
 #   - online EM
 
@@ -82,9 +82,10 @@ class GMM(ExpMixtureModel):
         else:
             raise GmmParamError("mode " + str(mode) + " not recognized")
 
-        self.gm.w   = w
-        self.gm.mu  = mu
-        self.gm.va  = va
+        self.gm.set_param(w, mu, va)
+        #self.gm.w   = w
+        #self.gm.mu  = mu
+        #self.gm.va  = va
 
     def init_random(self, data):
         """ Init the model at random."""
@@ -98,9 +99,7 @@ class GMM(ExpMixtureModel):
             raise GmmParamError("""init_random not implemented for
                     mode %s yet""", mode)
 
-        self.gm.w   = w
-        self.gm.mu  = mu
-        self.gm.va  = va
+        self.gm.set_param(w, mu, va)
 
     # TODO: 
     #   - format of parameters ? For variances, list of variances matrix,
@@ -265,9 +264,9 @@ if __name__ == "__main__":
     #   - mode: Mode of covariance matrix: full or diag
     #   - nframes: number of frames (frame = one data point = one
     #   row of d elements
-    k       = 3 
-    d       = 2         
-    mode    = 'full'        
+    k       = 2 
+    d       = 1
+    mode    = 'full'
     nframes = 1e3
 
     #+++++++++++++++++++++++++++++++++++++++++++
@@ -316,33 +315,47 @@ if __name__ == "__main__":
     print "drawing..."
     import pylab as P
     P.subplot(2, 1, 1)
-    # Draw what is happening
-    P.plot(data[:, 0], data[:, 1], '.', label = '_nolegend_')
 
-    # Real confidence ellipses
-    Xre, Yre  = gm.conf_ellipses()
-    P.plot(Xre[0], Yre[0], 'g', label = 'true confidence ellipsoides')
-    for i in range(1,k):
-        P.plot(Xre[i], Yre[i], 'g', label = '_nolegend_')
+    if not d == 1:
+        # Draw what is happening
+        P.plot(data[:, 0], data[:, 1], '.', label = '_nolegend_')
 
-    # Initial confidence ellipses as found by kmean
-    X0e, Y0e  = gm0.conf_ellipses()
-    P.plot(X0e[0], Y0e[0], 'k', label = 'initial confidence ellipsoides')
-    for i in range(1,k):
-        P.plot(X0e[i], Y0e[i], 'k', label = '_nolegend_')
+        # Real confidence ellipses
+        Xre, Yre  = gm.conf_ellipses()
+        P.plot(Xre[0], Yre[0], 'g', label = 'true confidence ellipsoides')
+        for i in range(1,k):
+            P.plot(Xre[i], Yre[i], 'g', label = '_nolegend_')
 
-    # Values found by EM
-    Xe, Ye  = lgm.conf_ellipses()
-    P.plot(Xe[0], Ye[0], 'r', label = 'confidence ellipsoides found by EM')
-    for i in range(1,k):
-        P.plot(Xe[i], Ye[i], 'r', label = '_nolegend_')
-    P.legend(loc = 0)
+        # Initial confidence ellipses as found by kmean
+        X0e, Y0e  = gm0.conf_ellipses()
+        P.plot(X0e[0], Y0e[0], 'k', label = 'initial confidence ellipsoides')
+        for i in range(1,k):
+            P.plot(X0e[i], Y0e[i], 'k', label = '_nolegend_')
 
-    #from scipy.cluster.vq import kmeans
-    #code    = kmeans(data, k)[0]
-    #print code
-    #P.plot(code[:,0], code[:, 1], 'oy')
-    #P.plot(gm0.mu[:,0], gm0.mu[:, 1], 'ok')
+        # Values found by EM
+        Xe, Ye  = lgm.conf_ellipses()
+        P.plot(Xe[0], Ye[0], 'r', label = 'confidence ellipsoides found by EM')
+        for i in range(1,k):
+            P.plot(Xe[i], Ye[i], 'r', label = '_nolegend_')
+        P.legend(loc = 0)
+    else:
+        # Real confidence ellipses
+        h   = gm.plot1d()
+        [i.set_color('g') for i in h['pdf']]
+        h['pdf'][0].set_label('true pdf')
+
+        # Initial confidence ellipses as found by kmean
+        h0  = gm0.plot1d()
+        [i.set_color('k') for i in h0['pdf']]
+        h0['pdf'][0].set_label('initial pdf')
+
+        # Values found by EM
+        hl  = lgm.plot1d(fill = 1, level = 0.66)
+        [i.set_color('r') for i in hl['pdf']]
+        hl['pdf'][0].set_label('pdf found by EM')
+
+        P.legend(loc = 0)
+
     P.subplot(2, 1, 2)
     P.plot(like)
     P.title('log likelihood')

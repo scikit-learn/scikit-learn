@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Tue Aug 29 08:00 PM 2006 J
+# Last Change: Mon Sep 11 05:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
@@ -28,6 +28,9 @@ MAX_COND    = 1e10
 #   methods to be used, ie for implementing random index.
 #   - there is no check on internal state of the GM, that is does w, mu and va values
 #   make sense (eg singular values)
+#   - plot1d is still very rhough. There should be a sensible way to 
+#   modify the result plot (maybe returns a dic with global pdf, component pdf and
+#   fill matplotlib handles). Should be coherent with plot
 class GmParamError:
     """Exception raised for errors in gmm params
 
@@ -84,8 +87,8 @@ class GM:
         if not d == self.d:
             raise GmParamError("Dimension of the given model is %d, expected %d" 
                     % (shape(d), shape(self.d)))
-        if not mode == self.mode:
-            raise GmParamError("Given covariance mode is %s, expected %d"
+        if not mode == self.mode and not d == 1:
+            raise GmParamError("Given covariance mode is %s, expected %s"
                     % (mode, self.mode))
         self.w  = weights
         self.mu = mu
@@ -260,8 +263,17 @@ class GM:
         except ImportError:
             raise GmParamError("matplotlib not found, cannot plot...")
 
-    def plot1d(self, level = 0.5):
-        """TODO: this is not documented"""
+    def plot1d(self, level = 0.5, fill = 0, gpdf = 0):
+        """This function plots the pdfs of each component of the model. 
+        If gpdf is 1, also plots the global pdf. If fill is 1, fill confidence
+        areas using level argument as a level value
+        
+        Returns a dictionary h of plot handles so that their properties can
+        be modified (eg color, label, etc...):
+            - h['pdf'] is a list of lines, one line per component pdf
+            - h['gpdf'] is the line for the global pdf
+            - h['conf'] is a list of filling area
+        """
         # This is not optimized at all, may be slow. Should not be
         # difficult to make much faster, but it is late, and I am lazy
         if not self.d == 1:
@@ -271,36 +283,47 @@ class GM:
         pval    = N.sqrt(self.va[:,0]) * nrm.ppf((1+level)/2)
 
         # Compute reasonable min/max for the normal pdf
-        mc  = 4
+        mc  = 3
         std = N.sqrt(self.va[:,0])
-        m   = N.amin(self.mu[:, 0] - 5 * std)
-        M   = N.amax(self.mu[:, 0] + 5 * std)
+        m   = N.amin(self.mu[:, 0] - mc * std)
+        M   = N.amax(self.mu[:, 0] + mc * std)
 
         np  = 500
         x   = N.linspace(m, M, np)
         Yf  = N.zeros(np)
         Yt  = N.zeros(np)
+
+        # Prepare the dic of plot handles to return
+        ks  = ['pdf', 'conf', 'gpdf']
+        hp  = dict((i,[]) for i in ks)
         try:
             import pylab as P
             for c in range(self.k):
                 y   = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
                         N.exp(-(x-self.mu[c][0])**2/(2*std[c]**2))
                 Yt  += y
-                P.plot(x, y, 'r:')
-                #P.axvspan(-pval[c] + self.mu[c][0], pval[c] + self.mu[c][0], 
-                #        facecolor = 'b', alpha = 0.2)
-                id1 = -pval[c] + self.mu[c]
-                id2 = pval[c] + self.mu[c]
-                xc  = x[:, N.where(x>id1)[0]]
-                xc  = xc[:, N.where(xc<id2)[0]]
-                Yf  = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
-                        N.exp(-(xc-self.mu[c][0])**2/(2*std[c]**2))
-                xc  = N.concatenate(([xc[0]], xc, [xc[-1]]))
-                Yf  = N.concatenate(([0], Yf, [0]))
-                P.fill(xc, Yf, facecolor = 'b', alpha = 0.2)
-                #P.fill([xc[0], xc[0], xc[-1], xc[-1]], 
-                #        [0, Yf[0], Yf[-1], 0], facecolor = 'b', alpha = 0.2)
-            P.plot(x, Yt, 'r')
+                h   = P.plot(x, y, 'r', label ='_nolegend_')
+                hp['pdf'].extend(h)
+                if fill:
+                    #P.axvspan(-pval[c] + self.mu[c][0], pval[c] + self.mu[c][0], 
+                    #        facecolor = 'b', alpha = 0.2)
+                    id1 = -pval[c] + self.mu[c]
+                    id2 = pval[c] + self.mu[c]
+                    xc  = x[:, N.where(x>id1)[0]]
+                    xc  = xc[:, N.where(xc<id2)[0]]
+                    Yf  = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
+                            N.exp(-(xc-self.mu[c][0])**2/(2*std[c]**2))
+                    xc  = N.concatenate(([xc[0]], xc, [xc[-1]]))
+                    Yf  = N.concatenate(([0], Yf, [0]))
+                    h   = P.fill(xc, Yf, 
+                            facecolor = 'b', alpha = 0.1, label='_nolegend_')
+                    hp['conf'].extend(h)
+                    #P.fill([xc[0], xc[0], xc[-1], xc[-1]], 
+                    #        [0, Yf[0], Yf[-1], 0], facecolor = 'b', alpha = 0.2)
+            if gpdf:
+                h           = P.plot(x, Yt, 'r:', label='_nolegend_')
+                hp['gpdf']  = h
+            return hp
         except ImportError:
             raise GmParamError("matplotlib not found, cannot plot...")
 
