@@ -44,34 +44,31 @@ class LibSvmPrecomputedDataSet:
 
         self.iddatamap = {}
 
-        # Create Gram matrix as a list of vectors that have extra
-        # entries for id and end of record marker.
+        # Create Gram matrix as a list of vectors which an extra entry
+        # for the id field.
         n = len(origdata)
-        grammat = [N.empty((n+2,), dtype=libsvm.svm_node_dtype)
+        grammat = [N.empty((n+1,), dtype=libsvm.svm_node_dtype)
                    for i in range(n)]
         self.grammat = grammat
 
         # Calculate Gram matrix. Refer to Kernel::kernel_precomputed
         # in svm.cpp to see how this precomputed setup works.
-        for i, (y1, x1) in enumerate(origdata):
+        for i, (yi, xi) in enumerate(origdata):
             id = i + 1
-            # XXX possible numpy bug
-            #grammat[i][[0,-1]] = (0, id), (-1, 0.0)
             grammat[i][0] = 0, id
-            grammat[i][-1] = -1, 0.0
-            for j, (y2, x2) in enumerate(origdata[i:]):
-                # Gram matrix is symmetric, so calculate dot product
-                # once and store it in both required locations
-                z = kernel(x1, x2, svm_node_dot)
-                # fix index so we assign to the right place
-                j += i
-                grammat[i][j+1] = 0, z
-                grammat[j][i+1] = 0, z
             # Map id to original vector so that we can find it again
             # after the model has been trained. libsvm essentially
             # provides the ids of the support vectors.
-            self.iddatamap[id] = x1
-    
+            self.iddatamap[id] = xi
+            for j, (yj, xj) in enumerate(origdata[i:]):
+                # Gram matrix is symmetric, so calculate dot product
+                # once and store it in both required locations
+                z = self.kernel(xi, xj, svm_node_dot)
+                # fix index so we assign to the right place
+                j += i
+                grammat[i][j + 1] = 0, z
+                grammat[j][i + 1] = 0, z
+
     def getdata(self):
         return zip(map(lambda x: x[0], self.origdata), self.grammat)
     data = property(getdata)
@@ -89,30 +86,45 @@ class LibSvmPrecomputedDataSet:
         Combine this dataset with another dataset by extending the
         Gram matrix with the new inner products into a new matrix.
         """
-        n = len(self.origdata) + len(dataset.data)
+        n = len(self.origdata) + len(dataset.data) + 1
         newgrammat = []
 
         # copy original Gram matrix
         for i in range(len(self.origdata)):
-            row = N.empty((n,), dtype=libsvm.svm_node_dtype)
-            row[:-1] = self.grammat[i]
-            newgrammat.append(row)
-
-        # copy id->vector map
-        newiddatamap = dict(self.iddatamap.items())
+            newrow = N.zeros((n,), dtype=libsvm.svm_node_dtype)
+            oldrow = self.grammat[i]
+            newrow[:len(oldrow)] = oldrow
+            newgrammat.append(newrow)
 
         # prepare Gram matrix for new data
         for i in range(len(dataset.data)):
-            id = i + len(self.origdata) + 1
-            row = N.empty((n,), dtype=libsvm.svm_node_dtype)
-            row[[0,-1]] = (0, id), (-1, 0.0)
+            row = N.zeros((n,), dtype=libsvm.svm_node_dtype)
             newgrammat.append(row)
-            newiddatamap[id] = dataset.data[i][1]
+
+        newiddatamap = dict(self.iddatamap.items())
+        m = len(self.origdata)
+        for i, (yi, xi) in enumerate(dataset.data):
+            i += m
+            for j, (yj, xj) in enumerate(self.origdata):
+                z = self.kernel(xi, xj, svm_node_dot)
+                newgrammat[i][j + 1] = 0, z
+                newgrammat[j][i + 1] = 0, z
+        for i, (yi, xi) in enumerate(dataset.data):
+            k = m + i
+            id = k + 1
+            newgrammat[k][0] = 0, id
+            newiddatamap[id] = xi
+            for j, (yj, xj) in enumerate(dataset.data[i:]):
+                z = self.kernel(xi, xj, svm_node_dot)
+                j += k
+                newgrammat[k][j + 1] = 0, z
+                newgrammat[j][k + 1] = 0, z
 
         newdataset = self.__class__(self.kernel)
         newdataset.origdata = self.origdata + dataset.data
         newdataset.iddatamap = newiddatamap
         newdataset.grammat = newgrammat
+        return newdataset
 
 class LibSvmRegressionDataSet(LibSvmDataSet):
     def __init__(self, origdata):

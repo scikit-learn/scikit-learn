@@ -1,13 +1,11 @@
+from numpy.testing import *
 import numpy as N
 
-from numpy.testing import *
 set_local_path('../..')
-
 from svm.dataset import *
 from svm.kernel import *
 from svm.dataset import convert_to_svm_node, svm_node_dot
 from svm.libsvm import svm_node_dtype
-
 restore_path()
 
 class test_dataset(NumpyTestCase):
@@ -95,23 +93,30 @@ class test_precomputed_dataset(NumpyTestCase):
             # get a new dataset containing the precomputed data
             pcdata = origdata.precompute(kernel)
             for i, row in enumerate(pcdata.grammat):
-                valuerow = row[1:-1]['value']
+                valuerow = row[1:]['value']
                 assert_array_almost_equal(valuerow, expt_grammat[i])
 
     def check_combine(self):
         kernel = LinearKernel()
 
-        y1 = N.random.randn(2)
-        x1 = N.random.randn(len(y1), 2)
+        y1 = N.random.randn(10)
+        x1 = N.random.randn(len(y1), 10)
         origdata = LibSvmRegressionDataSet(zip(y1, x1))
         pcdata = origdata.precompute(kernel)
 
-        y2 = N.random.randn(1)
+        y2 = N.random.randn(5)
         x2 = N.random.randn(len(y2), x1.shape[1])
         moredata = LibSvmRegressionDataSet(zip(y2, x2))
+        morepcdata = pcdata.combine(moredata)
 
-        #pcdata.combine(moredata)
-        #pcdata.copy_and_extend(moredata)
+        expt_grammat = N.empty((len(y1) + len(y2),)*2)
+        x = N.vstack([x1,x2])
+        for i, xi in enumerate(x):
+            for j, xj in enumerate(x):
+                expt_grammat[i, j] = kernel(xi, xj, N.dot)
+        for i, row in enumerate(morepcdata.grammat):
+            valuerow = row[1:]['value']
+            assert_array_almost_equal(valuerow, expt_grammat[i])
 
 if __name__ == '__main__':
     NumpyTest().run()

@@ -1,10 +1,8 @@
+from numpy.testing import *
 import numpy as N
 
-from numpy.testing import *
 set_local_path('../..')
-
 import svm.libsvm as libsvm
-
 restore_path()
 
 class test_libsvm(NumpyTestCase):

@@ -1,13 +1,11 @@
+from numpy.testing import *
 import numpy as N
 
-from numpy.testing import *
 set_local_path('../..')
-
 from svm.oneclass import *
 from svm.dataset import LibSvmOneClassDataSet
 from svm.dataset import LibSvmTestDataSet
 from svm.kernel import *
-
 restore_path()
 
 class test_oneclass(NumpyTestCase):

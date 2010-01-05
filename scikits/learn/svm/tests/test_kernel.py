@@ -1,10 +1,8 @@
+from numpy.testing import *
 import numpy as N
 
-from numpy.testing import *
 set_local_path('../..')
-
 from svm.kernel import *
-
 restore_path()
 
 class test_kernel(NumpyTestCase):
