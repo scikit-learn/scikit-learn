@@ -3,8 +3,8 @@ import numpy as N
 from numpy.testing import *
 set_local_path('../..')
 
-from svm.dataset import convert_to_svm_node
 from svm.dataset import *
+from svm.dataset import convert_to_svm_node, svm_node_dot
 from svm.libsvm import svm_node_dtype
 
 restore_path()
@@ -58,6 +58,30 @@ class test_dataset(NumpyTestCase):
         data = [N.arange(2)]
         dataset = LibSvmOneClassDataSet(data)
         self.assertAlmostEqual(dataset.gamma, 0.5)
+
+class test_svm_node_dot(NumpyTestCase):
+    def check_dot(self):
+        x = N.array([(-1,0.)], dtype=svm_node_dtype)
+        self.assertAlmostEqual(svm_node_dot(x, x), 0.)
+
+        x = N.array([(1,1.),(-1,0.)], dtype=svm_node_dtype)
+        y = N.array([(2,2.),(-1,0.)], dtype=svm_node_dtype)
+        self.assertAlmostEqual(svm_node_dot(x, y), 0.)
+
+        x = N.array([(3,2.),(-1,0.)], dtype=svm_node_dtype)
+        y = N.array([(3,2.),(-1,0.)], dtype=svm_node_dtype)
+        self.assertAlmostEqual(svm_node_dot(x, y), 4.)
+
+class test_precomputed_dataset(NumpyTestCase):
+    def check_foo(self):
+        y = N.random.randn(50)
+        x = N.random.randn(len(y), 1)
+        expected_dotprods = N.dot(x, N.transpose(x))
+        origdata = LibSvmRegressionDataSet(zip(y, x))
+        # get a new dataset containing the precomputed data
+        pcdata = origdata.precompute()
+        actual_dotprods = pcdata.grammat[:,1:-1]['value']
+        assert_array_almost_equal(actual_dotprods, expected_dotprods)
 
 if __name__ == '__main__':
     NumpyTest().run()
