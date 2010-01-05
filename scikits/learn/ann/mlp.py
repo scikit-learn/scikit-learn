@@ -1,8 +1,10 @@
 # mlp.py
 # by: Fred Mailhot
-# last mod: 2006-06-21
+# last mod: 2006-08-18
 
-from scipy import *
+from scipy import * # I'll want to change this for numpy eventually
+from scipy.optimize import leastsq
+import copy
 
 class mlp:
     """Class to define, train and test a multilayer perceptron."""
@@ -10,7 +12,6 @@ class mlp:
     _type = 'mlp'
     _outfxns = ('linear','logistic','softmax')
     _algs = ('simplex','powell','bfgs','cg','ncg','leastsq')
-    _options = zeros(18)                # don't know if I'll use this or not
 
     def __init__(self,nin,nhid,nout,fxn,alg='leastsq',w=None):
         """ Set up instance of mlp. Initial weights are drawn from a 
@@ -47,7 +48,6 @@ class mlp:
             self.w2 = randn(nhid,nout)/sqrt(nhid+1)
             self.b2 = randn(1,nout)/sqrt(nhid+1)
             self.packwts()
-        self.options = self._options
 
     def unpackwts(self):
         """ Decompose 1-d vector of weights w into appropriate weight 
@@ -96,138 +96,55 @@ class mlp:
             return array(y)
 
     def errfxn(self,w,x,t):
-        """ Implementing 'canonical' error fxns for each of the output
-        activation fxns (see Nabney pp.123-128,156-158 for more info).
-        Borrowing heavily from the Netlab implementations for now.
+        """ Return vector of squared-errors for the leastsq optimizer
         """
         y = self.fwd(x,w)
-        if self.alg == 'leastsq':
-            return sum(array(y-t)**2,axis=1)
-        if self.outfxn == 'linear':
-            # calculate & return SSE
-            return 0.5*sum(sum(array(y-t)**2,axis=1))
-        elif self.outfxn == 'logistic':
-            # calculate & return x-entropy
-            return -1.0*sum(sum(t*log2(y)+(1-t)*log2(1-y),axis=1))
-        elif self.outfxn == 'softmax':
-            # calculate & return entropy
-            return -1.0*sum(sum(t*log2(y),axis=1))
-        else:
-            # this shouldn't happen...return SSE as a reasonable default
-            return 0.5*sum(sum((y - t)**2,axis=1))
-        
-    def errgrad(self,w,x,t):
-        """ Error gradient fxns for canonical error fxns (see above, and
-        Nabney pp.127-128,156-158)
-        ** Includes error-backpropagation (Netlab splits these fxns)
-        Inputs:
-            w   - weight vector (don't really know why I pass this around...)
-            x   - input patterns
-            t   - targets
-        Outputs:
-            g   - gradient
-            
-            
-            ***N.B.*********************************************************
-             I'M DOING SOMETHING WRONG HERE, EVIDENTLY, AS THE OPTIMIZATION 
-             FXNS THAT DEPEND ON A GRADIENT FXN AREN'T DOING WHAT THEY'RE 
-             SUPPOSED TO (i.e. they're not optimizing anything)
-            ****************************************************************
-        """
-        # get output and hidden activation patterns for a full forward pass
-        y,z = self.fwd(x,w,True)
-        outdeltas = y-t
-        
-        # compute second-layer weight and bias gradients
-        # THIS IS AN AWFUL-LOOKING HACK, BUT I HAVEN'T FOUND A BETTER
-        # WAY TO DO IT, YET...
-        w2grad = zeros((shape(x)[0],shape(z)[1]*shape(outdeltas)[1]),dtype=Float)
-        for i in range(shape(w2grad)[0]):
-            w2grad[i] = outer(outdeltas[i],z[i]).reshape(size(outdeltas[i])*size(z[i]))
-        w2grad = sum(w2grad)
-        b2grad = sum(outdeltas)
-        # backpropagate...AGAIN WITH THE FUGLY HACK...PLUS I HAVE TO EXPLICITLY
-        # LOOP OVER ALL INPUT PATTERNS....*bleah*...
-        hiddeltas = zeros((shape(x)[0],self.nhid),dtype=Float)
-        for i in range(shape(hiddeltas)[0]):
-            for j in range(shape(hiddeltas)[1]):
-                hiddeltas[i][j] = (1-z[i][j]**2)*sum(diag(outer(self.w2[j],outdeltas[i])))
-        # compute first-layer weight and bias gradients
-        w1grad = zeros((shape(x)[0],shape(x)[1]*shape(hiddeltas)[1]),dtype=Float)
-        for i in range(shape(w1grad)[0]):
-            w1grad[i] = outer(hiddeltas[i],x[i]).reshape(size(hiddeltas[i])*size(x[i]))
-        w1grad = sum(w1grad)
-        b1grad = sum(hiddeltas)
-        # pack into a single vector and return it
-        g = hstack([w1grad.reshape(size(w1grad)),
-                    b1grad.reshape(size(b1grad)),
-                    w2grad.reshape(size(w2grad)),
-                    b2grad.reshape(size(b2grad))])
-        return g
-        
+        return sum(array(y-t)**2,axis=1)
+
     def train(self,x,t):
-        """ Train a multilayer perceptron with a user-specified algorithm.
-        Inputs:
+        """ Train a multilayer perceptron using scipy's leastsq optimizer
+        Input:
             x   - matrix of input data
             t   - matrix of target outputs
-            alg - training algorithm, one of {simplex,bfgs,ncg,leastsq}
-        Outputs:
-            w   - post-optimization weight vector
+        Returns:
+            post-optimization weight vector
         """
-        # N.B. doing nothing with the specified algorithm for now,
-        # just optimizing with the leastsq fxn in scipy.optimize
-        if self.alg == 'simplex':
-            from scipy.optimize import fmin
-            w = fmin(self.errfxn,self.w_packed,args=(x,t),full_output=True)
-        elif self.alg == 'bfgs':
-            from scipy.optimize import fmin_bfgs
-            # version of this that uses errgrad doesn't converge
-            #w = fmin_bfgs(self.errfxn,self.w_packed,fprime=self.errgrad,args=(x,t),full_output=True)
-            w = fmin_bfgs(self.errfxn,self.w_packed,args=(x,t),full_output=True)
-        elif self.alg == 'cg':
-            from scipy.optimize import fmin_cg
-            #w = fmin_cg(self.errfxn,self.w_packed,self.errgrad,args=(x,t),full_output=True)
-            w = fmin_cg(self.errfxn,self.w_packed,args=(x,t),full_output=True)
-        elif self.alg == 'ncg':
-            from scipy.optimize import fmin_ncg
-            w = fmin_ncg(self.errfxn,self.w_packed,self.errgrad,args=(x,t),\
-                         full_output=True)
-        else:
-            # leastsq, or undef'd algorithm, in which case use leastsq as
-            # a reasonable default
-            if self.alg != 'leastsq':
-                import sys
-                print "Undefined algorithm, using least-squares"
-                sys.stdout.flush()
-            from scipy.optimize import leastsq
-            w = leastsq(self.errfxn,self.w_packed,args=(x,t),\
-                        full_output=True)    
-        return w
+        # something's going wrong w/ the full_output option
+        # return leastsq(self.errfxn,self.w_packed,args=(x,t),full_output=True)
+        return leastsq(self.errfxn,self.w_packed,args=(x,t))
 
 def main():
-    import os,sys,copy
-    from scipy.io import read_array, write_array
     """ Approx test of module, using the oilTrn/oilTst data files that are 
-    distributed with Netlab. Prints a bunch of info about weight vector and 
-    error measures before and after optimization.
     """
-    opt = raw_input("\nEnter desired optimizer (simplex,bfgs,cg,ncg,leastsq): ")
+    from scipy.io import read_array, write_array
+    # build the net
     print "\nCreating 12-5-2 MLP with linear outputs"
-    net = mlp(12,5,2,'linear',opt)
+    net = mlp(12,5,2,'linear')
     w_init = copy.copy(net.w_packed)
+    # prep the train/test data
     print "\nLoading training and test sets...",
     trn_input = read_array('data/oilTrn.dat',lines=(3,-1),columns=(0,(1,12)))
     trn_targs = read_array('data/oilTrn.dat',lines=(3,-1),columns=(12,-1))
     tst_input = read_array('data/oilTst.dat',lines=(3,-1),columns=(0,(1,12)))
     tst_targs = read_array('data/oilTst.dat',lines=(3,-1),columns=(12,-1))
     print "done."
-    sys.stdout.flush()
-    
-    print "\nInitial error: ",net.errfxn(net.w_packed,tst_input,tst_targs)
-    retval = net.train(trn_input,trn_targs)
-    net.w_packed = retval[0]
-    print "\nFinal error: ",net.errfxn(net.w_packed,tst_input,tst_targs)
-
+    # initial squared-error
+    print "\nInitial SSE on training set: ",\
+          sum(net.errfxn(net.w_packed,trn_input,trn_targs))
+    print "\nInitial SSE on testing set: ",\
+          sum(net.errfxn(net.w_packed,tst_input,tst_targs))
+    # train the net
+    net.w_packed = net.train(trn_input,trn_targs)[0]
+    # final squared-error
+    print "\nFinal SSE on training set: ",\
+          sum(net.errfxn(net.w_packed,trn_input,trn_targs))
+    print "\nFinal SSE on testing set: ",\
+          sum(net.errfxn(net.w_packed,tst_input,tst_targs))
+    # view extended output?
+    # REMOVING THIS OPTION FOR NOW
+    #if raw_input("Do you want to see the full training output? (y/n").lower() == 'y':
+    #    print retval[1]
+        
 if __name__ == '__main__':
     main()
 
