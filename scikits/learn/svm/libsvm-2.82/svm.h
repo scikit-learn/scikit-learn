@@ -6,10 +6,10 @@
 #define LIBSVM_API __declspec(dllexport)
 #else
 #define LIBSVM_API __declspec(dllimport)
-#endif /* _LIBSVM_EXPORTS */
+#endif /* LIBSVM_EXPORTS */
 #else
 #define LIBSVM_API
-#endif /* _WIN32 */
+#endif /* LIBSVM_DLL */
 
 #ifdef __cplusplus
 extern "C" {

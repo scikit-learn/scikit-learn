@@ -136,7 +136,7 @@ def create_svm_problem(data):
     x = (POINTER(svm_node)*problem.l)()
     for i, (yi, xi) in enumerate(data):
         y[i] = yi
-        x[i] = cast(xi.ctypes.data, POINTER(svm_node))
+        x[i] = xi.ctypes.data_as(POINTER(svm_node))
     problem.x = x
     problem.y = y
     return problem

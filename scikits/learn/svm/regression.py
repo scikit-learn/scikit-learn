@@ -1,4 +1,4 @@
-from ctypes import cast, POINTER, c_double
+from ctypes import POINTER, c_double
 import numpy as N
 
 from model import LibSvmModel
@@ -65,7 +65,7 @@ class LibSvmRegressionModel(LibSvmModel):
 
         problem = dataset._create_svm_problem()
         target = N.empty((len(dataset.data),), dtype=N.float64)
-        tp = cast(target.ctypes.data, POINTER(c_double))
+        tp = target.ctypes.data_as(POINTER(c_double))
         libsvm.svm_cross_validation(problem, self.param, nr_fold, tp)
 
         total_error = sumv = sumy = sumvv = sumyy = sumvy = 0.

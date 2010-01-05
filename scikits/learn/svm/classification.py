@@ -1,4 +1,4 @@
-from ctypes import cast, POINTER, c_int, c_double
+from ctypes import POINTER, c_int, c_double
 import numpy as N
 
 from model import LibSvmModel
@@ -103,9 +103,9 @@ class LibSvmClassificationModel(LibSvmModel):
                 self.weights[i] = weight
             self.param.nr_weight = len(weights)
             self.param.weight_label = \
-                cast(self.weight_labels.ctypes.data, POINTER(c_int))
+                self.weight_labels.ctypes.data_as(POINTER(c_int))
             self.param.weight = \
-                cast(self.weights.ctypes.data, POINTER(c_double))
+                self.weights.ctypes.data_as(POINTER(c_double))
 
     def cross_validate(self, dataset, nr_fold):
         """
@@ -121,7 +121,7 @@ class LibSvmClassificationModel(LibSvmModel):
         """
         problem = dataset._create_svm_problem()
         target = N.empty((len(dataset.data),), dtype=N.float64)
-        tp = cast(target.ctypes.data, POINTER(c_double))
+        tp = target.ctypes.data_as(POINTER(c_double))
         libsvm.svm_cross_validation(problem, self.param, nr_fold, tp)
         total_correct = 0.
         for x, t in zip(dataset.data, target):

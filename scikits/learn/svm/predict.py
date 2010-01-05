@@ -1,4 +1,4 @@
-from ctypes import cast, POINTER, c_double, addressof
+from ctypes import POINTER, c_double, addressof
 import numpy as N
 
 from dataset import svm_node_dot
@@ -35,14 +35,14 @@ class LibSvmPredictor:
 
     def predict(self, x):
         x = self._transform_input(x)
-        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
+        xptr = x.ctypes.data_as(POINTER(libsvm.svm_node))
         return libsvm.svm_predict(self.model, xptr)
 
     def predict_values(self, x, n):
         x = self._transform_input(x)
-        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
+        xptr = x.ctypes.data_as(POINTER(libsvm.svm_node))
         v = N.empty((n,), dtype=N.float64)
-        vptr = cast(v.ctypes.data, POINTER(c_double))
+        vptr = v.ctypes.data_as(POINTER(c_double))
         libsvm.svm_predict_values(self.model, xptr, vptr)
         return v
 
@@ -50,9 +50,9 @@ class LibSvmPredictor:
         if not self.model.contents.param.probability:
             raise ValueError, 'not a probability model'
         x = self._transform_input(x)
-        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
+        xptr = x.ctypes.data_as(POINTER(libsvm.svm_node))
         pe = N.empty((n,), dtype=N.float64)
-        peptr = cast(pe.ctypes.data, POINTER(c_double))
+        peptr = pe.ctypes.data_as(POINTER(c_double))
         label = libsvm.svm_predict_probability(self.model, xptr, peptr)
         return label, pe
 
