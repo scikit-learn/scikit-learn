@@ -1,9 +1,13 @@
-from numpy.testing import *
 import numpy as N
+
+from numpy.testing import *
+set_local_path('../..')
 
 from svm.dataset import convert_to_svm_node
 from svm.dataset import *
 from svm.libsvm import svm_node_dtype
+
+restore_path()
 
 class test_dataset(NumpyTestCase):
     def check_convert_dict(self):

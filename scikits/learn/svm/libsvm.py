@@ -9,21 +9,7 @@ __all__ = [
     'POLY',
     'RBF',
     'SIGMOID',
-    'PRECOMPUTED',
-    'svm_node',
-    'svm_parameter',
-    'svm_problem',
-    'svm_model',
-    'svm_check_parameter',
-    'svm_train',
-    'svm_check_probability_model',
-    'svm_predict',
-    'svm_predict_values',
-    'svm_predict_probability',
-    'svm_get_svr_probability',
-    'svm_cross_validation',
-    'svm_destroy_model',
-    'svm_destroy_param'
+    'PRECOMPUTED'
     ]
 
 import numpy as N
@@ -122,56 +108,45 @@ class svm_model(Structure):
         ('free_sv', c_int)
         ]
 
-# svm_check_parameter
-_libsvm.svm_check_parameter.restype = c_char_p
-_libsvm.svm_check_parameter.argtypes = \
-    [POINTER(svm_problem), POINTER(svm_parameter)]
-svm_check_parameter = _libsvm.svm_check_parameter
+libsvm_api = {
+    'svm_check_parameter' :
+    (c_char_p, [POINTER(svm_problem), POINTER(svm_parameter)]),
+    'svm_train' :
+    (POINTER(svm_model), [POINTER(svm_problem), POINTER(svm_parameter)]),
+    'svm_check_probability_model' :
+    (None, [POINTER(svm_model)]),
+    'svm_predict' :
+    (c_double, [POINTER(svm_model), POINTER(svm_node)]),
+    'svm_predict_values' :
+    (None, [POINTER(svm_model), POINTER(svm_node), POINTER(c_double)]),
+    'svm_predict_probability' :
+    (c_double, [POINTER(svm_model), POINTER(svm_node), POINTER(c_double)]),
+    'svm_get_svr_probability' :
+    (c_double, [POINTER(svm_model)]),
+    'svm_cross_validation' :
+    (None,
+     [POINTER(svm_problem), POINTER(svm_parameter), c_int, POINTER(c_double)]),
+    'svm_destroy_model' :
+    (None, [POINTER(svm_model)])
+    }
 
-# svm_train
-_libsvm.svm_train.argtypes = \
-    [POINTER(svm_problem), POINTER(svm_parameter)]
-_libsvm.svm_train.restype = POINTER(svm_model)
-svm_train = _libsvm.svm_train
+import inspect
+for f, (restype, argtypes) in libsvm_api.iteritems():
+    func = getattr(_libsvm, f)
+    func.restype = restype
+    func.argtypes = argtypes
+    inspect.currentframe().f_locals[f] = func
 
-# svm_check_probability_model
-_libsvm.svm_check_probability_model.argtypes = [POINTER(svm_model)]
-svm_check_probability_model = _libsvm.svm_check_probability_model
-
-# svm_predict
-_libsvm.svm_predict.argtypes = [POINTER(svm_model), POINTER(svm_node)]
-_libsvm.svm_predict.restype = c_double
-svm_predict = _libsvm.svm_predict
-
-# svm_predict_values
-_libsvm.svm_predict_values.argtypes = \
-    [POINTER(svm_model), POINTER(svm_node), POINTER(c_double)]
-svm_predict_values = _libsvm.svm_predict_values
-
-# svm_predict_probability
-_libsvm.svm_predict_probability.restype = c_double
-_libsvm.svm_predict_probability.argtypes = \
-    [POINTER(svm_model), POINTER(svm_node), POINTER(c_double)]
-svm_predict_probability = _libsvm.svm_predict_probability
-
-# svm_get_svr_probability
-_libsvm.svm_get_svr_probability.restype = c_double
-_libsvm.svm_get_svr_probability.argtypes = [POINTER(svm_model)]
-svm_get_svr_probability = _libsvm.svm_get_svr_probability
-
-# svm_cross_validation
-_libsvm.svm_cross_validation.argtypes = [
-    POINTER(svm_problem),
-    POINTER(svm_parameter),
-    c_int,
-    POINTER(c_double)
-    ]
-svm_cross_validation = _libsvm.svm_cross_validation
-
-# svm_destroy_model
-_libsvm.svm_destroy_model.argtypes = [POINTER(svm_model)]
-svm_destroy_model = _libsvm.svm_destroy_model
-
-# svm_destroy_param
-_libsvm.svm_destroy_param.argtypes = [POINTER(svm_parameter)]
-svm_destroy_param = _libsvm.svm_destroy_param
+__all__ = [
+    'svm_node_dtype',
+    'C_SVC',
+    'NU_SVC',
+    'ONE_CLASS',
+    'EPSILON_SVR',
+    'NU_SVR',
+    'LINEAR',
+    'POLY',
+    'RBF',
+    'SIGMOID',
+    'PRECOMPUTED'
+    ] + libsvm_api.keys()

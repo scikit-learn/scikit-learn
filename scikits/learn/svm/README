@@ -45,7 +45,6 @@ apt-get install python-ctypes
 On Windows:
 
 cd tests
-set PYTHONPATH=..;..\..
 test_classification.py
 ...
 test_all.py
@@ -53,7 +52,6 @@ test_all.py
 On Linux:
 
 cd tests
-export PYTHONPATH=..:../..
 python test_classification.py
 ...
 python test_all.py
