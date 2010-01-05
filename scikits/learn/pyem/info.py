@@ -30,6 +30,7 @@ the results compared to true values
 Copyright: David Cournapeau 2006
 License: BSD-style (see LICENSE.txt in main source directory)
 """
+version = '0.5.3'
 
 depends = ['linalg', 'stats']
 ignore  = False

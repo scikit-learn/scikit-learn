@@ -104,4 +104,4 @@ P.plot(like)
 P.title('log likelihood')
 
 P.show()
-P.save('2d diag.png')
+# P.save('2d diag.png')

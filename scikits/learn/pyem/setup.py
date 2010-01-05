@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 06 09:00 PM 2006 J
+# Last Change: Thu Oct 12 11:00 PM 2006 J
 # TODO:
 #   - check how to handle cmd line build options with distutils and use
 #   it in the building process
@@ -8,6 +8,7 @@
 from data, using Expectation Maximization"""
 
 from os.path import join
+# This import from __init__ looks strange, should check whether there is no other way
 from info import version as pyem_version
 
 DISTNAME    = 'pyem' 
