@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # Last Change: Mon Jul 09 01:00 PM 2007 J
-# test
+
 # Copyright (C) 2007 Cournapeau David <cournape@gmail.com>
 #
 
