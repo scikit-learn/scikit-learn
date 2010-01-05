@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jun 09 05:00 PM 2007 J
+# Last Change: Mon Jul 02 02:00 PM 2007 J
 # TODO:
 #   - check how to handle cmd line build options with distutils and use
 #   it in the building process
@@ -28,7 +28,7 @@ def configuration(parent_package='',top_path=None, package_name='pyem'):
     from numpy.distutils.misc_util import Configuration
     config = Configuration(package_name,parent_package,top_path,
              version     = VERSION)
-    config.add_subpackage('data')
+    #config.add_subpackage('data')
     config.add_data_dir('tests')
     config.add_data_dir('profile_data')
     config.add_extension('c_gden',
