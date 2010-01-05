@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 03:00 PM 2007 J
+# Last Change: Mon Jul 02 06:00 PM 2007 J
 
 __doc__ = """This example shows how to do pdfestimation for one dimensional
 data. It estimates a Gaussian mixture model for several number of components,
@@ -73,3 +73,4 @@ P.plot(N.arange(1, 8), bc, 'o:')
 P.xlabel("number of components")
 P.ylabel("BIC")
 print "According to the BIC, model with %d components is better" % (N.argmax(bc) + 1)
+P.show()

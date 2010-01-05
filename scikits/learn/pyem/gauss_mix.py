@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Jul 02 05:00 PM 2007 J
+# Last Change: Mon Jul 02 06:00 PM 2007 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -383,6 +383,35 @@ class GM:
         else:
             return N.sum(D.multiple_gauss_den(x, self.mu, self.va) * self.w, 1)
 
+    def pdf_comp(self, x, comp, log = False):
+        """Computes the pdf of the model at given points, at given component.
+
+        :Parameters:
+            x : ndarray
+                points where to estimate the pdf. One row for one
+                multi-dimensional sample (eg to estimate the pdf at 100
+                different points in 10 dimension, data's shape should be (100,
+                20)).
+            comp: int
+                the component index.
+            log : bool
+                If true, returns the log pdf instead of the pdf.
+
+        :Returns:
+            y : ndarray
+                the pdf at points x."""
+        if self.mode == 'diag':
+            va = self.va[c]
+        elif self.mode == 'full':
+            va = self.va[c*self.d:(c+1)*self.d]
+        else:
+            raise GmParamError("""var mode %s not supported""" % self.mode)
+
+        if log:
+            D.gauss_den(x, self.mu[c], va, log = True) + N.log(self.w[c])
+        else:
+            return D.multiple_gauss_den(x, self.mu[c], va) * self.w[c]
+
     #=================
     # Plotting methods
     #=================
@@ -427,8 +456,6 @@ class GM:
             import pylab as P
             return [P.plot(Xe[i], Ye[i], 'r', label='_nolegend_')[0] for i in
                     range(k)]
-            #for i in range(k):
-            #    P.plot(Xe[i], Ye[i], 'r')
         except ImportError:
             raise GmParamError("matplotlib not found, cannot plot...")
 
@@ -453,7 +480,7 @@ class GM:
                 - h['conf'] is a list of filling area
         """
         if not self.is1d:
-            raise ValueError("This function does not make sense for "
+            raise ValueError("This function does not make sense for "\
                 "mixtures which are not unidimensional")
 
         # This is not optimized at all, may be slow. Should not be
@@ -480,34 +507,33 @@ class GM:
         # Prepare the dic of plot handles to return
         ks  = ['pdf', 'conf', 'gpdf']
         hp  = dict((i, []) for i in ks)
+
+        # Compute the densities
+        y   = D.multiple_gauss_den(x[:, N.newaxis], self.mu, self.va, log = True) \
+              + N.log(self.w)
+        yt  = self.pdf(x[:, N.newaxis])
+
         try:
             import pylab as P
             for c in range(self.k):
-                y   = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
-                        N.exp(-(x-self.mu[c][0])**2/(2*std[c]**2))
-                Yt  += y
-                h   = P.plot(x, y, 'r', label ='_nolegend_')
+                h   = P.plot(x, N.exp(y[:, c]), 'r', label ='_nolegend_')
                 hp['pdf'].extend(h)
                 if fill:
-                    #P.axvspan(-pval[c] + self.mu[c][0], pval[c] +
-                    #self.mu[c][0], 
-                    #        facecolor = 'b', alpha = 0.2)
+                    # Compute x coordinates of filled area
                     id1 = -pval[c] + self.mu[c]
                     id2 = pval[c] + self.mu[c]
                     xc  = x[:, N.where(x>id1)[0]]
                     xc  = xc[:, N.where(xc<id2)[0]]
-                    Yf  = self.w[c]/(N.sqrt(2*N.pi) * std[c]) * \
-                            N.exp(-(xc-self.mu[c][0])**2/(2*std[c]**2))
+                    
+                    # Compute the graph for filling
+                    Yf  = self.pdf_comp(xc, c)
                     xc  = N.concatenate(([xc[0]], xc, [xc[-1]]))
                     Yf  = N.concatenate(([0], Yf, [0]))
                     h   = P.fill(xc, Yf, 
                             facecolor = 'b', alpha = 0.1, label='_nolegend_')
                     hp['conf'].extend(h)
-                    #P.fill([xc[0], xc[0], xc[-1], xc[-1]], 
-                    #        [0, Yf[0], Yf[-1], 0], facecolor = 'b', alpha =
-                    #        0.2)
             if gpdf:
-                h           = P.plot(x, Yt, 'r:', label='_nolegend_')
+                h = P.plot(x, yt, 'r:', label='_nolegend_')
                 hp['gpdf']  = h
             return hp
         except ImportError:
