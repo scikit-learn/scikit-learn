@@ -1,14 +1,16 @@
-# Last Change: Wed Jul 12 05:00 PM 2006 J
+# Last Change: Thu Jul 13 05:00 PM 2006 J
 
 Things which must be implemented for a 1.0 version:
     - test for various length and model size.
     - refactoring with a class modelling mixture models.
     - for Gaussian densities: compute level <-> confidence ellipses 
     relationship with Chi2 model.
-    - C implementation of Gaussian densities at least.
     - a small help/tutorial
+    - review the code, with the difference between generic numpy functions
+    and blas ones
 
 Things which would be nice:
+    - C implementation of Gaussian densities at least.
     - Integrate libem (libem should be modified so
     that it would be easy to package and distribute)
     - On-line EM

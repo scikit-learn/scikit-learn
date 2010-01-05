@@ -1,9 +1,10 @@
 # /usr/bin/python
-# Last Change: Thu Jul 13 02:00 PM 2006 J
+# Last Change: Thu Jul 13 07:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
 import densities
+from kmean import kmean
 
 MAX_DEV = 1e-10
 
@@ -24,32 +25,6 @@ class GmmParamError(GmmError):
     
     def __str__(self):
         return self.message
-
-# Base class for mixture models: a mixture model can be initialized, 
-# have parameters, have its parameters changed, have function to returns sufficient
-# statistics, generate data from the model, have the functions relative to EM
-class Mixture:
-    def __init__(self, np, prior):
-        self.np     = np
-        self.prior  = prior
-
-    def em_post(self):
-        pass
-
-    def em_update(self):
-        pass
-
-    # Check that the current state is consistent (such as priori weighting to 1, etc...)
-    def check_state(self):
-        pass
-
-    # Return npoints points generated from the model
-    def generate(self, npoints):
-        pass
-
-# The Gaussian Mixture
-class GMM(Mixture):
-    pass
 
 # Function to generate a GMM, or valid parameters for GMM
 def gen_rand_index(p, n):
@@ -86,15 +61,6 @@ def gen_gmm(w, mu, va, n):
     if mode == 'diag':
         X   = mu[S, :]  + X * N.sqrt(va[S,:])
     elif mode == 'full':
-        # Naive implementation
-        # cho = N.zeros(va.shape, float)
-        # for k in range(K):
-        #     # Using cholesky is more stable than sqrtm; sqrtm is not
-        #     # available in numpy anyway, only in scipy...
-        #     cho[k*d:k*d+d,:]    = lin.cholesky(va[k*d:k*d+d,:])
-        # for i in range(n):
-        # X[i,:]  = mu[S[i],:] + N.matrixmultiply(cho[S[i]*d:S[i]*d+d,:], X[i,:])
-        
         # Faster:
         cho = N.zeros((K, va.shape[1], va.shape[1]), float)
         for k in range(K):
@@ -265,29 +231,6 @@ def gmm_init_kmean(data, k, mode, init = [], niter = 10):
 
     return w, mu, va
 
-def gmm_posterior(data, w, mu, va):
-    """ Computes the latent variable distribution (a 
-    posteriori probability) knowing the explicit data 
-    for the Gaussian model (w, mu, var): gamma(t, i) = 
-        P[state = i | observation = data(t); w, mu, va]
-
-    This is basically the E step of EM for GMM.
-   
-    the second returned value is the non normalized version 
-    of gamma, and may be needed for some computation, 
-    like eg likelihood"""
-    n   = data.shape[0]
-    K   = len(w)
-
-    # compute the gaussian pdf
-    tgd	= multiple_gauss_den(data, mu, va)
-    # multiply by the weight
-    tgd	*= w
-    # Normalize to get a pdf
-    gd	= tgd  / N.sum(tgd, axis=1)[:, N.NewAxis]
-
-    return gd, tgd
-
 # This function is just calling gmm_update and gmm_posterior, with
 # initialization. This is ugly, and we should have a class to model a GMM
 # instead of all this code to try to guess correct values and parameters...
@@ -315,18 +258,40 @@ def gmm_em(data, niter = 10, k = 2, mode = 'diag', w = [], mu = [], va = []):
         iteration.
     """
     if len(w) == 0:
-        w, mu, va   = gmm_init_kmean(data, k, mode, 5)
-    else:
-        k, d, mode  = check_gmm_parm(w, mu, va)
+        w, mu, va   = gmm_init_kmean(data, k, mode, niter = 5)
+    k, d, mode  = check_gmm_param(w, mu, va)
     
     like    = N.zeros(niter, float)
     for i in range(niter):
-        g, tgd  = gmm_posterior(data, w, mu, va)
-        like[i] = N.sum(N.log(N.sum(tgd, 1)))
-        w, mu, va   = gmm_update(X, g, d, k, mode)
+        g, tgd      = gmm_posterior(data, w, mu, va)
+        like[i]     = N.sum(N.log(N.sum(tgd, 1)))
+        w, mu, va   = gmm_update(data, g, d, k, mode)
 
     return w, mu, va, like
     
+def gmm_posterior(data, w, mu, va):
+    """ Computes the latent variable distribution (a 
+    posteriori probability) knowing the explicit data 
+    for the Gaussian model (w, mu, var): gamma(t, i) = 
+        P[state = i | observation = data(t); w, mu, va]
+
+    This is basically the E step of EM for GMM.
+   
+    the second returned value is the non normalized version 
+    of gamma, and may be needed for some computation, 
+    like eg likelihood"""
+    n   = data.shape[0]
+    K   = len(w)
+
+    # compute the gaussian pdf
+    tgd	= multiple_gauss_den(data, mu, va)
+    # multiply by the weight
+    tgd	*= w
+    # Normalize to get a pdf
+    gd	= tgd  / N.sum(tgd, axis=1)[:, N.NewAxis]
+
+    return gd, tgd
+
 def gmm_update(data, gamma, d, K, varmode):
     """Computes update of the Gaussian Mixture Model (M step)
     from the a posteriori pdf, computed by gmm_posterior
@@ -353,21 +318,12 @@ def gmm_update(data, gamma, d, K, varmode):
         mu  = N.zeros((K, d), float)
         va  = N.zeros((K*d, d), float)
 
-        # This is really slow because of the loop on each frame
-        # ways to improve that: either use 3d matrices and see 
-        # the memory usage increasing in n*d*d,
-        # using C (or pyrex, or ...) or using the trick commented
-        # which loops on the dimensions instead. If the number of dimensions
-        # is high, this won't help, though...
         for k in range(K):
             x   = N.sum(N.outerproduct(gamma[:, k], 
                         N.ones((1, d), float)) * data)
             xx  = N.zeros((d, d), float)
-            # for i in range(n):
-            #     xx  += gamma[i, k] * N.outerproduct(data[i,:], 
-            #                 data[i,:])
-
-            # This should be much faster
+            
+            # This should be much faster than reecursing on n...
             for i in range(d):
                 for j in range(d):
                     xx[i,j] = N.sum(data[:,i] * data[:,j] * gamma[:,k])
@@ -431,252 +387,13 @@ def gmm_ellipses(mu, va, c = [0, 1], npoints = 100):
 
     return Xe, Ye
 
-def kmean(data, init, iter = 10):
-    """Simple kmean implementation for EM
-    
-    returns a tuple (code, label), where code are the final
-    centroids, and label are the class label indec for each
-    frame (ie row) of data"""
-
-    data    = N.atleast_2d(data)
-    init    = N.atleast_2d(init)
-
-    (n, d)  = data.shape
-    (k, d1) = init.shape
-
-    if not d == d1:
-        msg = "data and init centers do not have same dimensions..."
-        raise GmmParamError(msg)
-    
-    code    = N.asarray(init.copy(), float)
-    for i in range(iter):
-        # Compute the nearest neighbour for each obs
-        # using the current code book
-        label   = _vq(data, code)
-        # Update the code by computing centroids using the new code book
-        for j in range(k):
-            code[j,:] = N.mean(data[N.where(label==j)]) 
-
-    return code, label
-
-def _py_vq(data, code):
-    """ Please do not use directly. Use kmean instead"""
-    # No attempt to be efficient has been made...
-    (n, d)  = data.shape
-    (k, d)  = code.shape
-
-    label   = N.zeros(n, int)
-    for i in range(n):
-        d           = N.sum((data[i, :] - code) ** 2, 1)
-        label[i]    = N.argmin(d)
-
-    return label
-    
-# Try to import pyrex function for vector quantization. If not available,
-# falls back on pure python implementation.
-try:
-    from c_gmm import _vq
-except:
-    print """c_gmm._vq not found, using pure python implementation instead.
-        Kmean will be REALLY slow"""
-    _vq = _py_vq
-
-# Test functions usable for now
-def test_kmean():
-    X   = N.array([[3.0, 3], [4, 3], [4, 2],
-            [9, 2], [5, 1], [6, 2], [9, 4], 
-            [5, 2], [5, 4], [7, 4], [6, 5]])
-
-    initc   = N.concatenate(([[X[0]], [X[1]], [X[2]]])) 
-
-    codet1  = N.array([[3.0000, 3.0000],
-            [6.2000, 4.0000], 
-            [5.8000, 1.8000]])
-            
-    codet2  = N.array([[11.0/3, 8.0/3], 
-            [6.7500, 4.2500],
-            [6.2500, 1.7500]])
-
-    code    = initc.copy()
-
-    code1   = kmean(X, code, 1)[0]
-    code2   = kmean(X, code, 2)[0]
-
-    import numpy.testing as testing
-    try:
-        testing.assert_array_almost_equal(code1, codet1)
-        print "kmean test 1 succeded"
-    except AssertionError:
-        print "kmean test 1 failed"
-
-    try:
-        testing.assert_array_almost_equal(code2, codet2)
-        print "kmean test 2 succeded"
-    except AssertionError:
-        print "kmean test 2 failed"
-
-# Test functions (unusable by other people for now....)
-def test_gmm_den():
-    """"""
-    import tables
-    
-    filename    = 'gmm_test.h5'
-    
-    k   = 3
-    d   = 2
-    mode        = 'full'
-    w, mu, va   = gen_gmm_param(d, k, mode, 2)
-    X           = gen_gmm(w, mu, va, 1e3)
-
-    h5file      = tables.openFile(filename, "w")
-
-    h5file.createArray(h5file.root, 'mu', mu)
-    h5file.createArray(h5file.root, 'va', va)
-    h5file.createArray(h5file.root, 'X', X)
-
-    Y1 =  densities.gauss_den(X, mu[0,:], va[0:2,:])
-    Y2 =  densities.gauss_den(X, mu[1,:], va[2:4,:])
-    Y3 =  densities.gauss_den(X, mu[2,:], va[4:6,:])
-
-    Y  =  multiple_gauss_den(X, mu, va)
-
-    h5file.createArray(h5file.root, 'Y', Y)
-    h5file.createArray(h5file.root, 'Y2', Y2)
-    h5file.createArray(h5file.root, 'Y1', Y1)
-    h5file.createArray(h5file.root, 'Y3', Y3)
-
-    h5file.close()
-
-def test_gmm_em():
-    """"""
-    import numpy as N
-    import tables
-    import pylab as P
-    filename    = 'data.h5'
-    
-    k               = 3
-    d               = 2
-    mode            = 'full'
-    wr, mur, var    = gen_gmm_param(d, k, mode, 2)
-    X               = gen_gmm(wr, mur, var, 1e3)
-
-    h5file      = tables.openFile(filename, "w")
-
-    h5file.createArray(h5file.root, 'wr', wr)
-    h5file.createArray(h5file.root, 'mur', mur)
-    h5file.createArray(h5file.root, 'var', var)
-    h5file.createArray(h5file.root, 'X', X)
-
-    P.plot(X[:, 0], X[:, 1], '.')
-    Xe, Ye  = gmm_ellipses(mur, var, npoints = 100)
-    for i in range(k):
-        P.plot(Xe[i], Ye[i], 'g')
-
-    # init EM: simply use kmean
-    initc   = X[0:k, :]
-    (code, label)   = kmean(X, initc, 10)
-
-    h5file.createArray(h5file.root, 'initc', initc)
-
-    w0      = N.ones(k, float) / k
-    mu0     = code.copy()
-    if mode == 'diag':
-        va0     = N.zeros((k, d), float)
-        for i in range(k):
-            for j in range(d):
-                va0[i,j] = N.cov(X[N.where(label==i), j], rowvar = 0)
-    elif mode == 'full':
-        va0     = N.zeros((k*d, d), float)
-        for i in range(k):
-            va0[i*d:i*d+d,:] = N.cov(X[N.where(label==i)], rowvar = 0)
-
-    h5file.createArray(h5file.root, 'w0', w0)
-    h5file.createArray(h5file.root, 'mu0', mu0)
-    h5file.createArray(h5file.root, 'va0', va0)
-
-    
-    # # Use random values
-    # w0  = N.ones(k, float) / k
-    # mu0 = N.randn(k, d)
-    # va0 = N.fabs(N.randn(k, d))
-
-    w   = w0.copy()
-    mu  = mu0.copy()
-    va  = va0.copy()
-
-    X0e, Y0e  = gmm_ellipses(mu, va, npoints = 100)
-    for i in range(k):
-        P.plot(X0e[i], Y0e[i], 'k')
-
-    niter   = 10
-    like    = N.zeros(niter, float)
-
-    for i in range(niter):
-        g, tgd  = gmm_posterior(X, w, mu, va)
-        #h5file.createArray(h5file.root, 'g', g)
-        #h5file.createArray(h5file.root, 'tgd', tgd)
-        like[i] = N.sum(N.log(N.sum(tgd, 1)))
-        print like[i]
-        w, mu, va    = gmm_update(X, g, d, k, mode)
-
-    h5file.createArray(h5file.root, 'w', w)
-    h5file.createArray(h5file.root, 'mu', mu)
-    h5file.createArray(h5file.root, 'va', va)
-
-    X0e, Y0e  = gmm_ellipses(mu, va, npoints = 100)
-    for i in range(k):
-        P.plot(X0e[i], Y0e[i], 'r')
-    P.figure()
-    P.plot(like)
-    h5file.close()
-    P.show()
-
-def _bench1():
-    #===========================================
-    # Diag GMM with 5 components of dimension 20
-    #===========================================
-    k       = 5
-    d       = 20
-    mode    = 'diag'
-
-    print "Generating the mixture"
-    # Generate a model with k components, d dimensions
-    wr, mur, var    = gen_gmm_param(d, k, mode, 3)
-    X               = gen_gmm(wr, mur, var, 1e4)
-
-    print "Init the mixture"
-    # Init the mixture with kmean
-    w0, mu0, va0    = gmm_init_kmean(X, k, mode, niter = 5)
-    
-    # # Use random values instead of kmean
-    # w0  = N.ones(k, float) / k
-    # mu0 = N.randn(k, d)
-    # va0 = N.fabs(N.randn(k, d))
-
-    print "EM computing..."
-    # Copy the initial values because we want to draw them later...
-    w   = w0.copy()
-    mu  = mu0.copy()
-    va  = va0.copy()
-
-    # The actual EM, with likelihood computation
-    niter   = 10
-    like    = N.zeros(niter, float)
-
-    for i in range(niter):
-        print "post"
-        g, tgd  = gmm_posterior(X, w, mu, va)
-        like[i] = N.sum(N.log(N.sum(tgd, 1)))
-        print "update"
-        w, mu, va   = gmm_update(X, g, d, k, mode)
-
 if __name__ == "__main__":
     #=============================
-    # Simple GMM with 3 components
+    # Simple GMM with 5 components
     #=============================
     import pylab as P
     k       = 5
-    d       = 3
+    d       = 5
     mode    = 'diag'
 
     print "Generating the mixture"
@@ -704,10 +421,8 @@ if __name__ == "__main__":
 
     print "computing..."
     for i in range(niter):
-        print "post"
         g, tgd  = gmm_posterior(X, w, mu, va)
         like[i] = N.sum(N.log(N.sum(tgd, 1)))
-        print "update"
         w, mu, va   = gmm_update(X, g, d, k, mode)
 
     print "drawing..."

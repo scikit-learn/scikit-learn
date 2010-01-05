@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Thu Jul 13 03:00 PM 2006 J
+# Last Change: Thu Jul 13 04:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -68,17 +68,15 @@ def gauss_den(x, mu, va, log = False):
     #===============#
     # Computation   #
     #===============#
-    data    = x - mu
-
     if d == 1:
         # scalar case
-        return _scalar_gauss_den(data[:, 0], mu[0, 0], va[0, 0], log)
+        return _scalar_gauss_den(x[:, 0], mu[0, 0], va[0, 0], log)
     elif dv0 == 1:
         # Diagonal matrix case
-        return _diag_gauss_den(data, mu, va, log)
+        return _diag_gauss_den(x, mu, va, log)
     elif dv1 == dv0:
         # full case
-        return  _full_gauss_den(data, mu, va, log)
+        return  _full_gauss_den(x, mu, va, log)
     else:
         raise DenError("variance mode not recognized, this is a bug")
 
@@ -94,7 +92,7 @@ def _scalar_gauss_den(x, mu, va, log):
     d       = mu.size
     inva    = 1/va
     fac     = (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
-    y       = (x ** 2) * -0.5 * inva
+    y       = ((x-mu) ** 2) * -0.5 * inva
     if not log:
         y   = fac * N.exp(y)
     else:
@@ -112,11 +110,17 @@ def _diag_gauss_den(x, mu, va, log):
     Call gauss_den instead"""
     # Diagonal matrix case
     d   = mu.size
-    y   = _scalar_gauss_den(x[:,0], mu[0,0], va[0,0], log)
     if not log:
+        inva    = 1/va[0,0]
+        fac     = (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
+        y       =  (x[:,0] - mu[0,0]) ** 2 * inva * -0.5
         for i in range(1, d):
-            y    *=  _scalar_gauss_den(x[:,i], mu[0,i], va[0,i], log)
+            inva    = 1/va[0,i]
+            fac     *= (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
+            y       += (x[:,i] - mu[0,i]) ** 2 * inva * -0.5
+        y   = fac * N.exp(y)
     else:
+        y   = _scalar_gauss_den(x[:,0], mu[0,0], va[0,0], log)
         for i in range(1, d):
             y    +=  _scalar_gauss_den(x[:,i], mu[0,i], va[0,i], log)
     return y
@@ -147,8 +151,8 @@ def _full_gauss_den(x, mu, va, log):
 
     # we are using a trick with sum to "emulate" 
     # the matrix multiplication inva * x without any explicit loop
-    y   = N.matrixmultiply(x, inva)
-    y   = -0.5 * N.sum(y * x, 1)
+    y   = N.matrixmultiply((x-mu), inva)
+    y   = -0.5 * N.sum(y * (x-mu), 1)
 
     if not log:
         y   = fac * N.exp(y)

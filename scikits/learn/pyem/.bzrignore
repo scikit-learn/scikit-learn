@@ -5,3 +5,8 @@ build
 pyem/bench1prof
 pyem/diag.dat
 pyem/gdenprof
+tmp.py
+test.py
+profile_gmm_em.py
+data.h5
+gmmprof

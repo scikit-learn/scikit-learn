@@ -1,4 +1,4 @@
-# Last Change: Thu Jul 13 02:00 PM 2006 J
+# Last Change: Thu Jul 13 04:00 PM 2006 J
 
 cimport c_numpy
 cimport c_python
@@ -64,35 +64,3 @@ def _imp_vq(c_numpy.ndarray data, c_numpy.ndarray init, c_numpy.ndarray label):
         labeld[i]   = lab
 
     return lab
-
-# # Scalar gaussian a posteriori pdf
-# def _scalar_gauss_den(c_numpy.ndarray x, double mu, 
-#         double va, int log):
-#     """ This function is the actual implementation
-#     of gaussian pdf in scalar case. It assumes all args
-#     are conformant, so it should not be used directly
-#     
-#     ** Expect centered data (ie with mean removed) **
-# 
-#     Call gauss_den instead"""
-#     cdef int d, n
-#     cdef double inva, fac
-#     cdef double* data
-# 
-#     if not x.dtype == numpy.dtype(numpy.float64):
-#         print '_scalar_gauss_den not (yet) implemented for dtype %s'%dtype.name
-#         return
-#     data  = (<double*>x.data)
-# 
-#     d       = x.dimensions[1]
-#     n       = x.dimensions[0]
-#     inva    = 1/va
-#     fac     = (2*N.pi) ** (-d/2.0) * N.sqrt(inva)
-#     y       = (x ** 2) * -0.5 * inva
-#     if not log:
-#         y   = fac * N.exp(y)
-#     else:
-#         y   = y + log(fac)
-# 
-#     return y
-#     
