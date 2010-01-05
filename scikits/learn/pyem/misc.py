@@ -1,10 +1,10 @@
-# Last Change: Sat Jun 09 07:00 PM 2007 J
+# Last Change: Sat Jun 09 08:00 PM 2007 J
 
 #========================================================
 # Constants used throughout the module (def args, etc...)
 #========================================================
 # This is the default dimension for representing confidence ellipses
-DEF_VIS_DIM = [0, 1]
+DEF_VIS_DIM = (0, 1)
 DEF_ELL_NP = 100
 DEF_LEVEL = 0.39
 #=====================================================================
