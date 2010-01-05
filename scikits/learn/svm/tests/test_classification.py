@@ -15,7 +15,13 @@ class test_classification(NumpyTestCase):
         weights = [(2, 10.0), (1, 20.0), (0, 30.0)]
         Model(Kernel, weights=weights)
         Model(Kernel, 1.0, weights)
-        model = Model(Kernel, cost=1.0, weights=weights)
+        Model(Kernel, cost=1.0, weights=weights)
+
+        Model = LibSvmNuClassificationModel
+        Model(Kernel)
+        Model(Kernel, nu=0.5)
+        Model(Kernel, weights=weights)
+        Model(Kernel, 0.5, weights)
 
     def check_c_basics(self):
         labels = [0, 1, 1, 2]
@@ -93,6 +99,17 @@ class test_classification(NumpyTestCase):
             model = LibSvmCClassificationModel(kernel, cost, weights)
             results = model.fit(traindata)
             results.predict_probability(testdata)
+
+    def check_cross_validate(self):
+        labels = ([-1] * 50) + ([1] * 50)
+        x = N.randn(len(labels), 10)
+        traindata = LibSvmClassificationDataSet(zip(labels, x))
+        kernel = LinearKernel()
+        model = LibSvmCClassificationModel(kernel)
+        nr_fold = 10
+        pcorr = model.cross_validate(traindata, nr_fold)
+        # XXX check cross-validation with and without probability
+        # output enabled
 
     def check_nu_train(self):
         pass

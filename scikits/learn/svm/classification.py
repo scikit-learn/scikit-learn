@@ -118,6 +118,27 @@ class LibSvmClassificationModel(LibSvmModel):
             self.param.weight = \
                 cast(self.weights.ctypes.data, POINTER(c_double))
 
+    def cross_validate(self, dataset, nr_fold):
+        """
+        Perform cross-validation to determine the suitability of
+        chosen model parameters.
+
+        Data are separated to nr_fold folds. Each fold is validated
+        against a model trained using the data from the remaining
+        (nr_fold-1) folds.
+
+        This function returns the percentage of data that was
+        classified correctly over all the experiments.
+        """
+        problem, y, x = self._create_problem(dataset)
+        target = N.empty((len(dataset.data),), dtype=N.float64)
+        tp = cast(target.ctypes.data, POINTER(c_double))
+        libsvm.svm_cross_validation(problem, self.param, nr_fold, tp)
+        total_correct = 0.
+        for x, t in zip(dataset.data, target):
+            if x[0] == int(t): total_correct += 1
+        return 100.0 * total_correct / len(dataset.data)
+
 class LibSvmCClassificationModel(LibSvmClassificationModel):
     """
     A model for C-SV classification.

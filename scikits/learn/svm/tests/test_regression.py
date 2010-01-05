@@ -1,8 +1,3 @@
-import sys
-import os
-sys.path.insert(0, '..')
-sys.path.insert(0, os.path.join('..','..'))
-
 from numpy.testing import *
 import numpy as N
 
@@ -20,6 +15,13 @@ class test_regression(NumpyTestCase):
         Model(Kernel, cost=1.0)
         model = Model(Kernel, shrinking=False)
         self.assert_(not model.shrinking)
+
+        Model = LibSvmNuRegressionModel
+        Model(Kernel)
+        Model(Kernel, nu=0.5)
+        model = Model(Kernel, 0.5, cache_size=60, tolerance=0.005)
+        self.assertEqual(model.cache_size, 60)
+        self.assertAlmostEqual(model.tolerance, 0.005)
 
     def check_epsilon_train(self):
         y = [10., 20., 30., 40.]
@@ -64,6 +66,15 @@ class test_regression(NumpyTestCase):
             results = model.fit(traindata)
             predictions = results.predict(testdata)
             assert_array_almost_equal(predictions, expected_y)
+
+    def check_cross_validate(self):
+        y = N.randn(100)
+        x = N.randn(len(y), 10)
+        traindata = LibSvmRegressionDataSet(zip(y, x))
+        kernel = LinearKernel()
+        model = LibSvmEpsilonRegressionModel(kernel)
+        nr_fold = 10
+        mse, scc = model.cross_validate(traindata, nr_fold)
 
     def check_nu_train(self):
         pass

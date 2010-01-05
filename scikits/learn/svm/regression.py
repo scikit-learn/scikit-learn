@@ -3,7 +3,8 @@ __all__ = [
     'LibSvmNuRegressionModel'
     ]
 
-from ctypes import cast, POINTER
+import numpy as N
+from ctypes import cast, POINTER, c_double
 
 from model import LibSvmModel
 import libsvm
@@ -46,7 +47,51 @@ class LibSvmRegressionResults:
         """
         return self.sigma
 
-class LibSvmEpsilonRegressionModel(LibSvmModel):
+class LibSvmRegressionModel(LibSvmModel):
+    Results = LibSvmRegressionResults
+
+    def __init__(self, kernel, **kwargs):
+        LibSvmModel.__init__(self, kernel, **kwargs)
+
+    def cross_validate(self, dataset, nr_fold):
+        """
+        Perform cross-validation to determine the suitability of
+        chosen model parameters.
+
+        Data are separated to nr_fold folds. Each fold is validated
+        against a model trained using the data from the remaining
+        (nr_fold-1) folds.
+
+        This function returns a 2-tuple containing the mean squared
+        error and the squared correlation coefficient.
+        """
+
+        problem, y, x = self._create_problem(dataset)
+        target = N.empty((len(dataset.data),), dtype=N.float64)
+        tp = cast(target.ctypes.data, POINTER(c_double))
+        libsvm.svm_cross_validation(problem, self.param, nr_fold, tp)
+
+        total_error = sumv = sumy = sumvv = sumyy = sumvy = 0.
+        for i in range(len(dataset.data)):
+            v = target[i]
+            y = dataset.data[i][0]
+            sumv = sumv + v
+            sumy = sumy + y
+            sumvv = sumvv + v * v
+            sumyy = sumyy + y * y
+            sumvy = sumvy + v * y
+            total_error = total_error + (v-y) * (v-y)
+
+        # mean squared error
+        mse = total_error / len(dataset.data)
+        # squared correlation coefficient
+        l = len(dataset.data)
+        scc = ((l*sumvy - sumv*sumy) * (l*sumvy - sumv*sumy)) / \
+            ((l*sumvv - sumv*sumv) * (l*sumyy - sumy*sumy))
+
+        return mse, scc
+
+class LibSvmEpsilonRegressionModel(LibSvmRegressionModel):
     """
     A model for epsilon-SV regression.
 
@@ -58,10 +103,8 @@ class LibSvmEpsilonRegressionModel(LibSvmModel):
       Prediction.
     """
 
-    Results = LibSvmRegressionResults
-
     def __init__(self, kernel, epsilon=0.1, cost=1.0, **kwargs):
-        LibSvmModel.__init__(self, kernel, **kwargs)
+        LibSvmRegressionModel.__init__(self, kernel, **kwargs)
         self.epsilon = epsilon
         self.cost = cost
         self.param.svm_type = libsvm.EPSILON_SVR
@@ -69,17 +112,15 @@ class LibSvmEpsilonRegressionModel(LibSvmModel):
         self.param.C = cost
         self.param.probability = True
 
-class LibSvmNuRegressionModel(LibSvmModel):
+class LibSvmNuRegressionModel(LibSvmRegressionModel):
     """
     A model for nu-SV regression.
 
     See also: Schoelkopf, et al. New Support Vector Algorithms.
     """
 
-    Results = LibSvmRegressionResults
-
     def __init__(self, kernel, nu=0.5, cost=1.0, **kwargs):
-        LibSvmModel.__init__(self, kernel, **kwargs)
+        LibSvmRegressionModel.__init__(self, kernel, **kwargs)
         self.nu = nu
         self.cost = cost
         self.param.svm_type = libsvm.NU_SVR

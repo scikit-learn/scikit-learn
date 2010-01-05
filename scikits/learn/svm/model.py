@@ -57,7 +57,7 @@ class LibSvmModel:
 
         self.param = param
 
-    def fit(self, dataset):
+    def _create_problem(self, dataset):
         # XXX don't poke around in dataset's internals
         problem = libsvm.svm_problem()
         problem.l = len(dataset.data)
@@ -69,6 +69,12 @@ class LibSvmModel:
         problem.x = cast(addressof(x), POINTER(POINTER(libsvm.svm_node)))
         problem.y = cast(addressof(y), POINTER(c_double))
         self._check_problem_param(problem, self.param)
+        # XXX keep references to y and x inside problem, if ctypes allows
+        # it (need to confirm this)
+        return problem, y, x
+
+    def fit(self, dataset):
+        problem, y, x = self._create_problem(dataset)
 
         model = libsvm.svm_train(problem, self.param)
 

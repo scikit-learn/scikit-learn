@@ -28,8 +28,6 @@ class LibSvmRegressionDataSet(LibSvmDataSet):
 class LibSvmClassificationDataSet(LibSvmDataSet):
     def __init__(self, origdata):
         labels = N.array(map(lambda x: x[0], origdata), dtype=N.intc)
-        assert N.alltrue(labels >= 0), \
-            'labels must be non-negative integers'
         labels.sort()
         self.labels = labels
 
