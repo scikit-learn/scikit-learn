@@ -18,4 +18,5 @@ How To Use This Module
 from classification import *
 from regression import *
 from oneclass import *
-from data import *
+from dataset import *
+from kernel import *
