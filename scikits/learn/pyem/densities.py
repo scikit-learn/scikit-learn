@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Mon Jun 11 07:00 PM 2007 J
+# Last Change: Tue Jun 12 12:00 PM 2007 J
 """This module implements various basic functions related to multivariate
 gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
 
@@ -268,7 +268,13 @@ def gauss_ell(mu, va, dim = misc.DEF_VIS_DIM, npoints = misc.DEF_ELL_NP, \
 
     return elps[0, :], elps[1, :]
 
-def multiple_gauss_den(data, mu, va):
+def logsumexp(x):
+    """Compute log(sum(exp(a), 1)) while avoiding underflow."""
+    axis = 1
+    mc = N.max(x, axis)
+    return mc + N.log(N.sum(N.exp(x-mc[:, N.newaxis]), axis))
+
+def multiple_gauss_den(data, mu, va, log = False):
     """Helper function to generate several Gaussian
     pdf (different parameters) at the same points
 
@@ -283,6 +289,8 @@ def multiple_gauss_den(data, mu, va):
             variance of the pdf. One row per different component for diagonal
             covariance (k, d), or d rows per component for full matrix pdf
             (k*d,d).
+        log : boolean
+            if True, returns the log-pdf instead of the pdf.
 
     :Returns:
         Returns a (n, k) array, each column i being the pdf of the ith mean and
@@ -297,11 +305,11 @@ def multiple_gauss_den(data, mu, va):
     y = N.zeros((K, n))
     if N.size(mu) == N.size(va):
         for i in range(K):
-            y[i] = gauss_den(data, mu[i, :], va[i, :])
+            y[i] = gauss_den(data, mu[i, :], va[i, :], log)
         return y.T
     else:
         for i in range(K):
-            y[i] = gauss_den(data, mu[i, :], va[d*i:d*i+d, :])
+            y[i] = gauss_den(data, mu[i, :], va[d*i:d*i+d, :], log)
         return y.T
 
 if __name__ == "__main__":

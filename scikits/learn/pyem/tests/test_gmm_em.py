@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jun 11 06:00 PM 2007 J
+# Last Change: Tue Jun 12 11:00 AM 2007 J
 
 # For now, just test that all mode/dim execute correctly
 

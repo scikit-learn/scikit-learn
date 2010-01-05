@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Jun 11 04:00 PM 2007 J
+# Last Change: Tue Jun 12 11:00 AM 2007 J
 
 """Module implementing GMM, a class to estimate Gaussian mixture models using
 EM, and EM, a class which use GMM instances to estimate models parameters using
@@ -101,8 +101,6 @@ class GMM(ExpMixtureModel):
             for i in range(k):
                 va[i*d:i*d+d]   = N.dot( va[i*d:i*d+d], 
                     va[i*d:i*d+d].T)
-            #raise GmmParamError("init_random not implemented for "\
-            #        "mode %s yet" % self.gm.mode)
 
         self.gm.set_param(w, mu, va)
         
@@ -150,11 +148,10 @@ class GMM(ExpMixtureModel):
         self.isinit = False
         self.initst = init
 
-    def sufficient_statistics(self, data):
+    def compute_responsabilities(self, data):
         """Compute responsabilities.
         
-        Return normalized and non-normalized sufficient statistics from the
-        model.
+        Return normalized and non-normalized respondabilities for the model.
         
         Note
         ----
@@ -325,11 +322,11 @@ class EM:
         like    = N.zeros(maxiter)
 
         # Em computation, with computation of the likelihood
-        g, tgd      = model.sufficient_statistics(data)
+        g, tgd      = model.compute_responsabilities(data)
         like[0]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
         model.update_em(data, g)
         for i in range(1, maxiter):
-            g, tgd      = model.sufficient_statistics(data)
+            g, tgd      = model.compute_responsabilities(data)
             like[i]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
             model.update_em(data, g)
             if has_em_converged(like[i], like[i-1], thresh):
@@ -337,21 +334,6 @@ class EM:
 
         return like
     
-#def regularize_diag(variance, alpha = _DEF_ALPHA):
-#    delta   = N.sum(variance) / variance.size
-#    if delta > _MIN_DBL_DELTA:
-#        return variance + alpha * delta
-#    else:
-#        return variance + alpha * _MIN_DBL_DELTA
-#
-#def regularize_full(variance):
-#    # Trace of a positive definite matrix is always > 0
-#    delta   = N.trace(variance) / variance.shape[0]
-#    if delta > _MIN_DBL_DELTA:
-#        return variance + alpha * delta
-#    else:
-#        return variance + alpha * _MIN_DBL_DELTA
-
 # Misc functions
 def bic(lk, deg, n):
     """ Expects lk to be log likelihood """
@@ -370,115 +352,6 @@ def has_em_converged(like, plike, thresh):
 
 if __name__ == "__main__":
     pass
-    ## import copy
-    ## #=============================
-    ## # Simple GMM with 5 components
-    ## #=============================
-
-    ## #+++++++++++++++++++++++++++++
-    ## # Meta parameters of the model
-    ## #   - k: Number of components
-    ## #   - d: dimension of each Gaussian
-    ## #   - mode: Mode of covariance matrix: full or diag
-    ## #   - nframes: number of frames (frame = one data point = one
-    ## #   row of d elements
-    ## k       = 2 
-    ## d       = 1
-    ## mode    = 'full'
-    ## nframes = 1e3
-
-    ## #+++++++++++++++++++++++++++++++++++++++++++
-    ## # Create an artificial GMM model, samples it
-    ## #+++++++++++++++++++++++++++++++++++++++++++
-    ## print "Generating the mixture"
-    ## # Generate a model with k components, d dimensions
-    ## w, mu, va   = GM.gen_param(d, k, mode, spread = 3)
-    ## gm          = GM(d, k, mode)
-    ## gm.set_param(w, mu, va)
-
-    ## # Sample nframes frames  from the model
-    ## data    = gm.sample(nframes)
-
-    ## #++++++++++++++++++++++++
-    ## # Learn the model with EM
-    ## #++++++++++++++++++++++++
-
-    ## # Init the model
-    ## print "Init a model for learning, with kmean for initialization"
-    ## lgm = GM(d, k, mode)
-    ## gmm = GMM(lgm, 'kmean')
-    ## gmm.init(data)
-
-    ## # Keep the initialized model for drawing
-    ## gm0 = copy.copy(lgm)
-
-    ## # The actual EM, with likelihood computation
-    ## niter   = 10
-    ## like    = N.zeros(niter)
-
-    ## print "computing..."
-    ## for i in range(niter):
-    ##     g, tgd  = gmm.sufficient_statistics(data)
-    ##     like[i] = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
-    ##     gmm.update_em(data, g)
-    ## # # Alternative form, by using EM class: as the EM class
-    ## # # is quite rudimentary now, it is not very useful, just save
-    ## # # a few lines
-    ## # em      = EM()
-    ## # like    = em.train(data, gmm, niter)
-
-    ## #+++++++++++++++
-    ## # Draw the model
-    ## #+++++++++++++++
-    ## print "drawing..."
-    ## import pylab as P
-    ## P.subplot(2, 1, 1)
-
-    ## if not d == 1:
-    ##     # Draw what is happening
-    ##     P.plot(data[:, 0], data[:, 1], '.', label = '_nolegend_')
-
-    ##     # Real confidence ellipses
-    ##     Xre, Yre  = gm.conf_ellipses()
-    ##     P.plot(Xre[0], Yre[0], 'g', label = 'true confidence ellipsoides')
-    ##     for i in range(1,k):
-    ##         P.plot(Xre[i], Yre[i], 'g', label = '_nolegend_')
-
-    ##     # Initial confidence ellipses as found by kmean
-    ##     X0e, Y0e  = gm0.conf_ellipses()
-    ##     P.plot(X0e[0], Y0e[0], 'k', label = 'initial confidence ellipsoides')
-    ##     for i in range(1,k):
-    ##         P.plot(X0e[i], Y0e[i], 'k', label = '_nolegend_')
-
-    ##     # Values found by EM
-    ##     Xe, Ye  = lgm.conf_ellipses()
-    ##     P.plot(Xe[0], Ye[0], 'r', label = "confidence ellipsoides found by"
-    ##      "EM")
-    ##     for i in range(1,k):
-    ##         P.plot(Xe[i], Ye[i], 'r', label = '_nolegend_')
-    ##     P.legend(loc = 0)
-    ## else:
-    ##     # Real confidence ellipses
-    ##     h   = gm.plot1d()
-    ##     [i.set_color('g') for i in h['pdf']]
-    ##     h['pdf'][0].set_label('true pdf')
-
-    ##     # Initial confidence ellipses as found by kmean
-    ##     h0  = gm0.plot1d()
-    ##     [i.set_color('k') for i in h0['pdf']]
-    ##     h0['pdf'][0].set_label('initial pdf')
-
-    ##     # Values found by EM
-    ##     hl  = lgm.plot1d(fill = 1, level = 0.66)
-    ##     [i.set_color('r') for i in hl['pdf']]
-    ##     hl['pdf'][0].set_label('pdf found by EM')
-
-    ##     P.legend(loc = 0)
-
-    ## P.subplot(2, 1, 2)
-    ## P.plot(like)
-    ## P.title('log likelihood')
-
     ## # #++++++++++++++++++
     ## # # Export the figure
     ## # #++++++++++++++++++

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jun 11 07:00 PM 2007 J
+# Last Change: Tue Jun 12 12:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
@@ -99,6 +99,58 @@ class test_py_implementation(TestDensities):
     def test_1d_log(self, level = 0):
         self._generate_test_data_1d()
         self._test_log(level)
+
+class test_py_logsumexp(TestDensities):
+    """Class to compare logsumexp vs naive implementation."""
+    def test_underlow(self):
+        """This function checks that logsumexp works as expected."""
+        # We check wether naive implementation would underflow, to be sure we
+        # are actually testing something here.
+        N.seterr(under='raise')
+        try:
+            a = N.array([[-1000]])
+            self.naive_logsumexp(a)
+            raise AssertionError("expected to catch underflow, we should not be here")
+        except FloatingPointError, e:
+            print "Catching underflow, as expected"
+        assert pyem.densities.logsumexp(a) == -1000.
+        try:
+            a = N.array([[-1000, -1000, -1000]])
+            self.naive_logsumexp(a)
+            raise AssertionError("expected to catch underflow, we should not be here")
+        except FloatingPointError, e:
+            print "Catching underflow, as expected"
+        assert_array_almost_equal(pyem.densities.logsumexp(a), -998.90138771)
+
+    def naive_logsumexp(self, data):
+        return N.log(N.sum(N.exp(data), 1)) 
+
+    def test_1d(self):
+        data = N.random.randn(1e1)[:, N.newaxis]
+        mu = N.array([[-5], [-6]])
+        va = N.array([[0.1], [0.1]])
+        y = pyem.densities.multiple_gauss_den(data, mu, va, log = True)
+        a1 = pyem.densities.logsumexp(y)
+        a2 = self.naive_logsumexp(y)
+        assert_array_equal(a1, a2)
+
+    def test_2d_full(self):
+        data = N.random.randn(1e1, 2)
+        mu = N.array([[-3, -1], [3, 3]])
+        va = N.array([[1.1, 0.4], [0.6, 0.8], [0.4, 0.2], [0.3, 0.9]])
+        y = pyem.densities.multiple_gauss_den(data, mu, va, log = True)
+        a1 = pyem.densities.logsumexp(y)
+        a2 = self.naive_logsumexp(y)
+        assert_array_almost_equal(a1, a2, DEF_DEC)
+
+    def test_2d_diag(self):
+        data = N.random.randn(1e1, 2)
+        mu = N.array([[-3, -1], [3, 3]])
+        va = N.array([[1.1, 0.4], [0.6, 0.8]])
+        y = pyem.densities.multiple_gauss_den(data, mu, va, log = True)
+        a1 = pyem.densities.logsumexp(y)
+        a2 = self.naive_logsumexp(y)
+        assert_array_almost_equal(a1, a2, DEF_DEC)
 
 class test_c_implementation(TestDensities):
     def _test(self, level, decimal = DEF_DEC):
