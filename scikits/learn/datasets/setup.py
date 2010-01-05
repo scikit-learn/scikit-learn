@@ -6,6 +6,8 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('oldfaithful')
     config.add_subpackage('pendigits')
     config.add_subpackage('iris')
+    config.add_subpackage('heart')
+    config.add_subpackage('german')
     config.make_config_py() # installs __config__.py
     return config
 
