@@ -9,6 +9,9 @@ __all__ = [
 class LibSvmOneClassResults:
     def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
+        if modelc.param.svm_type != libsvm.ONE_CLASS:
+            raise TypeError, '%s is for one-class problems' % \
+                str(self.__class__)
         self.rho = modelc.rho[0]
         self.sv_coef = modelc.sv_coef[0][:modelc.l]
         self.predictor = PredictorType(model, traindataset, kernel)

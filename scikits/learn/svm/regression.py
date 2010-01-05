@@ -15,6 +15,9 @@ __all__ = [
 class LibSvmRegressionResults:
     def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
+        if modelc.param.svm_type not in [libsvm.EPSILON_SVR, libsvm.NU_SVR]:
+            raise TypeError, '%s is for regression problems' % \
+                str(self.__class__)
         self.rho = modelc.rho[0]
         self.sv_coef = modelc.sv_coef[0][:modelc.l]
         if modelc.probA:

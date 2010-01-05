@@ -75,7 +75,7 @@ class test_classification(NumpyTestCase):
             results = model.fit(traindata, ResultType, PredictorType)
 
             self.assertEqual(results.labels, [0, 1, 2])
-            #self.assertEqual(model.nSV, [1, 2, 1])
+            self.assertEqual(results.nSV, [1, 2, 1])
 
             # use decimal=4 to suppress slight differences in values
             # calculated for rho on Windows with MSVC 7.1 and on

@@ -13,6 +13,9 @@ __all__ = [
 class LibSvmClassificationResults:
     def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
+        if modelc.param.svm_type not in [libsvm.C_SVC, libsvm.NU_SVC]:
+            raise TypeError, '%s is for classification problems' % \
+                str(self.__class__)
         self.nr_class = modelc.nr_class
         self.labels = modelc.labels[:self.nr_class]
         nrho = self.nr_class * (self.nr_class - 1) / 2

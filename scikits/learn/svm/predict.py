@@ -13,6 +13,10 @@ __all__ = [
 class LibSvmPredictor:
     def __init__(self, model, dataset, kernel):
         self.model = model
+        modelc = model.contents
+        if modelc.param.kernel_type == libsvm.PRECOMPUTED:
+            raise TypeError, '%s is for non-precomputed problems' % \
+                str(self.__class__)
 
     def __del__(self):
         libsvm.svm_destroy_model(self.model)
@@ -40,6 +44,9 @@ class LibSvmPrecomputedPredictor:
         self.kernel = kernel
         self.model = model
         modelc = model.contents
+        if modelc.param.kernel_type != libsvm.PRECOMPUTED:
+            raise TypeError, '%s is for precomputed problems' % \
+                str(self.__class__)
         ids = [int(modelc.SV[i][0].value) for i in range(modelc.l)]
         support_vectors = [dataset[id] for id in ids]
         self.support_vectors = support_vectors
