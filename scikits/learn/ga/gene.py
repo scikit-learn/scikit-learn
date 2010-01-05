@@ -193,7 +193,7 @@ class list_gene_gaussian_mutator:
         old = gene.index()
         new = -1; f = -1
         while not (0 <= new < size):
-            f = rv.norm(old,w)[0] 
+            f = rv.norm.rvs(old,w)[0] 
             new = round(f)
             if(old == new and f > new): new = new + 1
             if(old == new and f < new): new = new - 1
@@ -269,10 +269,10 @@ class float_gene_gaussian_mutator:
         dev = (gene.bounds[1]-gene.bounds[0]) * self.dev_width
         new = gene.bounds[1]
 #       while not (gene.bounds[0] <= new < gene.bounds[1]):
-#           new = rv.norm(gene.value(),dev)[0]
+#           new = rv.norm.rvs(gene.value(),dev)[0]
 #       new = rv.norm(gene.value(),dev)[0]
         #get the _value explicitly so mutator will work for log_float also
-        new = rv.norm(gene._value,dev).rvs()[0]
+        new = rv.norm.rvs(gene._value,dev)[0]
         if new > gene.bounds[1]: new = gene.bounds[1]
         if new < gene.bounds[0]: new = gene.bounds[0]
         return new
