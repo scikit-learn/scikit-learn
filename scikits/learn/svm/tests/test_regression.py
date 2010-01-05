@@ -113,7 +113,7 @@ class test_regression(NumpyTestCase):
                     [(1, 0.1, 0.0), (2, -0.2, 1.3), (3, 0.3, -0.3)]]
         #kernels += [SigmoidKernel(gamma, coef0)
         #            for gamma, coef0 in [(0.2, -0.5), (-0.5, 1.5)]]
-        #kernels += [CustomKernel(f) for f in [kernelf, kernelg]]
+        kernels += [CustomKernel(f) for f in [kernelf, kernelg]]
         return kernels
 
     def check_all(self):
@@ -126,9 +126,14 @@ class test_regression(NumpyTestCase):
                 LibSvmEpsilonRegressionModel(kernel, 1.0, 2.0),
                 LibSvmNuRegressionModel(kernel, 0.4, 0.5)
                 ]
-            fitargs = [
-                (trndata, LibSvmPredictor),
-                (trndata, LibSvmPythonPredictor),
+            fitargs = []
+            # CustomKernel needs a precomputed dataset
+            if not isinstance(kernel, CustomKernel):
+                fitargs += [
+                    (trndata, LibSvmPredictor),
+                    (trndata, LibSvmPythonPredictor),
+                    ]
+            fitargs += [
                 (pctrndata, LibSvmPredictor),
                 (pctrndata, LibSvmPythonPredictor)
                 ]
