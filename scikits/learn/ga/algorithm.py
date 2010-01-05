@@ -9,8 +9,10 @@ import anydbm, dumbdbm
 #import thread, sync
 if sys.platform != 'win32': 
 	import fcntl
-	time.clock = time.time	#clock behaves differently work on linux
-
+	timer = time.clock	#clock behaves differently work on linux
+else:
+    timer = time.time
+    
 dberror = dumbdbm.error
 
 def max_score(pop): return max(map(lambda x: x.score(),pop))
@@ -51,7 +53,7 @@ class galg:
 					print 'The valid settings are %s' % self.valid_settings
 	
 	def initialize(self,reseed = 1): 
-		b = time.clock()
+		b = timer()
 		self.test_settings(self.settings)
 		self.gen = 0
 		sd = self.settings['rand_seed']; alg = self.settings['rand_alg']
@@ -72,7 +74,7 @@ class galg:
 		self.stats = {'selections':0,'crossovers':0,'mutations':0,
 				  'replacements':0,'pop_evals':1,'ind_evals':0}
 		self.stats.update(self.pop.stats)
-		self.step_time = time.clock() - b
+		self.step_time = timer() - b
 		self.init_dbase()
 	def size_pop(self,s):
 		self.settings['pop_size'] = s
@@ -83,7 +85,7 @@ class galg:
 		replace = int(self.settings['p_replace'] * len(self.pop))
 		p_crossover = self.settings['p_cross']
 		for st in range(steps):
-			b = time.clock()
+			b = timer()
 			for i in range(0,replace,2):
 				mom,dad= self.pop.select(2)
 				self.stats['selections'] = self.stats['selections'] + 2
@@ -101,27 +103,27 @@ class galg:
 			if replace % 2: #we did one to many - remove the last individual
 				del self.pop[-1]
 				self.stats['crossovers'] = self.stats['crossovers'] - 1
-			e1 = time.clock();
+			e1 = timer();
 			self.stats['mutations'] = self.stats['mutations'] + self.pop[sz:].mutate()
 #			for ind in self.pop[sz:]:
 #				m = ind.mutate()
 #				self.stats['mutations'] = self.stats['mutations'] + m
-			e2 = time.clock();
+			e2 = timer();
 			self.pop.touch()
 			self.pop.evaluate()
-			e3 = time.clock();
+			e3 = timer();
 			del self.pop[sz:] #touch removed from del
 			self.pop.scale()
 			self.pop.update_stats()
 			self.stats['pop_evals'] = self.stats['pop_evals'] + 1
 			self.gen = self.gen + 1
-			e = time.clock(); self.step_time = e - b
+			e = timer(); self.step_time = e - b
 			#print 'cross:',e1-b,'mutate:',e2-e1,'eval:',e3-e2,'rest:',e-e3
 		self.stats.update(self.pop.stats)	
 		self.db_entry['best_scores'].append(self.stats['current']['max'])
 
 	def evolve(self):
-		b = time.clock()
+		b = timer()
 		self.initialize()
 		self.pre_evolve()
 		self.p_dev = self.pop_deviation()
@@ -135,7 +137,7 @@ class galg:
 				self.update_dbase()
 		self.update_dbase() #enter status prior to post_evolve in dbase
 		self.post_evolve()
-		self.db_entry['run_time'] = time.clock() - b
+		self.db_entry['run_time'] = timer() - b
 		self.write_dbase()
 	def iteration_output(self):
 		output = ( 'gen: ' + `self.gen` + ' ' 
@@ -233,7 +235,7 @@ class m_galg(galg):
 		self.settings = copy.copy(self.default_settings)
 
 	def initialize(self, mode = 'serial'): 
-		b = time.clock()
+		b = timer()
 		#same as galg
 		self.test_settings(self.settings)
 		self.gen = 0
@@ -284,7 +286,7 @@ class m_galg(galg):
 			cnt = cnt + 1
 		self.pop.sort() 			
 		self.init_stats()
-		self.step_time = time.clock() - b
+		self.step_time = timer() - b
 		self.init_dbase()
 
 	def init_stats(self):
@@ -323,7 +325,7 @@ class m_galg(galg):
 
 	def step(self,steps=1,mode = 'serial'):
 		for st in range(steps):
-			b = time.clock()
+			b = timer()
 			cnt = 0
 			#self.pop._size(0) # used if we keep a single pop
 			if mode[0] == 'p' or mode[0] == 'P':
@@ -348,7 +350,7 @@ class m_galg(galg):
 	
 			self.migrate()
 			self.gen = self.gen + 1
-			e = time.clock(); self.step_time = e - b
+			e = timer(); self.step_time = e - b
 			self.update_stats()
 			self.db_entry['best_scores'].append(self.stats['current']['max'])
 			
@@ -364,7 +366,7 @@ class m_galg(galg):
 		return 0
 
 	def evolve(self, mode = 'serial'):
-		b = time.clock()
+		b = timer()
 		self.initialize(mode)
 		self.pre_evolve()
 		self.p_dev = self.pop_deviation()
@@ -376,7 +378,7 @@ class m_galg(galg):
 			self.iteration_output()
 		self.update_dbase() #enter status prior to post_evolve in dbase
 		self.post_evolve()
-		self.db_entry['run_time'] = time.clock() - b
+		self.db_entry['run_time'] = timer() - b
 		self.write_dbase()
 
 	def migrate(self):
@@ -406,17 +408,17 @@ class m_galg(galg):
 
 """
 def GA_stepper(bar,finished,GA):
-	t1 = time.time()
+	t1 = timer()
 	GA.step()
-	t2 = time.time()
+	t2 = timer()
 	print 'thread ' + `thread.get_ident()` + 'time ' + `t2-t1` + ' sec.'
 	bar.enter()
 	finished.post()
 
 def GA_initializer(bar,finished,GA):
-	t1 = time.time()
+	t1 = timer()
 	GA.initialize(reseed = 0)
-	t2 = time.time()
+	t2 = timer()
 	print 'thread ' + `thread.get_ident()` + 'time ' + `t2-t1` + ' sec.'
 	bar.enter()
 	finished.post()			
