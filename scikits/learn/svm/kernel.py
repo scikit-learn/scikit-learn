@@ -50,7 +50,7 @@ class RBFKernel:
         self.dot = dot
 
     def __call__(self, x, y):
-        z = self.dot(x) + self.dot(y) - 2*self.dot(x, y)
+        z = self.dot(x, x) + self.dot(y, y) - 2*self.dot(x, y)
         return N.exp(-self.gamma*z)
 
 class SigmoidKernel:
