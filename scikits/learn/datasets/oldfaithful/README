@@ -1,0 +1,6 @@
+Each OldfaithfulC*.txt is one column of the datasets as presented in Azzalini
+and Bowman. The Oldfaithful.txt is simply a cat of all thos files: this is just
+to make checking easier. The data in the txt are *exactly* the same than the
+ones in Azzalini and Bowman: again, post processing them in python is easy
+(converting the time in seconds, etc...), and having exactly the data of the
+reference makes it easier to check.
