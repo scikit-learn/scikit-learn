@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Oct 06 08:00 PM 2006 J
+# Last Change: Thu Oct 12 09:00 PM 2006 J
 
 #---------------------------------------------
 # This is not meant to be used yet !!!! I am 
@@ -211,11 +211,16 @@ if __name__ == "__main__":
         nu[i]	= 1./(1 + lamb[i] / nu[i-1])
 
     gamma   = N.zeros((nframes, k))
+    agamma  = []
+    apw     = []
+    apmu    = []
+    apva    = []
+    print "========== Online Manual ==========="
     for e in range(emiter):
-        print "online manual:"
-        print pw
-        print pmu
-        print pva
+        print "online manual: estep %d, printing p* state " % e
+        apw.append(pw.copy())
+        apmu.append(pmu.copy())
+        apva.append(pva.copy())
         for t in range(nframes):
             gamma[t]    = multiple_gauss_den(data[t:t+1, :], pmu, pva)[0]
             gamma[t]    *= pw
@@ -234,32 +239,52 @@ if __name__ == "__main__":
             #pw  = cw.copy()
             #pmu = cmu.copy()
             #pva = cva.copy()
-        print gamma[-1]
+        print "gamma[end]: " + str(gamma[-1])
         pw  = cw.copy()
         pmu = cmu.copy()
         pva = cva.copy()
+        agamma.append(gamma.copy())
 
-    print "online manual:"
-    print pw
-    print pmu
-    print pva
+    gamma2  = N.zeros((nframes, k))
+    agamma2 = []
+    apw2    = []
+    apmu2   = []
+    apva2   = []
+    print "========== Online Automatic ==========="
     for e in range(emiter):
-        print "online automatic:"
-        print ogmm2.pw
-        print ogmm2.pmu
-        print ogmm2.pva
+        print "online automatic: estep %d, printing p* state " % e
+        apw2.append(ogmm2.pw.copy())
+        apmu2.append(ogmm2.pmu.copy())
+        apva2.append(ogmm2.pva.copy())
         for t in range(nframes):
-            gamma   = ogmm2.sufficient_statistics(data[t:t+1, :], nu[t])
-            ogmm2.update_em(data[t, :], gamma, nu[t])
-        print gamma
+            gamma2[t]   = ogmm2.sufficient_statistics(data[t:t+1, :], nu[t])
+            #gamma2[t]   = multiple_gauss_den(data[t:t+1, :], ogmm2.pmu, ogmm2.pva)[0]
+            #gamma2[t]   *= ogmm2.pw
+            #gamma2[t]   /= N.sum(gamma2[t])
+            #try:
+            #    assert_array_equal(agamma, gamma2[t])
+            #except AssertionError:
+            #    print "error for estep %d, step %d" % (e, t)
+            #    print ogmm2.pw
+            #    print ogmm2.pmu
+            #    print ogmm2.pva
+            #    raise 
+            ogmm2.update_em(data[t, :], gamma2[t], nu[t])
+            #ogmm2.cw	= (1 - nu[t]) * ogmm2.cw + nu[t] * agamma
+            ## loop through each component
+            #for i in range(k):
+            #    ogmm2.cx[i]   = (1 - nu[t]) * ogmm2.cx[i] + nu[t] * data[t, :] * agamma[i]
+            #    ogmm2.cxx[i]  = (1 - nu[t]) * ogmm2.cxx[i] + nu[t] * data[t, :] ** 2 * agamma[i]
+
+            #    ogmm2.cmu[i]  = ogmm2.cx[i] / ogmm2.cw[i]
+            #    ogmm2.cva[i]  = ogmm2.cxx[i] / ogmm2.cw[i] - ogmm2.cmu[i] ** 2
+
+        print "gamma[end]: " + str(gamma2[-1])
+        agamma2.append(gamma2.copy())
         ogmm2.pw  = ogmm2.cw.copy()
         ogmm2.pmu = ogmm2.cmu.copy()
         ogmm2.pva = ogmm2.cva.copy()
 
-    print "online automatic:"
-    print ogmm2.pw
-    print ogmm2.pmu
-    print ogmm2.pva
     # #ogm.set_param(pw, pmu, pva)
     # print "weights off vs on: \n" + str(lgm.w) + "\n " + str(cw)
     # print "mean off vs on: \n" + str(lgm.mu) + "\n " + str(cmu)
@@ -267,12 +292,16 @@ if __name__ == "__main__":
     # print "weights off vs on2: \n" + str(lgm.w) + "\n " + str(ogmm2.cw)
     # print "mean off vs on2: \n" + str(lgm.mu) + "\n " + str(ogmm2.cmu)
     # print "variances off vs on2: \n" + str(lgm.va) + "\n " + str(ogmm2.cva)
-    #assert_array_almost_equal(cw, lgm.w)
-    #assert_array_almost_equal(cmu, lgm.mu)
-    #assert_array_almost_equal(cva, lgm.va)
-    assert_array_almost_equal(ogmm2.cw, lgm.w)
-    assert_array_almost_equal(ogmm2.cmu, lgm.mu)
-    assert_array_almost_equal(ogmm2.cva, lgm.va)
+    # assert_array_almost_equal(cw, lgm.w)
+    # assert_array_almost_equal(cmu, lgm.mu)
+    # assert_array_almost_equal(cva, lgm.va)
+    assert_array_equal(ogmm2.pw, pw)
+    assert_array_equal(ogmm2.pmu, pmu)
+    assert_array_equal(ogmm2.pva, pva)
+    assert_array_equal(agamma[0], agamma2[0])
+    #assert_array_almost_equal(ogmm2.cw, lgm.w)
+    #assert_array_almost_equal(ogmm2.cmu, lgm.mu)
+    #assert_array_almost_equal(ogmm2.cva, lgm.va)
     # #+++++++++++++++
     # # Draw the model
     # #+++++++++++++++

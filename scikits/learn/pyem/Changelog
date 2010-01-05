@@ -1,3 +1,10 @@
+pyem (0.5.3) Thu, 12 Oct 2006 21:08:21 +0900
+
+	* Change the layout and setup.py for inclusion to scipy.
+	* Initial script for online em.
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.5.3) Tue, 03 Oct 2006 18:28:13 +0900
 
 	* Update tests so that they work within the numpy test framework
