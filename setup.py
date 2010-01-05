@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 02:00 PM 2007 J
+# Last Change: Mon Jul 09 01:00 PM 2007 J
 
 # Copyright (C) 2007 Cournapeau David <cournape@gmail.com>
 #
@@ -42,24 +42,6 @@ def configuration(parent_package='',top_path=None, package_name=DISTNAME):
         url = URL, 
         download_url = DOWNLOAD_URL,
         long_description = LONG_DESCRIPTION)
-
-    # XXX: once in SVN, should add svn version...
-    #print config.make_svn_version_py()
-
-    ## # package_data does not work with sdist for setuptools 0.5 (setuptools bug), 
-    ## # so we need to add them here while the bug is not solved...
-    ## config.add_data_files(('docs', \
-    ##         ['scikits/pyaudiolab/docs/' + i for i in DOC_FILES]))
-
-    ## config.add_data_files(('test_data', \
-    ##         ['scikits/pyaudiolab/test_data/' + i 
-    ##             for i in TEST_DATA_FILES]))
-
-    ## config.add_data_files(('misc', \
-    ##         ['scikits/pyaudiolab/misc/' + i 
-    ##             for i in BAD_FLAC_FILES]))
-
-    ## config.add_data_dir(('examples', 'scikits/pyaudiolab/docs/examples'))
 
     return config
 
