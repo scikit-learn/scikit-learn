@@ -29,7 +29,7 @@ mode    = 'diag'
 nframes = 1e3
 
 #+++++++++++++++++++++++++++++++++++++++++++
-# Create an artificial GMM model, samples it
+# Create an artificial GM model, samples it
 #+++++++++++++++++++++++++++++++++++++++++++
 w, mu, va   = GM.gen_param(d, k, mode, spread = 1.5)
 gm          = GM.fromvalues(w, mu, va)
@@ -80,7 +80,7 @@ if not d == 1:
     # Values found by EM
     h   = lgm.plot(level = level)
     [i.set_color('r') for i in h]
-    h[0].set_label('kmean confidence ellipsoides')
+    h[0].set_label('EM confidence ellipsoides')
 
     P.legend(loc = 0)
 else:

@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Oct 06 05:00 PM 2006 J
+# Last Change: Mon Oct 23 06:00 PM 2006 J
 
 # TODO:
 #   - which methods to avoid va shrinking to 0 ? There are several options, 
@@ -84,6 +84,8 @@ class GMM(ExpMixtureModel):
 
         self.gm.set_param(w, mu, va)
 
+        self.isinit = True
+
     def init_random(self, data):
         """ Init the model at random."""
         k   = self.gm.k
@@ -97,6 +99,8 @@ class GMM(ExpMixtureModel):
                     mode %s yet""", mode)
 
         self.gm.set_param(w, mu, va)
+        
+        self.isinit = True
 
     # TODO: 
     #   - format of parameters ? For variances, list of variances matrix,
@@ -115,6 +119,7 @@ class GMM(ExpMixtureModel):
             raise GmmParamError('init method %s not recognized' + str(init))
 
         self.init   = init_methods[init]
+        self.isinit = False
 
     def sufficient_statistics(self, data):
         """ Return normalized and non-normalized sufficient statistics
@@ -188,6 +193,53 @@ class GMM(ExpMixtureModel):
 
         self.gm.set_param(w, mu, va)
 
+    def likelihood(self, data):
+        """ Returns the current log likelihood of the model given
+        the data """
+        assert(self.isinit)
+        # compute the gaussian pdf
+        tgd	= multiple_gauss_den(data, self.gm.mu, self.gm.va)
+        # multiply by the weight
+        tgd	*= self.gm.w
+
+        return N.sum(N.log(N.sum(tgd, axis = 1)), axis = 0)
+
+    def bic(self, data):
+        """ Returns the BIC (Bayesian Information Criterion), 
+        also called Schwarz information criterion. Can be used 
+        to choose between different models which have different
+        number of clusters. The BIC is defined as:
+
+        BIC = 2 * ln(L) - k * ln(n)
+
+        where:
+            * ln(L) is the log-likelihood of the estimated model
+            * k is the number of degrees of freedom
+            * n is the number of frames
+        
+        Not that depending on the literature, BIC may be defined as the opposite
+        of the definition given here. """
+
+        if self.gm.mode == 'diag':
+            """ for a diagonal model, we have
+            k - 1 (k weigths, but one constraint of normality)
+            + k * d (means) + k * d (variances) """
+            free_deg    = self.gm.k * (self.gm.d * 2 + 1) - 1
+        elif self.gm.mode == 'full':
+            """ for a full model, we have
+            k - 1 (k weigths, but one constraint of normality)
+            + k * d (means) + k * d * d / 2 (each covariance matrice
+            has d **2 params, but with positivity constraint) """
+            if self.gm.d == 1:
+                free_deg    = self.gm.k * 3 - 1
+            else:
+                free_deg    = self.gm.k * (self.gm.d + 1 + self.gm.d ** 2 / 2) - 1
+
+        lk  = self.likelihood(data)
+        n   = N.shape(data)[0]
+        return bic(lk, free_deg, n)
+
+
 class EM:
     """An EM trainer. An EM trainer
     trains from data, with a model
@@ -234,6 +286,10 @@ class EM:
         return like
     
 # Misc functions
+def bic(lk, deg, n):
+    """ Expects lk to be log likelihood """
+    return 2 * lk - deg * N.log(n)
+
 def has_em_converged(like, plike, thresh):
     """ given likelihood of current iteration like and previous
     iteration plike, returns true is converged: based on comparison

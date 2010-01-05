@@ -1,3 +1,10 @@
+pyem (0.5.5) Mon, 23 Oct 2006 18:48:15 +0900
+
+	* Bump to 0.5.5
+	* Added bic method to GMM.
+	* A few fixes for docstrings
+	* Added bibliography to the doc
+
 pyem (0.5.4) Fri, 20 Oct 2006 12:52:01 +0900
 
 	* Bump to 0.5.4
