@@ -83,16 +83,3 @@ def convert_to_svm_node(x):
     assert len(x) == len(N.unique(y[:-1]['index'])), \
         'indexes must be unique'
     return y
-
-def svm_node_dot(x, y):
-    # associate node indexes with array indexes
-    xidx = dict(zip(x['index'][:-1],range(0,len(x))))
-    yidx = dict(zip(y['index'][:-1],range(0,len(y))))
-    # indexes in either vector
-    indexes = N.unique(N.hstack([x['index'],y['index']]))
-    z = 0.
-    for j in indexes:
-        if j in xidx and j in yidx:
-            # dot if index is present in both vectors
-            z += x['value'][xidx[j]]*y['value'][yidx[j]]
-    return z
