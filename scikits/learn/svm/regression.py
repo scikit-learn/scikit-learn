@@ -80,14 +80,14 @@ class LibSvmRegressionModel(LibSvmModel):
             sumvv = sumvv + v * v
             sumyy = sumyy + y * y
             sumvy = sumvy + v * y
-            total_error = total_error + (v-y) * (v-y)
+            total_error = total_error + (v - y) * (v - y)
 
         # mean squared error
         mse = total_error / len(dataset.data)
         # squared correlation coefficient
         l = len(dataset.data)
-        scc = ((l*sumvy - sumv*sumy) * (l*sumvy - sumv*sumy)) / \
-            ((l*sumvv - sumv*sumv) * (l*sumyy - sumy*sumy))
+        scc = ((l * sumvy - sumv * sumy) * (l * sumvy - sumv * sumy)) / \
+            ((l * sumvv - sumv*sumv) * (l * sumyy - sumy * sumy))
 
         return mse, scc
 

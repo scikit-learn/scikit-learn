@@ -41,7 +41,7 @@ class LibSvmPrecomputedDataSet:
         # Create Gram matrix as a list of vectors which an extra entry
         # for the id field.
         n = len(origdata)
-        grammat = [N.empty((n+1,), dtype=libsvm.svm_node_dtype)
+        grammat = [N.empty((n + 1,), dtype=libsvm.svm_node_dtype)
                    for i in range(n)]
         self.grammat = grammat
 
@@ -150,7 +150,7 @@ class LibSvmTestDataSet:
         self.data = map(lambda x: convert_to_svm_node(x), origdata)
 
 def convert_to_svm_node(x):
-    y = N.empty(len(x)+1, dtype=libsvm.svm_node_dtype)
+    y = N.empty(len(x) + 1, dtype=libsvm.svm_node_dtype)
     y[-1] = -1, 0.
     if isinstance(x, dict):
         x = x.items()
@@ -158,7 +158,7 @@ def convert_to_svm_node(x):
         x.sort(cmp=lambda x,y: cmp(x[0],y[0]))
         y[:-1] = x
     else:
-        y['index'][:-1] = N.arange(1,len(x)+1)
+        y['index'][:-1] = N.arange(1,len(x) + 1)
         y['value'][:-1] = x
     assert N.alltrue(y[:-1]['index'] >= 1), \
         'indexes must be positive'
@@ -176,5 +176,5 @@ def svm_node_dot(x, y):
     for j in indexes:
         if j in xidx and j in yidx:
             # dot if index is present in both vectors
-            z += x['value'][xidx[j]]*y['value'][yidx[j]]
+            z += x['value'][xidx[j]] * y['value'][yidx[j]]
     return z

@@ -26,7 +26,7 @@ class PolynomialKernel:
         self.coef0 = coef0
 
     def __call__(self, x, y, dot):
-        base = self.gamma*dot(x, y) + self.coef0
+        base = self.gamma * dot(x, y) + self.coef0
         tmp = base
         ret = 1.0
         t = self.degree
@@ -42,8 +42,8 @@ class RBFKernel:
         self.gamma = gamma
 
     def __call__(self, x, y, dot):
-        z = dot(x, x) + dot(y, y) - 2*dot(x, y)
-        return N.exp(-self.gamma*z)
+        z = dot(x, x) + dot(y, y) - 2 * dot(x, y)
+        return N.exp(-self.gamma * z)
 
 class SigmoidKernel:
     def __init__(self, gamma, coef0):
@@ -52,7 +52,7 @@ class SigmoidKernel:
         self.coef0 = coef0
 
     def __call__(self, x, y, dot):
-        return N.tanh(self.gamma*dot(x, y)+self.coef0)
+        return N.tanh(self.gamma * dot(x, y) + self.coef0)
 
 class CustomKernel:
     def __init__(self, f):

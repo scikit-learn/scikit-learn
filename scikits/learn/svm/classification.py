@@ -61,7 +61,7 @@ class LibSvmClassificationResults:
             count = 0
             d = {}
             for i in range(len(self.labels)):
-                for j in range(i+1, len(self.labels)):
+                for j in range(i + 1, len(self.labels)):
                     d[self.labels[i], self.labels[j]] = v[count]
                     d[self.labels[j], self.labels[i]] = -v[count]
                     count += 1
