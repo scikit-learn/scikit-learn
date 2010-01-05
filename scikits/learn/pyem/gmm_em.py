@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Nov 16 02:00 PM 2006 J
+# Last Change: Fri Jun 01 05:00 PM 2007 J
 
 # TODO:
 #   - which methods to avoid va shrinking to 0 ? There are several options, 
@@ -12,7 +12,8 @@ import numpy.linalg as lin
 from numpy.random import randn
 #import _c_densities as densities
 import densities
-from kmean import kmean
+#from kmean import kmean
+from scipy.cluster.vq import kmeans2 as kmean
 from gauss_mix import GM
 
 from misc import _DEF_ALPHA, _MIN_DBL_DELTA, _MIN_INV_COND

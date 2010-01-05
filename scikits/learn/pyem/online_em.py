@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Wed Dec 06 09:00 PM 2006 J
+# Last Change: Fri Jun 01 05:00 PM 2007 J
 
 #---------------------------------------------
 # This is not meant to be used yet !!!! I am 
@@ -23,7 +23,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from gmm_em import ExpMixtureModel, GMM, EM
 from gauss_mix import GM
-from kmean import kmean
+from scipy.cluster.vq import kmeans2 as kmean
 import densities2 as D
 
 import copy
