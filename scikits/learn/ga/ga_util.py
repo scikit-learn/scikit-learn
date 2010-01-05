@@ -7,7 +7,7 @@ GAError = 'GA Error'
 def nop(x): return x
 def flip_coin(p): return (rv.random() < p)
 
-import whrandom
+import random as whrandom
 
 def flip_coin2(p): return (whrandom.random() < p)
 class empty_class: pass

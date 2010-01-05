@@ -1,6 +1,6 @@
 import types
 import  time
-from whrandom import *
+from random import *
 SymbolError = 'Symbol Error'
 DepthError = 'Depth Error'
 

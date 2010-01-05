@@ -14,7 +14,7 @@ history:
 
 from ga_util import *
 import scipy.stats as rv
-from whrandom import random
+from random import random
 import copy
 
 class gene:
