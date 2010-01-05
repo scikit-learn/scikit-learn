@@ -1,5 +1,8 @@
 /*
- * Last Change: Wed Dec 06 08:00 PM 2006 J
+ * Last Change: Mon May 28 01:00 PM 2007 J
+ *
+ * Pure C module because ctypes cannot be used here for performance reasons
+ * (function calls are the primary bottleneck)
  */
 #include <Python.h>
 #include <numpy/arrayobject.h>

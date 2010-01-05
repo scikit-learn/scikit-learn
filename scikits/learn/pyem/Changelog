@@ -1,3 +1,7 @@
+pyem (0.5.7dev) Mon, 28 May 2007 11:31:08 +0900
+
+	* Put doc into its own directory
+
 pyem (0.5.6) Thu, 16 Nov 2006 21:02:02 +0900
 
 	* correct examples

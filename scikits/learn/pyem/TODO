@@ -1,8 +1,11 @@
-# Last Change: Thu Nov 09 06:00 PM 2006 J
+# Last Change: Mon May 28 11:00 AM 2007 J
+
 
 Things which must be implemented for a 1.0 version (in importante order)
     - A classifier
     - basic regularization
+    - Use scipy.cluster kmeans instead of our own, as it now provides all
+    necessary functionalities.
 
 Things which would be nice (after 1.0 version):
     - Bayes prior (hard, suppose MCMC)

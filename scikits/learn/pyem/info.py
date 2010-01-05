@@ -60,7 +60,7 @@ Bibliography:
 Copyright: David Cournapeau 2006
 License: BSD-style (see LICENSE.txt in main source directory)
 """
-version = '0.5.6'
+version = '0.5.7dev'
 
 depends = ['linalg', 'stats']
 ignore  = False

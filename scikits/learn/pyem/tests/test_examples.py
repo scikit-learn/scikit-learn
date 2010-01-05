@@ -1,10 +1,10 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 16 09:00 PM 2006 J
+# Last Change: Mon May 28 04:00 PM 2007 J
 
 from numpy.testing import *
 
 set_package_path()
-from pyem.examples import ex1, ex2, ex3
+from examples.examples import ex1, ex2, ex3
 restore_path()
 
 # #Optional:

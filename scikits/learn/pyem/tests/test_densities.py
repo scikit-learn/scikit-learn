@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 09 05:00 PM 2006 J
+# Last Change: Mon May 28 01:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
