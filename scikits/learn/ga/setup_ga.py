@@ -1,13 +1,13 @@
+#!/usr/bin/env python
+
 import os
 from scipy_distutils.misc_util import get_path, default_config_dict
 
 def configuration(parent_package=''):
-    if parent_package:
-        parent_package += '.'
-    local_path = get_path(__name__)
-
-    config = default_config_dict()
-    config['packages'].append(parent_package+'ga')
-    #config['packages'].append(parent_package+'ga.tests') 
-
+    package = 'ga'
+    config = default_config_dict(package,parent_package)
     return config
+
+if __name__ == '__main__':
+    from scipy_distutils.core import setup
+    setup(**configuration())
