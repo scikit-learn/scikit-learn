@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Jun 11 03:00 PM 2007 J
+# Last Change: Mon Jun 11 06:00 PM 2007 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -132,6 +132,7 @@ class GM:
         :SeeAlso:
             If you know already the parameters when creating the model, you can
             simply use the method class GM.fromvalues."""
+        #XXX: when fromvalues is called, parameters are called twice...
         k, d, mode  = check_gmm_param(weights, mu, sigma)
         if not k == self.k:
             raise GmParamError("Number of given components is %d, expected %d" 
@@ -664,14 +665,14 @@ def check_gmm_param(w, mu, va):
     """
         
     # Check that w is valid
-    if N.fabs(N.sum(w, 0)  - 1) > misc._MAX_DBL_DEV:
+    if not len(w.shape) == 1:
+        raise GmParamError('weight should be a rank 1 array')
+
+    if N.fabs(N.sum(w)  - 1) > misc._MAX_DBL_DEV:
         raise GmParamError('weight does not sum to 1')
     
-    if not len(w.shape) == 1:
-        raise GmParamError('weight is not a vector')
-
     # Check that mean and va have the same number of components
-    K           = len(w)
+    K = len(w)
 
     if N.ndim(mu) < 2:
         msg = "mu should be a K,d matrix, and a row vector if only 1 comp"
