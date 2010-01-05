@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Tue Jun 12 03:00 PM 2007 J
+# Last Change: Sat Jun 30 05:00 PM 2007 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -319,7 +319,7 @@ class GM:
         return True
 
     @classmethod
-    def gen_param(cls, d, nc, varmode = 'diag', spread = 1):
+    def gen_param(cls, d, nc, mode = 'diag', spread = 1):
         """Generate random, valid parameters for a gaussian mixture model.
 
         :Parameters:
@@ -327,7 +327,7 @@ class GM:
                 the dimension
             nc : int
                 the number of components
-            varmode : string
+            mode : string
                 covariance matrix mode ('full' or 'diag').
 
         :Returns:
@@ -346,9 +346,9 @@ class GM:
         w   = w / sum(w, 0)
 
         mu  = spread * N.sqrt(d) * randn(nc, d)
-        if varmode == 'diag':
+        if mode == 'diag':
             va  = N.abs(randn(nc, d))
-        elif varmode == 'full':
+        elif mode == 'full':
             # If A is invertible, A'A is positive definite
             va  = randn(nc * d, d)
             for k in range(nc):
@@ -360,12 +360,6 @@ class GM:
         return w, mu, va
 
     #gen_param = classmethod(gen_param)
-
-    # #=======================
-    # # Regularization methods
-    # #=======================
-    # def _regularize(self):
-    #     raise NotImplemented("No regularization")
 
     def pdf(self, x, log = False):
         """Computes the pdf of the model at given points.
@@ -532,7 +526,7 @@ class GM:
         return retval
 
     def density_on_grid(self, dim = misc.DEF_VIS_DIM, nx = 50, ny = 50,
-            maxlevel = 0.95, V = None):
+            nl = 20, maxlevel = 0.95, V = None):
         """Do all the necessary computation for contour plot of mixture's
         density.
         
@@ -543,6 +537,8 @@ class GM:
                 Number of points to use for the x axis of the grid
             ny : int
                 Number of points to use for the y axis of the grid
+            nl : int
+                Number of contour to plot.
         
         :Returns:
             X : ndarray
@@ -582,7 +578,7 @@ class GM:
         if V is None:
             #V = [-5, -3, -1, -0.5, ]
             #V.extend(list(N.linspace(0, N.max(lden), 20)))
-            V = N.linspace(-5, N.max(lden), 20)
+            V = N.linspace(-5, N.max(lden), nl)
         return X, Y, lden, N.array(V)
 
     def _densityctr(self, rangex, rangey, dim = misc.DEF_VIS_DIM):
