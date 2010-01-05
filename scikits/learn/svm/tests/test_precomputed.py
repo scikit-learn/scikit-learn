@@ -12,7 +12,6 @@ restore_path()
 class test_precomputed(NumpyTestCase):
     def xcheck_precomputed_classification(self):
         ModelType = LibSvmCClassificationModel
-        ResultType = LibSvmClassificationResults
         kernel = LinearKernel()
 
         labels1 = ([0] * 10) + ([1] * 10) + ([2] * 10)
@@ -26,13 +25,13 @@ class test_precomputed(NumpyTestCase):
 
         pcdata12 = pcdata1.combine(data2)
         model = LibSvmCClassificationModel(kernel)
-        results = model.fit(pcdata12, ResultType,LibSvmPrecomputedPredictor)
+        results = model.fit(pcdata12)
 
         reflabels = labels1 + labels2
         refx = N.vstack([x1, x2])
         refdata = LibSvmClassificationDataSet(zip(reflabels, refx))
         model = ModelType(kernel)
-        refresults = model.fit(refdata, ResultType, LibSvmPredictor)
+        refresults = model.fit(refdata)
 
         assert_array_almost_equal(results.rho, refresults.rho)
         assert_array_almost_equal(results.sv_coef, refresults.sv_coef)
@@ -56,7 +55,6 @@ class test_precomputed(NumpyTestCase):
 
     def check_precomputed_regression(self):
         ModelType = LibSvmEpsilonRegressionModel
-        ResultType = LibSvmRegressionResults
 
         kernel = LinearKernel()
 
@@ -74,7 +72,7 @@ class test_precomputed(NumpyTestCase):
 
         pcdata12 = pcdata1.combine(data2)
         model = LibSvmEpsilonRegressionModel(kernel)
-        results = model.fit(pcdata12, ResultType, LibSvmPrecomputedPredictor)
+        results = model.fit(pcdata12, LibSvmPredictor)
 
         # reference model, calculated without involving the
         # precomputed Gram matrix
@@ -82,7 +80,7 @@ class test_precomputed(NumpyTestCase):
         refx = N.vstack([x1, x2])
         refdata = LibSvmRegressionDataSet(zip(refy, refx))
         model = ModelType(kernel)
-        refresults = model.fit(refdata, ResultType, LibSvmPredictor)
+        refresults = model.fit(refdata, LibSvmPredictor)
 
         self.assertAlmostEqual(results.rho, refresults.rho)
         assert_array_almost_equal(results.sv_coef, refresults.sv_coef)

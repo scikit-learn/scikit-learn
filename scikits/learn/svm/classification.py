@@ -89,6 +89,8 @@ class LibSvmClassificationModel(LibSvmModel):
       Machines.
     """
 
+    ResultsType = LibSvmClassificationResults
+
     def __init__(self, kernel, weights, **kwargs):
         LibSvmModel.__init__(self, kernel, **kwargs)
         if weights is not None:

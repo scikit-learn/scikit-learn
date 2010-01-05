@@ -5,7 +5,6 @@ set_local_path('../..')
 from svm.classification import *
 from svm.dataset import LibSvmClassificationDataSet, LibSvmTestDataSet
 from svm.kernel import *
-from svm.predict import *
 restore_path()
 
 class test_classification(NumpyTestCase):
@@ -27,8 +26,6 @@ class test_classification(NumpyTestCase):
 
     def check_c_basics(self):
         ModelType = LibSvmCClassificationModel
-        ResultType = LibSvmClassificationResults
-        PredictorType = LibSvmPredictor
 
         labels = [0, 1, 1, 2]
         x = [N.array([0, 0]),
@@ -37,15 +34,13 @@ class test_classification(NumpyTestCase):
              N.array([1, 1])]
         traindata = LibSvmClassificationDataSet(zip(labels, x))
         model = ModelType(RBFKernel(traindata.gamma))
-        results = model.fit(traindata, ResultType, PredictorType)
+        results = model.fit(traindata)
         testdata = LibSvmTestDataSet(x)
         results.predict(testdata)
         results.predict_values(testdata)
 
     def check_c_more(self):
         ModelType = LibSvmCClassificationModel
-        ResultType = LibSvmClassificationResults
-        PredictorType = LibSvmPredictor
 
         labels = [0, 1, 1, 2]
         x = [N.array([0, 0]),
@@ -72,7 +67,7 @@ class test_classification(NumpyTestCase):
         for kernel, expected_rho, expected_error in \
             zip(kernels, expected_rhos, expected_errors):
             model = ModelType(kernel, cost, weights)
-            results = model.fit(traindata, ResultType, PredictorType)
+            results = model.fit(traindata)
 
             self.assertEqual(results.labels, [0, 1, 2])
             self.assertEqual(results.nSV, [1, 2, 1])
@@ -87,8 +82,6 @@ class test_classification(NumpyTestCase):
 
     def check_c_probability(self):
         ModelType = LibSvmCClassificationModel
-        ResultType = LibSvmClassificationResults
-        PredictorType = LibSvmPredictor
 
         labels = [0, 1, 1, 2]
         x = [N.array([0, 0]),
@@ -108,7 +101,7 @@ class test_classification(NumpyTestCase):
 
         for kernel in kernels:
             model = ModelType(kernel, cost, weights)
-            results = model.fit(traindata, ResultType, PredictorType)
+            results = model.fit(traindata)
             results.predict_probability(testdata)
 
     def check_cross_validate(self):

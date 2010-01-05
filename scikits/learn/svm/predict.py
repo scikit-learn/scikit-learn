@@ -6,53 +6,24 @@ import libsvm
 
 __all__ = [
     'LibSvmPredictor',
-    'LibSvmPrecomputedPredictor',
     'LibSvmPythonPredictor'
     ]
 
 class LibSvmPredictor:
     def __init__(self, model, dataset, kernel):
         self.model = model
+        self.kernel = kernel
         modelc = model.contents
         if modelc.param.kernel_type == libsvm.PRECOMPUTED:
-            raise TypeError, '%s is for non-precomputed problems' % \
-                str(self.__class__)
-
-    def __del__(self):
-        libsvm.svm_destroy_model(self.model)
-
-    def predict(self, x):
-        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-        return libsvm.svm_predict(self.model, xptr)
-
-    def predict_values(self, x, n):
-        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-        v = N.empty((n,), dtype=N.float64)
-        vptr = cast(v.ctypes.data, POINTER(c_double))
-        libsvm.svm_predict_values(self.model, xptr, vptr)
-        return v
-
-    def predict_probability(self, x, n):
-        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-        pe = N.empty((n,), dtype=N.float64)
-        peptr = cast(pe.ctypes.data, POINTER(c_double))
-        label = libsvm.svm_predict_probability(self.model, xptr, peptr)
-        return label, pe
-
-class LibSvmPrecomputedPredictor:
-    def __init__(self, model, dataset, kernel):
-        self.kernel = kernel
-        self.model = model
-        modelc = model.contents
-        if modelc.param.kernel_type != libsvm.PRECOMPUTED:
-            raise TypeError, '%s is for precomputed problems' % \
-                str(self.__class__)
-        ids = [int(modelc.SV[i][0].value) for i in range(modelc.l)]
-        support_vectors = [dataset[id] for id in ids]
-        self.support_vectors = support_vectors
-        # fix support vector ids in precomputed data
-        for i in range(modelc.l):
-            modelc.SV[i][0].value = i
+            ids = [int(modelc.SV[i][0].value) for i in range(modelc.l)]
+            support_vectors = [dataset[id] for id in ids]
+            self.support_vectors = support_vectors
+            # fix support vector ids in precomputed data
+            for i in range(modelc.l):
+                modelc.SV[i][0].value = i
+            self._transform_input = self._create_gramvec
+        else:
+            self._transform_input = lambda x: x
 
     def __del__(self):
         libsvm.svm_destroy_model(self.model)
@@ -65,24 +36,24 @@ class LibSvmPrecomputedPredictor:
         return gramvec
 
     def predict(self, x):
-        g = self._create_gramvec(x)
-        gptr = cast(g.ctypes.data, POINTER(libsvm.svm_node))
-        return libsvm.svm_predict(self.model, gptr)
+        x = self._transform_input(x)
+        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
+        return libsvm.svm_predict(self.model, xptr)
 
     def predict_values(self, x, n):
-        g = self._create_gramvec(x)
-        gptr = cast(g.ctypes.data, POINTER(libsvm.svm_node))
+        x = self._transform_input(x)
+        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
         v = N.empty((n,), dtype=N.float64)
         vptr = cast(v.ctypes.data, POINTER(c_double))
-        libsvm.svm_predict(self.model, gptr, vptr)
+        libsvm.svm_predict_values(self.model, xptr, vptr)
         return v
 
     def predict_probability(self, x, n):
-        g = self._create_gramvec(x)
-        gptr = cast(g.ctypes.data, POINTER(libsvm.svm_node))
+        x = self._transform_input(x)
+        xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
         pe = N.empty((n,), dtype=N.float64)
         peptr = cast(pe.ctypes.data, POINTER(c_double))
-        label = libsvm.svm_predict_probability(self.model, gptr, peptr)
+        label = libsvm.svm_predict_probability(self.model, xptr, peptr)
         return label, pe
 
 class LibSvmPythonPredictor:

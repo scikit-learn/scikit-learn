@@ -1,6 +1,7 @@
 from ctypes import POINTER, c_double, c_int
 
 from kernel import *
+from predict import *
 import libsvm
 
 __all__ = [
@@ -43,12 +44,12 @@ class LibSvmModel:
 
         self.param = param
 
-    def fit(self, dataset, ResultType, PredictorType):
+    def fit(self, dataset, PredictorType=LibSvmPredictor):
         problem = dataset._create_svm_problem()
         dataset._update_svm_parameter(self.param)
         self._check_problem_param(problem, self.param)
         model = libsvm.svm_train(problem, self.param)
-        return ResultType(model, dataset, self.kernel, PredictorType)
+        return self.ResultsType(model, dataset, self.kernel, PredictorType)
 
     def _check_problem_param(self, problem, param):
         error_msg = libsvm.svm_check_parameter(problem, param)

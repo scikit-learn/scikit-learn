@@ -27,8 +27,6 @@ class test_regression(NumpyTestCase):
 
     def check_epsilon_train(self):
         ModelType = LibSvmEpsilonRegressionModel
-        ResultType = LibSvmRegressionResults
-        PredictorType = LibSvmPredictor
 
         y = [10., 20., 30., 40.]
         x = [N.array([0, 0]),
@@ -38,14 +36,12 @@ class test_regression(NumpyTestCase):
         traindata = LibSvmRegressionDataSet(zip(y, x))
         testdata = LibSvmTestDataSet(x)
         model = ModelType(LinearKernel())
-        results = model.fit(traindata, ResultType, PredictorType)
+        results = model.fit(traindata)
         results.predict(testdata)
         results.get_svr_probability()
 
     def check_epsilon_more(self):
         ModelType = LibSvmEpsilonRegressionModel
-        ResultType = LibSvmRegressionResults
-        PredictorType = LibSvmPredictor
 
         y = [0.0, 1.0, 1.0, 2.0]
         x = [N.array([0, 0]),
@@ -70,7 +66,7 @@ class test_regression(NumpyTestCase):
 
         for kernel, expected_y in zip(kernels, expected_ys):
             model = ModelType(kernel, epsilon, cost)
-            results = model.fit(traindata, ResultType, PredictorType)
+            results = model.fit(traindata)
             predictions = results.predict(testdata)
             # look at differences instead of using assertAlmostEqual
             # due to slight differences between answers obtained on
@@ -121,7 +117,6 @@ class test_regression(NumpyTestCase):
         return kernels
 
     def check_all(self):
-        ResultType = LibSvmRegressionResults
         trndata, trndata1, trndata2, testdata = self._make_datasets()
         kernels = self._make_kernels()
         for kernel in kernels:
@@ -132,10 +127,10 @@ class test_regression(NumpyTestCase):
                 LibSvmNuRegressionModel(kernel, 0.4, 0.5)
                 ]
             fitargs = [
-                (trndata, ResultType, LibSvmPredictor),
-                (trndata, ResultType, LibSvmPythonPredictor),
-                #(pctrndata, ResultType, LibSvmPrecomputedPredictor),
-                (pctrndata, ResultType, LibSvmPythonPredictor)
+                (trndata, LibSvmPredictor),
+                (trndata, LibSvmPythonPredictor),
+                #(pctrndata, LibSvmPredictor),
+                (pctrndata, LibSvmPythonPredictor)
                 ]
             for model in models:
                 refresults = model.fit(*fitargs[0])

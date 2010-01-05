@@ -43,6 +43,8 @@ class LibSvmOneClassModel(LibSvmModel):
     High-Dimensional Distribution.
     """
 
+    ResultsType = LibSvmOneClassResults
+
     def __init__(self, kernel, nu=0.5, **kwargs):
         """
         Parameters:
