@@ -1,4 +1,4 @@
-from scipy.numeric import *
+from Numeric import *
 
 import sys, thread, sync
 
