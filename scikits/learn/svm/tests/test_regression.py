@@ -35,7 +35,7 @@ class test_regression(NumpyTestCase):
              N.array([1, 1])]
         traindata = LibSvmRegressionDataSet(zip(y, x))
         testdata = LibSvmTestDataSet(x)
-        model = ModelType(LinearKernel())
+        model = ModelType(LinearKernel(), probability=True)
         results = model.fit(traindata)
         results.predict(testdata)
         results.get_svr_probability()

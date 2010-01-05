@@ -101,7 +101,7 @@ class test_classification(NumpyTestCase):
             ]
 
         for kernel in kernels:
-            model = ModelType(kernel, cost, weights)
+            model = ModelType(kernel, cost, weights, True)
             results = model.fit(traindata)
             results.predict_probability(testdata)
 
@@ -156,8 +156,8 @@ class test_classification(NumpyTestCase):
             pctrndata1 = trndata1.precompute(kernel)
             pctrndata = pctrndata1.combine(trndata2)
             models = [
-                LibSvmCClassificationModel(kernel, 2.0, weights),
-                LibSvmNuClassificationModel(kernel, 0.3, weights)
+                LibSvmCClassificationModel(kernel, 2.0, weights, True),
+                LibSvmNuClassificationModel(kernel, 0.3, weights, True)
                 ]
             fitargs = []
             # CustomKernel needs a precomputed dataset

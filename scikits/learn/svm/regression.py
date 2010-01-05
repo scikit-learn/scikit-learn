@@ -100,14 +100,15 @@ class LibSvmEpsilonRegressionModel(LibSvmRegressionModel):
       Prediction.
     """
 
-    def __init__(self, kernel, epsilon=0.1, cost=1.0, **kwargs):
+    def __init__(self, kernel, epsilon=0.1, cost=1.0,
+                 probability=False, **kwargs):
         LibSvmRegressionModel.__init__(self, kernel, **kwargs)
         self.epsilon = epsilon
         self.cost = cost
         self.param.svm_type = libsvm.EPSILON_SVR
         self.param.p = epsilon
         self.param.C = cost
-        self.param.probability = True
+        self.param.probability = probability
 
 class LibSvmNuRegressionModel(LibSvmRegressionModel):
     """
@@ -116,11 +117,12 @@ class LibSvmNuRegressionModel(LibSvmRegressionModel):
     See also: Schoelkopf, et al. New Support Vector Algorithms.
     """
 
-    def __init__(self, kernel, nu=0.5, cost=1.0, **kwargs):
+    def __init__(self, kernel,
+                 nu=0.5, cost=1.0, probability=False, **kwargs):
         LibSvmRegressionModel.__init__(self, kernel, **kwargs)
         self.nu = nu
         self.cost = cost
         self.param.svm_type = libsvm.NU_SVR
         self.param.nu = nu
         self.param.C = cost
-        self.param.probability = True
+        self.param.probability = probability

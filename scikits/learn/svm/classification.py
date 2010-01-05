@@ -142,7 +142,8 @@ class LibSvmCClassificationModel(LibSvmClassificationModel):
       Recognition.
     """
 
-    def __init__(self, kernel, cost=1.0, weights=None, **kwargs):
+    def __init__(self, kernel,
+                 cost=1.0, weights=None, probability=False, **kwargs):
         """
         Parameters:
 
@@ -153,9 +154,7 @@ class LibSvmCClassificationModel(LibSvmClassificationModel):
         self.cost = cost
         self.param.svm_type = libsvm.C_SVC
         self.param.C = cost
-        # always train probability model parameters
-        # XXX review this decision when we do performance optimization
-        self.param.probability = True
+        self.param.probability = probability
 
 class LibSvmNuClassificationModel(LibSvmClassificationModel):
     """
@@ -167,7 +166,8 @@ class LibSvmNuClassificationModel(LibSvmClassificationModel):
     - Scholkopf, et al. New Support Vector Algorithms.
     """
 
-    def __init__(self, kernel, nu=0.5, weights=None, **kwargs):
+    def __init__(self, kernel,
+                 nu=0.5, weights=None, probability=False, **kwargs):
         """
         Parameters:
 
@@ -178,6 +178,4 @@ class LibSvmNuClassificationModel(LibSvmClassificationModel):
         self.nu = nu
         self.param.svm_type = libsvm.NU_SVC
         self.param.nu = nu
-        # always train probability model parameters
-        # XXX review this decision when we do performance optimization
-        self.param.probability = True
+        self.param.probability = probability
