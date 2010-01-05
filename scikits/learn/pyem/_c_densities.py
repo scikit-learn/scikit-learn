@@ -1,28 +1,34 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Thu Nov 09 05:00 PM 2006 J
+# Last Change: Sat Jun 09 10:00 PM 2007 J
+
+"""This module implements some function of densities module in C for efficiency
+reasons.  gaussian, such as pdf estimation, confidence interval/ellipsoids,
+etc..."""
+
+__docformat__ = 'restructuredtext'
 
 # This module uses a C implementation through ctypes, for diagonal cases
 # TODO:
 #   - portable way to find/open the shared library
 #   - full cov matrice
+#   - test before inclusion
 
 import numpy as N
 import numpy.linalg as lin
-from numpy.random import randn
-from scipy.stats import chi2
-import densities as D
+#from numpy.random import randn
+#from scipy.stats import chi2
+#import densities as D
 
 import ctypes
-from ctypes import cdll, c_uint, c_int, c_double, POINTER
+from ctypes import c_uint, c_int
 from numpy.ctypeslib import ndpointer, load_library
 
 ctypes_major    = int(ctypes.__version__.split('.')[0])
 if ctypes_major < 1:
-    msg =  "version of ctypes is %s, expected at least %s" \
-            % (ctypes.__version__, '1.0.0')
-    raise ImportError(msg)
+    raise ImportError(msg =  "version of ctypes is %s, expected at least %s"\
+            % (ctypes.__version__, '1.0.1'))
 
 # Requirements for diag gden
 _gden   = load_library('c_gden.so', __file__)
@@ -75,9 +81,9 @@ def gauss_den(x, mu, va, log = False):
     if len(N.shape(x)) != 2:
         raise DenError("x is not rank 2")
         
-    (n, d)      = x.shape
-    (dm0, dm1)  = mu.shape
-    (dv0, dv1)  = va.shape
+    (n, d)      = N.shape(x)
+    (dm0, dm1)  = N.shape(mu)
+    (dv0, dv1)  = N.shape(va)
     
     # Check x and mu same dimension
     if dm0 != 1:
@@ -165,9 +171,9 @@ def _diag_gauss_den(x, mu, va, log):
         #     inva.ctypes.data_as(POINTER(c_double)),
         #     y.ctypes.data_as(POINTER(c_double)))
     else:
-        y   = _scalar_gauss_den(x[:,0], mu[0,0], va[0,0], log)
+        y   = _scalar_gauss_den(x[:, 0], mu[0, 0], va[0, 0], log)
         for i in range(1, d):
-            y    +=  _scalar_gauss_den(x[:,i], mu[0,i], va[0,i], log)
+            y    +=  _scalar_gauss_den(x[:, i], mu[0, i], va[0, i], log)
         return y
 
 def _full_gauss_den(x, mu, va, log):
@@ -199,19 +205,20 @@ def _full_gauss_den(x, mu, va, log):
     return y
 
 if __name__ == "__main__":
-    #=========================================
-    # Test accuracy between pure and C python
-    #=========================================
-    mu  = N.array([2.0, 3])
-    va  = N.array([5.0, 3])
+    pass
+    ##=========================================
+    ## Test accuracy between pure and C python
+    ##=========================================
+    #mu  = N.array([2.0, 3])
+    #va  = N.array([5.0, 3])
 
-    # Generate a multivariate gaussian of mean mu and covariance va
-    nframes = 1e4
-    X       = randn(nframes, 2)
-    Yc      = N.dot(N.diag(N.sqrt(va)), X.transpose())
-    Yc      = Yc.transpose() + mu
+    ## Generate a multivariate gaussian of mean mu and covariance va
+    #nframes = 1e4
+    #X       = randn(nframes, 2)
+    #Yc      = N.dot(N.diag(N.sqrt(va)), X.transpose())
+    #Yc      = Yc.transpose() + mu
 
-    Y   = D.gauss_den(Yc, mu, va)
-    Yt  = gauss_den(Yc, mu, va)
+    #Y   = D.gauss_den(Yc, mu, va)
+    #Yt  = gauss_den(Yc, mu, va)
 
-    print "Diff is " + str(N.sqrt(N.sum((Y-Yt) ** 2))/nframes/2)
+    #print "Diff is " + str(N.sqrt(N.sum((Y-Yt) ** 2))/nframes/2)

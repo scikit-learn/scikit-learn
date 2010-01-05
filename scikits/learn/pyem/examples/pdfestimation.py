@@ -1,15 +1,11 @@
 #! /usr/bin/env python
-# Last Change: Sat Jun 09 03:00 PM 2007 J
+# Last Change: Sat Jun 09 07:00 PM 2007 J
 
 # Example of doing pdf estimation with EM algorithm. Requires matplotlib.
 import numpy as N
-from numpy.testing import set_package_path, restore_path
-
 import pylab as P
 
-set_package_path()
-import pyem
-restore_path()
+from scipy.sandbox import pyem
 import utils
 
 oldfaithful = utils.get_faithful()
@@ -45,6 +41,8 @@ for k in range(1, 5):
     X, Y, Z, V = gm.density_on_grid()
     P.contour(X, Y, Z, V)
     P.plot(dt[:, 0], dt[:, 1], '.')
+    P.xlabel('duration time (scaled)')
+    P.ylabel('waiting time (scaled)')
 
 print "According to the BIC, model with %d components is better" % (N.argmax(bc) + 1)
 P.show()

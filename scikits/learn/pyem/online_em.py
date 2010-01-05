@@ -1,28 +1,27 @@
 # /usr/bin/python
-# Last Change: Fri Jun 08 08:00 PM 2007 J
+# Last Change: Sat Jun 09 10:00 PM 2007 J
 
-#---------------------------------------------
-# This is not meant to be used yet !!!! I am 
-# not sure how to integrate this stuff inside
-# the package yet. The cases are:
-#   - we have a set of data, and we want to test online EM 
-#   compared to normal EM 
-#   - we do not have all the data before putting them in online EM:
-#   eg current frame depends on previous frame in some way.
+# This is not meant to be used yet !!!! I am not sure how to integrate this
+# stuff inside the package yet. The cases are:
+#   - we have a set of data, and we want to test online EM compared to normal
+#   EM 
+#   - we do not have all the data before putting them in online EM: eg current
+#   frame depends on previous frame in some way.
 
 # TODO:
 #   - Add biblio
-#   - Look back at articles for discussion for init, regularization and 
+#   - Look back at articles for discussion for init, regularization and
 #   convergence rates
-#   - the function sufficient_statistics does not really return SS. This is not a
-#   big problem, but it would be better to really return them as the name implied.
+#   - the function sufficient_statistics does not really return SS. This is not
+#   a big problem, but it would be better to really return them as the name
+#   implied.
 
 import numpy as N
 from numpy import mean
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from gmm_em import ExpMixtureModel, GMM, EM
-from gauss_mix import GM
+from gmm_em import ExpMixtureModel#, GMM, EM
+#from gauss_mix import GM
 from scipy.cluster.vq import kmeans2 as kmean
 import densities2 as D
 
@@ -60,22 +59,24 @@ class OnGMM(ExpMixtureModel):
         k   = self.gm.k
         d   = self.gm.d
         if self.gm.mode == 'diag':
-            w           = N.ones(k) / k
+            w  = N.ones(k) / k
 
             # Init the internal state of EM
-            self.cx     = N.outer(w, mean(init_data, 0))
-            self.cxx    = N.outer(w, mean(init_data ** 2, 0))
+            self.cx = N.outer(w, mean(init_data, 0))
+            self.cxx = N.outer(w, mean(init_data ** 2, 0))
 
             # w, mu and va init is the same that in the standard case
-            (code, label)   = kmean(init_data, init_data[0:k, :], iter = niter, minit = 'matrix')
-            mu          = code.copy()
-            va          = N.zeros((k, d))
+            (code, label) = kmean(init_data, init_data[0:k, :], iter = 10,
+                    minit = 'matrix')
+            mu = code.copy()
+            va = N.zeros((k, d))
             for i in range(k):
                 for j in range(d):
-                    va [i,j] = N.cov(init_data[N.where(label==i), j], rowvar = 0)
+                    va [i, j] = N.cov(init_data[N.where(label==i), j], 
+                            rowvar = 0)
         else:
             raise OnGmmParamError("""init_online not implemented for
-                    mode %s yet""", mode)
+                    mode %s yet""", self.gm.mode)
 
         self.gm.set_param(w, mu, va)
         # c* are the parameters which are computed at every step (ie
@@ -95,22 +96,24 @@ class OnGMM(ExpMixtureModel):
         k   = self.gm.k
         d   = self.gm.d
         if self.gm.mode == 'diag':
-            w           = N.ones(k) / k
+            w  = N.ones(k) / k
 
             # Init the internal state of EM
-            self.cx     = N.outer(w, mean(init_data, 0))
-            self.cxx    = N.outer(w, mean(init_data ** 2, 0))
+            self.cx = N.outer(w, mean(init_data, 0))
+            self.cxx = N.outer(w, mean(init_data ** 2, 0))
 
             # w, mu and va init is the same that in the standard case
-            (code, label)   = kmean(init_data, init_data[0:k, :], iter = niter, minit = 'matrix')
-            mu          = code.copy()
-            va          = N.zeros((k, d))
+            (code, label) = kmean(init_data, init_data[0:k, :], 
+                    iter = niter, minit = 'matrix')
+            mu = code.copy()
+            va = N.zeros((k, d))
             for i in range(k):
                 for j in range(d):
-                    va [i,j] = N.cov(init_data[N.where(label==i), j], rowvar = 0)
+                    va[i, j] = N.cov(init_data[N.where(label==i), j], 
+                            rowvar = 0)
         else:
             raise OnGmmParamError("""init_online not implemented for
-                    mode %s yet""", mode)
+                    mode %s yet""", self.gm.mode)
 
         self.gm.set_param(w, mu, va)
         # c* are the parameters which are computed at every step (ie
@@ -278,132 +281,133 @@ def multiple_gauss_den_frame(data, mu, va):
         
 
 if __name__ == '__main__':
-    d       = 1
-    k       = 2
-    mode    = 'diag'
-    nframes = int(5e3)
-    emiter  = 4
-    seed(5)
+    pass
+    #d       = 1
+    #k       = 2
+    #mode    = 'diag'
+    #nframes = int(5e3)
+    #emiter  = 4
+    #seed(5)
 
-    #+++++++++++++++++++++++++++++++++++++++++++++++++
-    # Generate a model with k components, d dimensions
-    #+++++++++++++++++++++++++++++++++++++++++++++++++
-    w, mu, va   = GM.gen_param(d, k, mode, spread = 1.5)
-    gm          = GM.fromvalues(w, mu, va)
-    # Sample nframes frames  from the model
-    data        = gm.sample(nframes)
+    ##+++++++++++++++++++++++++++++++++++++++++++++++++
+    ## Generate a model with k components, d dimensions
+    ##+++++++++++++++++++++++++++++++++++++++++++++++++
+    #w, mu, va   = GM.gen_param(d, k, mode, spread = 1.5)
+    #gm          = GM.fromvalues(w, mu, va)
+    ## Sample nframes frames  from the model
+    #data        = gm.sample(nframes)
 
-    #++++++++++++++++++++++++++++++++++++++++++
-    # Approximate the models with classical EM
-    #++++++++++++++++++++++++++++++++++++++++++
-    # Init the model
-    lgm = GM(d, k, mode)
-    gmm = GMM(lgm, 'kmean')
-    gmm.init(data)
+    ##++++++++++++++++++++++++++++++++++++++++++
+    ## Approximate the models with classical EM
+    ##++++++++++++++++++++++++++++++++++++++++++
+    ## Init the model
+    #lgm = GM(d, k, mode)
+    #gmm = GMM(lgm, 'kmean')
+    #gmm.init(data)
 
-    gm0    = copy.copy(gmm.gm)
-    # The actual EM, with likelihood computation
-    like    = N.zeros(emiter)
-    for i in range(emiter):
-        g, tgd  = gmm.sufficient_statistics(data)
-        like[i] = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
-        gmm.update_em(data, g)
+    #gm0    = copy.copy(gmm.gm)
+    ## The actual EM, with likelihood computation
+    #like    = N.zeros(emiter)
+    #for i in range(emiter):
+    #    g, tgd  = gmm.sufficient_statistics(data)
+    #    like[i] = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
+    #    gmm.update_em(data, g)
 
-    #++++++++++++++++++++++++++++++++++++++++
-    # Approximate the models with online EM
-    #++++++++++++++++++++++++++++++++++++++++
-    ogm     = GM(d, k, mode)
-    ogmm    = OnGMM(ogm, 'kmean')
-    init_data   = data[0:nframes / 20, :]
-    ogmm.init(init_data)
+    ##++++++++++++++++++++++++++++++++++++++++
+    ## Approximate the models with online EM
+    ##++++++++++++++++++++++++++++++++++++++++
+    #ogm     = GM(d, k, mode)
+    #ogmm    = OnGMM(ogm, 'kmean')
+    #init_data   = data[0:nframes / 20, :]
+    #ogmm.init(init_data)
 
-    # Forgetting param
-    ku		= 0.005
-    t0		= 200
-    lamb	= 1 - 1/(N.arange(-1, nframes-1) * ku + t0)
-    nu0		= 0.2
-    nu		= N.zeros((len(lamb), 1))
-    nu[0]	= nu0
-    for i in range(1, len(lamb)):
-        nu[i]	= 1./(1 + lamb[i] / nu[i-1])
+    ## Forgetting param
+    #ku		= 0.005
+    #t0		= 200
+    #lamb	= 1 - 1/(N.arange(-1, nframes-1) * ku + t0)
+    #nu0		= 0.2
+    #nu		= N.zeros((len(lamb), 1))
+    #nu[0]	= nu0
+    #for i in range(1, len(lamb)):
+    #    nu[i]	= 1./(1 + lamb[i] / nu[i-1])
 
-    print "meth1"
-    # object version of online EM
-    for t in range(nframes):
-        ogmm.compute_sufficient_statistics_frame(data[t], nu[t])
-        ogmm.update_em_frame()
+    #print "meth1"
+    ## object version of online EM
+    #for t in range(nframes):
+    #    ogmm.compute_sufficient_statistics_frame(data[t], nu[t])
+    #    ogmm.update_em_frame()
 
-    ogmm.gm.set_param(ogmm.cw, ogmm.cmu, ogmm.cva)
+    #ogmm.gm.set_param(ogmm.cw, ogmm.cmu, ogmm.cva)
 
-    # 1d optimized version
-    ogm2        = GM(d, k, mode)
-    ogmm2       = OnGMM1d(ogm2, 'kmean')
-    ogmm2.init(init_data[:, 0])
+    ## 1d optimized version
+    #ogm2        = GM(d, k, mode)
+    #ogmm2       = OnGMM1d(ogm2, 'kmean')
+    #ogmm2.init(init_data[:, 0])
 
-    print "meth2"
-    # object version of online EM
-    for t in range(nframes):
-        ogmm2.compute_sufficient_statistics_frame(data[t, 0], nu[t])
-        ogmm2.update_em_frame()
+    #print "meth2"
+    ## object version of online EM
+    #for t in range(nframes):
+    #    ogmm2.compute_sufficient_statistics_frame(data[t, 0], nu[t])
+    #    ogmm2.update_em_frame()
 
-    #ogmm2.gm.set_param(ogmm2.cw, ogmm2.cmu, ogmm2.cva)
+    ##ogmm2.gm.set_param(ogmm2.cw, ogmm2.cmu, ogmm2.cva)
 
-    print ogmm.cw
-    print ogmm2.cw
-    #+++++++++++++++
-    # Draw the model
-    #+++++++++++++++
-    print "drawing..."
-    import pylab as P
-    P.subplot(2, 1, 1)
+    #print ogmm.cw
+    #print ogmm2.cw
+    ##+++++++++++++++
+    ## Draw the model
+    ##+++++++++++++++
+    #print "drawing..."
+    #import pylab as P
+    #P.subplot(2, 1, 1)
 
-    if not d == 1:
-        # Draw what is happening
-        P.plot(data[:, 0], data[:, 1], '.', label = '_nolegend_')
+    #if not d == 1:
+    #    # Draw what is happening
+    #    P.plot(data[:, 0], data[:, 1], '.', label = '_nolegend_')
 
-        h   = gm.plot()    
-        [i.set_color('g') for i in h]
-        h[0].set_label('true confidence ellipsoides')
+    #    h   = gm.plot()    
+    #    [i.set_color('g') for i in h]
+    #    h[0].set_label('true confidence ellipsoides')
 
-        h   = gm0.plot()    
-        [i.set_color('k') for i in h]
-        h[0].set_label('initial confidence ellipsoides')
+    #    h   = gm0.plot()    
+    #    [i.set_color('k') for i in h]
+    #    h[0].set_label('initial confidence ellipsoides')
 
-        h   = lgm.plot()    
-        [i.set_color('r') for i in h]
-        h[0].set_label('confidence ellipsoides found by EM')
+    #    h   = lgm.plot()    
+    #    [i.set_color('r') for i in h]
+    #    h[0].set_label('confidence ellipsoides found by EM')
 
-        h   = ogmm.gm.plot()    
-        [i.set_color('m') for i in h]
-        h[0].set_label('confidence ellipsoides found by Online EM')
+    #    h   = ogmm.gm.plot()    
+    #    [i.set_color('m') for i in h]
+    #    h[0].set_label('confidence ellipsoides found by Online EM')
 
-        # P.legend(loc = 0)
-    else:
-        # Real confidence ellipses
-        h   = gm.plot1d()
-        [i.set_color('g') for i in h['pdf']]
-        h['pdf'][0].set_label('true pdf')
+    #    # P.legend(loc = 0)
+    #else:
+    #    # Real confidence ellipses
+    #    h   = gm.plot1d()
+    #    [i.set_color('g') for i in h['pdf']]
+    #    h['pdf'][0].set_label('true pdf')
 
-        # Initial confidence ellipses as found by kmean
-        h0  = gm0.plot1d()
-        [i.set_color('k') for i in h0['pdf']]
-        h0['pdf'][0].set_label('initial pdf')
+    #    # Initial confidence ellipses as found by kmean
+    #    h0  = gm0.plot1d()
+    #    [i.set_color('k') for i in h0['pdf']]
+    #    h0['pdf'][0].set_label('initial pdf')
 
-        # Values found by EM
-        hl  = lgm.plot1d(fill = 1, level = 0.66)
-        [i.set_color('r') for i in hl['pdf']]
-        hl['pdf'][0].set_label('pdf found by EM')
+    #    # Values found by EM
+    #    hl  = lgm.plot1d(fill = 1, level = 0.66)
+    #    [i.set_color('r') for i in hl['pdf']]
+    #    hl['pdf'][0].set_label('pdf found by EM')
 
-        P.legend(loc = 0)
+    #    P.legend(loc = 0)
 
-        # Values found by Online EM
-        hl  = ogmm.gm.plot1d(fill = 1, level = 0.66)
-        [i.set_color('m') for i in hl['pdf']]
-        hl['pdf'][0].set_label('pdf found by Online EM')
+    #    # Values found by Online EM
+    #    hl  = ogmm.gm.plot1d(fill = 1, level = 0.66)
+    #    [i.set_color('m') for i in hl['pdf']]
+    #    hl['pdf'][0].set_label('pdf found by Online EM')
 
-        P.legend(loc = 0)
+    #    P.legend(loc = 0)
 
-    P.subplot(2, 1, 2)
-    P.plot(nu)
-    P.title('Learning rate')
-    P.show()
+    #P.subplot(2, 1, 2)
+    #P.plot(nu)
+    #P.title('Learning rate')
+    #P.show()

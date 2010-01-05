@@ -13,7 +13,7 @@
         file: Bic_example.png
     /restindex
 
-.. Last Change: Mon May 28 10:00 AM 2007 J
+.. Last Change: Sat Jun 09 07:00 PM 2007 J
 
 ===================================================
  PyEM, a python package for Gaussian mixture models
@@ -176,13 +176,35 @@ useful for complex drawing.
 Examples 
 =========
 
-TODO.
+Using EM for pdf estimation
+---------------------------
+
+The following example uses the old faithful dataset and is available in the
+example directory. It models the joint distribution (d(t), w(t+1)), where d(t)
+is the duration time, and w(t+1) the waiting time for the next eruption. It
+selects the best model using the BIC.
+
+.. raw:: latex
+
+    \input{pdfestimation.tex}
+
+.. figure:: pdfestimation.png 
+    :width: 500
+    :height: 400
+
+    isodensity curves for the old faithful data modeled by a 1, 2, 3 and 4
+    componenits model (up to bottom, left to right).
+
 
 Using EM for clustering
 -----------------------
 
+TODO (this is fundamentally the same than pdf estimation, though)
+
 Using PyEM for supervised learning
 ----------------------------------
+
+TODO
 
 Note on performances
 ====================

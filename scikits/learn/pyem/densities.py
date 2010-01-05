@@ -1,8 +1,8 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Sat Jun 09 08:00 PM 2007 J
-"""This module implements various bsic functions related to multivariate
+# Last Change: Sat Jun 09 10:00 PM 2007 J
+"""This module implements various basic functions related to multivariate
 gaussian, such as pdf estimation, confidence interval/ellipsoids, etc..."""
 
 __docformat__ = 'restructuredtext'
@@ -50,10 +50,10 @@ def gauss_den(x, mu, va, log = False):
         pdf : ndarray
             Returns a rank 1 array of the pdf at points x.
 
-    Notes
-    -----
-    Vector are row vectors, except va which can be a matrix
-    (row vector variance for diagonal variance)."""
+    Note
+    ----
+        Vector are row vectors, except va which can be a matrix
+        (row vector variance for diagonal variance)."""
     
     lmu  = N.atleast_2d(mu)
     lva  = N.atleast_2d(va)
