@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Wed Dec 06 09:00 PM 2006 J
+# Last Change: Sat Jun 02 07:00 PM 2007 J
 
 # New version, with default numpy ordering.
 
