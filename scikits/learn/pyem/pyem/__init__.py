@@ -1,7 +1,7 @@
 #! /usr/bin/env python
-# Last Change: Fri Aug 04 11:00 PM 2006 J
+# Last Change: Thu Aug 17 03:00 PM 2006 J
 
-version = '0.5.0'
+version = '0.5.1'
 
 from gauss_mix import GmParamError, GM
 from gmm_em import GmmParamError, GMM

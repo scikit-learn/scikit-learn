@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Jul 13 07:00 PM 2006 J
+# Last Change: Thu Aug 17 03:00 PM 2006 J
 
 import numpy as N
 
@@ -20,14 +20,14 @@ def kmean(data, init, iter = 10):
         msg = "data and init centers do not have same dimensions..."
         raise GmmParamError(msg)
     
-    code    = N.asarray(init.copy(), float)
+    code    = N.asarray(init.copy())
     for i in range(iter):
         # Compute the nearest neighbour for each obs
         # using the current code book
         label   = _vq(data, code)
         # Update the code by computing centroids using the new code book
         for j in range(k):
-            code[j,:] = N.mean(data[N.where(label==j)]) 
+            code[j,:] = N.mean(data[N.where(label==j)], axis=0) 
 
     return code, label
 

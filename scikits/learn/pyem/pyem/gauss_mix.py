@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Aug 04 07:00 PM 2006 J
+# Last Change: Thu Aug 17 03:00 PM 2006 J
 
 # Module to implement GaussianMixture class.
 
@@ -54,12 +54,12 @@ class GM:
 
         # Init to 0 all parameters, with the right dimensions.
         # Not sure this is useful in python from an efficiency POV ?
-        self.w   = N.zeros(k, float)
-        self.mu  = N.zeros((k, d), float)
+        self.w   = N.zeros(k)
+        self.mu  = N.zeros((k, d))
         if mode == 'diag':
-            self.va  = N.zeros((k, d), float)
+            self.va  = N.zeros((k, d))
         elif mode == 'full':
-            self.va  = N.zeros((k * d, d), float)
+            self.va  = N.zeros((k * d, d))
 
         self.is_valid   = False
 
@@ -96,7 +96,7 @@ class GM:
             X   = self.mu[S, :]  + X * N.sqrt(self.va[S,:])
         elif self.mode == 'full':
             # Faster:
-            cho = N.zeros((self.k, self.va.shape[1], self.va.shape[1]), float)
+            cho = N.zeros((self.k, self.va.shape[1], self.va.shape[1]))
             for i in range(self.k):
                 # Using cholesky looks more stable than sqrtm; sqrtm is not
                 # available in numpy anyway, only in scipy...
@@ -110,14 +110,13 @@ class GM:
 
         return X
 
-    def conf_ellipses(self, c = [0, 1], npoints = 100):
+    def conf_ellipses(self, *args, **kargs):
         """Returns a list of confidence ellipsoids describing the Gmm
-        defined by mu and va. c is the dimension we are projecting
-        the variances on a 2d space. For now, the confidence level
-        is fixed to 0.39.
-        
+        defined by mu and va. Check densities.gauss_ell for details
+
         Returns:
-            -Xe:    a list of x coordinates for the ellipses
+            -Xe:    a list of x coordinates for the ellipses (Xe[i] is
+            the array containing x coordinates of the ith Gaussian)
             -Ye:    a list of y coordinates for the ellipses
 
         Example:
@@ -134,22 +133,19 @@ class GM:
             Will plot samples X draw from the mixture model, and
             plot the ellipses of equi-probability from the mean with
             fixed level of confidence 0.39.  """
-        # TODO: adjustable level (to do in gauss_ell). 
-        # For now, a level of 0.39 means that we draw
-        # ellipses for 1 standard deviation. 
         Xe  = []
         Ye  = []   
         if self.mode == 'diag':
             for i in range(self.k):
-                xe, ye  = densities.gauss_ell(self.mu[i,:], self.va[i,:], dim = c, 
-                        npoints = npoints)
+                xe, ye  = densities.gauss_ell(self.mu[i,:], self.va[i,:], 
+                        *args, **kargs)
                 Xe.append(xe)
                 Ye.append(ye)
         elif self.mode == 'full':
             for i in range(self.k):
                 xe, ye  = densities.gauss_ell(self.mu[i,:], 
-                        self.va[i*self.d:i*self.d+self.d,:], dim = c, 
-                        npoints = npoints)
+                        self.va[i*self.d:i*self.d+self.d,:], 
+                        *args, **kargs)
                 Xe.append(xe)
                 Ye.append(ye)
 
@@ -165,7 +161,7 @@ class GM:
         Returns: w, mu, va
         """
         w   = abs(randn(nc))
-        w   = w / sum(w)
+        w   = w / sum(w, 0)
 
         mu  = spread * randn(nc, d)
         if varmode == 'diag':
@@ -222,7 +218,7 @@ def check_gmm_param(w, mu, va):
     """
         
     # Check that w is valid
-    if N.fabs(N.sum(w)  - 1) > MAX_DEV:
+    if N.fabs(N.sum(w, 0)  - 1) > MAX_DEV:
         raise GmmParamError('weight does not sum to 1')
     
     if not len(w.shape) == 1:
@@ -266,7 +262,7 @@ if __name__ == '__main__':
     #   - d = dimension
     #   - mode : mode of covariance matrices
     d       = 5
-    k       = 5
+    k       = 4
     mode    = 'full'
     nframes = 1e3
 
@@ -283,9 +279,10 @@ if __name__ == '__main__':
 
     P.plot(X[:, 0], X[:, 1], '.', label = '_nolegend_')
 
-    # Real confidence ellipses with level 0.39
-    Xre, Yre  = gm.conf_ellipses()
-    P.plot(Xre[0], Yre[0], 'g', label = 'true confidence ellipsoides')
+    # Real confidence ellipses with confidence level 
+    level       = 0.39
+    Xre, Yre    = gm.conf_ellipses(level = level)
+    P.plot(Xre[0], Yre[0], 'g', label = 'true confidence ellipsoides at level %.2f' % level)
     for i in range(1,k):
         P.plot(Xre[i], Yre[i], 'g', label = '_nolegend_')
 

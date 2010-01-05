@@ -39,7 +39,7 @@ def bench1(mode = 'diag'):
 
     # The actual EM, with likelihood computation
     niter   = 10
-    like    = N.zeros(niter, float)
+    like    = N.zeros(niter)
 
     print "computing..."
     for i in range(niter):

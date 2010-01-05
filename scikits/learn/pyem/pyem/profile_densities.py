@@ -45,4 +45,3 @@ if __name__ == "__main__":
     import pstats
     p = pstats.Stats('gdenprof')
     print p.sort_stats('cumulative').print_stats(20)
-

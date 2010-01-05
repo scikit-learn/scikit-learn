@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Aug 04 07:00 PM 2006 J
+# Last Change: Thu Aug 17 03:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -60,15 +60,15 @@ class GMM(ExpMixtureModel):
 
         (code, label)   = kmean(data, init, niter)
 
-        w   = N.ones(k, float) / k
+        w   = N.ones(k) / k
         mu  = code.copy()
         if self.gm.mode == 'diag':
-            va = N.zeros((k, d), float)
+            va = N.zeros((k, d))
             for i in range(k):
                 for j in range(d):
                     va[i,j] = N.cov(data[N.where(label==i), j], rowvar = 0)
         elif self.gm.mode == 'full':
-            va  = N.zeros((k*d, d), float)
+            va  = N.zeros((k*d, d))
             for i in range(k):
                 va[i*d:i*d+d,:] = \
                     N.cov(data[N.where(label==i)], rowvar = 0)
@@ -84,7 +84,7 @@ class GMM(ExpMixtureModel):
         k   = self.gm.k
         d   = self.gm.d
         if mode == 'diag':
-            w   = N.ones(k, float) / k
+            w   = N.ones(k) / k
             mu  = randn(k, d)
             va  = N.fabs(randn(k, d))
         else:
@@ -142,11 +142,11 @@ class GMM(ExpMixtureModel):
         d       = self.gm.d
         n       = data.shape[0]
         invn    = 1.0/n
-        mGamma  = N.sum(gamma)
+        mGamma  = N.sum(gamma, axis = 0)
 
         if self.gm.mode == 'diag':
-            mu  = N.zeros((k, d), float)
-            va  = N.zeros((k, d), float)
+            mu  = N.zeros((k, d))
+            va  = N.zeros((k, d))
             gamma   = gamma.transpose()
             for c in range(k):
                 # x       = N.sum(N.outerproduct(gamma[:, k], 
@@ -161,18 +161,18 @@ class GMM(ExpMixtureModel):
             w   = invn * mGamma
 
         elif self.gm.mode == 'full':
-            mu  = N.zeros((k, d), float)
-            va  = N.zeros((k*d, d), float)
+            mu  = N.zeros((k, d))
+            va  = N.zeros((k*d, d))
 
             for c in range(k):
                 x   = N.sum(N.outerproduct(gamma[:, c], 
-                            N.ones((1, d), float)) * data)
-                xx  = N.zeros((d, d), float)
+                            N.ones((1, d))) * data, axis = 0)
+                xx  = N.zeros((d, d))
                 
                 # This should be much faster than recursing on n...
                 for i in range(d):
                     for j in range(d):
-                        xx[i,j] = N.sum(data[:,i] * data[:,j] * gamma[:,c])
+                        xx[i,j] = N.sum(data[:,i] * data[:,j] * gamma[:,c], axis = 0)
 
                 mu[c,:] = x / mGamma[c]
                 va[c*d:c*d+d,:] = xx  / mGamma[c] - \
@@ -211,12 +211,12 @@ class EM:
         model.init(data)
 
         # Likelihood is kept
-        like    = N.zeros(niter, float)
+        like    = N.zeros(niter)
 
         # Em computation, with computation of the likelihood
         for i in range(niter):
             g, tgd      = model.sufficient_statistics(data)
-            like[i]     = N.sum(N.log(N.sum(tgd, 1)))
+            like[i]     = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
             model.update_em(data, g)
 
         return like
@@ -232,7 +232,7 @@ def multiple_gauss_den(data, mu, va):
     n   = data.shape[0]
     d   = data.shape[1]
     
-    y   = N.zeros((n, K), float)
+    y   = N.zeros((n, K))
     if mu.size == va.size:
         for i in range(K):
             y[:, i] = densities.gauss_den(data, mu[i, :], va[i, :])
@@ -288,12 +288,12 @@ if __name__ == "__main__":
 
     # The actual EM, with likelihood computation
     niter   = 10
-    like    = N.zeros(niter, float)
+    like    = N.zeros(niter)
 
     print "computing..."
     for i in range(niter):
         g, tgd  = gmm.sufficient_statistics(data)
-        like[i] = N.sum(N.log(N.sum(tgd, 1)))
+        like[i] = N.sum(N.log(N.sum(tgd, 1)), axis = 0)
         gmm.update_em(data, g)
     # # Alternative form, by using EM class: as the EM class
     # # is quite rudimentary now, it is not very useful, just save

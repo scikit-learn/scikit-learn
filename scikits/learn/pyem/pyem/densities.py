@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Fri Aug 04 11:00 PM 2006 J
+# Last Change: Thu Aug 17 03:00 PM 2006 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -146,7 +146,7 @@ def _full_gauss_den(x, mu, va, log):
 
     # # Slow version
     # n       = N.size(x, 0)
-    # y       = N.zeros(n, float)
+    # y       = N.zeros(n)
     # for i in range(n):
     #     y[i] = N.dot(x[i,:],
     #              N.dot(inva, N.transpose(x[i,:])))
@@ -201,7 +201,7 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100, level = 0.39):
     mu  = mu[dim]
     if mode == 'diag':
         va      = va[dim]
-        elps    = N.outer(mu, N.ones(npoints, float))
+        elps    = N.outer(mu, N.ones(npoints))
         elps    += N.dot(N.diag(N.sqrt(va)), circle)
     elif mode == 'full':
         va  = va[c,:][:,c]
@@ -213,7 +213,7 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100, level = 0.39):
         #   - va = cova' * cova (matlab)
         # So take care when comparing results with matlab !
         cova    = lin.cholesky(va)
-        elps    = N.outer(mu, N.ones(npoints, float))
+        elps    = N.outer(mu, N.ones(npoints))
         elps    += N.dot(cova, circle)
     else:
         raise DenParam("var mode not recognized")

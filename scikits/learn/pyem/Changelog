@@ -1,3 +1,11 @@
+pyem (0.5.1) Thu, 17 Aug 2006 11:54:41 +0900
+
+	* put version to 0.5.1
+	* Update to last numpy (change axis args between 1.0b1 and 1.0b2,
+	change type args of ones and zeros)
+
+-- David Cournapeau <david@ar.media.kyoto-u.ac.jp> 
+
 pyem (0.5) Fri, 04 Aug 2006 23:10:37 +0900
 
 	* put version to 0.5.0
