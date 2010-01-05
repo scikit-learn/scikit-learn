@@ -22,11 +22,11 @@ class test_regression(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        dataset = LibSvmRegressionDataSet(zip(y, x))
+        traindata = LibSvmRegressionDataSet(zip(y, x))
 
         Model = LibSvmEpsilonRegressionModel
         model = Model(LinearKernel())
-        results = model.fit(dataset)
+        results = model.fit(traindata)
 
         testdata = LibSvmTestDataSet(x)
         results.predict(testdata)

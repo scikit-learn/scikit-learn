@@ -54,10 +54,6 @@ class LibSvmModel:
 
     def fit(self, dataset):
         # XXX don't poke around in dataset's internals
-
-        # no reference to the svm_problem is kept because a svm_model
-        # only requires some parameters and the support vectors chosen
-        # from the dataset
         problem = libsvm.svm_problem()
         problem.l = len(dataset.data)
         y = (c_double*problem.l)()
@@ -71,10 +67,15 @@ class LibSvmModel:
 
         model = libsvm.svm_train(problem, self.param)
 
-        # XXX because libsvm only does a shallow copy of the
-        # svm_parameter into the model, we have to make sure that a
-        # reference to weight labels and weights are kept somewhere
+        # weight parametes are no longer required, so remove to them
+        # as the data they point to might disappear when this object
+        # is deallocated
+        model.contents.param.nr_weight = 0
+        model.contents.param.weight = None
+        model.contents.param.weight_label = None
 
+        # results keep a refence to the dataset because the svm_model
+        # refers to some of its vectors as the support vectors
         return self.Results(model, dataset)
 
     def _check_problem_param(self, problem, param):

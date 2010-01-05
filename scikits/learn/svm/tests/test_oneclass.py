@@ -18,11 +18,11 @@ class test_oneclass(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        dataset = LibSvmOneClassDataSet(x)
+        triandata = LibSvmOneClassDataSet(x)
         
         Model = LibSvmOneClassModel
         model = Model(LinearKernel())
-        results = model.fit(dataset)
+        results = model.fit(traindata)
 
         testdata = LibSvmTestDataSet(x)
         results.predict(testdata)

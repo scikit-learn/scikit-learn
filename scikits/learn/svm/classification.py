@@ -39,7 +39,7 @@ class LibSvmClassificationResults:
         """
         def p(x):
             xptr = cast(x.ctypes.data, POINTER(libsvm.svm_node))
-            return libsvm.svm_predict(self.model, xptr)
+            return int(libsvm.svm_predict(self.model, xptr))
         return map(p, dataset.data)
 
     def predict_values(self, dataset):
