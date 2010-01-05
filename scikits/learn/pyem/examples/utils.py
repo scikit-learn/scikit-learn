@@ -1,15 +1,12 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 02:00 PM 2007 J
+# Last Change: Mon Jul 02 08:00 PM 2007 J
 
 # Various utilities for examples 
 
 import numpy as N
 from numpy.testing import set_package_path, restore_path
 
-# XXX: Bouah, hackish... Will go away once scipydata found its way
-set_package_path()
 from scikits.learn.datasets import oldfaithful, pendigits, iris
-restore_path()
 
 def get_faithful():
     """Return faithful data as a nx2 array, first column being duration, second
