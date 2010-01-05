@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Fri Nov 10 10:00 AM 2006 J
+# Last Change: Fri Jun 08 07:00 PM 2007 J
 
 import numpy as N
 import numpy.linalg as lin
@@ -188,6 +188,10 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100, level = 0.39):
         else:
             raise DenError("mean and variance are not dim conformant")
 
+    # When X is a sample from multivariante N(mu, sigma), (X-mu)Sigma^-1(X-mu)
+    # follows a Chi2(d) law. Here, we only take 2 dimension, so Chi2 with 2
+    # degree of freedom (See Wasserman. This is easy to see with characteristic
+    # functions)
     chi22d  = chi2(2)
     mahal   = N.sqrt(chi22d.ppf(level))
     
@@ -217,6 +221,26 @@ def gauss_ell(mu, va, dim = [0, 1], npoints = 100, level = 0.39):
         raise DenParam("var mode not recognized")
 
     return elps[0, :], elps[1, :]
+
+def multiple_gauss_den(data, mu, va):
+    """Helper function to generate several Gaussian
+    pdf (different parameters) from the same data"""
+    mu  = N.atleast_2d(mu)
+    va  = N.atleast_2d(va)
+
+    K   = mu.shape[0]
+    n   = data.shape[0]
+    d   = mu.shape[1]
+    
+    y   = N.zeros((K, n))
+    if mu.size == va.size:
+        for i in range(K):
+            y[i] = gauss_den(data, mu[i, :], va[i, :])
+        return y.T
+    else:
+        for i in range(K):
+            y[i] = gauss_den(data, mu[i, :], va[d*i:d*i+d, :])
+        return y.T
 
 if __name__ == "__main__":
     import pylab

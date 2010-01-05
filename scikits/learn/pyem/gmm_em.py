@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Jun 01 05:00 PM 2007 J
+# Last Change: Fri Jun 08 08:00 PM 2007 J
 
 # TODO:
 #   - which methods to avoid va shrinking to 0 ? There are several options, 
@@ -65,7 +65,8 @@ class GMM(ExpMixtureModel):
         d       = self.gm.d
         init    = data[0:k, :]
 
-        (code, label)   = kmean(data, init, niter)
+        # XXX: This is bogus: should do better (in kmean or here, do not know yet)
+        (code, label)   = kmean(data, init, niter, minit = 'matrix')
 
         w   = N.ones(k) / k
         mu  = code.copy()
@@ -135,7 +136,7 @@ class GMM(ExpMixtureModel):
         n   = data.shape[0]
 
         # compute the gaussian pdf
-        tgd	= multiple_gauss_den(data, self.gm.mu, self.gm.va)
+        tgd	= densities.multiple_gauss_den(data, self.gm.mu, self.gm.va)
         # multiply by the weight
         tgd	*= self.gm.w
         # Normalize to get a pdf
@@ -202,7 +203,7 @@ class GMM(ExpMixtureModel):
         the data """
         assert(self.isinit)
         # compute the gaussian pdf
-        tgd	= multiple_gauss_den(data, self.gm.mu, self.gm.va)
+        tgd	= densities.multiple_gauss_den(data, self.gm.mu, self.gm.va)
         # multiply by the weight
         tgd	*= self.gm.w
 
@@ -366,27 +367,6 @@ def has_em_converged(like, plike, thresh):
         return True
     else:
         return False
-
-def multiple_gauss_den(data, mu, va):
-    """Helper function to generate several Gaussian
-    pdf (different parameters) from the same data"""
-    mu  = N.atleast_2d(mu)
-    va  = N.atleast_2d(va)
-
-    K   = mu.shape[0]
-    n   = data.shape[0]
-    d   = mu.shape[1]
-    
-    y   = N.zeros((K, n))
-    if mu.size == va.size:
-        for i in range(K):
-            y[i] = densities.gauss_den(data, mu[i, :], va[i, :])
-        return y.T
-    else:
-        for i in range(K):
-            y[i] = densities.gauss_den(data, mu[i, :], 
-                        va[d*i:d*i+d, :])
-        return y.T
 
 if __name__ == "__main__":
     import copy

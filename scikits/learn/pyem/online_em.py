@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Fri Jun 01 05:00 PM 2007 J
+# Last Change: Fri Jun 08 08:00 PM 2007 J
 
 #---------------------------------------------
 # This is not meant to be used yet !!!! I am 
@@ -67,7 +67,7 @@ class OnGMM(ExpMixtureModel):
             self.cxx    = N.outer(w, mean(init_data ** 2, 0))
 
             # w, mu and va init is the same that in the standard case
-            (code, label)   = kmean(init_data, init_data[0:k, :], niter)
+            (code, label)   = kmean(init_data, init_data[0:k, :], iter = niter, minit = 'matrix')
             mu          = code.copy()
             va          = N.zeros((k, d))
             for i in range(k):
@@ -102,7 +102,7 @@ class OnGMM(ExpMixtureModel):
             self.cxx    = N.outer(w, mean(init_data ** 2, 0))
 
             # w, mu and va init is the same that in the standard case
-            (code, label)   = kmean(init_data, init_data[0:k, :], niter)
+            (code, label)   = kmean(init_data, init_data[0:k, :], iter = niter, minit = 'matrix')
             mu          = code.copy()
             va          = N.zeros((k, d))
             for i in range(k):
@@ -176,7 +176,7 @@ class OnGMM1d(ExpMixtureModel):
 
         # w, mu and va init is the same that in the standard case
         (code, label)   = kmean(init_data[:, N.newaxis], \
-                init_data[0:k, N.newaxis], niter)
+                init_data[0:k, N.newaxis], iter = niter)
         mu          = code.copy()
         va          = N.zeros((k, 1))
         for i in range(k):

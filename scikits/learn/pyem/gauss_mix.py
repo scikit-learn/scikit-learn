@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Mon Jun 04 07:00 PM 2007 J
+# Last Change: Fri Jun 08 07:00 PM 2007 J
 
 # Module to implement GaussianMixture class.
 
@@ -344,6 +344,8 @@ class GM:
     def _get_component_pdf(self, x):
         """Returns a list of pdf, one for each component. Summing them gives
         the pdf of the mixture."""
+        # XXX: have a public function to compute the pdf at given points
+        # instead...
         std = N.sqrt(self.va[:,0])
         retval = N.empty((x.size, self.k))
         for c in range(self.k):
@@ -351,6 +353,47 @@ class GM:
                     N.exp(-(x-self.mu[c][0])**2/(2*std[c]**2))
 
         return retval
+
+    def density_on_grid(self, nx = 50, ny = 50, maxlevel = 0.95):
+        """Do all the necessary computation for contour plot of mixture's density.
+        
+        Returns X, Y, Z and V as expected by mpl contour function."""
+
+        # Ok, it is a bit gory. Basically, we want to compute the size of the
+        # grid. We use conf_ellipse, which will return a couple of points for
+        # each component, and we can find a grid size which then is just big
+        # enough to contain all ellipses. This won't work well if two
+        # ellipsoids are crossing each other a lot (because this assumes that
+        # at a given point, one component is largely dominant for its
+        # contribution to the pdf).
+
+        # XXX: we need log pdf, not the pdf... this can save some computing
+        Xe, Ye = self.conf_ellipses(level = maxlevel)
+        ax = [N.min(Xe), N.max(Xe), N.min(Ye), N.max(Ye)]
+
+        w = ax[1] - ax[0]
+        h = ax[3] - ax[2]
+        X, Y, den = self._densityctr(N.linspace(ax[0]-0.2*w, ax[1]+0.2*w, nx), \
+                N.linspace(ax[2]-0.2*h, ax[3]+0.2*h, ny))
+        lden = N.log(den)
+        V = [-5, -3, -1, -0.5, ]
+        V.extend(N.linspace(0, N.max(lden), 4).tolist())
+        return X, Y, lden, N.array(V)
+
+    def _densityctr(self, xrange, yrange):
+        """Helper function to compute density contours on a grid."""
+        gr = N.meshgrid(xrange, yrange)
+        X = gr[0].flatten()
+        Y = gr[1].flatten()
+        xdata = N.concatenate((X[:, N.newaxis], Y[:, N.newaxis]), axis = 1)
+        # XXX refactor computing pdf
+        d = densities.multiple_gauss_den(xdata, self.mu, self.va) * self.w
+        d = N.sum(d, 1)
+        d = d.reshape(len(yrange), len(xrange))
+
+        X = gr[0]
+        Y = gr[1]
+        return X, Y, d
 
     # Syntactic sugar
     def __repr__(self):
