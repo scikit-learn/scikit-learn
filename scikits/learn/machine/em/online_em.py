@@ -21,6 +21,7 @@ from numpy import mean
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from gmm_em import ExpMixtureModel#, GMM, EM
+from gauss_mix import GM
 #from gauss_mix import GM
 from scipy.cluster.vq import kmeans2 as kmean
 import densities2 as D
@@ -229,6 +230,14 @@ class OnGMM1d(ExpMixtureModel):
         compute_sufficient_statistics_frame and update_em_frame"""
         _rawden.compute_em_frame_1d(frame, self.cw, self.cmu, self.cva, \
                 self.cx, self.cxx, nu)
+
+def compute_factor(nframes, ku = 0.005, t0 = 200, nu0 = 0.2):
+    lamb    = 1 - 1/(N.arange(-1, nframes - 1) * ku + t0)
+    nu      = N.zeros((nframes, 1), N.float64)
+    nu[0]   = nu0
+    for i in range(1, nframes):
+        nu[i]   = 1./(1 + lamb[i] / nu[i-1])
+    return nu
 
 def online_gmm_em(data, ninit, k, mode = 'diag', step = None):
     """ Emulate online_gmm_em of matlab, but uses scipy.sandbox.pyem"""
