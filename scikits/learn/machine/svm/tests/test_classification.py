@@ -4,16 +4,16 @@ import numpy as N
 
 set_local_path('../..')
 from svm.classification import *
-from svm.dataset import LibSvmClassificationDataSet, LibSvmTestDataSet
+from svm.dataset import ClassificationDataSet, TestDataSet
 from svm.kernel import *
 from svm.predict import *
 restore_path()
 
 class test_classification(NumpyTestCase):
     def check_basics(self):
-        kernel = LinearKernel()
+        kernel = Linear()
         # C-SVC
-        ModelType = LibSvmCClassificationModel
+        ModelType = CClassificationModel
         ModelType(kernel)
         ModelType(kernel, cost=1.0)
         weights = [(2, 10.0), (1, 20.0), (0, 30.0)]
@@ -21,7 +21,7 @@ class test_classification(NumpyTestCase):
         ModelType(kernel, 1.0, weights)
         ModelType(kernel, cost=1.0, weights=weights)
         # nu-SVC
-        ModelType = LibSvmNuClassificationModel
+        ModelType = NuClassificationModel
         ModelType(kernel)
         ModelType(kernel, nu=0.5)
         ModelType(kernel, weights=weights)
@@ -33,14 +33,14 @@ class test_classification(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        traindata = LibSvmClassificationDataSet(labels, x)
-        testdata = LibSvmTestDataSet(x)
+        traindata = ClassificationDataSet(labels, x)
+        testdata = TestDataSet(x)
         return traindata, testdata
 
     def check_c_basics(self):
         traindata, testdata = self._make_basic_datasets()
-        kernel = RBFKernel(traindata.gamma)
-        model = LibSvmCClassificationModel(kernel)
+        kernel = RBF(traindata.gamma)
+        model = CClassificationModel(kernel)
         results = model.fit(traindata)
         p = results.predict(testdata)
         assert_array_equal(p, [1, 1, 1, 1])
@@ -48,9 +48,9 @@ class test_classification(NumpyTestCase):
 
     def _make_basic_kernels(self, gamma):
         kernels = [
-            LinearKernel(),
-            PolynomialKernel(3, gamma, 0.0),
-            RBFKernel(gamma)
+            Linear(),
+            Polynomial(3, gamma, 0.0),
+            RBF(gamma)
             ]
         return kernels
 
@@ -77,7 +77,7 @@ class test_classification(NumpyTestCase):
                          [0.375, -1.0, -1.153547],
                          [0.671181, 0.0, -0.671133]]
         expected_ps = [[0, 1, 1, 2], [1, 1, 1, 2], [0, 1, 1, 2]]
-        self._classify_basic(LibSvmCClassificationModel,
+        self._classify_basic(CClassificationModel,
                              modelargs, expected_rhos, expected_ps)
 
     def check_c_probability(self):
@@ -87,8 +87,8 @@ class test_classification(NumpyTestCase):
         weights = [(1, 10.0)]
         kernels = self._make_basic_kernels(traindata.gamma)
         models = [
-            (LibSvmCClassificationModel, (cost, weights)),
-            (LibSvmNuClassificationModel, (nu, weights))
+            (CClassificationModel, (cost, weights)),
+            (NuClassificationModel, (nu, weights))
             ]
         for ModelType, modelargs in models:
             for kernel in kernels:
@@ -101,9 +101,9 @@ class test_classification(NumpyTestCase):
     def check_cross_validate(self):
         labels = ([-1] * 50) + ([1] * 50)
         x = N.random.randn(len(labels), 10)
-        traindata = LibSvmClassificationDataSet(labels, x)
-        kernel = LinearKernel()
-        model = LibSvmCClassificationModel(kernel)
+        traindata = ClassificationDataSet(labels, x)
+        kernel = Linear()
+        model = CClassificationModel(kernel)
         nr_fold = 10
         pcorr = model.cross_validate(traindata, nr_fold)
         # XXX check cross-validation with and without probability
@@ -111,8 +111,8 @@ class test_classification(NumpyTestCase):
 
     def check_nu_basics(self):
         traindata, testdata = self._make_basic_datasets()
-        kernel = RBFKernel(traindata.gamma)
-        model = LibSvmNuClassificationModel(kernel)
+        kernel = RBF(traindata.gamma)
+        model = NuClassificationModel(kernel)
         results = model.fit(traindata)
         p = results.predict(testdata)
         assert_array_equal(p, [0, 1, 1, 2])
@@ -126,7 +126,7 @@ class test_classification(NumpyTestCase):
                          [-1.0, -1.0, -1.15384846],
                          [0.6712142, 0.0, -0.6712142]]
         expected_ps = [[0, 1, 1, 2]] * 3
-        self._classify_basic(LibSvmNuClassificationModel,
+        self._classify_basic(NuClassificationModel,
                              modelargs, expected_rhos, expected_ps)
 
     def _make_datasets(self):
@@ -134,12 +134,12 @@ class test_classification(NumpyTestCase):
         x1 = N.random.randn(len(labels1), 10)
         labels2 = N.random.random_integers(0, 2, 10)
         x2 = N.random.randn(len(labels2), x1.shape[1])
-        trndata1 = LibSvmClassificationDataSet(labels1, x1)
-        trndata2 = LibSvmClassificationDataSet(labels2, x2)
+        trndata1 = ClassificationDataSet(labels1, x1)
+        trndata2 = ClassificationDataSet(labels2, x2)
         reflabels = N.concatenate([labels1, labels2])
         refx = N.vstack([x1, x2])
-        trndata = LibSvmClassificationDataSet(reflabels, refx)
-        testdata = LibSvmTestDataSet(refx)
+        trndata = ClassificationDataSet(reflabels, refx)
+        testdata = TestDataSet(refx)
         return trndata, testdata, trndata1, trndata2
 
     def _make_kernels(self):
@@ -147,15 +147,15 @@ class test_classification(NumpyTestCase):
             return dot(x, y)
         def kernelg(x, y, dot):
             return -dot(x, y)
-        kernels = [LinearKernel()]
-        #kernels += [RBFKernel(gamma)
+        kernels = [Linear()]
+        #kernels += [RBF(gamma)
         #            for gamma in [-0.1, 0.2, 0.3]]
-        #kernels += [PolynomialKernel(degree, gamma, coef0)
+        #kernels += [Polynomial(degree, gamma, coef0)
         #            for degree, gamma, coef0 in
         #            [(1, 0.1, 0.0), (2, -0.2, 1.3), (3, 0.3, -0.3)]]
-        #kernels += [SigmoidKernel(gamma, coef0)
+        #kernels += [Sigmoid(gamma, coef0)
         #            for gamma, coef0 in [(0.2, -0.5), (-0.5, 1.5)]]
-        #kernels += [CustomKernel(f) for f in [kernelf, kernelg]]
+        #kernels += [Custom(f) for f in [kernelf, kernelg]]
         return kernels
 
     def check_all(self):
@@ -166,19 +166,19 @@ class test_classification(NumpyTestCase):
             pctrndata1 = trndata1.precompute(kernel)
             pctrndata = pctrndata1.combine(trndata2)
             models = [
-                LibSvmCClassificationModel(kernel, 2.0, weights, True),
-                LibSvmNuClassificationModel(kernel, 0.3, weights, True)
+                CClassificationModel(kernel, 2.0, weights, True),
+                NuClassificationModel(kernel, 0.3, weights, True)
                 ]
             fitargs = []
-            # CustomKernel needs a precomputed dataset
-            if not isinstance(kernel, CustomKernel):
+            # Custom needs a precomputed dataset
+            if not isinstance(kernel, Custom):
                 fitargs += [
-                    (trndata, LibSvmPredictor),
-                    #(trndata, LibSvmPythonPredictor),
+                    (trndata, Predictor),
+                    #(trndata, PythonPredictor),
                     ]
             fitargs += [
-                (pctrndata, LibSvmPredictor),
-                #(pctrndata, LibSvmPythonPredictor)
+                (pctrndata, Predictor),
+                #(pctrndata, PythonPredictor)
                 ]
 
             for model in models:
@@ -204,17 +204,17 @@ class test_classification(NumpyTestCase):
                         #    self.assertEqual(lbl, reflbl)
                         #    assert_array_almost_equal(p, refp)
                     except NotImplementedError:
-                        self.assert_(fitargs[-1] is LibSvmPythonPredictor)
+                        self.assert_(fitargs[-1] is PythonPredictor)
 
     def check_python_predict(self):
         traindata, testdata = self._make_basic_datasets()
-        kernel = LinearKernel()
+        kernel = Linear()
         cost = 10.0
         weights = [(1, 10.0)]
-        model = LibSvmCClassificationModel(kernel, cost, weights)
+        model = CClassificationModel(kernel, cost, weights)
 
         refresults = model.fit(traindata)
-        results = model.fit(traindata, LibSvmPythonPredictor)
+        results = model.fit(traindata, PythonPredictor)
 
         refv = refresults.predict_values(testdata)
         v = results.predict_values(testdata)
@@ -229,11 +229,11 @@ class test_classification(NumpyTestCase):
 
     def xcheck_compact(self):
         traindata, testdata = self._make_basic_datasets()
-        kernel = LinearKernel()
+        kernel = Linear()
         cost = 10.0
         weights = [(1, 10.0)]
-        model = LibSvmCClassificationModel(kernel, cost, weights)
-        results = model.fit(traindata, LibSvmPythonPredictor)
+        model = CClassificationModel(kernel, cost, weights)
+        results = model.fit(traindata, PythonPredictor)
         refvs = results.predict_values(testdata)
         results.compact()
         vs = results.predict_values(testdata)
@@ -244,11 +244,11 @@ class test_classification(NumpyTestCase):
     def _make_compact_check_datasets(self):
         x = N.random.randn(150, 3)
         labels = N.random.random_integers(1, 5, x.shape[0])
-        traindata = LibSvmClassificationDataSet(labels, x)
+        traindata = ClassificationDataSet(labels, x)
         xdim, ydim, zdim = 4, 4, x.shape[1]
         img = N.random.randn(xdim, ydim, zdim)
-        testdata1 = LibSvmTestDataSet(img.reshape(xdim*ydim, zdim))
-        testdata2 = LibSvmTestDataSet(list(img.reshape(xdim*ydim, zdim)))
+        testdata1 = TestDataSet(img.reshape(xdim*ydim, zdim))
+        testdata2 = TestDataSet(list(img.reshape(xdim*ydim, zdim)))
         return traindata, testdata1, testdata2
 
     def check_compact_predict_values(self):
@@ -259,12 +259,12 @@ class test_classification(NumpyTestCase):
                     self.assertAlmostEqual(x, pred2[labels])
         traindata, testdata1, testdata2 = \
             self._make_compact_check_datasets()
-        kernel = LinearKernel()
-        model = LibSvmCClassificationModel(kernel)
+        kernel = Linear()
+        model = CClassificationModel(kernel)
         refresults = model.fit(traindata)
         refv1 = refresults.predict_values(testdata1)
         refv2 = refresults.predict_values(testdata2)
-        results = model.fit(traindata, LibSvmPythonPredictor)
+        results = model.fit(traindata, PythonPredictor)
         v11 = results.predict_values(testdata1)
         v12 = results.predict_values(testdata2)
         results.compact()
@@ -280,12 +280,12 @@ class test_classification(NumpyTestCase):
     def check_compact_predict(self):
         traindata, testdata1, testdata2 = \
             self._make_compact_check_datasets()
-        kernel = LinearKernel()
-        model = LibSvmCClassificationModel(kernel)
+        kernel = Linear()
+        model = CClassificationModel(kernel)
         refresults = model.fit(traindata)
         refp1 = refresults.predict(testdata1)
         refp2 = refresults.predict(testdata2)
-        results = model.fit(traindata, LibSvmPythonPredictor)
+        results = model.fit(traindata, PythonPredictor)
         p11 = results.predict(testdata1)
         p12 = results.predict(testdata2)
         results.compact()
@@ -301,10 +301,10 @@ class test_classification(NumpyTestCase):
     def check_no_support_vectors(self):
         x = N.array([[10.0, 20.0]])
         labels = [1]
-        traindata = LibSvmClassificationDataSet(labels, x)
-        kernel = LinearKernel()
-        model = LibSvmCClassificationModel(kernel)
-        testdata = LibSvmTestDataSet(x)
+        traindata = ClassificationDataSet(labels, x)
+        kernel = Linear()
+        model = CClassificationModel(kernel)
+        testdata = TestDataSet(x)
         self.assertRaises(ValueError, model.fit, traindata)
 
 if __name__ == '__main__':

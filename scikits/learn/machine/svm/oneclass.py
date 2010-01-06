@@ -1,12 +1,12 @@
-from model import LibSvmModel
+from model import Model
 import libsvm
 
 __all__ = [
-    'LibSvmOneClassModel',
-    'LibSvmOneClassResults'
+    'OneClassModel',
+    'OneClassResults'
     ]
 
-class LibSvmOneClassResults:
+class OneClassResults:
     def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
         if modelc.param.svm_type != libsvm.ONE_CLASS:
@@ -38,7 +38,7 @@ class LibSvmOneClassResults:
     def compact(self):
         self.predictor.compact()
 
-class LibSvmOneClassModel(LibSvmModel):
+class OneClassModel(Model):
     """
     A model for distribution estimation (one-class SVM).
 
@@ -46,7 +46,7 @@ class LibSvmOneClassModel(LibSvmModel):
     High-Dimensional Distribution.
     """
 
-    ResultsType = LibSvmOneClassResults
+    ResultsType = OneClassResults
 
     def __init__(self, kernel, nu=0.5, **kwargs):
         """
@@ -54,7 +54,7 @@ class LibSvmOneClassModel(LibSvmModel):
 
         - `nu`: XXX
         """
-        LibSvmModel.__init__(self, kernel, **kwargs)
+        Model.__init__(self, kernel, **kwargs)
         self.nu = nu
         self.param.svm_type = libsvm.ONE_CLASS
         self.param.nu = nu

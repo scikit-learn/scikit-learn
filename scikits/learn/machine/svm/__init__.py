@@ -1,29 +1,29 @@
 """
 A Support Vector Machine, this module defines the following classes:
 
-- `LibSvmCClassificationModel`, a model for C-SV classification
-- `LibSvmNuClassificationModel`, a model for nu-SV classification
-- `LibSvmEpsilonRegressionModel`, a model for epsilon-SV regression
-- `LibSvmNuRegressionModel`, a model for nu-SV regression
-- `LibSvmOneClassModel`, a model for distribution estimation
+- `CClassificationModel`, a model for C-SV classification
+- `NuClassificationModel`, a model for nu-SV classification
+- `EpsilonRegressionModel`, a model for epsilon-SV regression
+- `NuRegressionModel`, a model for nu-SV regression
+- `OneClassModel`, a model for distribution estimation
   (one-class SVM)
 
 Kernel classes:
 
-- `LinearKernel`, a linear kernel
-- `PolynomialKernel`, a polynomial kernel
-- `RBFKernel`, a radial basis function kernel
-- `SigmoidKernel`, a sigmoid kernel
-- `CustomKernel`, a kernel that wraps any callable
+- `Linear`, a linear kernel
+- `Polynomial`, a polynomial kernel
+- `RBF`, a radial basis function kernel
+- `Sigmoid`, a sigmoid kernel
+- `Custom`, a kernel that wraps any callable
 
 Dataset classes:
 
-- `LibSvmClassificationDataSet`, a dataset for training classification
+- `ClassificationDataSet`, a dataset for training classification
   models
-- `LibSvmRegressionDataSet`, a dataset for training regression models
-- `LibSvmOneClassDataSet`, a dataset for training distribution
+- `RegressionDataSet`, a dataset for training regression models
+- `OneClassDataSet`, a dataset for training distribution
   estimation (one-class SVM) models
-- `LibSvmTestDataSet`, a dataset for testing with any model
+- `TestDataSet`, a dataset for testing with any model
 
 Data type classes:
 
@@ -37,20 +37,20 @@ How To Use This Module
 
 2. Create a training dataset for your problem::
 
-       traindata = LibSvmClassificationDataSet(labels, x)
-       traindata = LibSvmRegressionDataSet(y, x)
-       traindata = LibSvmOneClassDataSet(x)
+       traindata = ClassificationDataSet(labels, x)
+       traindata = RegressionDataSet(y, x)
+       traindata = OneClassDataSet(x)
 
    where x is sequence of NumPy arrays containing scalars or
    svm_node_dtype entries.
 
 3. Create a test dataset::
 
-       testdata = LibSvmTestDataSet(u)
+       testdata = TestDataSet(u)
 
 4. Create a model and fit it to the training data::
 
-       model = LibSvmCClassificationModel(kernel)
+       model = CClassificationModel(kernel)
        results = model.fit(traindata)
 
 5. Use the results to make predictions with the test data::

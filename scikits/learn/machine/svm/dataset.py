@@ -3,13 +3,13 @@ import numpy as N
 import libsvm
 
 __all__ = [
-    'LibSvmRegressionDataSet',
-    'LibSvmClassificationDataSet',
-    'LibSvmOneClassDataSet',
-    'LibSvmTestDataSet'
+    'RegressionDataSet',
+    'ClassificationDataSet',
+    'OneClassDataSet',
+    'TestDataSet'
     ]
 
-class LibSvmDataSet:
+class DataSet:
     def __init__(self, data):
         self.data = data
         self.iddatamap = {}
@@ -27,7 +27,7 @@ class LibSvmDataSet:
     gamma = property(getgamma, 'Gamma parameter for RBF kernel')
 
     def precompute(self, kernel):
-        return LibSvmPrecomputedDataSet(kernel, self.data)
+        return PrecomputedDataSet(kernel, self.data)
 
     def _create_svm_problem(self):
         return libsvm.create_svm_problem(self.data)
@@ -36,7 +36,7 @@ class LibSvmDataSet:
         # XXX we can handle gamma=None here
         pass
 
-class LibSvmPrecomputedDataSet:
+class PrecomputedDataSet:
     def __init__(self, kernel, origdata=None):
         self.kernel = kernel
         self.origdata = origdata
@@ -138,24 +138,24 @@ class LibSvmPrecomputedDataSet:
     def _update_svm_parameter(self, param):
         param.kernel_type = libsvm.PRECOMPUTED
 
-class LibSvmRegressionDataSet(LibSvmDataSet):
+class RegressionDataSet(DataSet):
     def __init__(self, y, x):
         origdata = zip(y, x)
         data = [(x[0], convert_to_svm_node(x[1])) for x in origdata]
-        LibSvmDataSet.__init__(self, data)
+        DataSet.__init__(self, data)
 
-class LibSvmClassificationDataSet(LibSvmDataSet):
+class ClassificationDataSet(DataSet):
     def __init__(self, labels, x):
         origdata = zip(labels, x)
         data = [(x[0], convert_to_svm_node(x[1])) for x in origdata]
-        LibSvmDataSet.__init__(self, data)
+        DataSet.__init__(self, data)
 
-class LibSvmOneClassDataSet(LibSvmDataSet):
+class OneClassDataSet(DataSet):
     def __init__(self, x):
         data = [(0, convert_to_svm_node(y)) for y in x]
-        LibSvmDataSet.__init__(self, data)
+        DataSet.__init__(self, data)
 
-class LibSvmTestDataSet:
+class TestDataSet:
     def __init__(self, data):
         self.data = data
         self.__len__ = self.data.__len__

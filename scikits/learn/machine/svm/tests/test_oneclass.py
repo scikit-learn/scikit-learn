@@ -2,7 +2,7 @@ from numpy.testing import *
 import numpy as N
 
 set_local_path('../..')
-from svm.dataset import LibSvmOneClassDataSet, LibSvmTestDataSet
+from svm.dataset import OneClassDataSet, TestDataSet
 from svm.kernel import *
 from svm.oneclass import *
 from svm.predict import *
@@ -10,8 +10,8 @@ restore_path()
 
 class test_oneclass(NumpyTestCase):
     def check_basics(self):
-        ModelType = LibSvmOneClassModel
-        kernel = LinearKernel()
+        ModelType = OneClassModel
+        kernel = Linear()
         ModelType(kernel)
         ModelType(kernel, nu=1.0)
 
@@ -20,13 +20,13 @@ class test_oneclass(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        traindata = LibSvmOneClassDataSet(x)
-        testdata = LibSvmTestDataSet(x)
+        traindata = OneClassDataSet(x)
+        testdata = TestDataSet(x)
         return traindata, testdata
 
     def check_train(self):
         traindata, testdata = self._make_basic_datasets()
-        model = LibSvmOneClassModel(LinearKernel())
+        model = OneClassModel(Linear())
         results = model.fit(traindata)
         p = results.predict(testdata)
         assert_array_equal(p, [False, False, False, True])
@@ -35,12 +35,12 @@ class test_oneclass(NumpyTestCase):
 
     def check_more(self):
         traindata, testdata = self._make_basic_datasets()
-        ModelType = LibSvmOneClassModel
+        ModelType = OneClassModel
         nu = 0.5
         kernels = [
-            LinearKernel(),
-            PolynomialKernel(3, traindata.gamma, 0.0),
-            RBFKernel(traindata.gamma)
+            Linear(),
+            Polynomial(3, traindata.gamma, 0.0),
+            RBF(traindata.gamma)
             ]
         expected_preds = [
             [False, False, False, True],
@@ -58,8 +58,8 @@ class test_oneclass(NumpyTestCase):
 
     def check_compact(self):
         traindata, testdata = self._make_basic_datasets()
-        model = LibSvmOneClassModel(LinearKernel())
-        results = model.fit(traindata, LibSvmPythonPredictor)
+        model = OneClassModel(Linear())
+        results = model.fit(traindata, PythonPredictor)
         refv = results.predict_values(testdata)
         results.compact()
         v = results.predict_values(testdata)

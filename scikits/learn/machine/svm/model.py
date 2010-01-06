@@ -1,15 +1,15 @@
 from ctypes import POINTER, c_double, c_int
 
-from dataset import LibSvmPrecomputedDataSet
+from dataset import PrecomputedDataSet
 from kernel import *
 from predict import *
 import libsvm
 
 __all__ = [
-    'LibSvmModel'
+    'Model'
     ]
 
-class LibSvmModel:
+class Model:
     def __init__(self, kernel,
                  tolerance=0.001, shrinking=True, cache_size=40):
         """
@@ -45,9 +45,9 @@ class LibSvmModel:
 
         self.param = param
 
-    def fit(self, dataset, PredictorType=LibSvmPredictor):
+    def fit(self, dataset, PredictorType = Predictor):
         if self.kernel.kernel_type == libsvm.PRECOMPUTED and \
-            not isinstance(dataset, LibSvmPrecomputedDataSet):
+            not isinstance(dataset, PrecomputedDataSet):
             raise ValueError, 'kernel requires a precomputed dataset'
         problem = dataset._create_svm_problem()
         dataset._update_svm_parameter(self.param)

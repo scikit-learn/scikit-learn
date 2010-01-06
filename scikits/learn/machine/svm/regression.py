@@ -1,18 +1,18 @@
 from ctypes import POINTER, c_double
 import numpy as N
 
-from model import LibSvmModel
+from model import Model
 import libsvm
 
 __all__ = [
-    'LibSvmEpsilonRegressionModel',
-    'LibSvmNuRegressionModel',
-    'LibSvmRegressionResults'
+    'EpsilonRegressionModel',
+    'NuRegressionModel',
+    'RegressionResults'
     ]
 
 # XXX document why get_svr_probability could be useful
 
-class LibSvmRegressionResults:
+class RegressionResults:
     def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
         if modelc.param.svm_type not in [libsvm.EPSILON_SVR, libsvm.NU_SVR]:
@@ -48,11 +48,11 @@ class LibSvmRegressionResults:
     def compact(self):
         self.predictor.compact()
 
-class LibSvmRegressionModel(LibSvmModel):
-    ResultsType = LibSvmRegressionResults
+class RegressionModel(Model):
+    ResultsType = RegressionResults
 
     def __init__(self, kernel, **kwargs):
-        LibSvmModel.__init__(self, kernel, **kwargs)
+        Model.__init__(self, kernel, **kwargs)
 
     def cross_validate(self, dataset, nr_fold):
         """
@@ -92,7 +92,7 @@ class LibSvmRegressionModel(LibSvmModel):
 
         return mse, scc
 
-class LibSvmEpsilonRegressionModel(LibSvmRegressionModel):
+class EpsilonRegressionModel(RegressionModel):
     """
     A model for epsilon-SV regression.
 
@@ -106,7 +106,7 @@ class LibSvmEpsilonRegressionModel(LibSvmRegressionModel):
 
     def __init__(self, kernel, epsilon=0.1, cost=1.0,
                  probability=False, **kwargs):
-        LibSvmRegressionModel.__init__(self, kernel, **kwargs)
+        RegressionModel.__init__(self, kernel, **kwargs)
         self.epsilon = epsilon
         self.cost = cost
         self.param.svm_type = libsvm.EPSILON_SVR
@@ -114,7 +114,7 @@ class LibSvmEpsilonRegressionModel(LibSvmRegressionModel):
         self.param.C = cost
         self.param.probability = probability
 
-class LibSvmNuRegressionModel(LibSvmRegressionModel):
+class NuRegressionModel(RegressionModel):
     """
     A model for nu-SV regression.
 
@@ -123,7 +123,7 @@ class LibSvmNuRegressionModel(LibSvmRegressionModel):
 
     def __init__(self, kernel,
                  nu=0.5, cost=1.0, probability=False, **kwargs):
-        LibSvmRegressionModel.__init__(self, kernel, **kwargs)
+        RegressionModel.__init__(self, kernel, **kwargs)
         self.nu = nu
         self.cost = cost
         self.param.svm_type = libsvm.NU_SVR

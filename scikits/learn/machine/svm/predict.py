@@ -6,14 +6,14 @@ from dataset import svm_node_dot
 import libsvm
 
 __all__ = [
-    'LibSvmPredictor',
-    'LibSvmPythonPredictor'
+    'Predictor',
+    'PythonPredictor'
     ]
 
 def is_classification_problem(svm_type):
     return svm_type in [libsvm.C_SVC, libsvm.NU_SVC]
 
-class LibSvmPredictor:
+class Predictor:
     def __init__(self, model, dataset, kernel):
         self.model = model
         self.kernel = kernel
@@ -70,7 +70,7 @@ class LibSvmPredictor:
     def compact(self):
         raise NotImplementedError
 
-class LibSvmPythonPredictor:
+class PythonPredictor:
     def __init__(self, model, dataset, kernel):
         self.kernel = kernel
         modelc = model.contents

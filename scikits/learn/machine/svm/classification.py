@@ -2,16 +2,16 @@ from ctypes import POINTER, c_int, c_double
 from itertools import izip, repeat, chain
 import numpy as N
 
-from model import LibSvmModel
+from model import Model
 import libsvm
 
 __all__ = [
-    'LibSvmCClassificationModel',
-    'LibSvmNuClassificationModel',
-    'LibSvmClassificationResults'
+    'CClassificationModel',
+    'NuClassificationModel',
+    'ClassificationResults'
     ]
 
-class LibSvmClassificationResults:
+class ClassificationResults:
     def __init__(self, model, traindataset, kernel, PredictorType):
         modelc = model.contents
         if modelc.param.svm_type not in [libsvm.C_SVC, libsvm.NU_SVC]:
@@ -86,7 +86,7 @@ class LibSvmClassificationResults:
     def compact(self):
         self.predictor.compact()
 
-class LibSvmClassificationModel(LibSvmModel):
+class ClassificationModel(Model):
     """
     A model for support vector classification.
 
@@ -101,10 +101,10 @@ class LibSvmClassificationModel(LibSvmModel):
       Machines.
     """
 
-    ResultsType = LibSvmClassificationResults
+    ResultsType = ClassificationResults
 
     def __init__(self, kernel, weights, **kwargs):
-        LibSvmModel.__init__(self, kernel, **kwargs)
+        Model.__init__(self, kernel, **kwargs)
         if weights is not None:
             self.weight_labels = N.empty((len(weights),), dtype=N.intp)
             self.weights = N.empty((len(weights),), dtype=N.float64)
@@ -142,7 +142,7 @@ class LibSvmClassificationModel(LibSvmModel):
         # XXX also return results from folds in a list
         return 100.0 * total_correct / len(dataset.data)
 
-class LibSvmCClassificationModel(LibSvmClassificationModel):
+class CClassificationModel(ClassificationModel):
     """
     A model for C-SV classification.
 
@@ -162,13 +162,13 @@ class LibSvmCClassificationModel(LibSvmClassificationModel):
         - `cost`: XXX
         - `weights`: XXX
         """
-        LibSvmClassificationModel.__init__(self, kernel, weights, **kwargs)
+        ClassificationModel.__init__(self, kernel, weights, **kwargs)
         self.cost = cost
         self.param.svm_type = libsvm.C_SVC
         self.param.C = cost
         self.param.probability = probability
 
-class LibSvmNuClassificationModel(LibSvmClassificationModel):
+class NuClassificationModel(ClassificationModel):
     """
     A model for nu-SV classification.
 
@@ -186,7 +186,7 @@ class LibSvmNuClassificationModel(LibSvmClassificationModel):
         - `nu`: XXX
         - `weights`: XXX
         """
-        LibSvmClassificationModel.__init__(self, kernel, weights, **kwargs)
+        ClassificationModel.__init__(self, kernel, weights, **kwargs)
         self.nu = nu
         self.param.svm_type = libsvm.NU_SVC
         self.param.nu = nu

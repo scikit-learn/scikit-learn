@@ -2,7 +2,7 @@ from numpy.testing import *
 import numpy as N
 
 set_local_path('../..')
-from svm.dataset import LibSvmRegressionDataSet, LibSvmTestDataSet
+from svm.dataset import RegressionDataSet, TestDataSet
 from svm.kernel import *
 from svm.predict import *
 from svm.regression import *
@@ -10,15 +10,15 @@ restore_path()
 
 class test_regression(NumpyTestCase):
     def check_basics(self):
-        Model = LibSvmEpsilonRegressionModel
-        kernel = LinearKernel()
+        Model = EpsilonRegressionModel
+        kernel = Linear()
         Model(kernel)
         Model(kernel, epsilon=0.1)
         Model(kernel, cost=1.0)
         model = Model(kernel, shrinking=False)
         self.assert_(not model.shrinking)
 
-        Model = LibSvmNuRegressionModel
+        Model = NuRegressionModel
         Model(kernel)
         Model(kernel, nu=0.5)
         model = Model(kernel, 0.5, cache_size=60, tolerance=0.005)
@@ -26,15 +26,15 @@ class test_regression(NumpyTestCase):
         self.assertAlmostEqual(model.tolerance, 0.005)
 
     def check_epsilon_train(self):
-        ModelType = LibSvmEpsilonRegressionModel
+        ModelType = EpsilonRegressionModel
         y = [10., 20., 30., 40.]
         x = [N.array([0, 0]),
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        traindata = LibSvmRegressionDataSet(y, x)
-        testdata = LibSvmTestDataSet(x)
-        model = ModelType(LinearKernel(), probability=True)
+        traindata = RegressionDataSet(y, x)
+        testdata = TestDataSet(x)
+        model = ModelType(Linear(), probability=True)
         results = model.fit(traindata)
         results.predict(testdata)
         results.get_svr_probability()
@@ -45,20 +45,20 @@ class test_regression(NumpyTestCase):
              N.array([0, 1]),
              N.array([1, 0]),
              N.array([1, 1])]
-        traindata = LibSvmRegressionDataSet(labels, x)
-        testdata = LibSvmTestDataSet(x)
+        traindata = RegressionDataSet(labels, x)
+        testdata = TestDataSet(x)
         return traindata, testdata
 
     def _make_basic_kernels(self, gamma):
         kernels = [
-            LinearKernel(),
-            PolynomialKernel(3, gamma, 0.0),
-            RBFKernel(gamma)
+            Linear(),
+            Polynomial(3, gamma, 0.0),
+            RBF(gamma)
             ]
         return kernels
 
     def check_epsilon_more(self):
-        ModelType = LibSvmEpsilonRegressionModel
+        ModelType = EpsilonRegressionModel
         epsilon = 0.1
         cost = 10.0
         modelargs = epsilon, cost
@@ -85,14 +85,14 @@ class test_regression(NumpyTestCase):
     def check_cross_validate(self):
         y = N.random.randn(100)
         x = N.random.randn(len(y), 10)
-        traindata = LibSvmRegressionDataSet(y, x)
-        kernel = LinearKernel()
-        model = LibSvmEpsilonRegressionModel(kernel)
+        traindata = RegressionDataSet(y, x)
+        kernel = Linear()
+        model = EpsilonRegressionModel(kernel)
         nr_fold = 10
         mse, scc = model.cross_validate(traindata, nr_fold)
 
     def check_nu_more(self):
-        ModelType = LibSvmNuRegressionModel
+        ModelType = NuRegressionModel
         nu = 0.4
         cost = 10.0
         modelargs = nu, cost
@@ -108,12 +108,12 @@ class test_regression(NumpyTestCase):
         x1 = N.random.randn(len(y1), 10)
         y2 = N.random.randn(5)
         x2 = N.random.randn(len(y2), x1.shape[1])
-        trndata1 = LibSvmRegressionDataSet(y1, x1)
-        trndata2 = LibSvmRegressionDataSet(y2, x2)
+        trndata1 = RegressionDataSet(y1, x1)
+        trndata2 = RegressionDataSet(y2, x2)
         refy = N.concatenate([y1, y2])
         refx = N.vstack([x1, x2])
-        trndata = LibSvmRegressionDataSet(refy, refx)
-        testdata = LibSvmTestDataSet(refx)
+        trndata = RegressionDataSet(refy, refx)
+        testdata = TestDataSet(refx)
         return trndata, trndata1, trndata2, testdata
 
     def _make_kernels(self):
@@ -121,15 +121,15 @@ class test_regression(NumpyTestCase):
             return N.dot(x, y.T)
         def kernelg(x, y):
             return -N.dot(x, y.T)
-        kernels = [LinearKernel()]
-        kernels += [RBFKernel(gamma)
+        kernels = [Linear()]
+        kernels += [RBF(gamma)
                     for gamma in [-0.1, 0.2, 0.3]]
-        kernels += [PolynomialKernel(degree, gamma, coef0)
+        kernels += [Polynomial(degree, gamma, coef0)
                     for degree, gamma, coef0 in
                     [(1, 0.1, 0.0), (2, -0.2, 1.3), (3, 0.3, -0.3)]]
-        #kernels += [SigmoidKernel(gamma, coef0)
+        #kernels += [Sigmoid(gamma, coef0)
         #            for gamma, coef0 in [(0.2, -0.5), (-0.5, 1.5)]]
-        kernels += [CustomKernel(f) for f in [kernelf, kernelg]]
+        kernels += [Custom(f) for f in [kernelf, kernelg]]
         return kernels
 
     def check_all(self):
@@ -139,19 +139,19 @@ class test_regression(NumpyTestCase):
             pctrndata1 = trndata1.precompute(kernel)
             pctrndata = pctrndata1.combine(trndata2)
             models = [
-                LibSvmEpsilonRegressionModel(kernel, 1.0, 2.0),
-                LibSvmNuRegressionModel(kernel, 0.4, 0.5)
+                EpsilonRegressionModel(kernel, 1.0, 2.0),
+                NuRegressionModel(kernel, 0.4, 0.5)
                 ]
             fitargs = []
-            # CustomKernel needs a precomputed dataset
-            if not isinstance(kernel, CustomKernel):
+            # Custom needs a precomputed dataset
+            if not isinstance(kernel, Custom):
                 fitargs += [
-                    (trndata, LibSvmPredictor),
-                    (trndata, LibSvmPythonPredictor),
+                    (trndata, Predictor),
+                    (trndata, PythonPredictor),
                     ]
             fitargs += [
-                (pctrndata, LibSvmPredictor),
-                (pctrndata, LibSvmPythonPredictor)
+                (pctrndata, Predictor),
+                (pctrndata, PythonPredictor)
                 ]
             for model in models:
                 refresults = model.fit(*fitargs[0])
@@ -165,9 +165,9 @@ class test_regression(NumpyTestCase):
 
     def check_compact(self):
         traindata, testdata = self._make_basic_datasets()
-        kernel = LinearKernel()
-        model = LibSvmEpsilonRegressionModel(LinearKernel())
-        results = model.fit(traindata, LibSvmPythonPredictor)
+        kernel = Linear()
+        model = EpsilonRegressionModel(Linear())
+        results = model.fit(traindata, PythonPredictor)
         refp = results.predict(testdata)
         results.compact()
         p = results.predict(testdata)
