@@ -1,15 +1,15 @@
 from numpy.testing import *
 import numpy as N
 
-set_local_path('../..')
-from svm.dataset import *
-from svm.kernel import *
-from svm.dataset import convert_to_svm_node, svm_node_dot
-from svm.libsvm import svm_node_dtype
-restore_path()
+from ..dataset import OneClassDataSet, RegressionDataSet, \
+     ClassificationDataSet
+from ..kernel import Linear, Polynomial, RBF, Sigmoid
+from ..dataset import convert_to_svm_node, svm_node_dot
+from ..libsvm import svm_node_dtype
 
-class test_dataset(NumpyTestCase):
-    def check_convert_dict(self):
+
+class TestDataset(TestCase):
+    def test_convert_dict(self):
         x = N.array([(-1,0.)], dtype=svm_node_dtype)
         assert_array_equal(convert_to_svm_node({}), x)
 
@@ -22,7 +22,7 @@ class test_dataset(NumpyTestCase):
         # check for positive indexes
         self.assertRaises(AssertionError, convert_to_svm_node, {0:0.})
 
-    def check_convert_list(self):
+    def test_convert_list(self):
         x = N.array([(-1,0.)], dtype=svm_node_dtype)
         assert_array_equal(convert_to_svm_node([]), x)
 
@@ -34,14 +34,14 @@ class test_dataset(NumpyTestCase):
         self.assertRaises(AssertionError,
                           convert_to_svm_node, [(1,0.),(1,0.)])
 
-    def check_convert_array(self):
+    def test_convert_array(self):
         x = N.array([(-1,0.)], dtype=svm_node_dtype)
         assert_array_equal(convert_to_svm_node(N.empty(0)), x)
 
         x = N.array([(1,1.),(2,2.),(-1,0.)], dtype=svm_node_dtype)
         assert_array_equal(convert_to_svm_node(N.arange(1,3)), x)
 
-    def check_regression(self):
+    def test_regression(self):
         data = [(1.0, N.arange(5))]
         y = map(lambda x: x[0], data)
         x = map(lambda x: x[1], data)
@@ -52,7 +52,7 @@ class test_dataset(NumpyTestCase):
             self.assertEqual(data[i][0], x[0])
             assert_array_equal(data[i][1], x[1]['value'][:-1])
 
-    def check_classification(self):
+    def test_classification(self):
         data = [(1, N.arange(4)), (2, N.arange(10))]
         labels = map(lambda x: x[0], data)
         x = map(lambda x: x[1], data)
@@ -65,7 +65,7 @@ class test_dataset(NumpyTestCase):
             self.assertEqual(data[i][0], x[0])
             assert_array_equal(data[i][1], x[1]['value'][:-1])
 
-    def check_oneclass(self):
+    def test_oneclass(self):
         data = [N.arange(2)]
         dataset = OneClassDataSet(data)
         self.assertAlmostEqual(dataset.gamma, 0.5)
@@ -73,8 +73,8 @@ class test_dataset(NumpyTestCase):
         for i, x in enumerate(dataset):
             assert_array_equal(data[i], x[1]['value'][:-1])
 
-class test_svm_node_dot(NumpyTestCase):
-    def check_basics(self):
+class TestSvmNodeDot(TestCase):
+    def test_basics(self):
         kernel = Linear()
 
         x = N.array([(-1,0.)], dtype=svm_node_dtype)
@@ -88,8 +88,8 @@ class test_svm_node_dot(NumpyTestCase):
         y = N.array([(3,2.),(-1,0.)], dtype=svm_node_dtype)
         self.assertAlmostEqual(svm_node_dot(x, y, kernel), 4.)
 
-class test_precomputed_dataset(NumpyTestCase):
-    def check_precompute(self):
+class TestPrecomputedDataset(TestCase):
+    def test_precompute(self):
         degree, gamma, coef0 = 4, 3.0, 2.0
         kernels = [
             Linear(),
@@ -113,7 +113,7 @@ class test_precomputed_dataset(NumpyTestCase):
                 valuerow = row[1:]['value']
                 assert_array_almost_equal(valuerow, expt_grammat[i])
 
-    def check_combine(self):
+    def test_combine(self):
         kernel = Linear()
 
         y1 = N.random.randn(10)
@@ -136,4 +136,4 @@ class test_precomputed_dataset(NumpyTestCase):
             assert_array_almost_equal(valuerow, expt_grammat[i])
 
 if __name__ == '__main__':
-    NumpyTest().run()
+    run_module_suite()

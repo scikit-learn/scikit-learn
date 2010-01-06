@@ -3,11 +3,7 @@
 
 """Mini script useful for top level testing of the learn package."""
 
-from numpy.testing import NumpyTest
+from scikits.learn import test
 
-def additional_tests():
-    # XXX: does this guarantee that the package is the one in the dev trunk, and
-    # not scikits.foo installed somewhere else ?
-    import scikits.learn
-    np = NumpyTest(scikits.learn)
-    return np._test_suite_from_all_tests(np.package, level = 10, verbosity = 1)
+test()
+

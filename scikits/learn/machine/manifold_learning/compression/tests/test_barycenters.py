@@ -3,17 +3,14 @@
 # Matthieu Brucher
 # Last Change : 2007-12-10 09:52
 
-import unittest
-import numpy
+import numpy as np
 
 from numpy.testing import *
-set_package_path()
-from compression import barycenters
-restore_path()
+from ..barycenters import barycenters
 
-class test_barycenters(unittest.TestCase):
+class TestBarycenters(TestCase):
   def test_barycenters(self):
-    samples = numpy.array((0., 0., 0.,
+    samples = np.array((0., 0., 0.,
       1., 0., 0.,
       0., 1., 0.,
       1., 1., 0.,
@@ -25,4 +22,4 @@ class test_barycenters(unittest.TestCase):
     print sparse
 
 if __name__ == "__main__":
-  unittest.main()
+  run_module_suite()

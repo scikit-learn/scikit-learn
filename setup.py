@@ -50,11 +50,10 @@ if __name__ == "__main__":
     setup(configuration = configuration,
         install_requires='numpy', # can also add version specifiers      
         namespace_packages=['scikits'],
-        #packages=setuptools.find_packages(),
         packages=['scikits'],
         include_package_data = True,
         #package_data = {'scikits.pyaudiolab': data_files}, 
-        test_suite="tester", # for python setup.py test
+        test_suite="nose.collector", # for python setup.py test
         zip_safe=False, # the package can run out of an .egg file
         #FIXME url, download_url, ext_modules
         classifiers = 

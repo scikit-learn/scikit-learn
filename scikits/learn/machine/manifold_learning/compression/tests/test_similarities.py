@@ -7,11 +7,9 @@ import unittest
 import numpy
 
 from numpy.testing import *
-set_package_path()
-from compression import lle
-restore_path()
+from ..similarities import LLE
 
-class test_lle(unittest.TestCase):
+class test_lle(TestCase):
   def test_lle(self):
     samples = numpy.array((0., 0., 0.,
       1., 0., 0.,
@@ -21,8 +19,8 @@ class test_lle(unittest.TestCase):
       .5, 0., 0.,
       1., 1., 0.5,
       )).reshape((-1,3))
-    coords = lle(samples, 2, neighboors=5)
+    coords = LLE(samples, 2, neighboors=5)
     print coords
 
 if __name__ == "__main__":
-  unittest.main()
+    run_module_suite()  

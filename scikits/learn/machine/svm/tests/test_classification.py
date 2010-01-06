@@ -2,15 +2,13 @@ from itertools import izip
 from numpy.testing import *
 import numpy as N
 
-set_local_path('../..')
-from svm.classification import *
-from svm.dataset import ClassificationDataSet, TestDataSet
-from svm.kernel import *
-from svm.predict import *
-restore_path()
+from ..classification import CClassificationModel, NuClassificationModel
+from ..dataset import ClassificationDataSet, TestDataSet
+from ..kernel import Linear, Polynomial, RBF, Custom
+from ..predict import PythonPredictor, Predictor
 
-class test_classification(NumpyTestCase):
-    def check_basics(self):
+class TestClassification(TestCase):
+    def test_basics(self):
         kernel = Linear()
         # C-SVC
         ModelType = CClassificationModel
@@ -37,7 +35,7 @@ class test_classification(NumpyTestCase):
         testdata = TestDataSet(x)
         return traindata, testdata
 
-    def check_c_basics(self):
+    def test_c_basics(self):
         traindata, testdata = self._make_basic_datasets()
         kernel = RBF(traindata.gamma)
         model = CClassificationModel(kernel)
@@ -69,7 +67,7 @@ class test_classification(NumpyTestCase):
             p = N.array(results.predict(testdata))
             assert_array_equal(p, expected_p)
 
-    def check_c_more(self):
+    def test_c_more(self):
         cost = 10.0
         weights = [(1, 10.0)]
         modelargs = cost, weights
@@ -80,7 +78,7 @@ class test_classification(NumpyTestCase):
         self._classify_basic(CClassificationModel,
                              modelargs, expected_rhos, expected_ps)
 
-    def check_c_probability(self):
+    def test_c_probability(self):
         traindata, testdata = self._make_basic_datasets()
         nu = 0.5
         cost = 10.0
@@ -98,7 +96,7 @@ class test_classification(NumpyTestCase):
                 results = model.fit(traindata)
                 results.predict_probability(testdata)
 
-    def check_cross_validate(self):
+    def test_cross_validate(self):
         labels = ([-1] * 50) + ([1] * 50)
         x = N.random.randn(len(labels), 10)
         traindata = ClassificationDataSet(labels, x)
@@ -109,7 +107,7 @@ class test_classification(NumpyTestCase):
         # XXX check cross-validation with and without probability
         # output enabled
 
-    def check_nu_basics(self):
+    def test_nu_basics(self):
         traindata, testdata = self._make_basic_datasets()
         kernel = RBF(traindata.gamma)
         model = NuClassificationModel(kernel)
@@ -118,7 +116,7 @@ class test_classification(NumpyTestCase):
         assert_array_equal(p, [0, 1, 1, 2])
         v = results.predict_values(testdata)
 
-    def check_nu_more(self):
+    def test_nu_more(self):
         nu = 0.5
         weights = [(1, 10.0)]
         modelargs = nu, weights
@@ -158,7 +156,7 @@ class test_classification(NumpyTestCase):
         #kernels += [Custom(f) for f in [kernelf, kernelg]]
         return kernels
 
-    def check_all(self):
+    def test_all(self):
         trndata, testdata, trndata1, trndata2 = self._make_datasets()
         kernels = self._make_kernels()
         weights = [(0, 2.0), (1, 5.0), (2, 3.0)]
@@ -206,7 +204,7 @@ class test_classification(NumpyTestCase):
                     except NotImplementedError:
                         self.assert_(fitargs[-1] is PythonPredictor)
 
-    def check_python_predict(self):
+    def test_python_predict(self):
         traindata, testdata = self._make_basic_datasets()
         kernel = Linear()
         cost = 10.0
@@ -227,7 +225,7 @@ class test_classification(NumpyTestCase):
         p = results.predict(testdata)
         assert_array_equal(p, refp)
 
-    def xcheck_compact(self):
+    def xtest_compact(self):
         traindata, testdata = self._make_basic_datasets()
         kernel = Linear()
         cost = 10.0
@@ -241,7 +239,7 @@ class test_classification(NumpyTestCase):
             for key, value in refv.iteritems():
                 self.assertEqual(value, v[key])
 
-    def _make_compact_check_datasets(self):
+    def _make_compact_test_datasets(self):
         x = N.random.randn(150, 3)
         labels = N.random.random_integers(1, 5, x.shape[0])
         traindata = ClassificationDataSet(labels, x)
@@ -251,14 +249,14 @@ class test_classification(NumpyTestCase):
         testdata2 = TestDataSet(list(img.reshape(xdim*ydim, zdim)))
         return traindata, testdata1, testdata2
 
-    def check_compact_predict_values(self):
+    def test_compact_predict_values(self):
         def compare_predict_values(vx, vy):
             for pred1, pred2 in izip(vx, vy):
                 for labels, x in pred1.iteritems():
                     self.assert_(labels in pred2)
                     self.assertAlmostEqual(x, pred2[labels])
         traindata, testdata1, testdata2 = \
-            self._make_compact_check_datasets()
+            self._make_compact_test_datasets()
         kernel = Linear()
         model = CClassificationModel(kernel)
         refresults = model.fit(traindata)
@@ -277,9 +275,9 @@ class test_classification(NumpyTestCase):
         # XXX this test fails
         #compare_predict_values(refv1, v22)
 
-    def check_compact_predict(self):
+    def test_compact_predict(self):
         traindata, testdata1, testdata2 = \
-            self._make_compact_check_datasets()
+            self._make_compact_test_datasets()
         kernel = Linear()
         model = CClassificationModel(kernel)
         refresults = model.fit(traindata)
@@ -298,7 +296,7 @@ class test_classification(NumpyTestCase):
         #self.assertEqual(refp1, p21)
         #self.assertEqual(refp1, p22)
 
-    def check_no_support_vectors(self):
+    def test_no_support_vectors(self):
         x = N.array([[10.0, 20.0]])
         labels = [1]
         traindata = ClassificationDataSet(labels, x)
@@ -308,4 +306,4 @@ class test_classification(NumpyTestCase):
         self.assertRaises(ValueError, model.fit, traindata)
 
 if __name__ == '__main__':
-    NumpyTest().run()
+    run_module_suite()

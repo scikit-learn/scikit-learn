@@ -1,15 +1,13 @@
 from numpy.testing import *
 import numpy as N
 
-set_local_path('../..')
-from svm.dataset import OneClassDataSet, TestDataSet
-from svm.kernel import *
-from svm.oneclass import *
-from svm.predict import *
-restore_path()
+from ..dataset import OneClassDataSet, TestDataSet
+from ..kernel import Linear, Polynomial, RBF
+from ..oneclass import OneClassModel
+from ..predict import PythonPredictor
 
-class test_oneclass(NumpyTestCase):
-    def check_basics(self):
+class TestOneClass(TestCase):
+    def test_basics(self):
         ModelType = OneClassModel
         kernel = Linear()
         ModelType(kernel)
@@ -24,7 +22,7 @@ class test_oneclass(NumpyTestCase):
         testdata = TestDataSet(x)
         return traindata, testdata
 
-    def check_train(self):
+    def test_train(self):
         traindata, testdata = self._make_basic_datasets()
         model = OneClassModel(Linear())
         results = model.fit(traindata)
@@ -33,7 +31,7 @@ class test_oneclass(NumpyTestCase):
         v = results.predict_values(testdata)
         assert_array_equal(v, [-0.5, 0.0, 0.0, 0.5])
 
-    def check_more(self):
+    def test_more(self):
         traindata, testdata = self._make_basic_datasets()
         ModelType = OneClassModel
         nu = 0.5
@@ -56,7 +54,7 @@ class test_oneclass(NumpyTestCase):
             for p, v in zip(pred, values):
                 self.assertEqual(v > 0, p)
 
-    def check_compact(self):
+    def test_compact(self):
         traindata, testdata = self._make_basic_datasets()
         model = OneClassModel(Linear())
         results = model.fit(traindata, PythonPredictor)
@@ -66,4 +64,4 @@ class test_oneclass(NumpyTestCase):
         assert_array_equal(refv, v)
 
 if __name__ == '__main__':
-    NumpyTest().run()
+    run_module_suite()

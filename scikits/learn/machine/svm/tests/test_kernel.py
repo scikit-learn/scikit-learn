@@ -1,40 +1,38 @@
 from numpy.testing import *
 import numpy as N
 
-set_local_path('../..')
-from svm.kernel import *
-restore_path()
+from ..kernel import Linear, Polynomial,Sigmoid, RBF, Custom
 
 def kernelfunc(x, y):
     return 8 * N.dot(x, y.T)
 
-class test_kernel(NumpyTestCase):
-    def check_linear_kernel(self):
+class TestKernel(TestCase):
+    def test_linear_kernel(self):
         kernel = Linear()
         x = N.array([2.])
         self.assertAlmostEqual(kernel(x, x), 4.)
 
-    def check_polynomial_kernel(self):
+    def test_polynomial_kernel(self):
         kernel = Polynomial(degree=6, gamma=1.0, coef0=1.0)
         x = N.array([2.])
         self.assertAlmostEqual(kernel(x, x), 15625.)
 
-    def check_sigmoid_kernel(self):
+    def test_sigmoid_kernel(self):
         kernel = Sigmoid(gamma=0.2, coef0=0.3)
         x = N.array([2.])
         self.assertAlmostEqual(kernel(x, x), 0.80049902)
 
-    def check_rbf_kernel(self):
+    def test_rbf_kernel(self):
         kernel = RBF(gamma=1.0)
         x, y = N.array([2.]), N.array([3.])
         self.assertAlmostEqual(kernel(x, y), N.exp(-1.))
 
-    def check_custom_kernel(self):
+    def test_custom_kernel(self):
         kernel = Custom(kernelfunc)
         x = N.array([2.])
         self.assertAlmostEqual(kernel(x, x), 32.0)
 
-    def check_multidim_input(self):
+    def test_multidim_input(self):
         kernels = [
             Linear(),
             Polynomial(degree=6, gamma=1.0, coef0=1.0),
@@ -60,4 +58,4 @@ class test_kernel(NumpyTestCase):
                     assert_array_equal(u.squeeze(), z.squeeze())
 
 if __name__ == '__main__':
-    NumpyTest().run()
+    run_module_suite()

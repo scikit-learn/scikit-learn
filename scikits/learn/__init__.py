@@ -1,2 +1,6 @@
-#! /usr/bin/env python
-# Last Change: Mon Jul 02 02:00 PM 2007 J
+#
+#  scikits.learn - Machine Learning module
+#
+
+from numpy.testing import Tester
+test = Tester().test

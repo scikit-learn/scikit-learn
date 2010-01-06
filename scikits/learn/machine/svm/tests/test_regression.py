@@ -1,15 +1,13 @@
 from numpy.testing import *
 import numpy as N
 
-set_local_path('../..')
-from svm.dataset import RegressionDataSet, TestDataSet
-from svm.kernel import *
-from svm.predict import *
-from svm.regression import *
-restore_path()
+from ..dataset import RegressionDataSet, TestDataSet
+from ..kernel import Linear, Polynomial, RBF, Custom
+from ..predict import Predictor, PythonPredictor
+from ..regression import NuRegressionModel, EpsilonRegressionModel
 
-class test_regression(NumpyTestCase):
-    def check_basics(self):
+class TestRegression(TestCase):
+    def test_basics(self):
         Model = EpsilonRegressionModel
         kernel = Linear()
         Model(kernel)
@@ -25,7 +23,7 @@ class test_regression(NumpyTestCase):
         self.assertEqual(model.cache_size, 60)
         self.assertAlmostEqual(model.tolerance, 0.005)
 
-    def check_epsilon_train(self):
+    def test_epsilon_train(self):
         ModelType = EpsilonRegressionModel
         y = [10., 20., 30., 40.]
         x = [N.array([0, 0]),
@@ -57,7 +55,7 @@ class test_regression(NumpyTestCase):
             ]
         return kernels
 
-    def check_epsilon_more(self):
+    def test_epsilon_more(self):
         ModelType = EpsilonRegressionModel
         epsilon = 0.1
         cost = 10.0
@@ -82,7 +80,7 @@ class test_regression(NumpyTestCase):
             diff = N.absolute(predictions - expected_y)
             self.assert_(N.alltrue(diff < 1e-3,axis=0))
 
-    def check_cross_validate(self):
+    def test_cross_validate(self):
         y = N.random.randn(100)
         x = N.random.randn(len(y), 10)
         traindata = RegressionDataSet(y, x)
@@ -91,7 +89,7 @@ class test_regression(NumpyTestCase):
         nr_fold = 10
         mse, scc = model.cross_validate(traindata, nr_fold)
 
-    def check_nu_more(self):
+    def test_nu_more(self):
         ModelType = NuRegressionModel
         nu = 0.4
         cost = 10.0
@@ -132,7 +130,7 @@ class test_regression(NumpyTestCase):
         kernels += [Custom(f) for f in [kernelf, kernelg]]
         return kernels
 
-    def check_all(self):
+    def test_all(self):
         trndata, trndata1, trndata2, testdata = self._make_datasets()
         kernels = self._make_kernels()
         for kernel in kernels:
@@ -163,7 +161,7 @@ class test_regression(NumpyTestCase):
                     p = results.predict(testdata)
                     assert_array_almost_equal(refp, p)
 
-    def check_compact(self):
+    def test_compact(self):
         traindata, testdata = self._make_basic_datasets()
         kernel = Linear()
         model = EpsilonRegressionModel(Linear())
@@ -174,4 +172,4 @@ class test_regression(NumpyTestCase):
         assert_array_equal(refp, p)
 
 if __name__ == '__main__':
-    NumpyTest().run()
+    run_module_suite()
