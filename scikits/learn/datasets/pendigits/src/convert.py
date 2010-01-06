@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Jul 17 05:00 PM 2007 J
+# Last Change: Sun Jul 22 01:00 PM 2007 J
 
 # This script generates a python file from the txt data
 import csv
@@ -16,8 +16,10 @@ a = csv.reader(f)
 tes = [[int(j) for j in i] for i in a]
 
 # Write the data in pendigits.py
-a = open("../pendigits.py", "w")
+ftra = open("../pendigits_tra.py", "w")
+ftes = open("../pendigits_tes.py", "w")
 
-a.writelines(dumpvar(tra, 'training'))
-a.writelines(dumpvar(tes, 'testing'))
-a.close()
+ftra.writelines(dumpvar(tra, 'training'))
+ftra.close()
+ftes.writelines(dumpvar(tes, 'testing'))
+ftes.close()

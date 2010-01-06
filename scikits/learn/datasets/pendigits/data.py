@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-# Last Change: Fri Jun 22 05:00 PM 2007 J
+# Last Change: Sun Jul 22 03:00 PM 2007 J
 
 # The code and descriptive text is copyrighted and offered under the terms of
 # the BSD License from the authors; see below. However, the actual dataset may
@@ -101,10 +101,25 @@ pressure level values are ignored. The raw data that we capture
 from the tablet consist of integer values between 0 and 500 
 (tablet input box resolution). 
 
-pendigits-orig contain original, unnormalized data. pendigits is the 
-normalized and resampled version where all inputs are of the same
-length. Here because of speed or the digit, feature vectors may be of
-different lengths, e.g., '1' is shorter than '8'.
+In order to train and test our classifiers, we need to represent 
+digits as constant length feature vectors. A commonly used technique
+leading to good results is resampling the ( x_t, y_t) points. 
+Temporal resampling (points regularly spaced in time) or spatial
+resampling (points regularly spaced in arc length) can be used here. 
+Raw point data are already regularly spaced in time but the distance
+between them is variable. Previous research showed that spatial
+resampling to obtain a constant number of regularly spaced points 
+on the trajectory yields much better performance, because it provides 
+a better alignment between points. Our resampling algorithm uses 
+simple linear interpolation between pairs of points. The resampled
+digits are represented as a sequence of T points ( x_t, y_t )_{t=1}^T,
+regularly spaced in arc length, as opposed to the input sequence, 
+which is regularly spaced in time.
+
+So, the input vector size is 2*T, two times the number of points
+resampled. We considered spatial resampling to T=8,12,16 points in our
+experiments and found that T=8 gave the best trade-off between 
+accuracy and complexity.
 """
 
 NOTE        = """
@@ -127,65 +142,15 @@ pendigits.tra divides into
 Number of Attributes
 --------------------
 
-Input size depends on writing speed and time and is not fixed +1 class
-attribute
+16 (8 (x, y) coordinates)
 
 For Each Attribute:
 -------------------
 
-The data is in the UNIPEN format. See
-I. Guyon UNIPEN 1.0 Format Definition, 
-ftp://ftp.cis.upenn.edu/pub/UNIPEN-pub/definition/unipen.def
-1994
+All input attributes are integers in the range 0..100.
 
 Missing Attribute Values
 ------------------------
 
-Class Distribution
-------------------
-
-          classes
-          0    1    2    3    4    5    6    7    8    9
-tra     384  390  392  370  391  375  351  375  363  357 Tot 3748 
-cv      209  201  201  163  185  163  191  196  178  186 Tot 1873 
-wdep    187  188  187  186  204  182  178  207  178  176 Tot 1873 
-windep  363  364  364  336  364  335  336  364  336  336 Tot 3498 
+None 
 """
-
-def load():
-    """load the actual data and returns them.
-    
-    :returns:
-        data: dictionary.
-            data['training'] and data['testing'] both are dictionaries which
-            contains the following keys: x, y and class. x and y are the
-            coordinates of the eight resampled points, and class is an integer
-            between 0 and 9, indicating the number label.
-
-    example
-    -------
-
-    Let's say you want to plot the first sample of the training set with
-    matplotlib. You would do something like plot(data['training']['x'][0],
-    data['training']['y'][0], '-')
-    """
-    import numpy
-    from pendigits import training, testing
-    assert len(training) == 7494
-    assert len(testing) == 3498
-
-    def raw_to_num(dt):
-        coordinates = numpy.empty((len(dt), 16), numpy.int)
-        digclass = numpy.empty(len(dt), dtype = numpy.int)
-        for i in range(len(coordinates)):
-            coordinates[i] = dt[i][:-1]
-            digclass[i] = dt[i][-1]
-        xcor = coordinates[:, ::2]
-        ycor = coordinates[:, 1::2]
-        return xcor, ycor, digclass
-
-    xcor, ycor, digclass = raw_to_num(training)
-    training = {'x' : xcor, 'y' : ycor, 'class' : digclass}
-    xcor, ycor, digclass = raw_to_num(testing)
-    testing = {'x' : xcor, 'y' : ycor, 'class' : digclass}
-    return {'testing' : testing, 'training' : training}
