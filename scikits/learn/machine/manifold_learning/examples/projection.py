@@ -62,4 +62,4 @@ for sample in data:
 
 print "Saving results in %s" % projectedfile
 f = open(projectedfile, 'w')
-pickle.dump(projected, f)
+pickle.dump(projecteds, f)
