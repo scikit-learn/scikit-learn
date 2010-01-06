@@ -155,7 +155,7 @@ def logresp(data, w, mu, va):
     return nresp
 
 class EM:
-    def __init__(self, hint=0):
+    def __init__(self):
         pass
 
     def train(self, data, params, maxiter=10, hint=0):
@@ -163,6 +163,7 @@ class EM:
         ss = SStats(params.d, params.k, params.mode)
 
         for i in range(maxiter):
+            # Compute sufficient statistics
             if hint > 0:
                 ss.reset()
                 for j in range(data.shape[0] / hint):
@@ -171,6 +172,7 @@ class EM:
                 ss.update(data[j * hint + hint:], params.w, params.mu, params.va)
             else:
                 ss.compute(data, params.w, params.mu, params.va)
+            # Update parameters from ss
             params.update(ss)
 
         return params
