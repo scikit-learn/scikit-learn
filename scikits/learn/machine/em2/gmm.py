@@ -138,7 +138,7 @@ class SStats:
 
 def logresp(data, w, mu, va):
     """Compute log responsabilities for a GMM, given data and parameters
-        
+
     Note
     ----
     Computes the latent variable distribution (a posteriori probability)
@@ -161,12 +161,12 @@ class EM:
     def train(self, data, params, maxiter=10, hint=0):
         """params is modified in-place."""
         ss = SStats(params.d, params.k, params.mode)
-    
+
         for i in range(maxiter):
             if hint > 0:
                 ss.reset()
                 for j in range(data.shape[0] / hint):
-                    ss.update(data[j * hint: j * hint + hint], 
+                    ss.update(data[j * hint: j * hint + hint],
                               params.w, params.mu, params.va)
                 ss.update(data[j * hint + hint:], params.w, params.mu, params.va)
             else:
