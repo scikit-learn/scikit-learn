@@ -4,7 +4,7 @@ Projection with MAP on a piecewise linear function module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 13:54
+# Last Change : 2008-04-17 14:00
 
 from scikits.openopt.solvers.optimizers import *
 import numpy
@@ -65,6 +65,6 @@ class MAPProjection(ML_projection.MLProjection):
     Computes the best coordinates with maximization of the a posteriori probability of X and the error
     """
     function = APosteriori(RBFF, self.PLMR.random_variable.RBF, point, equation, mask)
-    opt = optimizer.StandardOptimizer(function = function, step = step.FRPRPConjugateGradientStep(), criterion = criterion.criterion(ftol = 0.0001, gtol = 0.0001, iterations_max = 200), x0 = numpy.squeeze(coord), line_search = line_search.BacktrackingSearch(rho=.00001))
+    opt = optimizer.StandardOptimizer(function = function, step = step.GradientStep(), criterion = criterion.criterion(ftol = 0.0001, gtol = 0.0001, iterations_max = 200), x0 = numpy.squeeze(coord), line_search = line_search.FibonacciSectionSearch(min_alpha_step=.00001))
     return opt.optimize()
     #return scipy.optimize.fmin(function, x0 = coord)

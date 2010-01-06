@@ -55,10 +55,10 @@ print "Projection using %s" % projectionkind
 projectionalgo = getattr(projection, projectionkind)
 projection_model = projectionalgo(model)
 
-projected = numpy.zeros((0,0))
+projecteds = numpy.zeros((0, data.shape[1]))
 for sample in data:
   (coord, projected, best) = projection_model.project(sample)
-  projected = numpy.hstack((projected, projected))
+  projecteds = numpy.vstack((projecteds, projected[None,:]))
 
 print "Saving results in %s" % projectedfile
 f = open(projectedfile, 'w')
