@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Jul 17 09:00 PM 2007 J
+# Last Change: Mon Feb 02 11:00 PM 2009 J
 
 # Various utilities for examples 
 
@@ -164,7 +164,7 @@ class Scaler:
         self.t = t
         self.s = s
 
-    def preprocess(self, data):
+    def scale(self, data):
         """Scale data *in-place*."""
         try:
             data -= self.t
@@ -175,7 +175,7 @@ class Scaler:
                              "scaler")
         return data
 
-    def unprocess(self, data):
+    def unscale(self, data):
         """Unscale data *in-place*."""
         try:
             data *= self.s
