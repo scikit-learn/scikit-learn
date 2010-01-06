@@ -1,0 +1,8 @@
+env = Environment()
+
+env.Append(CFLAGS=Split("""-W -Wall -Wextra"""))
+env.Append(CFLAGS=Split("""-O3"""))
+env.Append(CPPPATH=["/usr/include/python2.5",
+                "/home/david/local/lib/python2.5/site-packages/numpy/core/include"])
+
+env.SharedLibrary("_lk", source=["_lk.c"], SHLIBPREFIX="")
