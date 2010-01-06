@@ -7,7 +7,7 @@ def configuration(parent_package='', top_path=None, package_name='compression'):
     from numpy.distutils.misc_util import Configuration
     config = Configuration(package_name,parent_package,top_path)
     config.add_subpackage('*')
-    config.add_library('cost_function._cost_function',
+    config.add_extension('cost_function._cost_function',
                          sources=["cost_function/cost_function.cpp"],
                          include_dirs=[os.path.dirname(__file__) + '/..'],)
     config.add_data_dir('tests')

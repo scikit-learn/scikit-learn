@@ -1,24 +1,24 @@
 /**
- * \file neighboorsFromMatrix.h
- * Finds the nearest neighboors with the help of a tree
+ * \file neighborsFromMatrix.h
+ * Finds the nearest neighbors with the help of a tree
  */
 
 // Matthieu Brucher
-// Last Change : 2007-07-17 17:08
+// Last Change : 2008-04-15 10:43
 
-#ifndef NEIGHBOORSFROMMATRIX
-#define NEIGHBOORSFROMMATRIX
+#ifndef NEIGHBORSFROMMATRIX
+#define NEIGHBORSFROMMATRIX
 
 #include <vector>
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <matrix/matrix_lib.h>
 
-namespace Neighboor
+namespace Neighbor
 {
-  /// This class creates a set of elements in a K-neighboor or Parzen window of an other point with the help of a tree
+  /// This class creates a set of elements in a K-neighbor or Parzen window of an other point with the help of a tree
   template<class MatrixType>
-  class NeighboorsFromMatrix
+  class NeighborsFromMatrix
   {
     /// Inner implementation of the tree
     struct Node
@@ -55,10 +55,10 @@ namespace Neighboor
     typedef typename MatrixType::Data_Type DataType;
     /**
      * Constructor of a window factory
-     * @param points is the set of points used in the neighbooring
+     * @param points is the set of points used in the neighboring
      * @param levels indicates the number of levels in the tree
      */
-    NeighboorsFromMatrix(const MatrixType& points, unsigned long levels)
+    NeighborsFromMatrix(const MatrixType& points, unsigned long levels)
       :levels(levels), points(points), tree(new Node)
     {
       Matrix::Matrix<DataType, 0, 2U> minmax(points.height(), 2U);
@@ -92,19 +92,19 @@ namespace Neighboor
     }
 
     /**
-     * Finds the k-neighboors of a point in a set of points
+     * Finds the k-neighbors of a point in a set of points
      * @param points is the set of points
-     * @param neighboor is the number of neighboors to consider
-     * @param newPoint is the point neighboors are searched for
-     * @return a multimap of the neighboors
+     * @param neighbor is the number of neighbors to consider
+     * @param newPoint is the point neighbors are searched for
+     * @return a multimap of the neighbors
      */
     template<class ColumnVector>
-    std::multimap<DataType, unsigned long> kneighboors(const ColumnVector& newPoint, unsigned long neighboor) const
+    std::multimap<DataType, unsigned long> kneighbors(const ColumnVector& newPoint, unsigned long neighbor) const
     {
       assert(newPoint.width() == 1U);
       assert(newPoint.height() == points.height());
 
-      std::multimap<DataType, unsigned long> neighboors;
+      std::multimap<DataType, unsigned long> neighbors;
       std::multimap<DataType, Node*> openNode;
       openNode.insert(std::make_pair(norm2(newPoint - tree->center), tree.get()));
 
@@ -114,33 +114,33 @@ namespace Neighboor
         Node* front = it->second;
         openNode.erase(it);
 
-        if(neighboors.size() < neighboor)
-          processNode(newPoint, front, openNode, neighboors);
+        if(neighbors.size() < neighbor)
+          processNode(newPoint, front, openNode, neighbors);
         else
         {
-          typename std::multimap<DataType, unsigned long>::iterator last = neighboors.begin();
-          std::advance(last, neighboor - 1);
+          typename std::multimap<DataType, unsigned long>::iterator last = neighbors.begin();
+          std::advance(last, neighbor - 1);
 
           if((DataTypeTraits<DataType>::sqrt(norm2(newPoint - front->center)) - DataTypeTraits<DataType>::sqrt(front->squareDistance)) < last->first)
           {
-            processNode(newPoint, front, openNode, neighboors);
+            processNode(newPoint, front, openNode, neighbors);
           }
         }
       }
 
-      typename std::multimap<DataType, unsigned long>::iterator iterator = neighboors.begin();
-      std::advance(iterator, neighboor);
-      neighboors.erase(iterator, neighboors.end());
+      typename std::multimap<DataType, unsigned long>::iterator iterator = neighbors.begin();
+      std::advance(iterator, neighbor);
+      neighbors.erase(iterator, neighbors.end());
 
-      return neighboors;
+      return neighbors;
     }
 
     /**
-     * Finds the neighboors in a Parzen window of a point in a set of points
+     * Finds the neighbors in a Parzen window of a point in a set of points
      * @param points is the set of points
      * @param windowSize is the size of the Parzen window
-     * @param newPoint is the point neighboors are searched for
-     * @return a multimap of the neighboors
+     * @param newPoint is the point neighbors are searched for
+     * @return a multimap of the neighbors
      */
     template<class ColumnVector>
     std::multimap<DataType, unsigned long> parzen(const ColumnVector& newPoint, DataType windowSize) const
@@ -148,7 +148,7 @@ namespace Neighboor
       assert(newPoint.width() == 1U);
       assert(newPoint.height() == points.height());
 
-      std::multimap<DataType, unsigned long> neighboors;
+      std::multimap<DataType, unsigned long> neighbors;
       std::multimap<DataType, Node*> openNode;
       openNode.insert(std::make_pair(norm2(newPoint - tree->center), tree.get()));
 
@@ -162,12 +162,12 @@ namespace Neighboor
 
         if((DataTypeTraits<DataType>::sqrt(norm2(newPoint - front->center)) - DataTypeTraits<DataType>::sqrt(front->squareDistance)) < squareDistance)
         {
-          processNode(newPoint, front, openNode, neighboors);
+          processNode(newPoint, front, openNode, neighbors);
         }
       }
-      typename std::multimap<DataType, unsigned long>::iterator it = neighboors.upper_bound(windowSize);
-      neighboors.erase(it, neighboors.end());
-      return neighboors;
+      typename std::multimap<DataType, unsigned long>::iterator it = neighbors.upper_bound(windowSize);
+      neighbors.erase(it, neighbors.end());
+      return neighbors;
     }
 
   public:
@@ -255,20 +255,20 @@ namespace Neighboor
     }
 
     /**
-      * Processes a node and populates nodeMap or neighboors
-      * @param newPoint is the point for which neighboors must be found
+      * Processes a node and populates nodeMap or neighbors
+      * @param newPoint is the point for which neighbors must be found
       * @param node is the node to process
       * @param nodesMap is the list of nodes taht remains to be processed
-      * @param neighboors is the list of neighboors that are near enough the new point
+      * @param neighbors is the list of neighbors that are near enough the new point
       */
     template<class ColumnVector>
-    void processNode(const ColumnVector& newPoint, Node* node, std::multimap<DataType, Node*>& nodesMap, std::multimap<DataType, unsigned long>& neighboors) const
+    void processNode(const ColumnVector& newPoint, Node* node, std::multimap<DataType, Node*>& nodesMap, std::multimap<DataType, unsigned long>& neighbors) const
     {
       if(node->children.empty())
       {
         for(std::vector<unsigned long>::const_iterator it = node->points.begin(); it != node->points.end(); ++it)
         {
-          neighboors.insert(std::make_pair(DataTypeTraits<DataType>::sqrt(norm2(newPoint - points[*it])), *it));
+          neighbors.insert(std::make_pair(DataTypeTraits<DataType>::sqrt(norm2(newPoint - points[*it])), *it));
         }
       }
       else
@@ -282,7 +282,7 @@ namespace Neighboor
 
     /// The number of levels in the tree
     unsigned long levels;
-    /// The points used for the neighbooring
+    /// The points used for the neighboring
     MatrixType points;
     /// Pointer to the inner tree
     boost::shared_ptr<Node> tree;

@@ -4,7 +4,7 @@ Projection with ML on a piecewise linear function module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 13:53
+# Last Change : 2008-04-16 10:20
 
 from scikits.openopt.solvers.optimizers import *
 
@@ -12,6 +12,8 @@ import numpy
 import numpy.linalg as linalg
 
 import scipy.optimize
+
+import logging
 
 __all__ = ['MLProjection']
 
@@ -63,7 +65,7 @@ class MLProjection(object):
       candidates[cost] = (coord, epsilon, index)
     c = numpy.array(candidates.keys())
     best = numpy.nanmin(c)
-    print best, candidates[best][0], epsilon, point-epsilon, point
+    logging.debug("Likelihood: %f, coordinates: %s, error: %s, projection: %s, original: %s", best, candidates[best][0], epsilon, point-epsilon, point)
     return (candidates[best][0], self.function(candidates[best][0], candidates[best][2]), best)
 
   def function(self, coord, index):
@@ -86,7 +88,7 @@ class MLProjection(object):
     cost = self.PLMRcost(coordbis, point, equation = equation)
     reconstruct = numpy.dot(coordbis, self.PLMR.equations[equation])
     epsilon = point - reconstruct
-    print coord
+    logging.debug("Likelihood: %f; coordinates: %s", cost, coord)
     return(cost, coordbis, epsilon, equation)
 
   def computeBest(self, coord, point, equation, RBFF, mask):

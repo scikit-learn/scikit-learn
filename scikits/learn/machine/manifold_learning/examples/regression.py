@@ -6,7 +6,7 @@ Options:
   -h prints this help
 
 Usage:
-  compression.py [regressionkind [datafile [compresseddatafile]]]
+  regression.py [regressionkind [datafile [compresseddatafile [regressionfile]]]]
 
   - regressionkind is one of the regression estimation in scikits.learn.machine.manifold_learning.regression (PLMR, MLPLMR)
   - datafile is the data file to regress (default = swissroll.pickled)
@@ -40,21 +40,22 @@ else:
   compresseddatafile = "swissroll.isomap.pickled"
 
 if len(sys.argv) > 4:
-  compresseddatafile = sys.argv[4]
+  regressionfile = sys.argv[4]
 else:
-  compresseddatafile = "swissroll.isomap.pickled"
+  regressionfile = "swissroll.regressed.pickled"
 
 print "Importing dataset %s" % datafile
 f = open(datafile)
 data = pickle.load(f)
 
 print "Importing compressed dataset %s" % compresseddatafile
-f = open(datafile)
+f = open(compresseddatafile)
 coords = pickle.load(f)
 
 print "Regression using %s" % regressionkind
 regressionalgo = getattr(regression, regressionkind)
 model = regressionalgo(data, coords, neighbors = 9, random_variable = stats.IsotropicGaussianVariable, RBF_field = stats.RBFField)
+model.learn()
 
 print "Saving results in %s" % regressionfile
 f = open(regressionfile, 'w')

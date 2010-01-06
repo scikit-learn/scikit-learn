@@ -1,15 +1,15 @@
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 14:06
+# Last Change : 2008-04-15 10:42
 
 """
-Neighboors module
+Neighbors module
 """
 
-from neighboors import *
+from neighbors import *
 from utilities import *
 
-__all__ = ['Neighboors', 'KNeighboors', 'Parzen', 'create_graph']
+__all__ = ['Neighbors', 'KNeighbors', 'Parzen', 'create_graph']
 
 def test(level=-1, verbosity=1):
   from numpy.testing import NumpyTest

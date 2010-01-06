@@ -4,13 +4,13 @@ Robust optimization with a specific cost function
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-11 14:46
+# Last Change : 2008-04-15 10:50
 
 import numpy
 import numpy.linalg
 import math
 
-from toolbox.optimizers import *
+from scikits.openopt.solvers.optimizers import *
 import cost_function
 
 class Recorder(object):

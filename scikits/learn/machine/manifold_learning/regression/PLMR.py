@@ -4,12 +4,14 @@ Piecewise Linear Mapping Regression module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-15 10:06
+# Last Change : 2008-04-16 10:13
 
 import math
 import numpy
 import numpy.linalg as linalg
 from numpy.random import shuffle
+
+import logging
 
 class PLMR(object):
   """
@@ -21,7 +23,7 @@ class PLMR(object):
     Initializes the regression
     - points are the initial points
     - coords are the coordinates that will be used
-    - neighbors is the number of neighboor used for determining a plan's equation
+    - neighbors is the number of neighbor used for determining a plan's equation
     - random_variable is the kid of random variable that will be used for estimation, it is supposed to be identical for every piecewise function
     - correction_factor is the factor for belonging setting
     """
@@ -50,28 +52,30 @@ class PLMR(object):
     self.RBFF = [self.createRBF(numpy.where(self.belonging_vector == plan)[0]) for plan in range(0, len(self.equations))]
 
   def __getstate__(self):
-    return (self.coords, self.equations, self.belonging_vector, self.random_variable.get())
+    return (self.coords, self.equations, self.belonging_vector, self.random_variable, self.RBF_field)
 
   def __setstate__(self, state):
     self.coords = state[0]
     self.equations = state[1]
     self.belonging_vector = state[2]
-    self.random_variable.set(state[3])
+    self.random_variable = state[3]
+    self.RBF_field= state[4]
+    self.coords_field = self.RBF_field(self.coords[:,:-1], weight = 1)
     self.RBFF = [self.createRBF(numpy.where(self.belonging_vector == plan)[0]) for plan in range(0, len(self.equations))]
 
-  def create_graph(self, coords, neighbors):
+  def create_graph(self, coords, nb_neighbors):
     """
     Creates a pseudo graph of the nearest neighbors
     """
     import neighbors
 
     graph = [set() for i in xrange(len(coords))]
-    self.neighboorer = neighbors.Kneighbors(coords, neighbors)
+    self.neighborer = neighbors.Kneighbors(coords, nb_neighbors)
 
     for point in range(0, len(coords)):
-      for neighboor in self.neighboorer(coords[point]):
-        graph[point].add(neighboor[1])
-        graph[neighboor[1]].add(point)
+      for neighbor in self.neighborer(coords[point]):
+        graph[point].add(neighbor[1])
+        graph[neighbor[1]].add(point)
 
     return [list(neighbors) for neighbors in graph]
 
@@ -205,11 +209,10 @@ class PLMR(object):
         component = self.find_component(el, coords)
         coords.difference_update(component)
         if coords != set():
-          print coords
           self.belonging_vector[list(component)] = nbPlans
           nbPlans += 1
     if nbPlans != len(self.equations):
-      print "Connexity made plans be split"
+      logging.debug("Connexity made plans be split")
       return True
     return False
 

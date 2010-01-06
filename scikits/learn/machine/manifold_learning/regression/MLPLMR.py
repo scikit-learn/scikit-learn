@@ -4,7 +4,7 @@ Maximum Likelihood Piecewise Linear Mapping Regression module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-15 10:36
+# Last Change : 2008-04-15 13:34
 
 import math
 import numpy
@@ -14,6 +14,7 @@ import random
 import copy
 
 import PLMR
+import logging
 
 class MLPLMR(PLMR.PLMR):
   """
@@ -89,7 +90,7 @@ class MLPLMR(PLMR.PLMR):
       self.state['old_value'] = self.state['new_value']
       self.state['new_parameters'] = copy.deepcopy(self.equations)
       self.state['new_value'] = -self._getLogLikelihood()
-      print len(self.equations), self.state['new_value']
+      logging.debug("Equation(s): %d, likelihood: %f", len(self.equations), self.state['new_value'])
 
     self.belonging_vector = oldBV
     self.updateEquations()
