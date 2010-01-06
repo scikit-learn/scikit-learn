@@ -1,0 +1,4 @@
+Wed, 21 Jan 2009 20:41:57 +0900
+	* Start working a new version of em package, more scalable. The goal
+	is to be able to handle 1 million samples with (dimension) x (number of
+	components) ~ 100
