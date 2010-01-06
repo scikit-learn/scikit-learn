@@ -4,16 +4,16 @@ Dimensionality reduction with similarities
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-11 14:42
+# Last Change : 2008-04-15 10:32
 
 import numpy
 import numpy.random
 import numpy.linalg
 import math
 
-__all__ = ['lle', 'laplacianEigenmap', 'diffusionMap', ]
+__all__ = ['LLE', 'laplacianEigenmap', 'diffusionMap', ]
 
-from similarities import lle
+from similarities import LLE
 
 import similarities
 import tools

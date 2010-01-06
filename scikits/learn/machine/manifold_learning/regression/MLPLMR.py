@@ -4,7 +4,7 @@ Maximum Likelihood Piecewise Linear Mapping Regression module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-03-06 11:44
+# Last Change : 2008-04-15 10:36
 
 import math
 import numpy
@@ -20,21 +20,21 @@ class MLPLMR(PLMR.PLMR):
   Regression with piecewise linear functions
   Uses ML or mean square error (same error for every piecewise function)
   """
-  def __init__(self, points, coords, neighboors, random_variable, criterion = None, **kwargs):
+  def __init__(self, points, coords, neighbors, random_variable, criterion = None, **kwargs):
     """
     Initializes the regression
     - points are the initial points
     - coords are the coordinates that will be used
-    - neighboors is the number of neighboor used for determining a plan's equation
+    - neighbors is the number of neighboor used for determining a plan's equation
     - random_variable is the kid of random variable that will be used for estimation, it is supposed to be identical for every piecewise function
     - criterion is the stopping criterion
     """
     if not criterion:
-      import toolbox.optimizers
-      self.criterion = toolbox.optimizers.criterion.ModifiedAICCriterion(-0.00001, 1000, (coords.shape[-1] * points.shape[-1]) / (30 * numpy.std(points)))
+      import scikits.openopt.solvers.optimizers
+      self.criterion = scikits.openopt.solvers.optimizers.criterion.ModifiedAICCriterion(-0.00001, 1000, (coords.shape[-1] * points.shape[-1]) / (30 * numpy.std(points)))
     else:
       self.criterion = criterion
-    super(MLPLMR, self).__init__(points, coords, neighboors, random_variable, **kwargs)
+    super(MLPLMR, self).__init__(points, coords, neighbors, random_variable, **kwargs)
     self.iteration = 0
 
   def learn(self):

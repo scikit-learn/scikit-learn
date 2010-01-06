@@ -4,7 +4,7 @@ Clustering regression
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 13:56
+# Last Change : 2008-04-15 10:35
 
 import numpy
 import cluster
@@ -58,18 +58,18 @@ class CPLMR(object):
   """
   Allows to compute a regression block-wise
   """
-  def __init__(self, points, coords, neighboors, random_variable, RBF_field):
+  def __init__(self, points, coords, neighbors, random_variable, RBF_field):
     """
     Initializes the regression
     - points are the initial points
     - coords are the coordinates that will be used
-    - neighboors is the number of neighboor used for determining a plan's equation
+    - neighbors is the number of neighboor used for determining a plan's equation
     - random_variable is the kid of random variable that will be used for estimation, it is supposed to be identical for every piecewise function
     """
     self.points = points
     self.coords_orig = coords
     self.coords = numpy.append(coords, numpy.ones((len(coords),1)), axis = 1).copy()
-    self.neighboors = neighboors
+    self.neighbors = neighbors
 
     self.RV = ClusteredRandomVariable(random_variable)
 
@@ -91,7 +91,7 @@ class CPLMR(object):
 
     for cluster in range(0, self.nbClusters):
       points = self.points[:,numpy.where(self.clusters==cluster)[0]].copy()
-      plmr = MLPLMR(points, self.coords_orig, self.neighboors, random_variable = self.RV.kind, RBF_field = self.RBF_field)
+      plmr = MLPLMR(points, self.coords_orig, self.neighbors, random_variable = self.RV.kind, RBF_field = self.RBF_field)
       plmr.learn()
       self.PLMR.append(plmr)
 
