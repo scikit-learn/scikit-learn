@@ -1,5 +1,10 @@
-Last Change: Wed Jan 21 08:00 PM 2009 J
+Last Change: Fri Jan 23 02:00 PM 2009 J
 
 em2 is a new version of em, a python module build upon numpy and scipy (see
 http://www.scipy.org/) for learning mixtures models using Expectation
 Maximization.
+
+TODO:
+        - Parameters vs GM class
+        - Should SStats be integrated to GM class ?
+        - Full covariance implementation
