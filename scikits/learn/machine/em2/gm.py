@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Wed Jan 21 08:00 PM 2009 J
+# Last Change: Thu Jan 22 05:00 PM 2009 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -76,7 +76,7 @@ class GM:
         else:
             self.__is1d = True
 
-    def setparams(self, w, mu, sigma):
+    def setparams(self, w, mu, va):
         """Set parameters of the model.
 
         Args should be conformant with meta-parameters d and k given during
@@ -89,7 +89,7 @@ class GM:
         mu : ndarray
             means of the mixture. One component's mean per row, k row for k
             components.
-        sigma : ndarray
+        va : ndarray
             variances of the mixture. For diagonal models, one row contains
             the diagonal elements of the covariance matrix. For full
             covariance, d rows for one variance.
@@ -109,7 +109,7 @@ class GM:
         If you know already the parameters when creating the model, you can
         simply use the method class GM.fromvalues.
         """
-        k, d, mode = _check_gmm_param(w, mu, sigma)
+        k, d, mode = _check_gmm_param(w, mu, va)
         if not k == self.k:
             raise ValueError("Number of given components is %d, expected %d"
                              % (k, self.k))
@@ -121,7 +121,7 @@ class GM:
                              % (mode, self.mode))
         self.w = w
         self.mu = mu
-        self.va = sigma
+        self.va = va
 
         self.__is_valid   = True
 
@@ -161,7 +161,7 @@ class GM:
         are strictly equivalent."""
         k, d, mode  = _check_gmm_param(w, mu, va)
         res = cls(d, k, mode)
-        res.setparams(w, mu, sigma)
+        res.setparams(w, mu, va)
         return res
 
     @classmethod
@@ -190,8 +190,8 @@ class GM:
         -----
         This is a class method.
         """
-        w = np.abs(randn(nc))
-        w = w / np.sum(w, 0)
+        w = np.abs(rand(nc))
+        w /= np.sum(w)
 
         mu = spread * np.sqrt(d) * randn(nc, d)
         if mode == 'diag':
@@ -206,7 +206,7 @@ class GM:
 
         return w, mu, va
 
-    def pdf(self, x, log=False, out=None):
+    def pdf(self, x, log=False):
         """Computes the pdf of the model at given points.
 
         Parameters
@@ -222,17 +222,50 @@ class GM:
         -------
         out: ndarray
             the pdf at points x."""
-        if not out:
-            out = np.empty(x.shape[0], x.dtype)
-        else:
-            if not out.ndim == 1 or out.shape[0] != x.shape[0]:
-                raise ValueError("Out arg not the right shape")
-
         if log:
-            return logsumexp(
-                mnormalik(x, self.mu, self.va, log=True) + np.log(self.w))
+            return logsumexp(mnormalik(x, self.mu, self.va, log=True)
+                             + np.log(self.w))
         else:
             raise ValueError("Not implemented yet")
+
+    def sample(self, nframes):
+        """Sample nframes frames from the model.
+        
+        Parameters
+        ----------
+        nframes: int
+            number of samples to draw.
+        
+        Returns
+        -------
+        samples: ndarray
+            samples in the format one sample per row (nframes, d)."""
+        if not self.__is_valid:
+            raise ValueError("Parameters of the model has not been set yet" \
+                             ", please set them using self.setparams()")
+
+        # State index (ie hidden var)
+        sti = randindex(self.w, nframes)
+        # standard gaussian samples
+        x = randn(nframes, self.d)        
+
+        if self.mode == 'diag':
+            x = self.mu[sti, :] + x * np.sqrt(self.va[sti, :])
+        elif self.mode == 'full':
+            # Faster:
+            cho = np.zeros((self.k, self.va.shape[1], self.va.shape[1]))
+            for i in range(self.k):
+                # Using cholesky looks more stable than sqrtm; sqrtm is not
+                # available in numpy anyway, only in scipy...
+                cho[i] = np.linalg.cholesky(self.va[i*self.d:i*self.d+self.d, :])
+
+            for s in range(self.k):
+                tmpind = np.where(sti == s)[0]
+                x[tmpind] = np.dot(x[tmpind], cho[s].T) + self.mu[s]
+        else:
+            raise ValueError("%s mode not recognized" % self.mode)
+
+        return x
 
 # Function to generate a random index: this is kept outside any class,
 # as the function can be useful for other
@@ -247,6 +280,7 @@ def randindex(p, n):
     index = np.zeros(n, dtype=int)
 
     # This one should be a bit faster
+    # XXX: make this faster ?
     for k in range(len(p)-1, 0, -1):
         blop = np.where(np.logical_and(invcdf[k-1] <= uni, uni < invcdf[k]))
         index[blop] = k
@@ -284,7 +318,7 @@ def _check_gmm_param(w, mu, va):
     if not len(w.shape) == 1:
         raise ValueError('weight should be a rank 1 array')
 
-    if np.fabs(np.sum(w)  - 1) > misc.MAX_DBL_DEV:
+    if np.fabs(np.sum(w) - 1.) > 1e-15:
         raise ValueError('weight does not sum to 1')
 
     # Check that mean and va have the same number of components
