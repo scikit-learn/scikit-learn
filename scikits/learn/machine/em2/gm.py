@@ -9,9 +9,6 @@ models, ellipses of confidence, etc..."""
 
 import numpy as np
 from numpy.random import randn, rand
-import numpy.linalg as lin
-import densities as D
-import misc
 
 # TODO:
 #   - We have to use scipy now for chisquare pdf, so there may be other
@@ -22,10 +19,10 @@ import misc
 #   with global pdf, component pdf and fill matplotlib handles). Should be
 #   coherent with plot
 class GM:
-    """Gaussian Mixture class. This is a simple container class
-    to hold Gaussian Mixture parameters (weights, mean, etc...).
-    It can also draw itself (confidence ellipses) and samples itself.
-    """
+    """Gaussian Mixture class. This is a simple container class to hold
+    Gaussian Mixture parameters (weights, mean, etc...). It can estimate
+    (log)-likelihood of mixtures, or one component. It can also be used to
+    sample data from mixtures."""
 
     # I am not sure it is useful to have a spherical mode...
     _cov_mod    = ['diag', 'full']
@@ -79,7 +76,7 @@ class GM:
         else:
             self.__is1d = True
 
-    def setparams(self, weights, mu, sigma):
+    def setparams(self, w, mu, sigma):
         """Set parameters of the model. 
         
         Args should be conformant with meta-parameters d and k given during
@@ -87,8 +84,8 @@ class GM:
         
         Parameters
         ----------
-        weights : ndarray
-            weights of the mixture (k elements)
+        w: ndarray
+            weights of the mixture (k items)
         mu : ndarray
             means of the mixture. One component's mean per row, k row for k
             components.
@@ -101,17 +98,18 @@ class GM:
         --------
         Create a 3 component, 2 dimension mixture with full covariance matrices
 
-        >>> w = numpy.array([0.2, 0.5, 0.3])
-        >>> mu = numpy.array([[0., 0.], [1., 1.]])
-        >>> va = numpy.array([[1., 0.], [0., 1.], [2., 0.5], [0.5, 1]])
+        >>> w = np.array([0.2, 0.5, 0.3])
+        >>> mu = np.array([[0., 0.], [1., 1.]])
+        >>> va = np.array([[1., 0.], [0., 1.], [2., 0.5], [0.5, 1]])
         >>> gm = GM(2, 3, 'full')
-        >>> gm.set_params(w, mu, va)
+        >>> gm.setparams(w, mu, va)
 
         SeeAlso
         -------
         If you know already the parameters when creating the model, you can
-        simply use the method class GM.fromvalues."""
-        k, d, mode  = check_gmm_param(weights, mu, sigma)
+        simply use the method class GM.fromvalues.
+        """
+        k, d, mode = _check_gmm_param(w, mu, sigma)
         if not k == self.k:
             raise ValueError("Number of given components is %d, expected %d" 
                              % (k, self.k))
@@ -121,25 +119,25 @@ class GM:
         if not mode == self.mode and not d == 1:
             raise ValueError("Given covariance mode is %s, expected %s"
                              % (mode, self.mode))
-        self.w = weights
+        self.w = w
         self.mu = mu
         self.va = sigma
 
         self.__is_valid   = True
 
     @classmethod
-    def fromvalues(cls, weights, mu, sigma):
+    def fromvalues(cls, w, mu, va):
         """This class method can be used to create a GM model directly from its
         parameters weights, mean and variance
         
         Parameters
         ----------
-        weights : ndarray
+        w: ndarray
             weights of the mixture (k elements)
         mu : ndarray
             means of the mixture. One component's mean per row, k row for k
             components.
-        sigma : ndarray
+        va : ndarray
             variances of the mixture. For diagonal models, one row contains
             the diagonal elements of the covariance matrix. For full
             covariance, d rows for one variance.
@@ -152,18 +150,18 @@ class GM:
         Examples
         --------
         >>> w, mu, va = GM.genparams(d, k)
-        >>> gm  = GM(d, k)
+        >>> gm = GM(d, k)
         >>> gm.setparams(w, mu, va)
 
         and
         
         >>> w, mu, va = GM.genparams(d, k)
-        >>> gm  = GM.fromvalue(w, mu, va)
+        >>> gm = GM.fromvalues(w, mu, va)
 
         are strictly equivalent."""
-        k, d, mode  = check_gmm_param(weights, mu, sigma)
+        k, d, mode  = _check_gmm_param(w, mu, va)
         res = cls(d, k, mode)
-        res.setparams(weights, mu, sigma)
+        res.setparams(w, mu, sigma)
         return res
         
     @classmethod
