@@ -4,7 +4,7 @@ Piecewise Linear Mapping Regression module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 13:55
+# Last Change : 2008-04-15 10:06
 
 import math
 import numpy
@@ -16,19 +16,19 @@ class PLMR(object):
   Regression with piecewise linear functions
   Uses ML or mean square error (same error for every piecewise function
   """
-  def __init__(self, points, coords, neighboors, random_variable, RBF_field, correction_factor = 7.0):
+  def __init__(self, points, coords, neighbors, random_variable, RBF_field, correction_factor = 7.0):
     """
     Initializes the regression
     - points are the initial points
     - coords are the coordinates that will be used
-    - neighboors is the number of neighboor used for determining a plan's equation
+    - neighbors is the number of neighboor used for determining a plan's equation
     - random_variable is the kid of random variable that will be used for estimation, it is supposed to be identical for every piecewise function
     - correction_factor is the factor for belonging setting
     """
     self.points = points
     self.coords = numpy.append(coords, numpy.ones((len(coords),1)), axis = 1).copy()
     self.correction_factor = correction_factor
-    self.graph = self.create_graph(coords, neighboors)
+    self.graph = self.create_graph(coords, neighbors)
 
     self.random_variable = random_variable()
     self.RBF_field = RBF_field
@@ -49,21 +49,31 @@ class PLMR(object):
     del self.points
     self.RBFF = [self.createRBF(numpy.where(self.belonging_vector == plan)[0]) for plan in range(0, len(self.equations))]
 
-  def create_graph(self, coords, neighboors):
+  def __getstate__(self):
+    return (self.coords, self.equations, self.belonging_vector, self.random_variable.get())
+
+  def __setstate__(self, state):
+    self.coords = state[0]
+    self.equations = state[1]
+    self.belonging_vector = state[2]
+    self.random_variable.set(state[3])
+    self.RBFF = [self.createRBF(numpy.where(self.belonging_vector == plan)[0]) for plan in range(0, len(self.equations))]
+
+  def create_graph(self, coords, neighbors):
     """
-    Creates a pseudo graph of the nearest neighboors
+    Creates a pseudo graph of the nearest neighbors
     """
-    import neighboors
+    import neighbors
 
     graph = [set() for i in xrange(len(coords))]
-    self.neighboorer = neighboors.KNeighboors(coords, neighboors)
+    self.neighboorer = neighbors.Kneighbors(coords, neighbors)
 
     for point in range(0, len(coords)):
       for neighboor in self.neighboorer(coords[point]):
         graph[point].add(neighboor[1])
         graph[neighboor[1]].add(point)
 
-    return [list(neighboors) for neighboors in graph]
+    return [list(neighbors) for neighbors in graph]
 
   def findEquations(self, random = True):
     """
