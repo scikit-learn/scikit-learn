@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sun Jul 22 01:00 PM 2007 J
+# Last Change: Sun Sep 07 04:00 PM 2008 J
 
 import copy
 
@@ -9,10 +9,8 @@ from numpy.testing import *
 import numpy as N
 from numpy.random import seed
 
-set_package_path()
-from em import GM, GMM
-from em.online_em import OnGMM, OnGMM1d
-restore_path()
+from scikits.learn.machine.em import GM, GMM
+from scikits.learn.machine.em.online_em import OnGMM, OnGMM1d
 
 # #Optional:
 # set_local_path()

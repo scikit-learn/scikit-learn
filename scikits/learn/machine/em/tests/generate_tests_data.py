@@ -1,17 +1,12 @@
 #! /usr/bin/env python
-# Last Change: Mon Jun 11 05:00 PM 2007 J
+# Last Change: Sun Sep 07 04:00 PM 2008 J
 
 # This script generates some random data used for testing EM implementations.
 import copy
 import numpy as N
-from numpy.testing import set_package_path, restore_path
 from scipy.io import savemat, loadmat
 
-set_package_path()
-import pyem
-restore_path()
-
-from pyem import GM, GMM, EM
+from scikits.learn.machine.em import GM, GMM, EM
 
 def generate_dataset(d, k, mode, nframes):
     """Generate a dataset useful for EM anf GMM testing.

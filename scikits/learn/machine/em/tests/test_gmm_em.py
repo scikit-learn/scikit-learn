@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sun Jul 22 12:00 PM 2007 J
+# Last Change: Sun Sep 07 04:00 PM 2008 J
 
 # For now, just test that all mode/dim execute correctly
 
@@ -9,9 +9,7 @@ from numpy.testing import *
 
 import numpy as N
 
-set_package_path()
-from em import GMM, GM, EM
-restore_path()
+from scikits.learn.machine.em import GMM, GM, EM
 
 set_local_path()
 # import modules that are located in the same directory as this file.

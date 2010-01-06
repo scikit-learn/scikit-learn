@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sun Jul 22 12:00 PM 2007 J
+# Last Change: Sun Sep 07 04:00 PM 2008 J
 
 # For now, just test that all mode/dim execute correctly
 
@@ -8,10 +8,8 @@ from numpy.testing import *
 
 import numpy as N
 
-set_package_path()
-from em import GM
-from em.densities import multiple_gauss_den
-restore_path()
+from scikits.learn.machine.em import GM
+from scikits.learn.machine.em.densities import multiple_gauss_den
 
 class test_BasicFunc(TestCase):
     """Check that basic functionalities work."""
