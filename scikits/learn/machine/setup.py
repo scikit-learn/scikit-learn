@@ -5,8 +5,6 @@ def configuration(parent_package='',top_path=None):
     print "top path is %s" % top_path
     print "============================================="
     config = Configuration('machine',parent_package,top_path)
-    # pyem should be suppresed as some points
-    config.add_subpackage('pyem')
     config.add_subpackage('em')
     config.add_subpackage('manifold_learning')
     config.add_subpackage('svm')
