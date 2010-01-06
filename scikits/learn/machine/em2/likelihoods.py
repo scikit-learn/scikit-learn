@@ -1,14 +1,13 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Thu Jan 22 02:00 PM 2009 J
+# Last Change: Thu Jan 22 05:00 PM 2009 J
 
 """This module implements various basic functions related to multivariate
 gaussian, such as likelihood, confidence interval/ellipsoids, etc..."""
 
 import numpy as np
 
-from scikits.learn.machine.em.densities import multiple_gauss_den
 from _lk import quadform, logsumexp as _logsumexp
 
 def mnormalik(data, mu, va, log=False, out=None):
@@ -56,6 +55,7 @@ def logsumexp(x, out=None):
     return y
 
 if __name__ == '__main__':
+    from scikits.learn.machine.em.densities import multiple_gauss_den
     d = 20
     k = 15
     n = 1e4
