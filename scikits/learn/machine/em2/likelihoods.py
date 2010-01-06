@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Wed Jan 21 08:00 PM 2009 J
+# Last Change: Thu Jan 22 02:00 PM 2009 J
 
 """This module implements various basic functions related to multivariate
 gaussian, such as likelihood, confidence interval/ellipsoids, etc..."""
@@ -55,24 +55,25 @@ def logsumexp(x, out=None):
     _logsumexp(x, y)
     return y
 
-d = 20
-k = 15
-n = 1e4
-log = True
+if __name__ == '__main__':
+    d = 20
+    k = 15
+    n = 1e4
+    log = True
 
-type = np.float64
+    type = np.float64
 
-mu = np.random.randn(k, d).astype(type)
-va = np.random.randn(k, d).astype(type)
-va **= 2 
+    mu = np.random.randn(k, d).astype(type)
+    va = np.random.randn(k, d).astype(type)
+    va **= 2 
 
-x = np.random.randn(n, d).astype(type)
+    x = np.random.randn(n, d).astype(type)
 
-test(x[:1000, :], mu, va, log)
-y = np.empty((n, k), dtype=x.dtype)
-mnormalik(x, mu, va, out=y, log=log)
-#mnormalik(x, mu, va, out=None, log=log)
+    test(x[:1000, :], mu, va, log)
+    y = np.empty((n, k), dtype=x.dtype)
+    mnormalik(x, mu, va, out=y, log=log)
+    #mnormalik(x, mu, va, out=None, log=log)
 
-x = np.array([[-1000., -1001], [-2000, -2500]])
-print logsumexp(x)
-print np.log(np.sum(np.exp(x), axis=-1))
+    x = np.array([[-1000., -1001], [-2000, -2500]])
+    print logsumexp(x)
+    print np.log(np.sum(np.exp(x), axis=-1))
