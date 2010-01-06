@@ -23,7 +23,7 @@ restore_path()
 AR_AS_PREC  = 12
 KM_ITER     = 5
 
-class OnlineEmTest(NumpyTestCase):
+class OnlineEmTest(TestCase):
     def _create_model(self, d, k, mode, nframes, emiter):
         #+++++++++++++++++++++++++++++++++++++++++++++++++
         # Generate a model with k components, d dimensions

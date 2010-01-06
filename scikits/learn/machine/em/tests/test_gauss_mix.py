@@ -13,7 +13,7 @@ from em import GM
 from em.densities import multiple_gauss_den
 restore_path()
 
-class test_BasicFunc(NumpyTestCase):
+class test_BasicFunc(TestCase):
     """Check that basic functionalities work."""
     def test_conf_ellip(self):
         """Only test whether the call succeed. To check wether the result is

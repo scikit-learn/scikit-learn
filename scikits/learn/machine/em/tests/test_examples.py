@@ -7,7 +7,7 @@ set_package_path()
 from em.examples.examples import ex1, ex2, ex3, pdfestim, pdfestim1d
 restore_path()
 
-class test_examples(NumpyTestCase):
+class test_examples(TestCase):
     def test_ex1(self, level = 3):
         ex1()
 

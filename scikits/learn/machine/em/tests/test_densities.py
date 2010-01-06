@@ -22,7 +22,7 @@ set_local_path()
 from testcommon import DEF_DEC
 restore_path()
 
-class TestDensities(NumpyTestCase):
+class TestDensities(TestCase):
     def _generate_test_data_1d(self):
         self.va     = 2.0
         self.mu     = 1.0
@@ -105,9 +105,9 @@ class test_py_implementation(TestDensities):
 #=====================
 # Basic speed tests
 #=====================
-class test_speed(NumpyTestCase):
+class test_speed(TestCase):
     def __init__(self, *args, **kw):
-        NumpyTestCase.__init__(self, *args, **kw)
+        TestCase.__init__(self, *args, **kw)
         import sys
         import re
         try:
@@ -234,7 +234,7 @@ class test_c_implementation(TestDensities):
         self._generate_test_data_2d_full()
         self._test(level)
 
-class test_gauss_ell(NumpyTestCase):
+class test_gauss_ell(TestCase):
     def test_dim(self):
         em.densities.gauss_ell([0, 1], [1, 2.], [0, 1])
         try:

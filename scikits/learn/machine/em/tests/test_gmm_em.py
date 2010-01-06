@@ -27,7 +27,7 @@ def load_dataset(filename):
     dic['tw'] = dic['tw'].squeeze()
     return dic
 
-class EmTest(NumpyTestCase):
+class EmTest(TestCase):
     def _create_model_and_run_em(self, d, k, mode, nframes):
         #+++++++++++++++++++++++++++++++++++++++++++++++++
         # Generate a model with k components, d dimensions
