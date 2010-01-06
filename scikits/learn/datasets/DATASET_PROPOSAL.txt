@@ -1,0 +1,137 @@
+.. Last Change: Mon Sep 17 04:00 PM 2007 J
+.. vim:syntax=rest
+
+Dataset for scipy: design proposal
+==================================
+
+One of the thing numpy/scipy is missing now is a set of datasets, available for
+demo, courses, etc. For example, R has a set of dataset available at the core.
+
+The expected usage of the datasets are the following:
+
+        - machine learning: eg the data contain also class information (discrete or continuous)
+        - descriptive statistics
+        - others ?
+
+That is, a dataset is not only data, but also some meta-data. The goal of this
+proposal is to propose common practices for organizing the data, in a way which
+is both straightforward, and does not prevent specific usage of the data. 
+
+Organization
+------------
+
+A preliminary set of datasets is available at the following address:
+
+http://projects.scipy.org/scipy/scikits/browser/trunk/learn/scikits/learn/datasets
+
+Each dataset is a directory and defines a python package (e.g. has the
+__init__.py file). Each package is expected to define the function load, returning
+the corresponding data. For example, to access datasets data1, you should be able to do:
+
+>>> from datasets.data1 import load
+>>> d = load() # -> d contains the data.
+
+load can do whatever it wants: fetching data from a file (python script, csv
+file, etc...), from the internet, etc... Some special variables must be defined
+for each package, containing a python string:
+
+    - COPYRIGHT: copyright informations
+    - SOURCE: where the data are coming from
+    - DESCHOSRT: short description
+    - DESCLONG: long description
+    - NOTE: some notes on the datasets.
+
+Format of the data
+------------------
+
+Here, I suggest a common practice for the returned value by the load function.
+Instead of using classes to provide meta-data, I propose to use a dictionnary
+of arrays, with some values mandatory. The key goals are:
+
+        - for people who just want the data, there is no extra burden ("just
+          give me the data !" MOTO).
+        - for people who need more, they can easily extract what they need from
+          the returned values. More high level abstractions can be built easily
+          from this model.
+        - all possible dataset should fit into this model.
+        - In particular, I want to be able to be able to convert our dataset to
+          Orange Dataset representation (or other machine learning tool), and
+          vice-versa.
+
+For the datasets to be useful in the learn scikits, which is the project which
+initiated this datasets package, the data returned by load has to be a dict
+with the following conventions:
+
+    - 'data': this value should be a record array containing the actual data.
+    - 'label': this value should be a rank 1 array of integers, contains the
+      label index for each sample, that is label[i] should be the label index
+      of data[i]. If it contains float values, it is used for regression instead.
+    - 'class': a record array such as class[i] is the class name. In other
+      words, this makes the correspondance label name > label index.
+
+As an example, I use the famouse IRIS dataset: the dataset contains 3 classes
+of flowers, and for each flower, 4 measures (called attributes in machine
+learning vocabulary) are available (sepal width and length, petal width and
+length). In this case, the values returned by load would be:
+
+        - 'data': a record array containing all the flowers' measurements. For
+          descriptive statistics, that's all you may need. You can easily find
+          the attributes from the dtype (a function to find the attributes is
+          also available: it returns a list of the attributes).
+        - 'labels': an array of integers (for class information) or float (for
+          regression). each class is encoded as an integer, and labels[i]
+          returns this integer for the sample i.
+        - 'class': a record array, which returns the integer code for each
+          class. For example, class['Iris-versicolor'] will return the integer
+          used in label, and all samples i such as label[i] ==
+          class['Iris-versicolor'] are of the class 'Iris-versicolor'.
+
+This contains enough information to get all useful information through
+introspection and simple functions. I already implemented a small module to do
+basic things such as:
+
+        - selecting only a subset of all samples.
+        - selecting only a subset of the attributes (only sepal length and
+          width, for example).
+        - selecting only the samples of a given class.
+        - small summary of the dataset.
+
+This is implemented in less than 100 lines, which tends to show that the above
+design is not too simplistic.
+
+Remaining problems:
+-------------------
+
+I see mainly two big problems:
+
+        - if the dataset is big and cannot fit into memory, what kind of API do
+          we want to avoid loading all the data in memory ? Can we use memory
+          mapped arrays ?
+        - Missing data: I thought about subclassing both record arrays and
+          masked arrays classes, but I don't know if this is feasable, or even
+          makes sense. I have the feeling that some Data mining software use
+          Nan (for example, weka seems to use float internally), but this
+          prevents them from representing integer data.
+
+Current implementation
+----------------------
+
+An implementation following the above design is available in
+scikits.learn.datasets. If you installed scikits.learn, you can execute the
+file learn/utils/attrselect.py, which shows the information you can easily
+extract for now from this model.
+
+Also, once the above problems are solved, an arff converter will be available:
+arff is the format used by WEKA, and many datasets are available at this
+format:
+
+http://weka.sourceforge.net/wekadoc/index.php/en:ARFF_%283.5.4%29
+http://www.cs.waikato.ac.nz/ml/weka/index_datasets.html
+
+Note
+----
+
+Although the datasets package emerged from the learn package, I try to keep it
+independant from everything else, that is once we agree on the remaining
+problems and where the package should go, it can easily be put elsewhere
+without too much trouble.
