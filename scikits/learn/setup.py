@@ -8,6 +8,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('utils')
     config.add_subpackage('datasets')
     config.add_subpackage('machine')
+    config.add_subpackage('common')
     #config.make_svn_version_py()  # installs __svn_version__.py
     #config.make_config_py()
     return config
