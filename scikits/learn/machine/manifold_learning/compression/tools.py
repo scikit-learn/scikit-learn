@@ -18,16 +18,16 @@ def create_graph(samples, **kwargs):
   - neigh is a neighboorer (optional)
   - neighboors is the number of K-neighboors to use (optional, default 9) if neigh is not given
   """
-  import toolbox.neighboors
+  from ..regression.neighbors import Neighbors
   if 'neigh' in kwargs:
     neighboorer = kwargs['neigh'](samples, **kwargs)
   else:
-    neighboorer = toolbox.neighboors.distances.kneigh(samples, kwargs.get('neighboors', 9))
+    neighboorer = Neighbors(samples, kwargs.get('neighbors', 9), 1.2)
 
   graph = [None] * len(samples)
 
-  for point in range(0, len(samples)):
-    graph[point] = [neighboor for neighboor in neighboorer[point][1:]]
+  for i in range(0, len(samples)):
+    graph[i] = [neighboor for neighboor in neighboorer.kneighbors(samples[i])]
 
   return graph
 
