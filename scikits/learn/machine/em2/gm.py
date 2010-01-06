@@ -206,6 +206,34 @@ class GM:
 
         return w, mu, va
 
+    def pdf(self, x, log=False, out=None):
+        """Computes the pdf of the model at given points.
+
+        Parameters
+        ----------
+        x: ndarray
+            points where to estimate the pdf. One row for one multi-dimensional
+            sample (eg to estimate the pdf at 100 different points in 10
+            dimension, data's shape should be (100, 20)).
+        log: bool
+            If true, returns the log pdf instead of the pdf.
+
+        Returns
+        -------
+        out: ndarray
+            the pdf at points x."""
+        if not out:
+            out = np.empty(x.shape[0], x.dtype)
+        else:
+            if not out.ndim == 1 or out.shape[0] != x.shape[0]:
+                raise ValueError("Out arg not the right shape")
+
+        if log:
+            return logsumexp(
+                mnormalik(x, self.mu, self.va, log=True) + np.log(self.w))
+        else:
+            raise ValueError("Not implemented yet")
+
 # Function to generate a random index: this is kept outside any class,
 # as the function can be useful for other
 def randindex(p, n):
