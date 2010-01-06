@@ -9,7 +9,7 @@ gaussian, such as likelihood, confidence interval/ellipsoids, etc..."""
 import numpy as np
 
 from densities import multiple_gauss_den
-from _lk import quadform
+from _lk import quadform, logsumexp as _logsumexp
 
 def mnormalik(data, mu, va, log=False, out=None):
     k = np.shape(mu)[0]
@@ -48,6 +48,13 @@ def test(data, mu, va, log=False):
     yr = multiple_gauss_den(data, mu, va, log=log)
     np.testing.assert_array_almost_equal(y, yr)
 
+def logsumexp(x, out=None):
+    if not out:
+        y = np.empty(x.shape[0], x.dtype)
+
+    _logsumexp(x, y)
+    return y
+
 d = 20
 k = 15
 n = 1e4
@@ -65,3 +72,7 @@ test(x[:1000, :], mu, va, log)
 y = np.empty((n, k), dtype=x.dtype)
 mnormalik(x, mu, va, out=y, log=log)
 #mnormalik(x, mu, va, out=None, log=log)
+
+x = np.array([[-1000., -1001], [-2000, -2500]])
+print logsumexp(x)
+print np.log(np.sum(np.exp(x), axis=-1))
