@@ -5,7 +5,9 @@ from likelihoods import mnormalik, logsumexp
 from gm import _check_gmm_param
 
 def initkmeans(data, k):
-    # XXX: This is bogus initialization should do better (in kmean with CV)
+    d = data.shape[1]
+
+    # XXX: This initialization can be better
     (code, label) = kmeans2(data, data[:k], 5, minit='matrix')
 
     w = np.ones(k) / k
@@ -27,6 +29,9 @@ class Parameters:
 
     def __init__(self, d, k, mode='diag'):
         self.mode = mode
+        self.d = d
+        self.k = k
+
         self.w = np.zeros(k)
         self.mu = np.zeros((k, d))
         if mode == 'diag':
@@ -148,6 +153,20 @@ def logresp(data, w, mu, va):
     nresp = resp - logsumexp(resp)[:, np.newaxis]
 
     return nresp
+
+class EM:
+    def __init__(self):
+        pass
+
+    def train(self, data, params, maxiter=10):
+        """params is modified in-place."""
+        ss = SStats(params.d, params.k, params.mode)
+    
+        for i in range(maxiter):
+            ss.compute(data, params.w, params.mu, params.va)
+            params.update(ss)
+
+        return params
 
 class GMM:
     """A class to model a Gaussian Mixture Model (GMM)."""
