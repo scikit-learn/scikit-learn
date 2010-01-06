@@ -1,4 +1,8 @@
 """
+XXX: currently disabled
+"""
+
+"""
 =============
 NCEP NARR data sets
 =============
@@ -179,4 +183,4 @@ def convert_time(time):
     return t0+days*day+hours*hour
     
     
-narr = load(1979, 1,1)
+# narr = load(1979, 1,1) XXX: currently disabled
