@@ -8,7 +8,7 @@ gaussian, such as likelihood, confidence interval/ellipsoids, etc..."""
 
 import numpy as np
 
-from densities import multiple_gauss_den
+from scikits.learn.machine.em.densities import multiple_gauss_den
 from _lk import quadform, logsumexp as _logsumexp
 
 def mnormalik(data, mu, va, log=False, out=None):
