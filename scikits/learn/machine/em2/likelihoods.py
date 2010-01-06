@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Fri Jan 23 01:00 PM 2009 J
+# Last Change: Sat Jan 24 07:00 PM 2009 J
 
 """This module implements various basic functions related to multivariate
 gaussian, such as likelihood, confidence interval/ellipsoids, etc..."""
@@ -11,6 +11,7 @@ import numpy as np
 from _lk import quadform, mquadform, logsumexp as _logsumexp
 
 def normalik(data, mu, va, log=False, out=None):
+    raise ValueError("Does not work correctly")
     if data.ndim == 1:
         data = np.atleast_2d(data)
         mu = np.atleast_1d(mu)
