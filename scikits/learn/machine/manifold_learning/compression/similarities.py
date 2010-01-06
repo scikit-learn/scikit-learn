@@ -4,9 +4,9 @@ Computes coordinates based on the similarities given as parameters
 """
 
 # Matthieu Brucher
-# Last Change : 2008-02-28 15:04
+# Last Change : 2008-04-08 08:57
 
-__all__ = ['lle', 'laplacian_maps', 'hessian_map']
+__all__ = ['LLE', 'laplacian_maps', 'hessianMap']
 
 from barycenters import barycenters
 
@@ -17,14 +17,14 @@ import scipy.linalg
 import scipy.sparse.linalg.dsolve
 import math
 
-def lle(samples, nbCoords, **kwargs):
+def LLE(samples, nbCoords, **kwargs):
   """
   Computes the LLE reduction for a manifold
   Parameters :
   - samples are the samples that will be reduced
   - nbCoords is the number of coordinates in the manifold
-  - neigh is the neighboorer used (optional, default KNeighboor)
-  - neighboor is the number of neighboors (optional, default 9)
+  - neigh is the neighborer used (optional, default Kneighbor)
+  - neighbor is the number of neighbors (optional, default 9)
   """
   W = barycenters(samples, **kwargs)
   t = numpy.eye(len(samples), len(samples)) - W
@@ -53,8 +53,8 @@ def laplacian_maps(samples, nbCoords, method, **kwargs):
   - samples are the samples that will be reduced
   - nbCoords is the number of coordinates in the manifold
   - method is the method to create the similarity matrix
-  - neigh is the neighboorer used (optional, default KNeighboor)
-  - neighboor is the number of neighboors (optional, default 9)
+  - neigh is the neighborer used (optional, default Kneighbor)
+  - neighbor is the number of neighbors (optional, default 9)
   """
   W = method(samples, **kwargs)
 
@@ -86,8 +86,8 @@ def laplacian_maps2(samples, nbCoords, method, **kwargs):
   - samples are the samples that will be reduced
   - nbCoords is the number of coordinates in the manifold
   - method is the method to create the similarity matrix
-  - neigh is the neighboorer used (optional, default KNeighboor)
-  - neighboor is the number of neighboors (optional, default 9)
+  - neigh is the neighborer used (optional, default Kneighbor)
+  - neighbor is the number of neighbors (optional, default 9)
   """
   W = method(samples, **kwargs)
   D = numpy.sum(W, axis=0)
@@ -96,9 +96,9 @@ def laplacian_maps2(samples, nbCoords, method, **kwargs):
   index = numpy.argsort(w)[1:1+nbCoords]
   return numpy.sqrt(len(samples)) * vectors[:,index]
 
-def sparse_heat_kernel(samples, parameter = .5, **kwargs):
+def sparse_heat_kernel(samples, kernel_width = .5, **kwargs):
   """
-  Uses a heat kernel for computing similarities in a neighboorhood
+  Uses a heat kernel for computing similarities in a neighborhood
   """
   from tools import create_sym_graph
 
@@ -120,7 +120,7 @@ def sparse_heat_kernel(samples, parameter = .5, **kwargs):
   indptr = numpy.asarray(indptr, dtype=numpy.intc)
   return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples), len(samples)))
 
-def heat_kernel(samples, parameter = 10000., **kwargs):
+def heat_kernel(samples, kernel_width = .5, **kwargs):
   """
   Uses a heat kernel for computing similarities in the whole array
   """
@@ -138,14 +138,14 @@ def normalized_heat_kernel(samples, **kwargs):
 
   return p1[:, numpy.newaxis] * similarities * p1
 
-def hessian_map(samples, nbCoords, **kwargs):
+def hessianMap(samples, nbCoords, **kwargs):
   """
   Computes a Hessian eigenmap for a manifold
   Parameters:
   - samples are the samples that will be reduced
   - nbCoords is the number of coordinates in the manifold
-  - neigh is the neighboorer used (optional, default KNeighboor)
-  - neighboor is the number of neighboors (optional, default 9)
+  - neigh is the neighborer used (optional, default Kneighbor)
+  - neighbor is the number of neighbors (optional, default 9)
   """
   from tools import create_graph
   from numpy import linalg
@@ -156,8 +156,8 @@ def hessian_map(samples, nbCoords, **kwargs):
 
   for i in range(len(samples)):
     neighs = graph[i]
-    neighboorhood = samples[neighs] - numpy.mean(samples[neighs], axis=0)
-    u, s, vh = linalg.svd(neighboorhood.T, full_matrices=False)
+    neighborhood = samples[neighs] - numpy.mean(samples[neighs], axis=0)
+    u, s, vh = linalg.svd(neighborhood.T, full_matrices=False)
     tangent = vh.T[:,:nbCoords]
 
     Yi = numpy.zeros((len(tangent), dp))

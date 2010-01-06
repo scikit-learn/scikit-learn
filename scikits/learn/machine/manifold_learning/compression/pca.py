@@ -1,8 +1,9 @@
+
 # Matthieu Brucher
-# Last Change : 2007-06-22 16:49
+# Last Change : 2008-04-07 15:47
 
 """
-PCA module
+PCA module, by Zachary Pincus
 """
 
 import numpy

@@ -1,12 +1,12 @@
 
 # Matthieu Brucher
-# Last Change : 2008-04-01 09:01
+# Last Change : 2008-04-07 18:53
 
 import numpy
 import itertools
 
 from tools import dist2hd
-from toolbox.optimizers.helpers import ForwardFiniteDifferences
+from scikits.openopt.solvers.optimizers.helpers import ForwardFiniteDifferences
 
 class CostFunction(ForwardFiniteDifferences):
   """

@@ -4,21 +4,21 @@ Dimensionality reduction with similarities
 """
 
 # Matthieu Brucher
-# Last Change : 2007-12-20 15:12
+# Last Change : 2008-04-07 17:50
 
 import numpy
 import numpy.random
 import numpy.linalg
 import math
 
-__all__ = ['lle', 'laplacian_eigenmap', 'diffusion_map', ]
+__all__ = ['lle', 'laplacianEigenmap', 'diffusionMap', ]
 
 from similarities import lle
 
 import similarities
 import tools
 
-def laplacian_eigenmap(samples, nbCoords, **kwargs):
+def laplacianEigenmap(samples, nbCoords, **kwargs):
   """
   Computes the Laplacian eigenmap coordinates for a set of points
   Parameters:
@@ -28,9 +28,9 @@ def laplacian_eigenmap(samples, nbCoords, **kwargs):
   - neigh is the neighboorer used (optional, default KNeighboor)
   - neighboor is the number of neighboors (optional, default 9)
   """
-  return similarities.laplacian_maps(samples, nbCoords, method=similarities.sparse_heat_kernel, **kwargs)
+  return similarities.laplacian_map(samples, nbCoords, method=similarities.sparse_heat_kernel, **kwargs)
 
-def diffusion_map(samples, nbCoords, **kwargs):
+def diffusionMap(samples, nbCoords, **kwargs):
   """
   Computes the diffusion map coordinates for a set of points
   Parameters:
@@ -40,4 +40,4 @@ def diffusion_map(samples, nbCoords, **kwargs):
   - neigh is the neighboorer used (optional, default KNeighboor)
   - neighboor is the number of neighboors (optional, default 9)
   """
-  return similarities.laplacian_maps(tools.centered_normalized(samples), nbCoords, method=similarities.normalized_heat_kernel, **kwargs)
+  return similarities.laplacian_map(tools.centered_normalized(samples), nbCoords, method=similarities.normalized_heat_kernel, **kwargs)

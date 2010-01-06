@@ -1,30 +1,31 @@
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 15:21
+# Last Change : 2008-04-07 18:57
 
 """
-Allows to compute the nearest neighboors
+Allows to compute the nearest neighbors
 """
 
 import numpy
+from tools import dist2hd
 
-def parzen(samples, neighboors, **kwargs):
+def parzen(samples, window_size, **kwargs):
   """
-  Creates a list of the nearest neighboors in a Parzen window
+  Creates a list of the nearest neighbors in a Parzen window
   """
   l = []
 
   d = dist2hd(samples, samples)
 
   for dist in d:
-    wi = numpy.where(dist < neighboors)[0]
+    wi = numpy.where(dist < neighbors)[0]
     l.append(wi)
 
   return l
 
-def kneigh(samples, neighboors, **kwargs):
+def kneigh(samples, neighbors, **kwargs):
   """
-  Creates a list of the nearest neighboors in a K-neighboorhood
+  Creates a list of the nearest neighbors in a K-neighborhood
   """
   l = []
 
@@ -32,21 +33,9 @@ def kneigh(samples, neighboors, **kwargs):
 
   for dist in d:
     indices = numpy.argsort(dist)
-    l.append(indices[:neighboors])
+    l.append(indices[:neighbors])
 
   return l
-
-def dist2hd(x,y):
-   """
-   Generate a 'coordinate' of the solution at a time
-   """
-   d = numpy.zeros((x.shape[0],y.shape[0]),dtype=x.dtype)
-   for i in xrange(x.shape[1]):
-       diff2 = x[:,i,None] - y[:,i]
-       diff2 **= 2
-       d += diff2
-   numpy.sqrt(d,d)
-   return d
 
 def NumpyFloyd(dists):
   """

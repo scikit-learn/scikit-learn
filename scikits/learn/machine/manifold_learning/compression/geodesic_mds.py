@@ -4,7 +4,7 @@ Dimensionality reduction with geodesic distances
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 15:42
+# Last Change : 2008-04-07 18:53
 
 import numpy
 import numpy.random
@@ -21,8 +21,8 @@ def reduct(reduction, function, samples, nb_coords, **kwargs):
   - samples is an array with the samples for the compression
   - nb_coords is the number of coordinates that must be retained
   - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighbooring class that will be used
-  - neighboors is the number of k-neighboors if the K-neighboorhood is used
+  - neigh is the neighboring class that will be used
+  - neighbors is the number of k-neighbors if the K-neighborhood is used
   - window_size is the window size to use
   """
   import os
@@ -34,27 +34,27 @@ def reduct(reduction, function, samples, nb_coords, **kwargs):
   else:
     import distances
     if 'neigh' in kwargs:
-      neighboorer = kwargs['neigh'](samples, **kwargs)
+      neighborer = kwargs['neigh'](samples, **kwargs)
     else:
-      neighboorer = distances.kneigh(samples, kwargs.get('neighbors', 9))
+      neighborer = distances.kneigh(samples, kwargs.get('neighbors', 9))
 
-    dists = populateDistanceMatrixFromneighboors(samples, neighboorer)
+    dists = populateDistanceMatrixFromneighbors(samples, neighborer)
     distances.NumpyFloyd(dists)
     if 'temp_file' in kwargs:
       dists.tofile(kwargs['temp_file'])
-    del neighboorer
+    del neighborer
 
   return reduction(dists, function, nb_coords, **kwargs)
 
-def populateDistanceMatrixFromneighboors(points, neighboorer):
+def populateDistanceMatrixFromneighbors(points, neighborer):
   """
-  Creates a matrix with infinite value safe for points that are neighboors
+  Creates a matrix with infinite value safe for points that are neighbors
   """
   distances = numpy.ones((points.shape[0], points.shape[0]), dtype = numpy.float)
   distances *= 1e30000
   for indice in xrange(0, len(points)):
-    neighboorList = neighboorer[indice]
-    for element in neighboorList:
+    neighborList = neighborer[indice]
+    for element in neighborList:
       distances[indice, element] = math.sqrt(numpy.sum((points[indice] - points[element])**2))
       distances[element, indice] = math.sqrt(numpy.sum((points[indice] - points[element])**2))
 
@@ -66,8 +66,8 @@ def isomap(samples, nb_coords, **kwargs):
   - samples is an array with the samples for the compression
   - nb_coords is the number of coordinates that must be retained
   - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighbooring class that will be used
-  - neighboors is the number of k-neighboors if the K-neighboorhood is used
+  - neigh is the neighboring class that will be used
+  - neighbors is the number of k-neighbors if the K-neighborhood is used
   - window_size is the window size to use
   """
   import euclidian_mds
@@ -81,8 +81,8 @@ def isomapCompression(samples, nb_coords, **kwargs):
   - samples is an array with the samples for the compression
   - nb_coords is the number of coordinates that must be retained
   - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighbooring class that will be used
-  - neighboors is the number of k-neighboors if the K-neighboorhood is used
+  - neigh is the neighboring class that will be used
+  - neighbors is the number of k-neighbors if the K-neighborhood is used
   - window_size is the window size to use
   """
   import isomap_function
@@ -95,8 +95,8 @@ def multiIsomapCompression(samples, nb_coords, **kwargs):
   - samples is an array with the samples for the compression
   - nb_coords is the number of coordinates that must be retained
   - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighbooring class that will be used
-  - neighboors is the number of k-neighboors if the K-neighboorhood is used
+  - neigh is the neighboring class that will be used
+  - neighbors is the number of k-neighbors if the K-neighborhood is used
   - window_size is the window size to use
   """
   import isomap_function
@@ -109,8 +109,8 @@ def ccaCompression(samples, nb_coords, **kwargs):
   - samples is an array with the samples for the compression
   - nb_coords is the number of coordinates that must be retained
   - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighbooring class that will be used
-  - neighboors is the number of k-neighboors if the K-neighboorhood is used
+  - neigh is the neighboring class that will be used
+  - neighbors is the number of k-neighbors if the K-neighborhood is used
   - window_size is the window size to use
   - max_dist is the maximum distance to preserve
   """
@@ -124,8 +124,8 @@ def robustCompression(samples, nb_coords, **kwargs):
   - samples is an array with the samples for the compression
   - nb_coords is the number of coordinates that must be retained
   - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighbooring class that will be used
-  - neighboors is the number of k-neighboors if the K-neighboorhood is used
+  - neigh is the neighboring class that will be used
+  - neighbors is the number of k-neighbors if the K-neighborhood is used
   - window_size is the window size to use
   """
   import cost_function
@@ -138,8 +138,8 @@ def robustMultiresolutionCompression(samples, nb_coords, **kwargs):
   - samples is an array with the samples for the compression
   - nb_coords is the number of coordinates that must be retained
   - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighbooring class that will be used
-  - neighboors is the number of k-neighboors if the K-neighboorhood is used
+  - neigh is the neighboring class that will be used
+  - neighbors is the number of k-neighbors if the K-neighborhood is used
   - window_size is the window size to use
   """
   import cost_function

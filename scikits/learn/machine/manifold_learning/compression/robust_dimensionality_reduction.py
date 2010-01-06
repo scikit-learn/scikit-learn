@@ -4,7 +4,7 @@ Robust optimization with a specific cost function
 """
 
 # Matthieu Brucher
-# Last Change : 2008-01-08 14:03
+# Last Change : 2008-04-07 19:02
 
 import numpy
 import numpy.linalg
@@ -76,8 +76,6 @@ def optimize_cost_function(distances, function, nbCoords = 2, **kwargs):
 
   err = numpy.seterr(invalid='ignore')
 
-  recorder = Recorder()
-
   optimi = optimizer.StandardOptimizerModifying(
     function = function,
     step = step.GradientStep(),
@@ -85,14 +83,10 @@ def optimize_cost_function(distances, function, nbCoords = 2, **kwargs):
     x0 = x0,
     line_search = line_search.FixedLastStepModifier(step_factor = 4., line_search = line_search.FibonacciSectionSearch(alpha_step = 1., min_alpha_step = 0.0001)),
     pre_modifier = AddNoise(nbCoords, function),
-    post_modifier = Modifier(nbCoords),
-    record = recorder)
+    post_modifier = Modifier(nbCoords))
 
   optimal = optimi.optimize()
   optimal = optimal.reshape(-1, nbCoords)
-
-  f = open('SwissRoll.dump', 'w')
-  pickle.dump(recorder, f)
 
   numpy.seterr(**err)
 

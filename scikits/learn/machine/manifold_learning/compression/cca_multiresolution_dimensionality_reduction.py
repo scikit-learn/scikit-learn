@@ -4,14 +4,13 @@ Multireosolution optimization with a specific cost function
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-01 09:01
+# Last Change : 2008-04-07 18:53
 
 import numpy
 import numpy.random
 import math
 
-from toolbox.optimizers import *
-import cost_function
+from scikits.openopt.solvers.optimizers import *
 
 class Modifier(object):
   """

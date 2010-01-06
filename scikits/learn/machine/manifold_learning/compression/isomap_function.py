@@ -1,6 +1,6 @@
 
 # Matthieu Brucher
-# Last Change : 2007-12-10 15:48
+# Last Change : 2008-04-07 16:27
 
 import numpy
 import itertools
@@ -24,7 +24,10 @@ class CostFunction(object):
     """
     params = parameters.reshape((self.len, -1))
     d = dist2hd(params, params)
-    d = (d**2-self.distances**2)**2
+    diff_d = d**2-self.distances**2
+    diff_d -= diff_d.mean(axis=0)[:,None]
+    diff_d -= diff_d.mean(axis=1)[None,:]
+    d = diff_d**2
     return numpy.sum(d)
 
   def gradient(self, parameters):

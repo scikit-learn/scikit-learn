@@ -1,7 +1,7 @@
 
 # Matthieu Brucher
 
-# Last Change : 2007-09-29 10:46
+# Last Change : 2008-04-07 19:04
 
 from numpy.ctypeslib import ndpointer, load_library
 import numpy
@@ -27,7 +27,7 @@ class CostFunction:
   """
   Wrapper with ctypes around the cost function
   """
-  def __init__(self, distances, nbCoords = 2, epsilon = 0.0000001, sigma = 1, x1 = 60, **kwargs):
+  def __init__(self, distances, nbCoords = 2, epsilon = 0.0000001, sigma = 1, tau = 60, **kwargs):
     """
     Creates the correct cost function with the good arguments
     """
@@ -40,12 +40,12 @@ class CostFunction:
     self._sigma = sigma
 
     sigma = (sortedDistances[sigma * len(sortedDistances) // 100])
-    self._x1 = x1
-    x1 = (sortedDistances[x1 * len(sortedDistances) // 100]) ** 2
+    self._x1 = tau
+    tau = (sortedDistances[tau * len(sortedDistances) // 100]) ** 2
     del sortedDistances
     self.grad = None
     self.distances = distances.copy()
-    self._cf = _cost_function.allocate_cost_function(self.distances.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), distances.shape[0], distances.shape[1], nbCoords, epsilon, sigma, x1)
+    self._cf = _cost_function.allocate_cost_function(self.distances.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), distances.shape[0], distances.shape[1], nbCoords, epsilon, sigma, tau)
 
   def __del__(self, close_func = _cost_function.delete_cost_function):
     """
