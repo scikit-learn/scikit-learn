@@ -8,6 +8,7 @@ def configuration(parent_package='',top_path=None):
     # pyem should be suppresed as some points
     config.add_subpackage('pyem')
     config.add_subpackage('em')
+    config.add_subpackage('manifold_learning')
     config.add_subpackage('svm')
     #config.make_svn_version_py()  # installs __svn_version__.py
     #config.make_config_py()

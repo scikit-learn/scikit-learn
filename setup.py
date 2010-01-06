@@ -63,5 +63,6 @@ if __name__ == "__main__":
               'Intended Audience :: Developers',
               'Intended Audience :: Science/Research',
               'License :: OSI Approved :: BSD License',
-              'Topic :: Scientific/Engineering']
+              'Topic :: Scientific/Engineering'],
+#      options={'build_ext':{'swig_cpp':True}},
     )
