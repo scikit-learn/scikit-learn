@@ -8,6 +8,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('iris')
     config.add_subpackage('heart')
     config.add_subpackage('german')
+    config.add_subpackage('misc')
     config.make_config_py() # installs __config__.py
     return config
 
