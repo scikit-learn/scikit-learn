@@ -1,7 +1,21 @@
 import numpy as np
+from scipy.cluster.vq import kmeans2
 
 from likelihoods import mnormalik, logsumexp
 from gm import _check_gmm_param
+
+def initkmeans(data, k):
+    # XXX: This is bogus initialization should do better (in kmean with CV)
+    (code, label) = kmeans2(data, data[:k], 5, minit='matrix')
+
+    w = np.ones(k) / k
+    mu = code.copy()
+    va = np.zeros((k, d))
+    for c in range(k):
+        for i in range(d):
+            va[c, i] = np.cov(data[np.where(label==c), i], rowvar=0)
+
+    return w, mu, va
 
 class Parameters:
     @classmethod
