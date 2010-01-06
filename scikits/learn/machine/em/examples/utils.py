@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Jul 17 10:00 PM 2007 J
+# Last Change: Sun Jul 22 03:00 PM 2007 J
 
 # Various utilities for examples 
 
@@ -32,8 +32,8 @@ def get_pendigits():
     """Return faithful data as a nx2 array, first column being duration, second
     being waiting time."""
     # Load faithful data, convert waiting into integer, remove L, M and S data
-    data = pendigits.load()
-    return data['training']['x'], data['training']['y']
+    data = pendigits.training.load()
+    return data['data']['x0'], data['data']['y0']
 
 def scale(data):
     """ Scale data such as each col is in the range [0..1].

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sun Jul 22 12:00 PM 2007 J
+# Last Change: Sun Jul 22 03:00 PM 2007 J
 
 __doc__ = """Example of using RegularizedEM with pendigits data.
 
@@ -24,7 +24,7 @@ import utils
 x, y = utils.get_pendigits()
 
 # Take only the first point of pendigits for pdf estimation
-dt1 = N.concatenate([x[:, :1], y[:, :1]], 1)
+dt1 = N.concatenate([x[:, N.newaxis], y[:, N.newaxis]], 1)
 dt1 = utils.scale(dt1.astype(N.float))
 
 # pcnt is the poportion of samples to use as prior count. Eg if you have 1000
