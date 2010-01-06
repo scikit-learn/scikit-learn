@@ -4,7 +4,7 @@ Dimensionality reduction with geodesic distances
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 14:41
+# Last Change : 2008-04-07 15:22
 
 import numpy
 import numpy.random
@@ -39,7 +39,7 @@ def reduct(reduction, function, samples, nb_coords, **kwargs):
       neighboorer = distances.kneigh(samples, kwargs.get('neighboors', 9))
 
     dists = populateDistanceMatrixFromneighboors(samples, neighboorer)
-    distances.NumpyFloyd(distances)
+    distances.NumpyFloyd(dists)
     if 'temp_file' in kwargs:
       dists.tofile(kwargs['temp_file'])
     del neighboorer

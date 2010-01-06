@@ -1,6 +1,6 @@
 
 # Matthieu Brucher
-# Last Change : 2007-12-10 15:48
+# Last Change : 2008-04-07 15:20
 
 import numpy
 import math
@@ -36,13 +36,3 @@ def NLM(samples, nb_coords, **kargs):
   import NLM
   import dimensionality_reduction
   return reduct(dimensionality_reduction.optimize_cost_function, NLM.CostFunction, samples, nb_coords, **kwargs)
-
-def RNLM(samples, nb_coords, **kargs):
-  """
-  Data reduction with Robust NonLinear Mapping algorithm:
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
-  """
-  import RNLM
-  import dimensionality_reduction
-  return reduct(dimensionality_reduction.optimize_cost_function, RNLM.CostFunction, samples, nb_coords, **kwargs)

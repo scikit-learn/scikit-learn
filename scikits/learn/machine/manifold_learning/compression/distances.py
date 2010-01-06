@@ -1,6 +1,6 @@
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 13:35
+# Last Change : 2008-04-07 15:21
 
 """
 Allows to compute the nearest neighboors
@@ -48,10 +48,10 @@ def dist2hd(x,y):
    numpy.sqrt(d,d)
    return d
 
-def NumpyFloyd(distances):
+def NumpyFloyd(dists):
   """
   Implementation with Numpy vector operations
   """
-  for indice1 in xrange(len(distances)):
-    for indice2 in xrange(len(distances)):
-      distances[indice2, :] = numpy.minimum(distances[indice2, :], distances[indice2, indice1] + distances[indice1, :])
+  for indice1 in xrange(len(dists)):
+    for indice2 in xrange(len(dists)):
+      dists[indice2, :] = numpy.minimum(dists[indice2, :], dists[indice2, indice1] + dists[indice1, :])
