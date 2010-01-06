@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Aug 04 10:00 PM 2007 J
+# Last Change: Tue Aug 07 08:00 PM 2007 J
 import re
 import itertools
 
@@ -35,23 +35,12 @@ r_comattrval = re.compile(r"'(..+)'\s+(..+$)")
 r_mcomattrval = re.compile(r"'([..\n]+)'\s+(..+$)")
 # To get normal attributes 
 r_wcomattrval = re.compile(r"(\S+)\s+(..+$)")
-_arff_aclass = {
-    'numeric' : 0,
-    'nominal' : 1,
-    'string' : 2,
-    'date' : 4,
-    'relational' : 8,
-}
 
-acls2id = dict(_arff_aclass)
-acls2id['real'] = _arff_aclass['numeric']
-acls2id['integer'] = _arff_aclass['numeric']
-id2acls = N.empty(len(acls2id), 'S%d' % N.max([len(i) for i in acls2id.keys()]))
+class ArffError(IOError):
+    pass
 
-#acls2dtype = {'numeric' : N.float, 
-#        'real' : N.float,
-#        'integer' : N.integer,
-#        'string' : N.
+class ParseArffError(ArffError):
+    pass
 
 # An attribute  is defined as @attribute name value
 def parse_type(attrtype):
@@ -275,9 +264,18 @@ def read_arff(filename):
         if type == 'string':
             hasstr = True
 
+    # XXX The above code is ugly
     # Build the type descr from the attributes
+    #acls2sdtype = {'real' : 'N.float', 'integer' : 'N.float', 'numeric' : 'N.float'}
     acls2dtype = {'real' : N.float, 'integer' : N.float, 'numeric' : N.float}
+    def safe_float(x):
+        if x.strip() == '?':
+            return N.nan
+        else:
+            return N.float(x)
+    acls2conv = {'real' : safe_float, 'integer' : safe_float, 'numeric' : safe_float}
     descr = []
+    dc = []
     if not hasstr:
         for name, value in attr:
             type = parse_type(value)
@@ -286,21 +284,53 @@ def read_arff(filename):
             elif type == 'nominal':
                 n = maxnomlen(value)
                 descr.append((name, 'S%d' % n))
+                dc.append(lambda x : x)
             else:
                 descr.append((name, acls2dtype[type]))
+                dc.append(safe_float)
+                #dc.append(acls2conv[type])
+                #sdescr.append((name, acls2sdtype[type]))
     else:
         raise ValueError("String attributes not supported yet, sorry")
 
     # dc[i] returns a callable which can convert the ith element of a row of
     # data
-    dc = []
-    for name, i in descr:
-        if isinstance(i, str):
-            dc.append(lambda x: x)
-        else:
-            dc.append(i)
-
     ni = len(dc)
+
+    #dc = [i[1] for i in sdescr]
+    #ni = len(dc)
+    #convert_str = """("""
+    #if dc[0]:
+    #    convert_str += "%s(row[%d])" % (dc[0], 0)
+    #else:
+    #    convert_str += "row[%d]" % 0
+
+    #for i in range(1, ni):
+    #    if dc[i]:
+    #        convert_str += ", %s(row[%d])" % (dc[i], i)
+    #    else:
+    #        convert_str += ", row[%d]" % i
+    #convert_str += ")"
+    ##print convert_str
+    ##exec compile(convert_str, '<string>', 'exec') in globals(), locals()
+    #indent = " " * 4
+    #generator_str =  "def generator(row_iter, delim = ','):" + '\n'
+    #generator_str += "    raw = row_iter.next()" + '\n'
+    #generator_str += "    while r_empty.match(raw):" + '\n'
+    #generator_str += "        raw = row_iter.next()" + '\n'
+    #generator_str += "    while r_comment.match(raw):" + '\n'
+    #generator_str += "        raw = row_iter.next()" + '\n'
+    #generator_str += "    row = raw.split(delim) " + '\n'
+    #generator_str += "    yield " + convert_str + '\n'
+    #generator_str += "    for raw in row_iter:" + '\n'
+    #generator_str += "        while r_comment.match(raw):" + '\n'
+    #generator_str += "            raw = row_iter.next()" + '\n'
+    #generator_str += "        while r_empty.match(raw):" + '\n'
+    #generator_str += "            raw = row_iter.next()" + '\n'
+    #generator_str += "        row = raw.split(delim)" + '\n'
+    #generator_str += "        yield " + convert_str + '\n'
+
+    #exec compile(generator_str, '<string>', 'exec') in globals(), locals()
     def generator(row_iter, delim = ','):
         # TODO: this is where we are spending times (~80%). I think things
         # could be made more efficiently: 
@@ -321,26 +351,17 @@ def read_arff(filename):
             raw = row_iter.next()
         while r_comment.match(raw):
             raw = row_iter.next()
-        #while raw.startswith('%'):
-        #    raw = row_iter.next()
-        #while raw.startswith('\n'):
-        #    raw = row_iter.next()
 
         row = raw.split(delim)
-        #yield convert(row)
         yield tuple([dc[i](row[i]) for i in range(ni)])
         for raw in row_iter:
             while r_comment.match(raw):
                 raw = row_iter.next()
             while r_empty.match(raw):
                 raw = row_iter.next()
-            #while raw.startswith('%'):
-            #    raw = row_iter.next()
-            #while raw.startswith('\n'):
-            #    raw = row_iter.next()
             row = raw.split(delim)
             yield tuple([dc[i](row[i]) for i in range(ni)])
-            #yield convert(row)
+
     a = generator(ofile)
     data = N.fromiter(a, descr)
     return data, rel, [parse_type(j) for i, j in attr]
@@ -350,47 +371,49 @@ def basic_stats(data):
 
 def floupi(filename):
     data, rel, types = read_arff(filename)
-    print "relation %s, has %d instances" % (rel, data.size)
-    itp = iter(types)
-    for i in data.dtype.names:
-        tp = itp.next()
-        if tp == 'numeric' or tp == 'real' or tp == 'integer':
-            min, max, mean, std = basic_stats(data[i])
-            print "\tinstance %s: min %f, max %f, mean %f, std %f" % \
-                    (i, min, max, mean, std)
-        else:
-            print "\tinstance %s is nominal" % i
+    from attrselect import print_dataset_info
+    print_dataset_info(data)
+    #print "relation %s, has %d instances" % (rel, data.size)
+    #itp = iter(types)
+    #for i in data.dtype.names:
+    #    tp = itp.next()
+    #    if tp == 'numeric' or tp == 'real' or tp == 'integer':
+    #        min, max, mean, std = basic_stats(data[i])
+    #        print "\tinstance %s: min %f, max %f, mean %f, std %f" % \
+    #                (i, min, max, mean, std)
+    #    else:
+    #        print "\tinstance %s is nominal" % i
 
 if __name__ == '__main__':
     import glob
-    #for i in glob.glob('arff.bak/data/*'):
-    #    relation, attributes = read_header(open(i))
-    #    print "Parsing header of %s: relation %s, %d attributes" % (i,
-    #            relation, len(attributes))
+    for i in glob.glob('arff.bak/data/*'):
+        relation, attributes = read_header(open(i))
+        print "Parsing header of %s: relation %s, %d attributes" % (i,
+                relation, len(attributes))
 
     import sys
-    filename = sys.argv[1]
+    #filename = sys.argv[1]
 
-    import hotshot, hotshot.stats 
-    prof = hotshot.Profile('fooprof.prof', lineevents=1)
-    prof.runcall(lambda : floupi(filename))
-    ##profile.run('floupi(filename)', 'fooprof')
+    #import hotshot, hotshot.stats 
+    #prof = hotshot.Profile('fooprof.prof', lineevents=1)
+    #prof.runcall(lambda : floupi(filename))
+    #profile.run('floupi(filename)', 'fooprof')
     #floupi(filename)
-    #gf = []
-    #wf = []
-    #for i in glob.glob('arff.bak/data/*'):
-    #    try:
-    #        print "=============== reading %s ======================" % i
-    #        floupi(i)
-    #        gf.append(i)
-    #    except ValueError, e:
-    #        print "!!!! Error parsing the file !!!!!"
-    #        print e
-    #        wf.append(i)
-    #    except IndexError, e:
-    #        print "!!!! Error parsing the file !!!!!"
-    #        print e
-    #        wf.append(i)
+    gf = []
+    wf = []
+    for i in glob.glob('arff.bak/data/*'):
+        try:
+            print "=============== reading %s ======================" % i
+            floupi(i)
+            gf.append(i)
+        except ValueError, e:
+            print "!!!! Error parsing the file !!!!!"
+            print e
+            wf.append(i)
+        except IndexError, e:
+            print "!!!! Error parsing the file !!!!!"
+            print e
+            wf.append(i)
 
-    #print "%d good files" % len(gf)
-    #print "%d bad files" % len(wf)
+    print "%d good files" % len(gf)
+    print "%d bad files" % len(wf)
