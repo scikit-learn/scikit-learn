@@ -4,7 +4,7 @@ Maximum Likelihood Piecewise Linear Mapping Regression module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-15 13:34
+# Last Change : 2008-05-23 14:48
 
 import math
 import numpy
@@ -21,7 +21,7 @@ class MLPLMR(PLMR.PLMR):
   Regression with piecewise linear functions
   Uses ML or mean square error (same error for every piecewise function)
   """
-  def __init__(self, points, coords, neighbors, random_variable, criterion = None, **kwargs):
+  def __init__(self, points, coords, criterion = None, **kwargs):
     """
     Initializes the regression
     - points are the initial points
@@ -35,7 +35,7 @@ class MLPLMR(PLMR.PLMR):
       self.criterion = scikits.openopt.solvers.optimizers.criterion.ModifiedAICCriterion(-0.00001, 1000, (coords.shape[-1] * points.shape[-1]) / (30 * numpy.std(points)))
     else:
       self.criterion = criterion
-    super(MLPLMR, self).__init__(points, coords, neighbors, random_variable, **kwargs)
+    super(MLPLMR, self).__init__(points, coords, **kwargs)
     self.iteration = 0
 
   def learn(self):

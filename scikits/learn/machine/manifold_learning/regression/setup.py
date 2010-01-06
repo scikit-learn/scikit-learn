@@ -7,8 +7,8 @@ def configuration(parent_package='', top_path=None, package_name='regression'):
     from numpy.distutils.misc_util import Configuration
     config = Configuration(package_name,parent_package,top_path)
     config.add_subpackage('*')
-    config.add_extension('neighbours._neighbours',
-                         sources=["neighbours/neighbours.cpp"],
+    config.add_extension('neighbors._neighbors',
+                         sources=["neighbors/neighbors.cpp"],
                          include_dirs=[os.path.dirname(__file__) + '/..'])
     config.add_extension('cluster._modified_general_clustering',
                          sources=["cluster/ModifiedGeneralClustering.i"],

@@ -4,31 +4,32 @@ Piecewise Linear Mapping Regression module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-17 12:39
+# Last Change : 2008-05-23 14:57
 
 import math
 import numpy
 import numpy.linalg as linalg
 from numpy.random import shuffle
+from scikits.learn.machine.manifold_learning import stats
 
 class PLMR(object):
   """
   Regression with piecewise linear functions
   Uses ML or mean square error (same error for every piecewise function
   """
-  def __init__(self, points, coords, neighbours, random_variable, RBF_field, correction_factor = 7.0):
+  def __init__(self, points, coords, neighbors, random_variable = stats.IsotropicGaussianVariable, RBF_field = stats.RBFField, correction_factor = 7.0):
     """
     Initializes the regression
     - points are the initial points
     - coords are the coordinates that will be used
-    - neighbours is the number of neighbour used for determining a plan's equation
+    - neighbors is the number of neighbour used for determining a plan's equation
     - random_variable is the kid of random variable that will be used for estimation, it is supposed to be identical for every piecewise function
     - correction_factor is the factor for belonging setting
     """
     self.points = points
     self.coords = numpy.append(coords, numpy.ones((len(coords),1)), axis = 1).copy()
     self.correction_factor = correction_factor
-    self.graph = self.create_graph(coords, neighbours)
+    self.graph = self.create_graph(coords, neighbors)
 
     self.random_variable = random_variable()
     self.RBF_field = RBF_field
@@ -49,21 +50,32 @@ class PLMR(object):
     del self.points
     self.RBFF = [self.createRBF(numpy.where(self.belonging_vector == plan)[0]) for plan in range(0, len(self.equations))]
 
-  def create_graph(self, coords, neighbours):
+  def __getstate__(self):
+    return (self.coords, self.random_variable, self.RBF_field, self.equations, self.belonging_vector)
+
+  def __setstate__(self, state):
+    self.coords = state[0]
+    self.random_variable = state[1]
+    self.RBF_field = state[2]
+    self.equations = state[3]
+    self.belonging_vector = state[4]
+    self.RBFF = [self.createRBF(numpy.where(self.belonging_vector == plan)[0]) for plan in range(0, len(self.equations))]
+
+  def create_graph(self, coords, neighbors):
     """
-    Creates a pseudo graph of the nearest neighbours
+    Creates a pseudo graph of the nearest neighbors
     """
-    import neighbours as tool_neighbours
+    import neighbors as tool_neighbors
 
     graph = [set() for i in xrange(len(coords))]
-    self.neighbourer = tool_neighbours.KNeighbours(coords, neighbours)
+    self.neighbourer = tool_neighbors.Kneighbors(coords, neighbors)
 
     for point in range(0, len(coords)):
       for neighbour in self.neighbourer(coords[point]):
         graph[point].add(neighbour[1])
         graph[neighbour[1]].add(point)
 
-    return [list(neighbours) for neighbours in graph]
+    return [list(neighbors) for neighbors in graph]
 
   def findEquations(self, random = True):
     """

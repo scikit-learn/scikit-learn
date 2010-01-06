@@ -19,7 +19,6 @@ import pickle
 import numpy
 
 from scikits.learn.machine.manifold_learning import regression
-from scikits.learn.machine.manifold_learning import stats
 
 if len(sys.argv) > 1:
   if sys.argv[1] == "-h":
@@ -54,7 +53,7 @@ coords = pickle.load(f)
 
 print "Regression using %s" % regressionkind
 regressionalgo = getattr(regression, regressionkind)
-model = regressionalgo(data, coords, neighbors = 9, random_variable = stats.IsotropicGaussianVariable, RBF_field = stats.RBFField)
+model = regressionalgo(data, coords, neighbors = 9)
 model.learn()
 
 print "Saving results in %s" % regressionfile
