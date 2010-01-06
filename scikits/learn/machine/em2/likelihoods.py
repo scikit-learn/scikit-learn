@@ -1,14 +1,43 @@
 #! /usr/bin/python
 #
 # Copyrighted David Cournapeau
-# Last Change: Thu Jan 22 05:00 PM 2009 J
+# Last Change: Fri Jan 23 01:00 PM 2009 J
 
 """This module implements various basic functions related to multivariate
 gaussian, such as likelihood, confidence interval/ellipsoids, etc..."""
 
 import numpy as np
 
-from _lk import quadform, logsumexp as _logsumexp
+from _lk import quadform, mquadform, logsumexp as _logsumexp
+
+def normalik(data, mu, va, log=False, out=None):
+    if data.ndim == 1:
+        data = np.atleast_2d(data)
+        mu = np.atleast_1d(mu)
+        va = np.atleast_1d(va)
+    n, d = np.shape(data)
+
+    if out is not None:
+        out = np.asarray(out)
+        if out.ndim > 1:
+            raise ValueError("Expected rank 1 out array")
+        no = out.shape[0]
+        if not no == n:
+            raise ValueError("Argout not the right size %d vs %d" % (no, n))
+    else:
+        out = np.empty(n, dtype=data.dtype, order='C')
+
+    if mu.shape == va.shape:
+        inva = 1/va
+        fac = (2*np.pi) ** (-d/2.0) * np.prod(np.sqrt(inva))
+        inva *= -0.5
+        pquadform(data, mu, inva, np.log(fac), out)
+        if not log:
+            return np.exp(out)
+        else:
+            return out
+    else:
+        raise ValueError("Full covariance not yet supported")
 
 def mnormalik(data, mu, va, log=False, out=None):
     k = np.shape(mu)[0]
@@ -27,8 +56,8 @@ def mnormalik(data, mu, va, log=False, out=None):
         inva = 1/va
         fac = (2*np.pi) ** (-d/2.0) * np.prod(np.sqrt(inva), axis=-1)
         inva *= -0.5
-        #pquadform(data, mu, inva, np.log(fac), out)
-        quadform(data, mu, inva, np.log(fac), out)
+        #mpquadform(data, mu, inva, np.log(fac), out)
+        mquadform(data, mu, inva, np.log(fac), out)
         if not log:
             return np.exp(out)
         else:
@@ -37,6 +66,11 @@ def mnormalik(data, mu, va, log=False, out=None):
         raise ValueError("Full covariance not yet supported")
 
 def pquadform(input, mu, sp, fac, out):
+    x = (input-mu) ** 2
+    out[:] = np.dot(x, sp.T)
+    out[:] += fac
+
+def pmquadform(input, mu, sp, fac, out):
     for c in range(k):
         x = (input-mu[c]) ** 2
         out[:, c] = np.dot(x, sp[c].T)
