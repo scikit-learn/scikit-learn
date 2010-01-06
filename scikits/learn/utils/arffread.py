@@ -290,12 +290,30 @@ def safe_nominal(value, pvalue):
     else:
         raise ValueError("%s value not in %s" % (str(svalue), str(pvalue)))
 
+def get_delim(line):
+    """Given a string representing a line of data, check whether the
+    delimiter is ',' or space."""
+    l = line.split(',')
+    if len(l) > 1:
+        return ','
+    else:
+        l = line.split(' ')
+        if len(l) > 1:
+            return ' '
+        else:
+            raise ValueError("delimiter not understood: " + line)
+
 def read_arff(filename):
     ofile = open(filename)
 
     # Parse the header file 
-    rel, attr = read_header(ofile)
+    try:
+        rel, attr = read_header(ofile)
+    except ValueError, e:
+        msg = "Error while parsing header, error was: " + str(e)
+        raise ParseArffError(msg)
 
+    # Check whether we have a string attribute (not supported yet)
     hasstr = False
     for name, value in attr:
         type = parse_type(value)
@@ -325,7 +343,7 @@ def read_arff(filename):
                 #dc.append(acls2conv[type])
                 #sdescr.append((name, acls2sdtype[type]))
     else:
-        raise ValueError("String attributes not supported yet, sorry")
+        raise NotImplementedError("String attributes not supported yet, sorry")
 
     # dc[i] returns a callable which can convert the ith element of a row of
     # data
@@ -340,18 +358,7 @@ def read_arff(filename):
         while r_comment.match(raw):
             raw = row_iter.next()
         return raw
-    def get_delim(line):
-        """Given a string representing a line of data, check whether the
-        delimiter is ',' or space."""
-        l = line.split(',')
-        if len(l) > 1:
-            return ','
-        else:
-            l = line.split(' ')
-            if len(l) > 1:
-                return ' '
-            else:
-                raise ValueError("delimiter not understood: " + line)
+
     try:
         dtline = next_data_line(ofile)
         delim = get_delim(dtline)
@@ -375,7 +382,7 @@ def read_arff(filename):
         #   by % should be enough and faster, and for empty lines, same thing
         #   --> this does not seem to change anything.
 
-        # We do not abstract skipping comments and empty lines for performences
+        # We do not abstract skipping comments and empty lines for performances
         # reason.
         raw = row_iter.next()
         while r_empty.match(raw):
@@ -394,6 +401,7 @@ def read_arff(filename):
             yield tuple([dc[i](row[i]) for i in range(ni)])
 
     a = generator(ofile, delim = delim)
+    # No error should happen here: it is a bug otherwise
     data = N.fromiter(a, descr)
     return data, rel, [parse_type(j) for i, j in attr]
 
