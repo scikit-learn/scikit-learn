@@ -82,16 +82,29 @@ cdef int quadform_double(double* x, int n, int d, double *mu, double* inva,
     cdef int i, j, c
     cdef double acc, *cx, *cmu, *cy, *cinva
 
+    cx = x
+    cy = y
     for i in range(n):
-        cx = x + d * i
-        cy = y + k * i
-        for c in range(k):
-            cmu = mu + d * c
-            cinva = inva + d * c
-            acc = 0
-            for j in range(d):
-                acc += cinva[j] * (cx[j] - cmu[j]) * (cx[j] - cmu[j])
-            cy[c] = acc + fac[c]
+        quadform_double_frame(cx, d, mu, inva, fac, k, cy)
+        cx += d
+        cy += k
+
+    return 0
+
+cdef inline int quadform_double_frame(double* x, int d, double *mu, double* inva, 
+                         double *fac, int k, double*y):
+    cdef int i, c
+    cdef double acc, *cmu, *cinva
+
+    cmu = mu
+    cinva = inva
+    for c in range(k):
+        acc = 0
+        for i in range(d):
+            acc += cinva[i] * (x[i] - cmu[i]) * (x[i] - cmu[i])
+        y[c] = acc + fac[c]
+        cmu += d
+        cinva += d
 
     return 0
 
