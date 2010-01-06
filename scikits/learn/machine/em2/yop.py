@@ -2,8 +2,7 @@ import numpy as np
 from scipy.cluster.vq import kmeans2
 
 from gm import GM
-from gmm import GMM
-from scikits.learn.machine.em import EM as OEM, GMM as OGMM, GM as OGM
+from gmm import SStats, Parameters, EM
 
 def initkmeans(data, k):
     # XXX: This is bogus initialization should do better (in kmean with CV)
@@ -35,23 +34,16 @@ def new_em(data, w, mu, va, niter):
     k = w.size
     k = mu.shape[0]
 
-    lgm = GM(d, k)
-    gmm = GMM(lgm)
+    params = Parameters.fromvalues(w, mu, va)
+    em = EM(hint=1e4)
+    em.train(data, params)
 
-    gmm.gm.w = w.copy()
-    gmm.gm.mu = mu.copy()
-    gmm.gm.va = va.copy()
-
-    for i in range(niter):
-        g, gx, gxx = gmm.ss(data)
-        nw, nmu, nva = gmm.update(g, gx, gxx)
-        gmm.gm.w = nw
-        gmm.gm.mu = nmu
-        gmm.gm.va = nva
-
-    return gmm
+    print params.w, params.w.sum()
+    return GM.fromvalues(params.w, params.mu, params.va)
 
 def old_em(data, w, mu, va, niter):
+    from scikits.learn.machine.em import EM as OEM, GMM as OGMM, GM as OGM
+
     k = w.size
     k = mu.shape[0]
 
@@ -66,7 +58,7 @@ def old_em(data, w, mu, va, niter):
         g, tgd = gmm.compute_responsabilities(data)
         gmm.update_em(data, g)
 
-    return gmm
+    return gmm.gm
 
 print "NEW"
 newgmm = new_em(data, wi, mui, vai, 10)
