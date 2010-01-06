@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Aug 04 08:00 PM 2007 J
+# Last Change: Sat Aug 04 09:00 PM 2007 J
 import re
 import itertools
 
@@ -21,6 +21,8 @@ import numpy as N
 r_meta = re.compile('^\s*@')
 # Match a comment
 r_comment = re.compile(r'^%')
+# Match an empty line
+r_empty = re.compile(r'^\s+$')
 # Match a header line, that is a line which starts by @ + a word
 r_headerline = re.compile(r'^@\S*')
 r_datameta = re.compile(r'^@[Dd][Aa][Tt][Aa]')
@@ -299,11 +301,18 @@ def read_arff(filename):
             dc.append(i)
 
     def generator(row_iter):
-        row = row_iter.next().split(',')
+        # TODO: this is where we are spending times. I think things could be
+        # made for efficiently.
+        raw = row_iter.next()
+        while r_empty.match(raw):
+            raw = row_iter.next()
+        row = raw.split(',')
         yield tuple([dc[i](row[i]) for i in range(len(row))])
         for raw in row_iter:
             while r_comment.match(raw):
-                row_iter.next()
+                raw = row_iter.next()
+            while r_empty.match(raw):
+                raw = row_iter.next()
             row = raw.split(',')
             yield tuple([dc[i](row[i]) for i in range(len(row))])
     a = generator(ofile)
@@ -314,7 +323,7 @@ def basic_stats(data):
     return N.min(data), N.max(data), N.mean(data), N.std(data)
 
 if __name__ == '__main__':
-    #import glob
+    import glob
     #for i in glob.glob('arff.bak/data/*'):
     #    relation, attributes = read_header(open(i))
     #    print "Parsing header of %s: relation %s, %d attributes" % (i,
@@ -322,23 +331,23 @@ if __name__ == '__main__':
 
     import sys
     filename = sys.argv[1]
-    data, rel, tp = read_arff(filename)
-    print "relation %s, has %d instances" % (rel, data.size)
-    for i in data.dtype.names:
-        min, max, mean, std = basic_stats(data[i])
-        print "\tinstance %s: min %f, max %f, mean %f, std %f" % \
-                (i, min, max, mean, std)
+    def floupi(filename):
+        data, rel, types = read_arff(filename)
+        print "relation %s, has %d instances" % (rel, data.size)
+        itp = iter(types)
+        for i in data.dtype.names:
+            tp = itp.next()
+            if tp == 'numeric' or tp == 'real' or tp == 'integer':
+                min, max, mean, std = basic_stats(data[i])
+                print "\tinstance %s: min %f, max %f, mean %f, std %f" % \
+                        (i, min, max, mean, std)
+            else:
+                print "\tinstance %s is nominal" % i
 
-    #a = [['1', '1.2'], ['2', '2.2']]
-    ##a = [[1, 1.2], [2, 2.2]]
-    #descr = [('1', N.int), ('2', N.float)]
-    #def raw2row(raw, descr):
-    #    return tuple([descr[i][1](raw[i]) for i in range(len(descr))])
-
-    #print raw2row(a[0], descr)
-    #def generator(row_iter, descr):
-    #    yield raw2row(row_iter.next(), descr)
-    #    for i in row_iter:
-    #        yield raw2row(i, descr)
-
-    #print N.fromiter(generator(iter(a), descr), descr)
+    floupi(filename)
+    #for i in glob.glob('arff.bak/data/*'):
+    #    try:
+    #        print "=============== reading %s ======================" % i
+    #        floupi(i)
+    #    except ValueError, e:
+    #        print e
