@@ -11,8 +11,8 @@ from numpy.testing import *
 
 import numpy as N
 
-from scikits.learn.machin.em.densities import gauss_den, \
-            multiple_gauss_densities, logsumexp, gauss_ell
+from scikits.learn.machine.em.densities import gauss_den, \
+            multiple_gauss_den, logsumexp, gauss_ell
 
 #Optional:
 set_local_path()
