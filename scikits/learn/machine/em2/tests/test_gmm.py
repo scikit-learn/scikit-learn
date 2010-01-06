@@ -47,23 +47,40 @@ class TestLogresp(TestCase):
         tmp += np.log(w)
         return tmp - np.log(np.sum(np.exp(tmp), axis=-1))[:, np.newaxis]
 
-    def _test(self, d, k, mode):
-        from scikits.learn.machine.em2.gmm import logresp
+    def _test(self, d, k, mode, f):
         x = np.random.randn(100, d)
         w, mu, va = GM.genparams(d, k, mode)
         yr = self.ref(x, w, mu, va)
 
-        y = plogresp(x, w, mu, va)
+        y = f(x, w, mu, va)
         assert_array_almost_equal(y, yr)
 
     def test_1d_1k(self):
-        return self._test(1, 1, 'diag')
+        return self._test(1, 1, 'diag', plogresp)
 
     def test_1d_2k(self):
-        return self._test(1, 2, 'diag')
+        return self._test(1, 2, 'diag', plogresp)
 
     def test_1d_10k(self):
-        return self._test(1, 10, 'diag')
+        return self._test(1, 10, 'diag', plogresp)
+
+    def test_2d_1k(self):
+        return self._test(2, 1, 'diag', plogresp)
+
+    def test_2d_2k(self):
+        return self._test(2, 2, 'diag', plogresp)
+
+    def test_2d_10k(self):
+        return self._test(2, 10, 'diag', plogresp)
+
+    def test_5d_1k(self):
+        return self._test(5, 1, 'diag', plogresp)
+
+    def test_5d_2k(self):
+        return self._test(5, 2, 'diag', plogresp)
+
+    def test_5d_10k(self):
+        return self._test(5, 10, 'diag', plogresp)
 
 if __name__ == '__main__':
     run_module_suite()
