@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jul 21 07:00 PM 2007 J
+# Last Change: Sat Jul 21 09:00 PM 2007 J
 
 """This module implements function to extract attributes and/or classes from
 datasets."""
@@ -8,7 +8,7 @@ import numpy as N
 def print_dataset_info(data, label = None, cl = None):
     # Attributes info
     attr = get_attributes(data)
-    msg = "data Iris has: \n" + "\t%d attributes: " % len(attr)
+    msg = "data has: \n" + "\t%d attributes: " % len(attr)
     if len(attr) > 0:
         msg += ", ".join([i for i in attr[:-1]])
         msg += " and " + attr[-1]
@@ -20,18 +20,22 @@ def print_dataset_info(data, label = None, cl = None):
             if len(cl) > 0:
                 msg += "\t%d classes: " % len(cl)
                 msg += ", ".join([i for i in cl])
-        else:
-            msg += "\tNo classes"
+    else:
+        msg += "\tNo classes"
 
-        msg += '\n'
-        # Number of samples
-        ns = len(data)
-        msg += "\t%d samples in the dataset:\n" % ns
+    msg += '\n'
+
+    # Number of samples
+    ns = len(data)
+    if label is not None:
         if cl is not None and len(cl) > 0:
+            msg += "\t%d samples in the dataset:\n" % ns
             c2ind = get_c2ind(cl, label)
             msg += "".join(["\t\t%d samples for class %s\n" \
                               % (len(c2ind[cname]), cname) \
                               for cname in cl])
+    else:
+        msg += "\t%d samples in the dataset\n" % ns
 
     print msg
 
@@ -89,11 +93,19 @@ def get_c2ind(cl, label):
     return c2ind
 
 if __name__ == '__main__':
-    from scikits.learn.datasets import iris, german
+    from scikits.learn.datasets import iris, german, pendigits, oldfaithful
     d = iris.load()
     data, lab, cl = d['data'], d['label'], d['class']
     print_dataset_info(data, lab, cl)
 
     d = german.load()
+    data, lab, cl = d['data'], d['label'], d['class']
+    print_dataset_info(data, lab, cl)
+
+    d = oldfaithful.load()
+    data = d['data']
+    print_dataset_info(data)
+
+    d = pendigits.load()
     data, lab, cl = d['data'], d['label'], d['class']
     print_dataset_info(data, lab, cl)
