@@ -28,6 +28,8 @@ acls2id = dict(_arff_aclass)
 acls2id['real'] = _arff_aclass['numeric']
 acls2id['integer'] = _arff_aclass['numeric']
 id2acls = N.empty(len(acls2id), 'S%d' % N.max([len(i) for i in acls2id.keys()]))
+id2dtype = {acls2id['numeric'] : N.float,
+    acls2id['nominal'] : N.int}
 
 def parse_type(attrtype):
     """Given an arff attribute type string, returns its type"""
@@ -127,13 +129,31 @@ def read_header(ofile):
 
     return relation, attributes
 
-def read_data(ofile):
+def read_data(ofile, attributes, sb = None):
+    """If sb is none, the whole file is read to get the size of returned
+    data."""
+    if sb:
+        raise ValueError("Offline reading not supported yet")
     data = [ofile.next()]
     if data[0].strip()[0] == '{':
         raise ValueError("This looks like a sparse ARFF: not supported yet")
     data.extend([i for i in ofile])
-    return data
+    descr = _descr_from_attr(attributes)
+    ndata = N.empty(len(data), descr)
+    for i in range(10):
+        ndata[i] = [descr[j][1](data[i][j]) for j in range(len(data[i]))]
+    return ndata
 
+def _descr_from_attr(attr):
+    return [(name, id2dtype[acls2id[parse_type(type)]]) for name, type in attr]
+
+def _read_data_raw(ofile, ar, sb = None):
+    if sb is None:
+        data = [i for i in ofile.readlines()]
+    else:
+        data = [i for i in ofile.readlines(sb)]
+    ar[:len(data)] = data
+    
 if __name__ == '__main__':
     import sys
     filename = sys.argv[1]
@@ -148,5 +168,5 @@ if __name__ == '__main__':
         else:
             print "attribute %s is class %s" % (name, parse_type(type))
     print "%d attributes " % len(attr)
-    data = read_data(a)
-    print len(data)
+    data = read_data(a, attr)
+    print data
