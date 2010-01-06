@@ -239,11 +239,11 @@ cdef int logresp_double(double*x, int n, int d, double *w, double *mu,
     cout = out
     for i in range(n):
         quadform_double_frame(cx, d, mu, inva, fac, k, cout)
-        #for c in range(k):
-        #    cout[c] += logw[c]
-        #logsumexp_double_frame(cout, k, &norm)
-        #for c in range(k):
-        #    cout[c] -= norm
+        for c in range(k):
+            cout[c] += logw[c]
+        logsumexp_double_frame(cout, k, &norm)
+        for c in range(k):
+            cout[c] -= norm
         cx += d
         cout += k
 
