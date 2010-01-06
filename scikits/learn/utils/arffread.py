@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Aug 20 02:00 PM 2007 J
+# Last Change: Mon Aug 20 06:00 PM 2007 J
 import re
 import itertools
 import sys
@@ -43,15 +43,22 @@ r_mcomattrval = re.compile(r"'([..\n]+)'\s+(..+$)")
 # To get normal attributes 
 r_wcomattrval = re.compile(r"(\S+)\s+(..+$)")
 
+#-------------------------
+# Module defined exception
+#-------------------------
 class ArffError(IOError):
     pass
 
 class ParseArffError(ArffError):
     pass
 
+#------------------
+# Various utilities
+#------------------
+
 # An attribute  is defined as @attribute name value
 def parse_type(attrtype):
-    """Given an arff attribute value, returns its type.
+    """Given an arff attribute value (meta data), returns its type.
     
     Expect the value to be a name."""
     uattribute = attrtype.lower().strip()
@@ -75,10 +82,59 @@ def get_nominal(attribute):
     """If attribute is nominal, returns a list of the values"""
     return attribute.split(',')
         
+def read_data_list(ofile):
+    """Read each line of the iterable and put it in a list."""
+    data = [ofile.next()]
+    if data[0].strip()[0] == '{':
+        raise ValueError("This looks like a sparse ARFF: not supported yet")
+    data.extend([i for i in ofile])
+    return data
 
-#-------------------------------------
-# Functions to parse lines into tokens
-#-------------------------------------
+def get_ndata(ofile):
+    """Read the whole file to get number of data attributes."""
+    data = [ofile.next()]
+    loc = 1
+    if data[0].strip()[0] == '{':
+        raise ValueError("This looks like a sparse ARFF: not supported yet")
+    for i in ofile:
+        loc += 1
+    return loc
+
+def maxnomlen(atrv):
+    """Given a string contening a nominal type definition, returns the string
+    len of the biggest component.
+    
+    A nominal type is defined as seomthing framed between brace ({}).
+    
+    Example: maxnomlen("{floup, bouga, fl, ratata}") returns 6 (the size of
+    ratata, the longest nominal value)."""
+    nomtp = get_nom_val(atrv)
+    return max(len(i) for i in nomtp)
+
+def get_nom_val(atrv):
+    """Given a string contening a nominal type, returns a tuple of the possible
+    values.    
+    
+    A nominal type is defined as something framed between brace ({}).
+    
+    Example: get_nom_val("{floup, bouga, fl, ratata}") returns ("floup",
+    "bouga", "fl", "ratata")."""
+    r_nominal = re.compile('{(..+)}')
+    m = r_nominal.match(atrv)
+    if m:
+        return tuple(i.strip() for i in m.group(1).split(','))
+    else:
+        raise ValueError("This does not look like a nominal string")
+
+def go_data(ofile):
+    """Skip header.
+    
+    the first next() call of the returned iterator will be the @data line"""
+    return itertools.dropwhile(lambda x : not r_datameta.match(x), ofile)
+
+#----------------
+# Parsing header
+#----------------
 def tokenize_attribute(iterable, attribute):
     """Parse a raw string in header (eg starts by @attribute).
     
@@ -131,10 +187,6 @@ def tokenize_attribute(iterable, attribute):
 
 def tokenize_multilines(iterable, val):
     """Can tokenize an attribute spread over several lines."""
-    ## skip empty lines
-    #while r_empty.match(val):
-    #    val = iterable.next()
-
     # If one line does not match, read all the following lines up to next
     # line with meta character, and try to parse everything up to there.
     if not r_mcomattrval.match(val):
@@ -181,7 +233,7 @@ def tokenize_single_wcomma(val):
     return name, type
 
 def read_header(ofile):
-    """Reader header of the iterable ofile."""
+    """Read the header of the iterable ofile."""
     i = ofile.next()
 
     # Pass first comments
@@ -210,69 +262,9 @@ def read_header(ofile):
 
     return relation, attributes
 
-def attribute2dtype(typestr):
-    """From a type string, returns the corresponding dtype.
-
-    For example, if typestr is 'numeric', returns float dtype, etc..."""
-
-def read_data_list(ofile):
-    """Read each line of the iterable and put it in a list."""
-    data = [ofile.next()]
-    if data[0].strip()[0] == '{':
-        raise ValueError("This looks like a sparse ARFF: not supported yet")
-    data.extend([i for i in ofile])
-    return data
-
-def get_ndata(ofile):
-    """Read the whole file to get number of data attributes."""
-    #data = [ofile.next()]
-    #if data[0].strip()[0] == '{':
-    #    raise ValueError("This looks like a sparse ARFF: not supported yet")
-    #data.extend([i for i in ofile])
-    #return data
-    data = [ofile.next()]
-    loc = 1
-    if data[0].strip()[0] == '{':
-        raise ValueError("This looks like a sparse ARFF: not supported yet")
-    for i in ofile:
-        loc += 1
-    return loc
-
-def maxnomlen(atrv):
-    """Given a string contening a nominal type, returns the string len of the
-    biggest component.
-    
-    A nominal type is defined as seomthing framed between brace ({})."""
-    r_nominal = re.compile('{(..+)}')
-    m = r_nominal.match(atrv)
-    if m:
-        values = m.group(1).split(',')
-        return max([len(i.strip()) for i in values])
-    else:
-        raise ValueError("This does not look like a nominal string")
-
-def get_nom_val(atrv):
-    """Given a string contening a nominal type, returns a tuple of the possible
-    values.    
-    
-    A nominal type is defined as something framed between brace ({})."""
-    r_nominal = re.compile('{(..+)}')
-    m = r_nominal.match(atrv)
-    if m:
-        return tuple(i.strip() for i in m.group(1).split(','))
-    else:
-        raise ValueError("This does not look like a nominal string")
-
-def go_data(ofile):
-    """Skip header.
-    
-    the first next() call of the returned iterator will be the @data line"""
-    return itertools.dropwhile(lambda x : not r_datameta.match(x), ofile)
-
-#def get_header(ofile):
-#    """Get the header as a list of lines."""
-#    return itertools.takewhile(lambda x : not r_datameta.match(x), ofile)
-
+#--------------------
+# Parsing actual data
+#--------------------
 def safe_float(x):
     """given a string x, convert it to a float. If the stripped string is a ?,
     return a Nan (missing value)."""
@@ -320,13 +312,17 @@ def read_arff(filename):
         if type == 'string':
             hasstr = True
 
-    # XXX The following code is ugly
-    # Build the type descr from the attributes
-    #acls2sdtype = {'real' : 'N.float', 'integer' : 'N.float', 'numeric' : 'N.float'}
+    # XXX The following code is not great
+    # Build the type descriptor descr and the list of convertors to convert
+    # each attribute to the suitable type (which should match the one in
+    # descr).
+
+    # This can be used once we want to support integer as integer values and
+    # not as numeric anymore (using masked arrays ?).
     acls2dtype = {'real' : N.float, 'integer' : N.float, 'numeric' : N.float}
     acls2conv = {'real' : safe_float, 'integer' : safe_float, 'numeric' : safe_float}
     descr = []
-    dc = []
+    convertors = []
     if not hasstr:
         for name, value in attr:
             type = parse_type(value)
@@ -336,18 +332,18 @@ def read_arff(filename):
                 n = maxnomlen(value)
                 descr.append((name, 'S%d' % n))
                 pvalue = get_nom_val(value)
-                dc.append(partial(safe_nominal, pvalue = pvalue))
+                convertors.append(partial(safe_nominal, pvalue = pvalue))
             else:
                 descr.append((name, acls2dtype[type]))
-                dc.append(safe_float)
+                convertors.append(safe_float)
                 #dc.append(acls2conv[type])
                 #sdescr.append((name, acls2sdtype[type]))
     else:
+        # How to support string efficiently ? Ideally, we should know the max
+        # size of the string before allocating the numpy array.
         raise NotImplementedError("String attributes not supported yet, sorry")
 
-    # dc[i] returns a callable which can convert the ith element of a row of
-    # data
-    ni = len(dc)
+    ni = len(convertors)
 
     # Get the delimiter from the first line of data:
     def next_data_line(row_iter):
@@ -391,69 +387,90 @@ def read_arff(filename):
             raw = row_iter.next()
 
         row = raw.split(delim)
-        yield tuple([dc[i](row[i]) for i in range(ni)])
+        yield tuple([convertors[i](row[i]) for i in range(ni)])
         for raw in row_iter:
             while r_comment.match(raw):
                 raw = row_iter.next()
             while r_empty.match(raw):
                 raw = row_iter.next()
             row = raw.split(delim)
-            yield tuple([dc[i](row[i]) for i in range(ni)])
+            yield tuple([convertors[i](row[i]) for i in range(ni)])
 
     a = generator(ofile, delim = delim)
     # No error should happen here: it is a bug otherwise
     data = N.fromiter(a, descr)
     return data, rel, [parse_type(j) for i, j in attr]
 
+#-----
+# Misc
+#-----
 def basic_stats(data):
-    return N.min(data), N.max(data), N.mean(data), N.std(data)
+    nbfac = data.size * 1. / (data.size - 1)
+    return N.nanmin(data), N.nanmax(data), N.mean(data), N.std(data) * nbfac
+
+def print_attribute(name, type, data):
+    if type == 'numeric' or type == 'real' or type == 'integer':
+        min, max, mean, std = basic_stats(data)
+        print "%s,%s,%f,%f,%f,%f" % (name, type, min, max, mean, std)
+    else:
+        print name
+
+def test_weka(filename):
+    data, rel, types = read_arff(filename)
+    print len(data.dtype)
+    print data.size
+    itp = iter(types)
+    for i in data.dtype.names:
+        print_attribute(i,itp.next(),data[i])
 
 def floupi(filename):
     data, rel, types = read_arff(filename)
     from attrselect import print_dataset_info
     print_dataset_info(data)
-    #print "relation %s, has %d instances" % (rel, data.size)
-    #itp = iter(types)
-    #for i in data.dtype.names:
-    #    tp = itp.next()
-    #    if tp == 'numeric' or tp == 'real' or tp == 'integer':
-    #        min, max, mean, std = basic_stats(data[i])
-    #        print "\tinstance %s: min %f, max %f, mean %f, std %f" % \
-    #                (i, min, max, mean, std)
-    #    else:
-    #        print "\tinstance %s is nominal" % i
+    print "relation %s, has %d instances" % (rel, data.size)
+    itp = iter(types)
+    for i in data.dtype.names:
+        print_attribute(i,itp.next(),data[i])
+        #tp = itp.next()
+        #if tp == 'numeric' or tp == 'real' or tp == 'integer':
+        #    min, max, mean, std = basic_stats(data[i])
+        #    print "\tinstance %s: min %f, max %f, mean %f, std %f" % \
+        #            (i, min, max, mean, std)
+        #else:
+        #    print "\tinstance %s is non numeric" % i
 
 if __name__ == '__main__':
-    import glob
-    for i in glob.glob('arff.bak/data/*'):
-        relation, attributes = read_header(open(i))
-        print "Parsing header of %s: relation %s, %d attributes" % (i,
-                relation, len(attributes))
+    #import glob
+    #for i in glob.glob('arff.bak/data/*'):
+    #    relation, attributes = read_header(open(i))
+    #    print "Parsing header of %s: relation %s, %d attributes" % (i,
+    #            relation, len(attributes))
 
-    #import sys
-    #filename = sys.argv[1]
+    import sys
+    filename = sys.argv[1]
     #filename = 'arff.bak/data/pharynx.arff'
     #floupi(filename)
+    test_weka(filename)
 
-    gf = []
-    wf = []
-    for i in glob.glob('arff.bak/data/*'):
-        try:
-            print "=============== reading %s ======================" % i
-            floupi(i)
-            gf.append(i)
-        except ValueError, e:
-            print "!!!! Error parsing the file !!!!!"
-            print e
-            wf.append(i)
-        except IndexError, e:
-            print "!!!! Error parsing the file !!!!!"
-            print e
-            wf.append(i)
-        except ArffError, e:
-            print "!!!! Error parsing the file !!!!!"
-            print e
-            wf.append(i)
+    #gf = []
+    #wf = []
+    #for i in glob.glob('arff.bak/data/*'):
+    #    try:
+    #        print "=============== reading %s ======================" % i
+    #        floupi(i)
+    #        gf.append(i)
+    #    except ValueError, e:
+    #        print "!!!! Error parsing the file !!!!!"
+    #        print e
+    #        wf.append(i)
+    #    except IndexError, e:
+    #        print "!!!! Error parsing the file !!!!!"
+    #        print e
+    #        wf.append(i)
+    #    except ArffError, e:
+    #        print "!!!! Error parsing the file !!!!!"
+    #        print e
+    #        wf.append(i)
 
-    print "%d good files" % len(gf)
-    print "%d bad files" % len(wf)
+    #print "%d good files" % len(gf)
+    #print "%d bad files" % len(wf)
