@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Sat Jun 09 10:00 PM 2007 J
+# Last Change: Sat Dec 20 04:00 PM 2008 J
 
 # This is not meant to be used yet !!!! I am not sure how to integrate this
 # stuff inside the package yet. The cases are:
@@ -229,6 +229,50 @@ class OnGMM1d(ExpMixtureModel):
         compute_sufficient_statistics_frame and update_em_frame"""
         _rawden.compute_em_frame_1d(frame, self.cw, self.cmu, self.cva, \
                 self.cx, self.cxx, nu)
+
+def online_gmm_em(data, ninit, k, mode = 'diag', step = None):
+    """ Emulate online_gmm_em of matlab, but uses scipy.sandbox.pyem"""
+    nframes = data.shape[0]
+    if data.ndim > 1:
+        d   = data.shape[1]
+    else:
+        d       = 1
+        data    = data[:, N.newaxis]
+
+    nu      = compute_factor(nframes)
+
+    ogm         = GM(d, k, mode)
+    ogmm        = OnGMM1d(ogm, 'kmean')
+    init_data   = data[:ninit, 0]
+    # We force 10 iteration for equivalence with matlab
+    ogmm.init(init_data, niter = 10)
+    # print "after init in python online_gmm_em"
+    # print ogmm.gm.w
+    # print ogmm.gm.mu
+    # print ogmm.gm.va
+
+    wt  = []
+    mut = []
+    vat = []
+
+    for t in range(nframes):
+        #ogmm.compute_sufficient_statistics(data[t:t+1, :], nu[t])
+        #ogmm.update_em()
+        # Shit of 1 to agree exactly with matlab (index starting at 1)
+        # This is totally arbitrary otherwise
+        ogmm.compute_em_frame(data[t], nu[t])
+        if ((t+1) % step) == 0:
+            wt.append(ogmm.cw.copy())
+            mut.append(ogmm.cmu.copy())
+            vat.append(ogmm.cva.copy())
+
+    mut = [m[:, N.newaxis] for m in mut]
+    vat = [v[:, N.newaxis] for v in vat]
+    ogmm.gm.set_param(ogmm.cw, ogmm.cmu[:, N.newaxis], ogmm.cva[:, N.newaxis])
+    #ogmm.gm.set_param(ogmm.cw, ogmm.cmu, ogmm.cva)
+
+    return ogm, wt, mut, vat
+
 #class OnlineEM:
 #    def __init__(self, ogm):
 #        """Init Online Em algorithm with ogm, an instance of OnGMM."""
