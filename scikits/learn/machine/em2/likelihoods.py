@@ -8,7 +8,7 @@ gaussian, such as likelihood, confidence interval/ellipsoids, etc..."""
 
 import numpy as np
 
-from _lk import quadform, mquadform, logsumexp as _logsumexp
+from _lk import mquadform, logsumexp as _logsumexp
 
 def normalik(data, mu, va, log=False, out=None):
     raise ValueError("Does not work correctly")
