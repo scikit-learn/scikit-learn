@@ -4,7 +4,7 @@ Computes coordinates based on the similarities given as parameters
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-08 08:57
+# Last Change : 2008-04-11 14:42
 
 __all__ = ['LLE', 'laplacian_maps', 'hessianMap']
 
@@ -17,12 +17,12 @@ import scipy.linalg
 import scipy.sparse.linalg.dsolve
 import math
 
-def LLE(samples, nbCoords, **kwargs):
+def LLE(samples, nb_coords, **kwargs):
   """
   Computes the LLE reduction for a manifold
   Parameters :
   - samples are the samples that will be reduced
-  - nbCoords is the number of coordinates in the manifold
+  - nb_coords is the number of coordinates in the manifold
   - neigh is the neighborer used (optional, default Kneighbor)
   - neighbor is the number of neighbors (optional, default 9)
   """
@@ -32,26 +32,26 @@ def LLE(samples, nbCoords, **kwargs):
 
   w, vectors = numpy.linalg.eigh(M)
   print w
-  index = numpy.argsort(w)[1:1+nbCoords]
+  index = numpy.argsort(w)[1:1+nb_coords]
 
   t = scipy.sparse.eye(len(samples), len(samples)) - W
   M = t.T * t
 
   #sigma_solve = scipy.sparse.linalg.dsolve.splu(M).solve
-  #w, vectors = scipy.sparse.linalg.eigen_symmetric(M, k=nbCoords+1, which='LR')
-  #w, vectors = scipy.sparse.linalg.speigs.ARPACK_gen_eigs(M.matvec, sigma_solve, n=M.shape[0], sigma = 0, nev=nbCoords+1, which='SM')
+  #w, vectors = scipy.sparse.linalg.eigen_symmetric(M, k=nb_coords+1, which='LR')
+  #w, vectors = scipy.sparse.linalg.speigs.ARPACK_gen_eigs(M.matvec, sigma_solve, n=M.shape[0], sigma = 0, nev=nb_coords+1, which='SM')
   #vectors = numpy.asarray(vectors)
   #print w
-  #index = numpy.argsort(w)[1:1+nbCoords]
+  #index = numpy.argsort(w)[1:1+nb_coords]
 
   return numpy.sqrt(len(samples)) * vectors[:,index]
 
-def laplacian_maps(samples, nbCoords, method, **kwargs):
+def laplacian_maps(samples, nb_coords, method, **kwargs):
   """
   Computes a Laplacian eigenmap for a manifold
   Parameters:
   - samples are the samples that will be reduced
-  - nbCoords is the number of coordinates in the manifold
+  - nb_coords is the number of coordinates in the manifold
   - method is the method to create the similarity matrix
   - neigh is the neighborer used (optional, default Kneighbor)
   - neighbor is the number of neighbors (optional, default 9)
@@ -64,7 +64,7 @@ def laplacian_maps(samples, nbCoords, method, **kwargs):
     dia = scipy.sparse.dia_matrix((Di, (0,)), shape=W.shape)
     L = dia * W * dia
 
-    w, vectors = scipy.sparse.linalg.eigen_symmetric(L, k=nbCoords+1)
+    w, vectors = scipy.sparse.linalg.eigen_symmetric(L, k=nb_coords+1)
     vectors = numpy.asarray(vectors)
     D = numpy.asarray(D)
     Di = numpy.asarray(Di).squeeze()
@@ -75,16 +75,16 @@ def laplacian_maps(samples, nbCoords, method, **kwargs):
     L = Di * W * Di[:,numpy.newaxis]
     w, vectors = scipy.linalg.eigh(L)
 
-  index = numpy.argsort(w)[-2:-2-nbCoords:-1]
+  index = numpy.argsort(w)[-2:-2-nb_coords:-1]
 
   return numpy.sqrt(len(samples)) * Di[:,numpy.newaxis] * vectors[:,index] * math.sqrt(numpy.sum(D))
 
-def laplacian_maps2(samples, nbCoords, method, **kwargs):
+def laplacian_maps2(samples, nb_coords, method, **kwargs):
   """
   Computes a Laplacian eigenmap for a manifold
   Parameters:
   - samples are the samples that will be reduced
-  - nbCoords is the number of coordinates in the manifold
+  - nb_coords is the number of coordinates in the manifold
   - method is the method to create the similarity matrix
   - neigh is the neighborer used (optional, default Kneighbor)
   - neighbor is the number of neighbors (optional, default 9)
@@ -93,7 +93,7 @@ def laplacian_maps2(samples, nbCoords, method, **kwargs):
   D = numpy.sum(W, axis=0)
   L = 1/D[:, numpy.newaxis] * (numpy.diag(D) - W)
   w, vectors = scipy.linalg.eig(L)
-  index = numpy.argsort(w)[1:1+nbCoords]
+  index = numpy.argsort(w)[1:1+nb_coords]
   return numpy.sqrt(len(samples)) * vectors[:,index]
 
 def sparse_heat_kernel(samples, kernel_width = .5, **kwargs):
@@ -138,12 +138,12 @@ def normalized_heat_kernel(samples, **kwargs):
 
   return p1[:, numpy.newaxis] * similarities * p1
 
-def hessianMap(samples, nbCoords, **kwargs):
+def hessianMap(samples, nb_coords, **kwargs):
   """
   Computes a Hessian eigenmap for a manifold
   Parameters:
   - samples are the samples that will be reduced
-  - nbCoords is the number of coordinates in the manifold
+  - nb_coords is the number of coordinates in the manifold
   - neigh is the neighborer used (optional, default Kneighbor)
   - neighbor is the number of neighbors (optional, default 9)
   """
@@ -151,27 +151,27 @@ def hessianMap(samples, nbCoords, **kwargs):
   from numpy import linalg
 
   graph = create_graph(samples, **kwargs)
-  dp = nbCoords * (nbCoords + 1) / 2
+  dp = nb_coords * (nb_coords + 1) / 2
   W = numpy.zeros((len(samples) * dp, len(samples)))
 
   for i in range(len(samples)):
     neighs = graph[i]
     neighborhood = samples[neighs] - numpy.mean(samples[neighs], axis=0)
     u, s, vh = linalg.svd(neighborhood.T, full_matrices=False)
-    tangent = vh.T[:,:nbCoords]
+    tangent = vh.T[:,:nb_coords]
 
     Yi = numpy.zeros((len(tangent), dp))
     ct = 0
-    for j in range(nbCoords):
+    for j in range(nb_coords):
       startp = tangent[:,j]
-      for k in range(j, nbCoords):
+      for k in range(j, nb_coords):
         Yi[:, ct + k - j] = startp * tangent[:,k]
-      ct = ct + nbCoords - j
+      ct = ct + nb_coords - j
 
     Yi = numpy.hstack((numpy.ones((len(neighs), 1)), tangent, Yi))
 
     Yt = mgs(Yi)
-    Pii = Yt[:, nbCoords + 1:]
+    Pii = Yt[:, nb_coords + 1:]
     means = numpy.mean(Pii, axis=0)[:,None]
     means[numpy.where(means < 0.0001)[0]] = 1
     W[i * dp:(i+1) * dp, neighs] = Pii.T / means
@@ -183,7 +183,7 @@ def hessianMap(samples, nbCoords, **kwargs):
   ws = w[index]
   too_small = numpy.sum(ws < 10 * numpy.finfo(numpy.float).eps)
 
-  index = index[too_small:too_small+nbCoords]
+  index = index[too_small:too_small+nb_coords]
 
   return numpy.sqrt(len(samples)) * v[:,index]
 

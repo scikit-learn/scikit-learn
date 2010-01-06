@@ -1,6 +1,6 @@
 
 # Matthieu Brucher
-# Last Change : 2008-04-07 18:53
+# Last Change : 2008-04-11 14:44
 
 import numpy
 import itertools
@@ -12,7 +12,7 @@ class CostFunction(ForwardFiniteDifferences):
   """
   Cost function for the CCA algorithm (doi: 10.1109/72.554199)
   """
-  def __init__(self, distances, nbCoords, max_dist = 99, *args, **kwargs):
+  def __init__(self, distances, nb_coords, max_dist = 99, *args, **kwargs):
     """
     Saves the distances to approximate
     Parameters:

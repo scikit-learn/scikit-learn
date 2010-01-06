@@ -1,7 +1,7 @@
 
 # Matthieu Brucher
 
-# Last Change : 2008-04-07 19:04
+# Last Change : 2008-04-11 12:43
 
 from numpy.ctypeslib import ndpointer, load_library
 import numpy
@@ -27,7 +27,7 @@ class CostFunction:
   """
   Wrapper with ctypes around the cost function
   """
-  def __init__(self, distances, nbCoords = 2, epsilon = 0.0000001, sigma = 1, tau = 60, **kwargs):
+  def __init__(self, distances, nb_coords = 2, epsilon = 0.0000001, sigma = 1, tau = 60, **kwargs):
     """
     Creates the correct cost function with the good arguments
     """
@@ -35,7 +35,7 @@ class CostFunction:
     sortedDistances.sort()
     sortedDistances = sortedDistances[distances.shape[0]:]
 
-    self._nbCoords = nbCoords
+    self._nb_coords = nb_coords
     self._epsilon = epsilon
     self._sigma = sigma
 
@@ -45,7 +45,7 @@ class CostFunction:
     del sortedDistances
     self.grad = None
     self.distances = distances.copy()
-    self._cf = _cost_function.allocate_cost_function(self.distances.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), distances.shape[0], distances.shape[1], nbCoords, epsilon, sigma, tau)
+    self._cf = _cost_function.allocate_cost_function(self.distances.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), distances.shape[0], distances.shape[1], nb_coords, epsilon, sigma, tau)
 
   def __del__(self, close_func = _cost_function.delete_cost_function):
     """
@@ -63,7 +63,7 @@ class CostFunction:
     return _cost_function.call_cost_function(self._cf, parameters.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), len(parameters))
 
   def __getinitargs__(self):
-    return(self.distances, self._nbCoords, self._epsilon, self._sigma, self._x1)
+    return(self.distances, self._nb_coords, self._epsilon, self._sigma, self._x1)
 
   def __getstate__(self):
     return ()
