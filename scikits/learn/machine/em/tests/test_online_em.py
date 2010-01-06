@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon May 28 01:00 PM 2007 J
+# Last Change: Sun Jul 22 01:00 PM 2007 J
 
 import copy
 
@@ -10,8 +10,8 @@ import numpy as N
 from numpy.random import seed
 
 set_package_path()
-from pyem import GM, GMM
-from pyem.online_em import OnGMM, OnGMM1d
+from em import GM, GMM
+from em.online_em import OnGMM, OnGMM1d
 restore_path()
 
 # #Optional:
@@ -44,7 +44,7 @@ class OnlineEmTest(NumpyTestCase):
         self.gm0    = copy.copy(gmm.gm)
         # The actual EM, with likelihood computation
         for i in range(emiter):
-            g, tgd  = gmm.sufficient_statistics(data)
+            g, tgd  = gmm.compute_responsabilities(data)
             gmm.update_em(data, g)
 
         self.data   = data

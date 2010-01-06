@@ -1,11 +1,11 @@
 #! /usr/bin/env python
-# Last Change: Sat Jul 21 03:00 PM 2007 J
+# Last Change: Sun Jul 22 01:00 PM 2007 J
 
 from info import __doc__
 
 from gauss_mix import GmParamError, GM
 from gmm_em import GmmParamError, GMM, EM
-#from online_em import OnGMM as _OnGMM
+from online_em import OnGMM as _OnGMM
 
 __all__ = filter(lambda s:not s.startswith('_'), dir())
 
