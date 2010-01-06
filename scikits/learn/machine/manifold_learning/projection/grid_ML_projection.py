@@ -4,7 +4,7 @@ Projection with ML on a piecewise linear function module with a grid
 """
 
 # Matthieu Brucher
-# Last Change : 2008-02-29 17:19
+# Last Change : 2008-06-11 09:24
 
 import numpy
 
@@ -23,7 +23,7 @@ class GridMLProjection(object):
     self.maxs = numpy.max(PLMR.coords[:,:-1], axis=0)
 
     self.extremas = tuple([slice(min - (max - min) / 2.,max + (max - min) / 2.,(max - min) / 10.)  for min, max in zip(self.mins, self.maxs)])
-    self.PLMRcost = self.PLMR.getLogLikelihood
+    self.PLMRcost = self.PLMR.get_log_likelihood
 
   def project(self, point, mask=1):
     """
@@ -36,7 +36,7 @@ class GridMLProjection(object):
     for coord in grid:
       coords = numpy.append(coord, [1])
       cost = self.PLMRcost(coords, point, mask)
-      reconstruct = self.PLMR.getPoint(coords)
+      reconstruct = self.PLMR.get_point(coords)
       epsilon = point - reconstruct
       candidates[cost] = (coords, epsilon, -1)
     c = numpy.array(candidates.keys())
@@ -45,7 +45,7 @@ class GridMLProjection(object):
     for indice in indices[-5*len(self.mins):]:
       coords = self.optimize(candidates[c[indice]][0][:-1], point, mask)
       cost = self.PLMRcost(coords, point, mask)
-      reconstruct = self.PLMR.getPoint(coords)
+      reconstruct = self.PLMR.get_point(coords)
       epsilon = point - reconstruct
       candidates[cost] = (coords, epsilon, -1)
     c = numpy.array(candidates.keys())
@@ -53,7 +53,7 @@ class GridMLProjection(object):
     best = numpy.nanmin(c)
     print best, candidates[best][0]
 
-    return (candidates[best][0], self.PLMR.getPoint(candidates[best][0]), best)
+    return (candidates[best][0], self.PLMR.get_point(candidates[best][0]), best)
 
   def optimize(self, coords, point, mask):
     """

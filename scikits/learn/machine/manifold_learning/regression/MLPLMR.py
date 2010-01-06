@@ -4,7 +4,7 @@ Maximum Likelihood Piecewise Linear Mapping Regression module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-05-23 14:48
+# Last Change : 2008-11-06 09:23
 
 import math
 import numpy
@@ -104,7 +104,7 @@ class MLPLMR(PLMR.PLMR):
     Updates the belonging vector
     """
     self.computeError()
-    errors = numpy.array([[self.random_variable.getLogLikelihood(point - numpy.dot(coord, equation)) for (coord, point) in zip(self.coords, self.points)] for equation in self.equations])
+    errors = numpy.array([[self.random_variable.get_log_likelihood(point - numpy.dot(coord, equation)) for (coord, point) in zip(self.coords, self.points)] for equation in self.equations])
     self.belonging_vector = numpy.argmax(errors, axis=0)
 
   def _getLogLikelihood(self):

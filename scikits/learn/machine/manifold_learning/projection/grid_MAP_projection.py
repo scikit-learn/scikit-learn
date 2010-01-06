@@ -17,4 +17,4 @@ class GridMAPProjection(GridMLProjection):
   """
   def __init__(self, PLMR):
     GridMLProjection.__init__(self, PLMR)
-    self.PLMRcost = self.PLMR.getMAP
+    self.PLMRcost = self.PLMR.get_MAP

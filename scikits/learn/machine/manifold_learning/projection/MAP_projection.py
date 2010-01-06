@@ -4,7 +4,7 @@ Projection with MAP on a piecewise linear function module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-17 14:00
+# Last Change : 2008-06-11 10:54
 
 from scikits.openopt.solvers.optimizers import *
 import numpy
@@ -58,7 +58,7 @@ class MAPProjection(ML_projection.MLProjection):
   """
   def __init__(self, PLMR):
     self.PLMR = PLMR
-    self.PLMRcost = self.PLMR.getMAP
+    self.PLMRcost = self.PLMR.get_MAP
 
   def computeBest(self, coord, point, equation, RBFF, mask):
     """

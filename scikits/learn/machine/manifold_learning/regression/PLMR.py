@@ -4,7 +4,7 @@ Piecewise Linear Mapping Regression module
 """
 
 # Matthieu Brucher
-# Last Change : 2008-05-23 14:57
+# Last Change : 2008-11-06 10:50
 
 import math
 import numpy
@@ -57,6 +57,7 @@ class PLMR(object):
     self.coords = state[0]
     self.random_variable = state[1]
     self.RBF_field = state[2]
+    self.coords_field = self.RBF_field(numpy.array(self.coords[:,:-1]), weight = 1)
     self.equations = state[3]
     self.belonging_vector = state[4]
     self.RBFF = [self.createRBF(numpy.where(self.belonging_vector == plan)[0]) for plan in range(0, len(self.equations))]
@@ -230,7 +231,7 @@ class PLMR(object):
 
     return component
 
-  def getLogLikelihood(self, coords, point, mask=1., **kwargs):
+  def get_log_likelihood(self, coords, point, mask=1., **kwargs):
     """
     Returns the negative log-likelihood for a given point and set of coordinates
     """
@@ -244,7 +245,7 @@ class PLMR(object):
 
     return - self.random_variable.RBF(epsilon)
 
-  def getMAP(self, coords, points, mask=1., **kwargs):
+  def get_MAP(self, coords, points, mask=1., **kwargs):
     """
     Returns the MAP for a given point
     """
@@ -252,10 +253,10 @@ class PLMR(object):
       somme = - self.coords_field(coords[:-1])
     else:
       somme = - self.RBFF[self.computeNearestPlan(coords)](coords[:-1])
-    cost = self.getLogLikelihood(coords, points, mask, **kwargs)
+    cost = self.get_log_likelihood(coords, points, mask, **kwargs)
     return cost + somme
 
-  def getPoint(self, coords):
+  def get_point(self, coords):
     """
     Computes a point based on its coordinates
     """

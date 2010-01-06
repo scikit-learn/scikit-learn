@@ -4,7 +4,7 @@ Clustering regression
 """
 
 # Matthieu Brucher
-# Last Change : 2008-04-15 10:35
+# Last Change : 2008-06-11 09:24
 
 import numpy
 import cluster
@@ -116,7 +116,7 @@ class CPLMR(object):
     self.coords_field = state[4]
     self.random_variable = property(self.RV.modify_kind)
 
-  def getLogLikelihood(self, coords, points, mask=1., **kwargs):
+  def get_log_likelihood(self, coords, points, mask=1., **kwargs):
     """
     Returns the negative log-likelihood for a given point and set of coordinates
     """
@@ -130,16 +130,16 @@ class CPLMR(object):
 
     return - cost
 
-  def getMAP(self, coords, points, mask=1., **kwargs):
+  def get_MAP(self, coords, points, mask=1., **kwargs):
     """
     Returns the MAP for a given point
     """
-    cost = self.getLogLikelihood(coords, points, mask, **kwargs)
+    cost = self.get_log_likelihood(coords, points, mask, **kwargs)
     somme = - self.coords_field(coords[:-1])
     #somme = - sum([RBF(coords) for RBF in self.RBFF])
     return cost + somme
 
-  def getPoint(self, coords):
+  def get_Point(self, coords):
     """
     Computes a point based on its coordinates
     """
