@@ -3,15 +3,12 @@
 Stochastic optimization
 """
 
-# Matthieu Brucher
-# Last Change : 2008-04-15 10:51
-
 import numpy
 import numpy.random
 import numpy.linalg
 import math
 
-from scikits.openopt.solvers.optimizers import *
+from scikits.optimization import *
 import cost_function
 
 class Modifier(object):

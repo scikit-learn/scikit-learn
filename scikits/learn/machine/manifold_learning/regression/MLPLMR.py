@@ -3,9 +3,6 @@
 Maximum Likelihood Piecewise Linear Mapping Regression module
 """
 
-# Matthieu Brucher
-# Last Change : 2008-11-06 09:23
-
 import math
 import numpy
 import numpy.linalg as linalg
@@ -31,8 +28,8 @@ class MLPLMR(PLMR.PLMR):
     - criterion is the stopping criterion
     """
     if not criterion:
-      import scikits.openopt.solvers.optimizers
-      self.criterion = scikits.openopt.solvers.optimizers.criterion.ModifiedAICCriterion(-0.00001, 1000, (coords.shape[-1] * points.shape[-1]) / (30 * numpy.std(points)))
+      from scikits.optimization import criterion
+      self.criterion = criterion.ModifiedAICCriterion(-0.00001, 1000, (coords.shape[-1] * points.shape[-1]) / (30 * numpy.std(points)))
     else:
       self.criterion = criterion
     super(MLPLMR, self).__init__(points, coords, **kwargs)

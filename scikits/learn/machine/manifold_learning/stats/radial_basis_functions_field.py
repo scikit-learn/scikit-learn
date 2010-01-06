@@ -1,7 +1,4 @@
 
-# Matthieu Brucher
-# Last Change : 2008-04-15 10:31
-
 """
 Class for using RBF fields
 An RBF is only a kernel function
@@ -10,7 +7,7 @@ An RBF is only a kernel function
 import math
 import numpy
 
-from scikits.openopt.solvers.optimizers import helpers
+from scikits.optimization import helpers
 from scipy.stats import gaussian_kde
 
 class RBFField(helpers.ForwardFiniteDifferences, gaussian_kde):

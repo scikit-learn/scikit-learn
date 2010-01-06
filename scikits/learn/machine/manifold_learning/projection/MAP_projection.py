@@ -3,10 +3,7 @@
 Projection with MAP on a piecewise linear function module
 """
 
-# Matthieu Brucher
-# Last Change : 2008-06-11 10:54
-
-from scikits.openopt.solvers.optimizers import *
+from scikits.optimization import *
 import numpy
 import numpy.linalg as linalg
 import scipy.optimize

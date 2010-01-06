@@ -3,15 +3,12 @@
 Dimensionality reduction with geodesic distances
 """
 
-# Matthieu Brucher
-# Last Change : 2008-04-07 18:53
-
 import numpy
 import numpy.random
 import numpy.linalg
 import math
 
-from scikits.openopt.solvers.optimizers import *
+from scikits.optimization import *
 import cost_function
 
 def reduct(reduction, function, samples, nb_coords, **kwargs):

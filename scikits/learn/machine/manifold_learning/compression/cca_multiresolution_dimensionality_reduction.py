@@ -1,16 +1,13 @@
 
 """
-Multireosolution optimization with a specific cost function
+Multiresolution optimization with a specific cost function
 """
-
-# Matthieu Brucher
-# Last Change : 2008-04-11 14:44
 
 import numpy
 import numpy.random
 import math
 
-from scikits.openopt.solvers.optimizers import *
+from scikits.optimization import *
 
 class Modifier(object):
   """
