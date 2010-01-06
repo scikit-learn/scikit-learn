@@ -4,7 +4,7 @@ import re
 import itertools
 import sys
 
-from scikits.learn.floupi import partial
+from scikits.learn.common import partial
 
 import numpy as N
 
@@ -259,7 +259,7 @@ def get_nom_val(atrv):
     r_nominal = re.compile('{(..+)}')
     m = r_nominal.match(atrv)
     if m:
-        return tuple(m.group(1).split(','))
+        return tuple(i.strip() for i in m.group(1).split(','))
     else:
         raise ValueError("This does not look like a nominal string")
 
@@ -282,10 +282,13 @@ def safe_float(x):
         return N.float(x)
 
 def safe_nominal(value, pvalue):
-    if value in pvalue:
-        return value
+    svalue = value.strip()
+    if svalue in pvalue:
+        return svalue
+    elif svalue == '?':
+        return svalue
     else:
-        raise ValueError("%s value not in %s" % (str(value), str(pvalue)))
+        raise ValueError("%s value not in %s" % (str(svalue), str(pvalue)))
 
 def read_arff(filename):
     ofile = open(filename)
@@ -315,7 +318,7 @@ def read_arff(filename):
                 n = maxnomlen(value)
                 descr.append((name, 'S%d' % n))
                 pvalue = get_nom_val(value)
-                dc.append(lambda x : safe_nominal(x, pvalue))
+                dc.append(partial(safe_nominal, pvalue = pvalue))
             else:
                 descr.append((name, acls2dtype[type]))
                 dc.append(safe_float)
@@ -413,16 +416,16 @@ def floupi(filename):
     #        print "\tinstance %s is nominal" % i
 
 if __name__ == '__main__':
-    #import glob
-    #for i in glob.glob('arff.bak/data/*'):
-    #    relation, attributes = read_header(open(i))
-    #    print "Parsing header of %s: relation %s, %d attributes" % (i,
-    #            relation, len(attributes))
+    import glob
+    for i in glob.glob('arff.bak/data/*'):
+        relation, attributes = read_header(open(i))
+        print "Parsing header of %s: relation %s, %d attributes" % (i,
+                relation, len(attributes))
 
-    import sys
+    #import sys
     #filename = sys.argv[1]
-    filename = 'arff.bak/data/pharynx.arff'
-    floupi(filename)
+    #filename = 'arff.bak/data/pharynx.arff'
+    #floupi(filename)
 
     gf = []
     wf = []
