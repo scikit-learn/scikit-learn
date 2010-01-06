@@ -1,0 +1,50 @@
+About
+=====
+
+scikit.learn is a python module for machine learning built on top of
+scipy.
+
+The project was started in 2007 by David Cournapeu as a Google Summer
+of Code project, and is currently mantained by several volonteers.
+
+
+Install
+=======
+
+This packages uses distutils, which is the default way of installing
+python modules. To install, type in the command prompt (you might need
+superuser privileges)
+
+  python setup.py install
+
+
+Dependecies
+===========
+
+To install this package, you will need python >= 2.5, NumPy.
+
+In order to run the tests, you will need nosetests, python-dap
+(http://pypi.python.org/pypi/dap/) and sikits.optimization.
+
+
+Mailing list
+============
+
+Visit
+https://lists.sourceforge.net/lists/listinfo/scikit-learn-general to
+subscribe to the mailing list.
+
+
+Development
+===========
+
+Developement takes place in several places.
+
+
+Testing
+=======
+
+To run the test suite (you will need nosetests), issue the command
+'nosetests' from the poroject's top directory.
+
+
