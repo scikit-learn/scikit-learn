@@ -3,15 +3,11 @@
  * Finds the nearest neighbors with the help of a tree
  */
 
-// Matthieu Brucher
-// Last Change : 2008-04-15 10:43
-
 #ifndef NEIGHBORSFROMMATRIX
 #define NEIGHBORSFROMMATRIX
 
 #include <vector>
 #include <map>
-#include <boost/shared_ptr.hpp>
 #include <matrix/matrix_lib.h>
 
 namespace Neighbor
@@ -32,9 +28,13 @@ namespace Neighbor
       /// Level in the hierarchy
       unsigned long level;
       /// Sub nodes
-      std::vector<boost::shared_ptr<Node> > children;
+      std::vector<Node> children;
       /// points in the node
       std::vector<unsigned long> points;
+
+      Node()
+      :size(), squareDistance(0), level(0), children(), points()
+      {}
     };
 
     /// Predicate for removing test
@@ -45,9 +45,9 @@ namespace Neighbor
         * @param node is the node to test
         * @return true if node->children is empty
         */
-      bool operator()(const boost::shared_ptr<Node>& node) const
+      bool operator()(const Node& node) const
       {
-        return node->points.empty();
+        return node.points.empty();
       }
     };
 
@@ -59,7 +59,7 @@ namespace Neighbor
      * @param levels indicates the number of levels in the tree
      */
     NeighborsFromMatrix(const MatrixType& points, unsigned long levels)
-      :levels(levels), points(points), tree(new Node)
+      :levels(levels), points(points)
     {
       Matrix::Matrix<DataType, 0, 2U> minmax(points.height(), 2U);
       for(unsigned long i = 0; i < points.width(); ++i)
@@ -72,20 +72,20 @@ namespace Neighbor
             minmax(j, 1) = points(j, i);
         }
       }
-      tree->size.resize(points.height());
+      tree.size.resize(points.height());
       for(unsigned long i = 0; i < points.height(); ++i)
       {
-        tree->size[i] = (minmax(i, 1) - minmax(i, 0)) * 3. / 2.;
+        tree.size[i] = (minmax(i, 1) - minmax(i, 0)) * 3. / 2.;
       }
-      tree->squareDistance = computeSquareDistanceToCorner(tree->size);
+      tree.squareDistance = computeSquareDistanceToCorner(tree.size);
 
-      tree->center = (minmax[1] + minmax[0]) * (1. / 2.);
-      tree->level = 0U;
+      tree.center = (minmax[1] + minmax[0]) * (1. / 2.);
+      tree.level = 0U;
 
-      tree->points.resize(points.width());
+      tree.points.resize(points.width());
       for(unsigned long i = 0; i < points.width(); ++i)
       {
-        tree->points[i] = i;
+        tree.points[i] = i;
       }
 
       createTree(tree, levels);
@@ -105,13 +105,13 @@ namespace Neighbor
       assert(newPoint.height() == points.height());
 
       std::multimap<DataType, unsigned long> neighbors;
-      std::multimap<DataType, Node*> openNode;
-      openNode.insert(std::make_pair(norm2(newPoint - tree->center), tree.get()));
+      std::multimap<DataType, const Node*> openNode;
+      openNode.insert(std::make_pair(norm2(newPoint - tree.center), &tree));
 
       while(!(openNode.empty()))
       {
-        typename std::multimap<DataType, Node*>::iterator it = openNode.begin();
-        Node* front = it->second;
+        typename std::multimap<DataType, const Node*>::iterator it = openNode.begin();
+        const Node* front = it->second;
         openNode.erase(it);
 
         if(neighbors.size() < neighbor)
@@ -149,15 +149,15 @@ namespace Neighbor
       assert(newPoint.height() == points.height());
 
       std::multimap<DataType, unsigned long> neighbors;
-      std::multimap<DataType, Node*> openNode;
-      openNode.insert(std::make_pair(norm2(newPoint - tree->center), tree.get()));
+      std::multimap<DataType, const Node*> openNode;
+      openNode.insert(std::make_pair(norm2(newPoint - tree.center), &tree));
 
       DataType squareDistance = windowSize * windowSize;
 
        while(!(openNode.empty()))
       {
-        typename std::multimap<DataType, Node*>::iterator it = openNode.begin();
-        Node* front = it->second;
+        typename std::multimap<DataType, const Node*>::iterator it = openNode.begin();
+        const Node* front = it->second;
         openNode.erase(it);
 
         if((DataTypeTraits<DataType>::sqrt(norm2(newPoint - front->center)) - DataTypeTraits<DataType>::sqrt(front->squareDistance)) < squareDistance)
@@ -179,40 +179,38 @@ namespace Neighbor
     template<class Container>
     void createTree(Container& tree, unsigned long levels)
     {
-      DataType meanSize = std::accumulate(tree->size.begin(), tree->size.end(), DataTypeTraits<DataType>::zero(points(0,0)), std::plus<DataType>()) / tree->size.size();
+      DataType meanSize = std::accumulate(tree.size.begin(), tree.size.end(), DataTypeTraits<DataType>::zero(points(0,0)), std::plus<DataType>()) / tree.size.size();
 
       std::vector<unsigned long> dimensions;
-      for(unsigned long i = 0; i < tree->size.size(); ++i)
-        if(tree->size[i] > (meanSize * 2.f / 3.f))
+      for(unsigned long i = 0; i < tree.size.size(); ++i)
+        if(tree.size[i] > (meanSize * 2.f / 3.f))
           dimensions.push_back(i);
 
-      std::vector<DataType> newSize = tree->size;
+      std::vector<DataType> newSize = tree.size;
       for(unsigned long i = 0; i < dimensions.size(); ++i)
         newSize[dimensions[i]] *= 1.f / 2.f;
       DataType distanceToCorner = computeSquareDistanceToCorner(newSize);
 
-      if(levels != 0U && !tree->points.empty())
+      if(levels != 0U && !tree.points.empty())
       {
-        tree->children.resize(1 << dimensions.size());
+        tree.children.resize(1 << dimensions.size());
         for(unsigned long i = 0; i < (1U << dimensions.size()); ++i)
         {
-          tree->children[i].reset(new Node);
-
-          tree->children[i]->center = tree->center;
+          tree.children[i].center = tree.center;
           for(unsigned long j = 0; j < dimensions.size(); ++j)
           {
-            tree->children[i]->center(dimensions[j]) += ((i & (1U << j))==(1U << j)? newSize[dimensions[j]]:-newSize[dimensions[j]]) * (1.f / 2.f);
+            tree.children[i].center(dimensions[j]) += ((i & (1U << j))==(1U << j)? newSize[dimensions[j]]:-newSize[dimensions[j]]) * (1.f / 2.f);
           }
 
-          tree->children[i]->size = newSize;
-          tree->children[i]->squareDistance = distanceToCorner;
-          tree->children[i]->level = tree->level + 1;
+          tree.children[i].size = newSize;
+          tree.children[i].squareDistance = distanceToCorner;
+          tree.children[i].level = tree.level + 1;
 
-          populatePoints(tree->points, tree->children[i]->points, tree->children[i]->center, newSize);
+          populatePoints(tree.points, tree.children[i].points, tree.children[i].center, newSize);
 
-          createTree(tree->children[i], levels - 1);
+          createTree(tree.children[i], levels - 1);
         }
-        tree->children.erase(std::remove_if(tree->children.begin(), tree->children.end(), NoChildrenPredicate()), tree->children.end());
+        tree.children.erase(std::remove_if(tree.children.begin(), tree.children.end(), NoChildrenPredicate()), tree.children.end());
       }
     }
 
@@ -262,7 +260,7 @@ namespace Neighbor
       * @param neighbors is the list of neighbors that are near enough the new point
       */
     template<class ColumnVector>
-    void processNode(const ColumnVector& newPoint, Node* node, std::multimap<DataType, Node*>& nodesMap, std::multimap<DataType, unsigned long>& neighbors) const
+    void processNode(const ColumnVector& newPoint, const Node* node, std::multimap<DataType, const Node*>& nodesMap, std::multimap<DataType, unsigned long>& neighbors) const
     {
       if(node->children.empty())
       {
@@ -273,9 +271,9 @@ namespace Neighbor
       }
       else
       {
-        for(typename std::vector<boost::shared_ptr<Node> >::const_iterator it = node->children.begin(); it != node->children.end(); ++it)
+        for(typename std::vector<Node>::const_iterator it = node->children.begin(); it != node->children.end(); ++it)
         {
-          nodesMap.insert(std::make_pair(norm2(newPoint - (*it)->center), it->get()));
+          nodesMap.insert(std::make_pair(norm2(newPoint - (*it).center), &*it));
         }
       }
     }
@@ -285,7 +283,7 @@ namespace Neighbor
     /// The points used for the neighboring
     MatrixType points;
     /// Pointer to the inner tree
-    boost::shared_ptr<Node> tree;
+    Node tree;
   };
 }
 #endif
