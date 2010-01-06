@@ -6,7 +6,7 @@ def configuration(parent_package='',top_path=None):
     print "============================================="
     config = Configuration('machine',parent_package,top_path)
     config.add_subpackage('em')
-    #config.add_subpackage('manifold_learning')
+    config.add_subpackage('manifold_learning')
     config.add_subpackage('svm')
     #config.make_svn_version_py()  # installs __svn_version__.py
     #config.make_config_py()

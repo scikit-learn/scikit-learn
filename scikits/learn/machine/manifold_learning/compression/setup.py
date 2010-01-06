@@ -9,7 +9,7 @@ def configuration(parent_package='', top_path=None, package_name='compression'):
     config.add_subpackage('*')
     config.add_extension('cost_function._cost_function',
                          sources=["cost_function/cost_function.cpp"],
-                         include_dirs=[os.path.dirname(__file__) + '/..'],)
+                         include_dirs=[os.path.dirname(os.path.abspath(__file__)) + '/..'],)
     config.add_data_dir('tests')
     return config
 

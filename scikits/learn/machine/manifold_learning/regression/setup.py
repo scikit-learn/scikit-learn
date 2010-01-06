@@ -9,10 +9,10 @@ def configuration(parent_package='', top_path=None, package_name='regression'):
     config.add_subpackage('*')
     config.add_extension('neighbors._neighbors',
                          sources=["neighbors/neighbors.cpp"],
-                         include_dirs=[os.path.dirname(__file__) + '/..'])
+                         include_dirs=[os.path.dirname(os.path.abspath(__file__)) + '/..'],)
     config.add_extension('cluster._modified_general_clustering',
                          sources=["cluster/ModifiedGeneralClustering.i"],
-                         include_dirs=[os.path.dirname(__file__) + '/..', numpy.get_include()])
+                         include_dirs=[os.path.dirname(os.path.abspath(__file__)) + '/..', numpy.get_include()])
     config.add_data_dir('tests')
     return config
 
