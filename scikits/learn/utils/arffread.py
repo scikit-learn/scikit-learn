@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Aug 04 09:00 PM 2007 J
+# Last Change: Sat Aug 04 10:00 PM 2007 J
 import re
 import itertools
 
@@ -300,27 +300,66 @@ def read_arff(filename):
         else:
             dc.append(i)
 
-    def generator(row_iter):
-        # TODO: this is where we are spending times. I think things could be
-        # made for efficiently.
+    ni = len(dc)
+    def generator(row_iter, delim = ','):
+        # TODO: this is where we are spending times (~80%). I think things
+        # could be made more efficiently: 
+        #   - We could for example "compile" the function, because some values
+        #   do not change here. 
+        #   - The function to convert a line to dtyped values could also be
+        #   generated on the fly from a string and be executed instead of
+        #   looping.
+        #   - The regex are overkill: for comments, checking that a line starts
+        #   by % should be enough and faster, and for empty lines, same thing
+        #   --> this does not seem to change anything.
+
+        #def convert(line):
+        #    return tuple(dc[i](line[i]) for i in range(ni))
+
         raw = row_iter.next()
         while r_empty.match(raw):
             raw = row_iter.next()
-        row = raw.split(',')
-        yield tuple([dc[i](row[i]) for i in range(len(row))])
+        while r_comment.match(raw):
+            raw = row_iter.next()
+        #while raw.startswith('%'):
+        #    raw = row_iter.next()
+        #while raw.startswith('\n'):
+        #    raw = row_iter.next()
+
+        row = raw.split(delim)
+        #yield convert(row)
+        yield tuple([dc[i](row[i]) for i in range(ni)])
         for raw in row_iter:
             while r_comment.match(raw):
                 raw = row_iter.next()
             while r_empty.match(raw):
                 raw = row_iter.next()
-            row = raw.split(',')
-            yield tuple([dc[i](row[i]) for i in range(len(row))])
+            #while raw.startswith('%'):
+            #    raw = row_iter.next()
+            #while raw.startswith('\n'):
+            #    raw = row_iter.next()
+            row = raw.split(delim)
+            yield tuple([dc[i](row[i]) for i in range(ni)])
+            #yield convert(row)
     a = generator(ofile)
     data = N.fromiter(a, descr)
     return data, rel, [parse_type(j) for i, j in attr]
 
 def basic_stats(data):
     return N.min(data), N.max(data), N.mean(data), N.std(data)
+
+def floupi(filename):
+    data, rel, types = read_arff(filename)
+    print "relation %s, has %d instances" % (rel, data.size)
+    itp = iter(types)
+    for i in data.dtype.names:
+        tp = itp.next()
+        if tp == 'numeric' or tp == 'real' or tp == 'integer':
+            min, max, mean, std = basic_stats(data[i])
+            print "\tinstance %s: min %f, max %f, mean %f, std %f" % \
+                    (i, min, max, mean, std)
+        else:
+            print "\tinstance %s is nominal" % i
 
 if __name__ == '__main__':
     import glob
@@ -331,23 +370,27 @@ if __name__ == '__main__':
 
     import sys
     filename = sys.argv[1]
-    def floupi(filename):
-        data, rel, types = read_arff(filename)
-        print "relation %s, has %d instances" % (rel, data.size)
-        itp = iter(types)
-        for i in data.dtype.names:
-            tp = itp.next()
-            if tp == 'numeric' or tp == 'real' or tp == 'integer':
-                min, max, mean, std = basic_stats(data[i])
-                print "\tinstance %s: min %f, max %f, mean %f, std %f" % \
-                        (i, min, max, mean, std)
-            else:
-                print "\tinstance %s is nominal" % i
 
-    floupi(filename)
+    import hotshot, hotshot.stats 
+    prof = hotshot.Profile('fooprof.prof', lineevents=1)
+    prof.runcall(lambda : floupi(filename))
+    ##profile.run('floupi(filename)', 'fooprof')
+    #floupi(filename)
+    #gf = []
+    #wf = []
     #for i in glob.glob('arff.bak/data/*'):
     #    try:
     #        print "=============== reading %s ======================" % i
     #        floupi(i)
+    #        gf.append(i)
     #    except ValueError, e:
+    #        print "!!!! Error parsing the file !!!!!"
     #        print e
+    #        wf.append(i)
+    #    except IndexError, e:
+    #        print "!!!! Error parsing the file !!!!!"
+    #        print e
+    #        wf.append(i)
+
+    #print "%d good files" % len(gf)
+    #print "%d bad files" % len(wf)
