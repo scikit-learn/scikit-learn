@@ -122,21 +122,31 @@ def logsumexp(c_np.ndarray x, c_np.ndarray out):
     logsumexp_double(raw_x, n, d, raw_out)
 
 cdef int logsumexp_double(double* x, int n, int d, double *out):
-    cdef int i, j
-    cdef double m, acc
+    cdef int i
     cdef double *cx, *cout
 
+    cx = x
+    cout = out
     for i in range(n):
-        cx = x + i * d
-        # For each row of x, compute m + log(e^{x[0]-m} + ... e^{x[d-1]-m})
-        # where m is the maximum of x[0] ... x[d-1]
-        m = cx[0]
-        for j in range(1, d):
-            if cx[j] > m:
-                m = cx[j]
-        acc = 0
-        for j in range(d):
-            acc += exp(cx[j] - m)
-        out[i] = m + log(acc)
+        logsumexp_double_frame(cx, d, cout)
+        cx += d
+        cout += 1
+
+    return 0
+
+cdef inline int logsumexp_double_frame(double* x, int d, double *out):
+    cdef int j
+    cdef double m, acc
+
+    # compute m + log(e^{x[0]-m} + ... e^{x[d-1]-m}) where m is the maximum of
+    # x[0] ... x[d-1]
+    m = x[0]
+    for j in range(1, d):
+        if x[j] > m:
+            m = x[j]
+    acc = 0
+    for j in range(d):
+        acc += exp(x[j] - m)
+    out[0] = m + log(acc)
 
     return 0
