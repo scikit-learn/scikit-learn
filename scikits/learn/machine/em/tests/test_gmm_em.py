@@ -11,11 +11,9 @@ import numpy as N
 
 from scikits.learn.machine.em import GMM, GM, EM
 
-set_local_path()
-# import modules that are located in the same directory as this file.
-from testcommon import DEF_DEC
-curpath = sys.path[0]
-restore_path()
+from scikits.learn.machine.em.tests.testcommon import DEF_DEC
+
+curpath = os.path.dirname(__file__)
 
 def load_dataset(filename):
     from scipy.io import loadmat

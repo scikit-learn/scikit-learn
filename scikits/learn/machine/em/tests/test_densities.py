@@ -14,11 +14,7 @@ import numpy as N
 from scikits.learn.machine.em.densities import gauss_den, \
             multiple_gauss_den, logsumexp, gauss_ell
 
-#Optional:
-set_local_path()
-# import modules that are located in the same directory as this file.
-from testcommon import DEF_DEC
-restore_path()
+from scikits.learn.machine.em.tests.testcommon import DEF_DEC
 
 class TestDensities(TestCase):
     def _generate_test_data_1d(self):
@@ -100,51 +96,51 @@ class test_py_implementation(TestDensities):
         self._generate_test_data_1d()
         self._test_log(level)
 
-#=====================
-# Basic speed tests
-#=====================
-class test_speed(TestCase):
-    def __init__(self, *args, **kw):
-        TestCase.__init__(self, *args, **kw)
-        import sys
-        import re
-        try:
-            a = open('/proc/cpuinfo').readlines()
-            b = re.compile('cpu MHz')
-            c = [i for i in a if b.match(i)]
-            fcpu = float(c[0].split(':')[1])
-            self.fcpu = fcpu * 1e6
-            self.hascpu = True
-        except:
-            print "Could not read cpu frequency"
-            self.hascpu = False
-            self.fcpu = 0.
-
-    def _prepare(self, n, d, mode):
-        niter = 10
-        x = 0.1 * N.random.randn(n, d)
-        mu = 0.1 * N.random.randn(d)
-        if mode == 'diag':
-            va = 0.1 * N.random.randn(d) ** 2
-        elif mode == 'full':
-            a = N.random.randn(d, d)
-            va = 0.1 * N.dot(a.T, a)
-        st = self.measure("gauss_den(x, mu, va)", niter)
-        return st / niter
-
-    def _bench(self, n, d, mode):
-        st = self._prepare(n, d, mode)
-        print "%d dimension, %d samples, %s mode: %8.2f " % (d, n, mode, st)
-        if self.hascpu:
-            print "Cost per frame is %f; cost per sample is %f" % \
-                    (st * self.fcpu / n, st * self.fcpu / n / d)
-    
-    def test1(self, level = 5):
-        cls = self.__class__
-        for n, d in [(1e5, 1), (1e5, 5), (1e5, 10), (1e5, 30), (1e4, 100)]:
-            self._bench(n, d, 'diag')
-        for n, d in [(1e4, 2), (1e4, 5), (1e4, 10), (5000, 40)]:
-            self._bench(n, d, 'full')
+# #=====================
+# # Basic speed tests
+# #=====================
+# class test_speed(TestCase):
+#     def __init__(self, *args, **kw):
+#         TestCase.__init__(self, *args, **kw)
+#         import sys
+#         import re
+#         try:
+#             a = open('/proc/cpuinfo').readlines()
+#             b = re.compile('cpu MHz')
+#             c = [i for i in a if b.match(i)]
+#             fcpu = float(c[0].split(':')[1])
+#             self.fcpu = fcpu * 1e6
+#             self.hascpu = True
+#         except:
+#             print "Could not read cpu frequency"
+#             self.hascpu = False
+#             self.fcpu = 0.
+# 
+#     def _prepare(self, n, d, mode):
+#         niter = 10
+#         x = 0.1 * N.random.randn(n, d)
+#         mu = 0.1 * N.random.randn(d)
+#         if mode == 'diag':
+#             va = 0.1 * N.random.randn(d) ** 2
+#         elif mode == 'full':
+#             a = N.random.randn(d, d)
+#             va = 0.1 * N.dot(a.T, a)
+#         st = self.measure("gauss_den(x, mu, va)", niter)
+#         return st / niter
+# 
+#     def _bench(self, n, d, mode):
+#         st = self._prepare(n, d, mode)
+#         print "%d dimension, %d samples, %s mode: %8.2f " % (d, n, mode, st)
+#         if self.hascpu:
+#             print "Cost per frame is %f; cost per sample is %f" % \
+#                     (st * self.fcpu / n, st * self.fcpu / n / d)
+#     
+#     def test1(self, level = 5):
+#         cls = self.__class__
+#         for n, d in [(1e5, 1), (1e5, 5), (1e5, 10), (1e5, 30), (1e4, 100)]:
+#             self._bench(n, d, 'diag')
+#         for n, d in [(1e4, 2), (1e4, 5), (1e4, 10), (5000, 40)]:
+#             self._bench(n, d, 'full')
 
 #================
 # Logsumexp tests

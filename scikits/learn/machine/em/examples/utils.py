@@ -4,7 +4,6 @@
 # Various utilities for examples 
 
 import numpy as N
-from numpy.testing import set_package_path, restore_path
 
 from scikits.learn.datasets import oldfaithful, pendigits, iris
 

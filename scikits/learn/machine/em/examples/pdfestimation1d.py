@@ -10,7 +10,6 @@ It uses old faitfhul waiting time as the one dimension data, and plots the best
 model as well as the BIC as a function of the number of component."""
 # Example of doing pdf estimation with EM algorithm. Requires matplotlib.
 import numpy as N
-from numpy.testing import set_package_path, restore_path
 
 import pylab as P
 import matplotlib as MPL
