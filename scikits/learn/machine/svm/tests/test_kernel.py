@@ -10,37 +10,37 @@ def kernelfunc(x, y):
 
 class test_kernel(NumpyTestCase):
     def check_linear_kernel(self):
-        kernel = LinearKernel()
+        kernel = Linear()
         x = N.array([2.])
         self.assertAlmostEqual(kernel(x, x), 4.)
 
     def check_polynomial_kernel(self):
-        kernel = PolynomialKernel(degree=6, gamma=1.0, coef0=1.0)
+        kernel = Polynomial(degree=6, gamma=1.0, coef0=1.0)
         x = N.array([2.])
         self.assertAlmostEqual(kernel(x, x), 15625.)
 
     def check_sigmoid_kernel(self):
-        kernel = SigmoidKernel(gamma=0.2, coef0=0.3)
+        kernel = Sigmoid(gamma=0.2, coef0=0.3)
         x = N.array([2.])
         self.assertAlmostEqual(kernel(x, x), 0.80049902)
 
     def check_rbf_kernel(self):
-        kernel = RBFKernel(gamma=1.0)
+        kernel = RBF(gamma=1.0)
         x, y = N.array([2.]), N.array([3.])
         self.assertAlmostEqual(kernel(x, y), N.exp(-1.))
 
     def check_custom_kernel(self):
-        kernel = CustomKernel(kernelfunc)
+        kernel = Custom(kernelfunc)
         x = N.array([2.])
         self.assertAlmostEqual(kernel(x, x), 32.0)
 
     def check_multidim_input(self):
         kernels = [
-            LinearKernel(),
-            PolynomialKernel(degree=6, gamma=1.0, coef0=1.0),
-            SigmoidKernel(gamma=0.2, coef0=0.3),
-            RBFKernel(gamma=1.0),
-            CustomKernel(kernelfunc)
+            Linear(),
+            Polynomial(degree=6, gamma=1.0, coef0=1.0),
+            Sigmoid(gamma=0.2, coef0=0.3),
+            RBF(gamma=1.0),
+            Custom(kernelfunc)
             ]
         args = [
             N.random.randn(10),
