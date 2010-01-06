@@ -1,7 +1,10 @@
 #! /usr/bin/env python
-# Last Change: Tue Aug 07 08:00 PM 2007 J
+# Last Change: Mon Aug 20 02:00 PM 2007 J
 import re
 import itertools
+import sys
+
+from scikits.learn.floupi import partial
 
 import numpy as N
 
@@ -17,6 +20,10 @@ import numpy as N
 # TODO:
 #   - both integer and reals are treated as numeric -> the integer info is lost !
 #   - Replace ValueError by ParseError or something
+
+# We know can handle the following:
+#   - numeric and nominal attributes
+#   - missing values for numeric attributes
 
 r_meta = re.compile('^\s*@')
 # Match a comment
@@ -244,13 +251,41 @@ def maxnomlen(atrv):
     else:
         raise ValueError("This does not look like a nominal string")
 
-def go_data(ofile):
-    """Skip header."""
-    return itertools.dropwhile(lambda x : r_datameta.match(x), ofile)
+def get_nom_val(atrv):
+    """Given a string contening a nominal type, returns a tuple of the possible
+    values.    
+    
+    A nominal type is defined as something framed between brace ({})."""
+    r_nominal = re.compile('{(..+)}')
+    m = r_nominal.match(atrv)
+    if m:
+        return tuple(m.group(1).split(','))
+    else:
+        raise ValueError("This does not look like a nominal string")
 
-def get_header(ofile):
-    """Get the while header as a list of lines."""
-    return itertools.takewhile(lambda x : not r_datameta.match(x), ofile)
+def go_data(ofile):
+    """Skip header.
+    
+    the first next() call of the returned iterator will be the @data line"""
+    return itertools.dropwhile(lambda x : not r_datameta.match(x), ofile)
+
+#def get_header(ofile):
+#    """Get the header as a list of lines."""
+#    return itertools.takewhile(lambda x : not r_datameta.match(x), ofile)
+
+def safe_float(x):
+    """given a string x, convert it to a float. If the stripped string is a ?,
+    return a Nan (missing value)."""
+    if x.strip() == '?':
+        return N.nan
+    else:
+        return N.float(x)
+
+def safe_nominal(value, pvalue):
+    if value in pvalue:
+        return value
+    else:
+        raise ValueError("%s value not in %s" % (str(value), str(pvalue)))
 
 def read_arff(filename):
     ofile = open(filename)
@@ -264,15 +299,10 @@ def read_arff(filename):
         if type == 'string':
             hasstr = True
 
-    # XXX The above code is ugly
+    # XXX The following code is ugly
     # Build the type descr from the attributes
     #acls2sdtype = {'real' : 'N.float', 'integer' : 'N.float', 'numeric' : 'N.float'}
     acls2dtype = {'real' : N.float, 'integer' : N.float, 'numeric' : N.float}
-    def safe_float(x):
-        if x.strip() == '?':
-            return N.nan
-        else:
-            return N.float(x)
     acls2conv = {'real' : safe_float, 'integer' : safe_float, 'numeric' : safe_float}
     descr = []
     dc = []
@@ -284,7 +314,8 @@ def read_arff(filename):
             elif type == 'nominal':
                 n = maxnomlen(value)
                 descr.append((name, 'S%d' % n))
-                dc.append(lambda x : x)
+                pvalue = get_nom_val(value)
+                dc.append(lambda x : safe_nominal(x, pvalue))
             else:
                 descr.append((name, acls2dtype[type]))
                 dc.append(safe_float)
@@ -297,40 +328,38 @@ def read_arff(filename):
     # data
     ni = len(dc)
 
-    #dc = [i[1] for i in sdescr]
-    #ni = len(dc)
-    #convert_str = """("""
-    #if dc[0]:
-    #    convert_str += "%s(row[%d])" % (dc[0], 0)
-    #else:
-    #    convert_str += "row[%d]" % 0
+    # Get the delimiter from the first line of data:
+    def next_data_line(row_iter):
+        """Assumes we are already in the data part (eg after @data)."""
+        raw = row_iter.next()
+        while r_empty.match(raw):
+            raw = row_iter.next()
+        while r_comment.match(raw):
+            raw = row_iter.next()
+        return raw
+    def get_delim(line):
+        """Given a string representing a line of data, check whether the
+        delimiter is ',' or space."""
+        l = line.split(',')
+        if len(l) > 1:
+            return ','
+        else:
+            l = line.split(' ')
+            if len(l) > 1:
+                return ' '
+            else:
+                raise ValueError("delimiter not understood: " + line)
+    try:
+        dtline = next_data_line(ofile)
+        delim = get_delim(dtline)
+    except ValueError, e:
+        raise ParseArffError("Error while parsing delimiter: " + str(e))
+    finally:
+        ofile.seek(0, 0)
+        ofile = go_data(ofile)
+        # skip the @data line
+        ofile.next()
 
-    #for i in range(1, ni):
-    #    if dc[i]:
-    #        convert_str += ", %s(row[%d])" % (dc[i], i)
-    #    else:
-    #        convert_str += ", row[%d]" % i
-    #convert_str += ")"
-    ##print convert_str
-    ##exec compile(convert_str, '<string>', 'exec') in globals(), locals()
-    #indent = " " * 4
-    #generator_str =  "def generator(row_iter, delim = ','):" + '\n'
-    #generator_str += "    raw = row_iter.next()" + '\n'
-    #generator_str += "    while r_empty.match(raw):" + '\n'
-    #generator_str += "        raw = row_iter.next()" + '\n'
-    #generator_str += "    while r_comment.match(raw):" + '\n'
-    #generator_str += "        raw = row_iter.next()" + '\n'
-    #generator_str += "    row = raw.split(delim) " + '\n'
-    #generator_str += "    yield " + convert_str + '\n'
-    #generator_str += "    for raw in row_iter:" + '\n'
-    #generator_str += "        while r_comment.match(raw):" + '\n'
-    #generator_str += "            raw = row_iter.next()" + '\n'
-    #generator_str += "        while r_empty.match(raw):" + '\n'
-    #generator_str += "            raw = row_iter.next()" + '\n'
-    #generator_str += "        row = raw.split(delim)" + '\n'
-    #generator_str += "        yield " + convert_str + '\n'
-
-    #exec compile(generator_str, '<string>', 'exec') in globals(), locals()
     def generator(row_iter, delim = ','):
         # TODO: this is where we are spending times (~80%). I think things
         # could be made more efficiently: 
@@ -343,9 +372,8 @@ def read_arff(filename):
         #   by % should be enough and faster, and for empty lines, same thing
         #   --> this does not seem to change anything.
 
-        #def convert(line):
-        #    return tuple(dc[i](line[i]) for i in range(ni))
-
+        # We do not abstract skipping comments and empty lines for performences
+        # reason.
         raw = row_iter.next()
         while r_empty.match(raw):
             raw = row_iter.next()
@@ -362,7 +390,7 @@ def read_arff(filename):
             row = raw.split(delim)
             yield tuple([dc[i](row[i]) for i in range(ni)])
 
-    a = generator(ofile)
+    a = generator(ofile, delim = delim)
     data = N.fromiter(a, descr)
     return data, rel, [parse_type(j) for i, j in attr]
 
@@ -385,20 +413,17 @@ def floupi(filename):
     #        print "\tinstance %s is nominal" % i
 
 if __name__ == '__main__':
-    import glob
-    for i in glob.glob('arff.bak/data/*'):
-        relation, attributes = read_header(open(i))
-        print "Parsing header of %s: relation %s, %d attributes" % (i,
-                relation, len(attributes))
+    #import glob
+    #for i in glob.glob('arff.bak/data/*'):
+    #    relation, attributes = read_header(open(i))
+    #    print "Parsing header of %s: relation %s, %d attributes" % (i,
+    #            relation, len(attributes))
 
     import sys
     #filename = sys.argv[1]
+    filename = 'arff.bak/data/pharynx.arff'
+    floupi(filename)
 
-    #import hotshot, hotshot.stats 
-    #prof = hotshot.Profile('fooprof.prof', lineevents=1)
-    #prof.runcall(lambda : floupi(filename))
-    #profile.run('floupi(filename)', 'fooprof')
-    #floupi(filename)
     gf = []
     wf = []
     for i in glob.glob('arff.bak/data/*'):
@@ -411,6 +436,10 @@ if __name__ == '__main__':
             print e
             wf.append(i)
         except IndexError, e:
+            print "!!!! Error parsing the file !!!!!"
+            print e
+            wf.append(i)
+        except ArffError, e:
             print "!!!! Error parsing the file !!!!!"
             print e
             wf.append(i)
