@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jul 21 09:00 PM 2007 J
+# Last Change: Sun Jul 22 03:00 PM 2007 J
 
 """This module implements function to extract attributes and/or classes from
 datasets."""
@@ -106,6 +106,10 @@ if __name__ == '__main__':
     data = d['data']
     print_dataset_info(data)
 
-    d = pendigits.load()
+    d = pendigits.testing.load()
+    data, lab, cl = d['data'], d['label'], d['class']
+    print_dataset_info(data, lab, cl)
+
+    d = pendigits.training.load()
     data, lab, cl = d['data'], d['label'], d['class']
     print_dataset_info(data, lab, cl)
