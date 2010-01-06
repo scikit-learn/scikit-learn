@@ -1,5 +1,5 @@
 # /usr/bin/python
-# Last Change: Thu Jan 22 05:00 PM 2009 J
+# Last Change: Thu Jan 22 10:00 PM 2009 J
 
 """Module implementing GM, a class which represents Gaussian mixtures.
 
@@ -318,7 +318,7 @@ def _check_gmm_param(w, mu, va):
     if not len(w.shape) == 1:
         raise ValueError('weight should be a rank 1 array')
 
-    if np.fabs(np.sum(w) - 1.) > 1e-15:
+    if np.fabs(np.sum(w) - 1.) > 1e-12:
         raise ValueError('weight does not sum to 1')
 
     # Check that mean and va have the same number of components
