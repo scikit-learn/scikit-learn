@@ -4,7 +4,7 @@
 #   - check how to handle cmd line build options with distutils and use
 #   it in the building process
 
-""" pyem is a small python package to estimate Gaussian Mixtures Models
+"""This is a small python package to estimate Gaussian Mixtures Models
 from data, using Expectation Maximization.
 
 Maximum likelihood EM for mixture of Gaussian is implemented, with BIC computation
@@ -17,18 +17,19 @@ for estimating meta parameters of mixtures. """
 from os.path import join
 from info import version as pyem_version
 
-DISTNAME    = 'pyem' 
+DISTNAME    = 'em' 
 VERSION     = pyem_version
 DESCRIPTION ='A python module for Expectation Maximization learning of mixtures pdf',
 AUTHOR      ='David Cournapeau',
 AUTHOR_EMAIL='david@ar.media.kyoto-u.ac.jp',
 URL         ='http://ar.media.kyoto-u.ac.jp/members/david/softwares/pyem',
 
-def configuration(parent_package='',top_path=None, package_name='pyem'):
+def configuration(parent_package='',top_path=None, package_name='em'):
     from numpy.distutils.misc_util import Configuration
     config = Configuration(package_name,parent_package,top_path,
              version     = VERSION)
     #config.add_subpackage('data')
+    config.add_data_dir('examples')
     config.add_data_dir('tests')
     config.add_data_dir('profile_data')
     config.add_extension('c_gden',
