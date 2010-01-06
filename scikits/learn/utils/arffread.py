@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Aug 20 06:00 PM 2007 J
+# Last Change: Mon Aug 20 08:00 PM 2007 J
 import re
 import itertools
 import sys
@@ -295,6 +295,42 @@ def get_delim(line):
         else:
             raise ValueError("delimiter not understood: " + line)
 
+class MetaData:
+    """Small container to keep useful informations on a ARFF dataset.
+    
+    Also maintains the list of attributes in order, i.e. doing for i in meta,
+    where meta is an instance of MetaData, will return the different attribute
+    names in the order they were defined."""
+    def __init__(self, rel, attr):
+        self.name = rel
+        # We need the dictionary to be ordered
+        # XXX: may be better to implement an ordered dictionary
+        self._attributes = {}
+        self._attrnames = []
+        for name, value in attr:
+            tp = parse_type(value)
+            self._attrnames.append(name)
+            if tp == 'nominal':
+                self._attributes[name] = (tp, get_nom_val(value))
+            else:
+                self._attributes[name] = (tp, None)
+
+    def __repr__(self):
+        msg = ""
+        msg += "Dataset: %s\n" % self.name
+        for i in self._attrnames:
+            msg += "\t%s's type is %s" % (i, self._attributes[i][0])
+            if self._attributes[i][1]:
+                msg += ", range is %s" % str(self._attributes[i][1])
+            msg += '\n'
+        return msg
+    
+    def __iter__(self):
+        return iter(self._attrnames)
+
+    def __getitem__(self, key):
+        return self._attributes[key]
+
 def read_arff(filename):
     ofile = open(filename)
 
@@ -311,6 +347,8 @@ def read_arff(filename):
         type = parse_type(value)
         if type == 'string':
             hasstr = True
+
+    meta = MetaData(rel, attr)
 
     # XXX The following code is not great
     # Build the type descriptor descr and the list of convertors to convert
@@ -399,7 +437,7 @@ def read_arff(filename):
     a = generator(ofile, delim = delim)
     # No error should happen here: it is a bug otherwise
     data = N.fromiter(a, descr)
-    return data, rel, [parse_type(j) for i, j in attr]
+    return data, meta
 
 #-----
 # Misc
@@ -408,26 +446,31 @@ def basic_stats(data):
     nbfac = data.size * 1. / (data.size - 1)
     return N.nanmin(data), N.nanmax(data), N.mean(data), N.std(data) * nbfac
 
-def print_attribute(name, type, data):
+def print_attribute(name, tp, data):
+    type = tp[0]
     if type == 'numeric' or type == 'real' or type == 'integer':
         min, max, mean, std = basic_stats(data)
         print "%s,%s,%f,%f,%f,%f" % (name, type, min, max, mean, std)
     else:
-        print name
+        msg = name + ",{"
+        for i in range(len(tp[1])-1):
+            msg += tp[1][i] + ","
+        msg += tp[1][-1]
+        msg += "}"
+        print msg
 
 def test_weka(filename):
-    data, rel, types = read_arff(filename)
+    data, meta = read_arff(filename)
     print len(data.dtype)
     print data.size
-    itp = iter(types)
-    for i in data.dtype.names:
-        print_attribute(i,itp.next(),data[i])
+    for i in meta:
+        print_attribute(i,meta[i],data[i])
 
 def floupi(filename):
-    data, rel, types = read_arff(filename)
+    data, meta = read_arff(filename)
     from attrselect import print_dataset_info
     print_dataset_info(data)
-    print "relation %s, has %d instances" % (rel, data.size)
+    print "relation %s, has %d instances" % (meta.name, data.size)
     itp = iter(types)
     for i in data.dtype.names:
         print_attribute(i,itp.next(),data[i])
