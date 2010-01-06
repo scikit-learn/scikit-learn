@@ -77,11 +77,11 @@ class GM:
             self.__is1d = True
 
     def setparams(self, w, mu, sigma):
-        """Set parameters of the model. 
-        
+        """Set parameters of the model.
+
         Args should be conformant with meta-parameters d and k given during
         initialisation.
-        
+
         Parameters
         ----------
         w: ndarray
@@ -111,7 +111,7 @@ class GM:
         """
         k, d, mode = _check_gmm_param(w, mu, sigma)
         if not k == self.k:
-            raise ValueError("Number of given components is %d, expected %d" 
+            raise ValueError("Number of given components is %d, expected %d"
                              % (k, self.k))
         if not d == self.d:
             raise ValueError("Dimension of the given model is %d, "\
@@ -129,7 +129,7 @@ class GM:
     def fromvalues(cls, w, mu, va):
         """This class method can be used to create a GM model directly from its
         parameters weights, mean and variance
-        
+
         Parameters
         ----------
         w: ndarray
@@ -154,7 +154,7 @@ class GM:
         >>> gm.setparams(w, mu, va)
 
         and
-        
+
         >>> w, mu, va = GM.genparams(d, k)
         >>> gm = GM.fromvalues(w, mu, va)
 
@@ -163,7 +163,7 @@ class GM:
         res = cls(d, k, mode)
         res.setparams(w, mu, sigma)
         return res
-        
+
     @classmethod
     def genparams(cls, d, nc, mode='diag', spread=1):
         """Generate random but valid parameters for a gaussian mixture model.
@@ -209,10 +209,10 @@ class GM:
 # Function to generate a random index: this is kept outside any class,
 # as the function can be useful for other
 def randindex(p, n):
-    """Generate a N samples vector containing random index between 1 
+    """Generate a N samples vector containing random index between 1
     and length(p), each index i with probability p(i)"""
     # TODO Check args here
-    
+
     # TODO: check each value of inverse distribution is different
     invcdf = np.cumsum(p)
     uni = rand(n)
@@ -222,15 +222,15 @@ def randindex(p, n):
     for k in range(len(p)-1, 0, -1):
         blop = np.where(np.logical_and(invcdf[k-1] <= uni, uni < invcdf[k]))
         index[blop] = k
-        
+
     return index
 
 def _check_gmm_param(w, mu, va):
     """Check that w, mu and va are valid parameters for a mixture of gaussian.
-    
+
     w should sum to 1, there should be the same number of component in each
-    param, the variances should be positive definite, etc... 
-    
+    param, the variances should be positive definite, etc...
+
     Raise a ValueError if arguments are not valid
 
     Parameters
@@ -251,14 +251,14 @@ def _check_gmm_param(w, mu, va):
     mode : string
         Mode for covariances (diagonal, full, etc...)
     """
-        
+
     # Check that w is valid
     if not len(w.shape) == 1:
         raise ValueError('weight should be a rank 1 array')
 
     if np.fabs(np.sum(w)  - 1) > misc.MAX_DBL_DEV:
         raise ValueError('weight does not sum to 1')
-    
+
     # Check that mean and va have the same number of components
     k = len(w)
 
@@ -288,5 +288,5 @@ va should be a K,d / K *d, d matrix, and a row vector if only 1 diag comp"""
         if not ka == km*d:
             msg = "not same number of dimensions in mean and variances"
             raise ValueError(msg)
-        
+
     return k, d, mode
