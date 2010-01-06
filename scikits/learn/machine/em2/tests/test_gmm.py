@@ -7,6 +7,7 @@ from scipy.io import loadmat
 from scikits.learn.machine.em2.gmm import Parameters, EM
 from scikits.learn.machine.em2.gm import GM
 from scikits.learn.machine.em2.gmm import logresp as plogresp
+from scikits.learn.machine.em2.opcore import logresp as clogresp
 
 def load_dataset(filename):
     from scipy.io import loadmat
@@ -50,37 +51,66 @@ class TestLogresp(TestCase):
     def _test(self, d, k, mode, f):
         x = np.random.randn(100, d)
         w, mu, va = GM.genparams(d, k, mode)
-        yr = self.ref(x, w, mu, va)
+        #yr = self.ref(x, w, mu, va)
+        from scikits.learn.machine.em2.likelihoods import mnormalik
+        yr = mnormalik(x, mu, va)
 
         y = f(x, w, mu, va)
         assert_array_almost_equal(y, yr)
 
+    #def test_1d_1k(self):
+    #    return self._test(1, 1, 'diag', plogresp)
+
+    #def test_1d_2k(self):
+    #    return self._test(1, 2, 'diag', plogresp)
+
+    #def test_1d_10k(self):
+    #    return self._test(1, 10, 'diag', plogresp)
+
+    #def test_2d_1k(self):
+    #    return self._test(2, 1, 'diag', plogresp)
+
+    #def test_2d_2k(self):
+    #    return self._test(2, 2, 'diag', plogresp)
+
+    #def test_2d_10k(self):
+    #    return self._test(2, 10, 'diag', plogresp)
+
+    #def test_5d_1k(self):
+    #    return self._test(5, 1, 'diag', plogresp)
+
+    #def test_5d_2k(self):
+    #    return self._test(5, 2, 'diag', plogresp)
+
+    #def test_5d_10k(self):
+    #    return self._test(5, 10, 'diag', plogresp)
+
     def test_1d_1k(self):
-        return self._test(1, 1, 'diag', plogresp)
+        return self._test(1, 1, 'diag', clogresp)
 
     def test_1d_2k(self):
-        return self._test(1, 2, 'diag', plogresp)
+        return self._test(1, 2, 'diag', clogresp)
 
     def test_1d_10k(self):
-        return self._test(1, 10, 'diag', plogresp)
+        return self._test(1, 10, 'diag', clogresp)
 
     def test_2d_1k(self):
-        return self._test(2, 1, 'diag', plogresp)
+        return self._test(2, 1, 'diag', clogresp)
 
     def test_2d_2k(self):
-        return self._test(2, 2, 'diag', plogresp)
+        return self._test(2, 2, 'diag', clogresp)
 
     def test_2d_10k(self):
-        return self._test(2, 10, 'diag', plogresp)
+        return self._test(2, 10, 'diag', clogresp)
 
     def test_5d_1k(self):
-        return self._test(5, 1, 'diag', plogresp)
+        return self._test(5, 1, 'diag', clogresp)
 
     def test_5d_2k(self):
-        return self._test(5, 2, 'diag', plogresp)
+        return self._test(5, 2, 'diag', clogresp)
 
     def test_5d_10k(self):
-        return self._test(5, 10, 'diag', plogresp)
+        return self._test(5, 10, 'diag', clogresp)
 
 if __name__ == '__main__':
     run_module_suite()

@@ -2,9 +2,12 @@ import numpy as np
 cimport numpy as c_np
 cimport stdlib
 
+cdef double SQRT2PI = 2.50662827463100
+
 cdef extern from "math.h":
     double exp(double)
     double log(double)
+    double sqrt(double)
 
 # XXX: find out why this one does not work for d > 1
 #def quadform(c_np.ndarray x, c_np.ndarray mu, c_np.ndarray inva,
@@ -163,3 +166,87 @@ cdef inline int logsumexp_double_frame(double* x, int d, double *out):
     out[0] = m + log(acc)
 
     return 0
+
+def logresp(c_np.ndarray x, c_np.ndarray w, c_np.ndarray mu,
+            c_np.ndarray va, c_np.ndarray y):
+    cdef double *raw_x, *raw_y, *raw_mu, *raw_va, *raw_w
+    cdef int n, k, d
+
+    if not x.dtype == np.float64:
+        raise ValueError("Only float64 supported for now")
+
+    if not x.ndim == 2:
+        raise ValueError("Input rank != 2")
+
+    if not mu.ndim == 2:
+        raise ValueError("mean rank != 2")
+
+    if not va.ndim == 2:
+        raise ValueError("var rank != 2")
+
+    if not w.ndim == 1:
+        raise ValueError("weights rank != 1")
+
+    n = x.shape[0]
+    d = x.shape[1]
+    k = mu.shape[0]
+
+    if not mu.shape[1] == d:
+        raise ValueError("means has %d cols (expected %d)" % (mu.shape[1], d))
+    if not va.shape[0] == mu.shape[0] or not va.shape[1] == mu.shape[1]:
+        raise ValueError("Full covariances not supported yet")
+
+    raw_x = <double*>x.data
+    raw_y = <double*>y.data
+    raw_mu = <double*>mu.data
+    raw_va = <double*>va.data
+    raw_w = <double*>w.data
+
+    logresp_double(raw_x, n, d, raw_w, raw_mu, raw_va, k, raw_y)
+    return y
+
+cdef int logresp_double(double*x, int n, int d, double *w, double *mu, 
+                        double* va, int k, double* out):
+    cdef int i, c
+    cdef double *cx, *cout
+    cdef double *fac, *logw, *inva
+    cdef double norm
+
+    fac = <double*>stdlib.malloc(sizeof(double) * k)
+    if fac == NULL:
+        raise MemoryError()
+
+    inva = <double*>stdlib.malloc(sizeof(double) * k * d)
+    if inva == NULL:
+        raise MemoryError()
+
+    logw = <double*>stdlib.malloc(sizeof(double) * k)
+    if logw == NULL:
+        raise MemoryError()
+
+    for c in range(k):
+        logw[c] = log(w[c]) 
+        fac[c] = 1
+        for i in range(d):
+            inva[c * d + i] = 1 / va[c * d + i]
+            fac[c] *= sqrt(inva[c * d + i]) / SQRT2PI
+            inva[c * d + i] *= -0.5
+            #print 'inva', inva[c*d + i]
+        #print 'fac', fac[c]
+        fac[c] = log(fac[c])
+
+    cx = x
+    cout = out
+    for i in range(n):
+        quadform_double_frame(cx, d, mu, inva, fac, k, cout)
+        #for c in range(k):
+        #    cout[c] += logw[c]
+        #logsumexp_double_frame(cout, k, &norm)
+        #for c in range(k):
+        #    cout[c] -= norm
+        cx += d
+        cout += k
+
+    stdlib.free(logw)
+    stdlib.free(inva)
+    stdlib.free(fac)
