@@ -4,7 +4,7 @@
 import os
 import numpy as N
 
-from scikits.learn.utils.arffread import read_arff
+from scipy.io.arff import loadarff
 
 filename = '../arff.bak/data/pharynx.arff'
 
@@ -40,7 +40,7 @@ for line in b.readlines():
     else:
         haha.append(parse_numeric(line))
 
-data, meta = read_arff(filename)
+data, meta = loadarff(filename)
 
 for i in meta:
     print i

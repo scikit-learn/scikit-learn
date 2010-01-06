@@ -1,15 +1,12 @@
 from numpy.testing import *
 import numpy as N
 
-set_package_path()
-from utils.preprocessing import scale, Scaler, nanscale, NanScaler
-restore_path()
+from ..preprocessing import scale, Scaler, nanscale, NanScaler
 
 DEPS = N.finfo(N.float).eps
 
-class test_scale(NumpyTestCase):
+class test_scale:
     def __init__(self, *args, **kw):
-        NumpyTestCase.__init__(self, *args, **kw)
         N.random.seed(0)
 
     def test_simple(self):
@@ -42,9 +39,8 @@ class test_scale(NumpyTestCase):
         assert N.all(at[N.isfinite(a)] <= 1. + DEPS) and \
                N.all(at[N.isfinite(a)] >= 0. - DEPS)
 
-class test_Scaler(NumpyTestCase):
+class test_Scaler:
     def __init__(self, *args, **kw):
-        NumpyTestCase.__init__(self, *args, **kw)
         N.random.seed(0)
 
     def _generate_simple(self):
@@ -58,18 +54,18 @@ class test_Scaler(NumpyTestCase):
         sc = Scaler(a, mode)
 
         # Test whether preprocess -> unprocess gives back the data
-        sc.preprocess(a)
+        sc.scale(a)
         if mode == 'sym':
             assert N.all(a <= 1. + DEPS) and N.all(a >= -1. - DEPS)
         elif mode == 'right':
             assert N.all(a <= 1. + DEPS) and N.all(a >= -0. - DEPS)
         else:
             raise ValueError("unexpected mode %s" % str(mode))
-        sc.unprocess(a)
+        sc.unscale(a)
         assert_array_almost_equal(a, at)
 
-        sc.preprocess(b)
-        sc.unprocess(b)
+        sc.scale(b)
+        sc.unscale(b)
         assert_array_almost_equal(b, bt)
 
     def _nan_test(self, a, b, mode):
@@ -79,7 +75,7 @@ class test_Scaler(NumpyTestCase):
         sc = NanScaler(a, mode)
 
         # Test whether preprocess -> unprocess gives back the data
-        sc.preprocess(at)
+        sc.scale(at)
         if mode == 'sym':
             assert N.all(at[N.isfinite(a)] <= 1. + DEPS) and \
                    N.all(at[N.isfinite(a)] >= -1. - DEPS)
@@ -88,12 +84,12 @@ class test_Scaler(NumpyTestCase):
                    N.all(at[N.isfinite(a)] >= 0. - DEPS)
         else:
             raise ValueError("unexpected mode %s" % str(mode))
-        sc.unprocess(at)
+        sc.unscale(at)
         assert_array_almost_equal(a[N.isfinite(a)], 
                                   at[N.isfinite(a)])
 
-        sc.preprocess(b)
-        sc.unprocess(b)
+        sc.scale(b)
+        sc.unscale(b)
         assert_array_almost_equal(b, bt)
 
     def test_simple(self):
@@ -124,6 +120,3 @@ class test_Scaler(NumpyTestCase):
         except ValueError:
             pass
 
-
-if __name__ == "__main__":
-    NumpyTest().run()
