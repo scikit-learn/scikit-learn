@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sun Jul 01 06:00 PM 2007 J
+# Last Change: Sun Jul 22 12:00 PM 2007 J
 
 # For now, just test that all mode/dim execute correctly
 
@@ -10,7 +10,7 @@ from numpy.testing import *
 import numpy as N
 
 set_package_path()
-from pyem import GMM, GM, EM
+from em import GMM, GM, EM
 restore_path()
 
 set_local_path()

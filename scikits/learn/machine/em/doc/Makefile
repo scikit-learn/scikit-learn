@@ -1,9 +1,9 @@
-# Last Change: Mon Jul 02 09:00 PM 2007 J
+# Last Change: Sun Jul 22 11:00 AM 2007 J
 
 # This makefile is used to build the pdf from the rest file and inlined code
 # from python examples
 
-py2tex	= PYTHONPATH=/home/david/local/lib/python2.4/site-packages pygmentize -l python -f tex
+py2tex	= pygmentize -l python -f tex
 rst2tex	= PYTHONPATH=/home/david/local/lib/python2.4/site-packages rst2newlatex.py \
 		  --stylesheet-path base.tex --user-stylesheet user.tex 
 

@@ -1,3 +1,8 @@
+pyem (0.5.7dev) Sun, 22 Jul 2007 11:05:58 +0900
+
+	* pyem is now part of the scikits.learn package
+	* Renamed to em
+
 pyem (0.5.7dev) Mon, 28 May 2007 11:31:08 +0900
 
 	* Put doc into its own directory

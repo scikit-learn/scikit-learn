@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 05:00 PM 2007 J
+# Last Change: Sun Jul 22 12:00 PM 2007 J
 
 # For now, just test that all mode/dim execute correctly
 
@@ -9,8 +9,8 @@ from numpy.testing import *
 import numpy as N
 
 set_package_path()
-from pyem import GM
-from pyem.densities import multiple_gauss_den
+from em import GM
+from em.densities import multiple_gauss_den
 restore_path()
 
 class test_BasicFunc(NumpyTestCase):

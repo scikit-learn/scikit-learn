@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Jul 12 05:00 PM 2007 J
+# Last Change: Sun Jul 22 12:00 PM 2007 J
 
 # TODO:
 #   - having "fake tests" to check that all mode (scalar, diag and full) are
@@ -12,8 +12,8 @@ from numpy.testing import *
 import numpy as N
 
 set_package_path()
-from pyem.densities import gauss_den
-import pyem.densities
+from em.densities import gauss_den
+import em.densities
 restore_path()
 
 #Optional:
@@ -166,7 +166,7 @@ class test_py_logsumexp(TestDensities):
                                      "not be here")
             except FloatingPointError, e:
                 print "Catching underflow, as expected"
-            assert pyem.densities.logsumexp(a) == -1000.
+            assert em.densities.logsumexp(a) == -1000.
             try:
                 a = N.array([[-1000, -1000, -1000]])
                 self.naive_logsumexp(a)
@@ -174,7 +174,7 @@ class test_py_logsumexp(TestDensities):
                                      "not be here")
             except FloatingPointError, e:
                 print "Catching underflow, as expected"
-            assert_array_almost_equal(pyem.densities.logsumexp(a), 
+            assert_array_almost_equal(em.densities.logsumexp(a), 
                                       -998.90138771)
         finally:
             N.seterr(under=errst['under'])
@@ -186,8 +186,8 @@ class test_py_logsumexp(TestDensities):
         data = N.random.randn(1e1)[:, N.newaxis]
         mu = N.array([[-5], [-6]])
         va = N.array([[0.1], [0.1]])
-        y = pyem.densities.multiple_gauss_den(data, mu, va, log = True)
-        a1 = pyem.densities.logsumexp(y)
+        y = em.densities.multiple_gauss_den(data, mu, va, log = True)
+        a1 = em.densities.logsumexp(y)
         a2 = self.naive_logsumexp(y)
         assert_array_equal(a1, a2)
 
@@ -195,8 +195,8 @@ class test_py_logsumexp(TestDensities):
         data = N.random.randn(1e1, 2)
         mu = N.array([[-3, -1], [3, 3]])
         va = N.array([[1.1, 0.4], [0.6, 0.8], [0.4, 0.2], [0.3, 0.9]])
-        y = pyem.densities.multiple_gauss_den(data, mu, va, log = True)
-        a1 = pyem.densities.logsumexp(y)
+        y = em.densities.multiple_gauss_den(data, mu, va, log = True)
+        a1 = em.densities.logsumexp(y)
         a2 = self.naive_logsumexp(y)
         assert_array_almost_equal(a1, a2, DEF_DEC)
 
@@ -204,8 +204,8 @@ class test_py_logsumexp(TestDensities):
         data = N.random.randn(1e1, 2)
         mu = N.array([[-3, -1], [3, 3]])
         va = N.array([[1.1, 0.4], [0.6, 0.8]])
-        y = pyem.densities.multiple_gauss_den(data, mu, va, log = True)
-        a1 = pyem.densities.logsumexp(y)
+        y = em.densities.multiple_gauss_den(data, mu, va, log = True)
+        a1 = em.densities.logsumexp(y)
         a2 = self.naive_logsumexp(y)
         assert_array_almost_equal(a1, a2, DEF_DEC)
 
@@ -215,7 +215,7 @@ class test_py_logsumexp(TestDensities):
 class test_c_implementation(TestDensities):
     def _test(self, level, decimal = DEF_DEC):
         try:
-            from pyem._c_densities import gauss_den as c_gauss_den
+            from em._c_densities import gauss_den as c_gauss_den
             Y   = c_gauss_den(self.X, self.mu, self.va)
             assert_array_almost_equal(Y, self.Yt, decimal)
         except Exception, inst:
@@ -236,9 +236,9 @@ class test_c_implementation(TestDensities):
 
 class test_gauss_ell(NumpyTestCase):
     def test_dim(self):
-        pyem.densities.gauss_ell([0, 1], [1, 2.], [0, 1])
+        em.densities.gauss_ell([0, 1], [1, 2.], [0, 1])
         try:
-            pyem.densities.gauss_ell([0, 1], [1, 2.], [0, 2])
+            em.densities.gauss_ell([0, 1], [1, 2.], [0, 2])
             raise AssertionError("this call should not succeed, bogus dim.")
         except ValueError, e:
             print "Call with bogus dim did not succeed, OK"

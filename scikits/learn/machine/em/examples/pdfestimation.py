@@ -1,11 +1,11 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 03:00 PM 2007 J
+# Last Change: Sun Jul 22 12:00 PM 2007 J
 
 # Example of doing pdf estimation with EM algorithm. Requires matplotlib.
 import numpy as N
 import pylab as P
 
-from scipy.sandbox import pyem
+from scikits.learn.machine.em import EM, GM, GMM
 import utils
 
 oldfaithful = utils.get_faithful()
@@ -23,9 +23,9 @@ dt = utils.scale(dt)
 # model and the BIC
 def cluster(data, k, mode = 'full'):
     d = data.shape[1]
-    gm = pyem.GM(d, k, mode)
-    gmm = pyem.GMM(gm)
-    em = pyem.EM()
+    gm = GM(d, k, mode)
+    gmm = GMM(gm)
+    em = EM()
     em.train(data, gmm, maxiter = 20)
     return gm, gmm.bic(data)
 

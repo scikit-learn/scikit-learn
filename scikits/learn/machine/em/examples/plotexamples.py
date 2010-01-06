@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jun 11 03:00 PM 2007 J
+# Last Change: Sun Jul 22 12:00 PM 2007 J
 
 # This is a simple test to check whether plotting ellipsoides of confidence and
 # isodensity contours match
@@ -8,9 +8,7 @@ from numpy.testing import set_package_path, restore_path
 
 import pylab as P
 
-set_package_path()
-import pyem
-restore_path()
+from scikits.learn.machine.em import EM, GM, GMM
 
 # Generate a simple mixture model, plot its confidence ellipses + isodensity
 # curves for both diagonal and full covariance matrices
@@ -18,11 +16,11 @@ d = 3
 k = 3
 dim = [0, 2]
 # diag model
-w, mu, va = pyem.GM.gen_param(d, k)
-dgm = pyem.GM.fromvalues(w, mu, va)
+w, mu, va = GM.gen_param(d, k)
+dgm = GM.fromvalues(w, mu, va)
 # full model
-w, mu, va = pyem.GM.gen_param(d, k, 'full', spread = 1)
-fgm = pyem.GM.fromvalues(w, mu, va)
+w, mu, va = GM.gen_param(d, k, 'full', spread = 1)
+fgm = GM.fromvalues(w, mu, va)
 
 def plot_model(gm, dim):
     X, Y, Z, V = gm.density_on_grid(dim = dim)

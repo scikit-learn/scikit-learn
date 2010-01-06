@@ -1,11 +1,11 @@
 ..
     restindex
-        page-title: Pyem
-        crumb: Pyem
-        link-title: Pyem
+        page-title: Em
+        crumb: Em
+        link-title: Em
         encoding: utf-8
         output-encoding: None 
-        tags: python,pyem,Expectation Maximization,EM,online EM,recursive EM
+        tags: python,em,Expectation Maximization,EM,online EM,recursive EM
         file: basic_example1.py
         file: basic_example2.py
         file: basic_example3.py
@@ -13,15 +13,15 @@
         file: Bic_example.png
     /restindex
 
-.. Last Change: Mon Jul 02 09:00 PM 2007 J
+.. Last Change: Sun Jul 22 11:00 AM 2007 J
 
 ===================================================
- PyEM, a python package for Gaussian mixture models
+ em, a python package for Gaussian mixture models
 ===================================================
 
 .. contents:: Tables of contents
 
-PyEM is a package which enables to create Gaussian Mixture Models
+EM is a package which enables to create Gaussian Mixture Models
 (diagonal and full covariance matrices supported), to sample them, 
 and to estimate them from data using Expectation Maximization algorithm.
 It can also draw confidence ellipsoides for multivariate models, and 
@@ -29,7 +29,7 @@ compute the Bayesian Information Criterion to assess the number of
 clusters in the data. In a near future, I hope to add so-called 
 online EM (ie recursive EM) and variational Bayes implementation.
 
-PyEM is implemented in python, and uses the excellent numpy and scipy
+EM is implemented in python, and uses the excellent numpy and scipy
 packages. Numpy is a python packages which gives python a fast 
 multi-dimensional array capabilities (ala matlab and the likes); scipy
 leverages numpy to build common scientific features for signal processing,
@@ -40,63 +40,65 @@ Installation
 ============
 
 .. _scipy: http://www.scipy.org
+.. _scikits: https://projects.scipy.org/scipy/scikits/
 
-Pyem depends on several packages to work:
+The toolbox depends on several packages to work:
 
  - numpy
- - matplotlib (if you wish to use the plotting facilities of pyem)
+ - scipy
+ - setuptools
+ - matplotlib (if you wish to use the plotting facilities: this is not mandatory)
 
 Those packages are likely to be already installed in a typical numpy/scipy environment.
 
-Since september 2006, pyem is included in the sandbox of `scipy`_.  The sandbox
-contains packages which are pending for approval in main scipy; that means it
-is not installed by default, and that you need to install scipy from sources.
-For the most up-to-date version of pyem, you need to download scipy from
-subversion, which contains the development branch of scipy.
+Since July 2007, the toolbox is included in the learn scikits (`scikits`_).
+There is no official release yet, but you can get the package through svn with
+the following command:
 
-To install pyem, you just need to edit (or create if it does not exist)
-the file Lib/sandbox/enabled_packages.txt in scipy sources, and
-add one line with the name of the package (eg pyem).
-After, you just need to install scipy normally as explained 
-`here <http://www.scipy.org/Installing_SciPy>`_.
+svn co http://svn.scipy.org/svn/scikits/trunk scikits.dev
 
-You can (and should) also test pyem installation using the following:
+Of course, you can also use a graphical tool such as TortoiseSVN on windows if
+you do not feel confortable with the command line. Then, you can install it
+with the following command in the scikits.dev directory:
+
+python setup.py install
+
+You can (and should) also test em installation using the following:
 
 .. raw:: html
 
     {+mycoloring}
 
-    from scipy.sandbox import pyem
-    pyem.test()
+    from scikits.learn.machine import em
+    em.test()
     {-mycoloring}
 
 basic usage
 ============
 
-Once you are inside a python interpreter, you can import pyem
-using the follwing command:
+Once you are inside a python interpreter, you can import the package using the
+follwing command:
 
 .. raw:: html
 
     {+mycoloring}
-
-    from scipy.sandbox import pyem
+    from scikits.learn.machine import em
     {-mycoloring}
 
 
 Creating, sampling and plotting a mixture
 -----------------------------------------
 
-Importing pyem gives access to 3 classes: GM (for Gausssian Mixture), GMM
-(Gaussian Mixture Model) and EM (for Expectation Maximization). The first
-class GM can be used to create an artificial Gaussian Model, samples it,
-or plot it. The following example show how to create 
-a 2 dimension Gaussian Model with 3 components, sample it and plot
-its confidence ellipsoids with matplotlib:
+Importing the package gives access to 3 classes: GM (for Gausssian Mixture),
+GMM (Gaussian Mixture Model) and EM (for Expectation Maximization). The first
+class GM can be used to create an artificial Gaussian Model, samples it, or
+plot it. The following example show how to create a 2 dimension Gaussian Model
+with 3 components, sample it and plot its confidence ellipsoids with
+matplotlib:
 
 .. raw:: html
 
-    {mycolorize;input/softwares/pyem/basic_example1.py}
+    {mycolorize;input/softwares/em/basic_example1.py}
 
 .. raw:: latex
 
@@ -120,14 +122,14 @@ Basic estimation of mixture parameters from data
 ------------------------------------------------
 
 If you want to learn a Gaussian mixture from data with EM, you need to use two
-classes from pyem: GMM and EM. You first create a GMM object from a GM
-instance; then you can give the GMM object as a parameter to the EM class to
-compute iterations of EM; once the EM has finished the computation, the GM
-instance of GMM contains the computed parameters.
+classes from em: GMM and EM. You first create a GMM object from a GM instance;
+then you can give the GMM object as a parameter to the EM class to compute
+iterations of EM; once the EM has finished the computation, the GM instance of
+GMM contains the computed parameters.
 
 .. raw:: html
 
-    {mycolorize;input/softwares/pyem/basic_example2.py}
+    {mycolorize;input/softwares/em/basic_example2.py}
 
 .. raw:: latex
 
@@ -146,18 +148,17 @@ Advanced topics
 Bayesian Information Criterion and automatic clustering
 -------------------------------------------------------
 
-The GMM class is also able to compute the bayesian information criterion
-(BIC), which can be used to assess the number of clusters into the data.
-It was first suggested by Schwarz (see bibliography), who gave a Bayesian
-argument for adopting the BIC. The BIC is derived from an approximation
-of the integrated likelihood of the model, based on regularity assumptions.
-The following code generates an artificial mixture of 4 clusters, runs
-EM with models of 1 to 6 clusters, and prints which number of clusters
-is the most likely from the BIC:
+The GMM class is also able to compute the bayesian information criterion (BIC),
+which can be used to assess the number of clusters into the data.  It was first
+suggested by Schwarz (see bibliography), who gave a Bayesian argument for
+adopting the BIC. The BIC is derived from an approximation of the integrated
+likelihood of the model, based on regularity assumptions.  The following code
+generates an artificial mixture of 4 clusters, runs EM with models of 1 to 6
+clusters, and prints which number of clusters is the most likely from the BIC:
 
 .. raw:: html
 
-    {mycolorize;input/softwares/pyem/basic_example3.py}
+    {mycolorize;input/softwares/em/basic_example3.py}
 
 .. raw:: latex
 
@@ -169,9 +170,9 @@ which plots this figure:
     :width: 500
     :height: 400
 
-The above example also shows that you can control the plotting
-parameters by using returned handles from plot methods. This can be
-useful for complex drawing.
+The above example also shows that you can control the plotting parameters by
+using returned handles from plot methods. This can be useful for complex
+drawing.
 
 Examples 
 =========
@@ -201,8 +202,8 @@ Using EM for clustering
 
 TODO (this is fundamentally the same than pdf estimation, though)
 
-Using PyEM for supervised learning
-----------------------------------
+supervised learning (e.g discriminative analysis)
+-------------------------------------------------
 
 The following example shows how to do classification using discriminative
 analysis on the famous iris dataset. The idea is to model each class
@@ -227,28 +228,29 @@ are not linearly separable.
 Note on performances
 ====================
 
-Pyem is implemented in python (100% of the code has a python implementation),
-but thanks to the Moore Law, it is reasonably fast so that it can be used for
-other problems than toys problem. On my computer (linux on bi xeon 3.2 Ghz, 2Gb
-RAM), running 10 iterations of EM algorithm on 100 000 samples of dimension 15,
-for a diagonal model with 30 components, takes around 1 minute and 15 seconds:
-this makes the implementation usable for moderately complex problems such as
-speaker recognition using MFCC. If this is too slow, there is a C
-implementation for Gaussian densities which can be enabled by commenting out
-one line in pyem/gmm_em.py, which should gives a speed up of a factor 2 at
-least; this has not been tested much, though, so beware.
+The package is implemented in python (100% of the code has a python
+implementation, so that it can be used for educational purpose too), but thanks
+to the Moore Law, it is reasonably fast so that it can be used for other
+problems than toys problem. On my computer (linux on bi xeon 3.2 Ghz, 2Gb RAM),
+running 10 iterations of EM algorithm on 100 000 samples of dimension 15, for a
+diagonal model with 30 components, takes around 1 minute and 15 seconds: this
+makes the implementation usable for moderately complex problems such as speaker
+recognition using MFCC. If this is too slow, there is a C implementation for
+Gaussian densities which can be enabled by commenting out one line in the file
+gmm_em.py, which should gives a speed up of a factor 2 at least; this has not
+been tested much, though, so beware.
 
-Also, increasing the number of components and/or dimension is much more
-expensive than increasing the number of samples: a 5 dimension model of 100
-components will be much slower to estimate with 500 samples than a 5 dimension
-10 components with 5000 samples. This is because loops on dimension/components
-are in python, whereas loops on samples are in C (through numpy). I don't
+Also, increasing the number of components or dimension is much more expensive
+than increasing the number of samples: a 5 dimension model of 100 components
+will be much slower to estimate with 500 samples than a 5 dimension 10
+components with 5000 samples. This is because loops on dimension or components
+are in python, whereas loops on samples are in C (through numpy).  I don't
 think there is an easy fix to this problem. 
 
-Full covariances will be slow, because you cannot avoid nested loop
-in python this case without insane amount of memory. A C implementation
-may be implemented, but this is not my top priority; most of the time, you
-should avoid full covariance models anyway.
+Full covariances will be slow, because you cannot avoid nested loop in python
+this case without insane amount of memory. A C implementation may be
+implemented, but this is not my top priority; most of the time, you should
+avoid full covariance models if possible.
 
 TODO
 ====
@@ -266,7 +268,7 @@ to the toolbox:
 Other things which are doable but which I don't intend to implement are:
 
  - add other models (mixtures of multinomial: easy, simple HMM: easy, other ?)
- - add bayes prior using MCMC (hard, use PyMCMC for sampling ?)
+ - add bayes prior using MCMC (hard, use PyMC for sampling ?)
 
 Bibliography
 ============

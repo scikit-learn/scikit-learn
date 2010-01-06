@@ -1,7 +1,7 @@
 import numpy as N
 from numpy.random import seed
 
-from scipy.sandbox.pyem import GM, GMM, EM
+from scikits.learn.machine.em import GM, GMM, EM
 import copy
 
 seed(2)

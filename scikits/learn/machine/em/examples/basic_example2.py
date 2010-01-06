@@ -1,6 +1,6 @@
 from numpy.random import seed
 
-from scipy.sandbox.pyem import GM, GMM, EM
+from scikits.learn.machine.em import GM, GMM, EM
 import copy
 
 # To reproduce results, fix the random seed

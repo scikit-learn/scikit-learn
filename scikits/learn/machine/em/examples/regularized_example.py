@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 04:00 PM 2007 J
+# Last Change: Sun Jul 22 12:00 PM 2007 J
 
 __doc__ = """Example of using RegularizedEM with pendigits data.
 
@@ -16,9 +16,9 @@ you need to avoid singular covariance matrices."""
 import numpy as N
 import pylab as P
 
-#from scipy.sandbox import pyem
-from gauss_mix import GM
-from gmm_em import GMM, EM, RegularizedEM
+from scikits.learn.machine.em import EM, GM, GMM
+# Experimental RegularizedEM
+from scikits.learn.machine.em.gmm_em import RegularizedEM
 import utils
 
 x, y = utils.get_pendigits()

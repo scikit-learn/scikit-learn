@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Jul 02 09:00 PM 2007 J
+# Last Change: Sun Jul 22 12:00 PM 2007 J
 
 __doc__ = """Example of doing classification with mixture of Gaussian. Note
 that this is really a toy example: we do not use testing testset nor cross
@@ -13,7 +13,7 @@ import numpy as N
 import pylab as P
 import matplotlib as MPL
 
-from scipy.sandbox import pyem
+from scikits.learn.machine.em import EM, GMM, GM
 import utils
 
 data = utils.iris.load()
@@ -56,9 +56,9 @@ for i in range(3):
 # This function train a mixture model with k components
 def cluster(data, k, mode = 'full'):
     d = data.shape[1]
-    gm = pyem.GM(d, k, mode)
-    gmm = pyem.GMM(gm)
-    em = pyem.EM()
+    gm = GM(d, k, mode)
+    gmm = GMM(gm)
+    em = EM()
     em.train(data, gmm, maxiter = 20)
     return gm
 

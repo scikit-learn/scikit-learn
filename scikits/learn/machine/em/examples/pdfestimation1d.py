@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jul 21 03:00 PM 2007 J
+# Last Change: Sun Jul 22 12:00 PM 2007 J
 
 __doc__ = """This example shows how to do pdfestimation for one dimensional
 data. It estimates a Gaussian mixture model for several number of components,
@@ -15,9 +15,7 @@ from numpy.testing import set_package_path, restore_path
 import pylab as P
 import matplotlib as MPL
 
-set_package_path()
-import pyem
-restore_path()
+from scikits.learn.machine.em import EM, GM, GMM
 import utils
 
 oldfaithful = utils.get_faithful()
@@ -33,9 +31,9 @@ dt = waiting / 60.
 # model and the BIC
 def cluster(data, k):
     d = data.shape[1]
-    gm = pyem.GM(d, k)
-    gmm = pyem.GMM(gm)
-    em = pyem.EM()
+    gm = GM(d, k)
+    gmm = GMM(gm)
+    em = EM()
     em.train(data, gmm, maxiter = 20)
     return gm, gmm.bic(data)
 
