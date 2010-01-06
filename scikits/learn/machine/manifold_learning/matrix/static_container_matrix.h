@@ -19,6 +19,9 @@ namespace Matrix
 #  define NOITERATORASSIGNEMENT
 # endif
 #endif
+#if (__GNUC__ < 4)
+# define NOITERATORASSIGNEMENT
+#endif
 
   /// The general matrix container
   template<class DataType, unsigned long Height, unsigned long Width>
