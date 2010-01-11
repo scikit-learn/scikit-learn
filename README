@@ -10,13 +10,13 @@ The project was started in 2007 by David Cournapeu as a Google Summer
 of Code project, and since then many volunteers have contributed. See
 the AUTHORS file for a complete list of contributors.
 
-It is currently maintained by Fabian Pedregosa.
+It is currently maintained by a team of volonteers.
 
 
 Download
 ========
 
-There are currently no public releases, please se the section 'Code'
+There are currently no public releases, please see section 'Code'
 below.
 
 
@@ -62,7 +62,7 @@ Development
 Code
 ----
 
-To check out the sources for subversion, issue the command::
+To check out the sources for subversion run the command::
 
    svn co http://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn/trunk scikit-learn
 
@@ -80,7 +80,8 @@ http://sourceforge.net/tracker/?group_id=294768
 Testing
 -------
 
-To run the test suite (you will need nosetests), issue the command
-'nosetests' from the project's top directory.
+To execute the test suite, run from the project's top directory::
+
+    nosetests --with-doctest scikits/
 
 
