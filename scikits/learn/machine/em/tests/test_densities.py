@@ -7,7 +7,7 @@
 #   - having a dataset to check against
 
 import sys
-from numpy.testing import *
+from unittest import TestCase
 
 import numpy as N
 

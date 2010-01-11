@@ -6,7 +6,7 @@
 import unittest
 import numpy
 
-from numpy.testing import *
+from unittest import TestCase
 from ..similarities import LLE
 
 class test_lle(TestCase):
@@ -21,6 +21,3 @@ class test_lle(TestCase):
       )).reshape((-1,3))
     coords = LLE(samples, 2, neighboors=5)
     print coords
-
-if __name__ == "__main__":
-    run_module_suite()  

@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from numpy.testing import *
+from unittest import TestCase
 from ..barycenters import barycenters
 
 class TestBarycenters(TestCase):
@@ -20,6 +20,3 @@ class TestBarycenters(TestCase):
       )).reshape((-1,3))
     sparse = barycenters(samples, neighboors=5)
     print sparse
-
-if __name__ == "__main__":
-  run_module_suite()

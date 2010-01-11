@@ -5,7 +5,7 @@
 
 import sys
 import os 
-from numpy.testing import *
+from unittest import TestCase
 
 import numpy as N
 

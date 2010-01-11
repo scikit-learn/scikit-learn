@@ -4,7 +4,7 @@
 # For now, just test that all mode/dim execute correctly
 
 import sys
-from numpy.testing import *
+from unittest import TestCase
 
 import numpy as N
 

@@ -1,4 +1,4 @@
-from numpy.testing import *
+from unittest import TestCase
 import numpy as N
 
 from .. import libsvm as libsvm
@@ -11,8 +11,8 @@ class TestLibSvm(TestCase):
         node = N.empty((1,), dtype=libsvm.svm_node_dtype)
         node[0]['index'] = 123
         node[0]['value'] = 456.
-        assert_equal(node[0][0], 123)
-        assert_equal(node[0][1], 456.)
+        self.assertEqual(node[0][0], 123)
+        self.assertEqual(node[0][1], 456.)
 
     def test_svm_parameter(self):
         param = libsvm.svm_parameter()
@@ -29,7 +29,4 @@ class TestLibSvm(TestCase):
         param = libsvm.svm_parameter()
         param.degree = 3
         model.param = param
-        assert_equal(model.param.degree, 3)
-
-if __name__ == '__main__':
-    run_module_suite()
+        self.assertEqual(model.param.degree, 3)

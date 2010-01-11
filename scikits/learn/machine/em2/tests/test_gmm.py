@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from numpy.testing import *
+from unittest import TestCase
 from scipy.io import loadmat
 
 from scikits.learn.machine.em2.gmm import Parameters, EM
@@ -89,6 +89,3 @@ class TestLogresp(TestCase):
 class TestCythonLogresp(TestLogresp):
     def setUp(self):
         self.func = clogresp
-
-if __name__ == '__main__':
-    run_module_suite()

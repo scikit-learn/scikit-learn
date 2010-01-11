@@ -1,4 +1,5 @@
-from numpy.testing import *
+from unittest import TestCase
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 import numpy as N
 
 from ..dataset import OneClassDataSet, RegressionDataSet, \
@@ -134,6 +135,3 @@ class TestPrecomputedDataset(TestCase):
         for i, row in enumerate(morepcdata.grammat):
             valuerow = row[1:]['value']
             assert_array_almost_equal(valuerow, expt_grammat[i])
-
-if __name__ == '__main__':
-    run_module_suite()

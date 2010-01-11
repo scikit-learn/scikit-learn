@@ -1,4 +1,5 @@
-from numpy.testing import *
+from unittest import TestCase
+from numpy.testing import assert_array_equal
 import numpy as N
 
 from ..dataset import OneClassDataSet, TestDataSet
@@ -62,6 +63,3 @@ class TestOneClass(TestCase):
         results.compact()
         v = results.predict_values(testdata)
         assert_array_equal(refv, v)
-
-if __name__ == '__main__':
-    run_module_suite()

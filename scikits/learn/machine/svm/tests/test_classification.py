@@ -1,5 +1,6 @@
 from itertools import izip
-from numpy.testing import *
+from unittest import TestCase
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 import numpy as N
 
 from ..classification import CClassificationModel, NuClassificationModel
@@ -304,6 +305,3 @@ class TestClassification(TestCase):
         model = CClassificationModel(kernel)
         testdata = TestDataSet(x)
         self.assertRaises(ValueError, model.fit, traindata)
-
-if __name__ == '__main__':
-    run_module_suite()

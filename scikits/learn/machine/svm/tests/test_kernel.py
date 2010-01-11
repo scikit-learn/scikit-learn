@@ -1,4 +1,5 @@
-from numpy.testing import *
+from unittest import TestCase
+from numpy.testing import assert_array_equal
 import numpy as N
 
 from ..kernel import Linear, Polynomial,Sigmoid, RBF, Custom
@@ -56,6 +57,3 @@ class TestKernel(TestCase):
                     self.assertEqual(z.shape[1], zshape1)
                     u = kernel(y, x)
                     assert_array_equal(u.squeeze(), z.squeeze())
-
-if __name__ == '__main__':
-    run_module_suite()

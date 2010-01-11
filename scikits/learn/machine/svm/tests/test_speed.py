@@ -1,4 +1,4 @@
-from numpy.testing import *
+from unittest import TestCase
 import numpy as N
 
 from ..classification import ClassificationModel
@@ -50,6 +50,3 @@ from ..predict import PythonPredictor
 ##         #print v12
 ##         print v21
 ##         #print v22
-
-if __name__ == '__main__':
-    run_module_suite()

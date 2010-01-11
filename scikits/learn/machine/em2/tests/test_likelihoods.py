@@ -1,5 +1,6 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal, TestCase, run_module_suite
+from numpy.testing import assert_array_almost_equal
+from unittest import TestCase
 
 from scikits.learn.machine.em2.likelihoods import logsumexp, mnormalik, normalik
 
@@ -126,7 +127,4 @@ class TestMnormalLikelihood(TestCase):
     def test_log_one2d(self):
         return self._test(1e3, 2, 2, log=True)
 
-
-if __name__ == '__main__':
-    run_module_suite()
 

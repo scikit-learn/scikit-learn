@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # Last Change: Sun Sep 07 04:00 PM 2008 J
 
-from numpy.testing import *
+from unittest import TestCase
 
 from scikits.learn.machine.em.examples.examples import ex1, ex2, ex3, pdfestim, pdfestim1d
 

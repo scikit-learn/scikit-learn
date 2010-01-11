@@ -1,4 +1,5 @@
-from numpy.testing import *
+from unittest import TestCase
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 import numpy as N
 
 from ..dataset import RegressionDataSet, TestDataSet
@@ -170,6 +171,3 @@ class TestRegression(TestCase):
         results.compact()
         p = results.predict(testdata)
         assert_array_equal(refp, p)
-
-if __name__ == '__main__':
-    run_module_suite()
