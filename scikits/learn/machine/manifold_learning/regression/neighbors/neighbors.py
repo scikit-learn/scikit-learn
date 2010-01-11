@@ -66,9 +66,32 @@ class Neighbors:
   def kneighbors(self, point, *args, **kwargs):
     """
     Finds the K-neighbors of a point
+
     Parameters :
       - point is a new point
-      - neighbors is the number of neighbors to get (default is the value passed to the constructor)
+      - neighbors is the number of neighbors to get (default is the
+        value passed to the constructor)
+
+    Outputs a list of tuples in which each tuple has two components,
+    the first one indicates the length to point, whereas the second
+    one is the index of that point in the population matrix.
+
+    In the following example, we construnct a Neighbors class from an
+    array representing our data set and ask who's the closest point to
+    [1,1,1]
+
+    >>> import numpy as np
+    >>> samples = np.array([ \
+      [0., 0., 0.], \
+      [0., .5, 0.], \
+      [1., 1., .5]])
+    >>> n = Neighbors(samples)
+    >>> print n.kneighbors(np.array([1., 1., 1.]), 1)
+    [(0.5, 2L)]
+
+    As you can see, it returns [(0.5, 2L)], which means that the
+    element is at distance 0.5 and is the third element of samples
+    (indexes start at 0)
     """
     if len(args) > 0:
       neighbors = args[0]
