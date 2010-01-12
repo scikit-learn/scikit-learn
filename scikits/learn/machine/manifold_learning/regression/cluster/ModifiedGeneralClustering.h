@@ -13,20 +13,18 @@
 #include <vector>
 #include <cmath>
 
-using namespace std;
 
 namespace Graph
 {
   namespace Clustering
   {
-#ifdef _MSC_VER
     // std::isnan is a C99 extension
     // some compileres do not implement it
     inline bool isnan(long double element)
     {
       return element != element;
     }
-#endif
+
     /// Structure encapsulating the General Cluster algorithm, modified for our purpose
     template<class EnoughDistance, class LittleDistance>
     class ModifiedGeneralClustering
