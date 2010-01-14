@@ -14,13 +14,13 @@ import cost_function
 def reduct(reduction, function, samples, nb_coords, **kwargs):
   """
   Data reduction with geodesic distance approximation:
-  - reduction is the algorithm to use
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
-  - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighboring class that will be used
-  - neighbors is the number of k-neighbors if the K-neighborhood is used
-  - window_size is the window size to use
+    - reduction is the algorithm to use
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
+    - temp_file is a temporary file used for caching the distance matrix
+    - neigh is the neighboring class that will be used
+    - neighbors is the number of k-neighbors if the K-neighborhood is used
+    - window_size is the window size to use
   """
   import os
 
@@ -59,13 +59,13 @@ def populateDistanceMatrixFromneighbors(points, neighborer):
 
 def isomap(samples, nb_coords, **kwargs):
   """
-  Isomap compression :
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
-  - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighboring class that will be used
-  - neighbors is the number of k-neighbors if the K-neighborhood is used
-  - window_size is the window size to use
+  Isomap compression:
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
+    - temp_file is a temporary file used for caching the distance matrix
+    - neigh is the neighboring class that will be used
+    - neighbors is the number of k-neighbors if the K-neighborhood is used
+    - window_size is the window size to use
   """
   import euclidian_mds
   def function(*args, **kwargs):
@@ -75,12 +75,12 @@ def isomap(samples, nb_coords, **kwargs):
 def isomapCompression(samples, nb_coords, **kwargs):
   """
   Isomap compression :
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
-  - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighboring class that will be used
-  - neighbors is the number of k-neighbors if the K-neighborhood is used
-  - window_size is the window size to use
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
+    - temp_file is a temporary file used for caching the distance matrix
+    - neigh is the neighboring class that will be used
+    - neighbors is the number of k-neighbors if the K-neighborhood is used
+    - window_size is the window size to use
   """
   import isomap_function
   import dimensionality_reduction
@@ -89,12 +89,12 @@ def isomapCompression(samples, nb_coords, **kwargs):
 def multiIsomapCompression(samples, nb_coords, **kwargs):
   """
   Isomap compression :
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
-  - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighboring class that will be used
-  - neighbors is the number of k-neighbors if the K-neighborhood is used
-  - window_size is the window size to use
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
+    - temp_file is a temporary file used for caching the distance matrix
+    - neigh is the neighboring class that will be used
+    - neighbors is the number of k-neighbors if the K-neighborhood is used
+    - window_size is the window size to use
   """
   import isomap_function
   import multiresolution_dimensionality_reduction
@@ -103,13 +103,13 @@ def multiIsomapCompression(samples, nb_coords, **kwargs):
 def ccaCompression(samples, nb_coords, **kwargs):
   """
   CCA compression :
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
-  - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighboring class that will be used
-  - neighbors is the number of k-neighbors if the K-neighborhood is used
-  - window_size is the window size to use
-  - max_dist is the maximum distance to preserve
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
+    - temp_file is a temporary file used for caching the distance matrix
+    - neigh is the neighboring class that will be used
+    - neighbors is the number of k-neighbors if the K-neighborhood is used
+    - window_size is the window size to use
+    - max_dist is the maximum distance to preserve
   """
   import cca_function
   import cca_multiresolution_dimensionality_reduction
@@ -118,12 +118,12 @@ def ccaCompression(samples, nb_coords, **kwargs):
 def robustCompression(samples, nb_coords, **kwargs):
   """
   Robust compression :
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
-  - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighboring class that will be used
-  - neighbors is the number of k-neighbors if the K-neighborhood is used
-  - window_size is the window size to use
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
+    - temp_file is a temporary file used for caching the distance matrix
+    - neigh is the neighboring class that will be used
+    - neighbors is the number of k-neighbors if the K-neighborhood is used
+    - window_size is the window size to use
   """
   import cost_function
   import robust_dimensionality_reduction
@@ -132,12 +132,12 @@ def robustCompression(samples, nb_coords, **kwargs):
 def robustMultiresolutionCompression(samples, nb_coords, **kwargs):
   """
   Robust multiresolution compression :
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
-  - temp_file is a temporary file used for caching the distance matrix
-  - neigh is the neighboring class that will be used
-  - neighbors is the number of k-neighbors if the K-neighborhood is used
-  - window_size is the window size to use
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
+    - temp_file is a temporary file used for caching the distance matrix
+    - neigh is the neighboring class that will be used
+    - neighbors is the number of k-neighbors if the K-neighborhood is used
+    - window_size is the window size to use
   """
   import cost_function
   import multiresolution_dimensionality_reduction
@@ -146,8 +146,8 @@ def robustMultiresolutionCompression(samples, nb_coords, **kwargs):
 def geodesicNLM(samples, nb_coords, **kwargs):
   """
   Data reduction with NonLinear Mapping algorithm (JR. J. Sammon. A nonlinear mapping for data structure analysis.  IEEE Transactions on Computers, C-18(No. 5):401--409, May 1969):
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
   Geodesic distances are used here.
   """
   import NLM

@@ -13,8 +13,8 @@ class CostFunction(ForwardFiniteDifferences):
     """
     Saves the distances to approximate
     Parameters:
-    - distances is the matrix distance that will be used
-    - max_dist is a percentage indicating what distance to preserve
+      - distances is the matrix distance that will be used
+      - max_dist is a percentage indicating what distance to preserve
     """
     ForwardFiniteDifferences.__init__(self)
     self.distances = distances

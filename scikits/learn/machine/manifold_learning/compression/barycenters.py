@@ -1,4 +1,3 @@
-
 """
 Computes barycenters weights from a graph and saves it in a sparse matrix
 """

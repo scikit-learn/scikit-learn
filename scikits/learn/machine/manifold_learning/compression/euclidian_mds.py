@@ -10,10 +10,10 @@ from tools import dist2hd
 def reduct(reduction, function, samples, nb_coords, **kwargs):
   """
   Data reduction with euclidian distance approximation:
-  - reduction is the algorithm to use
-  - function is the function to optimize
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
+    - reduction is the algorithm to use
+    - function is the function to optimize
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
   """
   distances = dist2hd(samples, samples)
   return reduction(distances, function, nb_coords, **kwargs)
@@ -30,8 +30,8 @@ def mds(distances, function, nb_coords, **kargs):
 def NLM(samples, nb_coords, **kargs):
   """
   Data reduction with NonLinear Mapping algorithm (JR. J. Sammon. A nonlinear mapping for data structure analysis.  IEEE Transactions on Computers, C-18(No. 5):401--409, May 1969):
-  - samples is an array with the samples for the compression
-  - nb_coords is the number of coordinates that must be retained
+    - samples is an array with the samples for the compression
+    - nb_coords is the number of coordinates that must be retained
   """
   import NLM
   import dimensionality_reduction

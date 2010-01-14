@@ -28,7 +28,10 @@ _neighbors.find_parzen.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_doub
 
 class Neighbors:
   """
-  Wrapper with ctypes around the neighbors tree
+  Classifier implementing the k-Nearest Neighbor Algorithm.
+  
+  Core algorithm is written in C, so this class is a wrapper with
+  ctypes around the neighbors tree.
   """
   def __init__(self, points, neighbors = 0, window_size = 1., **kwargs):
     """
@@ -81,10 +84,7 @@ class Neighbors:
     [1,1,1]
 
     >>> import numpy as np
-    >>> samples = np.array([ \
-      [0., 0., 0.], \
-      [0., .5, 0.], \
-      [1., 1., .5]])
+    >>> samples = np.array([[0., 0., 0.], [0., .5, 0.], [1., 1., .5]])
     >>> n = Neighbors(samples)
     >>> print n.kneighbors(np.array([1., 1., 1.]), 1)
     [(0.5, 2L)]
@@ -125,7 +125,8 @@ class Neighbors:
 
   def callback(self, distance, indice):
     """
-    Callback for the searchs, populates self.results
+    Callback for the searchs, populates self.results.
+
     Parameters :
       - distance is the distance of the point to another point
       - indice is the indice of the other point

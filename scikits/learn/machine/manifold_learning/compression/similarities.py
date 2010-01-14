@@ -21,10 +21,10 @@ def LLE(samples, nb_coords, **kwargs):
   """
   Computes the LLE reduction for a manifold
   Parameters :
-  - samples are the samples that will be reduced
-  - nb_coords is the number of coordinates in the manifold
-  - neigh is the neighborer used (optional, default Kneighbor)
-  - neighbor is the number of neighbors (optional, default 9)
+    - samples are the samples that will be reduced
+    - nb_coords is the number of coordinates in the manifold
+    - neigh is the neighborer used (optional, default Kneighbor)
+    - neighbor is the number of neighbors (optional, default 9)
   """
   W = barycenters(samples, **kwargs)
   t = numpy.eye(len(samples), len(samples)) - W
@@ -50,11 +50,11 @@ def laplacian_maps(samples, nb_coords, method, **kwargs):
   """
   Computes a Laplacian eigenmap for a manifold
   Parameters:
-  - samples are the samples that will be reduced
-  - nb_coords is the number of coordinates in the manifold
-  - method is the method to create the similarity matrix
-  - neigh is the neighborer used (optional, default Kneighbor)
-  - neighbor is the number of neighbors (optional, default 9)
+    - samples are the samples that will be reduced
+    - nb_coords is the number of coordinates in the manifold
+    - method is the method to create the similarity matrix
+    - neigh is the neighborer used (optional, default Kneighbor)
+    - neighbor is the number of neighbors (optional, default 9)
   """
   W = method(samples, **kwargs)
 
@@ -83,11 +83,11 @@ def laplacian_maps2(samples, nb_coords, method, **kwargs):
   """
   Computes a Laplacian eigenmap for a manifold
   Parameters:
-  - samples are the samples that will be reduced
-  - nb_coords is the number of coordinates in the manifold
-  - method is the method to create the similarity matrix
-  - neigh is the neighborer used (optional, default Kneighbor)
-  - neighbor is the number of neighbors (optional, default 9)
+    - samples are the samples that will be reduced
+    - nb_coords is the number of coordinates in the manifold
+    - method is the method to create the similarity matrix
+    - neigh is the neighborer used (optional, default Kneighbor)
+    - neighbor is the number of neighbors (optional, default 9)
   """
   W = method(samples, **kwargs)
   D = numpy.sum(W, axis=0)

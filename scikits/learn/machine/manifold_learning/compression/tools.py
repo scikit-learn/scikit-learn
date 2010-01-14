@@ -14,9 +14,21 @@ def create_graph(samples, **kwargs):
   """
   Creates a list of list containing the nearest neighboors for each point in the dataset
   Parameters :
-  - samples is the points to consider
-  - neigh is a neighboorer (optional)
-  - neighboors is the number of K-neighboors to use (optional, default 9) if neigh is not given
+    - samples is the points to consider
+    - neigh is a neighboorer (optional)
+    - neighboors is the number of K-neighboors to use (optional, default 9) if neigh is not given
+
+  The following example creates a graph from samples and outputs the
+  first item, that is a tuple representing the distance from that
+  element to all other elements in sample:
+  
+  >>> samples = np.array([[0., 0., 0.], [1., 0., 0.], [0., 1., 0.], [1., 1., 0.5]])
+  >>> graph = create_graph(samples)
+  >>> print graph[0]
+  [(0.0, 0L), (1.0, 1L), (1.0, 2L)]
+
+  That is, it's at distance 0 from itself, at distance 1.0 from the
+  second element and equally distance 1.0 from the third element.
   """
   from ..regression.neighbors import Neighbors
   if 'neigh' in kwargs:
@@ -35,9 +47,9 @@ def create_sym_graph(samples, **kwargs):
   """
   Creates a list of list containing the nearest neighboors for each point in the dataset. The list of lists is symmetric
   Parameters :
-  - samples is the points to consider
-  - neigh is a neighboorer (optional)
-  - neighboors is the number of K-neighboors to use (optional, default 9) if neigh is not given
+    - samples is the points to consider
+    - neigh is a neighboorer (optional)
+    - neighboors is the number of K-neighboors to use (optional, default 9) if neigh is not given
   """
   import toolbox.neighboors
   if 'neigh' in kwargs:
