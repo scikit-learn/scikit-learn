@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+"""
+k-Nearest Neighbor Algorithm
+"""
 
 # Matthieu Brucher
 # Last Change : 2008-04-15 10:55
@@ -28,7 +30,7 @@ _neighbors.find_parzen.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_doub
 
 class Neighbors:
   """
-  Classifier implementing the k-Nearest Neighbor Algorithm.
+  Classifier implementing k-Nearest Neighbor Algorithm.
   
   Core algorithm is written in C, so this class is a wrapper with
   ctypes around the neighbors tree.
@@ -146,25 +148,3 @@ class Parzen(Neighbors):
   Wrapper for Parzen Window only
   """
   __call__ = Neighbors.parzen
-
-if __name__ == "__main__":
-  points = numpy.array([[0., 0., 0.],
-                [1., 0., 0.],
-                [0., 1., 0.],
-                [0., 0., 1.],
-                [1., 1., 0.],
-                [1., 0., 1.],
-                [0., 1., 1.],
-                [1., 1., 1.]], numpy.float64)
-
-  n = Neighbors(points, 4, 1.2)
-  print n.kneighbors(points[0])
-  print n.parzen(points[0])
-
-  kn = Kneighbors(points, 4, 1.2)
-  print kn(points[0])
-  print kn.parzen(points[0])
-
-  pn = Parzen(points, 4, 1.2)
-  print pn.kneighbors(points[0])
-  print pn(points[0])
