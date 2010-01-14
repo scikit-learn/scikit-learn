@@ -237,6 +237,3 @@ class test_gauss_ell(TestCase):
         except ValueError, e:
             print "Call with bogus dim did not succeed, OK"
 
-
-if __name__ == "__main__":
-    NumpyTest().run()

@@ -228,5 +228,3 @@ class test_on(OnlineEmTest):
         ogmm.gm.set_param(ogmm.cw, ogmm.cmu, ogmm.cva)
 
         return ogmm.gm
-if __name__ == "__main__":
-    NumpyTest().run()

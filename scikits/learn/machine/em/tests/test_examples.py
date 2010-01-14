@@ -20,6 +20,3 @@ class test_examples(TestCase):
 
     def test_pdfestim1d(self, level = 5):
         pdfestim1d()
-
-if __name__ == "__main__":
-    NumpyTest().run()

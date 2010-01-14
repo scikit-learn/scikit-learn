@@ -195,6 +195,3 @@ class test_log_domain(EmTest):
         k = 3
         mode = 'full'
         self._test_common(d, k, mode)
-
-if __name__ == "__main__":
-    NumpyTest().run()
