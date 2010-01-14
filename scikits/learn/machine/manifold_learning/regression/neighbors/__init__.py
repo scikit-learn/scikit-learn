@@ -9,7 +9,7 @@ Neighbors module
 from neighbors import *
 from utilities import *
 
-__all__ = ['Neighbors', 'KNeighbors', 'Parzen', 'create_graph']
+__all__ = ['Neighbors', 'Kneighbors', 'Parzen', 'create_graph']
 
 def test(level=-1, verbosity=1):
   from numpy.testing import NumpyTest
