@@ -4,7 +4,6 @@
 # This is a simple test to check whether plotting ellipsoides of confidence and
 # isodensity contours match
 import numpy as N
-from numpy.testing import set_package_path, restore_path
 
 import pylab as P
 
