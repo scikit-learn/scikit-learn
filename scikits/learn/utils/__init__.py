@@ -3,7 +3,3 @@
 from preprocessing import scale, nanscale, Scaler, NanScaler
 
 __all__ = ['scale', 'nanscale', 'Scaler', 'NanScaler']
-
-from numpy.testing import Tester
-test = Tester().test
-bench = Tester().bench
