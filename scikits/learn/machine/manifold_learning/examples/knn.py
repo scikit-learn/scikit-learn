@@ -8,23 +8,21 @@ n = 100 # number of points
 data1 = np.random.randn(n,2) + 3.0
 data2 = np.random.randn(n, 2) + 5.0
 data = np.concatenate((data1, data2))
+labels = [0]*n + [1]*n
 
 # we create the mesh
 h = 0.1 # step size
-x = np.arange(0, 12, h)
-y = np.arange(0, 12, h)
+x = np.arange(-2, 12, h)
+y = np.arange(-2, 12, h)
 X, Y = np.meshgrid(x, y)
 Z = np.zeros(X.shape)
 
 
-neigh = Neighbors(data, 3)
-
+neigh = Neighbors(data, labels=labels, k=6)
 
 for i in range(len(x)):
     for j in range(len(y)):
-        nn = np.array(neigh.kneighbors(np.array((x[i], y[j]))))
-        _t = np.sign(nn[:,1]-100)
-        Z[i,j] = np.sign(_t.sum())
+        Z[i,j] = neigh.predict((x[i], y[j]))
 
 ax = plt.subplot(111)
 plt.pcolormesh(X, Y, Z)
