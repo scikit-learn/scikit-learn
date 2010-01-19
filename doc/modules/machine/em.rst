@@ -36,54 +36,14 @@ leverages numpy to build common scientific features for signal processing,
 linear algebra, statistics, etc...
 
 
-Installation
-============
-
-.. _scipy: http://www.scipy.org
-.. _scikits: https://projects.scipy.org/scipy/scikits/
-
-The toolbox depends on several packages to work:
-
- - numpy
- - scipy
- - setuptools
- - matplotlib (if you wish to use the plotting facilities: this is not mandatory)
-
-Those packages are likely to be already installed in a typical numpy/scipy environment.
-
-Since July 2007, the toolbox is included in the learn scikits (`scikits`_).
-There is no official release yet, but you can get the package through svn with
-the following command:
-
-svn co http://svn.scipy.org/svn/scikits/trunk scikits.dev
-
-Of course, you can also use a graphical tool such as TortoiseSVN on windows if
-you do not feel confortable with the command line. Then, you can install it
-with the following command in the scikits.dev directory:
-
-python setup.py install
-
-You can (and should) also test em installation using the following:
-
-.. raw:: html
-
-    {+mycoloring}
-
-    from scikits.learn.machine import em
-    em.test()
-    {-mycoloring}
-
 basic usage
 ============
 
 Once you are inside a python interpreter, you can import the package using the
-follwing command:
+follwing command::
 
-.. raw:: html
 
-    {+mycoloring}
     from scikits.learn.machine import em
-    {-mycoloring}
 
 
 Creating, sampling and plotting a mixture
@@ -96,17 +56,12 @@ plot it. The following example show how to create a 2 dimension Gaussian Model
 with 3 components, sample it and plot its confidence ellipsoids with
 matplotlib:
 
-.. raw:: html
+.. literalinclude::  ../../../scikits/learn/machine/em/examples/basic_example1.py
 
-    {mycolorize;input/softwares/em/basic_example1.py}
-
-.. raw:: latex
-
-    \input{basic_example1.tex}
 
 which plots this figure:
 
-.. image:: example1.png 
+.. image:: em_data/example1.png 
     :width: 500
     :height: 400
 
@@ -118,6 +73,7 @@ mostly useful as a container for learning. There are also methods to create
 random (but valid !) parameters for a Gaussian Mixture: this can be done by the
 function method GM.generate_params (a class method).
 
+
 Basic estimation of mixture parameters from data
 ------------------------------------------------
 
@@ -127,13 +83,9 @@ then you can give the GMM object as a parameter to the EM class to compute
 iterations of EM; once the EM has finished the computation, the GM instance of
 GMM contains the computed parameters.
 
-.. raw:: html
 
-    {mycolorize;input/softwares/em/basic_example2.py}
+.. literalinclude::  ../../../scikits/learn/machine/em/examples/basic_example2.py
 
-.. raw:: latex
-
-    \input{basic_example2.tex}
 
 GMM class do all the hard work for learning: it can compute the sufficient
 statistics given the current state of the model, and update its parameters from
@@ -141,6 +93,7 @@ the sufficient statistics; the EM class uses a GMM instance to compute several
 iterations. The idea is that you can implements a different mixture model and
 uses the same EM class if you want (there are several optimized models for GMM,
 which are subclasses of GMM).
+
 
 Advanced topics
 ===============
@@ -156,17 +109,14 @@ likelihood of the model, based on regularity assumptions.  The following code
 generates an artificial mixture of 4 clusters, runs EM with models of 1 to 6
 clusters, and prints which number of clusters is the most likely from the BIC:
 
-.. raw:: html
 
-    {mycolorize;input/softwares/em/basic_example3.py}
 
-.. raw:: latex
+.. literalinclude::  ../../../scikits/learn/machine/em/examples/basic_example3.py
 
-    \input{basic_example3.tex}
 
 which plots this figure:
 
-.. image:: Bic_example.png 
+.. image:: em_data/Bic_example.png 
     :width: 500
     :height: 400
 
@@ -189,7 +139,7 @@ selects the best model using the BIC.
 
     \input{pdfestimation.tex}
 
-.. figure:: pdfestimation.png 
+.. figure:: em_data/pdfestimation.png 
     :width: 500
     :height: 400
 
@@ -216,7 +166,7 @@ are not linearly separable.
 
     \input{discriminant_analysis.tex}
 
-.. figure:: dclass.png 
+.. figure:: em_data/dclass.png 
     :width: 600
     :height: 400
 
