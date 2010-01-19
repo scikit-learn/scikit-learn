@@ -1,0 +1,32 @@
+.. -*- mode: rst -*-
+
+Authors
+=======
+
+The project was started in summer 2007 by David Cournapeau. Since
+then, many people have contributed to the project. These are, in
+chronological order:
+
+  * David Cournapeau, 2007-2009
+  * Fred Mailhot
+  * David Cooke
+  * David Huard
+  * Dave Morrill
+  * Ed Schofield
+  * Eric Jones
+  * fullung
+  * Jarrod Millman
+  * Matthieu Bbrucher
+  * Travis Oliphant
+  * Pearu Peterson
+  * Stefan van der Walt
+  * timl
+  * Fabian Pedregosa
+  * Gael Varoquaux
+
+
+For a complete list, look at the commit logs. Note that this list is
+not exhaustive, since subversion logs only publish the commiter's
+username and it can be hard to know the authors complete
+name. If I forgot anyone, please send me an email to
+fabian.pedregosa@inria.fr .
