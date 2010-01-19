@@ -8,38 +8,49 @@ Tools for computation
 
 __all__ = ['create_graph', 'create_sym_graph', 'centered_normalized', 'dist2hd']
 
-import numpy
+import numpy as np
 
 def create_graph(samples, **kwargs):
   """
   Creates a list of list containing the nearest neighboors for each point in the dataset
-  Parameters :
-    - samples is the points to consider
-    - neigh is a neighboorer (optional)
-    - neighboors is the number of K-neighboors to use (optional, default 9) if neigh is not given
 
+  Parameters
+  ----------
+  samples : matrix
+    The points to consider.
+
+  neigh : Neighbors
+    A neighboorer (optional).
+
+  k : int
+    The number of K-neighboors to use (optional, default 9) if neigh is not given.
+
+  Examples
+  --------
   The following example creates a graph from samples and outputs the
   first item, that is a tuple representing the distance from that
   element to all other elements in sample:
-  
+
+  >>> import numpy as np
   >>> samples = np.array([[0., 0., 0.], [1., 0., 0.], [0., 1., 0.], [1., 1., 0.5]])
   >>> graph = create_graph(samples)
   >>> print graph[0]
-  [(0.0, 0L), (1.0, 1L), (1.0, 2L)]
+  [[0.0, 1.0, 1.0], [0L, 1L, 2L]]
 
   That is, it's at distance 0 from itself, at distance 1.0 from the
   second element and equally distance 1.0 from the third element.
   """
   from ..regression.neighbors import Neighbors
-  if 'neigh' in kwargs:
-    neighboorer = kwargs['neigh'](samples, **kwargs)
-  else:
-    neighboorer = Neighbors(samples, kwargs.get('neighbors', 9), 1.2)
 
-  graph = [None] * len(samples)
+  n = len(samples)
+  labels, graph = np.zeros(n), [None]*n
+
+  neigh = kwargs.get('neigh', None)
+  if neigh is None:
+    neigh = Neighbors(samples, labels=labels, k=kwargs.get('k', 9))
 
   for i in range(0, len(samples)):
-    graph[i] = [neighboor for neighboor in neighboorer.kneighbors(samples[i])]
+    graph[i] = [neighboor for neighboor in neigh.kneighbors(samples[i])]
 
   return graph
 
@@ -70,18 +81,18 @@ def centered_normalized(samples):
   """
   Returns a set of samles that are centered and of variance 1
   """
-  centered = samples - numpy.mean(samples, axis=0)
-  centered /= numpy.std(centered, axis=0)
+  centered = samples - np.mean(samples, axis=0)
+  centered /= np.std(centered, axis=0)
   return centered
 
 def dist2hd(x,y):
    """
    Generate a 'coordinate' of the solution at a time
    """
-   d = numpy.zeros((x.shape[0],y.shape[0]),dtype=x.dtype)
+   d = np.zeros((x.shape[0],y.shape[0]),dtype=x.dtype)
    for i in xrange(x.shape[1]):
        diff2 = x[:,i,None] - y[:,i]
        diff2 **= 2
        d += diff2
-   numpy.sqrt(d,d)
+   np.sqrt(d,d)
    return d
