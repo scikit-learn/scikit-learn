@@ -13,8 +13,8 @@ import sys
 DISTNAME            = 'scikits.learn' 
 DESCRIPTION         = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION    = descr
-MAINTAINER          = 'Fabian Pedregosa',
-MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr',
+MAINTAINER          = 'Fabian Pedregosa'
+MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr'
 URL                 = 'http://scikit-learn.sourceforge.net'
 LICENSE             = 'new BSD'
 DOWNLOAD_URL        = URL
