@@ -7,6 +7,5 @@ Neighbors module
 """
 
 from neighbors import *
-from utilities import *
 
-__all__ = ['Neighbors', 'Kneighbors', 'Parzen', 'create_graph']
+__all__ = ['Neighbors', 'Kneighbors', 'Parzen']
