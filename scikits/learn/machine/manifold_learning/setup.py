@@ -12,11 +12,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('regression')
     config.add_subpackage('stats')
     include_dirs=['src', numpy.get_include()]
-    config.add_extension('regression.neighbors._neighbors',
-                         sources=["regression/neighbors/neighbors.cpp"],
-                         depends=["src/matrix/*.h"],
-                         include_dirs=include_dirs
-                         )
     config.add_extension('regression.cluster._modified_general_clustering',
                          sources=["regression/cluster/ModifiedGeneralClustering.i"],
                          depends=["src/matrix/*.h"],

@@ -2,33 +2,9 @@
 k-Nearest Neighbor Algorithm
 """
 
-# Last changes:
-# Matthieu Brucher, 2008-04-15 10:55
-# Fabian Pedregosa, Tue Jan 19 09:51:23 2010
-
-from numpy.ctypeslib import ndpointer, load_library
 from scipy.stats import mode
-import math
+from scipy.spatial.ckdtree import cKDTree as KDTree
 import numpy as np
-import sys
-import ctypes
-
-# Load the library
-#if sys.platform == 'win32':
-#  _neighbors = load_library('neighbors', "\\".join(__file__.split("\\")[:-1]) + "\\release")
-#else:
-_neighbors = load_library('_neighbors', __file__)
-
-_neighbors.allocate_neighborer.restype = ctypes.c_void_p
-_neighbors.allocate_neighborer.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong]
-
-_neighbors.delete_neighborer.restype = ctypes.c_int
-_neighbors.delete_neighborer.argtypes = [ctypes.c_void_p]
-
-CALLBACK = ctypes.CFUNCTYPE(ctypes.c_ulong, ctypes.c_double, ctypes.c_ulong)
-
-_neighbors.find_kneighbors.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double), ctypes.c_ulong, ctypes.c_ulong, CALLBACK]
-_neighbors.find_parzen.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double), ctypes.c_ulong, ctypes.c_double, CALLBACK]
 
 class Neighbors:
   """
@@ -36,8 +12,9 @@ class Neighbors:
 
   Parameters
   ----------
-  points : matrix
-      A matrix representing the points int the population space.
+  data : array-like, shape (n, k)
+      The data points to be indexed. This array is not copied, and so
+      modifying this data will result in bogus results.
   labels : array
       An array representing labels for the data (only arrays of
       integers are supported).
@@ -46,30 +23,25 @@ class Neighbors:
   window_size : float
       the default window size.
 
-
   Examples
   --------
   >>> samples = [[0.,0.,1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
   >>> labels = [0,0,1,1]
   >>> neigh = Neighbors(samples, labels=labels)
   >>> print neigh.predict([[0,0,0]])
-  [ 0.]
-
-  Notes
-  -----
-  Core algorithm is written in C++, this class is a ctypes wrapper
-  around the neighbors tree.
+  [0]
   """
-  def __init__(self, samples, labels, k = 1, window_size = 1.):
+
+  def __init__(self, data, labels, k = 1, window_size = 1.):
     """
-    Creates the tree, with a number of level depending on the log of
-    the number of elements and the number of coordinates
+    Internally uses scipy.spatial.KDTree for most of its algorithms.
     """
+    self.kdtree = KDTree(data, leafsize=20)
     self._k = k
     self.window_size = window_size
-    self.points = np.ascontiguousarray(samples) # needed for saving the state
-    self.labels = np.array(labels)
-    self._neigh = _neighbors.allocate_neighborer(self.points.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), self.points.shape[0], self.points.shape[1], int(math.log(self.points.shape[0]) / (self.points.shape[1] * math.log(2))))
+    self.points = np.ascontiguousarray(data) # needed for saving the state
+    self.labels = np.asarray(labels)
+    self.label_range = [self.labels.min(), self.labels.max()]
 
   def __getinitargs__(self):
     """
@@ -83,21 +55,13 @@ class Neighbors:
   def __getstate__(self):
     return {}
 
-  def __del__(self, close_func = _neighbors.delete_neighborer):
-    """
-    Deletes the cost function
-    """
-    if not (self._neigh == 0):
-      close_func(self._neigh)
-      self._neigh = 0
-
-  def kneighbors(self, point, k=None):
+  def kneighbors(self, data, k=None):
     """
     Finds the K-neighbors of a point.
 
     Parameters
     ----------
-    point : array
+    point : array-like
         The new point.
     k : int
         Number of neighbors to get (default is the value
@@ -111,7 +75,6 @@ class Neighbors:
         Array representing the indices of the nearest points in the
         population matrix.
 
-
     Examples
     --------
     In the following example, we construnct a Neighbors class from an
@@ -120,20 +83,21 @@ class Neighbors:
 
     >>> import numpy as np
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
-    >>> neigh = Neighbors(samples, labels=[0,0,1], k=2)
+    >>> labels = [0, 0, 1]
+    >>> neigh = Neighbors(samples, labels=labels)
     >>> print neigh.kneighbors([1., 1., 1.])
-    ([0.5, 1.5], [2L, 1L])
+    (0.5, 2)
 
     As you can see, it returns [0.5], and [2], which means that the
     element is at distance 0.5 and is the third element of samples
-    (indexes start at 0).
+    (indexes start at 0). You can also query for multiple points:
+
+    >>> print neigh.kneighbors([[0., 1., 0.], [1., 0., 1.]])
+    (array([ 0.5       ,  1.11803399]), array([1, 2]))
+
     """
     if k is None: k = self._k
-    point = np.asarray(point)
-
-    self.dist, self.ind = [], []
-    _neighbors.find_kneighbors(self._neigh, point.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), len(point), k, CALLBACK(self.callback))
-    return self.dist, self.ind
+    return self.kdtree.query(data, k=k)
 
 
   def parzen(self, point, window_size=None):
@@ -144,24 +108,7 @@ class Neighbors:
       - window_size is the size of the window (default is the value passed to the constructor)
     """
     if window_size is None: window_size = self.window_size
-
-    self.dist, self.ind = [], []
-    _neighbors.find_parzen(self._neigh, point.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), len(point), window_size, CALLBACK(self.callback))
-    return self.dist, self.ind
-
-
-  def callback(self, distance, indice):
-    """
-    Callback for the searchs, populates self.results.
-
-    Parameters :
-      - distance is the distance of the point to another point
-      - indice is the indice of the other point
-    """
-    self.dist.append(distance)
-    self.ind.append(indice)
-    return len(self.dist)
-
+    return self.kdtree.query_ball_point(data, p=1.)
 
   def predict(self, data):
     """
@@ -179,20 +126,24 @@ class Neighbors:
 
     Examples
     --------
-
     >>> import numpy as np
     >>> labels = [0,0,1]
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> neigh = Neighbors(samples, labels=labels)
-    >>> print neigh.predict([[.2, .1, .2]])
-    [ 0.]
+    >>> print neigh.predict([.2, .1, .2])
+    0
+    >>> print neigh.predict([[0., -1., 0.], [3., 2., 0.]])
+    [0 1]
     """
-    data = np.asmatrix(data)
-    res = np.zeros(len(data))
-    for i, point in enumerate(data):
-      dist, ind = self.kneighbors(point)
-      res[i] = mode(self.labels[ind])[0]
-    return res
+    dist, ind = self.kneighbors(data)
+    labels = self.labels[ind]
+    if self._k == 1: return labels
+    # search most common values along axis 1 of labels
+    # this is much faster than scipy.stats.mode
+    return np.apply_along_axis(
+      lambda x: np.bincount(x).argmax(),
+      axis=1,
+      arr=labels)
 
 class Kneighbors(Neighbors):
   """
