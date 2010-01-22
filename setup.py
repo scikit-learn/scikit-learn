@@ -18,6 +18,7 @@ MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr',
 URL                 = 'http://scikit-learn.sourceforge.net'
 LICENSE             = 'new BSD'
 DOWNLOAD_URL        = URL
+VERSION             = '0.1-SVN'
 
 # The following is more or less random copy/paste from numpy.distutils ...
 import setuptools
@@ -39,7 +40,8 @@ def configuration(parent_package='',top_path=None, package_name=DISTNAME):
         maintainer_email = MAINTAINER_EMAIL,
         description = DESCRIPTION,
         license = LICENSE,
-        url = URL, 
+        url = URL,
+        version = VERSION,
         download_url = DOWNLOAD_URL,
         long_description = LONG_DESCRIPTION)
     config.add_subpackage('scikits/learn')
@@ -52,7 +54,6 @@ if __name__ == "__main__":
         namespace_packages=['scikits'],
         packages=['scikits'],
         include_package_data = True,
-        #package_data = {'scikits.pyaudiolab': data_files}, 
         test_suite="nose.collector", # for python setup.py test
         zip_safe=False, # the package can run out of an .egg file
         #FIXME url, download_url, ext_modules

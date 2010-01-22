@@ -26,7 +26,7 @@ import_array();
 
 %module (package="modified_general_clustering", docstring=DOCSTRING) modified_general_clustering
 %{
-#include <regression/cluster/ModifiedGeneralClustering.h>
+#include "ModifiedGeneralClustering.h"
 #include <matrix/matrix_lib.h>
 #include <matrix/pointer_matrix.h>
 

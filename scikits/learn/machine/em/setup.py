@@ -13,22 +13,11 @@ for number of cluster assessment.
 There is also an experimental online EM version (the EM is updated for each new
 sample), and I plan to add Variational Bayes and/or MCMC support for Bayesian approach
 for estimating meta parameters of mixtures. """
-
 from os.path import join
-from info import version as pyem_version
-
-DISTNAME    = 'em' 
-VERSION     = pyem_version
-DESCRIPTION ='A python module for Expectation Maximization learning of mixtures pdf',
-AUTHOR      ='David Cournapeau',
-AUTHOR_EMAIL='david@ar.media.kyoto-u.ac.jp',
-URL         ='http://ar.media.kyoto-u.ac.jp/members/david/softwares/pyem',
 
 def configuration(parent_package='',top_path=None, package_name='em'):
     from numpy.distutils.misc_util import Configuration
-    config = Configuration(package_name,parent_package,top_path,
-             version     = VERSION)
-    #config.add_subpackage('data')
+    config = Configuration('em',parent_package, top_path)
     config.add_data_dir('examples')
     config.add_data_dir('tests')
     config.add_data_dir('profile_data')
@@ -41,6 +30,4 @@ def configuration(parent_package='',top_path=None, package_name='em'):
 
 if __name__ == "__main__":
     from numpy.distutils.core import setup
-    #setup(**configuration(top_path='').todict())
-    #setup(**configuration(top_path=''))
-    setup(configuration=configuration)
+    setup(**configuration(top_path='').todict())
