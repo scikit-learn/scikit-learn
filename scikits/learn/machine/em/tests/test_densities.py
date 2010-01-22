@@ -10,6 +10,7 @@ import sys
 from unittest import TestCase
 
 import numpy as N
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from scikits.learn.machine.em.densities import gauss_den, \
             multiple_gauss_den, logsumexp, gauss_ell

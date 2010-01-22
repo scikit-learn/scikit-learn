@@ -8,6 +8,7 @@ import os
 from unittest import TestCase
 
 import numpy as N
+from numpy.testing import assert_array_almost_equal
 
 from scikits.learn.machine.em import GMM, GM, EM
 

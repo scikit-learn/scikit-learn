@@ -7,6 +7,7 @@ import sys
 from unittest import TestCase
 
 import numpy as N
+from numpy.testing import assert_array_almost_equal
 
 from scikits.learn.machine.em import GM
 from scikits.learn.machine.em.densities import multiple_gauss_den
