@@ -30,8 +30,8 @@ def barycenters(samples, **kwargs):
   indices=[]
   indptr=[0]
   for i in range(len(samples)):
-    neighs = graph[i]
-    z = samples[i] - samples[neighs]
+    neighs, ind = graph[i]
+    z = samples[i] - samples[ind]
     Gram = dot(z, z.T)
     Gram += eye(len(neighs), len(neighs)) * tol * trace(Gram)
     wi = solve(Gram, ones(len(neighs)))
