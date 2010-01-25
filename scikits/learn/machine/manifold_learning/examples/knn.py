@@ -22,8 +22,10 @@ Z =  neigh.predict(points)
 Z =  Z.reshape(np.shape(X))
 
 ax = plt.subplot(111)
-plt.pcolormesh(X, Y, Z)
-plt.scatter(data1[:,0], data1[:,1])
+plt.pcolormesh(X, Y, Z.T)
+
+# print the population points
+plt.scatter(data1[:,0], data1[:,1], c='blue')
 plt.scatter(data2[:,0], data2[:,1], c='red')
 
 plt.show()
