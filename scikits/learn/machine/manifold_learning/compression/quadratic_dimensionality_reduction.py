@@ -3,15 +3,11 @@
 Quadratic optimization
 """
 
-# Matthieu Brucher
-# Last Change : 2008-04-11 14:45
-
 import numpy
 import numpy.random
 import numpy.linalg
-import math
 
-from toolbox.optimizers import *
+from scikits.optimizer import StandardOptimizerModifying
 import cost_function
 
 class Modifier(object):
@@ -42,7 +38,7 @@ def optimize_cost_function(distances, function, nb_coords = 2, **kwargs):
 
   err = numpy.seterr(invalid='ignore')
 
-  optimi = optimizer.StandardOptimizerModifying(
+  optimi = StandardOptimizerModifying(
     function = function,
     step = step.NewtonStep(),
     criterion = criterion.criterion(gtol = 0.000001, ftol = 0.000001, iterations_max = 10000),

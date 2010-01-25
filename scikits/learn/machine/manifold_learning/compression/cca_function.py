@@ -3,7 +3,7 @@ import numpy
 import itertools
 
 from tools import dist2hd
-from scikits.optimization.optimizers.helpers import ForwardFiniteDifferences
+from scikits.optimization.helpers import ForwardFiniteDifferences
 
 class CostFunction(ForwardFiniteDifferences):
   """
