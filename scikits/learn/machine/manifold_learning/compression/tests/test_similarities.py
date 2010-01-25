@@ -19,5 +19,5 @@ class test_lle(TestCase):
       .5, 0., 0.,
       1., 1., 0.5,
       )).reshape((-1,3))
-    coords = LLE(samples, 2, neighboors=5)
+    coords = LLE(samples, 2, k=5)
     print coords
