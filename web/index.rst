@@ -1,4 +1,4 @@
-Scikt-learn web page
+Scikit-learn web page
 ====================
 
 .. include:: ../README
