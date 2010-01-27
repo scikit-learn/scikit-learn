@@ -3,7 +3,6 @@ def configuration(parent_package='',top_path=None):
     config = Configuration('learn',parent_package,top_path)
 
     config.add_subpackage('datasets')
-    config.add_subpackage('common')
     config.add_subpackage('machine')
     config.add_subpackage('utils')
     return config
