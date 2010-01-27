@@ -1,2 +1,0 @@
-include AUTHORS COPYING
-include scikits/learn/machine/manifold_learning/regression/cluster/ModifiedGeneralClustering.i
