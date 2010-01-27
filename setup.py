@@ -17,35 +17,49 @@ MAINTAINER          = 'Fabian Pedregosa'
 MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr'
 URL                 = 'http://scikit-learn.sourceforge.net'
 LICENSE             = 'new BSD'
-DOWNLOAD_URL        = URL
+DOWNLOAD_URL        = 'http://sourceforge.net/projects/scikit-learn/files/'
 VERSION             = '0.1-SVN'
 
-import setuptools
-from numpy.distutils.core import setup, Extension
+import setuptools # we are using a setuptools namespace
+from numpy.distutils.core import setup
 
-def configuration(parent_package='',top_path=None, package_name=DISTNAME):
+def configuration(parent_package='',top_path=None):
     if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 
     from numpy.distutils.misc_util import Configuration
-    config = Configuration(package_name,parent_package,top_path,
+    config = Configuration(None, parent_package,top_path,
+        namespace_packages=['scikits'])
+
+    config.set_options(
+        ignore_setup_xxx_py=True,
+        assume_default_configuration=True,
+        delegate_options_to_subpackages=True,
+        quiet=True,
+    )
+
+
+
+    config.add_subpackage('scikits.learn')
+    config.add_data_files('scikits/__init__.py')
+
+    return config
+
+if __name__ == "__main__":
+    setup(configuration = configuration,
+        name = DISTNAME,
+        install_requires=[
+              'numpy >= 1.1',
+              'scipy >= 0.7',
+              'scikits.optimization'], # can also add version specifiers
         maintainer  = MAINTAINER,
+        include_package_data = True,
         maintainer_email = MAINTAINER_EMAIL,
         description = DESCRIPTION,
         license = LICENSE,
         url = URL,
         version = VERSION,
         download_url = DOWNLOAD_URL,
-        long_description = LONG_DESCRIPTION)
-    config.add_subpackage('scikits/learn')
-
-    return config
-
-if __name__ == "__main__":
-    setup(configuration = configuration,
-        install_requires='numpy', # can also add version specifiers      
-        namespace_packages=['scikits'],
-        packages=['scikits'],
-        include_package_data = True,
+        long_description = LONG_DESCRIPTION,
         test_suite="nose.collector", # for python setup.py test
         zip_safe=False, # the package can run out of an .egg file
         classifiers = 
