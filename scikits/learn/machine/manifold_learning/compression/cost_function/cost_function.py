@@ -1,4 +1,10 @@
+"""
+Non convex cost function for finding a lower-dimension space
+where data can be represented.
 
+This module is not meant to be accessed directly, but through helper
+functions that lie in the compression module.
+"""
 # Matthieu Brucher
 
 # Last Change : 2008-04-11 12:43
