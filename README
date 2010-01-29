@@ -84,8 +84,9 @@ https://sourceforge.net/apps/trac/scikit-learn/report
 Testing
 -------
 
-To execute the test suite, run from the project's top directory::
+To execute the test suite, run from the project's top directory (you
+will need to have nosetest installed)::
 
-    nosetests --with-doctest scikits/
+    python setup.py test
 
 
