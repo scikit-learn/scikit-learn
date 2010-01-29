@@ -5,9 +5,10 @@ __doc__ = """Example of doing classification with mixture of Gaussian. Note
 that this is really a toy example: we do not use testing testset nor cross
 validation.
 
-We use the famous iris database used by Sir R.A. Fisher. You can try to change
-the attributes used for classification, number of components used for the
-mixtures, etc..."""
+We use the german dataset by Dr. Hans Hofmann. You can try to change
+the attributes used for classification, number of components used for
+the mixtures, etc...
+"""
 
 import numpy as N
 import pylab as P
@@ -19,17 +20,17 @@ import utils
 from scikits.learn.datasets import german
 data = german.load()
 
-features = N.vstack([data['feat']['feat' + str(i)].astype(N.float) for i in range(1, 25)]).T
+features = N.vstack([data['data']['feat' + str(i)].astype(N.float) for i in range(1, 25)]).T
 label = data['label']
 
 t, s = utils.scale(features)
 
-training = svm.LibSvmClassificationDataSet(label, features)
+training = svm.ClassificationDataSet(label, features)
 
 def train_svm(cost, gamma, fold = 5):
     """Train a SVM for given cost and gamma."""
-    kernel = svm.RBFKernel(gamma = gamma)
-    model = svm.LibSvmCClassificationModel(kernel, cost = cost)
+    kernel = svm.kernel.RBF(gamma = gamma)
+    model = svm.CClassificationModel(kernel, cost = cost)
     cv = model.cross_validate(training, fold)
     return cv
 
