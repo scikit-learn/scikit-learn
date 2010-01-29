@@ -1,8 +1,7 @@
 from unittest import TestCase
 import numpy as N
 
-from .. import libsvm as libsvm
-
+from .. import libsvm
 
 class TestLibSvm(TestCase):
     def test_svm_node(self):

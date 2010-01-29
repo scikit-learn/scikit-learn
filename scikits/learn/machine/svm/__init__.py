@@ -65,3 +65,4 @@ from oneclass import *
 from dataset import *
 from kernel import *
 from predict import *
+import libsvm
