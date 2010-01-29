@@ -15,10 +15,14 @@ Usage:
 """
 
 import sys
+import os
 import pickle
 import numpy
 
+
 from scikits.learn.machine.manifold_learning import projection
+
+dirname = os.path.dirname(__file__)
 
 if len(sys.argv) > 1:
   if sys.argv[1] == "-h":
@@ -44,11 +48,11 @@ else:
   projectedfile = "swissroll.projected.pickled"
 
 print "Importing samples dataset %s" % datafile
-f = open(datafile)
+f = open(os.path.join(dirname, datafile))
 data = pickle.load(f)
 
 print "Importing model %s" % regressionfile
-f = open(regressionfile)
+f = open(os.path.join(dirname, regressionfile))
 model = pickle.load(f)
 
 print "Projection using %s" % projectionkind
@@ -61,5 +65,5 @@ for sample in data:
   projecteds = numpy.vstack((projecteds, projected[None,:]))
 
 print "Saving results in %s" % projectedfile
-f = open(projectedfile, 'w')
+f = open(os.path.join(dirname, sys.pathprojectedfile), 'w')
 pickle.dump(projecteds, f)
