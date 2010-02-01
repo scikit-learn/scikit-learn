@@ -18,7 +18,7 @@ MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr'
 URL                 = 'http://scikit-learn.sourceforge.net'
 LICENSE             = 'new BSD'
 DOWNLOAD_URL        = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION             = '0.1-beta'
+VERSION             = '0.1'
 
 import setuptools # we are using a setuptools namespace
 from numpy.distutils.core import setup
@@ -47,7 +47,8 @@ if __name__ == "__main__":
         name = DISTNAME,
         install_requires=[
               'numpy >= 1.1',
-              'scipy >= 0.7'],
+              'scipy >= 0.7',
+              'scikits.optimization'],
         maintainer  = MAINTAINER,
         include_package_data = True,
         maintainer_email = MAINTAINER_EMAIL,
