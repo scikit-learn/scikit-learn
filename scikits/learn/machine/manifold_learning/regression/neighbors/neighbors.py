@@ -99,8 +99,7 @@ class Neighbors:
     if k is None: k = self._k
     return self.kdtree.query(data, k=k)
 
-
-  def parzen(self, point, window_size=None):
+  def parzen(self, data, window_size=None):
     """
     Finds the neighbors of a point in a Parzen window
     Parameters :
@@ -108,7 +107,7 @@ class Neighbors:
       - window_size is the size of the window (default is the value passed to the constructor)
     """
     if window_size is None: window_size = self.window_size
-    return self.kdtree.query_ball_point(data, p=1.)
+    return self.kdtree.query(data, p=1., distance_upper_bound=window_size)
 
   def predict(self, data):
     """
