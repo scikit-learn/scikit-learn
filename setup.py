@@ -31,8 +31,6 @@ def configuration(parent_package='',top_path=None):
         namespace_packages=['scikits'])
 
     config.set_options(
-        ignore_setup_xxx_py=True,
-        assume_default_configuration=True,
         delegate_options_to_subpackages=True,
         quiet=True,
     )
