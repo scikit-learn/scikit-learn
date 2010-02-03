@@ -3,18 +3,18 @@ Manifold Learning
 =================
 
 
-.. automodule:: scikits.learn.machine.manifold_learning
+.. automodule:: scikits.learn.manifold
 
 Compression
 ===========
 
-.. automodule:: scikits.learn.machine.manifold_learning.compression
+.. automodule:: scikits.learn.manifold.compression
    :members:
 
 barycenters
 -----------
 
-.. automodule:: scikits.learn.machine.manifold_learning.compression.barycenters
+.. automodule:: scikits.learn.manifold.compression.barycenters
    :members:
 
 
@@ -34,12 +34,12 @@ assigned to the class of its nearest neighbor.
 
 
 
-.. autoclass:: scikits.learn.machine.manifold_learning.regression.neighbors.Neighbors
+.. autoclass:: scikits.learn.manifold.regression.neighbors.Neighbors
    :members:
 
 
 Tools
 =====
 
-.. automodule:: scikits.learn.machine.manifold_learning.compression.tools
+.. automodule:: scikits.learn.manifold.compression.tools
    :members:

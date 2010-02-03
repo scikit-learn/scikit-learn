@@ -27,10 +27,10 @@ Reference
 .. toctree::
    :maxdepth: 2
 
-   modules/machine/ann
-   modules/machine/em
-   modules/machine/manifold_learning
-   modules/machine/svm
+   modules/ann
+   modules/em
+   modules/manifold
+   modules/svm
 
 
 For Developers

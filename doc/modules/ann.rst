@@ -2,5 +2,5 @@
 Artificial Neural Networks
 ==========================
 
-.. automodule:: scikits.learn.machine.ann
+.. automodule:: scikits.learn.ann
    :members:
