@@ -1,3 +1,3 @@
-#
-#  scikits.learn - Machine Learning module
-#
+"""
+Machine Learning module for python.
+"""

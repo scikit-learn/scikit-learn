@@ -1,9 +1,9 @@
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
-    config = Configuration('learn',parent_package,top_path)
-
-    config.add_subpackage('datasets')
-    config.add_subpackage('machine')
+    config = Configuration('machine',parent_package,top_path)
+    config.add_subpackage('em')
+    config.add_subpackage('manifold')
+    config.add_subpackage('svm')
     config.add_subpackage('utils')
     return config
 
