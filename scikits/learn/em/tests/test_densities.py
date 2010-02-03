@@ -12,10 +12,10 @@ from unittest import TestCase
 import numpy as N
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from scikits.learn.machine.em.densities import gauss_den, \
+from scikits.learn.em.densities import gauss_den, \
             multiple_gauss_den, logsumexp, gauss_ell
 
-from scikits.learn.machine.em.tests.testcommon import DEF_DEC
+from scikits.learn.em.tests.testcommon import DEF_DEC
 
 class TestDensities(TestCase):
     def _generate_test_data_1d(self):

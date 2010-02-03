@@ -4,7 +4,7 @@ Expectation maximation example
 
 import pylab
 import numpy as np
-from scikits.learn.machine.em.densities2 import gauss_ell
+from scikits.learn.em.densities2 import gauss_ell
 
 #=========================================
 # Test plotting a simple diag 2d variance:

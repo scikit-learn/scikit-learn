@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scikits.learn.machine.manifold_learning.regression.neighbors import \
+from scikits.learn.manifold.regression.neighbors import \
      Neighbors, Kneighbors, Parzen
 
 n = 100 # number of points

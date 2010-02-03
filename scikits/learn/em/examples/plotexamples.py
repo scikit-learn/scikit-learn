@@ -7,7 +7,7 @@ import numpy as N
 
 import pylab as P
 
-from scikits.learn.machine.em import EM, GM, GMM
+from scikits.learn.em import EM, GM, GMM
 
 # Generate a simple mixture model, plot its confidence ellipses + isodensity
 # curves for both diagonal and full covariance matrices

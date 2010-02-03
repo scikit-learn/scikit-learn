@@ -13,7 +13,7 @@ import numpy as N
 import pylab as P
 import matplotlib as MPL
 
-from scikits.learn.machine.em import EM, GMM, GM
+from scikits.learn.em import EM, GMM, GM
 import utils
 
 data = utils.iris.load()

@@ -30,7 +30,7 @@ The required dependencies to build the software are python >= 2.5,
 NumPy >= 1.1, SciPy, the Boost libraries and a working C++ compiler.
 
 Optional dependencies are scikits.optimization for module
-machine.manifold_learning.
+machine.manifold.
 
 To run the tests you will also need nosetests and python-dap
 (http://pypi.python.org/pypi/dap/).

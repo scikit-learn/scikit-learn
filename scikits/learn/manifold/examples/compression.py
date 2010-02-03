@@ -8,7 +8,7 @@ Options:
 Usage:
   compression.py [compressionkind [datafile [compresseddatafile]]]
 
-  - compressionkind is one of the compression in scikits.learn.machine.manifold_learning.compression (isomap, LLE, ...)
+  - compressionkind is one of the compression in scikits.learn.manifold.compression (isomap, LLE, ...)
   - datafile is the data file to compress (default = swissroll.pickled)
   - compresseddatafile is the output file (default = swissroll.compressed.pickled)
 """
@@ -17,7 +17,7 @@ import sys
 import pickle
 import numpy
 
-from scikits.learn.machine.manifold_learning import compression
+from scikits.learn.manifold import compression
 
 if len(sys.argv) > 1:
   if sys.argv[1] == "-h":

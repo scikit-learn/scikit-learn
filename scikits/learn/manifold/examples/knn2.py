@@ -4,7 +4,7 @@ Demo using k-Nearest Neighbor Algorithm
 
 import numpy as np
 
-from scikits.learn.machine.manifold_learning.regression.neighbors import \
+from scikits.learn.manifold.regression.neighbors import \
      Neighbors, Kneighbors, Parzen
 
 points = np.array([[0., 0., 0.],

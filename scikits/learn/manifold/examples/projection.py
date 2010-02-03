@@ -8,7 +8,7 @@ Options:
 Usage:
   projection.py [projectionkind [datafile [regressionfile [projectedfile]]]]
 
-  - projectionkind is one of the projection algorithm in scikits.learn.machine.manifold_learning.projection (MLProjection, MAPProjection, ...)
+  - projectionkind is one of the projection algorithm in scikits.learn.manifold.projection (MLProjection, MAPProjection, ...)
   - datafile is the data file to project (default = swissroll.samples.pickled)
   - regressionfile is the model file (default = swissroll.regressed.pickled)
   - projectedfile is the output file (default = swissroll.projected.pickled)
@@ -20,7 +20,7 @@ import pickle
 import numpy
 
 
-from scikits.learn.machine.manifold_learning import projection
+from scikits.learn.manifold import projection
 
 dirname = os.path.dirname(__file__)
 

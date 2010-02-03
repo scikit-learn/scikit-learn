@@ -121,7 +121,7 @@ def setup(app, get_doc_object_=get_doc_object):
 #------------------------------------------------------------------------------
 # Input-mangling directives
 #------------------------------------------------------------------------------
-from docutils.statemachine import ViewList
+from docutils.stateimport ViewList
 
 def get_directive(name):
     from docutils.parsers.rst import directives
@@ -150,7 +150,7 @@ def wrap_mangling_directive(base_directive_name, objtype):
                 return base_func(self.name, self.arguments, self.options,
                                  self.content, self.lineno,
                                  self.content_offset, self.block_text,
-                                 self.state, self.state_machine)
+                                 self.state, self.state_
 
     class directive(base_directive):
         def run(self):

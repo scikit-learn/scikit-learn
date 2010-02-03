@@ -6,7 +6,7 @@ import copy
 import numpy as N
 from scipy.io import savemat, loadmat
 
-from scikits.learn.machine.em import GM, GMM, EM
+from scikits.learn.em import GM, GMM, EM
 
 def generate_dataset(d, k, mode, nframes):
     """Generate a dataset useful for EM anf GMM testing.

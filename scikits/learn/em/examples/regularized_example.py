@@ -16,9 +16,9 @@ you need to avoid singular covariance matrices."""
 import numpy as N
 import pylab as P
 
-from scikits.learn.machine.em import EM, GM, GMM
+from scikits.learn.em import EM, GM, GMM
 # Experimental RegularizedEM
-from scikits.learn.machine.em.gmm_em import RegularizedEM
+from scikits.learn.em.gmm_em import RegularizedEM
 import utils
 
 x, y = utils.get_pendigits()

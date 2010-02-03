@@ -10,9 +10,9 @@ from unittest import TestCase
 import numpy as N
 from numpy.testing import assert_array_almost_equal
 
-from scikits.learn.machine.em import GMM, GM, EM
+from scikits.learn.em import GMM, GM, EM
 
-from scikits.learn.machine.em.tests.testcommon import DEF_DEC
+from scikits.learn.em.tests.testcommon import DEF_DEC
 
 curpath = os.path.dirname(__file__)
 

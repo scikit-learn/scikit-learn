@@ -3,7 +3,7 @@
 
 from unittest import TestCase
 
-from scikits.learn.machine.em.examples.examples import ex1, ex2, ex3, pdfestim, pdfestim1d
+from scikits.learn.em.examples.examples import ex1, ex2, ex3, pdfestim, pdfestim1d
 
 class test_examples(TestCase):
     def test_ex1(self, level = 3):

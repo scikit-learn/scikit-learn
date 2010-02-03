@@ -10,7 +10,7 @@ import math
 import numpy
 import numpy.linalg as linalg
 from numpy.random import shuffle
-from scikits.learn.machine.manifold_learning import stats
+from scikits.learn.manifold import stats
 
 class PLMR(object):
   """

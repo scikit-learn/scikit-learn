@@ -13,7 +13,7 @@ import numpy as N
 import pylab as P
 import matplotlib as MPL
 
-from scikits.learn.machine import svm
+from scikits.learn.import svm
 import utils
 
 data = utils.iris.load()

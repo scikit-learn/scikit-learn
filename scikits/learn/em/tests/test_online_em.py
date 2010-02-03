@@ -9,8 +9,8 @@ from unittest import TestCase
 import numpy as N
 from numpy.random import seed
 
-from scikits.learn.machine.em import GM, GMM
-from scikits.learn.machine.em.online_em import OnGMM, OnGMM1d
+from scikits.learn.em import GM, GMM
+from scikits.learn.em.online_em import OnGMM, OnGMM1d
 
 # #Optional:
 # set_local_path()

@@ -14,7 +14,7 @@ import numpy as N
 import pylab as P
 import matplotlib as MPL
 
-from scikits.learn.machine.em import EM, GM, GMM
+from scikits.learn.em import EM, GM, GMM
 import utils
 
 oldfaithful = utils.get_faithful()

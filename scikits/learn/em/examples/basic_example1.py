@@ -1,6 +1,6 @@
 import numpy as N
 import pylab as P
-from scikits.learn.machine.em import GM
+from scikits.learn.em import GM
 
 #------------------------------
 # Hyper parameters:

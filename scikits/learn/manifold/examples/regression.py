@@ -8,7 +8,7 @@ Options:
 Usage:
   regression.py [regressionkind [datafile [compresseddatafile [regressionfile]]]]
 
-  - regressionkind is one of the regression estimation in scikits.learn.machine.manifold_learning.regression (PLMR, MLPLMR)
+  - regressionkind is one of the regression estimation in scikits.learn.manifold.regression (PLMR, MLPLMR)
   - datafile is the data file to regress (default = swissroll.pickled)
   - compresseddatafile is the compressed file (default = swissroll.isomap.pickled)
   - regressionfile is the output file (default = swissroll.regressed.pickled)
@@ -18,7 +18,7 @@ import sys
 import pickle
 import numpy
 
-from scikits.learn.machine.manifold_learning import regression
+from scikits.learn.manifold import regression
 
 if len(sys.argv) > 1:
   if sys.argv[1] == "-h":

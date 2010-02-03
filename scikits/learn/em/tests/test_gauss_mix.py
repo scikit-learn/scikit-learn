@@ -9,8 +9,8 @@ from unittest import TestCase
 import numpy as N
 from numpy.testing import assert_array_almost_equal
 
-from scikits.learn.machine.em import GM
-from scikits.learn.machine.em.densities import multiple_gauss_den
+from scikits.learn.em import GM
+from scikits.learn.em.densities import multiple_gauss_den
 
 class test_BasicFunc(TestCase):
     """Check that basic functionalities work."""
