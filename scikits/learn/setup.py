@@ -3,6 +3,7 @@ def configuration(parent_package='',top_path=None):
     config = Configuration('learn',parent_package,top_path)
     config.add_subpackage('em')
     config.add_subpackage('manifold')
+    config.add_subpackage('neighbors')
     config.add_subpackage('svm')
     config.add_subpackage('utils')
     return config
