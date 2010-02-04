@@ -18,7 +18,7 @@ MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr'
 URL                 = 'http://scikit-learn.sourceforge.net'
 LICENSE             = 'new BSD'
 DOWNLOAD_URL        = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION             = '0.1'
+VERSION             = '0.2-SVN'
 
 import setuptools # we are using a setuptools namespace
 from numpy.distutils.core import setup
@@ -34,8 +34,6 @@ def configuration(parent_package='',top_path=None):
         delegate_options_to_subpackages=True,
         quiet=True,
     )
-
-
 
     config.add_subpackage('scikits.learn')
     config.add_data_files('scikits/__init__.py')
