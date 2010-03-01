@@ -30,22 +30,25 @@ class Neighbors:
   --------
   >>> samples = [[0.,0.,1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
   >>> labels = [0,0,1,1]
-  >>> neigh = Neighbors(samples, labels=labels)
+  >>> neigh = Neighbors(k=3)
+  >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
+  <scikits.learn.neighbors.neighbors.Neighbors instance at 0x...>
   >>> print neigh.predict([[0,0,0]])
   [0]
   """
 
-  def __init__(self, data, labels, k = 1, window_size = 1.):
+  def __init__(self, k = 5, window_size = 1.):
     """
     Internally uses scipy.spatial.KDTree for most of its algorithms.
     """
-    self.ball_tree = BallTree(data)
     self._k = k
     self.window_size = window_size
-    self.points = np.ascontiguousarray(data) # needed for saving the state
-    self.labels = np.asarray(labels)
-    self.label_range = [self.labels.min(), self.labels.max()]
 
+  def fit(self, X, y):
+    self.ball_tree = BallTree(X)
+    self.X = np.asarray(X)
+    self.y = np.asarray(y)
+    return self
 
   def kneighbors(self, data, k=None):
     """
@@ -76,7 +79,9 @@ class Neighbors:
     >>> import numpy as np
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> labels = [0, 0, 1]
-    >>> neigh = Neighbors(samples, labels=labels)
+    >>> neigh = Neighbors(k=1)
+    >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
+    <scikits.learn.neighbors.neighbors.Neighbors instance at 0x...>
     >>> print neigh.kneighbors([1., 1., 1.])
     (0.5, 2)
 
@@ -91,24 +96,15 @@ class Neighbors:
     if k is None: k = self._k
     return self.ball_tree.query(data, k=k)
 
-  def parzen(self, data, window_size=None):
-    """
-    Finds the neighbors of a point in a Parzen window
-    Parameters :
-      - point is a new point
-      - window_size is the size of the window (default is the value passed to the constructor)
-    """
-    if window_size is None: window_size = self.window_size
-    return self.ball_tree.query(data, p=1., distance_upper_bound=window_size)
 
-  def predict(self, data, k=None):
+  def predict(self, test, k=None):
     """
     Predict the class labels for the provided data.
 
     Parameters
     ----------
-    data: matrix
-        An array representing the test point.
+    test: array
+        A 2-D array representing the test point.
     k : int
         Number of neighbors to get (default is the value
         passed to the constructor).
@@ -121,20 +117,40 @@ class Neighbors:
     Examples
     --------
     >>> import numpy as np
-    >>> labels = [0,0,1]
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
-    >>> neigh = Neighbors(samples, labels=labels)
+    >>> labels = [0, 0, 1]
+    >>> neigh = Neighbors(k=1)
+    >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
+    <scikits.learn.neighbors.neighbors.Neighbors instance at 0x...>
     >>> print neigh.predict([.2, .1, .2])
     0
     >>> print neigh.predict([[0., -1., 0.], [3., 2., 0.]])
     [0 1]
     """
-    dist, ind = self.kneighbors(data)
-    labels = self.labels[ind]
-    if self._k == 1: return labels
+    if k is None: k = self._k
+    return _predict_from_BallTree(self.ball_tree, self.y, np.asarray(test), k=k)
+
+
+def _predict_from_BallTree(ball_tree, Y, test, k):
+    """
+    Predict target from BallTree object containing the data points.
+
+    This is a helper method, not meant to be used directly. It will
+    not check that input is of the correct type.
+    """
+    Y_hat = Y[ball_tree.query(test, k=k, return_distance=False)]
+    if k == 1: return Y_hat
     # search most common values along axis 1 of labels
-    # this is much faster than scipy.stats.mode
+    # much faster than scipy.stats.mode
     return np.apply_along_axis(
-      lambda x: np.bincount(x).argmax(),
-      axis=1,
-      arr=labels)
+        lambda x: np.bincount(x).argmax(),
+        axis=1,
+        arr=Y_hat)
+
+
+def predict(X, Y, test, k=5):
+  """
+  Predict test using Nearest Neighbor Algorithm.
+  """
+  ball_tree  = BallTree(X)
+  return _predict_from_BallTree(ball_tree, np.asarray(Y), test, k=k)

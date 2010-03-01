@@ -1,5 +1,5 @@
 import numpy as np
-from ..neighbors import Neighbors
+from .. import neighbors
 
 from numpy.testing import assert_array_equal
 
@@ -12,18 +12,20 @@ def test_neighbors_1D():
     # some constants
     n = 6
     n_2 = n/2
-    samples = [[x] for x in range(0, n)]
-    labels  = [0]*n_2 + [1]*n_2
+    X = [[x] for x in range(0, n)]
+    Y  = [0]*n_2 + [1]*n_2
 
     # k = 1
-    knn = Neighbors(samples, labels=labels, k=1)
-    assert_array_equal( knn.predict([ [i +0.01] for i in range(0,n_2)]),
-                        np.zeros(n_2))
-    assert_array_equal( knn.predict([ [i-0.01] for i in range(n_2, n)]),
-                        np.ones(n_2))
+    knn = neighbors.Neighbors(k=1)
+    knn.fit(X, Y)
+    test = [[i +0.01] for i in range(0,n_2)] + [[i-0.01] for i in range(n_2, n)]
+    assert_array_equal( knn.predict(test), [0]*n_2 + [1]*n_2)
+    # same as before, but using predict() instead of Neighbors object
+    assert_array_equal( neighbors.predict(X, Y, test), [0]*n_2 + [1]*n_2)
 
     # k = 3
-    knn = Neighbors(samples, labels=labels, k=3)
+    knn = neighbors.Neighbors(k=3)
+    knn.fit(X, Y)
     assert_array_equal( knn.predict([ [i +0.01] for i in range(0,n_2)]),
                         np.zeros(n_2))
     assert_array_equal( knn.predict([ [i-0.01] for i in range(n_2, n)]),
@@ -42,7 +44,8 @@ def test_neighbors_2D():
         (-1,0), (-1,-1),(0,-1)) # label 1
     n_2 = len(samples)/2
     labels = [0]*n_2 + [1]*n_2
-    knn = Neighbors(samples, labels)
+    knn = neighbors.Neighbors()
+    knn.fit(samples, labels)
 
     prediction =  knn.predict(((0, .1), (0, -.1), (.1, 0), (-.1, 0)))
     assert_array_equal(prediction, ((0), (1), (0), (1)))
