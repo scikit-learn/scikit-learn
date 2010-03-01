@@ -1,31 +1,90 @@
-from unittest import TestCase
-import numpy as N
+from scikits.learn import svm
+import numpy as np
+from numpy.testing import assert_array_equal, \
+                          assert_array_almost_equal, \
+                          assert_raises
 
-from .. import libsvm
+# define our data
+X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
+y = np.array( [1, 1, 1, 2, 2, 2])
+T = np.array( [[-1,-1], [2, 2], [3, 2]] )
 
-class TestLibSvm(TestCase):
-    def test_svm_node(self):
-        node = libsvm.svm_node()
-        node = N.empty((), dtype=libsvm.svm_node_dtype)
-        node = N.empty((1,), dtype=libsvm.svm_node_dtype)
-        node[0]['index'] = 123
-        node[0]['value'] = 456.
-        self.assertEqual(node[0][0], 123)
-        self.assertEqual(node[0][1], 456.)
 
-    def test_svm_parameter(self):
-        param = libsvm.svm_parameter()
-        param.degree = 3
-        param.gamma = 1.0
+def test_svm_params():
+    """
+    C_SVC algorithm and linear kernel.
 
-    def test_svm_problem(self):
-        problem = libsvm.svm_problem()
-        problem.l = 123
+    This checks that we retrieve the correct parameters.
 
-    def test_svm_model(self):
-        model = libsvm.svm_model()
-        model.nr_class = 123
-        param = libsvm.svm_parameter()
-        param.degree = 3
-        model.param = param
-        self.assertEqual(model.param.degree, 3)
+    Data is just 6 separable points in the plane. We use linear kernel
+    """
+
+    clf =  svm.SVM(kernel_type='linear')
+    clf.fit(X, y)
+
+    assert_array_equal(clf.sv_coef_, [[ 0.25, -.25]])
+    assert_array_equal(clf.support_, [[-1,-1], [1, 1]])
+    assert_array_equal(clf.rho_, [0.])
+
+def test_tweak_params():
+    """
+    Make sure some tweaking of parameters works.
+    Currently this will fail because communication between fit/predict
+    is done via a pointer and not copying the arguments.
+    """
+    clf = svm.SVM(kernel_type='linear')
+    clf.fit(X, y)
+    assert_array_equal(clf.support_, [[-1, -1], [1, 1]])
+    clf.support = np.array([[-2, -1], [1, 1]])
+    assert_array_equal(clf.predict([[0, -0.1]]), [2])
+
+def test_error():
+    """
+    test that it gives proper exception on deficient input
+    """
+    # impossible value of nu
+    clf = svm.SVM(svm_type='nu_svc', kernel_type='linear', nu=0.0)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    y2 = y[:-1] # wrong dimensions for labels
+    assert_raises(ValueError, svm.SVM, X, y2)
+
+def test_predict():
+    true_result = [1, 2, 2]
+    assert_array_equal(svm.predict(X, y, T) , true_result)
+    # the same, but using SVM object
+    clf = svm.SVM()
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+def test_noncontiguous():
+    """
+    Test with arrays that are non-contiguous.
+
+    """
+    X_t = X.transpose()
+    y_t = [1, 2]
+    assert_array_equal(svm.predict(X_t, y_t, T), [1, 2, 2])
+
+def test_dimension_mismatch():
+    """
+    Test with data that in which dimensions of data space and labels do not
+    match
+    """
+    y_ = y[:-1]
+    assert_raises(AssertionError, svm.predict, X, y_, T)
+
+def test_predict_multiclass():
+    """
+    this example is from libsvm/README
+    """
+    X  =   [[0,	  0.1,	  0.2,	  0,	  0],
+            [ 0,  0.1,	  0.3,	 -1.2,	  0],
+            [0.4,  0,	  0,	  0,	  0],
+            [0,	  0.1,	  0,	  1.4,	  0.5],
+            [-0.1,-0.2,	  0.1,	  1.1,	  0.1]]
+    y = [1,2,1,2,3]
+    test = [[0, 1, 0, -1, 0]]
+    result = svm.predict(X, y, test)
+    assert_array_equal(result, [2])
+

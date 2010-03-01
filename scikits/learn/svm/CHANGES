@@ -1,0 +1,5 @@
+Changes to Libsvm
+
+This is here mainly as checklist for incorporation of new versions of libsvm.
+
+  * do not print info at runtime ("if 1" -> "if 0" in line 45)
