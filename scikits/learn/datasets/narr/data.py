@@ -105,7 +105,6 @@ well as model-derived fields which contain estimates of
 subsurface, surface, and radiative properties.
 """
 
-import dap.client
 import datetime
 import numpy as np
 
@@ -150,7 +149,7 @@ def load(year, month, day, verbose=True):
         lon = narr.lon[:]
     
     """
-
+    import dap.client
     tail = 'narr-a_221_' 
     dir1 = '%d%02d'%(year, month)
     dir2 = dir1+'%02d'%day
