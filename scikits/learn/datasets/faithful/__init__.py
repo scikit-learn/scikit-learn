@@ -6,4 +6,3 @@ copyright   = _faith.COPYRIGHT
 source      = _faith.SOURCE
 
 load        = _faith.load
-load_data   = _faith.load_data

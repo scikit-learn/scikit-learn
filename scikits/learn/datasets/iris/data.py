@@ -94,6 +94,9 @@ Missing Attribute Values: None
 Class Distribution: 33.3% for each of 3 classes.
 """
 
+import numpy as np
+
+
 def load():
     """load the iris data and returns them.
     
@@ -111,32 +114,15 @@ def load():
     know their class name.
 
     >>>> d = load()
-    >>>> ind = [10, 25, 50]
-    >>>> lind = d['label'][ind] # returns the label index of each sample
-    >>>> d['class'][lind] # returns the class name of each sample
+    # >>>> ind = [10, 25, 50]
+    # >>>> lind = d['label'][ind] # returns the label index of each sample
+    # >>>> d['class'][lind] # returns the class name of each sample
 
     """
-    import numpy
-    from iris import SL, SW, PL, PW, LABELS, LI2LN
-    PW = numpy.array(PW).astype(numpy.float)
-    PL = numpy.array(PL).astype(numpy.float)
-    SW = numpy.array(SW).astype(numpy.float)
-    SL = numpy.array(SL).astype(numpy.float)
-    data    = {}
-    data['data'] = numpy.empty(len(PW), 
-                               [('petal width', numpy.int),
-                                ('petal length', numpy.int),
-                                ('sepal width', numpy.int),
-                                ('sepal length', numpy.int)])
-
-    data['data']['petal width'] = numpy.round(PW * 10)
-    data['data']['petal length'] = numpy.round(PL * 10)
-    data['data']['sepal width'] = numpy.round(SW * 10)
-    data['data']['sepal length'] = numpy.round(SL * 10)
-    data['label'] = numpy.array(LABELS).astype(numpy.int)
-    data['class'] = numpy.empty(len(LI2LN), 
-                                'S%d' % numpy.max([len(i) for i in LI2LN.values()]))
-    for i,c in LI2LN.items():
-        data['class'][i] = c
-    
-    return data
+    from iris import SL, SW, PL, PW, labels, LI2LN
+    PW     = np.array(PW, dtype=np.float)
+    PL     = np.array(PL, dtype=np.float)
+    SW     = np.array(SW, dtype=np.float)
+    SL     = np.array(SL, dtype=np.float)
+    labels = np.array(labels, dtype=np.int)
+    return PW, PL, SW, SL, labels

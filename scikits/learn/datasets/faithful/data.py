@@ -27,24 +27,27 @@ DESCRLONG   = """According to Azzalini and Bowman's article, those data
 were recorded continuously from 1th August to 15th August 1985.
 
 Some of the durations times are labelled as L, M or S (Large, Small, Medium).
-According to Azzalini and Bowman's paper: "because the unbroken sequence
+According to Azzalini and Bowman's paper: 'because the unbroken sequence
 required measurements to be taken at night, some duration times are recorded as
 L (long), S (short) and M (medium). Other data sets do not contain a con-
-tinuous stream of data, making it difficult to deal with time series features."
+tinuous stream of data, making it difficult to deal with time series features'
 """
 
-NOTE        = """Eruptions time in minutes, waiting time to next eruption in
+NOTE = """Eruptions time in minutes, waiting time to next eruption in
 minutes"""
 
 import numpy as np
-
 
 def load():
     """load the actual data and returns them.
     
     :returns:
-        data: recordarray
-            a record array of the data.
+        waiting: array
+             waiting time until next eruption, in minutes
+        duration: array
+             duration of eruption, in minutes
     """
     from faithful import waiting, duration
-    return {'data': np.array(zip(waiting, duration))}
+    waiting = np.array(waiting, np.float)
+    duration = np.array(duration, np.float)
+    return waiting, duration
