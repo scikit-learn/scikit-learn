@@ -8,7 +8,6 @@ import numpy.linalg
 import math
 
 from scikits.optimization import *
-import cost_function
 
 class Recorder(object):
   def __init__(self):

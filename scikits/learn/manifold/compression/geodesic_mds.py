@@ -9,7 +9,6 @@ import numpy.linalg
 import math
 
 from scikits.optimization import *
-import cost_function
 
 def reduct(reduction, function, samples, nb_coords, **kwargs):
   """
@@ -125,7 +124,7 @@ def robustCompression(samples, nb_coords, **kwargs):
     - neighbors is the number of k-neighbors if the K-neighborhood is used
     - window_size is the window size to use
   """
-  import cost_function
+  from cost_function import cost_function
   import robust_dimensionality_reduction
   return reduct(robust_dimensionality_reduction.optimize_cost_function, cost_function.CostFunction, samples, nb_coords, **kwargs)
 
@@ -139,7 +138,7 @@ def robustMultiresolutionCompression(samples, nb_coords, **kwargs):
     - neighbors is the number of k-neighbors if the K-neighborhood is used
     - window_size is the window size to use
   """
-  import cost_function
+  from cost_function import cost_function
   import multiresolution_dimensionality_reduction
   return reduct(multiresolution_dimensionality_reduction.optimize_cost_function, cost_function.CostFunction, samples, nb_coords, **kwargs)
 

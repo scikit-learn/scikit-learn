@@ -40,7 +40,7 @@ def create_graph(samples, **kwargs):
   That is, it's at distance 0 from itself, at distance 1.0 from the
   second element and equally distance 1.0 from the third element.
   """
-  from ..regression.neighbors import Neighbors
+  from scikits.learn.neighbors import Neighbors
 
   n = len(samples)
   labels, graph = np.zeros(n), [None]*n

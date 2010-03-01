@@ -8,7 +8,7 @@ import numpy.random
 import numpy.linalg
 
 from scikits.optimizer import StandardOptimizerModifying
-import cost_function
+
 
 class Modifier(object):
   """
