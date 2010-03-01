@@ -30,11 +30,6 @@ def configuration(parent_package='',top_path=None):
     config = Configuration(None, parent_package,top_path,
         namespace_packages=['scikits'])
 
-    config.set_options(
-        delegate_options_to_subpackages=True,
-        quiet=True,
-    )
-
     config.add_subpackage('scikits.learn')
     config.add_data_files('scikits/__init__.py')
 
