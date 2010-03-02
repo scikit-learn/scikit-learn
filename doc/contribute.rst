@@ -1,12 +1,40 @@
+==========
 Contribute
 ==========
 
-This project is a community effort, so everyone is welcomed to
+This project is a community effort, and everyone is welcomed to
 contribute.
 
 
 Code
-----
+====
+
+Patches
+-------
+Patches are the prefered way to contribute to a project if you do not
+have (yet) write priviles.
+
+Let's suppose that you have the latest sources for subversion and that
+you just made some modifications that you'd like to share with the
+world. The way to proceed is the following:
+
+1. Create a patch file. The command::
+
+  svn diff > patch.diff
+
+will create a file "patch.diff" with the changes you made with
+the code base. 
+
+2. Send that file to the mailing list or attach it to an
+issue in the issue tracker and some devs will push that patch to the
+main repository.
+
+3. Wait for a reply. You should soon recive a reply on wether your
+patch was committed.
+
+For more info about Subversion, you can read the excellent book
+`Version Control with Subversion <http://svnbook.red-bean.com/>`_
+
 
 EasyFix Issues
 ^^^^^^^^^^^^^^
@@ -19,39 +47,14 @@ issue is low, but still you are helping the project and letting more
 experienced developers concentrate on other issues.
 
 
-Other Issues
-^^^^^^^^^^^^
-
-Just pick up an issue that is not assigned from the `issue tracker
-<https://sourceforge.net/apps/trac/scikit-learn/report>`_ and submit a patch.
-
-
-
-Patches
--------
-
-Suppose you have made some modifications to the source code and want
-to share your changes. The best way to share those changes is by
-submitting a patch file. I suppose that you have checked the latest
-sources from subversion. If you run the command::
-
-  svn diff > patch.diff
-
-This will create a file "patch.diff" with the changes you made with
-the code base. Send that file to the mailing list or attach it to an
-issue in the issue tracker and some devs will push that patch to the
-main repository.
-
-For more info about Subversion, you can read the excellent book
-`Version Control with Subversion <http://svnbook.red-bean.com/>`_
-
 
 SVN Access
 ----------
 
 If you have contributed some code and would like to have write
 privileges in subversion repository, please contact me (Fabian
-Pedregosa <fabian.pedregosa@inria.fr>) and I'll add you to the list.
+Pedregosa <fabian.pedregosa@inria.fr>) and I'll give you write
+privileges for the svn.
 
 
 Git repo
@@ -76,9 +79,9 @@ distribution.
 
 
 Documentation
--------------
+=============
 
-You can also contribute with documentation: function docstrings, rst
-docs (like this one), tutorials, etc. Rst docs live in the source code
+I am glad to accept any sort of documentation: function docstrings, rst docs (like
+this one), tutorials, etc. Rst docs live in the source code
 repository, under directory doc/.
 
