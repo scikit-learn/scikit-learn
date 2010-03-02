@@ -1,7 +1,6 @@
 Install
 =======
 
-
 Binary Packages
 ---------------
 
@@ -11,6 +10,9 @@ make one, please see section :ref:`packaging <packaging>`.
 
 From Source
 -----------
+
+Download the package from http://sourceforge.net/projects/scikit-learn/files
+, unpack the sources and cd into archive.
 
 This packages uses distutils, which is the default way of installing
 python modules. The install command is::
