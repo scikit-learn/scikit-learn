@@ -44,6 +44,9 @@ class SVM(object):
 
     C : float
 
+    scale : bool
+        If "True" the SVM is run on standardized data
+
     nu: float
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
@@ -59,7 +62,7 @@ class SVM(object):
         where nSV is the number of support vectors, D is the dimension
         of the underlying space.
 
-    
+
 
     rho_ : array
         constants in decision function
@@ -89,7 +92,7 @@ class SVM(object):
     def __init__(self, svm_type='c_svc', kernel_type='rbf', degree=3, \
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0):
+                 probability=0, scale=True):
         self.svm_type = svm_types.index(svm_type)
         self.kernel_type = kernel_types.index(kernel_type)
         self.degree = degree
@@ -103,10 +106,16 @@ class SVM(object):
         self.p = p
         self.shrinking = 1
         self.probability = 0
+        self.scale = scale
 
     def fit(self, X, y):
         X = np.asanyarray(X, dtype=np.float, order='C')
         y = np.asanyarray(y, dtype=np.float, order='C')
+
+        if self.scale:
+            self.mean = X.mean(0)
+            self.std = X.std(0)
+            X = (X - self.mean) / self.std
 
         # check dimensions
         assert X.shape[0] == y.shape[0], "Incompatible shapes"
@@ -127,6 +136,10 @@ class SVM(object):
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float, order='C')
+
+        if self.scale:
+            T = (T - self.mean) / self.std
+
         return libsvm.predict_from_model_wrap(T, self._model)
 
 

@@ -40,7 +40,6 @@ if __name__ == "__main__":
         name = DISTNAME,
         install_requires=[
               'numpy >= 1.1',
-              'scipy >= 0.7',
               'scikits.optimization'],
         maintainer  = MAINTAINER,
         include_package_data = True,
