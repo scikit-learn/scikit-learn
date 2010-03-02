@@ -92,7 +92,7 @@ class SVM(object):
     def __init__(self, svm_type='c_svc', kernel_type='rbf', degree=3, \
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0, scale=True):
+                 probability=0, scale=False):
         self.svm_type = svm_types.index(svm_type)
         self.kernel_type = kernel_types.index(kernel_type)
         self.degree = degree
