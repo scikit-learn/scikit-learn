@@ -25,12 +25,15 @@ except ImportError, e:
     print "Using Python version of coordinate descent"
 
 def enet_dual_gap(X, y, w, alpha, beta=0):
-    """Compute dual gap for Elastic-Net model
-        to check KKT optimality conditions
-        returns gap, primal_objective, dual_objective
-        gap should be positive
-        gap = primal_objective - dual_objective
-        gap < 1e-6 means convergence in practice
+    """Compute dual gap for Elastic-Net model to check KKT optimality conditions
+
+    Returns
+    -------
+    gap : the difference  primal_objective - dual_objective (should be positive)
+        A value less that 1e-6 means convergence in practice
+    primal_objective : the value of the objective function of the primal problem
+    dual_objective : the value of the objective function of the dual problem
+
     """
     Xw = np.dot(X,w)
     A = (y - Xw)
