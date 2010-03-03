@@ -2,12 +2,59 @@ import numpy as np
 import scipy.linalg
 from scikits.learn.utils.utils import fast_logdet
 
-def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
+
+def bayesian_regression_noprior( X , Y, ll_bool=False):
+    """
+    Bayesian regression. Find the solutions by Maximum-likelihood (ML) -
+    equivalent to the OLS estimate with a noise precision beta.
+
+    Parameters
+    ----------
+    X : numpy array of shape (length,features)
+	data
+    Y : numpy array of shape (length)
+	target
+    ll_bool  : boolean (default is False).
+	       If True, compute the log-likelihood at each step of the model.
+
+    Returns
+    -------
+    w : numpy array of shape (nb_features)
+         mean of the weights distribution.
+    beta : float
+	   precision of the noise.
+    log_likelihood : list of float of size steps.
+		     Compute (if asked) the log-likelihood of the model.
+   
+    Examples
+    --------
+
+    Notes
+    -----
+    See Bishop p 138-143 for more details.
+    """
+   
+    gram = np.dot(X.T, X)
+    w = np.dot(scipy.linalg.pinv(gram),np.dot(X.T,Y))
+    residual_ = (Y - np.dot(X, w))**2
+    beta = X.shape[0] / residual_.sum()
+    log_likelihood = []
+    if ll_bool :
+      log_likelihood = 0.5*X.shape[0]*np.log(beta)
+      log_likelihood -= 0.5*X.shape[0]*np.log(2*np.pi) 
+      log_likelihood -= 0.5*beta*residual_.sum()
+    return w,beta,log_likelihood
+
+
+
+
+
+
+def bayesian_regression_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
     """
     Bayesian ridge regression. Optimize the regularization parameters alpha
     (precision of the weights) and beta (precision of the noise) within a simple
     bayesian framework (MAP).
-
 
     Parameters
     ----------
@@ -24,8 +71,14 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
 
     Returns
     -------
-    w : numpy array of shape (dim)
+    w : numpy array of shape (nb_features)
          mean of the weights distribution.
+    alpha : float
+	   precision of the weights.
+    beta : float
+	   precision of the noise.
+    sigma : numpy array of shape (nb_features,nb_features)
+	    variance-covariance matrix of the weights
     log_likelihood : list of float of size steps.
 		     Compute (if asked) the log-likelihood of the model.
    
@@ -85,25 +138,9 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
     return w,alpha,beta,sigma,log_likelihood
 
 
-def bayesian_linear(alpha, beta):
-    """
-    Like bayesian_ridge,
-    but alpha, beta is given
-    """
-    
-    ### Compute mu and sigma
-    gram = np.dot(X.T, X)
-    ones = np.eye(gram.shape[1])
-    sigma = scipy.linalg.pinv(alpha*ones + beta*gram)
-    w = np.dot(beta*sigma,np.dot(X.T,Y))
 
-
-    return w, []
-
-
-
-def bayesian_ard( X , Y, step_th=300,th_w = 1.e-12,alpha_th=1.e+16,
-		 ll_bool=False):
+def bayesian_regression_ard(X , Y, step_th=300, th_w=1.e-12,\
+			    alpha_th=1.e+16, ll_bool=False):
     """
     Bayesian ard-based regression. Optimize the regularization parameters alpha
     (vector of precisions of the weights) and beta (precision of the noise).
@@ -128,8 +165,14 @@ def bayesian_ard( X , Y, step_th=300,th_w = 1.e-12,alpha_th=1.e+16,
 
     Returns
     -------
-    w : numpy array of shape (dim)
+    w : numpy array of shape (nb_features)
          mean of the weights distribution.
+    alpha : numpy array of shape (nb_features)
+	   precision of the weights.
+    beta : float
+	   precision of the noise.
+    sigma : numpy array of shape (nb_features,nb_features)
+	    variance-covariance matrix of the weights
     log_likelihood : list of float of size steps.
 		     Compute (if asked) the log-likelihood of the model.
    
@@ -145,13 +188,14 @@ def bayesian_ard( X , Y, step_th=300,th_w = 1.e-12,alpha_th=1.e+16,
     alpha = np.ones(gram.shape[1])
 
     
-    log_likelihood = []
+    log_likelihood = None
+    if ll_bool :
+      log_likelihood = []
     has_converged = False
     ones = np.eye(gram.shape[1])
     sigma = scipy.linalg.pinv(alpha*ones + beta*gram)
     w = np.dot(beta*sigma,np.dot(X.T,Y))
     old_w = np.copy(w)
-    # important values to keep
     keep_a  = np.ones(X.shape[1],dtype=bool)
     while not has_converged and step_th:
 
@@ -193,30 +237,56 @@ def bayesian_ard( X , Y, step_th=300,th_w = 1.e-12,alpha_th=1.e+16,
 
 
 
-
-
-
-
-
-
-
 class BayesianRegression(object):
     """
     Encapsulate various bayesian regression algorithms
     """
-    
-    def __init__(self, alpha=None, beta=None):
-        self.alpha = alpha
-        self.beta = beta
+    def __init__(self, ll_bool=False):
+	self.ll_bool = ll_bool
 
-    def fit(self, X, Y):
+    def fit(self,X,Y):
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
-        if self.alpha:
-            self.w ,self.alpha ,self.beta ,self.sigma ,self.log_likelihood = \
-               	bayesian_ridge(X, Y)
-
+	self.w, self.beta, self.log_likelihood = \
+	bayesian_regression_noprior(X, Y, self.ll_bool)
+  
     def predict(self, T):
         return np.dot(T, self.w)
 
 
+class RidgeRegression(BayesianRegression):
+    """
+    Encapsulate various bayesian regression algorithms
+    """
+    
+    def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12):
+        self.ll_bool = ll_bool
+	self.step_th = step_th
+	self.th_w = th_w
+
+    def fit(self, X, Y):
+        X = np.asanyarray(X, dtype=np.float)
+        Y = np.asanyarray(Y, dtype=np.float)
+	self.w ,self.alpha ,self.beta ,self.sigma ,self.log_likelihood = \
+	bayesian_regression_ridge(X, Y, self.step_th, self.th_w, self.ll_bool)
+
+
+
+class ARDRegression(BayesianRegression):
+    """
+    Encapsulate various bayesian regression algorithms
+    """
+    
+    def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,\
+		alpha_th=1.e+16):
+        self.ll_bool = ll_bool
+	self.step_th = step_th
+	self.th_w = th_w
+	self.alpha_th = alpha_th
+
+    def fit(self, X, Y):
+        X = np.asanyarray(X, dtype=np.float)
+        Y = np.asanyarray(Y, dtype=np.float)
+	self.w ,self.alpha ,self.beta ,self.sigma ,self.log_likelihood = \
+	bayesian_regression_ard(X, Y, self.step_th, self.th_w,\
+			    self.alpha_th, self.ll_bool)
