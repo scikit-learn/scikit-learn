@@ -1,35 +1,12 @@
 import numpy as np
 import scipy.linalg
 
-
-def fast_logdet(A):
-    """
-    Compute log(det(A)) for A symmetric
-    Equivalent to : np.log(nl.det(A))
-    but more robust
-    It returns -Inf if det(A) is non positive
-    Copyright : A. Gramfort 2010   
-    """
-    from math import exp,log
-    ld = np.sum(np.log(np.diag(A)))
-    if not np.isfinite(ld):
-        return -np.inf
-    a = exp(ld/A.shape[0])
-    d = scipy.linalg.det(A/a)
-    if d <= 0:
-        return -np.inf
-    ld += log(d)
-    if not np.isfinite(ld):
-        return -np.inf
-    return ld
-
-
+from scikits.learn.utils.utils import fast_logdet
 
 def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
     """
     Bayesian ridge regression. Optimize the regularization parameter alpha
     within a simple bayesian framework (MAP).
-
 
     Parameters
     ----------
@@ -66,9 +43,7 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
     beta = 1./np.var(Y)
     alpha = 1.0
 
-    log_likelihood = None
-    if ll_bool :
-      log_likelihood = []
+    log_likelihood = []
     has_converged = False
     gram = np.dot(X.T, X)
     ones = np.eye(gram.shape[1])
@@ -97,7 +72,6 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
 	has_converged =  (np.sum(np.abs(w-old_w))<th_w)
         old_w = w
 
-
 	### Compute the log likelihood
 	if ll_bool :
 	  residual_ = (Y - np.dot(X, w))**2
@@ -107,7 +81,23 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
 	  ll -= X.shape[0]*np.log(2*np.pi)
 	  log_likelihood.append(ll)
 
-    return w,log_likelihood
+    return w, log_likelihood
+
+
+def bayesian_linear(alpha, beta):
+    """
+    Like bayesian_ridge,
+    but alpha, beta is given
+    """
+
+    ### Compute mu and sigma
+    gram = np.dot(X.T, X)
+    ones = np.eye(gram.shape[1])
+    sigma = scipy.linalg.pinv(alpha*ones + beta*gram)
+    w = np.dot(beta*sigma,np.dot(X.T,Y))
+
+
+    return w
 
 
 
