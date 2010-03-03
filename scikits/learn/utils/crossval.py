@@ -1,7 +1,7 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-# $Id: cd.py 473 2010-03-03 16:27:38Z twigster $
+# $Id$
 
 import numpy as np
 import exceptions
