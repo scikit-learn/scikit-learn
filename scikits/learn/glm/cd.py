@@ -2,14 +2,18 @@
 # License: BSD Style.
 
 # $Id$
+"""Implementation of regularized linear regression with Coordinate Descent
+
+We focus the implementation on regularizer that lead to sparse parameters (many
+zeros) such as the laplacian (L1) and Elastic Net (L1 + L2) priors.
+"""
 
 import numpy as np
 import scipy.linalg as linalg
 from lasso_cd import lasso_coordinate_descent as lasso_coordinate_descent_slow
 # from enet_cd import enet_coordinate_descent
 
-"""Attempt to improve speed with cython
-"""
+# Attempt to improve speed with cython
 try:
     from lasso_cd_fast import lasso_coordinate_descent as lasso_coordinate_descent_fast
     lasso_coordinate_descent = lasso_coordinate_descent_fast
@@ -115,9 +119,9 @@ if __name__ == '__main__':
 
     # enet_model = ElasticNet(alpha=1.0, beta=10.0)
     # enet_model.fit(X, y, maxit=maxit)
-    # 
+    #
     # print "Duality gap (should be small): %f"%enet_model.gap
-    # 
+    #
     # import pylab as pl
     # pl.close('all')
     # # pl.plot(enet_model.E)
@@ -132,13 +136,13 @@ if __name__ == '__main__':
     model_slow.learner = lasso_coordinate_descent_slow
     model_slow.fit(X, y, maxit=maxit)
     print time.time() - t0
-    
+
     t0 = time.time()
     model_fast = Lasso(alpha=1)
     model_fast.learner = lasso_coordinate_descent_fast
     model_fast.fit(X, y, maxit=maxit)
     print time.time() - t0
-    
+
     import pylab as pl
     pl.close('all')
     pl.plot(model_fast.E,"rx-")
