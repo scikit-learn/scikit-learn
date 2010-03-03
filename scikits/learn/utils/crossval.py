@@ -3,49 +3,39 @@
 
 # $Id$
 
-import numpy as np
 import exceptions
 
-class LOO:
+import numpy as np
+
+def leave_one_out(n):
     """
     Leave-One-Out cross validation:
     Provides train/test indexes to split data in train test sets
 
-    Examples:
-    import scikits.learn.utils.crossval
-    import numpy as np
-    n_samples, n_features = 5, 10
-    X = np.random.randn(n_samples, n_features)
-    print X
-    loo = crossval.LOO(n_samples)
-    print loo[1]
-    for train_index, test_index in loo:
-        print "TRAIN:", train_index, "TEST:", test_index
-        Xtrain, Xtest, Ytrain, Ytest = split(train_index, test_index, X, y)
-        print Xtrain, Xtest, Ytrain, Ytest
+    Parameters
+    ===========
+    n: int
+        Total number of elements
+
+    Examples
+    ========
+ 
+    >>> import numpy as np
+    >>> import scikits.learn.utils.crossval
+    >>> n_samples, n_features = 5, 10
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> loo = crossval.LOO(n_samples)
+    >>> for train_index, test_index in loo:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    Xtrain, Xtest, Ytrain, Ytest = split(train_index, test_index, X, y)
+    ...    print Xtrain, Xtest, Ytrain, Ytest
     """
-
-    def __init__(self,n):
-        """
-        n : is the size of the dataset to split
-        """
-        self.n_folds = n
-        self.iter = 0
-
-    def __getitem__(self,item):
-        test_index  = np.zeros(self.n_folds,dtype=np.bool)
-        test_index[item] = True
+    for i in xrange(n):
+        test_index  = np.zeros(n, dtype=np.bool)
+        test_index[i] = True
         train_index = np.logical_not(test_index)
-        return train_index, test_index
+        yield train_index, test_index
 
-    def next(self):
-        if self.iter < self.n_folds:
-            self.iter += 1
-            return self.__getitem__(self.iter-1)
-        raise StopIteration
-
-    def __iter__(self):
-        return self
 
 def split(train_indexes, test_indexes, *args):
     """
@@ -60,14 +50,14 @@ def split(train_indexes, test_indexes, *args):
         ret.append(arg_test)
     return ret
 
+
 if __name__ == "__main__":
     print "Leave One Out crossvalidation"
     n_samples, n_features = 3, 4
     X = np.random.randn(n_samples, n_features)
     y = np.random.randn(n_samples)
     print X
-    loo = LOO(n_samples)
-    print loo[1]
+    loo = leave_one_out(n_samples)
     for train_index, test_index in loo:
         print "TRAIN:", train_index, "TEST:", test_index
         Xtrain, Xtest, Ytrain, Ytest = split(train_index, test_index, X, y)
