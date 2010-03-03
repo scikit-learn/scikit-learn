@@ -224,7 +224,7 @@ class UnivSelection(object):
 
     def __init__(self, estimator=None, 
                        score_func=f_regression,
-                       select_func=None, select_args=()):
+                       select_func=None, select_args=(10,)):
         """ An object to do univariate selection before using a
             classifier.
 

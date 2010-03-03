@@ -63,6 +63,8 @@ struct svm_node **dense_to_sparse (double *x, int *dims)
 
     if (sparse == NULL || temp == NULL) return NULL;
 
+    printf("%d", dims[1]);
+
     for (i=0; i<dims[0]; i++) {
         T = temp; /* reset stack to start of array */
 
