@@ -2,7 +2,7 @@
 Todo: cross-check the F-value with stats model
 """
 
-from scikits.learn.feature_select import univ_selection  as fs
+from scikits.learn.feature_selection import univ_selection  as fs
 import numpy as np
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
@@ -23,6 +23,21 @@ def make_dataset(n_samples=50, n_features=20, k=5, seed=None, classif=True,
         
     return x, y
 
+def _test_compare_with_statsmodels():
+    """
+    Test whether the F test yields the same results as scikits.statmodels
+    """
+    x, y = make_dataset(classif=False)
+    F, pv = fs.f_regression(x, y)
+
+    import scikits.statsmodels as sm
+    nsubj = y.shape[0]
+    q = np.zeros(nsubj)
+    for i in range(x.shape[1]):
+        q[i] = sm.OLS(x[:,i], y).fit().f_test(contrast).pvalue 
+    assert_array_equal(pv,q)
+
+    
 def test_F_test_classif():
     """
     Test whether the F test yields meaningful results
@@ -214,13 +229,13 @@ def test_univ_fs_fpr_regression():
     x, y = make_dataset(classif=False)
     univ_selection = fs.UnivSelection(score_func=fs.f_regression,
                                       select_func=fs.select_fpr,
-                                      select_args=(0.001,))
+                                      select_args=(0.01,))
     univ_selection.fit(x, y)
     result = univ_selection.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert(result[:5]==1).all()
-    assert(np.sum(result[5:]==1)<2)
+    assert(np.sum(result[5:]==1)<3)
 
 def test_univ_fs_fdr_regression():
     """
@@ -252,5 +267,6 @@ def test_univ_fs_fwe_regression():
     result = univ_selection.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
+
     assert(result[:5]==1).all()
     assert(np.sum(result[5:]==1)<2)
