@@ -37,6 +37,7 @@ def test_lasso_cd_python_cython_sanity():
     # check t convergence using the KKT condition
     assert_array_almost_equal(model_slow.gap, 0, 1e-6)
 
+    # check that python and cython implementations behave exactly the same
     assert_array_almost_equal(model_slow.w, model_fast.w)
     assert_array_almost_equal(model_slow.E, model_fast.E)
 
