@@ -1,5 +1,6 @@
 import numpy as np
 from math import exp,log
+import scipy
 
 def fast_logdet(A):
     """
