@@ -8,6 +8,7 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
     (precision of the weights) and beta (precision of the noise) within a simple
     bayesian framework (MAP).
 
+
     Parameters
     ----------
     X : numpy array of shape (length,features)
@@ -97,7 +98,7 @@ def bayesian_linear(alpha, beta):
     w = np.dot(beta*sigma,np.dot(X.T,Y))
 
 
-    return w
+    return w, []
 
 
 
@@ -144,14 +145,13 @@ def bayesian_ard( X , Y, step_th=300,th_w = 1.e-12,alpha_th=1.e+16,
     alpha = np.ones(gram.shape[1])
 
     
-    log_likelihood = None
-    if ll_bool :
-      log_likelihood = []
+    log_likelihood = []
     has_converged = False
     ones = np.eye(gram.shape[1])
     sigma = scipy.linalg.pinv(alpha*ones + beta*gram)
     w = np.dot(beta*sigma,np.dot(X.T,Y))
     old_w = np.copy(w)
+    # important values to keep
     keep_a  = np.ones(X.shape[1],dtype=bool)
     while not has_converged and step_th:
 
@@ -205,14 +205,16 @@ class BayesianRegression(object):
     Encapsulate various bayesian regression algorithms
     """
     
-    def __init__(self):
-        pass
+    def __init__(self, alpha=None, beta=None):
+        self.alpha = alpha
+        self.beta = beta
 
     def fit(self, X, Y):
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
-        self.w ,self.alpha ,self.beta ,self.sigma ,self.log_likelihood = \
-	bayesian_ridge(X, Y)
+        if self.alpha:
+            self.w ,self.alpha ,self.beta ,self.sigma ,self.log_likelihood = \
+               	bayesian_ridge(X, Y)
 
     def predict(self, T):
         return np.dot(T, self.w)
