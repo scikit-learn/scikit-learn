@@ -21,6 +21,8 @@ class LOO:
     print loo[1]
     for train_index, test_index in loo:
         print "TRAIN:", train_index, "TEST:", test_index
+        Xtrain, Xtest, Ytrain, Ytest = split(train_index, test_index, X, y)
+        print Xtrain, Xtest, Ytrain, Ytest
     """
 
     def __init__(self,n):
@@ -45,25 +47,28 @@ class LOO:
     def __iter__(self):
         return self
 
-def crossval_split(train_indexes, test_indexes, *args):
+def split(train_indexes, test_indexes, *args):
     """
     For each arg return a train and test subsets defined by indexes provided
     in train_indexes and test_indexes
     """
     ret = []
     for arg in args:
-        arg_train = arg[trainIndexes,:]
-        arg_test  = arg[testIndexes,:]
+        arg_train = arg[train_indexes,:]
+        arg_test  = arg[test_indexes,:]
         ret.append(arg_train)
         ret.append(arg_test)
     return ret
 
 if __name__ == "__main__":
     print "Leave One Out crossvalidation"
-    n_samples, n_features = 5, 10
+    n_samples, n_features = 3, 4
     X = np.random.randn(n_samples, n_features)
+    y = np.random.randn(n_samples)
     print X
     loo = LOO(n_samples)
     print loo[1]
     for train_index, test_index in loo:
         print "TRAIN:", train_index, "TEST:", test_index
+        Xtrain, Xtest, Ytrain, Ytest = split(train_index, test_index, X, y)
+        print Xtrain, Xtest, Ytrain, Ytest
