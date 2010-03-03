@@ -1,5 +1,5 @@
 import numpy as np
-from scikits.learn.bayes.bayes import *
+from scikits.learn.bayes.regression import *
 from numpy.testing import assert_array_almost_equal
 from  scikits.learn.datasets.samples_generator import linear,nonlinear
 
