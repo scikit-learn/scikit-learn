@@ -31,6 +31,7 @@ Reference
    modules/em
    modules/manifold
    modules/svm
+   modules/glm
 
 
 For Developers
