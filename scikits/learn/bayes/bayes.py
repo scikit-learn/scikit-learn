@@ -1,11 +1,14 @@
 import numpy as np
 import scipy.linalg
 
-def bayesian_regression( X , Y, step_th=300, verbose = True) :
+def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6, verbose = True) :
     """
-    Regularized regression function.
-    Function for fitting an Automatic Relevance Determination to the data.
-        See Bishop p 345-348 for more details.
+    Bayesian ridge regression. Optimize the regularization parameter alpha
+    within a simple bayesian framework (MAP).
+
+    Notes
+    -----
+    See Bishop p 345-348 for more details.
 
     Parameters
     ----------
@@ -50,7 +53,10 @@ def bayesian_regression( X , Y, step_th=300, verbose = True) :
     w = np.dot(beta*sigma,np.dot(X.T,Y))
     while not has_converged and step_th:
 
-        ### Update Parameters
+	w_ = np.copy(w)
+       
+	### Update Parameters
+	# alpha
         lmbd_ = np.real(scipy.linalg.eigvals(beta * gram.T))
         gamma_ = (lmbd_/(alpha + lmbd_)).sum()
         alpha = gamma_/np.dot(w.T, w)
@@ -58,13 +64,18 @@ def bayesian_regression( X , Y, step_th=300, verbose = True) :
         # beta
         residual_ = (Y - np.dot(X, w))**2
         beta = (X.shape[0]-gamma_) / residual_.sum()
+	if np.isinf(beta)b :
+	    break
 
         ### Compute mu and sigma
 	sigma = scipy.linalg.pinv(alpha*ones + beta*gram)
 	w = np.dot(beta*sigma,np.dot(X.T,Y))
+	print w,alpha,beta
         step_th -= 1
 
-        # convergence : compare w
+	# convergence : compare w
+	if np.sum(np.abs(w-w_))<th_w :
+	    break
 
     return w
 
