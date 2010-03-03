@@ -105,3 +105,23 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6,ll_bool=True) :
 	  log_likelihood.append(ll)
 
     return w,log_likelihood[1:]
+
+
+
+class BayessianRegression(object):
+    """
+    Encapsulate various bayesian regression algorithms
+    """
+    
+    def __init__(self):
+        pass
+
+    def fit(self, X, Y):
+        X = np.asanyarray(X, dtype=np.float)
+        Y = np.asanyarray(Y, dtype=np.float)
+        self.w  = bayesian_ridge(X, Y)
+
+    def predict(self, T):
+        T = np.asanyarray(T)
+        # I think this is wrong
+        return np.dot(T, self.w)
