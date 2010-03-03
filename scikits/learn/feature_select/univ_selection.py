@@ -1,7 +1,13 @@
+"""
+Univariate features selection.
+
+"""
+
+# Author: B. Thirion, G. Varoquaux
+# License: BSD 3 clause
+
 import numpy as np
 from scipy import stats 
-
-
 
 
 ######################################################################
@@ -167,21 +173,95 @@ def f_regression(x, y, center=True):
     return F, pv
 
 
+######################################################################
+# Selection function
+######################################################################
 
-
+def select_percentile(p_values, percentile):
+    score = stats.scoreatpercentile(p_values, percentile)
+    return (p_values < score)
 
 
 ######################################################################
 # Univariate Selection
 ######################################################################
 
+class UnivSelection(object):
+
+    def __init__(self, estimator=None, 
+                       score_func=f_regression,
+                       select_func=None, select_args=()):
+        """ An object to do univariate selection before using a
+            classifier.
+
+            Parameters
+            -----------
+            estimator: None or an estimator instance
+                If an estimator is given, it is used to predict on the
+                features selected.
+            score_func: A callable
+                The function used to score features. Should be::
+                    
+                    _, p_values = score_func(x, y)
+
+                The first output argument is ignored.
+            select_func: A callable
+                The function used to select features. Should be::
+                    
+                    support = select_func(p_values, *select_args)
+                If None is passed, the 10% lowest p_values are
+                selected.
+            select_args: A list or tuple
+                The arguments passed to select_func
+        """
+        assert hasattr(select_args, '__iter__'), ValueError(
+                "The select args should be a list-like."
+            )
+        assert callable(score_func), ValueError(
+                "The score function should be a callable, '%s' (type %s) "
+                "was passed." % (score_func, type(score_func))
+            )
+        if select_func is None:
+            if len(select_args) == 0:
+                select_args = (10,)
+            select_func = lambda p: select_percentile(p, *select_args)
+        assert callable(select_func), ValueError(
+                "The score function should be a callable, '%s' (type %s) "
+                "was passed." % (select_func, type(select_func))
+            )
+        self.estimator = estimator
+        self.score_func = score_func
+        self.select_func = select_func
 
 
+    #--------------------------------------------------------------------------
+    # Estimator interface
+    #--------------------------------------------------------------------------
+
+    def fit(self, x, y):
+        _, p_values_   = self.score_func(x, y)
+        self.support_  = self.select_func(p_values_)
+        self.p_values_ = p_values_
+        if self.estimator is not None:
+            self.estimator.fit(x[self.support_], y)
+        return self
+
+
+    def predict(self, x):
+        support_ = self.support_
+        if self.estimator is None:
+            return support_
+        else:
+            return self.estimator.predict(x[support_])
 
 
 if __name__ == "__main__":    
     x, y = generate_dataset_classif(n_samples=50, n_features=20, k=5, seed=2)
     F, pv = f_classif(x, y)
+    univ_selection = UnivSelection(score_func=f_classif, select_args=(25,))
+    univ_selection.fit(x, y)
+    print univ_selection.support_.astype(int)
+    assert np.all(univ_selection.p_values_ == pv)
     #x, y = generate_dataset_reg(n_samples=50, n_features=20, k=5, seed=2)
     #F, pv = f_regression(x, y)
     from scikits.learn import svm
