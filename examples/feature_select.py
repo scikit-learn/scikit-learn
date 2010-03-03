@@ -25,7 +25,7 @@ pl.clf()
 
 ################################################################################
 # Univariate feature selection
-from scikits.learn.feature_select import univ_selection 
+from scikits.learn.feature_selection import univ_selection 
 selector = univ_selection.UnivSelection(
                 score_func=univ_selection.f_classif)
 
