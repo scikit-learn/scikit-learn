@@ -200,8 +200,8 @@ def select_fpr(p_values, alpha):
 
 def select_fdr(p_values, alpha):
     """
-    Select the p-values corresponding to an estimated fdr of alpha
-
+    Select the p-values corresponding to an estimated false discovery rate
+    of alpha
     This uses the Benjamini-Hochberg procedure
     """
     sv = np.sort(p_values)
