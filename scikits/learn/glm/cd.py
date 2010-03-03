@@ -45,7 +45,7 @@ def enet_dual_gap(X, y, w, alpha, beta=0):
     gap = pobj - dobj
     return gap, pobj, dobj
 
-class LinearModelCD(object):
+class LinearModel(object):
     """Generic class for Linear Model optimized
     coordinate descent
     """
@@ -60,11 +60,11 @@ class LinearModelCD(object):
         y = np.dot(X,self.w)
         return y
 
-class LassoCD(LinearModelCD):
-    """Class LassoCD"""
+class Lasso(LinearModel):
+    """Class Lasso"""
 
     def __init__(self, alpha=None, w0=None):
-        super(LassoCD, self).__init__(w0)
+        super(Lasso, self).__init__(w0)
         self.alpha = alpha
         self.w = w0
         self.E = None
@@ -83,11 +83,11 @@ class LassoCD(LinearModelCD):
         self.gap, _, _ = enet_dual_gap(X, y, self.w, self.alpha, beta=0)
         return self
 
-class ElasticNetCD(LinearModelCD):
-    """Class ElasticNetCD"""
+class ElasticNet(LinearModel):
+    """Class ElasticNet"""
 
     def __init__(self, alpha=None, beta=None, w0=None):
-        super(ElasticNetCD, self).__init__(w0)
+        super(ElasticNet, self).__init__(w0)
         self.alpha = alpha
         self.beta = beta
         self.learner = enet_coordinate_descent
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     y = np.random.randn(N)
     X = np.random.randn(N,P)
 
-    # enet_model = ElasticNetCD(alpha=1.0, beta=10.0)
+    # enet_model = ElasticNet(alpha=1.0, beta=10.0)
     # enet_model.fit(X, y, maxit=maxit)
     # 
     # print "Duality gap (should be small): %f"%enet_model.gap
@@ -128,13 +128,13 @@ if __name__ == '__main__':
 
     import time
     t0 = time.time()
-    model_slow = LassoCD(alpha=1)
+    model_slow = Lasso(alpha=1)
     model_slow.learner = lasso_coordinate_descent_slow
     model_slow.fit(X, y, maxit=maxit)
     print time.time() - t0
     
     t0 = time.time()
-    model_fast = LassoCD(alpha=1)
+    model_fast = Lasso(alpha=1)
     model_fast.learner = lasso_coordinate_descent_fast
     model_fast.fit(X, y, maxit=maxit)
     print time.time() - t0
