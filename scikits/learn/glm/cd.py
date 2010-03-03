@@ -28,11 +28,13 @@ from enet_cd import enet_coordinate_descent as enet_coordinate_descent_slow
 
 # Attempt to improve speed with cython
 try:
-    from lasso_cd_fast import lasso_coordinate_descent as lasso_coordinate_descent_fast
-    from enet_cd_fast import enet_coordinate_descent as enet_coordinate_descent_fast
+    from lasso_cd_fast import lasso_coordinate_descent \
+            as lasso_coordinate_descent_fast
+    from enet_cd_fast import enet_coordinate_descent \
+            as enet_coordinate_descent_fast
     lasso_coordinate_descent = lasso_coordinate_descent_fast
     enet_coordinate_descent = enet_coordinate_descent_fast
-except ImportError, e:
+except ImportError:
     lasso_coordinate_descent = lasso_coordinate_descent_slow
     enet_coordinate_descent = enet_coordinate_descent_slow
     print "Using Python version of coordinate descent"
