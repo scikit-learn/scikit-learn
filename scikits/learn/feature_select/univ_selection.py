@@ -51,7 +51,7 @@ def generate_dataset_classif(n_samples=100, n_features=100, param=[1,1],
     param = np.ravel(np.array(param)).astype(np.float)
     for n in range(n_samples):
         y[n] = np.nonzero(random.multinomial(1, param/param.sum()))[0]
-    x[:,:k] += y[:,np.newaxis]
+    x[:,:k] += 3*y[:,np.newaxis]
     return x, y.astype(np.int)
 
 def generate_dataset_reg(n_samples=100, n_features=100, k=0, seed=None):
@@ -184,3 +184,8 @@ if __name__ == "__main__":
     F, pv = f_classif(x, y)
     #x, y = generate_dataset_reg(n_samples=50, n_features=20, k=5, seed=2)
     #F, pv = f_regression(x, y)
+    from scikits.learn import svm
+    clf =  svm.SVM(kernel_type='linear')
+    clf.fit(x, y)
+    print clf.predict(x[:5])
+    #print svm.predict(x,y,x)
