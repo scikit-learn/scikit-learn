@@ -260,7 +260,7 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     cdef int nclass = get_nr(model)
 
     # copy model.sv_coef 
-    cdef np.ndarray[np.double_t, ndim=2] sv_coef
+    cdef np.ndarray[np.double_t, ndim=2, mode='c'] sv_coef
     sv_coef = np.empty((nclass-1, nSV))
     copy_sv_coef(sv_coef.data, model, sv_coef.strides)
 
@@ -270,7 +270,7 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     copy_rho(rho.data, model, rho.strides)
 
     # copy model.SV
-    cdef np.ndarray[np.float_t, ndim=2] SV
+    cdef np.ndarray[np.float_t, ndim=2, mode='c'] SV
     SV = np.zeros((nSV, X.shape[1]))
     copy_SV(SV.data, model, SV.strides)
 
