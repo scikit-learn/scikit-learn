@@ -30,7 +30,7 @@ def enet_dual_gap(X, y, w, alpha, beta=0):
     Returns
     -------
     gap : the difference  primal_objective - dual_objective (should be positive)
-        A value less that 1e-6 means convergence in practice
+        A value less that 1e-5 means convergence in practice
     primal_objective : the value of the objective function of the primal problem
     dual_objective : the value of the objective function of the dual problem
 
@@ -67,6 +67,11 @@ class LinearModel(object):
         """
         y = np.dot(X,self.w)
         return y
+
+    def density(self):
+        """Ratio of non-zero weights in the model"""
+        return 0 if self.w is None else float((self.w != 0).sum()) / self.w.size
+
 
 class Lasso(LinearModel):
     """Linear Model trained with L1 prior as regularizer (a.k.a. the Lasso)"""
