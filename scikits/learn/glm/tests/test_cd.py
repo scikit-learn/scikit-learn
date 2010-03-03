@@ -1,12 +1,11 @@
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
+# Authors: Olivier Grisel <olivier.grisel@ensta.org>
+#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
 # $Id$
 
 import numpy as np
-from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_raises
 
 from ..cd import lasso_coordinate_descent_slow
 from ..cd import lasso_coordinate_descent_fast

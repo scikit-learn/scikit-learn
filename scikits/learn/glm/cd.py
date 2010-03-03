@@ -246,8 +246,7 @@ if __name__ == '__main__':
     from itertools import cycle
     color_iter = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k'])
 
-    import pylab as pl
-    pl.close('all')
+    pl.figure()
     for color, weight_lasso, weight_enet in zip(color_iter, weights_lasso.T, weights_enet.T):
         pl.plot(-np.log(alphas_lasso), weight_lasso, color)
         pl.plot(-np.log(alphas_enet), weight_enet, color+'x')
