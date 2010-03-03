@@ -31,13 +31,14 @@ ctypedef np.float64_t DOUBLE
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
+def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             float alpha,
+                            float beta,
                             np.ndarray[DOUBLE, ndim=1] w,
                             int maxit=10):
     """Cython version of the coordinate descent algorithm
-        for Lasso regression
+        for Elastic-Net regression
     """
 
     # get the data information into easy vars
@@ -47,7 +48,9 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
 
     E = []
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0) # Compute norms of the columns of X
-    cdef np.ndarray[DOUBLE, ndim=1] R = y - np.dot(X,w) # Init residual
+    cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(nfeatures+nsamples)
+    R[:nsamples] = y - np.dot(X,w)
+    R[nsamples:] = - sqrt(beta) * w
 
     cdef float tmp
     cdef float w_ii
@@ -61,18 +64,20 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
             # R += w_ii * X[:,ii]
             for jj in range(nsamples):
                 R[jj] += w_ii * X[jj,ii]
+            R[nsamples+ii] += w_ii * sqrt(beta)
 
             # tmp = (X[:,ii]*R).sum()
             tmp = 0.0
             for jj in range(nsamples):
                 tmp += R[jj] * X[jj,ii]
 
-            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha,0) / norm_cols_X[ii]
+            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha,0) / (norm_cols_X[ii] + beta)
 
             # R -=  w[ii] * X[:,ii] # Update residual
             for jj in range(nsamples):
                 R[jj] -=  w[ii] * X[jj,ii] # Update residual
+            R[nsamples+ii] -= w[ii] * sqrt(beta)
 
-        E.append(0.5*linalg.norm(R)**2 + alpha*np.abs(w).sum())
+        E.append(0.5*linalg.norm(R)**2 + alpha*np.abs(w).sum() + 0.5*beta*linalg.norm(w)**2)
 
     return w, E

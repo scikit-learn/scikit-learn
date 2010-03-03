@@ -11,14 +11,17 @@ zeros) such as the laplacian (L1) and Elastic Net (L1 + L2) priors.
 import numpy as np
 import scipy.linalg as linalg
 from lasso_cd import lasso_coordinate_descent as lasso_coordinate_descent_slow
-# from enet_cd import enet_coordinate_descent
+from enet_cd import enet_coordinate_descent as enet_coordinate_descent_slow
 
 # Attempt to improve speed with cython
 try:
     from lasso_cd_fast import lasso_coordinate_descent as lasso_coordinate_descent_fast
+    from enet_cd_fast import enet_coordinate_descent as enet_coordinate_descent_fast
     lasso_coordinate_descent = lasso_coordinate_descent_fast
+    enet_coordinate_descent = enet_coordinate_descent_fast
 except ImportError, e:
     lasso_coordinate_descent = lasso_coordinate_descent_slow
+    enet_coordinate_descent = enet_coordinate_descent_slow
     print "Using Python version of coordinate descent"
 
 def enet_dual_gap(X, y, w, alpha, beta=0):
@@ -70,8 +73,6 @@ class Lasso(LinearModel):
     def __init__(self, alpha=None, w0=None):
         super(Lasso, self).__init__(w0)
         self.alpha = alpha
-        self.w = w0
-        self.E = None
         self.learner = lasso_coordinate_descent
 
     def fit(self, X, y, maxit=10):
@@ -111,43 +112,67 @@ class ElasticNet(LinearModel):
         return self
 
 if __name__ == '__main__':
-    N, P, maxit = 100, 10000, 30
-    N, P, maxit = 5, 10, 100
+    N, P, maxit = 5, 10, 30
     np.random.seed(0)
     y = np.random.randn(N)
     X = np.random.randn(N,P)
 
-    # enet_model = ElasticNet(alpha=1.0, beta=10.0)
-    # enet_model.fit(X, y, maxit=maxit)
-    #
-    # print "Duality gap (should be small): %f"%enet_model.gap
-    #
-    # import pylab as pl
-    # pl.close('all')
-    # # pl.plot(enet_model.E)
-    # pl.loglog(enet_model.E)
-    # pl.xlabel('Iteration')
-    # pl.ylabel('Cost function')
-    # pl.show()
+    """Tests Lasso implementations (python and cython)
+    """
+
+    alpha = 1.0
 
     import time
     t0 = time.time()
-    model_slow = Lasso(alpha=1)
-    model_slow.learner = lasso_coordinate_descent_slow
-    model_slow.fit(X, y, maxit=maxit)
+    lasso_slow = Lasso(alpha=alpha)
+    lasso_slow.learner = lasso_coordinate_descent_slow
+    lasso_slow.fit(X, y, maxit=maxit)
     print time.time() - t0
 
     t0 = time.time()
-    model_fast = Lasso(alpha=1)
-    model_fast.learner = lasso_coordinate_descent_fast
-    model_fast.fit(X, y, maxit=maxit)
+    lasso_fast = Lasso(alpha=alpha)
+    lasso_fast.learner = lasso_coordinate_descent_fast
+    lasso_fast.fit(X, y, maxit=maxit)
     print time.time() - t0
+
+    print "Duality gap Lasso (should be small): %f"%lasso_fast.gap
 
     import pylab as pl
     pl.close('all')
-    pl.plot(model_fast.E,"rx-")
-    pl.plot(model_slow.E,"bo--")
+    pl.plot(lasso_fast.E,"rx-")
+    pl.plot(lasso_slow.E,"bo--")
     pl.xlabel('Iteration')
     pl.ylabel('Cost function')
     pl.legend(['Slow', 'Fast'])
+    pl.title('Lasso')
+    pl.show()
+
+    """Tests Elastic-Net implementations (python and cython)
+    """
+
+    alpha = 1.0
+    beta = 1.0
+
+    import time
+    t0 = time.time()
+    enet_slow = ElasticNet(alpha=alpha, beta=beta)
+    enet_slow.learner = enet_coordinate_descent_slow
+    enet_slow.fit(X, y, maxit=maxit)
+    print time.time() - t0
+
+    t0 = time.time()
+    enet_fast = ElasticNet(alpha=alpha, beta=beta)
+    enet_fast.learner = enet_coordinate_descent_fast
+    enet_fast.fit(X, y, maxit=maxit)
+    print time.time() - t0
+
+    print "Duality gap (should be small): %f"%enet_fast.gap
+
+    pl.figure()
+    pl.plot(enet_fast.E,"rx-")
+    pl.plot(enet_slow.E,"bo--")
+    pl.xlabel('Iteration')
+    pl.ylabel('Cost function')
+    pl.legend(['Slow', 'Fast'])
+    pl.title('Elastic-Net')
     pl.show()

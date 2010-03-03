@@ -11,7 +11,7 @@ def lasso_coordinate_descent(X, y, alpha, w, maxit=10):
     """
     E = []
     norm_cols_X = np.sum(X**2, axis=0) # Compute norms of the columns of X
-    R = y.copy() # Init residual
+    R = y - np.dot(X,w) # Init residual
     nsamples, nfeatures = X.shape
 
     for _ in xrange(maxit):

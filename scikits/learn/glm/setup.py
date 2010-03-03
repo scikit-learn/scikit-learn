@@ -12,6 +12,9 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('lasso_cd_fast',
                          sources=['lasso_cd_fast.c'],
                          include_dirs=[numpy.get_include()])
+    config.add_extension('enet_cd_fast',
+                         sources=['enet_cd_fast.c'],
+                         include_dirs=[numpy.get_include()])
     return config
 
 if __name__ == '__main__':
