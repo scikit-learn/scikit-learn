@@ -23,7 +23,7 @@ def make_dataset(n_samples=50, n_features=20, k=5, seed=None, classif=True,
         
     return x, y
 
-def _test_compare_with_statsmodels():
+def test_compare_with_statsmodels():
     """
     Test whether the F test yields the same results as scikits.statmodels
     """
@@ -32,10 +32,12 @@ def _test_compare_with_statsmodels():
 
     import scikits.statsmodels as sm
     nsubj = y.shape[0]
-    q = np.zeros(nsubj)
-    for i in range(x.shape[1]):
-        q[i] = sm.OLS(x[:,i], y).fit().f_test(contrast).pvalue 
-    assert_array_equal(pv,q)
+    nfeature = x.shape[1]
+    q = np.zeros(nfeature)
+    contrast = np.array([1,0])
+    for i in range(nfeature):
+        q[i] = sm.OLS(x[:,i], np.vstack((y,np.ones(nsubj))).T).fit().f_test(contrast).pvalue 
+    assert_array_almost_equal(pv,q,1.e-6)
 
     
 def test_F_test_classif():
