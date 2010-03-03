@@ -1,51 +1,70 @@
 import numpy as np
 import scipy.linalg
 
-def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6, verbose = True) :
+
+def fast_logdet(A):
+    """
+    Compute log(det(A)) for A symmetric
+    Equivalent to : np.log(nl.det(A))
+    but more robust
+    It returns -Inf if det(A) is non positive
+    Copyright : A. Gramfort 2010   
+    """
+    from math import exp,log
+    ld = np.sum(np.log(np.diag(A)))
+    if not np.isfinite(ld):
+        return -np.inf
+    a = exp(ld/A.shape[0])
+    d = scipy.linalg.det(A/a)
+    if d <= 0:
+        return -np.inf
+    ld += log(d)
+    if not np.isfinite(ld):
+        return -np.inf
+    return ld
+
+
+
+def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6,ll_bool=True) :
     """
     Bayesian ridge regression. Optimize the regularization parameter alpha
     within a simple bayesian framework (MAP).
 
-    Notes
-    -----
-    See Bishop p 345-348 for more details.
 
     Parameters
     ----------
-    phi : numpy array of shape (length,dim)
-          functionnal images (gram matrix)
-    y : numpy array of shape (length)
-        target.
-    prune_th : number
-           Defaut is 1.e+12. If not None, we remove the alpha by
-           removing the ones supra-thresholded.
-    mu_th : number
-        threshold on the delta of the weights to stop the convergence.
-        Defaut is 1.e-4.
-    lambd_th : number
-           threshold on the lambda, to avoid divergence. Set the lambda
-           to lambda_th (default is 1.e+12) is lambda > lambda_th.
-    step_th : number.
-          Stop the algorithm if the number of step is > step_th.
-    mode : string
-           mode of computing for alpha : direct differenciation
-           "DirectDiff" (defaut)(see Bishop p347), or
-           expectation-maximization "EM" (see Bishop p450).
-           "DirectDiff" is normally faster.
-    verbose  : boolean.
-           Set the output on the console (default is True).
+    X : numpy array of shape (length,features)
+	data
+    Y : numpy array of shape (length)
+	target
+    step_th : int (defaut is 300)
+	      Stop the algorithm after a given number of steps.
+    th_w : float (defaut is 1.e-6)
+	   Stop the algorithm if w has converged.
+    ll_bool  : boolean (default is True).
+	       If True, compute the log-likelihood at each step of the model.
 
     Returns
     -------
-    mu : numpy array of shape (dim)
+    w : numpy array of shape (dim)
          mean of the weights distribution.
-    log_evidence : number
-               the log evidence of p(y|0,Sigma)    
+   
+    Examples
+    --------
+    >>> X = np.array([[1], [2]])
+    >>> Y = np.array([1, 2])
+    >>> w = ridge_regression(X,Y)
+    w = 1.
+
+    Notes
+    -----
+    See Bishop p 345-348 for more details.
     """
 
     beta = 1./np.var(Y)
     alpha = 1.0
 
+    log_likelihood = []
     has_converged = False
     gram = np.dot(X.T, X)
     ones = np.eye(gram.shape[1])
@@ -69,9 +88,20 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6, verbose = True) :
 	w = np.dot(beta*sigma,np.dot(X.T,Y))
         step_th -= 1
 
+
+
 	# convergence : compare w
 	has_converged =  (np.sum(np.abs(w-old_w))<th_w)
         old_w = w
+
+
+	### Compute the log likelihood
+	if ll_bool :
+	  ll = 0.5*X.shape[1]*np.log(alpha) + 0.5*X.shape[0]*np.log(beta)
+	  ll -= 0.5*beta*residual_.sum()+ 0.5*alpha*np.dot(w.T,w)
+	  ll -= fast_logdet(inv_sigma_) 
+	  ll -= X.shape[0]*np.log(2*np.pi)
+	  log_likelihood.append(ll)
 
     return w
 
