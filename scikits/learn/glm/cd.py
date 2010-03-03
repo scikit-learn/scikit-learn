@@ -53,9 +53,7 @@ def enet_dual_gap(X, y, w, alpha, beta=0):
     return gap, pobj, dobj
 
 class LinearModel(object):
-    """Generic class for Linear Model optimized
-    coordinate descent
-    """
+    """Generic class for Linear Model optimized with coordinate descent"""
 
     def __init__(self, w0=None):
         self.w = w0
@@ -68,7 +66,7 @@ class LinearModel(object):
         return y
 
 class Lasso(LinearModel):
-    """Class Lasso"""
+    """Linear Model trained with L1 prior as regularizer (a.k.a. the Lasso)"""
 
     def __init__(self, alpha=None, w0=None):
         super(Lasso, self).__init__(w0)
@@ -89,7 +87,7 @@ class Lasso(LinearModel):
         return self
 
 class ElasticNet(LinearModel):
-    """Class ElasticNet"""
+    """Linear Model trained with L1 and L2 prior as regularizer"""
 
     def __init__(self, alpha=None, beta=None, w0=None):
         super(ElasticNet, self).__init__(w0)
@@ -135,7 +133,7 @@ if __name__ == '__main__':
     lasso_fast.fit(X, y, maxit=maxit)
     print time.time() - t0
 
-    print "Duality gap Lasso (should be small): %f"%lasso_fast.gap
+    print "Duality gap Lasso (should be small): %f" % lasso_fast.gap
 
     import pylab as pl
     pl.close('all')
@@ -166,7 +164,7 @@ if __name__ == '__main__':
     enet_fast.fit(X, y, maxit=maxit)
     print time.time() - t0
 
-    print "Duality gap (should be small): %f"%enet_fast.gap
+    print "Duality gap (should be small): %f" % enet_fast.gap
 
     pl.figure()
     pl.plot(enet_fast.E,"rx-")
@@ -176,3 +174,4 @@ if __name__ == '__main__':
     pl.legend(['Slow', 'Fast'])
     pl.title('Elastic-Net')
     pl.show()
+
