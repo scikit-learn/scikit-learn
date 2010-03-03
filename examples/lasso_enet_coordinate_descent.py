@@ -8,12 +8,6 @@ import numpy as np
 import pylab as pl
 from scikits.learn.glm.cd import Lasso, ElasticNet, lasso_path, enet_path
 
-# import some data to play with
-from scikits.learn.datasets.iris import load
-SP, SW, PL, PW, LABELS = load()
-X = np.c_[SP, SW]
-Y = LABELS
-
 def demo_glm():
     """
     Sample usage of GLM to predict with a linear model.
