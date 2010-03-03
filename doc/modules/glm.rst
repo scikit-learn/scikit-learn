@@ -25,4 +25,6 @@ Examples
 
 .. literalinclude:: ../../examples/lasso_enet_coordinate_descent.py
 
-TODO: include image
+.. image:: lasso_enet_coordinate_descent.png
+    :align: center
+
