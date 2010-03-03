@@ -25,7 +25,7 @@ def fast_logdet(A):
 
 
 
-def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6,ll_bool=True) :
+def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
     """
     Bayesian ridge regression. Optimize the regularization parameter alpha
     within a simple bayesian framework (MAP).
@@ -39,15 +39,17 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6,ll_bool=True) :
 	target
     step_th : int (defaut is 300)
 	      Stop the algorithm after a given number of steps.
-    th_w : float (defaut is 1.e-6)
+    th_w : float (defaut is 1.e-12)
 	   Stop the algorithm if w has converged.
-    ll_bool  : boolean (default is True).
+    ll_bool  : boolean (default is False).
 	       If True, compute the log-likelihood at each step of the model.
 
     Returns
     -------
     w : numpy array of shape (dim)
          mean of the weights distribution.
+    log_likelihood : list of float of size steps.
+		     Compute (if asked) the log-likelihood of the model.
    
     Examples
     --------
@@ -64,7 +66,9 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6,ll_bool=True) :
     beta = 1./np.var(Y)
     alpha = 1.0
 
-    log_likelihood = []
+    log_likelihood = None
+    if ll_bool :
+      log_likelihood = []
     has_converged = False
     gram = np.dot(X.T, X)
     ones = np.eye(gram.shape[1])
@@ -89,7 +93,6 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6,ll_bool=True) :
         step_th -= 1
 
 
-
 	# convergence : compare w
 	has_converged =  (np.sum(np.abs(w-old_w))<th_w)
         old_w = w
@@ -104,11 +107,11 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6,ll_bool=True) :
 	  ll -= X.shape[0]*np.log(2*np.pi)
 	  log_likelihood.append(ll)
 
-    return w,log_likelihood[1:]
+    return w,log_likelihood
 
 
 
-class BayessianRegression(object):
+class BayesianRegression(object):
     """
     Encapsulate various bayesian regression algorithms
     """
@@ -119,9 +122,9 @@ class BayessianRegression(object):
     def fit(self, X, Y):
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
-        self.w  = bayesian_ridge(X, Y)
+        self.w,self.log_likelihood = bayesian_ridge(X, Y)
 
     def predict(self, T):
-        T = np.asanyarray(T)
-        # I think this is wrong
         return np.dot(T, self.w)
+
+
