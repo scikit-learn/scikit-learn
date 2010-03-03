@@ -58,7 +58,7 @@ def generate_dataset_classif(n_samples=100, n_features=100, param=[1,1],
     for n in range(n_samples):
         y[n] = np.nonzero(random.multinomial(1, param/param.sum()))[0]
     x[:,:k] += 3*y[:,np.newaxis]
-    return x, y.astype(np.int)
+    return x, y
 
 def generate_dataset_reg(n_samples=100, n_features=100, k=0, seed=None):
     """
@@ -167,7 +167,7 @@ def f_regression(x, y, center=True):
     corr = np.dot(y, x)
 
     # convert to p-value
-    dof = y.size-1
+    dof = y.size-2
     F = corr**2/(1-corr**2)*dof
     pv = stats.f.sf(F, 1, dof)
     return F, pv
@@ -178,8 +178,42 @@ def f_regression(x, y, center=True):
 ######################################################################
 
 def select_percentile(p_values, percentile):
-    score = stats.scoreatpercentile(p_values, percentile)
-    return (p_values < score)
+    """ Select the best percentile of the p_values
+    """
+    alpha = stats.scoreatpercentile(p_values, percentile)
+    return (p_values < alpha)
+
+def select_k_best(p_values, k):
+    """Select the k lowest p-values 
+    """
+    assert k<len(p_values), ValueError('cannot select %d features'
+                                       ' among %d ' % (k, len(p_values)))
+    #alpha = stats.scoreatpercentile(p_values, 100.*k/len(p_values))
+    alpha = np.sort(p_values)[k]
+    return (p_values < alpha)
+    
+
+def select_fpr(p_values, alpha):
+    """Select the pvalues below alpha
+    """
+    return (p_values < alpha)
+
+def select_fdr(p_values, alpha):
+    """
+    Select the p-values corresponding to an estimated fdr of alpha
+
+    This uses the Benjamini-Hochberg procedure
+    """
+    sv = np.sort(p_values)
+    threshold = sv[sv < alpha*np.arange(len(p_values))].max()
+    return (p_values < threshold)
+
+def select_fwe(p_values, alpha):
+    """
+    Select the p-values corresponding to a corrected p-value of alpha
+    """
+    return (p_values<alpha/len(p_values))
+    
 
 
 ######################################################################
@@ -214,17 +248,14 @@ class UnivSelection(object):
             select_args: A list or tuple
                 The arguments passed to select_func
         """
-        assert hasattr(select_args, '__iter__'), ValueError(
-                "The select args should be a list-like."
-            )
+        if not hasattr(select_args, '__iter__'):
+            select_args = list(select_args)
         assert callable(score_func), ValueError(
                 "The score function should be a callable, '%s' (type %s) "
                 "was passed." % (score_func, type(score_func))
             )
         if select_func is None:
-            if len(select_args) == 0:
-                select_args = (10,)
-            select_func = lambda p: select_percentile(p, *select_args)
+            select_func = select_percentile
         assert callable(select_func), ValueError(
                 "The score function should be a callable, '%s' (type %s) "
                 "was passed." % (select_func, type(select_func))
@@ -232,6 +263,7 @@ class UnivSelection(object):
         self.estimator = estimator
         self.score_func = score_func
         self.select_func = select_func
+        self.select_args = select_args
 
 
     #--------------------------------------------------------------------------
@@ -240,7 +272,7 @@ class UnivSelection(object):
 
     def fit(self, x, y):
         _, p_values_   = self.score_func(x, y)
-        self.support_  = self.select_func(p_values_)
+        self.support_  = self.select_func(p_values_,*self.select_args)
         self.p_values_ = p_values_
         if self.estimator is not None:
             self.estimator.fit(x[self.support_], y)
@@ -261,11 +293,40 @@ if __name__ == "__main__":
     univ_selection = UnivSelection(score_func=f_classif, select_args=(25,))
     univ_selection.fit(x, y)
     print univ_selection.support_.astype(int)
+
+    univ_selection = UnivSelection(score_func=f_classif,
+                                   select_func=select_k_best,
+                                   select_args=(5,))
+    univ_selection.fit(x, y)
+    print univ_selection.support_.astype(int)
+
+    univ_selection = UnivSelection(score_func=f_classif,
+                                   select_func=select_fpr,
+                                   select_args=(0.001,))
+    univ_selection.fit(x, y)
+
+    print univ_selection.support_.astype(int)
+    univ_selection = UnivSelection(score_func=f_classif,
+                                   select_func=select_fwe,
+                                   select_args=(0.05,))
+    univ_selection.fit(x, y)
+    print univ_selection.support_.astype(int)
+
+    univ_selection = UnivSelection(score_func=f_classif,
+                                   select_func=select_fdr,
+                                   select_args=(0.05,))
+    univ_selection.fit(x, y)
+    print univ_selection.support_.astype(int)
+
+
+
+
     assert np.all(univ_selection.p_values_ == pv)
     #x, y = generate_dataset_reg(n_samples=50, n_features=20, k=5, seed=2)
     #F, pv = f_regression(x, y)
     from scikits.learn import svm
     clf =  svm.SVM(kernel_type='linear')
+    y = np.asfarray(y)
     clf.fit(x, y)
-    print clf.predict(x[:5])
+    print clf.predict(x)
     #print svm.predict(x,y,x)
