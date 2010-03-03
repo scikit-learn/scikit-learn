@@ -4,8 +4,21 @@
 # $Id$
 """Implementation of regularized linear regression with Coordinate Descent
 
-We focus the implementation on regularizer that lead to sparse parameters (many
-zeros) such as the laplacian (L1) and Elastic Net (L1 + L2) priors.
+This implementation is focused on regularizers that lead to sparse parameters
+(many zeros) such as the laplacian (L1) and Elastic Net (L1 + L2) priors:
+
+  http://en.wikipedia.org/wiki/Generalized_linear_model
+
+The objective function to minimize is for the Lasso::
+
+        0.5 * ||R||_2 ^ 2 + alpha * ||w||_1
+
+and for the Elastic Network::
+
+        0.5 * ||R||_2 ^ 2 + alpha * ||w||_1 + beta * ||w||_2 ^ 2
+
+Where R are the residuals betwee the output of the model and the expected value
+and w is the vector of weights to fit.
 """
 
 import numpy as np
@@ -35,11 +48,11 @@ def enet_dual_gap(X, y, w, alpha, beta=0):
     dual_objective : the value of the objective function of the dual problem
 
     """
-    Xw = np.dot(X,w)
+    Xw = np.dot(X, w)
     A = (y - Xw)
     if beta > 0:
         B = - np.sqrt(beta) * w
-    XtA = np.dot(X.T,A)
+    XtA = np.dot(X.T, A)
     if beta > 0:
         XtA += np.sqrt(beta) * B
     dual_norm_XtA = np.max(XtA)
@@ -54,6 +67,7 @@ def enet_dual_gap(X, y, w, alpha, beta=0):
         dobj += - 0.5 * linalg.norm(B)**2
     gap = pobj - dobj
     return gap, pobj, dobj
+
 
 class LinearModel(object):
     """Generic class for Linear Model optimized with coordinate descent"""
@@ -94,6 +108,7 @@ class Lasso(LinearModel):
         self.gap, _, _ = enet_dual_gap(X, y, self.w, self.alpha, beta=0)
         return self
 
+
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer"""
 
@@ -116,6 +131,7 @@ class ElasticNet(LinearModel):
         # Check convergence
         self.gap, _, _ = enet_dual_gap(X, y, self.w, self.alpha, beta=self.beta)
         return self
+
 
 def lasso_path(X, y, factor=0.95, n_alphas = 10):
     """Compute Lasso path with coordinate descent"""
