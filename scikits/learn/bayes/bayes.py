@@ -49,7 +49,7 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-12,ll_bool=False) :
     ones = np.eye(gram.shape[1])
     sigma = scipy.linalg.pinv(alpha*ones + beta*gram)
     w = np.dot(beta*sigma,np.dot(X.T,Y))
-    old_w = w
+    old_w = np.copy(w)
     while not has_converged and step_th:
 
 	### Update Parameters
@@ -151,17 +151,17 @@ def bayesian_ard( X , Y, step_th=300,th_w = 1.e-12,alpha_th=1.e+16,
     ones = np.eye(gram.shape[1])
     sigma = scipy.linalg.pinv(alpha*ones + beta*gram)
     w = np.dot(beta*sigma,np.dot(X.T,Y))
-    old_w = w
+    old_w = np.copy(w)
     keep_a  = np.ones(X.shape[1],dtype=bool)
     while not has_converged and step_th:
 
 	
 	# alpha
-	gamma_ = 1 - alpha*np.diag(sigma)
-	alpha = gamma_/w**2
+	gamma_ = 1 - alpha[keep_a]*np.diag(sigma)
+	alpha[keep_a] = gamma_/w[keep_a]**2
   
 	# beta
-	residual_ = (Y - np.dot(X, w))**2
+	residual_ = (Y - np.dot(X[:,keep_a], w[keep_a]))**2
 	beta = (X.shape[0]-gamma_.sum()) / residual_.sum()
 
 	### Avoid divergence of the values by setting a maximum values of the
@@ -182,13 +182,12 @@ def bayesian_ard( X , Y, step_th=300,th_w = 1.e-12,alpha_th=1.e+16,
 	
 	### Compute the log likelihood
 	if ll_bool :
-	  ones = np.eye(X.shape[1])
-	  A_ = ones/alpha
-	  C_ = (1./beta)*ones + np.dot(X.T,np.dot(A_,X))
+	  A_ = np.eye(X.shape[1])/alpha
+	  C_ = (1./beta)*np.eye(X.shape[0]) + np.dot(X,np.dot(A_,X.T))
 	  ll = X.shape[0]*np.log(2*np.pi)+fast_logdet(C_)
-	  ll += np.dot(Y.T,np.dot(scipy.linalg.pinv(C),Y)) 
+	  ll += np.dot(Y.T,np.dot(scipy.linalg.pinv(C_),Y)) 
 	  log_likelihood.append(-0.5*ll)
-
+	
     return w,alpha,beta,sigma,log_likelihood
 
 
