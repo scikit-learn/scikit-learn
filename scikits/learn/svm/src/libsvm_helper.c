@@ -64,8 +64,6 @@ struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 
     if (sparse == NULL || temp == NULL) return NULL;
 
-    printf("%d", dims[1]);
-
     for (i=0; i<dims[0]; i++) {
         T = temp; /* reset stack to start of array */
 
@@ -166,13 +164,18 @@ void copy_rho(char *data, struct svm_model *model, npy_intp *strides)
 
 /* this is a bit more complex since SV are stored as sparse
    structures, so we have to do the conversion on the fly and also
-   iterate fast over data                                       */
+   iterate fast over data             
+
+   XXX: assigning test = strides[1] fails because these
+   strides happen to be zero on 64 bits (I have no clue why)
+
+                          */
 void copy_SV(char *data, struct svm_model *model, npy_int *strides)
 {
     register int i, j, k;
     char *t = data;
-    int n = model->l;
-    npy_intp step = strides[1];
+    npy_intp n = (npy_intp) model->l;
+    int step = sizeof(double);
     for (i=0; i<n; i++) {
         j = 0;
         while ((k = model->SV[i][j].index) != -1) {

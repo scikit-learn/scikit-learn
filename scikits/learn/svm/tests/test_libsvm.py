@@ -9,6 +9,11 @@ X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
 y = np.array( [1, 1, 1, 2, 2, 2])
 T = np.array( [[-1,-1], [2, 2], [3, 2]] )
 
+clf =  svm.SVM(kernel_type='linear')
+clf.fit(X, y)
+
+print clf.support_
+
 
 def test_svm_params():
     """
