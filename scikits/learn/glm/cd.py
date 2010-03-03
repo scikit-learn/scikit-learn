@@ -112,6 +112,42 @@ class ElasticNet(LinearModel):
         self.gap, _, _ = enet_dual_gap(X, y, self.w, self.alpha, beta=self.beta)
         return self
 
+def lasso_path(X, y, factor=0.95, n_alphas = 10):
+    """Compute Lasso path with coordinate descent"""
+    alpha_max = np.dot(X.T, y).max()
+    alpha = alpha_max
+    model = Lasso(alpha=alpha)
+    weights = []
+    alphas = []
+    for _ in range(n_alphas):
+        model.alpha *= factor
+        model.fit(X, y)
+
+        alphas.append(model.alpha)
+        weights.append(model.w.copy())
+
+    alphas = np.asarray(alphas)
+    weights = np.asarray(weights)
+    return alphas, weights
+
+def enet_path(X, y, factor=0.95, n_alphas = 10, beta=1.0):
+    """Compute Elastic-Net path with coordinate descent"""
+    alpha_max = np.dot(X.T, y).max()
+    alpha = alpha_max
+    model = ElasticNet(alpha=alpha, beta=beta)
+    weights = []
+    alphas = []
+    for _ in range(n_alphas):
+        model.alpha *= factor
+        model.fit(X, y)
+
+        alphas.append(model.alpha)
+        weights.append(model.w.copy())
+
+    alphas = np.asarray(alphas)
+    weights = np.asarray(weights)
+    return alphas, weights
+
 if __name__ == '__main__':
     N, P, maxit = 5, 10, 30
     np.random.seed(0)
@@ -178,3 +214,22 @@ if __name__ == '__main__':
     pl.title('Elastic-Net')
     pl.show()
 
+    """Test path functions
+    """
+
+    alphas_lasso, weights_lasso = lasso_path(X, y, factor=0.97, n_alphas = 100)
+    alphas_enet, weights_enet = enet_path(X, y, factor=0.97, n_alphas = 100, beta=0.1)
+
+    from itertools import cycle
+    color_iter = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k'])
+
+    import pylab as pl
+    pl.close('all')
+    for color, weight_lasso, weight_enet in zip(color_iter, weights_lasso.T, weights_enet.T):
+        pl.plot(-np.log(alphas_lasso), weight_lasso, color)
+        pl.plot(-np.log(alphas_enet), weight_enet, color+'x')
+    pl.xlabel('-log(lambda)')
+    pl.ylabel('weights')
+    pl.title('Lasso and Elastic-Net Paths')
+    pl.legend(['Lasso','Elastic-Net'])
+    pl.show()

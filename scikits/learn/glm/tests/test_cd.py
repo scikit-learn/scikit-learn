@@ -15,6 +15,8 @@ from ..cd import Lasso
 from ..cd import enet_coordinate_descent_slow
 from ..cd import enet_coordinate_descent_fast
 from ..cd import ElasticNet
+from ..cd import lasso_path
+from ..cd import enet_path
 
 
 def test_lasso_cd_python_cython_sanity():
@@ -64,3 +66,13 @@ def test_enet_cd_python_cython_sanity():
     assert_array_almost_equal(model_slow.w, model_fast.w)
     assert_array_almost_equal(model_slow.E, model_fast.E)
 
+def test_lasso_enet_cd_paths():
+    """Test Lasso and Elastic-Net path functions
+    """
+    n_samples, n_features, maxit = 5, 10, 30
+    np.random.seed(0)
+    y = np.random.randn(n_samples)
+    X = np.random.randn(n_samples, n_features)
+
+    alphas_lasso, weights_lasso = lasso_path(X, y, factor=0.97, n_alphas = 50)
+    alphas_enet, weights_enet = enet_path(X, y, factor=0.97, n_alphas = 50, beta=0.1)
