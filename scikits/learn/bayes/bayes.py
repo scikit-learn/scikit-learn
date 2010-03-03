@@ -97,11 +97,11 @@ def bayesian_ridge( X , Y, step_th=300,th_w = 1.e-6,ll_bool=True) :
 
 	### Compute the log likelihood
 	if ll_bool :
+	  residual_ = (Y - np.dot(X, w))**2
 	  ll = 0.5*X.shape[1]*np.log(alpha) + 0.5*X.shape[0]*np.log(beta)
-	  ll -= 0.5*beta*residual_.sum()+ 0.5*alpha*np.dot(w.T,w)
-	  ll -= fast_logdet(inv_sigma_) 
+	  ll -= (0.5*beta*residual_.sum()+ 0.5*alpha*np.dot(w.T,w))
+	  ll -= fast_logdet(alpha*ones + beta*gram)
 	  ll -= X.shape[0]*np.log(2*np.pi)
 	  log_likelihood.append(ll)
 
-    return w
-
+    return w,log_likelihood[1:]
