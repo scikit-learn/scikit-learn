@@ -63,17 +63,17 @@ cdef extern from "svm.h":
 
 cdef extern from "libsvm_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
-    svm_node **dense_to_sparse (char *, int *)
+    svm_node **dense_to_sparse (char *, np.npy_intp *)
     svm_parameter *set_parameter(int , int , int , double, double ,
                                   double , double , double , double,
                                   double, int, int, int, char *, char *)
-    svm_problem *set_problem(char *, char *, int *)
-    void copy_sv_coef (char *, svm_model *, int *)
-    void copy_rho     (char *, svm_model *, int *)
-    void copy_SV      (char *, svm_model *, int *)
-    int  copy_predict (char *, svm_model *, int *, char *)
-    int  get_l  (svm_model *)
-    int  get_nr (svm_model *)
+    svm_problem *set_problem(char *, char *, np.npy_intp *)
+    void copy_sv_coef (char *, svm_model *, np.npy_intp *)
+    void copy_rho     (char *, svm_model *, np.npy_intp *)
+    void copy_SV      (char *, svm_model *, np.npy_intp *)
+    int  copy_predict (char *, svm_model *, np.npy_intp *, char *)
+    np.npy_intp  get_l  (svm_model *)
+    np.npy_intp  get_nr (svm_model *)
     int  free_problem(svm_problem *)
     int  free_model  (svm_model *)
     int  free_param  (svm_parameter *)
@@ -192,8 +192,8 @@ def predict_wrap( np.ndarray[np.float_t, ndim=2, mode='c'] X,
 
 
 
-def train_wrap (  np.ndarray[np.float_t, ndim=2, mode='c'] X, 
-                  np.ndarray[np.float_t, ndim=1, mode='c'] Y,
+def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X, 
+                  np.ndarray[np.double_t, ndim=1, mode='c'] Y,
                   int svm_type, int kernel_type,
                   int degree, double gamma,
                   double coef0, double eps, double C,

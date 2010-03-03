@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "svm.h"
 #include <stdio.h>
+#include <numpy/arrayobject.h>
 
 /*
 
@@ -50,7 +51,7 @@ struct svm_model
    elements and after we just memcpy that to the proper array.
 
 */
-struct svm_node **dense_to_sparse (double *x, int *dims)
+struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 {
     struct svm_node **sparse;
     register int i, j;              /* number of nonzero elements in row i */
@@ -120,7 +121,7 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree, 
 }
 
 
-struct svm_problem * set_problem(char *X,char *Y, int *dims)
+struct svm_problem * set_problem(char *X,char *Y, npy_intp *dims)
 {
     struct svm_problem *problem;
     problem = (struct svm_problem *) malloc(sizeof(struct svm_problem));
@@ -135,22 +136,22 @@ struct svm_problem * set_problem(char *X,char *Y, int *dims)
     return problem;
 }
 
-int get_l(struct svm_model *model)
+npy_intp get_l(struct svm_model *model)
 {
     return model->l;
 }
 
-int get_nr(struct svm_model *model)
+npy_intp get_nr(struct svm_model *model)
 {
     return model->nr_class;
 }
 
 /* some helpers to convert from libsvm sparse data structures */
-void copy_sv_coef(char *data, struct svm_model *model, int *strides)
+void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
 {
     register int i;
     char *temp = data;
-    int step = strides[0];
+    npy_intp step = strides[0];
     int len = model->nr_class-1;
     for(i=0; i<len; ++i) {
         memcpy(temp, model->sv_coef[i], step);
@@ -158,7 +159,7 @@ void copy_sv_coef(char *data, struct svm_model *model, int *strides)
     }
 }
 
-void copy_rho(char *data, struct svm_model *model, int *strides)
+void copy_rho(char *data, struct svm_model *model, npy_intp *strides)
 {
     memcpy(data, model->rho, strides[0]);
 }
@@ -166,11 +167,12 @@ void copy_rho(char *data, struct svm_model *model, int *strides)
 /* this is a bit more complex since SV are stored as sparse
    structures, so we have to do the conversion on the fly and also
    iterate fast over data                                       */
-void copy_SV(char *data, struct svm_model *model, int *strides)
+void copy_SV(char *data, struct svm_model *model, npy_int *strides)
 {
     register int i, j, k;
     char *t = data;
-    int n = model->l, step = strides[1];
+    int n = model->l;
+    npy_intp step = strides[1];
     for (i=0; i<n; i++) {
         j = 0;
         while ((k = model->SV[i][j].index) != -1) {
@@ -182,7 +184,7 @@ void copy_SV(char *data, struct svm_model *model, int *strides)
 }
 
 /* we must also free the nodes that we created in the call to dense_to_sparse */
-int copy_predict(char *train, struct svm_model *model, int *train_dims,
+int copy_predict(char *train, struct svm_model *model, npy_intp *train_dims,
                  char *dec_values)
 {
     double *t = (double *) dec_values;
