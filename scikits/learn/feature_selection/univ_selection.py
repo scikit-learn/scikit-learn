@@ -7,7 +7,7 @@ Univariate features selection.
 # License: BSD 3 clause
 
 import numpy as np
-from scipy import stats 
+from scipy import stats
 
 
 ######################################################################
@@ -26,22 +26,22 @@ def generate_dataset_classif(n_samples=100, n_features=100, param=[1,1],
     n_features : 100, int,
         the number of featyres
     param : [1,1], list,
-        parameter of a dirichlet density 
-        that is used to generate multinomial densities 
+        parameter of a dirichlet density
+        that is used to generate multinomial densities
         from which the n_featuress will be samples
     k : 0, int,
         number of informative features
     seed : None, int or np.random.RandomState
         if seed is an instance of np.random.RandomState,
         it is used to initialize the random generator
-    
+
     Returns
     -------
     x : array of shape(n_samples, n_features),
         the design matrix
     y : array of shape (n_samples),
         the subject labels
-    
+
     """
     assert k<n_features, ValueError('cannot have %d informative fetaures and'
                                    ' %d features' % (k, n_features))
@@ -75,14 +75,14 @@ def generate_dataset_reg(n_samples=100, n_features=100, k=0, seed=None):
     seed : None, int or np.random.RandomState
         if seed is an instance of np.random.RandomState,
         it is used to initialize the random generator
-    
+
     Returns
     -------
     x : array of shape(n_samples, n_features),
         the design matrix
     y : array of shape (n_samples),
         the subject data
-    
+
     """
     assert k<n_features, ValueError('cannot have %d informative fetaures and'
                                    ' %d features' % (k, n_features))
@@ -113,8 +113,8 @@ def f_classif(x, y):
         the set of regressors sthat will tested sequentially
     y : array of shape(n_samples)
         the data matrix
-    
-    Returns    
+
+    Returns
     -------
     F : array of shape (m),
         the set of F values
@@ -124,7 +124,7 @@ def f_classif(x, y):
     x = np.asanyarray(x)
     args = [x[y==k] for k in np.unique(y)]
     return stats.f_oneway(*args)
-    
+
 
 def f_regression(x, y, center=True):
     """
@@ -145,22 +145,22 @@ def f_regression(x, y, center=True):
 
     center : True, bool,
         If true, x and y are centered
-    
-    Returns    
+
+    Returns
     -------
     F : array of shape (m),
         the set of F values
     pval : array of shape(m)
         the set of p-values
     """
-    
+
     # orthogonalize everything wrt to confounds
     y = y.copy()
     x = x.copy()
     if center:
         y -= np.mean(y)
         x -= np.mean(x, 0)
-        
+
     # compute the correlation
     x /= np.sqrt(np.sum(x**2,0))
     y /= np.sqrt(np.sum(y**2))
@@ -184,14 +184,14 @@ def select_percentile(p_values, percentile):
     return (p_values < alpha)
 
 def select_k_best(p_values, k):
-    """Select the k lowest p-values 
+    """Select the k lowest p-values
     """
     assert k<len(p_values), ValueError('cannot select %d features'
                                        ' among %d ' % (k, len(p_values)))
     #alpha = stats.scoreatpercentile(p_values, 100.*k/len(p_values))
     alpha = np.sort(p_values)[k]
     return (p_values < alpha)
-    
+
 
 def select_fpr(p_values, alpha):
     """Select the pvalues below alpha
@@ -213,7 +213,7 @@ def select_fwe(p_values, alpha):
     Select the p-values corresponding to a corrected p-value of alpha
     """
     return (p_values<alpha/len(p_values))
-    
+
 
 
 ######################################################################
@@ -222,7 +222,7 @@ def select_fwe(p_values, alpha):
 
 class UnivSelection(object):
 
-    def __init__(self, estimator=None, 
+    def __init__(self, estimator=None,
                        score_func=f_regression,
                        select_func=None, select_args=(10,)):
         """ An object to do univariate selection before using a
@@ -235,13 +235,13 @@ class UnivSelection(object):
                 features selected.
             score_func: A callable
                 The function used to score features. Should be::
-                    
+
                     _, p_values = score_func(x, y)
 
                 The first output argument is ignored.
             select_func: A callable
                 The function used to select features. Should be::
-                    
+
                     support = select_func(p_values, *select_args)
                 If None is passed, the 10% lowest p_values are
                 selected.
@@ -279,15 +279,15 @@ class UnivSelection(object):
         return self
 
 
-    def predict(self, x):
+    def predict(self, x=None):
         support_ = self.support_
-        if self.estimator is None:
+        if x is None or self.estimator is None:
             return support_
         else:
             return self.estimator.predict(x[support_])
 
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     x, y = generate_dataset_classif(n_samples=50, n_features=20, k=5, seed=2)
     F, pv = f_classif(x, y)
     univ_selection = UnivSelection(score_func=f_classif, select_args=(25,))
