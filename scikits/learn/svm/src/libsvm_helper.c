@@ -170,12 +170,12 @@ void copy_rho(char *data, struct svm_model *model, npy_intp *strides)
    strides happen to be zero on 64 bits (I have no clue why)
 
                           */
-void copy_SV(char *data, struct svm_model *model, npy_int *strides)
+void copy_SV(char *data, struct svm_model *model, npy_intp *strides)
 {
-    register int i, j, k;
+    register int i, j;
     char *t = data;
-    npy_intp n = (npy_intp) model->l;
-    int step = sizeof(double);
+    int k, n = model->l;
+    npy_intp step = strides[1];
     for (i=0; i<n; i++) {
         j = 0;
         while ((k = model->SV[i][j].index) != -1) {

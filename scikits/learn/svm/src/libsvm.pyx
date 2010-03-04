@@ -11,6 +11,9 @@ method dense_to_sparse we translate a dense matrix representation as
 those produced by NumPy to a sparse representation that libsvm can
 understand.
 
+We define arrays to be the same type as those in libsvm, usually of 
+type C double and C int.
+
 Low-level memory management is done in libsvm_helper.c. If we happen
 to run out of memory a MemoryError will be raised. In practice this is
 not very helpful since hight changes are malloc fails inside svm.cpp,
@@ -44,9 +47,6 @@ cimport numpy as np
 # Default Parameters
 
 DEF NR_WEIGHT   = 0
-DEF NU          = 0.5
-DEF P           = 0.1
-DEF SHRINKING   = 1
 DEF PROBABILITY = 0
 
 ################################################################################
@@ -104,15 +104,15 @@ cdef class SvmModelPtr:
 # Wrapper functions
 
 
-def predict_wrap( np.ndarray[np.float_t, ndim=2, mode='c'] X,
-                  np.ndarray[np.float_t, ndim=1, mode='c'] Y,
-                  np.ndarray[np.float_t, ndim=2, mode='c'] T,
+def predict_wrap( np.ndarray[np.double_t, ndim=2, mode='c'] X,
+                  np.ndarray[np.double_t, ndim=1, mode='c'] Y,
+                  np.ndarray[np.double_t, ndim=2, mode='c'] T,
                   int svm_type, int kernel_type,
                   int degree, double gamma,
                   double coef0, double eps, double C,
                   int nr_weight,
                   np.ndarray[np.int_t, ndim=1] weight_label,
-                  np.ndarray[np.float_t, ndim=1] weight,
+                  np.ndarray[np.double_t, ndim=1] weight,
                   double nu, double cache_size,
                   double p, int shrinking,
                   int probability):
@@ -177,8 +177,8 @@ def predict_wrap( np.ndarray[np.float_t, ndim=2, mode='c'] X,
     model = svm_train(problem, param)
     if model == NULL: raise MemoryError
 
-    # predict values
-    cdef np.ndarray[np.float_t, ndim=1, mode='c'] dec_values
+    # predicted values
+    cdef np.ndarray[double, ndim=1, mode='c'] dec_values
     dec_values = np.empty(T.shape[0])
     if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory in svm_predict")
@@ -265,12 +265,12 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     copy_sv_coef(sv_coef.data, model, sv_coef.strides)
 
     # copy model.rho
-    cdef np.ndarray[np.float_t, ndim=1, mode='c'] rho
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] rho
     rho = np.empty((nclass*nclass-1)/2)
     copy_rho(rho.data, model, rho.strides)
 
     # copy model.SV
-    cdef np.ndarray[np.float_t, ndim=2, mode='c'] SV
+    cdef np.ndarray[np.double_t, ndim=2, mode='c'] SV
     SV = np.zeros((nSV, X.shape[1]))
     copy_SV(SV.data, model, SV.strides)
 
@@ -281,7 +281,7 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     return sv_coef, rho, SV, ptr
 
 
-def predict_from_model_wrap(np.ndarray[np.float_t, ndim=2] T,
+def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2] T,
                                 SvmModelPtr ptr):
     """
     Predict values T given a pointer to svm_model.
@@ -306,7 +306,7 @@ def predict_from_model_wrap(np.ndarray[np.float_t, ndim=2] T,
     dec_values : array
         predicted values.
     """
-    cdef np.ndarray[np.float_t, ndim=1, mode='c'] dec_values
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] dec_values
     dec_values = np.empty(T.shape[0])
     if copy_predict(T.data, ptr.model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
