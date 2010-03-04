@@ -1,7 +1,11 @@
 import numpy as np
-from scikits.learn.bayes.regression import *
+from scikits.learn.bayes.regression import bayesian_regression_noprior, \
+                                      bayesian_regression_ridge, \
+                                      bayesian_regression_ard, \
+                                      RidgeRegression, \
+                                      BayesianRegression, \
+                                      ARDRegression
 from numpy.testing import assert_array_almost_equal
-from  scikits.learn.datasets.samples_generator import linear,nonlinear
 
 def test_toy_noprior_regression():
     """
@@ -9,7 +13,7 @@ def test_toy_noprior_regression():
     """
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
-    w ,beta ,log_likelihood = bayesian_regression_noprior(X, Y)
+    w, beta, log_likelihood = bayesian_regression_noprior(X, Y)
     assert_array_almost_equal(w, [1])
 
 
@@ -19,7 +23,7 @@ def test_toy_ridge_regression():
     """
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
-    w ,alpha ,beta ,sigma ,log_likelihood = bayesian_regression_ridge(X, Y)
+    w, alpha, beta, sigma, log_likelihood = bayesian_regression_ridge(X, Y)
     assert_array_almost_equal(w, [1])
 
 
@@ -29,7 +33,7 @@ def test_toy_ard_regression():
     """
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
-    w ,alpha ,beta ,sigma ,log_likelihood = bayesian_regression_ard(X, Y)
+    w, alpha, beta, sigma, log_likelihood = bayesian_regression_ard(X, Y)
     assert(np.abs(1-w)<1.e-3)
 
 
@@ -67,8 +71,4 @@ def test_toy_ard_object():
     clf.fit(X, Y)
     Test = [[1], [2], [3], [4]]
     assert(np.abs(clf.predict(Test)-[1, 2, 3, 4]).sum()<1.e-3) # identity
-
-
-
-
 
