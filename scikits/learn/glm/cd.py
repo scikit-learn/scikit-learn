@@ -74,8 +74,8 @@ def enet_dual_gap(X, y, w, alpha, beta=0):
 class BaseIterationCallback(object):
     """Base callback to be called at the end of each iteration of CD
 
-    - records the value of the current objective cost
-    - records the density of the model
+    - record the value of the current objective cost
+    - record the density of the model
     - record and check the duality gap for early stop of the optim
       (before maxiter)
 
