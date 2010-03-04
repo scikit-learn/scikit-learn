@@ -8,7 +8,6 @@ def fast_logdet(A):
     Equivalent to : np.log(nl.det(A))
     but more robust
     It returns -Inf if det(A) is non positive or is not defined.
-    Copyright : A. Gramfort 2010   
     """
     ld = np.sum(np.log(np.diag(A)))
     a = exp(ld/A.shape[0])
