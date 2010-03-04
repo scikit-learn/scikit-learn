@@ -47,10 +47,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
     cdef unsigned int nfeatures = X.shape[1]
     cdef unsigned int nclasses = w.shape[1]
 
-    E = []
-    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0) # Compute norms of the columns of X
-    cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(nfeatures+nsamples)
-    R[:nsamples] = y - np.dot(X,w)
+    # compute norms of the columns of X
+    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
+
+    # initial value of the residuals
+    cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(nfeatures + nsamples)
+    R[:nsamples] = y - np.dot(X, w)
     R[nsamples:] = - sqrt(beta) * w
 
     cdef float tmp
@@ -72,16 +74,15 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
             for jj in range(nsamples):
                 tmp += R[jj] * X[jj,ii]
 
-            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha,0) / (norm_cols_X[ii] + beta)
+            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                    / (norm_cols_X[ii] + beta)
 
             # R -=  w[ii] * X[:,ii] # Update residual
             for jj in range(nsamples):
                 R[jj] -=  w[ii] * X[jj,ii] # Update residual
             R[nsamples+ii] -= w[ii] * sqrt(beta)
 
-        E.append(0.5 * linalg.norm(R) ** 2 + alpha * np.abs(w).sum() + \
-                 0.5 * beta * linalg.norm(w) ** 2)
-        if (callback is not None and not callback(X, y, alpha, w, iter)):
+        if (callback is not None and not callback(X, y, R, alpha, w, iter)):
             break
 
-    return w, E
+    return w

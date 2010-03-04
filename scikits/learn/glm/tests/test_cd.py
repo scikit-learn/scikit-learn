@@ -25,26 +25,28 @@ def test_lasso_cd_python_cython_sanity():
     X = np.random.randn(n_samples, n_features)
 
     model_slow = Lasso(alpha=1)
-    assert_array_almost_equal(model_slow.density(), 0)
+    assert_array_almost_equal(model_slow.compute_density(), 0)
     model_slow.learner = lasso_coordinate_descent_slow
     model_slow.fit(X, y, maxit=maxit)
 
     # check the convergence using the KKT condition
-    assert_array_almost_equal(model_slow.gap, 0, 4)
+    assert_array_almost_equal(model_slow.compute_gap(X, y), 0, 4)
 
     model_fast = Lasso(alpha=1)
     model_fast.learner = lasso_coordinate_descent_fast
     model_fast.fit(X, y, maxit=maxit)
 
-    # check t convergence using the KKT condition
-    assert_array_almost_equal(model_fast.gap, 0, 4)
+    # check the convergence using the KKT condition
+    assert_array_almost_equal(model_fast.compute_gap(X, y), 0, 4)
 
     # check that python and cython implementations behave exactly the same
     assert_array_almost_equal(model_slow.w, model_fast.w)
-    assert_array_almost_equal(model_slow.E, model_fast.E)
+    assert_array_almost_equal(model_slow.objective, model_fast.objective)
+    assert_array_almost_equal(model_slow.density, model_fast.density)
+    assert_array_almost_equal(model_slow.gap, model_fast.gap, 3)
 
     # check that the priori induces sparsity in the weights (feature selection)
-    assert_array_almost_equal(model_fast.density(), 0.88, 2)
+    assert_array_almost_equal(model_fast.compute_density(), 0.88, 2)
 
 def test_enet_cd_python_cython_sanity():
     n_samples, n_features, maxit = 100, 50, 150
@@ -57,21 +59,24 @@ def test_enet_cd_python_cython_sanity():
     model_slow.fit(X, y, maxit=maxit)
 
     # check the convergence using the KKT condition
-    assert_array_almost_equal(model_slow.gap, 0, 4)
+    assert_array_almost_equal(model_slow.compute_gap(X, y), 0, 4)
 
     model_fast = ElasticNet(alpha=1, beta=10)
     model_fast.learner = enet_coordinate_descent_fast
     model_fast.fit(X, y, maxit=maxit)
 
     # check t convergence using the KKT condition
-    assert_array_almost_equal(model_fast.gap, 0, 4)
+    assert_array_almost_equal(model_fast.compute_gap(X, y), 0, 4)
 
+    # check cython's sanity
     assert_array_almost_equal(model_slow.w, model_fast.w)
-    assert_array_almost_equal(model_slow.E, model_fast.E)
+    assert_array_almost_equal(model_slow.objective, model_fast.objective)
+    assert_array_almost_equal(model_slow.density, model_fast.density)
+    assert_array_almost_equal(model_slow.gap, model_fast.gap, 3)
 
     # check that the priori induces sparsity in the weights
     # (feature selection) but not 
-    assert_array_almost_equal(model_slow.density(), 0.90, 2)
+    assert_array_almost_equal(model_slow.compute_density(), 0.90, 2)
 
 
 def test_lasso_enet_cd_paths():
@@ -85,3 +90,4 @@ def test_lasso_enet_cd_paths():
     alphas_lasso, weights_lasso = lasso_path(X, y, factor=0.97, n_alphas = 50)
     alphas_enet, weights_enet = enet_path(X, y, factor=0.97, n_alphas = 50,
                                           beta=0.1)
+

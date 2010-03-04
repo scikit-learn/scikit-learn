@@ -71,22 +71,60 @@ def enet_dual_gap(X, y, w, alpha, beta=0):
     return gap, pobj, dobj
 
 
+class BaseIterationCallback(object):
+    """Base callback to be called at the end of each iteration of CD
+
+    - records the value of the current objective cost
+    - records the density of the model
+    - record and check the duality gap for early stop of the optim
+      (before maxiter)
+
+    To be subclassed if more monitoring is required.
+    """
+
+    def __init__(self, linear_model, gap_tolerance=1e-4):
+        self.linear_model = linear_model
+        self.gap_tolerance = gap_tolerance
+
+    def __call__(self, X, y, R, alpha, w, iter):
+        # TODO: check the last time stamp to avoid computing the stats too often
+        lm = self.linear_model
+        lm.compute_objective(X, y, R, record=True)
+        lm.compute_density(record=True)
+        gap = lm.compute_gap(X, y, record=True)
+
+        # should go on?
+        return gap > self.gap_tolerance
+
+
 class LinearModel(object):
-    """Generic class for Linear Model optimized with coordinate descent"""
+    """Base class for Linear Model optimized with coordinate descent"""
 
     def __init__(self, w0=None):
+        # weights of the model (can be lazily initialized by the ``fit`` method)
         self.w = w0
-        self.E = None
+
+        # recorded historic data at each training iteration, suitable for
+        # plotting and monitoring of the convergence
+        self.objective = []
+        self.gap = []
+        self.density = []
+
+        # callback that handles recording of the historic data
+        self.callback = BaseIterationCallback(self)
 
     def predict(self, X):
-        """Predict with Linear Model
-        """
-        y = np.dot(X,self.w)
+        """Linear model prediction: compute the dot product with the weights"""
+        X = np.asanyarray(X)
+        y = np.dot(X, self.w)
         return y
 
-    def density(self):
+    def compute_density(self, record=False):
         """Ratio of non-zero weights in the model"""
-        return 0 if self.w is None else float((self.w != 0).sum()) / self.w.size
+        d = 0 if self.w is None else float((self.w != 0).sum()) / self.w.size
+        if record:
+            self.density.append(d)
+        return d
 
 
 class Lasso(LinearModel):
@@ -99,16 +137,33 @@ class Lasso(LinearModel):
 
     def fit(self, X, y, maxit=10):
         """Fit Lasso model with coordinate descent"""
+        X, y = np.asanyarray(X), np.asanyarray(y)
         nsamples, nfeatures = X.shape
 
         if self.w is None:
             self.w = np.zeros(nfeatures)
 
-        self.w, self.E = self.learner(X, y, self.alpha, self.w, maxit=maxit)
+        self.w = self.learner(X, y, self.alpha, self.w, maxit=maxit,
+                              callback=self.callback)
 
-        # Check convergence
-        self.gap, _, _ = enet_dual_gap(X, y, self.w, self.alpha, beta=0)
+        # return self for chaining fit and predict calls
         return self
+
+    def compute_gap(self, X, y, record=False):
+        """Evaluate the duality gap of the current state of the model"""
+        gap, _, _ = enet_dual_gap(X, y, self.w, self.alpha, beta=0)
+        if record:
+            self.gap.append(gap)
+        return gap
+
+    def compute_objective(self, X, y, R=None, record=False):
+        """Evaluate the cost function to minimize"""
+        if R is None:
+            R = y - np.dot(X, self.w)
+        cost = 0.5 * linalg.norm(R) ** 2 + self.alpha * np.abs(self.w).sum()
+        if record:
+            self.objective.append(cost)
+        return cost
 
 
 class ElasticNet(LinearModel):
@@ -122,17 +177,36 @@ class ElasticNet(LinearModel):
 
     def fit(self, X, y, maxit=10):
         """Fit Elastic Net model with coordinate descent"""
+        X, y = np.asanyarray(X), np.asanyarray(y)
         nsamples, nfeatures = X.shape
 
         if self.w is None:
             self.w = np.zeros(nfeatures)
 
-        self.w, self.E = self.learner(X, y, self.alpha, self.beta, \
-                                                     self.w, maxit=maxit)
+        self.w = self.learner(X, y, self.alpha, self.beta, self.w, maxit=maxit,
+                              callback=self.callback)
 
-        # Check convergence
-        self.gap, _, _ = enet_dual_gap(X, y, self.w, self.alpha, beta=self.beta)
+        # return self for chaining fit and predict calls
         return self
+
+    def compute_gap(self, X, y, record=False):
+        gap, _, _ = enet_dual_gap(X, y, self.w, self.alpha, self.beta)
+        if record:
+            self.gap.append(gap)
+        return gap
+
+    def compute_objective(self, X, y, R=None, record=False):
+        """Evaluate the cost function to minimize"""
+        if R is None:
+            nsamples, nfeatures = X.shape
+            R = np.empty(nfeatures + nsamples)
+            R[:nsamples] = y - np.dot(X, self.w)
+            R[nsamples:] = - sqrt(self.beta) * self.w
+        cost = 0.5 * linalg.norm(R) ** 2 + self.alpha * np.abs(self.w).sum() + \
+                0.5 * self.beta * linalg.norm(self.w) ** 2
+        if record:
+            self.objective.append(cost)
+        return cost
 
 
 def lasso_path(X, y, factor=0.95, n_alphas = 10):
@@ -175,7 +249,7 @@ if __name__ == '__main__':
     N, P, maxit = 5, 10, 30
     np.random.seed(0)
     y = np.random.randn(N)
-    X = np.random.randn(N,P)
+    X = np.random.randn(N, P)
 
     """Tests Lasso implementations (python and cython)
     """
@@ -195,12 +269,12 @@ if __name__ == '__main__':
     lasso_fast.fit(X, y, maxit=maxit)
     print time.time() - t0
 
-    print "Duality gap Lasso (should be small): %f" % lasso_fast.gap
+    print "Duality gap Lasso (should be small): %f" % lasso_fast.gap[-1]
 
     import pylab as pl
     pl.close('all')
-    pl.plot(lasso_fast.E,"rx-")
-    pl.plot(lasso_slow.E,"bo--")
+    pl.plot(lasso_fast.objective,"rx-")
+    pl.plot(lasso_slow.objective,"bo--")
     pl.xlabel('Iteration')
     pl.ylabel('Cost function')
     pl.legend(['Slow', 'Fast'])
@@ -226,11 +300,11 @@ if __name__ == '__main__':
     enet_fast.fit(X, y, maxit=maxit)
     print time.time() - t0
 
-    print "Duality gap (should be small): %f" % enet_fast.gap
+    print "Duality gap (should be small): %f" % enet_fast.gap[-1]
 
     pl.figure()
-    pl.plot(enet_fast.E,"rx-")
-    pl.plot(enet_slow.E,"bo--")
+    pl.plot(enet_fast.objective,"rx-")
+    pl.plot(enet_slow.objective,"bo--")
     pl.xlabel('Iteration')
     pl.ylabel('Cost function')
     pl.legend(['Slow', 'Fast'])
@@ -255,3 +329,4 @@ if __name__ == '__main__':
     pl.title('Lasso and Elastic-Net Paths')
     pl.legend(['Lasso','Elastic-Net'])
     pl.show()
+

@@ -8,7 +8,6 @@ import scipy.linalg as linalg
 
 def lasso_coordinate_descent(X, y, alpha, w, maxit=10, callback=None):
     """Coordinate descent for Lasso model"""
-    E = []
     norm_cols_X = np.sum(X**2, axis=0) # Compute norms of the columns of X
     R = y - np.dot(X,w) # Init residual
     nsamples, nfeatures = X.shape
@@ -22,8 +21,7 @@ def lasso_coordinate_descent(X, y, alpha, w, maxit=10, callback=None):
                     / norm_cols_X[ii]
             R -= w[ii] * X[:, ii] # Update residual
 
-        E.append(0.5 * linalg.norm(R)**2 + alpha * np.abs(w).sum())
-        if (callback is not None and not callback(X, y, alpha, w, iter)):
+        if (callback is not None and not callback(X, y, R, alpha, w, iter)):
             break
 
-    return w, E
+    return w

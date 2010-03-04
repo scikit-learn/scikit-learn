@@ -28,22 +28,22 @@ X = np.random.randn(n_samples, n_features)
 lasso = Lasso(alpha=1)
 lasso.fit(X, y, maxit=maxit)
 
-print "Duality gap Lasso (should be small): %f" % lasso.gap
+print "Duality gap Lasso (should be small): %f" % lasso.compute_gap(X, y)
 
 
 # Elastic-Net 
 enet = ElasticNet(alpha=1, beta=1)
 enet.fit(X, y, maxit=maxit)
 
-print "Duality gap (should be small): %f" % enet.gap
+print "Duality gap (should be small): %f" % enet.compute_gap(X, y)
 
 # Display results
 pl.figure(-1, figsize=(8, 4))
 pl.clf()
 pl.subplots_adjust(wspace=.4, right=.95)
 pl.subplot(1, 2, 1)
-pl.plot(lasso.E, label='Lasso')
-pl.plot(enet.E,  label='Elastic Net')
+pl.plot(lasso.objective, label='Lasso')
+pl.plot(enet.objective,  label='Elastic Net')
 pl.xlabel('Iteration')
 pl.ylabel('Cost function')
 pl.legend()
