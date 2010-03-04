@@ -17,8 +17,8 @@ and for the Elastic Network::
 
         0.5 * ||R||_2 ^ 2 + alpha * ||w||_1 + beta * ||w||_2 ^ 2
 
-Where R are the residuals betwee the output of the model and the expected value
-and w is the vector of weights to fit.
+Where R are the residuals between the output of the model and the expected
+value and w is the vector of weights to fit.
 """
 
 import numpy as np
