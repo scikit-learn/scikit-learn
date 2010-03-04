@@ -35,7 +35,8 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             float alpha,
                             np.ndarray[DOUBLE, ndim=1] w,
-                            int maxit=10):
+                            int maxit=10,
+                            callback=None):
     """Cython version of the coordinate descent algorithm
         for Lasso regression
     """
@@ -53,26 +54,28 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
     cdef float w_ii
     cdef unsigned int ii
     cdef unsigned int jj
-    cdef unsigned int it
-    for it in xrange(maxit):
+    cdef unsigned int iter
+    for iter in xrange(maxit):
         for ii in xrange(nfeatures): # Loop over coordinates
             w_ii = w[ii] # Store previous value
 
             # R += w_ii * X[:,ii]
             for jj in range(nsamples):
-                R[jj] += w_ii * X[jj,ii]
+                R[jj] += w_ii * X[jj, ii]
 
             # tmp = (X[:,ii]*R).sum()
             tmp = 0.0
             for jj in range(nsamples):
-                tmp += R[jj] * X[jj,ii]
+                tmp += R[jj] * X[jj, ii]
 
-            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha,0) / norm_cols_X[ii]
+            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) / norm_cols_X[ii]
 
             # R -=  w[ii] * X[:,ii] # Update residual
             for jj in range(nsamples):
-                R[jj] -=  w[ii] * X[jj,ii] # Update residual
+                R[jj] -=  w[ii] * X[jj, ii] # Update residual
 
-        E.append(0.5*linalg.norm(R)**2 + alpha*np.abs(w).sum())
+        E.append(0.5 * linalg.norm(R) ** 2 + alpha * np.abs(w).sum())
+        if (callback is not None and not callback(X, y, alpha, w, iter)):
+            break
 
     return w, E

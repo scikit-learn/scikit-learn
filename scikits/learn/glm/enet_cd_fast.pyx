@@ -36,7 +36,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
                             float alpha,
                             float beta,
                             np.ndarray[DOUBLE, ndim=1] w,
-                            int maxit=10):
+                            int maxit=10,
+                            callback=None):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
     """
@@ -56,8 +57,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
     cdef float w_ii
     cdef unsigned int ii
     cdef unsigned int jj
-    cdef unsigned int it
-    for it in xrange(maxit):
+    cdef unsigned int iter
+    for iter in xrange(maxit):
         for ii in xrange(nfeatures): # Loop over coordinates
             w_ii = w[ii] # Store previous value
 
@@ -78,6 +79,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
                 R[jj] -=  w[ii] * X[jj,ii] # Update residual
             R[nsamples+ii] -= w[ii] * sqrt(beta)
 
-        E.append(0.5*linalg.norm(R)**2 + alpha*np.abs(w).sum() + 0.5*beta*linalg.norm(w)**2)
+        E.append(0.5 * linalg.norm(R) ** 2 + alpha * np.abs(w).sum() + \
+                 0.5 * beta * linalg.norm(w) ** 2)
+        if (callback is not None and not callback(X, y, alpha, w, iter)):
+            break
 
     return w, E
