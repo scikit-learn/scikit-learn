@@ -249,11 +249,11 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     # confusing, since, we used nSV to denote the total number
     # of support vectors
     cdef np.ndarray[np.int_t, ndim=1, mode='c'] nclass_SV
-    nclass_SV = np.empty((nr), dtype=np.int32)
+    nclass_SV = np.empty((nr), dtype=np.int)
     copy_nSV(nclass_SV.data, model)
 
     cdef np.ndarray[np.int_t, ndim=1, mode='c'] label
-    label = np.empty((nr), dtype=np.int32)
+    label = np.empty((nr), dtype=np.int)
     copy_label(label.data, model)
 
     return sv_coef, rho, SV, nr, nclass_SV, label
