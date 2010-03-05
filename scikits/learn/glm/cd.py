@@ -94,6 +94,10 @@ class BaseIterationCallback(object):
         gap = lm.compute_gap(X, y, record=True)
 
         # should go on?
+        if len(lm.gap) > 1 and lm.gap[-1] > lm.gap[-2]:
+            # if the gap increases it means that it means we reached convergence
+            # this is a consequence of the way we compute dual_objective
+            return False
         return gap > self.gap_tolerance
 
 
@@ -130,7 +134,7 @@ class LinearModel(object):
 class Lasso(LinearModel):
     """Linear Model trained with L1 prior as regularizer (a.k.a. the Lasso)"""
 
-    def __init__(self, alpha=None, w0=None):
+    def __init__(self, alpha=1.0, w0=None):
         super(Lasso, self).__init__(w0)
         self.alpha = alpha
         self.learner = lasso_coordinate_descent
@@ -169,7 +173,7 @@ class Lasso(LinearModel):
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer"""
 
-    def __init__(self, alpha=None, beta=None, w0=None):
+    def __init__(self, alpha=1.0, beta=1.0, w0=None):
         super(ElasticNet, self).__init__(w0)
         self.alpha = alpha
         self.beta = beta
