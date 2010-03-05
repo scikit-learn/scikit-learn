@@ -139,6 +139,9 @@ class Lasso(LinearModel):
         self.alpha = alpha
         self.learner = lasso_coordinate_descent
 
+    def __repr__(self):
+	return "Lasso cd"
+
     def fit(self, X, y, maxit=10):
         """Fit Lasso model with coordinate descent"""
         X, y = np.asanyarray(X), np.asanyarray(y)
@@ -170,6 +173,7 @@ class Lasso(LinearModel):
         return cost
 
 
+
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer"""
 
@@ -178,6 +182,9 @@ class ElasticNet(LinearModel):
         self.alpha = alpha
         self.beta = beta
         self.learner = enet_coordinate_descent
+
+    def __repr__(self):
+	return "ElasticNet cd"
 
     def fit(self, X, y, maxit=10):
         """Fit Elastic Net model with coordinate descent"""

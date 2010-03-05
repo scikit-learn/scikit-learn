@@ -14,6 +14,9 @@ class Ridge(object):
     def __init__(self, alpha=1.0):
         self.alpha = alpha
 
+    def __repr__(self):
+	return "Ridge"
+
     def fit(self, X, y):
         """Fit Ridge regression model"""
         nsamples, nfeatures = X.shape
