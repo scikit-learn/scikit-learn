@@ -245,6 +245,8 @@ class BayesianRegression(object):
     def predict(self, T):
         return np.dot(T, self.w)
 
+    def __repr__(self):
+        return "Bayes. Reg."
 
 class RidgeRegression(BayesianRegression):
     """
@@ -262,7 +264,9 @@ class RidgeRegression(BayesianRegression):
         self.w, self.alpha, self.beta, self.sigma, self.log_likelihood = \
             bayesian_regression_ridge(X, Y, self.step_th, self.th_w, self.ll_bool)
         return self
-
+    
+    def __repr__(self):
+        return "Bayes. Reg. RIDGE"
 
 class ARDRegression(BayesianRegression):
     """
@@ -284,3 +288,5 @@ class ARDRegression(BayesianRegression):
             self.alpha_th, self.ll_bool)
         return self
 
+    def __repr__(self):
+        return "Bayes. Reg. ARD"
