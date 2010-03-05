@@ -4,17 +4,20 @@
 #include <numpy/arrayobject.h>
 
 /*
-
-   libsvm does not expose this structure, thus it is not in the .h. We add it 
-   here so that cython can use it.
-
-   There are some redundant calls to malloc in set_problem and set_param since we do
-   not want to export the structs in libsvm.pyx. But still we could do both in a single
-   call.
-
-*/
-
-#define SD sizeof(double) /* just a shortcut */
+ * Some helper methods for libsvm bindings.
+ *
+ * We need to access from python some parameters stored in svm_model
+ * but libsvm does not expose this structure, so we define it here
+ * along some utilities to convert from numpy arrays.
+ *
+ * There are some redundant calls to malloc in set_problem and set_param since we do
+ * not want to export the structs in libsvm.pyx. But still we could do both in a single
+ * call.
+ * 
+ * License: New BSD.
+ *
+ * Author: 2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+ */
 
 struct svm_model
 {
@@ -43,14 +46,16 @@ struct svm_model
 
 
 /*
-   Convert matrix to sparse representation suitable for libsvm. x is
-   expected to be an array of length nrow*ncol.
-
-   Typically the matrix will be dense, so we speed up the routine for
-   this case. We create a temporary array temp that collects non-zero
-   elements and after we just memcpy that to the proper array.
-
-*/
+ * Convert matrix to sparse representation suitable for libsvm. x is
+ * expected to be an array of length nrow*ncol.
+ *
+ * Typically the matrix will be dense, so we speed up the routine for
+ * this case. We create a temporary array temp that collects non-zero
+ * elements and after we just memcpy that to the proper array.
+ *
+ * We collect nonzero items into stack temp and then copy the whole stack
+ * into sparse.
+ */
 struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 {
     struct svm_node **sparse;
@@ -65,14 +70,14 @@ struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
     if (sparse == NULL || temp == NULL) return NULL;
 
     for (i=0; i<dims[0]; i++) {
-        T = temp; /* reset stack to start of array */
+        T = temp; /* reset stack pointer */
 
         for (j=0; j<dims[1]; j++) {
             if ((T->value = *x) != 0) {
                 T->index = j+1;
-                ++T; /* go to to next struct*/
+                ++T;
             }
-            ++x; /* whatever happens, go to the next element of the array*/
+            ++x; /* go to next element */
         }
 
         /* set sentinel */
@@ -90,7 +95,7 @@ struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
     return sparse;
 }
 
-
+/* Create a svm_paramater struct with and return it */
 struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,  double gamma,
                                      double coef0, double nu, double cache_size, 
                                      double C, double eps, double p, int shrinking, 
@@ -134,17 +139,83 @@ struct svm_problem * set_problem(char *X,char *Y, npy_intp *dims)
     return problem;
 }
 
+/*
+ * See svm_model for a description of parameters.
+ *
+ * The copy of model->sv_coef should be straightforward, but
+ * unfortunately to represent a matrix numpy and libsvm use different
+ * approaches, so it requires some iteration.  
+ *
+ * Possible issue: on 64 bits, the number of columns that numpy can 
+ * store is a long, but libsvm enforces this number (model->l) to be
+ * an int.
+ *
+ * Notes: we could group all calls to malloc that return pointers in a
+ * single call.
+ *
+ * TODO: check that malloc was successful.
+ */
+struct svm_model *set_model(struct svm_parameter *param, int nr_class,
+                            char *SV, npy_intp *SV_dims, npy_intp *sv_coef_strides, 
+                            char *sv_coef, char *rho, char *nSV, char *label)
+{
+    int i;
+    char *t = sv_coef;
+    struct svm_model *model;
+    model = (struct svm_model *) malloc(sizeof(struct svm_model));
+    model->nr_class = nr_class;
+    model->param = *param;
+    model->l = (int) SV_dims[0];
+    model->SV = dense_to_sparse((double *) SV, SV_dims);
+
+    model->nSV = (int *) malloc((model->nr_class) * sizeof(int *));
+    memcpy(model->nSV, nSV, model->nr_class * sizeof(int));
+    model->label = (int *) malloc((model->nr_class) * sizeof(int));;
+    memcpy(model->label, label, model->nr_class * sizeof(int));
+
+    model->sv_coef = (double **) malloc((model->nr_class-1)*sizeof(double *));
+    for (i=0; i < model->nr_class-1; i++) {
+        /* we could do this once outside the loop */
+        model->sv_coef[i] = (double *) malloc((model->l) * sizeof(double)); 
+        memcpy(model->sv_coef[i], t, (model->l) * sizeof(double));
+        t += sv_coef_strides[0];
+    }
+
+    int m = nr_class*(nr_class-1)/2;
+    model->rho = (double *) malloc(m * sizeof(double));
+    memcpy(model->rho, rho, m * sizeof(double));
+
+    /* just to avoid segfaults, since these features are not wrapped */
+    model->probA = (double *) malloc(sizeof(double *));
+    model->probB = (double *) malloc(sizeof(double *));
+
+    /* tell svn_destroy_model to also free the support vectors */
+    model->free_sv = 1;
+    return model;
+}
+
+/*
+ * Get the number of support vectors in a model.
+ */
 npy_intp get_l(struct svm_model *model)
 {
     return model->l;
 }
 
+/*
+ * Get the number of classes in a model, = 2 in regression/one class
+ * svm.
+ */
 npy_intp get_nr(struct svm_model *model)
 {
     return model->nr_class;
 }
 
-/* some helpers to convert from libsvm sparse data structures */
+/*
+ * Some helpers to convert from libsvm sparse data structures 
+ * model->sv_coef is a double **, whereas data is just a double *,
+ * so we have to do some stupid copying.
+ */
 void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
 {
     register int i;
@@ -157,19 +228,16 @@ void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
     }
 }
 
-void copy_rho(char *data, struct svm_model *model, npy_intp *strides)
+void copy_rho(char *data, struct svm_model *model, npy_intp *dims)
 {
-    memcpy(data, model->rho, strides[0]);
+    memcpy(data, model->rho, dims[0]*sizeof(double));
 }
 
-/* this is a bit more complex since SV are stored as sparse
-   structures, so we have to do the conversion on the fly and also
-   iterate fast over data             
-
-   XXX: assigning test = strides[1] fails because these
-   strides happen to be zero on 64 bits (I have no clue why)
-
-                          */
+/* 
+ * This is a bit more complex since SV are stored as sparse
+ * structures, so we have to do the conversion on the fly and also
+ * iterate fast over data.
+ */
 void copy_SV(char *data, struct svm_model *model, npy_intp *strides)
 {
     register int i, j;
@@ -177,16 +245,32 @@ void copy_SV(char *data, struct svm_model *model, npy_intp *strides)
     int k, n = model->l;
     npy_intp step = strides[1];
     for (i=0; i<n; i++) {
-        j = 0;
-        while ((k = model->SV[i][j].index) != -1) {
+        k = model->SV[i][0].index;
+        for(j=0; k >= 0;j++) {
             * ((double *) (t + (k-1)*step)) = model->SV[i][j].value;
-            j++;
+            k = model->SV[i][j+1].index;
         }
         t += strides[0];
     }
 }
 
-/* we must also free the nodes that we created in the call to dense_to_sparse */
+/* copy svm_model.nSV, an array with the number of SV for each class */
+void copy_nSV(char *data, struct svm_model *model)
+{
+    memcpy(data, model->nSV, model->nr_class * sizeof(int));
+}
+
+/* maybe merge into the previous */
+void copy_label(char *data, struct svm_model *model)
+{
+    memcpy(data, model->label, model->nr_class * sizeof(int));
+}
+
+/* Use train to predict using model. Train is expected to be an array
+ * in the numpy sense.
+ *
+ *  It will return -1 if we run out of memory.
+ */
 int copy_predict(char *train, struct svm_model *model, npy_intp *train_dims,
                  char *dec_values)
 {
@@ -194,7 +278,8 @@ int copy_predict(char *train, struct svm_model *model, npy_intp *train_dims,
     register int i, n;
     n = train_dims[0];
     struct svm_node **train_nodes;
-    if ((train_nodes = dense_to_sparse((double *) train, train_dims)) == NULL)
+    train_nodes = dense_to_sparse((double *) train, train_dims);
+    if (train_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
         *t = svm_predict(model, train_nodes[i]);
@@ -203,6 +288,13 @@ int copy_predict(char *train, struct svm_model *model, npy_intp *train_dims,
     }
     return 0;
 }
+
+
+/* 
+ * Some free routines. Some of them are nontrivial since a lot of
+ * sharing happens across objects (they *must* be called in the
+ * correct order)
+ */
 
 int free_problem(struct svm_problem *problem)
 {

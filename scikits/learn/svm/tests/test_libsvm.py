@@ -9,12 +9,6 @@ X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
 y = np.array( [1, 1, 1, 2, 2, 2])
 T = np.array( [[-1,-1], [2, 2], [3, 2]] )
 
-clf =  svm.SVM(kernel_type='linear')
-clf.fit(X, y)
-
-print clf.support_
-
-
 def test_svm_params():
     """
     C_SVC algorithm and linear kernel.
@@ -27,7 +21,7 @@ def test_svm_params():
     clf =  svm.SVM(kernel_type='linear')
     clf.fit(X, y)
 
-    assert_array_equal(clf.sv_coef_, [[ 0.25, -.25]])
+    assert_array_equal(clf.coef_, [[ 0.25, -.25]])
     assert_array_equal(clf.support_, [[-1,-1], [1, 1]])
     assert_array_equal(clf.rho_, [0.])
 
@@ -36,12 +30,17 @@ def test_tweak_params():
     Make sure some tweaking of parameters works.
     Currently this will fail because communication between fit/predict
     is done via a pointer and not copying the arguments.
+
+    We change clf.coef_ at run time and expect .predict() to change
+    accordingly. Notice that this is not trivial since it involves a lot
+    of C/Python copying in the libsvm bindings.
     """
     clf = svm.SVM(kernel_type='linear')
     clf.fit(X, y)
-    assert_array_equal(clf.support_, [[-1, -1], [1, 1]])
-    clf.support = np.array([[-2, -1], [1, 1]])
-    assert_array_equal(clf.predict([[0, -0.1]]), [2])
+    assert_array_equal(clf.coef_, [[.25, -.25]])
+    assert_array_equal(clf.predict([[-.1, -.1]]), [1])
+    clf.coef_ = np.array([[.0, 1.]])
+    assert_array_equal(clf.predict([[-.1, -.1]]), [2])
 
 def test_error():
     """
@@ -67,17 +66,17 @@ def test_noncontiguous():
     Test with arrays that are non-contiguous.
 
     """
-    X_t = X.transpose()
-    y_t = [1, 2]
-    assert_array_equal(svm.predict(X_t, y_t, T), [1, 2, 2])
+    Xt = X.transpose()
+    yt = [1, 2]
+    assert_array_equal(svm.predict(Xt, yt, T), [1, 2, 2])
 
 def test_dimension_mismatch():
     """
     Test with data that in which dimensions of data space and labels do not
     match
     """
-    y_ = y[:-1]
-    assert_raises(AssertionError, svm.predict, X, y_, T)
+    Y2 = y[:-1]
+    assert_raises(AssertionError, svm.predict, X, Y2, T)
 
 def test_predict_multiclass():
     """
@@ -88,8 +87,8 @@ def test_predict_multiclass():
             [0.4,  0,	  0,	  0,	  0],
             [0,	  0.1,	  0,	  1.4,	  0.5],
             [-0.1,-0.2,	  0.1,	  1.1,	  0.1]]
-    y = [1,2,1,2,3]
+    Y = [1,2,1,2,3]
     test = [[0, 1, 0, -1, 0]]
-    result = svm.predict(X, y, test)
+    result = svm.predict(X, Y, test)
     assert_array_equal(result, [2])
 

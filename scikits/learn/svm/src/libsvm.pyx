@@ -30,10 +30,6 @@ Maybe we could speed it a bit further by decorating functions with
 @cython.boundscheck(False), but probably it is not worth since all
 work is done in lisvm_helper.c
 
-TODO
-----
-Coding style, eliminate SvmModelPtr
-
 Authors
 -------
 2010: Fabian Pedregosa <fabian.pedregosa@inria.fr>
@@ -42,12 +38,6 @@ Authors
 
 import  numpy as np
 cimport numpy as np
-
-################################################################################
-# Default Parameters
-
-DEF NR_WEIGHT   = 0
-DEF PROBABILITY = 0
 
 ################################################################################
 # Includes
@@ -68,36 +58,19 @@ cdef extern from "libsvm_helper.c":
                                   double , double , double , double,
                                   double, int, int, int, char *, char *)
     svm_problem *set_problem(char *, char *, np.npy_intp *)
+    svm_model *set_model(svm_parameter *, int, char *, np.npy_intp *, np.npy_intp *,
+                         char *, char *, char *, char *)
     void copy_sv_coef (char *, svm_model *, np.npy_intp *)
     void copy_rho     (char *, svm_model *, np.npy_intp *)
     void copy_SV      (char *, svm_model *, np.npy_intp *)
     int  copy_predict (char *, svm_model *, np.npy_intp *, char *)
+    void copy_nSV     (char *, svm_model *)
+    void copy_label   (char *, svm_model *)
     np.npy_intp  get_l  (svm_model *)
     np.npy_intp  get_nr (svm_model *)
-    int  free_problem(svm_problem *)
-    int  free_model  (svm_model *)
-    int  free_param  (svm_parameter *)
-
-
-################################################################################
-# Object definition
-
-cdef class SvmModelPtr:
-    """
-    Container for two pointers, one to svm_problem and another one to
-    svm_model.
-
-    This lets us efficiently pass a svm_model from train_wrap to
-    predict_from_model_wrap. See the internals of function
-    scikits.learn.svm.SVM.predict for an example on how this is
-    handled.
-    """
-    cdef svm_model *model
-    cdef svm_problem *problem
-
-    def __dealloc__(self):
-        free_problem(self.problem)
-        free_model(self.model)
+    int  free_problem (svm_problem *)
+    int  free_model   (svm_model *)
+    int  free_param   (svm_parameter *)
 
 
 ################################################################################
@@ -225,8 +198,7 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
         constants in decision functions
     SV : array-like
         support vectors
-    ptr : SvmModelPtr
-        container for efficient C/Python communication
+    TODO
     """
 
     cdef svm_parameter *param
@@ -238,7 +210,6 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     problem = set_problem(X.data, Y.data, X.shape)
 
     # set parameters
-    if (gamma == 0): gamma = 1.0/X.shape[0]
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size,
                           C, eps, p, shrinking, probability,
@@ -257,32 +228,54 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     model = svm_train(problem, param)
 
     cdef int nSV = get_l(model)
-    cdef int nclass = get_nr(model)
+    cdef int nr = get_nr(model)
 
     # copy model.sv_coef 
     cdef np.ndarray[np.double_t, ndim=2, mode='c'] sv_coef
-    sv_coef = np.empty((nclass-1, nSV))
+    sv_coef = np.empty((nr-1, nSV))
     copy_sv_coef(sv_coef.data, model, sv_coef.strides)
 
     # copy model.rho
     cdef np.ndarray[np.double_t, ndim=1, mode='c'] rho
-    rho = np.empty((nclass*nclass-1)/2)
-    copy_rho(rho.data, model, rho.strides)
+    rho = np.empty(nr*(nr-1)/2)
+    copy_rho(rho.data, model, rho.shape)
 
     # copy model.SV
     cdef np.ndarray[np.double_t, ndim=2, mode='c'] SV
     SV = np.zeros((nSV, X.shape[1]))
     copy_SV(SV.data, model, SV.strides)
 
-    cdef SvmModelPtr ptr
-    ptr = SvmModelPtr()
-    ptr.model = model
-    ptr.problem = problem
-    return sv_coef, rho, SV, ptr
+    # copy model.nSV
+    # confusing, since, we used nSV to denote the total number
+    # of support vectors
+    cdef np.ndarray[np.int_t, ndim=1, mode='c'] nclass_SV
+    nclass_SV = np.empty((nr), dtype=np.int32)
+    copy_nSV(nclass_SV.data, model)
+
+    cdef np.ndarray[np.int_t, ndim=1, mode='c'] label
+    label = np.empty((nr), dtype=np.int32)
+    copy_label(label.data, model)
+
+    return sv_coef, rho, SV, nr, nclass_SV, label
 
 
-def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2] T,
-                                SvmModelPtr ptr):
+def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2, mode='c'] T,
+                            np.ndarray[np.double_t, ndim=2, mode='c'] SV,
+                            np.ndarray[np.double_t, ndim=2, mode='c'] sv_coef,
+                            np.ndarray[np.double_t, ndim=1, mode='c'] rho,
+                          int svm_type, int kernel_type,
+                          int degree, double gamma,
+                          double coef0, double eps, double C,
+                          int nr_weight,
+                          np.ndarray[np.int_t, ndim=1] weight_label,
+                          np.ndarray[np.float_t, ndim=1] weight,
+                          double nu, double cache_size,
+                          double p, int shrinking,
+                          int probability, int nr_class,
+                          np.ndarray[np.int_t, ndim=1, mode='c'] nSV,
+                          np.ndarray[np.int_t, ndim=1, mode='c'] label
+                            
+                            ):
     """
     Predict values T given a pointer to svm_model.
 
@@ -290,6 +283,9 @@ def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2] T,
 
     For speed, all real work is done at the C level in function
     copy_predict (libsvm_helper.c).
+
+    We have to reconstruct model and parameters to make sure we stay
+    in sync with the python object. predict_wrap skips this step.
 
     Parameters
     ----------
@@ -307,7 +303,18 @@ def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2] T,
         predicted values.
     """
     cdef np.ndarray[np.double_t, ndim=1, mode='c'] dec_values
+    cdef svm_parameter *param
+    cdef svm_model *model
+    param = set_parameter(svm_type, kernel_type, degree, gamma,
+                          coef0, nu, cache_size,
+                          C, eps, p, shrinking, probability,
+                          nr_weight, weight_label.data, weight.data)
+    model = set_model(param, nr_class, SV.data, SV.shape, sv_coef.strides,
+                      sv_coef.data, rho.data, nSV.data, label.data)
     dec_values = np.empty(T.shape[0])
-    if copy_predict(T.data, ptr.model, T.shape, dec_values.data) < 0:
+    if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
+    # free model and param
+    free_model(model)
+    free_param(param)
     return dec_values

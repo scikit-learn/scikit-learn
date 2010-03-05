@@ -24,7 +24,7 @@ class SVM(object):
     -------------------
     svm_type : string
         Specifies the algorithm. Must be one of 'c_svc', 'nu_svc',
-        'one_class', 'epsilon_srv', 'nu_svr'.
+        'one_class', 'epsilon_svr', 'nu_svr'.
         If none is given, 'c_svc' will be used.
 
     kernel_type : string
@@ -109,6 +109,9 @@ class SVM(object):
         self.scale = scale
 
     def fit(self, X, y):
+        """
+        should empty arrays created be order='C' ?
+        """
         X = np.asanyarray(X, dtype=np.float, order='C')
         y = np.asanyarray(y, dtype=np.float, order='C')
 
@@ -118,32 +121,32 @@ class SVM(object):
             X = (X - self.mean) / self.std
 
         # check dimensions
-        assert X.shape[0] == y.shape[0], "Incompatible shapes"
+        if X.shape[0] != y.shape[0]: raise ValueError("Incompatible shapes")
 
-        self.sv_coef_, self.rho_, self.support_, self._model  = \
-             libsvm.train_wrap(X, y, svm_type=self.svm_type,
-                               kernel_type=self.kernel_type,
-                               degree=self.degree, gamma=self.gamma,
-                               coef0=self.coef0, eps=self.eps,
-                               C=self.C, nr_weight=self.nr_weight,
-                               weight_label=np.empty(0, dtype=np.int),
-                               weight=np.empty(0, dtype=np.float),
-                               nu=self.nu, cache_size=self.cache_size,
-                               p=self.p,
-                               shrinking=self.shrinking,
-                               probability=self.probability)
+        if (self.gamma == 0): self.gamma = 1.0/X.shape[0]
+        # last args should be private
+        self.coef_, self.rho_, self.support_, self.nclass_, self.nSV_, self.label_  = \
+             libsvm.train_wrap(X, y, self.svm_type, self.kernel_type, self.degree,
+                 self.gamma, self.coef0, self.eps, self.C, self.nr_weight,
+                 np.empty(0, dtype=np.int), np.empty(0, dtype=np.float), self.nu,
+                 self.cache_size, self.p, self.shrinking, self.probability)
         return self
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float, order='C')
-
         if self.scale:
             T = (T - self.mean) / self.std
+        return libsvm.predict_from_model_wrap(T, self.support_,
+                      self.coef_, self.rho_, self.svm_type,
+                      self.kernel_type, self.degree, self.gamma,
+                      self.coef0, self.eps, self.C, self.nr_weight,
+                      np.empty(0, dtype=np.int), np.empty(0,
+                      dtype=np.float), self.nu, self.cache_size,
+                      self.p, self.shrinking, self.probability,
+                      self.nclass_, self.nSV_, self.label_)
 
-        return libsvm.predict_from_model_wrap(T, self._model)
 
-
-def predict(X, y, T,svm_type='c_svc', kernel_type='rbf', degree=3, \
+def predict(X, y, T,svm_type='c_svc', kernel_type='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
                  probability=0):
@@ -166,15 +169,10 @@ def predict(X, y, T,svm_type='c_svc', kernel_type='rbf', degree=3, \
     y = np.asanyarray(y, dtype=np.float, order='C')
     T = np.asanyarray(T, dtype=np.float, order='C')
     assert X.shape[0] == y.shape[0], "Incompatible shapes"
-    return libsvm.predict_wrap(X, y, T,svm_type=svm_types.index(svm_type),
-                               kernel_type=kernel_types.index(kernel_type),
-                               degree=degree, gamma=gamma,
-                               coef0=coef0, eps=eps,
-                               C=C, nr_weight=nr_weight,
-                               weight_label=np.empty(0, dtype=np.int),
-                               weight=np.empty(0, dtype=np.float),
-                               nu=nu, cache_size=cache_size,
-                               p=p,
-                               shrinking=shrinking,
-                               probability=probability)
+    return libsvm.predict_wrap(X, y, T, svm_types.index(svm_type),
+                               kernel_types.index(kernel_type),
+                               degree, gamma, coef0, eps, C,
+                               nr_weight, np.empty(0, dtype=np.int),
+                               np.empty(0, dtype=np.float), nu,
+                               cache_size, p, shrinking, probability)
 
