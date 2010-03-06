@@ -29,6 +29,8 @@ Notes
 Maybe we could speed it a bit further by decorating functions with
 @cython.boundscheck(False), but probably it is not worth since all
 work is done in lisvm_helper.c
+Also, the signature mode='c' is somewhat superficial, since we already
+check that arrays are C-contiguous in svm.py
 
 Authors
 -------
@@ -80,15 +82,12 @@ cdef extern from "libsvm_helper.c":
 def predict_wrap( np.ndarray[np.double_t, ndim=2, mode='c'] X,
                   np.ndarray[np.double_t, ndim=1, mode='c'] Y,
                   np.ndarray[np.double_t, ndim=2, mode='c'] T,
-                  int svm_type, int kernel_type,
-                  int degree, double gamma,
-                  double coef0, double eps, double C,
-                  int nr_weight,
-                  np.ndarray[np.int_t, ndim=1] weight_label,
-                  np.ndarray[np.double_t, ndim=1] weight,
-                  double nu, double cache_size,
-                  double p, int shrinking,
-                  int probability):
+                  int svm_type, int kernel_type, int degree, double
+                  gamma, double coef0, double eps, double C, int
+                  nr_weight, np.ndarray[np.int_t, ndim=1]
+                  weight_label, np.ndarray[np.double_t, ndim=1]
+                  weight, double nu, double cache_size, double p, int
+                  shrinking, int probability):
     """
     Wrapper for svm_train_predict in libsvm.
     Predict T learning from X, Y, where X are data points and Y are
@@ -166,16 +165,13 @@ def predict_wrap( np.ndarray[np.double_t, ndim=2, mode='c'] X,
 
 
 def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X, 
-                  np.ndarray[np.double_t, ndim=1, mode='c'] Y,
-                  int svm_type, int kernel_type,
-                  int degree, double gamma,
-                  double coef0, double eps, double C,
-                  int nr_weight,
+                  np.ndarray[np.double_t, ndim=1, mode='c'] Y, int
+                  svm_type, int kernel_type, int degree, double gamma,
+                  double coef0, double eps, double C, int nr_weight,
                   np.ndarray[np.int_t, ndim=1] weight_label,
-                  np.ndarray[np.float_t, ndim=1] weight,
-                  double nu, double cache_size,
-                  double p, int shrinking,
-                  int probability):
+                  np.ndarray[np.float_t, ndim=1] weight, double nu,
+                  double cache_size, double p, int shrinking, int
+                  probability):
     """
     Wrapper for svm_train in libsvm
 
@@ -246,7 +242,7 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     copy_SV(SV.data, model, SV.strides)
 
     # copy model.nSV
-    # confusing, since, we used nSV to denote the total number
+    # name is a bit confusing since we used nSV to denote the total number
     # of support vectors
     cdef np.ndarray[np.int_t, ndim=1, mode='c'] nclass_SV
     nclass_SV = np.empty((nr), dtype=np.int)
@@ -262,20 +258,16 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
 def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2, mode='c'] T,
                             np.ndarray[np.double_t, ndim=2, mode='c'] SV,
                             np.ndarray[np.double_t, ndim=2, mode='c'] sv_coef,
-                            np.ndarray[np.double_t, ndim=1, mode='c'] rho,
-                          int svm_type, int kernel_type,
-                          int degree, double gamma,
-                          double coef0, double eps, double C,
-                          int nr_weight,
-                          np.ndarray[np.int_t, ndim=1] weight_label,
-                          np.ndarray[np.float_t, ndim=1] weight,
-                          double nu, double cache_size,
-                          double p, int shrinking,
-                          int probability, int nr_class,
-                          np.ndarray[np.int_t, ndim=1, mode='c'] nSV,
-                          np.ndarray[np.int_t, ndim=1, mode='c'] label
-                            
-                            ):
+                            np.ndarray[np.double_t, ndim=1, mode='c']
+                            rho, int svm_type, int kernel_type, int
+                            degree, double gamma, double coef0, double
+                            eps, double C, int nr_weight,
+                            np.ndarray[np.int_t, ndim=1] weight_label,
+                            np.ndarray[np.float_t, ndim=1] weight,
+                            double nu, double cache_size, double p, int
+                            shrinking, int probability, int nr_class,
+                            np.ndarray[np.int_t, ndim=1, mode='c'] nSV,
+                            np.ndarray[np.int_t, ndim=1, mode='c'] label):
     """
     Predict values T given a pointer to svm_model.
 
@@ -306,9 +298,9 @@ def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2, mode='c'] T,
     cdef svm_parameter *param
     cdef svm_model *model
     param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu, cache_size,
-                          C, eps, p, shrinking, probability,
-                          nr_weight, weight_label.data, weight.data)
+                          coef0, nu, cache_size, C, eps, p, shrinking,
+                          probability, nr_weight, weight_label.data,
+                          weight.data)
     model = set_model(param, nr_class, SV.data, SV.shape, sv_coef.strides,
                       sv_coef.data, rho.data, nSV.data, label.data)
     dec_values = np.empty(T.shape[0])

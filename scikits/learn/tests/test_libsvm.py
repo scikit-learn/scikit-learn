@@ -4,18 +4,17 @@ from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
                           assert_raises
 
-# define our data
+# Data is just 6 separable points in the plane
 X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
 y = np.array( [1, 1, 1, 2, 2, 2])
 T = np.array( [[-1,-1], [2, 2], [3, 2]] )
+
 
 def test_svm_params():
     """
     C_SVC algorithm and linear kernel.
 
     This checks that we retrieve the correct parameters.
-
-    Data is just 6 separable points in the plane. We use linear kernel
     """
 
     clf =  svm.SVM(kernel_type='linear')
@@ -28,12 +27,13 @@ def test_svm_params():
 def test_tweak_params():
     """
     Make sure some tweaking of parameters works.
-    Currently this will fail because communication between fit/predict
-    is done via a pointer and not copying the arguments.
 
     We change clf.coef_ at run time and expect .predict() to change
     accordingly. Notice that this is not trivial since it involves a lot
     of C/Python copying in the libsvm bindings.
+
+    The success of this test ensures that the mapping between libsvm and
+    the python classifier is complete.
     """
     clf = svm.SVM(kernel_type='linear')
     clf.fit(X, y)
@@ -44,7 +44,7 @@ def test_tweak_params():
 
 def test_error():
     """
-    test that it gives proper exception on deficient input
+    Test that it gives proper exception on deficient input
     """
     # impossible value of nu
     clf = svm.SVM(svm_type='nu_svc', kernel_type='linear', nu=0.0)
@@ -64,7 +64,6 @@ def test_predict():
 def test_noncontiguous():
     """
     Test with arrays that are non-contiguous.
-
     """
     Xt = X.transpose()
     yt = [1, 2]

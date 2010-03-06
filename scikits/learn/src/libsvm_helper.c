@@ -10,10 +10,6 @@
  * but libsvm does not expose this structure, so we define it here
  * along some utilities to convert from numpy arrays.
  *
- * There are some redundant calls to malloc in set_problem and set_param since we do
- * not want to export the structs in libsvm.pyx. But still we could do both in a single
- * call.
- * 
  * License: New BSD.
  *
  * Author: 2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
@@ -144,7 +140,7 @@ struct svm_problem * set_problem(char *X,char *Y, npy_intp *dims)
 }
 
 /*
- * See svm_model for a description of parameters.
+ * Create and return an instance of svm_model.
  *
  * The copy of model->sv_coef should be straightforward, but
  * unfortunately to represent a matrix numpy and libsvm use different
@@ -153,9 +149,6 @@ struct svm_problem * set_problem(char *X,char *Y, npy_intp *dims)
  * Possible issue: on 64 bits, the number of columns that numpy can 
  * store is a long, but libsvm enforces this number (model->l) to be
  * an int.
- *
- * Notes: we could group all calls to malloc that return pointers in a
- * single call.
  *
  * TODO: check that malloc was successful.
  */
@@ -173,23 +166,25 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     model->label =   (int *)      malloc(nr_class * sizeof(int));;
     model->sv_coef = (double **)  malloc((nr_class-1)*sizeof(double *));
     model->rho =     (double *)   malloc( m * sizeof(double));
+    model->SV = dense_to_sparse((double *) SV, SV_dims);
 
     model->nr_class = nr_class;
     model->param = *param;
     model->l = (int) SV_dims[0];
-    model->SV = dense_to_sparse((double *) SV, SV_dims);
     memcpy(model->nSV, nSV, model->nr_class * sizeof(int));
     memcpy(model->label, label, model->nr_class * sizeof(int));
-    /* Get all needed space in a single malloc */
-    double *coef = (double *) malloc((nr_class-1)*(model->l) * sizeof(double));
     for (i=0; i < model->nr_class-1; i++) {
-        model->sv_coef[i] = coef;
+        /*
+         * We cannot squash all this mallocs in a single call since
+         * svm_destroy_model will free each element of the array.
+         * Anyway, number of classes is typically small.
+         */
+        model->sv_coef[i] = (double *) malloc((model->l) * sizeof(double));
         memcpy(model->sv_coef[i], t, (model->l) * sizeof(double));
-        t += sv_coef_strides[0];
-        coef += model->l;
+        t += sv_coef_strides[0]; 
     }
-    memcpy(model->rho, rho, m * sizeof(double));
 
+    memcpy(model->rho, rho, m * sizeof(double));
     /* 
      * just to avoid segfaults, these features are not wrapped but
      * svm_destroy_model will try to free them.
