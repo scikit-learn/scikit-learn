@@ -53,8 +53,11 @@ struct svm_model
  * this case. We create a temporary array temp that collects non-zero
  * elements and after we just memcpy that to the proper array.
  *
- * We collect nonzero items into stack temp and then copy the whole stack
- * into sparse.
+ * Special care must be taken with indices, since libsvm indices start
+ * at 1 and not at 0
+ *
+ * We collect nonzero items into stack temp and then copy the whole
+ * stack into sparse.
  */
 struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 {
@@ -69,12 +72,13 @@ struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 
     if (sparse == NULL || temp == NULL) return NULL;
 
-    for (i=0; i<dims[0]; i++) {
+    for (i=0; i<dims[0]; ++i) {
         T = temp; /* reset stack pointer */
 
-        for (j=0; j<dims[1]; j++) {
-            if ((T->value = *x) != 0) {
-                T->index = j+1;
+        for (j=1; j<=dims[1]; ++j) {
+            T->value = *x;
+            if (T->value != 0) {
+                T->index = j;
                 ++T;
             }
             ++x; /* go to next element */
@@ -161,33 +165,37 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
 {
     int i;
     char *t = sv_coef;
+    int m = nr_class*(nr_class-1)/2;
     struct svm_model *model;
-    model = (struct svm_model *) malloc(sizeof(struct svm_model));
+
+    model = (struct svm_model *)  malloc(sizeof(struct svm_model));
+    model->nSV =     (int *)      malloc(nr_class * sizeof(int));
+    model->label =   (int *)      malloc(nr_class * sizeof(int));;
+    model->sv_coef = (double **)  malloc((nr_class-1)*sizeof(double *));
+    model->rho =     (double *)   malloc( m * sizeof(double));
+
     model->nr_class = nr_class;
     model->param = *param;
     model->l = (int) SV_dims[0];
     model->SV = dense_to_sparse((double *) SV, SV_dims);
-
-    model->nSV = (int *) malloc((model->nr_class) * sizeof(int *));
     memcpy(model->nSV, nSV, model->nr_class * sizeof(int));
-    model->label = (int *) malloc((model->nr_class) * sizeof(int));;
     memcpy(model->label, label, model->nr_class * sizeof(int));
-
-    model->sv_coef = (double **) malloc((model->nr_class-1)*sizeof(double *));
+    /* Get all needed space in a single malloc */
+    double *coef = (double *) malloc((nr_class-1)*(model->l) * sizeof(double));
     for (i=0; i < model->nr_class-1; i++) {
-        /* we could do this once outside the loop */
-        model->sv_coef[i] = (double *) malloc((model->l) * sizeof(double)); 
+        model->sv_coef[i] = coef;
         memcpy(model->sv_coef[i], t, (model->l) * sizeof(double));
         t += sv_coef_strides[0];
+        coef += model->l;
     }
-
-    int m = nr_class*(nr_class-1)/2;
-    model->rho = (double *) malloc(m * sizeof(double));
     memcpy(model->rho, rho, m * sizeof(double));
 
-    /* just to avoid segfaults, since these features are not wrapped */
-    model->probA = (double *) malloc(sizeof(double *));
-    model->probB = (double *) malloc(sizeof(double *));
+    /* 
+     * just to avoid segfaults, these features are not wrapped but
+     * svm_destroy_model will try to free them.
+     */
+    model->probA = (double *) malloc(sizeof(double));
+    model->probB = (double *) malloc(sizeof(double));
 
     /* tell svn_destroy_model to also free the support vectors */
     model->free_sv = 1;
@@ -244,9 +252,9 @@ void copy_SV(char *data, struct svm_model *model, npy_intp *strides)
     char *t = data;
     int k, n = model->l;
     npy_intp step = strides[1];
-    for (i=0; i<n; i++) {
+    for (i=0; i<n; ++i) {
         k = model->SV[i][0].index;
-        for(j=0; k >= 0;j++) {
+        for(j=0; k >= 0; ++j) {
             * ((double *) (t + (k-1)*step)) = model->SV[i][j].value;
             k = model->SV[i][j+1].index;
         }
@@ -266,7 +274,8 @@ void copy_label(char *data, struct svm_model *model)
     memcpy(data, model->label, model->nr_class * sizeof(int));
 }
 
-/* Use train to predict using model. Train is expected to be an array
+/* 
+ * Use train to predict using model. Train is expected to be an array
  * in the numpy sense.
  *
  *  It will return -1 if we run out of memory.
@@ -295,7 +304,6 @@ int copy_predict(char *train, struct svm_model *model, npy_intp *train_dims,
  * sharing happens across objects (they *must* be called in the
  * correct order)
  */
-
 int free_problem(struct svm_problem *problem)
 {
     if (problem == NULL) return -1;
