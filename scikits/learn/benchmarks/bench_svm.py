@@ -18,7 +18,6 @@ import numpy as np
 import pylab as pl
 from datetime import datetime
 import gc
-from timeit import Timer
 
 # to store the results
 scikit_results = []
