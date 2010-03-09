@@ -1,19 +1,20 @@
 import numpy as np
 import libsvm
 
-svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
-kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
+_kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
+_svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
-class SVM(object):
+
+class BaseSVM(object):
     """
+    Base class for classifiers that use support vector machine.
+
     Classifier using Support Vector Machine algorithms.
 
-    Important memmbers are train, predict.
-
-    To access the support vectors you can access them in member SV.
+    To access the support vectors you can access them in member support_.
 
     Parameters
-    ---------
+    ----------
     X : array-like, shape = [N, D]
         It will be converted to a floating-point array.
     y : array, shape = [N]
@@ -22,12 +23,12 @@ class SVM(object):
 
     Optional Parameters
     -------------------
-    svm_type : string
+    svm : string
         Specifies the algorithm. Must be one of 'c_svc', 'nu_svc',
         'one_class', 'epsilon_svr', 'nu_svr'.
         If none is given, 'c_svc' will be used.
 
-    kernel_type : string
+    kernel : string
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
          If none is given 'rbf' will be used.
@@ -45,7 +46,7 @@ class SVM(object):
     C : float
 
     scale : bool
-        If "True" the SVM is run on standardized data
+        If True the SVM is run on standardized data
 
     nu: float
         An upper bound on the fraction of training errors and a lower
@@ -62,7 +63,8 @@ class SVM(object):
         where nSV is the number of support vectors, D is the dimension
         of the underlying space.
 
-
+    coef_ : array
+        coefficient of the support vector in the decission function.
 
     rho_ : array
         constants in decision function
@@ -89,12 +91,11 @@ class SVM(object):
     not by copying the parameters. Solving this is a work in progress.
     """
 
-    def __init__(self, svm_type='c_svc', kernel_type='rbf', degree=3, \
-                 gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
-                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0, scale=False):
-        self.svm_type = svm_types.index(svm_type)
-        self.kernel_type = kernel_types.index(kernel_type)
+    def __init__(self, svm, kernel, degree, gamma, coef0, cache_size,
+                 eps, C, nr_weight, nu, p, shrinking, probability,
+                 scale):
+        self.svm = _svm_types.index(svm)
+        self.kernel = _kernel_types.index(kernel)
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
@@ -104,8 +105,8 @@ class SVM(object):
         self.nr_weight = 0
         self.nu = nu
         self.p = p
-        self.shrinking = 1
-        self.probability = 0
+        self.shrinking = shrinking
+        self.probability = probability
         self.scale = scale
 
     def fit(self, X, y):
@@ -124,9 +125,8 @@ class SVM(object):
         if X.shape[0] != y.shape[0]: raise ValueError("Incompatible shapes")
 
         if (self.gamma == 0): self.gamma = 1.0/X.shape[0]
-        # last args should be private
         self.coef_, self.rho_, self.support_, self.nclass_, self.nSV_, self.label_  = \
-             libsvm.train_wrap(X, y, self.svm_type, self.kernel_type, self.degree,
+             libsvm.train_wrap(X, y, self.svm, self.kernel, self.degree,
                  self.gamma, self.coef0, self.eps, self.C, self.nr_weight,
                  np.empty(0, dtype=np.int), np.empty(0, dtype=np.float), self.nu,
                  self.cache_size, self.p, self.shrinking, self.probability)
@@ -134,11 +134,10 @@ class SVM(object):
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float, order='C')
-        if self.scale:
-            T = (T - self.mean) / self.std
+        if self.scale: T = (T - self.mean) / self.std
         return libsvm.predict_from_model_wrap(T, self.support_,
-                      self.coef_, self.rho_, self.svm_type,
-                      self.kernel_type, self.degree, self.gamma,
+                      self.coef_, self.rho_, self.svm,
+                      self.kernel, self.degree, self.gamma,
                       self.coef0, self.eps, self.C, self.nr_weight,
                       np.empty(0, dtype=np.int), np.empty(0,
                       dtype=np.float), self.nu, self.cache_size,
@@ -146,12 +145,12 @@ class SVM(object):
                       self.nclass_, self.nSV_, self.label_)
 
 
-def predict(X, y, T,svm_type='c_svc', kernel_type='rbf', degree=3,
+def predict(X, y, T, svm='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
                  probability=0):
     """
-    TODO.
+    Shortcut that does fit and predict in a single step.
 
     Parameters
     ----------
@@ -164,15 +163,63 @@ def predict(X, y, T,svm_type='c_svc', kernel_type='rbf', degree=3,
 
     Optional Parameters
     -------------------
+    TODO
+
+    Examples
+    --------
     """
     X = np.asanyarray(X, dtype=np.float, order='C')
     y = np.asanyarray(y, dtype=np.float, order='C')
     T = np.asanyarray(T, dtype=np.float, order='C')
-    assert X.shape[0] == y.shape[0], "Incompatible shapes"
-    return libsvm.predict_wrap(X, y, T, svm_types.index(svm_type),
-                               kernel_types.index(kernel_type),
+    if X.shape[0] != y.shape[0]: raise ValueError("Incompatible shapes")
+    return libsvm.predict_wrap(X, y, T, _svm_types.index(svm),
+                               _kernel_types.index(kernel),
                                degree, gamma, coef0, eps, C,
                                nr_weight, np.empty(0, dtype=np.int),
                                np.empty(0, dtype=np.float), nu,
                                cache_size, p, shrinking, probability)
 
+
+###
+# these classes are designed to maintain coherence across modules
+# No processing should go into these classes
+# these are just dummy classes with different default values
+
+class SVM(BaseSVM):
+    """
+    Classification. By default, CSVC.
+    """
+    def __init__(self, svm='c_svc', kernel='rbf', degree=3,
+                 gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
+                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
+                 probability=0, scale=True):
+
+        BaseSVM.__init__(self, svm, kernel, degree, gamma, coef0,
+                         cache_size, eps, C, nr_weight, nu, p,
+                         shrinking, probability, scale)    
+
+
+class SVR(BaseSVM):
+    """
+    Support Vector Regression.
+    """
+    def __init__(self, svm='epsilon_svr', kernel='rbf', degree=3,
+                 gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
+                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
+                 probability=0, scale=True):
+        BaseSVM.__init__(self, svm, kernel, degree, gamma, coef0,
+                         cache_size, eps, C, nr_weight, nu, p,
+                         shrinking, probability, scale)
+
+class OneClassSVM(BaseSVM):
+    """
+    Outlayer detection
+    """
+    def __init__(self, kernel='rbf', degree=3,
+                 gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
+                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
+                 probability=0, scale=True):
+        svm = 'one_class'
+        BaseSVM.__init__(self, svm, kernel, degree, gamma, coef0,
+                         cache_size, eps, C, nr_weight, nu, p,
+                         shrinking, probability, scale)

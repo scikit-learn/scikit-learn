@@ -1,3 +1,4 @@
+# cython: profile=True
 """
 Binding for libsvm[1]
 ---------------------

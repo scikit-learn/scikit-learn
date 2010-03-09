@@ -4,7 +4,7 @@ It will plot the decision surface and the support vectors.
 """
 import numpy as np
 import pylab as pl
-from scikits.learn.svm import SVM
+from scikits.learn import svm
 
 # import some data to play with
 from scikits.learn.datasets.iris import load
@@ -15,8 +15,9 @@ Y = LABELS
 h=.05
 kernel_type='linear'
 
-# we create an instance of SVM and fit out data
-clf = SVM(kernel_type='linear')
+# we create an instance of SVM and fit out data. We do not scale our
+# data since we want to plot the support vectors
+clf = svm.SVM(kernel_type='linear', scale=False)
 clf.fit(X, Y)
 
 # Plot the decision boundary. For that, we will asign a color to each

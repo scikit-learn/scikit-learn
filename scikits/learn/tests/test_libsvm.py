@@ -6,7 +6,7 @@ from numpy.testing import assert_array_equal, \
 
 # Data is just 6 separable points in the plane
 X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
-y = np.array( [1, 1, 1, 2, 2, 2])
+Y = np.array( [1, 1, 1, 2, 2, 2])
 T = np.array( [[-1,-1], [2, 2], [3, 2]] )
 
 
@@ -17,8 +17,8 @@ def test_svm_params():
     This checks that we retrieve the correct parameters.
     """
 
-    clf =  svm.SVM(kernel_type='linear')
-    clf.fit(X, y)
+    clf =  svm.SVM(kernel='linear', scale=False)
+    clf.fit(X, Y)
 
     assert_array_equal(clf.coef_, [[ 0.25, -.25]])
     assert_array_equal(clf.support_, [[-1,-1], [1, 1]])
@@ -35,8 +35,8 @@ def test_tweak_params():
     The success of this test ensures that the mapping between libsvm and
     the python classifier is complete.
     """
-    clf = svm.SVM(kernel_type='linear')
-    clf.fit(X, y)
+    clf = svm.SVM(kernel='linear', scale=False)
+    clf.fit(X, Y)
     assert_array_equal(clf.coef_, [[.25, -.25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
     clf.coef_ = np.array([[.0, 1.]])
@@ -47,18 +47,19 @@ def test_error():
     Test that it gives proper exception on deficient input
     """
     # impossible value of nu
-    clf = svm.SVM(svm_type='nu_svc', kernel_type='linear', nu=0.0)
-    assert_raises(ValueError, clf.fit, X, y)
+    clf = svm.SVM(svm='nu_svc', kernel='linear', nu=0.0)
+    assert_raises(ValueError, clf.fit, X, Y)
 
-    y2 = y[:-1] # wrong dimensions for labels
-    assert_raises(ValueError, svm.SVM, X, y2)
+    Y2 = Y[:-1] # wrong dimensions for labels
+    assert_raises(ValueError, svm.SVM, X, Y2)
+    assert_raises(ValueError, svm.predict, X, Y2, T)
 
 def test_predict():
     true_result = [1, 2, 2]
-    assert_array_equal(svm.predict(X, y, T) , true_result)
+    assert_array_equal(svm.predict(X, Y, T) , true_result)
     # the same, but using SVM object
     clf = svm.SVM()
-    clf.fit(X, y)
+    clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
 def test_noncontiguous():
@@ -66,16 +67,8 @@ def test_noncontiguous():
     Test with arrays that are non-contiguous.
     """
     Xt = X.transpose()
-    yt = [1, 2]
-    assert_array_equal(svm.predict(Xt, yt, T), [1, 2, 2])
-
-def test_dimension_mismatch():
-    """
-    Test with data that in which dimensions of data space and labels do not
-    match
-    """
-    Y2 = y[:-1]
-    assert_raises(AssertionError, svm.predict, X, Y2, T)
+    Yt = [1, 2]
+    assert_array_equal(svm.predict(Xt, Yt, T), [1, 2, 2])
 
 def test_predict_multiclass():
     """
