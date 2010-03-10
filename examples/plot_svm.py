@@ -12,12 +12,12 @@ SP, SW, PL, PW, LABELS = load()
 X = np.c_[SP, SW]
 Y = LABELS
 
-h=.05
+h=.05 # step size in the mesh
 kernel_type='linear'
 
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-clf = svm.SVM(kernel_type='linear', scale=False)
+clf = svm.SVM(kernel='linear', scale=False)
 clf.fit(X, Y)
 
 # Plot the decision boundary. For that, we will asign a color to each
@@ -35,5 +35,7 @@ pl.pcolormesh(xx, yy, Z)
 pl.scatter(SP, SW, c=Y)
 # and the support vectors
 pl.scatter(clf.support_[:,0], clf.support_[:, 1], marker='+')
+pl.title('3-Class classification using Support Vector Machine. \n' + \
+         'Support Vectors are hightlighted with a +')
 pl.axis('tight')
 pl.show()

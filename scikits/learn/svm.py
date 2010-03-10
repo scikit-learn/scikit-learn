@@ -69,15 +69,6 @@ class BaseSVM(object):
     rho_ : array
         constants in decision function
 
-    Examples
-    --------
-    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> y = np.array([1, 1, 2, 2])
-    >>> clf = SVM()
-    >>> clf.fit(X, y)    #doctest: +ELLIPSIS
-    <scikits.learn.svm.svm.SVM object at 0x...>
-    >>> print clf.predict([[-0.8, -1]])
-    [ 1.]
 
     Notes
     -----
@@ -181,13 +172,31 @@ def predict(X, y, T, svm='c_svc', kernel='rbf', degree=3,
 
 
 ###
-# these classes are designed to maintain coherence across modules
+# Public API
 # No processing should go into these classes
-# these are just dummy classes with different default values
 
 class SVM(BaseSVM):
     """
-    Classification. By default, CSVC.
+    Classification using Support Vector Machines.
+    Implementation by default, CSVC.
+
+    Parameters
+    ----------
+    X : array-like, shape = [N, D]
+        Training vector
+    Y : array, shape = [N]
+        Target vector relative to X
+
+    Examples
+    --------
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> y = np.array([1, 1, 2, 2])
+    >>> clf = SVM()
+    >>> clf.fit(X, y)    #doctest: +ELLIPSIS
+    <scikits.learn.svm.svm.SVM object at 0x...>
+    >>> print clf.predict([[-0.8, -1]])
+    [ 1.]
+
     """
     def __init__(self, svm='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
@@ -202,6 +211,14 @@ class SVM(BaseSVM):
 class SVR(BaseSVM):
     """
     Support Vector Regression.
+
+    Parameters
+    ----------
+    X : array-like, shape = [N, D]
+        Training vector
+    Y : array, shape = [N]
+        Target vector relative to X
+    
     """
     def __init__(self, svm='epsilon_svr', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
