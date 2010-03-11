@@ -9,9 +9,7 @@ class BaseSVM(object):
     """
     Base class for classifiers that use support vector machine.
 
-    Classifier using Support Vector Machine algorithms.
-
-    To access the support vectors you can access them in member support_.
+    Should not be used directly, use derived classes instead
 
     Parameters
     ----------
@@ -20,66 +18,6 @@ class BaseSVM(object):
     y : array, shape = [N]
         target vector relative to X
         It will be converted to a floating-point array.
-
-    Optional Parameters
-    -------------------
-    svm : string
-        Specifies the algorithm. Must be one of 'c_svc', 'nu_svc',
-        'one_class', 'epsilon_svr', 'nu_svr'.
-        If none is given, 'c_svc' will be used.
-
-    kernel : string
-         Specifies the kernel type to be used in the algorithm.
-         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
-         If none is given 'rbf' will be used.
-
-    degree : int
-        degree of kernel function
-        is significant only in POLY, RBF, SIGMOID
-
-    gamma : float
-
-    coef0 : float
-
-    eps : float
-
-    C : float
-
-    scale : bool
-        If True the SVM is run on standardized data
-
-    nu: float
-        An upper bound on the fraction of training errors and a lower
-        bound of the fraction of support vectors. Should be in the
-        interval (0, 1].
-        By default 0.5 will be taken.
-
-    weight : array
-
-    Members
-    -------
-    support_ : array-like, shape = [nSV, D]
-        estimated support vectors.
-        where nSV is the number of support vectors, D is the dimension
-        of the underlying space.
-
-    coef_ : array
-        coefficient of the support vector in the decission function.
-
-    rho_ : array
-        constants in decision function
-
-
-    Notes
-    -----
-    For a complete description, see
-    http://scikit-learn.sourceforge.net/doc/modules/svm.html
-
-    Bugs
-    ----
-    Modification of estimated parameters will not affect the predict because
-    communication with the predictor is done via an encapsulated pointer and
-    not by copying the parameters. Solving this is a work in progress.
     """
 
     def __init__(self, svm, kernel, degree, gamma, coef0, cache_size,
@@ -143,6 +81,8 @@ def predict(X, y, T, svm='c_svc', kernel='rbf', degree=3,
     """
     Shortcut that does fit and predict in a single step.
 
+    Should be faster than instatating the object, since less copying is done.
+
     Parameters
     ----------
     X : array-like
@@ -177,15 +117,60 @@ def predict(X, y, T, svm='c_svc', kernel='rbf', degree=3,
 
 class SVM(BaseSVM):
     """
-    Classification using Support Vector Machines.
-    Implementation by default, CSVC.
+    Support Vector Classification
+
+    Implementats C-SVC, nu-SVC
 
     Parameters
     ----------
-    X : array-like, shape = [N, D]
-        Training vector
-    Y : array, shape = [N]
+    X : array-like, shape = [nsamples, nfeatures]
+        Training vector, where nsamples in the number of samples and
+        nfeatures is the number of features.
+    Y : array, shape = [nsamples]
         Target vector relative to X
+
+    Optional Parameters
+    -------------------
+    impl : string
+        SVM implementation to choose from. This refers to different
+        formulations of the SVM optimization problem.
+        Can be one of 'c_svc', 'nu_svc'. By default 'c_svc' will be chosen.
+
+    scale : boolean
+        Scale data before fitting the model. Caution: if activated,
+        estimated parameters will also be scaled.
+        Default is True.
+
+    nu: float
+        An upper bound on the fraction of training errors and a lower
+        bound of the fraction of support vectors. Should be in the
+        interval (0, 1].
+        By default 0.5 will be taken.
+        Only available is impl is set to 'nu_svc'
+
+
+    kernel : string
+         Specifies the kernel type to be used in the algorithm.
+         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
+         If none is given 'rbf' will be used.
+
+    degree : int
+        degree of kernel function
+        is significant only in POLY, RBF, SIGMOID
+
+    Members
+    -------
+    support_ : array-like, shape = [nSV, D]
+        estimated support vectors.
+        where nSV is the number of support vectors, D is the dimension
+        of the underlying space.
+
+    coef_ : array
+        coefficient of the support vector in the decission function.
+
+    rho_ : array
+        constants in decision function
+
 
     Examples
     --------
@@ -197,13 +182,17 @@ class SVM(BaseSVM):
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
+    References
+    ----------
+    http://scikit-learn.sourceforge.net/doc/modules/svm.html
+    http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf
     """
-    def __init__(self, svm='c_svc', kernel='rbf', degree=3,
+    def __init__(self, impl='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
                  probability=0, scale=True):
 
-        BaseSVM.__init__(self, svm, kernel, degree, gamma, coef0,
+        BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability, scale)    
 
