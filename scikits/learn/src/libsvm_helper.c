@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include "svm.h"
-#include <stdio.h>
 #include <numpy/arrayobject.h>
 
 /*
@@ -50,10 +49,8 @@ struct svm_model
  * elements and after we just memcpy that to the proper array.
  *
  * Special care must be taken with indices, since libsvm indices start
- * at 1 and not at 0
+ * at 1 and not at 0.
  *
- * We collect nonzero items into stack temp and then copy the whole
- * stack into sparse.
  */
 struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 {
