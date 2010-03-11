@@ -15,10 +15,6 @@ cdef extern from "math.h":
     double fmax(double f1, double f2)
     double rand()
 
-cdef extern from "time.h":
-    ctypedef long time_t
-    time_t time(time_t *)
-
 cdef inline double fsign(double f):
     if f == 0:
         return 0
