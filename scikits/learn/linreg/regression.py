@@ -19,6 +19,11 @@ class LinearRegression(object):
     ----------
     This class takes no parameters
 
+    Members
+    -------
+    coef_ : array
+        Estimated coefficients for the linear regression problem.
+
     This is just plain linear regression wrapped is a Predictor object.
     """
 
@@ -26,7 +31,7 @@ class LinearRegression(object):
         """
         Fit linear model
         """
-        self.w, self.residues, self.rank, self.singular = \
+        self.coef_, self.residues_, self.rank_, self.singular_ = \
                 scipy.linalg.lstsq(X, Y)
         return self
 
@@ -62,8 +67,7 @@ class RidgeRegression(object):
 
     See also
     --------
-    http://scikit-learn.sourceforge.net/doc/modules/glm.html
-
+    http://scikit-learn.sourceforge.net/doc/modules/linreg.html
     """
 
     def __init__(self, alpha=1.0):
@@ -75,16 +79,17 @@ class RidgeRegression(object):
 
         if nsamples > nfeatures:
             # w = inv(X^t X + alpha*Id) * X.T y
-            self.w = scipy.linalg.solve(np.dot(X.T,X) + self.alpha * np.eye(nfeatures),
+            self.coef_ = scipy.linalg.solve(np.dot(X.T,X) + self.alpha * np.eye(nfeatures),
                                   np.dot(X.T,y))
         else:
             # w = X.T * inv(X X^t + alpha*Id) y
-            self.w = np.dot(X.T,
+            self.coef_ = np.dot(X.T,
                     scipy.linalg.solve(np.dot(X, X.T) + self.alpha * np.eye(nsamples), y))
 
         return self
 
-    def predict(self, X):
-        """Predict using Linear Model
+    def predict(self, T):
         """
-        return np.dot(X,self.w)
+        Predict using Linear Model
+        """
+        return np.dot(T, self.w)
