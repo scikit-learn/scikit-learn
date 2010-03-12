@@ -1,5 +1,5 @@
 import numpy as np
-from .. import neighbors
+from scikits.learn import neighbors
 
 from numpy.testing import assert_array_equal
 

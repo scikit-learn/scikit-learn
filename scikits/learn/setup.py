@@ -17,6 +17,13 @@ def configuration(parent_package='',top_path=None):
                          depends=[join('src', 'svm.h'),
                                  join('src', 'libsvm_helper.c'),
                                   ])
+
+    config.add_extension('BallTree',
+                         sources=[join('src', 'BallTree.cpp')],
+                         include_dirs=[numpy.get_include()]
+                         )
+
+
     return config
 
     config.add_subpackage('utils')
