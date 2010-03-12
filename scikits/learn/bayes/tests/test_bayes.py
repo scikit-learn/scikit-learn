@@ -1,21 +1,6 @@
 import numpy as np
-from scikits.learn.bayes.regression import bayesian_regression_noprior, \
-                                      bayesian_regression_ridge, \
-                                      bayesian_regression_ard, \
-                                      RidgeRegression, \
-                                      BayesianRegression, \
-                                      ARDRegression
+from scikits.learn.bayes.regression import *
 from numpy.testing import assert_array_almost_equal
-
-def test_toy_noprior_regression():
-    """
-    Test no prior regression classifier
-    """
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
-    w, beta, log_likelihood = bayesian_regression_noprior(X, Y)
-    assert_array_almost_equal(w, [1])
-
 
 def test_toy_ridge_regression():
     """
@@ -37,7 +22,7 @@ def test_toy_ard_regression():
     assert(np.abs(1-w)<1.e-3)
 
 
-def test_toy_noprior_object():
+def test_toy_noprior():
     """
     Test BayesianRegression with no prior classifier
     """
@@ -45,8 +30,8 @@ def test_toy_noprior_object():
     Y = np.array([1, 2])
     clf = BayesianRegression()
     clf.fit(X, Y)
-    Test = [[1], [2], [3], [4]]
-    assert_array_almost_equal(clf.predict(Test), [1, 2, 3, 4]) # identity
+    T = [[1], [2], [3], [4]]
+    assert_array_almost_equal(clf.predict(T), [1, 2, 3, 4]) # identity
 
 
 def test_toy_ridge_object():

@@ -3,48 +3,6 @@ import scipy.linalg
 from scikits.learn.utils.utils import fast_logdet
 
 
-def bayesian_regression_noprior( X , Y, ll_bool=False):
-    """
-    Bayesian regression. Find the solutions by Maximum-likelihood (ML) -
-    equivalent to the OLS estimate with a noise precision beta.
-
-    Parameters
-    ----------
-    X : numpy array of shape (length,features)
-    data
-    Y : numpy array of shape (length)
-    target
-    ll_bool  : boolean (default is False).
-           If True, compute the log-likelihood at each step of the model.
-
-    Returns
-    -------
-    w : numpy array of shape (nb_features)
-         mean of the weights distribution.
-    beta : float
-       precision of the noise.
-    log_likelihood : list of float of size steps.
-             Compute (if asked) the log-likelihood of the model.
-
-    Examples
-    --------
-
-    Notes
-    -----
-    See Bishop p 138-143 for more details.
-    """
-
-    gram = np.dot(X.T, X)
-    w = np.dot(scipy.linalg.pinv(gram),np.dot(X.T,Y))
-    residual_ = (Y - np.dot(X, w))**2
-    beta = X.shape[0] / residual_.sum()
-    log_likelihood = []
-    if ll_bool :
-      log_likelihood = 0.5*X.shape[0]*np.log(beta)
-      log_likelihood -= 0.5*X.shape[0]*np.log(2*np.pi)
-      log_likelihood -= 0.5*beta*residual_.sum()
-    return w, beta, log_likelihood
-
 
 def bayesian_regression_ridge( X , Y, step_th=500, th_w = 1.e-12,
                                         ll_bool=False):
@@ -240,26 +198,6 @@ def bayesian_regression_ard(X, Y, step_th=500, th_w=1.e-12, \
     return w, alpha, beta, sigma, log_likelihood
 
 
-class BayesianRegression(object):
-    """
-    Encapsulate various bayesian regression algorithms
-    """
-    def __init__(self, ll_bool=False):
-        self.ll_bool = ll_bool
-
-    def fit(self,X,Y):
-        X = np.asanyarray(X, dtype=np.float)
-        Y = np.asanyarray(Y, dtype=np.float)
-        self.w, self.beta, self.log_likelihood = \
-            bayesian_regression_noprior(X, Y, self.ll_bool)
-        return self
-
-    def predict(self, T):
-        return np.dot(T, self.w)
-
-    def __repr__(self):
-        return "Bayes. Reg."
-
 class RidgeRegression(BayesianRegression):
     """
     Encapsulate various bayesian regression algorithms
@@ -276,9 +214,6 @@ class RidgeRegression(BayesianRegression):
         self.w, self.alpha, self.beta, self.sigma, self.log_likelihood = \
             bayesian_regression_ridge(X, Y, self.step_th, self.th_w, self.ll_bool)
         return self
-    
-    def __repr__(self):
-        return "Bayes. Reg. RIDGE"
 
 class ARDRegression(BayesianRegression):
     """
@@ -299,6 +234,3 @@ class ARDRegression(BayesianRegression):
             bayesian_regression_ard(X, Y, self.step_th, self.th_w,\
             self.alpha_th, self.ll_bool)
         return self
-
-    def __repr__(self):
-        return "Bayes. Reg. ARD"
