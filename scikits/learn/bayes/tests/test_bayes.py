@@ -22,18 +22,6 @@ def test_toy_ard_regression():
     assert(np.abs(1-w)<1.e-3)
 
 
-def test_toy_noprior():
-    """
-    Test BayesianRegression with no prior classifier
-    """
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
-    clf = BayesianRegression()
-    clf.fit(X, Y)
-    T = [[1], [2], [3], [4]]
-    assert_array_almost_equal(clf.predict(T), [1, 2, 3, 4]) # identity
-
-
 def test_toy_ridge_object():
     """
     Test BayesianRegression ridge classifier

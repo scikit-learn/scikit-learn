@@ -59,11 +59,12 @@ def bayesian_regression_ridge( X , Y, step_th=500, th_w = 1.e-12,
     sigma = scipy.linalg.pinv(alpha*ones + beta*gram)
     w = np.dot(beta*sigma,np.dot(X.T,Y))
     old_w = np.copy(w)
+    eigen = np.real(scipy.linalg.eigvals(gram.T))
     while not has_converged and step_th:
 
         ### Update Parameters
         # alpha
-        lmbd_ = np.real(scipy.linalg.eigvals(beta * gram.T))
+        lmbd_ = np.dot(beta, eigen)
         gamma_ = (lmbd_/(alpha + lmbd_)).sum()
         alpha = gamma_/np.dot(w.T, w)
 
@@ -198,7 +199,7 @@ def bayesian_regression_ard(X, Y, step_th=500, th_w=1.e-12, \
     return w, alpha, beta, sigma, log_likelihood
 
 
-class RidgeRegression(BayesianRegression):
+class RidgeRegression:
     """
     Encapsulate various bayesian regression algorithms
     """
@@ -215,7 +216,10 @@ class RidgeRegression(BayesianRegression):
             bayesian_regression_ridge(X, Y, self.step_th, self.th_w, self.ll_bool)
         return self
 
-class ARDRegression(BayesianRegression):
+    def predict(self, T):
+        return np.dot(T, self.w)
+
+class ARDRegression:
     """
     Encapsulate various bayesian regression algorithms
     """
@@ -234,3 +238,6 @@ class ARDRegression(BayesianRegression):
             bayesian_regression_ard(X, Y, self.step_th, self.th_w,\
             self.alpha_th, self.ll_bool)
         return self
+
+    def predict(self, T):
+        return np.dot(T, self.w)
