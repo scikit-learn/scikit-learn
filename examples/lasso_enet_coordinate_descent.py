@@ -12,7 +12,7 @@ from itertools import cycle
 import numpy as np
 import pylab as pl
 
-from scikits.learn.glm.cd import Lasso, ElasticNet, lasso_path, \
+from scikits.learn.glm.coordinate_descent import Lasso, ElasticNet, lasso_path, \
                                     enet_path, enet_dual_gap, lasso_dual_gap, \
                                     IterationCallbackFunc, \
                                     lasso_objective, enet_objective
