@@ -21,8 +21,7 @@ class BaseSVM(object):
     """
 
     def __init__(self, svm, kernel, degree, gamma, coef0, cache_size,
-                 eps, C, nr_weight, nu, p, shrinking, probability,
-                 scale):
+                 eps, C, nr_weight, nu, p, shrinking, probability):
         self.svm = _svm_types.index(svm)
         self.kernel = _kernel_types.index(kernel)
         self.degree = degree
@@ -36,7 +35,6 @@ class BaseSVM(object):
         self.p = p
         self.shrinking = shrinking
         self.probability = probability
-        self.scale = scale
 
     def fit(self, X, y):
         """
@@ -44,11 +42,6 @@ class BaseSVM(object):
         """
         X = np.asanyarray(X, dtype=np.float, order='C')
         y = np.asanyarray(y, dtype=np.float, order='C')
-
-        if self.scale:
-            self.mean = X.mean(0)
-            self.std = X.std(0)
-            X = (X - self.mean) / self.std
 
         # check dimensions
         if X.shape[0] != y.shape[0]: raise ValueError("Incompatible shapes")
@@ -63,7 +56,6 @@ class BaseSVM(object):
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float, order='C')
-        if self.scale: T = (T - self.mean) / self.std
         return libsvm.predict_from_model_wrap(T, self.support_,
                       self.coef_, self.rho_, self.svm,
                       self.kernel, self.degree, self.gamma,
@@ -129,32 +121,24 @@ class SVC(BaseSVM):
     Y : array, shape = [nsamples]
         Target vector relative to X
 
-    Optional Parameters
-    -------------------
-    impl : string
+    impl : string, optional
         SVM implementation to choose from. This refers to different
         formulations of the SVM optimization problem.
         Can be one of 'c_svc', 'nu_svc'. By default 'c_svc' will be chosen.
 
-    scale : boolean
-        Scale data before fitting the model. Caution: if activated,
-        estimated parameters will also be scaled.
-        Default is True.
-
-    nu: float
+    nu: float, optional
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
         interval (0, 1].
         By default 0.5 will be taken.
         Only available is impl is set to 'nu_svc'
 
-
-    kernel : string
+    kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
          If none is given 'rbf' will be used.
 
-    degree : int
+    degree : int, optional
         degree of kernel function
         is significant only in POLY, RBF, SIGMOID
 
@@ -182,19 +166,20 @@ class SVC(BaseSVM):
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
-    References
-    ----------
+    See also
+    --------
     http://scikit-learn.sourceforge.net/doc/modules/svm.html
+
     http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf
     """
     def __init__(self, impl='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0, scale=True):
+                 probability=0):
 
         BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
-                         shrinking, probability, scale)    
+                         shrinking, probability)    
 
 
 class SVR(BaseSVM):
@@ -212,10 +197,10 @@ class SVR(BaseSVM):
     def __init__(self, svm='epsilon_svr', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0, scale=True):
+                 probability=0):
         BaseSVM.__init__(self, svm, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
-                         shrinking, probability, scale)
+                         shrinking, probability)
 
 class OneClassSVM(BaseSVM):
     """
@@ -224,8 +209,8 @@ class OneClassSVM(BaseSVM):
     def __init__(self, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0, scale=True):
+                 probability=0):
         svm = 'one_class'
         BaseSVM.__init__(self, svm, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
-                         shrinking, probability, scale)
+                         shrinking, probability)
