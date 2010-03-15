@@ -115,7 +115,7 @@ def predict(X, y, T, svm='c_svc', kernel='rbf', degree=3,
 # Public API
 # No processing should go into these classes
 
-class SVM(BaseSVM):
+class SVC(BaseSVM):
     """
     Support Vector Classification
 

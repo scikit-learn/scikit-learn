@@ -17,7 +17,7 @@ def test_svm_params():
     This checks that we retrieve the correct parameters.
     """
 
-    clf =  svm.SVM(kernel='linear', scale=False)
+    clf =  svm.SVC(kernel='linear', scale=False)
     clf.fit(X, Y)
 
     assert_array_equal(clf.coef_, [[ 0.25, -.25]])
@@ -35,7 +35,7 @@ def test_tweak_params():
     The success of this test ensures that the mapping between libsvm and
     the python classifier is complete.
     """
-    clf = svm.SVM(kernel='linear', scale=False)
+    clf = svm.SVC(kernel='linear', scale=False)
     clf.fit(X, Y)
     assert_array_equal(clf.coef_, [[.25, -.25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
@@ -47,18 +47,18 @@ def test_error():
     Test that it gives proper exception on deficient input
     """
     # impossible value of nu
-    clf = svm.SVM(svm='nu_svc', kernel='linear', nu=0.0)
+    clf = svm.SVC(impl='nu_svc', kernel='linear', nu=0.0)
     assert_raises(ValueError, clf.fit, X, Y)
 
     Y2 = Y[:-1] # wrong dimensions for labels
-    assert_raises(ValueError, svm.SVM, X, Y2)
+    assert_raises(ValueError, svm.SVC, X, Y2)
     assert_raises(ValueError, svm.predict, X, Y2, T)
 
 def test_predict():
     true_result = [1, 2, 2]
     assert_array_equal(svm.predict(X, Y, T) , true_result)
     # the same, but using SVM object
-    clf = svm.SVM()
+    clf = svm.SVC()
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
