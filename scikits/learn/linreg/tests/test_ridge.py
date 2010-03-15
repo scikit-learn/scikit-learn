@@ -86,13 +86,26 @@ def test_toy_ard_regression():
 def test_toy_ridge_object():
     """
     Test BayesianRegression ridge classifier
+    TODO: test also nsamples > nfeatures
+    """
+    X = np.array([[1], [2]])
+    Y = np.array([1, 2])
+    clf = Ridge(alpha=0.0)
+    clf.fit(X, Y)
+    Test = [[1], [2], [3], [4]]
+    assert_array_equal(clf.predict(Test), [1, 2, 3, 4]) # identity
+
+
+def test_toy_bayesian_ridge_object():
+    """
+    Test BayesianRegression ridge classifier
     """
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
     clf = BayesianRidge()
     clf.fit(X, Y)
     Test = [[1], [2], [3], [4]]
-    assert(np.abs(clf.predict(Test)-[1, 2, 3, 4]).sum()<1.) # identity
+    assert_array_equal(clf.predict(Test), [1, 2, 3, 4]) # identity
 
 
 def test_toy_ard_object():
