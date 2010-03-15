@@ -16,10 +16,10 @@ Parameter W is estimated by least squares.
 
 Linear regression is done via instances of :class:`LinearRegression`.
 
-.. autoclass:: scikits.learn.linreg.LinearRegression
+.. autoclass:: scikits.learn.glm.LinearRegression
     :members:
 
->>> from scikits.learn import linreg
+>>> from scikits.learn import glm
 >>> 
 >>> clf = Linre
 
