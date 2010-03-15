@@ -27,18 +27,20 @@ ctypedef np.float64_t DOUBLE
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
+def enet_coordinate_descent(model,
+                            np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            float alpha,
-                            float beta,
-                            np.ndarray[DOUBLE, ndim=1] w,
-                            int maxit=10,
-                            callback=None):
+                            unsigned int maxit):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
     """
 
     # get the data information into easy vars
+    cdef float alpha = model.alpha
+    cdef float beta = model.beta
+    cdef np.ndarray[DOUBLE, ndim=1] w = model.w
+    callbacks = model.callbacks
+
     cdef unsigned int nsamples = X.shape[0]
     cdef unsigned int nfeatures = X.shape[1]
     cdef unsigned int nclasses = w.shape[1]
@@ -55,8 +57,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
     cdef float w_ii
     cdef unsigned int ii
     cdef unsigned int jj
-    cdef unsigned int iter
-    for iter in xrange(maxit):
+    cdef unsigned int n_iter
+
+    for callback in callbacks:
+        callback(0) # Init callback
+
+    goon = True
+    for n_iter in range(maxit):
         for ii in xrange(nfeatures): # Loop over coordinates
             w_ii = w[ii] # Store previous value
 
@@ -78,7 +85,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
                 R[jj] -=  w[ii] * X[jj,ii] # Update residual
             R[nsamples+ii] -= w[ii] * sqrt(beta)
 
-        if (callback is not None and not callback(X, y, R, alpha, w, iter)):
+        for callback in callbacks:
+            if not callback(n_iter, X=X, y=y, w=w, alpha=alpha, beta=beta, R=R):
+                goon *= False
+
+        if not goon:
             break
 
     return w

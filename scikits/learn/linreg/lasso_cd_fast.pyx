@@ -1,4 +1,4 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr> 
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
 # $Id$
@@ -27,17 +27,19 @@ ctypedef np.float64_t DOUBLE
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
+def lasso_coordinate_descent(model,
+                            np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            float alpha,
-                            np.ndarray[DOUBLE, ndim=1] w,
-                            int maxit=10,
-                            callback=None):
+                            unsigned int maxit):
     """Cython version of the coordinate descent algorithm
         for Lasso regression
     """
 
     # get the data information into easy vars
+    cdef float alpha = model.alpha
+    cdef np.ndarray[DOUBLE, ndim=1] w = model.w
+    callbacks = model.callbacks
+
     cdef unsigned int nsamples = X.shape[0]
     cdef unsigned int nfeatures = X.shape[1]
     cdef unsigned int nclasses = w.shape[1]
@@ -49,8 +51,13 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
     cdef float w_ii
     cdef unsigned int ii
     cdef unsigned int jj
-    cdef unsigned int iter
-    for iter in xrange(maxit):
+    cdef unsigned int n_iter
+
+    for callback in callbacks:
+        callback(0) # Init callback
+
+    goon = True
+    for n_iter in range(maxit):
         for ii in xrange(nfeatures): # Loop over coordinates
             w_ii = w[ii] # Store previous value
 
@@ -69,7 +76,11 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=2] X,
             for jj in range(nsamples):
                 R[jj] -=  w[ii] * X[jj, ii] # Update residual
 
-        if (callback is not None and not callback(X, y, R, alpha, w, iter)):
+        for callback in callbacks:
+            if not callback(n_iter, X=X, y=y, w=w, alpha=alpha, R=R):
+                goon *= False
+
+        if not goon:
             break
 
     return w
