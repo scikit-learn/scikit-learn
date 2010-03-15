@@ -7,16 +7,16 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
-from ..cd import lasso_coordinate_descent_slow
-from ..cd import lasso_coordinate_descent_fast
-from ..cd import Lasso
+from ..coordinate_descent import lasso_coordinate_descent_slow
+from ..coordinate_descent import lasso_coordinate_descent_fast
+from ..coordinate_descent import Lasso
 
-from ..cd import enet_coordinate_descent_slow
-from ..cd import enet_coordinate_descent_fast
-from ..cd import ElasticNet
-from ..cd import lasso_path
-from ..cd import enet_path
-from ..cd import enet_dual_gap, lasso_dual_gap
+from ..coordinate_descent import enet_coordinate_descent_slow
+from ..coordinate_descent import enet_coordinate_descent_fast
+from ..coordinate_descent import ElasticNet
+from ..coordinate_descent import lasso_path
+from ..coordinate_descent import enet_path
+from ..coordinate_descent import enet_dual_gap, lasso_dual_gap
 
 def test_lasso_cd_python_cython_sanity():
     n_samples, n_features, maxit = 100, 50, 150
