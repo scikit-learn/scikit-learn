@@ -164,7 +164,6 @@ def predict_wrap( np.ndarray[np.double_t, ndim=2, mode='c'] X,
     return dec_values
 
 
-
 def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X, 
                   np.ndarray[np.double_t, ndim=1, mode='c'] Y, int
                   svm_type, int kernel_type, int degree, double gamma,
@@ -233,7 +232,7 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     copy_sv_coef(sv_coef.data, model, sv_coef.strides)
 
     # copy model.rho
-    cdef np.ndarray[np.double_t, ndim=1, mode='c'] rho
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] rho 
     rho = np.empty(nr*(nr-1)/2)
     copy_rho(rho.data, model, rho.shape)
 
@@ -252,6 +251,10 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     cdef np.ndarray[np.int_t, ndim=1, mode='c'] label
     label = np.empty((nr), dtype=np.int)
     copy_label(label.data, model)
+
+    free_model(model)
+    free_problem(problem)
+    free_param(param)
 
     return sv_coef, rho, SV, nr, nclass_SV, label
 
