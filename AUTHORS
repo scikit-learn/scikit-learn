@@ -16,7 +16,7 @@ chronological order:
   * Eric Jones
   * fullung
   * Jarrod Millman
-  * Matthieu Bbrucher
+  * Matthieu Brucher
   * Travis Oliphant
   * Pearu Peterson
   * Stefan van der Walt
@@ -26,7 +26,7 @@ chronological order:
   * Jake VanderPlas
   * Alexandre Gramfort
   * Olivier Grisel
-
+  * Vincent Michel
 
 For a complete list, look at the commit logs. Note that this list is
 not exhaustive, since subversion logs only publish the commiter's
