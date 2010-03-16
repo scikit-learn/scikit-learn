@@ -38,7 +38,8 @@ class BaseSVM(object):
 
     def fit(self, X, y):
         """
-        should empty arrays created be order='C' ?
+        Fit the model with vectors X, Y.
+
         """
         X = np.asanyarray(X, dtype=np.float, order='C')
         y = np.asanyarray(y, dtype=np.float, order='C')
@@ -111,7 +112,7 @@ class SVC(BaseSVM):
     """
     Support Vector Classification
 
-    Implementats C-SVC, nu-SVC
+    Implements C-SVC, nu-SVC
 
     Parameters
     ----------
@@ -126,7 +127,7 @@ class SVC(BaseSVM):
         formulations of the SVM optimization problem.
         Can be one of 'c_svc', 'nu_svc'. By default 'c_svc' will be chosen.
 
-    nu: float, optional
+    nu : float, optional
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
         interval (0, 1].
@@ -142,17 +143,16 @@ class SVC(BaseSVM):
         degree of kernel function
         is significant only in POLY, RBF, SIGMOID
 
-    Members
-    -------
-    support_ : array-like, shape = [nSV, D]
-        estimated support vectors.
-        where nSV is the number of support vectors, D is the dimension
-        of the underlying space.
 
-    coef_ : array
+    Attributes
+    ----------
+    support : array-like, shape = [nSV, nfeatures]
+        support vectors
+
+    coef : array
         coefficient of the support vector in the decission function.
 
-    rho_ : array
+    rho : array
         constants in decision function
 
 
@@ -168,15 +168,17 @@ class SVC(BaseSVM):
 
     See also
     --------
-    http://scikit-learn.sourceforge.net/doc/modules/svm.html
+    SVR
 
-    http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf
+    References
+    ----------
+    - http://scikit-learn.sourceforge.net/doc/modules/svm.html
+    - http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf
     """
     def __init__(self, impl='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
                  probability=0):
-
         BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)    
@@ -192,7 +194,11 @@ class SVR(BaseSVM):
         Training vector
     Y : array, shape = [N]
         Target vector relative to X
-    
+
+
+    See also
+    --------
+    SVC
     """
     def __init__(self, svm='epsilon_svr', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,

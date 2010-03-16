@@ -19,8 +19,7 @@ you just made some modifications that you'd like to share with the
 world. The way to proceed is the following:
 
 1. Create a patch file. The command::
-
-  svn diff > patch.diff
+    svn diff > patch.diff
 
 will create a file "patch.diff" with the changes you made with
 the code base. 

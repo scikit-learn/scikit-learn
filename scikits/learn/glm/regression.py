@@ -19,8 +19,8 @@ class LinearRegression(object):
     ----------
     This class takes no parameters
 
-    Members
-    -------
+    Attributes
+    ----------
     coef_ : array
         Estimated coefficients for the linear regression problem.
 

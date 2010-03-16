@@ -56,7 +56,7 @@ plot it. The following example show how to create a 2 dimension Gaussian Model
 with 3 components, sample it and plot its confidence ellipsoids with
 matplotlib:
 
-.. literalinclude::  ../../../scikits/learn/em/examples/basic_example1.py
+.. literalinclude::  ../../scikits/learn/em/examples/basic_example1.py
 
 
 which plots this figure:
@@ -84,7 +84,7 @@ iterations of EM; once the EM has finished the computation, the GM instance of
 GMM contains the computed parameters.
 
 
-.. literalinclude::  ../../../scikits/learn/em/examples/basic_example2.py
+.. literalinclude::  ../../scikits/learn/em/examples/basic_example2.py
 
 
 GMM class do all the hard work for learning: it can compute the sufficient
@@ -111,7 +111,7 @@ clusters, and prints which number of clusters is the most likely from the BIC:
 
 
 
-.. literalinclude::  ../../../scikits/learn/em/examples/basic_example3.py
+.. literalinclude::  ../../scikits/learn/em/examples/basic_example3.py
 
 
 which plots this figure:

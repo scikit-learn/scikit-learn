@@ -14,9 +14,9 @@ Parameter W is estimated by least squares.
 
 .. what happens if there are duplicate rows ?
 
-Linear regression is done via instances of :class:`LinearRegression`.
+Linear regression is done via instances of:
 
-.. autoclass:: scikits.learn.glm.LinearRegression
+.. autoclass:: scikits.learn.glm.regression.LinearRegression
     :members:
 
 >>> from scikits.learn import glm
