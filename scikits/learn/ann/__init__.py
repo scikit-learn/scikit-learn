@@ -10,5 +10,3 @@ Each of {mlp,srn,rbf}.py contains a class to define, train and test a network,
 along with a main() functions that demos on a toy dataset.
 """
 
-__all__ = ['mlp','srn','rbf']
-
