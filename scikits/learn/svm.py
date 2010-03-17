@@ -36,8 +36,8 @@ class BaseSVM(object):
         self.nr_weight = 0
         self.nu = nu
         self.p = p
-        self.shrinking = shrinking
-        self.probability = probability
+        self.shrinking = int(shrinking)
+        self.probability = int(probability)
 
     def fit(self, X, y):
         """
@@ -133,9 +133,8 @@ class SVC(BaseSVM):
     nu : float, optional
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
-        interval (0, 1].
-        By default 0.5 will be taken.
-        Only available is impl is set to 'nu_svc'
+        interval (0, 1].  By default 0.5 will be taken.  Only
+        available if impl='nu_svc'
 
     kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
@@ -144,18 +143,19 @@ class SVC(BaseSVM):
 
     degree : int, optional
         degree of kernel function
-        is significant only in POLY, RBF, SIGMOID
+        is significant only in poly, rbf, sigmoid
 
+    coef0 : float, optional
 
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, nfeatures]
         Support vectors
 
-    `coef_` : array
+    `coef_` : array, shape = [nclasses-1, nfeatures]
         Coefficient of the support vector in the decission function.
 
-    `rho_` : array
+    `rho_` : array, shape = [nclasses-1]
         constants in decision function
 
     Methods
@@ -169,9 +169,9 @@ class SVC(BaseSVM):
     Examples
     --------
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> y = np.array([1, 1, 2, 2])
+    >>> Y = np.array([1, 1, 2, 2])
     >>> clf = SVM()
-    >>> clf.fit(X, y)    #doctest: +ELLIPSIS
+    >>> clf.fit(X, Y)    #doctest: +ELLIPSIS
     <scikits.learn.svm.svm.SVM object at 0x...>
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -179,16 +179,11 @@ class SVC(BaseSVM):
     See also
     --------
     SVR
-
-    References
-    ----------
-    - http://scikit-learn.sourceforge.net/doc/modules/svm.html
-    - http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf
     """
     def __init__(self, impl='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
-                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0):
+                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
+                 probability=False):
         BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)    
@@ -200,9 +195,10 @@ class SVR(BaseSVM):
 
     Parameters
     ----------
-    X : array-like, shape = [N, D]
-        Training vector
-    Y : array, shape = [N]
+    X : array-like, shape = [nsamples, nfeatures]
+        Training vector, where nsamples in the number of samples and
+        nfeatures is the number of features.
+    Y : array, shape = [nsamples]
         Target vector relative to X
 
 
@@ -211,10 +207,10 @@ class SVR(BaseSVM):
     `support_` : array-like, shape = [nSV, nfeatures]
         Support vectors
 
-    `coef_` : array
+    `coef_` : array, shape = [nclasses-1, nfeatures]
         Coefficient of the support vector in the decission function.
 
-    `rho_` : array
+    `rho_` : array, shape = [nclasses-1]
         constants in decision function
 
     Methods
@@ -231,8 +227,8 @@ class SVR(BaseSVM):
     """
     def __init__(self, impl='epsilon_svr', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
-                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0):
+                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
+                 probability=False):
         BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
@@ -243,8 +239,8 @@ class OneClassSVM(BaseSVM):
     """
     def __init__(self, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
-                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
-                 probability=0):
+                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
+                 probability=False):
         impl = 'one_class'
         BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
