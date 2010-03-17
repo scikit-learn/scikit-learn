@@ -67,10 +67,11 @@ def enet_coordinate_descent(model,
         for ii in xrange(nfeatures): # Loop over coordinates
             w_ii = w[ii] # Store previous value
 
-            # R += w_ii * X[:,ii]
-            for jj in range(nsamples):
-                R[jj] += w_ii * X[jj,ii]
-            R[nsamples+ii] += w_ii * sqrt(beta)
+            if w_ii != 0.0:
+                # R += w_ii * X[:,ii]
+                for jj in range(nsamples):
+                    R[jj] += w_ii * X[jj,ii]
+                R[nsamples+ii] += w_ii * sqrt(beta)
 
             # tmp = (X[:,ii]*R).sum()
             tmp = 0.0
@@ -80,10 +81,11 @@ def enet_coordinate_descent(model,
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
 
-            # R -=  w[ii] * X[:,ii] # Update residual
-            for jj in range(nsamples):
-                R[jj] -=  w[ii] * X[jj,ii] # Update residual
-            R[nsamples+ii] -= w[ii] * sqrt(beta)
+            if w[ii] != 0.0:
+                # R -=  w[ii] * X[:,ii] # Update residual
+                for jj in range(nsamples):
+                    R[jj] -=  w[ii] * X[jj,ii] # Update residual
+                R[nsamples+ii] -= w[ii] * sqrt(beta)
 
         for callback in callbacks:
             if not callback(n_iter, X=X, y=y, w=w, alpha=alpha, beta=beta, R=R):

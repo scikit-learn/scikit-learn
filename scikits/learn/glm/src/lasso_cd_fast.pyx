@@ -61,9 +61,10 @@ def lasso_coordinate_descent(model,
         for ii in xrange(nfeatures): # Loop over coordinates
             w_ii = w[ii] # Store previous value
 
-            # R += w_ii * X[:,ii]
-            for jj in range(nsamples):
-                R[jj] += w_ii * X[jj, ii]
+            if w_ii != 0.0:
+                # R += w_ii * X[:,ii]
+                for jj in range(nsamples):
+                    R[jj] += w_ii * X[jj, ii]
 
             # tmp = (X[:,ii]*R).sum()
             tmp = 0.0
@@ -72,9 +73,10 @@ def lasso_coordinate_descent(model,
 
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) / norm_cols_X[ii]
 
-            # R -=  w[ii] * X[:,ii] # Update residual
-            for jj in range(nsamples):
-                R[jj] -=  w[ii] * X[jj, ii] # Update residual
+            if w[ii] != 0.0:
+                # R -=  w[ii] * X[:,ii] # Update residual
+                for jj in range(nsamples):
+                    R[jj] -=  w[ii] * X[jj, ii] # Update residual
 
         for callback in callbacks:
             if not callback(n_iter, X=X, y=y, w=w, alpha=alpha, R=R):

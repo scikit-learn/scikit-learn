@@ -29,14 +29,17 @@ def enet_coordinate_descent(model, X, y, maxit):
     for n_iter in range(maxit):
         for ii in xrange(n_features): # Loop over coordinates
             w_ii = w[ii] # Store previous value
-            R[:n_samples] += w_ii * X[:, ii]
-            R[n_samples + ii] += w_ii * sqrt(beta)
+            if w_ii != 0.0:
+                R[:n_samples] += w_ii * X[:, ii]
+                R[n_samples + ii] += w_ii * sqrt(beta)
             tmp = (X[:, ii] * R[:n_samples]).sum()
             tmp += sqrt(beta) * R[n_samples + ii]
             w[ii] = np.sign(tmp) * np.maximum(abs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
-            R[:n_samples] -= w[ii] * X[:, ii] # Update residual
-            R[n_samples + ii] -= w[ii] * sqrt(beta)
+
+            if w[ii] != 0.0:
+                R[:n_samples] -= w[ii] * X[:, ii] # Update residual
+                R[n_samples + ii] -= w[ii] * sqrt(beta)
 
         for callback in callbacks:
             if not callback(n_iter, X=X, y=y, w=w, alpha=alpha, beta=beta, R=R):

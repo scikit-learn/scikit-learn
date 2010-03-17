@@ -24,11 +24,13 @@ def lasso_coordinate_descent(model, X, y, maxit):
     for n_iter in range(maxit):
         for ii in xrange(n_features): # Loop over coordinates
             w_ii = w[ii] # Store previous value
-            R += w_ii * X[:, ii]
+            if w_ii != 0.0:
+                R += w_ii * X[:, ii]
             tmp = (X[:, ii] * R).sum()
             w[ii] = np.sign(tmp) * np.maximum(abs(tmp) - alpha, 0) \
                     / norm_cols_X[ii]
-            R -= w[ii] * X[:, ii] # Update residual
+            if w[ii] != 0.0:
+                R -= w[ii] * X[:, ii] # Update residual
 
         for callback in callbacks:
             if not callback(n_iter, X=X, y=y, w=w, alpha=alpha, R=R):
