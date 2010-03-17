@@ -4,13 +4,12 @@ Install
 Binary Packages
 ---------------
 
-There are currently no binary packages available. If you would like to
-make one, please see section :ref:`packaging <packaging>`.
+There is a prebuild package for windows. See section downloads in the
+project's web page.
 
 
 From Source
 -----------
-
 Download the package from http://sourceforge.net/projects/scikit-learn/files
 , unpack the sources and cd into archive.
 
@@ -27,3 +26,11 @@ through Mac Ports), you must issue the commands::
 
   python setup.py build_ext --include=/opt/local/include
   python setup.py install
+
+
+Bleeding Edge
+-------------
+
+Latests source code can be found on subversion::
+
+  svn co http://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn/trunk scikit-learn

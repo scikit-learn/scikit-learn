@@ -1,9 +1,16 @@
-Welcome to scikit-learn's documentation!
-========================================
+===========================
+Scikits.learn Documentation
+===========================
 
-Scikit-learn is a Python module for machine learning.
+Introduction
+============
+``scikits.learn`` is a Python module for machine learning. It aims to
+implement classic machine learning algorithms while remaining simple
+and efficient.
 
-
+It implements several machine learning algorithms, including Support
+Vector Machines, Gaussian Mixture Models, Neural Networks, Nearest
+Neighbors, Generalized Linear Models, etc.
 
 .. toctree::
    :maxdepth: 1
@@ -21,8 +28,9 @@ Scikit-learn is a Python module for machine learning.
   tutorial
 
 
-Reference
----------
+Module Reference
+================
+
 
 .. toctree::
    :maxdepth: 2
@@ -32,10 +40,10 @@ Reference
    modules/manifold
    modules/svm
    modules/glm
+   module/feature_selection
 
-
-For Developers
---------------
+Developers
+==========
 
 .. toctree::
    :maxdepth: 1

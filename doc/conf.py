@@ -172,8 +172,8 @@ htmlhelp_basename = 'scikit-learndoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'scikit-learn.tex', u'scikit-learn Documentation',
-   u'Scikit-Learn Developers', 'manual'),
+  ('index', 'scikits.learn.tex', u'scikits.learn Documentation',
+   u'scikits.learn Developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -185,7 +185,9 @@ latex_documents = [
 #latex_use_parts = False
 
 # Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
+latex_preamble = """
+\usepackage{amsmath}\usepackage{amsfonts}
+"""
 
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []

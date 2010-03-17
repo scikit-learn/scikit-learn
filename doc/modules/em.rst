@@ -135,10 +135,6 @@ example directory. It models the joint distribution (d(t), w(t+1)), where d(t)
 is the duration time, and w(t+1) the waiting time for the next eruption. It
 selects the best model using the BIC.
 
-.. raw:: latex
-
-    \input{pdfestimation.tex}
-
 .. figure:: em_data/pdfestimation.png 
     :width: 500
     :height: 400
@@ -161,10 +157,6 @@ distribution P(data|class) by a mixture of Gaussian, and to classify the data
 with Maximum A Posteriori (eg takes the class which maximizes P(class | data)).
 Not surprisingly, the errors lie on the border between the two classes which
 are not linearly separable.
-
-.. raw:: latex
-
-    \input{discriminant_analysis.tex}
 
 .. figure:: em_data/dclass.png 
     :width: 600
@@ -198,7 +190,7 @@ are in python, whereas loops on samples are in C (through numpy).  I don't
 think there is an easy fix to this problem. 
 
 Full covariances will be slow, because you cannot avoid nested loop in python
-this case without insane amount of memory. A C implementation may be
+this case without insane amount of memory. A C version may be
 implemented, but this is not my top priority; most of the time, you should
 avoid full covariance models if possible.
 
