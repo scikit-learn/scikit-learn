@@ -1,5 +1,5 @@
-from scikits.learn import svm
 import numpy as np
+from scikits.learn import svm
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
                           assert_raises
@@ -9,7 +9,6 @@ X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
 Y = np.array( [1, 1, 1, 2, 2, 2])
 T = np.array( [[-1,-1], [2, 2], [3, 2]] )
 
-
 def test_svm_params():
     """
     C_SVC algorithm and linear kernel.
@@ -17,12 +16,17 @@ def test_svm_params():
     This checks that we retrieve the correct parameters.
     """
 
-    clf =  svm.SVC(kernel='linear', scale=False)
+    clf =  svm.SVC(kernel='linear')
     clf.fit(X, Y)
 
     assert_array_equal(clf.coef_, [[ 0.25, -.25]])
     assert_array_equal(clf.support_, [[-1,-1], [1, 1]])
     assert_array_equal(clf.rho_, [0.])
+
+def test_fit():
+    clf = svm.SVC()
+    clf.fit([[1,2]], [0])
+    assert_array_equal(clf.predict([[-1, -1]]), [0])
 
 def test_tweak_params():
     """
@@ -35,7 +39,7 @@ def test_tweak_params():
     The success of this test ensures that the mapping between libsvm and
     the python classifier is complete.
     """
-    clf = svm.SVC(kernel='linear', scale=False)
+    clf = svm.SVC(kernel='linear')
     clf.fit(X, Y)
     assert_array_equal(clf.coef_, [[.25, -.25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
