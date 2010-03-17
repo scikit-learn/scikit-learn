@@ -48,18 +48,17 @@ def load(dataset):
     """
     import csv
     import os
-    DESCR = ''
     
     firis = csv.reader(open(os.path.dirname(__file__) + '/data/%s.csv' % dataset))
     fdescr = open(os.path.dirname(__file__) + '/descr/%s.rst' % dataset)
     temp = firis.next()
     nsamples = int(temp[0])
     nfeat = int(temp[1])
-    labelnames = temp[2:]
+    targetnames = temp[2:]
     data = np.empty((nsamples, nfeat))
-    label = np.empty((nsamples,))
+    target = np.empty((nsamples,))
     for i, ir in enumerate(firis):
         data[i] = np.asanyarray(ir[:-1], dtype=np.float)
-        label[i] = np.asanyarray(ir[-1], dtype=np.int)
-    return Bunch(data = data, label=label, labelnames=labelnames, DESCR=fdescr.read())
+        target[i] = np.asanyarray(ir[-1], dtype=np.float)
+    return Bunch(data = data, target=target, targetnames=targetnames, DESCR=fdescr.read())
 
