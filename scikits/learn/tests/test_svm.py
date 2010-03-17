@@ -88,3 +88,11 @@ def test_predict_multiclass():
     result = svm.predict(X, Y, test)
     assert_array_equal(result, [2])
 
+def test_regression():
+    """
+    TODO: simplify this. btw, is it correct ?
+    """
+    clf = svm.SVR()
+    clf.fit([[0,0], [1, 1]], [0, 1])
+    assert_array_almost_equal(clf.predict([[0,0], [1, 1]]), [.099999, .9])
+    

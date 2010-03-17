@@ -168,13 +168,19 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     model->nr_class = nr_class;
     model->param = *param;
     model->l = (int) SV_dims[0];
-    memcpy(model->nSV, nSV, model->nr_class * sizeof(int));
-    memcpy(model->label, label, model->nr_class * sizeof(int));
+
+    /* 
+     * regression and one-class does not use nSV, label.
+     * TODO: does this provoque memory leaks (we just malloc'ed them)?
+     */
+    if (param->svm_type < 2) {
+        memcpy(model->nSV, nSV, model->nr_class * sizeof(int));
+        memcpy(model->label, label, model->nr_class * sizeof(int));
+    }
     for (i=0; i < model->nr_class-1; i++) {
         /*
          * We cannot squash all this mallocs in a single call since
          * svm_destroy_model will free each element of the array.
-         * Anyway, number of classes is typically small.
          */
         model->sv_coef[i] = (double *) malloc((model->l) * sizeof(double));
         memcpy(model->sv_coef[i], t, (model->l) * sizeof(double));
@@ -254,15 +260,23 @@ void copy_SV(char *data, struct svm_model *model, npy_intp *strides)
     }
 }
 
-/* copy svm_model.nSV, an array with the number of SV for each class */
+/* 
+ * copy svm_model.nSV, an array with the number of SV for each class 
+ * will be NULL in the case of SVR, OneClass
+ */
 void copy_nSV(char *data, struct svm_model *model)
 {
+    if (model->label == NULL) return;
     memcpy(data, model->nSV, model->nr_class * sizeof(int));
 }
 
-/* maybe merge into the previous */
+/* 
+ * same as above with model->label
+ * TODO: maybe merge into the previous?
+ */
 void copy_label(char *data, struct svm_model *model)
 {
+    if (model->label == NULL) return;
     memcpy(data, model->label, model->nr_class * sizeof(int));
 }
 
