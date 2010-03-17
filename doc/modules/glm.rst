@@ -20,8 +20,9 @@ Linear regression is done via instances of:
     :members:
 
 >>> from scikits.learn import glm
->>> 
->>> clf = Linre
+>>> clf = glm.LinearRegression()
+
+.. TODO: put here an example
 
 Ridge Regression
 ================
@@ -47,16 +48,12 @@ coefficients using:
 .. autoclass:: scikits.learn.glm.ridge.Ridge
    :members:
 
-Formulations
-============
-
-
-Parameters
-==========
-
 Lasso and Elastic-Net
 =====================
+The lasso is a shrinkage method like ridge, with subtle but important
+differences.
 
+TODO
 
 
 Examples
@@ -64,6 +61,6 @@ Examples
 
 .. literalinclude:: ../../examples/lasso_enet_coordinate_descent.py
 
-.. image:: lasso_enet_coordinate_descent.png
+.. image:: glm_data/lasso_enet_coordinate_descent.png
     :align: center
 

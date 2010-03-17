@@ -2,5 +2,4 @@
 Artificial Neural Networks
 ==========================
 
-.. automodule:: scikits.learn.ann
-   :members:
+Documentation for this module is missing

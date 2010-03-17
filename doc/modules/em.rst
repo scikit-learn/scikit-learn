@@ -167,8 +167,8 @@ are not linearly separable.
     correctly classified.
 
 
-Note on performances
-====================
+Notes on performance
+--------------------
 
 The package is implemented in python (100% of the code has a python
 implementation, so that it can be used for educational purpose too), but thanks
@@ -194,8 +194,8 @@ this case without insane amount of memory. A C version may be
 implemented, but this is not my top priority; most of the time, you should
 avoid full covariance models if possible.
 
-TODO
-====
+Notes
+-----
 
 I believe the current API simple and powerful enough, except 
 maybe for plotting (if you think otherwise, I would be happy to hear
@@ -211,8 +211,3 @@ Other things which are doable but which I don't intend to implement are:
 
  - add other models (mixtures of multinomial: easy, simple HMM: easy, other ?)
  - add bayes prior using MCMC (hard, use PyMC for sampling ?)
-
-Bibliography
-============
-
-TODO.

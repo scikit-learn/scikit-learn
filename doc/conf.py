@@ -172,8 +172,8 @@ htmlhelp_basename = 'scikit-learndoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'scikits.learn.tex', u'scikits.learn Documentation',
-   u'scikits.learn Developers', 'manual'),
+  ('index', 'scikits.learn.tex', u'scikits.learn documentation',
+   u'scikits.learn developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

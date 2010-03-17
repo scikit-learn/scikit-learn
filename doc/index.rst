@@ -18,14 +18,9 @@ Neighbors, Generalized Linear Models, etc.
    install
 
 .. toctree::
-   :maxdepth: 1
-
-   faq
-
-.. toctree::
   :maxdepth: 2
 
-  tutorial
+   tutorial
 
 
 Module Reference
@@ -37,10 +32,11 @@ Module Reference
 
    modules/ann
    modules/em
-   modules/manifold
-   modules/svm
-   modules/glm
    module/feature_selection
+   modules/glm
+   modules/manifold
+   modules/neighbors
+   modules/svm
 
 Developers
 ==========
@@ -49,12 +45,4 @@ Developers
    :maxdepth: 1
 
    contribute
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   .. API
