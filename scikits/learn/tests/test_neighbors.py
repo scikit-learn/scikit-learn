@@ -39,13 +39,13 @@ def test_neighbors_2D():
     Puts three points of each label in the plane and performs a
     nearest neighbor query on points near the decision boundary.
     """
-    samples = (
+    X = (
         (0, 1), (1, 1), (1, 0), # label 0
         (-1,0), (-1,-1),(0,-1)) # label 1
-    n_2 = len(samples)/2
-    labels = [0]*n_2 + [1]*n_2
+    n_2 = len(X)/2
+    Y = [0]*n_2 + [1]*n_2
     knn = neighbors.Neighbors()
-    knn.fit(samples, labels)
+    knn.fit(X, Y)
 
     prediction =  knn.predict(((0, .1), (0, -.1), (.1, 0), (-.1, 0)))
     assert_array_equal(prediction, ((0), (1), (0), (1)))
