@@ -19,10 +19,13 @@ class BaseSVM(object):
         target vector relative to X
         It will be converted to a floating-point array.
     """
+    support_ = None
+    coef_ = None
+    rho_ = None
 
-    def __init__(self, svm, kernel, degree, gamma, coef0, cache_size,
+    def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nr_weight, nu, p, shrinking, probability):
-        self.svm = _svm_types.index(svm)
+        self.svm = _svm_types.index(impl)
         self.kernel = _kernel_types.index(kernel)
         self.degree = degree
         self.gamma = gamma
@@ -146,15 +149,22 @@ class SVC(BaseSVM):
 
     Attributes
     ----------
-    support : array-like, shape = [nSV, nfeatures]
-        support vectors
+    `support_` : array-like, shape = [nSV, nfeatures]
+        Support vectors
 
-    coef : array
-        coefficient of the support vector in the decission function.
+    `coef_` : array
+        Coefficient of the support vector in the decission function.
 
-    rho : array
+    `rho_` : array
         constants in decision function
 
+    Methods
+    -------
+    fit(X, Y) : self
+        Fit the model
+
+    predict(X) : array
+        Predict using the model.
 
     Examples
     --------
@@ -196,15 +206,34 @@ class SVR(BaseSVM):
         Target vector relative to X
 
 
+    Attributes
+    ----------
+    `support_` : array-like, shape = [nSV, nfeatures]
+        Support vectors
+
+    `coef_` : array
+        Coefficient of the support vector in the decission function.
+
+    `rho_` : array
+        constants in decision function
+
+    Methods
+    -------
+    fit(X, Y) : self
+        Fit the model
+
+    predict(X) : array
+        Predict using the model.
+
     See also
     --------
     SVC
     """
-    def __init__(self, svm='epsilon_svr', kernel='rbf', degree=3,
+    def __init__(self, impl='epsilon_svr', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
                  probability=0):
-        BaseSVM.__init__(self, svm, kernel, degree, gamma, coef0,
+        BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
 
@@ -216,7 +245,7 @@ class OneClassSVM(BaseSVM):
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=1,
                  probability=0):
-        svm = 'one_class'
-        BaseSVM.__init__(self, svm, kernel, degree, gamma, coef0,
+        impl = 'one_class'
+        BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
