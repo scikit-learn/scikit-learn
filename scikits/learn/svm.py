@@ -115,7 +115,7 @@ class SVC(BaseSVM):
     """
     Support Vector Classification
 
-    Implements C-SVC, nu-SVC
+    Implements C-SVC, Nu-SVC
 
     Parameters
     ----------
