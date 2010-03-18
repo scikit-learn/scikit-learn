@@ -31,14 +31,14 @@ def bench_scikit(X, Y, T):
     bench with scikit-learn bindings on libsvm
     """
     import scikits.learn
-    from scikits.learn.svm import SVM
+    from scikits.learn.svm import SVC
 
 
     gc.collect()
 
     # start time
     tstart = datetime.now()
-    clf = scikits.learn.svm.SVM(kernel='linear', scale=False);
+    clf = scikits.learn.svm.SVC(kernel='linear');
     clf.fit(X, Y);
     Z = clf.predict(T)
     delta = (datetime.now() - tstart)
@@ -93,14 +93,17 @@ def bench_pymvpa(X, Y, T):
 
 if __name__ == '__main__':
 
-    from scikits.learn.datasets.iris import load
-    SP, SW, PL, PW, LABELS = load()
-    X = np.c_[SP, SW, PL, PW]
-    Y = LABELS
+    from scikits.learn.datasets import load
+    iris = load('iris')
+    X = iris.data
+    Y = iris.target
 
     n = 100
     step = 100
     for i in range(n):
+        print '============================================'
+        print 'Entering iteration %s of %s' % (i, n)
+        print '============================================'
         T = np.random.randn(step*i, 4)
         bench_scikit(X, Y, T)
         bench_pymvpa(X, Y, T)
@@ -136,7 +139,7 @@ if __name__ == '__main__':
     dimension = start_dim
     for i in range(0, n):
         print '============================================'
-        print 'Entering iteration %s' % i
+        print 'Entering iteration %s of %s' % (i, n)
         print '============================================'
         dimension += step
         X, Y = sparse_uncorrelated(nb_features=dimension, nb_samples=100)
