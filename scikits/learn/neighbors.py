@@ -31,7 +31,7 @@ class Neighbors:
   >>> labels = [0,0,1,1]
   >>> neigh = Neighbors(k=3)
   >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-  <scikits.learn.neighbors.neighbors.Neighbors instance at 0x...>
+  <scikits.learn.neighbors.Neighbors instance at 0x...>
   >>> print neigh.predict([[0,0,0]])
   [0]
   """
@@ -80,9 +80,9 @@ class Neighbors:
     >>> labels = [0, 0, 1]
     >>> neigh = Neighbors(k=1)
     >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-    <scikits.learn.neighbors.neighbors.Neighbors instance at 0x...>
+    <scikits.learn.neighbors.Neighbors instance at 0x...>
     >>> print neigh.kneighbors([1., 1., 1.])
-    (0.5, 2)
+    (array(0.5), array(2))
 
     As you can see, it returns [0.5], and [2], which means that the
     element is at distance 0.5 and is the third element of samples
@@ -120,7 +120,7 @@ class Neighbors:
     >>> labels = [0, 0, 1]
     >>> neigh = Neighbors(k=1)
     >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-    <scikits.learn.neighbors.neighbors.Neighbors instance at 0x...>
+    <scikits.learn.neighbors.Neighbors instance at 0x...>
     >>> print neigh.predict([.2, .1, .2])
     0
     >>> print neigh.predict([[0., -1., 0.], [3., 2., 0.]])
