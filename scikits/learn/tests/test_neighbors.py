@@ -19,17 +19,16 @@ def test_neighbors_1D():
     knn = neighbors.Neighbors(k=1)
     knn.fit(X, Y)
     test = [[i +0.01] for i in range(0,n_2)] + [[i-0.01] for i in range(n_2, n)]
-    assert_array_equal( knn.predict(test), [0]*n_2 + [1]*n_2)
+    assert_array_equal( knn.predict(test), [0, 0, 0, 1, 1, 1])
     # same as before, but using predict() instead of Neighbors object
-    assert_array_equal( neighbors.predict(X, Y, test), [0]*n_2 + [1]*n_2)
 
     # k = 3
     knn = neighbors.Neighbors(k=3)
     knn.fit(X, Y)
     assert_array_equal( knn.predict([ [i +0.01] for i in range(0,n_2)]),
-                        np.zeros(n_2))
+                        [0 for i in range(n_2)])
     assert_array_equal( knn.predict([ [i-0.01] for i in range(n_2, n)]),
-                        np.ones(n_2))    
+                        [1 for i in range(n_2)])
 
 
 def test_neighbors_2D():
@@ -47,6 +46,6 @@ def test_neighbors_2D():
     knn = neighbors.Neighbors()
     knn.fit(X, Y)
 
-    prediction =  knn.predict(((0, .1), (0, -.1), (.1, 0), (-.1, 0)))
-    assert_array_equal(prediction, ((0), (1), (0), (1)))
+    prediction =  knn.predict([[0, .1], [0, -.1], [.1, 0], [-.1, 0]])
+    assert_array_equal(prediction, [0, 1, 0, 1])
         

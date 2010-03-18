@@ -43,10 +43,10 @@ class Neighbors:
     self._k = k
     self.window_size = window_size
 
-  def fit(self, X, y):
+  def fit(self, X, Y):
+    # we need Y to be an integer, because after we'll use it an index
+    self.Y = np.asanyarray(Y, dtype=np.int)
     self.ball_tree = BallTree(X)
-    self.X = np.asarray(X)
-    self.y = np.asarray(y)
     return self
 
   def kneighbors(self, data, k=None):
@@ -128,7 +128,7 @@ class Neighbors:
     """
     T = np.asanyarray(T)
     if k is None: k = self._k
-    return _predict_from_BallTree(self.ball_tree, self.y, T, k=k)
+    return _predict_from_BallTree(self.ball_tree, self.Y, T, k=k)
 
 
 def _predict_from_BallTree(ball_tree, Y, test, k):
@@ -139,15 +139,5 @@ def _predict_from_BallTree(ball_tree, Y, test, k):
     not check that input is of the correct type.
     """
     Y_ = Y[ball_tree.query(test, k=k, return_distance=False)]
-    if k == 1: return Y_hat
-    # search most common values along axis 1 of labels
-    # much faster than scipy.stats.mode
-    return stats.mode(Y_, axis=1)[0]
-
-
-def predict(X, Y, test, k=5):
-  """
-  Predict test using Nearest Neighbor Algorithm.
-  """
-  ball_tree  = BallTree(X)
-  return _predict_from_BallTree(ball_tree, np.asarray(Y), test, k=k)
+    if k == 1: return Y_
+    return (stats.mode(Y_, axis=1)[0]).ravel()
