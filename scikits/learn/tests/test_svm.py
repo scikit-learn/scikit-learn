@@ -56,12 +56,9 @@ def test_error():
 
     Y2 = Y[:-1] # wrong dimensions for labels
     assert_raises(ValueError, svm.SVC, X, Y2)
-    assert_raises(ValueError, svm.predict, X, Y2, T)
 
 def test_predict():
     true_result = [1, 2, 2]
-    assert_array_equal(svm.predict(X, Y, T) , true_result)
-    # the same, but using SVM object
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
@@ -72,7 +69,9 @@ def test_noncontiguous():
     """
     Xt = X.transpose()
     Yt = [1, 2]
-    assert_array_equal(svm.predict(Xt, Yt, T), [1, 2, 2])
+    clf = svm.SVC()
+    clf.fit(Xt, Yt)
+    assert_array_equal(clf.predict(T), [1, 2, 2])
 
 def test_predict_multiclass():
     """
@@ -85,7 +84,9 @@ def test_predict_multiclass():
             [-0.1,-0.2,	  0.1,	  1.1,	  0.1]]
     Y = [1,2,1,2,3]
     test = [[0, 1, 0, -1, 0]]
-    result = svm.predict(X, Y, test)
+    clf = svm.SVC()
+    clf.fit(X, Y)
+    result = clf.predict(test)
     assert_array_equal(result, [2])
 
 def test_regression():
