@@ -21,10 +21,10 @@ def leave_one_out(n):
     ========
  
     >>> import numpy as np
-    >>> import scikits.learn.utils.crossval
+    >>> from scikits.learn.utils import crossval
     >>> n_samples, n_features = 5, 10
     >>> X = np.random.randn(n_samples, n_features)
-    >>> loo = crossval.LOO(n_samples)
+    >>> loo = crossval.leave_one_out(n_samples)
     >>> for train_index, test_index in loo:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    Xtrain, Xtest, Ytrain, Ytest = split(train_index, test_index, X, y)
