@@ -30,15 +30,6 @@ def create_graph(samples, **kwargs):
   The following example creates a graph from samples and outputs the
   first item, that is a tuple representing the distance from that
   element to all other elements in sample:
-
-  >>> import numpy as np
-  >>> samples = np.array([[0., 0., 0.], [1., 0., 0.], [0., 1., 0.], [1., 1., 0.5]])
-  >>> graph = create_graph(samples, k=3)
-  >>> print graph[0]
-  [array([ 0.,  1.,  1.]), array([0, 2, 1])]
-
-  That is, it's at distance 0 from itself, at distance 1.0 from the
-  second element and equally distance 1.0 from the third element.
   """
   from scikits.learn.neighbors import Neighbors
 
