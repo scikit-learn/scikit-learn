@@ -1,5 +1,5 @@
 import numpy as np
-import libsvm
+from . import libsvm
 
 _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
