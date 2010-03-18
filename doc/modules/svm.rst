@@ -80,16 +80,14 @@ data close to the model prediction.
 
 Distribution estimation
 =======================
-One-class SVM was proposed by Scholkopf et al. (2001) for estimating
-the support of a high-dimensional distribution. Given training vectors
-:math:`x_i \in \mathbb{R}^n, i=1, .., l` without any class
-information, the primal form is:
+One-class SVM is used for outlayer detection, that is, given a set of
+samples, it will detect the soft boundary of that set.
 
-.. math::    \min_{w, b, \xi} {1 \over 2} w^T w - \rho + {1 \over \nu l} \sum_{i=1}^l \xi_i
+.. linteralinclude:: ../../examples/plot_svm_oneclass.py
 
-             \textrm{subject to} w^T \phi(x_i) \geq \rho - \xi_i
+.. image:: data_svm/oneclass.png
 
-             \xi_i \geq 0, i=1,...,l
+.. autoclass:: scikits.learn.svm.OneClassSVM
 
 Scaling
 =======
