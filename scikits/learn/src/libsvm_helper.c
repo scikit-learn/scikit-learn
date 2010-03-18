@@ -195,8 +195,8 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     model->probA = (double *) malloc(sizeof(double));
     model->probB = (double *) malloc(sizeof(double));
 
-    /* tell svn_destroy_model to also free the support vectors */
-    model->free_sv = 1;
+    /* We'll free SV ourselves */
+    model->free_sv = 0;
     return model;
 }
 
@@ -323,6 +323,14 @@ int free_model(struct svm_model *model)
 {
     if (model == NULL) return -1;
     svm_destroy_model(model);
+    return 0;
+}
+
+int free_model_SV(struct svm_model *model)
+{
+    register int i;
+    for (i=model->l-1; i>=0; --i) free(model->SV[i]);
+    /* svn_destroy_model frees model->SV */
     return 0;
 }
 

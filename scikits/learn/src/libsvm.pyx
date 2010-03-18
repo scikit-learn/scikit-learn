@@ -73,6 +73,7 @@ cdef extern from "libsvm_helper.c":
     np.npy_intp  get_nr (svm_model *)
     int  free_problem (svm_problem *)
     int  free_model   (svm_model *)
+    int  free_model_SV(svm_model *)
     int  free_param   (svm_parameter *)
 
 
@@ -311,6 +312,7 @@ def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2, mode='c'] T,
     if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
     # free model and param
+    free_model_SV(model)
     free_model(model)
     free_param(param)
     return dec_values
