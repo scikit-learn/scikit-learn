@@ -5,7 +5,7 @@
 
 import numpy as N
 
-from scikits.learn.datasets import oldfaithful, pendigits, iris
+from scikits.learn.datasets import oldfaithful, pendigits
 
 def get_faithful():
     """Return faithful data as a nx2 array, first column being duration, second
