@@ -10,14 +10,14 @@ import pylab as pl
 # import some data to play with
 
 # The IRIS dataset
-from scikits.learn.datasets.iris import load
-SP, SW, PL, PW, LABELS = load()
+from scikits.learn import datasets, svm
+iris = datasets.load('iris')
 
 # Some noisy data not correlated
-E1, E2 = np.random.normal(size=(2, len(SP)))
+E1, E2 = np.random.normal(size=(2, len(iris.data)))
 
-x = np.c_[SP, SW, PL, PW, E1, E2]
-y = LABELS
+x = iris.data
+y = iris.target
 
 ################################################################################
 pl.figure(1)
@@ -35,11 +35,10 @@ pl.plot(scores/scores.max(), label='Univariate score (p values)')
 
 ################################################################################
 # Compare to the weights of an SVM
-from scikits.learn.svm import SVM
-svm = SVM(kernel_type='linear')
-svm.fit(x, y)
+clf = svm.SVC(kernel='linear')
+clf.fit(x, y)
 
-svm_weights = (svm.support_**2).sum(axis=0)
+svm_weights = (clf.support_**2).sum(axis=0)
 pl.plot(svm_weights/svm_weights.max(), label='SVM weight')
 
 pl.title("Comparing feature selection")
