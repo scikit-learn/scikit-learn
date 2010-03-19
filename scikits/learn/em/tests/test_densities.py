@@ -148,34 +148,6 @@ class test_py_implementation(TestDensities):
 #================
 class test_py_logsumexp(TestDensities):
     """Class to compare logsumexp vs naive implementation."""
-    def test_underlow(self):
-        """This function checks that logsumexp works as expected."""
-        # We check wether naive implementation would underflow, to be sure we
-        # are actually testing something here.
-        errst = N.seterr(under='raise')
-        try:
-            try:
-                a = N.array([[-1000]])
-                self.naive_logsumexp(a)
-                raise AssertionError("expected to catch underflow, we should"\
-                                     "not be here")
-            except FloatingPointError, e:
-                print "Catching underflow, as expected"
-            assert logsumexp(a) == -1000.
-            try:
-                a = N.array([[-1000, -1000, -1000]])
-                self.naive_logsumexp(a)
-                raise AssertionError("expected to catch underflow, we should"\
-                                     "not be here")
-            except FloatingPointError, e:
-                print "Catching underflow, as expected"
-            assert_array_almost_equal(logsumexp(a), 
-                                      -998.90138771)
-        finally:
-            N.seterr(under=errst['under'])
-
-    def naive_logsumexp(self, data):
-        return N.log(N.sum(N.exp(data), 1)) 
 
     def test_1d(self):
         data = N.random.randn(1e1)[:, N.newaxis]
