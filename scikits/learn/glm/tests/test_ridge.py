@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_raises
 
-from ..regression import LinearRegression, bayesian_regression_ridge, Ridge, \
+from ..regression import LinearRegression, bayesian_ridge_regression, Ridge, \
      BayesianRidge, ARDRegression, bayesian_regression_ard
 
 
@@ -31,7 +31,7 @@ def test_bayesian_ridge():
     """
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
-    w, alpha, beta, sigma, log_likelihood = bayesian_regression_ridge(X, Y)
+    w, alpha, beta, sigma, log_likelihood = bayesian_ridge_regression(X, Y)
     assert np.abs(1-w)<1.e-3
 
     X = np.array([[1], [2]])
@@ -69,7 +69,7 @@ def test_toy_ridge_regression():
     """
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
-    w, alpha, beta, sigma, log_likelihood = bayesian_regression_ridge(X, Y)
+    w, alpha, beta, sigma, log_likelihood = bayesian_ridge_regression(X, Y)
     assert(np.abs(1-w)<1.e-3)
 
 

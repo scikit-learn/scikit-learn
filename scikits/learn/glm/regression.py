@@ -61,9 +61,9 @@ class Ridge(object):
     >>> np.random.seed(0)
     >>> Y = np.random.randn(nsamples)
     >>> X = np.random.randn(nsamples, nfeatures)
-    >>> clf = Ridge(alpha=alpha)
-    >>> clf.fit(X, Y)
-    ?
+    >>> clf = Ridge(alpha=1.0)
+    >>> clf.fit(X, Y) #doctest: +ELLIPSIS
+    <scikits.learn.glm.regression.Ridge object at 0x...>
 
     See also
     --------
@@ -109,7 +109,7 @@ class BayesianRidge:
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
         self.w, self.alpha, self.beta, self.sigma, self.log_likelihood = \
-            bayesian_regression_ridge(X, Y, self.step_th, self.th_w, self.ll_bool)
+            bayesian_ridge_regression(X, Y, self.step_th, self.th_w, self.ll_bool)
         return self
 
     def predict(self, T):
@@ -147,7 +147,7 @@ class ARDRegression:
 ### helper methods
 ### we should homogeneize this
 
-def bayesian_regression_ridge( X , Y, step_th=300, th_w = 1.e-12, ll_bool=False):
+def bayesian_ridge_regression( X , Y, step_th=300, th_w = 1.e-12, ll_bool=False):
     """
     Bayesian ridge regression. Optimize the regularization parameters alpha
     (precision of the weights) and beta (precision of the noise) within a simple
@@ -183,8 +183,7 @@ def bayesian_regression_ridge( X , Y, step_th=300, th_w = 1.e-12, ll_bool=False)
     --------
     >>> X = np.array([[1], [2]])
     >>> Y = np.array([1, 2])
-    >>> w = ridge_regression(X,Y)
-    w = 1.
+    >>> w = bayesian_ridge_regression(X,Y)
 
     Notes
     -----
