@@ -149,6 +149,9 @@ class test_py_implementation(TestDensities):
 class test_py_logsumexp(TestDensities):
     """Class to compare logsumexp vs naive implementation."""
 
+    def naive_logsumexp(self, data):
+        return N.log(N.sum(N.exp(data), 1)) 
+
     def test_1d(self):
         data = N.random.randn(1e1)[:, N.newaxis]
         mu = N.array([[-5], [-6]])
