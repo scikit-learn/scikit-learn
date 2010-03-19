@@ -19,16 +19,19 @@ def leave_one_out(n):
 
     Examples
     ========
-    # commented doctest, see issue #34
-    # >>> import numpy as np
-    # >>> from scikits.learn.utils import crossval
-    # >>> n_samples, n_features = 5, 10
-    # >>> X = np.random.randn(n_samples, n_features)
-    # >>> loo = crossval.leave_one_out(n_samples)
-    # >>> for train_index, test_index in loo:
-    # ...    print "TRAIN:", train_index, "TEST:", test_index
-    # ...    Xtrain, Xtest, Ytrain, Ytest = split(train_index, test_index, X, y)
-    # ...    print Xtrain, Xtest, Ytrain, Ytest
+    >>> import numpy as np
+    >>> from scikits.learn.utils import crossval
+    >>> X = [[1, 2], [3, 4]]
+    >>> y = [1, 2]
+    >>> loo = crossval.leave_one_out(2)
+    >>> for train_index, test_index in loo:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test, y_train, y_test = crossval.split(train_index, test_index, X, y)
+    ...    print X_train, X_test, y_train, y_test
+    TRAIN: [False  True] TEST: [ True False]
+    [[3 4]] [[1 2]] [2] [1]
+    TRAIN: [ True False] TEST: [False  True]
+    [[1 2]] [[3 4]] [1] [2]
     """
     for i in xrange(n):
         test_index  = np.zeros(n, dtype=np.bool)
@@ -48,6 +51,19 @@ def k_fold(n, k):
         Total number of elements
     k: int
         number of folds
+
+    Examples
+    ========
+    >>> import numpy as np
+    >>> from scikits.learn.utils import crossval
+    >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
+    >>> y = [1, 2, 3, 4]
+    >>> kf = crossval.k_fold(4, 2)
+    >>> for train_index, test_index in kf:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test, y_train, y_test = crossval.split(train_index, test_index, X, y)
+    TRAIN: [False False  True  True] TEST: [ True  True False False]
+    TRAIN: [ True  True False False] TEST: [False False  True  True]
 
     Note
     ====
@@ -74,27 +90,9 @@ def split(train_indexes, test_indexes, *args):
     """
     ret = []
     for arg in args:
-        arg_train = arg[train_indexes,:]
-        arg_test  = arg[test_indexes,:]
+        arg = np.asanyarray(arg)
+        arg_train = arg[train_indexes]
+        arg_test  = arg[test_indexes]
         ret.append(arg_train)
         ret.append(arg_test)
     return ret
-
-
-if __name__ == "__main__":
-    print "Leave One Out crossvalidation"
-    n_samples, n_features = 4, 2
-    X = np.random.randn(n_samples, n_features)
-    y = np.random.randn(n_samples)
-    print X
-    loo = leave_one_out(n_samples)
-    for train_index, test_index in loo:
-        print "TRAIN:", train_index, "TEST:", test_index
-        Xtrain, Xtest, Ytrain, Ytest = split(train_index, test_index, X, y)
-        print Xtrain, Xtest, Ytrain, Ytest
-
-    print "K-Fold crossvalidation"
-    k = 2
-    kf = k_fold(n_samples, k)
-    for train_index, test_index in kf:
-        print "TRAIN:", train_index, "TEST:", test_index
