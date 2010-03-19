@@ -5,8 +5,10 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('learn',parent_package,top_path)
     config.add_subpackage('em')
+    config.add_subpackage('datasets')
     config.add_subpackage('glm')
     config.add_subpackage('manifold')
+    config.add_subpackage('utils')
     config.add_extension('libsvm',
                          define_macros=[('LIBSVM_EXPORTS', None),
                                         ('LIBSVM_DLL',     None)],
