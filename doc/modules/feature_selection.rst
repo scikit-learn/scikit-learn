@@ -15,7 +15,8 @@ estimator with feature selection and expose a new estimator:
 
 .. autofunction:: scikits.learn.feature_selection.univ_selection.UnivSelection
 
-
+This object takes another estimator, a scoring function that returns
+univariate p values, and a selection function that selects attributes.
 
 Feature scoring functions
 --------------------------
