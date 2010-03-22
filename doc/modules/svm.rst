@@ -91,7 +91,7 @@ samples, it will detect the soft boundary of that set.
 
 .. linteralinclude:: ../../examples/plot_svm_oneclass.py
 
-.. image:: data_svm/oneclass.png
+.. image:: svm_data/oneclass.png
 
 .. autoclass:: scikits.learn.svm.OneClassSVM
 
