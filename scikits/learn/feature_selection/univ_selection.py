@@ -275,7 +275,7 @@ class UnivSelection(object):
         self.support_  = self.select_func(p_values_,*self.select_args)
         self.p_values_ = p_values_
         if self.estimator is not None:
-            self.estimator.fit(x[self.support_], y)
+            self.estimator.fit(x[:,self.support_], y)
         return self
 
 
@@ -284,7 +284,7 @@ class UnivSelection(object):
         if x is None or self.estimator is None:
             return support_
         else:
-            return self.estimator.predict(x[support_])
+            return self.estimator.predict(x[:,support_])
 
 
 if __name__ == "__main__":
