@@ -6,7 +6,7 @@ Then run the simple timings script:
  python bench_kdtree.py 1000 100
 """
 
-from scikits.learn.neighbors.BallTree import BallTree, knn_brute
+from scikits.learn.BallTree import BallTree, knn_brute
 import numpy
 from time import time
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         N,D,ls,k = map(int,sys.argv[1:])
         
     else:
-        print "usage: test_time.py N D [leafsize=20], [k=20]"
+        print "usage: bench_balltree.py N D [leafsize=20], [k=20]"
         exit()
     
     
