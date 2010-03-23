@@ -209,6 +209,20 @@ def test_univ_fs_percentile_regression2():
     gtruth[:5]=1
     assert_array_equal(result, gtruth)
 
+def test_univ_fs_full_percentile_regression():
+    """
+    Test whether the relative univariate feature selection
+    selects all features when '100%' is asked.
+    """
+    x, y = make_dataset(classif=False)
+    univ_selection = fs.UnivSelection(score_func=fs.f_regression,
+                                      select_func=fs.select_percentile,
+                                      select_args=(100,))
+    univ_selection.fit(x, y)
+    result = univ_selection.support_.astype(int)
+    gtruth = np.ones(20)
+    assert_array_equal(result, gtruth)
+
 def test_univ_fs_kbest_regression():
     """
     Test whether the relative univariate feature selection

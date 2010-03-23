@@ -181,7 +181,7 @@ def select_percentile(p_values, percentile):
     """ Select the best percentile of the p_values
     """
     alpha = stats.scoreatpercentile(p_values, percentile)
-    return (p_values < alpha)
+    return (p_values <= alpha)
 
 def select_k_best(p_values, k):
     """Select the k lowest p-values
