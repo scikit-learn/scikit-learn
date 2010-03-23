@@ -3,7 +3,7 @@ Univariate features selection.
 
 """
 
-# Author: B. Thirion, G. Varoquaux
+# Author: B. Thirion, G. Varoquaux, A. Gramfort
 # License: BSD 3 clause
 
 import numpy as np
@@ -43,7 +43,7 @@ def generate_dataset_classif(n_samples=100, n_features=100, param=[1,1],
         the subject labels
 
     """
-    assert k<n_features, ValueError('cannot have %d informative fetaures and'
+    assert k<=n_features, ValueError('cannot have %d informative features and'
                                    ' %d features' % (k, n_features))
     if isinstance(seed, np.random.RandomState):
         random = seed
@@ -180,17 +180,20 @@ def f_regression(x, y, center=True):
 def select_percentile(p_values, percentile):
     """ Select the best percentile of the p_values
     """
+    assert percentile<=len(100), ValueError('percentile should be \
+                                             between 0 and 100 (%f given)' \
+                                             %(percentile))
     alpha = stats.scoreatpercentile(p_values, percentile)
     return (p_values <= alpha)
 
 def select_k_best(p_values, k):
     """Select the k lowest p-values
     """
-    assert k<len(p_values), ValueError('cannot select %d features'
+    assert k<=len(p_values), ValueError('cannot select %d features'
                                        ' among %d ' % (k, len(p_values)))
     #alpha = stats.scoreatpercentile(p_values, 100.*k/len(p_values))
-    alpha = np.sort(p_values)[k]
-    return (p_values < alpha)
+    alpha = np.sort(p_values)[k-1]
+    return (p_values <= alpha)
 
 
 def select_fpr(p_values, alpha):
@@ -278,14 +281,66 @@ class UnivSelection(object):
             self.estimator.fit(x[:,self.support_], y)
         return self
 
-
     def predict(self, x=None):
+        # FIXME : support estimate is done again in predict too in
+        # case select_args have changed
+        self.support_  = self.select_func(self.p_values_, *self.select_args)
         support_ = self.support_
         if x is None or self.estimator is None:
             return support_
         else:
             return self.estimator.predict(x[:,support_])
 
+class UnivSelect(object):
+
+    def __init__(self, score_func=f_regression,
+                       select_func=None):
+        """ An object to do univariate selection before using a
+            classifier.
+
+            Implements fit and reduce methods
+
+            The reduce method returns the support of the selected
+            feature set.
+
+            Parameters
+            -----------
+            score_func: A callable
+                The function used to score features. Should be::
+
+                    _, p_values = score_func(x, y)
+
+                The first output argument is ignored.
+            select_func: A callable
+                The function used to select features. Should be::
+
+                    support = select_func(p_values, *select_args)
+                If None is passed, the 10% lowest p_values are
+                selected.
+        """
+        if select_func is None:
+            select_func = select_percentile
+        assert callable(select_func), ValueError(
+                "The score function should be a callable, '%s' (type %s) "
+                "was passed." % (select_func, type(select_func))
+            )
+        self.score_func = score_func
+        self.select_func = select_func
+
+    #--------------------------------------------------------------------------
+    # Interface
+    #--------------------------------------------------------------------------
+
+    def fit(self, x, y):
+        self.x = x
+        self.y = y
+        _, p_values_   = self.score_func(x, y)
+        self.p_values_ = p_values_
+        return self
+
+    def reduce(self, n_features):
+        support  = self.select_func(self.p_values_, n_features)
+        return support
 
 if __name__ == "__main__":
     x, y = generate_dataset_classif(n_samples=50, n_features=20, k=5, seed=2)
