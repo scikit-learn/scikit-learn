@@ -180,7 +180,7 @@ def f_regression(x, y, center=True):
 def select_percentile(p_values, percentile):
     """ Select the best percentile of the p_values
     """
-    assert percentile<=len(100), ValueError('percentile should be \
+    assert percentile<=100, ValueError('percentile should be \
                                              between 0 and 100 (%f given)' \
                                              %(percentile))
     alpha = stats.scoreatpercentile(p_values, percentile)
