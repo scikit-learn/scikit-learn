@@ -91,9 +91,15 @@ def test_predict_multiclass():
 
 def test_regression():
     """
+    Test SVM regression
     TODO: simplify this. btw, is it correct ?
     """
     clf = svm.SVR()
     clf.fit([[0,0], [1, 1]], [0, 1])
     assert_array_almost_equal(clf.predict([[0,0], [1, 1]]), [.099999, .9])
     
+
+def test_oneclass():
+    clf = svm.OneClassSVM()
+    clf.fit(X, Y)
+    assert_array_equal(Y, [1, 1, 1, 2, 2, 2])
