@@ -43,6 +43,14 @@ class BaseSVM(object):
         """
         Fit the model with vectors X, Y.
 
+        Parameters
+        ----------
+        X : array-like, shape = [nsamples, nfeatures]
+            Training vector, where nsamples in the number of samples and
+            nfeatures is the number of features.
+        Y : array, shape = [nsamples]
+            Target vector relative to X
+
         """
         X = np.asanyarray(X, dtype=np.float, order='C')
         y = np.asanyarray(y, dtype=np.float, order='C')
@@ -155,15 +163,6 @@ class SVR(BaseSVM):
     """
     Support Vector Regression.
 
-    Parameters
-    ----------
-    X : array-like, shape = [nsamples, nfeatures]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
-    Y : array, shape = [nsamples]
-        Target vector relative to X
-
-
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, nfeatures]
@@ -198,6 +197,14 @@ class SVR(BaseSVM):
 class OneClassSVM(BaseSVM):
     """
     Outlayer detection
+
+    Methods
+    -------
+    fit(X, Y) : self
+        Fit the model
+
+    predict(X) : array
+        Predict using the model.
     """
     def __init__(self, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
