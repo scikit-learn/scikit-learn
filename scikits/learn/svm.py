@@ -123,7 +123,7 @@ class SVC(BaseSVM):
         Support vectors
 
     `coef_` : array, shape = [nclasses-1, nfeatures]
-        Coefficient of the support vector in the decission function.
+        Coefficient of the support vector in the decision function.
 
     `rho_` : array, shape = [nclasses-1]
         constants in decision function
@@ -169,7 +169,7 @@ class SVR(BaseSVM):
         Support vectors
 
     `coef_` : array, shape = [nclasses-1, nfeatures]
-        Coefficient of the support vector in the decission function.
+        Coefficient of the support vector in the decision function.
 
     `rho_` : array, shape = [nclasses-1]
         constants in decision function
