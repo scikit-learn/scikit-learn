@@ -7,6 +7,23 @@ import exceptions
 
 import numpy as np
 
+try:
+    from itertools import combinations
+except: # Using Python < 2.6
+    def combinations(seq, r=None):
+        """Generator returning combinations of items from sequence <seq>
+        taken <r> at a time. Order is not significant. If <r> is not given,
+        the entire sequence is returned.
+        """
+        if r == None:
+            r = len(seq)
+        if r <= 0:
+            yield []
+        else:
+            for i in xrange(len(seq)):
+                for cc in combinations(seq[i+1:], r-1):
+                    yield [seq[i]]+cc
+
 def leave_one_out(n):
     """
     Leave-One-Out cross validation:
@@ -36,6 +53,42 @@ def leave_one_out(n):
     for i in xrange(n):
         test_index  = np.zeros(n, dtype=np.bool)
         test_index[i] = True
+        train_index = np.logical_not(test_index)
+        yield train_index, test_index
+
+def leave_p_out(n, p):
+    """
+    Leave-P-Out cross validation:
+    Provides train/test indexes to split data in train test sets
+
+    Parameters
+    ===========
+    n: int
+        Total number of elements
+    p: int
+        Size test sets
+
+    Examples
+    ========
+    >>> import numpy as np
+    >>> from scikits.learn.utils import crossval
+    >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
+    >>> y = [1, 2, 3, 4]
+    >>> lpo = crossval.leave_p_out(4, 2)
+    >>> for train_index, test_index in lpo:
+    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    X_train, X_test, y_train, y_test = crossval.split(train_index, test_index, X, y)
+    TRAIN: [False False  True  True] TEST: [ True  True False False]
+    TRAIN: [False  True False  True] TEST: [ True False  True False]
+    TRAIN: [False  True  True False] TEST: [ True False False  True]
+    TRAIN: [ True False False  True] TEST: [False  True  True False]
+    TRAIN: [ True False  True False] TEST: [False  True False  True]
+    TRAIN: [ True  True False False] TEST: [False False  True  True]
+    """
+    comb = combinations(range(n), p)
+    for idx in comb:
+        test_index = np.zeros(n, dtype=np.bool)
+        test_index[np.array(idx)] = True
         train_index = np.logical_not(test_index)
         yield train_index, test_index
 
@@ -136,3 +189,4 @@ def split(train_indexes, test_indexes, *args):
         ret.append(arg_train)
         ret.append(arg_test)
     return ret
+
