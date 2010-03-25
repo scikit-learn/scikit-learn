@@ -22,7 +22,7 @@ http://sourceforge.net/projects/scikit-learn/files/
 
 
 Dependencies
-===========
+============
 
 The required dependencies to build the software are python >= 2.5,
 NumPy >= 1.1, SciPy, the Boost libraries and a working C++ compiler.
@@ -57,12 +57,43 @@ Development
 Code
 ----
 
-To check out the sources for subversion run the command::
+SVN
+~~~
+
+To check out the sources from the main repository, which is under
+subversion control, run the command::
 
    svn co http://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn/trunk scikit-learn
 
-You can also browse the code online in the address
+You can also browse the code online at
 http://scikit-learn.svn.sourceforge.net/viewvc/scikit-learn
+
+GIT Mirror
+~~~~~~~~~~
+
+There is also an automatically updated git mirror of scikit-learn
+available from github (http://github.com/yarikoptic/scikit-learn).  So
+you could setup your development using GIT and committing results back
+to SVN using ``git svn``.  To get started using git mirror and link it
+to original SVN, use::
+
+  git clone --origin=svn git://github.com/yarikoptic/scikit-learn.git scikit-learn
+  cd scikit-learn
+  git svn init --prefix=svn/ -s https://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn
+  git svn rebase -l -n			         # should be quick
+  git config svn.authorsfile .svnauthors
+
+Such setup was inspired by GIT Mirror for NumPy and SciPy projects,
+which is well described at
+http://projects.scipy.org/numpy/wiki/GitMirror .
+
+If you are not a part of the team and/or have no commit rights to SVN,
+but want to share code/documentation changes (bug fixes, enhancements,
+etc.), you can either make use of ``git format-patch`` commands to
+prepare a bundle of patches to be posted with bugreport (see Bugs), or
+simply create your own fork of git repository on github ("Fork" button
+in github web UI) and point to corresponding commits within your
+bugreport.
 
 
 Bugs
