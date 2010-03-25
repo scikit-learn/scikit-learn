@@ -65,7 +65,7 @@ class LinearModel(object):
         n_samples, n_features = X.shape
 
         if tol is not None:
-            cb_dual_gap = IterationCallbackFunc(self.dual_gap_func, tol=tol)
+            cb_dual_gap = IterationCallbackFunc(self._dual_gap_func, tol=tol)
             self.callbacks.append(cb_dual_gap)
 
         if self.w is None:
@@ -93,7 +93,9 @@ class Lasso(LinearModel):
         super(Lasso, self).__init__(w0, callbacks)
         self.alpha = alpha
         self.learner = lasso_coordinate_descent
-        self.dual_gap_func = lambda X, y, w, **kw: lasso_dual_gap(X, y, w, kw['alpha'])[0]
+
+    def _dual_gap_func(self, X, y, w, **kw):
+        return lasso_dual_gap(X, y, w, kw['alpha'])[0]
 
     def __repr__(self):
         return "Lasso cd"
@@ -107,8 +109,9 @@ class ElasticNet(LinearModel):
         self.alpha = alpha
         self.beta = beta
         self.learner = enet_coordinate_descent
-        self.dual_gap_func = lambda X, y, w, **kw: enet_dual_gap(X, y, w, kw['alpha'],
-                                                           kw['beta'])[0]
+
+    def _dual_gap_func(self, X, y, w, **kw):
+        return enet_dual_gap(X, y, w, kw['alpha'], kw['beta'])[0]
 
     def __repr__(self):
         return "ElasticNet cd"
