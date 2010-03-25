@@ -73,7 +73,7 @@ GIT Mirror
 
 There is also an automatically updated git mirror of scikit-learn
 available from github (http://github.com/yarikoptic/scikit-learn).  So
-you could setup your development using GIT and committing results back
+you could setup your development using GIT and commit results back
 to SVN using ``git svn``.  To get started using git mirror and link it
 to original SVN, use::
 
@@ -84,7 +84,7 @@ to original SVN, use::
   git config svn.authorsfile .svnauthors
 
 Such setup was inspired by GIT Mirror for NumPy and SciPy projects,
-which is well described at
+which is well described (including some of ``git svn`` caveats) at
 http://projects.scipy.org/numpy/wiki/GitMirror .
 
 If you are not a part of the team and/or have no commit rights to SVN,
