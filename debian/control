@@ -7,7 +7,7 @@ Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.5), pytho
 Standards-Version: 3.8.4
 Homepage: http://scikit-learn.sourceforge.net
 Vcs-Browser: http://github.com/yarikoptic/scikit-learn
-Vcs-Git: git@github.com:yarikoptic/scikit-learn.git
+Vcs-Git: git://github.com/yarikoptic/scikit-learn.git
 XS-DM-Upload-Allowed: yes
 
 Package: python-scikits-learn
@@ -33,7 +33,7 @@ Section: doc
 Depends: ${misc:Depends}, libjs-jquery
 Suggests: python-scikits-learn
 Description: documentation and examples for scikit-learn
- This package containts documentation and example scripts for for
+ This package contains documentation and example scripts for
  scikit-learn.
 
 
