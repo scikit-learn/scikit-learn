@@ -1,0 +1,5 @@
+scikit-learn (0.2+svn615-1~pre0) UNRELEASED; urgency=low
+
+  * Initial Debian release (Closes: #567036)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 29 Mar 2010 08:52:30 -0400

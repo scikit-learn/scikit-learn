@@ -1,0 +1,77 @@
+#!/usr/bin/make -f
+# -*- mode: makefile; coding: utf-8 -*-
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+DEB_PYTHON_SYSTEM = pysupport
+# for earlier cdbs versions
+DEB_PYTHON_MODULE_PACKAGE = python-scikits-learn
+# for cdbs >= 0.4.54
+DEB_PYTHON_MODULE_PACKAGES = python-scikits-learn python-scikits-learn-lib
+include /usr/share/cdbs/1/class/python-distutils.mk
+
+## # enable the LIBSVM wrapper and disable building provided copy
+## export PYMVPA_NO_3RD=1
+## DEB_PYTHON_BUILD_ARGS += --with-libsvm
+## DEB_PYTHON_INSTALL_ARGS_ALL += --with-libsvm
+
+doc: doc-stamp
+doc-stamp:
+ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
+	$(MAKE) -C doc html
+	touch $@
+endif
+
+clean::
+	$(MAKE) distclean
+
+# run at install otherwise at build it tends to do them twice for some
+# reason
+install/python-scikits-learn::
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	for buildver in $(cdbs_python_build_versions); do \
+		echo "I: Running scikits-learn unittests using python$$buildver"; \
+        cd $(CURDIR) && cd $(DEB_SRCDIR)/build/lib.*-$$buildver && \
+		PYTHONPATH=. \
+         $(call cdbs_python_binary,python$$buildver) /usr/bin/nosetests scikits.learn; \
+    done
+endif
+
+build/python-scikits-learn-doc:: doc
+
+# use jquery from Debian package
+# symlinked by debhelper
+install/python-scikits-learn-doc::
+	-rm build/html/_static/jquery.js
+
+install/python-scikits-learn-lib::
+	# move libraries into the python-scikits-learn-lib package
+	for lib in $$(find debian/python-scikits-learn/usr -name '*.so'); do \
+	   sdir=$$(dirname $$lib) ; \
+	   tdir=debian/python-scikits-learn-lib/$${sdir#*python-scikits-learn/} ; \
+	   mkdir -p $$tdir ; \
+	   echo "Moving '$$lib' into '$$tdir'." ; \
+	   mv $$lib $$tdir ; \
+	done
+
+# we need to move libraries away first, hence dependence on -lib
+# Also without this step, movemodules from pysupport would not
+# move arch-indep part of the module under pyshared
+install/python-scikits-learn:: install/python-scikits-learn-lib
+
+## binary-install/python-scikits-learn-lib::
+## 	# assure that there is no mvpa module itself
+## 	# actually remove everything under ../share/.. since that is provided
+## 	# by python-scikits-learn. That prevents e.g. duplicate egg-info files.
+## #	rm -rf debian/python-scikits-learn-lib/usr/share/python-support/python-scikits-learn-lib/*
+
+# install directly into package directory (despite multiple packages)
+DEB_DESTDIR = $(CURDIR)/debian/python-scikits-learn
+# immediately useable documentation
+# and exemplar data (they are small excerpts anyways)
+DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
+# -doc package contents
+ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
+DEB_INSTALL_DOCS_python-scikits-learn-doc := build/html
+DEB_INSTALL_EXAMPLES_python-scikits-learn-doc := examples/*
+endif
+
