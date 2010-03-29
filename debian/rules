@@ -22,19 +22,8 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 endif
 
 clean::
-	rm -rf build doc/_build
+	rm -rf build doc/_build *-stamp scikits.learn.egg-info
 
-# run at install otherwise at build it tends to do them twice for some
-# reason
-install/python-scikits-learn::
-ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	for buildver in $(cdbs_python_build_versions); do \
-		echo "I: Running scikits-learn unittests using python$$buildver"; \
-        cd $(CURDIR) && cd $(DEB_SRCDIR)/build/lib.*-$$buildver && \
-		PYTHONPATH=. \
-         $(call cdbs_python_binary,python$$buildver) /usr/bin/nosetests scikits.learn; \
-    done
-endif
 
 build/python-scikits-learn-doc:: doc
 
@@ -44,8 +33,21 @@ install/python-scikits-learn-doc::
 	-rm doc/_build/html/_static/jquery.js
 
 install/python-scikits-learn-lib::
+	# run unittests before moving libraries away
+	# --exclude manifold since it depends on yet to be packaged
+	# scikits.optimization
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	for buildver in $(cdbs_python_build_versions); do \
+		echo "I: Running scikits-learn unittests using python$$buildver"; \
+		cd $(DEB_DESTDIR)/usr/lib/python$$buildver/site-packages && \
+		PYTHONPATH=. \
+		 $(call cdbs_python_binary,python$$buildver) /usr/bin/nosetests \
+		  --exclude manifold scikits/learn; \
+	done
+endif
+
 	# move libraries into the python-scikits-learn-lib package
-	for lib in $$(find debian/python-scikits-learn/usr -name '*.so'); do \
+	for lib in $$(find $(DEB_DESTDIR)/usr -name '*.so'); do \
 	   sdir=$$(dirname $$lib) ; \
 	   tdir=debian/python-scikits-learn-lib/$${sdir#*python-scikits-learn/} ; \
 	   mkdir -p $$tdir ; \
