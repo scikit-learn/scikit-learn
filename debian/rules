@@ -22,7 +22,7 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 endif
 
 clean::
-	$(MAKE) distclean
+	rm -rf build doc/_build
 
 # run at install otherwise at build it tends to do them twice for some
 # reason
@@ -41,7 +41,7 @@ build/python-scikits-learn-doc:: doc
 # use jquery from Debian package
 # symlinked by debhelper
 install/python-scikits-learn-doc::
-	-rm build/html/_static/jquery.js
+	-rm doc/_build/html/_static/jquery.js
 
 install/python-scikits-learn-lib::
 	# move libraries into the python-scikits-learn-lib package
@@ -71,7 +71,7 @@ DEB_DESTDIR = $(CURDIR)/debian/python-scikits-learn
 DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
 # -doc package contents
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-DEB_INSTALL_DOCS_python-scikits-learn-doc := build/html
+DEB_INSTALL_DOCS_python-scikits-learn-doc := doc/_build/html
 DEB_INSTALL_EXAMPLES_python-scikits-learn-doc := examples/*
 endif
 

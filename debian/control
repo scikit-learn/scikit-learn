@@ -16,15 +16,15 @@ Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-scipy, python-
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nose, python-psyco, python-matplotlib
-Suggests: python-mvpa, python-mdp, python-scikits-learn-doc
-Description: python modules for machine learning and data mining
- scikit-learn is a collection of python modules relevant to
+Suggests: python-dap, python-scikits-optimization, python-scikits-learn-doc
+Description: Python modules for machine learning and data mining
+ scikit-learn is a collection of Python modules relevant to
  machine/statistical learning and data mining.  Non-exhaustive list of
  included functionality:
   - Gaussian Mixture Models
   - Manifold learning
   - kNN
-  - SVM (via libsvm)
+  - SVM (via LIBSVM)
 
 
 Package: python-scikits-learn-doc
