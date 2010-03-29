@@ -1,5 +1,6 @@
 scikit-learn (0.2+svn615-1~pre0) UNRELEASED; urgency=low
 
   * Initial Debian release (Closes: #567036)
+  * First ever package by me to adhere to dkg-source 3.0 (quilt) format.
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 29 Mar 2010 08:52:30 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 29 Mar 2010 10:54:33 -0400
