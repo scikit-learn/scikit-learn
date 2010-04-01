@@ -59,6 +59,13 @@ endif
 # Also without this step, movemodules from pysupport would not
 # move arch-indep part of the module under pyshared
 install/python-scikits-learn:: install/python-scikits-learn-lib
+	# prune scikits/__init__.py declaring a namespace,
+	# so we don't have conflicts in future between
+	# different python-scikits-* packages. blank __init__.py
+	# as would be created by pysupport is sufficient
+	# since all system-wide installed scikits will share this
+	# location
+	find debian -wholename \*scikits/__init__.py -delete
 
 ## binary-install/python-scikits-learn-lib::
 ## 	# assure that there is no mvpa module itself
