@@ -134,7 +134,12 @@ class LDA(object):
         V = V[:X.shape[0], :]
         return S_sort, V
 
-    def predict(self, X, posterior=False):
+    def predict(self, X):
+        probas = self.proba_predict(X)
+        y_pred = self.classes[probas.argmax(1)]
+        return y_pred
+
+    def proba_predict(self, X):
         #Ensure X is an array
         X = np.asarray(X)
         scaling = self.scaling
@@ -146,13 +151,9 @@ class LDA(object):
         # for each class k, compute the linear discrinant function(p. 87 Hastie)
         # of sphered (scaled data)
         dist = 0.5*np.sum(dm**2, 1) - np.log(self.priors) - np.dot(X,dm.T)
-        self.dist = dist
         # take exp of min dist
         dist = np.exp(-dist + dist.min(1).reshape(X.shape[0],1))
         # normalize by p(x)=sum_k p(x|k)
-        self.posteriors = dist / dist.sum(1).reshape(X.shape[0],1)
+        probas = dist / dist.sum(1).reshape(X.shape[0],1)
         # classify according to the maximun a posteriori
-        y_pred = self.classes[self.posteriors.argmax(1)]
-        if posterior is True:
-            return y_pred, self.posteriors
-        return y_pred
+        return probas
