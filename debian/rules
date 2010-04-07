@@ -22,7 +22,7 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 endif
 
 clean::
-	rm -rf build doc/_build *-stamp scikits.learn.egg-info
+	rm -rf build doc/_build *-stamp scikits.learn.egg-info scikits/learn/datasets/__config__.py
 
 
 build/python-scikits-learn-doc:: doc
