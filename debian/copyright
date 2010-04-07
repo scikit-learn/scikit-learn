@@ -20,6 +20,15 @@ License: BSD-3
 On Debian GNU/Linux systems, the complete text of the 3-clause BSD License
 can be found in `/usr/share/common-licenses/BSD'.
 
+Files: doc/sphinxext/*
+Copyright: Copyright (C) 2008 Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
+License: BSD
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
 
 Files: debian/*
 Copyright: Copyright 2010,
