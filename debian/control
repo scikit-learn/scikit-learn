@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Experimental Psychology Maintainers <pkg-exppsy-maintainers@lists.alioth.debian.org>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>, Michael Hanke <michael.hanke@gmail.com>
-Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-sphinx, graphviz, python-nose, python-setuptools
+Build-Depends: cdbs, debhelper (>= 7.0.50), python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-sphinx, graphviz, python-nose, python-setuptools, cython
 Standards-Version: 3.8.4
 Homepage: http://scikit-learn.sourceforge.net
 Vcs-Browser: http://github.com/yarikoptic/scikit-learn
@@ -34,7 +34,7 @@ Depends: ${misc:Depends}, libjs-jquery
 Suggests: python-scikits-learn
 Description: documentation and examples for scikit-learn
  This package contains documentation and example scripts for
- scikit-learn.
+ python-scikit-learn.
 
 
 Package: python-scikits-learn-lib
@@ -43,5 +43,6 @@ Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: low-level implementations and bindings for scikit-learn
- This is an add-on package for scikit-learn. It provides low-level
- implementations and custom Python bindings for the LIBSVM library.
+ This is an add-on package for python-scikit-learn. It provides
+ low-level implementations and custom Python bindings for the LIBSVM
+ library.
