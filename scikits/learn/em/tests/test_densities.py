@@ -185,7 +185,7 @@ class test_py_logsumexp(TestDensities):
 class test_c_implementation(TestDensities):
     def _test(self, level, decimal = DEF_DEC):
         try:
-            from em._c_densities import gauss_den as c_gauss_den
+            from scikits.learn.em._c_densities import gauss_den as c_gauss_den
             Y   = c_gauss_den(self.X, self.mu, self.va)
             assert_array_almost_equal(Y, self.Yt, decimal)
         except Exception, inst:
