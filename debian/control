@@ -1,0 +1,48 @@
+Source: scikit-learn
+Section: python
+Priority: optional
+Maintainer: Experimental Psychology Maintainers <pkg-exppsy-maintainers@lists.alioth.debian.org>
+Uploaders: Yaroslav Halchenko <debian@onerussian.com>, Michael Hanke <michael.hanke@gmail.com>
+Build-Depends: cdbs, debhelper (>= 7.0.50), python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy-ext, python-scipy, libsvm-dev (>= 2.84.0), python-sphinx, graphviz, python-nose, python-setuptools, cython
+Standards-Version: 3.8.4
+Homepage: http://scikit-learn.sourceforge.net
+Vcs-Browser: http://github.com/yarikoptic/scikit-learn
+Vcs-Git: git://github.com/yarikoptic/scikit-learn.git
+XS-DM-Upload-Allowed: yes
+
+Package: python-scikits-learn
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-scipy, python-scikits-learn-lib(>= ${source:Version})
+Provides: ${python:Provides}
+XB-Python-Version: ${python:Versions}
+Recommends: python-nose, python-psyco, python-matplotlib
+Suggests: python-dap, python-scikits-optimization, python-scikits-learn-doc
+Description: Python modules for machine learning and data mining
+ scikit-learn is a collection of Python modules relevant to
+ machine/statistical learning and data mining.  Non-exhaustive list of
+ included functionality:
+  - Gaussian Mixture Models
+  - Manifold learning
+  - kNN
+  - SVM (via LIBSVM)
+
+
+Package: python-scikits-learn-doc
+Architecture: all
+Section: doc
+Depends: ${misc:Depends}, libjs-jquery
+Suggests: python-scikits-learn
+Description: documentation and examples for scikit-learn
+ This package contains documentation and example scripts for
+ python-scikit-learn.
+
+
+Package: python-scikits-learn-lib
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
+Provides: ${python:Provides}
+XB-Python-Version: ${python:Versions}
+Description: low-level implementations and bindings for scikit-learn
+ This is an add-on package for python-scikit-learn. It provides
+ low-level implementations and custom Python bindings for the LIBSVM
+ library.

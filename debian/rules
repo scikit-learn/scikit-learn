@@ -1,0 +1,61 @@
+#!/usr/bin/make -f
+# -*- mode: makefile; coding: utf-8 -*-
+
+PACKAGE_NAME = python-scikits-learn
+PACKAGE_ROOT_DIR = debian/${PACKAGE_NAME}
+
+PYVERS = $(shell pyversions -vs)
+
+# Mega rule
+%:
+	dh $@
+
+# Build docs during build
+override_dh_auto_build: doc-stamp
+	dh_auto_build
+
+doc-stamp:
+ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
+	$(MAKE) -C doc html
+endif
+	touch $@
+
+override_dh_clean:
+	rm -rf build doc/_build *-stamp scikits.learn.egg-info scikits/learn/datasets/__config__.py
+	dh_clean
+
+# Prune toplevel scikits/__init__.py to avoid conflicts across future
+# scikits- packages, and rely on pysupport to create such one if
+# necessary
+override_dh_auto_install: ${PYVERS:%=python-install%}
+	find debian -wholename \*scikits/__init__.py -delete
+
+# Per Python version logic -- install, test, move .so into -lib
+python-install%:
+	python$* setup.py install --install-layout=deb --root=$(PACKAGE_ROOT_DIR)
+
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	: # Run unittests
+	python$* /usr/bin/nosetests --exclude manifold \
+	  $(PACKAGE_ROOT_DIR)/usr/lib/python$*/*/scikits/learn
+else
+	: # Skip unittests due to nocheck
+endif
+
+	: # Move platform-specific libraries into -lib
+	for lib in $$(find $(PACKAGE_ROOT_DIR)/usr -name '*.so'); do \
+	   sdir=$$(dirname $$lib) ; \
+	   tdir=$(PACKAGE_ROOT_DIR)-lib/$${sdir#*$(PACKAGE_NAME)/} ; \
+	   mkdir -p $$tdir ; \
+	   echo "Moving '$$lib' into '$$tdir'." ; \
+	   mv $$lib $$tdir ; \
+	done
+
+## immediately useable documentation and exemplar scripts/data
+override_dh_compress:
+	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc
+
+override_dh_installdocs:
+	: # Use jquery from Debian package, so prune shipped one
+	-rm doc/_build/html/_static/jquery.js
+	dh_installdocs -A AUTHORS README
