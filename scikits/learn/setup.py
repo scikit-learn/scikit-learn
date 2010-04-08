@@ -1,17 +1,6 @@
 from os.path import join
 import numpy
 
-# Workaround to enforce building cython extensions while
-# maintaining compatibility with NumPy
-# Found at http://old.nabble.com/problem-with-numpy.distutils-and-Cython-td25100957.html
-# Introduced here by Yaroslav Halchenko <debian@onerussian.com> 2010-04-06
-from numpy.distutils.command import build_src
-import Cython
-import Cython.Compiler.Main
-build_src.Pyrex = Cython
-build_src.have_pyrex = True
-
-
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('learn',parent_package,top_path)
@@ -25,10 +14,9 @@ def configuration(parent_package='',top_path=None):
                          define_macros=[('LIBSVM_EXPORTS', None),
                                         ('LIBSVM_DLL',     None)],
                          sources=[join('src', 'svm.cpp'), 
-                                  join('src', 'libsvm.pyx'),
+                                  join('src', 'libsvm.c'),
                                   ],
-                         include_dirs=[numpy.get_include(),
-                                       join('scikits', 'learn', 'src')],
+                         include_dirs=[numpy.get_include()],
                          depends=[join('src', 'svm.h'),
                                  join('src', 'libsvm_helper.c'),
                                   ])

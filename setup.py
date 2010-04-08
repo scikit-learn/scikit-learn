@@ -23,16 +23,6 @@ VERSION             = '0.3-SVN'
 import setuptools # we are using a setuptools namespace
 from numpy.distutils.core import setup
 
-# Workaround to enforce building cython extensions while
-# maintaining compatibility with NumPy
-# Found at http://old.nabble.com/problem-with-numpy.distutils-and-Cython-td25100957.html
-# Introduced here by Yaroslav Halchenko <debian@onerussian.com> 2010-04-06
-from numpy.distutils.command import build_src
-import Cython
-import Cython.Compiler.Main
-build_src.Pyrex = Cython
-build_src.have_pyrex = True
-
 def configuration(parent_package='',top_path=None):
     if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 
