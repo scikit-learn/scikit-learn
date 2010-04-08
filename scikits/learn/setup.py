@@ -1,4 +1,4 @@
-from os.path import join
+from os.path import join, dirname
 import numpy
 
 # Workaround to enforce building cython extensions while
@@ -21,16 +21,22 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('glm')
     config.add_subpackage('manifold')
     config.add_subpackage('utils')
+
+    include_dirs = []
+    if top_path != '':
+         # so that top-level setup.py could build
+        include_dirs += [join(dirname(__file__), 'src')]
+
     config.add_extension('libsvm',
                          define_macros=[('LIBSVM_EXPORTS', None),
                                         ('LIBSVM_DLL',     None)],
-                         sources=[join('src', 'svm.cpp'), 
-                                  join('src', 'libsvm.pyx'),
+                         sources=[join('src', 'libsvm.pyx'),
                                   ],
-                         include_dirs=[numpy.get_include(),
-                                       join('scikits', 'learn', 'src')],
-                         depends=[join('src', 'svm.h'),
-                                 join('src', 'libsvm_helper.c'),
+                         include_dirs=['/usr/include/libsvm-2.0/libsvm']
+                                      + include_dirs,
+                                      # [numpy.get_include()] +
+                         libraries=['svm'],
+                         depends=[join('src', 'libsvm_helper.c'),
                                   ])
 
     config.add_extension('BallTree',
