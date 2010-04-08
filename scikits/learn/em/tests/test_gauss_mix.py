@@ -33,13 +33,15 @@ class test_BasicFunc(TestCase):
             gm.conf_ellipses()
             raise AssertionError("This should not work !")
         except ValueError, e:
-            print "Ok, conf_ellipses failed as expected (with msg: " + str(e) + ")"
+            self.assertEqual(str(e), 
+                "This function does not make sense for 1d mixtures.")
 
         try:
             gm.density_on_grid()
             raise AssertionError("This should not work !")
         except ValueError, e:
-            print "Ok, density_grid failed as expected (with msg: " + str(e) + ")"
+            self.assertEqual(str(e), 
+                "This function does not make sense for 1d mixtures.")
 
     def test_get_va(self):
         """Test _get_va for diag and full mode."""
