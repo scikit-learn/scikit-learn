@@ -1,71 +1,86 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-include /usr/share/cdbs/1/rules/debhelper.mk
-DEB_PYTHON_SYSTEM = pysupport
-# for earlier cdbs versions
-DEB_PYTHON_MODULE_PACKAGE = python-scikits-learn
-# for cdbs >= 0.4.54
-DEB_PYTHON_MODULE_PACKAGES = python-scikits-learn python-scikits-learn-lib
-include /usr/share/cdbs/1/class/python-distutils.mk
+PYVERS = $(shell pyversions -vs)
 
-## # enable the LIBSVM wrapper and disable building provided copy
-## export PYMVPA_NO_3RD=1
-## DEB_PYTHON_BUILD_ARGS += --with-libsvm
-## DEB_PYTHON_INSTALL_ARGS_ALL += --with-libsvm
+# Mega rule
+%:
+	dh $@
 
-doc: doc-stamp
+override_dh_build: doc-stamp
+	dh_build
+
 doc-stamp:
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	$(MAKE) -C doc html
+endif
 	touch $@
-endif
 
-clean::
+override_dh_clean:
 	rm -rf build doc/_build *-stamp scikits.learn.egg-info scikits/learn/datasets/__config__.py
+	dh_clean
 
+#dh# # use jquery from Debian package
+#dh# # symlinked by debhelper
+#dh# override_dh_install:
+#dh# 	-rm doc/_build/html/_static/jquery.js
+#dh# 	dh_install
+#dh# 	# prune scikits/__init__.py declaring a namespace,
+#dh# 	# so we don't have conflicts in future between
+#dh# 	# different python-scikits-* packages. blank __init__.py
+#dh# 	# as would be created by pysupport is sufficient
+#dh# 	# since all system-wide installed scikits will share this
+#dh# 	# location
+#dh# 	find debian -wholename \*scikits/__init__.py -delete
+#dh# 
 
-build/python-scikits-learn-doc:: doc
+python-install%:
+	python$* setup.py install \
+		--root $(CURDIR)/debian \
+		--install-layout=deb \
+		--no-compile \
+		--install-purelib=python-scikits-learn/usr/shared/pyshared \
+		--install-platlib=python-scikits-learn-lib/usr/shared/pyshared/python$*
 
-# use jquery from Debian package
-# symlinked by debhelper
-install/python-scikits-learn-doc::
+.PHONY: override_dh_auto_install
+override_dh_auto_install: ${PYVERS:%=python-install%}
 	-rm doc/_build/html/_static/jquery.js
-
-install/python-scikits-learn-lib::
-	# run unittests before moving libraries away
-	# --exclude manifold since it depends on yet to be packaged
-	# scikits.optimization
-ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	for buildver in $(cdbs_python_build_versions); do \
-		echo "I: Running scikits-learn unittests using python$$buildver"; \
-		cd $(DEB_DESTDIR)/usr/lib/python$$buildver/site-packages && \
-		PYTHONPATH=. \
-		 $(call cdbs_python_binary,python$$buildver) /usr/bin/nosetests \
-		  --exclude manifold scikits/learn; \
-	done
-endif
-
-	# move libraries into the python-scikits-learn-lib package
-	for lib in $$(find $(DEB_DESTDIR)/usr -name '*.so'); do \
-	   sdir=$$(dirname $$lib) ; \
-	   tdir=debian/python-scikits-learn-lib/$${sdir#*python-scikits-learn/} ; \
-	   mkdir -p $$tdir ; \
-	   echo "Moving '$$lib' into '$$tdir'." ; \
-	   mv $$lib $$tdir ; \
-	done
-
-# we need to move libraries away first, hence dependence on -lib
-# Also without this step, movemodules from pysupport would not
-# move arch-indep part of the module under pyshared
-install/python-scikits-learn:: install/python-scikits-learn-lib
-	# prune scikits/__init__.py declaring a namespace,
-	# so we don't have conflicts in future between
-	# different python-scikits-* packages. blank __init__.py
-	# as would be created by pysupport is sufficient
-	# since all system-wide installed scikits will share this
-	# location
 	find debian -wholename \*scikits/__init__.py -delete
+
+#dh# install/python-scikits-learn-lib::
+#dh# 	# run unittests before moving libraries away
+#dh# 	# --exclude manifold since it depends on yet to be packaged
+#dh# 	# scikits.optimization
+#dh# ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+#dh# 	for buildver in $(cdbs_python_build_versions); do \
+#dh# 		echo "I: Running scikits-learn unittests using python$$buildver"; \
+#dh# 		cd $(DEB_DESTDIR)/usr/lib/python$$buildver/site-packages && \
+#dh# 		PYTHONPATH=. \
+#dh# 		 $(call cdbs_python_binary,python$$buildver) /usr/bin/nosetests \
+#dh# 		  --exclude manifold scikits/learn; \
+#dh# 	done
+#dh# endif
+#dh# 
+#dh# 	# move libraries into the python-scikits-learn-lib package
+#dh# 	for lib in $$(find $(DEB_DESTDIR)/usr -name '*.so'); do \
+#dh# 	   sdir=$$(dirname $$lib) ; \
+#dh# 	   tdir=debian/python-scikits-learn-lib/$${sdir#*python-scikits-learn/} ; \
+#dh# 	   mkdir -p $$tdir ; \
+#dh# 	   echo "Moving '$$lib' into '$$tdir'." ; \
+#dh# 	   mv $$lib $$tdir ; \
+#dh# 	done
+#dh# 
+#dh# # we need to move libraries away first, hence dependence on -lib
+#dh# # Also without this step, movemodules from pysupport would not
+#dh# # move arch-indep part of the module under pyshared
+#dh# install/python-scikits-learn:: install/python-scikits-learn-lib
+#dh# 	# prune scikits/__init__.py declaring a namespace,
+#dh# 	# so we don't have conflicts in future between
+#dh# 	# different python-scikits-* packages. blank __init__.py
+#dh# 	# as would be created by pysupport is sufficient
+#dh# 	# since all system-wide installed scikits will share this
+#dh# 	# location
+#dh# 	find debian -wholename \*scikits/__init__.py -delete
 
 ## binary-install/python-scikits-learn-lib::
 ## 	# assure that there is no mvpa module itself
@@ -73,14 +88,19 @@ install/python-scikits-learn:: install/python-scikits-learn-lib
 ## 	# by python-scikits-learn. That prevents e.g. duplicate egg-info files.
 ## #	rm -rf debian/python-scikits-learn-lib/usr/share/python-support/python-scikits-learn-lib/*
 
-# install directly into package directory (despite multiple packages)
-DEB_DESTDIR = $(CURDIR)/debian/python-scikits-learn
-# immediately useable documentation
-# and exemplar data (they are small excerpts anyways)
-DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
-# -doc package contents
-ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-DEB_INSTALL_DOCS_python-scikits-learn-doc := doc/_build/html
-DEB_INSTALL_EXAMPLES_python-scikits-learn-doc := examples/*
-endif
+## immediately useable documentation
+## and exemplar data (they are small excerpts anyway)
+override_dh_compress:
+	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc -X.par -X.bin
+
+#dh# # install directly into package directory (despite multiple packages)
+#dh# DEB_DESTDIR = $(CURDIR)/debian/python-scikits-learn
+#dh# # immediately useable documentation
+#dh# # and exemplar data (they are small excerpts anyways)
+#dh# DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
+#dh# # -doc package contents
+#dh# ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
+#dh# DEB_INSTALL_DOCS_python-scikits-learn-doc := doc/_build/html
+#dh# DEB_INSTALL_EXAMPLES_python-scikits-learn-doc := examples/*
+#dh# endif
 
