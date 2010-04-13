@@ -1,5 +1,8 @@
 """
-generate the rst files for the examples by iterating over the pylab examples
+generate the rst files for the examples by iterating over the pylab examples.
+
+Images must be created manually and dropped in directory auto_examples/images. Files that generate images should start with 'plot'
+
 """
 import os, glob
 
@@ -10,6 +13,23 @@ fileList = []
 
                           
 import token, tokenize      
+
+                                                                                                                    
+
+rst_template = """%(docstring)s
+
+.. literalinclude:: %(short_fname)s
+    :lines: %(end_row)s-
+    """
+
+plot_rst_template = """%(docstring)s
+
+.. image:: images/%(image_name)s
+
+.. literalinclude:: %(short_fname)s
+    :lines: %(end_row)s-
+    """
+
 
 def extract_docstring(filename):
     # Extract a module-level docstring, if any
@@ -37,18 +57,6 @@ def extract_docstring(filename):
         break
     return docstring, first_par, erow+1+start_row
 
-                                                                                                                    
-rst_template = """
-
-example
---------------------------------------------
-
-%(docstring)s
-
-.. literalinclude:: %(short_fname)s
-    :lines: %(end_row)s-
-
-    """
 
 def generate_example_rst(app):
     rootdir = os.path.join(app.builder.srcdir, 'auto_examples')
@@ -57,17 +65,21 @@ def generate_example_rst(app):
         os.makedirs(exampledir)
 
     datad = []
-    import glob
 
     for root, dirs, files in os.walk(exampledir):
         for fname in files:
+            global rst_template, plot_rst_template
             if  not fname.endswith('py'): continue
+            if fname.startswith('plot'): rst_template = plot_rst_template
             complete_fname = os.path.join(exampledir, fname)
             docstring, short_desc, end_row = extract_docstring(complete_fname)
 
             short_fname = '../../examples/' + fname
 
+            image_name = fname[:-2] + 'png'
+
             f = open(os.path.join(rootdir, fname[:-2] + 'rst'),'w')
+            print rst_template
             f.write( rst_template % locals())
             f.flush()
             datad.append(fname)
@@ -77,10 +89,6 @@ def generate_example_rst(app):
     fhindex.write("""\
 .. _examples-index:
 
-####################
-Matplotlib Examples
-####################
-
     :Release: |version|
     :Date: |today|
 
@@ -89,7 +97,7 @@ Matplotlib Examples
 """)
     
     for fname in datad:
-        fhindex.write('    %s\n' % fname[:-2]+'rst')
+        fhindex.write('    %s\n' % (fname[:-2]+'rst'))
     fhindex.flush()
 
 def setup(app):

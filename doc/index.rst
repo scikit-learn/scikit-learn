@@ -43,6 +43,7 @@ Examples
 ========
 
 .. toctree::
+
    auto_examples/index
 
 Developers
