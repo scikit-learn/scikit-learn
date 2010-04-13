@@ -89,7 +89,7 @@ Distribution estimation
 One-class SVM is used for out-layer detection, that is, given a set of
 samples, it will detect the soft boundary of that set.
 
-.. linteralinclude:: ../../examples/plot_svm_oneclass.py
+.. literalinclude:: ../../examples/plot_svm_oneclass.py
 
 .. image:: svm_data/oneclass.png
 

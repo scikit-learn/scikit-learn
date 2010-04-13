@@ -38,6 +38,13 @@ Module Reference
    modules/neighbors
    modules/svm
 
+
+Examples
+========
+
+.. toctree::
+   auto_examples/index
+
 Developers
 ==========
 
