@@ -1,4 +1,7 @@
 """
+=====================
+Lasso and Elastic Net
+=====================
 Lasso and elastic net (L1 and L2 penalisation) implemented using a
 coordinate descent.
 """

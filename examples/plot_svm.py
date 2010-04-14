@@ -1,4 +1,8 @@
 """
+==========================
+Plot Linear SVM classifier
+==========================
+
 Sample usage of Support Vector Machines to classify a sample.
 It will plot the decision surface and the support vectors.
 """

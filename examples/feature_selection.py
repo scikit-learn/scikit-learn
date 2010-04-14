@@ -1,4 +1,8 @@
 """
+=================
+Feature Selection
+=================
+
 An example showing feature selection.
 
 Noisy (non informative) features are added to the iris data and
