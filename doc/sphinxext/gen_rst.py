@@ -75,7 +75,9 @@ def generate_example_rst(app):
             short_fname = '../../examples/' + fname
             if  not fname.endswith('py'): continue
             if fname.startswith('plot'):
-                print 'building %s' % fname
+                # generate the plot as png image if file name
+                # starts with plot.
+                print 'plotting %s' % fname
                 import matplotlib.pyplot as plt
                 plt.close('all')
                 mplshell.magic_run(os.path.join(exampledir, fname))
