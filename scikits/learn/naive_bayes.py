@@ -26,7 +26,7 @@ class GNB(object):
 
     Methods
     -------
-    fit(X, Y) : self
+    fit(X, y) : self
         Fit the model
 
     predict(X) : array
@@ -54,35 +54,35 @@ class GNB(object):
         theta = []
         sigma = []
         proba_y = []
-        uniy = np.unique(y)
-        for yi in uniy:
-            theta.append(np.mean(X[y==yi,:],0))
-            sigma.append(np.var(X[y==yi,:],0))
-            proba_y.append(np.float(np.sum(y==yi))/np.size(y))
+        unique_y = np.unique(y)
+        for yi in unique_y:
+            theta.append(np.mean(X[y==yi,:], 0))
+            sigma.append(np.var(X[y==yi,:], 0))
+            proba_y.append(np.float(np.sum(y==yi)) / np.size(y))
         self.theta = np.array(theta)
         self.sigma = np.array(sigma)
         self.proba_y = np.array(proba_y)
-        self.uniy = uniy
+        self.unique_y = unique_y
         return self
 
 
     def predict(self, X):
-        y_pred = self.uniy[np.argmax(self.predict_proba(X),1)]
+        y_pred = self.unique_y[np.argmax(self.predict_proba(X),1)]
         return y_pred
 
 
     def predict_proba(self, X):
         joint_log_likelihood = []
-        for i in range(np.size(self.uniy)):
+        for i in range(np.size(self.unique_y)):
             jointi = np.log(self.proba_y[i])
-            n_ij = np.sum(-0.5*np.log(np.pi*self.sigma[i,:]))
-            n_ij = n_ij*np.ones(np.size(X,0))
-            n_ij -= np.sum((X - self.theta[i,:])**2,1)
-            n_ij += np.sum(2*self.sigma[i,:])*np.ones(np.size(X,0))
-            joint_log_likelihood.append(jointi+n_ij)
+            n_ij = np.sum(-0.5 * np.log(np.pi * self.sigma[i,:]))
+            n_ij = n_ij * np.ones(np.size(X, 0))
+            n_ij -= np.sum((X - self.theta[i,:])**2, 1)
+            n_ij += np.sum(2 * self.sigma[i,:]) * np.ones(np.size(X, 0))
+            joint_log_likelihood.append(jointi + n_ij)
         joint_log_likelihood = np.array(joint_log_likelihood).T
         proba = np.exp(joint_log_likelihood)
-        proba = proba/np.sum(proba,1)[:,np.newaxis]
+        proba = proba / np.sum(proba,1)[:,np.newaxis]
         return proba
 
 
