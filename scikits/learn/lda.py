@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# $Id$
+
 import numpy as np
 import exceptions
 import scipy.linalg as linalg
@@ -16,19 +17,21 @@ class LDA(object):
         Target vector relative to X
 
     priors : array, optional, shape = [n_classes]
-        ### TODO
+        Priors on classes
 
     use_svd : bool, optional
          Specify if the SVD from scipy should be used.
 
     Attributes
     ----------
-    `means_` : array-like, shape = [n_classes]
-        Support vectors
+    `means_` : array-like, shape = [n_classes, n_features]
+        Class means
+    `xbar` : float, shape = [n_features]
+        Over all mean
 
     Methods
     -------
-    fit(X, Y) : self
+    fit(X, y) : self
         Fit the model
 
     predict(X) : array
@@ -58,23 +61,23 @@ class LDA(object):
 
     def fit(self, X, y, tol = 1.0e-4):
         if X.ndim!=2:
-            raise exceptions.ValueError('X must be 2D array')
+            raise exceptions.ValueError('X must be a 2D array')
         n_samples = X.shape[0]
         n_features = X.shape[1]
         classes = np.unique(y)
-        n_classes = classes.shape[0]
+        n_classes = classes.size
         if n_classes < 2:
             raise exceptions.ValueError('Y has Less than 2 classes')
-        classes_indexes = [(y == lev).ravel() for lev in classes]
+        classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array([float(np.sum(group_indexes)) \
-                for group_indexes in classes_indexes])
+            counts = np.array([float(np.sum(group_indices)) \
+                               for group_indices in classes_indices])
             self.priors = counts / n_samples
-        # Group means n_classes*nfeats matrix
+        # Group means n_classes*n_features matrix
         means = []
         Xc = []
-        for group_indexes in classes_indexes:
-            Xg = X[group_indexes,:]
+        for group_indices in classes_indices:
+            Xg = X[group_indices,:]
             meang = Xg.mean(0)
             means.append(meang)
             # centered group data
@@ -88,7 +91,7 @@ class LDA(object):
         fac = float(1) / (n_samples - n_classes)
         # ----------------------------
         # 2) Within variance scaling
-        X = np.sqrt(fac)*np.dot(Xc, scaling)
+        X = np.sqrt(fac) * np.dot(Xc, scaling)
         # SVD of centered (within)scaled data
         if self.use_svd == True:
             U, S, V = linalg.svd(X, full_matrices=0)
@@ -110,9 +113,9 @@ class LDA(object):
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use svd to find projection in the space spamed by the (n_classes) centers
         if self.use_svd == True:
-            U, S, V = linalg.svd(X,full_matrices=0)
+            U, S, V = linalg.svd(X, full_matrices=0)
         else:
-            S, V = self.svd(X)
+            S, V = self._svd(X)
 
         rank = np.sum(S > tol*S[0])
         # compose the scalings
@@ -123,7 +126,7 @@ class LDA(object):
         self.classes = classes
         return self
 
-    def svd(self, X):
+    def _svd(self, X):
         #computational trick to compute svd. U, S, V=linalg.svd(X)
         K = np.dot(X.T, X)
         S, V = linalg.eigh(K)
@@ -135,11 +138,11 @@ class LDA(object):
         return S_sort, V
 
     def predict(self, X):
-        probas = self.proba_predict(X)
+        probas = self.predict_proba(X)
         y_pred = self.classes[probas.argmax(1)]
         return y_pred
 
-    def proba_predict(self, X):
+    def predict_proba(self, X):
         #Ensure X is an array
         X = np.asarray(X)
         scaling = self.scaling
