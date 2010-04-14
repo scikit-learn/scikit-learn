@@ -1,10 +1,14 @@
-==========
-Contribute
-==========
+===========
+Development
+===========
 
 This project is a community effort, and everyone is welcomed to
 contribute.
 
+Developers web site
+===================
+This is the central web page for developers
+http://sourceforge.net/apps/trac/scikit-learn/wiki
 
 Code
 ====
@@ -12,11 +16,11 @@ Code
 Patches
 -------
 Patches are the prefered way to contribute to a project if you do not
-have (yet) write priviles.
+have write priviles.
 
 Let's suppose that you have the latest sources for subversion and that
 you just made some modifications that you'd like to share with the
-world. The way to proceed is the following:
+world. You might proceed as:
 
 1. Create a patch file. The command::
 
@@ -66,7 +70,7 @@ is usually up to date with the main subversion repo. It's web
 interface is located `here <http://github.com/fseoane/scikit-learn>`_
 and the clone command is::
 
-  git clone http://github.com/fseoane/scikit-learn
+  git clone http://github.com/yarikoptic/scikit-learn
 
 
 .. _packaging:

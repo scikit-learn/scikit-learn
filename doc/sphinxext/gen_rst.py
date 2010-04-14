@@ -11,10 +11,12 @@ import re
 import sys
 fileList = []
 
+import matplotlib
+matplotlib.use('Agg')
+import IPython.Shell
+mplshell = IPython.Shell.MatplotlibShell('mpl')
                           
 import token, tokenize      
-
-                                                                                                                    
 
 rst_template = """%(docstring)s
 
@@ -68,18 +70,22 @@ def generate_example_rst(app):
 
     for root, dirs, files in os.walk(exampledir):
         for fname in files:
+            image_name = fname[:-2] + 'png'
             global rst_template, plot_rst_template
+            short_fname = '../../examples/' + fname
             if  not fname.endswith('py'): continue
-            if fname.startswith('plot'): rst_template = plot_rst_template
+            if fname.startswith('plot'):
+                print 'building %s' % fname
+                import matplotlib.pyplot as plt
+                plt.close('all')
+                mplshell.magic_run(os.path.join(exampledir, fname))
+                plt.savefig(os.path.join(rootdir, 'images', image_name))
+                rst_template = plot_rst_template
+
             complete_fname = os.path.join(exampledir, fname)
             docstring, short_desc, end_row = extract_docstring(complete_fname)
 
-            short_fname = '../../examples/' + fname
-
-            image_name = fname[:-2] + 'png'
-
             f = open(os.path.join(rootdir, fname[:-2] + 'rst'),'w')
-            print rst_template
             f.write( rst_template % locals())
             f.flush()
             datad.append(fname)
@@ -97,7 +103,7 @@ def generate_example_rst(app):
 """)
     
     for fname in datad:
-        fhindex.write('    %s\n' % (fname[:-2]+'rst'))
+        fhindex.write('    %s\n' % (fname[:-3]))
     fhindex.flush()
 
 def setup(app):

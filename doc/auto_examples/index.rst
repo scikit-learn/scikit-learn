@@ -5,11 +5,11 @@
 
 .. toctree::
 
-    feature_selection.rst
-    lasso_enet_coordinate_descent.rst
-    lda.rst
-    plot_neighbors.rst
-    plot_svm.rst
-    plot_svm_hyperplane.rst
-    plot_svm_nonlinear.rst
-    plot_svm_oneclass.rst
+    feature_selection
+    lda
+    plot_lasso_coordinate_descent_path
+    plot_neighbors
+    plot_svm
+    plot_svm_hyperplane
+    plot_svm_nonlinear
+    plot_svm_oneclass
