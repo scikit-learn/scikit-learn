@@ -1,5 +1,6 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#          Vincent Michel <vincent.michel@inria.fr>
 #
 # License: BSD Style.
 
