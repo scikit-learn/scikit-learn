@@ -33,7 +33,7 @@ class Neighbors:
   >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
   <scikits.learn.neighbors.Neighbors instance at 0x...>
   >>> print neigh.predict([[0,0,0]])
-  [0]
+  [ 0.]
   """
 
   def __init__(self, k = 5, window_size = 1.):
