@@ -4,11 +4,8 @@ generate the rst files for the examples by iterating over the pylab examples.
 Images must be created manually and dropped in directory auto_examples/images. Files that generate images should start with 'plot'
 
 """
-import os, glob
-
 import os
-import re
-import sys
+
 fileList = []
 
 import matplotlib
@@ -18,15 +15,28 @@ mplshell = IPython.Shell.MatplotlibShell('mpl')
                           
 import token, tokenize      
 
-rst_template = """%(docstring)s
+rst_template = """
+
+.. %(short_fname)s_example:
+
+%(docstring)s
+
+**Source code:** :download:`%(short_fname)s`
 
 .. literalinclude:: %(short_fname)s
     :lines: %(end_row)s-
     """
 
-plot_rst_template = """%(docstring)s
+plot_rst_template = """
+
+.. %(short_fname)s_example:
+
+%(docstring)s
 
 .. image:: images/%(image_name)s
+    :align: center
+
+**Source code:** :download:`%(fname)s <%(short_fname)s>`
 
 .. literalinclude:: %(short_fname)s
     :lines: %(end_row)s-
@@ -76,16 +86,21 @@ def generate_example_rst(app):
             if  not fname.endswith('py'): continue
             if fname.startswith('plot'):
                 # generate the plot as png image if file name
-                # starts with plot.
-                print 'plotting %s' % fname
-                import matplotlib.pyplot as plt
-                plt.close('all')
-                mplshell.magic_run(os.path.join(exampledir, fname))
-                plt.savefig(os.path.join(rootdir, 'images', image_name))
+                # starts with plot and if it is more recent than an
+                # existing image.
+                image_file = os.path.join(rootdir, 'images', image_name)
+                example_file = os.path.join(exampledir, fname)
+                if (not os.path.exists(image_file) or
+                      os.stat(image_file).st_mtime <= 
+                            os.stat(example_file).st_mtime):
+                    print 'plotting %s' % fname
+                    import matplotlib.pyplot as plt
+                    plt.close('all')
+                    mplshell.magic_run(example_file)
+                    plt.savefig(image_file)
                 rst_template = plot_rst_template
 
-            complete_fname = os.path.join(exampledir, fname)
-            docstring, short_desc, end_row = extract_docstring(complete_fname)
+            docstring, short_desc, end_row = extract_docstring(example_file)
 
             f = open(os.path.join(rootdir, fname[:-2] + 'rst'),'w')
             f.write( rst_template % locals())
