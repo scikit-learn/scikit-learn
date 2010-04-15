@@ -1,5 +1,8 @@
 .. _examples-index:
 
+Examples
+==========
+
     :Release: |version|
     :Date: |today|
 

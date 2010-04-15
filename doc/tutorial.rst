@@ -1,15 +1,36 @@
 Tutorial
 ========
 
-Load a dataset
---------------
+Loading a sample dataset
+--------------------------
+
+The `scikit.learn` comes with a few standard datasets:
 
 >>> from scikits.learn import datasets
 >>> iris = datasets.load('iris')
 
 A dataset is a dictionary-like object that holds all the samples and
 some metadata about the samples. You can access the underlying data
-with members .data and .target.
+with members `.data` and `.target`.
+
+For instance, in the case of the iris dataset, `iris.data` gives access
+to the features that can be used to classify the iris samples:
+
+>>> iris.data
+array([[ 5.1,  3.5,  1.4,  0.2],
+       [ 4.9,  3. ,  1.4,  0.2],
+       [ 4.7,  3.2,  1.3,  0.2],
+       ...
+       [ 6.5,  3. ,  5.2,  2. ],
+       [ 6.2,  3.4,  5.4,  2.3],
+       [ 5.9,  3. ,  5.1,  1.8]])
+
+and `iris.target` gives the ground thruth for the iris dataset, that is
+the labels describing the different classes of irises that we are trying
+to learn:
+
+>>> iris.target
+array([ 0.,  0.,  0.,  0., ... 2.,  2.,  2.,  2.])
 
 
 Prediction

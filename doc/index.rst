@@ -1,3 +1,31 @@
+.. raw:: html
+
+  <style type="text/css">
+    li.toctree-l1 {
+        padding: 0.5em 0 1em 0 ;
+        list-style-type: none;
+        font-size: 150% ;
+        }
+
+    li.toctree-l2 {
+        font-size: 70% ;
+        list-style-type: square;
+        }
+
+    li.toctree-l3 {
+        font-size: 85% ;
+        list-style-type: circle;
+        }
+
+    div.bodywrapper h1 {
+        text-align: center;
+        font-size: 300% ;
+    }
+  
+  </style>
+
+
+
 ===========================
 Scikits.learn Documentation
 ===========================
@@ -12,45 +40,15 @@ It implements several machine learning algorithms, including Support
 Vector Machines, Gaussian Mixture Models, Neural Networks, Nearest
 Neighbors, Generalized Linear Models, etc.
 
-.. toctree::
-   :maxdepth: 1
-
-   install
-
-.. toctree::
-  :maxdepth: 2
-
-   tutorial
-
-
-Module Reference
-================
-
+User guide: contents
+======================
 
 .. toctree::
    :maxdepth: 2
 
-   modules/ann
-   modules/em
-   module/feature_selection
-   modules/glm
-   modules/manifold
-   modules/neighbors
-   modules/svm
-
-
-Examples
-========
-
-.. toctree::
-
+   install
+   tutorial
+   module/index
    auto_examples/index
-
-Developers
-==========
-
-.. toctree::
-   :maxdepth: 1
-
    contribute
    .. API

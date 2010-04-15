@@ -83,13 +83,14 @@ def generate_example_rst(app):
             image_name = fname[:-2] + 'png'
             global rst_template, plot_rst_template
             short_fname = '../../examples/' + fname
-            if  not fname.endswith('py'): continue
+            if  not fname.endswith('py'): 
+                continue
+            example_file = os.path.join(exampledir, fname)
             if fname.startswith('plot'):
                 # generate the plot as png image if file name
                 # starts with plot and if it is more recent than an
                 # existing image.
                 image_file = os.path.join(rootdir, 'images', image_name)
-                example_file = os.path.join(exampledir, fname)
                 if (not os.path.exists(image_file) or
                       os.stat(image_file).st_mtime <= 
                             os.stat(example_file).st_mtime):
@@ -111,6 +112,9 @@ def generate_example_rst(app):
     fhindex = file(os.path.join(rootdir, 'index.rst'), 'w')
     fhindex.write("""\
 .. _examples-index:
+
+Examples
+==========
 
     :Release: |version|
     :Date: |today|

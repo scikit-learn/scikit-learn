@@ -1,5 +1,5 @@
-Install
-=======
+Installing
+============
 
 Binary Packages
 ---------------

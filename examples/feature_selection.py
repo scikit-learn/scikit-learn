@@ -35,7 +35,7 @@ E = np.random.normal(size=(len(iris.data), 35))
 
 # Add the noisy data to the informative features
 x = np.hstack((iris.data, E))
-y = iris.target
+y = np.c_[iris.target, E1, E2]
 
 ################################################################################
 pl.figure(1)
