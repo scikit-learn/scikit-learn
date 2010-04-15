@@ -21,7 +21,7 @@ rst_template = """
 
 %(docstring)s
 
-**Source code:** :download:`%(short_fname)s`
+**Source code:** :download:`%(fname)s <%(short_fname)s>`
 
 .. literalinclude:: %(short_fname)s
     :lines: %(end_row)s-
@@ -82,6 +82,7 @@ def generate_example_rst(app):
         for fname in files:
             image_name = fname[:-2] + 'png'
             global rst_template, plot_rst_template
+            this_template = rst_template
             short_fname = '../../examples/' + fname
             if  not fname.endswith('py'): 
                 continue
@@ -99,12 +100,12 @@ def generate_example_rst(app):
                     plt.close('all')
                     mplshell.magic_run(example_file)
                     plt.savefig(image_file)
-                rst_template = plot_rst_template
+                this_template = plot_rst_template
 
             docstring, short_desc, end_row = extract_docstring(example_file)
 
             f = open(os.path.join(rootdir, fname[:-2] + 'rst'),'w')
-            f.write( rst_template % locals())
+            f.write( this_template % locals())
             f.flush()
             datad.append(fname)
 
