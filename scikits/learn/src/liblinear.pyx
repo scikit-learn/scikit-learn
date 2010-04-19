@@ -46,6 +46,7 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef problem *problem
     cdef model *model
     cdef char *error_msg
+    cdef int len_w
 
     problem = set_problem(X.data, Y.data, X.shape, bias)
 
@@ -64,8 +65,13 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = get_nr_feature(model)
     if bias > 0: nr_feature = nr_feature + 1
-    w = np.empty((nr_feature, nr_class))
-    copy_w(w.data, model, nr_class * nr_feature)
+    if nr_class == 2:
+        w = np.empty(nr_feature)
+        copy_w(w.data, model, nr_feature)
+    else:
+        len_w = nr_class * nr_feature
+        w = np.empty(len_w)
+        copy_w(w.data, model, len_w)
 
     bias = get_bias(model)
 
