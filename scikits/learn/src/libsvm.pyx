@@ -1,4 +1,3 @@
-# cython: profile=True
 """
 Binding for libsvm[1]
 ---------------------
@@ -80,12 +79,12 @@ cdef extern from "libsvm_helper.c":
 ################################################################################
 # Wrapper functions
 
-def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X, 
-                  np.ndarray[np.double_t, ndim=1, mode='c'] Y, int
+def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X, 
+                  np.ndarray[np.float64_t, ndim=1, mode='c'] Y, int
                   svm_type, int kernel_type, int degree, double gamma,
                   double coef0, double eps, double C, int nr_weight,
                   np.ndarray[np.int_t, ndim=1] weight_label,
-                  np.ndarray[np.float_t, ndim=1] weight, double nu,
+                  np.ndarray[np.float64_t, ndim=1] weight, double nu,
                   double cache_size, double p, int shrinking, int
                   probability):
     """
@@ -143,17 +142,17 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     cdef int nr = get_nr(model)
 
     # copy model.sv_coef 
-    cdef np.ndarray[np.double_t, ndim=2, mode='c'] sv_coef
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
     sv_coef = np.empty((nr-1, nSV))
     copy_sv_coef(sv_coef.data, model, sv_coef.strides)
 
     # copy model.rho
-    cdef np.ndarray[np.double_t, ndim=1, mode='c'] rho 
+    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] rho 
     rho = np.empty(nr*(nr-1)/2)
     copy_rho(rho.data, model, rho.shape)
 
     # copy model.SV
-    cdef np.ndarray[np.double_t, ndim=2, mode='c'] SV
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] SV
     SV = np.zeros((nSV, X.shape[1]))
     copy_SV(SV.data, model, SV.strides)
 
@@ -175,10 +174,10 @@ def train_wrap (  np.ndarray[np.double_t, ndim=2, mode='c'] X,
     return sv_coef, rho, SV, nr, nclass_SV, label
 
 
-def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2, mode='c'] T,
-                            np.ndarray[np.double_t, ndim=2, mode='c'] SV,
-                            np.ndarray[np.double_t, ndim=2, mode='c'] sv_coef,
-                            np.ndarray[np.double_t, ndim=1, mode='c']
+def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+                            np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+                            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+                            np.ndarray[np.float64_t, ndim=1, mode='c']
                             rho, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
                             eps, double C, int nr_weight,
@@ -214,7 +213,7 @@ def predict_from_model_wrap(np.ndarray[np.double_t, ndim=2, mode='c'] T,
     dec_values : array
         predicted values.
     """
-    cdef np.ndarray[np.double_t, ndim=1, mode='c'] dec_values
+    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter *param
     cdef svm_model *model
     param = set_parameter(svm_type, kernel_type, degree, gamma,

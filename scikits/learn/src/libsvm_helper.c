@@ -126,7 +126,7 @@ struct svm_problem * set_problem(char *X,char *Y, npy_intp *dims)
     struct svm_problem *problem;
     problem = (struct svm_problem *) malloc(sizeof(struct svm_problem));
     if (problem == NULL) return NULL;
-    problem->l = dims[0];
+    problem->l = (int) dims[0];
     problem->y = (double *) Y;
     problem->x = dense_to_sparse((double *) X, dims);
     if (problem->x == NULL) { 
@@ -236,7 +236,7 @@ void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
 
 void copy_rho(char *data, struct svm_model *model, npy_intp *dims)
 {
-    memcpy(data, model->rho, dims[0]*sizeof(double));
+    memcpy(data, model->rho, dims[0] * sizeof(double));
 }
 
 /* 

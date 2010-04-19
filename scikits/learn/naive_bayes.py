@@ -33,7 +33,7 @@ class GNB(object):
         Predict using the model.
 
     predict_proba(X) : array
-        Predict the proba of each class using the model.
+        Predict the probability of each class using the model.
 
     Examples
     --------
