@@ -20,7 +20,7 @@ cdef extern from "linear.h":
     void destroy_param (parameter *)
 
 cdef extern from "liblinear_helper.c":
-    void copy_w(char *, model *, int)
+    void copy_w(char *, model *, problem *)
     parameter *set_parameter (int, double, double, int,
                              char *, char *)
     problem *set_problem (char *, char *, np.npy_intp *, double)
@@ -56,16 +56,15 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         free_problem(problem)
         free_parameter(param)
         raise ValueError(error_msg)
-
+ 
     # early return
     model = train(problem, param)
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] w
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = get_nr_feature(model)
+    if bias > 0: nr_class = nr_class + 1
     w = np.empty((nr_class, nr_feature))
-    copy_w(w.data, model, nr_class * nr_feature)
-
     bias = get_bias(model)
 
     cdef np.ndarray[np.int_t, ndim=1, mode='c'] label
@@ -101,6 +100,7 @@ def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
         raise MemoryError("We've run out of of memory")
 
     ### FREE
+    # TODO: we also have to release temp allocated by set_model
     return dec_values
                           
     

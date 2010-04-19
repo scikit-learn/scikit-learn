@@ -39,7 +39,6 @@ struct feature_node **dense_to_sparse (double *x, npy_intp *dims)
             ++ x; /* go to next element */
         }
 
-
         /* set bias element */
         T->value = 1.0;
         T->index = j;
@@ -142,8 +141,11 @@ struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp
 struct model * set_model(struct parameter *param, char *coef, npy_intp *dims, 
                          char *label, double bias)
 {
-    npy_intp m = dims[0] * dims[1];
+    npy_int m = dims[0];
     struct model *model;
+
+    if (bias > 0) m += 1;
+    m *= dims[1];
 
     model = (struct model *)  malloc(sizeof(struct model));
     model->w =       (double *)   malloc(m * sizeof(double)); 
@@ -159,11 +161,10 @@ struct model * set_model(struct parameter *param, char *coef, npy_intp *dims,
 
     return model;
 }
-    
 
-void copy_w(char *data, struct model *model, int l)
+void copy_w(char *data, struct model *model, struct problem *prob)
 {
-    memcpy(data, model->w, l * sizeof(double));
+    memcpy(data, model->w, prob->n * sizeof(double));
 }
 
 double get_bias(struct model *model)
