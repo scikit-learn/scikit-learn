@@ -24,7 +24,8 @@ class LogisticRegression(object):
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_wrap(T, self.coef_, 0, self.eps,
-                                      self.C, self._weight_label,
+        return liblinear.predict_wrap(T, self.coef_, self.penalty,
+                                      self.eps, self.C,
+                                      self._weight_label,
                                       self._weight, self.label_,
                                       self.bias_)

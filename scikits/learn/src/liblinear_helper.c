@@ -141,30 +141,29 @@ struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp
 struct model * set_model(struct parameter *param, char *coef, npy_intp *dims, 
                          char *label, double bias)
 {
-    npy_int m = dims[0];
+    npy_int len_w = dims[0] * dims[1];
     struct model *model;
 
-    if (bias > 0) m += 1;
-    m *= dims[1];
-
     model = (struct model *)  malloc(sizeof(struct model));
-    model->w =       (double *)   malloc(m * sizeof(double)); 
-    model->label =   (int *)      malloc(dims[0] * sizeof(int));;
+    model->w =       (double *)   malloc( len_w * sizeof(double)); 
+    model->label =   (int *)      malloc( dims[0] * sizeof(int));;
 
     memcpy(model->label, label, dims[0] * sizeof(int));
-    memcpy(model->w, coef, m * sizeof(double));
+    memcpy(model->w, coef, len_w * sizeof(double));
 
-    model->nr_class = (int) dims[0];
-    model->nr_feature = (int) dims[1];
+    model->nr_class = (int) dims[1];
+
+    int m = (int) dims[0];
+    model->nr_feature = bias > 0 ? m - 1 : m;
     model->param = *param;
     model->bias = bias;
 
     return model;
 }
 
-void copy_w(char *data, struct model *model, struct problem *prob)
+void copy_w(char *data, struct model *model, int len)
 {
-    memcpy(data, model->w, prob->n * sizeof(double));
+    memcpy(data, model->w, len * sizeof(double));
 }
 
 double get_bias(struct model *model)

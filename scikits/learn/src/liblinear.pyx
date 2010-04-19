@@ -20,7 +20,7 @@ cdef extern from "linear.h":
     void destroy_param (parameter *)
 
 cdef extern from "liblinear_helper.c":
-    void copy_w(char *, model *, problem *)
+    void copy_w(char *, model *, int)
     parameter *set_parameter (int, double, double, int,
                              char *, char *)
     problem *set_problem (char *, char *, np.npy_intp *, double)
@@ -63,8 +63,10 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] w
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = get_nr_feature(model)
-    if bias > 0: nr_class = nr_class + 1
-    w = np.empty((nr_class, nr_feature))
+    if bias > 0: nr_feature = nr_feature + 1
+    w = np.empty((nr_feature, nr_class))
+    copy_w(w.data, model, nr_class * nr_feature)
+
     bias = get_bias(model)
 
     cdef np.ndarray[np.int_t, ndim=1, mode='c'] label
