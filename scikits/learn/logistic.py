@@ -1,9 +1,12 @@
 import numpy as np
 from . import liblinear
 
-class Logistic(object):
+_penalties = {'l2': 0, 'l1' : 6}
 
-    def __init__(self, eps=1e-4, C=1.0):
+class LogisticRegression(object):
+
+    def __init__(self, penalty='l2', eps=1e-4, C=1.0):
+        self.penalty = _penalties[penalty]
         self.eps = eps
         self.C = C
 
@@ -14,7 +17,7 @@ class Logistic(object):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int, order='C')
         self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
-                                          Y, 0, self.eps, 1.0,
+                                          Y, self.penalty, self.eps, 1.0,
                                           self.C, 0,
                                           self._weight_label,
                                           self._weight)
