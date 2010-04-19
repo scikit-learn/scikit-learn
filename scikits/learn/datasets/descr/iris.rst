@@ -62,8 +62,3 @@ Missing Attribute Values: None
 
 Class Distribution: 33.3% for each of 3 classes.
 
-Example
--------
-    >>> data = load()
-    >>> print data.label #doctest: +ELLIPSIS
-    [ 0. 0. ...][ 0.  0. ...]

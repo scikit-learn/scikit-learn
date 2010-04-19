@@ -1,67 +1,101 @@
 """
-Base object for all datasets
+Base IO code for all datasets
 """
 
 # Copyright (c) 2007 David Cournapeau <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
+import csv
+import os
 
 import numpy as np
 
-class Bunch(dict):
-    """
-    Container for dataset.
 
-    Members
-    -------
-    - data : a record array with the actual data
-    - label : label[i] = label index of data[i]
-    - class : class[i] is the string corresponding to label index i.
-    - COPYRIGHT, TITLE, SOURCE, DESCRSHORT, DESCRLONG,
-      NOTE. Information about the dataset.
+class Bunch(dict):
+    """ Container object for datasets: dictionnary-like object that
+        exposes its keys as attributes.
     """
 
     def __init__(self, **kwargs):
         dict.__init__(self, kwargs)
         self.__dict__ = self
 
-def load(dataset):
-    """load the data and returns them.
+
+################################################################################
+
+def load_iris():
+    """load the iris dataset and returns it.
     
     Returns
     -------
     data : Bunch
-        See docstring of bunch for a complete description of its members.
-
-    Available datasets
-     - iris
+        Dictionnary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels, 
+        'target_names', the meaning of the labels, and 'DESCR', the
+        full description of the dataset.
 
     Example
     -------
     Let's say you are interested in the samples 10, 25, and 50, and want to
     know their class name.
 
-    >>> data = load()
-    >>> print data.label #doctest: +ELLIPSIS
-    [ 0.  0. ...]
+    >>> data = load_iris()
+    >>> print data.target[[10, 25, 50]]
+    [0  0 1]
+    >>> print data.target_names[data.target[[10, 25, 50]]]
+    ['setosa' 'setosaosa' 'versicolor']
     """
-    import csv
-    import os
     
-    firis = csv.reader(open(os.path.dirname(__file__) 
-                        + '/data/%s.csv' % dataset))
+    data_file = csv.reader(open(os.path.dirname(__file__) 
+                        + '/data/iris.csv'))
     fdescr = open(os.path.dirname(__file__) 
-                        + '/descr/%s.rst' % dataset)
-    temp = firis.next()
-    nsamples = int(temp[0])
-    nfeat = int(temp[1])
-    targetnames = temp[2:]
-    data = np.empty((nsamples, nfeat))
-    target = np.empty((nsamples,))
-    for i, ir in enumerate(firis):
+                        + '/descr/iris.rst')
+    temp = data_file.next()
+    n_samples = int(temp[0])
+    n_features = int(temp[1])
+    target_names = np.array(temp[2:])
+    data = np.empty((n_samples, n_features))
+    target = np.empty((n_samples,), dtype=np.int)
+    for i, ir in enumerate(data_file):
         data[i] = np.asanyarray(ir[:-1], dtype=np.float)
-        target[i] = np.asanyarray(ir[-1], dtype=np.float)
-    return Bunch(data=data, target=target, targetnames=targetnames, 
+        target[i] = np.asanyarray(ir[-1], dtype=np.int)
+    return Bunch(data=data, target=target, target_names=target_names, 
+                 DESCR=fdescr.read())
+
+def load_digits():
+    """load the digits dataset and returns it.
+    
+    Returns
+    -------
+    data : Bunch
+        Dictionnary-like object, the interesting attributes are:
+        'data', the data to learn, `raw_data`, the images corresponding
+        to each sample, 'target', the classification labels for each
+        sample, 'target_names', the meaning of the labels, and 'DESCR', 
+        the full description of the dataset.
+
+    Example
+    -------
+    To load the data and visualize the images::
+
+        import pylab as pl
+        digits = datasets.load_digits()
+        pl.gray()
+        # Visualize the first image:
+        pl.matshow(digits.raw_data[0])
+
+"""
+    
+    data = np.loadtxt(os.path.join(os.path.dirname(__file__) 
+                        + '/data/digits.csv.gz'), delimiter=',')
+    fdescr = open(os.path.join(os.path.dirname(__file__) 
+                        + '/descr/iris.rst'))
+    target = data[:, -1]
+    flat_data = data[:, :-1]
+    images = flat_data.view()
+    images.shape = (-1, 8, 8)
+    return Bunch(data=data, target=target, target_names=np.arange(10), 
+                 raw_data=images,
                  DESCR=fdescr.read())
 

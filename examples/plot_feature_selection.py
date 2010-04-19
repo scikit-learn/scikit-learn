@@ -28,7 +28,7 @@ import pylab as pl
 
 # The IRIS dataset
 from scikits.learn import datasets, svm
-iris = datasets.load('iris')
+iris = datasets.load_iris()
 
 # Some noisy data not correlated
 E = np.random.normal(size=(len(iris.data), 35))

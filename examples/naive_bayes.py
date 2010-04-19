@@ -16,7 +16,7 @@ import pylab as pl
 
 # The IRIS dataset
 from scikits.learn import datasets, svm
-iris = datasets.load('iris')
+iris = datasets.load_iris()
 
 
 X = iris.data
@@ -29,4 +29,4 @@ gnb = GNB()
 
 y_pred = gnb.fit(X, y).predict(X)
 
-print "Number of mislabeled points : %d"%(y != y_pred).sum()
+print "Number of mislabeled points : %d" % (y != y_pred).sum()
