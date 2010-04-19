@@ -15,7 +15,7 @@ Now can upload the generated html documentation using scp or some other SFTP cli
     * Username: Combine your SourceForge.net Username with your SourceForge.net project UNIX name using a comma ( "," ) See Example
     * Password: Your SourceForge.net Password 
 
-An example session might look like the following for Username "jsmith" uploading a file for his project with a UNIX name of "fooproject":
+An example session might look like the following for Username "jsmith" uploading a file for this project:
 
 [jsmith@linux ~]$ scp -r _build/html/* jsmith,scikit-learn@web.sourceforge.net:htdocs
 Connecting to web.sourceforge.net...
