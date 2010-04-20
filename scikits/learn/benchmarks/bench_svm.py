@@ -93,8 +93,8 @@ def bench_pymvpa(X, Y, T):
 
 if __name__ == '__main__':
 
-    from scikits.learn.datasets import load
-    iris = load('iris')
+    from scikits.learn.datasets import load_iris
+    iris = load_iris()
     X = iris.data
     Y = iris.target
 

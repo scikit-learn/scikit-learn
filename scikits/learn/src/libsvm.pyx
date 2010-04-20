@@ -61,7 +61,7 @@ cdef extern from "libsvm_helper.c":
                                   double, int, int, int, char *, char *)
     svm_problem *set_problem(char *, char *, np.npy_intp *)
     svm_model *set_model(svm_parameter *, int, char *, np.npy_intp *, np.npy_intp *,
-                         char *, char *, char *, char *)
+                         char *, char *, char *, char *, char *, char *)
     void copy_sv_coef (char *, svm_model *, np.npy_intp *)
     void copy_rho     (char *, svm_model *, np.npy_intp *)
     void copy_SV      (char *, svm_model *, np.npy_intp *)
@@ -69,6 +69,8 @@ cdef extern from "libsvm_helper.c":
     int  copy_prob_predict (char *, svm_model *, np.npy_intp *, char *)
     void copy_nSV     (char *, svm_model *)
     void copy_label   (char *, svm_model *)
+    void copy_probA(char *, svm_model *, np.npy_intp *)
+    void copy_probB(char *, svm_model *, np.npy_intp *)
     np.npy_intp  get_l  (svm_model *)
     np.npy_intp  get_nr (svm_model *)
     int  free_problem (svm_problem *)
@@ -164,15 +166,26 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     nclass_SV = np.empty((nr), dtype=np.int)
     copy_nSV(nclass_SV.data, model)
 
+    # copy label
     cdef np.ndarray[np.int_t, ndim=1, mode='c'] label
     label = np.empty((nr), dtype=np.int)
     copy_label(label.data, model)
+
+    # copy probabilities
+    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
+    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
+    if probability != 0:
+        # this is only valid for SVC
+        probA = np.empty(nr*(nr-1)/2, dtype=np.float64)
+        probB = np.empty(nr*(nr-1)/2, dtype=np.float64)
+        copy_probA(probA.data, model, probA.shape)
+        copy_probB(probB.data, model, probB.shape)
 
     free_model(model)
     free_problem(problem)
     free_param(param)
 
-    return sv_coef, rho, SV, nr, nclass_SV, label
+    return sv_coef, rho, SV, nr, nclass_SV, label, probA, probB
 
 
 def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
@@ -187,7 +200,9 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             double nu, double cache_size, double p, int
                             shrinking, int probability, int nr_class,
                             np.ndarray[np.int_t, ndim=1, mode='c'] nSV,
-                            np.ndarray[np.int_t, ndim=1, mode='c'] label):
+                            np.ndarray[np.int_t, ndim=1, mode='c'] label,
+                            np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
+                            np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
     """
     Predict values T given a pointer to svm_model.
 
@@ -222,7 +237,8 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                           probability, nr_weight, weight_label.data,
                           weight.data)
     model = set_model(param, nr_class, SV.data, SV.shape, sv_coef.strides,
-                      sv_coef.data, rho.data, nSV.data, label.data)
+                      sv_coef.data, rho.data, nSV.data, label.data,
+                      probA.data, probB.data)
     dec_values = np.empty(T.shape[0])
     if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
@@ -231,7 +247,6 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     free_model(model)
     free_param(param)
     return dec_values
-
 
 
 def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
@@ -246,7 +261,9 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             double nu, double cache_size, double p, int
                             shrinking, int probability, int nr_class,
                             np.ndarray[np.int_t, ndim=1, mode='c'] nSV,
-                            np.ndarray[np.int_t, ndim=1, mode='c'] label):
+                            np.ndarray[np.int_t, ndim=1, mode='c'] label,
+                            np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
+                            np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
     """
     Predict probabilities
 
@@ -281,10 +298,11 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                           probability, nr_weight, weight_label.data,
                           weight.data)
     model = set_model(param, nr_class, SV.data, SV.shape, sv_coef.strides,
-                      sv_coef.data, rho.data, nSV.data, label.data)
+                      sv_coef.data, rho.data, nSV.data, label.data,
+                      probA.data, probB.data)
 
     cdef int nr = get_nr(model)    
-    dec_values = np.empty((T.shape[0], nr))
+    dec_values = np.empty((T.shape[0], nr), dtype=np.float64)
     if copy_prob_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
     # free model and param

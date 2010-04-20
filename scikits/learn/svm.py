@@ -59,11 +59,13 @@ class BaseSVM(object):
         if X.shape[0] != y.shape[0]: raise ValueError("Incompatible shapes")
 
         if (self.gamma == 0): self.gamma = 1.0/X.shape[0]
-        self.coef_, self.rho_, self.support_, self.nclass_, self.nSV_, self.label_  = \
-             libsvm.train_wrap(X, y, self.svm, self.kernel, self.degree,
-                 self.gamma, self.coef0, self.eps, self.C, self.nr_weight,
-                 np.empty(0, dtype=np.int), np.empty(0, dtype=np.float), self.nu,
-                 self.cache_size, self.p, self.shrinking, self.probability)
+        self.coef_, self.rho_, self.support_, self.nclass_, self.nSV_, self.label_, \
+             self.probA_, self.probB_ = libsvm.train_wrap(X, y,
+                 self.svm, self.kernel, self.degree, self.gamma,
+                 self.coef0, self.eps, self.C, self.nr_weight,
+                 np.empty(0, dtype=np.int), np.empty(0,
+                 dtype=np.float), self.nu, self.cache_size, self.p,
+                 self.shrinking, int(self.probability))
         return self
 
     def predict(self, T):
@@ -75,8 +77,8 @@ class BaseSVM(object):
                       np.empty(0, dtype=np.int), np.empty(0,
                       dtype=np.float), self.nu, self.cache_size,
                       self.p, self.shrinking, self.probability,
-                      self.nclass_, self.nSV_, self.label_)
-
+                      self.nclass_, self.nSV_, self.label_,
+                      self.probA_, self.probB_)
 
     def prob_predict(self, T):
         T = np.asanyarray(T, dtype=np.float, order='C')
@@ -87,7 +89,8 @@ class BaseSVM(object):
                       np.empty(0, dtype=np.int), np.empty(0,
                       dtype=np.float), self.nu, self.cache_size,
                       self.p, self.shrinking, self.probability,
-                      self.nclass_, self.nSV_, self.label_)
+                      self.nclass_, self.nSV_, self.label_,
+                      self.probA_, self.probB_)
 
 ###
 # Public API
@@ -165,7 +168,7 @@ class SVC(BaseSVM):
     def __init__(self, impl='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
-                 probability=False):
+                 probability=True):
         BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)    

@@ -151,7 +151,8 @@ struct svm_problem * set_problem(char *X,char *Y, npy_intp *dims)
  */
 struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *SV, npy_intp *SV_dims, npy_intp *sv_coef_strides, 
-                            char *sv_coef, char *rho, char *nSV, char *label)
+                            char *sv_coef, char *rho, char *nSV, char *label, 
+                            char *probA, char *probB)
 {
     int i;
     char *t = sv_coef;
@@ -177,6 +178,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
         memcpy(model->nSV, nSV, model->nr_class * sizeof(int));
         memcpy(model->label, label, model->nr_class * sizeof(int));
     }
+
     for (i=0; i < model->nr_class-1; i++) {
         /*
          * We cannot squash all this mallocs in a single call since
@@ -192,8 +194,16 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
      * just to avoid segfaults, these features are not wrapped but
      * svm_destroy_model will try to free them.
      */
-    model->probA = (double *) malloc(sizeof(double));
-    model->probB = (double *) malloc(sizeof(double));
+
+    if (param->probability) {
+        model->probA = (double *) malloc(m * sizeof(double));
+        memcpy(model->probA, probA, m * sizeof(double));
+        model->probB = (double *) malloc(m * sizeof(double));
+        memcpy(model->probB, probB, m * sizeof(double));
+    } else {
+        model->probA = NULL;
+        model->probB = NULL;
+    }
 
     /* We'll free SV ourselves */
     model->free_sv = 0;
@@ -280,6 +290,17 @@ void copy_label(char *data, struct svm_model *model)
     memcpy(data, model->label, model->nr_class * sizeof(int));
 }
 
+void copy_probA(char *data, struct svm_model *model, npy_intp * dims)
+{
+    memcpy(data, model->probA, dims[0] * sizeof(double));
+}
+
+
+void copy_probB(char *data, struct svm_model *model, npy_intp * dims)
+{
+    memcpy(data, model->probB, dims[0] * sizeof(double));
+}
+
 /* 
  * Use train to predict using model. Train is expected to be an array
  * in the numpy sense.
@@ -315,9 +336,8 @@ int copy_prob_predict(char *predict, struct svm_model *model, npy_intp *predict_
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
-        svm_predict_probability(model, predict_nodes[i], t);
+        svm_predict_probability(model, predict_nodes[i], &t[i*predict_dims[1]]);
         free(predict_nodes[i]);
-        t += predict_dims[1] * sizeof(double);
     }
     return 0;
 }

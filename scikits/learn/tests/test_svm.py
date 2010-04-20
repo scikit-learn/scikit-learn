@@ -10,8 +10,10 @@ Y = np.array( [1, 1, 1, 2, 2, 2])
 T = np.array( [[-1,-1], [2, 2], [3, 2]] )
 
 
-clf = svm.SVC()#probability=True)
+clf = svm.SVC(probability=True)
 clf.fit(X, Y)
+# print clf.probA_
+# print clf.probB_
 # clf.predict(T)
 print clf.prob_predict(T)
 
