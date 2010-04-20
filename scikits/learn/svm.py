@@ -80,7 +80,7 @@ class BaseSVM(object):
                       self.nclass_, self.nSV_, self.label_,
                       self.probA_, self.probB_)
 
-    def prob_predict(self, T):
+    def predict_proba(self, T):
         if not self.probability:
             raise ValueError("probability estimates must be enabled to use this method")
         T = np.asanyarray(T, dtype=np.float, order='C')

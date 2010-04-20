@@ -329,14 +329,16 @@ int copy_prob_predict(char *predict, struct svm_model *model, npy_intp *predict_
                  char *dec_values)
 {
     double *t = (double *) dec_values;
-    register int i, n;
+    register int i;
+    int n, m;
     n = predict_dims[0];
+    m = model->nr_class;
     struct svm_node **predict_nodes;
     predict_nodes = dense_to_sparse((double *) predict, predict_dims);
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
-        svm_predict_probability(model, predict_nodes[i], &t[i*predict_dims[1]]);
+        svm_predict_probability(model, predict_nodes[i], &t[i*m]);
         free(predict_nodes[i]);
     }
     return 0;
