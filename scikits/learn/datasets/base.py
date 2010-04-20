@@ -96,7 +96,7 @@ def load_digits():
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
-    return Bunch(data=flat_data, target=target.as_type(np.int), 
+    return Bunch(data=flat_data, target=target.astype(np.int), 
                  target_names=np.arange(10), 
                  images=images,
                  DESCR=fdescr.read())
