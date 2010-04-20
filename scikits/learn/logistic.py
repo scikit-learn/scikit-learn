@@ -1,15 +1,15 @@
 import numpy as np
 from . import liblinear
 
-_penalties = {'l2': 0, 'l1' : 6}
 
 class LogisticRegression(object):
 
     def __init__(self, penalty='l2', eps=1e-4, C=1.0):
-        self.penalty = _penalties[penalty]
+        self.penalty = self._penalties[penalty]
         self.eps = eps
         self.C = C
 
+    _penalties = {'l2': 0, 'l1' : 6}
     _weight_label = np.empty(0, dtype=np.int)
     _weight = np.empty(0, dtype=np.float64)
 

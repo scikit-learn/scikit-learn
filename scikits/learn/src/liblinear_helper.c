@@ -142,19 +142,21 @@ struct model * set_model(struct parameter *param, char *coef, npy_intp *dims,
                          char *label, double bias)
 {
     npy_int len_w = dims[0] * dims[1];
+    int m = (int) dims[0];
     struct model *model;
 
+    if (m == 1) m = 2; /* liblinear collapses the weight vector in the case of two classes */
     model = (struct model *)  malloc(sizeof(struct model));
     model->w =       (double *)   malloc( len_w * sizeof(double)); 
-    model->label =   (int *)      malloc( dims[0] * sizeof(int));;
+    model->label =   (int *)      malloc( m * sizeof(int));;
 
-    memcpy(model->label, label, dims[0] * sizeof(int));
+    memcpy(model->label, label, m * sizeof(int));
     memcpy(model->w, coef, len_w * sizeof(double));
 
-    model->nr_class = (int) dims[1];
+    int k =  (int) dims[1];
+    model->nr_feature = bias > 0 ? k - 1 : k;
 
-    int m = (int) dims[0];
-    model->nr_feature = bias > 0 ? m - 1 : m;
+    model->nr_class = m;
     model->param = *param;
     model->bias = bias;
 

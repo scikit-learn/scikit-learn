@@ -35,7 +35,7 @@ cdef extern from "liblinear_helper.c":
 
 
 def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-                 np.ndarray[np.int_t, ndim=1, mode='c'] Y, int
+                 np.ndarray[np.int32_t, ndim=1, mode='c'] Y, int
                  solver_type, double eps, double bias, double C, int nr_weight,
                  np.ndarray[np.int_t, ndim=1] weight_label,
                  np.ndarray[np.float64_t, ndim=1] weight):
@@ -66,11 +66,11 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef int nr_feature = get_nr_feature(model)
     if bias > 0: nr_feature = nr_feature + 1
     if nr_class == 2:
-        w = np.empty(nr_feature)
+        w = np.empty((1, nr_feature))
         copy_w(w.data, model, nr_feature)
     else:
         len_w = nr_class * nr_feature
-        w = np.empty(len_w)
+        w = np.empty((nr_class, nr_feature))
         copy_w(w.data, model, len_w)
 
     bias = get_bias(model)
