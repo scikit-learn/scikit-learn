@@ -77,6 +77,18 @@ class BaseSVM(object):
                       self.p, self.shrinking, self.probability,
                       self.nclass_, self.nSV_, self.label_)
 
+
+    def prob_predict(self, T):
+        T = np.asanyarray(T, dtype=np.float, order='C')
+        return libsvm.predict_prob_from_model_wrap(T, self.support_,
+                      self.coef_, self.rho_, self.svm,
+                      self.kernel, self.degree, self.gamma,
+                      self.coef0, self.eps, self.C, self.nr_weight,
+                      np.empty(0, dtype=np.int), np.empty(0,
+                      dtype=np.float), self.nu, self.cache_size,
+                      self.p, self.shrinking, self.probability,
+                      self.nclass_, self.nSV_, self.label_)
+
 ###
 # Public API
 # No processing should go into these classes

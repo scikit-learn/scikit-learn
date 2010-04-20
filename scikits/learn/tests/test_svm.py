@@ -9,6 +9,13 @@ X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
 Y = np.array( [1, 1, 1, 2, 2, 2])
 T = np.array( [[-1,-1], [2, 2], [3, 2]] )
 
+
+clf = svm.SVC()#probability=True)
+clf.fit(X, Y)
+# clf.predict(T)
+print clf.prob_predict(T)
+
+
 def test_svm_params():
     """
     C_SVC algorithm and linear kernel.
@@ -26,7 +33,7 @@ def test_svm_params():
 def test_fit():
     clf = svm.SVC()
     clf.fit([[1,2]], [0])
-    assert_array_equal(clf.predict([[-1, -1]]), [0])
+    assert_array_equal(clf.predict([[-1, -1]]), [0.])
 
 def test_tweak_params():
     """
@@ -62,6 +69,17 @@ def test_predict():
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
+
+
+
+def test_probability():
+    """
+    predict probabilities
+    """
+    clf = svm.SVC(probability=True)
+    clf.fit(X, Y)
+    assert_array_almost_equal(clf.prob_predict(T), [])
+
 
 def test_noncontiguous():
     """
@@ -103,3 +121,4 @@ def test_oneclass():
     clf = svm.OneClassSVM()
     clf.fit(X, Y)
     assert_array_equal(Y, [1, 1, 1, 2, 2, 2])
+

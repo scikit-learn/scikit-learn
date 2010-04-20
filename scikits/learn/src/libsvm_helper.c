@@ -286,20 +286,38 @@ void copy_label(char *data, struct svm_model *model)
  *
  *  It will return -1 if we run out of memory.
  */
-int copy_predict(char *train, struct svm_model *model, npy_intp *train_dims,
+int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
                  char *dec_values)
 {
     double *t = (double *) dec_values;
     register int i, n;
-    n = train_dims[0];
-    struct svm_node **train_nodes;
-    train_nodes = dense_to_sparse((double *) train, train_dims);
-    if (train_nodes == NULL)
+    n = predict_dims[0];
+    struct svm_node **predict_nodes;
+    predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+    if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
-        *t = svm_predict(model, train_nodes[i]);
-        free(train_nodes[i]);
+        *t = svm_predict(model, predict_nodes[i]);
+        free(predict_nodes[i]);
         ++t;
+    }
+    return 0;
+}
+
+int copy_prob_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
+                 char *dec_values)
+{
+    double *t = (double *) dec_values;
+    register int i, n;
+    n = predict_dims[0];
+    struct svm_node **predict_nodes;
+    predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+    if (predict_nodes == NULL)
+        return -1;
+    for(i=0; i<n; ++i) {
+        svm_predict_probability(model, predict_nodes[i], t);
+        free(predict_nodes[i]);
+        t += predict_dims[1] * sizeof(double);
     }
     return 0;
 }

@@ -51,7 +51,7 @@ cdef extern from "svm.h":
     cdef struct svm_problem
     char *svm_check_parameter(svm_problem *, svm_parameter *)
     svm_model *svm_train(svm_problem *, svm_parameter *)
-    double svm_predict(svm_model *, svm_node *)
+
 
 cdef extern from "libsvm_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
@@ -66,6 +66,7 @@ cdef extern from "libsvm_helper.c":
     void copy_rho     (char *, svm_model *, np.npy_intp *)
     void copy_SV      (char *, svm_model *, np.npy_intp *)
     int  copy_predict (char *, svm_model *, np.npy_intp *, char *)
+    int  copy_prob_predict (char *, svm_model *, np.npy_intp *, char *)
     void copy_nSV     (char *, svm_model *)
     void copy_label   (char *, svm_model *)
     np.npy_intp  get_l  (svm_model *)
@@ -224,6 +225,67 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                       sv_coef.data, rho.data, nSV.data, label.data)
     dec_values = np.empty(T.shape[0])
     if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
+        raise MemoryError("We've run out of of memory")
+    # free model and param
+    free_model_SV(model)
+    free_model(model)
+    free_param(param)
+    return dec_values
+
+
+
+def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+                            np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+                            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+                            np.ndarray[np.float64_t, ndim=1, mode='c']
+                            rho, int svm_type, int kernel_type, int
+                            degree, double gamma, double coef0, double
+                            eps, double C, int nr_weight,
+                            np.ndarray[np.int_t, ndim=1] weight_label,
+                            np.ndarray[np.float_t, ndim=1] weight,
+                            double nu, double cache_size, double p, int
+                            shrinking, int probability, int nr_class,
+                            np.ndarray[np.int_t, ndim=1, mode='c'] nSV,
+                            np.ndarray[np.int_t, ndim=1, mode='c'] label):
+    """
+    Predict probabilities
+
+    svm_model stores all parameters needed to predict a given value.
+
+    For speed, all real work is done at the C level in function
+    copy_predict (libsvm_helper.c).
+
+    We have to reconstruct model and parameters to make sure we stay
+    in sync with the python object. predict_wrap skips this step.
+
+    Parameters
+    ----------
+    X: array-like, dtype=float
+    Y: array
+        target vector
+
+    Optional Parameters
+    -------------------
+    See scikits.learn.svm.predict for a complete list of parameters.
+
+    Return
+    ------
+    dec_values : array
+        predicted values.
+    """
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef svm_parameter *param
+    cdef svm_model *model
+    param = set_parameter(svm_type, kernel_type, degree, gamma,
+                          coef0, nu, cache_size, C, eps, p, shrinking,
+                          probability, nr_weight, weight_label.data,
+                          weight.data)
+    model = set_model(param, nr_class, SV.data, SV.shape, sv_coef.strides,
+                      sv_coef.data, rho.data, nSV.data, label.data)
+
+    cdef int nr = get_nr(model)    
+    dec_values = np.empty((T.shape[0], nr))
+    if copy_prob_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
     # free model and param
     free_model_SV(model)
