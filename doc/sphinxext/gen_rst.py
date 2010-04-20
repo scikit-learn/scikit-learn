@@ -1,7 +1,10 @@
 """
-generate the rst files for the examples by iterating over the pylab examples.
+Example generation for the scikit learn
 
-Images must be created manually and dropped in directory auto_examples/images. Files that generate images should start with 'plot'
+Generate the rst files for the examples by iterating over the python
+example files.
+
+Files that generate images should start with 'plot'
 
 """
 import os
@@ -91,6 +94,9 @@ def generate_example_rst(app):
                 # generate the plot as png image if file name
                 # starts with plot and if it is more recent than an
                 # existing image.
+                if not os.path.exists(
+                                    os.path.join(rootdir, 'images')):
+                    os.makedirs(os.path.join(rootdir, 'images'))
                 image_file = os.path.join(rootdir, 'images', image_name)
                 if (not os.path.exists(image_file) or
                       os.stat(image_file).st_mtime <= 
