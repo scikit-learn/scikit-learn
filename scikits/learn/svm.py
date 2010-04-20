@@ -81,6 +81,8 @@ class BaseSVM(object):
                       self.probA_, self.probB_)
 
     def prob_predict(self, T):
+        if not self.probability:
+            raise ValueError("probability estimates must be enabled to use this method")
         T = np.asanyarray(T, dtype=np.float, order='C')
         return libsvm.predict_prob_from_model_wrap(T, self.support_,
                       self.coef_, self.rho_, self.svm,
@@ -130,6 +132,10 @@ class SVC(BaseSVM):
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
+    probability: boolean, optional (False by default)
+        especify if probability estimates must be enabled
+        must be enabled prior to calling prob_predict
+
     coef0 : float, optional
 
     Attributes
@@ -168,7 +174,7 @@ class SVC(BaseSVM):
     def __init__(self, impl='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
-                 probability=True):
+                 probability=False):
         BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)    
