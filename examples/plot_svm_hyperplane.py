@@ -22,7 +22,7 @@ a = -w[0]/w[1]
 xx = np.linspace(-5, 5)
 yy = a*xx + (clf.rho_[0])/w[1]
 
-# plot the paralels to the separating hyperplane that pass through the
+# plot the parallels to the separating hyperplane that pass through the
 # support vectors
 b = clf.support_[0]
 yy_down = a*xx + (b[1] - a*b[0])
