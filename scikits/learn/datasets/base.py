@@ -63,6 +63,7 @@ def load_iris():
     return Bunch(data=data, target=target, target_names=target_names, 
                  DESCR=fdescr.read())
 
+
 def load_digits():
     """load the digits dataset and returns it.
     
@@ -85,12 +86,12 @@ def load_digits():
         # Visualize the first image:
         pl.matshow(digits.raw_data[0])
 
-"""
+    """
     
     data = np.loadtxt(os.path.join(os.path.dirname(__file__) 
                         + '/data/digits.csv.gz'), delimiter=',')
     fdescr = open(os.path.join(os.path.dirname(__file__) 
-                        + '/descr/iris.rst'))
+                        + '/descr/digits.rst'))
     target = data[:, -1]
     flat_data = data[:, :-1]
     images = flat_data.view()
