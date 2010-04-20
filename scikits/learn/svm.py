@@ -1,5 +1,5 @@
 import numpy as np
-from . import libsvm
+from . import libsvm, liblinear
 
 _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -22,6 +22,9 @@ class BaseSVM(object):
     support_ = None
     coef_ = None
     rho_ = None
+
+    weight = np.empty(0, dtype=np.float64)
+    weight_label = np.empty(0, dtype=np.int32)
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nr_weight, nu, p, shrinking, probability):
@@ -63,8 +66,7 @@ class BaseSVM(object):
              self.probA_, self.probB_ = libsvm.train_wrap(X, y,
                  self.svm, self.kernel, self.degree, self.gamma,
                  self.coef0, self.eps, self.C, self.nr_weight,
-                 np.empty(0, dtype=np.int), np.empty(0,
-                 dtype=np.float), self.nu, self.cache_size, self.p,
+                 self.weight_label, self.weight, self.nu, self.cache_size, self.p,
                  self.shrinking, int(self.probability))
         return self
 
@@ -171,14 +173,45 @@ class SVC(BaseSVM):
     --------
     SVR
     """
-    def __init__(self, impl='c_svc', kernel='rbf', degree=3,
+
+    _penalties = {'l2': 0, 'l1' : 6}
+
+    
+    def __init__(self, impl='c_svc', kernel='rbf', degree=3, penalty='l2',
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
                  probability=False):
         BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
-                         shrinking, probability)    
+                         shrinking, probability)
+        self.penalty = self._penalties[penalty]
+        if self.kernel == 0:
+            # this must be called after BaseSVM.__init__
+            # because liblinear expects this to be ints
+            self.weight_label = np.empty(0, dtype=np.int32)
 
+    def fit(self, X, Y):
+        if self.kernel > 0:
+            return BaseSVM.fit(self, X, Y)
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        Y = np.asanyarray(Y, dtype=np.int32, order='C')
+        self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
+                                          Y, self.penalty, self.eps, 1.0,
+                                          self.C, 0,
+                                          self.weight_label,
+                                          self.weight)
+
+        return self
+
+    def predict(self, T):
+        if self.kernel > 0:
+            return BaseSVM.predict(self, T)
+        T = np.asanyarray(T, dtype=np.float64, order='C')
+        return liblinear.predict_wrap(T, self.coef_, self.penalty,
+                                      self.eps, self.C,
+                                      self.weight_label,
+                                      self.weight, self.label_,
+                                      1.0)
 
 class SVR(BaseSVM):
     """
