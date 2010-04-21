@@ -13,6 +13,20 @@ http://sourceforge.net/apps/trac/scikit-learn/wiki
 Code
 ====
 
+
+SVN Access
+----------
+
+You can check the sources with the command::
+    
+    svn co https://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn/trunk scikit-learn
+
+If you have contributed some code and would like to have write
+privileges in subversion repository, please contact me (Fabian
+Pedregosa <fabian.pedregosa@inria.fr>) and I'll give you write
+privileges for the svn.
+
+
 Patches
 -------
 Patches are the prefered way to contribute to a project if you do not
@@ -51,14 +65,6 @@ issue is low, but still you are helping the project and letting more
 experienced developers concentrate on other issues.
 
 
-
-SVN Access
-----------
-
-If you have contributed some code and would like to have write
-privileges in subversion repository, please contact me (Fabian
-Pedregosa <fabian.pedregosa@inria.fr>) and I'll give you write
-privileges for the svn.
 
 
 Git repo
