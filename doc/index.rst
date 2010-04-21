@@ -40,6 +40,42 @@ It implements several machine learning algorithms, including Support
 Vector Machines, Gaussian Mixture Models, Neural Networks, Nearest
 Neighbors, Generalized Linear Models, etc.
 
+.. image:: auto_examples/images/plot_digits_classification.png
+    :align: right
+    :scale: 50
+
+
+.. raw:: html
+
+    <small>
+
+**Example**::
+
+    import pylab as pl
+
+    from scikits.learn import datasets, svm
+    digits = datasets.load_digits()
+    for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
+        pl.subplot(2, 4, index+1)
+        pl.imshow(image, cmap=pl.cm.gray_r)
+        pl.title('Training: %i' % label)
+    
+    n_features = len(digits.images)
+    data = digits.images.reshape((n_features, -1))
+    
+    classifier = svm.SVC()
+    classifier.fit(data[:n_features/2], digits.target[:n_features/2])
+    
+    for index, image in enumerate(digits.images[n_features/2:n_features/2+4]):
+        pl.subplot(2, 4, index+5)
+        pl.imshow(image, cmap=pl.cm.gray_r)
+        pl.title('Prediction: %i' % classifier.predict(image.ravel()))
+    
+.. raw:: html
+
+    </small>
+
+    
 User guide: contents
 ======================
 
