@@ -20,7 +20,7 @@ class BaseLibsvm(object):
         It will be converted to a floating-point array.
     """
     support_ = None
-    coef_ = None
+    dual_coef_ = None
     rho_ = None
 
     weight = np.empty(0, dtype=np.float64)
@@ -62,7 +62,7 @@ class BaseLibsvm(object):
         if X.shape[0] != y.shape[0]: raise ValueError("Incompatible shapes")
 
         if (self.gamma == 0): self.gamma = 1.0/X.shape[0]
-        self.coef_, self.rho_, self.support_, self.nclass_, self.nSV_, \
+        self.dual_coef_, self.rho_, self.support_, self.nclass_, self.nSV_, \
                  self.label_, self.probA_, self.probB_ = libsvm.train_wrap(X, y,
                  self.svm, self.kernel, self.degree, self.gamma,
                  self.coef0, self.eps, self.C, self.nr_weight,
@@ -73,10 +73,10 @@ class BaseLibsvm(object):
     def predict(self, T):
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         return libsvm.predict_from_model_wrap(T, self.support_,
-                      self.coef_, self.rho_, self.svm,
+                      self.dual_coef_, self.rho_, self.svm,
                       self.kernel, self.degree, self.gamma,
                       self.coef0, self.eps, self.C, self.nr_weight,
-                      self.weight_label, self.weight, self.nu, 
+                      self.weight_label, self.weight, self.nu,
                       self.cache_size,
                       self.p, self.shrinking, self.probability,
                       self.nclass_, self.nSV_, self.label_,
@@ -87,7 +87,7 @@ class BaseLibsvm(object):
             raise ValueError("probability estimates must be enabled to use this method")
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         return libsvm.predict_prob_from_model_wrap(T, self.support_,
-                      self.coef_, self.rho_, self.svm,
+                      self.dual_coef_, self.rho_, self.svm,
                       self.kernel, self.degree, self.gamma,
                       self.coef0, self.eps, self.C, self.nr_weight,
                       self.weight_label, self.weight,
@@ -95,6 +95,7 @@ class BaseLibsvm(object):
                       self.p, self.shrinking, self.probability,
                       self.nclass_, self.nSV_, self.label_,
                       self.probA_, self.probB_)
+
 
 ###
 # Public API
@@ -145,7 +146,7 @@ class SVC(BaseLibsvm):
     `support_` : array-like, shape = [nSV, nfeatures]
         Support vectors
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `dual_coef_` : array, shape = [nclasses-1, nfeatures]
         Coefficient of the support vector in the decision function.
 
     `rho_` : array, shape = [nclasses-1]
@@ -183,6 +184,22 @@ class SVC(BaseLibsvm):
                          shrinking, probability)
 
 
+    @property
+    def coef_(self):
+        if _kernel_types[self.kernel] != 'linear':
+            raise NotImplementedError('coef_ is only available when using a linear kernel')
+        if self.support_.size == 0:
+            raise Exception, 'No support vector'
+
+        coef_ = []
+        for i in range(self.dual_coef_.shape[0]):
+            w = 0
+            for j, sp in enumerate(self.support_):
+                w += self.dual_coef_[0][j] * sp
+            coef_.append(w)
+        coef_ = np.array(coef_)
+        return coef_
+
 class SVR(BaseLibsvm):
     """
     Support Vector Regression.
@@ -192,7 +209,7 @@ class SVR(BaseLibsvm):
     `support_` : array-like, shape = [nSV, nfeatures]
         Support vectors
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `dual_coef_` : array, shape = [nclasses-1, nfeatures]
         Coefficient of the support vector in the decision function.
 
     `rho_` : array, shape = [nclasses-1]
@@ -247,7 +264,7 @@ class LinearSVC(object):
 
     Parameters
     ----------
-    
+
     Also accepts parameter penalty, that can have values 'l1' or 'l2'
 
     Similar to SVC with parameter kernel='linear', but uses internally
@@ -274,7 +291,7 @@ class LinearSVC(object):
     def fit(self, X, Y):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
+        self.coef_with_intercept_, self.label_, self.bias_ = liblinear.train_wrap(X,
                                           Y, self.solver_type, self.eps, 1.0,
                                           self.C, 0,
                                           self._weight_label,
@@ -282,13 +299,20 @@ class LinearSVC(object):
 
     def predict(self, T):
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        return liblinear.predict_wrap(T, self.coef_, self.solver_type,
+        return liblinear.predict_wrap(T, self.coef_with_intercept_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
                                       self.bias_)
 
-
     def predict_proba(self, T):
         raise NotImplementedError('liblinear does not provide this functionality')
+
+    @property
+    def intercept_(self):
+        return self.coef_with_intercept_[:,-1]
+
+    @property
+    def coef_(self):
+        return self.coef_with_intercept_[:,:-1]
 

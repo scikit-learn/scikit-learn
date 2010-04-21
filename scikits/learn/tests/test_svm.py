@@ -20,7 +20,7 @@ def test_svm_params():
     clf =  svm.SVC(kernel='linear')
     clf.fit(X, Y)
 
-    assert_array_equal(clf.coef_, [[ 0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[ 0.25, -.25]])
     assert_array_equal(clf.support_, [[-1,-1], [1, 1]])
     assert_array_equal(clf.rho_, [0.])
 
@@ -33,7 +33,7 @@ def test_tweak_params():
     """
     Make sure some tweaking of parameters works.
 
-    We change clf.coef_ at run time and expect .predict() to change
+    We change clf.dual_coef_ at run time and expect .predict() to change
     accordingly. Notice that this is not trivial since it involves a lot
     of C/Python copying in the libsvm bindings.
 
@@ -42,9 +42,9 @@ def test_tweak_params():
     """
     clf = svm.SVC(kernel='linear')
     clf.fit(X, Y)
-    assert_array_equal(clf.coef_, [[.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[.25, -.25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
-    clf.coef_ = np.array([[.0, 1.]])
+    clf.dual_coef_ = np.array([[.0, 1.]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [2])
 
 def test_error():
@@ -109,7 +109,6 @@ def test_regression():
     clf = svm.SVR()
     clf.fit([[0,0], [1, 1]], [0, 1])
     assert_array_almost_equal(clf.predict([[0,0], [1, 1]]), [.099999, .9])
-    
 
 def test_oneclass():
     """
@@ -133,8 +132,20 @@ def test_LinearSVC():
     clf = svm.LinearSVC(penalty='l2', dual=True)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
-    
-    # 
+
+    #
     clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
+
+def test_coef_SVC_vs_LinearSVC():
+    svc = svm.SVC(kernel='linear', C=1)
+    svc.fit(X, Y)
+    print svc.coef_
+    linsvc = svm.LinearSVC(C=1)
+    linsvc.fit(X, Y)
+    print linsvc.coef_
+
+    assert_array_equal(linsvc.coef_.shape, svc.coef_.shape)
+
+    
