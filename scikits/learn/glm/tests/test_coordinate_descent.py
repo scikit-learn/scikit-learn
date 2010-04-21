@@ -31,7 +31,7 @@ def test_lasso_cd_python_cython_sanity():
     model_slow.learner = lasso_coordinate_descent_slow
     model_slow.fit(X, y, maxit=maxit)
 
-    model_slow_gap = lasso_dual_gap(X, y, model_slow.w, alpha)[0]
+    model_slow_gap = lasso_dual_gap(X, y, model_slow.coef_, alpha)[0]
 
     # check the convergence using the KKT condition
     assert_array_almost_equal(model_slow_gap, 0, 4)
@@ -40,13 +40,13 @@ def test_lasso_cd_python_cython_sanity():
     model_fast.learner = lasso_coordinate_descent_fast
     model_fast.fit(X, y, maxit=maxit)
 
-    model_fast_gap = lasso_dual_gap(X, y, model_fast.w, alpha)[0]
+    model_fast_gap = lasso_dual_gap(X, y, model_fast.coef_, alpha)[0]
 
     # check the convergence using the KKT condition
     assert_array_almost_equal(model_fast_gap, 0, 4)
 
     # check that python and cython implementations behave exactly the same
-    assert_array_almost_equal(model_slow.w, model_fast.w)
+    assert_array_almost_equal(model_slow.coef_, model_fast.coef_)
     assert_array_almost_equal(model_slow_gap, model_fast_gap, 3)
 
     # # check that the priori induces sparsity in the weights (feature selection)
@@ -64,7 +64,7 @@ def test_enet_cd_python_cython_sanity():
     model_slow.learner = enet_coordinate_descent_slow
     model_slow.fit(X, y, maxit=maxit)
 
-    model_slow_gap = enet_dual_gap(X, y, model_slow.w, alpha, beta)[0]
+    model_slow_gap = enet_dual_gap(X, y, model_slow.coef_, alpha, beta)[0]
 
     # check the convergence using the KKT condition
     assert_array_almost_equal(model_slow_gap, 0, 4)
@@ -73,13 +73,13 @@ def test_enet_cd_python_cython_sanity():
     model_fast.learner = enet_coordinate_descent_fast
     model_fast.fit(X, y, maxit=maxit)
 
-    model_fast_gap = enet_dual_gap(X, y, model_fast.w, alpha, beta)[0]
+    model_fast_gap = enet_dual_gap(X, y, model_fast.coef_, alpha, beta)[0]
 
     # check t convergence using the KKT condition
     assert_array_almost_equal(model_fast_gap, 0, 4)
 
     # check cython's sanity
-    assert_array_almost_equal(model_slow.w, model_fast.w)
+    assert_array_almost_equal(model_slow.coef_, model_fast.coef_)
     assert_array_almost_equal(model_slow_gap, model_fast_gap, 3)
 
     # check that the priori induces sparsity in the weights

@@ -86,6 +86,10 @@ class LinearModel(object):
         """Ratio of non-zero weights in the model"""
         return density(self.w)
 
+    @property
+    def coef_(self):
+        return self.w
+
 class Lasso(LinearModel):
     """Linear Model trained with L1 prior as regularizer (a.k.a. the Lasso)"""
 
@@ -184,7 +188,7 @@ if __name__ == '__main__':
     density_slow = callback_density.values
 
     print "Duality gap Lasso (should be small): %f" % \
-            lasso_dual_gap(X, y, lasso_slow.w, alpha)[0]
+            lasso_dual_gap(X, y, lasso_slow.coef_, alpha)[0]
 
     t0 = time.time()
     lasso_fast = Lasso(alpha=alpha, callbacks=[callback_objective,
@@ -194,7 +198,7 @@ if __name__ == '__main__':
     print time.time() - t0
 
     print "Duality gap Lasso (should be small): %f" % \
-            lasso_dual_gap(X, y, lasso_slow.w, alpha)[0]
+            lasso_dual_gap(X, y, lasso_slow.coef_, alpha)[0]
 
     objective_convergence_fast = callback_objective.values
     density_fast = callback_density.values
@@ -232,7 +236,7 @@ if __name__ == '__main__':
     print time.time() - t0
 
     print "Duality gap (should be small): %f" % \
-            enet_dual_gap(X, y, enet_slow.w, alpha)[0]
+            enet_dual_gap(X, y, enet_slow.coef_, alpha)[0]
 
     objective_convergence_slow = callback_objective.values
     density_slow = callback_density.values
@@ -246,7 +250,7 @@ if __name__ == '__main__':
     print time.time() - t0
 
     print "Duality gap (should be small): %f" % \
-            enet_dual_gap(X, y, enet_fast.w, alpha)[0]
+            enet_dual_gap(X, y, enet_fast.coef_, alpha)[0]
 
     objective_convergence_fast = callback_objective.values
     density_fast = callback_density.values

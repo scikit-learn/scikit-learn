@@ -19,7 +19,7 @@ def enet_coordinate_descent(model, X, y, maxit):
 
     # Init residual
     R = np.empty(n_features + n_samples)
-    R[:n_samples] = y - np.dot(X,w)
+    R[:n_samples] = y - np.dot(X, w)
     R[n_samples:] = - sqrt(beta) * w
 
     for callback in callbacks:

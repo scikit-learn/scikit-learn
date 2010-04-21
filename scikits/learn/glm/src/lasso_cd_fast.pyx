@@ -37,7 +37,7 @@ def lasso_coordinate_descent(model,
 
     # get the data information into easy vars
     cdef float alpha = model.alpha
-    cdef np.ndarray[DOUBLE, ndim=1] w = model.w
+    cdef np.ndarray[DOUBLE, ndim=1] w = model.coef_
     callbacks = model.callbacks
 
     cdef unsigned int nsamples = X.shape[0]

@@ -38,7 +38,7 @@ lasso = Lasso(alpha=alpha, callbacks=[lasso_objective_callback])
 lasso.fit(X, y, maxit=maxit)
 
 print "Duality gap Lasso (should be small): %f" % \
-        lasso_dual_gap(X, y, lasso.w, alpha)[0]
+        lasso_dual_gap(X, y, lasso.coef_, alpha)[0]
 lasso_objective = lasso_objective_callback.values
 
 
@@ -49,7 +49,7 @@ enet = ElasticNet(alpha=alpha, beta=beta, callbacks=[enet_objective_callback])
 enet.fit(X, y, maxit=maxit)
 
 print "Duality gap (should be small): %f" % \
-        enet_dual_gap(X, y, enet.w, alpha, beta)[0]
+        enet_dual_gap(X, y, enet.coef_, alpha, beta)[0]
 enet_objective = enet_objective_callback.values
 
 # Display results
