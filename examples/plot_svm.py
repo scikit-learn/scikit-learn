@@ -1,10 +1,11 @@
 """
 ==========================
-Plot Linear SVM classifier
+Linear SVM classifier
 ==========================
 
-Sample usage of Support Vector Machines to classify a sample.
-It will plot the decision surface and the support vectors.
+Simple usage of Support Vector Machines to classify a sample. It will
+plot the decision surface and the support vectors.
+
 """
 import numpy as np
 import pylab as pl

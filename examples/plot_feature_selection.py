@@ -1,9 +1,9 @@
 """
-=================
-Feature Selection
-=================
+===============================
+Univariate Feature Selection
+===============================
 
-An example showing feature selection.
+An example showing univariate feature selection.
 
 Noisy (non informative) features are added to the iris data and
 univariate feature selection is applied. For each feature, we plot the

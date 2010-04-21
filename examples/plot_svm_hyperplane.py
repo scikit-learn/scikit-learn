@@ -1,8 +1,10 @@
 """
-====================================
-Maximum separating margin hyperplane
-====================================
+===========================================
+SVM: Maximum separating margin hyperplane
+===========================================
+
 """
+
 import numpy as np
 import pylab as pl
 from scikits.learn import svm
