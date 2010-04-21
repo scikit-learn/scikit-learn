@@ -30,16 +30,19 @@
 Scikits.learn Documentation
 ===========================
 
-Introduction
-============
-``scikits.learn`` is a Python module for machine learning. It aims to
-implement classic machine learning algorithms while remaining simple
-and efficient.
+.. topic:: Easy-to-use and general-purpose machine learning in Python
 
-It implements several machine learning algorithms, including Support
-Vector Machines, Gaussian Mixture Models, Neural Networks, Nearest
-Neighbors, Generalized Linear Models, etc.
-
+    ``scikits.learn`` is a Python module integrating classique machine
+    learning algorithmes in the tightly-nit world of scientific Python
+    packages (`numpy <http://www.scipy.org>`_, `scipy
+    <http://www.scipy.org>`_, `matplotlib
+    <http://matplotlib.sourceforge.net/>`_).
+    
+    It aims to provide simple and efficient solutions to learning
+    problems that are accessible to everybody and reusable in various
+    contexts: **machine-learning as a versatile tool for science and
+    engineering**.
+    
 .. image:: auto_examples/images/plot_digits_classification.png
     :align: right
     :scale: 50
@@ -49,7 +52,7 @@ Neighbors, Generalized Linear Models, etc.
 
     <small>
 
-**Example**::
+:ref:`A simple Example: recognizing hand-written digits <example_plot_digits_classification.py>` ::
 
     import pylab as pl
 
@@ -75,8 +78,17 @@ Neighbors, Generalized Linear Models, etc.
 
     </small>
 
-    
-User guide: contents
+
+**Features:**
+
+ * **Solid**: supervised learning: classification, regression
+
+ * **Work in progress**: unsupervised learning: clustering, mixture modeling,
+   manifold learning
+
+ * **Planed**: Gaussian graphical models, matrix factorization, ICA
+
+User guide
 ======================
 
 .. toctree::

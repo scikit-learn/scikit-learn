@@ -1,5 +1,5 @@
-Installing
-============
+Installing the `scikit.learn`
+===============================
 
 Binary Packages
 ---------------
