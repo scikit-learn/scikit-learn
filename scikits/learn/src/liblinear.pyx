@@ -38,7 +38,7 @@ cdef extern from "liblinear_helper.c":
 def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                  np.ndarray[np.int32_t, ndim=1, mode='c'] Y, int
                  solver_type, double eps, double bias, double C, int nr_weight,
-                 np.ndarray[np.int_t, ndim=1] weight_label,
+                 np.ndarray[np.int32_t, ndim=1] weight_label,
                  np.ndarray[np.float64_t, ndim=1] weight):
     """
     Wrapper for train
@@ -76,8 +76,8 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     bias = get_bias(model)
 
-    cdef np.ndarray[np.int_t, ndim=1, mode='c'] label
-    label = np.empty((nr_class), dtype=np.int)
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
+    label = np.empty((nr_class), dtype=np.int32)
     copy_label(label.data, model, nr_class)
 
     ### FREE
@@ -91,9 +91,9 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                  np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
                  int solver_type, double eps, double C,
-                 np.ndarray[np.int_t, ndim=1, mode='c'] weight_label,
+                 np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
                  np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
-                 np.ndarray[np.int_t, ndim=1, mode='c'] label,
+                 np.ndarray[np.int32_t, ndim=1, mode='c'] label,
                  double bias):
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] dec_values
@@ -104,7 +104,7 @@ def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 
     model = set_model(param, coef_.data, coef_.shape, label.data, bias)
 
-    dec_values = np.empty(T.shape[0], dtype=np.int)
+    dec_values = np.empty(T.shape[0], dtype=np.int32)
     if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
 
@@ -119,9 +119,9 @@ def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                  np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
                  int solver_type, double eps, double C,
-                 np.ndarray[np.int_t, ndim=1, mode='c'] weight_label,
+                 np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
                  np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
-                 np.ndarray[np.int_t, ndim=1, mode='c'] label,
+                 np.ndarray[np.int32_t, ndim=1, mode='c'] label,
                  double bias):
     """
     Predict probabilities

@@ -10,12 +10,12 @@ class LogisticRegression(object):
         self.C = C
 
     _penalties = {'l2': 0, 'l1' : 6}
-    _weight_label = np.empty(0, dtype=np.int)
+    _weight_label = np.empty(0, dtype=np.int32)
     _weight = np.empty(0, dtype=np.float64)
 
     def fit(self, X, Y):
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int, order='C')
+        Y = np.asanyarray(Y, dtype=np.int32, order='C')
         self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
                                           Y, self.solver_type, self.eps, 1.0,
                                           self.C, 0,

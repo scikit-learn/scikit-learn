@@ -196,7 +196,7 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             degree, double gamma, double coef0, double
                             eps, double C, int nr_weight,
                             np.ndarray[np.int32_t, ndim=1] weight_label,
-                            np.ndarray[np.float_t, ndim=1] weight,
+                            np.ndarray[np.float64_t, ndim=1] weight,
                             double nu, double cache_size, double p, int
                             shrinking, int probability, int nr_class,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
@@ -257,12 +257,12 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             rho, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
                             eps, double C, int nr_weight,
-                            np.ndarray[np.int_t, ndim=1] weight_label,
+                            np.ndarray[np.int32_t, ndim=1] weight_label,
                             np.ndarray[np.float_t, ndim=1] weight,
                             double nu, double cache_size, double p, int
                             shrinking, int probability, int nr_class,
-                            np.ndarray[np.int_t, ndim=1, mode='c'] nSV,
-                            np.ndarray[np.int_t, ndim=1, mode='c'] label,
+                            np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
+                            np.ndarray[np.int32_t, ndim=1, mode='c'] label,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
     """
