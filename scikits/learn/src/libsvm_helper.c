@@ -338,7 +338,8 @@ int copy_prob_predict(char *predict, struct svm_model *model, npy_intp *predict_
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
-        svm_predict_probability(model, predict_nodes[i], &t[i*m]);
+        svm_predict_probability(model, predict_nodes[i], 
+                                dec_values + i*m*sizeof(double));
         free(predict_nodes[i]);
     }
     return 0;

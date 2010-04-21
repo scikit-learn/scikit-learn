@@ -5,7 +5,7 @@ _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
 
-class BaseSVM(object):
+class BaseLibsvm(object):
     """
     Base class for classifiers that use support vector machine.
 
@@ -62,8 +62,8 @@ class BaseSVM(object):
         if X.shape[0] != y.shape[0]: raise ValueError("Incompatible shapes")
 
         if (self.gamma == 0): self.gamma = 1.0/X.shape[0]
-        self.coef_, self.rho_, self.support_, self.nclass_, self.nSV_, self.label_, \
-             self.probA_, self.probB_ = libsvm.train_wrap(X, y,
+        self.coef_, self.rho_, self.support_, self.nclass_, self.nSV_, \
+                 self.label_, self.probA_, self.probB_ = libsvm.train_wrap(X, y,
                  self.svm, self.kernel, self.degree, self.gamma,
                  self.coef0, self.eps, self.C, self.nr_weight,
                  self.weight_label, self.weight, self.nu, self.cache_size, self.p,
@@ -100,7 +100,7 @@ class BaseSVM(object):
 # Public API
 # No processing should go into these classes
 
-class SVC(BaseSVM):
+class SVC(BaseLibsvm):
     """
     Support Vector Classification
 
@@ -174,46 +174,16 @@ class SVC(BaseSVM):
     SVR
     """
 
-    _penalties = {'l2': 0, 'l1' : 6}
-
-    
-    def __init__(self, impl='c_svc', kernel='rbf', degree=3, penalty='l2',
+    def __init__(self, impl='c_svc', kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
                  probability=False):
-        BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
+        BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
-        self.penalty = self._penalties[penalty]
-        if self.kernel == 0:
-            # this must be called after BaseSVM.__init__
-            # because liblinear expects this to be ints
-            self.weight_label = np.empty(0, dtype=np.int32)
 
-    def fit(self, X, Y):
-        if self.kernel > 0:
-            return BaseSVM.fit(self, X, Y)
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
-                                          Y, self.penalty, self.eps, 1.0,
-                                          self.C, 0,
-                                          self.weight_label,
-                                          self.weight)
 
-        return self
-
-    def predict(self, T):
-        if self.kernel > 0:
-            return BaseSVM.predict(self, T)
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_wrap(T, self.coef_, self.penalty,
-                                      self.eps, self.C,
-                                      self.weight_label,
-                                      self.weight, self.label_,
-                                      1.0)
-
-class SVR(BaseSVM):
+class SVR(BaseLibsvm):
     """
     Support Vector Regression.
 
@@ -244,11 +214,11 @@ class SVR(BaseSVM):
                  gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
                  probability=False):
-        BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
+        BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
 
-class OneClassSVM(BaseSVM):
+class OneClassSVM(BaseLibsvm):
     """
     Outlayer detection
 
@@ -265,6 +235,51 @@ class OneClassSVM(BaseSVM):
                  C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
                  probability=False):
         impl = 'one_class'
-        BaseSVM.__init__(self, impl, kernel, degree, gamma, coef0,
+        BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
+
+
+class LinearSVC(object):
+    """
+    Linear Support Vector Classification.
+
+
+    Parameters
+    ----------
+    
+    Also accepts parameter penalty, that can have values 'l1' or 'l2'
+
+    Similar to SVC with parameter kernel='linear', but uses internally
+    liblinear rather than libsvm, so it has more flexibility in the
+    choice of penalties and loss functions and should be faster for
+    huge datasets.
+    """
+    _penalties = {'': 0}
+
+    def __init__(self, loss='l2', penalty='l2', dual=False, eps=1e-4, C=1.0):
+        self.penalty = self._penalties[penalty]
+        self.eps = eps
+        self.C = C
+
+    _penalties = {'l2': 0, 'l1' : 6}
+    _weight_label = np.empty(0, dtype=np.int)
+    _weight = np.empty(0, dtype=np.float64)
+
+    def fit(self, X, Y):
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        Y = np.asanyarray(Y, dtype=np.int, order='C')
+        self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
+                                          Y, self.penalty, self.eps, 1.0,
+                                          self.C, 0,
+                                          self._weight_label,
+                                          self._weight)
+
+    def predict(self, T):
+        T = np.asanyarray(T, dtype=np.float64, order='C')
+        return liblinear.predict_wrap(T, self.coef_, self.penalty,
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self.bias_)
+
