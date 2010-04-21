@@ -8,6 +8,7 @@ from numpy.testing import assert_array_equal, \
 X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
 Y = np.array( [1, 1, 1, 2, 2, 2])
 T = np.array( [[-1,-1], [2, 2], [3, 2]] )
+true_result = [1, 2, 2]
 
 def test_svm_params():
     """
@@ -58,11 +59,9 @@ def test_error():
     assert_raises(ValueError, svm.SVC, X, Y2)
 
 def test_predict():
-    true_result = [1, 2, 2]
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
-
 
 
 def test_probability():
@@ -113,7 +112,29 @@ def test_regression():
     
 
 def test_oneclass():
+    """
+    FIXME: this does nothing
+    """
     clf = svm.OneClassSVM()
     clf.fit(X, Y)
     assert_array_equal(Y, [1, 1, 1, 2, 2, 2])
 
+def test_LinearSVC():
+    clf = svm.LinearSVC()
+    clf.fit(X, Y)
+    assert_array_equal(clf.predict(T), true_result)
+
+    # the same with l1 penalty
+    clf = svm.LinearSVC(penalty='l1')
+    clf.fit(X, Y)
+    assert_array_equal(clf.predict(T), true_result)
+
+    # l2 penalty with dual formulation
+    clf = svm.LinearSVC(penalty='l2', dual=True)
+    clf.fit(X, Y)
+    assert_array_equal(clf.predict(T), true_result)
+    
+    # 
+    clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True)
+    clf.fit(X, Y)
+    assert_array_equal(clf.predict(T), true_result)

@@ -254,11 +254,16 @@ class LinearSVC(object):
     liblinear rather than libsvm, so it has more flexibility in the
     choice of penalties and loss functions and should be faster for
     huge datasets.
-    """
-    _penalties = {'': 0}
 
-    def __init__(self, loss='l2', penalty='l2', dual=False, eps=1e-4, C=1.0):
-        self.penalty = self._penalties[penalty]
+    TODO: wrap Cramer & Singer
+    """
+    _solver_type = {'l2l2_1': 1, 'l2l2_0' : 2, 'l2l1_1' : 3, 'l1l2_0' : 5}
+
+    def __init__(self, penalty='l2', loss='l2', dual=False, eps=1e-4, C=1.0):
+        s = penalty + loss + '_' + str(int(dual))
+        try: self.solver_type = self._solver_type[s]
+        except KeyError:
+            raise ValueError('Not supported set of arguments')
         self.eps = eps
         self.C = C
 
@@ -270,14 +275,14 @@ class LinearSVC(object):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int, order='C')
         self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
-                                          Y, self.penalty, self.eps, 1.0,
+                                          Y, self.solver_type, self.eps, 1.0,
                                           self.C, 0,
                                           self._weight_label,
                                           self._weight)
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_wrap(T, self.coef_, self.penalty,
+        return liblinear.predict_wrap(T, self.coef_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
