@@ -5,7 +5,7 @@ from . import liblinear
 class LogisticRegression(object):
 
     def __init__(self, penalty='l2', eps=1e-4, C=1.0):
-        self.penalty = self._penalties[penalty]
+        self.solver_type = self._penalties[penalty]
         self.eps = eps
         self.C = C
 
@@ -17,14 +17,22 @@ class LogisticRegression(object):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int, order='C')
         self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
-                                          Y, self.penalty, self.eps, 1.0,
+                                          Y, self.solver_type, self.eps, 1.0,
                                           self.C, 0,
                                           self._weight_label,
                                           self._weight)
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_wrap(T, self.coef_, self.penalty,
+        return liblinear.predict_wrap(T, self.coef_, self.solver_type,
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self.bias_)
+
+    def predict_proba(self, T):
+        T = np.asanyarray(T, dtype=np.float64, order='C')
+        return liblinear.predict_prob_wrap(T, self.coef_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,

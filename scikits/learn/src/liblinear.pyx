@@ -28,6 +28,7 @@ cdef extern from "liblinear_helper.c":
                           
     model *set_model(parameter *, char *, np.npy_intp *, char *, double)
     int copy_predict(char *, model *, np.npy_intp *, char *)
+    int copy_prob_predict(char *, model *, np.npy_intp *, char *)
     int copy_label(char *, model *, int)
     double get_bias(model *)
     void free_problem (problem *)
@@ -108,7 +109,61 @@ def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
         raise MemoryError("We've run out of of memory")
 
     ### FREE
-    # TODO: we also have to release temp allocated by set_model
+    free_parameter(param)
+    destroy_model(model)
     return dec_values
                           
     
+
+
+def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+                 np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+                 int solver_type, double eps, double C,
+                 np.ndarray[np.int_t, ndim=1, mode='c'] weight_label,
+                 np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+                 np.ndarray[np.int_t, ndim=1, mode='c'] label,
+                 double bias):
+    """
+    Predict probabilities
+
+    svm_model stores all parameters needed to predict a given value.
+
+    For speed, all real work is done at the C level in function
+    copy_predict (libsvm_helper.c).
+
+    We have to reconstruct model and parameters to make sure we stay
+    in sync with the python object. predict_wrap skips this step.
+
+    Parameters
+    ----------
+    X: array-like, dtype=float
+    Y: array
+        target vector
+
+    Optional Parameters
+    -------------------
+    See scikits.learn.svm.predict for a complete list of parameters.
+
+    Return
+    ------
+    dec_values : array
+        predicted values.
+    """
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef parameter *param
+    cdef model *model
+
+    param = set_parameter(solver_type, eps, C, weight.shape[0], weight_label.data, weight.data)
+
+    model = set_model(param, coef_.data, coef_.shape, label.data, bias)
+
+    cdef int nr = get_nr_class(model)
+    dec_values = np.empty((T.shape[0], nr), dtype=np.float64)
+    if copy_prob_predict(T.data, model, T.shape, dec_values.data) < 0:
+        raise MemoryError("We've run out of of memory")
+
+    ### FREE
+    free_parameter(param)
+    destroy_model(model)
+
+    return dec_values

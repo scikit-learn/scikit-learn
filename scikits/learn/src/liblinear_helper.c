@@ -200,8 +200,33 @@ int copy_predict(char *train, struct model *model, npy_intp *train_dims,
         free(train_nodes[i]);
         ++t;
     }
+    free(train_nodes);
     return 0;
 }
+
+
+int copy_prob_predict(char *predict, struct model *model, npy_intp *predict_dims,
+                 char *dec_values)
+{
+    double *t = (double *) dec_values;
+    register int i;
+    double temp;
+    int n, m;
+    n = predict_dims[0];
+    m = model->nr_class;
+    struct feature_node **predict_nodes;
+    predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+    if (predict_nodes == NULL)
+        return -1;
+    for(i=0; i<n; ++i) {
+        predict_probability(model, predict_nodes[i],
+                            ((double *) dec_values) + i*m);
+        free(predict_nodes[i]);
+    }
+    free(predict_nodes);
+    return 0;
+}
+
 
 int copy_label(char *data, struct model *model_, int nr_class)
 {

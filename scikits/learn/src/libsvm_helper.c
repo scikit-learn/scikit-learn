@@ -322,6 +322,7 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
         free(predict_nodes[i]);
         ++t;
     }
+    free(predict_nodes);
     return 0;
 }
 
@@ -330,7 +331,6 @@ int copy_prob_predict(char *predict, struct svm_model *model, npy_intp *predict_
 {
     double *t = (double *) dec_values;
     register int i;
-    double temp;
     int n, m;
     n = predict_dims[0];
     m = model->nr_class;
@@ -339,10 +339,11 @@ int copy_prob_predict(char *predict, struct svm_model *model, npy_intp *predict_
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
-        temp = svm_predict_probability(model, predict_nodes[i], 
-                                dec_values + i*m*sizeof(double));
+        svm_predict_probability(model, predict_nodes[i], 
+                                ((double *) dec_values) + i*m);
         free(predict_nodes[i]);
     }
+    free(predict_nodes);
     return 0;
 }
 

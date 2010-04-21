@@ -288,3 +288,12 @@ class LinearSVC(object):
                                       self._weight, self.label_,
                                       self.bias_)
 
+
+    def predict_proba(self, T):
+        T = np.asanyarray(T, dtype=np.float64, order='C')
+        return liblinear.predict_prob_wrap(T, self.coef_, self.solver_type,
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self.bias_)
+

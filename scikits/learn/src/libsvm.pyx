@@ -239,6 +239,7 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     model = set_model(param, nr_class, SV.data, SV.shape, sv_coef.strides,
                       sv_coef.data, rho.data, nSV.data, label.data,
                       probA.data, probB.data)
+    #TODO: use check_model
     dec_values = np.empty(T.shape[0])
     if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
