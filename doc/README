@@ -15,15 +15,15 @@ Now can upload the generated html documentation using scp or some other SFTP cli
     * Username: Combine your SourceForge.net Username with your SourceForge.net project UNIX name using a comma ( "," ) See Example
     * Password: Your SourceForge.net Password 
 
-An example session might look like the following for Username "jsmith" uploading a file for this project:
+An example session might look like the following for Username "jsmith" uploading a file for this project, using rsync with the right switch for the permissions:
 
-[jsmith@linux ~]$ scp -r _build/html/* jsmith,scikit-learn@web.sourceforge.net:htdocs
+[jsmith@linux ~]$ rsync -rltvz _build/html/ jsmith,scikit-learn@web.sourceforge.net:htdocs/ -essh
 Connecting to web.sourceforge.net...
 The authenticity of host 'web.sourceforge.net (216.34.181.57)' can't be established.
 RSA key fingerprint is 68:b3:26:02:a0:07:e4:78:d4:ec:7f:2f:6a:4d:32:c5.
 Are you sure you want to continue connecting (yes/no)? yes
 Warning: Permanently added 'web.sourceforge.net,216.34.181.57' (RSA) to the list of known hosts.
 jsmith,fooproject@web.sourceforge.net's password:
-barfile                                                                                       100%  241     0.2KB/s   00:01
-
+sending incremental file list
+...
 
