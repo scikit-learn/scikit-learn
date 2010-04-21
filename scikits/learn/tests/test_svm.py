@@ -71,9 +71,9 @@ def test_probability():
     clf = svm.SVC(probability=True)
     clf.fit(X, Y)
     assert_array_almost_equal(clf.predict_proba(T),
-                              [[ 0.81997622,  0.18002378],
-                               [ 0.18863819,  0.81136181],
-                               [ 0.27647055,  0.72352945]])
+                              [[ 0.81936054,  0.18063946],
+                               [ 0.18923853,  0.81076147],
+                               [ 0.27698362,  0.72301638]])
 
 def test_noncontiguous():
     """

@@ -1961,7 +1961,7 @@ int predict(const model *model_, const feature_node *x)
 
 int predict_probability(const struct model *model_, const struct feature_node *x, double* prob_estimates)
 {
-	if(model_->param.solver_type==L2R_LR)
+	if(model_->param.solver_type==L2R_LR || model_->param.solver_type == L1R_LR)
 	{
 		int i;
 		int nr_class=model_->nr_class;

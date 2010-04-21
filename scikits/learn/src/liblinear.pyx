@@ -157,8 +157,8 @@ def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 
     model = set_model(param, coef_.data, coef_.shape, label.data, bias)
 
-    cdef int nr = get_nr_class(model)
-    dec_values = np.empty((T.shape[0], nr), dtype=np.float64)
+    cdef int nr_class = get_nr_class(model)
+    dec_values = np.empty((T.shape[0], nr_class), dtype=np.float64)
     if copy_prob_predict(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
 
