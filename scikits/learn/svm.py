@@ -71,7 +71,7 @@ class BaseLibsvm(object):
         return self
 
     def predict(self, T):
-        T = np.asanyarray(T, dtype=np.float64, order='C')
+        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         return libsvm.predict_from_model_wrap(T, self.support_,
                       self.coef_, self.rho_, self.svm,
                       self.kernel, self.degree, self.gamma,
@@ -85,7 +85,7 @@ class BaseLibsvm(object):
     def predict_proba(self, T):
         if not self.probability:
             raise ValueError("probability estimates must be enabled to use this method")
-        T = np.asanyarray(T, dtype=np.float64, order='C')
+        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         return libsvm.predict_prob_from_model_wrap(T, self.support_,
                       self.coef_, self.rho_, self.svm,
                       self.kernel, self.degree, self.gamma,
@@ -281,7 +281,7 @@ class LinearSVC(object):
                                           self._weight)
 
     def predict(self, T):
-        T = np.asanyarray(T, dtype=np.float64, order='C')
+        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         return liblinear.predict_wrap(T, self.coef_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
