@@ -16,7 +16,7 @@ class LogisticRegression(object):
     def fit(self, X, Y):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
+        self.coef_with_intercept_, self.label_, self.bias_ = liblinear.train_wrap(X,
                                           Y, self.solver_type, self.eps, 1.0,
                                           self.C, 0,
                                           self._weight_label,
@@ -24,7 +24,7 @@ class LogisticRegression(object):
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_wrap(T, self.coef_, self.solver_type,
+        return liblinear.predict_wrap(T, self.coef_with_intercept_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
@@ -32,8 +32,17 @@ class LogisticRegression(object):
 
     def predict_proba(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_prob_wrap(T, self.coef_, self.solver_type,
+        return liblinear.predict_prob_wrap(T, self.coef_with_intercept_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
                                       self.bias_)
+
+    @property
+    def intercept_(self):
+        return self.coef_with_intercept_[:,-1]
+
+    @property
+    def coef_(self):
+        return self.coef_with_intercept_[:,:-1]
+
