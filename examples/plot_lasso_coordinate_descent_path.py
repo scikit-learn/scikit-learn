@@ -35,6 +35,8 @@ X = np.random.randn(n_samples, n_features)
 alpha = 1
 lasso_objective_callback = IterationCallbackFunc(lasso_objective)
 lasso = Lasso(alpha=alpha, callbacks=[lasso_objective_callback])
+
+print "Fitting lasso model to random data..."
 lasso.fit(X, y, maxit=maxit)
 
 print "Duality gap Lasso (should be small): %f" % \
@@ -46,6 +48,8 @@ lasso_objective = lasso_objective_callback.values
 alpha, beta = 1, 1
 enet_objective_callback = IterationCallbackFunc(enet_objective)
 enet = ElasticNet(alpha=alpha, beta=beta, callbacks=[enet_objective_callback])
+
+print "Fitting elastic net model to random data..."
 enet.fit(X, y, maxit=maxit)
 
 print "Duality gap (should be small): %f" % \
@@ -68,9 +72,12 @@ pl.title('Convergence')
 # Demo path functions
 ################################################################################
 
-alphas_lasso, weights_lasso = lasso_path(X, y, factor=0.97, n_alphas = 100)
-alphas_enet, weights_enet = enet_path(X, y, factor=0.97, n_alphas = 100,
-                                                beta=0.1)
+print "Computing regularization path using the lasso..."
+alphas_lasso, weights_lasso = lasso_path(X, y, factor=0.93, n_alphas = 50)
+
+print "Computing regularization path using the elastic net..."
+alphas_enet, weights_enet = enet_path(X, y, factor=0.93, n_alphas = 50,
+                                                beta=0.5)
 
 # Display results
 pl.subplot(1, 2, 2)
