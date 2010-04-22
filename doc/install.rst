@@ -4,8 +4,9 @@ Installing the `scikit.learn`
 Binary Packages
 ---------------
 
-There is a prebuild package for windows. See section downloads in the
-project's web page.
+There is a prebuild package for windows. See section `downloads
+<https://sourceforge.net/projects/scikit-learn/files/>`_
+in the project's web page.
 
 
 From Source
