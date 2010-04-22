@@ -17,7 +17,6 @@ training set, classify a sample and plot the time taken as a function of the num
 import numpy as np
 import pylab as pl
 from datetime import datetime
-import gc
 
 # to store the results
 scikit_results = []
@@ -33,18 +32,15 @@ def bench_scikit(X, Y, T):
     import scikits.learn
     from scikits.learn.svm import SVC
 
-
-    gc.collect()
-
     # start time
     tstart = datetime.now()
-    clf = scikits.learn.svm.SVC(kernel='linear');
+    clf = SVC(kernel='linear');
     clf.fit(X, Y);
     Z = clf.predict(T)
     delta = (datetime.now() - tstart)
     # stop time
 
-    scikit_results.append(delta.microseconds/mu_second)
+    scikit_results.append(delta.seconds + delta.microseconds/mu_second)
 
 def bench_svm(X, Y, T):
     """
@@ -57,8 +53,6 @@ def bench_svm(X, Y, T):
     Y1 = Y.tolist()
     T1 = T.tolist()
 
-    gc.collect()
-
     # start time
     tstart = datetime.now()
     problem = svm.svm_problem(Y1, X1)
@@ -68,8 +62,7 @@ def bench_svm(X, Y, T):
         model.predict(i)
     delta = (datetime.now() - tstart)
     # stop time
-
-    svm_results.append(delta.microseconds/mu_second)
+    svm_results.append(delta.seconds + delta.microseconds/mu_second)
 
 def bench_pymvpa(X, Y, T):
     """
@@ -80,8 +73,6 @@ def bench_pymvpa(X, Y, T):
     from mvpa.clfs import svm
     data = Dataset.from_wizard(samples=X, targets=Y)
 
-    gc.collect()
-
     # start time
     tstart = datetime.now()
     clf = svm.SVM(kernel=svm.LinearSVMKernel())
@@ -89,7 +80,7 @@ def bench_pymvpa(X, Y, T):
     Z = clf.predict(T)
     delta = (datetime.now() - tstart)
     # stop time
-    mvpa_results.append(delta.microseconds/mu_second)
+    mvpa_results.append(delta.seconds + delta.microseconds/mu_second)
 
 if __name__ == '__main__':
 
@@ -98,7 +89,7 @@ if __name__ == '__main__':
     X = iris.data
     Y = iris.target
 
-    n = 100
+    n = 40
     step = 100
     for i in range(n):
         print '============================================'
@@ -128,8 +119,8 @@ if __name__ == '__main__':
     scikit_results = []
     svm_results = []
     mvpa_results = []
-    n = 100
-    step = 20
+    n = 40
+    step = 500
     start_dim = 400
 
     print '============================================'
