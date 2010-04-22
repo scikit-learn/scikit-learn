@@ -24,9 +24,8 @@ class LogisticRegression(object):
         the bigger in the regularization.
 
     intercept : bool, default: True
-        SVM implementation to choose from. This refers to different
-        formulations of the SVM optimization problem.
-        Can be one of 'c_svc', 'nu_svc'. By default 'c_svc' will be chosen.
+        Specifies if a constant (a.k.a. bias or intercept) should be
+        added the decision function
 
     Attributes
     ----------
