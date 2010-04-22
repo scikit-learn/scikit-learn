@@ -4,7 +4,7 @@ Base IO code for all datasets
 
 # Copyright (c) 2007 David Cournapeau <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#
+# License: Simplified BSD
 
 import csv
 import os
@@ -71,7 +71,7 @@ def load_digits():
     -------
     data : Bunch
         Dictionnary-like object, the interesting attributes are:
-        'data', the data to learn, `raw_data`, the images corresponding
+        'data', the data to learn, `images`, the images corresponding
         to each sample, 'target', the classification labels for each
         sample, 'target_names', the meaning of the labels, and 'DESCR', 
         the full description of the dataset.
