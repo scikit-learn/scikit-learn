@@ -1,6 +1,13 @@
 Getting started: an introduction to learning with the scikit
 =============================================================
 
+.. topic:: Section contents
+
+    In this section, we introduce the machine learning vocabulary that we
+    use through-out the `scikit.learn` and give a simple example of
+    solving a learning problem.
+
+
 Machine learning: the problem setting
 ---------------------------------------
 
@@ -27,7 +34,17 @@ We can separate learning problems in a few large categories:
  * **unsupervised learning**, in which we are trying to learning a
    synthetic representation of the data.
 
-Loading a sample dataset
+.. topic:: Training set and testing set
+
+    Machine learning is about learning some properties of a data set and
+    applying them to new data. This is why a common practice in machine 
+    learning to evaluate an algorithm is to split the data at hand in two
+    sets, one that we call a *training set* on which we learn data
+    properties, and one that we call a *testing set*, on which we test
+    these properties.
+
+
+Loading an example dataset
 --------------------------
 
 The `scikit.learn` comes with a few standard datasets, for instance the
@@ -39,61 +56,97 @@ the `digits dataset
     >>> iris = datasets.load_iris()
     >>> digits = datasets.load_digits()
 
-A dataset is a dictionary-like object that holds all the samples and
-some metadata about the samples. You can access the underlying data
-with members `.data` and `.target`.
+A dataset is a dictionary-like object that holds all the data and some
+metadata about the data. This data is stored in the `.data` member, which
+is a `n_samples, n_features` array. In the case of supervised problem,
+explanatory variables are stored in the `.target` member.
 
-For instance, in the case of the iris dataset, `iris.data` gives access
-to the features that can be used to classify the iris samples::
+For instance, in the case of the digits dataset, `digits.data` gives
+access to the features that can be used to classify the digits samples::
 
-    >>> iris.data
-    array([[ 5.1,  3.5,  1.4,  0.2],
-	   [ 4.9,  3. ,  1.4,  0.2],
-	   [ 4.7,  3.2,  1.3,  0.2],
-	   ...
-	   [ 6.5,  3. ,  5.2,  2. ],
-	   [ 6.2,  3.4,  5.4,  2.3],
-	   [ 5.9,  3. ,  5.1,  1.8]])
+    >>> digits.data
+    array([[  0.,   0.,   5., ...,   0.,   0.,   0.],
+           [  0.,   0.,   0., ...,  10.,   0.,   0.],
+           [  0.,   0.,   0., ...,  16.,   9.,   0.],
+           ..., 
+           [  0.,   0.,   1., ...,   6.,   0.,   0.],
+           [  0.,   0.,   2., ...,  12.,   0.,   0.],
+           [  0.,   0.,  10., ...,  12.,   1.,   0.]])
 
-and `iris.target` gives the ground thruth for the iris dataset, that is
-the labels describing the different classes of irises that we are trying
-to learn:
+and `digits.target` gives the ground truth for the digit dataset, that
+is the number corresponding to each digit image that we are trying to
+learn:
 
->>> iris.target
-array([ 0.,  0.,  0.,  0., ... 2.,  2.,  2.,  2.])
+>>> digits.target
+array([0, 1, 2, ..., 8, 9, 8])
 
+.. topic:: Shape of the data arrays
+   
+    The data is always are 2D array, `n_samples, n_features`, although
+    the original data may have had a different shape. In the case of the
+    digits, each original sample is an image of shape `8, 8` and can be
+    accessed using:
 
-Prediction
-----------
+    >>> digits.images[0]
+    array([[  0.,   0.,   5.,  13.,   9.,   1.,   0.,   0.],
+           [  0.,   0.,  13.,  15.,  10.,  15.,   5.,   0.],
+           [  0.,   3.,  15.,   2.,   0.,  11.,   8.,   0.],
+           [  0.,   4.,  12.,   0.,   0.,   8.,   8.,   0.],
+           [  0.,   5.,   8.,   0.,   0.,   9.,   8.,   0.],
+           [  0.,   4.,  11.,   0.,   1.,  12.,   7.,   0.],
+           [  0.,   2.,  14.,   5.,  10.,  12.,   0.,   0.],
+           [  0.,   0.,   6.,  13.,  10.,   0.,   0.,   0.]])
 
-Suppose some given data points each belong to one of two classes, and
-the goal is to decide which class a new data point will be in. In
-``scikits.learn`` this is done with an *estimator*. An *estimator* is
-just a plain Python class that implements the methods fit(X, Y) and
-predict(T).
-
-An example of predictor is the class
-``scikits.learn.neighbors.Neighbors``(XXX ref). The constructor of a predictor
-takes as arguments the parameters of the model. In this case, our only
-parameter is k, the number of neighbors to consider.
-
->>> from scikits.learn import neighbors
->>> clf = neighbors.Neighbors(k=3)
-
-The predictor now must be fitted to the model, that is, it must
-`learn` from the model. This is done by passing our training set to
-the ``fit`` method.
-
->>> clf.fit(iris.data, iris.target) #doctest: +ELLIPSIS
-<scikits.learn.neighbors.Neighbors instance at 0x...>
-
-Now you can predict new values
-
->>> print clf.predict([[0, 0, 0, 0]])
-[[ 0.]]
+    The :ref:`simple example on this dataset <example_plot_digits_classification.py>`
+    illustrates how starting from the original problem one can shape the 
+    data for consumption in the `scikit.learn`.
 
 
-Regression
-----------
-In the regression problem, classes take continous values.
-Linear Regression. TODO
+Learning and Predicting
+------------------------
+
+In the case of the digits dataset, the task is to predict the value of a
+hand-written digit from an image. We are given samples of each of the 10
+possible classes on which we *fit* an `estimator` to be able to *predict*
+the labels corresponding to new data.
+
+In `scikit.learn`, an *estimator* is just a plain Python class that
+implements the methods `fit(X, Y)` and `predict(T)`.
+
+An example of estimator is the class ``scikits.learn.neighbors.SVC`` that
+implements `Support Vector Classification
+<http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
+constructor of an estimator takes as arguments the parameters of the
+model, but for the time being, we will consider the estimator as a black
+box and not worry about these:
+
+>>> from scikits.learn import svm
+>>> clf = svm.SVC()
+
+We call our estimator instance `clf` as it is a classifier. It now must
+be fitted to the model, that is, it must `learn` from the model. This is
+done by passing our training set to the ``fit`` method. As a training
+set, let us use the all the images of our dataset appart from the last
+one:
+
+>>> clf.fit(digits.data[:-1], digits.target[:-1]) #doctest: +ELLIPSIS
+<scikits.learn.svm.SVC object at 0x...>
+
+Now you can predict new values, in particular, we can ask to the
+classifier what is the digit of our last image in the `digits` dataset,
+which we have not used to train the classifier:
+
+>>> print clf.predict(digits.data[-1])
+array([ 8.])
+
+The corresponding image is the following:
+
+.. image:: images/last_digit.png
+    :align: center
+
+As you can see, it is a challenging task: the images are of poor
+resolution. Do you agree with the classifier?
+
+A complete example of this classification problem is available as an
+example that you can run and study:
+:ref:`example_plot_digits_classification.py`. 
