@@ -96,6 +96,9 @@ class BaseLibsvm(object):
                       self.nclass_, self.nSV_, self.label_,
                       self.probA_, self.probB_)
 
+    @property
+    def intercept_(self):
+        return - self.rho_
 
 ###
 # Public API
@@ -149,7 +152,7 @@ class SVC(BaseLibsvm):
     `dual_coef_` : array, shape = [nclasses-1, nfeatures]
         Coefficient of the support vector in the decision function.
 
-    `rho_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [nclasses-1]
         constants in decision function
 
     Methods
@@ -209,7 +212,7 @@ class SVR(BaseLibsvm):
     `dual_coef_` : array, shape = [nclasses-1, nfeatures]
         Coefficient of the support vector in the decision function.
 
-    `rho_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [nclasses-1]
         constants in decision function
 
     Methods
