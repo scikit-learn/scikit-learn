@@ -27,21 +27,21 @@ for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
 
 # To apply an classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
-n_features = len(digits.images)
-data = digits.images.reshape((n_features, -1))
+n_samples = len(digits.images)
+data = digits.images.reshape((n_samples, -1))
 
 # Import a classifier:
 from scikits.learn import svm
 classifier = svm.SVC()
 
 # We learn the digits on the first half of the digits
-classifier.fit(data[:n_features/2], digits.target[:n_features/2])
+classifier.fit(data[:n_samples/2], digits.target[:n_samples/2])
 
 # Now predict the value of the digit on the second half:
-predicted = classifier.predict(data[n_features/2:])
+predicted = classifier.predict(data[n_samples/2:])
 
 for index, (image, prediction) in enumerate(zip(
-                                       digits.images[n_features/2:], 
+                                       digits.images[n_samples/2:], 
                                        predicted
                                     )[:4]):
     pl.subplot(2, 4, index+5)

@@ -63,13 +63,13 @@ Scikits.learn Documentation
         pl.imshow(image, cmap=pl.cm.gray_r)
         pl.title('Training: %i' % label)
     
-    n_features = len(digits.images)
-    data = digits.images.reshape((n_features, -1))
+    n_samples = len(digits.images)
+    data = digits.images.reshape((n_samples, -1))
     
     classifier = svm.SVC()
-    classifier.fit(data[:n_features/2], digits.target[:n_features/2])
+    classifier.fit(data[:n_samples/2], digits.target[:n_samples/2])
     
-    for index, image in enumerate(digits.images[n_features/2:n_features/2+4]):
+    for index, image in enumerate(digits.images[n_samples/2:n_samples/2+4]):
         pl.subplot(2, 4, index+5)
         pl.imshow(image, cmap=pl.cm.gray_r)
         pl.title('Prediction: %i' % classifier.predict(image.ravel()))
