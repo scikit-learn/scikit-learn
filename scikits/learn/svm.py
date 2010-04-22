@@ -193,10 +193,7 @@ class SVC(BaseLibsvm):
 
         coef_ = []
         for i in range(self.dual_coef_.shape[0]):
-            w = 0
-            for j, sp in enumerate(self.support_):
-                w += self.dual_coef_[0][j] * sp
-            coef_.append(w)
+            coef_.append(np.dot(self.dual_coef_[i], self.support_))
         coef_ = np.array(coef_)
         return coef_
 
