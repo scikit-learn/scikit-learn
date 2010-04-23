@@ -3,7 +3,7 @@
 Linear Discriminant Analysis
 ============================
 
-A classification example using Linear Discriminant Anlysis (LDA).
+A classification example using Linear Discriminant Analysis (LDA).
 
 """
 
