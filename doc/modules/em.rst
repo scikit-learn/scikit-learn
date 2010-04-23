@@ -1,22 +1,5 @@
-..
-    restindex
-        page-title: Em
-        crumb: Em
-        link-title: Em
-        encoding: utf-8
-        output-encoding: None 
-        tags: python,em,Expectation Maximization,EM,online EM,recursive EM
-        file: basic_example1.py
-        file: basic_example2.py
-        file: basic_example3.py
-        file: example1.png
-        file: Bic_example.png
-    /restindex
-
-.. Last Change: Sun Jul 22 11:00 AM 2007 J
-
 ===================================================
- em, a python package for Gaussian mixture models
+Gaussian mixture models
 ===================================================
 
 .. contents:: Tables of contents
@@ -35,8 +18,14 @@ multi-dimensional array capabilities (ala matlab and the likes); scipy
 leverages numpy to build common scientific features for signal processing,
 linear algebra, statistics, etc...
 
+.. warning::
 
-basic usage
+  The code in the `scikits.learn.em` submodule is not as mature as the 
+  rest of the scikit and is prone to changing.
+     
+
+
+Basic usage
 ============
 
 Once you are inside a python interpreter, you can import the package using the
@@ -56,7 +45,7 @@ plot it. The following example show how to create a 2 dimension Gaussian Model
 with 3 components, sample it and plot its confidence ellipsoids with
 matplotlib:
 
-.. literalinclude::  ../../scikits/learn/em/examples/basic_example1.py
+.. literalinclude::  ../examples/em/basic_example1.py
 
 
 which plots this figure:
@@ -84,7 +73,7 @@ iterations of EM; once the EM has finished the computation, the GM instance of
 GMM contains the computed parameters.
 
 
-.. literalinclude::  ../../scikits/learn/em/examples/basic_example2.py
+.. literalinclude::  ../auto_examples/em/basic_example2.py
 
 
 GMM class do all the hard work for learning: it can compute the sufficient
@@ -111,7 +100,7 @@ clusters, and prints which number of clusters is the most likely from the BIC:
 
 
 
-.. literalinclude::  ../../scikits/learn/em/examples/basic_example3.py
+.. literalinclude::  ../auto_examples/em/basic_example3.py
 
 
 which plots this figure:
@@ -194,20 +183,21 @@ this case without insane amount of memory. A C version may be
 implemented, but this is not my top priority; most of the time, you should
 avoid full covariance models if possible.
 
-Notes
------
-
-I believe the current API simple and powerful enough, except 
-maybe for plotting (if you think otherwise, I would be happy to hear
-your suggestions). Now, I am considering adding some more functionalities
-to the toolbox:
-
+..
+ Notes
+ -----
+ 
+ I believe the current API simple and powerful enough, except 
+ maybe for plotting (if you think otherwise, I would be happy to hear
+ your suggestions). Now, I am considering adding some more functionalities
+ to the toolbox:
+ 
  - add simple methods for regularization of covariance matrix (easy)
  - add bayes prior (using variational Bayes approximation) for overfitting and
    model selection problems (not trivial, but doable)
  - improve online EM
-
-Other things which are doable but which I don't intend to implement are:
-
+ 
+ Other things which are doable but which I don't intend to implement are:
+ 
  - add other models (mixtures of multinomial: easy, simple HMM: easy, other ?)
  - add bayes prior using MCMC (hard, use PyMC for sampling ?)

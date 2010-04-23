@@ -8,6 +8,7 @@ Files that generate images should start with 'plot'
 
 """
 import os
+import shutil
 
 fileList = []
 
@@ -20,34 +21,35 @@ import token, tokenize
 
 rst_template = """
 
-.. %(short_fname)s_example:
+.. _example_%(short_fname)s:
 
 %(docstring)s
 
-**Source code:** :download:`%(fname)s <%(short_fname)s>`
+**Source code:** :download:`%(fname)s <%(fname)s>`
 
-.. literalinclude:: %(short_fname)s
+.. literalinclude:: %(fname)s
     :lines: %(end_row)s-
     """
 
 plot_rst_template = """
 
-.. _example_%(fname)s:
+.. _example_%(short_fname)s:
 
 %(docstring)s
 
 .. image:: images/%(image_name)s
     :align: center
 
-**Source code:** :download:`%(fname)s <%(short_fname)s>`
+**Source code:** :download:`%(fname)s <%(fname)s>`
 
-.. literalinclude:: %(short_fname)s
+.. literalinclude:: %(fname)s
     :lines: %(end_row)s-
     """
 
 
 def extract_docstring(filename):
-    # Extract a module-level docstring, if any
+    """ Extract a module-level docstring, if any
+    """
     lines = file(filename).readlines()
     start_row = 0
     if lines[0].startswith('#!'):
@@ -74,49 +76,18 @@ def extract_docstring(filename):
 
 
 def generate_example_rst(app):
-    rootdir = os.path.join(app.builder.srcdir, 'auto_examples')
-    exampledir = os.path.abspath(app.builder.srcdir +  '/../' + 'examples')
-    if not os.path.exists(exampledir):
-        os.makedirs(exampledir)
-
-    datad = []
-
-    for root, dirs, files in os.walk(exampledir):
-        for fname in files:
-            image_name = fname[:-2] + 'png'
-            global rst_template, plot_rst_template
-            this_template = rst_template
-            short_fname = '../../examples/' + fname
-            if  not fname.endswith('py'): 
-                continue
-            example_file = os.path.join(exampledir, fname)
-            if fname.startswith('plot'):
-                # generate the plot as png image if file name
-                # starts with plot and if it is more recent than an
-                # existing image.
-                if not os.path.exists(
-                                    os.path.join(rootdir, 'images')):
-                    os.makedirs(os.path.join(rootdir, 'images'))
-                image_file = os.path.join(rootdir, 'images', image_name)
-                if (not os.path.exists(image_file) or
-                      os.stat(image_file).st_mtime <= 
-                            os.stat(example_file).st_mtime):
-                    print 'plotting %s' % fname
-                    import matplotlib.pyplot as plt
-                    plt.close('all')
-                    mplshell.magic_run(example_file)
-                    plt.savefig(image_file)
-                this_template = plot_rst_template
-
-            docstring, short_desc, end_row = extract_docstring(example_file)
-
-            f = open(os.path.join(rootdir, fname[:-2] + 'rst'),'w')
-            f.write( this_template % locals())
-            f.flush()
-            datad.append(fname)
+    """ Generate the list of examples, as well as the contents of
+        examples.
+    """ 
+    root_dir = os.path.join(app.builder.srcdir, 'auto_examples')
+    example_dir = os.path.abspath(app.builder.srcdir +  '/../' + 'examples')
+    if not os.path.exists(example_dir):
+        os.makedirs(example_dir)
+    if not os.path.exists(root_dir):
+        os.makedirs(root_dir)
 
     # we create an index.rst with all examples
-    fhindex = file(os.path.join(rootdir, 'index.rst'), 'w')
+    fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')
     fhindex.write("""\
 .. _examples-index:
 
@@ -126,13 +97,75 @@ Examples
     :Release: |version|
     :Date: |today|
 
+""")
+    # Here we don't use an os.walk, but we recurse only twice: flat is
+    # better than nested.
+    generate_dir_rst('.', fhindex, example_dir, root_dir)
+    for dir in sorted(os.listdir(example_dir)):
+        if dir == '.svn':
+            continue
+        if os.path.isdir(os.path.join(example_dir, dir)):
+            generate_dir_rst(dir, fhindex, example_dir, root_dir)
+    fhindex.flush()
+
+
+def generate_dir_rst(dir, fhindex, example_dir, root_dir):
+    """ Generate the rst file for an example directory.
+    """
+    target_dir = os.path.join(root_dir, dir)
+    src_dir = os.path.join(example_dir, dir)
+    if not os.path.exists(os.path.join(src_dir, 'README.txt')):
+        raise IOError('Example directory %s does not have a README.txt file' 
+                        % src_dir)
+    fhindex.write("""
+
+%s
+
 .. toctree::
 
-""")
-    
-    for fname in datad:
-        fhindex.write('    %s\n' % (fname[:-3]))
-    fhindex.flush()
+""" % file(os.path.join(src_dir, 'README.txt')).read())
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    for fname in sorted(os.listdir(src_dir)):
+        if fname.endswith('py'): 
+            generate_file_rst(fname, target_dir, src_dir)
+            fhindex.write('    %s\n' % (os.path.join(dir, fname[:-3])))
+
+
+def generate_file_rst(fname, target_dir, src_dir):
+    """ Generate the rst file for a given example.
+    """
+    image_name = fname[:-2] + 'png'
+    global rst_template, plot_rst_template
+    this_template = rst_template
+    short_fname = os.path.split(src_dir)[-1] + fname
+    src_file = os.path.join(src_dir, fname)
+    example_file = os.path.join(target_dir, fname)
+    shutil.copyfile(src_file, example_file)
+    if fname.startswith('plot'):
+        # generate the plot as png image if file name
+        # starts with plot and if it is more recent than an
+        # existing image.
+        if not os.path.exists(
+                            os.path.join(target_dir, 'images')):
+            os.makedirs(os.path.join(target_dir, 'images'))
+        image_file = os.path.join(target_dir, 'images', image_name)
+        if (not os.path.exists(image_file) or
+                os.stat(image_file).st_mtime <= 
+                    os.stat(src_file).st_mtime):
+            print 'plotting %s' % fname
+            import matplotlib.pyplot as plt
+            plt.close('all')
+            mplshell.magic_run(example_file)
+            plt.savefig(image_file)
+        this_template = plot_rst_template
+
+    docstring, short_desc, end_row = extract_docstring(example_file)
+
+    f = open(os.path.join(target_dir, fname[:-2] + 'rst'),'w')
+    f.write( this_template % locals())
+    f.flush()
+
 
 def setup(app):
     app.connect('builder-inited', generate_example_rst)

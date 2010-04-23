@@ -92,11 +92,12 @@ User guide
 ======================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    install
    tutorial
-   module/index
+   supervised_learning
+   unsupervised_learning
    auto_examples/index
    contribute
    .. API

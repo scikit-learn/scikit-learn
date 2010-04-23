@@ -4,9 +4,7 @@ Module reference
 .. toctree::
    :maxdepth: 2
 
-   ann
-   em
-   eature_selection
+   feature_selection
    glm
    manifold
    neighbors
