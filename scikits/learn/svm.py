@@ -261,23 +261,47 @@ class LinearSVC(object):
     """
     Linear Support Vector Classification.
 
-
-    Parameters
-    ----------
-
-    Also accepts parameter penalty, that can have values 'l1' or 'l2'
-
     Similar to SVC with parameter kernel='linear', but uses internally
     liblinear rather than libsvm, so it has more flexibility in the
     choice of penalties and loss functions and should be faster for
     huge datasets.
 
+    Parameters
+    ----------
+    X : array-like, shape = [nsamples, nfeatures]
+        Training vector, where nsamples in the number of samples and
+        nfeatures is the number of features.
+    Y : array, shape = [nsamples]
+        Target vector relative to X
+
+    loss : string, 'l1' or 'l2' (default 'l2')
+        Specifies the loss function. With 'l1' it is the standard SVM
+        loss (a.k.a. hinge Loss) while with 'l2' it is the squared loss.
+        (a.k.a. squared hinge Loss)
+
+    penalty : string, 'l1' or 'l2' (default 'l2')
+        Specifies the norm used in the penalization. The 'l2'
+        penalty is the standard used in SVC. The 'l1' leads to coef_
+        vectors that are sparse.
+
+    dual : bool, (default True)
+        Specifies the norm used in the penalization. The 'l2'
+        penalty is the standard used in SVC. The 'l1' leads to coef_
+        vectors that are sparse.
+
     TODO: wrap Cramer & Singer
+
+    References
+    ----------
+    LIBLINEAR -- A Library for Large Linear Classification
+    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
     """
     _solver_type = {'l2l2_1': 1, 'l2l2_0' : 2, 'l2l1_1' : 3, 'l1l2_0' : 5}
 
-    def __init__(self, penalty='l2', loss='l2', dual=False, eps=1e-4, C=1.0):
+    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0):
         s = penalty + loss + '_' + str(int(dual))
+        print s
         try: self.solver_type = self._solver_type[s]
         except KeyError:
             raise ValueError('Not supported set of arguments')

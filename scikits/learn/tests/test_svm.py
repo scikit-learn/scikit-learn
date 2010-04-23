@@ -89,11 +89,11 @@ def test_predict_multiclass():
     """
     this example is from libsvm/README
     """
-    X  =   [[0,	  0.1,	  0.2,	  0,	  0],
-            [ 0,  0.1,	  0.3,	 -1.2,	  0],
-            [0.4,  0,	  0,	  0,	  0],
-            [0,	  0.1,	  0,	  1.4,	  0.5],
-            [-0.1,-0.2,	  0.1,	  1.1,	  0.1]]
+    X  =   [[0,     0.1,    0.2,    0,      0],
+            [ 0,  0.1,      0.3,   -1.2,    0],
+            [0.4,  0,   0,      0,      0],
+            [0,     0.1,    0,      1.4,    0.5],
+            [-0.1,-0.2,     0.1,    1.1,    0.1]]
     Y = [1,2,1,2,3]
     test = [[0, 1, 0, -1, 0]]
     clf = svm.SVC()
@@ -124,7 +124,7 @@ def test_LinearSVC():
     assert_array_equal(clf.predict(T), true_result)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='l1')
+    clf = svm.LinearSVC(penalty='l1', dual=False)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -138,14 +138,17 @@ def test_LinearSVC():
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
-def test_coef_SVC_vs_LinearSVC():
+def test_coef_and_intercept_SVC_vs_LinearSVC():
+    """
+    Test that SVC and LinearSVC return the same coef_ and intercept_
+    """
     svc = svm.SVC(kernel='linear', C=1)
     svc.fit(X, Y)
-    print svc.coef_
-    linsvc = svm.LinearSVC(C=1)
+    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1', dual=True)
     linsvc.fit(X, Y)
-    print linsvc.coef_
 
     assert_array_equal(linsvc.coef_.shape, svc.coef_.shape)
+    assert_array_almost_equal(linsvc.coef_, svc.coef_, 5)
+    assert_array_almost_equal(linsvc.intercept_, svc.intercept_, 6)
 
     
