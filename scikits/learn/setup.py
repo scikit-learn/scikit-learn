@@ -36,7 +36,7 @@ def configuration(parent_package='',top_path=None):
     blas_info = get_info('blas_opt')
     if not blas_info:
         warnings.warn(BlasNotFoundError.__doc__)
-        liblinear_souces.append(blas_sources)
+        liblinear_sources.append(blas_sources)
 
     config.add_extension('liblinear',
                          sources=liblinear_sources,
