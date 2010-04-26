@@ -75,11 +75,10 @@ class GNB(object):
         joint_log_likelihood = []
         for i in range(np.size(self.unique_y)):
             jointi = np.log(self.proba_y[i])
-            n_ij = np.sum(-0.5 * np.log(np.pi * self.sigma[i,:]))
-            n_ij = n_ij * np.ones(np.size(X, 0))
-            n_ij -= np.sum((X - self.theta[i,:])**2, 1)
-            n_ij += np.sum(2 * self.sigma[i,:]) * np.ones(np.size(X, 0))
-            joint_log_likelihood.append(jointi + n_ij)
+            n_ij = - 0.5 * np.sum(np.log(np.pi*self.sigma[i,:]))
+            n_ij -= 0.5 * np.sum( ((X - self.theta[i,:])**2) /\
+                                    (self.sigma[i,:]),1)
+            joint_log_likelihood.append(jointi+n_ij)
         joint_log_likelihood = np.array(joint_log_likelihood).T
         proba = np.exp(joint_log_likelihood)
         proba = proba / np.sum(proba,1)[:,np.newaxis]
