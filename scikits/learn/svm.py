@@ -235,6 +235,20 @@ class SVR(BaseLibsvm):
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
 
+    @property
+    def coef_(self):
+        if _kernel_types[self.kernel] != 'linear':
+            raise NotImplementedError(
+            'coef_ is only available when using a linear kernel')
+        if self.support_.size == 0:
+            raise Exception, 'No support vector'
+
+        coef_ = []
+        for i in range(self.dual_coef_.shape[0]):
+            coef_.append(np.dot(self.dual_coef_[i], self.support_))
+        coef_ = np.array(coef_)
+        return coef_
+
 class OneClassSVM(BaseLibsvm):
     """
     Outlayer detection
