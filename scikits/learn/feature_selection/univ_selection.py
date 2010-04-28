@@ -291,6 +291,11 @@ class UnivSelection(object):
         else:
             return self.estimator.predict(x[:,support_])
 
+    def predict_proba(self, X):
+        self.support_  = self.select_func(self.p_values_, *self.select_args)
+        support_ = self.support_
+        return self.estimator.predict_proba(X[:,support_])
+
 class UnivSelect(object):
 
     def __init__(self, score_func=f_regression,
