@@ -25,7 +25,7 @@ def test_CSVC():
     the second one with three classes. We check for predicted values
     and estimated parameters.
 
-    TODO: check with different parameters of C
+    TODO: check with different parameters of C, nonlinear kernel
     """
 
     clf = svm.SVC(kernel='linear')
@@ -36,6 +36,7 @@ def test_CSVC():
     assert_array_equal(clf.intercept_, [0.])
     assert_array_equal(pred, true_result)
 
+    # the same with other dataset
     clf.fit(X2, Y2)
     pred = clf.predict(T2)
     assert_array_almost_equal(clf.dual_coef_,
@@ -66,15 +67,42 @@ def test_SVR():
     assert_array_almost_equal(clf.intercept_, [1.5])
     assert_array_almost_equal(pred, [1.1, 2.3, 2.5])
 
+    # the same with kernel='rbf'
+    clf = svm.SVR(kernel='rbf')
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+
+    assert_array_almost_equal(clf.dual_coef_,
+                              [[-0.01441007, -0.51530606, -0.01365979,
+                                 0.51569493, 0.01387495, 0.01380604]])
+    assert_raises(NotImplementedError, lambda: clf.coef_)
+    assert_array_almost_equal(clf.support_, X)
+    assert_array_almost_equal(clf.intercept_, [ 1.49997261])
+    assert_array_almost_equal(pred, [ 1.10001274,  1.86682485,  1.73300377])
+
 
 def test_oneclass():
     """
     FIXME: this does nothing
     """
-    clf = svm.OneClassSVM()
+    clf = svm.OneClassSVM(kernel='linear')
     clf.fit(X, Y)
-    assert_array_equal(Y, [1, 1, 1, 2, 2, 2])
+    pred = clf.predict(T)
 
+    assert_array_almost_equal(pred, [1, 1, 1])
+    assert_array_almost_equal(clf.intercept_, [0])
+    assert_array_almost_equal(clf.dual_coef_, [[.666, 1, .333, 1]], decimal=3)
+    assert_array_almost_equal(clf.coef_, [[0, 0]])
+
+    # the same with rbf kernel
+    clf = svm.OneClassSVM(kernel='rbf')
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+
+    assert_array_almost_equal(pred, [1, -1, -1])
+    assert_array_almost_equal(clf.intercept_, [-1.3514943])
+    assert_array_almost_equal(clf.dual_coef_, [[ 0.75061969,  0.74938031,  0.74996915,  0.75003085]])
+    assert_raises(NotImplementedError, lambda: clf.coef_)
 
 
 def test_tweak_params():
@@ -98,7 +126,8 @@ def test_tweak_params():
 
 def test_probability():
     """
-    predict probabilities.
+    Predict probabilities using SVC
+    
     FIXME: is it harmless that we obtain slightly different results on
     different operating systems ? (that is why we only check for 1
     decimal precission)
@@ -131,6 +160,9 @@ def test_error():
     assert_array_equal(clf.predict(T), [1, 2, 2])
 
 def test_LinearSVC():
+    """
+    Test basic routines using LinearSVC
+    """
     clf = svm.LinearSVC()
     clf.fit(X, Y)
 
@@ -162,7 +194,7 @@ def test_coef_and_intercept_SVC_vs_LinearSVC():
     linsvc.fit(X, Y)
 
     assert_array_equal(linsvc.coef_.shape, svc.coef_.shape)
-    assert_array_almost_equal(linsvc.coef_, svc.coef_, 5)
-    assert_array_almost_equal(linsvc.intercept_, svc.intercept_, 6)
+    assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
+    assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
 
     
