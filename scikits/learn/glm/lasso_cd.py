@@ -4,7 +4,6 @@
 # $Id$
 
 import numpy as np
-import scipy.linalg as linalg
 
 def lasso_coordinate_descent(model, X, y, maxit):
     """Coordinate descent for Lasso model"""
