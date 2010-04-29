@@ -10,7 +10,7 @@ def configuration(parent_package='', top_path=None):
     site_cfg = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
 
-    if site_cfg.has_section('scikit-learn') and site_cfg.getboolean('scikit-learn', 'use_boost'):
+    if site_cfg.has_section('boost') and site_cfg.getboolean('boost', 'use_boost'):
         # build this extension if enabled in site.cfg
         include_dirs=['../../src', '.', numpy.get_include()]
         config.add_extension('_cost_function',
