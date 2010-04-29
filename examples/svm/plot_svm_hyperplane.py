@@ -22,7 +22,7 @@ clf.fit(X, Y)
 w = np.dot(clf.dual_coef_[0], clf.support_)
 a = -w[0]/w[1]
 xx = np.linspace(-5, 5)
-yy = a*xx + (clf.rho_[0])/w[1]
+yy = a*xx - (clf.intercept_[0])/w[1]
 
 # plot the parallels to the separating hyperplane that pass through the
 # support vectors

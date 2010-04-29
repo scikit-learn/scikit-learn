@@ -1,13 +1,11 @@
 import numpy as np
 from . import libsvm, liblinear
 
-_kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
-_svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
-
 
 class BaseLibsvm(object):
     """
-    Base class for classifiers that use support vector machine.
+    Base class for classifiers that use libsvm as library for
+    support vector machine classification and regression.
 
     Should not be used directly, use derived classes instead
 
@@ -19,17 +17,23 @@ class BaseLibsvm(object):
         target vector relative to X
         It will be converted to a floating-point array.
     """
-    support_ = None
-    dual_coef_ = None
-    rho_ = None
+    support_ = np.empty((0,0), dtype=np.float64, order='C')
+    dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
+    intercept_ = np.empty(0, dtype=np.float64, order='C')
 
-    weight = np.empty(0, dtype=np.float64)
-    weight_label = np.empty(0, dtype=np.int32)
+    # only used in classification
+    nSV_ = np.empty(0, dtype=np.int32, order='C')
+
+    weight = np.empty(0, dtype=np.float64, order='C')
+    weight_label = np.empty(0, dtype=np.int32, order='C')
+
+    _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
+    _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nr_weight, nu, p, shrinking, probability):
-        self.svm = _svm_types.index(impl)
-        self.kernel = _kernel_types.index(kernel)
+        self.solver_type = self._svm_types.index(impl)
+        self.kernel = self._kernel_types.index(kernel)
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
@@ -42,9 +46,9 @@ class BaseLibsvm(object):
         self.shrinking = int(shrinking)
         self.probability = int(probability)
 
-    def fit(self, X, y):
+    def fit(self, X, Y):
         """
-        Fit the model with vectors X, Y.
+        Fit the SVM model according to the given training data and parameters.
 
         Parameters
         ----------
@@ -52,53 +56,85 @@ class BaseLibsvm(object):
             Training vector, where nsamples in the number of samples and
             nfeatures is the number of features.
         Y : array, shape = [nsamples]
-            Target vector relative to X
-
+            Target values (integers in classification, real numbers in
+            regression)
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        y = np.asanyarray(y, dtype=np.float64, order='C')
+        Y = np.asanyarray(Y, dtype=np.float64, order='C')
 
         # check dimensions
-        if X.shape[0] != y.shape[0]: raise ValueError("Incompatible shapes")
+        if X.shape[0] != Y.shape[0]: raise ValueError("Incompatible shapes")
 
         if (self.gamma == 0): self.gamma = 1.0/X.shape[0]
-        self.dual_coef_, self.rho_, self.support_, self.nclass_, self.nSV_, \
-                 self.label_, self.probA_, self.probB_ = libsvm.train_wrap(X, y,
-                 self.svm, self.kernel, self.degree, self.gamma,
-                 self.coef0, self.eps, self.C, self.nr_weight,
-                 self.weight_label, self.weight, self.nu, self.cache_size, self.p,
-                 self.shrinking, int(self.probability))
+        self.label_, self.probA_, self.probB_ = libsvm.train_wrap(X, Y,
+                 self.solver_type, self.kernel, self.degree,
+                 self.gamma, self.coef0, self.eps, self.C,
+                 self.nr_weight, self.support_, self.dual_coef_,
+                 self.intercept_, self.weight_label, self.weight,
+                 self.nSV_, self.nu, self.cache_size, self.p,
+                 self.shrinking,
+                 int(self.probability))
         return self
 
+
     def predict(self, T):
+        """
+        This function does classification or regression on an array of
+        test vectors T.
+
+        For a classification model, the predicted class for each
+        sample in T is returned.
+        For a regression model, the function value of T calculated is
+        returned.
+
+        For an one-class model, +1 or -1 is returned.
+
+        Parameters
+        ----------
+        T : array-like, shape = [nsamples, nfeatures]
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+        """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         return libsvm.predict_from_model_wrap(T, self.support_,
-                      self.dual_coef_, self.rho_, self.svm,
-                      self.kernel, self.degree, self.gamma,
-                      self.coef0, self.eps, self.C, self.nr_weight,
-                      self.weight_label, self.weight, self.nu,
-                      self.cache_size,
-                      self.p, self.shrinking, self.probability,
-                      self.nclass_, self.nSV_, self.label_,
-                      self.probA_, self.probB_)
+                      self.dual_coef_, self.intercept_,
+                      self.solver_type, self.kernel, self.degree,
+                      self.gamma, self.coef0, self.eps, self.C,
+                      self.nr_weight, self.weight_label, self.weight,
+                      self.nu, self.cache_size, self.p,
+                      self.shrinking, self.probability,
+                      self.nSV_, self.label_, self.probA_,
+                      self.probB_)
 
     def predict_proba(self, T):
+        """
+        This function does classification or regression on a test vector T
+        given a model with probability information.
+
+        For a classification model with probability information, this
+        function returns nr_class probability estimates in the array
+        prob_estimates. For regression/one-class SVM, the array prob_estimates
+        is unchanged and the returned value is the same as that of
+        svm_predict.        
+
+        Parameters
+        ----------
+        T : array-like, shape = [nsamples, nfeatures]
+        """
         if not self.probability:
             raise ValueError("probability estimates must be enabled to use this method")
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         return libsvm.predict_prob_from_model_wrap(T, self.support_,
-                      self.dual_coef_, self.rho_, self.svm,
+                      self.dual_coef_, self.intercept_, self.solver_type,
                       self.kernel, self.degree, self.gamma,
                       self.coef0, self.eps, self.C, self.nr_weight,
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
                       self.p, self.shrinking, self.probability,
-                      self.nclass_, self.nSV_, self.label_,
+                      self.nSV_, self.label_,
                       self.probA_, self.probB_)
-
-    @property
-    def intercept_(self):
-        return - self.rho_
 
 ###
 # Public API
@@ -115,6 +151,7 @@ class SVC(BaseLibsvm):
     X : array-like, shape = [nsamples, nfeatures]
         Training vector, where nsamples in the number of samples and
         nfeatures is the number of features.
+
     Y : array, shape = [nsamples]
         Target vector relative to X
 
@@ -178,27 +215,18 @@ class SVC(BaseLibsvm):
     SVR
     """
 
-    def __init__(self, impl='c_svc', kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
-                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
-                 probability=False):
+    def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, nr_weight=0,
+                 nu=0.5, p=0.1, shrinking=True, probability=False):
         BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
 
-
     @property
     def coef_(self):
-        if _kernel_types[self.kernel] != 'linear':
+        if self._kernel_types[self.kernel] != 'linear':
             raise NotImplementedError('coef_ is only available when using a linear kernel')
-        if self.support_.size == 0:
-            raise Exception, 'No support vector'
-
-        coef_ = []
-        for i in range(self.dual_coef_.shape[0]):
-            coef_.append(np.dot(self.dual_coef_[i], self.support_))
-        coef_ = np.array(coef_)
-        return coef_
+        return np.dot(self.dual_coef_, self.support_)
 
 class SVR(BaseLibsvm):
     """
@@ -227,27 +255,12 @@ class SVR(BaseLibsvm):
     --------
     SVC
     """
-    def __init__(self, impl='epsilon_svr', kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
-                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
-                 probability=False):
-        BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, nr_weight=0,
+                 nu=0.5, p=0.1, shrinking=True, probability=False):
+        BaseLibsvm.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
-
-    @property
-    def coef_(self):
-        if _kernel_types[self.kernel] != 'linear':
-            raise NotImplementedError(
-            'coef_ is only available when using a linear kernel')
-        if self.support_.size == 0:
-            raise Exception, 'No support vector'
-
-        coef_ = []
-        for i in range(self.dual_coef_.shape[0]):
-            coef_.append(np.dot(self.dual_coef_[i], self.support_))
-        coef_ = np.array(coef_)
-        return coef_
 
 class OneClassSVM(BaseLibsvm):
     """
@@ -261,12 +274,10 @@ class OneClassSVM(BaseLibsvm):
     predict(X) : array
         Predict using the model.
     """
-    def __init__(self, kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, cache_size=100.0, eps=1e-3,
-                 C=1.0, nr_weight=0, nu=0.5, p=0.1, shrinking=True,
-                 probability=False):
-        impl = 'one_class'
-        BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, nr_weight=0,
+                 nu=0.5, p=0.1, shrinking=True, probability=False):
+        BaseLibsvm.__init__(self, 'one_class', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
 
@@ -311,33 +322,36 @@ class LinearSVC(object):
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
     """
-    _solver_type = {'l2l2_1': 1, 'l2l2_0' : 2, 'l2l1_1' : 3, 'l1l2_0' : 5}
 
-    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0):
-        s = penalty + loss + '_' + str(int(dual))
-        print s
-        try: self.solver_type = self._solver_type[s]
-        except KeyError:
-            raise ValueError('Not supported set of arguments')
-        self.eps = eps
-        self.C = C
-
-    _penalties = {'l2': 0, 'l1' : 6}
     _weight_label = np.empty(0, dtype=np.int32)
     _weight = np.empty(0, dtype=np.float64)
+
+    _solver_type_dict = {
+        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
+        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
+        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
+        'PL1_LL2_D0' : 5, # L2 penalty, L1 Loss, primal problem
+        }
+
+    def __init__(self, penalty='L2', loss='L2', dual=True, eps=1e-4, C=1.0):
+        self.solver_type = 'P' + penalty + '_L' + loss + '_D' + str(int(dual))
+        if not (self.solver_type in self._solver_type_dict.keys()):
+            raise ValueError('Not supported set of arguments: ' + self.solver_type)
+        self.eps = eps
+        self.C = C
 
     def fit(self, X, Y):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.coef_with_intercept_, self.label_, self.bias_ = liblinear.train_wrap(X,
-                                          Y, self.solver_type, self.eps, 1.0,
-                                          self.C, 0,
-                                          self._weight_label,
-                                          self._weight)
+        self.raw_coef, self.label_, self.bias_ = \
+                       liblinear.train_wrap(X, Y,
+                       self._solver_type_dict[self.solver_type],
+                       self.eps, 1.0, self.C, 0, self._weight_label,
+                       self._weight)
 
     def predict(self, T):
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        return liblinear.predict_wrap(T, self.coef_with_intercept_, self.solver_type,
+        return liblinear.predict_wrap(T, self.raw_coef, self._solver_type_dict[self.solver_type],
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
@@ -348,9 +362,9 @@ class LinearSVC(object):
 
     @property
     def intercept_(self):
-        return self.coef_with_intercept_[:,-1]
+        return self.raw_coef[:,-1]
 
     @property
     def coef_(self):
-        return self.coef_with_intercept_[:,:-1]
+        return self.raw_coef[:,:-1]
 

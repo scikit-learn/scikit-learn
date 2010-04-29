@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "svm.h"
 #include <numpy/arrayobject.h>
 
@@ -189,7 +190,9 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
         t += sv_coef_strides[0]; 
     }
 
-    memcpy(model->rho, rho, m * sizeof(double));
+    for (i=0; i<m; ++i) 
+        (model->rho)[i] = -((double *) rho)[i];
+
     /* 
      * just to avoid segfaults, these features are not wrapped but
      * svm_destroy_model will try to free them.
@@ -244,9 +247,17 @@ void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
     }
 }
 
-void copy_rho(char *data, struct svm_model *model, npy_intp *dims)
+void copy_intercept(char *data, struct svm_model *model, npy_intp *dims)
 {
-    memcpy(data, model->rho, dims[0] * sizeof(double));
+    /* intercept = -rho */
+    int i, n = dims[0];
+    double t, *ddata = (double *) data;
+    for (i=0; i<n; ++i) {
+        t = model->rho[i];
+        /* we do this to avoid ugly -0.0 */
+        *ddata = (t != 0) ? -t : 0;
+        ++ddata;
+    }
 }
 
 /* 
@@ -254,19 +265,18 @@ void copy_rho(char *data, struct svm_model *model, npy_intp *dims)
  * structures, so we have to do the conversion on the fly and also
  * iterate fast over data.
  */
-void copy_SV(char *data, struct svm_model *model, npy_intp *strides)
+void copy_SV(char *data, struct svm_model *model, npy_intp *dims)
 {
-    register int i, j;
-    char *t = data;
-    int k, n = model->l;
-    npy_intp step = strides[1];
+    int i, j, k, n = model->l;
+    double *t = (double *) data;
+    int step = dims[1] * sizeof(double);
     for (i=0; i<n; ++i) {
-        k = model->SV[i][0].index;
-        for(j=0; k >= 0; ++j) {
-            * ((double *) (t + (k-1)*step)) = model->SV[i][j].value;
-            k = model->SV[i][j+1].index;
+        k = model->SV[i][0].index - 1;
+        for(j=0; k >=0 ; ++j) {
+            t[k] = model->SV[i][j].value;
+            k = model->SV[i][j+1].index - 1;
         }
-        t += strides[0];
+        t += dims[1];
     }
 }
 
@@ -326,10 +336,9 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
     return 0;
 }
 
-int copy_prob_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
+int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict_dims,
                  char *dec_values)
 {
-    double *t = (double *) dec_values;
     register int i;
     int n, m;
     n = predict_dims[0];

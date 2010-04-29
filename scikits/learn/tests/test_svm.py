@@ -4,30 +4,79 @@ from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
                           assert_raises
 
-# Data is just 6 separable points in the plane
-X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
-Y = np.array( [1, 1, 1, 2, 2, 2])
-T = np.array( [[-1,-1], [2, 2], [3, 2]] )
+# test sample 1
+X =  [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]]
+Y =  [1, 1, 1, 2, 2, 2]
+T =  [[-1,-1], [2, 2], [3, 2]]
 true_result = [1, 2, 2]
 
-def test_svm_params():
+# test sample 2
+X2 = [[0, 0, 0], [1, 1, 1], [2, 0, 0, ],
+      [0, 0, 2], [3, 3, 3]]
+Y2 = [1, 2, 2, 2, 3]
+T2 = [[-1, -1, -1], [1, 1, 1], [2, 2, 2]]
+true_result2 = [1, 2, 3]
+
+def test_CSVC():
     """
     C_SVC algorithm and linear kernel.
 
-    This checks that we retrieve the correct parameters.
+    We test this on two datasets, the first one with two classes and
+    the second one with three classes. We check for predicted values
+    and estimated parameters.
+
+    TODO: check with different parameters of C
     """
 
-    clf =  svm.SVC(kernel='linear')
+    clf = svm.SVC(kernel='linear')
     clf.fit(X, Y)
-
+    pred = clf.predict(T)
     assert_array_equal(clf.dual_coef_, [[ 0.25, -.25]])
     assert_array_equal(clf.support_, [[-1,-1], [1, 1]])
-    assert_array_equal(clf.rho_, [0.])
+    assert_array_equal(clf.intercept_, [0.])
+    assert_array_equal(pred, true_result)
 
-def test_fit():
-    clf = svm.SVC()
-    clf.fit([[1,2]], [0])
-    assert_array_equal(clf.predict([[-1, -1]]), [0.])
+    clf.fit(X2, Y2)
+    pred = clf.predict(T2)
+    assert_array_almost_equal(clf.dual_coef_,
+                              [[ .99, -.006, -.49, -.49, -.07],
+                               [ .072, .16, 0, 0, -.16]], decimal=2)
+    assert_array_equal(clf.support_,
+                       [[ 0.,  0.,  0.],
+                        [ 1.,  1.,  1.],
+                        [ 2.,  0.,  0.],
+                        [ 0.,  0.,  2.],
+                        [ 3.,  3.,  3.]])
+    assert_array_equal(pred, true_result2)
+
+
+def test_SVR():
+    """
+    Test SVM regression
+    TODO: simplify this. btw, is it correct ?
+    """
+
+    clf = svm.SVR()
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+
+    assert_array_almost_equal(clf.dual_coef_,
+                              [[-0.01441007, -0.51530605, -0.01365979,
+                                0.51569493, 0.01387495, 0.01380604]])
+    print clf.support_
+    assert_array_almost_equal(clf.support_, X)
+    assert_array_almost_equal(pred,[ 1.10001274,  1.86682485,  1.73300377])
+
+
+def test_oneclass():
+    """
+    FIXME: this does nothing
+    """
+    clf = svm.OneClassSVM()
+    clf.fit(X, Y)
+    assert_array_equal(Y, [1, 1, 1, 2, 2, 2])
+
+
 
 def test_tweak_params():
     """
@@ -47,6 +96,23 @@ def test_tweak_params():
     clf.dual_coef_ = np.array([[.0, 1.]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [2])
 
+
+def test_probability():
+    """
+    predict probabilities.
+    FIXME: is it harmless that we obtain slightly different results on
+    different operating systems ? (that is why we only check for 1
+    decimal precission)
+    TODO: test also on an example with intercept != 0
+    """
+    clf = svm.SVC(probability=True)
+    clf.fit(X, Y)
+    assert_array_almost_equal(clf.predict_proba(T),
+                              [[ 0.81936054,  0.18063946],
+                               [ 0.18923853,  0.81076147],
+                               [ 0.27698362,  0.72301638]],
+                              decimal=1)
+
 def test_error():
     """
     Test that it gives proper exception on deficient input
@@ -58,65 +124,12 @@ def test_error():
     Y2 = Y[:-1] # wrong dimensions for labels
     assert_raises(ValueError, svm.SVC, X, Y2)
 
-def test_predict():
-    clf = svm.SVC()
-    clf.fit(X, Y)
-    assert_array_equal(clf.predict(T), true_result)
-
-
-def test_probability():
-    """
-    predict probabilities
-    """
-    clf = svm.SVC(probability=True)
-    clf.fit(X, Y)
-    assert_array_almost_equal(clf.predict_proba(T),
-                              [[ 0.81936054,  0.18063946],
-                               [ 0.18923853,  0.81076147],
-                               [ 0.27698362,  0.72301638]])
-
-def test_noncontiguous():
-    """
-    Test with arrays that are non-contiguous.
-    """
-    Xt = X.transpose()
+    # Test with arrays that are non-contiguous.
+    Xt = np.array(X).transpose()
     Yt = [1, 2]
     clf = svm.SVC()
     clf.fit(Xt, Yt)
     assert_array_equal(clf.predict(T), [1, 2, 2])
-
-def test_predict_multiclass():
-    """
-    this example is from libsvm/README
-    """
-    X  =   [[0,     0.1,    0.2,    0,      0],
-            [ 0,  0.1,      0.3,   -1.2,    0],
-            [0.4,  0,   0,      0,      0],
-            [0,     0.1,    0,      1.4,    0.5],
-            [-0.1,-0.2,     0.1,    1.1,    0.1]]
-    Y = [1,2,1,2,3]
-    test = [[0, 1, 0, -1, 0]]
-    clf = svm.SVC()
-    clf.fit(X, Y)
-    result = clf.predict(test)
-    assert_array_equal(result, [2])
-
-def test_regression():
-    """
-    Test SVM regression
-    TODO: simplify this. btw, is it correct ?
-    """
-    clf = svm.SVR()
-    clf.fit([[0,0], [1, 1]], [0, 1])
-    assert_array_almost_equal(clf.predict([[0,0], [1, 1]]), [.099999, .9])
-
-def test_oneclass():
-    """
-    FIXME: this does nothing
-    """
-    clf = svm.OneClassSVM()
-    clf.fit(X, Y)
-    assert_array_equal(Y, [1, 1, 1, 2, 2, 2])
 
 def test_LinearSVC():
     clf = svm.LinearSVC()
@@ -124,17 +137,17 @@ def test_LinearSVC():
     assert_array_equal(clf.predict(T), true_result)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='l1', dual=False)
+    clf = svm.LinearSVC(penalty='L1', dual=False)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
-    clf = svm.LinearSVC(penalty='l2', dual=True)
+    clf = svm.LinearSVC(penalty='L2', dual=True)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     #
-    clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True)
+    clf = svm.LinearSVC(penalty='L2', loss='L1', dual=True)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -144,7 +157,7 @@ def test_coef_and_intercept_SVC_vs_LinearSVC():
     """
     svc = svm.SVC(kernel='linear', C=1)
     svc.fit(X, Y)
-    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1', dual=True)
+    linsvc = svm.LinearSVC(C=1, penalty='L2', loss='L1', dual=True)
     linsvc.fit(X, Y)
 
     assert_array_equal(linsvc.coef_.shape, svc.coef_.shape)

@@ -62,11 +62,11 @@ cdef extern from "libsvm_helper.c":
     svm_problem *set_problem(char *, char *, np.npy_intp *)
     svm_model *set_model(svm_parameter *, int, char *, np.npy_intp *, np.npy_intp *,
                          char *, char *, char *, char *, char *, char *)
-    void copy_sv_coef (char *, svm_model *, np.npy_intp *)
-    void copy_rho     (char *, svm_model *, np.npy_intp *)
-    void copy_SV      (char *, svm_model *, np.npy_intp *)
+    void copy_sv_coef   (char *, svm_model *, np.npy_intp *)
+    void copy_intercept (char *, svm_model *, np.npy_intp *)
+    void copy_SV        (char *, svm_model *, np.npy_intp *)
     int  copy_predict (char *, svm_model *, np.npy_intp *, char *)
-    int  copy_prob_predict (char *, svm_model *, np.npy_intp *, char *)
+    int  copy_predict_proba (char *, svm_model *, np.npy_intp *, char *)
     void copy_nSV     (char *, svm_model *)
     void copy_label   (char *, svm_model *)
     void copy_probA(char *, svm_model *, np.npy_intp *)
@@ -86,12 +86,16 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                   np.ndarray[np.float64_t, ndim=1, mode='c'] Y, int
                   svm_type, int kernel_type, int degree, double gamma,
                   double coef0, double eps, double C, int nr_weight,
-                  np.ndarray[np.int32_t, ndim=1] weight_label,
-                  np.ndarray[np.float64_t, ndim=1] weight, double nu,
-                  double cache_size, double p, int shrinking, int
-                  probability):
+                  np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+                  np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+                  np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
+                  np.ndarray[np.int32_t,   ndim=1, mode='c'] weight_label,
+                  np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+                  np.ndarray[np.int32_t,   ndim=1, mode='c'] nclass_SV,
+                  double nu, double cache_size, double p, int
+                  shrinking, int probability):
     """
-    Wrapper for svm_train in libsvm
+    Wrap svm_train from libsvm
 
     Parameters
     ----------
@@ -100,7 +104,9 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     Y: array, dtype=float, size=[N]
         target vector
 
-    Optional Parameters
+    ...
+
+    Notes
     -------------------
     See scikits.learn.svm.predict for a complete list of parameters.
 
@@ -108,7 +114,7 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     ------
     sv_coef: array of coeficients for support vector in decision
             function (aka alphas)
-    rho : array
+    intercept : array
         constants in decision functions
     SV : array-like
         support vectors
@@ -141,29 +147,29 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     # call svm_train, this does the real work
     model = svm_train(problem, param)
 
-    cdef int nSV = get_l(model)
+    cdef int SV_len = get_l(model)
     cdef int nr = get_nr(model)
 
-    # copy model.sv_coef 
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
-    sv_coef = np.empty((nr-1, nSV))
+    # copy model.sv_coef
+    # we create a new array instead of resizing, otherwise
+    # it would not erase previous information
+    sv_coef.resize((nr-1, SV_len), refcheck=False)
     copy_sv_coef(sv_coef.data, model, sv_coef.strides)
 
-    # copy model.rho
-    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] rho 
-    rho = np.empty(nr*(nr-1)/2)
-    copy_rho(rho.data, model, rho.shape)
+    # copy model.rho into the intercept
+    # the intercept is just model.rho but with sign changed
+    intercept.resize(nr*(nr-1)/2, refcheck=False)
+    copy_intercept(intercept.data, model, intercept.shape)
 
     # copy model.SV
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] SV
-    SV = np.zeros((nSV, X.shape[1]))
-    copy_SV(SV.data, model, SV.strides)
+    # we erase any previous information in SV
+    SV.resize((0,0), refcheck=False)
+    SV.resize((SV_len, X.shape[1]), refcheck=False)
+    copy_SV(SV.data, model, SV.shape)
 
     # copy model.nSV
-    # name is a bit confusing since we used nSV to denote the total number
-    # of support vectors
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] nclass_SV
-    nclass_SV = np.empty((nr), dtype=np.int32)
+    # TODO: do only in classification
+    nclass_SV.resize(nr, refcheck=False)
     copy_nSV(nclass_SV.data, model)
 
     # copy label
@@ -185,20 +191,20 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     free_problem(problem)
     free_param(param)
 
-    return sv_coef, rho, SV, nr, nclass_SV, label, probA, probB
+    return label, probA, probB
 
 
 def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
                             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
                             np.ndarray[np.float64_t, ndim=1, mode='c']
-                            rho, int svm_type, int kernel_type, int
+                            intercept, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
                             eps, double C, int nr_weight,
                             np.ndarray[np.int32_t, ndim=1] weight_label,
                             np.ndarray[np.float64_t, ndim=1] weight,
                             double nu, double cache_size, double p, int
-                            shrinking, int probability, int nr_class,
+                            shrinking, int probability,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] label,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
@@ -236,9 +242,10 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                           coef0, nu, cache_size, C, eps, p, shrinking,
                           probability, nr_weight, weight_label.data,
                           weight.data)
-    model = set_model(param, nr_class, SV.data, SV.shape, sv_coef.strides,
-                      sv_coef.data, rho.data, nSV.data, label.data,
-                      probA.data, probB.data)
+
+    model = set_model(param, nSV.shape[0], SV.data, SV.shape,
+                      sv_coef.strides, sv_coef.data, intercept.data,
+                      nSV.data, label.data, probA.data, probB.data)
     #TODO: use check_model
     dec_values = np.empty(T.shape[0])
     if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
@@ -254,13 +261,13 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
                             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
                             np.ndarray[np.float64_t, ndim=1, mode='c']
-                            rho, int svm_type, int kernel_type, int
+                            intercept, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
                             eps, double C, int nr_weight,
                             np.ndarray[np.int32_t, ndim=1] weight_label,
                             np.ndarray[np.float_t, ndim=1] weight,
                             double nu, double cache_size, double p, int
-                            shrinking, int probability, int nr_class,
+                            shrinking, int probability,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] label,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
@@ -298,13 +305,13 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                           coef0, nu, cache_size, C, eps, p, shrinking,
                           probability, nr_weight, weight_label.data,
                           weight.data)
-    model = set_model(param, nr_class, SV.data, SV.shape, sv_coef.strides,
-                      sv_coef.data, rho.data, nSV.data, label.data,
+    model = set_model(param, nSV.shape[0], SV.data, SV.shape, sv_coef.strides,
+                      sv_coef.data, intercept.data, nSV.data, label.data,
                       probA.data, probB.data)
 
     cdef int nr = get_nr(model)    
     dec_values = np.empty((T.shape[0], nr), dtype=np.float64)
-    if copy_prob_predict(T.data, model, T.shape, dec_values.data) < 0:
+    if copy_predict_proba(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
     # free model and param
     free_model_SV(model)
