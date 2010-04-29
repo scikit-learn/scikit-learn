@@ -56,16 +56,15 @@ def test_SVR():
     TODO: simplify this. btw, is it correct ?
     """
 
-    clf = svm.SVR()
+    clf = svm.SVR(kernel='linear')
     clf.fit(X, Y)
     pred = clf.predict(T)
 
-    assert_array_almost_equal(clf.dual_coef_,
-                              [[-0.01441007, -0.51530605, -0.01365979,
-                                0.51569493, 0.01387495, 0.01380604]])
-    print clf.support_
-    assert_array_almost_equal(clf.support_, X)
-    assert_array_almost_equal(pred,[ 1.10001274,  1.86682485,  1.73300377])
+    assert_array_almost_equal(clf.dual_coef_, [[-0.1, 0.1]])
+    assert_array_almost_equal(clf.coef_, [[0.2, 0.2]])
+    assert_array_almost_equal(clf.support_, [[-1, -1], [1, 1]])
+    assert_array_almost_equal(clf.intercept_, [1.5])
+    assert_array_almost_equal(pred, [1.1, 2.3, 2.5])
 
 
 def test_oneclass():
@@ -134,7 +133,9 @@ def test_error():
 def test_LinearSVC():
     clf = svm.LinearSVC()
     clf.fit(X, Y)
+
     assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.intercept_, [0])
 
     # the same with l1 penalty
     clf = svm.LinearSVC(penalty='L1', dual=False)

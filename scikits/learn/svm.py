@@ -8,14 +8,6 @@ class BaseLibsvm(object):
     support vector machine classification and regression.
 
     Should not be used directly, use derived classes instead
-
-    Parameters
-    ----------
-    X : array-like, shape = [N, D]
-        It will be converted to a floating-point array.
-    y : array, shape = [N]
-        target vector relative to X
-        It will be converted to a floating-point array.
     """
     support_ = np.empty((0,0), dtype=np.float64, order='C')
     dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
@@ -83,9 +75,8 @@ class BaseLibsvm(object):
         test vectors T.
 
         For a classification model, the predicted class for each
-        sample in T is returned.
-        For a regression model, the function value of T calculated is
-        returned.
+        sample in T is returned.  For a regression model, the function
+        value of T calculated is returned.
 
         For an one-class model, +1 or -1 is returned.
 
@@ -135,6 +126,14 @@ class BaseLibsvm(object):
                       self.p, self.shrinking, self.probability,
                       self.nSV_, self.label_,
                       self.probA_, self.probB_)
+
+
+    @property
+    def coef_(self):
+        if self._kernel_types[self.kernel] != 'linear':
+            raise NotImplementedError('coef_ is only available when using a linear kernel')
+        return np.dot(self.dual_coef_, self.support_)
+
 
 ###
 # Public API
@@ -221,12 +220,6 @@ class SVC(BaseLibsvm):
         BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nr_weight, nu, p,
                          shrinking, probability)
-
-    @property
-    def coef_(self):
-        if self._kernel_types[self.kernel] != 'linear':
-            raise NotImplementedError('coef_ is only available when using a linear kernel')
-        return np.dot(self.dual_coef_, self.support_)
 
 class SVR(BaseLibsvm):
     """
