@@ -96,13 +96,12 @@ class LogisticRegression(object):
     def intercept_(self):
         if self.bias_ > 0:
             return self.raw_coef_[:,-1]
-        else:
-            raise ValueError('intercept_ not estimated')
+        return 0.0
+            
 
     @property
     def coef_(self):
         if self.bias_ > 0:
             return self.raw_coef_[:,:-1]
-        else:
-            return self.raw_coef_
+        return self.raw_coef_
 

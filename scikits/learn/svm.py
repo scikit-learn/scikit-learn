@@ -355,9 +355,13 @@ class LinearSVC(object):
 
     @property
     def intercept_(self):
-        return self.raw_coef[:,-1]
+        if self.bias_ > 0:
+            return self.raw_coef[:,-1]
+        return 0.0
 
     @property
     def coef_(self):
-        return self.raw_coef[:,:-1]
+        if self.bias_ > 0:
+            return self.raw_coef[:,:-1]
+        return self.raw_coef_
 

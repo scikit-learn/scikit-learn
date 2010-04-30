@@ -8,10 +8,18 @@ X = [[0, 0], [0, 1], [1, 1]]
 Y1 = [0,1,1]
 Y2 = [0,1,2]
 
+
 def test_predict_2_classes():
     clf = logistic.LogisticRegression()
     clf.fit(X, Y1)
+    assert_array_almost_equal(clf.coef_, [[-0.27501564, -0.60803562]])
+    assert_array_almost_equal(clf.intercept_, [-0.08642295])
     assert_array_equal(clf.predict([[-1, -1], [0, 1],]), [0, 1])
+
+    clf = logistic.LogisticRegression(intercept=False)
+    clf.fit(X, Y1)
+    assert_array_almost_equal(clf.coef_, [[-0.28540916, -0.63236105]])
+    assert_array_almost_equal(clf.intercept_, [0])
 
 def test_predict_3_classes():
     clf = logistic.LogisticRegression()
@@ -22,7 +30,7 @@ def test_predict_proba():
     clf = logistic.LogisticRegression()
     clf.fit(X, Y2)
     assert_array_almost_equal(clf.predict_proba([[1, 1]]),
-                              [[ 0.23148573,  0.31760051,  0.45091376]])
+                              [[ 0.21490268,  0.32639437,  0.45870294]])
 
     clf = logistic.LogisticRegression(penalty='l1')
     clf.fit(X, Y2)

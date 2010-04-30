@@ -13,8 +13,9 @@
  * Special care must be taken with indices, since libsvm indices start
  * at 1 and not at 0.
  *
+ * If bias is > 0, we append an item at the end.
  */
-struct feature_node **dense_to_sparse (double *x, npy_intp *dims)
+struct feature_node **dense_to_sparse (double *x, npy_intp *dims, double bias)
 {
     struct feature_node **sparse;
     register int i, j;              /* number of nonzero elements in row i */
@@ -40,53 +41,15 @@ struct feature_node **dense_to_sparse (double *x, npy_intp *dims)
         }
 
         /* set bias element */
-        T->value = 1.0;
-        T->index = j;
-        ++ T;
-
-        /* set sentinel */
-        T->index = -1;
-        ++ T;
-
-        /* allocate memory and copy collected items*/
-        count = T - temp;
-        sparse[i] = (struct feature_node *) malloc(count * sizeof(struct feature_node));
-        if (sparse[i] == NULL) return NULL;
-        memcpy(sparse[i], temp, count * sizeof(struct feature_node));
-    }
-
-    free(temp);
-    return sparse;
-}
-
-struct feature_node **dense_to_sparse_nobias (double *x, npy_intp *dims)
-{
-    struct feature_node **sparse;
-    register int i, j;              /* number of nonzero elements in row i */
-    struct feature_node *temp;          /* stack for nonzero elements */
-    struct feature_node *T;             /* pointer to the top of the stack */
-    int count;
-
-    sparse = (struct feature_node **) malloc (dims[0] * sizeof(struct feature_node *));
-    temp = (struct feature_node *) malloc ((dims[1]+1) * sizeof(struct feature_node));
-
-    if (sparse == NULL || temp == NULL) return NULL;
-
-    for (i=0; i<dims[0]; ++i) {
-        T = temp; /* reset stack pointer */
-
-        for (j=1; j<=dims[1]; ++j) {
-            T->value = *x;
-            if (T->value != 0) {
+        if (bias > 0) {
+                T->value = 1.0;
                 T->index = j;
-                ++T;
+                ++ T;
             }
-            ++x; /* go to next element */
-        }
 
         /* set sentinel */
         T->index = -1;
-        ++T;
+        ++ T;
 
         /* allocate memory and copy collected items*/
         count = T - temp;
@@ -98,6 +61,7 @@ struct feature_node **dense_to_sparse_nobias (double *x, npy_intp *dims)
     free(temp);
     return sparse;
 }
+
 
 struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
 {
@@ -113,7 +77,7 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
         problem->n = (int) dims[1];
     }
     problem->y = (int *) Y;
-    problem->x = dense_to_sparse((double *) X, dims); /* TODO: free */
+    problem->x = dense_to_sparse((double *) X, dims, bias); /* TODO: free */
     problem->bias = bias;
     if (problem->x == NULL) { 
         free(problem);
@@ -191,7 +155,7 @@ int copy_predict(char *train, struct model *model, npy_intp *train_dims,
     register int i, n;
     struct feature_node **train_nodes;
     n = train_dims[0];
-    train_nodes = dense_to_sparse((double *) train, train_dims);
+    train_nodes = dense_to_sparse((double *) train, train_dims, -1.0);
     if (train_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
@@ -214,7 +178,7 @@ int copy_prob_predict(char *predict, struct model *model, npy_intp *predict_dims
     int n, m;
     n = predict_dims[0];
     m = model->nr_class;
-    predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+    predict_nodes = dense_to_sparse((double *) predict, predict_dims, -1.0);
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
