@@ -17,6 +17,7 @@ Y2 = [1, 2, 2, 2, 3]
 T2 = [[-1, -1, -1], [1, 1, 1], [2, 2, 2]]
 true_result2 = [1, 2, 3]
 
+
 def test_CSVC():
     """
     C_SVC algorithm and linear kernel.
@@ -54,7 +55,6 @@ def test_CSVC():
 def test_SVR():
     """
     Test SVM regression
-    TODO: simplify this. btw, is it correct ?
     """
 
     clf = svm.SVR(kernel='linear')
@@ -83,19 +83,9 @@ def test_SVR():
 
 def test_oneclass():
     """
-    FIXME: this does nothing
+    Test OneClassSVM
     """
-    clf = svm.OneClassSVM(kernel='linear')
-    clf.fit(X, Y)
-    pred = clf.predict(T)
-
-    assert_array_almost_equal(pred, [1, 1, 1])
-    assert_array_almost_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.dual_coef_, [[.666, 1, .333, 1]], decimal=3)
-    assert_array_almost_equal(clf.coef_, [[0, 0]])
-
-    # the same with rbf kernel
-    clf = svm.OneClassSVM(kernel='rbf')
+    clf = svm.OneClassSVM()
     clf.fit(X, Y)
     pred = clf.predict(T)
 
