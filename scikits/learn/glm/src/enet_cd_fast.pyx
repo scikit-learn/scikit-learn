@@ -4,16 +4,20 @@
 # $Id$
 
 cimport numpy as np
+cimport cython
+
 import numpy as np
 import scipy.linalg as linalg
-cimport cython
 
 cdef extern from "math.h":
     double fabs(double f)
     double sqrt(double f)
     double exp(double f)
-    double fmax(double f1, double f2)
     double rand()
+
+cdef inline double fmax(double x, double y):
+    if x > y: return x
+    return y
 
 cdef inline double fsign(double f):
     if f == 0:
@@ -25,8 +29,8 @@ cdef inline double fsign(double f):
 
 ctypedef np.float64_t DOUBLE
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def enet_coordinate_descent(model,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
@@ -36,8 +40,8 @@ def enet_coordinate_descent(model,
     """
 
     # get the data information into easy vars
-    cdef float alpha = model.alpha
-    cdef float beta = model.beta
+    cdef double alpha = model.alpha
+    cdef double beta = model.beta
     cdef np.ndarray[DOUBLE, ndim=1] w = model.coef_
     callbacks = model.callbacks
 
@@ -53,8 +57,8 @@ def enet_coordinate_descent(model,
     R[:nsamples] = y - np.dot(X, w)
     R[nsamples:] = - sqrt(beta) * w
 
-    cdef float tmp
-    cdef float w_ii
+    cdef double tmp
+    cdef double w_ii
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter

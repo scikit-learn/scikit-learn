@@ -7,6 +7,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 PyObject* compute_ss_frame_1d_py(PyObject* dum, PyObject *arg);

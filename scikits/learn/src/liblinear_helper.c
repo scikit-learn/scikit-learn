@@ -142,7 +142,7 @@ struct model * set_model(struct parameter *param, char *coef, npy_intp *dims,
                          char *label, double bias)
 {
     npy_int len_w = dims[0] * dims[1];
-    int m = (int) dims[0];
+    int m = (int) dims[0], k = (int) dims[1];
     struct model *model;
 
     if (m == 1) m = 2; /* liblinear collapses the weight vector in the case of two classes */
@@ -153,7 +153,6 @@ struct model * set_model(struct parameter *param, char *coef, npy_intp *dims,
     memcpy(model->label, label, m * sizeof(int));
     memcpy(model->w, coef, len_w * sizeof(double));
 
-    int k =  (int) dims[1];
     model->nr_feature = bias > 0 ? k - 1 : k;
 
     model->nr_class = m;
@@ -190,8 +189,8 @@ int copy_predict(char *train, struct model *model, npy_intp *train_dims,
 {
     int *t = (int *) dec_values;
     register int i, n;
-    n = train_dims[0];
     struct feature_node **train_nodes;
+    n = train_dims[0];
     train_nodes = dense_to_sparse((double *) train, train_dims);
     if (train_nodes == NULL)
         return -1;
@@ -209,12 +208,12 @@ int copy_prob_predict(char *predict, struct model *model, npy_intp *predict_dims
                  char *dec_values)
 {
     double *t = (double *) dec_values;
+    struct feature_node **predict_nodes;
     register int i;
     double temp;
     int n, m;
     n = predict_dims[0];
     m = model->nr_class;
-    struct feature_node **predict_nodes;
     predict_nodes = dense_to_sparse((double *) predict, predict_dims);
     if (predict_nodes == NULL)
         return -1;

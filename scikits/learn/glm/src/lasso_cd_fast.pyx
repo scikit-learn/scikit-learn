@@ -12,8 +12,11 @@ cdef extern from "math.h":
     double fabs(double f)
     double sqrt(double f)
     double exp(double f)
-    double fmax(double f1, double f2)
     double rand()
+
+cdef inline double fmax(double x, double y):
+    if x > y: return x
+    return y
 
 cdef inline double fsign(double f):
     if f == 0:
@@ -36,7 +39,7 @@ def lasso_coordinate_descent(model,
     """
 
     # get the data information into easy vars
-    cdef float alpha = model.alpha
+    cdef double alpha = model.alpha
     cdef np.ndarray[DOUBLE, ndim=1] w = model.coef_
     callbacks = model.callbacks
 
@@ -47,8 +50,8 @@ def lasso_coordinate_descent(model,
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0) # Compute norms of the columns of X
     cdef np.ndarray[DOUBLE, ndim=1] R = y - np.dot(X, w) # Init residual
 
-    cdef float tmp
-    cdef float w_ii
+    cdef double tmp
+    cdef double w_ii
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter

@@ -151,14 +151,16 @@ struct svm_problem * set_problem(char *X,char *Y, npy_intp *dims)
  * TODO: check that malloc was successful.
  */
 struct svm_model *set_model(struct svm_parameter *param, int nr_class,
-                            char *SV, npy_intp *SV_dims, npy_intp *sv_coef_strides, 
+                            char *SV, npy_intp *SV_dims, 
+			    npy_intp *sv_coef_strides, 
                             char *sv_coef, char *rho, char *nSV, char *label, 
                             char *probA, char *probB)
 {
-    int i;
-    char *t = sv_coef;
-    int m = nr_class*(nr_class-1)/2;
     struct svm_model *model;
+    char *t = sv_coef;
+    int i, m;
+
+    m = nr_class*(nr_class-1)/2;
 
     model = (struct svm_model *)  malloc(sizeof(struct svm_model));
     model->nSV =     (int *)      malloc(nr_class * sizeof(int));
@@ -322,8 +324,8 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
 {
     double *t = (double *) dec_values;
     register int i, n;
-    n = predict_dims[0];
     struct svm_node **predict_nodes;
+    n = predict_dims[0];
     predict_nodes = dense_to_sparse((double *) predict, predict_dims);
     if (predict_nodes == NULL)
         return -1;
@@ -341,9 +343,9 @@ int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict
 {
     register int i;
     int n, m;
+    struct svm_node **predict_nodes;
     n = predict_dims[0];
     m = model->nr_class;
-    struct svm_node **predict_nodes;
     predict_nodes = dense_to_sparse((double *) predict, predict_dims);
     if (predict_nodes == NULL)
         return -1;
@@ -364,8 +366,8 @@ int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict
  */
 int free_problem(struct svm_problem *problem)
 {
-    if (problem == NULL) return -1;
     register int i;
+    if (problem == NULL) return -1;
     for (i=problem->l-1; i>=0; --i) free (problem->x[i]);
     free (problem->x);
     return 0;
