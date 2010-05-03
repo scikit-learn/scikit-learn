@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Experimental Psychology Maintainers <pkg-exppsy-maintainers@lists.alioth.debian.org>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>, Michael Hanke <michael.hanke@gmail.com>
-Build-Depends: debhelper (>= 7.0.50), python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy-ext, python-scipy, libsvm-dev (>= 2.84.0), python-sphinx, graphviz, python-nose, python-setuptools, cython, python-matplotlib, ipython, swig, libboost1.42-dev
+Build-Depends: debhelper (>= 7.0.50), python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy-ext, python-scipy, libsvm-dev (>= 2.84.0), python-sphinx, graphviz, python-nose, python-setuptools, cython, python-matplotlib, ipython, swig, libboost-dev
 Standards-Version: 3.8.4
 Homepage: http://scikit-learn.sourceforge.net
 Vcs-Browser: http://github.com/yarikoptic/scikit-learn

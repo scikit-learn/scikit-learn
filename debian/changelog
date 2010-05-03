@@ -8,7 +8,7 @@ scikit-learn (0.3-1) unstable; urgency=low
     + additional cleanups
   * debian/control:
     + additional build-depends: python-matplotlib, ipython, swig,
-      libboost1.42-dev
+      libboost-dev
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 03 May 2010 12:25:21 -0400
 
