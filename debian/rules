@@ -5,23 +5,23 @@ PACKAGE_NAME = python-scikits-learn
 PACKAGE_ROOT_DIR = debian/${PACKAGE_NAME}
 
 PYVERS = $(shell pyversions -vs)
+PYVER = $(shell pyversions  -vd)
 
 # Mega rule
 %:
 	dh $@
 
 # Build docs during build
-override_dh_auto_build: doc-stamp
+override_dh_auto_build:
 	dh_auto_build
-
-doc-stamp:
+	: # Build Documentation
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	$(MAKE) -C doc html
+	PYTHONPATH=`/bin/ls -d $$PWD/build/lib.*$(PYVER)` $(MAKE) -C doc html
 endif
-	touch $@
+
 
 override_dh_clean:
-	rm -rf build doc/_build *-stamp scikits.learn.egg-info scikits/learn/datasets/__config__.py
+	rm -rf build doc/_build doc/auto_examples *-stamp scikits.learn.egg-info scikits/learn/datasets/__config__.py
 	dh_clean
 
 # Prune toplevel scikits/__init__.py to avoid conflicts across future
