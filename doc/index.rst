@@ -88,6 +88,11 @@ Scikits.learn Documentation
 
  * **Planed**: Gaussian graphical models, matrix factorization, ICA
 
+Download
+========
+
+Click `here <https://sourceforge.net/projects/scikit-learn/files/>`_ to download latest release. Previous releases can also be found in that directory.
+
 User guide
 ======================
 
