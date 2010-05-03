@@ -185,8 +185,14 @@ class SVC(BaseLibsvm):
     `support_` : array-like, shape = [nSV, nfeatures]
         Support vectors
 
-    `dual_coef_` : array, shape = [nclasses-1, nfeatures]
-        Coefficient of the support vector in the decision function.
+    `dual_coef_` : array, shape = [nclasses-1, nSV]
+        Coefficient of the support vector in the decision function,
+        where nclasses is the number of classes and nSV is the number
+        of support vectors.
+
+    `coef_` : array, shape = [nclasses-1, nfeatures]
+        Wiehgiths asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
 
     `intercept_` : array, shape = [nclasses-1]
         constants in decision function
@@ -230,8 +236,14 @@ class SVR(BaseLibsvm):
     `support_` : array-like, shape = [nSV, nfeatures]
         Support vectors
 
-    `dual_coef_` : array, shape = [nclasses-1, nfeatures]
-        Coefficient of the support vector in the decision function.
+    `dual_coef_` : array, shape = [nclasses-1, nSV]
+        Coefficient of the support vector in the decision function,
+        where nclasses is the number of classes and nSV is the number
+        of support vectors.
+
+    `coef_` : array, shape = [nclasses-1, nfeatures]
+        Wiehgiths asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
 
     `intercept_` : array, shape = [nclasses-1]
         constants in decision function
@@ -258,6 +270,23 @@ class SVR(BaseLibsvm):
 class OneClassSVM(BaseLibsvm):
     """
     Outlayer detection
+
+    Attributes
+    ----------
+    `support_` : array-like, shape = [nSV, nfeatures]
+        Support vectors
+
+    `dual_coef_` : array, shape = [nclasses-1, nSV]
+        Coefficient of the support vector in the decision function,
+        where nclasses is the number of classes and nSV is the number
+        of support vectors.
+
+    `coef_` : array, shape = [nclasses-1, nfeatures]
+        Wiehgiths asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+    `intercept_` : array, shape = [nclasses-1]
+        constants in decision function
 
     Methods
     -------
@@ -307,7 +336,29 @@ class LinearSVC(object):
         penalty is the standard used in SVC. The 'l1' leads to coef_
         vectors that are sparse.
 
-    TODO: wrap Cramer & Singer
+
+    Attributes
+    ----------
+    `support_` : array-like, shape = [nSV, nfeatures]
+        Support vectors
+
+    `dual_coef_` : array, shape = [nclasses-1, nSV]
+        Coefficient of the support vector in the decision function,
+        where nclasses is the number of classes and nSV is the number
+        of support vectors.
+
+    `coef_` : array, shape = [nclasses-1, nfeatures]
+        Wiehgiths asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+    `intercept_` : array, shape = [nclasses-1]
+        constants in decision function
+
+
+    Notes
+    -----
+    Some features of liblinear are still not wrapped, like the Cramer
+    & Singer algorithm.
 
     References
     ----------
