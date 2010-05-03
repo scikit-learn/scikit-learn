@@ -1,3 +1,17 @@
+scikit-learn (0.3-1) unstable; urgency=low
+
+  * Fresh upstream release.
+  * Switching to use quilt for patches, debian/* tags point to detached
+    debian branch
+  * debian/rules:
+    + build docs after python modules got built
+    + additional cleanups
+  * debian/control:
+    + additional build-depends: python-matplotlib, ipython, swig,
+      libboost1.42-dev
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 03 May 2010 12:25:21 -0400
+
 scikit-learn (0.2+svn625-1) unstable; urgency=low
 
   * Initial Debian release (Closes: #567036)
