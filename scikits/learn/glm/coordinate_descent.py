@@ -23,38 +23,16 @@ value and w is the vector of weights to fit.
 
 import numpy as np
 import scipy.linalg as linalg
-from lasso_cd import lasso_coordinate_descent as lasso_coordinate_descent_slow
-from enet_cd import enet_coordinate_descent as enet_coordinate_descent_slow
-from iteration_callbacks import IterationCallbackMaxit, IterationCallbackFunc
-from utils import enet_dual_gap, lasso_dual_gap, lasso_objective, \
-                  enet_objective, density
-
-# Attempt to improve speed with cython
-try:
-    from lasso_cd_fast import lasso_coordinate_descent \
-            as lasso_coordinate_descent_fast
-    from enet_cd_fast import enet_coordinate_descent \
-            as enet_coordinate_descent_fast
-    lasso_coordinate_descent = lasso_coordinate_descent_fast
-    enet_coordinate_descent = enet_coordinate_descent_fast
-except ImportError:
-    lasso_coordinate_descent = lasso_coordinate_descent_slow
-    enet_coordinate_descent = enet_coordinate_descent_slow
-    print "Using Python version of coordinate descent"
+from lasso_cd_fast import lasso_coordinate_descent
+from enet_cd_fast import enet_coordinate_descent
+from utils import lasso_objective, enet_objective, density
 
 class LinearModel(object):
     """Base class for Linear Model optimized with coordinate descent"""
 
-    def __init__(self, w0=None, callbacks=None):
+    def __init__(self, w0=None):
         # weights of the model (can be lazily initialized by the ``fit`` method)
         self.w = w0
-
-        # callbacks that handles recording of the historic data
-        # and can stop iterations
-        self.callbacks = []
-        if callbacks is not None:
-            for callback in callbacks:
-                self.callbacks.append(callback)
 
         self.learner = None
         self.dual_gap_func = None
@@ -64,14 +42,10 @@ class LinearModel(object):
         X, y = np.asanyarray(X), np.asanyarray(y)
         n_samples, n_features = X.shape
 
-        if tol is not None:
-            cb_dual_gap = IterationCallbackFunc(self._dual_gap_func, tol=tol)
-            self.callbacks.append(cb_dual_gap)
-
         if self.w is None:
             self.w = np.zeros(n_features)
 
-        self.w = self.learner(self, X, y, maxit)
+        self.w = self.learner(self.w, X, y, maxit)
 
         # return self for chaining fit and predict calls
         return self
@@ -94,13 +68,24 @@ class Lasso(LinearModel):
     """Linear Model trained with L1 prior as regularizer (a.k.a. the Lasso)"""
 
     def __init__(self, alpha=1.0, w0=None, callbacks=None):
-        super(Lasso, self).__init__(w0, callbacks)
+        super(Lasso, self).__init__(w0)
         self.alpha = alpha
         self.learner = lasso_coordinate_descent
 
-    def _dual_gap_func(self, X, y, w, **kw):
-        return lasso_dual_gap(X, y, w, kw['alpha'])[0]
+    def fit(self, X, y, maxit=100, tol=1e-4):
+        """Fit Lasso model with coordinate descent"""
+        X, y = np.asanyarray(X), np.asanyarray(y)
+        n_samples, n_features = X.shape
 
+        if self.w is None:
+            self.w = np.zeros(n_features)
+
+        self.w = lasso_coordinate_descent(self.w, self.alpha, X, y, maxit, tol)
+
+        # return self for chaining fit and predict calls
+        return self
+
+    
     def __repr__(self):
         return "Lasso cd"
 
@@ -129,6 +114,7 @@ def lasso_path(X, y, factor=0.95, n_alphas = 10, **kwargs):
     weights = []
     alphas = []
     for _ in range(n_alphas):
+        # warm restarts
         model.alpha *= factor
         model.fit(X, y, **kwargs)
 

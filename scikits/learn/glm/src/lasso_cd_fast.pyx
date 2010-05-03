@@ -28,20 +28,18 @@ cdef inline double fsign(double f):
 
 ctypedef np.float64_t DOUBLE
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def lasso_coordinate_descent(model,
-                            np.ndarray[DOUBLE, ndim=2] X,
-                            np.ndarray[DOUBLE, ndim=1] y,
-                            unsigned int maxit):
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
+                             double alpha,
+                             np.ndarray[DOUBLE, ndim=2] X,
+                             np.ndarray[DOUBLE, ndim=1] y,
+                             unsigned int maxit, double tol):
     """Cython version of the coordinate descent algorithm
         for Lasso regression
     """
 
     # get the data information into easy vars
-    cdef double alpha = model.alpha
-    cdef np.ndarray[DOUBLE, ndim=1] w = model.coef_
-    callbacks = model.callbacks
 
     cdef unsigned int nsamples = X.shape[0]
     cdef unsigned int nfeatures = X.shape[1]
@@ -55,9 +53,6 @@ def lasso_coordinate_descent(model,
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter
-
-    for callback in callbacks:
-        callback(0) # Init callback
 
     goon = True
     for n_iter in range(maxit):
@@ -81,11 +76,20 @@ def lasso_coordinate_descent(model,
                 for jj in range(nsamples):
                     R[jj] -=  w[ii] * X[jj, ii] # Update residual
 
-        for callback in callbacks:
-            if not callback(n_iter, X=X, y=y, w=w, alpha=alpha, R=R):
-                goon *= False
+        
+        A = R
+        XtA = np.dot(X.T, A)
+        dual_norm_XtA = np.max(np.abs(XtA))
+        A_norm = linalg.norm(A)
+        R_norm = A_norm
+        if (dual_norm_XtA > alpha):
+            A_norm *= np.abs(alpha / dual_norm_XtA)
+        pobj = 0.5 * R_norm**2 + alpha * np.abs(w).sum();
+        dobj = - 0.5 * A_norm**2 + np.dot(A.T, y)
+        gap = pobj - dobj
 
-        if not goon:
+        if gap < tol:
+            # TODO: 
             break
 
     return w
