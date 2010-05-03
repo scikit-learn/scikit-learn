@@ -57,44 +57,16 @@ Development
 Code
 ----
 
-SVN
+GIT
 ~~~
 
-To check out the sources from the main repository, which is under
-subversion control, run the command::
+You can check out the current repository with the command::
 
-   svn co http://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn/trunk scikit-learn
+    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn 
 
-You can also browse the code online at
-http://scikit-learn.svn.sourceforge.net/viewvc/scikit-learn
+Developers with write privileges should instead use the comamnd::
 
-GIT Mirror
-~~~~~~~~~~
-
-There is also an automatically updated git mirror of scikit-learn
-available from github (http://github.com/yarikoptic/scikit-learn).  So
-you could setup your development using GIT and commit results back
-to SVN using ``git svn``.  To get started using git mirror and link it
-to original SVN, use::
-
-  git clone --origin=svn git://github.com/yarikoptic/scikit-learn.git scikit-learn
-  cd scikit-learn
-  git svn init --prefix=svn/ -s https://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn
-  git svn rebase -l -n			         # should be quick
-  git config svn.authorsfile .svnauthors
-
-Such setup was inspired by GIT Mirror for NumPy and SciPy projects,
-which is well described (including some of ``git svn`` caveats) at
-http://projects.scipy.org/numpy/wiki/GitMirror .
-
-If you are not a part of the team and/or have no commit rights to SVN,
-but want to share code/documentation changes (bug fixes, enhancements,
-etc.), you can either make use of ``git format-patch`` commands to
-prepare a bundle of patches to be posted with bugreport (see Bugs), or
-simply create your own fork of git repository on github ("Fork" button
-in github web UI) and point to corresponding commits within your
-bugreport.
-
+    git clone ssh://fseoane@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
 
 Bugs
 ----
