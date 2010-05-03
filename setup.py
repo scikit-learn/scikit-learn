@@ -39,8 +39,7 @@ if __name__ == "__main__":
     setup(configuration = configuration,
         name = DISTNAME,
         install_requires=[
-              'numpy >= 1.1',
-              'scikits.optimization'],
+              'numpy >= 1.1'],
         maintainer  = MAINTAINER,
         include_package_data = True,
         maintainer_email = MAINTAINER_EMAIL,
