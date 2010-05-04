@@ -100,7 +100,7 @@ def lasso_path(X, y, factor=0.95, n_alphas = 10, **kwargs):
         alphas.append(model.alpha)
         weights.append(model.coef_.copy())
 
-    alphas = np.asarray(alphas)
+        alphas = np.asarray(alphas)
     weights = np.asarray(weights)
     return alphas, weights
 
