@@ -51,7 +51,7 @@ class Lasso(LinearModel):
         super(Lasso, self).__init__(w0)
         self.alpha = float(alpha)
 
-    def fit(self, X, Y, maxit=100, tol=1e-4):
+    def fit(self, X, Y, maxit=1000000, tol=1e-4):
         """Fit Lasso model with coordinate descent"""
         X, Y = np.asanyarray(X, dtype=np.float64), np.asanyarray(Y, dtype=np.float64)
 

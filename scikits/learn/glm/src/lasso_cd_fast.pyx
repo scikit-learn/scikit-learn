@@ -54,6 +54,9 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_iter
     cdef double dual_norm_XtA
 
+    ttol = tol
+    tol = tol * linalg.norm(y)**2
+
     goon = True
     for n_iter in range(maxit):
         for ii in xrange(nfeatures): # Loop over coordinates
@@ -77,19 +80,24 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     R[jj] -=  w[ii] * X[jj, ii] # Update residual
 
 
-        dual_norm_XtA = linalg.norm(np.dot(X.T, R), ord=np.inf)
-        gap = 0.0
-        const = 1.0
-        if (dual_norm_XtA > alpha):
-            R_norm = linalg.norm(R)
-            const =  np.abs(alpha / dual_norm_XtA)
-            A_norm = R_norm * const
-            gap = 0.5 * (R_norm**2 - A_norm**2)
+    dual_norm_XtA = np.max(np.abs(np.dot(X.T, R)))
+    gap = 0.0
+    const = 1.0
+    if (dual_norm_XtA > alpha):
+        R_norm = linalg.norm(R)
+        const =  alpha / dual_norm_XtA
+        A_norm = R_norm * (const)
+        gap = 0.5 * (R_norm**2 - A_norm**2)
 
-        gap = gap + alpha * linalg.norm(w, ord=1) + const * np.dot(R.T, y)
+    gap = gap + alpha * linalg.norm(w, ord=1) - const * np.dot(R.T, y)
 
-        if gap < tol:
-            # TODO: something about an exp that alex told me
-            break
+
+    print 'gap ', gap
+    print 'ttol ', ttol
+    print 'tol ', tol
+
+    # if gap < tol:
+    #     # TODO: something about an exp that alex told me
+    #     break
 
     return w, gap
