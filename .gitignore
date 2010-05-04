@@ -2,3 +2,7 @@
 *.so
 *~
 .#*
+*.swp
+build
+scikits/learn/datasets/__config__.py
+
