@@ -32,55 +32,34 @@ class LinearModel(object):
 
     def __init__(self, w0=None):
         # weights of the model (can be lazily initialized by the ``fit`` method)
-        self.w = w0
-
-        self.learner = None
-        self.dual_gap_func = None
-
-    def fit(self, X, y, maxit=100, tol=1e-4):
-        """Fit Lasso model with coordinate descent"""
-        X, y = np.asanyarray(X), np.asanyarray(y)
-        n_samples, n_features = X.shape
-
-        if self.w is None:
-            self.w = np.zeros(n_features)
-
-        self.w = self.learner(self.w, X, y, maxit)
-
-        # return self for chaining fit and predict calls
-        return self
+        self.coef_ = w0
 
     def predict(self, X):
         """Linear model prediction: compute the dot product with the weights"""
         X = np.asanyarray(X)
-        y = np.dot(X, self.w)
-        return y
+        return np.dot(X, self.coef_)
 
     def compute_density(self):
         """Ratio of non-zero weights in the model"""
-        return density(self.w)
+        return density(self.coef_)
 
-    @property
-    def coef_(self):
-        return self.w
 
 class Lasso(LinearModel):
     """Linear Model trained with L1 prior as regularizer (a.k.a. the Lasso)"""
 
-    def __init__(self, alpha=1.0, w0=None, callbacks=None):
+    def __init__(self, alpha=1.0, w0=None):
         super(Lasso, self).__init__(w0)
-        self.alpha = alpha
-        self.learner = lasso_coordinate_descent
+        self.alpha = float(alpha)
 
-    def fit(self, X, y, maxit=100, tol=1e-4):
+    def fit(self, X, Y, maxit=100, tol=1e-4):
         """Fit Lasso model with coordinate descent"""
-        X, y = np.asanyarray(X), np.asanyarray(y)
-        n_samples, n_features = X.shape
+        X, Y = np.asanyarray(X, dtype=np.float64), np.asanyarray(Y, dtype=np.float64)
 
-        if self.w is None:
-            self.w = np.zeros(n_features)
-
-        self.w = lasso_coordinate_descent(self.w, self.alpha, X, y, maxit, tol)
+        if self.coef_ is None:
+            self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
+            
+        self.coef_, self.dual_gap_ = \
+                    lasso_coordinate_descent(self.coef_, self.alpha, X, Y, maxit, tol)
 
         # return self for chaining fit and predict calls
         return self
@@ -119,7 +98,7 @@ def lasso_path(X, y, factor=0.95, n_alphas = 10, **kwargs):
         model.fit(X, y, **kwargs)
 
         alphas.append(model.alpha)
-        weights.append(model.w.copy())
+        weights.append(model.coef_.copy())
 
     alphas = np.asarray(alphas)
     weights = np.asarray(weights)

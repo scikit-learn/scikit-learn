@@ -29,8 +29,8 @@ cdef inline double fsign(double f):
 
 ctypedef np.float64_t DOUBLE
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def enet_coordinate_descent(model,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,

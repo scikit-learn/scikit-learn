@@ -34,7 +34,7 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                              double alpha,
                              np.ndarray[DOUBLE, ndim=2] X,
                              np.ndarray[DOUBLE, ndim=1] y,
-                             unsigned int maxit, double tol):
+                             int maxit, double tol):
     """Cython version of the coordinate descent algorithm
         for Lasso regression
     """
@@ -76,20 +76,19 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 for jj in range(nsamples):
                     R[jj] -=  w[ii] * X[jj, ii] # Update residual
 
-        
-        A = R
-        XtA = np.dot(X.T, A)
+        XtA = np.dot(X.T, R)
         dual_norm_XtA = np.max(np.abs(XtA))
-        A_norm = linalg.norm(A)
+        A_norm = linalg.norm(R)
         R_norm = A_norm
+        gap = 0
         if (dual_norm_XtA > alpha):
             A_norm *= np.abs(alpha / dual_norm_XtA)
-        pobj = 0.5 * R_norm**2 + alpha * np.abs(w).sum();
-        dobj = - 0.5 * A_norm**2 + np.dot(A.T, y)
-        gap = pobj - dobj
+            gap = 0.5 * (R_norm**2 - A_norm**2)
+
+        gap + = alpha * np.abs(w).sum() + np.dot(A.T, y)
 
         if gap < tol:
             # TODO: 
             break
 
-    return w
+    return w, gap
