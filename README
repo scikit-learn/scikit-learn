@@ -66,7 +66,9 @@ You can check out the current repository with the command::
 
 Developers with write privileges should instead use the comamnd::
 
-    git clone ssh://fseoane@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+
+where USERNAME is your sourceforge username.
 
 Bugs
 ----
