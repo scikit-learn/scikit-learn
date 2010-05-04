@@ -20,7 +20,7 @@ from scikits.learn.glm.coordinate_descent import Lasso, ElasticNet, lasso_path, 
                                     enet_path, \
                                     lasso_objective, enet_objective
 
-n_samples, n_features, maxit = 5, 10, 30
+n_samples, n_features = 100, 500
 
 np.random.seed(0)
 y = np.random.randn(n_samples)
@@ -72,14 +72,22 @@ alpha = 1
 ################################################################################
 
 print "Computing regularization path using the lasso..."
+from datetime import datetime
+
+start = datetime.now()
+
 alphas_lasso, weights_lasso = lasso_path(X, y, factor=0.97, n_alphas = 100)
+
+delta = datetime.now() - start
+
+print 'time taken: ', delta
 
 # print "Computing regularization path using the elastic net..."
 # alphas_enet, weights_enet = enet_path(X, y, factor=0.93, n_alphas = 50,
 #                                                 beta=0.5)
 
 # Display results
-pl.subplot(1, 2, 2)
+# pl.subplot(1, 2, 2)
 color_iter = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k'])
 for color, weight_lasso in zip(color_iter,
                             weights_lasso.T):

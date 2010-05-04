@@ -51,15 +51,16 @@ class Lasso(LinearModel):
         super(Lasso, self).__init__(w0)
         self.alpha = float(alpha)
 
-    def fit(self, X, Y, maxit=1000000, tol=1e-4):
+    def fit(self, X, Y, maxit=100, tol=1e-4):
         """Fit Lasso model with coordinate descent"""
-        X, Y = np.asanyarray(X, dtype=np.float64), np.asanyarray(Y, dtype=np.float64)
+        X = np.asanyarray(X, dtype=np.float64)
+        Y = np.asanyarray(Y, dtype=np.float64)
 
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
             
         self.coef_, self.dual_gap_ = \
-                    lasso_coordinate_descent(self.coef_, self.alpha, X, Y, maxit, tol)
+                    lasso_coordinate_descent(self.coef_, self.alpha, X, Y, maxit, 10, tol)
 
         # return self for chaining fit and predict calls
         return self
