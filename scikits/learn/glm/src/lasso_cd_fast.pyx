@@ -5,7 +5,7 @@
 
 cimport numpy as np
 import numpy as np
-import scipy.linalg as linalg
+import numpy.linalg as linalg
 cimport cython
 
 cdef extern from "math.h":
@@ -48,11 +48,11 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0) # Compute norms of the columns of X
     cdef np.ndarray[DOUBLE, ndim=1] R = y - np.dot(X, w) # Init residual
 
-    cdef double tmp
-    cdef double w_ii
+    cdef double tmp, w_ii, gap
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter
+    cdef double dual_norm_XtA
 
     goon = True
     for n_iter in range(maxit):
@@ -76,19 +76,20 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 for jj in range(nsamples):
                     R[jj] -=  w[ii] * X[jj, ii] # Update residual
 
-        XtA = np.dot(X.T, R)
-        dual_norm_XtA = np.max(np.abs(XtA))
-        A_norm = linalg.norm(R)
-        R_norm = A_norm
-        gap = 0
+
+        dual_norm_XtA = linalg.norm(np.dot(X.T, R), ord=np.inf)
+        gap = 0.0
+        const = 1.0
         if (dual_norm_XtA > alpha):
-            A_norm *= np.abs(alpha / dual_norm_XtA)
+            R_norm = linalg.norm(R)
+            const =  np.abs(alpha / dual_norm_XtA)
+            A_norm = R_norm * const
             gap = 0.5 * (R_norm**2 - A_norm**2)
 
-        gap + = alpha * np.abs(w).sum() + np.dot(A.T, y)
+        gap = gap + alpha * linalg.norm(w, ord=1) + const * np.dot(R.T, y)
 
         if gap < tol:
-            # TODO: 
+            # TODO: something about an exp that alex told me
             break
 
     return w, gap

@@ -91,13 +91,13 @@ def lasso_path(X, y, factor=0.95, n_alphas = 10, **kwargs):
     alpha = alpha_max
     model = Lasso(alpha=alpha)
     weights = []
-    alphas = []
+    alphas = np.empty(0)
     for _ in range(n_alphas):
         # warm restarts
         model.alpha *= factor
         model.fit(X, y, **kwargs)
 
-        alphas.append(model.alpha)
+        alphas = np.append(alphas, model.alpha)
         weights.append(model.coef_.copy())
 
         alphas = np.asarray(alphas)
