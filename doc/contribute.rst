@@ -19,7 +19,7 @@ SVN Access
 
 You can check the sources with the command::
     
-    svn co https://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn/trunk scikit-learn
+    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
 
 If you have contributed some code and would like to have write
 privileges in subversion repository, please contact me (Fabian
@@ -38,9 +38,9 @@ world. You might proceed as:
 
 1. Create a patch file. The command::
 
-    svn diff > patch.diff
+    git format-patch origin
 
-will create a file "patch.diff" with the changes you made with
+will create a series of patch files with the changes you made with
 the code base. 
 
 2. Send that file to the mailing list or attach it to an
@@ -49,9 +49,6 @@ main repository.
 
 3. Wait for a reply. You should soon recive a reply on wether your
 patch was committed.
-
-For more info about Subversion, you can read the excellent book
-`Version Control with Subversion <http://svnbook.red-bean.com/>`_
 
 
 EasyFix Issues
@@ -64,19 +61,6 @@ labeled as EasyFix. This means that the knowledge needed to solve the
 issue is low, but still you are helping the project and letting more
 experienced developers concentrate on other issues.
 
-
-
-
-Git repo
---------
-
-Some people find easier to work with Decentralized Version Control
-Systems like Git. If that is your case, you can use a Git mirror that
-is usually up to date with the main subversion repo. It's web
-interface is located `here <http://github.com/fseoane/scikit-learn>`_
-and the clone command is::
-
-  git clone http://github.com/yarikoptic/scikit-learn
 
 
 .. _packaging:
