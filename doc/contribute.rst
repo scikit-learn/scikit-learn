@@ -21,6 +21,10 @@ You can check the sources with the command::
     
     git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
 
+or if you have write privileges::
+
+	git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+
 If you have contributed some code and would like to have write
 privileges in subversion repository, please contact me (Fabian
 Pedregosa <fabian.pedregosa@inria.fr>) and I'll give you write
