@@ -138,8 +138,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int jj
     cdef unsigned int n_iter
 
-    for callback in callbacks:
-        callback(0) # Init callback
+    tol = tol * linalg.norm(y)**2
 
     for n_iter in range(maxit):
         for ii in xrange(nfeatures): # Loop over coordinates
@@ -169,8 +168,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         # calculate the dual gap each gap_step iterations
         if n_iter % gap_step == 0: continue
 
-        dual_norm_XtA = linalg.norm(np.dot(X.T, R), np.inf)
-        R_norm = linalg.norm(R)
+        R2 = R[:nsamples]
+        dual_norm_XtA = beta * linalg.norm(np.dot(X.T, R2), np.inf)
+        R_norm = linalg.norm(R2)
+        w_norm = linalg.norm(w)
         if (dual_norm_XtA > alpha):
             const =  alpha / dual_norm_XtA
             A_norm = R_norm * (const)
@@ -179,11 +180,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             const = 1.0
             gap = R_norm**2
 
-        gap = gap + alpha * linalg.norm(w, 1) - const * np.dot(R.T, y)
+        gap = gap + alpha * linalg.norm(w, 1) - const * np.dot(R2.T, y) + \
+              0.5 * (beta + np.sqrt(beta) * const) * w_norm
 
         if gap < tol:
             # return if we reached desired tolerance
             break
 
 
-    return w
+    return w, gap

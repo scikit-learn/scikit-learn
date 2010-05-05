@@ -52,7 +52,27 @@ def test_Lasso_toy():
 
 def test_Enet_toy():
     # TODO
-    pass
+    X = [[-1], [0], [1]]
+    Y = [-1, 0, 1]       # just a straight line
+    T = [[2], [3], [4]]  # test sample
+
+    # this should be the same as lasso
+    clf = ElasticNet(alpha=0, beta=0)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [1])
+    assert_array_almost_equal(pred, [2, 3, 4])
+    assert clf.dual_gap_ == 0.
+
+    # TODO: not sure of these results.
+    # dual_gap seems a bit too high
+    clf = ElasticNet(alpha=0, beta=1.)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.666], decimal=3)
+    assert_array_almost_equal(pred, [1.333, 2, 2.666], decimal=3)
+    assert 0.44 < clf.dual_gap_ < 0.45
+    
 
 def test_lasso_path():
     """

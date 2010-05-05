@@ -23,8 +23,7 @@ value and w is the vector of weights to fit.
 
 import numpy as np
 import scipy.linalg as linalg
-from lasso_cd_fast import lasso_coordinate_descent
-from enet_cd_fast import enet_coordinate_descent
+from cd_fast import lasso_coordinate_descent, enet_coordinate_descent
 from utils import lasso_objective, enet_objective, density
 
 class LinearModel(object):
@@ -73,13 +72,24 @@ class Lasso(LinearModel):
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer"""
 
-    def __init__(self, alpha=1.0, beta=1.0, w0=None, callbacks=None):
-        super(ElasticNet, self).__init__(w0, callbacks)
+    def __init__(self, alpha=1.0, beta=1.0, w0=None):
+        super(ElasticNet, self).__init__(w0)
         self.alpha = alpha
         self.beta = beta
 
-    def _dual_gap_func(self, X, y, w, **kw):
-        return enet_dual_gap(X, y, w, kw['alpha'], kw['beta'])[0]
+    def fit(self, X, Y, maxit=100, tol=1e-4):
+        """Fit Elastic Net model with coordinate descent"""
+        X = np.asanyarray(X, dtype=np.float64)
+        Y = np.asanyarray(Y, dtype=np.float64)
+
+        if self.coef_ is None:
+            self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
+            
+        self.coef_, self.dual_gap_ = \
+                    enet_coordinate_descent(self.coef_, self.alpha, self.beta, X, Y, maxit, 10, tol)
+
+        # return self for chaining fit and predict calls
+        return self
 
     def __repr__(self):
         return "ElasticNet cd"

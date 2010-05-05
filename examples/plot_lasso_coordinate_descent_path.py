@@ -97,6 +97,7 @@ for color, weight_lasso in zip(color_iter,
 pl.xlabel('-log(lambda)')
 pl.ylabel('weights')
 pl.title('Lasso and Elastic-Net Paths')
+pl.axis('tight')
 # pl.legend(['Lasso','Elastic-Net'])
 pl.show()
 
