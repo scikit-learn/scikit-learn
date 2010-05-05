@@ -14,8 +14,8 @@ Code
 ====
 
 
-SVN Access
-----------
+Git repo
+--------
 
 You can check the sources with the command::
     
