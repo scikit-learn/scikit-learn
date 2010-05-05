@@ -265,16 +265,16 @@ class LeaveOneLabelOut(object):
                                 )
 
 
-def split(train_indexes, test_indexes, *args):
+def split(train_indices, test_indices, *args):
     """
     For each arg return a train and test subsets defined by indexes provided
-    in train_indexes and test_indexes
+    in train_indices and test_indices
     """
     ret = []
     for arg in args:
         arg = np.asanyarray(arg)
-        arg_train = arg[train_indexes]
-        arg_test  = arg[test_indexes]
+        arg_train = arg[train_indices]
+        arg_test  = arg[test_indices]
         ret.append(arg_train)
         ret.append(arg_test)
     return ret
