@@ -77,7 +77,6 @@ class ElasticNet(LinearModel):
         super(ElasticNet, self).__init__(w0, callbacks)
         self.alpha = alpha
         self.beta = beta
-        self.learner = enet_coordinate_descent
 
     def _dual_gap_func(self, X, y, w, **kw):
         return enet_dual_gap(X, y, w, kw['alpha'], kw['beta'])[0]
