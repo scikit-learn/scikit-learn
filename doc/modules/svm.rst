@@ -17,12 +17,17 @@ distance to the nearest training data points of any class (so-called
 functional margin), since in general the larger the margin the lower
 the generalization error of the classifier.
 
+Classification
+--------------
+
 Suppose some given data points each belong to one of two classes, and
 the goal is to decide which class a new data point will be in. This
 classification will be performed by creating a hyperplane that
 maximizes the distance between any two classes.
 
-.. literalinclude:: ../../examples/plot_svm_hyperplane.py
+.. TODO substitute this by a link
+
+.. literalinclude:: ../../examples/svm/plot_svm_hyperplane.py
 .. image:: svm_data/separating_hyperplane_2D.png
 
 The original optimal hyperplane algorithm was a linear
@@ -38,8 +43,8 @@ The decision function in this case will be:
 
 .. math:: sgn(\sum_{i=1}^l \alpha_i K(x_i, x) + \rho)
 
-where :math:`\alpha, \rho` can be accessed through fields support_ and
-rho_ of the classifier instance, respectevely.
+where :math:`\alpha, \rho` can be accessed through fields `support_` and
+`intercept_` of the classifier instance, respectevely.
 
 If the kernel used is a Gaussian radial basis function, the
 corresponding feature space is a Hilbert space of infinite
@@ -57,7 +62,7 @@ and only if x > 0 XOR y > 0. In the following example, we create a
 training set of random points X with target Y = XOR(X). We see that
 the SVM correctly draws the decision function.
 
-.. literalinclude:: ../../examples/plot_svm_nonlinear.py
+.. literalinclude:: ../../examples/svm/plot_svm_nonlinear.py
 .. image:: svm_data/separating_nonlinear.png
 
 Complete class reference:
@@ -103,7 +108,7 @@ variance 1. Note that the *same* scaling must be applied to the test
 vector to obtain meaningful results.
 
 See `The CookBook
-<https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>` for
+<https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_ for
 some examples on scaling.
 
 
