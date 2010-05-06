@@ -43,7 +43,7 @@ print "This took ", datetime.now() - start
 
 print "Computing regularization path using the elastic net..."
 start = datetime.now()
-alphas_enet, weights_enet = enet_path(X, y, rho=0.2, eps=eps)
+alphas_enet, weights_enet = enet_path(X, y, rho=0.6, eps=eps)
 print "This took ", datetime.now() - start
 
 
