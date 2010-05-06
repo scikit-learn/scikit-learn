@@ -55,13 +55,15 @@ class Lasso(LinearModel):
         """Fit Lasso model with coordinate descent"""
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
-        nsamples =  X.shape[0]
+
+        nsamples = X.shape[0]
+        alpha = self.alpha * nsamples
 
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                    lasso_coordinate_descent(self.coef_, self.alpha, X, Y, maxit, 10, tol)
+                    lasso_coordinate_descent(self.coef_, alpha, X, Y, maxit, 10, tol)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
@@ -108,7 +110,7 @@ class ElasticNet(LinearModel):
 def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
     """Compute Lasso path with coordinate descent"""
     nsamples = X.shape[0]
-    alpha_max = np.abs(np.dot(X.T, y)).max()
+    alpha_max = np.abs(np.dot(X.T, y)).max() / nsamples
     model = Lasso(alpha=alpha_max)
     weights = []
     alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
@@ -124,7 +126,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
 def enet_path(X, y, eps=1e-3, n_alphas=100, rho=0.5, **kwargs):
     """Compute Elastic-Net path with coordinate descent"""
     nsamples = X.shape[0]
-    alpha_max = np.abs(np.dot(X.T, y)).max()
+    alpha_max = np.abs(np.dot(X.T, y)).max() / (nsamples*rho)
     model = ElasticNet(alpha=alpha_max, rho=rho)
     weights = []
     alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
