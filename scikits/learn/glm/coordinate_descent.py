@@ -15,7 +15,7 @@ The objective function to minimize is for the Lasso::
 
 and for the Elastic Network::
 
-        0.5 * ||R||_2 ^ 2 + alpha * ||w||_1 + beta * 0.5 * ||w||_2 ^ 2
+        0.5 * ||R||_2 ^ 2 + alpha * rho * ||w||_1 + alpha * (1-rho) * 0.5 * ||w||_2 ^ 2
 
 Where R are the residuals between the output of the model and the expected
 value and w is the vector of weights to fit.
@@ -56,10 +56,10 @@ class Lasso(LinearModel):
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
         nsamples =  X.shape[0]
-        
+
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
-            
+
         self.coef_, self.dual_gap_, self.eps_ = \
                     lasso_coordinate_descent(self.coef_, self.alpha, X, Y, maxit, 10, tol)
 
@@ -69,7 +69,7 @@ class Lasso(LinearModel):
         # return self for chaining fit and predict calls
         return self
 
-    
+
     def __repr__(self):
         return "Lasso cd"
 
@@ -77,10 +77,10 @@ class Lasso(LinearModel):
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer"""
 
-    def __init__(self, alpha=1.0, beta=1.0, w0=None):
+    def __init__(self, alpha=1.0, rho=0.5, w0=None):
         super(ElasticNet, self).__init__(w0)
         self.alpha = alpha
-        self.beta = beta
+        self.rho = rho
 
     def fit(self, X, Y, maxit=100, tol=1e-4):
         """Fit Elastic Net model with coordinate descent"""
@@ -89,9 +89,12 @@ class ElasticNet(LinearModel):
 
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
-            
+
+        nsamples = X.shape[0]
+        alpha = self.alpha * self.rho * nsamples
+        beta = self.alpha * (1.0 - self.rho) * nsamples
         self.coef_, self.dual_gap_, self.eps_ = \
-                    enet_coordinate_descent(self.coef_, self.alpha, self.beta, X, Y, maxit, 10, tol)
+                    enet_coordinate_descent(self.coef_, alpha, beta, X, Y, maxit, 10, tol)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
@@ -102,40 +105,34 @@ class ElasticNet(LinearModel):
     def __repr__(self):
         return "ElasticNet cd"
 
-
-def lasso_path(X, y, factor=0.95, n_alphas = 10, **kwargs):
+def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
     """Compute Lasso path with coordinate descent"""
+    nsamples = X.shape[0]
     alpha_max = np.abs(np.dot(X.T, y)).max()
-    alpha = alpha_max
-    model = Lasso(alpha=alpha)
+    model = Lasso(alpha=alpha_max)
     weights = []
-    alphas = np.empty(0)
-    for _ in range(n_alphas):
-        # warm restarts
-        model.alpha *= factor
+    alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
+    alphas = np.exp(alphas)
+    for alpha in alphas:
+        model.alpha = alpha
         model.fit(X, y, **kwargs)
-
-        alphas = np.append(alphas, model.alpha)
         weights.append(model.coef_.copy())
 
-        alphas = np.asarray(alphas)
     weights = np.asarray(weights)
     return alphas, weights
 
-def enet_path(X, y, factor=0.95, n_alphas=10, beta=1.0, **kwargs):
+def enet_path(X, y, eps=1e-3, n_alphas=100, rho=0.5, **kwargs):
     """Compute Elastic-Net path with coordinate descent"""
+    nsamples = X.shape[0]
     alpha_max = np.abs(np.dot(X.T, y)).max()
-    alpha = alpha_max
-    model = ElasticNet(alpha=alpha, beta=beta)
+    model = ElasticNet(alpha=alpha_max, rho=rho)
     weights = []
-    alphas = []
-    for _ in range(n_alphas):
-        model.alpha *= factor
+    alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
+    alphas = np.exp(alphas)
+    for alpha in alphas:
+        model.alpha = alpha
         model.fit(X, y, **kwargs)
-
-        alphas.append(model.alpha)
         weights.append(model.coef_.copy())
 
-    alphas = np.asarray(alphas)
     weights = np.asarray(weights)
     return alphas, weights

@@ -34,15 +34,16 @@ X = np.random.randn(n_samples, n_features)
 # Demo path functions
 ################################################################################
 
+eps = 1e-2 # the smaller it is the longer is the path
+
 print "Computing regularization path using the lasso..."
 start = datetime.now()
-alphas_lasso, weights_lasso = lasso_path(X, y, factor=0.97, n_alphas = 100)
+alphas_lasso, weights_lasso = lasso_path(X, y, eps=eps)
 print "This took ", datetime.now() - start
 
 print "Computing regularization path using the elastic net..."
 start = datetime.now()
-alphas_enet, weights_enet = enet_path(X, y, factor=0.97, n_alphas = 100,
-                                                beta=0.5)
+alphas_enet, weights_enet = enet_path(X, y, rho=0.2, eps=eps)
 print "This took ", datetime.now() - start
 
 
@@ -50,10 +51,10 @@ print "This took ", datetime.now() - start
 color_iter = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k'])
 for color, weight_lasso, weight_enet in zip(color_iter,
                             weights_lasso.T, weights_enet.T):
-    pl.plot(-np.log(alphas_lasso), weight_lasso, color)
-    pl.plot(-np.log(alphas_enet), weight_enet, color+'x')
+    pl.plot(-np.log10(alphas_lasso), weight_lasso, color)
+    pl.plot(-np.log10(alphas_enet), weight_enet, color+'x')
 
-pl.xlabel('-log(lambda)')
+pl.xlabel('-Log(lambda)')
 pl.ylabel('weights')
 pl.title('Lasso and Elastic-Net Paths')
 pl.legend(['Lasso','Elastic-Net'])
