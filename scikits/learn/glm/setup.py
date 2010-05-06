@@ -16,6 +16,7 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('enet_cd_fast',
                          sources=['src/enet_cd_fast.c'],
                          include_dirs=[numpy.get_include()])
+    config.add_data_dir('test')
     return config
 
 if __name__ == '__main__':
