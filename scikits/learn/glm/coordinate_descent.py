@@ -123,6 +123,7 @@ class LassoPath(LinearModel):
                 best_mse = mse
                 best_alpha = alpha
                 self.coef_path.append(model.coef_.copy())
+                # XXX: store a path of Lasso instances instead?
 
         # fine tune at optimal alpha on complete data set
         model.alpha = best_alpha
