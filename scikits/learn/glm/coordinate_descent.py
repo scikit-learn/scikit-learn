@@ -212,10 +212,9 @@ class LassoPath(LinearModel):
                     self.path_.append(best_model)
 
         # fine tune at optimal alpha on complete data set
-        model = best_model
-        model.fit(X, y, **kwargs)
-        self.coef_ = model.coef_
-        self.alpha = model.alpha # purely indicative
+        best_model.fit(X, y, **kwargs)
+        self.coef_ = best_model.coef_
+        self.alpha = best_model.alpha # purely indicative
         return self
 
 
