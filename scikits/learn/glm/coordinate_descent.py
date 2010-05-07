@@ -27,6 +27,7 @@ import numpy as np
 from cd_fast import lasso_coordinate_descent, enet_coordinate_descent
 from utils import lasso_objective, enet_objective, density
 
+
 class LinearModel(object):
     """Base class for Linear Model optimized with coordinate descent"""
 
@@ -71,7 +72,6 @@ class Lasso(LinearModel):
         # return self for chaining fit and predict calls
         return self
 
-
     def __repr__(self):
         return "Lasso cd"
 
@@ -107,6 +107,7 @@ class ElasticNet(LinearModel):
     def __repr__(self):
         return "ElasticNet cd"
 
+
 def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
     """Compute Lasso path with coordinate descent"""
     nsamples = X.shape[0]
@@ -123,6 +124,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
     weights = np.asarray(weights)
     return alphas, weights
 
+
 def enet_path(X, y, eps=1e-3, n_alphas=100, rho=0.5, **kwargs):
     """Compute Elastic-Net path with coordinate descent"""
     nsamples = X.shape[0]
@@ -138,3 +140,4 @@ def enet_path(X, y, eps=1e-3, n_alphas=100, rho=0.5, **kwargs):
 
     weights = np.asarray(weights)
     return alphas, weights
+
