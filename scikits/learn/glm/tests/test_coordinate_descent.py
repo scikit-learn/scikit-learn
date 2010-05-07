@@ -5,8 +5,7 @@
 
 import numpy as np
 from numpy.testing import *
-from nose.tools import assert_equal
-from nose.tools import assert_almost_equal
+from nose.tools import *
 
 from ..coordinate_descent import Lasso, LassoPath, lasso_path
 from ..coordinate_descent import ElasticNet, enet_path
@@ -98,18 +97,27 @@ def test_lasso_path_early_stopping():
     X = np.random.randn(n_samples, n_features)
     y = np.dot(X, w)
 
-    clf = LassoPath(n_alphas=100, eps=1e-3).fit(X, y, maxit=maxit)
-    assert_equal(len(clf.coef_path), 52)
-    assert_almost_equal(clf.active_clf.alpha, 0.07, 2) # James Bond!
+    clf = LassoPath(n_alphas=100, eps=1e-3).fit(
+        X, y, maxit=maxit, store_path=True)
+    assert_equal(len(clf.path_), 52)
+    assert_almost_equal(clf.alpha, 0.07, 2) # James Bond!
 
     # sanity check
-    assert_almost_equal(clf.alphas[len(clf.coef_path)-1], 0.07, 2)
+    assert_almost_equal(clf.path_[-1].alpha, clf.alpha)
+    assert_array_almost_equal(clf.path_[-1].coef_, clf.coef_)
 
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
     assert_almost_equal(rmse, 0.35, 2)
+
+    # check that storing the path is not mandatory and yields the same results
+    clf2 = LassoPath(n_alphas=100, eps=1e-3).fit(
+        X, y, maxit=maxit, store_path=False)
+    assert_almost_equal(clf2.alpha, clf.alpha)
+    assert_array_almost_equal(clf2.coef_, clf.coef_)
+    assert_equals(clf2.path_, [])
 
 
 # def test_lasso_path():

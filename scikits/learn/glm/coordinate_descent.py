@@ -168,18 +168,18 @@ class LassoPath(LinearModel):
         self.cv_factory = cv_factory
         self.eps = eps
         self.n_alphas = n_alphas
-        self.active_clf = None
-        self.coef_path = []
         self.coef_ = w0
+        self.alpha = 0.0
+        self.path = []
 
-    def fit(self, X, y, **kwargs):
+    def fit(self, X, y, store_path=False, **kwargs):
         """Fit Lasso model with coordinate descent along decreasing alphas
 
-        The same model is reused using warm restarts. Early stopping can happen
+        The same model is reused with warm restarts. Early stopping can happen
         before reaching n_alphas if the cross validation detects overfitting
         when decreasing the strength of the regularization.
         """
-        self.coef_path = []
+        self.path_ = []
         n_samples = X.shape[0]
 
         # init cross validator
@@ -190,13 +190,12 @@ class LassoPath(LinearModel):
         alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
         logalphas = np.linspace(np.log(alpha_max),
                                 np.log(self.eps * alpha_max), self.n_alphas)
-        self.alphas = np.exp(logalphas)
+        alphas = np.exp(logalphas)
 
         # fit a model down the alpha grid and stop before overfitting
         model = Lasso(alpha=alpha_max)
         best_mse = np.inf
-        best_alpha = alpha_max
-        for alpha in self.alphas:
+        for alpha in alphas:
             model.alpha = alpha
             y_ = model.fit(X[train], y[train], **kwargs).predict(X[valid])
             mse = ((y_ - y[valid]) ** 2).mean()
@@ -205,16 +204,15 @@ class LassoPath(LinearModel):
                 break
             else:
                 best_mse = mse
-                best_alpha = alpha
-                self.coef_path.append(model.coef_.copy())
-                # XXX: store a path of Lasso instances instead?
+                best_model = Lasso(w0=model.coef_.copy(), alpha=alpha)
+                if store_path:
+                    self.path_.append(best_model)
 
         # fine tune at optimal alpha on complete data set
-        model.alpha = best_alpha
-        model.coef_ = self.coef_path[-1]
+        model = best_model
         model.fit(X, y, **kwargs)
-        self.active_clf = model
         self.coef_ = model.coef_
+        self.alpha = model.alpha # purely indicative
         return self
 
 
