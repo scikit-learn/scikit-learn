@@ -41,14 +41,14 @@ def test_Lasso_toy():
     pred = clf.predict(T)
     # assert_array_almost_equal(clf.coef_, [.75])
     # assert_array_almost_equal(pred, [1.5, 2.25, 3.])
-    assert clf.dual_gap_ == 0.
+    assert_array_almost_equal(clf.dual_gap_, 0.0, 10)
 
     clf = Lasso(alpha=1)
     clf.fit(X, Y)
     pred = clf.predict(T)
     # assert_array_almost_equal(clf.coef_, [.5])
     # assert_array_almost_equal(pred, [1, 1.5, 2.])
-    assert clf.dual_gap_ == 0.
+    assert_array_almost_equal(clf.dual_gap_, 0.0, 10)
 
 
 def test_Enet_toy():
@@ -69,14 +69,14 @@ def test_Enet_toy():
     pred = clf.predict(T)
     # assert_array_almost_equal(clf.coef_, [1])
     # assert_array_almost_equal(pred, [2, 3, 4])
-    assert clf.dual_gap_ == 0.
+    assert_array_almost_equal(clf.dual_gap_, 0.0, 10)
 
     clf = ElasticNet(alpha=0.5, rho=0.5)
     clf.fit(X, Y)
     pred = clf.predict(T)
     # assert_array_almost_equal(clf.coef_, [0.5])
     # assert_array_almost_equal(pred, [1, 1.5, 2.])
-    assert 0 < clf.dual_gap_ < 1e-10
+    assert_array_almost_equal(clf.dual_gap_, 0.0, 10)
 
 # def test_lasso_path():
 #     """
