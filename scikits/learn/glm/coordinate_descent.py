@@ -161,19 +161,28 @@ class ElasticNet(LinearModel):
         return "ElasticNet cd"
 
 
-class LassoPath(LinearModel):
-    """Linear model trained with L1 prior along a regularization path"""
+class LinearModelPath(LinearModel):
+    """Base class for iterative model fitting along a regularization path"""
 
-    def __init__(self, w0=None, cv_factory=None, eps=1e-3, n_alphas=100):
+    model_class = None
+
+    default_model_params = {}
+
+    def __init__(self, w0=None, cv_factory=None, eps=1e-3, n_alphas=100,
+                 model_params=None):
         self.cv_factory = cv_factory
         self.eps = eps
         self.n_alphas = n_alphas
         self.coef_ = w0
         self.alpha = 0.0
         self.path = []
+        if model_params is None:
+            self.model_params = self.default_model_params.copy()
+        else:
+            self.model_params = model_params
 
     def fit(self, X, y, store_path=False, **kwargs):
-        """Fit Lasso model with coordinate descent along decreasing alphas
+        """Fit linear model with coordinate descent along decreasing alphas
 
         The same model is reused with warm restarts. Early stopping can happen
         before reaching n_alphas if the cross validation detects overfitting
@@ -196,7 +205,7 @@ class LassoPath(LinearModel):
         alphas = np.exp(logalphas)
 
         # fit a model down the alpha grid and stop before overfitting
-        model = Lasso(alpha=alpha_max)
+        model = self.model_class(alpha=alpha_max, **self.model_params)
         best_mse = np.inf
         for alpha in alphas:
             model.alpha = alpha
@@ -207,7 +216,8 @@ class LassoPath(LinearModel):
                 break
             else:
                 best_mse = mse
-                best_model = Lasso(w0=model.coef_.copy(), alpha=alpha)
+                best_model = self.model_class(w0=model.coef_.copy(),
+                                              alpha=alpha, **self.model_params)
                 if store_path:
                     self.path_.append(best_model)
 
@@ -216,6 +226,21 @@ class LassoPath(LinearModel):
         self.coef_ = best_model.coef_
         self.alpha = best_model.alpha # purely indicative
         return self
+
+
+class LassoPath(LinearModelPath):
+    """Lasso linear model with iterative fitting along a regularization path"""
+
+    model_class = Lasso
+
+
+class ElasticNetPath(LinearModelPath):
+    """Elastic Net model with iterative fitting along a regularization path"""
+
+    model_class = ElasticNet
+
+    default_model_params = {"rho": 0.5}
+
 
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
