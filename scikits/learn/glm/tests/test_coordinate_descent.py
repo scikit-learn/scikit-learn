@@ -6,8 +6,10 @@
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+from nose.tools import assert_equal
+from nose.tools import assert_almost_equal
 
-from ..coordinate_descent import Lasso, lasso_path
+from ..coordinate_descent import Lasso, LassoPath, lasso_path
 from ..coordinate_descent import ElasticNet, enet_path
 
 def test_Lasso_toy():
@@ -77,6 +79,32 @@ def test_Enet_toy():
     # assert_array_almost_equal(clf.coef_, [0.5])
     # assert_array_almost_equal(pred, [1, 1.5, 2.])
     assert_array_almost_equal(clf.dual_gap_, 0.0, 10)
+
+
+def test_lasso_path_early_stopping():
+
+    # build an ill-posed linear regression problem with many noisy features and
+    # comparatively few samples
+    n_samples, n_features, maxit = 50, 200, 30
+    np.random.seed(0)
+    w = np.random.randn(n_features)
+    w[10:] = 0.0 # only the top 10 features are impacting the model
+    X = np.random.randn(n_samples, n_features)
+    y = np.dot(X, w)
+
+    clf = LassoPath(n_alphas=100, eps=1e-3).fit(X, y, maxit=maxit)
+    assert_equal(len(clf.coef_path), 52)
+    assert_almost_equal(clf.active_clf.alpha, 0.07, 2) # James Bond!
+
+    # sanity check
+    assert_almost_equal(clf.alphas[len(clf.coef_path)-1], 0.07, 2)
+
+    # test set
+    X_test = np.random.randn(n_samples, n_features)
+    y_test = np.dot(X_test, w)
+    rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
+    assert_almost_equal(rmse, 0.35, 2)
+
 
 # def test_lasso_path():
 #     """

@@ -24,8 +24,9 @@ value and w is the vector of weights to fit.
 import warnings
 import numpy as np
 
-from cd_fast import lasso_coordinate_descent, enet_coordinate_descent
-from utils import lasso_objective, enet_objective, density
+from .cd_fast import lasso_coordinate_descent, enet_coordinate_descent
+from .utils import lasso_objective, enet_objective, density
+from ..cross_val import KFold
 
 
 class LinearModel(object):
@@ -64,7 +65,7 @@ class Lasso(LinearModel):
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                    lasso_coordinate_descent(self.coef_, alpha, X, Y, maxit, 10, tol)
+                lasso_coordinate_descent(self.coef_, alpha, X, Y, maxit, 10, tol)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
@@ -74,6 +75,62 @@ class Lasso(LinearModel):
 
     def __repr__(self):
         return "Lasso cd"
+
+
+class LassoPath(LinearModel):
+    """Linear model trained with L1 prior along a regularization path"""
+
+    def __init__(self, w0=None, cv_factory=None, eps=1e-3, n_alphas=100):
+        self.cv_factory = cv_factory
+        self.eps = eps
+        self.n_alphas = n_alphas
+        self.active_clf = None
+        self.coef_path = []
+        self.coef_ = w0
+
+    def fit(self, X, y, **kwargs):
+        """Fit Lasso model with coordinate descent along decreasing alphas
+
+        The same model is reused using warm restarts. Early stopping can happen
+        before reaching n_alphas if the cross validation detects overfitting
+        when decreasing the strength of the regularization.
+        """
+        self.coef_path = []
+        n_samples = X.shape[0]
+
+        # init cross validator
+        cv = self.cv_factory(X, y) if self.cv_factory else KFold(n_samples, 3)
+        train, valid = iter(cv).next()
+
+        # compute the alpha grid
+        alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
+        logalphas = np.linspace(np.log(alpha_max),
+                                np.log(self.eps * alpha_max), self.n_alphas)
+        self.alphas = np.exp(logalphas)
+
+        # fit a model down the alpha grid and stop before overfitting
+        model = Lasso(alpha=alpha_max)
+        last_mse = np.inf
+        best_alpha = alpha_max
+        for alpha in self.alphas:
+            model.alpha = alpha
+            y_ = model.fit(X[train], y[train], **kwargs).predict(X[valid])
+            mse = ((y_ - y[valid]) ** 2).mean()
+            if len(self.coef_path) > 0 and mse > best_mse:
+                # early stop we are overfitting
+                break
+            else:
+                best_mse = mse
+                best_alpha = alpha
+                self.coef_path.append(model.coef_.copy())
+
+        # fine tune at optimal alpha on complete data set
+        model.alpha = best_alpha
+        model.coef_ = self.coef_path[-1]
+        model.fit(X, y, **kwargs)
+        self.active_clf = model
+        self.coef_ = model.coef_
+        return self
 
 
 class ElasticNet(LinearModel):
