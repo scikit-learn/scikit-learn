@@ -2,17 +2,16 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-# $Id$
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import *
 
 from ..coordinate_descent import Lasso, lasso_path
 from ..coordinate_descent import ElasticNet, enet_path
 
 def test_Lasso_toy():
     """
-    test predict on a toy example.
+    Test Lasso on a toy example for various values of alpha.
 
     When validating this against glmnet notice that glmnet divides it
     against nobs.
@@ -27,28 +26,28 @@ def test_Lasso_toy():
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
-    assert clf.dual_gap_ == 0.
+    assert_almost_equal(clf.dual_gap_,  0)
 
     clf = Lasso(alpha=0.1)
     clf.fit(X, Y)
     pred = clf.predict(T)
-    # assert_array_almost_equal(clf.coef_, [.95])
-    # assert_array_almost_equal(pred, [1.9, 2.85, 3.8])
-    assert clf.dual_gap_ == 0.
+    assert_array_almost_equal(clf.coef_, [.85])
+    assert_array_almost_equal(pred, [ 1.7 ,  2.55,  3.4 ])
+    assert_almost_equal(clf.dual_gap_, 0)
 
     clf = Lasso(alpha=0.5)
     clf.fit(X, Y)
     pred = clf.predict(T)
-    # assert_array_almost_equal(clf.coef_, [.75])
-    # assert_array_almost_equal(pred, [1.5, 2.25, 3.])
-    assert clf.dual_gap_ == 0.
+    assert_array_almost_equal(clf.coef_, [.25])
+    assert_array_almost_equal(pred, [0.5, 0.75, 1.])
+    assert_almost_equal(clf.dual_gap_, 0)
 
     clf = Lasso(alpha=1)
     clf.fit(X, Y)
     pred = clf.predict(T)
-    # assert_array_almost_equal(clf.coef_, [.5])
-    # assert_array_almost_equal(pred, [1, 1.5, 2.])
-    assert clf.dual_gap_ == 0.
+    assert_array_almost_equal(clf.coef_, [.0])
+    assert_array_almost_equal(pred, [0, 0, 0])
+    assert_almost_equal(clf.dual_gap_, 0)
 
 
 def test_Enet_toy():
@@ -67,16 +66,25 @@ def test_Enet_toy():
     clf = ElasticNet(alpha=0, rho=1.0)
     clf.fit(X, Y)
     pred = clf.predict(T)
-    # assert_array_almost_equal(clf.coef_, [1])
-    # assert_array_almost_equal(pred, [2, 3, 4])
-    assert clf.dual_gap_ == 0.
+    assert_array_almost_equal(clf.coef_, [1])
+    assert_array_almost_equal(pred, [2, 3, 4])
+    assert_almost_equal(clf.dual_gap_, 0)
+
+    # clf = ElasticNet(alpha=0.5, rho=0.3)
+    # clf.fit(X, Y, maxit=1000)
+    # pred = clf.predict(T)
+    # assert_array_almost_equal(clf.coef_, [0.531], decimal=3)
+    # assert_array_almost_equal(pred, [1.104, 1.656, 2.208], decimal=3)
+    # assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, rho=0.5)
     clf.fit(X, Y)
     pred = clf.predict(T)
     # assert_array_almost_equal(clf.coef_, [0.5])
     # assert_array_almost_equal(pred, [1, 1.5, 2.])
-    assert 0 < clf.dual_gap_ < 1e-10
+    assert_almost_equal(clf.dual_gap_, 0)
+
+
 
 # def test_lasso_path():
 #     """
