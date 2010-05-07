@@ -127,6 +127,24 @@ class BaseLibsvm(object):
                       self.nSV_, self.label_,
                       self.probA_, self.probB_)
 
+    def predict_margin(self, T):
+        """
+        Parameters
+        ----------
+        T : array-like, shape = [nsamples, nfeatures]
+        """
+        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
+        return libsvm.predict_margin_from_model_wrap(T, self.support_,
+                      self.dual_coef_, self.intercept_, self.solver_type,
+                      self.kernel, self.degree, self.gamma,
+                      self.coef0, self.eps, self.C, self.nr_weight,
+                      self.weight_label, self.weight,
+                      self.nu, self.cache_size,
+                      self.p, self.shrinking, self.probability,
+                      self.nSV_, self.label_,
+                      self.probA_, self.probB_)
+
+
 
     @property
     def coef_(self):

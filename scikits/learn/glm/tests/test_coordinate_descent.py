@@ -2,100 +2,136 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-# $Id$
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import *
 
-from ..coordinate_descent import lasso_coordinate_descent_slow
-from ..coordinate_descent import lasso_coordinate_descent_fast
-from ..coordinate_descent import Lasso
+from ..coordinate_descent import Lasso, lasso_path
+from ..coordinate_descent import ElasticNet, enet_path
 
-from ..coordinate_descent import enet_coordinate_descent_slow
-from ..coordinate_descent import enet_coordinate_descent_fast
-from ..coordinate_descent import ElasticNet
-from ..coordinate_descent import lasso_path
-from ..coordinate_descent import enet_path
-from ..coordinate_descent import enet_dual_gap, lasso_dual_gap
-
-def test_lasso_cd_python_cython_sanity():
-    n_samples, n_features, maxit = 100, 50, 150
-    np.random.seed(0)
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
-
-    alpha = 1
-
-    model_slow = Lasso(alpha=alpha)
-    assert_array_almost_equal(model_slow.compute_density(), 0)
-    model_slow.learner = lasso_coordinate_descent_slow
-    model_slow.fit(X, y, maxit=maxit)
-
-    model_slow_gap = lasso_dual_gap(X, y, model_slow.coef_, alpha)[0]
-
-    # check the convergence using the KKT condition
-    assert_array_almost_equal(model_slow_gap, 0, 4)
-
-    model_fast = Lasso(alpha=alpha)
-    model_fast.learner = lasso_coordinate_descent_fast
-    model_fast.fit(X, y, maxit=maxit)
-
-    model_fast_gap = lasso_dual_gap(X, y, model_fast.coef_, alpha)[0]
-
-    # check the convergence using the KKT condition
-    assert_array_almost_equal(model_fast_gap, 0, 4)
-
-    # check that python and cython implementations behave exactly the same
-    assert_array_almost_equal(model_slow.coef_, model_fast.coef_)
-    assert_array_almost_equal(model_slow_gap, model_fast_gap, 3)
-
-    # # check that the priori induces sparsity in the weights (feature selection)
-    assert_array_almost_equal(model_fast.compute_density(), 0.88, 2)
-
-def test_enet_cd_python_cython_sanity():
-    n_samples, n_features, maxit = 100, 50, 150
-    np.random.seed(0)
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
-
-    alpha, beta = 1, 10
-
-    model_slow = ElasticNet(alpha=alpha, beta=beta)
-    model_slow.learner = enet_coordinate_descent_slow
-    model_slow.fit(X, y, maxit=maxit)
-
-    model_slow_gap = enet_dual_gap(X, y, model_slow.coef_, alpha, beta)[0]
-
-    # check the convergence using the KKT condition
-    assert_array_almost_equal(model_slow_gap, 0, 4)
-
-    model_fast = ElasticNet(alpha=alpha, beta=beta)
-    model_fast.learner = enet_coordinate_descent_fast
-    model_fast.fit(X, y, maxit=maxit)
-
-    model_fast_gap = enet_dual_gap(X, y, model_fast.coef_, alpha, beta)[0]
-
-    # check t convergence using the KKT condition
-    assert_array_almost_equal(model_fast_gap, 0, 4)
-
-    # check cython's sanity
-    assert_array_almost_equal(model_slow.coef_, model_fast.coef_)
-    assert_array_almost_equal(model_slow_gap, model_fast_gap, 3)
-
-    # check that the priori induces sparsity in the weights
-    # (feature selection) but not
-    assert_array_almost_equal(model_slow.compute_density(), 0.90, 2)
-
-
-def test_lasso_enet_cd_paths():
-    """Test Lasso and Elastic-Net path functions
+def test_Lasso_toy():
     """
-    n_samples, n_features, maxit = 5, 10, 30
-    np.random.seed(0)
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
+    Test Lasso on a toy example for various values of alpha.
 
-    alphas_lasso, weights_lasso = lasso_path(X, y, factor=0.97, n_alphas = 50,
-                                            tol=1e-2)
-    alphas_enet, weights_enet = enet_path(X, y, factor=0.97, n_alphas = 50,
-                                            beta=0.1, tol=1e-2)
+    When validating this against glmnet notice that glmnet divides it
+    against nobs.
+    """
+
+    X = [[-1], [0], [1]]
+    Y = [-1, 0, 1]       # just a straight line
+    T = [[2], [3], [4]]  # test sample
+
+    clf = Lasso(alpha=0)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [1])
+    assert_array_almost_equal(pred, [2, 3, 4])
+    assert_almost_equal(clf.dual_gap_,  0)
+
+    clf = Lasso(alpha=0.1)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [.85])
+    assert_array_almost_equal(pred, [ 1.7 ,  2.55,  3.4 ])
+    assert_almost_equal(clf.dual_gap_, 0)
+
+    clf = Lasso(alpha=0.5)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [.25])
+    assert_array_almost_equal(pred, [0.5, 0.75, 1.])
+    assert_almost_equal(clf.dual_gap_, 0)
+
+    clf = Lasso(alpha=1)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [.0])
+    assert_array_almost_equal(pred, [0, 0, 0])
+    assert_almost_equal(clf.dual_gap_, 0)
+
+
+def test_Enet_toy():
+    """
+    Test ElasticNet for various parameters of alpha and rho.
+
+    Actualy, the parameters alpha = 0 should not be alowed. However,
+    we test it as a border case.
+    """
+
+    X = [[-1], [0], [1]]
+    Y = [-1, 0, 1]       # just a straight line
+    T = [[2], [3], [4]]  # test sample
+
+    # this should be the same as lasso
+    clf = ElasticNet(alpha=0, rho=1.0)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [1])
+    assert_array_almost_equal(pred, [2, 3, 4])
+    assert_almost_equal(clf.dual_gap_, 0)
+
+    # clf = ElasticNet(alpha=0.5, rho=0.3)
+    # clf.fit(X, Y, maxit=1000)
+    # pred = clf.predict(T)
+    # assert_array_almost_equal(clf.coef_, [0.531], decimal=3)
+    # assert_array_almost_equal(pred, [1.104, 1.656, 2.208], decimal=3)
+    # assert_almost_equal(clf.dual_gap_, 0)
+
+    clf = ElasticNet(alpha=0.5, rho=0.5)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    # assert_array_almost_equal(clf.coef_, [0.5])
+    # assert_array_almost_equal(pred, [1, 1.5, 2.])
+    assert_almost_equal(clf.dual_gap_, 0)
+
+
+
+# def test_lasso_path():
+#     """
+#     Test for the complete lasso path.
+# 
+#     As the weigths_lasso array is quite big, we only test at the first
+#     & last index.
+#     """
+#     n_samples, n_features, maxit = 5, 10, 30
+#     np.random.seed(0)
+#     Y = np.random.randn(n_samples)
+#     X = np.random.randn(n_samples, n_features)
+# 
+#     alphas_lasso, weights_lasso = lasso_path(X, Y, n_alphas = 10, tol=1e-3)
+#     assert_array_almost_equal(alphas_lasso,
+#                               [ 4.498, 4.363, 4.232, 4.105, 3.982,
+#                               3.863, 3.747, 3.634, 3.525, 3.420],
+#                               decimal=3)
+# 
+#     assert weights_lasso.shape == (10, 10)
+# 
+#     assert_array_almost_equal(weights_lasso[0],
+#                               [0, 0, 0, 0, 0 , -0.016, 0, 0, 0, 0],
+#                               decimal=3)
+# 
+#     assert_array_almost_equal(weights_lasso[9],
+#                               [-0.038, 0, 0, 0, 0, -0.148, 0, -0.095, 0, 0],
+#                               decimal=3)
+# 
+# def test_enet_path():
+#     n_samples, n_features, maxit = 5, 10, 30
+#     np.random.seed(0)
+#     Y = np.random.randn(n_samples)
+#     X = np.random.randn(n_samples, n_features)
+# 
+#     alphas_enet, weights_enet = enet_path(X, Y, n_alphas = 10, tol=1e-3)
+#     assert_array_almost_equal(alphas_enet,
+#                               [ 4.498, 4.363, 4.232, 4.105, 3.982,
+#                               3.863, 3.747, 3.634, 3.525, 3.420],
+#                               decimal=3)
+# 
+#     assert weights_enet.shape == (10, 10)
+# 
+#     assert_array_almost_equal(weights_enet[0],
+#                               [0, 0, 0, 0, 0 , -0.016, 0, 0, 0, 0],
+#                               decimal=3)
+# 
+#     assert_array_almost_equal(weights_enet[9],
+#                               [-0.028, 0, 0, 0, 0, -0.131, 0, -0.081, 0, 0],
+#                               decimal=3)

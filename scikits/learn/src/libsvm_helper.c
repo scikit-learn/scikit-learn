@@ -338,6 +338,26 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
     return 0;
 }
 
+int copy_predict_values(char *predict, struct svm_model *model, 
+                        npy_intp *predict_dims, char *dec_values, int nr)
+{
+    register int i;
+    int n, m;
+    struct svm_node **predict_nodes;
+    n = predict_dims[0];
+    predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+    if (predict_nodes == NULL)
+        return -1;
+    for(i=0; i<n; ++i) {
+        svm_predict_values(model, predict_nodes[i], 
+                                ((double *) dec_values) + i*nr);
+        free(predict_nodes[i]);
+    }
+    free(predict_nodes);
+    return 0;
+}
+
+
 int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict_dims,
                  char *dec_values)
 {

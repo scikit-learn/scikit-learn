@@ -32,6 +32,4 @@ through Mac Ports), you must issue the commands::
 Bleeding Edge
 -------------
 
-Latests source code can be found on subversion::
-
-  svn co http://scikit-learn.svn.sourceforge.net/svnroot/scikit-learn/trunk scikit-learn
+See section :doc:`contribute` no how to get the development version.

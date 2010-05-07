@@ -28,7 +28,7 @@ or if you have write privileges::
 If you have contributed some code and would like to have write
 privileges in subversion repository, please contact me (Fabian
 Pedregosa <fabian.pedregosa@inria.fr>) and I'll give you write
-privileges for the svn.
+privileges.
 
 
 Patches
