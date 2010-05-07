@@ -131,6 +131,17 @@ def test_probability():
                                [ 0.27698362,  0.72301638]],
                               decimal=1)
 
+def test_margin():
+    """
+    Test predict_margin
+    """
+    clf = svm.SVC()
+    clf.fit(X, Y)
+    assert_array_almost_equal(clf.predict_margin(T),
+                              [[ 0.97686446],
+                               [-0.93974878],
+                               [-0.61983725]])
+
 def test_error():
     """
     Test that it gives proper exception on deficient input
