@@ -172,7 +172,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
 
         # calculate the dual gap each gap_step iterations
+<<<<<<< HEAD:scikits/learn/glm/src/cd_fast.pyx
         # if n_iter % gap_step == 0: continue
+=======
+        if n_iter % gap_step == 0: continue
+>>>>>>> ddbb8755c963789797e35f60cd76284f51f63898:scikits/learn/glm/src/cd_fast.pyx
 
         dual_norm_XtA = linalg.norm(np.dot(X.T, R) - np.sqrt(beta) * w, np.inf)
         # TODO: use C sqrt
