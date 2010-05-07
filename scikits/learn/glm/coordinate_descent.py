@@ -179,6 +179,9 @@ class LassoPath(LinearModel):
         before reaching n_alphas if the cross validation detects overfitting
         when decreasing the strength of the regularization.
         """
+        X = np.asanyarray(X, dtype=np.float64)
+        y = np.asanyarray(y, dtype=np.float64)
+
         self.path_ = []
         n_samples = X.shape[0]
 
