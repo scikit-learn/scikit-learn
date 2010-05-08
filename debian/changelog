@@ -1,3 +1,10 @@
+scikit-learn (0.3-2) unstable; urgency=low
+
+  * Setting both HOME and MPLCONFIGDIR while building documentation
+    (slipped through fingers somehow) (Closes: #580727).
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 08 May 2010 00:35:59 -0400
+
 scikit-learn (0.3-1) unstable; urgency=low
 
   * Fresh upstream release.

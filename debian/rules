@@ -16,7 +16,8 @@ override_dh_auto_build:
 	dh_auto_build
 	: # Build Documentation
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	PYTHONPATH=`/bin/ls -d $$PWD/build/lib.*$(PYVER)` $(MAKE) -C doc html
+	export PYTHONPATH=`/bin/ls -d $$PWD/build/lib.*$(PYVER)` MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
+	 cd doc; $(MAKE) html
 endif
 
 
