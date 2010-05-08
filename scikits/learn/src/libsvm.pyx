@@ -67,6 +67,7 @@ cdef extern from "libsvm_helper.c":
     void copy_SV        (char *, svm_model *, np.npy_intp *)
     int  copy_predict (char *, svm_model *, np.npy_intp *, char *)
     int  copy_predict_proba (char *, svm_model *, np.npy_intp *, char *)
+    int  copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int)
     void copy_nSV     (char *, svm_model *)
     void copy_label   (char *, svm_model *)
     void copy_probA(char *, svm_model *, np.npy_intp *)
@@ -281,7 +282,7 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     copy_predict (libsvm_helper.c).
 
     We have to reconstruct model and parameters to make sure we stay
-    in sync with the python object. predict_wrap skips this step.
+    in sync with the python object.
 
     Parameters
     ----------
@@ -318,3 +319,54 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     free_model(model)
     free_param(param)
     return dec_values
+
+
+def predict_margin_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+                            np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+                            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+                            np.ndarray[np.float64_t, ndim=1, mode='c']
+                            intercept, int svm_type, int kernel_type, int
+                            degree, double gamma, double coef0, double
+                            eps, double C, int nr_weight,
+                            np.ndarray[np.int32_t, ndim=1] weight_label,
+                            np.ndarray[np.float_t, ndim=1] weight,
+                            double nu, double cache_size, double p, int
+                            shrinking, int probability,
+                            np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
+                            np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+                            np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
+                            np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
+    """
+    Predict margin (libsvm name for this is predict_values)
+
+    We have to reconstruct model and parameters to make sure we stay
+    in sync with the python object.
+    """
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef svm_parameter *param
+    cdef svm_model *model
+    cdef int nr
+
+    param = set_parameter(svm_type, kernel_type, degree, gamma,
+                          coef0, nu, cache_size, C, eps, p, shrinking,
+                          probability, nr_weight, weight_label.data,
+                          weight.data)
+    model = set_model(param, nSV.shape[0], SV.data, SV.shape, sv_coef.strides,
+                      sv_coef.data, intercept.data, nSV.data, label.data,
+                      probA.data, probB.data)
+
+    if svm_type > 1:
+        nr = 1
+    else:
+        nr = get_nr(model)
+        nr = nr * (nr - 1) / 2
+    
+    dec_values = np.empty((T.shape[0], nr), dtype=np.float64)
+    if copy_predict_values(T.data, model, T.shape, dec_values.data, nr) < 0:
+        raise MemoryError("We've run out of of memory")
+    # free model and param
+    free_model_SV(model)
+    free_model(model)
+    free_param(param)
+    return dec_values
+

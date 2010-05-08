@@ -106,8 +106,7 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # return if we reached desired tolerance
             break
 
-    return w, gap
-
+    return w, gap, tol
 
 
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
@@ -117,6 +116,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             int maxit, int gap_step, double tol):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
+
+        We minimize
+
+        1 norm(y - X w, 2)^2 + alpha norm(w, 1) + beta norm(w, 2)^2
+        -                                         ----
+        2                                           2
     """
 
     # get the data information into easy vars
@@ -128,15 +133,15 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
 
     # initial value of the residuals
-    cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(nfeatures + nsamples)
-    R[:nsamples] = y - np.dot(X, w)
-    R[nsamples:] = - sqrt(beta) * w
+    cdef np.ndarray[DOUBLE, ndim=1] R
 
     cdef double tmp
     cdef double w_ii
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter
+
+    R = y - np.dot(X, w)
 
     tol = tol * linalg.norm(y)**2
 
@@ -148,7 +153,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # R += w_ii * X[:,ii]
                 for jj in range(nsamples):
                     R[jj] += w_ii * X[jj,ii]
-                R[nsamples+ii] += w_ii * sqrt(beta)
 
             # tmp = (X[:,ii]*R).sum()
             tmp = 0.0
@@ -162,30 +166,28 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # R -=  w[ii] * X[:,ii] # Update residual
                 for jj in range(nsamples):
                     R[jj] -=  w[ii] * X[jj,ii] # Update residual
-                R[nsamples+ii] -= w[ii] * sqrt(beta)
-
 
         # calculate the dual gap each gap_step iterations
         if n_iter % gap_step == 0: continue
 
-        R2 = R[:nsamples]
-        dual_norm_XtA = beta * linalg.norm(np.dot(X.T, R2), np.inf)
-        R_norm = linalg.norm(R2)
-        w_norm = linalg.norm(w)
+        dual_norm_XtA = linalg.norm(np.dot(X.T, R) - np.sqrt(beta) * w, np.inf)
+        # TODO: use C sqrt
+        R_norm = linalg.norm(R)
+        w_norm = linalg.norm(w, 2)
         if (dual_norm_XtA > alpha):
             const =  alpha / dual_norm_XtA
-            A_norm = R_norm * (const)
+            A_norm = R_norm * const
             gap = 0.5 * (R_norm**2 + A_norm**2)
         else:
             const = 1.0
             gap = R_norm**2
 
-        gap = gap + alpha * linalg.norm(w, 1) - const * np.dot(R2.T, y) + \
-              0.5 * (beta + np.sqrt(beta) * const) * w_norm
+        gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
+              0.5 * beta * (1 + const**2) * (w_norm**2)
 
         if gap < tol:
             # return if we reached desired tolerance
             break
 
 
-    return w, gap
+    return w, gap, tol

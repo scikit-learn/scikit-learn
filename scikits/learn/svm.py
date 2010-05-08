@@ -127,6 +127,24 @@ class BaseLibsvm(object):
                       self.nSV_, self.label_,
                       self.probA_, self.probB_)
 
+    def predict_margin(self, T):
+        """
+        Parameters
+        ----------
+        T : array-like, shape = [nsamples, nfeatures]
+        """
+        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
+        return libsvm.predict_margin_from_model_wrap(T, self.support_,
+                      self.dual_coef_, self.intercept_, self.solver_type,
+                      self.kernel, self.degree, self.gamma,
+                      self.coef0, self.eps, self.C, self.nr_weight,
+                      self.weight_label, self.weight,
+                      self.nu, self.cache_size,
+                      self.p, self.shrinking, self.probability,
+                      self.nSV_, self.label_,
+                      self.probA_, self.probB_)
+
+
 
     @property
     def coef_(self):
@@ -183,19 +201,18 @@ class SVC(BaseLibsvm):
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, nfeatures]
-        Support vectors
+        Support vectors.
 
     `dual_coef_` : array, shape = [nclasses-1, nSV]
-        Coefficient of the support vector in the decision function,
-        where nclasses is the number of classes and nSV is the number
-        of support vectors.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [nclasses-1, nfeatures]
-        Wiehgiths asigned to the features (coefficients in the primal
+        Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
     `intercept_` : array, shape = [nclasses-1]
-        constants in decision function
+        Constants in decision function.
+
 
     Methods
     -------
@@ -204,6 +221,9 @@ class SVC(BaseLibsvm):
 
     predict(X) : array
         Predict using the model.
+
+    predict_proba(X) : array
+        Return probability estimates.
 
     Examples
     --------
@@ -237,12 +257,10 @@ class SVR(BaseLibsvm):
         Support vectors
 
     `dual_coef_` : array, shape = [nclasses-1, nSV]
-        Coefficient of the support vector in the decision function,
-        where nclasses is the number of classes and nSV is the number
-        of support vectors.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [nclasses-1, nfeatures]
-        Wiehgiths asigned to the features (coefficients in the primal
+        Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
     `intercept_` : array, shape = [nclasses-1]
@@ -255,6 +273,9 @@ class SVR(BaseLibsvm):
 
     predict(X) : array
         Predict using the model.
+
+    predict_proba(X) : array
+        Return probability estimates.
 
     See also
     --------
@@ -276,15 +297,14 @@ class OneClassSVM(BaseLibsvm):
     `support_` : array-like, shape = [nSV, nfeatures]
         Support vectors
 
+
     `dual_coef_` : array, shape = [nclasses-1, nSV]
-        Coefficient of the support vector in the decision function,
-        where nclasses is the number of classes and nSV is the number
-        of support vectors.
+        Coefficient of the support vector in the decision function.
 
     `coef_` : array, shape = [nclasses-1, nfeatures]
-        Wiehgiths asigned to the features (coefficients in the primal
+        Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
-
+    
     `intercept_` : array, shape = [nclasses-1]
         constants in decision function
 
@@ -295,6 +315,10 @@ class OneClassSVM(BaseLibsvm):
 
     predict(X) : array
         Predict using the model.
+
+    predict_proba(X) : array
+        Return probability estimates.
+
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  cache_size=100.0, eps=1e-3, C=1.0, nr_weight=0,

@@ -13,6 +13,7 @@ def configuration(parent_package='', top_path=None):
                          sources=['src/cd_fast.c'],
                          # libraries=['m'],
                          include_dirs=[numpy.get_include()])
+    config.add_data_dir('test')
     return config
 
 if __name__ == '__main__':
