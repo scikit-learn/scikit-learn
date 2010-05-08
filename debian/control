@@ -34,7 +34,7 @@ Depends: ${misc:Depends}, libjs-jquery
 Suggests: python-scikits-learn
 Description: documentation and examples for scikit-learn
  This package contains documentation and example scripts for
- python-scikit-learn.
+ python-scikits-learn.
 
 
 Package: python-scikits-learn-lib
@@ -42,7 +42,7 @@ Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Description: low-level implementations and bindings for scikit-learn
- This is an add-on package for python-scikit-learn. It provides
+Description: low-level implementations and bindings for scikits-learn
+ This is an add-on package for python-scikits-learn. It provides
  low-level implementations and custom Python bindings for the LIBSVM
  library.
