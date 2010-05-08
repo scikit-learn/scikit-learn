@@ -1,3 +1,9 @@
+scikit-learn (0.3-3) unstable; urgency=low
+
+  * Set HOME and MPLCONFIGDIR while unittesting as well (Closes: #580727)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 08 May 2010 12:47:07 -0400
+
 scikit-learn (0.3-2) unstable; urgency=low
 
   * Setting both HOME and MPLCONFIGDIR while building documentation
