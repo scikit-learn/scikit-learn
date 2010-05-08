@@ -1,0 +1,50 @@
+Format-Specification: http://wiki.debian.org/Proposals/CopyrightFormat
+Upstream-Name: scikit-learn
+Upstream-Source-Location: http://sourceforge.net/apps/trac/scikit-learn/wiki/SubversionRepo
+
+Files: *
+Copyright: Copyright (C)  2007 - 2010 Scikit-Learn Developers.
+License: BSD-3
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  a. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+  b. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+  c. Neither the name of the Scikit-learn Developers  nor the names of
+     its contributors may be used to endorse or promote products
+     derived from this software without specific prior written
+     permission.
+On Debian GNU/Linux systems, the complete text of the 3-clause BSD License
+can be found in `/usr/share/common-licenses/BSD'.
+
+Files: doc/sphinxext/*
+Copyright: Copyright (C) 2008 Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
+License: BSD
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
+
+Files: debian/*
+Copyright: Copyright 2010,
+    Yaroslav Halchenko <debian@onerussian.com>
+License: GPL-2
+  On Debian GNU/Linux systems, the complete text of the GPL-2 License
+  can be found in `/usr/share/common-licenses/GPL-2'.
+
+Files: ./scikits/learn/src/
+Copyright: Copyright (c) 2000-2009 Chih-Chung Chang and Chih-Jen Lin
+License: BSD-3
+  The source tarball contains a partial copy of the LIBSVM package.  However,
+  the corresponding library is available from the libsvm source package (or
+  rather the binary packages it builds). Therefore this code is not used and
+  the respective packages are used as dependencies. This copy of the libsvm
+  code is, however, left in place, as it does not hurt and does not justify
+  repackaging of the upstream sources.
+On Debian GNU/Linux systems, the complete text of the 3-clause BSD License
+can be found in `/usr/share/common-licenses/BSD'.

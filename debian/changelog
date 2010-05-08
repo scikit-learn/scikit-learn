@@ -1,0 +1,27 @@
+scikit-learn (0.3-2) unstable; urgency=low
+
+  * Setting both HOME and MPLCONFIGDIR while building documentation
+    (slipped through fingers somehow) (Closes: #580727).
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 08 May 2010 00:35:59 -0400
+
+scikit-learn (0.3-1) unstable; urgency=low
+
+  * Fresh upstream release.
+  * Switching to use quilt for patches, debian/* tags point to detached
+    debian branch
+  * debian/rules:
+    + build docs after python modules got built
+    + additional cleanups
+  * debian/control:
+    + additional build-depends: python-matplotlib, ipython, swig,
+      libboost-dev
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 03 May 2010 12:25:21 -0400
+
+scikit-learn (0.2+svn625-1) unstable; urgency=low
+
+  * Initial Debian release (Closes: #567036)
+  * First ever package by me to adhere to use fresh and shiny dh.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Apr 2010 23:38:06 -0400
