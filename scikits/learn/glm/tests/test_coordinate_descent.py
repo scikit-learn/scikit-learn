@@ -153,7 +153,6 @@ def test_enet_path_early_stopping():
     assert_array_almost_equal(clf2.coef_, clf.coef_)
     assert_equals(clf2.path_, [])
 
-
 # def test_lasso_path():
 #     """
 #     Test for the complete lasso path.
@@ -170,6 +169,16 @@ def test_enet_path_early_stopping():
 #     assert_array_almost_equal(alphas_lasso,
 #                               [ 4.498, 4.363, 4.232, 4.105, 3.982,
 #                               3.863, 3.747, 3.634, 3.525, 3.420],
+#                               decimal=3)
+#
+#     assert weights_lasso.shape == (10, 10)
+#
+#     assert_array_almost_equal(weights_lasso[0],
+#                               [0, 0, 0, 0, 0 , -0.016, 0, 0, 0, 0],
+#                               decimal=3)
+#
+#     assert_array_almost_equal(weights_lasso[9],
+#                               [-0.038, 0, 0, 0, 0, -0.148, 0, -0.095, 0, 0],
 #                               decimal=3)
 #
 #     assert weights_lasso.shape == (10, 10)

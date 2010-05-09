@@ -30,7 +30,6 @@ from .cd_fast import lasso_coordinate_descent, enet_coordinate_descent
 from .utils import lasso_objective, enet_objective, density
 from ..cross_val import KFold
 
-
 class LinearModel(object):
     """Base class for Linear Model optimized with coordinate descent"""
 
@@ -240,7 +239,6 @@ class ElasticNetPath(LinearModelPath):
     model_class = ElasticNet
 
     default_model_params = {"rho": 0.5}
-
 
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):

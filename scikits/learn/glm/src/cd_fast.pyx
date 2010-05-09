@@ -122,6 +122,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         1 norm(y - X w, 2)^2 + alpha norm(w, 1) + beta norm(w, 2)^2
         -                                         ----
         2                                           2
+
     """
 
     # get the data information into easy vars
