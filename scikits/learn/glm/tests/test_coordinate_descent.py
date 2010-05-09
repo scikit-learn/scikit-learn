@@ -131,7 +131,7 @@ def test_enet_path_early_stopping():
     X = np.random.randn(n_samples, n_features)
     y = np.dot(X, w)
 
-    clf = ElasticNetPath(n_alphas=100, eps=1e-3, model_params={"rho": 0.99})
+    clf = ElasticNetPath(n_alphas=100, eps=1e-3, rho=0.99)
     clf.fit(X, y, maxit=maxit, store_path=True)
     assert_equal(len(clf.path_), 51)
     assert_almost_equal(clf.alpha, 0.08, 2)
@@ -147,7 +147,7 @@ def test_enet_path_early_stopping():
     assert_almost_equal(rmse, 0.37, 2)
 
     # check that storing the path is not mandatory and yields the same results
-    clf2 = ElasticNetPath(n_alphas=100, eps=1e-3, model_params={"rho": 0.99})
+    clf2 = ElasticNetPath(n_alphas=100, eps=1e-3, rho=0.99)
     clf2.fit(X, y, maxit=maxit, store_path=False)
     assert_almost_equal(clf2.alpha, clf.alpha)
     assert_array_almost_equal(clf2.coef_, clf.coef_)

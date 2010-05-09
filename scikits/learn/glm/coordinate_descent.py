@@ -17,7 +17,8 @@ The objective function to minimize is for the Lasso::
 
 and for the Elastic Network::
 
-        0.5 * ||y - X w||_2 ^ 2 + alpha * rho * ||w||_1 + alpha * (1-rho) * 0.5 * ||w||_2 ^ 2
+        0.5 * ||y - X w||_2 ^ 2 + alpha * rho * ||w||_1
+        + alpha * (1-rho) * 0.5 * ||w||_2 ^ 2
 
 Where R are the residuals between the output of the model and the expected
 value and w is the vector of weights to fit.
@@ -27,7 +28,7 @@ import warnings
 import numpy as np
 
 from .cd_fast import lasso_coordinate_descent, enet_coordinate_descent
-from .utils import lasso_objective, enet_objective, density
+from .utils import density
 from ..cross_val import KFold
 
 class LinearModel(object):
@@ -46,6 +47,25 @@ class LinearModel(object):
         """Ratio of non-zero weights in the model"""
         return density(self.coef_)
 
+    def compute_rsquared(self, X, Y):
+        """Compute explained variance a.k.a. r^2"""
+        self.rsquared_ = 1 - np.linalg.norm(Y - np.dot(X, self.coef_))**2 \
+                         / np.linalg.norm(Y)**2
+
+    def __str__(self):
+        if self.coef_ is not None:
+            n_non_zeros = (np.abs(self.coef_) != 0).sum()
+            return ("%s with %d non-zero coefficients (%.2f%%)\n" + \
+                    " * Regularisation parameter = %.7f\n" +\
+                    " * Training r^2: %.4f") % \
+                    (self.__class__.__name__, n_non_zeros,
+                     n_non_zeros / float(len(self.coef_)) * 100,
+                     self.alpha, self.rsquared_)
+        else:
+            return ("%s\n" + \
+                    " * Regularisation parameter = %.7f\n" +\
+                    " * No fit") % \
+                    (self.__class__.__name__, self.alpha)
 
 class Lasso(LinearModel):
     """
@@ -91,7 +111,7 @@ class Lasso(LinearModel):
         self.alpha = float(alpha)
         self.tol = tol
 
-    def fit(self, X, Y, maxit=100):
+    def fit(self, X, Y, maxit=1000):
         """Fit Lasso model with coordinate descent"""
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
@@ -103,7 +123,10 @@ class Lasso(LinearModel):
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                    lasso_coordinate_descent(self.coef_, alpha, X, Y, maxit, 10, self.tol)
+                    lasso_coordinate_descent(self.coef_, alpha, X, Y, maxit, \
+                    10, self.tol)
+
+        self.compute_rsquared(X, Y)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
@@ -126,7 +149,7 @@ class ElasticNet(LinearModel):
     alpha : double
         TODO
     rho : double
-        The ElasticNet mixing parameter, with 0 < rho <= 1. 
+        The ElasticNet mixing parameter, with 0 < rho <= 1.
     """
 
     def __init__(self, alpha=1.0, rho=0.5, w0=None, tol=1e-4):
@@ -135,7 +158,7 @@ class ElasticNet(LinearModel):
         self.rho = rho
         self.tol = tol
 
-    def fit(self, X, Y, maxit=100):
+    def fit(self, X, Y, maxit=1000):
         """Fit Elastic Net model with coordinate descent"""
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
@@ -150,6 +173,8 @@ class ElasticNet(LinearModel):
                 enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
                                         maxit, 10, self.tol)
 
+        self.compute_rsquared(X, Y)
+
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
 
@@ -163,22 +188,13 @@ class ElasticNet(LinearModel):
 class LinearModelPath(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
-    model_class = None
-
-    default_model_params = {}
-
-    def __init__(self, w0=None, cv_factory=None, eps=1e-3, n_alphas=100,
-                 model_params=None):
+    def __init__(self, w0=None, cv_factory=None, eps=1e-3, n_alphas=100):
         self.cv_factory = cv_factory
         self.eps = eps
         self.n_alphas = n_alphas
         self.coef_ = w0
         self.alpha = 0.0
         self.path = []
-        if model_params is None:
-            self.model_params = self.default_model_params.copy()
-        else:
-            self.model_params = model_params
 
     def fit(self, X, y, store_path=False, **kwargs):
         """Fit linear model with coordinate descent along decreasing alphas
@@ -194,7 +210,7 @@ class LinearModelPath(LinearModel):
         n_samples = X.shape[0]
 
         # init cross validator
-        cv = self.cv_factory(X, y) if self.cv_factory else KFold(n_samples, 3)
+        cv = self.cv_factory() if self.cv_factory else KFold(n_samples, 3)
         train, valid = iter(cv).next()
 
         # compute the alpha grid
@@ -204,7 +220,7 @@ class LinearModelPath(LinearModel):
         alphas = np.exp(logalphas)
 
         # fit a model down the alpha grid and stop before overfitting
-        model = self.model_class(alpha=alpha_max, **self.model_params)
+        model = self.model_factory(alpha=alpha_max)
         best_mse = np.inf
         for alpha in alphas:
             model.alpha = alpha
@@ -212,11 +228,12 @@ class LinearModelPath(LinearModel):
             mse = ((y_ - y[valid]) ** 2).mean()
             if mse > best_mse:
                 # early stop we are overfitting
-                break
+                # break
+                pass # FIXME : should not early stop
             else:
                 best_mse = mse
-                best_model = self.model_class(w0=model.coef_.copy(),
-                                              alpha=alpha, **self.model_params)
+                best_model = self.model_factory(w0=model.coef_.copy(),
+                                              alpha=alpha)
                 if store_path:
                     self.path_.append(best_model)
 
@@ -224,21 +241,26 @@ class LinearModelPath(LinearModel):
         best_model.fit(X, y, **kwargs)
         self.coef_ = best_model.coef_
         self.alpha = best_model.alpha # purely indicative
+        self.compute_rsquared(X, y)
         return self
 
 
 class LassoPath(LinearModelPath):
     """Lasso linear model with iterative fitting along a regularization path"""
 
-    model_class = Lasso
+    def model_factory(self, **kwargs):
+        return Lasso(**kwargs)
 
 
 class ElasticNetPath(LinearModelPath):
     """Elastic Net model with iterative fitting along a regularization path"""
 
-    model_class = ElasticNet
+    def model_factory(self, **kwargs):
+        return ElasticNet(rho=self.rho, **kwargs)
 
-    default_model_params = {"rho": 0.5}
+    def __init__(self, rho=0.5, **kwargs):
+        super(ElasticNetPath, self).__init__(**kwargs)
+        self.rho = rho
 
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
