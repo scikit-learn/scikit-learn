@@ -236,12 +236,12 @@ class LeaveOneLabelOut(object):
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         [[5 6]
-        [7 8]] [[1 2]
-        [3 4]] [1 2] [1 2]
+         [7 8]] [[1 2]
+         [3 4]] [1 2] [1 2]
         TRAIN: [ True  True False False] TEST: [False False  True  True]
         [[1 2]
-        [3 4]] [[5 6]
-        [7 8]] [1 2] [1 2]
+         [3 4]] [[5 6]
+         [7 8]] [1 2] [1 2]
 
         """
         self.labels = labels
