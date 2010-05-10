@@ -129,6 +129,8 @@ class BaseLibsvm(object):
 
     def predict_margin(self, T):
         """
+        Calculate the distance of the samples in T to the separating hyperplane.
+
         Parameters
         ----------
         T : array-like, shape = [nsamples, nfeatures]

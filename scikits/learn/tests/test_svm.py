@@ -126,21 +126,24 @@ def test_probability():
     clf = svm.SVC(probability=True)
     clf.fit(X, Y)
     assert_array_almost_equal(clf.predict_proba(T),
-                              [[ 0.81936054,  0.18063946],
-                               [ 0.18923853,  0.81076147],
-                               [ 0.27698362,  0.72301638]],
+                              [[ 0.819,  0.18],
+                               [ 0.189,  0.810],
+                               [ 0.276,  0.723]],
                               decimal=1)
 
 def test_margin():
     """
     Test predict_margin
+    TODO: more tests
     """
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_array_almost_equal(clf.predict_margin(T),
-                              [[ 0.97686446],
-                               [-0.93974878],
-                               [-0.61983725]])
+                              [[ 0.976],
+                               [-0.939],
+                               [-0.619]],
+                              decimal=3)
+
 
 def test_error():
     """
@@ -168,7 +171,7 @@ def test_LinearSVC():
     clf.fit(X, Y)
 
     assert_array_equal(clf.predict(T), true_result)
-    assert_array_almost_equal(clf.intercept_, [0])
+    assert_array_almost_equal(clf.intercept_, [0], decimal=5)
 
     # the same with l1 penalty
     clf = svm.LinearSVC(penalty='L1', dual=False)
