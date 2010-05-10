@@ -113,7 +113,7 @@ the labels corresponding to new data.
 In `scikit.learn`, an *estimator* is just a plain Python class that
 implements the methods `fit(X, Y)` and `predict(T)`.
 
-An example of estimator is the class ``scikits.learn.neighbors.SVC`` that
+An example of estimator is the class ``scikits.learn.svm.SVC`` that
 implements `Support Vector Classification
 <http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 constructor of an estimator takes as arguments the parameters of the
