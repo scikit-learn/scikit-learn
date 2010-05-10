@@ -18,7 +18,7 @@ curpath = os.path.dirname(__file__)
 
 def load_dataset(filename):
     from scipy.io import loadmat
-    dic = loadmat(os.path.join(curpath, filename), squeeze_me = False)
+    dic = loadmat(os.path.join(curpath, filename), squeeze_me = False, byte_order='little')
     dic['w0'] = dic['w0'].squeeze()
     dic['w'] = dic['w'].squeeze()
     dic['tw'] = dic['tw'].squeeze()
