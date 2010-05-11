@@ -1,3 +1,12 @@
+scikit-learn (0.3-4) unstable; urgency=low
+
+  * Disabling test_gmm_em unittests while building (Closes: #580879).
+    Actual reason for failing tests lies within NumPy -- see #581043,
+    which should be fixed there, but should not prevent building of
+    this package atm.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 10 May 2010 23:59:49 -0400
+
 scikit-learn (0.3-3) unstable; urgency=low
 
   * Set HOME and MPLCONFIGDIR while unittesting as well (Closes: #580727)
