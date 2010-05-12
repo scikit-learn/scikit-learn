@@ -2,27 +2,21 @@
 Linear Regression
 =================
 
-Linear Regression
-=================
 
 In this model, the target value is expected to be a linear combination
 of the input variables.
 
-.. math::    y(X, W) = w_0 + w_1 x_1 + ... + w_D x_D
+.. math::    y(x, w) = w_0 + w_1 x_1 + ... + w_D x_D
 
-Parameter W is estimated by least squares.
 
-.. what happens if there are duplicate rows ?
+Ordinary Least Squares
+======================
 
-Linear regression is done via instances of:
+Parameter w is estimated by least squares.
 
 .. autoclass:: scikits.learn.glm.regression.LinearRegression
     :members:
 
->>> from scikits.learn import glm
->>> clf = glm.LinearRegression()
-
-.. TODO: put here an example
 
 Ridge Regression
 ================
@@ -48,19 +42,25 @@ coefficients using:
 .. autoclass:: scikits.learn.glm.ridge.Ridge
    :members:
 
-Lasso and Elastic-Net
-=====================
-The lasso is a shrinkage method like ridge, with subtle but important
-differences.
 
-TODO
+Lasso
+=====
+The Lasso is a linear model trained with L1 prior as regularizer
+
+.. autoclass:: scikits.learn.glm.Lasso
+   :members:
+
+Elastic Net
+===========
+Elastic Net is a linear model trained with L1 and L2 prior as
+regularizer.
+
+.. autoclass:: scikits.learn.glm.ElasticNet
+   :members:
 
 
 Examples
 ========
 
-.. literalinclude:: ../../examples/lasso_enet_coordinate_descent.py
-
-.. image:: glm_data/lasso_enet_coordinate_descent.png
-    :align: center
+:ref:`plot_lasso_coordinate_descent_path.py`
 
