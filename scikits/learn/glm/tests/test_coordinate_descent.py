@@ -144,7 +144,7 @@ def test_enet_path_early_stopping():
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_almost_equal(rmse, 0.37, 2)
+    assert_almost_equal(rmse, 0.36, 2)
 
     # check that storing the path is not mandatory and yields the same results
     clf2 = ElasticNetPath(n_alphas=100, eps=1e-3, rho=0.99)
