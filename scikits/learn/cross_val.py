@@ -9,6 +9,7 @@ Utilities for cross validation.
 # $Id$
 
 import numpy as np
+from math import factorial
 
 try:
     from itertools import combinations
@@ -51,6 +52,8 @@ class LeaveOneOut(object):
         >>> X = [[1, 2], [3, 4]]
         >>> y = [1, 2]
         >>> loo = cross_val.LeaveOneOut(2)
+        >>> len(loo)
+        2
         >>> for train_index, test_index in loo:
         ...    print "TRAIN:", train_index, "TEST:", test_index
         ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
@@ -78,6 +81,8 @@ class LeaveOneOut(object):
                                 self.n,
                                 )
 
+    def __len__(self):
+        return self.n
 
 
 ################################################################################
@@ -106,6 +111,8 @@ class LeavePOut(object):
         >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
         >>> y = [1, 2, 3, 4]
         >>> lpo = cross_val.LeavePOut(4, 2)
+        >>> len(lpo)
+        6
         >>> for train_index, test_index in lpo:
         ...    print "TRAIN:", train_index, "TEST:", test_index
         ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
@@ -139,6 +146,10 @@ class LeavePOut(object):
                                 self.p,
                                 )
 
+    def __len__(self):
+        return factorial(self.n) / factorial(self.n - self.p) \
+               / factorial(self.p)
+
 
 ################################################################################
 class KFold(object):
@@ -165,6 +176,8 @@ class KFold(object):
         >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
         >>> y = [1, 2, 3, 4]
         >>> kf = cross_val.KFold(4, k=2)
+        >>> len(kf)
+        2
         >>> for train_index, test_index in kf:
         ...    print "TRAIN:", train_index, "TEST:", test_index
         ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
@@ -204,6 +217,8 @@ class KFold(object):
                                 self.k,
                                 )
 
+    def __len__(self):
+        return self.k
 
 ################################################################################
 class LeaveOneLabelOut(object):
@@ -229,6 +244,8 @@ class LeaveOneLabelOut(object):
         >>> y = [1, 2, 1, 2]
         >>> labels = [1, 1, 2, 2]
         >>> lol = cross_val.LeaveOneLabelOut(labels)
+        >>> len(lol)
+        2
         >>> for train_index, test_index in lol:
         ...    print "TRAIN:", train_index, "TEST:", test_index
         ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, \
@@ -245,6 +262,7 @@ class LeaveOneLabelOut(object):
 
         """
         self.labels = labels
+        self.n_labels = np.unique(labels).size
 
 
     def __iter__(self):
@@ -263,6 +281,9 @@ class LeaveOneLabelOut(object):
                                 self.__class__.__name__,
                                 self.labels,
                                 )
+
+    def __len__(self):
+        return self.n_labels
 
 
 def split(train_indices, test_indices, *args):
