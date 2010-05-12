@@ -59,7 +59,7 @@ cdef extern from "libsvm_helper.c":
     svm_parameter *set_parameter(int , int , int , double, double ,
                                   double , double , double , double,
                                   double, int, int, int, char *, char *)
-    svm_problem *set_problem(char *, char *, np.npy_intp *)
+    svm_problem *set_problem(char *, char *, np.npy_intp *, int)
     svm_model *set_model(svm_parameter *, int, char *, np.npy_intp *, np.npy_intp *,
                          char *, char *, char *, char *, char *, char *)
     void copy_sv_coef   (char *, svm_model *, np.npy_intp *)
@@ -128,7 +128,7 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef char *error_msg
 
     # set libsvm problem
-    problem = set_problem(X.data, Y.data, X.shape)
+    problem = set_problem(X.data, Y.data, X.shape, kernel_type)
 
     # set parameters
     param = set_parameter(svm_type, kernel_type, degree, gamma,
@@ -165,7 +165,10 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     # copy model.SV
     # we erase any previous information in SV
     SV.resize((0,0), refcheck=False)
-    SV.resize((SV_len, X.shape[1]), refcheck=False)
+    if kernel_type == 4:
+        SV.resize((SV_len, 1), refcheck=False)
+    else:
+        SV.resize((SV_len, X.shape[1]), refcheck=False)
     copy_SV(SV.data, model, SV.shape)
 
     # copy model.nSV

@@ -9,15 +9,6 @@ class BaseLibsvm(object):
 
     Should not be used directly, use derived classes instead
     """
-    support_ = np.empty((0,0), dtype=np.float64, order='C')
-    dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
-    intercept_ = np.empty(0, dtype=np.float64, order='C')
-
-    # only used in classification
-    nSV_ = np.empty(0, dtype=np.int32, order='C')
-
-    weight = np.empty(0, dtype=np.float64, order='C')
-    weight_label = np.empty(0, dtype=np.int32, order='C')
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -25,7 +16,10 @@ class BaseLibsvm(object):
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nr_weight, nu, p, shrinking, probability):
         self.solver_type = self._svm_types.index(impl)
-        self.kernel = self._kernel_types.index(kernel)
+        if callable(kernel):
+            self._kernfunc = kernel
+            self.kernel = -1
+        else: self.kernel = self._kernel_types.index(kernel)
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
@@ -37,6 +31,18 @@ class BaseLibsvm(object):
         self.p = p
         self.shrinking = int(shrinking)
         self.probability = int(probability)
+
+        # container for when we call fit
+        self.support_ = np.empty((0,0), dtype=np.float64, order='C')
+        self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
+        self.intercept_ = np.empty(0, dtype=np.float64, order='C')
+
+        # only used in classification
+        self.nSV_ = np.empty(0, dtype=np.int32, order='C')
+
+        self.weight = np.empty(0, dtype=np.float64, order='C')
+        self.weight_label = np.empty(0, dtype=np.int32, order='C')
+
 
     def fit(self, X, Y):
         """
@@ -54,12 +60,25 @@ class BaseLibsvm(object):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.float64, order='C')
 
-        # check dimensions
-        if X.shape[0] != Y.shape[0]: raise ValueError("Incompatible shapes")
+        # in the case of precomputed kernel given as a function, we
+        # have to compute explicitly the kernel matrix
+        if self.kernel < 0:
+            # TODO: put keyword copy to copy on demand
+            _X = np.asanyarray(self._kernfunc(X, X), dtype=np.float64, order='C')
+             # you must store a reference to X to compute the kernel in predict
+             # there's a way around this, but it involves patching libsvm
+            self.__Xfit = X
+            kernel_type = 4
+        else:
+            _X = X
+            kernel_type = self.kernel
 
-        if (self.gamma == 0): self.gamma = 1.0/X.shape[0]
-        self.label_, self.probA_, self.probB_ = libsvm.train_wrap(X, Y,
-                 self.solver_type, self.kernel, self.degree,
+        # check dimensions
+        if _X.shape[0] != Y.shape[0]: raise ValueError("Incompatible shapes")
+
+        if (self.gamma == 0): self.gamma = 1.0/_X.shape[0]
+        self.label_, self.probA_, self.probB_ = libsvm.train_wrap(_X, Y,
+                 self.solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
                  self.nr_weight, self.support_, self.dual_coef_,
                  self.intercept_, self.weight_label, self.weight,
@@ -89,9 +108,18 @@ class BaseLibsvm(object):
         C : array, shape = [nsample]
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        return libsvm.predict_from_model_wrap(T, self.support_,
+
+        # in the case of precomputed kernel given as function, we have
+        # to manually calculate the kernel matrix ...
+        if self.kernel < 0:
+            _T = np.asanyarray(self._kernfunc(T, self.__Xfit), dtype=np.float64, order='C')
+            kernel_type = 4
+        else:
+            _T = T
+            kernel_type = self.kernel
+        return libsvm.predict_from_model_wrap(_T, self.support_,
                       self.dual_coef_, self.intercept_,
-                      self.solver_type, self.kernel, self.degree,
+                      self.solver_type, kernel_type, self.degree,
                       self.gamma, self.coef0, self.eps, self.C,
                       self.nr_weight, self.weight_label, self.weight,
                       self.nu, self.cache_size, self.p,

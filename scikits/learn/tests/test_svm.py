@@ -1,8 +1,6 @@
 import numpy as np
-from scikits.learn import svm
-from numpy.testing import assert_array_equal, \
-                          assert_array_almost_equal, \
-                          assert_raises
+from scikits.learn import svm, datasets
+from numpy.testing import *
 
 # test sample 1
 X =  [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]]
@@ -50,6 +48,44 @@ def test_CSVC():
                         [ 0.,  0.,  2.],
                         [ 3.,  3.,  3.]])
     assert_array_equal(pred, true_result2)
+
+def test_precomputed():
+    """
+    Test with a precomputed kernel
+    """
+    clf = svm.SVC(kernel='precomputed')
+    # just a linear kernel
+    K = np.dot(X, np.array(X).T)
+    clf.fit(K, Y)
+    KT = np.dot(T, np.array(X).T)
+    pred = clf.predict(KT)
+
+    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.intercept_, [0])
+    assert_array_almost_equal(clf.support_, [[2], [4]])
+    assert_array_equal(pred, true_result)
+
+    # same as before, but giving the function instead of the kernel
+    # matrix
+    kfunc = lambda x, y: np.dot(x, y.T)
+    clf = svm.SVC(kernel=kfunc)
+    # just a linear kernel
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+
+    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.intercept_, [0])
+    assert_array_almost_equal(clf.support_, [[2], [4]])
+    assert_array_equal(pred, true_result)
+    
+
+    # test with a real dataset, also simulating a linear kernel
+    clf = svm.SVC(kernel='precomputed')
+    iris = datasets.load_iris()
+    K = np.dot(iris.data, iris.data.T)
+    clf.fit(K, iris.target)
+    pred = clf.predict(K)
+    assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
 
 def test_SVR():

@@ -1,7 +1,6 @@
 #include <stdlib.h>
-#include <stdio.h>
-#include "svm.h"
 #include <numpy/arrayobject.h>
+#include "svm.h"
 
 /*
  * Some helper methods for libsvm bindings.
@@ -52,14 +51,16 @@ struct svm_model
  * Special care must be taken with indices, since libsvm indices start
  * at 1 and not at 0.
  *
+ * Strictly speaking, the C standard does not require that structs are
+ * contiguous, but in practice its a reasonable assumption.
+ *
  */
 struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 {
     struct svm_node **sparse;
-    register int i, j;              /* number of nonzero elements in row i */
+    int i, j, count;                /* number of nonzero elements in row i */
     struct svm_node *temp;          /* stack for nonzero elements */
     struct svm_node *T;             /* pointer to the top of the stack */
-    int count;
 
     sparse = (struct svm_node **) malloc (dims[0] * sizeof(struct svm_node *));
     temp = (struct svm_node *) malloc ((dims[1]+1) * sizeof(struct svm_node));
@@ -93,6 +94,51 @@ struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
     return sparse;
 }
 
+/* transform a dense kernel representation into one that libsvm can understand 
+ *
+ * TODO: this could be optimized, since row length is always the same.
+*/
+struct svm_node **dense_to_precomputed (double *x, npy_intp *dims)
+{
+    struct svm_node **sparse;
+    int i, j, count;               /* number of nonzero elements in row i */
+    struct svm_node *temp;          /* stack for nonzero elements */
+    struct svm_node *T;             /* pointer to the top of the stack */
+
+    sparse = (struct svm_node **) malloc (dims[0] * sizeof(struct svm_node *));
+    temp = (struct svm_node *) malloc ((dims[1]+2) * sizeof(struct svm_node));
+
+    if (sparse == NULL || temp == NULL) return NULL;
+
+    for (i=0; i<dims[0]; ++i) {
+        T = temp; /* reset stack pointer */
+        T->value = (float) (i+1);
+        T->index = 0;
+        ++T;
+
+        for (j=1; j<=dims[1]; ++j) {
+            T->value = *x;
+            T->index = j;
+            ++T;
+            ++x; /* go to next element */
+        }
+
+        /* set sentinel */
+        T->index = -1;
+        ++T;
+
+        /* allocate memory and copy collected items*/
+        count = T - temp;
+        sparse[i] = (struct svm_node *) malloc(count * sizeof(struct svm_node));
+        if (sparse[i] == NULL) return NULL;
+        memcpy(sparse[i], temp, count * sizeof(struct svm_node));
+    }
+
+    free(temp);
+    return sparse;
+}
+
+
 /* Create a svm_paramater struct with and return it */
 struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,  double gamma,
                                      double coef0, double nu, double cache_size, 
@@ -122,14 +168,17 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree, 
 }
 
 
-struct svm_problem * set_problem(char *X,char *Y, npy_intp *dims)
+struct svm_problem * set_problem(char *X, char *Y, npy_intp *dims, int kernel_type)
 {
     struct svm_problem *problem;
     problem = (struct svm_problem *) malloc(sizeof(struct svm_problem));
     if (problem == NULL) return NULL;
     problem->l = (int) dims[0];
     problem->y = (double *) Y;
-    problem->x = dense_to_sparse((double *) X, dims);
+    if (kernel_type == PRECOMPUTED)
+        problem->x = dense_to_precomputed((double *) X, dims);
+    else 
+        problem->x = dense_to_sparse((double *) X, dims);
     if (problem->x == NULL) { 
         free(problem);
         return NULL;
@@ -167,8 +216,11 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     model->label =   (int *)      malloc(nr_class * sizeof(int));;
     model->sv_coef = (double **)  malloc((nr_class-1)*sizeof(double *));
     model->rho =     (double *)   malloc( m * sizeof(double));
-    model->SV = dense_to_sparse((double *) SV, SV_dims);
 
+    /* in the case of precomputed kernels we do not use
+       dense_to_precomputed because we don't want the leading 0. As
+       indices start at 1 (not at 0) this will work */
+    model->SV = dense_to_sparse((double *) SV, SV_dims);
     model->nr_class = nr_class;
     model->param = *param;
     model->l = (int) SV_dims[0];
@@ -272,6 +324,14 @@ void copy_SV(char *data, struct svm_model *model, npy_intp *dims)
     int i, j, k, n = model->l;
     double *t = (double *) data;
     int step = dims[1] * sizeof(double);
+    int fsig; /* first significant element */
+    if (model->param.kernel_type == PRECOMPUTED) {
+        /* first element is special in the case of precomputed kernel */
+        for(i=0; i<n; ++i) {
+            t[i] = model->SV[i][0].value;
+        }
+        return;
+    }
     for (i=0; i<n; ++i) {
         k = model->SV[i][0].index - 1;
         for(j=0; k >=0 ; ++j) {
@@ -307,7 +367,6 @@ void copy_probA(char *data, struct svm_model *model, npy_intp * dims)
     memcpy(data, model->probA, dims[0] * sizeof(double));
 }
 
-
 void copy_probB(char *data, struct svm_model *model, npy_intp * dims)
 {
     memcpy(data, model->probB, dims[0] * sizeof(double));
@@ -326,7 +385,12 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
     register int i, n;
     struct svm_node **predict_nodes;
     n = predict_dims[0];
-    predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+
+    if (model->param.kernel_type == PRECOMPUTED) 
+        predict_nodes = dense_to_precomputed((double *) predict, predict_dims);
+    else
+        predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
@@ -345,7 +409,10 @@ int copy_predict_values(char *predict, struct svm_model *model,
     int n, m;
     struct svm_node **predict_nodes;
     n = predict_dims[0];
-    predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+    if (model->param.kernel_type == PRECOMPUTED) 
+        predict_nodes = dense_to_precomputed((double *) predict, predict_dims);
+    else
+        predict_nodes = dense_to_sparse((double *) predict, predict_dims);
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
@@ -366,7 +433,10 @@ int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict
     struct svm_node **predict_nodes;
     n = predict_dims[0];
     m = model->nr_class;
-    predict_nodes = dense_to_sparse((double *) predict, predict_dims);
+    if (model->param.kernel_type == PRECOMPUTED) 
+        predict_nodes = dense_to_precomputed((double *) predict, predict_dims);
+    else
+        predict_nodes = dense_to_sparse((double *) predict, predict_dims);
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
