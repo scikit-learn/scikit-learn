@@ -270,11 +270,12 @@ class GMM(ExpMixtureModel):
         the data """
         assert(self.isinit)
         # compute the gaussian pdf
-        tgd	= densities.multiple_gauss_den(data, self.gm.mu, self.gm.va)
+        tgd    = densities.multiple_gauss_den(data, self.gm.mu, 
+                                           self.gm.va, log = True)
         # multiply by the weight
-        tgd	*= self.gm.w
+        tgd    += N.log(self.gm.w)
 
-        return N.sum(N.log(N.sum(tgd, axis = 1)), axis = 0)
+        return N.sum(densities.logsumexp(tgd), axis = 0)
 
     def bic(self, data):
         """ Returns the BIC (Bayesian Information Criterion), 
