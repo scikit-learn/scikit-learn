@@ -70,6 +70,26 @@ Complete class reference:
 .. autoclass:: scikits.learn.svm.SVC
    :members:
 
+Using Custom Kernels
+^^^^^^^^^^^^^^^^^^^^
+
+You can also use your own defined kernels by passing a function to the
+keyword `kernel` in the constructor.
+
+Your kernel must take as arguments two arrays and return a
+floating-point number. 
+
+The following code defines a valid kernel and creates a Support Vector
+Machine with that associated kernel::
+
+    >>> import numpy as np
+    >>> from scikits.learn import svm
+    >>> def my_kernel(x, y):
+    ...     return np.tanh(np.dot(x, y.T) - 1)
+    ... 
+    >>> clf = svm.SVC(kernel=my_kernel)
+
+
 Regression
 ----------
 The method of Support Vector Classification can be extended to solve
