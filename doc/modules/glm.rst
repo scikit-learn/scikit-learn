@@ -15,7 +15,7 @@ Ordinary Least Squares
 Parameter w is estimated by least squares.
 
 .. autoclass:: scikits.learn.glm.regression.LinearRegression
-    :members:
+   :members:
 
 
 Ridge Regression
@@ -47,7 +47,7 @@ Lasso
 =====
 The Lasso is a linear model trained with L1 prior as regularizer
 
-.. autoclass:: scikits.learn.glm.Lasso
+.. autoclass:: scikits.learn.glm.coordinate_descent.Lasso
    :members:
 
 Elastic Net
@@ -55,12 +55,12 @@ Elastic Net
 Elastic Net is a linear model trained with L1 and L2 prior as
 regularizer.
 
-.. autoclass:: scikits.learn.glm.ElasticNet
+.. autoclass:: scikits.learn.glm.coordinate_descent.ElasticNet
    :members:
 
 
 Examples
 ========
 
-:ref:`plot_lasso_coordinate_descent_path.py`
+:ref:`example_plot_lasso_coordinate_descent_path.py`
 

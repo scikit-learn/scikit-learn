@@ -25,10 +25,7 @@ the goal is to decide which class a new data point will be in. This
 classification will be performed by creating a hyperplane that
 maximizes the distance between any two classes.
 
-.. TODO substitute this by a link
-
-.. literalinclude:: ../../examples/svm/plot_svm_hyperplane.py
-.. image:: svm_data/separating_hyperplane_2D.png
+See :ref:`example_svm_plot_svm_hyperplane.py` for a complete example
 
 The original optimal hyperplane algorithm was a linear
 classifier. However, in 1992, Bernhard Boser, Isabelle Guyon and
@@ -51,10 +48,12 @@ corresponding feature space is a Hilbert space of infinite
 dimension. Maximum margin classifiers are well regularized, so the
 infinite dimension does not spoil the results. Available kernels are,
 
-  * linear :math:`(1 + <x, x'>)`
-  * polynomial :math:`(1 + <x, x'>)^d`
-  * radial basis :math:`exp(-\gamma |x-x'|^2)`
-  * sigmoid :math:`tanh(x_i x_j + c)`
+  * linear :math:`(<x_i, x_j'>)`
+  * polynomial :math:`(\gamma <x, x'> + r)^d, \gamma > 0`
+  * radial basis :math:`exp(-\gamma |x-x'|^2), \gamma > 0`
+  * sigmoid :math:`tanh(<x_i, x_j> + r)`
+
+where :math:`\gamma, r`, and :math:`d` are kernel parameters.
 
 The exclusive-OR is the simplest problem that cannot be solved using a
 linear kernel. In this problem, point (x, y) belongs has target 1 if
@@ -62,13 +61,13 @@ and only if x > 0 XOR y > 0. In the following example, we create a
 training set of random points X with target Y = XOR(X). We see that
 the SVM correctly draws the decision function.
 
-.. literalinclude:: ../../examples/svm/plot_svm_nonlinear.py
-.. image:: svm_data/separating_nonlinear.png
+See :ref:`example_svm_plot_svm_nonlinear.py` for a complete example
 
 Complete class reference:
 
 .. autoclass:: scikits.learn.svm.SVC
    :members:
+   :inherited-members:
 
 Using Custom Kernels
 --------------------
@@ -109,6 +108,7 @@ data close to the model prediction.
 
 .. autoclass:: scikits.learn.svm.SVR
    :members:
+   :inherited-members:
 
 
 Distribution estimation
@@ -116,11 +116,15 @@ Distribution estimation
 One-class SVM is used for out-layer detection, that is, given a set of
 samples, it will detect the soft boundary of that set.
 
-.. literalinclude:: ../../examples/svm/plot_svm_oneclass.py
-
-.. image:: svm_data/oneclass.png
-
 .. autoclass:: scikits.learn.svm.OneClassSVM
+   :members:
+   :inherited-members:
+
+Examples
+--------
+
+See :ref:`example_svm_plot_svm_oneclass.py` for a complete example.
+
 
 Scaling
 =======

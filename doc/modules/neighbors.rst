@@ -27,3 +27,17 @@ straightforward using the BallTree class.
 Examples
 ========
 
+See :ref:`example_plot_neighbors.py` for an example of classification
+using nearest neighbor.
+
+BallTree
+========
+
+Behind the scenes, nearest neighbor search is done by the object
+BallTree, which is a fast way to perform neighbor searches in data
+sets of very high dimensionality.
+
+.. autoclass:: scikits.learn.BallTree.BallTree
+   :members:
+
+.. autofunction:: scikits.learn.BallTree.knn_brute
