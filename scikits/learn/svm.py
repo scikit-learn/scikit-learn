@@ -189,19 +189,13 @@ class BaseLibsvm(object):
 
 class SVC(BaseLibsvm):
     """
-    Support Vector Classification
+    Classification using Support Vector Machines.
 
-    Implements C-SVC, Nu-SVC
+    This class implements the most common classification methods
+    (C-SVC, Nu-SVC) using support vector machines.
 
     Parameters
     ----------
-    X : array-like, shape = [nsamples, nfeatures]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
-
-    Y : array, shape = [nsamples]
-        Target vector relative to X
-
     impl : string, optional
         SVM implementation to choose from. This refers to different
         formulations of the SVM optimization problem.
@@ -369,12 +363,6 @@ class LinearSVC(object):
 
     Parameters
     ----------
-    X : array-like, shape = [nsamples, nfeatures]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
-    Y : array, shape = [nsamples]
-        Target vector relative to X
-
     loss : string, 'l1' or 'l2' (default 'l2')
         Specifies the loss function. With 'l1' it is the standard SVM
         loss (a.k.a. hinge Loss) while with 'l2' it is the squared loss.
@@ -439,6 +427,14 @@ class LinearSVC(object):
         self.C = C
 
     def fit(self, X, Y):
+        """
+        X : array-like, shape = [nsamples, nfeatures]
+            Training vector, where nsamples in the number of samples and
+            nfeatures is the number of features.
+        Y : array, shape = [nsamples]
+            Target vector relative to X
+        """
+        
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
         self.raw_coef, self.label_, self.bias_ = \
