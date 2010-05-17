@@ -18,7 +18,7 @@ functional margin), since in general the larger the margin the lower
 the generalization error of the classifier.
 
 Classification
---------------
+==============
 
 Suppose some given data points each belong to one of two classes, and
 the goal is to decide which class a new data point will be in. This
@@ -71,27 +71,29 @@ Complete class reference:
    :members:
 
 Using Custom Kernels
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 You can also use your own defined kernels by passing a function to the
 keyword `kernel` in the constructor.
 
-Your kernel must take as arguments two arrays and return a
-floating-point number. 
+Your kernel must take as arguments two matrices and return a third matrix.
 
-The following code defines a valid kernel and creates a Support Vector
-Machine with that associated kernel::
+The following code defines a linear kernel and creates a classifier
+instance that will use that kernel::
 
     >>> import numpy as np
     >>> from scikits.learn import svm
     >>> def my_kernel(x, y):
-    ...     return np.tanh(np.dot(x, y.T) - 1)
+    ...     return np.dot(x, y.T)
     ... 
     >>> clf = svm.SVC(kernel=my_kernel)
 
 
+For a complete example, see :ref:`example_svm_plot_custom_kernel.py` 
+
 Regression
-----------
+==========
+
 The method of Support Vector Classification can be extended to solve
 the regression problem. This method is called Support Vector
 Regression.
@@ -114,7 +116,7 @@ Distribution estimation
 One-class SVM is used for out-layer detection, that is, given a set of
 samples, it will detect the soft boundary of that set.
 
-.. literalinclude:: ../../examples/plot_svm_oneclass.py
+.. literalinclude:: ../../examples/svm/plot_svm_oneclass.py
 
 .. image:: svm_data/oneclass.png
 

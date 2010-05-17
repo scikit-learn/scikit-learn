@@ -141,6 +141,7 @@ def generate_file_rst(fname, target_dir, src_dir):
     last_dir = os.path.split(src_dir)[-1]
     # to avoid leading . in file names
     if last_dir == '.': last_dir = ''
+    else: last_dir += '_'
     short_fname =  last_dir + fname
     src_file = os.path.join(src_dir, fname)
     example_file = os.path.join(target_dir, fname)
