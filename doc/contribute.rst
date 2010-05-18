@@ -17,18 +17,25 @@ Code
 Git repo
 --------
 
-You can check the sources with the command::
+You can check the latest sources with the command::
     
     git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
 
 or if you have write privileges::
 
-	git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
 
 If you have contributed some code and would like to have write
 privileges in subversion repository, please contact me (Fabian
 Pedregosa <fabian.pedregosa@inria.fr>) and I'll give you write
 privileges.
+
+If you run the development version, it is cumbersome to re-install the
+package each time you update the sources. It is thus preferred that
+you add the scikit-directory to your PYTHONPATH and build the
+extension in place::
+
+    python setup.py build_ext --inplace
 
 
 Patches
