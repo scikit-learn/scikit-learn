@@ -1,8 +1,9 @@
 """
-Simple Ordinary Least Squares example.
+Ordinary Least Squares
+======================
 
-We draw the linear least squares solution for a random set of points
-in the plane.
+Simple Ordinary Least Squares example, we draw the linear least
+squares solution for a random set of points in the plane.
 """
 import numpy as np
 import pylab as pl

@@ -12,6 +12,9 @@ Regression using linear models: Linear, Ridge.
 import numpy as np
 import scipy.linalg
 
+from scikits.learn.utils.extmath import fast_logdet
+
+
 class LinearRegression(object):
     """
     Ordinary least squares Linear Regression.
@@ -27,12 +30,26 @@ class LinearRegression(object):
     coef_ : array
         Estimated coefficients for the linear regression problem.
 
+    intercept_ : array
+        Independent term in the linear model.
+
     This is just plain linear regression wrapped is a Predictor object.
     """
 
     def fit(self,X,Y):
         """
-        Fit linear model
+        Fit linear model.
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+            Training data
+        Y : numpy array of shape [nsamples]
+            Target values
+
+        Returns
+        -------
+        self : returns an instance of self.
         """
         X = np.asanyarray( X )
         Y = np.asanyarray( Y )
@@ -48,9 +65,17 @@ class LinearRegression(object):
     def predict(self, T):
         """
         Predict using linear model
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+            Returns predicted values.
         """
-        T = np.c_[np.asanyarray( T )]
-        # T = np.c_[T, np.ones(T.shape[0])]
+        T = np.asanyarray( T )
         return np.dot(T, self.coef_) + self.intercept_
 
 
@@ -86,7 +111,20 @@ class Ridge(object):
         self.alpha = alpha
 
     def fit(self, X, Y):
-        """Fit Ridge regression model"""
+        """
+        Fit Ridge regression model
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+            Training data
+        Y : numpy array of shape [nsamples]
+            Target values
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         nsamples, nfeatures = X.shape
 
         if nsamples > nfeatures:
@@ -103,6 +141,15 @@ class Ridge(object):
     def predict(self, T):
         """
         Predict using Linear Model
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+            Returns predicted values.
         """
         return np.dot(T, self.coef_)
 
@@ -118,6 +165,18 @@ class BayesianRidge:
         self.th_w = th_w
 
     def fit(self, X, Y):
+        """
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+            Training data
+        Y : numpy array of shape [nsamples]
+            Target values
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
         self.w, self.alpha, self.beta, self.sigma, self.log_likelihood = \
@@ -125,10 +184,19 @@ class BayesianRidge:
         return self
 
     def predict(self, T):
+        """
+        Predict using Linear Model
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+            Returns predicted values.
+        """
         return np.dot(T, self.w)
-
-from scikits.learn.utils.extmath import fast_logdet
-
 
 
 class ARDRegression:
