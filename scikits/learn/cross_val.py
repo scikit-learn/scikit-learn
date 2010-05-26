@@ -9,7 +9,7 @@ Utilities for cross validation.
 # $Id$
 
 import numpy as np
-from scikits.learn.utils.math import factorial, combinations
+from scikits.learn.utils.extmath import factorial, combinations
 
 ################################################################################
 class LeaveOneOut(object):

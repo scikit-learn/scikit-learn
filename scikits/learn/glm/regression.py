@@ -116,7 +116,7 @@ class BayesianRidge:
     def predict(self, T):
         return np.dot(T, self.w)
 
-from scikits.learn.utils.utils import fast_logdet
+from scikits.learn.utils.extmath import fast_logdet
 
 
 
