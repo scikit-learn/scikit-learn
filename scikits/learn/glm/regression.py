@@ -36,7 +36,7 @@ class LinearRegression(object):
     This is just plain linear regression wrapped is a Predictor object.
     """
 
-    def fit(self,X,Y):
+    def fit(self,X,Y, intercept=True):
         """
         Fit linear model.
 
@@ -46,6 +46,10 @@ class LinearRegression(object):
             Training data
         Y : numpy array of shape [nsamples]
             Target values
+        intercept : boolen
+            wether to calculate the intercept for this model. If set
+            to false, no intercept will be used in calculations
+            (e.g. data is expected to be already centered).
 
         Returns
         -------
@@ -54,12 +58,16 @@ class LinearRegression(object):
         X = np.asanyarray( X )
         Y = np.asanyarray( Y )
 
-        # augmented X array to store the intercept
-        X_aug = np.c_[X, np.ones(X.shape[0])]
+        if intercept:
+            # augmented X array to store the intercept
+            X = np.c_[X, np.ones(X.shape[0])]
         self.coef_, self.residues_, self.rank_, self.singular_ = \
-                np.linalg.lstsq(X_aug, Y)
-        self.intercept_ = self.coef_[-1]
-        self.coef_ = self.coef_[:-1]
+                np.linalg.lstsq(X, Y)
+        if intercept:
+            self.intercept_ = self.coef_[-1]
+            self.coef_ = self.coef_[:-1]
+        else:
+            self.intercept_ = np.zeros(self.coef_X.shape[1])
         return self
 
     def predict(self, T):
