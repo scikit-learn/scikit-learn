@@ -14,7 +14,9 @@ import scipy.linalg
 
 class LinearRegression(object):
     """
-    Linear Regression.
+    Ordinary least squares Linear Regression.
+
+    TODO: rename to OLS ?
 
     Parameters
     ----------
@@ -32,15 +34,24 @@ class LinearRegression(object):
         """
         Fit linear model
         """
+        X = np.asanyarray( X )
+        Y = np.asanyarray( Y )
+
+        # augmented X array to store the intercept
+        X_aug = np.c_[X, np.ones(X.shape[0])]
         self.coef_, self.residues_, self.rank_, self.singular_ = \
-                scipy.linalg.lstsq(X, Y)
+                np.linalg.lstsq(X_aug, Y)
+        self.intercept_ = self.coef_[-1]
+        self.coef_ = self.coef_[:-1]
         return self
 
     def predict(self, T):
         """
         Predict using linear model
         """
-        return np.dot(T, self.coef_)
+        T = np.c_[np.asanyarray( T )]
+        # T = np.c_[T, np.ones(T.shape[0])]
+        return np.dot(T, self.coef_) + self.intercept_
 
 
 class Ridge(object):
