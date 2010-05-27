@@ -132,11 +132,11 @@ samples, it will detect the soft boundary of that set.
    :members:
    :inherited-members:
 
+
 Examples
---------
+========
 
-See :ref:`example_svm_plot_svm_oneclass.py` for a complete example.
-
+See :ref:`svm_examples` for a complete list of examples.
 
 Scaling
 =======
