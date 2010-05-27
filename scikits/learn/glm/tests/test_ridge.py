@@ -8,7 +8,7 @@ import numpy as np
 from numpy.testing import assert_raises, assert_array_equal, \
      assert_array_almost_equal
 
-from ..regression import *
+from scikits.learn.glm.regression import *
 
 def test_LinearRegression():
     """
