@@ -30,7 +30,7 @@ def confusion_matrix(y, y_):
 
     References
     ==========
-    TODO : add ref
+    http://en.wikipedia.org/wiki/Confusion_matrix
     """
     # removing possible NaNs in targets (they are ignored)
     clean_y = y[np.isfinite(y)].ravel()
@@ -72,7 +72,7 @@ def roc(y, probas_):
 
     References
     ==========
-    TODO : add ref
+    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
     """
     y = y.ravel()
     probas_ = probas_.ravel()
@@ -137,7 +137,7 @@ def precision_recall(y, probas_):
 
     References
     ==========
-    TODO : add ref
+    http://en.wikipedia.org/wiki/Precision_and_recall
     """
     y = y.ravel()
     probas_ = probas_.ravel()
