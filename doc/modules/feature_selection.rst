@@ -53,6 +53,6 @@ Feature selection functions
 Examples
 ----------
 
-.. literalinclude:: ../../examples/feature_selection.py
+.. literalinclude:: ../../examples/plot_feature_selection.py
 
 

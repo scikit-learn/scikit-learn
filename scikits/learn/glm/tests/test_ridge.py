@@ -1,29 +1,39 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#
 # License: BSD Style.
 
-# $Id: test_cd.py 450 2010-03-03 14:21:06Z twigster $
-
 import numpy as np
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_raises
 
-from ..regression import LinearRegression, bayesian_ridge_regression, Ridge, \
-     BayesianRidge, ARDRegression, bayesian_regression_ard
+from numpy.testing import assert_raises, assert_array_equal, \
+     assert_array_almost_equal
 
+from ..regression import *
 
-
-def test_toy_noprior():
+def test_LinearRegression():
     """
-    Test BayesianRegression with no prior classifier
+    Test LinearRegression on a simple dataset.
     """
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
+    # a simple dataset
+    X = [[1], [2]]
+    Y = [1, 2]
+
     clf = LinearRegression()
     clf.fit(X, Y)
-    T = [[1], [2], [3], [4]]
-    assert_array_almost_equal(clf.predict(T), [1, 2, 3, 4]) # identity
 
+    assert_array_almost_equal(clf.coef_, [1])
+    assert_array_almost_equal(clf.intercept_, [0])
+    assert_array_almost_equal(clf.predict(X), [1, 2])
+
+    # test it also for degenerate input
+    X = [[1]]
+    Y = [0]
+
+    clf = LinearRegression()
+    clf.fit(X, Y)
+    assert_array_almost_equal(clf.coef_, [0])
+    assert_array_almost_equal(clf.intercept_, [0])
+    assert_array_almost_equal(clf.predict(X), [0])
 
 def test_bayesian_ridge():
     """

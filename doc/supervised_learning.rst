@@ -3,6 +3,7 @@ Supervised learning
 -----------------------
 
 .. toctree::
+   :maxdepth: 1
 
     modules/svm
     modules/glm
