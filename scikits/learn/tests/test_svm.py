@@ -181,6 +181,16 @@ def test_margin():
                               decimal=3)
 
 
+def test_weight():
+    """
+    Test class weights
+    """
+    clf = svm.SVC()
+    # we give a small weights to class 1
+    clf.fit(X, Y, {1: 0.1})
+    # so all predicted values belong to class 2
+    assert_array_almost_equal(clf.predict(X), [2]*6)
+
 def test_error():
     """
     Test that it gives proper exception on deficient input
