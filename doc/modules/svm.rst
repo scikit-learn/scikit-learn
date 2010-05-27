@@ -69,6 +69,7 @@ Complete class reference:
    :members:
    :inherited-members:
 
+
 Using Custom Kernels
 --------------------
 
@@ -87,6 +88,17 @@ instance that will use that kernel::
     ... 
     >>> clf = svm.SVC(kernel=my_kernel)
 
+
+Classifiers with custom kernels behave the same way as any other
+classifiers, except that:
+
+    * Support vectors do no longer represent the vectors, but rather are
+      indices of the support vectors for the training vectors.
+
+    * A reference (and not a copy) of the first argument in the fit()
+      method is stored for future reference. If that array changes
+      between the use of fit() and predict() you will have
+      unexpected results.
 
 For a complete example, see :ref:`example_svm_plot_custom_kernel.py` 
 
