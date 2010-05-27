@@ -14,7 +14,7 @@ class BaseLibsvm(object):
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
-                 eps, C, nr_weight, nu, p, shrinking, probability):
+                 eps, C, nu, p, shrinking, probability):
         self.solver_type = self._svm_types.index(impl)
         if callable(kernel):
             self._kernfunc = kernel
@@ -26,7 +26,6 @@ class BaseLibsvm(object):
         self.cache_size = cache_size
         self.eps = eps
         self.C = C
-        self.nr_weight = 0
         self.nu = nu
         self.p = p
         self.shrinking = int(shrinking)
@@ -80,7 +79,7 @@ class BaseLibsvm(object):
         self.label_, self.probA_, self.probB_ = libsvm.train_wrap(_X, Y,
                  self.solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
-                 self.nr_weight, self.support_, self.dual_coef_,
+                 self.support_, self.dual_coef_,
                  self.intercept_, self.weight_label, self.weight,
                  self.nSV_, self.nu, self.cache_size, self.p,
                  self.shrinking,
@@ -121,7 +120,7 @@ class BaseLibsvm(object):
                       self.dual_coef_, self.intercept_,
                       self.solver_type, kernel_type, self.degree,
                       self.gamma, self.coef0, self.eps, self.C,
-                      self.nr_weight, self.weight_label, self.weight,
+                      self.weight_label, self.weight,
                       self.nu, self.cache_size, self.p,
                       self.shrinking, self.probability,
                       self.nSV_, self.label_, self.probA_,
@@ -148,7 +147,7 @@ class BaseLibsvm(object):
         return libsvm.predict_prob_from_model_wrap(T, self.support_,
                       self.dual_coef_, self.intercept_, self.solver_type,
                       self.kernel, self.degree, self.gamma,
-                      self.coef0, self.eps, self.C, self.nr_weight,
+                      self.coef0, self.eps, self.C, 
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
                       self.p, self.shrinking, self.probability,
@@ -167,7 +166,7 @@ class BaseLibsvm(object):
         return libsvm.predict_margin_from_model_wrap(T, self.support_,
                       self.dual_coef_, self.intercept_, self.solver_type,
                       self.kernel, self.degree, self.gamma,
-                      self.coef0, self.eps, self.C, self.nr_weight,
+                      self.coef0, self.eps, self.C, 
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
                       self.p, self.shrinking, self.probability,
@@ -265,10 +264,10 @@ class SVC(BaseLibsvm):
     """
 
     def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, nr_weight=0,
+                 cache_size=100.0, eps=1e-3, C=1.0, 
                  nu=0.5, p=0.1, shrinking=True, probability=False):
         BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nr_weight, nu, p,
+                         cache_size, eps, C, nu, p,
                          shrinking, probability)
 
 class SVR(BaseLibsvm):
@@ -306,10 +305,10 @@ class SVR(BaseLibsvm):
     SVC
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, nr_weight=0,
+                 cache_size=100.0, eps=1e-3, C=1.0, 
                  nu=0.5, p=0.1, shrinking=True, probability=False):
         BaseLibsvm.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nr_weight, nu, p,
+                         cache_size, eps, C, nu, p,
                          shrinking, probability)
 
 class OneClassSVM(BaseLibsvm):
@@ -345,10 +344,10 @@ class OneClassSVM(BaseLibsvm):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, nr_weight=0,
+                 cache_size=100.0, eps=1e-3, C=1.0, 
                  nu=0.5, p=0.1, shrinking=True, probability=False):
         BaseLibsvm.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nr_weight, nu, p,
+                         cache_size, eps, C, nu, p,
                          shrinking, probability)
 
 
@@ -440,7 +439,7 @@ class LinearSVC(object):
         self.raw_coef, self.label_, self.bias_ = \
                        liblinear.train_wrap(X, Y,
                        self._solver_type_dict[self.solver_type],
-                       self.eps, 1.0, self.C, 0, self._weight_label,
+                       self.eps, 1.0, self.C, self._weight_label,
                        self._weight)
 
     def predict(self, T):

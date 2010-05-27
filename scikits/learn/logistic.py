@@ -72,7 +72,7 @@ class LogisticRegression(object):
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
         self.raw_coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
                                           Y, self.solver_type, self.eps, self.bias_,
-                                          self.C, 0,
+                                          self.C,
                                           self._weight_label,
                                           self._weight)
 
