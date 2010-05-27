@@ -40,7 +40,7 @@ class BaseLibsvm(object):
         self.nSV_ = np.empty(0, dtype=np.int32, order='C')
 
 
-    def fit(self, X, Y, weight={}):
+    def fit(self, X, Y, class_weight={}):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -59,8 +59,8 @@ class BaseLibsvm(object):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.float64, order='C')
 
-        self.weight = np.asarray(weight.values(), dtype=np.float64, order='C')
-        self.weight_label = np.asarray(weight.keys(), dtype=np.int32, order='C')
+        self.weight = np.asarray(class_weight.values(), dtype=np.float64, order='C')
+        self.weight_label = np.asarray(class_weight.keys(), dtype=np.int32, order='C')
 
         # in the case of precomputed kernel given as a function, we
         # have to compute explicitly the kernel matrix
