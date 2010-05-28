@@ -134,20 +134,28 @@ class BaseLibsvm(object):
         This function does classification or regression on a test vector T
         given a model with probability information.
 
-        For a classification model with probability information, this
-        function returns nr_class probability estimates in the array
-        prob_estimates. For regression/one-class SVM, the array prob_estimates
-        is unchanged and the returned value is the same as that of
-        svm_predict.        
-
         Parameters
         ----------
         T : array-like, shape = [nsamples, nfeatures]
+
+        Returns
+        -------
+        T : array-like, shape = [nsamples, nclasses]
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+
+        Notes
+        -----
+        The probability model is created using cross validation, so
+        the results can be slightly different than those obtained by
+        predict. Also, it will meaningless results on very small
+        datasets.
         """
         if not self.probability:
             raise ValueError("probability estimates must be enabled to use this method")
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        return libsvm.predict_prob_from_model_wrap(T, self.support_,
+        pprob = libsvm.predict_prob_from_model_wrap(T, self.support_,
                       self.dual_coef_, self.intercept_, self.solver_type,
                       self.kernel, self.degree, self.gamma,
                       self.coef0, self.eps, self.C, 
@@ -156,6 +164,8 @@ class BaseLibsvm(object):
                       self.p, self.shrinking, self.probability,
                       self.nSV_, self.label_,
                       self.probA_, self.probB_)
+        return pprob[:, np.argsort(self.label_)]
+        
 
     def predict_margin(self, T):
         """

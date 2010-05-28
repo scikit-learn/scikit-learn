@@ -153,19 +153,24 @@ def test_tweak_params():
 def test_probability():
     """
     Predict probabilities using SVC
-    
-    FIXME: is it harmless that we obtain slightly different results on
-    different operating systems ? (that is why we only check for 1
-    decimal precission)
-    TODO: test also on an example with intercept != 0
+
+    This uses cross validation, so we use a slightly bigger testing
+    set.
+
+    TODO: test also on an example with
+    intercept != 0
     """
+    from scikits.learn import datasets
+    iris = datasets.load_iris()
+
     clf = svm.SVC(probability=True)
-    clf.fit(X, Y)
+    clf.fit(iris.data, iris.target)
+    T = [[0, 0, 0, 0],
+         [2, 2, 2, 2]]
     assert_array_almost_equal(clf.predict_proba(T),
-                              [[ 0.819,  0.18],
-                               [ 0.189,  0.810],
-                               [ 0.276,  0.723]],
-                              decimal=1)
+                [[ 0.993,  0.003,  0.002],
+                 [ 0.740,  0.223  ,  0.035]],
+                 decimal=2)
 
 def test_margin():
     """
