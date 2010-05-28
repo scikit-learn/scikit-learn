@@ -29,13 +29,13 @@ y_ = classifier.predict(X[half:])
 
 def test_roc():
     """test Receiver operating characteristic (ROC)"""
-    fpr, tpr, thresholds = roc(y[half:], probas_[:,0])
+    fpr, tpr, thresholds = roc(y[half:], probas_[:,1])
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.8079, 3)
 
 def test_precision_recall():
     """test Precision-Recall"""
-    precision, recall, thresholds = precision_recall(y[half:], probas_[:,0])
+    precision, recall, thresholds = precision_recall(y[half:], probas_[:,1])
     precision_recall_auc = auc(precision, recall)
     assert_array_almost_equal(precision_recall_auc, 0.3197, 3)
 
