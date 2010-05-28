@@ -1,9 +1,15 @@
+"""
+Testing for Support Vector Machine
+
+TODO: remove hardcoding numerical results when possible
+"""
+
 import numpy as np
 from scikits.learn import svm, datasets
 from numpy.testing import *
 
 # test sample 1
-X =  [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]]
+X =  [[-2,-1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 Y =  [1, 1, 1, 2, 2, 2]
 T =  [[-1,-1], [2, 2], [3, 2]]
 true_result = [1, 2, 2]
@@ -41,7 +47,8 @@ def test_CSVC():
     assert_array_almost_equal(clf.dual_coef_,
                               [[ .99, -.006, -.49, -.49, -.07],
                                [ .072, .16, 0, 0, -.16]], decimal=2)
-    assert_array_equal(clf.support_,
+    # TODO: why are we getting all the dataset as support vectors
+    assert_array_equal(clf.support_, 
                        [[ 0.,  0.,  0.],
                         [ 1.,  1.,  1.],
                         [ 2.,  0.,  0.],
@@ -51,12 +58,15 @@ def test_CSVC():
 
 def test_precomputed():
     """
-    Test with a precomputed kernel
+    SVC with a precomputed kernel.
+
+    We test it with a toy dataset and with iris.
     """
     clf = svm.SVC(kernel='precomputed')
     # just a linear kernel
     K = np.dot(X, np.array(X).T)
     clf.fit(K, Y)
+    # gram matrix
     KT = np.dot(T, np.array(X).T)
     pred = clf.predict(KT)
 
@@ -65,11 +75,11 @@ def test_precomputed():
     assert_array_almost_equal(clf.support_, [[2], [4]])
     assert_array_equal(pred, true_result)
 
-    # same as before, but giving the function instead of the kernel
-    # matrix
+
+    # same as before, but using function instead of the kernel
+    # matrix. kernel is just a linear kernel
     kfunc = lambda x, y: np.dot(x, y.T)
     clf = svm.SVC(kernel=kfunc)
-    # just a linear kernel
     clf.fit(X, Y)
     pred = clf.predict(T)
 
@@ -77,9 +87,9 @@ def test_precomputed():
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [[2], [4]])
     assert_array_equal(pred, true_result)
-    
 
-    # test with a real dataset, also simulating a linear kernel
+    
+    # test a precomputed kernel with the iris dataset
     clf = svm.SVC(kernel='precomputed')
     iris = datasets.load_iris()
     K = np.dot(iris.data, iris.data.T)
@@ -90,7 +100,7 @@ def test_precomputed():
 
 def test_SVR():
     """
-    Test SVM regression
+    Test Support Vector Regression
     """
 
     clf = svm.SVR(kernel='linear')
@@ -156,21 +166,26 @@ def test_probability():
 
     This uses cross validation, so we use a slightly bigger testing
     set.
-
-    TODO: test also on an example with
-    intercept != 0
     """
     from scikits.learn import datasets
     iris = datasets.load_iris()
 
     clf = svm.SVC(probability=True)
     clf.fit(iris.data, iris.target)
+
+    # predict on a simple dataset
     T = [[0, 0, 0, 0],
          [2, 2, 2, 2]]
     assert_array_almost_equal(clf.predict_proba(T),
                 [[ 0.993,  0.003,  0.002],
                  [ 0.740,  0.223  ,  0.035]],
                  decimal=2)
+
+    # make sure probabilities sum to one
+    pprob = clf.predict_proba(X)
+    assert_array_almost_equal( pprob.sum(axis=1),
+                               np.ones(len(X)))
+
 
 def test_margin():
     """
@@ -196,6 +211,7 @@ def test_weight():
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2]*6)
 
+
 def test_error():
     """
     Test that it gives proper exception on deficient input
@@ -213,6 +229,7 @@ def test_error():
     clf = svm.SVC()
     clf.fit(Xt, Yt)
     assert_array_equal(clf.predict(T), [1, 2, 2])
+
 
 def test_LinearSVC():
     """
@@ -238,6 +255,7 @@ def test_LinearSVC():
     clf = svm.LinearSVC(penalty='L2', loss='L1', dual=True)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
+
 
 def test_coef_and_intercept_SVC_vs_LinearSVC():
     """
