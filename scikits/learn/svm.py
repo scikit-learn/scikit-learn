@@ -374,9 +374,8 @@ class LinearSVC(object):
         vectors that are sparse.
 
     dual : bool, (default True)
-        Specifies the norm used in the penalization. The 'l2'
-        penalty is the standard used in SVC. The 'l1' leads to coef_
-        vectors that are sparse.
+        Select the algorithm to either solve the dual or primal
+        optimization problem.
 
 
     Attributes
@@ -419,10 +418,12 @@ class LinearSVC(object):
         'PL1_LL2_D0' : 5, # L2 penalty, L1 Loss, primal problem
         }
 
-    def __init__(self, penalty='L2', loss='L2', dual=True, eps=1e-4, C=1.0):
-        self.solver_type = 'P' + penalty + '_L' + loss + '_D' + str(int(dual))
+    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0):
+        self.solver_type = "P%s_L%s_D%d"  % (
+            penalty.upper(), loss.upper(), int(dual))
         if not (self.solver_type in self._solver_type_dict.keys()):
-            raise ValueError('Not supported set of arguments: ' + self.solver_type)
+            raise ValueError('Not supported set of arguments: '
+                             + self.solver_type)
         self.eps = eps
         self.C = C
 

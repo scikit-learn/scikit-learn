@@ -55,7 +55,7 @@ class LogisticRegression(object):
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
     def __init__(self, penalty='l2', eps=1e-4, C=1.0, intercept=True):
-        self.solver_type = self._penalties[penalty]
+        self.solver_type = self._penalties[penalty.lower()]
         self.eps = eps
         self.C = C
         if intercept:

@@ -209,15 +209,15 @@ def test_LinearSVC():
     assert_array_almost_equal(clf.intercept_, [0], decimal=5)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='L1', dual=False).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l1', dual=False).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
-    clf = svm.LinearSVC(penalty='L2', dual=True).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l2', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     #
-    clf = svm.LinearSVC(penalty='L2', loss='L1', dual=True).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
 def test_coef_and_intercept_SVC_vs_LinearSVC():
@@ -225,7 +225,7 @@ def test_coef_and_intercept_SVC_vs_LinearSVC():
     Test that SVC and LinearSVC return the same coef_ and intercept_
     """
     svc = svm.SVC(kernel='linear', C=1).fit(X, Y)
-    linsvc = svm.LinearSVC(C=1, penalty='L2', loss='L1', dual=True).fit(X, Y)
+    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1', dual=True).fit(X, Y)
 
     assert_array_equal(linsvc.coef_.shape, svc.coef_.shape)
     assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
