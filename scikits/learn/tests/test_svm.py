@@ -163,15 +163,7 @@ def test_probability():
     """
     Predict probabilities using SVC
 
-<<<<<<< HEAD:scikits/learn/tests/test_svm.py
-    FIXME: is it harmless that we obtain slightly different results on
-    different operating systems ? (that is why we only check for 1
-    decimal precission)
-    TODO: test also on an example with intercept != 0
-=======
-    This uses cross validation, so we use a slightly bigger testing
-    set.
->>>>>>> 2f4844ca54934b842fd76a5fe38b2c4de090b666:scikits/learn/tests/test_svm.py
+    This uses cross validation, so we use a slightly bigger testing set.
     """
     from scikits.learn import datasets
     iris = datasets.load_iris()
