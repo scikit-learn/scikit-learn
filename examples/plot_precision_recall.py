@@ -34,7 +34,7 @@ classifier = svm.SVC(kernel='linear', probability=True)
 probas_ = classifier.fit(X[:half],y[:half]).predict_proba(X[half:])
 
 # Compute Precision-Recall and plot curve
-precision, recall, thresholds = precision_recall(y[half:], probas_[:,0])
+precision, recall, thresholds = precision_recall(y[half:], probas_[:,1])
 
 pl.figure(-1)
 pl.clf()

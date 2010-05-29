@@ -1,3 +1,8 @@
+"""
+===============================
+Plot classification probability
+===============================
+"""
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 

@@ -37,7 +37,7 @@ cdef extern from "liblinear_helper.c":
 
 def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                  np.ndarray[np.int32_t, ndim=1, mode='c'] Y, int
-                 solver_type, double eps, double bias, double C, int nr_weight,
+                 solver_type, double eps, double bias, double C, 
                  np.ndarray[np.int32_t, ndim=1] weight_label,
                  np.ndarray[np.float64_t, ndim=1] weight):
     """
@@ -51,7 +51,7 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     problem = set_problem(X.data, Y.data, X.shape, bias)
 
-    param = set_parameter(solver_type, eps, C, nr_weight, weight_label.data, weight.data)
+    param = set_parameter(solver_type, eps, C, weight.shape[0], weight_label.data, weight.data)
 
     error_msg = check_parameter(problem, param)
     if error_msg:

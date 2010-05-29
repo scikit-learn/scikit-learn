@@ -1,3 +1,4 @@
+.. _svm_examples:
 
 SVM: support vector machine
 ------------------------------

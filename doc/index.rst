@@ -96,6 +96,12 @@ Click `here <https://sourceforge.net/projects/scikit-learn/files/>`_ to download
 User guide
 ======================
 
+.. warning:: 
+
+   This documentation is relative to the development version,
+   documentation for the stable version can be found `here
+   <http://scikit-learn.sourceforge.net/old_doc/>`_
+
 .. toctree::
    :maxdepth: 3
 

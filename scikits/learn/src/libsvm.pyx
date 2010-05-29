@@ -86,7 +86,7 @@ cdef extern from "libsvm_helper.c":
 def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X, 
                   np.ndarray[np.float64_t, ndim=1, mode='c'] Y, int
                   svm_type, int kernel_type, int degree, double gamma,
-                  double coef0, double eps, double C, int nr_weight,
+                  double coef0, double eps, double C, 
                   np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
                   np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
                   np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
@@ -134,7 +134,7 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size,
                           C, eps, p, shrinking, probability,
-                          nr_weight, weight_label.data, weight.data)
+                          weight.shape[0], weight_label.data, weight.data)
 
     # check parameters
     if (param == NULL or problem == NULL):
@@ -204,7 +204,7 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             np.ndarray[np.float64_t, ndim=1, mode='c']
                             intercept, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
-                            eps, double C, int nr_weight,
+                            eps, double C, 
                             np.ndarray[np.int32_t, ndim=1] weight_label,
                             np.ndarray[np.float64_t, ndim=1] weight,
                             double nu, double cache_size, double p, int
@@ -244,7 +244,7 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef svm_model *model
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size, C, eps, p, shrinking,
-                          probability, nr_weight, weight_label.data,
+                          probability, weight.shape[0], weight_label.data,
                           weight.data)
 
     model = set_model(param, nSV.shape[0], SV.data, SV.shape,
@@ -267,7 +267,7 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             np.ndarray[np.float64_t, ndim=1, mode='c']
                             intercept, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
-                            eps, double C, int nr_weight,
+                            eps, double C, 
                             np.ndarray[np.int32_t, ndim=1] weight_label,
                             np.ndarray[np.float_t, ndim=1] weight,
                             double nu, double cache_size, double p, int
@@ -307,7 +307,7 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef svm_model *model
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size, C, eps, p, shrinking,
-                          probability, nr_weight, weight_label.data,
+                          probability, weight.shape[0], weight_label.data,
                           weight.data)
     model = set_model(param, nSV.shape[0], SV.data, SV.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data, label.data,
@@ -330,7 +330,7 @@ def predict_margin_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             np.ndarray[np.float64_t, ndim=1, mode='c']
                             intercept, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
-                            eps, double C, int nr_weight,
+                            eps, double C, 
                             np.ndarray[np.int32_t, ndim=1] weight_label,
                             np.ndarray[np.float_t, ndim=1] weight,
                             double nu, double cache_size, double p, int
@@ -352,7 +352,7 @@ def predict_margin_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size, C, eps, p, shrinking,
-                          probability, nr_weight, weight_label.data,
+                          probability, weight.shape[0], weight_label.data,
                           weight.data)
     model = set_model(param, nSV.shape[0], SV.data, SV.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data, label.data,

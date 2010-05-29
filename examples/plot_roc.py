@@ -33,7 +33,7 @@ classifier = svm.SVC(kernel='linear', probability=True)
 probas_ = classifier.fit(X[:half],y[:half]).predict_proba(X[half:])
 
 # Compute ROC curve and area the curve
-fpr, tpr, thresholds = roc(y[half:], probas_[:,0])
+fpr, tpr, thresholds = roc(y[half:], probas_[:,1])
 roc_auc = auc(fpr, tpr)
 print "Area under the ROC curve : %f" % roc_auc
 
