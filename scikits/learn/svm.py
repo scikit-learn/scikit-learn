@@ -442,6 +442,7 @@ class LinearSVC(object):
                        self._solver_type_dict[self.solver_type],
                        self.eps, 1.0, self.C, 0, self._weight_label,
                        self._weight)
+        return self
 
     def predict(self, T):
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))

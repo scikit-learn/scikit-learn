@@ -77,7 +77,7 @@ def test_precomputed():
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [[2], [4]])
     assert_array_equal(pred, true_result)
-    
+
 
     # test with a real dataset, also simulating a linear kernel
     clf = svm.SVC(kernel='precomputed')
@@ -153,7 +153,7 @@ def test_tweak_params():
 def test_probability():
     """
     Predict probabilities using SVC
-    
+
     FIXME: is it harmless that we obtain slightly different results on
     different operating systems ? (that is why we only check for 1
     decimal precission)
@@ -203,38 +203,31 @@ def test_LinearSVC():
     """
     Test basic routines using LinearSVC
     """
-    clf = svm.LinearSVC()
-    clf.fit(X, Y)
+    clf = svm.LinearSVC().fit(X, Y)
 
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.intercept_, [0], decimal=5)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='L1', dual=False)
-    clf.fit(X, Y)
+    clf = svm.LinearSVC(penalty='L1', dual=False).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
-    clf = svm.LinearSVC(penalty='L2', dual=True)
-    clf.fit(X, Y)
+    clf = svm.LinearSVC(penalty='L2', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     #
-    clf = svm.LinearSVC(penalty='L2', loss='L1', dual=True)
-    clf.fit(X, Y)
+    clf = svm.LinearSVC(penalty='L2', loss='L1', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
 def test_coef_and_intercept_SVC_vs_LinearSVC():
     """
     Test that SVC and LinearSVC return the same coef_ and intercept_
     """
-    svc = svm.SVC(kernel='linear', C=1)
-    svc.fit(X, Y)
-    linsvc = svm.LinearSVC(C=1, penalty='L2', loss='L1', dual=True)
-    linsvc.fit(X, Y)
+    svc = svm.SVC(kernel='linear', C=1).fit(X, Y)
+    linsvc = svm.LinearSVC(C=1, penalty='L2', loss='L1', dual=True).fit(X, Y)
 
     assert_array_equal(linsvc.coef_.shape, svc.coef_.shape)
     assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
     assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
 
-    
