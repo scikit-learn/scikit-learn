@@ -39,9 +39,20 @@ class LinearModel(object):
         self.coef_ = w0
 
     def predict(self, X):
-        """Linear model prediction: compute the dot product with the weights"""
+        """
+        Predict using the linear model
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+            Returns predicted values.
+        """
         X = np.asanyarray(X)
-        return np.dot(X, self.coef_)
+        return np.dot(X, self.coef_) + self.intercept_
 
     def compute_density(self):
         """Ratio of non-zero weights in the model"""
@@ -111,10 +122,37 @@ class Lasso(LinearModel):
         self.alpha = float(alpha)
         self.tol = tol
 
-    def fit(self, X, Y, maxit=1000):
-        """Fit Lasso model with coordinate descent"""
+    def fit(self, X, Y, intercept=True, maxit=1000):
+        """
+        Fit Lasso model.
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+            Training data
+        Y : numpy array of shape [nsamples]
+            Target values
+        intercept : boolen
+            wether to calculate the intercept for this model. If set
+            to false, no intercept will be used in calculations
+            (e.g. data is expected to be already centered).
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
+
+        self._intercept = intercept
+        if self._intercept:
+            self._xmean = X.mean(axis=0)
+            self._ymean = Y.mean(axis=0)
+            X = X - self._xmean
+            Y = Y - self._ymean
+        else:
+            self._xmean = 0.
+            self._ymean = 0.
 
         nsamples = X.shape[0]
         alpha = self.alpha * nsamples
@@ -126,6 +164,9 @@ class Lasso(LinearModel):
                     lasso_coordinate_descent(self.coef_, alpha, X, Y, maxit, \
                     10, self.tol)
 
+        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+
+        # TODO: why not define a method rsquared that computes this ?
         self.compute_rsquared(X, Y)
 
         if self.dual_gap_ > self.eps_:
@@ -158,10 +199,20 @@ class ElasticNet(LinearModel):
         self.rho = rho
         self.tol = tol
 
-    def fit(self, X, Y, maxit=1000):
+    def fit(self, X, Y, intercept=True, maxit=1000):
         """Fit Elastic Net model with coordinate descent"""
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
+
+        self._intercept = intercept
+        if self._intercept:
+            self._xmean = X.mean(axis=0)
+            self._ymean = Y.mean(axis=0)
+            X = X - self._xmean
+            Y = Y - self._ymean
+        else:
+            self._xmean = 0
+            self._ymean = 0
 
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
@@ -173,6 +224,8 @@ class ElasticNet(LinearModel):
                 enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
                                         maxit, 10, self.tol)
 
+        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+
         self.compute_rsquared(X, Y)
 
         if self.dual_gap_ > self.eps_:
@@ -183,6 +236,13 @@ class ElasticNet(LinearModel):
 
     def __repr__(self):
         return "ElasticNet cd"
+
+
+#########################################################################
+#                                                                       #
+# The following classes store linear models along a regularization path #
+#                                                                       #
+#########################################################################
 
 
 class LinearModelPath(LinearModel):
@@ -263,7 +323,7 @@ class ElasticNetPath(LinearModelPath):
         self.rho = rho
 
 
-def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
+def lasso_path(X, y, eps=1e-3, n_alphas=100, intercept=True, **kwargs):
     """
     Compute Lasso path with coordinate descent
 
@@ -277,14 +337,14 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, **kwargs):
     alphas = np.exp(alphas)
     for alpha in alphas:
         model.alpha = alpha
-        model.fit(X, y, **kwargs)
+        model.fit(X, y, intercept, **kwargs)
         weights.append(model.coef_.copy())
 
     weights = np.asarray(weights)
     return alphas, weights
 
 
-def enet_path(X, y, eps=1e-3, n_alphas=100, rho=0.5, **kwargs):
+def enet_path(X, y, eps=1e-3, n_alphas=100, intercept=True, rho=0.5, **kwargs):
     """Compute Elastic-Net path with coordinate descent"""
     nsamples = X.shape[0]
     alpha_max = np.abs(np.dot(X.T, y)).max() / (nsamples*rho)

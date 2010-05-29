@@ -38,12 +38,12 @@ eps = 1e-2 # the smaller it is the longer is the path
 
 print "Computing regularization path using the lasso..."
 start = datetime.now()
-alphas_lasso, weights_lasso = lasso_path(X, y, eps=eps)
+alphas_lasso, weights_lasso = lasso_path(X, y, intercept=False, eps=eps)
 print "This took ", datetime.now() - start
 
 print "Computing regularization path using the elastic net..."
 start = datetime.now()
-alphas_enet, weights_enet = enet_path(X, y, rho=0.6, eps=eps)
+alphas_enet, weights_enet = enet_path(X, y, intercept=False, rho=0.6, eps=eps)
 print "This took ", datetime.now() - start
 
 
@@ -52,7 +52,7 @@ color_iter = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k'])
 for color, weight_lasso, weight_enet in zip(color_iter,
                             weights_lasso.T, weights_enet.T):
     pl.plot(-np.log10(alphas_lasso), weight_lasso, color)
-    pl.plot(-np.log10(alphas_enet), weight_enet, color+'x')
+    pl.plot(-np.log10(alphas_enet), weight_enet, color + 'x')
 
 pl.xlabel('-Log(lambda)')
 pl.ylabel('weights')
