@@ -12,7 +12,7 @@ other.
 More formally, a support vector machine constructs a hyperplane or set
 of hyperplanes in a high or infinite dimensional space, which can be
 used for classification, regression or other tasks. Intuitively, a
-good separation is achieved by the hyperplane that has the largest
+Support Vector Machine builds the hyperplane that has the largest
 distance to the nearest training data points of any class (so-called
 functional margin), since in general the larger the margin the lower
 the generalization error of the classifier.
