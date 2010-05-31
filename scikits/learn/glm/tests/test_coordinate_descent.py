@@ -99,8 +99,8 @@ def test_lasso_path_early_stopping():
 
     clf = LassoPath(n_alphas=100, eps=1e-3).fit(
         X, y, maxit=maxit, store_path=True)
-    assert_equal(len(clf.path_), 52)
-    assert_almost_equal(clf.alpha, 0.07, 2) # James Bond!
+    assert_equal(len(clf.path_), 57)
+    assert_almost_equal(clf.alpha, 0.05, 2) 
 
     # sanity check
     assert_almost_equal(clf.path_[-1].alpha, clf.alpha)
@@ -110,7 +110,7 @@ def test_lasso_path_early_stopping():
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_almost_equal(rmse, 0.35, 2)
+    assert_almost_equal(rmse, 0.28, 2)
 
     # check that storing the path is not mandatory and yields the same results
     clf2 = LassoPath(n_alphas=100, eps=1e-3).fit(
@@ -133,8 +133,8 @@ def test_enet_path_early_stopping():
 
     clf = ElasticNetPath(n_alphas=100, eps=1e-3, rho=0.99)
     clf.fit(X, y, maxit=maxit, store_path=True)
-    assert_equal(len(clf.path_), 51)
-    assert_almost_equal(clf.alpha, 0.08, 2)
+    assert_equal(len(clf.path_), 58)
+    assert_almost_equal(clf.alpha, 0.049, 2)
 
     # sanity check
     assert_almost_equal(clf.path_[-1].alpha, clf.alpha)
@@ -144,7 +144,7 @@ def test_enet_path_early_stopping():
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_almost_equal(rmse, 0.36, 2)
+    assert_almost_equal(rmse, 0.265, 2)
 
     # check that storing the path is not mandatory and yields the same results
     clf2 = ElasticNetPath(n_alphas=100, eps=1e-3, rho=0.99)
