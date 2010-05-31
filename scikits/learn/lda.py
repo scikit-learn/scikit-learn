@@ -72,7 +72,10 @@ class LDA(object):
         if self.priors is None:
             counts = np.array([float(np.sum(group_indices)) \
                                for group_indices in classes_indices])
-            self.priors = counts / n_samples
+            self.priors_ = counts / n_samples
+        else:
+            self.priors_ = self.priors
+
         # Group means n_classes*n_features matrix
         means = []
         Xc = []
@@ -105,9 +108,9 @@ class LDA(object):
         ## ----------------------------
         ## 3) Between variance scaling
         # Overall mean
-        xbar = np.dot(self.priors, means)
+        xbar = np.dot(self.priors_, means)
         # Scale weighted centers
-        X = np.dot(np.dot(np.diag(np.sqrt((n_samples * self.priors)*fac)),
+        X = np.dot(np.dot(np.diag(np.sqrt((n_samples * self.priors_)*fac)),
                           (means - xbar)),
                    scaling)
         # Centers are living in a space with n_classes-1 dim (maximum)
@@ -153,7 +156,7 @@ class LDA(object):
         dm = np.dot(self.means_ - self.xbar, scaling)
         # for each class k, compute the linear discrinant function(p. 87 Hastie)
         # of sphered (scaled data)
-        dist = 0.5*np.sum(dm**2, 1) - np.log(self.priors) - np.dot(X,dm.T)
+        dist = 0.5*np.sum(dm**2, 1) - np.log(self.priors_) - np.dot(X,dm.T)
         # take exp of min dist
         dist = np.exp(-dist + dist.min(1).reshape(X.shape[0],1))
         # normalize by p(x)=sum_k p(x|k)
