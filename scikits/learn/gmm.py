@@ -199,7 +199,7 @@ class GMM(object):
         """
 
         self._nstates = nstates
-        self._ndim = ndim
+        self.ndim = ndim
         self._cvtype = cvtype
 
         self.weights = np.tile(1.0 / nstates, nstates)
@@ -217,11 +217,6 @@ class GMM(object):
         Must be one of 'spherical', 'tied', 'diag', 'full'.
         """
         return self._cvtype
-
-    @property
-    def ndim(self):
-        """Dimensionality of the mixture components."""
-        return self._ndim
 
     @property
     def nstates(self):
@@ -319,7 +314,7 @@ class GMM(object):
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
-        obs = np.empty((n, self._ndim))
+        obs = np.empty((n, self.ndim))
         for x in xrange(n):
             rand = np.random.rand()
             c = (weight_cdf > rand).argmax()
@@ -541,13 +536,13 @@ def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     # Distribution"
     avg_obs2 = np.dot(obs.T, obs)
     #avg_obs2 = np.dot(obs.T, avg_obs)
-    cv = np.empty((gmm._nstates, gmm._ndim, gmm._ndim))
+    cv = np.empty((gmm._nstates, gmm.ndim, gmm.ndim))
     for c in xrange(gmm._nstates):
         wobs = obs.T * posteriors[:,c]
         avg_obs2 = np.dot(wobs, obs) / posteriors[:,c].sum()
         mu = gmm.means[c][np.newaxis]
         cv[c] = (avg_obs2 - np.dot(mu, mu.T)
-                 + min_covar * np.eye(gmm._ndim))
+                 + min_covar * np.eye(gmm.ndim))
     return cv
 
 def _covar_mstep_tied2(*args):
@@ -559,7 +554,7 @@ def _covar_mstep_tied(gmm, obs, posteriors, avg_obs, norm, min_covar):
     # Distribution"
     avg_obs2 = np.dot(obs.T, obs)
     avg_means2 = np.dot(gmm.means.T, gmm.means)
-    return (avg_obs2 - avg_means2 + min_covar * np.eye(gmm._ndim))
+    return (avg_obs2 - avg_means2 + min_covar * np.eye(gmm.ndim))
 
 def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
     w = posteriors.sum(axis=0)
@@ -567,13 +562,13 @@ def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
     for c in xrange(gmm._nstates):
         mu = gmm.means[c]
         #cv = np.dot(mu.T, mu)
-        avg_obs2 = np.zeros((gmm._ndim, gmm._ndim))
+        avg_obs2 = np.zeros((gmm.ndim, gmm.ndim))
         for t,o in enumerate(obs):
             avg_obs2 += posteriors[t,c] * np.outer(o, o)
         cv = (avg_obs2 / w[c]
               - 2 * np.outer(avg_obs[c] / w[c], mu)
               + np.outer(mu, mu)
-              + min_covar * np.eye(gmm._ndim))
+              + min_covar * np.eye(gmm.ndim))
         if gmm.cvtype == 'spherical':
             covars[c] = np.diag(cv).mean()
         elif gmm.cvtype == 'diag':
