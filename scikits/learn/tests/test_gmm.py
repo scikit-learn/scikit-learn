@@ -331,7 +331,7 @@ class GMMTester():
         g.init(train_obs, params=params, minit='points')
         init_testll = g.lpdf(test_obs).sum()
 
-        trainll = g.train(train_obs, iter=20, params=params)
+        trainll = g.fit(train_obs, iter=20, params=params)
         self.assert_(np.all(np.diff(trainll) > -1))
 
         post_testll = g.lpdf(test_obs).sum()

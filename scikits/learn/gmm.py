@@ -157,7 +157,7 @@ class GMM(object):
         Generate `n` samples from the model.
     init(obs)
         Initialize model parameters from `obs`.
-    train(obs)
+    fit(obs)
         Estimate model parameters from `obs` using the EM algorithm.
 
     Examples
@@ -167,7 +167,7 @@ class GMM(object):
     ...                          10 + numpy.random.randn(300, 1)))
     >>> # Roughly initialize the model parameters.
     >>> gmm.init(obs)
-    >>> gmm.train(obs)
+    >>> gmm.fit(obs)
     >>> gmm.weights, gmm.means, gmm.covars
     (array([ 0.25,  0.75]),
      array([[ -0.22744484],
@@ -176,8 +176,8 @@ class GMM(object):
            [ 1.11389491]]))
     >>> gmm.decode([0, 2, 9, 10])
     array([0, 0, 1, 1])
-    >>> # Retrain the model on new data (initial parameters remain the same).
-    >>> gmm.train(numpy.concatenate((20 * [0], 20 * [10])))
+    >>> # Refit the model on new data (initial parameters remain the same).
+    >>> gmm.fit(numpy.concatenate((20 * [0], 20 * [10])))
     """
 
     def __init__(self, nstates=1, ndim=1, cvtype='diag'):
@@ -358,7 +358,7 @@ class GMM(object):
             self.covars = _distribute_covar_matrix_to_match_cvtype(
                 cv, self._cvtype, self._nstates)
 
-    def train(self, obs, iter=10, min_covar=1.0, thresh=1e-2, params='wmc'):
+    def fit(self, obs, iter=10, min_covar=1.0, thresh=1e-2, params='wmc'):
         """Estimate model parameters with the expectation-maximization
         algorithm.
 
