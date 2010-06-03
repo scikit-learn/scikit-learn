@@ -10,6 +10,8 @@ Developers web site
 This is the central web page for developers
 http://sourceforge.net/apps/trac/scikit-learn/wiki
 
+
+
 Code
 ====
 
@@ -41,7 +43,7 @@ extension in place::
 Patches
 -------
 Patches are the prefered way to contribute to a project if you do not
-have write priviles.
+have write privileges.
 
 Let's suppose that you have the latest sources for subversion and that
 you just made some modifications that you'd like to share with the
@@ -58,7 +60,7 @@ the code base.
 issue in the issue tracker and some devs will push that patch to the
 main repository.
 
-3. Wait for a reply. You should soon recive a reply on wether your
+3. Wait for a reply. You should soon receive a reply on whether your
 patch was committed.
 
 
@@ -86,7 +88,99 @@ distribution.
 Documentation
 =============
 
-I am glad to accept any sort of documentation: function docstrings, rst docs (like
-this one), tutorials, etc. Rst docs live in the source code
-repository, under directory doc/.
+I am glad to accept any sort of documentation: function docstrings,
+rst docs (like this one), tutorials, etc. Rst docs live in the source
+code repository, under directory doc/.
 
+
+
+
+API guidelines
+==============
+
+The following are some guidelines on how new code should be
+written. Of course, there are special cases and there will be
+exceptions to these rules. However, following these rules when
+submitting new code makes the review easier so new code can be
+integrated in less time.
+
+
+Estimators
+----------
+
+The API has one predominant object: the estimator. A estimator is an
+object that fits a model based on some training data and is capable of
+inferring some properties on new data. It can be for instance a
+classifier or a regressor.
+
+
+Instantiation
+^^^^^^^^^^^^^
+
+This concerns the object creation. The object's __init__ method might
+accept as arguments constants that determine the estimator behavior
+(like the C constant in SVMs).
+
+It should not, however, take the actual training data as argument, as
+this is leaved to the ``fit()`` method::
+
+    clf1 = SVM(impl='c_svm')
+    clf2 = SVM(C=2.3)
+    clf3 = SVM([[1, 2], [2, 3]], [-1, 1]) # WRONG!
+
+
+Fitting
+^^^^^^^
+
+The next thing you'll probably want to do is to estimate some
+parameters in the model. This is implemented in the .fit() method.
+
+The fit method takes as argument the training data, which can be one
+array in the case of unsupervised learning, or two arrays in the case
+of supervised learning.
+
+Note that the model is fitted using X and y but the object holds no
+reference to X, y. There are however some exceptions to this, as in
+the case of precomputed kernels where you need to store access these
+data in the predict method.
+
+  Parameters
+
+    * X : array-like, with shape = [N, D], where N is the number of
+      samples and D is the number of features.
+    * Y : array, with shape = [N], where N is the number of samples.
+
+X.shape[0] should be the same as Y.shape[0]. If this requisite is not
+met, an exception should be raised.
+
+Y might be dropped in the case of unsupervised learning.
+
+The method should return the object (self).
+
+
+Python tuples
+^^^^^^^^^^^^^
+
+In addition to numpy arrays, all methods should be able to accept
+python tuples as arguments. In practice, this means you should call
+numpy.asanyarray at the beginning at each public method that accepts
+arrays.
+
+Properties
+----------
+
+
+
+TODO
+----
+Some things are must still be decided:
+
+    * what should happen when predict is called before than fit() ?
+    * which exception should be raised when arrays' shape do not match
+      in fit() ?
+
+
+Specific models
+---------------
+
+In linear models, coefficients are stored in a 
