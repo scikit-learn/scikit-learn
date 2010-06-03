@@ -301,6 +301,7 @@ class LinearModelPath(LinearModel):
         best_model.fit(X, y, **kwargs)
         self.coef_ = best_model.coef_
         self.alpha = best_model.alpha # purely indicative
+        self.intercept_ = best_model.intercept_
         self.compute_rsquared(X, y)
         return self
 
