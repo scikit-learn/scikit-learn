@@ -10,7 +10,7 @@ from nose.tools import *
 from ..coordinate_descent import Lasso, LassoPath, lasso_path
 from ..coordinate_descent import ElasticNet, ElasticNetPath, enet_path
 
-def test_Lasso_toy():
+def test_lasso_toy():
     """
     Test Lasso on a toy example for various values of alpha.
 
@@ -51,7 +51,7 @@ def test_Lasso_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def test_Enet_toy():
+def test_enet_toy():
     """
     Test ElasticNet for various parameters of alpha and rho.
 
@@ -71,22 +71,22 @@ def test_Enet_toy():
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    # clf = ElasticNet(alpha=0.5, rho=0.3)
-    # clf.fit(X, Y, maxit=1000)
-    # pred = clf.predict(T)
-    # assert_array_almost_equal(clf.coef_, [0.531], decimal=3)
-    # assert_array_almost_equal(pred, [1.104, 1.656, 2.208], decimal=3)
-    # assert_almost_equal(clf.dual_gap_, 0)
+    clf = ElasticNet(alpha=0.5, rho=0.3)
+    clf.fit(X, Y, maxit=1000)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
+    assert_array_almost_equal(pred, [1.0163,  1.5245,  2.0327], decimal=3)
+    assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, rho=0.5)
     clf.fit(X, Y)
     pred = clf.predict(T)
-    # assert_array_almost_equal(clf.coef_, [0.5])
-    # assert_array_almost_equal(pred, [1, 1.5, 2.])
+    assert_array_almost_equal(clf.coef_, [0.45454], 3)
+    assert_array_almost_equal(pred, [0.9090,  1.3636,  1.8181], 3)
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def test_lasso_path_early_stopping():
+def test_lasso_path():
 
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
@@ -97,30 +97,16 @@ def test_lasso_path_early_stopping():
     X = np.random.randn(n_samples, n_features)
     y = np.dot(X, w)
 
-    clf = LassoPath(n_alphas=100, eps=1e-3).fit(
-        X, y, maxit=maxit, store_path=True)
-    assert_equal(len(clf.path_), 57)
-    assert_almost_equal(clf.alpha, 0.05, 2) 
-
-    # sanity check
-    assert_almost_equal(clf.path_[-1].alpha, clf.alpha)
-    assert_array_almost_equal(clf.path_[-1].coef_, clf.coef_)
+    clf = LassoPath(n_alphas=100, eps=1e-3).fit(X, y, maxit=maxit)
+    assert_almost_equal(clf.alpha, 0.011, 2)
 
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_almost_equal(rmse, 0.28, 2)
+    assert_almost_equal(rmse, 0.062, 2)
 
-    # check that storing the path is not mandatory and yields the same results
-    clf2 = LassoPath(n_alphas=100, eps=1e-3).fit(
-        X, y, maxit=maxit, store_path=False)
-    assert_almost_equal(clf2.alpha, clf.alpha)
-    assert_array_almost_equal(clf2.coef_, clf.coef_)
-    assert_equals(clf2.path_, [])
-
-
-def test_enet_path_early_stopping():
+def test_enet_path():
 
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
@@ -132,26 +118,14 @@ def test_enet_path_early_stopping():
     y = np.dot(X, w)
 
     clf = ElasticNetPath(n_alphas=100, eps=1e-3, rho=0.99)
-    clf.fit(X, y, maxit=maxit, store_path=True)
-    assert_equal(len(clf.path_), 58)
-    assert_almost_equal(clf.alpha, 0.049, 2)
-
-    # sanity check
-    assert_almost_equal(clf.path_[-1].alpha, clf.alpha)
-    assert_array_almost_equal(clf.path_[-1].coef_, clf.coef_)
+    clf.fit(X, y, maxit=maxit)
+    assert_almost_equal(clf.alpha, 0.00526, 2)
 
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_almost_equal(rmse, 0.265, 2)
-
-    # check that storing the path is not mandatory and yields the same results
-    clf2 = ElasticNetPath(n_alphas=100, eps=1e-3, rho=0.99)
-    clf2.fit(X, y, maxit=maxit, store_path=False)
-    assert_almost_equal(clf2.alpha, clf.alpha)
-    assert_array_almost_equal(clf2.coef_, clf.coef_)
-    assert_equals(clf2.path_, [])
+    assert_almost_equal(rmse, 1.205, 2)
 
 # def test_lasso_path():
 #     """

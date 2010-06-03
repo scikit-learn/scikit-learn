@@ -10,15 +10,12 @@ coordinate descent.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-# $Id$
-
 from datetime import datetime
 from itertools import cycle
 import numpy as np
 import pylab as pl
 
-from scikits.learn.glm.coordinate_descent import Lasso, ElasticNet, lasso_path, \
-                                    enet_path
+from scikits.learn.glm.coordinate_descent import lasso_path, enet_path
 
 n_samples, n_features, maxit = 5, 10, 30
 
@@ -38,21 +35,24 @@ eps = 1e-2 # the smaller it is the longer is the path
 
 print "Computing regularization path using the lasso..."
 start = datetime.now()
-alphas_lasso, weights_lasso = lasso_path(X, y, intercept=False, eps=eps)
+models = lasso_path(X, y, eps=eps, intercept=False)
 print "This took ", datetime.now() - start
+alphas_lasso = np.array([model.alpha for model in models])
+coefs_lasso = np.array([model.coef_ for model in models])
 
 print "Computing regularization path using the elastic net..."
 start = datetime.now()
-alphas_enet, weights_enet = enet_path(X, y, intercept=False, rho=0.6, eps=eps)
+models = enet_path(X, y, eps=eps, intercept=False, rho=0.6)
 print "This took ", datetime.now() - start
-
+alphas_enet = np.array([model.alpha for model in models])
+coefs_enet = np.array([model.coef_ for model in models])
 
 # Display results
 color_iter = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k'])
-for color, weight_lasso, weight_enet in zip(color_iter,
-                            weights_lasso.T, weights_enet.T):
-    pl.plot(-np.log10(alphas_lasso), weight_lasso, color)
-    pl.plot(-np.log10(alphas_enet), weight_enet, color + 'x')
+for color, coef_lasso, coef_enet in zip(color_iter,
+                            coefs_lasso.T, coefs_enet.T):
+    pl.plot(-np.log10(alphas_lasso), coef_lasso, color)
+    pl.plot(-np.log10(alphas_enet), coef_enet, color + 'x')
 
 pl.xlabel('-Log(lambda)')
 pl.ylabel('weights')
