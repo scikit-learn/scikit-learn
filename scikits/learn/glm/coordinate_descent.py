@@ -34,9 +34,9 @@ from ..cross_val import KFold
 class LinearModel(object):
     """Base class for Linear Model optimized with coordinate descent"""
 
-    def __init__(self, w0=None):
+    def __init__(self, coef=None):
         # weights of the model (can be lazily initialized by the ``fit`` method)
-        self.coef_ = w0
+        self.coef_ = coef
 
     def predict(self, X):
         """
@@ -117,8 +117,8 @@ class Lasso(LinearModel):
     The algorithm used to fit the model is coordinate descent.x
     """
 
-    def __init__(self, alpha=1.0, w0=None, tol=1e-4):
-        super(Lasso, self).__init__(w0)
+    def __init__(self, alpha=1.0, coef=None, tol=1e-4):
+        super(Lasso, self).__init__(coef)
         self.alpha = float(alpha)
         self.tol = tol
 
@@ -132,8 +132,8 @@ class Lasso(LinearModel):
             Training data
         Y : numpy array of shape [nsamples]
             Target values
-        intercept : boolen
-            wether to calculate the intercept for this model. If set
+        intercept : boolean
+            whether to calculate the intercept for this model. If set
             to false, no intercept will be used in calculations
             (e.g. data is expected to be already centered).
 
@@ -193,8 +193,8 @@ class ElasticNet(LinearModel):
         The ElasticNet mixing parameter, with 0 < rho <= 1.
     """
 
-    def __init__(self, alpha=1.0, rho=0.5, w0=None, tol=1e-4):
-        super(ElasticNet, self).__init__(w0)
+    def __init__(self, alpha=1.0, rho=0.5, coef=None, tol=1e-4):
+        super(ElasticNet, self).__init__(coef)
         self.alpha = alpha
         self.rho = rho
         self.tol = tol
@@ -244,19 +244,111 @@ class ElasticNet(LinearModel):
 #                                                                       #
 #########################################################################
 
+def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
+    """
+    Compute Lasso path with coordinate descent
+
+    See examples/plot_lasso_coordinate_descent_path.py for an example.
+    """
+    nsamples = X.shape[0]
+    if alphas is None:
+        alpha_max = np.abs(np.dot(X.T, y)).max() / nsamples
+        alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
+        alphas = np.exp(alphas)
+    else:
+        alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
+    coef = None # init coef_
+    models = []
+    for alpha in alphas:
+        model = Lasso(coef=coef, alpha=alpha)
+        model.fit(X, y, **fit_kwargs)
+        coef = model.coef_.copy()
+        models.append(model)
+    return models
+
+def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
+    """Compute Elastic-Net path with coordinate descent"""
+    nsamples = X.shape[0]
+    if alphas is None:
+        alpha_max = np.abs(np.dot(X.T, y)).max() / (nsamples*rho)
+        alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
+        alphas = np.exp(alphas)
+    else:
+        alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
+    coef = None # init coef_
+    models = []
+    for alpha in alphas:
+        model = ElasticNet(coef=coef, alpha=alpha, rho=rho)
+        model.fit(X, y, **fit_kwargs)
+        coef = model.coef_.copy()
+        models.append(model)
+    return models
+
+def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
+                                eps=1e-3, intercept=True, **fit_kwargs):
+    """Returns an optimized Lasso instance
+    """
+    # Start to compute path on full data
+    models = lasso_path(X, y, eps=eps, n_alphas=n_alphas, alphas=alphas,
+                                intercept=intercept, **fit_kwargs)
+
+    n_samples = y.size
+    # init cross-validation generator
+    cv = cv if cv else KFold(n_samples, 5)
+
+    alphas = [model.alpha for model in models]
+    n_alphas = len(alphas)
+    # Compute path for all folds and compute MSE to get the best alpha
+    mse_alphas = np.zeros(n_alphas)
+    for train, test in cv:
+        models_train = lasso_path(X[train], y[train], eps, n_alphas,
+                                    alphas=alphas,
+                                    intercept=intercept, **fit_kwargs)
+        for i_alpha, model in enumerate(models_train):
+            y_ = model.predict(X[test])
+            mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
+
+    i_best_alpha = np.argmin(mse_alphas)
+    return models[i_best_alpha]
+
+def optimized_enet(X, y, rho=0.5, cv=None, n_alphas=100, alphas=None,
+                                 eps=1e-3, intercept=True, **fit_kwargs):
+    """Returns an optimized ElasticNet instance
+    """
+    # Start to compute path on full data
+    models = enet_path(X, y, rho=rho, eps=eps, n_alphas=n_alphas,
+                                alphas=alphas, intercept=intercept, **fit_kwargs)
+
+    n_samples = y.size
+    # init cross-validation generator
+    cv = cv if cv else KFold(n_samples, 5)
+
+    alphas = [model.alpha for model in models]
+    n_alphas = len(alphas)
+    # Compute path for all folds and compute MSE to get the best alpha
+    mse_alphas = np.zeros(n_alphas)
+    for train, test in cv:
+        models_train = enet_path(X[train], y[train], rho=rho,
+                                    alphas=alphas, eps=eps, n_alphas=n_alphas,
+                                    intercept=intercept, **fit_kwargs)
+        for i_alpha, model in enumerate(models_train):
+            y_ = model.predict(X[test])
+            mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
+
+    i_best_alpha = np.argmin(mse_alphas)
+    return models[i_best_alpha]
 
 class LinearModelPath(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
-    def __init__(self, w0=None, cv_factory=None, eps=1e-3, n_alphas=100):
-        self.cv_factory = cv_factory
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, intercept=True):
         self.eps = eps
         self.n_alphas = n_alphas
-        self.coef_ = w0
-        self.alpha = 0.0
-        self.path = []
+        self.alphas = alphas
+        # self.path = None
+        self.intercept = intercept
 
-    def fit(self, X, y, store_path=False, **kwargs):
+    def fit(self, X, y, cv=None, **kwargs):
         """Fit linear model with coordinate descent along decreasing alphas
 
         The same model is reused with warm restarts. Early stopping can happen
@@ -269,95 +361,26 @@ class LinearModelPath(LinearModel):
         self.path_ = []
         n_samples = X.shape[0]
 
-        # init cross validator
-        cv = self.cv_factory() if self.cv_factory else KFold(n_samples, 3)
-        train, valid = iter(cv).next()
+        model = self.path(X, y, cv=cv, eps=self.eps, n_alphas=self.n_alphas,
+                                    intercept=self.intercept, **kwargs)
 
-        # compute the alpha grid
-        alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
-        logalphas = np.linspace(np.log(alpha_max),
-                                np.log(self.eps * alpha_max), self.n_alphas)
-        alphas = np.exp(logalphas)
-
-        # fit a model down the alpha grid and stop before overfitting
-        model = self.model_factory(alpha=alpha_max)
-        best_mse = np.inf
-        for alpha in alphas:
-            model.alpha = alpha
-            y_ = model.fit(X[train], y[train], **kwargs).predict(X[valid])
-            mse = ((y_ - y[valid]) ** 2).mean()
-            if mse > best_mse:
-                # early stop we are overfitting
-                # break
-                pass # FIXME : should not early stop
-            else:
-                best_mse = mse
-                best_model = self.model_factory(w0=model.coef_.copy(),
-                                              alpha=alpha)
-                if store_path:
-                    self.path_.append(best_model)
-
-        # fine tune at optimal alpha on complete data set
-        best_model.fit(X, y, **kwargs)
-        self.coef_ = best_model.coef_
-        self.alpha = best_model.alpha # purely indicative
-        self.intercept_ = best_model.intercept_
-        self.compute_rsquared(X, y)
+        self.__dict__.update(model.__dict__)
         return self
-
 
 class LassoPath(LinearModelPath):
     """Lasso linear model with iterative fitting along a regularization path"""
 
-    def model_factory(self, **kwargs):
-        return Lasso(**kwargs)
-
+    @property
+    def path(self):
+        return optimized_lasso
 
 class ElasticNetPath(LinearModelPath):
     """Elastic Net model with iterative fitting along a regularization path"""
 
-    def model_factory(self, **kwargs):
-        return ElasticNet(rho=self.rho, **kwargs)
+    @property
+    def path(self):
+        return optimized_enet
 
     def __init__(self, rho=0.5, **kwargs):
         super(ElasticNetPath, self).__init__(**kwargs)
         self.rho = rho
-
-
-def lasso_path(X, y, eps=1e-3, n_alphas=100, intercept=True, **kwargs):
-    """
-    Compute Lasso path with coordinate descent
-
-    See examples/plot_lasso_coordinate_descent_path.py for an example.
-    """
-    nsamples = X.shape[0]
-    alpha_max = np.abs(np.dot(X.T, y)).max() / nsamples
-    model = Lasso(alpha=alpha_max)
-    weights = []
-    alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
-    alphas = np.exp(alphas)
-    for alpha in alphas:
-        model.alpha = alpha
-        model.fit(X, y, intercept, **kwargs)
-        weights.append(model.coef_.copy())
-
-    weights = np.asarray(weights)
-    return alphas, weights
-
-
-def enet_path(X, y, eps=1e-3, n_alphas=100, intercept=True, rho=0.5, **kwargs):
-    """Compute Elastic-Net path with coordinate descent"""
-    nsamples = X.shape[0]
-    alpha_max = np.abs(np.dot(X.T, y)).max() / (nsamples*rho)
-    model = ElasticNet(alpha=alpha_max, rho=rho)
-    weights = []
-    alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
-    alphas = np.exp(alphas)
-    for alpha in alphas:
-        model.alpha = alpha
-        model.fit(X, y, **kwargs)
-        weights.append(model.coef_.copy())
-
-    weights = np.asarray(weights)
-    return alphas, weights
-
