@@ -248,6 +248,29 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
     """
     Compute Lasso path with coordinate descent
 
+    Parameters
+    ----------
+    X : numpy array of shape [nsamples,nfeatures]
+        Training data
+    Y : numpy array of shape [nsamples]
+        Target values
+    eps : float
+        Length of the path. eps=1e-3 means that
+        alpha_min / alpha_max = 1e-3
+    n_alphas : int
+        Number of alphas along the regularization path
+    alphas : numpy array
+        List of alphas where to compute the models.
+        If None alphas are set automatically
+    fit_kwargs : dict
+        parameters passed to the Lasso fit method
+
+    Returns
+    -------
+    models : a list of models along the regularization path
+
+    Notes
+    -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
     nsamples = X.shape[0]
@@ -267,7 +290,33 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
     return models
 
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
-    """Compute Elastic-Net path with coordinate descent"""
+    """Compute Elastic-Net path with coordinate descent
+
+    Parameters
+    ----------
+    X : numpy array of shape [nsamples,nfeatures]
+        Training data
+    Y : numpy array of shape [nsamples]
+        Target values
+    eps : float
+        Length of the path. eps=1e-3 means that
+        alpha_min / alpha_max = 1e-3
+    n_alphas : int
+        Number of alphas along the regularization path
+    alphas : numpy array
+        List of alphas where to compute the models.
+        If None alphas are set automatically
+    fit_kwargs : dict
+        parameters passed to the Lasso fit method
+
+    Returns
+    -------
+    models : a list of models along the regularization path
+
+    Notes
+    -----
+    See examples/plot_lasso_coordinate_descent_path.py for an example.
+    """
     nsamples = X.shape[0]
     if alphas is None:
         alpha_max = np.abs(np.dot(X.T, y)).max() / (nsamples*rho)
@@ -285,12 +334,38 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
     return models
 
 def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
-                                eps=1e-3, intercept=True, **fit_kwargs):
-    """Returns an optimized Lasso instance
+                                eps=1e-3, **fit_kwargs):
+    """Compute an optimized Lasso model
+
+    Parameters
+    ----------
+    X : numpy array of shape [nsamples,nfeatures]
+        Training data
+    Y : numpy array of shape [nsamples]
+        Target values
+    cv : cross-validation generator
+    eps : float
+        Length of the path. eps=1e-3 means that
+        alpha_min / alpha_max = 1e-3
+    n_alphas : int
+        Number of alphas along the regularization path
+    alphas : numpy array
+        List of alphas where to compute the models.
+        If None alphas are set automatically
+    fit_kwargs : dict
+        parameters passed to the Lasso fit method
+
+    Returns
+    -------
+    model : a Lasso instance model
+
+    Notes
+    -----
+    See examples/lasso_path_with_crossvalidation.py for an example.
     """
     # Start to compute path on full data
     models = lasso_path(X, y, eps=eps, n_alphas=n_alphas, alphas=alphas,
-                                intercept=intercept, **fit_kwargs)
+                                **fit_kwargs)
 
     n_samples = y.size
     # init cross-validation generator
@@ -302,8 +377,7 @@ def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
     mse_alphas = np.zeros(n_alphas)
     for train, test in cv:
         models_train = lasso_path(X[train], y[train], eps, n_alphas,
-                                    alphas=alphas,
-                                    intercept=intercept, **fit_kwargs)
+                                    alphas=alphas, **fit_kwargs)
         for i_alpha, model in enumerate(models_train):
             y_ = model.predict(X[test])
             mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
@@ -312,12 +386,41 @@ def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
     return models[i_best_alpha]
 
 def optimized_enet(X, y, rho=0.5, cv=None, n_alphas=100, alphas=None,
-                                 eps=1e-3, intercept=True, **fit_kwargs):
-    """Returns an optimized ElasticNet instance
+                                 eps=1e-3, **fit_kwargs):
+    """Returns an optimized ElasticNet model
+
+    Parameters
+    ----------
+    X : numpy array of shape [nsamples,nfeatures]
+        Training data
+    Y : numpy array of shape [nsamples]
+        Target values
+    rho : float
+        float between 0 and 1 passed to ElasticNet (scaling between
+        l1 and l2 penalties)
+    cv : cross-validation generator
+    eps : float
+        Length of the path. eps=1e-3 means that
+        alpha_min / alpha_max = 1e-3
+    n_alphas : int
+        Number of alphas along the regularization path
+    alphas : numpy array
+        List of alphas where to compute the models.
+        If None alphas are set automatically
+    fit_kwargs : dict
+        parameters passed to the Lasso fit method
+
+    Returns
+    -------
+    model : a Lasso instance model
+
+    Notes
+    -----
+    See examples/lasso_path_with_crossvalidation.py for an example.
     """
     # Start to compute path on full data
     models = enet_path(X, y, rho=rho, eps=eps, n_alphas=n_alphas,
-                                alphas=alphas, intercept=intercept, **fit_kwargs)
+                                alphas=alphas, **fit_kwargs)
 
     n_samples = y.size
     # init cross-validation generator
@@ -330,7 +433,7 @@ def optimized_enet(X, y, rho=0.5, cv=None, n_alphas=100, alphas=None,
     for train, test in cv:
         models_train = enet_path(X[train], y[train], rho=rho,
                                     alphas=alphas, eps=eps, n_alphas=n_alphas,
-                                    intercept=intercept, **fit_kwargs)
+                                    **fit_kwargs)
         for i_alpha, model in enumerate(models_train):
             y_ = model.predict(X[test])
             mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
@@ -341,19 +444,13 @@ def optimized_enet(X, y, rho=0.5, cv=None, n_alphas=100, alphas=None,
 class LinearModelPath(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, intercept=True):
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
-        # self.path = None
-        self.intercept = intercept
 
-    def fit(self, X, y, cv=None, **kwargs):
+    def fit(self, X, y, cv=None, **fit_kwargs):
         """Fit linear model with coordinate descent along decreasing alphas
-
-        The same model is reused with warm restarts. Early stopping can happen
-        before reaching n_alphas if the cross validation detects overfitting
-        when decreasing the strength of the regularization.
         """
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
@@ -362,7 +459,7 @@ class LinearModelPath(LinearModel):
         n_samples = X.shape[0]
 
         model = self.path(X, y, cv=cv, eps=self.eps, n_alphas=self.n_alphas,
-                                    intercept=self.intercept, **kwargs)
+                                    **fit_kwargs)
 
         self.__dict__.update(model.__dict__)
         return self
