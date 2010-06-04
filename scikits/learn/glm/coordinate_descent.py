@@ -103,6 +103,9 @@ class Lasso(LinearModel):
     `coef_` : array, shape = [nfeatures]
         parameter vector (w in the fomulation formula)
 
+    `intercept_` : float
+        independent term in decision function.
+
     Examples
     --------
     >>> from scikits.learn import glm
@@ -252,18 +255,23 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
     ----------
     X : numpy array of shape [nsamples,nfeatures]
         Training data
+
     Y : numpy array of shape [nsamples]
         Target values
-    eps : float
+
+    eps : float, optional
         Length of the path. eps=1e-3 means that
         alpha_min / alpha_max = 1e-3
-    n_alphas : int
+
+    n_alphas : int, optional
         Number of alphas along the regularization path
-    alphas : numpy array
+
+    alphas : numpy array, optional
         List of alphas where to compute the models.
         If None alphas are set automatically
-    fit_kwargs : dict
-        parameters passed to the Lasso fit method
+
+    fit_kwargs : kwargs, optional
+        keyword arguments passed to the Lasso fit method
 
     Returns
     -------
@@ -296,18 +304,23 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
     ----------
     X : numpy array of shape [nsamples,nfeatures]
         Training data
+
     Y : numpy array of shape [nsamples]
         Target values
+
     eps : float
         Length of the path. eps=1e-3 means that
         alpha_min / alpha_max = 1e-3
+
     n_alphas : int
         Number of alphas along the regularization path
+
     alphas : numpy array
         List of alphas where to compute the models.
         If None alphas are set automatically
-    fit_kwargs : dict
-        parameters passed to the Lasso fit method
+
+    fit_kwargs : kwargs
+        keyword arguments passed to the ElasticNet fit method
 
     Returns
     -------
@@ -341,19 +354,30 @@ def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
     ----------
     X : numpy array of shape [nsamples,nfeatures]
         Training data
+
     Y : numpy array of shape [nsamples]
         Target values
-    cv : cross-validation generator
-    eps : float
+
+    rho : float, optional
+        float between 0 and 1 passed to ElasticNet (scaling between
+        l1 and l2 penalties)
+
+    cv : cross-validation generator, optional
+         If None, KFold will be used.
+
+    eps : float, optional
         Length of the path. eps=1e-3 means that
-        alpha_min / alpha_max = 1e-3
-    n_alphas : int
+        alpha_min / alpha_max = 1e-3.
+
+    n_alphas : int, optional
         Number of alphas along the regularization path
-    alphas : numpy array
+
+    alphas : numpy array, optional
         List of alphas where to compute the models.
         If None alphas are set automatically
-    fit_kwargs : dict
-        parameters passed to the Lasso fit method
+
+    fit_kwargs : kwargs
+        keyword arguments passed to the ElasticNet fit method
 
     Returns
     -------
@@ -387,28 +411,37 @@ def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
 
 def optimized_enet(X, y, rho=0.5, cv=None, n_alphas=100, alphas=None,
                                  eps=1e-3, **fit_kwargs):
-    """Returns an optimized ElasticNet model
+    """Returns an ElasticNet model that is optimized in the sense of
+    cross validation.
 
     Parameters
     ----------
     X : numpy array of shape [nsamples,nfeatures]
         Training data
+
     Y : numpy array of shape [nsamples]
         Target values
-    rho : float
+
+    rho : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties)
-    cv : cross-validation generator
-    eps : float
+
+    cv : cross-validation generator, optional
+         If None, KFold will be used.
+
+    eps : float, optional
         Length of the path. eps=1e-3 means that
-        alpha_min / alpha_max = 1e-3
-    n_alphas : int
+        alpha_min / alpha_max = 1e-3.
+
+    n_alphas : int, optional
         Number of alphas along the regularization path
-    alphas : numpy array
+
+    alphas : numpy array, optional
         List of alphas where to compute the models.
         If None alphas are set automatically
-    fit_kwargs : dict
-        parameters passed to the Lasso fit method
+
+    fit_kwargs : kwargs
+        keyword arguments passed to the ElasticNet fit method
 
     Returns
     -------
