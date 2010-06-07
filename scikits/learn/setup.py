@@ -50,23 +50,49 @@ def configuration(parent_package='',top_path=None):
                          join('src', 'tron.cpp')]
 
     # we try to link agains system-wide blas
-    blas_info = get_info('blas_opt')
+    blas_info = get_info('blas_opt', 0)
+    blas_lib = blas_info.pop('libraries', [])
+    extra_compile_args = blas_info.pop('extra_compile_args', [])
+
     if not blas_info:
+        config.add_library('blas', blas_sources)
         warnings.warn(BlasNotFoundError.__doc__)
-        liblinear_sources.append(blas_sources)
 
     config.add_extension('liblinear',
                          sources=liblinear_sources,
-                         libraries = blas_info.pop('libraries', []),
+                         libraries = blas_lib,
                          include_dirs=['src',
-                                       numpy.get_include(),
-                                       blas_info.pop('include_dirs', [])],
+                                       numpy.get_include()],
                          depends=[join('src', 'linear.h'),
                                   join('src', 'tron.h'),
                                   join('src', 'blas', 'blas.h'),
                                   join('src', 'blas', 'blasp.h')],
-                         **blas_info)
+                         extra_compile_args=extra_compile_args)
     ## end liblinear module
+
+    # minilear needs cblas, fortran-compiled BLAS will not be sufficient
+    if not blas_info or (
+        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
+        config.add_library('cblas',
+                           sources=[
+                               join('src', 'cblas', '*.c'),
+                               ]
+                           )
+
+    minilearn_sources = [
+        join('src', 'minilearn', 'lars.c'),
+        join('src', 'minilearn', 'minilearn.c')]
+
+    extra_compile_args += ['-std=c99', '-g']
+
+    config.add_extension('minilearn',
+                         sources=minilearn_sources,
+                         libraries = ['blas', 'cblas'],
+                         include_dirs=[join('src', 'minilearn'),
+                                       join('src', 'cblas'),
+                                       numpy.get_include()],
+                         extra_compile_args=extra_compile_args,
+                         )
 
     config.add_extension('BallTree',
                          sources=[join('src', 'BallTree.cpp')],

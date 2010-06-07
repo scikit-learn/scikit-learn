@@ -929,3 +929,45 @@ class ElasticNetPath(LinearModelPath):
     def __init__(self, rho=0.5, **kwargs):
         super(ElasticNetPath, self).__init__(**kwargs)
         self.rho = rho
+
+
+class LassoLARS (object):
+    """
+    Lasso using the LARS algorithm
+
+    As implemented in minilearn
+    """
+    def __init__(self):
+        self._cholesky = np.empty(0, dtype=np.float64)
+        self.coef_ = np.empty(0, dtype=np.float64)
+        self.ind_ = np.empty(0, dtype=np.int32)
+
+    def fit (self, X, Y, intercept=True, niter=None, normalize=True):
+        """
+        WARNING: Y will be overwritten
+
+        TODO: resize (not create) arrays
+        """
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        Y = np.asanyarray(Y, dtype=np.float64, order='C')
+
+        from . import minilearn
+
+        if niter is None:
+            niter = min(*X.shape) - 1
+
+        sum_k = niter * (niter + 1) /2
+        self._cholesky = np.zeros(sum_k, dtype=np.float64)
+        self.coef_ = np.zeros(sum_k, dtype=np.float64)
+        self.ind_ = np.zeros(niter, dtype=np.int32)
+
+        if normalize:
+            X = X - X.mean(0)
+            Y = Y - Y.mean(0)
+            self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
+            X /= self._norms
+
+
+        minilearn.lars_fit_wrap(X, Y, self.coef_, self.ind_,
+                                self._cholesky, niter)
+        return self
