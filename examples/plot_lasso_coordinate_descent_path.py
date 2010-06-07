@@ -15,7 +15,7 @@ from itertools import cycle
 import numpy as np
 import pylab as pl
 
-from scikits.learn.glm.coordinate_descent import lasso_path, enet_path
+from scikits.learn.glm import lasso_path, enet_path
 
 n_samples, n_features, maxit = 5, 10, 30
 

@@ -7,8 +7,8 @@ import numpy as np
 from numpy.testing import *
 from nose.tools import *
 
-from ..coordinate_descent import Lasso, LassoPath, lasso_path
-from ..coordinate_descent import ElasticNet, ElasticNetPath, enet_path
+from scikits.learn.glm import Lasso, LassoPath, lasso_path, \
+     ElasticNet, ElasticNetPath, enet_path
 
 def test_lasso_toy():
     """

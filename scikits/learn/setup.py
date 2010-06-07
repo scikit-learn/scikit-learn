@@ -14,7 +14,6 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('em')
     config.add_subpackage('datasets')
     config.add_subpackage('feature_selection')
-    config.add_subpackage('glm')
     config.add_subpackage('manifold')
     config.add_subpackage('utils')
 
@@ -73,6 +72,12 @@ def configuration(parent_package='',top_path=None):
                          sources=[join('src', 'BallTree.cpp')],
                          include_dirs=[numpy.get_include()]
                          )
+
+    config.add_extension('cd_fast',
+                         sources=[join('src', 'cd_fast.c')],
+                         # libraries=['m'],
+                         include_dirs=[numpy.get_include()])
+
 
     config.add_subpackage('utils')
 

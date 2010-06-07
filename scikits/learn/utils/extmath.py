@@ -45,3 +45,12 @@ if sys.version_info[1] < 6:
 else:
     import itertools
     combinations = itertools.combinations
+
+
+
+def density(w, **kwargs):
+    """Compute density of a sparse vector
+        Return a value between 0 and 1
+    """
+    d = 0 if w is None else float((w != 0).sum()) / w.size
+    return d
