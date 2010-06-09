@@ -51,7 +51,7 @@ def configuration(parent_package='',top_path=None):
 
     # we try to link agains system-wide blas
     blas_info = get_info('blas_opt', 0)
-    blas_lib = blas_info.pop('libraries', [])
+    blas_lib = blas_info.pop('libraries', ['blas'])
     extra_compile_args = blas_info.pop('extra_compile_args', [])
 
     if not blas_info:
