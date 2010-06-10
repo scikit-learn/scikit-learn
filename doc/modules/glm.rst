@@ -4,10 +4,10 @@ Generalized Linear Models
 
 The following are a set of methods intended for regression in which
 the target value is expected to be a linear combination of the input
-variables. In mathematical notion, if :math:`\^y` is the predicted
+variables. In mathematical notion, if :math:`\hat{y}` is the predicted
 value.
 
-.. math::    \^y(x, w) = w_0 + w_1 x_1 + ... + w_D x_D
+.. math::    \hat{y}(x, w) = w_0 + w_1 x_1 + ... + w_D x_D
 
 Across the module, we designate the vector :math:`w = (w1, ..., w_D)` as
 ``coef_`` and :math:`w_0` as ``intercept_``.
@@ -20,7 +20,7 @@ This method minimizes the sum of squared distances between the
 observed responses in the dataset, and the responses predicted by the
 linear approximation.
 
-.. autoclass:: scikits.learn.glm.regression.LinearRegression
+.. autoclass:: scikits.learn.glm.LinearRegression
    :members:
 
 Examples
