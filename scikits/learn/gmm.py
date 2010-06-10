@@ -1,13 +1,8 @@
 import itertools
 import time
-import logging
 
 import numpy as np
 from scipy import cluster
-
-ZEROLOGPROB = -1e200
-
-log = logging.getLogger('gmm.gmm')
 
 def almost_equal(actual, desired, decimal=7):
     """Check that two floats are approximately equal."""
@@ -399,15 +394,8 @@ class GMM(object):
             curr_logprob, posteriors = self.eval(obs)
             logprob.append(curr_logprob.sum())
 
-            currT = time.time()
-            log.info('Iteration %d: log likelihood = %f (took %f seconds).'
-                      % (i, logprob[-1], currT - T))
-            T = currT
-
-
             # Check for convergence.
             if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
-                log.info('Converged at iteration %d.' % i)
                 break
 
             # Maximization step
