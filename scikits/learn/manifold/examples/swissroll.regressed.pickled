@@ -1,7 +1,7 @@
 ccopy_reg
 _reconstructor
 p0
-(cscikits.learn.machine.manifold_learning.regression.MLPLMR
+(cscikits.learn.manifold.regression.MLPLMR
 MLPLMR
 p1
 c__builtin__
@@ -46,7 +46,7 @@ S'9FQ\x9eN\xab%\xc0\x8a\xb0\xcf\x85\xb2\xfe\x0b\xc0\x00\x00\x00\x00\x00\x00\xf0?
 p18
 tp19
 bg0
-(cscikits.learn.machine.manifold_learning.stats.gaussian
+(cscikits.learn.manifold.stats.gaussian
 IsotropicGaussianVariable
 p20
 g2
@@ -79,7 +79,7 @@ Rp33
 sS'RBF'
 p34
 g0
-(cscikits.learn.machine.manifold_learning.stats.kernels.gaussian
+(cscikits.learn.manifold.stats.kernels.gaussian
 IsotropicGaussianKernel
 p35
 g2
@@ -114,7 +114,7 @@ p48
 NsS'mean'
 p49
 g42
-sbcscikits.learn.machine.manifold_learning.stats.radial_basis_functions_field
+sbcscikits.learn.manifold.stats.radial_basis_functions_field
 RBFField
 p50
 (lp51
