@@ -205,33 +205,29 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
         cblas_dscal (nfeatures, 0., uu, 1);
         for (i=k, cur = top_active; cur; cur = cur->prev, --i)
             cblas_daxpy (nsamples, dir[i], cur->ptr, nfeatures, uu, 1);
-        Aa = fabs (cblas_ddot (nsamples, top_active->ptr, nfeatures, uu, 1));
-        C  = fabs (pmax->cov);
+        Aa = cblas_ddot (nsamples, top_active->ptr, nfeatures, uu, 1);
+        Aa = fabs (Aa)        + DBL_EPSILON;
+        C  = fabs (pmax->cov) + DBL_EPSILON;
 
         /*
          * Compute gamma.
          */
-        gamma = DBL_MAX;
+        gamma = INFINITY;
         for (cur = head->next; cur->ptr; cur = cur->next) {
             aj = cblas_ddot (nsamples, cur->ptr, nfeatures, uu, 1);
-
-            if (cur->cov > 0)
+            if (cur->cov > 0) 
                 tgamma = (C - cur->cov) / (Aa - aj);
-            else
+            else 
                 tgamma = (C + cur->cov) / (Aa + aj);
-
-            gamma = fmin(tgamma, gamma);
+            gamma = fmin (tgamma, gamma);
         }
-
-	/* regularization for degenerate gamma = 0 case */
-	gamma += DBL_EPSILON;
 
         /* 
          * Set up return values.
          * TODO: we should iterate over used_indices (for Lasso variant).
          */
         cblas_daxpy (k, 1./gamma, dir-k, 1, dir, 1);
-        cblas_dscal (k + 1, gamma, dir, 1);
+        cblas_dscal (k+1, gamma, dir, 1);
         ind[k] = (pmax->ptr - X);
     }
  
