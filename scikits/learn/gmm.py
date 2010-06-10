@@ -4,9 +4,22 @@ import time
 import numpy as np
 from scipy import cluster
 
-def almost_equal(actual, desired, decimal=7):
+#######################################################
+#
+# This module is experimental. It is meant to replace
+# the em module, but before that happens, some work
+# must be done:
+#
+#   - migrate the plotting methods from em (see
+#     em.gauss_mix.GM.plot)
+#   - profile and benchmark
+#
+#######################################################
+
+
+def almost_equal(actual, desired, eps=1e-7):
     """Check that two floats are approximately equal."""
-    return abs(desired - actual) < 0.5 * 10**(-decimal)
+    return abs(desired - actual) < eps
 
 def logsum(A, axis=None):
     """Computes the sum of A assuming A is in the log domain.
@@ -413,6 +426,9 @@ class GMM(object):
 
         return logprob
 
+##
+## some helper routines
+##    
 
 def _lmvnpdfdiag(obs, means=0.0, covars=1.0):
     nobs, ndim = obs.shape
