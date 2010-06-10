@@ -328,14 +328,16 @@ class GMMTester():
         train_obs = g.rvs(n=100)
         test_obs = g.rvs(n=2)
 
-        g.init(train_obs, params=params, minit='points')
+        g.fit(train_obs, niter=0, init_params=params,
+              minit='points')
         init_testll = g.lpdf(test_obs).sum()
 
-        trainll = g.fit(train_obs, iter=20, params=params)
+        trainll = g.fit(train_obs, niter=20, params=params,
+                        init_params='')
         self.assert_(np.all(np.diff(trainll) > -1))
 
         post_testll = g.lpdf(test_obs).sum()
-        #print self.__class__.__name__, init_testll, post_testll
+
         self.assertTrue(post_testll >= init_testll)
 
 

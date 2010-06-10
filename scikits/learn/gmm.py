@@ -1,3 +1,10 @@
+#
+# Gaussian Mixture Models
+#
+# Author: Ron Weiss <ronweiss@gmail.com>
+#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#
+
 import itertools
 import time
 
@@ -13,6 +20,8 @@ from scipy import cluster
 #   - migrate the plotting methods from em (see
 #     em.gauss_mix.GM.plot)
 #   - profile and benchmark
+#   - adopt naming scheme used in other modules (svm, glm)
+#     for estimated parameters (trailing underscore, etc.)
 #
 #######################################################
 
@@ -333,65 +342,62 @@ class GMM(object):
             obs[x] = sample_gaussian(self.means[c], cv, self._cvtype)
         return obs
 
-    def init(self, obs, params='wmc', **kwargs):
-        """Initialize model parameters from data using the k-means algorithm
-
-        Parameters
-        ----------
-        obs : array_like, shape (n, ndim)
-            List of ndim-dimensional data points.  Each row corresponds to a
-            single data point.
-        params : string
-            Controls which parameters are updated in the training
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-        **kwargs :
-            Keyword arguments to pass through to the k-means function 
-            (scipy.cluster.vq.kmeans2)
-
-        See Also
-        --------
-        scipy.cluster.vq.kmeans2
-        """
-        
-        if 'm' in params:
-            self.means, tmp = cluster.vq.kmeans2(obs, self._nstates,
-                                                     **kwargs)
-        if 'w' in params:
-            self.weights = np.tile(1.0 / self._nstates, self._nstates)
-        if 'c' in params:
-            cv = np.cov(obs.T)
-            if not cv.shape:
-                cv.shape = (1, 1)
-            self.covars = _distribute_covar_matrix_to_match_cvtype(
-                cv, self._cvtype, self._nstates)
-
-    def fit(self, obs, iter=10, min_covar=1.0, thresh=1e-2, params='wmc'):
+    def fit(self, obs, niter=10, min_covar=1.0, thresh=1e-2, params='wmc',
+            init_params='wmc', **kwargs):
         """Estimate model parameters with the expectation-maximization
         algorithm.
 
+        A initialization step is performed before entering the em
+        algorithm. If you want to avoid this step, set the keyword
+        argument init_params to the empty string ''. Likewise, if you
+        would like just to do an initialization, call this method with
+        niter=0.
+
         Parameters
         ----------
         obs : array_like, shape (n, ndim)
             List of ndim-dimensional data points.  Each row corresponds to a
             single data point.
-        iter : int
+        niter : int, optional
             Number of EM iterations to perform.
-        min_covar : float
+        min_covar : float, optional
             Floor on the diagonal of the covariance matrix to prevent
             overfitting.  Defaults to 1.0.
-        thresh : float
+        thresh : float, optional
             Convergence threshold.
-        params : string
+        params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+        init_params : string, optional
+            Controls which parameters are updated in the initialization
+            process.  Can contain any combination of 'w' for weights,
+            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+        kwargs : keyword, optional
+            Keyword arguments passed to scipy.cluster.vq.kmeans2
 
         Returns
         -------
         logprob : list
             Log probabilities of each data point in `obs` for each iteration
         """
+
+        ## initialization step
+
+        if 'm' in init_params:
+            self.means, tmp = cluster.vq.kmeans2(obs, self._nstates, **kwargs)
+
+        if 'w' in init_params:
+            self.weights = np.tile(1.0 / self._nstates, self._nstates)
+
+        if 'c' in init_params:
+            cv = np.cov(obs.T)
+            if not cv.shape:
+                cv.shape = (1, 1)
+            self.covars = _distribute_covar_matrix_to_match_cvtype(
+                cv, self._cvtype, self._nstates)
+
+
         covar_mstep_fun = {'spherical': _covar_mstep_spherical,
                            'diag': _covar_mstep_diag,
                            #'tied': _covar_mstep_tied,
@@ -400,9 +406,10 @@ class GMM(object):
                            'full': _covar_mstep_slow,
                            }[self._cvtype]
 
-        T = time.time()
+        # EM algorithm
+
         logprob = []
-        for i in xrange(iter):
+        for i in xrange(niter):
             # Expectation step
             curr_logprob, posteriors = self.eval(obs)
             logprob.append(curr_logprob.sum())
