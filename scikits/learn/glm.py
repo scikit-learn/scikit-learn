@@ -7,20 +7,66 @@
 
 
 """
-Regression using linear models: Linear, Ridge.
+Generalized Linear models.
 """
 
+import warnings
+
 import numpy as np
-import scipy.linalg
+import scipy.linalg # TODO: use numpy.linalg instead
 
-from scikits.learn.utils.extmath import fast_logdet
+from .cd_fast import lasso_coordinate_descent, enet_coordinate_descent
+from .utils.extmath import fast_logdet, density
+from .cross_val import KFold
+
+###
+### TODO: intercept for all models
+### We should define a common function to center data instead of
+### repeating the same code inside each fit method.
+###
+### Also, bayesian_ridge_regression and bayesian_regression_ard
+### should be squashed into its respective objects.
+###
+
+class LinearModel(object):
+    """Base class for Linear Models"""
+
+    def __init__(self, coef=None):
+        # weights of the model (can be lazily initialized by the ``fit`` method)
+        self.coef_ = coef
+
+    def predict(self, X):
+        """
+        Predict using the linear model
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+            Returns predicted values.
+        """
+        X = np.asanyarray(X)
+        return np.dot(X, self.coef_) + self.intercept_
+
+    def compute_density(self):
+        """Ratio of non-zero weights in the model"""
+        return density(self.coef_)
+
+## TODO: it's a bit strange that the above method returns a value
+## but the below does not
+
+    def compute_rsquared(self, X, Y):
+        """Compute explained variance a.k.a. r^2"""
+        self.rsquared_ = 1 - np.linalg.norm(Y - np.dot(X, self.coef_))**2 \
+                         / np.linalg.norm(Y)**2
 
 
-class LinearRegression(object):
+class LinearRegression(LinearModel):
     """
     Ordinary least squares Linear Regression.
-
-    TODO: rename to OLS ?
 
     Parameters
     ----------
@@ -71,24 +117,8 @@ class LinearRegression(object):
             self.intercept_ = np.zeros(self.coef_X.shape[1])
         return self
 
-    def predict(self, T):
-        """
-        Predict using linear model
 
-        Parameters
-        ----------
-        X : numpy array of shape [nsamples,nfeatures]
-
-        Returns
-        -------
-        C : array, shape = [nsample]
-            Returns predicted values.
-        """
-        T = np.asanyarray( T )
-        return np.dot(T, self.coef_) + self.intercept_
-
-
-class Ridge(object):
+class Ridge(LinearModel):
     """
     Ridge regression.
 
@@ -109,7 +139,7 @@ class Ridge(object):
     >>> X = np.random.randn(nsamples, nfeatures)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, Y) #doctest: +ELLIPSIS
-    <scikits.learn.glm.regression.Ridge object at 0x...>
+    <scikits.learn.glm.Ridge object at 0x...>
 
     See also
     --------
@@ -119,7 +149,7 @@ class Ridge(object):
     def __init__(self, alpha=1.0):
         self.alpha = alpha
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, intercept=True):
         """
         Fit Ridge regression model
 
@@ -136,34 +166,32 @@ class Ridge(object):
         """
         nsamples, nfeatures = X.shape
 
+        self._intercept = intercept
+        if self._intercept:
+            self._xmean = X.mean(axis=0)
+            self._ymean = Y.mean(axis=0)
+            X = X - self._xmean
+            Y = Y - self._ymean
+        else:
+            self._xmean = 0.
+            self._ymean = 0.
+
+
         if nsamples > nfeatures:
             # w = inv(X^t X + alpha*Id) * X.T y
-            self.coef_ = scipy.linalg.solve(np.dot(X.T,X) + self.alpha * np.eye(nfeatures),
-                                  np.dot(X.T, Y))
+            self.coef_ = scipy.linalg.solve(
+                np.dot(X.T, X) + self.alpha * np.eye(nfeatures),
+                np.dot(X.T, Y))
         else:
             # w = X.T * inv(X X^t + alpha*Id) y
-            self.coef_ = np.dot(X.T,
-                    scipy.linalg.solve(np.dot(X, X.T) + self.alpha * np.eye(nsamples), Y))
+            self.coef_ = np.dot(X.T, scipy.linalg.solve(
+                np.dot(X, X.T) + self.alpha * np.eye(nsamples), Y))
 
+        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
         return self
 
-    def predict(self, T):
-        """
-        Predict using Linear Model
 
-        Parameters
-        ----------
-        X : numpy array of shape [nsamples,nfeatures]
-
-        Returns
-        -------
-        C : array, shape = [nsample]
-            Returns predicted values.
-        """
-        return np.dot(T, self.coef_)
-
-
-class BayesianRidge:
+class BayesianRidge (LinearModel):
     """
     Encapsulate various bayesian regression algorithms
     """
@@ -173,7 +201,7 @@ class BayesianRidge:
         self.step_th = step_th
         self.th_w = th_w
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, intercept=True):
         """
         Parameters
         ----------
@@ -188,30 +216,31 @@ class BayesianRidge:
         """
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
-        self.w, self.alpha, self.beta, self.sigma, self.log_likelihood = \
+
+        self._intercept = intercept
+        if self._intercept:
+            self._xmean = X.mean(axis=0)
+            self._ymean = Y.mean(axis=0)
+            X = X - self._xmean
+            Y = Y - self._ymean
+        else:
+            self._xmean = 0.
+            self._ymean = 0.
+
+        # todo, shouldn't most of these have trailing underscores ?
+        self.coef_, self.alpha, self.beta, self.sigma, self.log_likelihood = \
             bayesian_ridge_regression(X, Y, self.step_th, self.th_w, self.ll_bool)
+
+        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+
         return self
 
-    def predict(self, T):
-        """
-        Predict using Linear Model
 
-        Parameters
-        ----------
-        X : numpy array of shape [nsamples,nfeatures]
-
-        Returns
-        -------
-        C : array, shape = [nsample]
-            Returns predicted values.
-        """
-        return np.dot(T, self.w)
-
-
-class ARDRegression:
+class ARDRegression (LinearModel):
     """
     Encapsulate various bayesian regression algorithms
     """
+    # TODO: add intercept
 
     def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,\
         alpha_th=1.e+16):
@@ -420,78 +449,6 @@ def bayesian_regression_ard(X, Y, step_th=300, th_w=1.e-12, \
 
     return w, alpha, beta, sigma, log_likelihood
 
-"""Implementation of regularized linear regression with Coordinate Descent
-
-This implementation is focused on regularizers that lead to sparse parameters
-(many zeros) such as the laplacian (L1) and Elastic Net (L1 + L2) priors:
-
-  http://en.wikipedia.org/wiki/Generalized_linear_model
-
-The objective function to minimize is for the Lasso::
-
-        0.5 * ||y - X w||_2 ^ 2 + alpha * ||w||_1
-
-and for the Elastic Network::
-
-        0.5 * ||y - X w||_2 ^ 2 + alpha * rho * ||w||_1
-        + alpha * (1-rho) * 0.5 * ||w||_2 ^ 2
-
-Where R are the residuals between the output of the model and the expected
-value and w is the vector of weights to fit.
-"""
-
-import warnings
-
-from .cd_fast import lasso_coordinate_descent, enet_coordinate_descent
-from .utils.extmath import density
-from .cross_val import KFold
-
-class LinearModel(object):
-    """Base class for Linear Model optimized with coordinate descent"""
-
-    def __init__(self, coef=None):
-        # weights of the model (can be lazily initialized by the ``fit`` method)
-        self.coef_ = coef
-
-    def predict(self, X):
-        """
-        Predict using the linear model
-
-        Parameters
-        ----------
-        X : numpy array of shape [nsamples,nfeatures]
-
-        Returns
-        -------
-        C : array, shape = [nsample]
-            Returns predicted values.
-        """
-        X = np.asanyarray(X)
-        return np.dot(X, self.coef_) + self.intercept_
-
-    def compute_density(self):
-        """Ratio of non-zero weights in the model"""
-        return density(self.coef_)
-
-    def compute_rsquared(self, X, Y):
-        """Compute explained variance a.k.a. r^2"""
-        self.rsquared_ = 1 - np.linalg.norm(Y - np.dot(X, self.coef_))**2 \
-                         / np.linalg.norm(Y)**2
-
-    def __str__(self):
-        if self.coef_ is not None:
-            n_non_zeros = (np.abs(self.coef_) != 0).sum()
-            return ("%s with %d non-zero coefficients (%.2f%%)\n" + \
-                    " * Regularisation parameter = %.7f\n" +\
-                    " * Training r^2: %.4f") % \
-                    (self.__class__.__name__, n_non_zeros,
-                     n_non_zeros / float(len(self.coef_)) * 100,
-                     self.alpha, self.rsquared_)
-        else:
-            return ("%s\n" + \
-                    " * Regularisation parameter = %.7f\n" +\
-                    " * No fit") % \
-                    (self.__class__.__name__, self.alpha)
 
 class Lasso(LinearModel):
     """
@@ -510,8 +467,8 @@ class Lasso(LinearModel):
 
     Parameters
     ----------
-    alpha : double
-        Constant that multiplies the L1 term.
+    alpha : double, optional
+        Constant that multiplies the L1 term. Defaults to 1.0
 
     Attributes
     ----------
@@ -524,11 +481,13 @@ class Lasso(LinearModel):
     Examples
     --------
     >>> from scikits.learn import glm
-    >>> clf = glm.Lasso()
+    >>> clf = glm.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso Coordinate Descent
     >>> print clf.coef_
-    [ 0.4  0. ]
+    [ 0.85  0.  ]
+    >>> print clf.intercept_
+    0.15
 
     Notes
     -----
@@ -931,16 +890,14 @@ class ElasticNetPath(LinearModelPath):
         self.rho = rho
 
 
-class LassoLARS (object):
+class LeastAngleRegression (object):
     """
-    Lasso using the LARS algorithm
+    LeastAngleRegression using the LARS algorithm
 
-    As implemented in minilearn
+
+    WARNING: this is alpha quality, use it at your own risk
+
     """
-    def __init__(self):
-        self._cholesky = np.empty(0, dtype=np.float64)
-        self.coef_ = np.empty(0, dtype=np.float64)
-        self.ind_ = np.empty(0, dtype=np.int32)
 
     def fit (self, X, Y, intercept=True, niter=None, normalize=True):
         """
@@ -966,7 +923,6 @@ class LassoLARS (object):
             Y = Y - Y.mean(0)
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
             X /= self._norms
-
 
         minilearn.lars_fit_wrap(X, Y, self.coef_, self.ind_,
                                 self._cholesky, niter)
