@@ -20,7 +20,7 @@ Git repo
 --------
 
 You can check the latest sources with the command::
-    
+
     git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
 
 or if you have write privileges::
@@ -92,7 +92,10 @@ I am glad to accept any sort of documentation: function docstrings,
 rst docs (like this one), tutorials, etc. Rst docs live in the source
 code repository, under directory doc/.
 
-
+You can edit them using any text editor and generate the html docs by
+typing ``make html`` from the doc/ directory. That should create a
+directory _build/html/ with html files that are viewable in a web
+browser.
 
 
 API guidelines
