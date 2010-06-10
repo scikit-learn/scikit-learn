@@ -166,9 +166,12 @@ python tuples as arguments. In practice, this means you should call
 numpy.asanyarray at the beginning at each public method that accepts
 arrays.
 
-Properties
-----------
 
+Optional Arguments
+^^^^^^^^^^^^^^^^^^
+
+In iterative algorithms, number of iterations should be specified by
+an int called ``niter``.
 
 
 TODO
@@ -183,4 +186,5 @@ Some things are must still be decided:
 Specific models
 ---------------
 
-In linear models, coefficients are stored in a 
+In linear models, coefficients are stored in an array called ``coef_``,
+and independent term is stored in ``intercept_``.
