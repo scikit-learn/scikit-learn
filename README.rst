@@ -51,6 +51,15 @@ https://lists.sourceforge.net/lists/listinfo/scikit-learn-general to
 subscribe to the mailing list.
 
 
+IRC channel
+===========
+
+Some developers tend to hang around the channel ``#scikit-learn``
+at ``irc.freenode.net``, especially during the week preparing a new
+release. If nobody is available to answer your questions there don't
+hesitate to ask it on the mailing list to reach a wider audience.
+
+
 Development
 ===========
 
@@ -62,7 +71,7 @@ GIT
 
 You can check out the current repository with the command::
 
-    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn 
+    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
 
 Developers with write privileges should instead use the command::
 
