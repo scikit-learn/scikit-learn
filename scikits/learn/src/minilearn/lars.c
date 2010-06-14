@@ -153,9 +153,9 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
         /* 
          * Compute the least-squares direction of the coefficients.
          */
-        temp = pmax->cov;
+        dir[k] = temp = pmax->cov;
 
-        for (i=k, cur=top_active; cur; cur=cur->prev, --i) {
+        for (i=k-1, cur=top_active->prev; cur; cur=cur->prev, --i) {
             /*
              * To update the cholesky decomposition, we need to compute
              *
@@ -187,7 +187,7 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
          * and u is the last vector added to the active set.
          *
          */
-        cblas_dtpsv (CblasRowMajor, CblasLower, CblasTrans, CblasNonUnit, 
+        cblas_dtpsv (CblasRowMajor, CblasLower, CblasNoTrans, CblasNonUnit, 
                      k, L, v, 1);
 
         v[k] = sqrt(1 - cblas_ddot(k, v, 1, v, 1));
@@ -202,7 +202,7 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
          * Update uu with the current direction 
          * uu = Xa' * dir
          */
-        cblas_dscal (nfeatures, 0., uu, 1);
+        cblas_dscal (nsamples, 0., uu, 1);
         for (i=k, cur = top_active; cur; cur = cur->prev, --i)
             cblas_daxpy (nsamples, dir[i], cur->ptr, nfeatures, uu, 1);
         Aa = cblas_ddot (nsamples, top_active->ptr, nfeatures, uu, 1);
@@ -212,13 +212,15 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
         /*
          * Compute gamma.
          */
-        gamma = INFINITY;
+        gamma = DBL_MAX;
         for (cur = head->next; cur->ptr; cur = cur->next) {
             aj = cblas_ddot (nsamples, cur->ptr, nfeatures, uu, 1);
-            if (cur->cov > 0) 
+            if (cur->cov > 0) {
                 tgamma = (C - cur->cov) / (Aa - aj);
-            else 
+            }
+            else {
                 tgamma = (C + cur->cov) / (Aa + aj);
+            }
             gamma = fmin (tgamma, gamma);
         }
 
@@ -227,7 +229,7 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
          * TODO: we should iterate over used_indices (for Lasso variant).
          */
         cblas_daxpy (k, 1./gamma, dir-k, 1, dir, 1);
-        cblas_dscal (k+1, gamma, dir, 1);
+        cblas_dscal (k + 1, gamma, dir, 1);
         ind[k] = (pmax->ptr - X);
     }
  

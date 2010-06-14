@@ -8,7 +8,7 @@ cimport numpy as np
 
 cdef extern from "minilearn.h":
     void lars_fit (int, int, double *, double *, double *, int *, double *, int)
-    int RowMajorStrg
+    # int RowMajorStrg
 
 def lars_fit_wrap (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                    np.ndarray[np.float64_t, ndim=1, mode='c'] res,

@@ -915,7 +915,7 @@ class LeastAngleRegression (object):
 
         sum_k = niter * (niter + 1) /2
         self._cholesky = np.zeros(sum_k, dtype=np.float64)
-        self.coef_ = np.zeros(sum_k, dtype=np.float64)
+        self.coef_ = np.zeros(sum_k , dtype=np.float64)
         self.ind_ = np.zeros(niter, dtype=np.int32)
 
         if normalize:
