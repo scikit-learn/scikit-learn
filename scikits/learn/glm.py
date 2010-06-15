@@ -14,6 +14,7 @@ import warnings
 
 import numpy as np
 import scipy.linalg # TODO: use numpy.linalg instead
+import scipy.sparse as sp # needed by LeastAngleRegression
 
 from .cd_fast import lasso_coordinate_descent, enet_coordinate_descent
 from .utils.extmath import fast_logdet, density
@@ -915,8 +916,10 @@ class LeastAngleRegression (object):
 
         sum_k = niter * (niter + 1) /2
         self._cholesky = np.zeros(sum_k, dtype=np.float64)
-        self.coef_ = np.zeros(sum_k , dtype=np.float64)
-        self.ind_ = np.zeros(niter, dtype=np.int32)
+        self.beta_ = np.zeros(sum_k , dtype=np.float64)
+        self.row_ = np.zeros(sum_k, dtype=np.int32)
+        self.col_ = np.zeros(sum_k, dtype=np.int32)
+
 
         if normalize:
             X = X - X.mean(0)
@@ -924,6 +927,10 @@ class LeastAngleRegression (object):
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
             X /= self._norms
 
-        minilearn.lars_fit_wrap(X, Y, self.coef_, self.ind_,
-                                self._cholesky, niter)
+        minilearn.lars_fit_wrap(X, Y, self.beta_, self.row_,
+                                self.col_, self._cholesky, niter)
+
+        self.coef_ = sp.coo_matrix((self.beta_,
+                                    (self.row_, self.col_))).todense()
+
         return self

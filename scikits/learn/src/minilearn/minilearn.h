@@ -8,7 +8,7 @@ typedef long int 	ml_int;
 
 
 /* lars.c */
-void lars_fit(int nfeatures, int nsamples, double *X, double *b, double *beta, int *ind, double *L, int niter);
+void lars_fit(int nfeatures, int nsamples, double *X, double *b, double *beta, int *row, int *col, double *L, int stop);
 
 /* from cholesky.c */
 int cholesky_update(double *R, int ldr, int p, double *X, double *Z, int ldz,
@@ -17,4 +17,5 @@ int cholesky_update(double *R, int ldr, int p, double *X, double *Z, int ldz,
 void givens_rot(double *da, double *db, double *dc, double *ds);
 
 double cholesky_logdet (double *L, int n);
+
 

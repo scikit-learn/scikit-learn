@@ -46,6 +46,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <float.h>
 #include <cblas.h>
@@ -95,7 +96,7 @@ struct dllist {
  *
  */
 void lars_fit(int nfeatures, int nsamples, double *X, double *res, 
-              double *beta, int *ind, double *L, int niter)
+              double *beta, int *row, int *col, double *L, int niter)
 {
     /* temp variables */
     /* TODO: pass uu by reference */
@@ -228,9 +229,13 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
          * Set up return values.
          * TODO: we should iterate over used_indices (for Lasso variant).
          */
-        cblas_daxpy (k, 1./gamma, dir-k, 1, dir, 1);
+        cblas_daxpy (k,  1./gamma, dir-k, 1, dir, 1);
         cblas_dscal (k + 1, gamma, dir, 1);
-        ind[k] = (pmax->ptr - X);
+
+        /* TODO: this is proper of LAR */
+        memcpy (row + sum_k, row + sum_k - k, k * sizeof(int));
+        row[sum_k + k] = (pmax->ptr - X);
+        for (i=0; i<=k; ++i) col[sum_k + i] = k;
     }
  
     free (active_set);
