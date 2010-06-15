@@ -96,7 +96,8 @@ struct dllist {
  *
  */
 void lars_fit(int nfeatures, int nsamples, double *X, double *res, 
-              double *beta, int *row, int *col, double *L, int niter)
+              double *beta, double *lambdas, int *row, int *col, 
+              double *L, int niter)
 {
     /* temp variables */
     /* TODO: pass uu by reference */
@@ -231,6 +232,7 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
          */
         cblas_daxpy (k,  1./gamma, dir-k, 1, dir, 1);
         cblas_dscal (k + 1, gamma, dir, 1);
+        lambdas[k] = pmax->cov;
 
         /* TODO: this is proper of LAR */
         memcpy (row + sum_k, row + sum_k - k, k * sizeof(int));

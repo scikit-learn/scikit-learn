@@ -900,7 +900,7 @@ class LeastAngleRegression (object):
 
     """
 
-    def fit (self, X, Y, intercept=True, niter=None, normalize=True):
+    def fit (self, X, Y, intercept=True, n_iter=None, normalize=True):
         """
         WARNING: Y will be overwritten
 
@@ -911,10 +911,11 @@ class LeastAngleRegression (object):
 
         from . import minilearn
 
-        if niter is None:
-            niter = min(*X.shape) - 1
+        if n_iter is None:
+            n_iter = min(*X.shape) - 1
 
-        sum_k = niter * (niter + 1) /2
+        sum_k = n_iter * (n_iter + 1) /2
+        self.alphas_ = np.zeros(n_iter, dtype=np.float64)
         self._cholesky = np.zeros(sum_k, dtype=np.float64)
         self.beta_ = np.zeros(sum_k , dtype=np.float64)
         self.row_ = np.zeros(sum_k, dtype=np.int32)
@@ -927,8 +928,9 @@ class LeastAngleRegression (object):
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
             X /= self._norms
 
-        minilearn.lars_fit_wrap(X, Y, self.beta_, self.row_,
-                                self.col_, self._cholesky, niter)
+        minilearn.lars_fit_wrap(X, Y, self.beta_, self.alphas_,
+                                self.row_,
+                                self.col_, self._cholesky, n_iter)
 
         self.coef_ = sp.coo_matrix((self.beta_,
                                     (self.row_, self.col_))).todense()
