@@ -104,6 +104,7 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
     double *uu  = (double *) calloc(nsamples, sizeof(double));
 
     double *v, *dir, C, temp, gamma=0, tgamma, aj, Aa = 0;
+    double ga, gb;
     int i, k, sum_k=0;
 
     struct dllist *active_set, *head, *cur, *top_active;
@@ -203,6 +204,8 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
         /* 
          * Update uu with the current direction 
          * uu = Xa' * dir
+         * 
+         * TODO: is always Aa == C ?
          */
         cblas_dscal (nsamples, 0., uu, 1);
         for (i=k, cur = top_active; cur; cur = cur->prev, --i)
@@ -217,13 +220,17 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
         gamma = DBL_MAX;
         for (cur = head->next; cur->ptr; cur = cur->next) {
             aj = cblas_ddot (nsamples, cur->ptr, nfeatures, uu, 1);
-            if (cur->cov > 0) {
-                tgamma = (C - cur->cov) / (Aa - aj);
-            }
-            else {
-                tgamma = (C + cur->cov) / (Aa + aj);
-            }
-            gamma = fmin (tgamma, gamma);
+
+            double cj = cur->cov;
+
+            ga = (C - cj) / (Aa - aj);
+            gb = (C + cj) / (Aa + aj);
+
+            ga = ga > 0 ? ga : gamma;
+            gb = gb > 0 ? gb : gamma;
+
+            tgamma = fmin(ga, gb);
+            gamma  = fmin(tgamma, gamma);
         }
 
         /* 
@@ -232,13 +239,22 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
          */
         cblas_daxpy (k,  1./gamma, dir-k, 1, dir, 1);
         cblas_dscal (k + 1, gamma, dir, 1);
-        lambdas[k] = pmax->cov;
+        lambdas[k] = C;
 
         /* TODO: this is proper of LAR */
         memcpy (row + sum_k, row + sum_k - k, k * sizeof(int));
         row[sum_k + k] = (pmax->ptr - X);
-        for (i=0; i<=k; ++i) col[sum_k + i] = k;
+        for (i=0; i<=k; ++i) col[sum_k + i] = k + 1;
     }
+
+    /* calculate last C_hat */
+    for (pmax=head->next, cur=head->next; cur->ptr; cur=cur->next) {
+        cur->cov = cblas_ddot (nsamples, cur->ptr, nfeatures, res, 1);
+        pmax = (fabs(cur->cov) > fabs(pmax->cov)) ? cur : pmax;
+    }
+
+    lambdas[k+1] = fabs(pmax->cov);
+
  
     free (active_set);
     free (uu);

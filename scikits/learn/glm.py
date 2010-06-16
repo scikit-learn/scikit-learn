@@ -904,7 +904,7 @@ class LeastAngleRegression (object):
         """
         WARNING: Y will be overwritten
 
-        TODO: resize (not create) arrays
+        TODO: resize (not create) arrays, check shape
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.float64, order='C')
@@ -915,7 +915,7 @@ class LeastAngleRegression (object):
             n_iter = min(*X.shape) - 1
 
         sum_k = n_iter * (n_iter + 1) /2
-        self.alphas_ = np.zeros(n_iter, dtype=np.float64)
+        self.alphas_ = np.zeros(n_iter + 1, dtype=np.float64)
         self._cholesky = np.zeros(sum_k, dtype=np.float64)
         self.beta_ = np.zeros(sum_k , dtype=np.float64)
         self.row_ = np.zeros(sum_k, dtype=np.int32)
@@ -929,10 +929,11 @@ class LeastAngleRegression (object):
             X /= self._norms
 
         minilearn.lars_fit_wrap(X, Y, self.beta_, self.alphas_,
-                                self.row_,
-                                self.col_, self._cholesky, n_iter)
+                                self.row_, self.col_, self._cholesky,
+                                n_iter)
 
         self.coef_ = sp.coo_matrix((self.beta_,
-                                    (self.row_, self.col_))).todense()
+                                    (self.row_, self.col_)),
+                                   shape=(X.shape[1], n_iter+1)).todense()
 
         return self
