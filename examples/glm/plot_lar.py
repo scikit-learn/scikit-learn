@@ -33,7 +33,7 @@ eps = 1e-2 # the smaller it is the longer is the path
 
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-clf = glm.LeastAngleRegression().fit(X, y, n_iter=7)
+clf = glm.LeastAngleRegression().fit(X, y, n_features=7)
 print "This took ", datetime.now() - start
 
 # alphas = np.append(clf.alphas_, np.zeros(7))

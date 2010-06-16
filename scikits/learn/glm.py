@@ -900,22 +900,24 @@ class LeastAngleRegression (object):
 
     """
 
-    def fit (self, X, Y, intercept=True, n_iter=None, normalize=True):
+    def fit (self, X, Y, intercept=True, n_features=None, normalize=True):
         """
         WARNING: Y will be overwritten
 
         TODO: resize (not create) arrays, check shape
+
+        n_features : number of features to enter the model
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.float64, order='C')
 
         from . import minilearn
 
-        if n_iter is None:
-            n_iter = min(*X.shape) - 1
+        if n_features is None:
+            n_features = min(X.shape[0], X.shape[1])
 
-        sum_k = n_iter * (n_iter + 1) /2
-        self.alphas_ = np.zeros(n_iter + 1, dtype=np.float64)
+        sum_k = n_features * (n_features - 1) /2
+        self.alphas_ = np.zeros(n_features, dtype=np.float64)
         self._cholesky = np.zeros(sum_k, dtype=np.float64)
         self.beta_ = np.zeros(sum_k , dtype=np.float64)
         self.row_ = np.zeros(sum_k, dtype=np.int32)
@@ -930,10 +932,10 @@ class LeastAngleRegression (object):
 
         minilearn.lars_fit_wrap(X, Y, self.beta_, self.alphas_,
                                 self.row_, self.col_, self._cholesky,
-                                n_iter)
+                                n_features)
 
         self.coef_ = sp.coo_matrix((self.beta_,
                                     (self.row_, self.col_)),
-                                   shape=(X.shape[1], n_iter+1)).todense()
+                                   shape=(X.shape[1], n_features)).todense()
 
         return self
