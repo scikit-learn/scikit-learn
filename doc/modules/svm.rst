@@ -25,7 +25,11 @@ the goal is to decide which class a new data point will be in. This
 classification will be performed by creating a hyperplane that
 maximizes the distance between any two classes.
 
-See :ref:`example_svm_plot_svm_hyperplane.py` for a complete example
+
+.. note::
+
+    See :ref:`example_svm_plot_svm_hyperplane.py` for an example
+    illustrating the classification problem using a hyperplane.
 
 The original optimal hyperplane algorithm was a linear
 classifier. However, in 1992, Bernhard Boser, Isabelle Guyon and
@@ -61,9 +65,15 @@ and only if x > 0 XOR y > 0. In the following example, we create a
 training set of random points X with target Y = XOR(X). We see that
 the SVM correctly draws the decision function.
 
-See :ref:`example_svm_plot_svm_nonlinear.py` for a complete example
+.. note::
 
-Complete class reference:
+    See :ref:`example_svm_plot_svm_nonlinear.py` for a complete example
+    illustrating the choice of kernel.
+
+
+____
+
+**Complete class reference:**
 
 .. autoclass:: scikits.learn.svm.SVC
    :members:
@@ -100,7 +110,10 @@ classifiers, except that:
       between the use of fit() and predict() you will have
       unexpected results.
 
-For a complete example, see :ref:`example_svm_plot_custom_kernel.py` 
+.. note::
+
+    For a complete example of custom kernels, 
+    see :ref:`example_svm_plot_custom_kernel.py` 
 
 Regression
 ==========
@@ -117,21 +130,36 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
+____
 
 .. autoclass:: scikits.learn.svm.SVR
    :members:
    :inherited-members:
 
 
-Distribution estimation
+Density estimation
 =======================
-One-class SVM is used for out-layer detection, that is, given a set of
-samples, it will detect the soft boundary of that set.
+
+One-class SVM is used for outliers detection, that is, given a set of
+samples, it will detect the soft boundary of that set so as to classify
+new points as belonging to that set or not.
+
+____
 
 .. autoclass:: scikits.learn.svm.OneClassSVM
    :members:
    :inherited-members:
 
+____
+
+.. figure:: ../auto_examples/svm/images/plot_svm_oneclass.png
+   :align: center
+   :scale: 50
+
+.. note::
+
+    For a complete example on one class SVM see 
+    :ref:`example_svm_plot_svm_oneclass.py` example.
 
 Examples
 ========
