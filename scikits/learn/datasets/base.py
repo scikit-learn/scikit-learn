@@ -101,3 +101,11 @@ def load_digits():
                  images=images,
                  DESCR=fdescr.read())
 
+
+
+def load_diabetes():
+    data = np.loadtxt(os.path.join(os.path.dirname(__file__) +
+                                   '/data/diabetes.csv'))
+    target = data[:, -1]
+    data   = data[:, :-1]
+    return Bunch (data=data, target=target)
