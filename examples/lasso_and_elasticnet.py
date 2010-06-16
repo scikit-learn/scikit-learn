@@ -26,7 +26,7 @@ X_test, y_test = X[n_samples/2:], y[n_samples/2:]
 
 ################################################################################
 # Lasso
-from scikits.learn.glm.coordinate_descent import Lasso
+from scikits.learn.glm import Lasso
 
 alpha = 0.1
 lasso = Lasso(alpha=alpha)
@@ -35,9 +35,10 @@ y_pred_lasso = lasso.fit(X_train, y_train).predict(X_test)
 print lasso
 print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_pred_lasso)**2
                                       / np.linalg.norm(y_test)**2)
-                                      ################################################################################
+
+################################################################################
 # ElasticNet
-from scikits.learn.glm.coordinate_descent import ElasticNet
+from scikits.learn.glm import ElasticNet
 
 enet = ElasticNet(alpha=alpha, rho=0.7)
 

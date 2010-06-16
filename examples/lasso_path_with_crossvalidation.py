@@ -29,7 +29,7 @@ X_test, y_test = X[n_samples/2:], y[n_samples/2:]
 ################################################################################
 # Lasso with path and cross-validation using optimized_lasso
 from scikits.learn.cross_val import KFold
-from scikits.learn.glm.coordinate_descent import optimized_lasso
+from scikits.learn.glm import optimized_lasso
 
 # Instanciate cross-validation generator
 cv = KFold(n_samples/2, 5)
@@ -46,7 +46,7 @@ print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_)**2
 
 ################################################################################
 # Lasso with path and cross-validation using LassoPath path
-from scikits.learn.glm.coordinate_descent import LassoPath
+from scikits.learn.glm import LassoPath
 lasso_path = LassoPath()
 
 y_pred = lasso_path.fit(X_train, y_train).predict(X_test)
