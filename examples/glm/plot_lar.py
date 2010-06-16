@@ -21,6 +21,12 @@ np.random.seed(0)
 y = np.random.randn(n_samples)
 X = np.random.randn(n_samples, n_features)
 
+from scikits.learn import datasets
+
+# diabetes = datasets.load_diabetes()
+# X = diabetes.data
+# Y = diabetes.target
+
 ################################################################################
 # Fit models
 ################################################################################
@@ -36,7 +42,6 @@ start = datetime.now()
 clf = glm.LeastAngleRegression().fit(X, y, n_features=7)
 print "This took ", datetime.now() - start
 
-# alphas = np.append(clf.alphas_, np.zeros(7))
 alphas = -np.log10(np.abs(clf.alphas_))
 
 # Display results
