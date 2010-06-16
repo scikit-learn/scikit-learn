@@ -35,7 +35,7 @@ class LogisticRegression(object):
 
     `intercept_` : array, shape = [nclasses-1]
         intercept (a.k.a. bias) added to the decision function.
-        It is available only when parametr intercept is set to True
+        It is available only when parameter intercept is set to True
 
     Methods
     -------
@@ -98,7 +98,6 @@ class LogisticRegression(object):
         if self.bias_ > 0:
             return self.raw_coef_[:,-1]
         return 0.0
-            
 
     @property
     def coef_(self):

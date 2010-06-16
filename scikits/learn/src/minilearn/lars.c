@@ -127,7 +127,7 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
     top_active = NULL;
     head->ptr = NULL;
 
-    /* main loop, we iterate over the user-suplied number of iterations */
+    /* main loop, we iterate over the user-supplied number of iterations */
     for (k=0; k < niter; ++k) {
 
         sum_k = k * (k+1) / 2;
