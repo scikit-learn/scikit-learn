@@ -752,7 +752,7 @@ def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
         If None alphas are set automatically
 
     fit_kwargs : kwargs
-        keyword arguments passed to the Lasso fit method
+        keyword arguments passed to the ElasticNet fit method
 
     Returns
     -------
@@ -920,7 +920,7 @@ class LeastAngleRegression (object):
             n_features = min(X.shape[0], X.shape[1]) - 1
 
         sum_k = n_features * (n_features + 1) /2
-        self.alphas_ = np.zeros(n_features + 1, dtype=np.float64)
+        self.alphas_ = np.zeros(n_features + 2, dtype=np.float64)
         self._cholesky = np.zeros(sum_k, dtype=np.float64)
         self.beta_ = np.zeros(sum_k , dtype=np.float64)
         self.row_ = np.zeros(sum_k, dtype=np.int32)
