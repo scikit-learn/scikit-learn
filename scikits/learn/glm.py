@@ -908,9 +908,12 @@ class LeastAngleRegression (object):
 
         n_features : number of features to enter the model
         """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.float64, order='C')
+        X = np.ascontiguousarray (X, dtype=np.float64)
+        Y = np.ascontiguousarray (Y, dtype=np.float64)
 
+        assert X.shape[0] == Y.shape[0], ValueError (
+            "Shape mismatch in input array")
+        
         from . import minilearn
 
         if n_features is None:

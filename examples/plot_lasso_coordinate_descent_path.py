@@ -17,11 +17,17 @@ import pylab as pl
 
 from scikits.learn.glm import lasso_path, enet_path
 
-n_samples, n_features, maxit = 5, 10, 30
+n_samples, n_features, maxit = 442, 10, 50
+
+from scikits.learn import datasets
 
 np.random.seed(0)
 y = np.random.randn(n_samples)
 X = np.random.randn(n_samples, n_features)
+
+data = datasets.load_diabetes()
+X = data.data
+y = data.target
 
 ################################################################################
 # Fit models
