@@ -150,16 +150,15 @@ ____
    :members:
    :inherited-members:
 
-____
+.. note::
+
+    For a complete example on one class SVM see 
+    :ref:`example_svm_plot_svm_oneclass.py` example.
 
 .. figure:: ../auto_examples/svm/images/plot_svm_oneclass.png
    :align: center
    :scale: 50
 
-.. note::
-
-    For a complete example on one class SVM see 
-    :ref:`example_svm_plot_svm_oneclass.py` example.
 
 Examples
 ========
