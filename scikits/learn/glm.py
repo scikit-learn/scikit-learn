@@ -752,7 +752,7 @@ def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
         If None alphas are set automatically
 
     fit_kwargs : kwargs
-        keyword arguments passed to the ElasticNet fit method
+        keyword arguments passed to the Lasso fit method
 
     Returns
     -------
