@@ -52,6 +52,13 @@
 #include <cblas.h>
 #include "minilearn.h"
 
+/* some visual studio compatibility */
+#ifdef _MSC_VER
+    /* MSVC does not implement C99 */
+    #define copysign _copysign
+    #define fmin __min
+#endif
+
 /* 
  * Doubly linked list structure, we will use this to iterate over
  * indices.
@@ -104,7 +111,7 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
     double *uu  = (double *) calloc(nsamples, sizeof(double));
 
     double *v, *dir, C, temp, gamma=0, tgamma, aj, Aa = 0;
-    double ga, gb;
+    double cj, ga, gb;
     int i, k, sum_k=0;
 
     struct dllist *active_set, *head, *cur, *top_active;
@@ -221,7 +228,7 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
         for (cur = head->next; cur->ptr; cur = cur->next) {
             aj = cblas_ddot (nsamples, cur->ptr, nfeatures, uu, 1);
 
-            double cj = cur->cov;
+            cj = cur->cov;
 
             ga = (C - cj) / (Aa - aj);
             gb = (C + cj) / (Aa + aj);
