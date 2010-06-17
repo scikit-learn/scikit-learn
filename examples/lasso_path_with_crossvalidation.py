@@ -34,7 +34,7 @@ from scikits.learn.glm import optimized_lasso
 # Instanciate cross-validation generator
 cv = KFold(n_samples/2, 5)
 
-# Estimate optimized lasso model
+# # Estimate optimized lasso model
 lasso_opt = optimized_lasso(X_train, y_train, cv, n_alphas=100, eps=1e-3, maxit=100)
 y_ = lasso_opt.predict(X_test)
 
@@ -45,13 +45,13 @@ print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_)**2
                                       / np.linalg.norm(y_test)**2)
 
 ################################################################################
-# Lasso with path and cross-validation using LassoPath path
-from scikits.learn.glm import LassoPath
-lasso_path = LassoPath()
+# Lasso with path and cross-validation using LassoCV path
+from scikits.learn.glm import LassoCV
+lasso_cv = LassoCV()
 
-y_pred = lasso_path.fit(X_train, y_train).predict(X_test)
+y_pred = lasso_cv.fit(X_train, y_train).predict(X_test)
 
-print lasso_path
+print lasso_cv
 
 # Compute explained variance on test data
 print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_)**2

@@ -7,8 +7,8 @@ import numpy as np
 from numpy.testing import *
 from nose.tools import *
 
-from scikits.learn.glm import Lasso, LassoPath, lasso_path, \
-     ElasticNet, ElasticNetPath, enet_path
+from scikits.learn.glm import Lasso, LassoCV, lasso_path, \
+     ElasticNet, ElasticNetCV, enet_path
 
 def test_lasso_toy():
     """
@@ -97,7 +97,7 @@ def test_lasso_path():
     X = np.random.randn(n_samples, n_features)
     y = np.dot(X, w)
 
-    clf = LassoPath(n_alphas=100, eps=1e-3).fit(X, y, maxit=maxit)
+    clf = LassoCV(n_alphas=100, eps=1e-3).fit(X, y, maxit=maxit)
     assert_almost_equal(clf.alpha, 0.011, 2)
 
     # test set
@@ -117,7 +117,7 @@ def test_enet_path():
     X = np.random.randn(n_samples, n_features)
     y = np.dot(X, w)
 
-    clf = ElasticNetPath(n_alphas=100, eps=1e-3, rho=0.99)
+    clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.99)
     clf.fit(X, y, maxit=maxit)
     assert_almost_equal(clf.alpha, 0.00526, 2)
 

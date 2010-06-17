@@ -849,7 +849,7 @@ def optimized_enet(X, y, rho=0.5, cv=None, n_alphas=100, alphas=None,
     i_best_alpha = np.argmin(mse_alphas)
     return models[i_best_alpha]
 
-class LinearModelPath(LinearModel):
+class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None):
@@ -872,22 +872,26 @@ class LinearModelPath(LinearModel):
         self.__dict__.update(model.__dict__)
         return self
 
-class LassoPath(LinearModelPath):
-    """Lasso linear model with iterative fitting along a regularization path"""
+class LassoCV(LinearModelCV):
+    """Lasso linear model with iterative fitting along a regularization path
+    The best model is then selected by cross-validation
+    """
 
     @property
     def path(self):
         return optimized_lasso
 
-class ElasticNetPath(LinearModelPath):
-    """Elastic Net model with iterative fitting along a regularization path"""
+class ElasticNetCV(LinearModelCV):
+    """Elastic Net model with iterative fitting along a regularization path
+    The best model is then selected by cross-validation
+    """
 
     @property
     def path(self):
         return optimized_enet
 
     def __init__(self, rho=0.5, **kwargs):
-        super(ElasticNetPath, self).__init__(**kwargs)
+        super(ElasticNetCV, self).__init__(**kwargs)
         self.rho = rho
 
 
