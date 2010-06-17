@@ -71,11 +71,11 @@ def bench_pymvpa(X, Y, T):
     """
     from mvpa.datasets import Dataset
     from mvpa.clfs import svm
-    data = Dataset.from_wizard(samples=X, targets=Y)
+    data = Dataset(samples=X, labels=Y)
 
     # start time
     tstart = datetime.now()
-    clf = svm.SVM(kernel=svm.LinearSVMKernel())
+    clf = svm.LinearCSVMC()
     clf.train(data)
     Z = clf.predict(T)
     delta = (datetime.now() - tstart)
@@ -113,8 +113,7 @@ if __name__ == '__main__':
 
     # now do a bench where the number of points is fixed
     # and the variable is the number of dimensions
-    from scikits.learn.datasets.samples_generator.nonlinear import friedman
-    from scikits.learn.datasets.samples_generator.linear import sparse_uncorrelated
+    from scikits.learn.datasets.samples_generator import friedman, sparse_uncorrelated
 
     scikit_results = []
     svm_results = []
