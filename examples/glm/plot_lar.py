@@ -35,22 +35,17 @@ Y = diabetes.target
 # Demo path functions
 ################################################################################
 
-eps = 1e-2 # the smaller it is the longer is the path
-
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
 clf = glm.LeastAngleRegression().fit(X, Y, n_features=9, normalize=False)
 print "This took ", datetime.now() - start
 
-alphas = -np.log10(clf.alphas_)
+# Display results
+alphas = -np.log10(clf.alphas_[:-1])
+pl.plot(alphas, clf.coef_.T)
 
-# # Display results
-color_iter = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k' , 'b', 'c', 'c'])
-
-for coef_, color in zip(clf.coef_, color_iter):
-    pl.plot(alphas, coef_.T, color)
-
-pl.vlines(alphas, -200, 550)
+ymin, ymax = pl.ylim()
+pl.vlines(alphas, ymin, ymax, linestyle='dashed')
 pl.xlabel('-Log(lambda)')
 pl.ylabel('weights')
 pl.title('Least Angle Regression (LAR) Paths')
