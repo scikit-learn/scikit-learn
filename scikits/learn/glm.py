@@ -19,6 +19,8 @@ import scipy.sparse as sp # needed by LeastAngleRegression
 from .cd_fast import lasso_coordinate_descent, enet_coordinate_descent
 from .utils.extmath import fast_logdet, density
 from .cross_val import KFold
+from .minilearn import lars_fit_wrap
+
 
 ###
 ### TODO: intercept for all models
@@ -51,13 +53,6 @@ class LinearModel(object):
         """
         X = np.asanyarray(X)
         return np.dot(X, self.coef_) + self.intercept_
-
-    def compute_density(self):
-        """Ratio of non-zero weights in the model"""
-        return density(self.coef_)
-
-## TODO: it's a bit strange that the above method returns a value
-## but the below does not
 
     def compute_rsquared(self, X, Y):
         """Compute explained variance a.k.a. r^2"""
@@ -874,7 +869,8 @@ class LinearModelCV(LinearModel):
 
 class LassoCV(LinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path
-    The best model is then selected by cross-validation
+
+    The best model is then sselected by cross-validation.
     """
 
     @property
@@ -882,9 +878,7 @@ class LassoCV(LinearModelCV):
         return optimized_lasso
 
 class ElasticNetCV(LinearModelCV):
-    """Elastic Net model with iterative fitting along a regularization path
-    The best model is then selected by cross-validation
-    """
+    """Elastic Net model with iterative fitting along a regularization path"""
 
     @property
     def path(self):
@@ -895,40 +889,47 @@ class ElasticNetCV(LinearModelCV):
         self.rho = rho
 
 
-class LeastAngleRegression (object):
+class LeastAngleRegression (LinearModel):
     """
     LeastAngleRegression using the LARS algorithm
 
 
-    WARNING: this is alpha quality, use it at your own risk
 
+    WARNING: this is alpha quality, use it at your own risk
+    TODO: add intercept
+
+    Notes
+    -----
+    predict does only work correctly in the case of normalized
+    predictors.
+    
     """
 
     def fit (self, X, Y, intercept=True, n_features=None, normalize=True):
         """
-        WARNING: Y will be overwritten
 
-        TODO: resize (not create) arrays, check shape
 
-        n_features : number of features to enter the model
+        n_features : int
+            number of features to get into the model
+
+        TODO: resize (not create) arrays, check shape,
+            add a real intercept
         """
-        X = np.ascontiguousarray (X, dtype=np.float64)
-        Y = np.ascontiguousarray (Y, dtype=np.float64)
+        X  = np.asanyarray(X, dtype=np.float64, order='C')
+        _Y = np.asanyarray(Y, dtype=np.float64, order='C')
 
-        assert X.shape[0] == Y.shape[0], ValueError (
-            "Shape mismatch in input array")
-        
-        from . import minilearn
+        if Y is _Y: Y = _Y.copy()
+        else: Y = _Y
 
         if n_features is None:
-            n_features = min(X.shape[0], X.shape[1]) - 1
+            n_features = min(*X.shape) - 1
 
         sum_k = n_features * (n_features + 1) /2
-        self.alphas_ = np.zeros(n_features + 2, dtype=np.float64)
+        self.alphas_ = np.zeros(n_features + 1, dtype=np.float64)
         self._cholesky = np.zeros(sum_k, dtype=np.float64)
         self.beta_ = np.zeros(sum_k , dtype=np.float64)
-        self.row_ = np.zeros(sum_k, dtype=np.int32)
-        self.col_ = np.zeros(sum_k, dtype=np.int32)
+        coef_row = np.zeros(sum_k, dtype=np.int32)
+        coef_col = np.zeros(sum_k, dtype=np.int32)
 
 
         if normalize:
@@ -937,12 +938,14 @@ class LeastAngleRegression (object):
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
             X /= self._norms
 
-        minilearn.lars_fit_wrap(X, Y, self.beta_, self.alphas_,
-                                self.row_, self.col_, self._cholesky,
-                                n_features)
+        lars_fit_wrap(0, X, Y, self.beta_, self.alphas_, coef_row,
+                      coef_col, self._cholesky, n_features)
 
-        self.coef_ = sp.coo_matrix((self.beta_,
-                                    (self.row_, self.col_)),
-                                   shape=(X.shape[1], n_features + 1)).todense()
+        self.coef_path_ = sp.coo_matrix((self.beta_,
+                                         (coef_row, coef_col))).todense()
+
+        self.coef_ = np.ravel(self.coef_path_[:, n_features])
+
+        self.intercept_ = 0.
 
         return self

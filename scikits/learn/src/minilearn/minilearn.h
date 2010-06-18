@@ -6,9 +6,10 @@ typedef long int 	ml_int;
 #endif
 
 
-
 /* lars.c */
-void lars_fit(int nfeatures, int nsamples, double *X, double *b, double *beta,double *lambdas,  int *row, int *col, double *L, int stop);
+void lars_fit(int itype, int nfeatures, int nsamples, double *X, double *res, 
+              double *beta, double *lambdas, int *row, int *col, 
+              double *L, int niter);
 
 /* from cholesky.c */
 int cholesky_update(double *R, int ldr, int p, double *X, double *Z, int ldz,

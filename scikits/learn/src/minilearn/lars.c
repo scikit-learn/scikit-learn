@@ -52,9 +52,8 @@
 #include <cblas.h>
 #include "minilearn.h"
 
-/* some visual studio compatibility */
+/* some compatibility for MS Visual C compiler */
 #ifdef _MSC_VER
-    /* MSVC does not implement C99 */
     #define copysign _copysign
     #define fmin __min
 #endif
@@ -102,7 +101,7 @@ struct dllist {
  * should make vector multiplication faster.
  *
  */
-void lars_fit(int nfeatures, int nsamples, double *X, double *res, 
+void lars_fit(int itype, int m, int nsamples, double *X, double *res, 
               double *beta, double *lambdas, int *row, int *col, 
               double *L, int niter)
 {
@@ -110,23 +109,23 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
     /* TODO: pass uu by reference */
     double *uu  = (double *) calloc(nsamples, sizeof(double));
 
-    double *v, *dir, C, temp, gamma=0, tgamma, aj, Aa = 0;
+    double *v, *dir, C, temp, gamma, tgamma, aj, Aa = 0;
     double cj, ga, gb;
-    int i, k, sum_k=0;
+    int i, k=0, drop=0, sum_k=0;
 
     struct dllist *active_set, *head, *cur, *top_active;
     struct dllist *pmax=NULL; /* current working variable */
 
-    active_set = (struct dllist *) malloc((nfeatures+1) * sizeof(struct dllist));
+    active_set = (struct dllist *) malloc((m+1) * sizeof(struct dllist));
 
     /* create index list as a circular doubly linked list */
-    for (i=0; i<=nfeatures; ++i) {
+    for (i=0; i<=m; ++i) {
         active_set[i].ptr = X + i;
         active_set[i].next = active_set + i + 1;
         active_set[i].prev = active_set + i - 1;
     }
 
-    head = active_set + nfeatures;
+    head = active_set + m;
     head->next = active_set;
     active_set->prev = head;
 
@@ -134,23 +133,18 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
     top_active = NULL;
     head->ptr = NULL;
 
-    /* main loop, we iterate over the user-supplied number of iterations */
-    for (k=0; k < niter; ++k) {
+    /* calculate covariances (c_hat), and get maximum covariance (C_hat)*/
+    for (pmax=head->next, cur=head->next; cur->ptr; cur=cur->next) {
+        cur->cov = cblas_ddot (nsamples, cur->ptr, m, res, 1);
+        pmax = (fabs(cur->cov) > fabs(pmax->cov)) ? cur : pmax;
+    }
 
-        sum_k = k * (k+1) / 2;
+
+    while (k+drop < niter) {
+
+        sum_k += k;
         v = L + sum_k;
         dir = beta + sum_k;
-
-        /* 
-         * Update residual.
-         */
-        cblas_daxpy (nsamples, -gamma, uu, 1, res, 1);
-
-        /* calculate covariances (c_hat), and get maximum covariance (C_hat)*/
-        for (pmax=head->next, cur=head->next; cur->ptr; cur=cur->next) {
-            cur->cov = cblas_ddot (nsamples, cur->ptr, nfeatures, res, 1);
-            pmax = (fabs(cur->cov) > fabs(pmax->cov)) ? cur : pmax;
-        }
 
         /* remove it from the unused set */
         pmax->prev->next = pmax->next;
@@ -163,9 +157,9 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
         /* 
          * Compute the least-squares direction of the coefficients.
          */
-        dir[k] = temp = pmax->cov;
+        dir[k-drop] = temp = pmax->cov;
 
-        for (i=k-1, cur=top_active->prev; cur; cur=cur->prev, --i) {
+        for (i=k-drop-1, cur=top_active->prev; cur; cur=cur->prev, --i) {
             /*
              * To update the cholesky decomposition, we need to compute
              *
@@ -177,8 +171,8 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
              *
              * Covariances in the active set are kept tied and decreasing.
              */
-            v[i] = cblas_ddot (nsamples, cur->ptr, nfeatures, 
-                               pmax->ptr, nfeatures);
+            v[i] = cblas_ddot (nsamples, cur->ptr, m, 
+                               pmax->ptr, m);
 
             temp = copysign(temp, cur->cov);
             dir[i] = temp;
@@ -198,9 +192,9 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
          *
          */
         cblas_dtpsv (CblasRowMajor, CblasLower, CblasNoTrans, CblasNonUnit, 
-                     k, L, v, 1);
+                     k-drop, L, v, 1);
 
-        v[k] = sqrt(1 - cblas_ddot(k, v, 1, v, 1));
+        v[k] = sqrt(1 - cblas_ddot(k-drop, v, 1, v, 1));
 
         cblas_dtpsv (CblasRowMajor, CblasLower, CblasNoTrans, CblasNonUnit,
                      k + 1, L, dir, 1);
@@ -212,21 +206,19 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
          * Update uu with the current direction 
          * uu = Xa' * dir
          * 
-         * TODO: is always Aa == C ?
          */
         cblas_dscal (nsamples, 0., uu, 1);
-        for (i=k, cur = top_active; cur; cur = cur->prev, --i)
-            cblas_daxpy (nsamples, dir[i], cur->ptr, nfeatures, uu, 1);
-        Aa = cblas_ddot (nsamples, top_active->ptr, nfeatures, uu, 1);
-        Aa = fabs (Aa)        + DBL_EPSILON;
-        C  = fabs (pmax->cov) + DBL_EPSILON;
+        for (i=k-drop, cur = top_active; cur; cur = cur->prev, --i)
+            cblas_daxpy (nsamples, dir[i], cur->ptr, m, uu, 1);
+
 
         /*
-         * Compute gamma.
+         * Compute gamma
          */
-        gamma = DBL_MAX;
+        gamma = 1.;
+        Aa = C  = fabs (pmax->cov) + DBL_EPSILON;
         for (cur = head->next; cur->ptr; cur = cur->next) {
-            aj = cblas_ddot (nsamples, cur->ptr, nfeatures, uu, 1);
+            aj = cblas_ddot (nsamples, cur->ptr, m, uu, 1);
 
             cj = cur->cov;
 
@@ -248,19 +240,67 @@ void lars_fit(int nfeatures, int nsamples, double *X, double *res,
         cblas_dscal (k + 1, gamma, dir, 1);
         lambdas[k] = C;
 
-        /* TODO: this is proper of LAR */
         memcpy (row + sum_k, row + sum_k - k, k * sizeof(int));
         row[sum_k + k] = (pmax->ptr - X);
         for (i=0; i<=k; ++i) col[sum_k + i] = k + 1;
+
+        switch (itype) {
+
+        case 0:
+            k++;
+            break;
+
+        case 1: /* Lasso modification */
+            tgamma = gamma;
+            for (i=0; i<k; ++i) {
+                if (dir[i - k]*dir[i] < 0) {
+                    printf("%d - %d\n", k , i);
+                    /* it's possible that more than 1 variables
+                     *  have changed sign
+                     */
+                    temp = - gamma * dir[i-k] / (dir[k] - dir[i-k]);
+                    tgamma = fmin (tgamma, temp);
+                    printf ("Change of sign!! %f \n", tgamma / gamma);
+                }
+            }
+
+            if (tgamma < gamma) {
+
+                for (i=0; i<k; ++i) {
+                    dir[i] = dir[i-k] + (dir[i] - dir[i-k]) \
+                        * tgamma / gamma ;
+
+                }
+                dir[k] = dir[k] * tgamma / gamma;
+                gamma = tgamma;
+
+                /* remove pmax from the active set */
+                top_active = pmax->prev;
+
+                pmax->prev = head;
+                pmax->next = head->next;
+                head->next->prev = pmax;
+                head->next = pmax;
+
+                drop ++;
+            }
+            break;
+        }
+
+        /* 
+         * Update residual.
+         */
+        cblas_daxpy (nsamples, -gamma, uu, 1, res, 1);
+
+        /* calculate next active set */
+        for (pmax=head->next, cur=head->next; cur->ptr; cur=cur->next) {
+            cur->cov = cblas_ddot (nsamples, cur->ptr, m, res, 1);
+            pmax = (fabs(cur->cov) > fabs(pmax->cov)) ? cur : pmax;
+        }
+
     }
 
-    /* calculate last C_hat */
-    for (pmax=head->next, cur=head->next; cur->ptr; cur=cur->next) {
-        cur->cov = cblas_ddot (nsamples, cur->ptr, nfeatures, res, 1);
-        pmax = (fabs(cur->cov) > fabs(pmax->cov)) ? cur : pmax;
-    }
-
-    lambdas[k+1] = fabs(pmax->cov);
+    /* lambdas[k+1] = fabs(pmax->cov); */
 
  
     free (active_set);
