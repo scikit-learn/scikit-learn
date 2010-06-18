@@ -16,6 +16,7 @@ training set, classify a sample and plot the time taken as a function of the num
 """
 import numpy as np
 import pylab as pl
+import gc
 from datetime import datetime
 
 # to store the results
@@ -31,6 +32,8 @@ def bench_scikit(X, Y, T):
     """
     import scikits.learn
     from scikits.learn.svm import SVC
+
+    gc.collect()
 
     # start time
     tstart = datetime.now()
@@ -53,6 +56,8 @@ def bench_svm(X, Y, T):
     Y1 = Y.tolist()
     T1 = T.tolist()
 
+    gc.collect()
+
     # start time
     tstart = datetime.now()
     problem = svm.svm_problem(Y1, X1)
@@ -72,6 +77,8 @@ def bench_pymvpa(X, Y, T):
     from mvpa.datasets import Dataset
     from mvpa.clfs import svm
     data = Dataset(samples=X, labels=Y)
+
+    gc.collect()
 
     # start time
     tstart = datetime.now()
