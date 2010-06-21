@@ -31,7 +31,7 @@ def test_roc():
     """test Receiver operating characteristic (ROC)"""
     fpr, tpr, thresholds = roc(y[half:], probas_[:,1])
     roc_auc = auc(fpr, tpr)
-    assert_array_almost_equal(roc_auc, 0.8079, 3)
+    assert_array_almost_equal(roc_auc, 0.80, decimal=2)
 
 def test_precision_recall():
     """test Precision-Recall"""

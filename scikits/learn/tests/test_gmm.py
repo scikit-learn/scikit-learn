@@ -360,7 +360,3 @@ class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
 
 class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     cvtype = 'full'
-
-
-if __name__ == '__main__':
-    unittest.main()
