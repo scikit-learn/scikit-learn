@@ -258,14 +258,13 @@ class GMMTester():
                                 for x in xrange(nstates)])}
 
     def test_bad_cvtype(self):
-        g = gmm.GMM(20, 1, self.cvtype)
+        g = gmm.GMM(20, self.cvtype)
 
-        self.assertRaises(ValueError, gmm.GMM, 20, 1, 'badcvtype')
+        self.assertRaises(ValueError, gmm.GMM, 20, 'badcvtype')
 
     def test_attributes(self):
-        g = gmm.GMM(self.nstates, self.ndim, self.cvtype)
+        g = gmm.GMM(self.nstates, self.cvtype)
         self.assertEquals(g.nstates, self.nstates)
-        self.assertEquals(g.ndim, self.ndim)
         self.assertEquals(g.cvtype, self.cvtype)
 
         g.weights = self.weights
@@ -282,18 +281,18 @@ class GMMTester():
         # self.assertRaises(ValueError, g.__setattr__, 'means',
         #                   np.zeros((self.nstates - 2, self.ndim)))
 
-        g.covars = self.covars[self.cvtype]
-        assert_array_almost_equal(g.covars, self.covars[self.cvtype])
+        g._covars = self.covars[self.cvtype]
+        assert_array_almost_equal(g._covars, self.covars[self.cvtype])
         # self.assertRaises(ValueError, g.__setattr__, 'covars', [])
         # self.assertRaises(ValueError, g.__setattr__, 'covars',
         #                   np.zeros((self.nstates - 2, self.ndim)))
 
     def test_eval(self):
-        g = gmm.GMM(self.nstates, self.ndim, self.cvtype)
+        g = gmm.GMM(self.nstates, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
-        g.covars = self.covars[self.cvtype]
+        g._covars = self.covars[self.cvtype]
 
         gaussidx = np.repeat(range(self.nstates), 5)
         nobs = len(gaussidx)
@@ -307,26 +306,26 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=1000):
-        g = gmm.GMM(self.nstates, self.ndim, self.cvtype)
+        g = gmm.GMM(self.nstates, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
-        g.covars = np.maximum(self.covars[self.cvtype], 0.1)
+        g._covars = np.maximum(self.covars[self.cvtype], 0.1)
         # g.weights = self.weights
 
-        samples = g.rvs(n)
+        samples = g.rvs(self.ndim, n)
         self.assertEquals(samples.shape, (n, self.ndim))
 
     def test_train(self, params='wmc'):
-        g = gmm.GMM(self.nstates, self.ndim, self.cvtype)
+        g = gmm.GMM(self.nstates, self.cvtype)
         g.weights = self.weights
         g.means = self.means
-        g.covars = 20*self.covars[self.cvtype]
+        g._covars = 20*self.covars[self.cvtype]
 
         # Create a training and testing set by sampling from the same
         # distribution.
-        train_obs = g.rvs(n=100)
-        test_obs = g.rvs(n=2)
+        train_obs = g.rvs(self.ndim, n=100)
+        test_obs = g.rvs(self.ndim, n=2)
 
         g.fit(train_obs, niter=0, init_params=params,
               minit='points')

@@ -197,7 +197,7 @@ class GMM(object):
     >>> gmm.fit(numpy.concatenate((20 * [0], 20 * [10])))
     """
 
-    def __init__(self, nstates=1, ndim=1, cvtype='diag'):
+    def __init__(self, nstates=1, cvtype='diag'):
         """Create a Gaussian mixture model
 
         Initializes parameters such that every mixture component has
@@ -216,14 +216,12 @@ class GMM(object):
         """
 
         self._nstates = nstates
-        self.ndim = ndim
         self._cvtype = cvtype
 
+        if not cvtype in ['spherical', 'tied', 'diag', 'full']:
+            raise ValueError('bad cvtype')
+
         self.weights = np.tile(1.0 / nstates, nstates)
-        self.means = np.zeros((nstates, ndim))
-        self.covars = _distribute_covar_matrix_to_match_cvtype(
-            np.eye(ndim), cvtype, nstates)
-        
         self.labels = [None] * nstates
 
     # Read-only properties.
@@ -239,6 +237,16 @@ class GMM(object):
     def nstates(self):
         """Number of mixture components in the model."""
         return self._nstates
+
+    @property
+    def covars(self):
+        """
+        Return covars as a full matrix
+        """
+        if self.cvtype == 'full':
+            return self._covars
+        elif self.cvtype == 'diag':
+            return [np.diag(cov) for cov in self._covars]
 
     def _get_weights(self):
         """Mixing weights for each mixture component."""
@@ -275,7 +283,7 @@ class GMM(object):
             Posterior probabilities of each mixture component for each
             observation
         """
-        lpr = (lmvnpdf(obs, self.means, self.covars, self._cvtype)
+        lpr = (lmvnpdf(obs, self.means, self._covars, self._cvtype)
                + self._log_weights)
         logprob = logsum(lpr, axis=1)
         posteriors = np.exp(lpr - logprob[:,np.newaxis])
@@ -315,7 +323,7 @@ class GMM(object):
         logprob, posteriors = self.eval(obs)
         return logprob, posteriors.argmax(axis=1)
         
-    def rvs(self, n=1):
+    def rvs(self, ndim, n=1):
         """Generate random samples from the model.
 
         Parameters
@@ -331,18 +339,18 @@ class GMM(object):
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
-        obs = np.empty((n, self.ndim))
+        obs = np.empty((n, ndim))
         for x in xrange(n):
             rand = np.random.rand()
             c = (weight_cdf > rand).argmax()
             if self._cvtype == 'tied':
-                cv = self.covars
+                cv = self._covars
             else:
-                cv = self.covars[c]
+                cv = self._covars[c]
             obs[x] = sample_gaussian(self.means[c], cv, self._cvtype)
         return obs
 
-    def fit(self, obs, niter=10, min_covar=1.0, thresh=1e-2, params='wmc',
+    def fit(self, X, niter=10, min_covar=1.0, thresh=1e-2, params='wmc',
             init_params='wmc', **kwargs):
         """Estimate model parameters with the expectation-maximization
         algorithm.
@@ -355,7 +363,7 @@ class GMM(object):
 
         Parameters
         ----------
-        obs : array_like, shape (n, ndim)
+        X : array_like, shape (n, ndim)
             List of ndim-dimensional data points.  Each row corresponds to a
             single data point.
         niter : int, optional
@@ -379,22 +387,22 @@ class GMM(object):
         Returns
         -------
         logprob : list
-            Log probabilities of each data point in `obs` for each iteration
+            Log probabilities of each data point in `X` for each iteration
         """
 
         ## initialization step
 
         if 'm' in init_params:
-            self.means, tmp = cluster.vq.kmeans2(obs, self._nstates, **kwargs)
+            self.means, tmp = cluster.vq.kmeans2(X, self._nstates, **kwargs)
 
         if 'w' in init_params:
             self.weights = np.tile(1.0 / self._nstates, self._nstates)
 
         if 'c' in init_params:
-            cv = np.cov(obs.T)
+            cv = np.cov(X.T)
             if not cv.shape:
                 cv.shape = (1, 1)
-            self.covars = _distribute_covar_matrix_to_match_cvtype(
+            self._covars = _distribute_covar_matrix_to_match_cvtype(
                 cv, self._cvtype, self._nstates)
 
 
@@ -411,7 +419,7 @@ class GMM(object):
         logprob = []
         for i in xrange(niter):
             # Expectation step
-            curr_logprob, posteriors = self.eval(obs)
+            curr_logprob, posteriors = self.eval(X)
             logprob.append(curr_logprob.sum())
 
             # Check for convergence.
@@ -420,7 +428,7 @@ class GMM(object):
 
             # Maximization step
             w = posteriors.sum(axis=0)
-            avg_obs = np.dot(posteriors.T, obs)
+            avg_obs = np.dot(posteriors.T, X)
             norm = 1.0 / w[:,np.newaxis]
             
             if 'w' in params:
@@ -428,7 +436,7 @@ class GMM(object):
             if 'm' in params:
                 self.means = avg_obs * norm
             if 'c' in params:
-                self.covars = covar_mstep_fun(self, obs, posteriors,
+                self._covars = covar_mstep_fun(self, X, posteriors,
                                                avg_obs, norm, min_covar)
 
         return logprob
@@ -481,34 +489,6 @@ def _lmvnpdffull(obs, means, covars):
         #                   + np.log(2 * np.pi) + np.linalg.det(cv)).diagonal()
     return lpr
 
-def _validate_covars(covars, cvtype, nmix, ndim):
-    if cvtype == 'spherical':
-        if len(covars) != nmix:
-            raise ValueError, "'spherical' covars must have length nmix"
-        elif np.any(covars <= 0):
-            raise ValueError, "'spherical' covars must be non-negative"
-    elif cvtype == 'tied':
-        if covars.shape != (ndim, ndim):
-            raise ValueError, "'tied' covars must have shape (ndim, ndim)"
-        elif (not np.all(almost_equal(covars, covars.T))
-              or np.any(np.linalg.eigvalsh(covars) <= 0)):
-            raise (ValueError,
-                   "'tied' covars must be symmetric, positive-definite")
-    elif cvtype == 'diag':
-        if covars.shape != (nmix, ndim):
-            raise ValueError, "'diag' covars must have shape (nmix, ndim)"
-        elif np.any(covars <= 0):
-            raise ValueError, "'diag' covars must be non-negative"
-    elif cvtype == 'full':
-        if covars.shape != (nmix, ndim, ndim):
-            raise (ValueError,
-                   "'full' covars must have shape (nmix, ndim, ndim)")
-        for n,cv in enumerate(covars):
-            if (not np.all(almost_equal(cv, cv.T))
-                or np.any(np.linalg.eigvalsh(cv) <= 0)):
-                raise (ValueError,
-                       "component %d of 'full' covars must be symmetric,"
-                       "positive-definite" % n)
 
 def _distribute_covar_matrix_to_match_cvtype(tiedcv, cvtype, nstates):
     if cvtype == 'spherical':
@@ -547,13 +527,14 @@ def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     # Distribution"
     avg_obs2 = np.dot(obs.T, obs)
     #avg_obs2 = np.dot(obs.T, avg_obs)
-    cv = np.empty((gmm._nstates, gmm.ndim, gmm.ndim))
+    ndim = obs.shape[1]
+    cv = np.empty((gmm._nstates, ndim, ndim))
     for c in xrange(gmm._nstates):
         wobs = obs.T * posteriors[:,c]
         avg_obs2 = np.dot(wobs, obs) / posteriors[:,c].sum()
         mu = gmm.means[c][np.newaxis]
         cv[c] = (avg_obs2 - np.dot(mu, mu.T)
-                 + min_covar * np.eye(gmm.ndim))
+                 + min_covar * np.eye(ndim))
     return cv
 
 def _covar_mstep_tied2(*args):
@@ -563,23 +544,25 @@ def _covar_mstep_tied(gmm, obs, posteriors, avg_obs, norm, min_covar):
     print "THIS IS BROKEN"
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
     # Distribution"
+    ndim = obs.shape[1]
     avg_obs2 = np.dot(obs.T, obs)
     avg_means2 = np.dot(gmm.means.T, gmm.means)
-    return (avg_obs2 - avg_means2 + min_covar * np.eye(gmm.ndim))
+    return (avg_obs2 - avg_means2 + min_covar * np.eye(ndim))
 
 def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
     w = posteriors.sum(axis=0)
-    covars = np.zeros(gmm.covars.shape)
+    covars = np.zeros(gmm._covars.shape)
     for c in xrange(gmm._nstates):
         mu = gmm.means[c]
         #cv = np.dot(mu.T, mu)
-        avg_obs2 = np.zeros((gmm.ndim, gmm.ndim))
+        ndim = obs.shape[1]
+        avg_obs2 = np.zeros((ndim, ndim))
         for t,o in enumerate(obs):
             avg_obs2 += posteriors[t,c] * np.outer(o, o)
         cv = (avg_obs2 / w[c]
               - 2 * np.outer(avg_obs[c] / w[c], mu)
               + np.outer(mu, mu)
-              + min_covar * np.eye(gmm.ndim))
+              + min_covar * np.eye(ndim))
         if gmm.cvtype == 'spherical':
             covars[c] = np.diag(cv).mean()
         elif gmm.cvtype == 'diag':
