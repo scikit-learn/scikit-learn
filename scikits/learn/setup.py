@@ -20,16 +20,16 @@ def configuration(parent_package='',top_path=None):
     libsvm_includes = [numpy.get_include()]
     libsvm_libraries = []
     libsvm_library_dirs = []
-    libsvm_sources = [join('src', 'libsvm.c')]
+    libsvm_sources = [join('src', '_libsvm.c')]
 
-    if site_cfg.has_section('libsvm'):
+    if site_cfg.has_section('_libsvm'):
         libsvm_includes.append(site_cfg.get('libsvm', 'include_dirs'))
         libsvm_libraries.append(site_cfg.get('libsvm', 'libraries'))
         libsvm_library_dirs.append(site_cfg.get('libsvm', 'library_dirs'))
     else:
         libsvm_sources.append(join('src', 'svm.cpp'))
 
-    config.add_extension('libsvm',
+    config.add_extension('_libsvm',
                          sources=libsvm_sources,
                          include_dirs=libsvm_includes,
                          libraries=libsvm_libraries,

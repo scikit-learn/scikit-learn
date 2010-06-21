@@ -1,5 +1,6 @@
 import numpy as np
-from . import libsvm, liblinear
+import _libsvm
+import liblinear
 
 
 class BaseLibsvm(object):
@@ -79,7 +80,7 @@ class BaseLibsvm(object):
         if _X.shape[0] != Y.shape[0]: raise ValueError("Incompatible shapes")
 
         if (self.gamma == 0): self.gamma = 1.0/_X.shape[0]
-        self.label_, self.probA_, self.probB_ = libsvm.train_wrap(_X, Y,
+        self.label_, self.probA_, self.probB_ = _libsvm.train_wrap(_X, Y,
                  self.solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
                  self.support_, self.dual_coef_,
@@ -119,7 +120,7 @@ class BaseLibsvm(object):
         else:
             _T = T
             kernel_type = self.kernel
-        return libsvm.predict_from_model_wrap(_T, self.support_,
+        return _libsvm.predict_from_model_wrap(_T, self.support_,
                       self.dual_coef_, self.intercept_,
                       self.solver_type, kernel_type, self.degree,
                       self.gamma, self.coef0, self.eps, self.C,
@@ -155,7 +156,7 @@ class BaseLibsvm(object):
         if not self.probability:
             raise ValueError("probability estimates must be enabled to use this method")
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        pprob = libsvm.predict_prob_from_model_wrap(T, self.support_,
+        pprob = _libsvm.predict_prob_from_model_wrap(T, self.support_,
                       self.dual_coef_, self.intercept_, self.solver_type,
                       self.kernel, self.degree, self.gamma,
                       self.coef0, self.eps, self.C, 
@@ -176,7 +177,7 @@ class BaseLibsvm(object):
         T : array-like, shape = [nsamples, nfeatures]
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        return libsvm.predict_margin_from_model_wrap(T, self.support_,
+        return _libsvm.predict_margin_from_model_wrap(T, self.support_,
                       self.dual_coef_, self.intercept_, self.solver_type,
                       self.kernel, self.degree, self.gamma,
                       self.coef0, self.eps, self.C, 
