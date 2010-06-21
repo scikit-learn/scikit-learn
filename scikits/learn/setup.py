@@ -14,7 +14,6 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('em')
     config.add_subpackage('datasets')
     config.add_subpackage('feature_selection')
-    config.add_subpackage('manifold')
     config.add_subpackage('utils')
 
     # libsvm
