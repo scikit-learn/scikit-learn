@@ -17,6 +17,12 @@ def _generate_random_spd_matrix(ndim):
     randspd = np.dot(np.dot(U, 1.0+np.diag(np.random.rand(ndim))), V)
     return randspd
 
+
+def test_simple1():
+    X = [[0, 0], [.1, .1], [1, 1]]
+    clf = gmm.GMM(2)
+    clf.fit(X)
+
 class TestLogsum(unittest.TestCase):
     def test_logsum_1D(self):
         A = np.random.rand(10) + 1.0

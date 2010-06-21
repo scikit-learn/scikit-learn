@@ -197,7 +197,7 @@ class GMM(object):
     >>> gmm.fit(numpy.concatenate((20 * [0], 20 * [10])))
     """
 
-    def __init__(self, nstates=1, cvtype='diag'):
+    def __init__(self, nstates, cvtype='diag'):
         """Create a Gaussian mixture model
 
         Initializes parameters such that every mixture component has
@@ -247,6 +247,11 @@ class GMM(object):
             return self._covars
         elif self.cvtype == 'diag':
             return [np.diag(cov) for cov in self._covars]
+        elif self.cvtype == 'tied':
+            print np.tile(self._covars, 2)
+            return [self._covars]*self._nstates
+        elif self.cvtype == 'spherical':
+            return [np.eye(self._nstates) * f for f in self._covars]
 
     def _get_weights(self):
         """Mixing weights for each mixture component."""
@@ -283,11 +288,30 @@ class GMM(object):
             Posterior probabilities of each mixture component for each
             observation
         """
+        obs = np.asanyarray(obs)
         lpr = (lmvnpdf(obs, self.means, self._covars, self._cvtype)
                + self._log_weights)
         logprob = logsum(lpr, axis=1)
         posteriors = np.exp(lpr - logprob[:,np.newaxis])
         return logprob, posteriors
+
+
+    def predict (self, X):
+        """
+        Predict label for data
+
+        Parameters
+        ----------
+        T : array-like, shape = [nsamples, nfeatures]
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+        
+        """
+        logprob, posteriors = self.eval(X)
+        return np.argmax(posteriors, axis=1)
+    
 
     def lpdf(self, obs):
         """Compute the log probability under the model.
@@ -392,7 +416,11 @@ class GMM(object):
 
         ## initialization step
 
+        X = np.asanyarray(X, dtype=np.float64)
+
         if 'm' in init_params:
+            if not 'minit' in kwargs:
+                kwargs.update({'minit': 'points'})
             self.means, tmp = cluster.vq.kmeans2(X, self._nstates, **kwargs)
 
         if 'w' in init_params:
