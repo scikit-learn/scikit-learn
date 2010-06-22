@@ -780,7 +780,7 @@ static PyMethodDef BTmodule_methods[] = {
 #define PyMODINIT_FUNC void
 #endif
 PyMODINIT_FUNC
-initBallTree(void)
+initball_tree(void)
 {    
   PyObject* m;   
   PyBallTreeType.tp_new = PyType_GenericNew;
@@ -788,7 +788,7 @@ initBallTree(void)
   if (PyType_Ready(&PyBallTreeType) < 0)
     return;
 
-  m = Py_InitModule3("BallTree", BTmodule_methods,
+  m = Py_InitModule3("ball_tree", BTmodule_methods,
 		     "Ball Tree package                                   \n"
 		     " Written by Jake VanderPlas, January 2010           \n"
 		     "   vanderplas@astro.washington.edu                  \n"

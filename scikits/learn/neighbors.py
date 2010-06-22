@@ -6,7 +6,7 @@ neighbor searches in high dimensionality.
 """
 import numpy as np
 from scipy import stats
-from .BallTree import BallTree
+from .ball_tree import BallTree
 
 class Neighbors:
   """

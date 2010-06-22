@@ -93,7 +93,7 @@ def configuration(parent_package='',top_path=None):
                          extra_compile_args=extra_compile_args,
                          )
 
-    config.add_extension('BallTree',
+    config.add_extension('ball_tree',
                          sources=[join('src', 'BallTree.cpp')],
                          include_dirs=[numpy.get_include()]
                          )
