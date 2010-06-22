@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.testing import *
 from nose.tools import *
+from numpy.testing import *
 
 from scikits.learn import glm
 
@@ -65,5 +65,51 @@ def test_feature_selection():
     # we find again that only the first 10 features are useful
     assert_equal((sparse_coef[:10] == 0.0).sum(), 0)
     assert_equal((sparse_coef[10:] != 0.0).sum(), 0)
+
+
+
+# XXX: there seems to be somthing borked in the shape reconstruction of the
+# sparse coef_path_ matrix
+
+def test_sparse_coding():
+    """Use LARS as a sparse encoder w.r.t to a given fixed dictionary"""
+    n_samples, n_features = 42, 50
+    n_dictionary = 30
+
+    # generate random input set
+    X = np.random.randn(n_samples, n_features)
+
+    # take the first vectors of the dataset as a dictionnary
+    D = X[:n_dictionary].T
+
+    assert_equal(D.shape, (n_features, n_dictionary))
+
+    def sparse_encode(vector):
+        return glm.LeastAngleRegression().fit(
+            D, vector, n_features=5, normalize=False, intercept=False).coef_
+
+    def sparse_decode(vector):
+        return np.dot(D, vector)
+
+    # sparse encode each vector and check the quality of the encoded
+    # representation
+    for i, x_i in enumerate(X):
+        # compute a sparse representation of x_i using the dictionary D
+        c_i = sparse_encode(x_i)
+
+        assert_equal(c_i.shape, (n_dictionary,))
+
+        if i < n_dictionary:
+            # x_i is one of the vector of D hence there is a trivial sparse code
+            expected_code = np.zeros(n_dictionary)
+            expected_code[i] = 1.0
+
+            assert_almost_equal(c_i, expected_code, decimal=2)
+        else:
+            # x_i does not exactly belong to the dictionary, hence up to 5
+            # components of the dictionary are used to represent it
+            assert_true((c_i != 0.0).sum() < 6)
+            assert_true((abs(sparse_decode(c_i) - x_i) < 0.1).all())
+
 
 
