@@ -26,10 +26,6 @@ from scipy import cluster
 #######################################################
 
 
-def almost_equal(actual, desired, eps=1e-7):
-    """Check that two floats are approximately equal."""
-    return abs(desired - actual) < eps
-
 def logsum(A, axis=None):
     """Computes the sum of A assuming A is in the log domain.
 
@@ -260,7 +256,7 @@ class GMM(object):
     def _set_weights(self, weights):
         if len(weights) != self._nstates:
             raise ValueError, 'weights must have length nstates'
-        if not almost_equal(np.sum(weights), 1.0):
+        if not np.allclose(np.sum(weights), 1.0):
             raise ValueError, 'weights must sum to 1.0'
         
         self._log_weights = np.log(np.asarray(weights).copy())

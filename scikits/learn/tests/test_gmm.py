@@ -67,19 +67,19 @@ class TestNormalize(unittest.TestCase):
         A = np.random.rand(10) + 1.0
         for axis in range(1):
             Anorm = gmm.normalize(A, axis)
-            self.assertTrue(np.all(gmm.almost_equal(Anorm.sum(axis), 1.0)))
+            self.assertTrue(np.all(np.allclose(Anorm.sum(axis), 1.0)))
 
     def test_normalize_with_axis_2D(self):
         A = np.random.rand(10, 4) + 1.0
         for axis in range(2):
             Anorm = gmm.normalize(A, axis)
-            self.assertTrue(np.all(gmm.almost_equal(Anorm.sum(axis), 1.0)))
+            self.assertTrue(np.all(np.allclose(Anorm.sum(axis), 1.0)))
 
     def test_normalize_with_axis_3D(self):
         A = np.random.rand(10, 4, 5) + 1.0
         for axis in range(3):
             Anorm = gmm.normalize(A, axis)
-            self.assertTrue(np.all(gmm.almost_equal(Anorm.sum(axis), 1.0)))
+            self.assertTrue(np.all(np.allclose(Anorm.sum(axis), 1.0)))
 
 class TestSampleGaussian(unittest.TestCase):
     def _test_sample_gaussian_diag(self, ndim, n=10000):
