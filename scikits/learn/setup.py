@@ -22,7 +22,7 @@ def configuration(parent_package='',top_path=None):
     libsvm_library_dirs = []
     libsvm_sources = [join('src', '_libsvm.c')]
 
-    if site_cfg.has_section('_libsvm'):
+    if site_cfg.has_section('libsvm'):
         libsvm_includes.append(site_cfg.get('libsvm', 'include_dirs'))
         libsvm_libraries.append(site_cfg.get('libsvm', 'libraries'))
         libsvm_library_dirs.append(site_cfg.get('libsvm', 'library_dirs'))
