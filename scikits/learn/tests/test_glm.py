@@ -19,7 +19,7 @@ def test_toy():
     # check that Lasso with coordinate descent finds the same coefficients
     clf2 = glm.Lasso().fit(X, Y)
     assert_array_almost_equal(clf.coef_, [0, 0, -1.4142], decimal=4)
-    assert_array_almost_equal(clf.predict(X), np.sqrt(2) * np.array(Y))
+    assert_array_almost_equal(clf.predict(X), np.array(Y))
 
 
 def test_feature_selection():
