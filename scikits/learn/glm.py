@@ -898,6 +898,8 @@ class LeastAngleRegression (LinearModel):
     WARNING: this is alpha quality, use it at your own risk
     TODO: add intercept
 
+    coef_ is the **normalized** coefficient.
+
     Notes
     -----
     predict does only work correctly in the case of normalized
@@ -933,8 +935,10 @@ class LeastAngleRegression (LinearModel):
 
 
         if normalize:
-            X = X - X.mean(0)
-            Y = Y - Y.mean(0)
+            self._xmean = X.mean(0)
+            self._ymean = Y.mean(0)
+            X = X - self._xmean
+            Y = Y - self._ymean
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
             X /= self._norms
 
@@ -942,10 +946,24 @@ class LeastAngleRegression (LinearModel):
                       coef_col, self._cholesky, n_features)
 
         self.coef_path_ = sp.coo_matrix((self.beta_,
-                                         (coef_row, coef_col))).todense()
+                                        (coef_row, coef_col)),
+                                        shape=(X.shape[1], n_features+1)).todense()
 
         self.coef_ = np.ravel(self.coef_path_[:, n_features])
 
-        self.intercept_ = 0.
+        # self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
         return self
+
+
+    def predict(self, X, normalize=True):
+        """
+        TODO: add intercept
+        """
+        X = np.asanyarray(X)
+        if normalize:
+            X -= self._xmean
+            X /= self._norms
+        return  np.dot(X, self.coef_)
+
+        

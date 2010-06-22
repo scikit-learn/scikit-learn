@@ -4,7 +4,7 @@ Unsupervised learning
 
 .. toctree::
 
-    modules/em
+    modules/gmm
 
 
 
