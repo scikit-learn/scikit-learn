@@ -2,54 +2,22 @@
 Todo: cross-check the F-value with stats model
 """
 
-from scikits.learn.feature_selection import univ_selection  as fs
+from scikits.learn.feature_selection import univariate_selection  as us
 import numpy as np
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
                           assert_raises
+import scikits.learn.datasets.samples_generator as sg
 
-def make_dataset(n_samples=50, n_features=20, k=5, seed=None, classif=True,
-                 param=[1,1]):
-    """
-    Create a generic dataset for various tests
-    """
-    if classif:
-        # classification
-        x, y = fs.generate_dataset_classif(n_samples, n_features, k=k,
-                                           seed=seed)
-    else:
-        # regression
-        x, y = fs.generate_dataset_reg(n_samples, n_features, k=k, seed=seed)
-        
-    return x, y
 
-# 
-# this test is commented because it depends on scikits.statsmodels
-# 
-# def test_compare_with_statsmodels():
-#     """
-#     Test whether the F test yields the same results as scikits.statmodels
-#     """
-#     x, y = make_dataset(classif=False)
-#     F, pv = fs.f_regression(x, y)
-
-#     import scikits.statsmodels as sm
-#     nsubj = y.shape[0]
-#     nfeature = x.shape[1]
-#     q = np.zeros(nfeature)
-#     contrast = np.array([1,0])
-#     for i in range(nfeature):
-#         q[i] = sm.OLS(x[:,i], np.vstack((y,np.ones(nsubj))).T).fit().f_test(contrast).pvalue 
-#     assert_array_almost_equal(pv,q,1.e-6)
-
-    
 def test_F_test_classif():
     """
     Test whether the F test yields meaningful results
     on a simple simulated classification problem
     """
-    x, y = make_dataset()
-    F, pv = fs.f_classif(x, y)
+    X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    F, pv = us.f_classif(X, Y)
     assert(F>0).all()
     assert(pv>0).all()
     assert(pv<1).all()
@@ -61,8 +29,9 @@ def test_F_test_reg():
     Test whether the F test yields meaningful results
     on a simple simulated regression problem
     """
-    x, y = make_dataset(classif=False)
-    F, pv = fs.f_regression(x, y)
+    X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    F, pv = us.f_regression(X, Y)
     assert(F>0).all()
     assert(pv>0).all()
     assert(pv<1).all()
@@ -74,8 +43,9 @@ def test_F_test_multi_class():
     Test whether the F test yields meaningful results
     on a simple simulated classification problem
     """
-    x, y = make_dataset(param=[1,1,1])
-    F, pv = fs.f_classif(x, y)
+    X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
+                                           seed=None,param=[1,1,1])
+    F, pv = us.f_classif(X, Y)
     assert(F>0).all()
     assert(pv>0).all()
     assert(pv<1).all()
@@ -88,27 +58,11 @@ def test_univ_fs_percentile_classif():
     gets the correct items in a simple classification problem
     with the percentile heuristic
     """
-    x, y = make_dataset()
-    univ_selection = fs.UnivSelection(score_func=fs.f_classif,
-                                      select_args=(25,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
-    gtruth = np.zeros(20)
-    gtruth[:5]=1
-    assert_array_equal(result, gtruth)
-
-def test_univ_fs_percentile_classif2():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple classification problem
-    with the percentile heuristic
-    """
-    x, y = make_dataset()
-    univ_selection = fs.UnivSelection(score_func=fs.f_classif,
-                                      select_func=fs.select_percentile,
-                                      select_args=(25,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectPercentile(us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X, percentile=25)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(result, gtruth)
@@ -119,12 +73,11 @@ def test_univ_fs_kbest_classif():
     gets the correct items in a simple classification problem
     with the k best heuristic
     """
-    x, y = make_dataset()
-    univ_selection = fs.UnivSelection(score_func=fs.f_classif,
-                                      select_func=fs.select_k_best,
-                                      select_args=(5,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectKBest(us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X, k=5)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(result, gtruth)
@@ -135,12 +88,11 @@ def test_univ_fs_fpr_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    x, y = make_dataset()
-    univ_selection = fs.UnivSelection(score_func=fs.f_classif,
-                                      select_func=fs.select_fpr,
-                                      select_args=(0.0001,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectFpr(us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.0001)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(result, gtruth)
@@ -151,12 +103,11 @@ def test_univ_fs_fdr_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    x, y = make_dataset(seed=3)
-    univ_selection = fs.UnivSelection(score_func=fs.f_classif,
-                                      select_func=fs.select_fdr,
-                                      select_args=(0.01,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
+                                           seed=3)
+    univariate_filter = us.SelectFdr(us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(result, gtruth)
@@ -167,15 +118,19 @@ def test_univ_fs_fwe_classif():
     gets the correct items in a simple classification problem
     with the fpr heuristic
     """
-    x, y = make_dataset()
-    univ_selection = fs.UnivSelection(score_func=fs.f_classif,
-                                      select_func=fs.select_fwe,
-                                      select_args=(0.01,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectFwe(us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert(np.sum(np.abs(result-gtruth))<2)
+
+
+
+
+
 
 
 def test_univ_fs_percentile_regression():
@@ -184,27 +139,11 @@ def test_univ_fs_percentile_regression():
     gets the correct items in a simple regression problem
     with the percentile heuristic
     """
-    x, y = make_dataset(classif=False)
-    univ_selection = fs.UnivSelection(score_func=fs.f_regression,
-                                      select_args=(25,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
-    gtruth = np.zeros(20)
-    gtruth[:5]=1
-    assert_array_equal(result, gtruth)
-
-def test_univ_fs_percentile_regression2():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple regression problem
-    with the percentile heuristic
-    """
-    x, y = make_dataset(classif=False)
-    univ_selection = fs.UnivSelection(score_func=fs.f_regression,
-                                      select_func=fs.select_percentile,
-                                      select_args=(25,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectPercentile(us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X, percentile=25)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(result, gtruth)
@@ -214,12 +153,11 @@ def test_univ_fs_full_percentile_regression():
     Test whether the relative univariate feature selection
     selects all features when '100%' is asked.
     """
-    x, y = make_dataset(classif=False)
-    univ_selection = fs.UnivSelection(score_func=fs.f_regression,
-                                      select_func=fs.select_percentile,
-                                      select_args=(100,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectPercentile(us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X, percentile=100)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.ones(20)
     assert_array_equal(result, gtruth)
 
@@ -229,12 +167,11 @@ def test_univ_fs_kbest_regression():
     gets the correct items in a simple regression problem
     with the k best heuristic
     """
-    x, y = make_dataset(classif=False)
-    univ_selection = fs.UnivSelection(score_func=fs.f_regression,
-                                      select_func=fs.select_k_best,
-                                      select_args=(5,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectKBest(us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X, k=5)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(result, gtruth)
@@ -245,12 +182,11 @@ def test_univ_fs_fpr_regression():
     gets the correct items in a simple regression problem
     with the fpr heuristic
     """
-    x, y = make_dataset(classif=False)
-    univ_selection = fs.UnivSelection(score_func=fs.f_regression,
-                                      select_func=fs.select_fpr,
-                                      select_args=(0.01,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectFpr(us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert(result[:5]==1).all()
@@ -262,12 +198,11 @@ def test_univ_fs_fdr_regression():
     gets the correct items in a simple regression problem
     with the fpr heuristic
     """
-    x, y = make_dataset(seed=2, classif=False)
-    univ_selection = fs.UnivSelection(score_func=fs.f_regression,
-                                      select_func=fs.select_fdr,
-                                      select_args=(0.01,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
+                                           seed=2)
+    univariate_filter = us.SelectFdr(us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(result, gtruth)
@@ -278,14 +213,12 @@ def test_univ_fs_fwe_regression():
     gets the correct items in a simple regression problem
     with the fpr heuristic
     """
-    x, y = make_dataset(classif=False)
-    univ_selection = fs.UnivSelection(score_func=fs.f_regression,
-                                      select_func=fs.select_fwe,
-                                      select_args=(0.01,))
-    univ_selection.fit(x, y)
-    result = univ_selection.support_.astype(int)
+    X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
+                                           seed=None)
+    univariate_filter = us.SelectFwe(us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
+    result = univariate_filter.support_.astype(int)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-
     assert(result[:5]==1).all()
     assert(np.sum(result[5:]==1)<2)

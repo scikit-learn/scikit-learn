@@ -1,6 +1,115 @@
 import numpy as np
 import numpy.random as nr
 
+
+"""
+Samples generator
+
+"""
+
+# Author: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel
+# License: BSD 3 clause
+
+
+
+
+######################################################################
+# Generate Dataset for test
+######################################################################
+
+def test_dataset_classif(n_samples=100, n_features=100, param=[1,1],
+                             k=0, seed=None):
+    """
+    Generate an snp matrix
+
+    Parameters
+    ----------
+    n_samples : 100, int,
+        the number of subjects
+    n_features : 100, int,
+        the number of features
+    param : [1,1], list,
+        parameter of a dirichlet density
+        that is used to generate multinomial densities
+        from which the n_featuress will be samples
+    k : 0, int,
+        number of informative features
+    seed : None, int or np.random.RandomState
+        if seed is an instance of np.random.RandomState,
+        it is used to initialize the random generator
+
+    Returns
+    -------
+    x : array of shape(n_samples, n_features),
+        the design matrix
+    y : array of shape (n_samples),
+        the subject labels
+
+    """
+    assert k<=n_features, ValueError('cannot have %d informative features and'
+                                   ' %d features' % (k, n_features))
+    if isinstance(seed, np.random.RandomState):
+        random = seed
+    elif seed is not None:
+        random = np.random.RandomState(seed)
+    else:
+        random = np.random
+
+    x = random.randn(n_samples, n_features)
+    y = np.zeros(n_samples)
+    param = np.ravel(np.array(param)).astype(np.float)
+    for n in range(n_samples):
+        y[n] = np.nonzero(random.multinomial(1, param/param.sum()))[0]
+    x[:,:k] += 3*y[:,np.newaxis]
+    return x, y
+
+def test_dataset_reg(n_samples=100, n_features=100, k=0, seed=None):
+    """
+    Generate an snp matrix
+
+    Parameters
+    ----------
+    n_samples : 100, int,
+        the number of subjects
+    n_features : 100, int,
+        the number of features
+    k : 0, int,
+        number of informative features
+    seed : None, int or np.random.RandomState
+        if seed is an instance of np.random.RandomState,
+        it is used to initialize the random generator
+
+    Returns
+    -------
+    x : array of shape(n_samples, n_features),
+        the design matrix
+    y : array of shape (n_samples),
+        the subject data
+
+    """
+    assert k<n_features, ValueError('cannot have %d informative fetaures and'
+                                   ' %d features' % (k, n_features))
+    if isinstance(seed, np.random.RandomState):
+        random = seed
+    elif seed is not None:
+        random = np.random.RandomState(seed)
+    else:
+        random = np.random
+
+    x = random.randn(n_samples, n_features)
+    y = random.randn(n_samples)
+    x[:,:k] += y[:, np.newaxis]
+    return x, y
+
+
+
+
+
+######################################################################
+# Generate Dataset for regression
+######################################################################
+
+
 def sparse_uncorrelated(nb_samples=100, nb_features=10):
     """
     Function creating simulated data with sparse uncorrelated design.
