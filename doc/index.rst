@@ -91,7 +91,18 @@ Scikits.learn Documentation
 Download
 ========
 
-Click `here <https://sourceforge.net/projects/scikit-learn/files/>`_ to download latest release. Previous releases can also be found in that directory.
+Click `here <https://sourceforge.net/projects/scikit-learn/files/>`_
+to download latest release. Previous releases can also be found in
+that directory.
+
+Mailing List
+============
+
+Visit `this page
+<https://lists.sourceforge.net/lists/listinfo/scikit-learn-general>`_
+to subscribe to the mailing list and keep informed about scikit-learn
+development
+
 
 User guide
 ======================

@@ -22,7 +22,7 @@ def configuration(parent_package='',top_path=None):
     libsvm_library_dirs = []
     libsvm_sources = [join('src', '_libsvm.c')]
 
-    if site_cfg.has_section('_libsvm'):
+    if site_cfg.has_section('libsvm'):
         libsvm_includes.append(site_cfg.get('libsvm', 'include_dirs'))
         libsvm_libraries.append(site_cfg.get('libsvm', 'libraries'))
         libsvm_library_dirs.append(site_cfg.get('libsvm', 'library_dirs'))
@@ -45,31 +45,34 @@ def configuration(parent_package='',top_path=None):
                     join('src', 'blas', 'dscal.c')]
 
     liblinear_sources = [join('src', 'linear.cpp'),
-                         join('src', 'liblinear.c'),
+                         join('src', '_liblinear.c'),
                          join('src', 'tron.cpp')]
 
     # we try to link agains system-wide blas
     blas_info = get_info('blas_opt', 0)
-    blas_lib = blas_info.pop('libraries', ['blas'])
+
     extra_compile_args = blas_info.pop('extra_compile_args', [])
 
     if not blas_info:
         config.add_library('blas', blas_sources)
         warnings.warn(BlasNotFoundError.__doc__)
 
-    config.add_extension('liblinear',
+    config.add_extension('_liblinear',
                          sources=liblinear_sources,
-                         libraries = blas_lib,
+                         libraries = blas_info.pop('libraries', ['blas']),
                          include_dirs=['src',
-                                       numpy.get_include()],
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
                          depends=[join('src', 'linear.h'),
                                   join('src', 'tron.h'),
                                   join('src', 'blas', 'blas.h'),
                                   join('src', 'blas', 'blasp.h')],
-                         extra_compile_args=extra_compile_args)
+                         **blas_info)
+
     ## end liblinear module
 
     # minilear needs cblas, fortran-compiled BLAS will not be sufficient
+    blas_info = get_info('blas_opt', 0)
     if not blas_info or (
         ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
         config.add_library('cblas',
@@ -80,17 +83,20 @@ def configuration(parent_package='',top_path=None):
 
     minilearn_sources = [
         join('src', 'minilearn', 'lars.c'),
-        join('src', 'minilearn', 'minilearn.c')]
+        join('src', 'minilearn', '_minilearn.c')]
 
-    extra_compile_args += ['-std=c99', '-g']
 
-    config.add_extension('minilearn',
+    config.add_extension('_minilearn',
                          sources=minilearn_sources,
-                         libraries = ['blas', 'cblas'],
+                         libraries = blas_info.pop('libraries', 
+                                                    ['cblas']),
                          include_dirs=[join('src', 'minilearn'),
                                        join('src', 'cblas'),
-                                       numpy.get_include()],
-                         extra_compile_args=extra_compile_args,
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=['-std=c99'] + \
+                                             blas_info.pop('extra_compile_args', []),
+                         **blas_info
                          )
 
     config.add_extension('ball_tree',

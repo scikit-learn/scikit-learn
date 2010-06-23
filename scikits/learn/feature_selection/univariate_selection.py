@@ -111,18 +111,11 @@ class UnivariateFilter(object):
         #self._rank = np.argsort(self._pvalues)
         return self
 
-    def get_selected_features(self):
+    def transform(self,X,**kwargs):
         """
-        Returns the indices of the selected features
+        Transform a new matrix using the selected features
         """
-        return self.support_
-
-   #def transform(self):
-       #"""
-        #Returns the indices of the selected features
-       #"""
-       #raise("Error  : Not implemented")
-
+        return X[:,self.support(**kwargs)]
 
 
 ######################################################################
@@ -133,35 +126,28 @@ class SelectPercentile(UnivariateFilter):
     """
     Filter : Select the best percentile of the p_values
     """
-    def transform(self,X,percentile):
-        """
-        Transform the data.
-        """
+    def support(self,percentile):
         assert percentile<=100, ValueError('percentile should be \
                             between 0 and 100 (%f given)' %(percentile))
         alpha = stats.scoreatpercentile(self._pvalues, percentile)
-        self.support_ = (self._pvalues <= alpha)
-        return X[:,self.support_]
+        return (self._pvalues <= alpha)
 
 class SelectKBest(UnivariateFilter):
     """
     Filter : Select the k lowest p-values
     """
-    def transform(self,X,k):
+    def support(self,k):
         assert k<=len(self._pvalues), ValueError('cannot select %d features'
                                     ' among %d ' % (k, len(self._pvalues)))
         alpha = np.sort(self._pvalues)[k-1]
-        self.support_ = (self._pvalues <= alpha)
-        return X[:,self.support_]
-
+        return (self._pvalues <= alpha)
 
 class SelectFpr(UnivariateFilter):
     """
     Filter : Select the pvalues below alpha
     """
-    def transform(self,X,alpha):
-        self.support_ = (self._pvalues < alpha)
-        return X[:,self.support_]
+    def support(self,alpha):
+        return (self._pvalues < alpha)
 
 
 class SelectFdr(UnivariateFilter):
@@ -169,20 +155,18 @@ class SelectFdr(UnivariateFilter):
     Filter : Select the p-values corresponding to an estimated false
     discovery rate of alpha. This uses the Benjamini-Hochberg procedure
     """
-    def transform(self,X,alpha):
+    def support(self,alpha):
         sv = np.sort(self._pvalues)
         threshold = sv[sv < alpha*np.arange(len(self._pvalues))].max()
-        self.support_ = (self._pvalues < threshold)
-        return X[:,self.support_]
+        return (self._pvalues < threshold)
 
 
 class SelectFwe(UnivariateFilter):
     """
     Filter : Select the p-values corresponding to a corrected p-value of alpha
     """
-    def transform(self,X,alpha):
-        self.support_ = (self._pvalues < alpha/len(self._pvalues))
-        return X[:,self.support_]
+    def support(self,alpha):
+        return (self._pvalues < alpha/len(self._pvalues))
 
 
 
@@ -193,11 +177,14 @@ if __name__ == "__main__":
     X,y = sg.sparse_uncorrelated(50,100)
     univariate_filter = SelectKBest(f_regression)
     X_r = univariate_filter.fit(X, y).transform(X, k=5)
+    sel = univariate_filter.support(k=5)
     clf = SVR(kernel='linear', C=1.)
     y_ = clf.fit(X_r, y).predict(X_r)
-    print univariate_filter.support_.astype(int)
+    print sel
 
     ### now change k
     X_r = univariate_filter.transform(X, k=2)
     y_ = clf.fit(X_r, y).predict(X)
-    print univariate_filter.support_.astype(int)
+    print sel
+
+

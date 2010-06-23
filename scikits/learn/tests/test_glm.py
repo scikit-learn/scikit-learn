@@ -8,19 +8,25 @@ def test_toy():
     """Very simple test on a small dataset"""
     X = [[1, 0, -1.],
          [0, 0, 0],
-         [0, 1, 1.]]
+         [0, 1, .9]]
     Y = [1, 0, -1]
 
-    clf = glm.LeastAngleRegression().fit(X, Y)
-    assert_array_almost_equal(clf.coef_, [0, 0, -1.4142], decimal=4)
+    clf = glm.LeastAngleRegression().fit(X, Y, max_features=1)
+    assert_array_almost_equal(clf.coef_, [0, 0, -1.2624], decimal=4)
+    assert_array_almost_equal(clf.alphas_, [1.4135, 0.1510], decimal=4)
+    assert_array_almost_equal(clf.alphas_.shape, clf.coef_path_.shape[1])
+    assert np.linalg.norm(clf.predict(X) - Y) < 0.3
+    
+
+    clf = glm.LeastAngleRegression().fit(X, Y) # implicitly max_features=2
+    assert_array_almost_equal(clf.coef_, [0, -.0816, -1.34412], decimal=4)
+    assert_array_almost_equal(clf.alphas_, \
+                 [ 1.41356,   .1510,   3.919e-16], decimal=4)
     assert_array_almost_equal(clf.alphas_.shape, clf.coef_path_.shape[1])
     assert_array_almost_equal(clf.predict(X), np.array(Y))
 
-    # check that Lasso with coordinate descent finds the same coefficients
-    clf2 = glm.Lasso().fit(X, Y)
-    assert_array_almost_equal(clf.coef_, [0, 0, -1.4142], decimal=4)
-    assert_array_almost_equal(clf.predict(X), np.array(Y))
-
+    # TODO: check that Lasso with coordinate descent finds the same
+    # coefficients
 
 def test_feature_selection():
     n_samples, n_features = 442, 100
@@ -43,7 +49,7 @@ def test_feature_selection():
 
     # fit the model assuming that will allready know that only 10 out of
     # n_features are contributing to Y
-    clf = glm.LeastAngleRegression().fit(X, Y, n_features=10)
+    clf = glm.LeastAngleRegression().fit(X, Y, max_features=10)
 
     # ensure that only the first 10 coefs are non zeros and the remaining set to
     # null, as in the ground thrutg model
@@ -52,7 +58,7 @@ def test_feature_selection():
 
     # train again, but this time without knowing in advance how many features
     # are useful:
-    clf = glm.LeastAngleRegression().fit(X, Y, n_features=None)
+    clf = glm.LeastAngleRegression().fit(X, Y, max_features=None)
     assert_equal((clf.coef_[:10] == 0.0).sum(), 0)
     assert_equal((clf.coef_[10:] != 0.0).sum(), 89)
 
@@ -66,6 +72,26 @@ def test_feature_selection():
     assert_equal((sparse_coef[:10] == 0.0).sum(), 0)
     assert_equal((sparse_coef[10:] != 0.0).sum(), 0)
 
+
+def test_predict():
+    """
+    Just see if predicted values are close from known response.
+    """
+    n, m = 10, 20
+    np.random.seed(0)
+    X = np.random.randn(n, m)
+    Y = np.random.randn(n)
+    Y = Y - Y.mean() # center response
+
+    Y_ = glm.LeastAngleRegression().fit(X, Y, intercept=False).predict(X)
+    print np.linalg.norm(Y - Y_)
+    assert np.linalg.norm(Y-Y_) < 1e-10
+
+
+    # the same but with an intercept
+    Y = Y + 10.
+    Y_ = glm.LeastAngleRegression().fit(X, Y).predict(X)
+    assert np.linalg.norm(Y-Y_) < 1e-10
 
 
 # XXX: there seems to be somthing borked in the shape reconstruction of the

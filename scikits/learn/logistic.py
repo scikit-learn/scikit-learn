@@ -1,5 +1,5 @@
 import numpy as np
-from . import liblinear
+from . import _liblinear
 
 
 class LogisticRegression(object):
@@ -70,7 +70,7 @@ class LogisticRegression(object):
     def fit(self, X, Y):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.raw_coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
+        self.raw_coef_, self.label_, self.bias_ = _liblinear.train_wrap(X,
                                           Y, self.solver_type, self.eps, self.bias_,
                                           self.C,
                                           self._weight_label,
@@ -79,7 +79,7 @@ class LogisticRegression(object):
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_wrap(T, self.raw_coef_, self.solver_type,
+        return _liblinear.predict_wrap(T, self.raw_coef_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
@@ -87,7 +87,7 @@ class LogisticRegression(object):
 
     def predict_proba(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_prob_wrap(T, self.raw_coef_, self.solver_type,
+        return _liblinear.predict_prob_wrap(T, self.raw_coef_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,

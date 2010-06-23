@@ -5,12 +5,14 @@ Development
 This project is a community effort, and everyone is welcomed to
 contribute.
 
-Developers web site
-===================
-This is the central web page for developers
-http://sourceforge.net/apps/trac/scikit-learn/wiki
+Bug Tracker
+===========
 
+In case you experience difficulties using the package, do not hesitate
+to submit a ticket to the
+`Bug Tracker <http://sourceforge.net/apps/trac/scikit-learn/report/1>`_.
 
+You are also welcomed to post there feature requests and patches.
 
 Code
 ====
@@ -75,6 +77,12 @@ issue is low, but still you are helping the project and letting more
 experienced developers concentrate on other issues.
 
 
+Roadmap
+-------
+
+`Here <http://sourceforge.net/apps/trac/scikit-learn/roadmap`_ you
+will find a detailed roadmap, with a description on what's planned to
+be implemented in the following releases.
 
 .. _packaging:
 
@@ -84,6 +92,11 @@ Packaging
 You can also help making binary distributions for windows, OsX or packages for some
 distribution.
 
+Developers web site
+===================
+More information can be found at the developer's web site:
+http://sourceforge.net/apps/trac/scikit-learn/wiki , which contains a
+wiki, an issue tracker, and a Roadmap
 
 Documentation
 =============

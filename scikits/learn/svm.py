@@ -1,6 +1,6 @@
 import numpy as np
 import _libsvm
-import liblinear
+import _liblinear
 
 
 class BaseLibsvm(object):
@@ -452,7 +452,7 @@ class LinearSVC(object):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
         self.raw_coef, self.label_, self.bias_ = \
-                       liblinear.train_wrap(X, Y,
+                       _liblinear.train_wrap(X, Y,
                        self._solver_type_dict[self.solver_type],
                        self.eps, 1.0, self.C, self._weight_label,
                        self._weight)
@@ -460,7 +460,7 @@ class LinearSVC(object):
 
     def predict(self, T):
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        return liblinear.predict_wrap(T, self.raw_coef, self._solver_type_dict[self.solver_type],
+        return _liblinear.predict_wrap(T, self.raw_coef, self._solver_type_dict[self.solver_type],
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
