@@ -45,7 +45,7 @@ def configuration(parent_package='',top_path=None):
                     join('src', 'blas', 'dscal.c')]
 
     liblinear_sources = [join('src', 'linear.cpp'),
-                         join('src', 'liblinear.c'),
+                         join('src', '_liblinear.c'),
                          join('src', 'tron.cpp')]
 
     # we try to link agains system-wide blas
@@ -57,7 +57,7 @@ def configuration(parent_package='',top_path=None):
         config.add_library('blas', blas_sources)
         warnings.warn(BlasNotFoundError.__doc__)
 
-    config.add_extension('liblinear',
+    config.add_extension('_liblinear',
                          sources=liblinear_sources,
                          libraries = blas_lib,
                          include_dirs=['src',
