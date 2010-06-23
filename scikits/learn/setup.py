@@ -80,11 +80,11 @@ def configuration(parent_package='',top_path=None):
 
     minilearn_sources = [
         join('src', 'minilearn', 'lars.c'),
-        join('src', 'minilearn', 'minilearn.c')]
+        join('src', 'minilearn', '_minilearn.c')]
 
     extra_compile_args += ['-std=c99', '-g']
 
-    config.add_extension('minilearn',
+    config.add_extension('_minilearn',
                          sources=minilearn_sources,
                          libraries = ['blas', 'cblas'],
                          include_dirs=[join('src', 'minilearn'),
