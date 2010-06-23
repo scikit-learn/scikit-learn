@@ -62,10 +62,10 @@ def test_univ_fs_percentile_classif():
                                            seed=None)
     univariate_filter = us.SelectPercentile(us.f_classif)
     X_r = univariate_filter.fit(X, Y).transform(X, percentile=25)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(percentile=25)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert_array_equal(result, gtruth)
+    assert_array_equal(support, gtruth)
 
 def test_univ_fs_kbest_classif():
     """
@@ -77,10 +77,10 @@ def test_univ_fs_kbest_classif():
                                            seed=None)
     univariate_filter = us.SelectKBest(us.f_classif)
     X_r = univariate_filter.fit(X, Y).transform(X, k=5)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(k=5)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert_array_equal(result, gtruth)
+    assert_array_equal(support, gtruth)
 
 def test_univ_fs_fpr_classif():
     """
@@ -92,10 +92,10 @@ def test_univ_fs_fpr_classif():
                                            seed=None)
     univariate_filter = us.SelectFpr(us.f_classif)
     X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.0001)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(alpha=0.0001)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert_array_equal(result, gtruth)
+    assert_array_equal(support, gtruth)
 
 def test_univ_fs_fdr_classif():
     """
@@ -107,10 +107,10 @@ def test_univ_fs_fdr_classif():
                                            seed=3)
     univariate_filter = us.SelectFdr(us.f_classif)
     X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(alpha=0.01)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert_array_equal(result, gtruth)
+    assert_array_equal(support, gtruth)
 
 def test_univ_fs_fwe_classif():
     """
@@ -122,10 +122,10 @@ def test_univ_fs_fwe_classif():
                                            seed=None)
     univariate_filter = us.SelectFwe(us.f_classif)
     X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(alpha=0.01)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert(np.sum(np.abs(result-gtruth))<2)
+    assert(np.sum(np.abs(support-gtruth))<2)
 
 
 
@@ -143,10 +143,10 @@ def test_univ_fs_percentile_regression():
                                            seed=None)
     univariate_filter = us.SelectPercentile(us.f_regression)
     X_r = univariate_filter.fit(X, Y).transform(X, percentile=25)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(percentile=25)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert_array_equal(result, gtruth)
+    assert_array_equal(support, gtruth)
 
 def test_univ_fs_full_percentile_regression():
     """
@@ -157,9 +157,9 @@ def test_univ_fs_full_percentile_regression():
                                            seed=None)
     univariate_filter = us.SelectPercentile(us.f_regression)
     X_r = univariate_filter.fit(X, Y).transform(X, percentile=100)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(percentile=100)
     gtruth = np.ones(20)
-    assert_array_equal(result, gtruth)
+    assert_array_equal(support, gtruth)
 
 def test_univ_fs_kbest_regression():
     """
@@ -171,10 +171,10 @@ def test_univ_fs_kbest_regression():
                                            seed=None)
     univariate_filter = us.SelectKBest(us.f_regression)
     X_r = univariate_filter.fit(X, Y).transform(X, k=5)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(k=5)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert_array_equal(result, gtruth)
+    assert_array_equal(support, gtruth)
 
 def test_univ_fs_fpr_regression():
     """
@@ -186,11 +186,11 @@ def test_univ_fs_fpr_regression():
                                            seed=None)
     univariate_filter = us.SelectFpr(us.f_regression)
     X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(alpha=0.01)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert(result[:5]==1).all()
-    assert(np.sum(result[5:]==1)<3)
+    assert(support[:5]==1).all()
+    assert(np.sum(support[5:]==1)<3)
 
 def test_univ_fs_fdr_regression():
     """
@@ -202,10 +202,10 @@ def test_univ_fs_fdr_regression():
                                            seed=2)
     univariate_filter = us.SelectFdr(us.f_regression)
     X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(alpha=0.01)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert_array_equal(result, gtruth)
+    assert_array_equal(support, gtruth)
 
 def test_univ_fs_fwe_regression():
     """
@@ -217,8 +217,8 @@ def test_univ_fs_fwe_regression():
                                            seed=None)
     univariate_filter = us.SelectFwe(us.f_regression)
     X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    result = univariate_filter.support_.astype(int)
+    support = univariate_filter.support(alpha=0.01)
     gtruth = np.zeros(20)
     gtruth[:5]=1
-    assert(result[:5]==1).all()
-    assert(np.sum(result[5:]==1)<2)
+    assert(support[:5]==1).all()
+    assert(np.sum(support[5:]==1)<2)
