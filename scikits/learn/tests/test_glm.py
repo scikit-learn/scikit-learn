@@ -112,7 +112,7 @@ def test_sparse_coding():
 
     def sparse_encode(vector):
         return glm.LeastAngleRegression().fit(
-            D, vector, n_features=5, normalize=False, intercept=False).coef_
+            D, vector, max_features=5, normalize=False, intercept=False).coef_
 
     def sparse_decode(vector):
         return np.dot(D, vector)
