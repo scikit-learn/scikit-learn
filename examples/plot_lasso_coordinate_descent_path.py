@@ -41,14 +41,14 @@ eps = 1e-2 # the smaller it is the longer is the path
 
 print "Computing regularization path using the lasso..."
 start = datetime.now()
-models = lasso_path(X, y, eps=eps, intercept=False)
+models = lasso_path(X, y, eps=eps)
 print "This took ", datetime.now() - start
 alphas_lasso = np.array([model.alpha for model in models])
 coefs_lasso = np.array([model.coef_ for model in models])
 
 print "Computing regularization path using the elastic net..."
 start = datetime.now()
-models = enet_path(X, y, eps=eps, intercept=False, rho=0.6)
+models = enet_path(X, y, eps=eps, rho=0.6)
 print "This took ", datetime.now() - start
 alphas_enet = np.array([model.alpha for model in models])
 coefs_enet = np.array([model.coef_ for model in models])
