@@ -590,8 +590,8 @@ class ElasticNet(Lasso):
             X = X - self._xmean
             Y = Y - self._ymean
         else:
-            self._xmean = 0
-            self._ymean = 0
+            self._xmean = np.zeros(X.shape[1])
+            self._ymean = np.zeros(X.shape[0])
 
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
