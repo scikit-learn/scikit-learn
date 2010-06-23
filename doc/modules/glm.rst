@@ -36,7 +36,7 @@ function in order to control over-fitting.
 
 
 Ridge Regression
-----------------
+================
 
 Coefficient estimates for multiple linear regression models rely on
 the independence of the model terms. When terms are correlated and the
@@ -56,20 +56,37 @@ coefficients using:
 
 .. math::    \hat{\beta} = (X^T X + \alpha I)^{-1} X^T y
 
-.. autoclass:: scikits.learn.glm.ridge.Ridge
+Reference
+---------
+.. autoclass:: scikits.learn.glm.Ridge
    :members:
 
 
 Lasso
------
+=====
 
 The Lasso is a linear model trained with L1 prior as regularizer. The
 objective function to minimize is:
 
 .. math::  0.5 * ||y - X w||_2 ^ 2 + \alpha * ||w||_1
 
-The current implementation uses coordinate descent as the algorithm to
-fit the coeffcients. The class reference is:
+The lasso estimate solves thus solves the minization of the
+least-squares penalty with :math:`\alpha * ||w||_1` added, where
+:math:`\alpha` is a constant and :math:`||w||_1` is the L1-norm of the
+parameter vector.
+
+
+This formulation is useful in some context due to its tendency to
+prefer solutions with fewer parameter values, effectively reducing
+the number of variables upon which the given solution is
+dependent. For this reason, the LASSO and its variants are
+fundamental to the field of compressed sensing.
+
+This implementation uses coordinate descent as the algorithm to fit
+the coeffcients. 
+
+Reference
+---------
 
 .. autoclass:: scikits.learn.glm.Lasso
    :members:
@@ -83,17 +100,19 @@ of possible values.
 
 
 Elastic Net
------------
+===========
 Elastic Net is a linear model trained with L1 and L2 prior as
 regularizer.
 
 
 The objective function to minize is in this case
 
-..math::        0.5 * ||y - X w||_2 ^ 2 + alpha * rho * ||w||_1 + alpha * (1-rho) * 0.5 * ||w||_2 ^ 2
+.. math::        0.5 * ||y - X w||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
 
+Reference
+---------
 
-.. autoclass:: scikits.learn.glm.coordinate_descent.ElasticNet
+.. autoclass:: scikits.learn.glm.ElasticNet
    :members:
 
 
@@ -101,4 +120,30 @@ Examples
 --------
 
 :ref:`example_plot_lasso_coordinate_descent_path.py`
+
+
+
+Least Angle Regression
+======================
+
+Least Angle Regression is a regression model similar to the Lasso. It
+is implemented using the LARS algorithm.
+
+Contrary to the algorithms based on coordinate descent, the LARS
+
+.. warning::
+
+    This class is experimental and might contain bugs.
+
+.. autoclass:: scikits.learn.glm.LeastAngleRegression
+    :members:
+
+Examples
+--------
+:ref:`example_glm_plot_lar.py`
+
+References
+----------
+Original Algorithm is detailed in the 
+`paper <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_ by Hastie et al.
 

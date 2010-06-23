@@ -16,10 +16,10 @@ import numpy as np
 import scipy.linalg # TODO: use numpy.linalg instead
 import scipy.sparse as sp # needed by LeastAngleRegression
 
-from .cd_fast import lasso_coordinate_descent, enet_coordinate_descent
+from . import cd_fast
 from .utils.extmath import fast_logdet, density
 from .cross_val import KFold
-from .minilearn import lars_fit_wrap
+from ._minilearn import lars_fit_wrap
 
 
 ###
@@ -35,7 +35,9 @@ class LinearModel(object):
     """Base class for Linear Models"""
 
     def __init__(self, coef=None):
-        # weights of the model (can be lazily initialized by the ``fit`` method)
+        # weights of the model (can be lazily initialized by the
+        # ``fit`` method) 
+       # TODO: I believe this is not really much used
         self.coef_ = coef
 
     def predict(self, X):
@@ -54,9 +56,10 @@ class LinearModel(object):
         X = np.asanyarray(X)
         return np.dot(X, self.coef_) + self.intercept_
 
-    def compute_rsquared(self, X, Y):
+    def explained_variance(self, X, Y):
         """Compute explained variance a.k.a. r^2"""
-        self.rsquared_ = 1 - np.linalg.norm(Y - np.dot(X, self.coef_))**2 \
+        ## TODO: this should have a tests.
+        return 1 - np.linalg.norm(Y - self.predict(X))**2 \
                          / np.linalg.norm(Y)**2
 
 
@@ -64,19 +67,19 @@ class LinearRegression(LinearModel):
     """
     Ordinary least squares Linear Regression.
 
-    Parameters
-    ----------
-    This class takes no parameters
-
     Attributes
     ----------
-    coef_ : array
+    `coef_` : array
         Estimated coefficients for the linear regression problem.
 
-    intercept_ : array
+    `intercept_` : array
         Independent term in the linear model.
 
-    This is just plain linear regression wrapped is a Predictor object.
+    Notes
+    -----
+    From the implementation point of view, this is just plain Ordinary
+    Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
+
     """
 
     def fit(self,X,Y, intercept=True):
@@ -121,13 +124,12 @@ class Ridge(LinearModel):
 
     Parameters
     ----------
-    alpha : ridge parameter. Small positive values of alpha improve
-    the coditioning of the problem and reduce the variance of the
-    estimates.
+    alpha : float
+        Small positive values of alpha improve the coditioning of the
+        problem and reduce the variance of the estimates.
     
     Examples
     --------
-    # With more samples than features
     >>> import numpy as np
     >>> nsamples, nfeatures = 10, 5
     >>> np.random.seed(0)
@@ -136,10 +138,6 @@ class Ridge(LinearModel):
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, Y) #doctest: +ELLIPSIS
     <scikits.learn.glm.Ridge object at 0x...>
-
-    See also
-    --------
-    http://scikit-learn.sourceforge.net/doc/modules/linreg.html
     """
 
     def __init__(self, alpha=1.0):
@@ -451,19 +449,9 @@ class Lasso(LinearModel):
     Linear Model trained with L1 prior as regularizer (a.k.a. the
     lasso).
 
-    The lasso estimate solves the minization of the least-squares
-    penalty with alpha * ||beta||_1 added, where alpha is a constant and
-    ||beta||_1 is the L1-norm of the parameter vector.
-
-    This formulation is useful in some context due to its tendency to
-    prefer solutions with fewer parameter values, effectively reducing
-    the number of variables upon which the given solution is
-    dependent. For this reason, the LASSO and its variants are
-    fundamental to the field of compressed sensing.
-
     Parameters
     ----------
-    alpha : double, optional
+    alpha : float, optional
         Constant that multiplies the L1 term. Defaults to 1.0
 
     Attributes
@@ -487,7 +475,7 @@ class Lasso(LinearModel):
 
     Notes
     -----
-    The algorithm used to fit the model is coordinate descent.x
+    The algorithm used to fit the model is coordinate descent.
     """
 
     def __init__(self, alpha=1.0, coef=None, tol=1e-4):
@@ -503,12 +491,19 @@ class Lasso(LinearModel):
         ----------
         X : numpy array of shape [nsamples,nfeatures]
             Training data
+
         Y : numpy array of shape [nsamples]
             Target values
+
         intercept : boolean
             whether to calculate the intercept for this model. If set
             to false, no intercept will be used in calculations
             (e.g. data is expected to be already centered).
+
+        maxit : int
+
+            maximum number of coordinate descent iterations used to
+            fit the model. In case 
 
         Returns
         -------
@@ -524,8 +519,8 @@ class Lasso(LinearModel):
             X = X - self._xmean
             Y = Y - self._ymean
         else:
-            self._xmean = 0.
-            self._ymean = 0.
+            self._xmean = np.zeros(X.shape[1])
+            self._ymean = np.zeros(X.shape[0])
 
         nsamples = X.shape[0]
         alpha = self.alpha * nsamples
@@ -534,25 +529,36 @@ class Lasso(LinearModel):
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                    lasso_coordinate_descent(self.coef_, alpha, X, Y, maxit, \
-                    10, self.tol)
+                    cd_fast.lasso_coordinate_descent(self.coef_,
+                    alpha, X, Y, maxit, 10, self.tol)
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
-
-        # TODO: why not define a method rsquared that computes this ?
-        self.compute_rsquared(X, Y)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
 
+        self._explained_variance = self.explained_variance(X, Y)
+
         # return self for chaining fit and predict calls
         return self
 
-    def __repr__(self):
-        return "Lasso Coordinate Descent"
+    def __str__(self):
+        if self.coef_ is not None:
+            n_non_zeros = (np.abs(self.coef_) != 0).sum()
+            return ("%s with %d non-zero coefficients (%.2f%%)\n" + \
+                    " * Regularisation parameter = %.7f\n" +
+                    " * Explained Variance = %.7f\n") % \
+                    (self.__class__.__name__, n_non_zeros,
+                     n_non_zeros / float(len(self.coef_)) * 100,
+                     self.alpha, self._explained_variance)
+        else:
+            return ("%s\n" + \
+                    " * Regularisation parameter = %.7f\n" +\
+                    " * No fit") % \
+                    (self.__class__.__name__, self.alpha) 
 
 
-class ElasticNet(LinearModel):
+class ElasticNet(Lasso):
     """Linear Model trained with L1 and L2 prior as regularizer
 
     rho=1 is the lasso penalty. Currently, rho <= 0.01 is not
@@ -560,14 +566,14 @@ class ElasticNet(LinearModel):
 
     Parameters
     ----------
-    alpha : double
-        TODO
-    rho : double
+    alpha : float
+        Constant that multiplies the L1 term. Defaults to 1.0
+    rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
     """
 
     def __init__(self, alpha=1.0, rho=0.5, coef=None, tol=1e-4):
-        super(ElasticNet, self).__init__(coef)
+        self.coef_ = coef
         self.alpha = alpha
         self.rho = rho
         self.tol = tol
@@ -594,21 +600,19 @@ class ElasticNet(LinearModel):
         alpha = self.alpha * self.rho * nsamples
         beta = self.alpha * (1.0 - self.rho) * nsamples
         self.coef_, self.dual_gap_, self.eps_ = \
-                enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
+                cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
                                         maxit, 10, self.tol)
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
-        self.compute_rsquared(X, Y)
-
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
 
+        self._explained_variance = self.explained_variance(X, Y)
+
+
         # return self for chaining fit and predict calls
         return self
-
-    def __repr__(self):
-        return "ElasticNet cd"
 
 
 #########################################################################
@@ -617,7 +621,8 @@ class ElasticNet(LinearModel):
 #                                                                       #
 #########################################################################
 
-def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
+def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
+               verbose=False, **fit_kwargs):
     """
     Compute Lasso path with coordinate descent
 
@@ -663,11 +668,14 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
     for alpha in alphas:
         model = Lasso(coef=coef, alpha=alpha)
         model.fit(X, y, **fit_kwargs)
+        if verbose: print model
         coef = model.coef_.copy()
         models.append(model)
     return models
 
-def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
+def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
+              verbose=False, **fit_kwargs):
+    
     """Compute Elastic-Net path with coordinate descent
 
     Parameters
@@ -712,6 +720,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None, **fit_kwargs):
     for alpha in alphas:
         model = ElasticNet(coef=coef, alpha=alpha, rho=rho)
         model.fit(X, y, **fit_kwargs)
+        if verbose: print model
         coef = model.coef_.copy()
         models.append(model)
     return models
@@ -891,43 +900,68 @@ class ElasticNetCV(LinearModelCV):
 
 class LeastAngleRegression (LinearModel):
     """
-    LeastAngleRegression using the LARS algorithm
+    Least Angle Regression using the LARS algorithm
 
 
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
 
-    WARNING: this is alpha quality, use it at your own risk
-    TODO: add intercept
+    `intercept_` : float
+        independent term in decision function.
 
-    coef_ is the **normalized** coefficient.
+    `coef_path_` : array, shape = [max_features, n_features]
+         Full coeffients path.
 
     Notes
     -----
     predict does only work correctly in the case of normalized
     predictors.
-    
+
+    See also
+    --------
+    scikits.learn.glm.Lasso
+
     """
 
-    def fit (self, X, Y, intercept=True, n_features=None, normalize=True):
+    def fit (self, X, Y, intercept=True, max_features=None, normalize=True):
         """
 
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+            Training data
 
-        n_features : int
+        Y : numpy array of shape [nsamples]
+            Target values
+
+        intercept : boolen
+            wether to calculate the intercept for this model. If set
+            to false, no intercept will be used in calculations
+            (e.g. data is expected to be already centered).
+
+        max_features : int
             number of features to get into the model
 
-        TODO: resize (not create) arrays, check shape,
-            add a real intercept
+        normalize : boolean
+            whether to normalize (make all columns have mean 0 and
+            norm 1).
         """
+        ## TODO: resize (not create) arrays, check shape,
+        ##    add a real intercept
+        
         X  = np.asanyarray(X, dtype=np.float64, order='C')
         _Y = np.asanyarray(Y, dtype=np.float64, order='C')
 
         if Y is _Y: Y = _Y.copy()
         else: Y = _Y
 
-        if n_features is None:
-            n_features = min(*X.shape) - 1
+        if max_features is None:
+            max_features = min(*X.shape) - 1
 
-        sum_k = n_features * (n_features + 1) /2
-        self.alphas_ = np.zeros(n_features + 1, dtype=np.float64)
+        sum_k = max_features * (max_features + 1) /2
+        self.alphas_ = np.zeros(max_features + 1, dtype=np.float64)
         self._cholesky = np.zeros(sum_k, dtype=np.float64)
         self.beta_ = np.zeros(sum_k , dtype=np.float64)
         coef_row = np.zeros(sum_k, dtype=np.int32)
@@ -943,27 +977,39 @@ class LeastAngleRegression (LinearModel):
             X /= self._norms
 
         lars_fit_wrap(0, X, Y, self.beta_, self.alphas_, coef_row,
-                      coef_col, self._cholesky, n_features)
+                      coef_col, self._cholesky, max_features)
 
         self.coef_path_ = sp.coo_matrix((self.beta_,
                                         (coef_row, coef_col)),
-                                        shape=(X.shape[1], n_features+1)).todense()
+                                        shape=(X.shape[1], max_features+1)).todense()
 
-        self.coef_ = np.ravel(self.coef_path_[:, n_features])
+        self.coef_ = np.ravel(self.coef_path_[:, max_features])
 
-        # self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+        if intercept:
+            self.intercept_ = self._ymean
+        else:
+            self.intercept_ = 0.
 
         return self
 
 
     def predict(self, X, normalize=True):
         """
-        TODO: add intercept
+        Predict using the linear model
+
+        Parameters
+        ----------
+        X : numpy array of shape [nsamples,nfeatures]
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+            Returns predicted values.
         """
-        X = np.asanyarray(X)
+        X = np.asanyarray(X, dtype=np.float64, order='C')
         if normalize:
             X -= self._xmean
             X /= self._norms
-        return  np.dot(X, self.coef_)
+        return  np.dot(X, self.coef_) + self.intercept_
 
         
