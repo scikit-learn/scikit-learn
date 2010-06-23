@@ -300,8 +300,7 @@ void lars_fit(int itype, int m, int nsamples, double *X, double *res,
 
     }
 
-    /* lambdas[k+1] = fabs(pmax->cov); */
-
+    lambdas[k] = fabs(pmax->cov);
  
     free (active_set);
     free (uu);

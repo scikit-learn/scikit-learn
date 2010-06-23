@@ -8,19 +8,25 @@ def test_toy():
     """Very simple test on a small dataset"""
     X = [[1, 0, -1.],
          [0, 0, 0],
-         [0, 1, 1.]]
+         [0, 1, .9]]
     Y = [1, 0, -1]
 
-    clf = glm.LeastAngleRegression().fit(X, Y)
-    assert_array_almost_equal(clf.coef_, [0, 0, -1.4142], decimal=4)
+    clf = glm.LeastAngleRegression().fit(X, Y, max_features=1)
+    assert_array_almost_equal(clf.coef_, [0, 0, -1.2624], decimal=4)
+    assert_array_almost_equal(clf.alphas_, [1.4135, 0.1510], decimal=4)
+    assert_array_almost_equal(clf.alphas_.shape, clf.coef_path_.shape[1])
+    assert np.linalg.norm(clf.predict(X) - Y) < 0.3
+    
+
+    clf = glm.LeastAngleRegression().fit(X, Y) # implicitly max_features=2
+    assert_array_almost_equal(clf.coef_, [0, -.0816, -1.34412], decimal=4)
+    assert_array_almost_equal(clf.alphas_, \
+                 [ 1.41356,   .1510,   3.919e-16], decimal=4)
     assert_array_almost_equal(clf.alphas_.shape, clf.coef_path_.shape[1])
     assert_array_almost_equal(clf.predict(X), np.array(Y))
 
-    # check that Lasso with coordinate descent finds the same coefficients
-    clf2 = glm.Lasso().fit(X, Y)
-    assert_array_almost_equal(clf.coef_, [0, 0, -1.4142], decimal=4)
-    assert_array_almost_equal(clf.predict(X), np.array(Y))
-
+    # TODO: check that Lasso with coordinate descent finds the same
+    # coefficients
 
 def test_feature_selection():
     n_samples, n_features = 442, 100

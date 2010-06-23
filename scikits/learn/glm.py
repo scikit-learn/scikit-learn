@@ -911,7 +911,7 @@ class LeastAngleRegression (LinearModel):
     `intercept_` : float
         independent term in decision function.
 
-    `coef_path_` : array, shape = [max_features, n_features]
+    `coef_path_` : array, shape = [max_features + 1, n_features]
          Full coeffients path.
 
     Notes
@@ -936,13 +936,16 @@ class LeastAngleRegression (LinearModel):
         Y : numpy array of shape [nsamples]
             Target values
 
-        intercept : boolen
+        intercept : boolean, optional
             wether to calculate the intercept for this model. If set
             to false, no intercept will be used in calculations
             (e.g. data is expected to be already centered).
 
-        max_features : int
-            number of features to get into the model
+        max_features : int, optional
+            number of features to get into the model. The iterative
+            will stop just before the `max_features` variable enters
+            in the active set. If not specified, min(N, p) - 1
+            will be used.
 
         normalize : boolean
             whether to normalize (make all columns have mean 0 and
@@ -958,7 +961,7 @@ class LeastAngleRegression (LinearModel):
         else: Y = _Y
 
         if max_features is None:
-            max_features = min(*X.shape) - 1
+            max_features = min(*X.shape)-1
 
         sum_k = max_features * (max_features + 1) /2
         self.alphas_ = np.zeros(max_features + 1, dtype=np.float64)
