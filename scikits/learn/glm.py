@@ -56,7 +56,7 @@ class LinearModel(object):
         X = np.asanyarray(X)
         return np.dot(X, self.coef_) + self.intercept_
 
-    def explained_variance(self, X, Y):
+    def _explained_variance(self, X, Y):
         """Compute explained variance a.k.a. r^2"""
         ## TODO: this should have a tests.
         return 1 - np.linalg.norm(Y - self.predict(X))**2 \
@@ -537,7 +537,7 @@ class Lasso(LinearModel):
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
 
-        self._explained_variance = self.explained_variance(X, Y)
+        self.explained_variance_ = self._explained_variance(X, Y)
 
         # return self for chaining fit and predict calls
         return self
@@ -550,7 +550,7 @@ class Lasso(LinearModel):
                     " * Explained Variance = %.7f\n") % \
                     (self.__class__.__name__, n_non_zeros,
                      n_non_zeros / float(len(self.coef_)) * 100,
-                     self.alpha, self._explained_variance)
+                     self.alpha, self.explained_variance_)
         else:
             return ("%s\n" + \
                     " * Regularisation parameter = %.7f\n" +\
@@ -608,7 +608,7 @@ class ElasticNet(Lasso):
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
 
-        self._explained_variance = self.explained_variance(X, Y)
+        self.explained_variance_ = self._explained_variance(X, Y)
 
 
         # return self for chaining fit and predict calls
