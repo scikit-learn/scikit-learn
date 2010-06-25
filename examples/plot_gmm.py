@@ -1,12 +1,13 @@
 """
-Simple Gaussian Mixture model plotting example
+=================================
+Gaussian Mixture Model Ellipsoids
+=================================
 
-TODO: use the faithful dataset
+Plot the confidence ellipsoids of a mixture of two gaussians.
 """
 
 import numpy as np
 from scikits.learn import gmm
-from datetime import datetime
 import itertools
 
 import pylab as pl
@@ -34,7 +35,7 @@ for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars, color_iter))
     pl.scatter(X[Y_==i, 0], X[Y_==i, 1], .8, color=color)
     angle = np.arctan(u[1]/u[0])
     angle = 180 * angle / np.pi # convert to degrees
-    ell = mpl.patches.Ellipse (mean, v[0], v[1], 180 + angle, color=color) #, angle)
+    ell = mpl.patches.Ellipse (mean, v[0], v[1], 180 + angle, color=color)
     ell.set_clip_box(splot.bbox)
     ell.set_alpha(0.5)
     splot.add_artist(ell)
