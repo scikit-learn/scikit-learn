@@ -5,19 +5,18 @@ TODO: use the faithful dataset
 """
 
 import numpy as np
-from scikits.learn import gmm, shortcuts
+from scikits.learn import gmm
 from datetime import datetime
 import itertools
 
 import pylab as pl
 import matplotlib as mpl
 
-n, m = 442, 2
+n, m = 300, 2
 
+# generate random sample, two components
 np.random.seed(0)
-
-C = np.array([[0., -0.7], [3.5, .7]]) # rotation and scale matrix
-
+C = np.array([[0., -0.7], [3.5, .7]])
 X = np.r_[np.dot(np.random.randn(n, 2), C),
           np.random.randn(n, 2) + np.array([3, 3])]
 
@@ -25,15 +24,11 @@ clf = gmm.GMM(2, cvtype='full')
 clf.fit(X)
 
 splot = pl.subplot(111, aspect='equal')
-
-n_comp = len(clf.means) # number of components
-
 color_iter = itertools.cycle (['r', 'g', 'b', 'c'])
 
 Y_ = clf.predict(X)
 
-for i, mean, covar, color in zip(range(n_comp), clf.means,
-                                 clf.covars, color_iter):
+for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars, color_iter)):
     v, w = np.linalg.eigh(covar)
     u = w[0] / np.linalg.norm(w[0])
     pl.scatter(X[Y_==i, 0], X[Y_==i, 1], .8, color=color)
