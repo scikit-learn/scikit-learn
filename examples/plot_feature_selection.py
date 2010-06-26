@@ -45,12 +45,12 @@ x_indices = np.arange(x.shape[-1])
 
 ################################################################################
 # Univariate feature selection
-from scikits.learn.feature_selection import univariate_selection as univ_selection
+from scikits.learn.feature_selection import univariate_selection
 # As a scoring function, we use a F test for classification
 # We use the default selection function: the 10% most significant
 # features
-selector = univ_selection.SelectFpr(
-                score_func=univ_selection.f_classif)
+selector = univariate_selection.SelectFpr(
+                score_func=univariate_selection.f_classif)
 
 selector.fit(x, y)
 scores = -np.log(selector._pvalues)
