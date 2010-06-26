@@ -69,6 +69,22 @@ svm_weights /= svm_weights.max()
 pl.bar(x_indices-.15, svm_weights, width=.3, label='SVM weight',
         color='r')
 
+
+# ################################################################################
+# # Now fit an SVM with added feature selection
+# selector = univ_selection.Univ(
+#                 score_func=univ_selection.f_classif)
+
+# selector.fit(x, clf.predict(x))
+# svm_weights = (clf.support_**2).sum(axis=0)
+# svm_weights /= svm_weights.max()
+# full_svm_weights = np.zeros(selector.support_.shape)
+# full_svm_weights[selector.support_] = svm_weights
+# pl.bar(x_indices+.15, full_svm_weights, width=.3, 
+#         label='SVM weight after univariate selection',
+#         color='b')
+
+
 pl.title("Comparing feature selection")
 pl.xlabel('Feature number')
 pl.yticks(())
