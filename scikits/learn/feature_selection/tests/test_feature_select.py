@@ -60,7 +60,7 @@ def test_univ_fs_percentile_classif():
     gets the correct items in a simple classification problem
     with the percentile heuristic
     """
-    np.random.seed(0)
+
     X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
     univariate_filter = us.SelectPercentile(us.f_classif)
