@@ -42,9 +42,6 @@ X = np.c_[X,np.random.randn(n_samples, 200*n_features)]
 cv = KFold(n_samples, 6)
 classifier = svm.SVC(kernel='linear', probability=True)
 
-pl.figure(-1)
-pl.clf()
-
 mean_tpr = 0.0
 mean_fpr = np.linspace(0, 1, 100)
 all_tpr = []
