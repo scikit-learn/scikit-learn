@@ -10,24 +10,16 @@ coordinate descent.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-from datetime import datetime
 from itertools import cycle
 import numpy as np
 import pylab as pl
 
 from scikits.learn.glm import lasso_path, enet_path
 
-n_samples, n_features, maxit = 442, 10, 50
-
-from scikits.learn import datasets
-
+n_samples, n_features = 100, 10
 np.random.seed(0)
 y = np.random.randn(n_samples)
 X = np.random.randn(n_samples, n_features)
-
-data = datasets.load_diabetes()
-X = data.data
-y = data.target
 
 ################################################################################
 # Fit models
@@ -40,16 +32,12 @@ y = data.target
 eps = 1e-2 # the smaller it is the longer is the path
 
 print "Computing regularization path using the lasso..."
-start = datetime.now()
 models = lasso_path(X, y, eps=eps)
-print "This took ", datetime.now() - start
 alphas_lasso = np.array([model.alpha for model in models])
 coefs_lasso = np.array([model.coef_ for model in models])
 
 print "Computing regularization path using the elastic net..."
-start = datetime.now()
 models = enet_path(X, y, eps=eps, rho=0.6)
-print "This took ", datetime.now() - start
 alphas_enet = np.array([model.alpha for model in models])
 coefs_enet = np.array([model.coef_ for model in models])
 

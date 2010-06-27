@@ -45,15 +45,15 @@ x_indices = np.arange(x.shape[-1])
 
 ################################################################################
 # Univariate feature selection
-from scikits.learn.feature_selection import univ_selection 
+from scikits.learn.feature_selection import univariate_selection
 # As a scoring function, we use a F test for classification
 # We use the default selection function: the 10% most significant
 # features
-selector = univ_selection.UnivSelection(
-                score_func=univ_selection.f_classif)
+selector = univariate_selection.SelectFpr(
+                score_func=univariate_selection.f_classif)
 
 selector.fit(x, y)
-scores = -np.log(selector.p_values_)
+scores = -np.log(selector._pvalues)
 scores /= scores.max()
 pl.bar(x_indices-.45, scores, width=.3, 
         label=r'Univariate score ($-\log(p\,values)$)', 
@@ -69,20 +69,20 @@ svm_weights /= svm_weights.max()
 pl.bar(x_indices-.15, svm_weights, width=.3, label='SVM weight',
         color='r')
 
-################################################################################
-# Now fit an SVM with added feature selection
-selector = univ_selection.UnivSelection(
-                estimator=clf,
-                score_func=univ_selection.f_classif)
 
-selector.fit(x, y)
-svm_weights = (clf.support_**2).sum(axis=0)
-svm_weights /= svm_weights.max()
-full_svm_weights = np.zeros(selector.support_.shape)
-full_svm_weights[selector.support_] = svm_weights
-pl.bar(x_indices+.15, full_svm_weights, width=.3, 
-        label='SVM weight after univariate selection',
-        color='b')
+# ################################################################################
+# # Now fit an SVM with added feature selection
+# selector = univ_selection.Univ(
+#                 score_func=univ_selection.f_classif)
+
+# selector.fit(x, clf.predict(x))
+# svm_weights = (clf.support_**2).sum(axis=0)
+# svm_weights /= svm_weights.max()
+# full_svm_weights = np.zeros(selector.support_.shape)
+# full_svm_weights[selector.support_] = svm_weights
+# pl.bar(x_indices+.15, full_svm_weights, width=.3, 
+#         label='SVM weight after univariate selection',
+#         color='b')
 
 
 pl.title("Comparing feature selection")

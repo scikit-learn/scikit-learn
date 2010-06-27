@@ -1,3 +1,10 @@
+"""
+===================
+Logistic Regression
+===================
+
+with l1 and l2 penalty
+"""
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 

@@ -58,7 +58,7 @@ advantage of this property leads to determining neighbors in O[log(N)]
 time, as opposed to O[N] time for a brute-force search.
 
 
-.. autoclass:: scikits.learn.BallTree.BallTree
+.. autoclass:: scikits.learn.ball_tree.BallTree
    :members:
 
-.. autofunction:: scikits.learn.BallTree.knn_brute
+.. autofunction:: scikits.learn.ball_tree.knn_brute

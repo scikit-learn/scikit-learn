@@ -88,6 +88,9 @@ def f_regression(X, y, center=True):
 
 
 class UnivariateFilter(object):
+    """
+    Abstract class, not meant to be used directly
+    """
 
     def __init__(self, score_func):
         """
