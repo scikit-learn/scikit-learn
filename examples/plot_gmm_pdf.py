@@ -1,19 +1,17 @@
 """
-=================================
-Gaussian Mixture Model Ellipsoids
-=================================
+=============================================
+Density Estimation for a mixture of Gaussians
+=============================================
 
-Plot the confidence ellipsoids of a mixture of two gaussians.
+Plot the density estimation of a mixture of two gaussians. Data is
+generated from two gaussians with different centers and covariance
+matrices.
 """
 
-import numpy as np
-from scikits.learn import gmm
 import itertools
-
+import numpy as np
 import pylab as pl
-import matplotlib as mpl
-
-import matplotlib.pyplot as plt
+from scikits.learn import gmm
 
 n, m = 300, 2
 
@@ -34,7 +32,7 @@ Z =  np.log(-clf.eval(XX)[0])
 Z = Z.reshape(X.shape)
 
 CS = pl.contour(X, Y, Z)
-CB = plt.colorbar(CS, shrink=0.8, extend='both')
+CB = pl.colorbar(CS, shrink=0.8, extend='both')
 pl.scatter(X_train[:, 0], X_train[:, 1], .8)
 
 pl.axis('tight')
