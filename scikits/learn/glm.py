@@ -972,12 +972,17 @@ class LeastAngleRegression (LinearModel):
 
 
         if normalize:
+            # will only normalize non-zero columns
             self._xmean = X.mean(0)
             self._ymean = Y.mean(0)
             X = X - self._xmean
             Y = Y - self._ymean
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
-            X /= self._norms
+            nonzeros = np.flatnonzero(self._norms)
+            X[:, nonzeros] /= self._norms[nonzeros]
+        else:
+            self._xmean = 0.
+            self._ymean = 0.
 
         lars_fit_wrap(0, X, Y, self.beta_, self.alphas_, coef_row,
                       coef_col, self._cholesky, max_features)

@@ -267,6 +267,81 @@ class LeaveOneLabelOut(object):
     def __len__(self):
         return self.n_labels
 
+################################################################################
+class LeavePLabelOut(object):
+    """
+    Leave-P-Label_Out cross-validation iterator:
+    Provides train/test indexes to split data in train test sets
+    """
+
+    def __init__(self, labels, p):
+        """
+        Leave-P-Label_Out cross validation:
+        Provides train/test indexes to split data in train test sets
+
+        Parameters
+        ----------
+        labels : list
+                List of labels
+
+        Examples
+        ----------
+        >>> from scikits.learn import cross_val
+        >>> X = [[1, 2], [3, 4], [5, 6]]
+        >>> y = [1, 2, 1]
+        >>> labels = [1, 2, 3]
+        >>> lpl = cross_val.LeavePLabelOut(labels, p=2)
+        >>> len(lpl)
+        3
+        >>> for train_index, test_index in lpl:
+        ...    print "TRAIN:", train_index, "TEST:", test_index
+        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, \
+            test_index, X, y)
+        ...    print X_train, X_test, y_train, y_test
+        TRAIN: [False False  True] TEST: [ True  True False]
+        [[5 6]] [[1 2]
+         [3 4]] [1] [1 2]
+        TRAIN: [False  True False] TEST: [ True False  True]
+        [[3 4]] [[1 2]
+         [5 6]] [2] [1 1]
+        TRAIN: [ True False False] TEST: [False  True  True]
+        [[1 2]] [[3 4]
+         [5 6]] [1] [2 1]
+
+        """
+        self.labels = labels
+        self.unique_labels = np.unique(self.labels)
+        self.n_labels = self.unique_labels.size
+        self.p = p
+
+    def __iter__(self):
+        # We make a copy here to avoid side-effects during iteration
+        labels = np.array(self.labels, copy=True)
+        unique_labels = np.unique(labels)
+        n_labels = unique_labels.size
+        comb = combinations(range(n_labels), self.p)
+
+        for idx in comb:
+            test_index = np.zeros(labels.size, dtype=np.bool)
+            idx = np.array(idx)
+            for l in unique_labels[idx]:
+                test_index[labels == l] = True
+            train_index = np.logical_not(test_index)
+            yield train_index, test_index
+
+    def __repr__(self):
+        return '%s.%s(labels=%s, p=%s)' % (
+                                self.__class__.__module__,
+                                self.__class__.__name__,
+                                self.labels,
+                                self.p,
+                                )
+
+    def __len__(self):
+        return factorial(self.n_labels) / factorial(self.n_labels - self.p) \
+               / factorial(self.p)
+
+
 
 def split(train_indices, test_indices, *args):
     """
