@@ -979,7 +979,7 @@ class LeastAngleRegression (LinearModel):
             Y = Y - self._ymean
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
             nonzeros = np.flatnonzero(self._norms)
-            X = X[:, nonzeros] / self._norms[nonzeros]
+            X[:, nonzeros] /= self._norms[nonzeros]
         else:
             self._xmean = 0.
             self._ymean = 0.

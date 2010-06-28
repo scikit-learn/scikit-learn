@@ -28,6 +28,18 @@ def test_toy():
     # TODO: check that Lasso with coordinate descent finds the same
     # coefficients
 
+
+def test_toy2():
+    """
+    Check that LAR responds well to features (columns) that are zero
+    arrays.
+    """
+    X = [[0, 0],
+         [0, 1]]
+    Y = [0, 1]
+    clf = glm.LeastAngleRegression().fit(X, Y)
+    assert_array_almost_equal(clf.coef_, [0., .70], decimal=2)
+
 def test_feature_selection():
     n_samples, n_features = 442, 100
 
