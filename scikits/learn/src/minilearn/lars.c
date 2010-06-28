@@ -109,7 +109,7 @@ void lars_fit(int itype, int m, int nsamples, double *X, double *res,
     /* TODO: pass uu by reference */
     double *uu  = (double *) calloc(nsamples, sizeof(double));
 
-    double *v, *dir, C, temp, gamma, tgamma, aj, Aa = 0;
+    double *v, *dir, C, temp, gamma, tgamma, aj, Aa = 0, diag;
     double cj, ga, gb;
     int i, k=0, drop=0, sum_k=0;
 
@@ -174,6 +174,7 @@ void lars_fit(int itype, int m, int nsamples, double *X, double *res,
             v[i] = cblas_ddot (nsamples, cur->ptr, m, 
                                pmax->ptr, m);
 
+
             temp = copysign(temp, cur->cov);
             dir[i] = temp;
         }
@@ -194,7 +195,11 @@ void lars_fit(int itype, int m, int nsamples, double *X, double *res,
         cblas_dtpsv (CblasRowMajor, CblasLower, CblasNoTrans, CblasNonUnit, 
                      k-drop, L, v, 1);
 
-        v[k] = sqrt(1 - cblas_ddot(k-drop, v, 1, v, 1));
+        /* TODO: this is 1 in the case of normalized columns */
+        diag = cblas_ddot(nsamples, pmax->ptr, m, pmax->ptr, m);
+
+        v[k] = sqrt(diag - cblas_ddot(k, v, 1, v, 1));
+
 
         cblas_dtpsv (CblasRowMajor, CblasLower, CblasNoTrans, CblasNonUnit,
                      k + 1, L, dir, 1);
@@ -250,17 +255,15 @@ void lars_fit(int itype, int m, int nsamples, double *X, double *res,
             k++;
             break;
 
-        case 1: /* Lasso modification */
+        case 1: /* Lasso modification , does not work yet */
             tgamma = gamma;
             for (i=0; i<k; ++i) {
                 if (dir[i - k]*dir[i] < 0) {
-                    printf("%d - %d\n", k , i);
                     /* it's possible that more than 1 variables
                      *  have changed sign
                      */
                     temp = - gamma * dir[i-k] / (dir[k] - dir[i-k]);
                     tgamma = fmin (tgamma, temp);
-                    printf ("Change of sign!! %f \n", tgamma / gamma);
                 }
             }
 
