@@ -60,4 +60,4 @@ override_dh_compress:
 override_dh_installdocs:
 	: # Use jquery from Debian package, so prune shipped one
 	-rm doc/_build/html/_static/jquery.js
-	dh_installdocs -A AUTHORS README
+	dh_installdocs -A AUTHORS README.rst
