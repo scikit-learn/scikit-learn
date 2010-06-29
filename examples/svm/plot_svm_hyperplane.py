@@ -19,7 +19,7 @@ clf = svm.SVC(kernel='linear')
 clf.fit(X, Y)
 
 # get the separating hyperplane
-w = np.dot(clf.dual_coef_[0], clf.support_)
+w =  clf.coef_[0]
 a = -w[0]/w[1]
 xx = np.linspace(-5, 5)
 yy = a*xx - (clf.intercept_[0])/w[1]

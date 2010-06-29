@@ -8,28 +8,28 @@ then, many people have contributed to the project. These are, in
 chronological order:
 
   * David Cournapeau, 2007-2009
-  * Fred Mailhot
+  * Fred Mailhot, 2008, Artificial Neural Networks (ann) module.
   * David Cooke
   * David Huard
   * Dave Morrill
   * Ed Schofield
-  * Eric Jones
-  * fullung
+  * Eric Jones, 2008, Genetic Algorithms (ga) module. No longer part
+    of scikits.learn.
   * Jarrod Millman
-  * Matthieu Brucher
+  * Matthieu Brucher, 2008 - 2009 (manifold module).
   * Travis Oliphant
   * Pearu Peterson
   * Stefan van der Walt
-  * timl
-  * Fabian Pedregosa
+  * Fabian Pedregosa, 2010 - present (current maintainer).
   * Gael Varoquaux
   * Jake VanderPlas
   * Alexandre Gramfort
   * Olivier Grisel
   * Vincent Michel
+  * Chris Filo Gorgolewski
+  * Angel Soler Gollonet (Graphical Design)
+  * Yaroslav Halchenko (maintainer for Debian OS)
+  * Ron Weiss
 
-For a complete list, look at the commit logs. Note that this list is
-not exhaustive, since subversion logs only publish the commiter's
-username and it can be hard to know the authors complete
-name. If I forgot anyone, please send me an email to
-fabian.pedregosa@inria.fr .
+If I forgot anyone, do not hesitate to send me an email to
+fabian.pedregosa@inria.fr and I'll include you in the list.

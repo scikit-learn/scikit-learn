@@ -33,7 +33,7 @@ Scikits.learn Documentation
 .. topic:: Easy-to-use and general-purpose machine learning in Python
 
     ``scikits.learn`` is a Python module integrating classique machine
-    learning algorithmes in the tightly-nit world of scientific Python
+    learning algorithms in the tightly-nit world of scientific Python
     packages (`numpy <http://www.scipy.org>`_, `scipy
     <http://www.scipy.org>`_, `matplotlib
     <http://matplotlib.sourceforge.net/>`_).
@@ -91,10 +91,22 @@ Scikits.learn Documentation
 Download
 ========
 
-Click `here <https://sourceforge.net/projects/scikit-learn/files/>`_ to download latest release. Previous releases can also be found in that directory.
+Click `here <https://sourceforge.net/projects/scikit-learn/files/>`_
+to download latest release. Previous releases can also be found in
+that directory.
+
+Mailing List
+============
+
+Visit `this page
+<https://lists.sourceforge.net/lists/listinfo/scikit-learn-general>`_
+to subscribe to the mailing list and keep informed about scikit-learn
+development
+
 
 User guide
 ======================
+
 
 .. toctree::
    :maxdepth: 3

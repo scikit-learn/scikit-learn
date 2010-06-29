@@ -6,7 +6,7 @@ neighbor searches in high dimensionality.
 """
 import numpy as np
 from scipy import stats
-from .BallTree import BallTree
+from .ball_tree import BallTree
 
 class Neighbors:
   """
@@ -22,7 +22,7 @@ class Neighbors:
       integers are supported).
   k : int
       default number of neighbors.
-  window_size : float
+  window_size : int
       the default window size.
 
   Examples
@@ -36,17 +36,18 @@ class Neighbors:
   [ 0.]
   """
 
-  def __init__(self, k = 5, window_size = 1.):
+  def __init__(self, k = 5, window_size = 1):
     """
-    Internally uses scipy.spatial.KDTree for most of its algorithms.
+    Internally uses the ball tree datastructure and algorithm for fast
+    neighbors lookups on high dimensional datasets.
     """
     self._k = k
     self.window_size = window_size
 
-  def fit(self, X, Y):
+  def fit(self, X, Y=()):
     # we need Y to be an integer, because after we'll use it an index
     self.Y = np.asanyarray(Y, dtype=np.int)
-    self.ball_tree = BallTree(X)
+    self.ball_tree = BallTree(X, self.window_size)
     return self
 
   def kneighbors(self, data, k=None):

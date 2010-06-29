@@ -472,8 +472,8 @@ static PyMethodDef BallTree_methods[] = {
      "                                                     \n"
      "   query the Ball Tree for the k nearest neighbors   \n"
      "                                                     \n"
-     " Parameters                                          \n"
-     " ==========                                          \n"
+     "Parameters                                           \n"
+     "----------                                           \n"
      " x : array-like, last dimension self.dim             \n"
      "       An array of points to query                   \n"
      " k : integer  (default = 1)                          \n"
@@ -483,7 +483,7 @@ static PyMethodDef BallTree_methods[] = {
      "       if False, return array i                      \n"
      "                                                     \n"
      " Returns                                             \n"
-     " =======                                             \n"
+     " -------                                             \n"
      "  i    : if return_distance == False                 \n"
      " (d,i) : if return_distance == True                  \n"
      "                                                     \n"
@@ -503,7 +503,7 @@ static PyMethodDef BallTree_methods[] = {
      "    query the Ball Tree for the k nearest neighbors  \n"
      "                                                     \n"
      " Parameters                                          \n"
-     " ==========                                          \n"
+     " ----------                                          \n"
      " x : array-like, last dimension self.dim             \n"
      "       An array of points to query                   \n"
      " r : floating-point value                            \n"
@@ -516,7 +516,7 @@ static PyMethodDef BallTree_methods[] = {
      "                           neighbors for each point  \n"
      "                                                     \n"
      " Returns                                             \n"
-     " =======                                             \n"
+     " -------                                             \n"
      " i : if count_only is False:                         \n"
      "       array of integer-arrays - shape: x.shape[:-1] \n"
      "        each entry gives the list of neighbors of    \n"
@@ -556,11 +556,11 @@ static PyTypeObject PyBallTreeType = {
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
     "Ball Tree for fast nearest-neighbor searches :           \n"
     "                                                         \n"
-    "Initialization:                                          \n"
+    " BallTree(M, leafsize=20)                                \n"
     "                                                         \n"
-    " BallTree(M, leafsize=20)                               \n"
+    "                                                         \n"
     "   Parameters                                            \n"
-    "   ==========                                            \n"
+    "   ----------                                            \n"
     "   M : array-like, shape = [N,D]                         \n"
     "        N is the number of points in the data set, and   \n"
     "        D is the dimension of the parameter space.       \n"
@@ -570,30 +570,6 @@ static PyTypeObject PyBallTreeType = {
     "   leafsize : positive integer (default = 20)           \n"
     "               number of points at which to switch       \n"
     "               to brute-force                            \n"
-    "                                                         \n"
-    "Description:                                             \n"
-    "                                                         \n"
-    "This class provides an interface to an optimized Ball    \n"
-    "Tree implementation to rapidly look up the nearest       \n"
-    "neighbors of any point.  Ball Trees are particularly     \n"
-    "useful for very high-dimensionality data, where more     \n"
-    "traditional tree searches (e.g. KD-Trees) perform poorly.\n"
-    "The cost is a slightly longer construction time, though  \n"
-    "for repeated queries, this added construction time       \n"
-    "quickly becomes insignificant.                           \n"
-    "                                                         \n"
-    "A Ball Tree reduces the number of candidate points for   \n"
-    "a neighbor search through use of the triangle inequality:\n"
-    "  |x+y| <= |x| + |y|                                     \n"
-    "Each node of the Ball Tree defines a centroid, C, and a  \n"
-    "radius r such that each point in the node lies within    \n"
-    "the hyper-sphere of radius r, centered at C.  With this  \n"
-    "setup, a single distance calculation between a test point\n"
-    "and the centroid is sufficient to determine a lower bound\n"
-    "on the distance to all points within the node.  Carefully\n"
-    "taking advantage of this property leads to determining   \n"
-    "neighbors in O[log(N)] time, as opposed to O[N] time for \n"
-    "a brute-force search.                                    \n"
     "                                                         \n",/* tp_doc */
     0,		               /* tp_traverse */
     0,		               /* tp_clear */
@@ -781,8 +757,8 @@ static PyMethodDef BTmodule_methods[] = {
    "                                                          \n"
    "     Brute-Force k-nearest neighbor search.               \n"
    "                                                          \n"
-   "  Parameters:                                             \n"
-   "  ==========                                              \n"
+   "  Parameters                                              \n"
+   "  ----------                                              \n"
    "    x  : an array of shape [N,D] representing N points    \n"
    "          in D dimensions                                 \n"
    "    pt : array-like, last dimension D                     \n"
@@ -790,8 +766,8 @@ static PyMethodDef BTmodule_methods[] = {
    "    k  : a positive integer, giving the number of nearest \n"
    "         neighbors to query                               \n"
    "                                                          \n"
-   "  Returns:                                                \n"
-   "  =======                                                 \n"
+   "  Returns                                                 \n"
+   "  -------                                                 \n"
    "    nbrs : array of integers - shape: pt.shape[:-1] + (k,)\n"
    "             each entry gives the list of indices of      \n"
    "             neighbors of the corresponding point         \n"},
@@ -804,7 +780,7 @@ static PyMethodDef BTmodule_methods[] = {
 #define PyMODINIT_FUNC void
 #endif
 PyMODINIT_FUNC
-initBallTree(void)
+initball_tree(void)
 {    
   PyObject* m;   
   PyBallTreeType.tp_new = PyType_GenericNew;
@@ -812,7 +788,7 @@ initBallTree(void)
   if (PyType_Ready(&PyBallTreeType) < 0)
     return;
 
-  m = Py_InitModule3("BallTree", BTmodule_methods,
+  m = Py_InitModule3("ball_tree", BTmodule_methods,
 		     "Ball Tree package                                   \n"
 		     " Written by Jake VanderPlas, January 2010           \n"
 		     "   vanderplas@astro.washington.edu                  \n"

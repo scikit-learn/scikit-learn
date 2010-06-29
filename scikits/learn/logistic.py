@@ -1,5 +1,5 @@
 import numpy as np
-from . import liblinear
+from . import _liblinear
 
 
 class LogisticRegression(object):
@@ -35,7 +35,7 @@ class LogisticRegression(object):
 
     `intercept_` : array, shape = [nclasses-1]
         intercept (a.k.a. bias) added to the decision function.
-        It is available only when parametr intercept is set to True
+        It is available only when parameter intercept is set to True
 
     Methods
     -------
@@ -55,7 +55,7 @@ class LogisticRegression(object):
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
     def __init__(self, penalty='l2', eps=1e-4, C=1.0, intercept=True):
-        self.solver_type = self._penalties[penalty]
+        self.solver_type = self._penalties[penalty.lower()]
         self.eps = eps
         self.C = C
         if intercept:
@@ -70,15 +70,16 @@ class LogisticRegression(object):
     def fit(self, X, Y):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.raw_coef_, self.label_, self.bias_ = liblinear.train_wrap(X,
+        self.raw_coef_, self.label_, self.bias_ = _liblinear.train_wrap(X,
                                           Y, self.solver_type, self.eps, self.bias_,
-                                          self.C, 0,
+                                          self.C,
                                           self._weight_label,
                                           self._weight)
+        return self
 
     def predict(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_wrap(T, self.raw_coef_, self.solver_type,
+        return _liblinear.predict_wrap(T, self.raw_coef_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
@@ -86,7 +87,7 @@ class LogisticRegression(object):
 
     def predict_proba(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return liblinear.predict_prob_wrap(T, self.raw_coef_, self.solver_type,
+        return _liblinear.predict_prob_wrap(T, self.raw_coef_, self.solver_type,
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
@@ -97,7 +98,6 @@ class LogisticRegression(object):
         if self.bias_ > 0:
             return self.raw_coef_[:,-1]
         return 0.0
-            
 
     @property
     def coef_(self):

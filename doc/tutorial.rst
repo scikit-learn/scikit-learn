@@ -1,11 +1,10 @@
-Getting started: an introduction to learning with the scikit
-=============================================================
+Getting started: an introduction to machine learning with scikits.learn
+=======================================================================
 
 .. topic:: Section contents
 
     In this section, we introduce the machine learning vocabulary that we
-    use through-out the `scikit.learn` and give a simple example of
-    solving a learning problem.
+    use through-out `scikits.learn` and give a simple learning example.
 
 
 Machine learning: the problem setting
@@ -24,15 +23,24 @@ We can separate learning problems in a few large categories:
    
     * **classification**: samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
-      of un-labeled data.
+      of un-labeled data. An example of classification problem would
+      be the digit recognition example, in which the aim is to assign
+      each input vector to one of a finite number of discrete
+      categories.
 
-    * **regression**: each sample is associated with a numerical
-      attribute, often called explanatory variable. The goal is to 
-      learn the relationship between the data and the explanatory
-      variable to be able to predict its value on new data.
+    * **regression**: if the desired output consists of one or more
+        continuous variables, then the task is called *regression*. An
+        example of a regression problem would be the prediction of the
+        length of a salmon as a function of its age and weight.
 
- * **unsupervised learning**, in which we are trying to learning a
-   synthetic representation of the data.
+ * **unsupervised learning**, in which the training data consists of a
+     set of input vectors x without any corresponding target
+     values. The goal in such problems may be to discover groups of
+     similar examples within the data, where it is called
+     *clustering*, or to determine the distribution of data within the
+     input space, known as *density estimation*, or to project the data
+     from a high-dimensional space down to two or thee dimensions for
+     the purpose of *visualization*.
 
 .. topic:: Training set and testing set
 
@@ -47,7 +55,7 @@ We can separate learning problems in a few large categories:
 Loading an example dataset
 --------------------------
 
-The `scikit.learn` comes with a few standard datasets, for instance the
+`scikits.learn` comes with a few standard datasets, for instance the
 `iris dataset <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_, or
 the `digits dataset
 <http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_::
@@ -82,7 +90,7 @@ array([0, 1, 2, ..., 8, 9, 8])
 
 .. topic:: Shape of the data arrays
    
-    The data is always are 2D array, `n_samples, n_features`, although
+    The data is always a 2D array, `n_samples, n_features`, although
     the original data may have had a different shape. In the case of the
     digits, each original sample is an image of shape `8, 8` and can be
     accessed using:
@@ -113,7 +121,7 @@ the labels corresponding to new data.
 In `scikit.learn`, an *estimator* is just a plain Python class that
 implements the methods `fit(X, Y)` and `predict(T)`.
 
-An example of estimator is the class ``scikits.learn.neighbors.SVC`` that
+An example of estimator is the class ``scikits.learn.svm.SVC`` that
 implements `Support Vector Classification
 <http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 constructor of an estimator takes as arguments the parameters of the
@@ -143,6 +151,7 @@ The corresponding image is the following:
 
 .. image:: images/last_digit.png
     :align: center
+    :scale: 50
 
 As you can see, it is a challenging task: the images are of poor
 resolution. Do you agree with the classifier?

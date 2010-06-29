@@ -6,7 +6,7 @@ Then run the simple timings script:
  python bench_kdtree.py 1000 100
 """
 
-from scikits.learn.BallTree import BallTree, knn_brute
+from scikits.learn.ball_tree import BallTree, knn_brute
 import numpy
 from time import time
 

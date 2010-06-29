@@ -11,18 +11,15 @@ def configuration(parent_package='',top_path=None):
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
 
-    config.add_subpackage('em')
     config.add_subpackage('datasets')
     config.add_subpackage('feature_selection')
-    config.add_subpackage('glm')
-    config.add_subpackage('manifold')
     config.add_subpackage('utils')
 
     # libsvm
     libsvm_includes = [numpy.get_include()]
     libsvm_libraries = []
     libsvm_library_dirs = []
-    libsvm_sources = [join('src', 'libsvm.c')]
+    libsvm_sources = [join('src', '_libsvm.c')]
 
     if site_cfg.has_section('libsvm'):
         libsvm_includes.append(site_cfg.get('libsvm', 'include_dirs'))
@@ -31,7 +28,7 @@ def configuration(parent_package='',top_path=None):
     else:
         libsvm_sources.append(join('src', 'svm.cpp'))
 
-    config.add_extension('libsvm',
+    config.add_extension('_libsvm',
                          sources=libsvm_sources,
                          include_dirs=libsvm_includes,
                          libraries=libsvm_libraries,
@@ -47,18 +44,21 @@ def configuration(parent_package='',top_path=None):
                     join('src', 'blas', 'dscal.c')]
 
     liblinear_sources = [join('src', 'linear.cpp'),
-                         join('src', 'liblinear.c'),
+                         join('src', '_liblinear.c'),
                          join('src', 'tron.cpp')]
 
     # we try to link agains system-wide blas
-    blas_info = get_info('blas_opt')
-    if not blas_info:
-        warnings.warn(BlasNotFoundError.__doc__)
-        liblinear_sources.append(blas_sources)
+    blas_info = get_info('blas_opt', 0)
 
-    config.add_extension('liblinear',
+    extra_compile_args = blas_info.pop('extra_compile_args', [])
+
+    if not blas_info:
+        config.add_library('blas', blas_sources)
+        warnings.warn(BlasNotFoundError.__doc__)
+
+    config.add_extension('_liblinear',
                          sources=liblinear_sources,
-                         libraries = blas_info.pop('libraries', []),
+                         libraries = blas_info.pop('libraries', ['blas']),
                          include_dirs=['src',
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
@@ -67,14 +67,53 @@ def configuration(parent_package='',top_path=None):
                                   join('src', 'blas', 'blas.h'),
                                   join('src', 'blas', 'blasp.h')],
                          **blas_info)
+
     ## end liblinear module
 
-    config.add_extension('BallTree',
+    # minilear needs cblas, fortran-compiled BLAS will not be sufficient
+    blas_info = get_info('blas_opt', 0)
+    if not blas_info or (
+        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
+        config.add_library('cblas',
+                           sources=[
+                               join('src', 'cblas', '*.c'),
+                               ]
+                           )
+
+    minilearn_sources = [
+        join('src', 'minilearn', 'lars.c'),
+        join('src', 'minilearn', '_minilearn.c')]
+
+
+    config.add_extension('_minilearn',
+                         sources=minilearn_sources,
+                         libraries = blas_info.pop('libraries', 
+                                                    ['cblas']),
+                         include_dirs=[join('src', 'minilearn'),
+                                       join('src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=['-std=c99'] + \
+                                             blas_info.pop('extra_compile_args', []),
+                         **blas_info
+                         )
+
+    config.add_extension('ball_tree',
                          sources=[join('src', 'BallTree.cpp')],
                          include_dirs=[numpy.get_include()]
                          )
 
+    config.add_extension('cd_fast',
+                         sources=[join('src', 'cd_fast.c')],
+                         # libraries=['m'],
+                         include_dirs=[numpy.get_include()])
+
+
     config.add_subpackage('utils')
+
+    # add the test directory
+    config.add_data_dir('tests')
+
     return config
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 
-from scikits.learn.BallTree import BallTree, knn_brute
+from scikits.learn.ball_tree import BallTree, knn_brute
 import numpy as np
 from time import time
 
