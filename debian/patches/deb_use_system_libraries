@@ -3,10 +3,11 @@
 @@ -1,9 +1,9 @@
  
  # Uncomment to link against system-wide libsvm
- # [libsvm]
+-# [libsvm]
 -# libraries=svm
 -# library_dirs=/usr/lib
 -# include_dirs=/usr/include/libsvm-2.0/libsvm
++[libsvm]
 +libraries=svm
 +library_dirs=/usr/lib
 +include_dirs=/usr/include/libsvm-2.0/libsvm
