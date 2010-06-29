@@ -1,3 +1,11 @@
+scikit-learn (0.4-1) unstable; urgency=low
+
+  * Fresh upstream release:
+    - no boost library used any longer (removed from Build-Depends)
+  * Moving under NeuroDebian umbrella
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 29 Jun 2010 09:32:18 -0400
+
 scikit-learn (0.3-4) unstable; urgency=low
 
   * Disabling test_gmm_em unittests while building (Closes: #580879).

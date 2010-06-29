@@ -1,18 +1,16 @@
 --- a/site.cfg
 +++ b/site.cfg
-@@ -1,8 +1,8 @@
- # uncomment this to compile libraries that depend on boost
--# [boost]
--# use_boost=True
-+[boost]
-+use_boost=True
+@@ -1,9 +1,9 @@
  
+ # Uncomment to link against system-wide libsvm
 -# [libsvm]
 -# libraries=svm
 -# library_dirs=/usr/lib
 -# include_dirs=/usr/include/libsvm-2.0/libsvm
-\ No newline at end of file
 +[libsvm]
 +libraries=svm
 +library_dirs=/usr/lib
 +include_dirs=/usr/include/libsvm-2.0/libsvm
+ 
+ # Uncomment to link against the MKL library on windows
+ # [mkl]
