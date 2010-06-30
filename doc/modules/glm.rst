@@ -129,6 +129,19 @@ Least Angle Regression
 Least Angle Regression is a regression model similar to the Lasso. It
 is implemented using the LARS algorithm.
 
+The algorithm is similar to forward stepwise regression, but instead
+of including variables at each step, the estimated parameters are
+increased in a direction equiangular to each one's correlations with
+the residual.
+
+Instead of giving a vector result, the LARS solution consists of a
+curve denoting the solution for each value of the L1 norm of the
+parameter vector. The full coeffients path is stored in the array
+``coef_path_``, which has size (n_features, max_features+1). The first
+column is always zero.
+
+
+
 Contrary to the algorithms based on coordinate descent, the LARS
 
 .. warning::

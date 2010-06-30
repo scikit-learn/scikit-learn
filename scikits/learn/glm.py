@@ -900,8 +900,9 @@ class ElasticNetCV(LinearModelCV):
 
 class LeastAngleRegression (LinearModel):
     """
-    Least Angle Regression using the LARS algorithm
+    Least Angle Regression using the LARS algorithm.
 
+    Least Angle Regression 
 
     Attributes
     ----------
@@ -925,8 +926,14 @@ class LeastAngleRegression (LinearModel):
 
     """
 
+    def __init__(self):
+        self.alphas_ = np.empty(0, dtype=np.float64)
+        self._chol   = np.empty(0, dtype=np.float64)
+        self.beta_    = np.empty(0, dtype=np.float64)
+
     def fit (self, X, Y, intercept=True, max_features=None, normalize=True):
         """
+        Fit the model according to data X, Y.
 
         Parameters
         ----------
@@ -948,8 +955,8 @@ class LeastAngleRegression (LinearModel):
             will be used.
 
         normalize : boolean
-            whether to normalize (make all columns have mean 0 and
-            norm 1).
+            whether to normalize (make all non-zero columns have mean
+            0 and norm 1).
         """
         ## TODO: resize (not create) arrays, check shape,
         ##    add a real intercept
@@ -964,9 +971,9 @@ class LeastAngleRegression (LinearModel):
             max_features = min(*X.shape)-1
 
         sum_k = max_features * (max_features + 1) /2
-        self.alphas_ = np.zeros(max_features + 1, dtype=np.float64)
-        self._cholesky = np.zeros(sum_k, dtype=np.float64)
-        self.beta_ = np.zeros(sum_k , dtype=np.float64)
+        self.alphas_.resize(max_features + 1)
+        self._chol.resize(sum_k)
+        self.beta_.resize(sum_k)
         coef_row = np.zeros(sum_k, dtype=np.int32)
         coef_col = np.zeros(sum_k, dtype=np.int32)
 
@@ -985,7 +992,7 @@ class LeastAngleRegression (LinearModel):
             self._ymean = 0.
 
         lars_fit_wrap(0, X, Y, self.beta_, self.alphas_, coef_row,
-                      coef_col, self._cholesky, max_features)
+                      coef_col, self._chol, max_features)
 
         self.coef_path_ = sp.coo_matrix((self.beta_,
                                         (coef_row, coef_col)),
@@ -1003,7 +1010,7 @@ class LeastAngleRegression (LinearModel):
 
     def predict(self, X, normalize=True):
         """
-        Predict using the linear model
+        Predict using the linear model.
 
         Parameters
         ----------
