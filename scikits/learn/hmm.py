@@ -1,8 +1,5 @@
-import abc
 import functools
 import itertools
-import logging
-import time
 
 import numpy as np
 import scipy as sp
@@ -13,8 +10,6 @@ from gmm import _distribute_covar_matrix_to_match_cvtype, _validate_covars
 import hmm_trainers
 
 ZEROLOGPROB = -1e200
-
-log = logging.getLogger('gm.hmm')
 
 def HMM(emission_type='gaussian', *args, **kwargs):
     """Create an HMM object with the given emission_type."""
@@ -66,7 +61,6 @@ class _BaseHMM(object):
     --------
     GMM : Gaussian mixture model
     """
-    __metaclass__ = abc.ABCMeta
 
     # This class implements the public interface to all HMMs that
     # derive from it, including all of the machinery for the
@@ -80,7 +74,7 @@ class _BaseHMM(object):
     # Subclasses will probably also want to implement properties for
     # the emission distribution parameters to expose them publically.
 
-    @abc.abstractproperty
+    @property
     def emission_type(self):
         """String identifier for the emission distribution used by this HMM"""
         return None
@@ -442,15 +436,12 @@ class _BaseHMM(object):
         state_idx, = np.nonzero(lattice_frame >= threshlogprob)
         return state_idx
 
-    @abc.abstractmethod
     def _compute_log_likelihood(self, obs):
         pass
     
-    @abc.abstractmethod
     def _generate_sample_from_state(self, state):
         pass
 
-    @abc.abstractmethod
     def _init(self, obs, params, **kwargs):
         if 's' in params:
             self.startprob[:] = 1.0 / self._nstates

@@ -1,19 +1,11 @@
-import abc
-import logging
-import time
-
 import numpy as np
 
 from gmm import *
 
-log = logging.getLogger('gm.hmm_trainers')
-
 class HMMTrainer(object):
     """Abstract base class for HMM training algorithms."""
 
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractproperty
+    @property
     def emission_type(self):
         pass
 
@@ -60,7 +52,6 @@ class HMMTrainer(object):
         (e.g. based on model adaptation), getting more training data,
         or decreasing `covarprior`.
         """
-        T = time.time()
         logprob = []
         for i in xrange(iter):
             # Expectation step
@@ -81,34 +72,23 @@ class HMMTrainer(object):
                                                        params)
             logprob.append(curr_logprob)
 
-            currT = time.time()
-            log.info('Iteration %d: log likelihood = %f (took %f seconds).'
-                      % (i, logprob[-1], currT - T))
-            T = currT
-
-            if i > 0:
-                if logprob[-1] < logprob[-2]:
-                    log.warning("Log likelihood decreased at iteration %d.", i)
-                if abs(logprob[-1] - logprob[-2]) < thresh:
-                    log.info('Converged at iteration %d.' % i)
-                    break
+            # Check for convergence.
+            if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
+                break
 
             # Maximization step
             self._do_mstep(hmm, stats, params, **kwargs)
 
         return logprob
 
-    @abc.abstractmethod
     def _initialize_sufficient_statistics(self, hmm):
         pass
 
-    @abc.abstractmethod
     def _accumulate_sufficient_statistics(self, hmm, stats, seq, framelogprob, 
                                           posteriors, fwdlattice,
                                           bwdlattice, params):
         pass
     
-    @abc.abstractmethod
     def _do_mstep(self, hmm, stats, params, **kwargs):
         pass
 
