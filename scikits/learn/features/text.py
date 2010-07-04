@@ -101,18 +101,14 @@ class HashingVectorizer(object):
         """Compute the TF-log(IDF) vectors of the sampled documents"""
         return self.tf_vectors * np.log(float(self.sampled) / self.df_counts)
 
+    def vectorize(self, root_folder):
+        """Scan a folder structure for text documents and estimate frequencies
 
-if __name__ == "__main__":
+        If this is a 2 level folder structure the first level is assumed to be
+        categories to be used as labels for supervised learning.
+        """
+        # TODO: implement me!
+        pass
 
-    # TODO: write unittests instead!
-    hv = HashingVectorizer(dim=10, probes=2)
-    print hv.analyzer.analyze(u"This is a s\xe9ntence named Mary; with puncts...")
 
-    print hv.sample_document("This is a test document.")
-    print hv.sample_document("This is not a test.")
-    print hv.sample_document("document document document this toto")
-    print hv.tf_vectors
-    print hv.df_counts
-    print hv.sampled
-    print hv.get_tfidf()
 
