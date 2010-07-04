@@ -63,14 +63,13 @@ class HashingVectorizer(object):
         # computing IDF
         self.df_counts = np.ones(dim, dtype=long)
         self.tf_vectors = None
-        self.labels = []
         self.sampled = 0
 
     def hash_sign(self, token, probe=0):
         h = hash(token + (probe * u"#"))
         return abs(h) % self.dim, 1.0 if h % 2 == 0 else -1.0
 
-    def sample_document(self, text, tf_vector=None, label=None):
+    def sample_document(self, text, tf_vector=None, update_estimates=True):
         """Extract features from text and update running freq estimates"""
         if tf_vector is None:
             # allocate term frequency vector and stack to history
@@ -80,8 +79,6 @@ class HashingVectorizer(object):
             else:
                 self.tf_vectors = np.vstack((self.tf_vectors, tf_vector))
                 tf_vector = self.tf_vectors[-1]
-        if label is not None:
-            self.labels.append(label)
 
         tokens = self.analyzer.analyze(text)
         for token in tokens:
@@ -92,9 +89,10 @@ class HashingVectorizer(object):
                 tf_vector[i] += incr
         tf_vector /= len(tokens) * self.probes
 
-        # update the running DF estimate
-        self.df_counts += tf_vector != 0.0
-        self.sampled += 1
+        if update_estimates:
+            # update the running DF estimate
+            self.df_counts += tf_vector != 0.0
+            self.sampled += 1
         return tf_vector
 
     def get_tfidf(self):

@@ -2,6 +2,7 @@ from scikits.learn.features.text import strip_accents
 from scikits.learn.features.text import SimpleAnalyzer
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.logistic import LogisticRegression
+import numpy as np
 from nose.tools import *
 
 
@@ -44,24 +45,27 @@ def test_tf_idf():
     hv = HashingVectorizer(dim=1000, probes=3)
 
     # junk food documents
-    hv.sample_document("the pizza pizza beer", label=-1)
-    hv.sample_document("the pizza pizza beer", label=-1)
-    hv.sample_document("the the pizza beer beer", label=-1)
-    hv.sample_document("the pizza beer beer", label=-1)
-    hv.sample_document("the coke beer coke", label=-1)
-    hv.sample_document("the coke pizza pizza", label=-1)
+    hv.sample_document("the pizza pizza beer")
+    hv.sample_document("the pizza pizza beer")
+    hv.sample_document("the the pizza beer beer")
+    hv.sample_document("the pizza beer beer")
+    hv.sample_document("the coke beer coke")
+    hv.sample_document("the coke pizza pizza")
 
     # not-junk food documents
-    hv.sample_document("the salad celeri", label=1)
-    hv.sample_document("the salad salad sparkling water", label=1)
-    hv.sample_document("the the celeri celeri", label=1)
-    hv.sample_document("the tomato tomato salad water", label=1)
-    hv.sample_document("the tomato salad water", label=1)
+    hv.sample_document("the salad celeri")
+    hv.sample_document("the salad salad sparkling water")
+    hv.sample_document("the the celeri celeri")
+    hv.sample_document("the tomato tomato salad water")
+    hv.sample_document("the tomato salad water")
 
     # extract the TF-IDF data
-    X, y = hv.get_tfidf(), hv.labels
+    X = hv.get_tfidf()
     assert_equal(X.shape, (11, 1000))
-    assert_equal(len(y), 11)
+
+    # label junk food as -1, the others as +1
+    y = np.ones(X.shape[0])
+    y[:6] = -1
 
     # train and test a classifier
     clf = LogisticRegression().fit(X[1:-1], y[1:-1])
