@@ -26,9 +26,12 @@ class SimpleAnalyzer(object):
 
     token_pattern = re.compile(r"\b\w\w+\b", re.U)
 
+    def __init__(self, default_charset='utf-8'):
+        self.charset = default_charset
+
     def analyze(self, text_document):
         if isinstance(text_document, str):
-            text_document = text_document.decode("utf-8")
+            text_document = text_document.decode(self.charset, 'ignore')
         text_document = strip_accents(text_document.lower())
         return re.findall(self.token_pattern, text_document)
 
@@ -54,10 +57,12 @@ class HashingVectorizer(object):
     # TODO: implement me using the murmurhash that might be faster: but profile
     # me first :)
 
-    def __init__(self, dim=5000, probes=3, analyzer=SimpleAnalyzer()):
+    def __init__(self, dim=5000, probes=3, analyzer=SimpleAnalyzer(),
+                 use_idf=True):
         self.dim = dim
         self.probes = probes
         self.analyzer = analyzer
+        self.use_idf = use_idf
 
         # start counts at one to avoid zero division while
         # computing IDF
@@ -89,24 +94,39 @@ class HashingVectorizer(object):
                 tf_vector[i] += incr
         tf_vector /= len(tokens) * self.probes
 
-        if update_estimates:
+        if update_estimates and self.use_idf:
             # update the running DF estimate
             self.df_counts += tf_vector != 0.0
             self.sampled += 1
         return tf_vector
 
+    def get_idf(self):
+        return np.log(float(self.sampled) / self.df_counts)
+
     def get_tfidf(self):
         """Compute the TF-log(IDF) vectors of the sampled documents"""
-        return self.tf_vectors * np.log(float(self.sampled) / self.df_counts)
+        if self.tf_vectors is None:
+            return None
+        return self.tf_vectors * self.get_idf()
 
-    def vectorize(self, root_folder):
-        """Scan a folder structure for text documents and estimate frequencies
+    def vectorize(self, document_filepaths):
+        """Vectorize a batch of documents"""
+        tf_vectors = np.zeros((len(document_filepaths), self.dim))
+        for i, filepath in enumerate(document_filepaths):
+            self.sample_document(file(filepath).read(), tf_vectors[i])
 
-        If this is a 2 level folder structure the first level is assumed to be
-        categories to be used as labels for supervised learning.
-        """
-        # TODO: implement me!
-        pass
+        if self.tf_vectors is None:
+            self.tf_vectors = tf_vectors
+        else:
+            self.tf_vectors = np.vstack((self.tf_vectors, tf_vectors))
+
+
+    def get_vectors(self):
+        if self.use_idf:
+            return self.get_tfidf()
+        else:
+            return self.tf_vectors
+
 
 
 

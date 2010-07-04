@@ -4,11 +4,29 @@
 
 import os
 from scikits.learn.datasets.base import Bunch
+from scikits.learn.features.text import HashingVectorizer
 
 
-def load_document_classification(dataset_path, metadata, **kw):
-    return Bunch(data=None, target=None, target_names=None,
-                 DESCR=metadata.get('description'))
+def load_document_classification(dataset_path, metadata, set_, **kw):
+    """Loader implementation for the DocumentClassification format"""
+    target = []
+    target_names = {}
+    vectorizer = kw.get('vectorizer', HashingVectorizer())
+
+    dataset_path = os.path.join(dataset_path, set_)
+    folders = [f for f in sorted(os.listdir(dataset_path))
+               if os.path.isdir(os.path.join(dataset_path, f))]
+    for label, folder in enumerate(folders):
+        target_names[label] = folder
+        folder_path = os.path.join(dataset_path, folder)
+        documents = [os.path.join(folder_path, d)
+                     for d in sorted(os.listdir(folder_path))]
+        vectorizer.vectorize(documents)
+        target.extend(len(documents) * [label])
+
+    return Bunch(data=vectorizer.get_vectors(), target=target,
+                 target_names=target_names, DESCR=metadata.get('description'))
+
 
 LOADERS = {
     'DocumentClassification': load_document_classification,
@@ -16,7 +34,7 @@ LOADERS = {
 }
 
 
-def load_mlcomp(name_or_id, mlcomp_root=None, **kwargs):
+def load_mlcomp(name_or_id, mlcomp_root=None, set_="raw", **kwargs):
     """Load a datasets as downloaded from http://mlcomp.org
 
     Parameters
@@ -28,6 +46,8 @@ def load_mlcomp(name_or_id, mlcomp_root=None, **kwargs):
     mlcomp_root : the filesystem path to the root folder where MLComp datasets
                   are stored, if mlcomp_root is None, the MLCOMP_DATASETS_HOME
                   environment variable is looked up instead.
+
+    set_ : select the portion to load: 'train', 'test' or 'raw'
 
     **kwargs : domain specific kwargs to be passed to the dataset loader.
 
@@ -59,7 +79,6 @@ def load_mlcomp(name_or_id, mlcomp_root=None, **kwargs):
 
     if not os.path.exists(mlcomp_root):
         raise ValueError("Could not find folder: " + mlcomp_root)
-
 
     # dataset lookup
     if isinstance(name_or_id, int):
@@ -95,9 +114,8 @@ def load_mlcomp(name_or_id, mlcomp_root=None, **kwargs):
     loader = LOADERS.get(format)
     if loader is None:
         raise ValueError("No loader implemented for format: " + format)
-    return loader(dataset_path, metadata, **kwargs)
+    return loader(dataset_path, metadata, set_=set_, **kwargs)
 
 
 if __name__ == "__main__":
-    print load_mlcomp('20news-18828')
-    print load_mlcomp(379)
+    twentynews = load_mlcomp('20news-18828')
