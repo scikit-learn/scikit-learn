@@ -3,6 +3,7 @@
 """Glue code to load http://mlcomp.org data as a scikit.learn dataset"""
 
 import os
+import numpy as np
 from scikits.learn.datasets.base import Bunch
 from scikits.learn.features.text import HashingVectorizer
 
@@ -13,6 +14,12 @@ def load_document_classification(dataset_path, metadata, set_, **kw):
     target_names = {}
     filenames = []
     vectorizer = kw.get('vectorizer', HashingVectorizer())
+
+    # TODO: make it possible to plug a several pass system to filter-out tokens
+    # that occur in more than 30% of the documents for instance.
+
+    # TODO: use joblib.Parallel or multiprocessing to parallelize the following
+    # (provided this is not IO bound)
 
     dataset_path = os.path.join(dataset_path, set_)
     folders = [f for f in sorted(os.listdir(dataset_path))
@@ -26,7 +33,7 @@ def load_document_classification(dataset_path, metadata, set_, **kw):
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
-    return Bunch(data=vectorizer.get_vectors(), target=target,
+    return Bunch(data=vectorizer.get_vectors(), target=np.array(target),
                  target_names=target_names, filenames=filenames,
                  DESCR=metadata.get('description'))
 

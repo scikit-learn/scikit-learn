@@ -26,6 +26,8 @@ class SimpleAnalyzer(object):
 
     token_pattern = re.compile(r"\b\w\w+\b", re.U)
 
+    # TODO: make it possible to pass stop words list here
+
     def __init__(self, default_charset='utf-8'):
         self.charset = default_charset
 
@@ -58,7 +60,11 @@ class HashingVectorizer(object):
     # TODO: implement me using the murmurhash that might be faster: but profile
     # me first :)
 
-    def __init__(self, dim=1000, probes=3, analyzer=SimpleAnalyzer(),
+    # TODO: make it possible to select between the current dense representation
+    # and sparse alternatives from scipy.sparse once the liblinear and libsvm
+    # wrappers have been updated to be able to handle it efficiently
+
+    def __init__(self, dim=5000, probes=3, analyzer=SimpleAnalyzer(),
                  use_idf=True):
         self.dim = dim
         self.probes = probes
@@ -121,13 +127,10 @@ class HashingVectorizer(object):
         else:
             self.tf_vectors = np.vstack((self.tf_vectors, tf_vectors))
 
-
     def get_vectors(self):
         if self.use_idf:
             return self.get_tfidf()
         else:
             return self.tf_vectors
-
-
 
 
