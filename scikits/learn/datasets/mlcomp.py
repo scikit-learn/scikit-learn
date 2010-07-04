@@ -11,6 +11,7 @@ def load_document_classification(dataset_path, metadata, set_, **kw):
     """Loader implementation for the DocumentClassification format"""
     target = []
     target_names = {}
+    filenames = []
     vectorizer = kw.get('vectorizer', HashingVectorizer())
 
     dataset_path = os.path.join(dataset_path, set_)
@@ -23,9 +24,11 @@ def load_document_classification(dataset_path, metadata, set_, **kw):
                      for d in sorted(os.listdir(folder_path))]
         vectorizer.vectorize(documents)
         target.extend(len(documents) * [label])
+        filenames.extend(documents)
 
     return Bunch(data=vectorizer.get_vectors(), target=target,
-                 target_names=target_names, DESCR=metadata.get('description'))
+                 target_names=target_names, filenames=filenames,
+                 DESCR=metadata.get('description'))
 
 
 LOADERS = {
