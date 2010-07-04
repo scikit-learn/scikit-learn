@@ -51,13 +51,14 @@ class HashingVectorizer(object):
     Documents is a sequence of lists of tokens to initialize the DF estimates.
 
     TODO handle bigrams in a smart way such as demonstrated here:
+
       http://streamhacker.com/2010/05/24/text-classification-sentiment-analysis-stopwords-collocations/
 
     """
     # TODO: implement me using the murmurhash that might be faster: but profile
     # me first :)
 
-    def __init__(self, dim=5000, probes=3, analyzer=SimpleAnalyzer(),
+    def __init__(self, dim=1000, probes=3, analyzer=SimpleAnalyzer(),
                  use_idf=True):
         self.dim = dim
         self.probes = probes
