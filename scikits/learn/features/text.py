@@ -35,7 +35,7 @@ class SimpleAnalyzer(object):
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
         text_document = strip_accents(text_document.lower())
-        return re.findall(self.token_pattern, text_document)
+        return self.token_pattern.findall(text_document)
 
 
 class HashingVectorizer(object):
