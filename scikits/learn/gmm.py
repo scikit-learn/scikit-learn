@@ -168,8 +168,6 @@ class GMM(object):
         Find most likely mixture components for each point in `obs`.
     rvs(n=1)
         Generate `n` samples from the model.
-    init(obs)
-        Initialize model parameters from `obs`.
     fit(obs)
         Estimate model parameters from `obs` using the EM algorithm.
 
@@ -178,8 +176,6 @@ class GMM(object):
     >>> gmm = GMM(2, ndim=1)
     >>> obs = numpy.concatenate((numpy.random.randn(100, 1),
     ...                          10 + numpy.random.randn(300, 1)))
-    >>> # Roughly initialize the model parameters.
-    >>> gmm.init(obs)
     >>> gmm.fit(obs)
     >>> gmm.weights, gmm.means, gmm.covars
     (array([ 0.25,  0.75]),
