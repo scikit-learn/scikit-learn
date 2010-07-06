@@ -58,9 +58,9 @@ print "done in %fs" % (time() - t0)
 # The documents have been hashed into TF-IDF (Term Frequencies times Inverse
 # Document Frequencies) vectors of a fixed dimension.
 # Currently most scikits.learn wrappers or algorithm implementations are unable
-# to leverage efficiently a sparse datastracture; hence we use of a this dense
+# to leverage efficiently a sparse datastracture; hence we use a dense
 # representation of a text dataset. Efficient handling of sparse data
-# structures should be expected for in an upcoming version of scikits.learn
+# structures should be expected in an upcoming version of scikits.learn
 print "n_samples: %d, n_features: %d" % news_train.data.shape
 
 print "Training a linear classification model with L1 penalty... "

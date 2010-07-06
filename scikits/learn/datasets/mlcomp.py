@@ -8,7 +8,7 @@ from scikits.learn.datasets.base import Bunch
 from scikits.learn.features.text import HashingVectorizer
 
 
-def load_document_classification(dataset_path, metadata, set_, **kw):
+def _load_document_classification(dataset_path, metadata, set_, **kw):
     """Loader implementation for the DocumentClassification format"""
     target = []
     target_names = {}
@@ -39,7 +39,7 @@ def load_document_classification(dataset_path, metadata, set_, **kw):
 
 
 LOADERS = {
-    'DocumentClassification': load_document_classification,
+    'DocumentClassification': _load_document_classification,
     # TODO: implement the remaining domain formats
 }
 
@@ -127,5 +127,3 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     return loader(dataset_path, metadata, set_=set_, **kwargs)
 
 
-if __name__ == "__main__":
-    twentynews = load_mlcomp('20news-18828')
