@@ -80,7 +80,7 @@ class _BaseHMM(object):
         """String identifier for the emission distribution used by this HMM"""
         return None
 
-    def __init__(self, nstates=1, startprob=None, transmat=None, labels=None,
+    def __init__(self, nstates, startprob=None, transmat=None, labels=None,
                  trainer=hmm_trainers.BaseHMMBaumWelchTrainer()):
         self._nstates = nstates
 
@@ -202,8 +202,8 @@ class _BaseHMM(object):
         -------
         viterbi_logprob : float
             Log probability of the maximum likelihood path through the HMM
-        components : array_like, shape (n,)
-            Index of the most likelihood states for each observation
+        states : array_like, shape (n,)
+            Index of the most likely states for each observation
 
         See Also
         --------
@@ -214,6 +214,33 @@ class _BaseHMM(object):
         logprob, state_sequence = self._do_viterbi_pass(framelogprob, maxrank,
                                                         beamlogprob)
         return logprob, state_sequence
+
+    def predict(self, obs, **kwargs):
+        """Find most likely state sequence corresponding to `obs`.
+
+
+        Parameters
+        ----------
+        obs : array_like, shape (n, ndim)
+            List of ndim-dimensional data points.  Each row corresponds to a
+            single data point.
+        maxrank : int
+            Maximum rank to evaluate for rank pruning.  If not None,
+            only consider the top `maxrank` states in the inner
+            sum of the forward algorithm recursion.  Defaults to None
+            (no rank pruning).  See The HTK Book for more details.
+        beamlogprob : float
+            Width of the beam-pruning beam in log-probability units.
+            Defaults to -numpy.Inf (no beam pruning).  See The HTK
+            Book for more details.
+
+        Returns
+        -------
+        states : array_like, shape (n,)
+            Index of the most likely states for each observation
+        """
+        logprob, state_sequence = self.decode(obs, **kwargs)
+        return state_sequence
         
     def rvs(self, n=1):
         """Generate random samples from the model.
@@ -289,7 +316,8 @@ class _BaseHMM(object):
         logprob : list
             Log probabilities of each data point in `obs` for each iteration
         """
-            
+        obs = np.asanyarray(obs)
+        
         self._init(obs, init_params, **kwargs)
             
         if trainer is None:
@@ -316,7 +344,7 @@ class _BaseHMM(object):
         if not np.allclose(np.sum(startprob), 1.0):
             raise ValueError('startprob must sum to 1.0')
         
-        self._log_startprob = np.log(np.asarray(startprob).copy())
+        self._log_startprob = np.log(np.asanyarray(startprob).copy())
 
     startprob = property(_get_startprob, _set_startprob)
 
@@ -325,12 +353,12 @@ class _BaseHMM(object):
         return np.exp(self._log_transmat)
 
     def _set_transmat(self, transmat):
-        if np.asarray(transmat).shape != (self._nstates, self._nstates):
+        if np.asanyarray(transmat).shape != (self._nstates, self._nstates):
             raise ValueError('transmat must have shape (nstates, nstates)')
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
         
-        self._log_transmat = np.log(np.asarray(transmat).copy())
+        self._log_transmat = np.log(np.asanyarray(transmat).copy())
         underflow_idx = np.isnan(self._log_transmat)
         self._log_transmat[underflow_idx] = -np.Inf
 
@@ -494,7 +522,7 @@ class GaussianHMM(_BaseHMM):
 
     emission_type = 'gaussian'
 
-    def __init__(self, nstates=1, ndim=1, cvtype='diag', startprob=None,
+    def __init__(self, nstates, ndim=1, cvtype='diag', startprob=None,
                  transmat=None, labels=None, means=None, covars=None,
                  trainer=hmm_trainers.GaussianHMMBaumWelchTrainer()):
         """Create a hidden Markov model with Gaussian emissions.
@@ -504,11 +532,11 @@ class GaussianHMM(_BaseHMM):
 
         Parameters
         ----------
-        ndim : int
-            Dimensionality of the states.
         nstates : int
             Number of states.
-        cvtype : string (read-only)
+        ndim : int
+            Dimensionality of the states.
+        cvtype : string
             String describing the type of covariance parameters to
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
             Defaults to 'diag'.
@@ -517,7 +545,9 @@ class GaussianHMM(_BaseHMM):
 
         self._ndim = ndim
         self._cvtype = cvtype
-
+        if not cvtype in ['spherical', 'tied', 'diag', 'full']:
+            raise ValueError('bad cvtype')
+        
         if means is None:
             means = np.zeros((nstates, ndim))
         self.means = means
@@ -549,7 +579,7 @@ class GaussianHMM(_BaseHMM):
         return self._means
 
     def _set_means(self, means):
-        means = np.asarray(means)
+        means = np.asanyarray(means)
         if means.shape != (self._nstates, self._ndim):
             raise ValueError('means must have shape (nstates, ndim)')
         self._means = means.copy()
@@ -561,7 +591,7 @@ class GaussianHMM(_BaseHMM):
         return self._covars
 
     def _set_covars(self, covars):
-        covars = np.asarray(covars)
+        covars = np.asanyarray(covars)
         #_validate_covars(covars, self._cvtype, self._nstates, self._ndim)
         self._covars = covars.copy()
 
@@ -579,6 +609,7 @@ class GaussianHMM(_BaseHMM):
 
     def _init(self, obs, params='stmc', **kwargs):
         super(GaussianHMM, self)._init(obs, params=params)
+        
 
         if 'm' in params:
             self._means, tmp = sp.cluster.vq.kmeans2(obs[0], self._nstates,
