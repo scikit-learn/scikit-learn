@@ -5,6 +5,7 @@ import numpy as np
 import scipy as sp
 import scipy.cluster
 
+import gmm
 from gmm import *
 from gmm import _distribute_covar_matrix_to_match_cvtype #, _validate_covars
 import hmm_trainers
@@ -77,8 +78,8 @@ class _BaseHMM(object):
         """String identifier for the emission distribution used by this HMM"""
         return None
 
-    def __init__(self, nstates=1, startprob=None, transmat=None,
-        labels=None, trainer=hmm_trainers.BaseHMMBaumWelchTrainer()):
+    def __init__(self, nstates=1, startprob=None, transmat=None, labels=None,
+                 trainer=hmm_trainers.BaseHMMBaumWelchTrainer()):
         self._nstates = nstates
 
         if startprob is None:
@@ -93,7 +94,7 @@ class _BaseHMM(object):
             labels = [None] * nstates
         self.labels = labels
 
-        self.trainer = trainer
+        self._default_trainer = trainer
 
     def eval(self, obs, maxrank=None, beamlogprob=-np.Inf):
         """Compute the log probability under the model and compute posteriors
@@ -266,7 +267,7 @@ class _BaseHMM(object):
         self._init(obs, params, **kwargs)
 
     def train(self, obs, iter=10, thresh=1e-2, params='stmpc',
-              maxrank=None, beamlogprob=-np.Inf, **kwargs):
+              maxrank=None, beamlogprob=-np.Inf, trainer=None, **kwargs):
         """Estimate model parameters with the Baum-Welch algorithm.
 
         Parameters
@@ -297,9 +298,15 @@ class _BaseHMM(object):
         logprob : list
             Log probabilities of each data point in `obs` for each iteration
         """
-        return self.trainer.train(self, obs, iter, thresh, params,
-                                  maxrank, beamlogprob, **kwargs)
+        if trainer is None:
+            trainer = self._default_trainer
+        
+        if self.emission_type != trainer.emission_type:
+            raise ValueError('trainer has incompatible emission_type')
 
+        return trainer.train(self, obs, iter, thresh, params, maxrank,
+                             beamlogprob, **kwargs)
+    
     @property
     def nstates(self):
         """Number of states in the model."""
@@ -335,17 +342,6 @@ class _BaseHMM(object):
 
     transmat = property(_get_transmat, _set_transmat)
     
-    def _get_trainer(self):
-        """HMMTrainer used to train this HMM."""
-        return self._trainer
-
-    def _set_trainer(self, trainer):
-        if self.emission_type != trainer.emission_type:
-            raise ValueError('trainer has incompatible emission_type')
-        self._trainer = trainer
-    trainer = property(_get_trainer, _set_trainer)
-
-
     def _do_viterbi_pass(self, framelogprob, maxrank=None, beamlogprob=-np.Inf):
         nobs = len(framelogprob)
         lattice = np.zeros((nobs, self._nstates))
@@ -504,9 +500,8 @@ class GaussianHMM(_BaseHMM):
 
     emission_type = 'gaussian'
 
-    def __init__(self, nstates=1, ndim=1, cvtype='diag',
-                 startprob=None, transmat=None, labels=None,
-                 means=None, covars=None,
+    def __init__(self, nstates=1, ndim=1, cvtype='diag', startprob=None,
+                 transmat=None, labels=None, means=None, covars=None,
                  trainer=hmm_trainers.GaussianHMMBaumWelchTrainer()):
         """Create a hidden Markov model with Gaussian emissions.
 
@@ -524,8 +519,7 @@ class GaussianHMM(_BaseHMM):
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
             Defaults to 'diag'.
         """
-        super(GaussianHMM, self).__init__(nstates, startprob,
-                                          transmat, labels, trainer)
+        super(GaussianHMM, self).__init__(nstates, startprob, transmat, labels)
 
         self._ndim = ndim
         self._cvtype = cvtype
@@ -539,7 +533,8 @@ class GaussianHMM(_BaseHMM):
                                                               cvtype, nstates)
         self.covars = covars
 
-        self.trainer = trainer
+        self._default_trainer = trainer
+
 
     # Read-only properties.
     @property
@@ -654,7 +649,7 @@ class GMMHMM(_BaseHMM):
 
     def __init__(self, nstates=1, ndim=1, nmix=1, cvtype='diag',
                  startprob=None, transmat=None, labels=None, gmms=None,
-                 trainer=None): #hmm_trainers.GMMHMMBaumWelchTrainer()):
+                 trainer=None):
         """Create a hidden Markov model with GMM emissions.
 
         Initializes parameters such that every state has zero mean and
@@ -683,7 +678,7 @@ class GMMHMM(_BaseHMM):
             gmms = [gmm.GMM(nmix, ndim, cvtype)] * nstates
         self.gmms = gmms
 
-        self.trainer = trainer
+        self._default_trainer = trainer
 
     # Read-only properties.
     @property

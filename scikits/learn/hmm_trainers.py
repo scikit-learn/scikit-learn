@@ -3,7 +3,7 @@ import numpy as np
 from gmm import *
 
 class HMMTrainer(object):
-    """Abstract base class for HMM training algorithms."""
+    """Base class for HMM training algorithms."""
 
     @property
     def emission_type(self):
