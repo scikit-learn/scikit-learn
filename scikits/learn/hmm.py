@@ -56,8 +56,6 @@ class _BaseHMM(object):
         Viterbi algorithm.
     rvs(n=1)
         Generate `n` samples from the HMM.
-    init(obs)
-        Initialize HMM parameters from `obs`.
     fit(obs)
         Estimate HMM parameters from `obs`.
 
@@ -248,51 +246,40 @@ class _BaseHMM(object):
 
         return np.array(obs)
 
-    def init(self, obs, params='stmc', **kwargs):
-        """Initialize model parameters from data using the k-means algorithm
-
-        Parameters
-        ----------
-        obs : list
-            List of array-like observation sequences (shape (n_i, ndim)).
-        params : string
-            Controls which parameters are updated in the training
-            process.  Can contain any combination of 's' for startprob,
-            't' for transmat, 'm' for means, and 'c' for covars.
-            Defaults to 'stmc'.
-        **kwargs :
-            Keyword arguments to pass through to the k-means function 
-            (scipy.cluster.vq.kmeans2)
-
-        See Also
-        --------
-        scipy.cluster.vq.kmeans2
-        """
-        self._init(obs, params, **kwargs)
-
-    def fit(self, obs, iter=10, thresh=1e-2, params='stmpc',
+    def fit(self, obs, niter=10, thresh=1e-2, params='stmpc', init_params='stmpc',
             maxrank=None, beamlogprob=-np.Inf, trainer=None, **kwargs):
         """Estimate model parameters with the Baum-Welch algorithm.
 
+        An initialization step is performed before entering the EM
+        algorithm. If you want to avoid this step, set the keyword
+        argument init_params to the empty string ''. Likewise, if you
+        would like just to do an initialization, call this method with
+        niter=0.
+
         Parameters
         ----------
         obs : list
             List of array-like observation sequences (shape (n_i, ndim)).
-        iter : int
+        niter : int, optional
             Number of iterations to perform.
-        thresh : float
+        thresh : float, optional
             Convergence threshold.
-        params : string
+        params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 's' for startprob,
             't' for transmat, 'm' for means, and 'c' for covars, etc.
-            Defaults to all parameters ('stmpc').
-        maxrank : int
+            Defaults to all parameters ('stmc').
+        init_params : string, optional
+            Controls which parameters are initialized prior to
+            training.  Can contain any combination of 's' for
+            startprob, 't' for transmat, 'm' for means, and 'c' for
+            covars, etc.  Defaults to all parameters ('stmc').
+        maxrank : int, optional
             Maximum rank to evaluate for rank pruning.  If not None,
             only consider the top `maxrank` states in the inner
             sum of the forward algorithm recursion.  Defaults to None
             (no rank pruning).  See "The HTK Book" for more details.
-        beamlogprob : float
+        beamlogprob : float, optional
             Width of the beam-pruning beam in log-probability units.
             Defaults to -numpy.Inf (no beam pruning).  See "The HTK
             Book" for more details.
@@ -302,13 +289,16 @@ class _BaseHMM(object):
         logprob : list
             Log probabilities of each data point in `obs` for each iteration
         """
+            
+        self._init(obs, init_params, **kwargs)
+            
         if trainer is None:
             trainer = self._default_trainer
         
         if self.emission_type != trainer.emission_type:
             raise ValueError('trainer has incompatible emission_type')
 
-        return trainer.train(self, obs, iter, thresh, params, maxrank,
+        return trainer.train(self, obs, niter, thresh, params, maxrank,
                              beamlogprob, **kwargs)
     
     @property

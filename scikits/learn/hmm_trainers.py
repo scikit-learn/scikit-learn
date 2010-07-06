@@ -9,7 +9,7 @@ class HMMTrainer(object):
     def emission_type(self):
         pass
 
-    def train(self, hmm, obs, iter=10, thresh=1e-2, params='stmpc',
+    def train(self, hmm, obs, niter=10, thresh=1e-2, params='stmpc',
               maxrank=None, beamlogprob=-np.Inf, **kwargs):
         """Estimate model parameters.
 
@@ -19,7 +19,7 @@ class HMMTrainer(object):
             HMM to train.
         obs : list
             List of array-like observation sequences (shape (n_i, ndim)).
-        iter : int
+        niter : int
             Number of iterations to perform.
         thresh : float
             Convergence threshold.
@@ -53,7 +53,7 @@ class HMMTrainer(object):
         or decreasing `covarprior`.
         """
         logprob = []
-        for i in xrange(iter):
+        for i in xrange(niter):
             # Expectation step
             stats = self._initialize_sufficient_statistics(hmm)
             curr_logprob = 0
@@ -187,11 +187,11 @@ class GaussianHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
                                 + np.outer(hmm._means[c] * stats['post'][c],
                                            hmm._means[c]))
                 if hmm._cvtype == 'tied':
-                    hmm._covars = ((cvnum.sum(axis=0) + cvprior)
-                                   / (1.0 + stats['post'].sum()))
+                    hmm._covars = ((cvnum.sum(0) + cvprior)
+                                   / (1.0 + stats['post'].sum(0)))
                 elif hmm._cvtype == 'full':
                     hmm._covars = ((cvnum + cvprior)
-                                   / (1.0 + stats['post'][:,None,None]))
+                                   / (1.0 + stats['post'][:,np.newaxis,np.newaxis]))
 
 
 class GaussianHMMMAPTrainer(GaussianHMMBaumWelchTrainer):

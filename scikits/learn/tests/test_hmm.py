@@ -297,7 +297,7 @@ class GaussianHMMTester(GaussianHMMParams):
         samples = h.rvs(n)
         self.assertEquals(samples.shape, (n, self.ndim))
 
-    def test_fit(self, params='stmc', niter=5):
+    def test_fit(self, params='stmc', niter=5, **kwargs):
         h = hmm.GaussianHMM(self.nstates, self.ndim, self.cvtype)
         h.startprob = self.startprob
         tmp = self.transmat + np.diag(np.random.rand(self.nstates))
@@ -310,10 +310,10 @@ class GaussianHMMTester(GaussianHMMParams):
         train_obs = [h.rvs(n=10) for x in xrange(50)]
         test_obs = [h.rvs(n=10) for x in xrange(5)]
 
-        h.init(train_obs, minit='points')
+        h.fit(train_obs, niter=0, minit='points')
         init_testll = [h.lpdf(x) for x in test_obs]
 
-        trainll = h.fit(train_obs, iter=niter, params=params)
+        trainll = h.fit(train_obs, niter=niter, params=params, **kwargs)
         if not np.all(np.diff(trainll) > 0):
             print
             print 'Test train: %s (%s)\n  %s\n  %s' % (self.cvtype, params,
@@ -381,11 +381,10 @@ class GaussianHMMMAPTrainerTester(GaussianHMMParams):
         train_obs = [h.rvs(n=10) for x in xrange(10)]
         test_obs = [h.rvs(n=10) for x in xrange(5)]
 
-        h.init(train_obs, minit='points')
+        h.fit(train_obs, niter=0, minit='points')
         init_testll = [h.lpdf(x) for x in test_obs]
 
-        trainll = h.fit(train_obs, iter=niter, params=params, trainer=trainer)
-
+        trainll = h.fit(train_obs, niter=niter, params=params, trainer=trainer)
         if not np.all(np.diff(trainll) > 0):
             print
             print 'Test MAP train: %s (%s)\n  %s\n  %s' % (self.cvtype, params,
@@ -407,12 +406,6 @@ class GaussianHMMMAPTrainerTester(GaussianHMMParams):
 class TestGaussianHMMMAPTrainerWithSphericalCovars(GaussianHMMMAPTrainerTester,
                                                    SeedRandomNumberGeneratorTestCase):
     cvtype = 'spherical'
-
-    def test_fit_startprob_and_transmat(self):
-        self.test_fit('st')
-
-    def test_fit_means(self):
-        self.test_fit('m')
 
 
 class TestGaussianHMMMAPTrainerWithDiagonalCovars(GaussianHMMMAPTrainerTester,
