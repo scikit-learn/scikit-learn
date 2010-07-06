@@ -1,3 +1,7 @@
+# Hidden Markov Models
+#
+# Author: Ron Weiss <ronweiss@gmail.com>
+
 import functools
 import itertools
 
@@ -54,8 +58,8 @@ class _BaseHMM(object):
         Generate `n` samples from the HMM.
     init(obs)
         Initialize HMM parameters from `obs`.
-    train(obs)
-        Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
+    fit(obs)
+        Estimate HMM parameters from `obs`.
 
     See Also
     --------
@@ -266,8 +270,8 @@ class _BaseHMM(object):
         """
         self._init(obs, params, **kwargs)
 
-    def train(self, obs, iter=10, thresh=1e-2, params='stmpc',
-              maxrank=None, beamlogprob=-np.Inf, trainer=None, **kwargs):
+    def fit(self, obs, iter=10, thresh=1e-2, params='stmpc',
+            maxrank=None, beamlogprob=-np.Inf, trainer=None, **kwargs):
         """Estimate model parameters with the Baum-Welch algorithm.
 
         Parameters
@@ -486,7 +490,7 @@ class GaussianHMM(_BaseHMM):
         Generate `n` samples from the HMM.
     init(obs)
         Initialize HMM parameters from `obs`.
-    train(obs)
+    fit(obs)
         Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
 
     Examples
@@ -596,120 +600,3 @@ class GaussianHMM(_BaseHMM):
             self._covars = _distribute_covar_matrix_to_match_cvtype(
                 cv, self._cvtype, self._nstates)
 
-
-class GMMHMM(_BaseHMM):
-    """Semi-continuous Hidden Markov Model with GMM emissions
-
-    Representation of a hidden Markov model probability distribution.
-    This class allows for easy evaluation of, sampling from, and
-    maximum-likelihood estimation of the parameters of a HMM.
-
-    Attributes
-    ----------
-    cvtype : string (read-only)
-        String describing the type of covariance parameters used by
-        the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    ndim : int (read-only)
-        Dimensionality of the Gaussian components.
-    nstates : int (read-only)
-        Number of states in the model.
-    transmat : array, shape (`nstates`, `nstates`)
-        Matrix of transition probabilities between states.
-    startprob : array, shape ('nstates`,)
-        Initial state occupation distribution.
-    gmms : list of `nstates` GMM objects
-        GMM emission distributions for each state.
-    labels : list, len `nstates`
-        Optional labels for each state.
-
-    Methods
-    -------
-    eval(obs)
-        Compute the log likelihood of `obs` under the HMM.
-    decode(obs)
-        Find most likely state sequence for each point in `obs` using the
-        Viterbi algorithm.
-    rvs(n=1)
-        Generate `n` samples from the HMM.
-    init(obs)
-        Initialize HMM parameters from `obs`.
-    train(obs)
-        Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
-
-    Examples
-    --------
-    >>> hmm = HMM('gmm', nstates=2, ndim=1)
-
-    See Also
-    --------
-    GMM : Gaussian mixture model
-    GaussianHMM : Gaussian mixture model
-    """
-    emission_type = 'gmm'
-
-    def __init__(self, nstates=1, ndim=1, nmix=1, cvtype='diag',
-                 startprob=None, transmat=None, labels=None, gmms=None,
-                 trainer=None):
-        """Create a hidden Markov model with GMM emissions.
-
-        Initializes parameters such that every state has zero mean and
-        identity covariance.
-
-        Parameters
-        ----------
-        ndim : int
-            Dimensionality of the states.
-        nmix : int
-            Number of mixture components in each GMM
-        nstates : int
-            Number of states.
-        cvtype : string (read-only)
-            String describing the type of covariance parameters to
-            use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-            Defaults to 'diag'.
-        """
-        super(GMMHMM, self).__init__(nstates, startprob,
-                                     transmat, labels, trainer)
-
-        self._ndim = ndim
-        self._cvtype = cvtype
-
-        if gmms is None:
-            gmms = [gmm.GMM(nmix, ndim, cvtype)] * nstates
-        self.gmms = gmms
-
-        self._default_trainer = trainer
-
-    # Read-only properties.
-    @property
-    def ndim(self):
-        """Dimensionality of the states."""
-        return self._ndim
-
-    @property
-    def gmms(self):
-        """GMM parameters for each state."""
-        return self._gmms
-
-    def _compute_log_likelihood(self, obs):
-        return lmvnpdf(obs, self._means, self._covars, self._cvtype)
-
-    def _generate_sample_from_state(self, state):
-        if self._cvtype == 'tied':
-            cv = self._covars
-        else:
-            cv = self._covars[state]
-        return sample_gaussian(self._means[state], cv, self._cvtype)
-
-    def _init(self, obs, params='stmc', **kwargs):
-        super(GaussianHMM, self)._init(obs, params=params)
-
-        if 'm' in params:
-            self._means, tmp = sp.cluster.vq.kmeans2(obs[0], self._nstates,
-                                                     **kwargs)
-        if 'c' in params:
-            cv = np.cov(obs[0].T)
-            if not cv.shape:
-                cv.shape = (1, 1)
-            self._covars = _distribute_covar_matrix_to_match_cvtype(
-                cv, self._cvtype, self._nstates)
