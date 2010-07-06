@@ -2,7 +2,8 @@ import numpy as np
 from scikits.learn import lda
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
-                          assert_raises, assert_
+                          assert_raises
+from nose.tools import assert_true
 
 # Data is just 6 separable points in the plane
 X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])
@@ -32,5 +33,5 @@ def test_lda():
     # Primarily test for commit 2f34950 -- "reuse" of priors
     y_pred3 = clf.fit(X, y3).predict(X)
     # LDA shouldn't be able to separate those
-    assert_(np.any(y_pred3 != y3))
+    assert_true(np.any(y_pred3 != y3))
 
