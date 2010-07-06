@@ -58,6 +58,8 @@ class _BaseHMM(object):
         Generate `n` samples from the HMM.
     fit(obs)
         Estimate HMM parameters from `obs`.
+    predict(obs)
+        Like decode, find most likely state sequence corresponding to `obs`.
 
     See Also
     --------
@@ -217,7 +219,6 @@ class _BaseHMM(object):
 
     def predict(self, obs, **kwargs):
         """Find most likely state sequence corresponding to `obs`.
-
 
         Parameters
         ----------
@@ -380,12 +381,13 @@ class _BaseHMM(object):
         # Do traceback.
         reverse_state_sequence = []
         s = lattice[-1].argmax()
+        logprob = lattice[-1,s]
         for frame in reversed(traceback):
             reverse_state_sequence.append(s)
             s = frame[s]
 
         reverse_state_sequence.reverse()
-        return logsum(lattice[-1]), np.array(reverse_state_sequence)
+        return logprob, np.array(reverse_state_sequence)
 
     def _do_forward_pass(self, framelogprob, maxrank=None, beamlogprob=-np.Inf):
         nobs = len(framelogprob)
@@ -510,6 +512,8 @@ class GaussianHMM(_BaseHMM):
         Initialize HMM parameters from `obs`.
     fit(obs)
         Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
+    predict(obs)
+        Like decode, find most likely state sequence corresponding to `obs`.
 
     Examples
     --------
