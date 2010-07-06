@@ -94,7 +94,7 @@ class HMMTrainer(object):
 
 
 class BaseHMMBaumWelchTrainer(HMMTrainer):
-    """Abstract base class for HMM trainers.
+    """Base class for HMM trainers.
 
     Uses the Baum-Welch algorithm to train the startprob and transmat
     parameters.

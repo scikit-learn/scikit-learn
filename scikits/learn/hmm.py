@@ -6,24 +6,23 @@ import scipy as sp
 import scipy.cluster
 
 from gmm import *
-from gmm import _distribute_covar_matrix_to_match_cvtype, _validate_covars
+from gmm import _distribute_covar_matrix_to_match_cvtype #, _validate_covars
 import hmm_trainers
 
 ZEROLOGPROB = -1e200
 
 def HMM(emission_type='gaussian', *args, **kwargs):
     """Create an HMM object with the given emission_type."""
-    supported_emission_types = dict([(x.emission_type.lower(), x)
+    supported_emission_types = dict([(str(x.emission_type).lower(), x)
                                      for x in _BaseHMM.__subclasses__()])
-    emission_type = emission_type.lower()
+    emission_type = str(emission_type).lower()
     if emission_type in supported_emission_types.keys():
         return supported_emission_types[emission_type](*args, **kwargs)
     else:
-        raise ValueError, 'Unknown emission_type'
-    
+        raise ValueError('Unknown emission_type')
 
 class _BaseHMM(object):
-    """Hidden Markov Model abstract base class.
+    """Hidden Markov Model base class.
     
     Representation of a hidden Markov model probability distribution.
     This class allows for easy evaluation of, sampling from, and
@@ -65,11 +64,10 @@ class _BaseHMM(object):
     # This class implements the public interface to all HMMs that
     # derive from it, including all of the machinery for the
     # forward-backward and Viterbi algorithms.  Subclasses need only
-    # implement the abstractproperty emission_type, and the
-    # abstractmethods _generate_sample_from_state(),
-    # _compute_log_likelihood(), _init(), and a corresponding
-    # HMMTrainer instance, all of which depend on the specific
-    # emission distribution.
+    # implement emission_type, and methods
+    # _generate_sample_from_state(), _compute_log_likelihood(),
+    # _init(), and a corresponding HMMTrainer instance, all of which
+    # depend on the specific emission distribution.
     #
     # Subclasses will probably also want to implement properties for
     # the emission distribution parameters to expose them publically.
@@ -307,46 +305,46 @@ class _BaseHMM(object):
         """Number of states in the model."""
         return self._nstates
 
-    @property
-    def startprob(self):
+    def _get_startprob(self):
         """Mixing startprob for each state."""
         return np.exp(self._log_startprob)
 
-    @startprob.setter
-    def startprob(self, startprob):
+    def _set_startprob(self, startprob):
         if len(startprob) != self._nstates:
-            raise ValueError, 'startprob must have length nstates'
-        if not almost_equal(np.sum(startprob), 1.0):
-            raise ValueError, 'startprob must sum to 1.0'
+            raise ValueError('startprob must have length nstates')
+        if not np.allclose(np.sum(startprob), 1.0):
+            raise ValueError('startprob must sum to 1.0')
         
         self._log_startprob = np.log(np.asarray(startprob).copy())
 
-    @property
-    def transmat(self):
+    startprob = property(_get_startprob, _set_startprob)
+
+    def _get_transmat(self):
         """Matrix of transition probabilities."""
         return np.exp(self._log_transmat)
 
-    @transmat.setter
-    def transmat(self, transmat):
+    def _set_transmat(self, transmat):
         if np.asarray(transmat).shape != (self._nstates, self._nstates):
-            raise ValueError, 'transmat must have shape (nstates, nstates)'
-        if not np.all(almost_equal(np.sum(transmat, axis=1), 1.0)):
-            raise ValueError, 'each row of transmat must sum to 1.0'
+            raise ValueError('transmat must have shape (nstates, nstates)')
+        if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
+            raise ValueError('Rows of transmat must sum to 1.0')
         
         self._log_transmat = np.log(np.asarray(transmat).copy())
         underflow_idx = np.isnan(self._log_transmat)
         self._log_transmat[underflow_idx] = -np.Inf
 
-    @property
-    def trainer(self):
+    transmat = property(_get_transmat, _set_transmat)
+    
+    def _get_trainer(self):
         """HMMTrainer used to train this HMM."""
         return self._trainer
 
-    @trainer.setter
-    def trainer(self, trainer):
+    def _set_trainer(self, trainer):
         if self.emission_type != trainer.emission_type:
-            raise ValueError, 'trainer has incompatible emission_type'
+            raise ValueError('trainer has incompatible emission_type')
         self._trainer = trainer
+    trainer = property(_get_trainer, _set_trainer)
+
 
     def _do_viterbi_pass(self, framelogprob, maxrank=None, beamlogprob=-np.Inf):
         nobs = len(framelogprob)
@@ -557,28 +555,28 @@ class GaussianHMM(_BaseHMM):
         """Dimensionality of the states."""
         return self._ndim
 
-    @property
-    def means(self):
+    def _get_means(self):
         """Mean parameters for each state."""
         return self._means
 
-    @means.setter
-    def means(self, means):
+    def _set_means(self, means):
         means = np.asarray(means)
         if means.shape != (self._nstates, self._ndim):
-            raise ValueError, 'means must have shape (nstates, ndim)'
+            raise ValueError('means must have shape (nstates, ndim)')
         self._means = means.copy()
 
-    @property
-    def covars(self):
+    means = property(_get_means, _set_means)
+
+    def _get_covars(self):
         """Covariance parameters for each state."""
         return self._covars
 
-    @covars.setter
-    def covars(self, covars):
+    def _set_covars(self, covars):
         covars = np.asarray(covars)
-        _validate_covars(covars, self._cvtype, self._nstates, self._ndim)
+        #_validate_covars(covars, self._cvtype, self._nstates, self._ndim)
         self._covars = covars.copy()
+
+    covars = property(_get_covars, _set_covars)
 
     def _compute_log_likelihood(self, obs):
         return lmvnpdf(obs, self._means, self._covars, self._cvtype)
@@ -689,14 +687,6 @@ class GMMHMM(_BaseHMM):
 
     # Read-only properties.
     @property
-    def cvtype(self):
-        """Covariance type of the model.
-
-        Must be one of 'spherical', 'tied', 'diag', 'full'.
-        """
-        return self._cvtype
-
-    @property
     def ndim(self):
         """Dimensionality of the states."""
         return self._ndim
@@ -705,24 +695,6 @@ class GMMHMM(_BaseHMM):
     def gmms(self):
         """GMM parameters for each state."""
         return self._gmms
-
-    @gmms.setter
-    def gmms(self, gmms):
-        
-        if means.shape != (self._nstates, self._ndim):
-            raise ValueError, 'means must have shape (nstates, ndim)'
-        self._means = means.copy()
-
-    @property
-    def covars(self):
-        """Covariance parameters for each state."""
-        return self._covars
-
-    @covars.setter
-    def covars(self, covars):
-        covars = np.asarray(covars)
-        _validate_covars(covars, self._cvtype, self._nstates, self._ndim)
-        self._covars = covars.copy()
 
     def _compute_log_likelihood(self, obs):
         return lmvnpdf(obs, self._means, self._covars, self._cvtype)
