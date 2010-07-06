@@ -10,9 +10,13 @@ from scikits.learn import hmm
 
 from test_gmm import _generate_random_spd_matrix
 
-np.random.seed(0)
 
-class TestHMM(unittest.TestCase):
+class SeedRandomNumberGeneratorTestCase(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(0)
+
+
+class TestHMM(SeedRandomNumberGeneratorTestCase):
     def test_hmm(self):
         h = hmm.HMM()
 
@@ -22,7 +26,7 @@ class TestHMM(unittest.TestCase):
         self.assertTrue(h.__class__, hmm.GaussianHMM)
 
 
-class TestBaseHMM(unittest.TestCase):
+class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
     class StubHMM(hmm._BaseHMM):
         emission_type = None
         def _compute_log_likelihood(self):
@@ -327,7 +331,8 @@ class GaussianHMMTester(GaussianHMMParams):
         self.test_fit('c')
 
 
-class TestGaussianHMMWithSphericalCovars(unittest.TestCase, GaussianHMMTester):
+class TestGaussianHMMWithSphericalCovars(GaussianHMMTester,
+                                         SeedRandomNumberGeneratorTestCase):
     cvtype = 'spherical'
 
     def test_fit_startprob_and_transmat(self):
@@ -337,15 +342,18 @@ class TestGaussianHMMWithSphericalCovars(unittest.TestCase, GaussianHMMTester):
         self.test_fit('m')
 
 
-class TestGaussianHMMWithDiagonalCovars(unittest.TestCase, GaussianHMMTester):
+class TestGaussianHMMWithDiagonalCovars(GaussianHMMTester,
+                                        SeedRandomNumberGeneratorTestCase):
     cvtype = 'diag'
 
 
-class TestGaussianHMMWithTiedCovars(unittest.TestCase, GaussianHMMTester):
+class TestGaussianHMMWithTiedCovars(GaussianHMMTester,
+                                    SeedRandomNumberGeneratorTestCase):
     cvtype = 'tied'
 
 
-class TestGaussianHMMWithFullCovars(unittest.TestCase, GaussianHMMTester):
+class TestGaussianHMMWithFullCovars(GaussianHMMTester,
+                                    SeedRandomNumberGeneratorTestCase):
     cvtype = 'full'
 
 
@@ -396,8 +404,8 @@ class GaussianHMMMAPTrainerTester(GaussianHMMParams):
         self.test_fit('c')
 
 
-class TestGaussianHMMMAPTrainerWithSphericalCovars(unittest.TestCase,
-                                                   GaussianHMMMAPTrainerTester):
+class TestGaussianHMMMAPTrainerWithSphericalCovars(GaussianHMMMAPTrainerTester,
+                                                   SeedRandomNumberGeneratorTestCase):
     cvtype = 'spherical'
 
     def test_fit_startprob_and_transmat(self):
@@ -407,18 +415,18 @@ class TestGaussianHMMMAPTrainerWithSphericalCovars(unittest.TestCase,
         self.test_fit('m')
 
 
-class TestGaussianHMMMAPTrainerWithDiagonalCovars(unittest.TestCase,
-                                                  GaussianHMMMAPTrainerTester):
+class TestGaussianHMMMAPTrainerWithDiagonalCovars(GaussianHMMMAPTrainerTester,
+                                                  SeedRandomNumberGeneratorTestCase):
     cvtype = 'diag'
 
 
-class TestGaussianHMMMAPTrainerWithTiedCovars(unittest.TestCase,
-                                              GaussianHMMMAPTrainerTester):
+class TestGaussianHMMMAPTrainerWithTiedCovars(GaussianHMMMAPTrainerTester,
+                                              SeedRandomNumberGeneratorTestCase):
     cvtype = 'tied'
 
 
-class TestGaussianHMMMAPTrainerWithFullCovars(unittest.TestCase,
-                                              GaussianHMMMAPTrainerTester):
+class TestGaussianHMMMAPTrainerWithFullCovars(GaussianHMMMAPTrainerTester,
+                                              SeedRandomNumberGeneratorTestCase):
     cvtype = 'full'
 
 
