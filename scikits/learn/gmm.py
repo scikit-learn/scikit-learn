@@ -512,6 +512,34 @@ def _lmvnpdffull(obs, means, covars):
         #                   + np.log(2 * np.pi) + np.linalg.det(cv)).diagonal()
     return lpr
 
+def _validate_covars(covars, cvtype, nmix, ndim):
+    if cvtype == 'spherical':
+        if len(covars) != nmix:
+            raise ValueError, "'spherical' covars must have length nmix"
+        elif np.any(covars <= 0):
+            raise ValueError, "'spherical' covars must be non-negative"
+    elif cvtype == 'tied':
+        if covars.shape != (ndim, ndim):
+            raise ValueError, "'tied' covars must have shape (ndim, ndim)"
+        elif (not np.allclose(covars, covars.T)
+              or np.any(np.linalg.eigvalsh(covars) <= 0)):
+            raise (ValueError,
+                   "'tied' covars must be symmetric, positive-definite")
+    elif cvtype == 'diag':
+        if covars.shape != (nmix, ndim):
+            raise ValueError, "'diag' covars must have shape (nmix, ndim)"
+        elif np.any(covars <= 0):
+            raise ValueError, "'diag' covars must be non-negative"
+    elif cvtype == 'full':
+        if covars.shape != (nmix, ndim, ndim):
+            raise (ValueError,
+                   "'full' covars must have shape (nmix, ndim, ndim)")
+        for n,cv in enumerate(covars):
+            if (not np.allclose(cv, cv.T)
+                or np.any(np.linalg.eigvalsh(cv) <= 0)):
+                raise (ValueError,
+                       "component %d of 'full' covars must be symmetric,"
+                       "positive-definite" % n)
 
 def _distribute_covar_matrix_to_match_cvtype(tiedcv, cvtype, nstates):
     if cvtype == 'spherical':

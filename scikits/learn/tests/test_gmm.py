@@ -283,15 +283,15 @@ class GMMTester():
 
         g.means = self.means
         assert_array_almost_equal(g.means, self.means)
-        # self.assertRaises(ValueError, g.__setattr__, 'means', [])
-        # self.assertRaises(ValueError, g.__setattr__, 'means',
-        #                   np.zeros((self.nstates - 2, self.ndim)))
+        self.assertRaises(ValueError, g.__setattr__, 'means', [])
+        self.assertRaises(ValueError, g.__setattr__, 'means',
+                          np.zeros((self.nstates - 2, self.ndim)))
 
         g._covars = self.covars[self.cvtype]
         assert_array_almost_equal(g._covars, self.covars[self.cvtype])
-        # self.assertRaises(ValueError, g.__setattr__, 'covars', [])
-        # self.assertRaises(ValueError, g.__setattr__, 'covars',
-        #                   np.zeros((self.nstates - 2, self.ndim)))
+        self.assertRaises(ValueError, g.__setattr__, 'covars', [])
+        self.assertRaises(ValueError, g.__setattr__, 'covars',
+                          np.zeros((self.nstates - 2, self.ndim)))
 
     def test_eval(self):
         g = gmm.GMM(self.nstates, self.cvtype)
