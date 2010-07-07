@@ -170,6 +170,9 @@ class GMM(object):
         Generate `n` samples from the model.
     fit(obs)
         Estimate model parameters from `obs` using the EM algorithm.
+    predict(obs)
+        Like decode, find most likely mixtures components for each
+        observation in `obs`.
 
     Examples
     --------
@@ -289,8 +292,7 @@ class GMM(object):
 
 
     def predict (self, X):
-        """
-        Predict label for data
+        """Predict label for data
 
         Parameters
         ----------
@@ -339,7 +341,7 @@ class GMM(object):
         logprob, posteriors = self.eval(obs)
         return logprob, posteriors.argmax(axis=1)
         
-    def rvs(self, ndim, n=1):
+    def rvs(self, n=1):
         """Generate random samples from the model.
 
         Parameters
@@ -355,6 +357,7 @@ class GMM(object):
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
+        ndim = self.means.shape[1]
         obs = np.empty((n, ndim))
         for x in xrange(n):
             rand = np.random.rand()

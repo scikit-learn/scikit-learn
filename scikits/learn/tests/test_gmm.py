@@ -319,7 +319,7 @@ class GMMTester():
         g._covars = np.maximum(self.covars[self.cvtype], 0.1)
         # g.weights = self.weights
 
-        samples = g.rvs(self.ndim, n)
+        samples = g.rvs(n)
         self.assertEquals(samples.shape, (n, self.ndim))
 
     def test_train(self, params='wmc'):
@@ -330,8 +330,8 @@ class GMMTester():
 
         # Create a training and testing set by sampling from the same
         # distribution.
-        train_obs = g.rvs(self.ndim, n=100)
-        test_obs = g.rvs(self.ndim, n=2)
+        train_obs = g.rvs(n=100)
+        test_obs = g.rvs(n=2)
 
         g.fit(train_obs, niter=0, init_params=params,
               minit='points')
