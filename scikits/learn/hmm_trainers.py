@@ -1,3 +1,5 @@
+import string
+
 import numpy as np
 
 from gmm import *
@@ -9,7 +11,7 @@ class HMMTrainer(object):
     def emission_type(self):
         pass
 
-    def train(self, hmm, obs, niter=10, thresh=1e-2, params='stmpc',
+    def train(self, hmm, obs, niter=10, thresh=1e-2, params=string.letters,
               maxrank=None, beamlogprob=-np.Inf, **kwargs):
         """Estimate model parameters.
 
@@ -26,8 +28,8 @@ class HMMTrainer(object):
         params : string
             Controls which parameters are updated in the training
             process.  Can contain any combination of 's' for startprob,
-            't' for transmat, 'm' for means, and 'c' for covars.
-            Defaults to all parameters ('stmpc').
+            't' for transmat, 'm' for means, and 'c' for covars, etc.
+            Defaults to all parameters.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
             only consider the top `maxrank` states in the inner

@@ -4,6 +4,7 @@
 
 import functools
 import itertools
+import string
 
 import numpy as np
 import scipy as sp
@@ -274,7 +275,8 @@ class _BaseHMM(object):
 
         return np.array(obs)
 
-    def fit(self, obs, niter=10, thresh=1e-2, params='stmpc', init_params='stmpc',
+    def fit(self, obs, niter=10, thresh=1e-2, params=string.letters,
+            init_params=string.letters,
             maxrank=None, beamlogprob=-np.Inf, trainer=None, **kwargs):
         """Estimate model parameters with the Baum-Welch algorithm.
 
@@ -296,12 +298,12 @@ class _BaseHMM(object):
             Controls which parameters are updated in the training
             process.  Can contain any combination of 's' for startprob,
             't' for transmat, 'm' for means, and 'c' for covars, etc.
-            Defaults to all parameters ('stmc').
+            Defaults to all parameters.
         init_params : string, optional
             Controls which parameters are initialized prior to
             training.  Can contain any combination of 's' for
             startprob, 't' for transmat, 'm' for means, and 'c' for
-            covars, etc.  Defaults to all parameters ('stmc').
+            covars, etc.  Defaults to all parameters.
         maxrank : int, optional
             Maximum rank to evaluate for rank pruning.  If not None,
             only consider the top `maxrank` states in the inner
@@ -684,9 +686,8 @@ class MultinomialHMM(_BaseHMM):
                                              labels)
         self._nsymbols = nsymbols
         if not emissionprob:
-            emissionprob = np.random.rand(self.nstates, self.nsymbols)
-            emissionprob /= emissionprob.sum(1)[:,np.newaxis]
-            
+            emissionprob = normalize(np.random.rand(self.nstates,
+                                                    self.nsymbols), 1)
         self.emissionprob = emissionprob
         self._default_trainer = trainer
 
