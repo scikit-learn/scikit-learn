@@ -187,7 +187,7 @@ Optional Arguments
 ^^^^^^^^^^^^^^^^^^
 
 In iterative algorithms, number of iterations should be specified by
-an int called ``niter``.
+an int called ``n_iter``.
 
 
 TODO
