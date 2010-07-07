@@ -192,7 +192,7 @@ class GMM(object):
     >>> gmm.fit(numpy.concatenate((20 * [0], 20 * [10])))
     """
 
-    def __init__(self, nstates, cvtype='diag'):
+    def __init__(self, nstates=1, ndim=1, cvtype='diag'):
         """Create a Gaussian mixture model
 
         Initializes parameters such that every mixture component has
@@ -211,12 +211,17 @@ class GMM(object):
         """
 
         self._nstates = nstates
+        self._ndim = ndim
         self._cvtype = cvtype
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
 
         self.weights = np.tile(1.0 / nstates, nstates)
+        self.means = np.zeros((nstates, ndim))
+        self.covars = _distribute_covar_matrix_to_match_cvtype(
+            np.eye(ndim), cvtype, nstates)
+        
         self.labels = [None] * nstates
 
     # Read-only properties.
@@ -229,15 +234,17 @@ class GMM(object):
         return self._cvtype
 
     @property
+    def ndim(self):
+        """Dimensionality of the mixture components."""
+        return self._ndim
+
+    @property
     def nstates(self):
         """Number of mixture components in the model."""
         return self._nstates
 
-    @property
-    def covars(self):
-        """
-        Return covars as a full matrix
-        """
+    def _get_covars(self):
+        """Return covars as a full matrix."""
         if self.cvtype == 'full':
             return self._covars
         elif self.cvtype == 'diag':
@@ -248,6 +255,25 @@ class GMM(object):
         elif self.cvtype == 'spherical':
             return [np.eye(self._nstates) * f for f in self._covars]
 
+    def _set_covars(self, covars):
+        covars = np.asanyarray(covars)
+        _validate_covars(covars, self._cvtype, self._nstates, self._ndim)
+        self._covars = covars
+
+    covars = property(_get_covars, _set_covars)
+
+    def _get_means(self):
+        """Mean parameters for each mixture component."""
+        return self._means
+
+    def _set_means(self, means):
+        means = np.asarray(means)
+        if means.shape != (self._nstates, self._ndim):
+            raise ValueError, 'means must have shape (nstates, ndim)'
+        self._means = means.copy()
+
+    means = property(_get_means, _set_means)
+    
     def _get_weights(self):
         """Mixing weights for each mixture component."""
         return np.exp(self._log_weights)
@@ -261,7 +287,7 @@ class GMM(object):
         self._log_weights = np.log(np.asarray(weights).copy())
 
     weights = property(_get_weights, _set_weights)
-    
+
     def eval(self, obs):
         """Evaluate the model on data
 
@@ -284,7 +310,7 @@ class GMM(object):
             observation
         """
         obs = np.asanyarray(obs)
-        lpr = (lmvnpdf(obs, self.means, self._covars, self._cvtype)
+        lpr = (lmvnpdf(obs, self._means, self._covars, self._cvtype)
                + self._log_weights)
         logprob = logsum(lpr, axis=1)
         posteriors = np.exp(lpr - logprob[:,np.newaxis])
@@ -357,8 +383,7 @@ class GMM(object):
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
-        ndim = self.means.shape[1]
-        obs = np.empty((n, ndim))
+        obs = np.empty((n, self._ndim))
         for x in xrange(n):
             rand = np.random.rand()
             c = (weight_cdf > rand).argmax()
@@ -366,7 +391,7 @@ class GMM(object):
                 cv = self._covars
             else:
                 cv = self._covars[c]
-            obs[x] = sample_gaussian(self.means[c], cv, self._cvtype)
+            obs[x] = sample_gaussian(self._means[c], cv, self._cvtype)
         return obs
 
     def fit(self, X, niter=10, min_covar=1.0, thresh=1e-2, params='wmc',
@@ -416,7 +441,7 @@ class GMM(object):
         if 'm' in init_params:
             if not 'minit' in kwargs:
                 kwargs.update({'minit': 'points'})
-            self.means, tmp = cluster.vq.kmeans2(X, self._nstates, **kwargs)
+            self._means, tmp = cluster.vq.kmeans2(X, self._nstates, **kwargs)
 
         if 'w' in init_params:
             self.weights = np.tile(1.0 / self._nstates, self._nstates)
@@ -455,9 +480,9 @@ class GMM(object):
             norm = 1.0 / w[:,np.newaxis]
             
             if 'w' in params:
-                self.weights = w / w.sum()
+                self._weights = w / w.sum()
             if 'm' in params:
-                self.means = avg_obs * norm
+                self._means = avg_obs * norm
             if 'c' in params:
                 self._covars = covar_mstep_fun(self, X, posteriors,
                                                avg_obs, norm, min_covar)
@@ -565,8 +590,8 @@ def _covar_mstep_diag(gmm, obs, posteriors, avg_obs, norm, min_covar):
     # But everything here is a row vector, so all of the
     # above needs to be transposed.
     avg_obs2 = np.dot(posteriors.T, obs * obs) * norm
-    avg_means2 = gmm.means**2 
-    avg_obs_means = gmm.means * avg_obs * norm
+    avg_means2 = gmm._means**2 
+    avg_obs_means = gmm._means * avg_obs * norm
     return avg_obs2 - 2 * avg_obs_means + avg_means2 + min_covar
 
 def _covar_mstep_spherical(*args):
@@ -578,14 +603,13 @@ def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     # Distribution"
     avg_obs2 = np.dot(obs.T, obs)
     #avg_obs2 = np.dot(obs.T, avg_obs)
-    ndim = obs.shape[1]
-    cv = np.empty((gmm._nstates, ndim, ndim))
+    cv = np.empty((gmm._nstates, gmm._ndim, gmm._ndim))
     for c in xrange(gmm._nstates):
         wobs = obs.T * posteriors[:,c]
         avg_obs2 = np.dot(wobs, obs) / posteriors[:,c].sum()
-        mu = gmm.means[c][np.newaxis]
+        mu = gmm._means[c][np.newaxis]
         cv[c] = (avg_obs2 - np.dot(mu, mu.T)
-                 + min_covar * np.eye(ndim))
+                 + min_covar * np.eye(gmm._ndim))
     return cv
 
 def _covar_mstep_tied2(*args):
@@ -594,26 +618,23 @@ def _covar_mstep_tied2(*args):
 def _covar_mstep_tied(gmm, obs, posteriors, avg_obs, norm, min_covar):
     print "THIS IS BROKEN"
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
-    # Distribution"
-    ndim = obs.shape[1]
     avg_obs2 = np.dot(obs.T, obs)
-    avg_means2 = np.dot(gmm.means.T, gmm.means)
-    return (avg_obs2 - avg_means2 + min_covar * np.eye(ndim))
+    avg_means2 = np.dot(gmm._means.T, gmm._means)
+    return (avg_obs2 - avg_means2 + min_covar * np.eye(gmm._ndim))
 
 def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
     w = posteriors.sum(axis=0)
     covars = np.zeros(gmm._covars.shape)
     for c in xrange(gmm._nstates):
-        mu = gmm.means[c]
+        mu = gmm._means[c]
         #cv = np.dot(mu.T, mu)
-        ndim = obs.shape[1]
-        avg_obs2 = np.zeros((ndim, ndim))
+        avg_obs2 = np.zeros((gmm._ndim, gmm._ndim))
         for t,o in enumerate(obs):
             avg_obs2 += posteriors[t,c] * np.outer(o, o)
         cv = (avg_obs2 / w[c]
               - 2 * np.outer(avg_obs[c] / w[c], mu)
               + np.outer(mu, mu)
-              + min_covar * np.eye(ndim))
+              + min_covar * np.eye(gmm._ndim))
         if gmm.cvtype == 'spherical':
             covars[c] = np.diag(cv).mean()
         elif gmm.cvtype == 'diag':

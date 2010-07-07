@@ -17,10 +17,9 @@ def _generate_random_spd_matrix(ndim):
     randspd = np.dot(np.dot(U, 1.0+np.diag(np.random.rand(ndim))), V)
     return randspd
 
-
 def test_simple1():
     X = [[0, 0], [.1, .1], [1, 1]]
-    clf = gmm.GMM(2)
+    clf = gmm.GMM(2, ndim=2)
     clf.fit(X)
 
 class TestLogsum(unittest.TestCase):
@@ -264,12 +263,12 @@ class GMMTester():
                                 for x in xrange(nstates)])}
 
     def test_bad_cvtype(self):
-        g = gmm.GMM(20, self.cvtype)
+        g = gmm.GMM(20, self.ndim, self.cvtype)
 
-        self.assertRaises(ValueError, gmm.GMM, 20, 'badcvtype')
+        self.assertRaises(ValueError, gmm.GMM, 20, 1, 'badcvtype')
 
     def test_attributes(self):
-        g = gmm.GMM(self.nstates, self.cvtype)
+        g = gmm.GMM(self.nstates, self.ndim, self.cvtype)
         self.assertEquals(g.nstates, self.nstates)
         self.assertEquals(g.cvtype, self.cvtype)
 
@@ -294,7 +293,7 @@ class GMMTester():
                           np.zeros((self.nstates - 2, self.ndim)))
 
     def test_eval(self):
-        g = gmm.GMM(self.nstates, self.cvtype)
+        g = gmm.GMM(self.nstates, self.ndim, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -312,7 +311,7 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=1000):
-        g = gmm.GMM(self.nstates, self.cvtype)
+        g = gmm.GMM(self.nstates, self.ndim, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -323,7 +322,7 @@ class GMMTester():
         self.assertEquals(samples.shape, (n, self.ndim))
 
     def test_train(self, params='wmc'):
-        g = gmm.GMM(self.nstates, self.cvtype)
+        g = gmm.GMM(self.nstates, self.ndim, self.cvtype)
         g.weights = self.weights
         g.means = self.means
         g._covars = 20*self.covars[self.cvtype]
