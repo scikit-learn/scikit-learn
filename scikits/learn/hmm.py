@@ -625,3 +625,106 @@ class GaussianHMM(_BaseHMM):
             self._covars = _distribute_covar_matrix_to_match_cvtype(
                 cv, self._cvtype, self._nstates)
 
+
+class MultinomialHMM(_BaseHMM):
+    """Hidden Markov Model with multinomial (discrete) emissions
+
+    Attributes
+    ----------
+    nstates : int (read-only)
+        Number of states in the model.
+    transmat : array, shape (`nstates`, `nstates`)
+        Matrix of transition probabilities between states.
+    startprob : array, shape ('nstates`,)
+        Initial state occupation distribution.
+    emissionprob: array, shape ('nstates`, K)
+        Probability of emitting a given symbol when in each state.  K
+        is the number of possible symbols in the observations.
+    labels : list, len `nstates`
+        Optional labels for each state.
+
+    Methods
+    -------
+    eval(obs)
+        Compute the log likelihood of `obs` under the HMM.
+    decode(obs)
+        Find most likely state sequence for each point in `obs` using the
+        Viterbi algorithm.
+    rvs(n=1)
+        Generate `n` samples from the HMM.
+    init(obs)
+        Initialize HMM parameters from `obs`.
+    fit(obs)
+        Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
+    predict(obs)
+        Like decode, find most likely state sequence corresponding to `obs`.
+
+    Examples
+    --------
+    >>> hmm = HMM('multinomial', nstates=2)
+
+    See Also
+    --------
+    GaussianHMM : HMM with Gaussian emissions
+    """
+
+    emission_type = 'multinomial'
+
+    def __init__(self, nstates, nsymbols, startprob=None, transmat=None,
+                 labels=None, emissionprob=None, 
+                 trainer=hmm_trainers.MultinomialHMMBaumWelchTrainer()):
+        """Create a hidden Markov model with multinomial emissions.
+
+        Parameters
+        ----------
+        nstates : int
+            Number of states.
+        """
+        super(MultinomialHMM, self).__init__(nstates, startprob, transmat,
+                                             labels)
+        self._nsymbols = nsymbols
+        if not emissionprob:
+            emissionprob = np.random.rand(self.nstates, self.nsymbols)
+            emissionprob /= emissionprob.sum(1)[:,np.newaxis]
+            
+        self.emissionprob = emissionprob
+        self._default_trainer = trainer
+
+    # Read-only properties.
+    @property
+    def nsymbols(self):
+        return self._nsymbols
+
+    def _get_emissionprob(self):
+        """Emission probability distribution for each state."""
+        return np.exp(self._log_emissionprob)
+
+    def _set_emissionprob(self, emissionprob):
+        emissionprob = np.asanyarray(emissionprob)
+        if emissionprob.shape != (self._nstates, self._nsymbols):
+            raise ValueError('emissionprob must have shape (nstates, nsymbols)')
+
+        self._log_emissionprob = np.log(emissionprob)
+        underflow_idx = np.isnan(self._log_emissionprob)
+        self._log_emissionprob[underflow_idx] = -np.Inf
+        
+    emissionprob = property(_get_emissionprob, _set_emissionprob)
+
+    def _compute_log_likelihood(self, obs):
+        return self._log_emissionprob[:,obs].T
+
+    def _generate_sample_from_state(self, state):
+        cdf = np.cumsum(self.emissionprob[state,:])
+        rand = np.random.rand()
+        symbol = (cdf > rand).argmax()
+        return symbol
+
+    def _init(self, obs, params='ste', **kwargs):
+        super(MultinomialHMM, self)._init(obs, params=params)
+
+        nsymbols = obs.max()
+        
+        if 'e' in params:
+            emissionprob = np.random.rand(self._nstates, nsymbols)
+            emissionprob /= emissionprob.sum(1)[:,np.newaxis]
+            self.emissionprob = emissionprob

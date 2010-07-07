@@ -127,7 +127,7 @@ class BaseHMMBaumWelchTrainer(HMMTrainer):
 
 
 class GaussianHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
-    """Baum-Welch trainer for HMMs with Gaussian emissions."""
+    """Baum-Welch maximum likelihood trainer for HMMs with Gaussian emissions."""
     emission_type = 'gaussian'
 
     def _initialize_sufficient_statistics(self, hmm):
@@ -279,3 +279,32 @@ class GaussianHMMMAPTrainer(GaussianHMMBaumWelchTrainer):
                                    / (cvweight + stats['post'][:,None,None]))
 
  
+
+class MultinomialHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
+    "Baum-Welch maximum likelihood trainer for HMM with multinomial emissions."
+    emission_type = 'multinomial'
+
+    def _initialize_sufficient_statistics(self, hmm):
+        stats = super(MultinomialHMMBaumWelchTrainer,
+                      self)._initialize_sufficient_statistics(hmm)
+        stats['obs']  = np.zeros((hmm._nstates, hmm._nsymbols))
+        return stats
+
+    def _accumulate_sufficient_statistics(self, hmm, stats, obs, framelogprob,
+                                          posteriors, fwdlattice, bwdlattice,
+                                          params):
+        super(MultinomialHMMBaumWelchTrainer,
+              self)._accumulate_sufficient_statistics(hmm, stats, obs,
+                                                      framelogprob, posteriors,
+                                                      fwdlattice, bwdlattice,
+                                                      params)
+        if 'e' in params:
+            for t,symbol in enumerate(obs):
+                stats['obs'][:,symbol] += posteriors[t,:]
+                  
+    def _do_mstep(self, hmm, stats, params, covarprior=1e-2, **kwargs):
+        super(MultinomialHMMBaumWelchTrainer, self)._do_mstep(hmm, stats,
+                                                              params)
+
+        if 'e' in params:
+            hmm.emissionprob = stats['obs'] / stats['obs'].sum(1)[:,np.newaxis]
