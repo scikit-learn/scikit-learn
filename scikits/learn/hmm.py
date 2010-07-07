@@ -135,6 +135,7 @@ class _BaseHMM(object):
         lpdf : Compute the log probability under the model
         decode : Find most likely state sequence corresponding to a `obs`
         """
+        obs = np.asanyarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
                                                     beamlogprob)
@@ -176,6 +177,7 @@ class _BaseHMM(object):
         eval : Compute the log probability under the model and compute posteriors
         decode : Find most likely state sequence corresponding to a `obs`
         """
+        obs = np.asanyarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, fwdlattice =  self._do_forward_pass(framelogprob, maxrank,
                                                      beamlogprob)
@@ -213,6 +215,7 @@ class _BaseHMM(object):
         eval : Compute the log probability under the model and compute posteriors
         lpdf : Compute the log probability under the model
         """
+        obs = np.asanyarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
         logprob, state_sequence = self._do_viterbi_pass(framelogprob, maxrank,
                                                         beamlogprob)
@@ -482,7 +485,7 @@ class GaussianHMM(_BaseHMM):
         String describing the type of covariance parameters used by
         the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
     ndim : int (read-only)
-        Dimensionality of the Gaussian components.
+        Dimensionality of the Gaussian emissions.
     nstates : int (read-only)
         Number of states in the model.
     transmat : array, shape (`nstates`, `nstates`)
@@ -541,7 +544,7 @@ class GaussianHMM(_BaseHMM):
         nstates : int
             Number of states.
         ndim : int
-            Dimensionality of the states.
+            Dimensionality of the emissions.
         cvtype : string
             String describing the type of covariance parameters to
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
@@ -577,7 +580,7 @@ class GaussianHMM(_BaseHMM):
 
     @property
     def ndim(self):
-        """Dimensionality of the states."""
+        """Dimensionality of the emissions."""
         return self._ndim
 
     def _get_means(self):
@@ -723,9 +726,97 @@ class MultinomialHMM(_BaseHMM):
     def _init(self, obs, params='ste', **kwargs):
         super(MultinomialHMM, self)._init(obs, params=params)
 
-        nsymbols = obs.max()
-        
         if 'e' in params:
-            emissionprob = np.random.rand(self._nstates, nsymbols)
-            emissionprob /= emissionprob.sum(1)[:,np.newaxis]
+            emissionprob = normalize(np.random.rand(self._nstates,
+                                                    self._nsymbols), 1)
             self.emissionprob = emissionprob
+
+
+class GMMHMM(_BaseHMM):
+    """Hidden Markov Model with Gaussin mixture emissions
+
+    Attributes
+    ----------
+    nstates : int (read-only)
+        Number of states in the model.
+    transmat : array, shape (`nstates`, `nstates`)
+        Matrix of transition probabilities between states.
+    startprob : array, shape ('nstates`,)
+        Initial state occupation distribution.
+    gmms: array of GMM objects, length 'nstates`
+        GMM emission distributions for each state
+    labels : list, len `nstates`
+        Optional labels for each state.
+
+    Methods
+    -------
+    eval(obs)
+        Compute the log likelihood of `obs` under the HMM.
+    decode(obs)
+        Find most likely state sequence for each point in `obs` using the
+        Viterbi algorithm.
+    rvs(n=1)
+        Generate `n` samples from the HMM.
+    init(obs)
+        Initialize HMM parameters from `obs`.
+    fit(obs)
+        Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
+    predict(obs)
+        Like decode, find most likely state sequence corresponding to `obs`.
+
+    Examples
+    --------
+    >>> hmm = HMM('gmm', nstates=2, nmix=10, ndim=3)
+
+    See Also
+    --------
+    GaussianHMM : HMM with Gaussian emissions
+    """
+
+    emission_type = 'gmm'
+
+    def __init__(self, nstates, ndim, nmix=1, startprob=None, transmat=None,
+                 labels=None, gmms=None,
+                 trainer=hmm_trainers.GMMHMMBaumWelchTrainer(),
+                 **kwargs):
+        """Create a hidden Markov model with GMM emissions.
+
+        Parameters
+        ----------
+        nstates : int
+            Number of states.
+        ndim : int (read-only)
+            Dimensionality of the emissions.
+        """
+        super(GMMHMM, self).__init__(nstates, startprob, transmat,
+                                     labels)
+
+        self._ndim = ndim
+
+        if gmms is None:
+            gmms = []
+            for x in xrange(self.nstates):
+                gmms.append(gmm.GMM(nmix, ndim, **kwargs))
+        self.gmms = gmms
+        
+        self._default_trainer = trainer
+
+    # Read-only properties.
+    @property
+    def ndim(self):
+        """Dimensionality of the emissions from this HMM."""
+        return self._ndim
+
+    def _compute_log_likelihood(self, obs):
+        return np.array([g.lpdf(obs) for g in self.gmms]).T
+
+    def _generate_sample_from_state(self, state):
+        return self.gmms[state].rvs(1).flatten()
+
+    def _init(self, obs, params='stwmc', **kwargs):
+        super(GMMHMM, self)._init(obs, params=params)
+
+        allobs = np.concatenate(obs, 0)
+        for g in self.gmms:
+            g.fit(allobs, niter=0, init_params=params)
+        

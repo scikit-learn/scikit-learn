@@ -12,8 +12,9 @@ from test_gmm import _generate_random_spd_matrix
 
 
 class SeedRandomNumberGeneratorTestCase(unittest.TestCase):
+    seed = 0
     def setUp(self):
-        np.random.seed(0)
+        np.random.seed(self.seed)
 
 
 class TestHMM(SeedRandomNumberGeneratorTestCase):
@@ -29,6 +30,11 @@ class TestHMM(SeedRandomNumberGeneratorTestCase):
         h = hmm.HMM('multinomial', nstates=1, nsymbols=1)
         self.assertEquals(h.emission_type, 'multinomial')
         self.assertTrue(h.__class__, hmm.MultinomialHMM)
+
+    def test_gmm_hmm(self):
+        h = hmm.HMM('gmm', nstates=1, ndim=1)
+        self.assertEquals(h.emission_type, 'gmm')
+        self.assertTrue(h.__class__, hmm.GMMHMM)
 
 
 class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
@@ -542,6 +548,147 @@ class TestMultinomialHMM(MultinomialHMMParams, SeedRandomNumberGeneratorTestCase
 
     def test_fit_emissionprob(self):
         self.test_fit('e')
+
+
+class GMMHMMParams(object):
+    nstates = 2
+    nmix = 4
+    ndim = 3
+    cvtype = 'diag'
+    startprob = np.random.rand(nstates)
+    startprob = startprob / startprob.sum()
+    transmat = np.random.rand(nstates, nstates)
+    transmat /= np.tile(transmat.sum(axis=1)[:,np.newaxis], (1, nstates))
+
+    @staticmethod
+    def create_random_gmm(nmix, ndim, cvtype):
+        from scikits.learn import gmm
+
+        means = np.random.randint(-20, 20, (nmix, ndim))
+        mincv = 2
+        covars = {'spherical': (1.0 + mincv * np.random.rand(nmix))**2,
+                  'tied': _generate_random_spd_matrix(ndim)
+                          + mincv * np.eye(ndim),
+                  'diag': (1.0 + mincv * np.random.rand(nmix, ndim))**2,
+                  'full': np.array([_generate_random_spd_matrix(ndim)
+                                    + mincv * np.eye(ndim) 
+                                    for x in xrange(nmix)])}[cvtype]
+        weights = hmm.normalize(np.random.rand(nmix))
+        return gmm.GMM(nmix, ndim, cvtype=cvtype, weights=weights, means=means,
+                       covars=covars)
+
+class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
+    def setUp(self):
+        np.random.seed(self.seed)
+        self.gmms = []
+        for state in xrange(self.nstates):
+            self.gmms.append(self.create_random_gmm(self.nmix, self.ndim,
+                                                    self.cvtype))
+
+    def test_attributes(self):
+        h = hmm.GMMHMM(self.nstates, self.ndim, cvtype=self.cvtype)
+
+        self.assertEquals(h.emission_type, 'gmm')
+        
+        self.assertEquals(h.nstates, self.nstates)
+        self.assertEquals(h.ndim, self.ndim)
+
+        h.startprob = self.startprob
+        assert_array_almost_equal(h.startprob, self.startprob)
+        self.assertRaises(ValueError, h.__setattr__, 'startprob',
+                          2 * self.startprob)
+        self.assertRaises(ValueError, h.__setattr__, 'startprob', [])
+        self.assertRaises(ValueError, h.__setattr__, 'startprob',
+                          np.zeros((self.nstates - 2, self.ndim)))
+
+        h.transmat = self.transmat
+        assert_array_almost_equal(h.transmat, self.transmat)
+        self.assertRaises(ValueError, h.__setattr__, 'transmat',
+                          2 * self.transmat)
+        self.assertRaises(ValueError, h.__setattr__, 'transmat', [])
+        self.assertRaises(ValueError, h.__setattr__, 'transmat',
+                          np.zeros((self.nstates - 2, self.nstates)))
+
+    def test_eval_and_decode(self):
+        h = hmm.GMMHMM(self.nstates, self.ndim, gmms=self.gmms)
+        # Make sure the means are far apart so posteriors.argmax()
+        # picks the actual component used to generate the observations.
+        for g in h.gmms:
+            g.means *= 20
+
+        refstateseq = np.repeat(range(self.nstates), 5)
+        nobs = len(refstateseq)
+        obs = [h.gmms[x].rvs(1).flatten() for x in refstateseq]
+
+        ll, posteriors = h.eval(obs)
+
+        self.assertEqual(posteriors.shape, (nobs, self.nstates))
+        assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
+
+        viterbi_ll, stateseq = h.decode(obs)
+        assert_array_equal(stateseq, refstateseq)
+
+    def test_rvs(self, n=1000):
+        h = hmm.GMMHMM(self.nstates, self.ndim, self.cvtype,
+                       startprob=self.startprob, transmat=self.transmat,
+                       gmms=self.gmms)
+        samples = h.rvs(n)
+        self.assertEquals(samples.shape, (n, self.ndim))
+
+    def test_fit(self, params='stmwc', niter=5, **kwargs):
+        h = hmm.GMMHMM(self.nstates, self.ndim)
+        h.startprob = self.startprob
+        h.transmat = hmm.normalize(self.transmat
+                                   + np.diag(np.random.rand(self.nstates)), 1)
+        h.gmms = self.gmms
+
+        # Create a training and testing set by sampling from the same
+        # distribution.
+        train_obs = [h.rvs(n=10) for x in xrange(50)]
+        test_obs = [h.rvs(n=10) for x in xrange(5)]
+
+        # Mess up the parameters and see if we can re-learn them.
+        h.fit(train_obs, niter=0, minit='points')
+        h.transmat = hmm.normalize(np.random.rand(self.nstates, self.nstates),
+                                   axis=1)
+        h.startprob = hmm.normalize(np.random.rand(self.nstates))
+        init_testll = [h.lpdf(x) for x in test_obs]
+
+        trainll = h.fit(train_obs, niter=niter, params=params, **kwargs)
+        if not np.all(np.diff(trainll) > 0):
+            print
+            print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
+                                                    np.diff(trainll))
+        self.assertTrue(np.all(np.diff(trainll) > -0.5))
+
+        post_testll = [h.lpdf(x) for x in test_obs]
+        if not (np.sum(post_testll) > np.sum(init_testll)):
+            print
+            print 'Test train: (%s)\n  %s\n  %s' % (params, init_testll,
+                                                    post_testll)
+        self.assertTrue(np.sum(post_testll) > np.sum(init_testll))
+
+
+    def test_fit_covars(self):
+        self.test_fit('c')
+
+
+class TestGMMHMMWithSphericalCovars(TestGMMHMM):
+    cvtype = 'spherical'
+
+    def test_fit_startprob_and_transmat(self):
+        self.test_fit('st')
+
+    def test_fit_means(self):
+        self.test_fit('m')
+
+
+class TestGMMHMMWithTiedCovars(TestGMMHMM):
+    cvtype = 'tied'
+
+
+class TestGMMHMMWithFullCovars(TestGMMHMM):
+    cvtype = 'full'
 
 if __name__ == '__main__':
     unittest.main()

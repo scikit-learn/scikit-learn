@@ -45,6 +45,7 @@ def logsum(A, axis=None):
     return Asum
 
 def normalize(A, axis=None):
+    A += np.finfo(float).eps
     Asum = A.sum(axis)
     if axis and A.ndim > 1:
         # Make sure we don't divide by zero.
@@ -192,7 +193,8 @@ class GMM(object):
     >>> gmm.fit(numpy.concatenate((20 * [0], 20 * [10])))
     """
 
-    def __init__(self, nstates=1, ndim=1, cvtype='diag'):
+    def __init__(self, nstates=1, ndim=1, cvtype='diag', weights=None,
+                 means=None, covars=None):
         """Create a Gaussian mixture model
 
         Initializes parameters such that every mixture component has
@@ -200,10 +202,10 @@ class GMM(object):
 
         Parameters
         ----------
-        ndim : int
-            Dimensionality of the mixture components.
         nstates : int
             Number of mixture components.
+        ndim : int
+            Dimensionality of the mixture components.
         cvtype : string (read-only)
             String describing the type of covariance parameters to
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
@@ -217,10 +219,18 @@ class GMM(object):
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
 
-        self.weights = np.tile(1.0 / nstates, nstates)
-        self.means = np.zeros((nstates, ndim))
-        self.covars = _distribute_covar_matrix_to_match_cvtype(
-            np.eye(ndim), cvtype, nstates)
+        if weights is None:
+            weights = np.tile(1.0 / nstates, nstates)
+        self.weights = weights
+
+        if means is None:
+            means = np.zeros((nstates, ndim))
+        self.means = means
+
+        if covars is None:
+            covars = _distribute_covar_matrix_to_match_cvtype(
+                np.eye(ndim), cvtype, nstates)
+        self.covars = covars
         
         self.labels = [None] * nstates
 
@@ -250,7 +260,6 @@ class GMM(object):
         elif self.cvtype == 'diag':
             return [np.diag(cov) for cov in self._covars]
         elif self.cvtype == 'tied':
-            print np.tile(self._covars, 2)
             return [self._covars]*self._nstates
         elif self.cvtype == 'spherical':
             return [np.eye(self._nstates) * f for f in self._covars]
@@ -453,17 +462,7 @@ class GMM(object):
             self._covars = _distribute_covar_matrix_to_match_cvtype(
                 cv, self._cvtype, self._nstates)
 
-
-        covar_mstep_fun = {'spherical': _covar_mstep_spherical,
-                           'diag': _covar_mstep_diag,
-                           #'tied': _covar_mstep_tied,
-                           #'full': _covar_mstep_full,
-                           'tied': _covar_mstep_slow,
-                           'full': _covar_mstep_slow,
-                           }[self._cvtype]
-
         # EM algorithm
-
         logprob = []
         for i in xrange(niter):
             # Expectation step
@@ -475,6 +474,11 @@ class GMM(object):
                 break
 
             # Maximization step
+            self._do_mstep(X, posteriors, params, min_covar)
+
+        return logprob
+
+    def _do_mstep(self, X, posteriors, params, min_covar=0):
             w = posteriors.sum(axis=0)
             avg_obs = np.dot(posteriors.T, X)
             norm = 1.0 / w[:,np.newaxis]
@@ -484,10 +488,11 @@ class GMM(object):
             if 'm' in params:
                 self._means = avg_obs * norm
             if 'c' in params:
-                self._covars = covar_mstep_fun(self, X, posteriors,
-                                               avg_obs, norm, min_covar)
+                covar_mstep_func = _covar_mstep_funcs[self._cvtype]
+                self._covars = covar_mstep_func(self, X, posteriors,
+                                                avg_obs, norm, min_covar)
 
-        return logprob
+            return w
 
 ##
 ## some helper routines
@@ -644,3 +649,11 @@ def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
         elif gmm.cvtype == 'tied':
             covars += cv / gmm._nstates
     return covars
+
+_covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
+                      'diag': _covar_mstep_diag,
+                      #'tied': _covar_mstep_tied,
+                      #'full': _covar_mstep_full,
+                      'tied': _covar_mstep_slow,
+                      'full': _covar_mstep_slow}
+

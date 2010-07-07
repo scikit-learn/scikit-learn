@@ -149,6 +149,7 @@ class GaussianHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
                                                       framelogprob, posteriors,
                                                       fwdlattice, bwdlattice,
                                                       params)
+
         if 'm' in params or 'c' in params:
             stats['post'] += posteriors.sum(axis=0)
             stats['obs'] += np.dot(posteriors.T, obs)
@@ -310,3 +311,72 @@ class MultinomialHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
 
         if 'e' in params:
             hmm.emissionprob = stats['obs'] / stats['obs'].sum(1)[:,np.newaxis]
+
+
+class GMMHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
+    "Baum-Welch maximum likelihood trainer for HMM with GMM emissions."
+    emission_type = 'gmm'
+
+    def _initialize_sufficient_statistics(self, hmm):
+        stats = super(GMMHMMBaumWelchTrainer,
+                      self)._initialize_sufficient_statistics(hmm)
+        stats['norm'] = [np.zeros(g.weights.shape) for g in hmm.gmms]
+        stats['means'] = [np.zeros(np.shape(g.means)) for g in hmm.gmms]
+        stats['covars'] = [np.zeros(np.shape(g._covars)) for g in hmm.gmms]
+        return stats
+
+    def _accumulate_sufficient_statistics(self, hmm, stats, obs, framelogprob,
+                                          posteriors, fwdlattice, bwdlattice,
+                                          params):
+        super(GMMHMMBaumWelchTrainer,
+              self)._accumulate_sufficient_statistics(hmm, stats, obs,
+                                                      framelogprob, posteriors,
+                                                      fwdlattice, bwdlattice,
+                                                      params)
+        for state,g in enumerate(hmm.gmms):
+            gmm_logprob, gmm_posteriors = g.eval(obs)
+            gmm_posteriors *= posteriors[:,state][:,np.newaxis]
+            tmpgmm = GMM(g.nstates, g.ndim, cvtype=g.cvtype)
+            norm = tmpgmm._do_mstep(obs, gmm_posteriors, params, min_covar=0)
+
+            stats['norm'][state] += norm
+            if 'm' in params:
+                stats['means'][state] += tmpgmm.means * norm[:,np.newaxis]
+            if 'c' in params:
+                if tmpgmm.cvtype == 'tied':
+                    stats['covars'][state] += tmpgmm._covars * norm.sum()
+                else:
+                    cvnorm = np.copy(norm)
+                    shape = np.ones(tmpgmm._covars.ndim)
+                    shape[0] = np.shape(tmpgmm._covars)[0]
+                    cvnorm.shape = shape
+                    stats['covars'][state] += tmpgmm._covars * cvnorm
+                  
+    def _do_mstep(self, hmm, stats, params, covarprior=1e-2, **kwargs):
+        super(GMMHMMBaumWelchTrainer, self)._do_mstep(hmm, stats, params)
+        # All we have left to do is apply covarprior to the parameters
+        # we updated in _accumulate_sufficient_statistics.
+        for state,g in enumerate(hmm.gmms):
+            norm = stats['norm'][state]
+            #print norm
+            if 'w' in params:
+                g.weights = normalize(norm) 
+            if 'm' in params:
+                g.means = stats['means'][state] / norm[:,np.newaxis]
+            if 'c' in params:
+                if g.cvtype == 'tied':
+                    g.covars = (stats['covars'][state]
+                                + covarprior * np.eye(g.ndim)) / norm.sum()
+                else:
+                    cvnorm = np.copy(norm)
+                    shape = np.ones(g._covars.ndim)
+                    shape[0] = np.shape(g._covars)[0]
+                    cvnorm.shape = shape
+                    if g.cvtype == 'spherical' or g.cvtype == 'diag':
+                        g.covars = (stats['covars'][state]
+                                    + covarprior) / cvnorm
+                    elif g.cvtype == 'full':
+                        g.covars = ((stats['covars'][state]
+                                     + covarprior*np.eye(g.ndim)[np.newaxis,:,:])
+                                    / cvnorm)
+        
