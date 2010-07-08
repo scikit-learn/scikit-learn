@@ -229,6 +229,12 @@ class SVC(BaseLibsvm):
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf
+
+    C : float, optional (default=1.0)
+        penalty parameter of the error term of the 
+    
     probability: boolean, optional (False by default)
         especify if probability estimates must be enabled
         must be enabled prior to calling prob_predict
@@ -277,9 +283,10 @@ class SVC(BaseLibsvm):
     SVR
     """
 
-    def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, 
-                 nu=0.5, p=0.1, shrinking=True, probability=False):
+    def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0,
+                 coef0=0.0,cache_size=100.0, eps=1e-3, C=1.0,nu=0.5, p=0.1,
+                 shrinking=True, probability=False):
+
         BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
@@ -319,8 +326,9 @@ class SVR(BaseLibsvm):
     SVC
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, 
-                 nu=0.5, p=0.1, shrinking=True, probability=False):
+                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
+                 shrinking=True, probability=False):
+
         BaseLibsvm.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
@@ -428,7 +436,7 @@ class LinearSVC(object):
         'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
         'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
         'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
-        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
+        'PL1_LL2_D0' : 5, # L2 penalty, L1 Loss, primal problem
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0):
