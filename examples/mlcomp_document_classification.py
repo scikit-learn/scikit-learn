@@ -65,10 +65,10 @@ print "n_samples: %d, n_features: %d" % news_train.data.shape
 
 print "Training a linear classification model with L1 penalty... "
 parameters = {
-    'loss': 'l2',
-    'penalty': 'l1',
+    'loss': 'l1',
+    'penalty': 'l2',
     'C': 10,
-    'dual': False,
+    'dual': True,
     'eps': 1e-4,
 }
 print "parameters:", parameters
