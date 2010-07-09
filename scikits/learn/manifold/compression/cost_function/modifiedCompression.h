@@ -3,9 +3,6 @@
  * Our own compression method, a little bit modified
  */
 
-// Matthieu Brucher
-// Last Change : 2008-02-21 15:29
-
 #ifndef MODIFIEDCOMPRESSIONMETHOD
 #define MODIFIEDCOMPRESSIONMETHOD
 

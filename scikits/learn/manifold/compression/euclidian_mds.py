@@ -1,7 +1,4 @@
 
-# Matthieu Brucher
-# Last Change : 2008-04-11 14:43
-
 import numpy
 import math
 
@@ -22,7 +19,7 @@ def mds(distances, function, nb_coords, **kargs):
   """
   Computes a new set of coordinates based on the distance matrix passed as a parameter, in fact it is a classical MDS
   """
-  square_distances = -distances ** 2 /2.
+  square_distances = -distances ** 2 / 2.
   correlations = square_distances + numpy.mean(square_distances) - numpy.mean(square_distances, axis=0) - numpy.mean(square_distances, axis=1)[numpy.newaxis].T
   (u, s, vh) = numpy.linalg.svd(correlations)
   return u[:, :nb_coords] * numpy.sqrt(s[:nb_coords])
