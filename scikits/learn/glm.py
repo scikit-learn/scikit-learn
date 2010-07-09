@@ -528,6 +528,7 @@ class Lasso(LinearModel):
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
 
+        X = np.asfortranarray(X) # make data contiguous in memory
         self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.lasso_coordinate_descent(self.coef_,
                     alpha, X, Y, maxit, 10, self.tol)
@@ -599,6 +600,9 @@ class ElasticNet(Lasso):
         nsamples = X.shape[0]
         alpha = self.alpha * self.rho * nsamples
         beta = self.alpha * (1.0 - self.rho) * nsamples
+        
+        X = np.asfortranarray(X) # make data contiguous in memory
+        
         self.coef_, self.dual_gap_, self.eps_ = \
                 cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
                                         maxit, 10, self.tol)
