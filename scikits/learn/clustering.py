@@ -5,9 +5,9 @@ Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 
 import numpy as np
 
-# ****************************************************************************** # 
+# ****************************************************************************** #
 # MeanShift
-# ****************************************************************************** # 
+# ****************************************************************************** #
 
 def meanshift(X, bandwidth):
     """Perform MeanShift Clustering of data using a flat kernel
@@ -133,9 +133,9 @@ class MeanShift(object):
         self.cluster_centers, self.labels = meanshift(X, self.bandwidth)
         return self
 
-# ****************************************************************************** # 
+# ****************************************************************************** #
 # Affinity Propagation
-# ****************************************************************************** # 
+# ****************************************************************************** #
 
 def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     """Perform Affinity Propagation Clustering of data
@@ -178,6 +178,9 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
 
     if p is None:
         p = np.median(S)
+
+    if df < 0.5 or df >= 1:
+        raise ValueError('df must be >= 0.5 and < 1')
 
     np.random.seed(0)
 
@@ -241,7 +244,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
                 break
     else:
         print "Did not converged"
-        
+
     I = np.where(np.diag(A+R) > 0)[0]
     K = I.size # Identify exemplars
 
