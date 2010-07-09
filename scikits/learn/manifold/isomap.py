@@ -43,6 +43,10 @@ class Isomap(object):
     ----------
     X : array_like
       The learning dataset
+      
+    Returns
+    -------
+    The embedding of the training dataset
     """
     pass
     
@@ -52,6 +56,10 @@ class Isomap(object):
     ----------
     Y : array_like
       The learning dataset
+    
+    Returns
+    -------
+    The embedding of the new dataset
     """
     pass
 	
