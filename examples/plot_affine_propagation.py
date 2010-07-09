@@ -64,5 +64,3 @@ for k, col in zip(unique_labels, colors):
         pl.plot([cluster_center[0], x[0]], [cluster_center[1], x[1]], col)
 
 pl.title('Estimated number of clusters: %d' % n_clusters_)
-
-pl.show()
