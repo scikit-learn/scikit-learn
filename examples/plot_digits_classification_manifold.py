@@ -42,7 +42,7 @@ isomap.fit(data[:n_samples/2])
 colors = np.array([(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1), (0,0,0), (1,1,1), (.5, 0, 0), (0, .5, 0), (0, 0, .5)])
 
 fig2 = pl.figure()
-fig2.gca().scatter(isomap.embedding_[:,0], isomap.embedding_[:,1], c=colors[digits.target[n_samples/2:]])
+fig2.gca().scatter(isomap.embedding_[:,0], isomap.embedding_[:,1], c=colors[digits.target[:n_samples/2]])
 
 reduced_test_data = isomap.predict(data[n_samples/2:])
 
