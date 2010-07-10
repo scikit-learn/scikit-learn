@@ -36,13 +36,16 @@ data = digits.images.reshape((n_samples, -1))
 
 from scikits.learn.manifold import Isomap
 
-isomap = Isomap(reduction_opts={'nb_coords' : 3, 'neighbors' : 20})
+isomap = Isomap(reduction_opts={'nb_coords' : 3, 'neighbors' : 8})
 isomap.fit(data[:n_samples/2])
 
 colors = np.array([(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1), (0,0,0), (1,1,1), (.5, 0, 0), (0, .5, 0), (0, 0, .5)])
 
+from mpl_toolkits.mplot3d import Axes3D
+
 fig2 = pl.figure()
-fig2.gca().scatter(isomap.embedding_[:,0], isomap.embedding_[:,1], c=colors[digits.target[:n_samples/2]])
+ax3 = Axes3D(fig2)
+ax3.scatter(isomap.embedding_[:,0], isomap.embedding_[:,1], isomap.embedding_[:,2], c=colors[digits.target[:n_samples/2]])
 
 reduced_test_data = isomap.predict(data[n_samples/2:])
 
