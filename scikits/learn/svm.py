@@ -1,7 +1,5 @@
 import numpy as np
 import _libsvm
-import _liblinear
-
 
 class BaseLibsvm(object):
     """
@@ -448,7 +446,8 @@ class LinearSVC(object):
         Y : array, shape = [nsamples]
             Target vector relative to X
         """
-        
+        import _liblinear
+
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
         self.raw_coef, self.label_, self.bias_ = \
@@ -459,6 +458,8 @@ class LinearSVC(object):
         return self
 
     def predict(self, T):
+        import _liblinear
+
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         return _liblinear.predict_wrap(T, self.raw_coef, self._solver_type_dict[self.solver_type],
                                       self.eps, self.C,

@@ -22,7 +22,7 @@ def mds(distances, function, nb_coords, **kargs):
   square_distances = -distances ** 2 / 2.
   correlations = square_distances + numpy.mean(square_distances) - numpy.mean(square_distances, axis=0) - numpy.mean(square_distances, axis=1)[numpy.newaxis].T
   (u, s, vh) = numpy.linalg.svd(correlations)
-  return u[:, :nb_coords] * numpy.sqrt(s[:nb_coords])
+  return u[:, :nb_coords] * numpy.sqrt(s[:nb_coords]), {'scaling' : u[:nb_coords], 'eigen_vectors' : u[:, :nb_coords]}
 
 def NLM(samples, nb_coords, **kargs):
   """

@@ -12,11 +12,11 @@ class Isomap(object):
     Projection technique that will be used ("barycenter" by default)
 
   projection_opts : dict
-    Dictionary of reduction options
+    Dictionary of projection options
 
   Attributes
   ----------
-  embedding : array_like
+  embedding_ : array_like
     Embedding of the learning data
     
   See Also
@@ -35,7 +35,9 @@ class Isomap(object):
   
   """
   def __init__(self, reduction_opts, projection = None, projection_opts = None):
-    pass
+    self.__reduction_opts = reduction_opts
+    self.__projection = projection
+    self.__projection_opts = projection_opts
 
   def fit(self, X):
     """
@@ -46,9 +48,11 @@ class Isomap(object):
       
     Returns
     -------
-    The embedding of the training dataset
+    Self
     """
-    pass
+    from compression.geodesic_mds import isomap
+    
+    self.embedding_, reduced_parameter_set = isomap(X, **self.__reduction_opts)
     
   def predict(self, Y):
     """

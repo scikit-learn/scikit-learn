@@ -3,4 +3,4 @@
 Manifold Learning Module
 """
 
-from Isomap import Isomap
+from isomap import Isomap

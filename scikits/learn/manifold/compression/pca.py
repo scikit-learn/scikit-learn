@@ -1,7 +1,4 @@
 
-# Matthieu Brucher
-# Last Change : 2008-04-07 15:47
-
 """
 PCA module, by Zachary Pincus
 """

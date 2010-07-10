@@ -3,9 +3,6 @@
 Computes coordinates based on the similarities given as parameters
 """
 
-# Matthieu Brucher
-# Last Change : 2008-04-11 14:42
-
 __all__ = ['LLE', 'laplacian_maps', 'hessianMap']
 
 from barycenters import barycenters

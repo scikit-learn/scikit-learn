@@ -3,9 +3,6 @@
 Computes barycenters weights from a graph and saves it in a sparse matrix
 """
 
-# Matthieu Brucher
-# Last Change : 2008-02-28 14:06
-
 import math
 
 import scipy.sparse

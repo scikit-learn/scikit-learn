@@ -1,7 +1,4 @@
 
-# Matthieu Brucher
-# Last Change : 2008-04-15 10:33
-
 """
 Compression module
 """

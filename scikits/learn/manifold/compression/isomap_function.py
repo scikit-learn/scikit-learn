@@ -1,7 +1,4 @@
 
-# Matthieu Brucher
-# Last Change : 2008-04-07 16:27
-
 import numpy
 import itertools
 

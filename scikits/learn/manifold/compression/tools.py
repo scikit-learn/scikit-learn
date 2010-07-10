@@ -3,9 +3,6 @@
 Tools for computation
 """
 
-# Matthieu Brucher
-# Last Change : 2008-02-28 09:33
-
 __all__ = ['create_graph', 'create_sym_graph', 'centered_normalized', 'dist2hd']
 
 import numpy as np

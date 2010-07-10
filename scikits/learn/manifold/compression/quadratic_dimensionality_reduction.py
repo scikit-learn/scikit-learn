@@ -9,7 +9,6 @@ import numpy.linalg
 
 from scikits.optimizer import StandardOptimizerModifying
 
-
 class Modifier(object):
   """
   Recenters the points on each axis

@@ -3,9 +3,6 @@
 Dimensionality reduction with similarities
 """
 
-# Matthieu Brucher
-# Last Change : 2008-04-15 10:32
-
 import numpy
 import numpy.random
 import numpy.linalg
