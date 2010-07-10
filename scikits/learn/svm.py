@@ -233,13 +233,15 @@ class SVC(BaseLibsvm):
         kernel coefficient for rbf
 
     C : float, optional (default=1.0)
-        penalty parameter of the error term of the 
+        penalty parameter C of the error term.
     
     probability: boolean, optional (False by default)
-        especify if probability estimates must be enabled
-        must be enabled prior to calling prob_predict
+        enable probability estimates. This must be enabled prior
+        to calling prob_predict.
 
     coef0 : float, optional
+        independent term in kernel function. It is only significant
+        in poly/sigmoid.
 
     Attributes
     ----------
@@ -295,6 +297,42 @@ class SVR(BaseLibsvm):
     """
     Support Vector Regression.
 
+    Parameters
+    ----------
+    impl : string, optional
+
+        SVM implementation to choose from. This refers to different formulations
+        of the SVM optimization problem. Can be one of 'epsilon_svr', 'nu_svr'.
+        By default 'epsilon_svc' will be chosen.
+
+    nu : float, optional
+        An upper bound on the fraction of training errors and a lower bound of
+        the fraction of support vectors. Should be in the interval (0, 1].  By
+        default 0.5 will be taken.  Only available if impl='nu_svc'
+
+    kernel : string, optional
+         Specifies the kernel type to be used in the algorithm.
+         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
+         If none is given 'rbf' will be used.
+
+    degree : int, optional
+        degree of kernel function
+        is significant only in poly, rbf, sigmoid
+
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf
+
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
+    
+    probability: boolean, optional (False by default)
+        enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
+    coef0 : float, optional
+        independent term in kernel function. It is only significant
+        in poly/sigmoid.
+
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, nfeatures]
@@ -336,6 +374,36 @@ class SVR(BaseLibsvm):
 class OneClassSVM(BaseLibsvm):
     """
     Outlayer detection
+
+    Parameters
+    ----------
+
+    kernel : string, optional
+         Specifies the kernel type to be used in the algorithm. one of 'linear',
+         'poly', 'rbf', 'sigmoid', 'precomputed'. If none is given 'rbf' will be
+         used.
+
+    nu : float, optional
+        An upper bound on the fraction of training errors and a lower bound of
+        the fraction of support vectors. Should be in the interval (0, 1].  By
+        default 0.5 will be taken.  Only available if impl='nu_svc'
+
+    degree : int, optional
+        degree of kernel function. Significant only in poly, rbf, sigmoid
+
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf.
+
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
+    
+    probability: boolean, optional (False by default)
+        enable probability estimates. Must be enabled prior to calling
+        prob_predict.
+
+    coef0 : float, optional
+        independent term in kernel function. It is only significant in
+        poly/sigmoid.
 
     Attributes
     ----------
