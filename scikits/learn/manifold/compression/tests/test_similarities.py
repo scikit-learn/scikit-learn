@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# Matthieu Brucher
-# Last Change : 2007-12-10 10:14
-
 import unittest
 import numpy
 

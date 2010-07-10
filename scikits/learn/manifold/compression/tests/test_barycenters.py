@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# Matthieu Brucher
-# Last Change : 2007-12-10 09:52
-
 import numpy as np
 
 from unittest import TestCase

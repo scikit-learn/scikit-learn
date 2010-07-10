@@ -36,10 +36,10 @@ data = digits.images.reshape((n_samples, -1))
 
 from scikits.learn.manifold import Isomap
 
-isomap = Isomap(reduction_opts={'nb_coords' : 2})
+isomap = Isomap(reduction_opts={'nb_coords' : 3, 'neighbors' : 20})
 isomap.fit(data[:n_samples/2])
 
-colors = np.array(['r', 'g', 'b', 'y', 'c', 'm', 'k', 'w', (.5, 0, 0), (0, .5, 0), (0, 0, .5)], dtype=np.object)
+colors = np.array([(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1), (0,0,0), (1,1,1), (.5, 0, 0), (0, .5, 0), (0, 0, .5)])
 
 fig2 = pl.figure()
 fig2.gca().scatter(isomap.embedding_[:,0], isomap.embedding_[:,1], c=colors[digits.target[n_samples/2:]])
