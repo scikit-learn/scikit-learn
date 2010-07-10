@@ -15,7 +15,7 @@ def parzen(samples, window_size, **kwargs):
   d = dist2hd(samples, samples)
 
   for dist in d:
-    wi = numpy.where(dist < neighbors)[0]
+    wi = numpy.where(dist < window_size)[0]
     l.append(wi)
 
   return l
