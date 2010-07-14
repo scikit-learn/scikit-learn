@@ -17,4 +17,4 @@ class test_lle(TestCase):
       1., 1., 0.5,
       )).reshape((-1,3))
     coords = LLE(samples, 2, neighbors=5)
-    print coords
+    assert(coords.shape == (7,2))

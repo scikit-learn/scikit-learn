@@ -51,7 +51,7 @@ def barycenters(samples, **kwargs):
   indptr = asarray(indptr, dtype=intc)
   return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples), len(samples)))
 
-def barycenter(point, neighbors):
+def barycenter(point, neighbors, tol = 1e-3):
   """
   Computes barycenter weights so that point may be reconstructed from its neighbors
   
@@ -67,7 +67,6 @@ def barycenter(point, neighbors):
   -------
   Barycenter weights
   """
-  tol = 1e-3
   z = point - neighbors
   Gram = dot(z, z.T)
   Gram += eye(len(neighbors), len(neighbors)) * tol * trace(Gram)
