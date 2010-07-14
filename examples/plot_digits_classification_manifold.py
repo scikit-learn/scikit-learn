@@ -46,6 +46,7 @@ from mpl_toolkits.mplot3d import Axes3D
 fig2 = pl.figure()
 ax3 = Axes3D(fig2)
 ax3.scatter(isomap.embedding_[:,0], isomap.embedding_[:,1], isomap.embedding_[:,2], c=colors[digits.target[:n_samples/2]])
+fig2.suptitle('Training samples in embedded space')
 
 reduced_test_data = isomap.predict(data[n_samples/2:])
 

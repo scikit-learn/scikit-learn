@@ -28,7 +28,6 @@ def LLE(samples, nb_coords, **kwargs):
   M = numpy.asarray(numpy.dot(t.T, t))
 
   w, vectors = numpy.linalg.eigh(M)
-  print w
   index = numpy.argsort(w)[1:1+nb_coords]
 
   t = scipy.sparse.eye(len(samples), len(samples)) - W

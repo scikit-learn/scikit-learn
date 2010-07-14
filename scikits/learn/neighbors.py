@@ -94,6 +94,7 @@ class Neighbors:
 
     """
     if k is None: k = self._k
+
     return self.ball_tree.query(data, k=k)
 
 

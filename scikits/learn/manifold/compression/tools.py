@@ -17,9 +17,10 @@ def create_graph(samples, **kwargs):
     The points to consider.
 
   neigh : Neighbors
-    A neighboorer (optional).
+    A neighboorer (optional). By default, a K-Neighbor research is done.
+    If provided, neigh must be a functor. All parameters passed to this function will be apssed to its constructor.
 
-  k : int
+  neighbors : int
     The number of K-neighboors to use (optional, default 9) if neigh is not given.
 
   Examples
@@ -27,6 +28,10 @@ def create_graph(samples, **kwargs):
   The following example creates a graph from samples and outputs the
   first item, that is a tuple representing the distance from that
   element to all other elements in sample:
+  
+  >>> from scikits.learn.manifold.compression.tools import create_graph
+  >>> graph = create_graph(data)
+  >>> print graph[0]
   """
   from scikits.learn.neighbors import Neighbors
 
@@ -35,11 +40,12 @@ def create_graph(samples, **kwargs):
 
   neigh = kwargs.get('neigh', None)
   if neigh is None:
-    neigh = Neighbors(k=kwargs.get('k', 9))
+    neigh = Neighbors(k=kwargs.get('neighbors', 9))
     neigh.fit(samples, labels)
+  neigh = neigh.kneighbors
 
   for i in range(0, len(samples)):
-    graph[i] = [neighboor for neighboor in neigh.kneighbors(samples[i])]
+    graph[i] = [neighboor for neighboor in neigh(samples[i])]
 
   return graph
 
