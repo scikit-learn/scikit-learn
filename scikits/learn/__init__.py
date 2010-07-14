@@ -21,9 +21,10 @@ import logistic
 import lda
 import metrics
 import svm
+import features
 
 __all__ = ['cross_val', 'ball_tree', 'gmm', 'glm', 'logistic', 'lda',
-           'metrics', 'svm']
+           'metrics', 'svm', 'features']
 
 __version__ = '0.5-git'
 
