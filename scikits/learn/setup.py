@@ -80,6 +80,9 @@ def configuration(parent_package='',top_path=None):
                                join('src', 'cblas', '*.c'),
                                ]
                            )
+        cblas_libs = ['cblas']
+    else:
+        cblas_libs = blas_info.pop('libraries')
 
     minilearn_sources = [
         join('src', 'minilearn', 'lars.c'),
@@ -87,9 +90,8 @@ def configuration(parent_package='',top_path=None):
 
 
     config.add_extension('_minilearn',
-                         sources=minilearn_sources,
-                         libraries = blas_info.pop('libraries', 
-                                                    ['cblas']),
+                         sources = minilearn_sources,
+                         libraries = cblas_libs,
                          include_dirs=[join('src', 'minilearn'),
                                        join('src', 'cblas'),
                                        numpy.get_include(),
