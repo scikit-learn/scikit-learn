@@ -12,7 +12,6 @@ def configuration(parent_package='',top_path=None):
     site_cfg.read(get_standard_file('site.cfg'))
 
     config.add_subpackage('datasets')
-    config.add_subpackage('features')
     config.add_subpackage('feature_selection')
     config.add_subpackage('utils')
 
@@ -81,6 +80,7 @@ def configuration(parent_package='',top_path=None):
                                ]
                            )
         cblas_libs = ['cblas']
+        blas_info.pop('libraries')
     else:
         cblas_libs = blas_info.pop('libraries')
 
