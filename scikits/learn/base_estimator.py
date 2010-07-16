@@ -5,48 +5,56 @@ Base class for all estimators.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 
 # License: BSD Style
+import inspect
 
 import numpy as np
 
 # XXX: This is work in progress and will probably need refactoring
 
-# TODO:
-#       * It might be worth the while to use the inspect module to
-#         check at instanciationg the __init__ signature and check that
-#         we are not creating a __init__ that is not consistent with the
-#         _params
 
 ################################################################################
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
 
-        _params: parameters of the model, but not parameters of the
-        estimation algorithm (such as maxiter)
+        Note
+        =====
+
+        All estimators should specify all the parameters that can be set
+        at the class level in their __init__ as explicit keyword
+        arguments (no *args, **kwargs).
+
     """
 
-    def __init__(self, **params):
-        assert hasattr(self, '_params'), \
-                'Estimator class without parameter definition'
-        assert isinstance(self._params, frozenset), \
-                'Parameter defintion (self._params) should be a frozenset'
-        self._set_params(**params)
-
-
-    def _set_params(self, **params):
-        for key, value in params.iteritems():
-            assert key in self._params, ('Specified parameter, %s, unknown'
-                            % key)
-            # Right now we are punting on type checking: this gives too
-            # much work for no good.
-            #assert isinstance(value, self.params[key])
-            setattr(self, key, value)
+    @classmethod
+    def _get_param_names(cls):
+        args, varargs, kw, default = inspect.getargspec(cls.__init__)
+        assert varargs is None, (
+            'scikit learn estimators should always specify their '
+            'parameters in the signature of their init (no varargs).'
+            )
+        # Remove 'self'
+        # XXX: This is going to fail if the init is a staticmethod, but
+        # who would do this?
+        args.pop(0)
+        return args
 
 
     def _get_params(self):
         out = dict()
-        for key in self._params:
+        for key in self._get_param_names():
             out[key] = getattr(self, key)
         return out
+
+
+    def _set_params(self, **params):
+        """ Set the parameters of the estimator.
+        """
+        valid_params = self._get_param_names()
+        for key, value in params.iteritems():
+            assert key in valid_params, ('Invalid parameter %s '
+                'for estimator %s' %
+                (key, self.__class__.__name__))
+            setattr(self, key, value)
 
 
     def __repr__(self):

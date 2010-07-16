@@ -82,10 +82,10 @@ class LinearRegression(LinearModel):
     Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
 
     """
-    _params = frozenset(('fit_intercept',))
 
     def __init__(self, fit_intercept=True):
-        super(LinearRegression, self).__init__(fit_intercept=fit_intercept)
+        self.fit_intercept = fit_intercept
+
 
     def fit(self, X, Y, **params):
         """
@@ -148,10 +148,11 @@ class Ridge(LinearModel):
     >>> clf.fit(X, Y) #doctest: +ELLIPSIS
     <scikits.learn.glm.Ridge object at 0x...>
     """
-    _params = frozenset(('alpha', 'fit_intercept'))
 
     def __init__(self, alpha=1.0, fit_intercept=True):
-        super(Ridge, self).__init__(alpha=alpha)
+        self.alpha = alpha
+        self.fit_intercept = True
+
 
     def fit(self, X, Y, **params):
         """
@@ -198,13 +199,14 @@ class BayesianRidge(LinearModel):
     """
     Encapsulate various bayesian regression algorithms
     """
-    _params = frozenset(('ll_bool', 'step_th', 'th_w', 'fit_intercept'))
 
     def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,
                 fit_intercept=True):
-        super(BayesianRidge, self).__init__(ll_bool=ll_bool,
-                    fit_intercept=fit_intercept,
-                    step_th=step_th, th_w=th_w)
+        self.ll_bool = ll_bool
+        self.step_th = step_th
+        self.th_w = th_w
+        self.fit_intercept = fit_intercept
+
 
     def fit(self, X, Y, **params):
         """
@@ -250,12 +252,12 @@ class ARDRegression(LinearModel):
     """
     # TODO: add intercept
 
-    _params = frozenset(('ll_bool', 'step_th', 'th_w', 'alpha_th'))
-
     def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,
             alpha_th=1e16):
-        super(BayesianRidge, self).__init__(ll_bool=ll_bool,
-                    step_th=step_th, th_w=th_w, alpha_th=alpha_th)
+        self.ll_bool = ll_bool
+        self.step_th = step_th
+        self.th_w = th_w
+        self.alpha_th = alpha_th
 
     def fit(self, X, Y, **params):
         self._set_params(**params)
@@ -501,11 +503,11 @@ class Lasso(LinearModel):
     The algorithm used to fit the model is coordinate descent.
     """
 
-    _params = frozenset(('alpha', 'fit_intercept', 'coef_'))
-
     def __init__(self, alpha=1.0, fit_intercept=True, coef_=None):
-        super(Lasso, self).__init__(alpha=alpha, 
-                    coef_=coef_, fit_intercept=fit_intercept)
+        self.alpha = alpha
+        self.fit_intercept = fit_intercept
+        self.coef_ = coef_
+
 
     def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """
@@ -586,15 +588,13 @@ class ElasticNet(Lasso):
         data is assumed to be already centered.
     """
 
-    _params = frozenset(('alpha', 'rho', 'fit_intercept', 'coef_'))
-
     def __init__(self, alpha=1.0, rho=0.5, coef_=None, 
                 fit_intercept=True):
-        # Don't call the parent class, but above, to avoid conflicting
-        # signatures
-        LinearModel.__init__(self, alpha=alpha,
-                        rho=rho, coef_=coef_, 
-                        fit_intercept=fit_intercept)
+        self.alpha = alpha
+        self.rho = rho
+        self.coef_ = coef_
+        self.fit_intercept = fit_intercept
+
 
     def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """Fit Elastic Net model with coordinate descent"""
@@ -749,11 +749,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
-    _params = frozenset(('eps', 'n_alphas', 'alphas'))
-
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None):
-        super(LinearModelCV, self).__init__(eps=eps, n_alphas=n_alphas,
-                                    alphas=alphas)
+        self.eps = eps
+        self.n_alphas = n_alphas
+        self.alphas = alphas
+
 
     def fit(self, X, y, cv=None, **fit_params):
         """Fit linear model with coordinate descent along decreasing alphas
@@ -865,14 +865,13 @@ class ElasticNetCV(LinearModelCV):
     See examples/lasso_path_with_crossvalidation.py for an example.
     """
 
-    _params = frozenset(('eps', 'n_alphas', 'alphas', 'rho'))
-
     path = staticmethod(enet_path)
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None):
-        LinearModel.__init__(self, rho=rho,
-                        eps=eps, n_alphas=n_alphas,
-                        alphas=alphas)
+        self.rho = rho
+        self.eps = eps
+        self.n_alphas = n_alphas
+        self.alphas = alphas
 
 
 class LeastAngleRegression(LinearModel):
