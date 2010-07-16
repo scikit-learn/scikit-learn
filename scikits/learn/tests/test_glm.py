@@ -1,6 +1,7 @@
 import numpy as np
-from nose.tools import *
-from numpy.testing import *
+from nose.tools import assert_equal, assert_true
+from numpy.testing import (assert_array_almost_equal,
+                           assert_almost_equal)
 
 from scikits.learn import glm
 
