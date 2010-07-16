@@ -1,10 +1,13 @@
 # $Id$
 
-import numpy as np
 import exceptions, warnings
+
+import numpy as np
 import scipy.linalg as linalg
 
-class LDA(object):
+from scikits.learn.base_estimator import BaseEstimator
+
+class LDA(BaseEstimator):
     """
     Linear Discriminant Analysis (LDA)
 
@@ -52,7 +55,7 @@ class LDA(object):
     QDA
 
     """
-    def __init__(self, priors = None, use_svd = True):
+    def __init__(self, priors=None, use_svd=True):
         #use_svd : if True, use linalg.svd alse use computational
         #          trick with covariance matrix
         if not priors is None:
@@ -60,7 +63,10 @@ class LDA(object):
         else: self.priors = None
         self.use_svd = use_svd
 
-    def fit(self, X, y, tol = 1.0e-4):
+    def fit(self, X, y, tol=1.0e-4, **params):
+        self._set_params(**params)
+        X = np.asanyarray(X)
+        y = np.asanyarray(y)
         if X.ndim!=2:
             raise exceptions.ValueError('X must be a 2D array')
         n_samples = X.shape[0]
@@ -118,7 +124,7 @@ class LDA(object):
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use svd to find projection in the space spamed by the
         # (n_classes) centers
-        if self.use_svd == True:
+        if self.use_svd:
             U, S, V = linalg.svd(X, full_matrices=0)
         else:
             S, V = self._svd(X)
@@ -150,7 +156,7 @@ class LDA(object):
 
     def predict_proba(self, X):
         #Ensure X is an array
-        X = np.asarray(X)
+        X = np.asanyarray(X)
         scaling = self.scaling
         # Remove overall mean (center) and scale
         # a) data

@@ -5,6 +5,8 @@ Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 
 import numpy as np
 
+from scikits.learn.base_estimator import BaseEstimator
+
 ################################################################################
 # MeanShift
 ################################################################################
@@ -120,15 +122,15 @@ def mean_shift(X, bandwidth):
 
 
 ################################################################################
-class MeanShift(object):
+class MeanShift(BaseEstimator):
     """MeanShift clustering"""
 
     def __init__(self, bandwidth):
-        super(MeanShift, self).__init__()
         self.bandwidth = bandwidth
 
-    def fit(self, X):
+    def fit(self, X, **params):
         """compute MeanShift"""
+        self._set_params(**params)
         self.cluster_centers, self.labels = mean_shift(X, self.bandwidth)
         return self
 
@@ -137,7 +139,7 @@ class MeanShift(object):
 # Affinity Propagation
 ################################################################################
 
-def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
+def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
@@ -149,7 +151,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     p : array [n_points,] or float
         Preferences for each point
 
-    df : float
+    damping : float
         Damping factor
 
     Returns
@@ -176,8 +178,8 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     if p is None:
         p = np.median(S)
 
-    if df < 0.5 or df >= 1:
-        raise ValueError('df must be >= 0.5 and < 1')
+    if damping < 0.5 or damping >= 1:
+        raise ValueError('damping must be >= 0.5 and < 1')
 
     random_state = np.random.RandomState(0)
 
@@ -212,7 +214,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
 
         R[ind, I[ind]] = S[ind, I[ind]] - Y2[ind]
 
-        R = (1-df)*R + df*Rold # Damping
+        R = (1-damping)*R + damping*Rold # Damping
 
         # Compute availabilities
         Aold = A
@@ -226,7 +228,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
 
         A.flat[::n_points+1] = dA
 
-        A = (1-df)*A + df*Aold # Damping
+        A = (1-damping)*A + damping*Aold # Damping
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
@@ -264,11 +266,15 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     return labels
 
 ################################################################################
-class AffinityPropagation(object):
+class AffinityPropagation(BaseEstimator):
     """Affinity Propagation clustering"""
 
-    def fit(self, S, p=None, maxit=200, convit=30, df=0.5):
+    def __init__(self, damping=.5):
+        self.damping = damping
+
+    def fit(self, S, p=None, maxit=200, convit=30, **params):
         """compute MeanShift"""
+        self._set_params(**params)
         self.labels = affinity_propagation(S, p, maxit=maxit, convit=convit,
-                                            df=df)
+                                            damping=self.damping)
         return self
