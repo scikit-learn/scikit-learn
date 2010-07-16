@@ -886,16 +886,12 @@ class LassoCV(LinearModelCV):
     The best model is then sselected by cross-validation.
     """
 
-    @property
-    def path(self):
-        return optimized_lasso
+    path = staticmethod(optimized_lasso)
 
 class ElasticNetCV(LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path"""
 
-    @property
-    def path(self):
-        return optimized_enet
+    path = staticmethod(optimized_enet)
 
     def __init__(self, rho=0.5, **kwargs):
         super(ElasticNetCV, self).__init__(**kwargs)
