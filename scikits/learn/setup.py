@@ -12,6 +12,7 @@ def configuration(parent_package='',top_path=None):
     site_cfg.read(get_standard_file('site.cfg'))
 
     config.add_subpackage('datasets')
+    config.add_subpackage('features')
     config.add_subpackage('feature_selection')
     config.add_subpackage('utils')
 
@@ -72,13 +73,17 @@ def configuration(parent_package='',top_path=None):
 
     # minilear needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
-    if not blas_info or (
+    if (not blas_info) or (
         ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
         config.add_library('cblas',
                            sources=[
                                join('src', 'cblas', '*.c'),
                                ]
                            )
+        cblas_libs = ['cblas']
+        blas_info.pop('libraries')
+    else:
+        cblas_libs = blas_info.pop('libraries')
 
     minilearn_sources = [
         join('src', 'minilearn', 'lars.c'),
@@ -86,9 +91,8 @@ def configuration(parent_package='',top_path=None):
 
 
     config.add_extension('_minilearn',
-                         sources=minilearn_sources,
-                         libraries = blas_info.pop('libraries', 
-                                                    ['cblas']),
+                         sources = minilearn_sources,
+                         libraries = cblas_libs,
                          include_dirs=[join('src', 'minilearn'),
                                        join('src', 'cblas'),
                                        numpy.get_include(),

@@ -5,15 +5,15 @@ Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 
 import numpy as np
 
-# ****************************************************************************** #
+################################################################################
 # MeanShift
-# ****************************************************************************** #
+################################################################################
 
-def meanshift(X, bandwidth):
+def mean_shift(X, bandwidth):
     """Perform MeanShift Clustering of data using a flat kernel
 
-    Arguments:
-    =========
+    Parameters
+    ==========
 
     X : array [n_samples, n_features]
         Input points
@@ -21,23 +21,20 @@ def meanshift(X, bandwidth):
     bandwidth : float
         kernel bandwidth
 
-    Output:
-    ======
+    Returns
+    ========
 
     cluster_centers: array [n_clusters, n_features]
 
     labels : array [n_samples]
         cluster labels for each point
 
-    References:
-    ===========
-
-    K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
-    Density Function, with Applications in Pattern Recognition"
-
     Notes:
     =====
     See examples/plot_meanshift.py for an example.
+
+    K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
+    Density Function, with Applications in Pattern Recognition"
 
     """
 
@@ -55,15 +52,14 @@ def meanshift(X, bandwidth):
     # used to resolve conflicts on cluster membership
     cluster_votes = []
 
-    np.random.seed(0)
+    random_state = np.random.RandomState(0)
 
     while n_points_init:
-
         # pick a random seed point
-        tmp_index   = np.random.randint(n_points_init)
+        tmp_index   = random_state.randint(n_points_init)
         # use this point as start of mean
         start_idx   = points_idx_init[tmp_index]
-        my_mean     = X[start_idx,:] # intilize mean to this points location
+        my_mean     = X[start_idx, :] # intilize mean to this points location
         # points that will get added to this cluster
         my_members  = np.zeros(n_points, dtype=np.bool)
         # used to resolve conflicts on cluster membership
@@ -122,26 +118,30 @@ def meanshift(X, bandwidth):
 
     return cluster_centers, labels
 
+
+################################################################################
 class MeanShift(object):
     """MeanShift clustering"""
+
     def __init__(self, bandwidth):
         super(MeanShift, self).__init__()
         self.bandwidth = bandwidth
 
     def fit(self, X):
         """compute MeanShift"""
-        self.cluster_centers, self.labels = meanshift(X, self.bandwidth)
+        self.cluster_centers, self.labels = mean_shift(X, self.bandwidth)
         return self
 
-# ****************************************************************************** #
+
+################################################################################
 # Affinity Propagation
-# ****************************************************************************** #
+################################################################################
 
 def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     """Perform Affinity Propagation Clustering of data
 
-    Arguments:
-    =========
+    Parameters
+    ===========
 
     S : array [n_points, n_points]
         Matrix of similarities between points
@@ -152,23 +152,20 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     df : float
         Damping factor
 
-    Output:
-    ======
+    Returns
+    ========
 
     cluster_centers: array [n_clusters, n_features]
 
     labels : array [n_points]
         cluster labels for each point
 
-    References:
-    ===========
+    Notes
+    =====
+    See examples/plot_affinity_propagation.py for an example.
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
-
-    Notes:
-    =====
-    See examples/plot_affinity_propagation.py for an example.
 
     """
 
@@ -182,7 +179,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     if df < 0.5 or df >= 1:
         raise ValueError('df must be >= 0.5 and < 1')
 
-    np.random.seed(0)
+    random_state = np.random.RandomState(0)
 
     # Place preferences on the diagonal of S
     S.flat[::(n_points+1)] = p
@@ -191,8 +188,9 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     R = np.zeros((n_points, n_points)) # Initialize messages
 
     # Remove degeneracies
-    S += (np.finfo(np.double).eps*S +
-          np.finfo(np.double).tiny *100) * np.random.randn(n_points,n_points)
+    S += (  np.finfo(np.double).eps*S
+          + np.finfo(np.double).tiny*100
+         )*random_state.randn(n_points, n_points)
 
     # Execute parallel affinity propagation updates
     e = np.zeros((n_points, convit))
@@ -200,20 +198,19 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     ind = np.arange(n_points)
 
     for it in range(maxit):
-
         # Compute responsibilities
         Rold = R.copy()
         AS = A + S
 
         I = np.argmax(AS, axis=1)
-        Y = AS[np.arange(n_points),I]#np.max(AS, axis=1)
+        Y = AS[np.arange(n_points), I]#np.max(AS, axis=1)
 
-        AS[ind,I[ind]] = - np.finfo(np.double).max
+        AS[ind, I[ind]] = - np.finfo(np.double).max
 
         Y2 = np.max(AS, axis=1)
-        R = S - Y[:,np.newaxis]
+        R = S - Y[:, np.newaxis]
 
-        R[ind,I[ind]] = S[ind,I[ind]] - Y2[ind]
+        R[ind, I[ind]] = S[ind, I[ind]] - Y2[ind]
 
         R = (1-df)*R + df*Rold # Damping
 
@@ -222,7 +219,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
         Rp = np.maximum(R, 0)
         Rp.flat[::n_points+1] = R.flat[::n_points+1]
 
-        A = np.sum(Rp, axis=0)[np.newaxis,:] - Rp
+        A = np.sum(Rp, axis=0)[np.newaxis, :] - Rp
 
         dA = np.diag(A)
         A = np.minimum(A, 0)
@@ -249,26 +246,26 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, df=0.5):
     K = I.size # Identify exemplars
 
     if K > 0:
-        c = np.argmax(S[:,I], axis=1)
+        c = np.argmax(S[:, I], axis=1)
         c[I] = np.arange(K) # Identify clusters
         # Refine the final set of exemplars and clusters and return results
         for k in range(K):
             ii = np.where(c==k)[0]
-            j = np.argmax(np.sum(S[ii,ii], axis=0))
+            j = np.argmax(np.sum(S[ii, ii], axis=0))
             I[k] = ii[j]
 
-        c = np.argmax(S[:,I], axis=1)
+        c = np.argmax(S[:, I], axis=1)
         c[I] = np.arange(K)
         labels = I[c]
     else:
-        labels = np.nan * np.ones((n_points, 1))
+        labels = np.empty((n_points, 1))
+        labels.fill(np.nan)
 
     return labels
 
+################################################################################
 class AffinityPropagation(object):
     """Affinity Propagation clustering"""
-    def __init__(self):
-        super(AffinityPropagation, self).__init__()
 
     def fit(self, S, p=None, maxit=200, convit=30, df=0.5):
         """compute MeanShift"""
