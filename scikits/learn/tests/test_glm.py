@@ -5,6 +5,15 @@ from numpy.testing import (assert_array_almost_equal,
 
 from scikits.learn import glm
 
+################################################################################
+# Smoke test of different estimators
+################################################################################
+
+
+################################################################################
+# Test LeastAngleRegression
+################################################################################
+
 def test_toy():
     """Very simple test on a small dataset"""
     X = [[1, 0, -1.],
