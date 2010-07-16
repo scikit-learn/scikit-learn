@@ -59,7 +59,7 @@ class LinearModel(BaseEstimator):
     def __str__(self):
         if self.coef_ is not None:
             return ("<%s \n  Fitted: explained variance=%s>"
-                    (self, self.explained_variance_)
+                    (self, self.explained_variance_))
         else:
             return "<%s \n  Not fitted to data>" % self
 
