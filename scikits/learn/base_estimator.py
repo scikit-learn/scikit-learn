@@ -9,8 +9,6 @@ import inspect
 
 import numpy as np
 
-# XXX: This is work in progress and will probably need refactoring
-
 
 ################################################################################
 class BaseEstimator(object):
