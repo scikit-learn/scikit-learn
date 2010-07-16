@@ -56,6 +56,13 @@ class LinearModel(BaseEstimator):
         return 1 - np.linalg.norm(Y - self.predict(X))**2 \
                          / np.linalg.norm(Y)**2
 
+    def __str__(self):
+        if self.coef_ is not None:
+            return ("<%s \n  Fitted: explained variance=%s>"
+                    (self, self.explained_variance_)
+        else:
+            return "<%s \n  Not fitted to data>" % self
+
 
 class LinearRegression(LinearModel):
     """
@@ -232,6 +239,9 @@ class BayesianRidge(LinearModel):
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
+        # Store explained variance for __str__
+        self.explained_variance_ = self._explained_variance(X, Y)
+
         return self
 
 
@@ -256,6 +266,9 @@ class ARDRegression(LinearModel):
         self.w ,self.alpha ,self.beta ,self.sigma ,self.log_likelihood = \
             bayesian_regression_ard(X, Y, self.step_th, self.th_w,\
             self.alpha_th, self.ll_bool)
+
+        # Store explained variance for __str__
+        self.explained_variance_ = self._explained_variance(X, Y)
         return self
 
     def predict(self, T):
@@ -490,33 +503,36 @@ class Lasso(LinearModel):
     The algorithm used to fit the model is coordinate descent.
     """
 
-    _params = {'alpha': [float, int], 'tol': float}
+    _params = {'alpha': [float, int], 'intercept': bool,
+               'coef_': [float, None]}
 
-    def __init__(self, alpha=1.0, tol=1e-4, intercept=True):
-        super(Lasso, self).__init__(alpha=alpha, tol=tol, intercept=intercept)
+    def __init__(self, alpha=1.0, intercept=True, coef_=None):
+        super(Lasso, self).__init__(alpha=alpha, 
+                    coef_=coef_, intercept=intercept)
 
-    def fit(self, X, Y, maxit=1000, **params):
+    def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """
         Fit Lasso model.
 
         Parameters
         ----------
-        X : numpy array of shape [nsamples,nfeatures]
+        X: numpy array of shape [nsamples,nfeatures]
             Training data
 
-        Y : numpy array of shape [nsamples]
+        Y: numpy array of shape [nsamples]
             Target values
 
-        maxit : int
-
+        maxit: int, optional
             maximum number of coordinate descent iterations used to
             fit the model. In case
+        tol: float, optional
+            fit tolerance
 
         Returns
         -------
         self : returns an instance of self.
         """
-        self._set_params(self, **params)
+        self._set_params(**params)
 
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
@@ -539,7 +555,7 @@ class Lasso(LinearModel):
         X = np.asfortranarray(X) # make data contiguous in memory
         self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.lasso_coordinate_descent(self.coef_,
-                    alpha, X, Y, maxit, 10, self.tol)
+                    alpha, X, Y, maxit, 10, tol)
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
@@ -547,25 +563,11 @@ class Lasso(LinearModel):
             warnings.warn('Objective did not converge, you might want '
                                 'to increase the number of interations')
 
+        # Store explained variance for __str__
         self.explained_variance_ = self._explained_variance(X, Y)
 
         # return self for chaining fit and predict calls
         return self
-
-    def __str__(self):
-        if self.coef_ is not None:
-            n_non_zeros = (np.abs(self.coef_) != 0).sum()
-            return ("%s with %d non-zero coefficients (%.2f%%)\n" + \
-                    " * Regularisation parameter = %.7f\n" +
-                    " * Explained Variance = %.7f\n") % \
-                    (self.__class__.__name__, n_non_zeros,
-                     n_non_zeros / float(len(self.coef_)) * 100,
-                     self.alpha, self.explained_variance_)
-        else:
-            return ("%s\n" + \
-                    " * Regularisation parameter = %.7f\n" +\
-                    " * No fit") % \
-                    (self.__class__.__name__, self.alpha)
 
 
 class ElasticNet(Lasso):
@@ -587,16 +589,18 @@ class ElasticNet(Lasso):
         data is assumed to be already centered.
     """
 
-    _params = {'alpha': [float, int], 'tol': float, 'rho': float, 
-                'intercept': bool, 'coef': [list, None]}
+    _params = {'alpha': [float, int], 'rho': float, 
+                'intercept': bool, 'coef_': [list, None]}
 
-    def __init__(self, alpha=1.0, rho=0.5, coef=None, 
-                intercept=True, tol=1e-4):
-        super(ElasticNet, self).__init__(alpha=alpha,
-                        rho=rho, coef=coef, 
-                        intercept=intercept, tol=tol)
+    def __init__(self, alpha=1.0, rho=0.5, coef_=None, 
+                intercept=True):
+        # Don't call the parent class, but above, to avoid conflicting
+        # signatures
+        LinearModel.__init__(self, alpha=alpha,
+                        rho=rho, coef_=coef_, 
+                        intercept=intercept)
 
-    def fit(self, X, Y, maxit=1000, **params):
+    def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """Fit Elastic Net model with coordinate descent"""
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float64)
@@ -622,13 +626,14 @@ class ElasticNet(Lasso):
 
         self.coef_, self.dual_gap_, self.eps_ = \
                 cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
-                                        maxit, 10, self.tol)
+                                        maxit, 10, tol)
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
 
+        # Store explained variance for __str__
         self.explained_variance_ = self._explained_variance(X, Y)
 
         # return self for chaining fit and predict calls
@@ -941,11 +946,9 @@ class ElasticNetCV(LinearModelCV):
         self.rho = rho
 
 
-class LeastAngleRegression (LinearModel):
+class LeastAngleRegression(LinearModel):
     """
     Least Angle Regression using the LARS algorithm.
-
-    Least Angle Regression
 
     Attributes
     ----------
