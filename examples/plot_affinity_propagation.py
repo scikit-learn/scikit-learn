@@ -9,9 +9,9 @@ Between Data Points", Science Feb. 2007
 import numpy as np
 from scikits.learn.clustering import affinity_propagation
 
-# ========================
-# = Generate sample data =
-# ========================
+################################################################################
+# Generate sample data
+################################################################################
 np.random.seed(0)
 
 n_points_per_cluster = 100
@@ -24,16 +24,16 @@ X = np.empty((0, 2))
 for i in range(n_clusters):
     X = np.r_[X, means[i] + std * np.random.randn(n_points_per_cluster, 2)]
 
-# ========================
-# = Compute similarities =
-# ========================
+################################################################################
+# Compute similarities
+################################################################################
 X_norms = np.sum(X*X, axis=1)
 S = - X_norms[:,np.newaxis] - X_norms[np.newaxis,:] + 2 * np.dot(X, X.T)
 p = 10*np.median(S)
 
-# ================================
-# = Compute Affinity Propagation =
-# ================================
+################################################################################
+# Compute Affinity Propagation
+################################################################################
 
 labels = affinity_propagation(S, p)
 
@@ -42,9 +42,9 @@ n_clusters_ = unique_labels.size
 
 print 'Estimated number of clusters: %d' % n_clusters_
 
-# ===============
-# = Plot result =
-# ===============
+################################################################################
+# Plot result
+################################################################################
 
 import pylab as pl
 from itertools import cycle
