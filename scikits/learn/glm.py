@@ -82,10 +82,10 @@ class LinearRegression(LinearModel):
     Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
 
     """
-    _params = frozenset(('intercept',))
+    _params = frozenset(('fit_intercept',))
 
-    def __init__(self, intercept=True):
-        super(LinearRegression, self).__init__(intercept=intercept)
+    def __init__(self, fit_intercept=True):
+        super(LinearRegression, self).__init__(fit_intercept=fit_intercept)
 
     def fit(self, X, Y, **params):
         """
@@ -97,7 +97,7 @@ class LinearRegression(LinearModel):
             Training data
         Y : numpy array of shape [nsamples]
             Target values
-        intercept : boolean, optional
+        fit_intercept : boolean, optional
             wether to calculate the intercept for this model. If set
             to false, no intercept will be used in calculations
             (e.g. data is expected to be already centered).
@@ -110,12 +110,12 @@ class LinearRegression(LinearModel):
         X = np.asanyarray( X )
         Y = np.asanyarray( Y )
 
-        if self.intercept:
+        if self.fit_intercept:
             # augmented X array to store the intercept
             X = np.c_[X, np.ones(X.shape[0])]
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, Y)
-        if self.intercept:
+        if self.fit_intercept:
             self.intercept_ = self.coef_[-1]
             self.coef_ = self.coef_[:-1]
         else:
@@ -132,7 +132,7 @@ class Ridge(LinearModel):
     alpha : float
         Small positive values of alpha improve the coditioning of the
         problem and reduce the variance of the estimates.
-    intercept : boolean
+    fit_intercept : boolean
         wether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -148,9 +148,9 @@ class Ridge(LinearModel):
     >>> clf.fit(X, Y) #doctest: +ELLIPSIS
     <scikits.learn.glm.Ridge object at 0x...>
     """
-    _params = frozenset(('alpha', 'intercept'))
+    _params = frozenset(('alpha', 'fit_intercept'))
 
-    def __init__(self, alpha=1.0, intercept=True):
+    def __init__(self, alpha=1.0, fit_intercept=True):
         super(Ridge, self).__init__(alpha=alpha)
 
     def fit(self, X, Y, **params):
@@ -171,7 +171,7 @@ class Ridge(LinearModel):
         self._set_params(**params)
         nsamples, nfeatures = X.shape
 
-        if self.intercept:
+        if self.fit_intercept:
             self._xmean = X.mean(axis=0)
             self._ymean = Y.mean(axis=0)
             X = X - self._xmean
@@ -198,12 +198,12 @@ class BayesianRidge(LinearModel):
     """
     Encapsulate various bayesian regression algorithms
     """
-    _params = frozenset(('ll_bool', 'step_th', 'th_w', 'intercept'))
+    _params = frozenset(('ll_bool', 'step_th', 'th_w', 'fit_intercept'))
 
     def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,
-                intercept=True):
+                fit_intercept=True):
         super(BayesianRidge, self).__init__(ll_bool=ll_bool,
-                    intercept=intercept,
+                    fit_intercept=fit_intercept,
                     step_th=step_th, th_w=th_w)
 
     def fit(self, X, Y, **params):
@@ -223,7 +223,7 @@ class BayesianRidge(LinearModel):
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
 
-        if self.intercept:
+        if self.fit_intercept:
             self._xmean = X.mean(axis=0)
             self._ymean = Y.mean(axis=0)
             X = X - self._xmean
@@ -472,7 +472,7 @@ class Lasso(LinearModel):
     alpha : float, optional
         Constant that multiplies the L1 term. Defaults to 1.0
 
-    intercept : boolean
+    fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -501,11 +501,11 @@ class Lasso(LinearModel):
     The algorithm used to fit the model is coordinate descent.
     """
 
-    _params = frozenset(('alpha', 'intercept', 'coef_'))
+    _params = frozenset(('alpha', 'fit_intercept', 'coef_'))
 
-    def __init__(self, alpha=1.0, intercept=True, coef_=None):
+    def __init__(self, alpha=1.0, fit_intercept=True, coef_=None):
         super(Lasso, self).__init__(alpha=alpha, 
-                    coef_=coef_, intercept=intercept)
+                    coef_=coef_, fit_intercept=fit_intercept)
 
     def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """
@@ -534,7 +534,7 @@ class Lasso(LinearModel):
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
 
-        if self.intercept:
+        if self.fit_intercept:
             self._xmean = X.mean(axis=0)
             self._ymean = Y.mean(axis=0)
             X = X - self._xmean
@@ -581,20 +581,20 @@ class ElasticNet(Lasso):
         The ElasticNet mixing parameter, with 0 < rho <= 1.
     corf: ndarray of shape n_features
         The initial coeffients to warm-start the optimization
-    intercept: bool
+    fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
     """
 
-    _params = frozenset(('alpha', 'rho', 'intercept', 'coef_'))
+    _params = frozenset(('alpha', 'rho', 'fit_intercept', 'coef_'))
 
     def __init__(self, alpha=1.0, rho=0.5, coef_=None, 
-                intercept=True):
+                fit_intercept=True):
         # Don't call the parent class, but above, to avoid conflicting
         # signatures
         LinearModel.__init__(self, alpha=alpha,
                         rho=rho, coef_=coef_, 
-                        intercept=intercept)
+                        fit_intercept=fit_intercept)
 
     def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """Fit Elastic Net model with coordinate descent"""
@@ -602,7 +602,7 @@ class ElasticNet(Lasso):
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
 
-        if self.intercept:
+        if self.fit_intercept:
             self._xmean = X.mean(axis=0)
             self._ymean = Y.mean(axis=0)
             X = X - self._xmean
@@ -900,7 +900,7 @@ class LeastAngleRegression(LinearModel):
         self._chol   = np.empty(0, dtype=np.float64)
         self.beta_    = np.empty(0, dtype=np.float64)
 
-    def fit (self, X, Y, intercept=True, max_features=None, normalize=True):
+    def fit (self, X, Y, fit_intercept=True, max_features=None, normalize=True):
         """
         Fit the model according to data X, Y.
 
@@ -912,7 +912,7 @@ class LeastAngleRegression(LinearModel):
         Y : numpy array of shape [nsamples]
             Target values
 
-        intercept : boolean, optional
+        fit_intercept : boolean, optional
             wether to calculate the intercept for this model. If set
             to false, no intercept will be used in calculations
             (e.g. data is expected to be already centered).
@@ -969,7 +969,7 @@ class LeastAngleRegression(LinearModel):
 
         self.coef_ = np.ravel(self.coef_path_[:, max_features])
 
-        if intercept:
+        if fit_intercept:
             self.intercept_ = self._ymean
         else:
             self.intercept_ = 0.
