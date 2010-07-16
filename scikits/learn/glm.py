@@ -745,6 +745,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         models.append(model)
     return models
 
+
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
@@ -864,7 +865,7 @@ class ElasticNetCV(LinearModelCV):
     See examples/lasso_path_with_crossvalidation.py for an example.
     """
 
-    _params = {'eps':float, 'n_alphas':int, 'alphas':list, 'rho':0.2}
+    _params = frozenset(('eps', 'n_alphas', 'alphas', 'rho'))
 
     path = staticmethod(enet_path)
 
