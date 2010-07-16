@@ -75,7 +75,10 @@ class LinearRegression(LinearModel):
     Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
 
     """
-    _params = {'intercept': True}
+    _params = {'intercept': bool}
+
+    def __init__(self, intercept=True):
+        super(LinearRegression, self).__init__(intercept=intercept)
 
     def fit(self, X, Y, **params):
         """
