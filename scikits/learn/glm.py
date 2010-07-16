@@ -82,7 +82,7 @@ class LinearRegression(LinearModel):
     Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
 
     """
-    _params = {'intercept': bool}
+    _params = frozenset(('intercept',))
 
     def __init__(self, intercept=True):
         super(LinearRegression, self).__init__(intercept=intercept)
@@ -148,7 +148,7 @@ class Ridge(LinearModel):
     >>> clf.fit(X, Y) #doctest: +ELLIPSIS
     <scikits.learn.glm.Ridge object at 0x...>
     """
-    _params = {'alpha': float, 'intercept': bool}
+    _params = frozenset(('alpha', 'intercept'))
 
     def __init__(self, alpha=1.0, intercept=True):
         super(Ridge, self).__init__(alpha=alpha)
@@ -198,8 +198,7 @@ class BayesianRidge(LinearModel):
     """
     Encapsulate various bayesian regression algorithms
     """
-    _params = {'ll_bool': bool, 'step_th': float, 'th_w':float,
-               'intercept': bool}
+    _params = frozenset(('ll_bool', 'step_th', 'th_w', 'intercept'))
 
     def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,
                 intercept=True):
@@ -251,8 +250,7 @@ class ARDRegression(LinearModel):
     """
     # TODO: add intercept
 
-    _params = {'ll_bool': bool, 'step_th': float, 'th_w':float,
-               'alpha_th': float}
+    _params = frozenset(('ll_bool', 'step_th', 'th_w', 'alpha_th'))
 
     def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,
             alpha_th=1e16):
@@ -503,8 +501,7 @@ class Lasso(LinearModel):
     The algorithm used to fit the model is coordinate descent.
     """
 
-    _params = {'alpha': [float, int], 'intercept': bool,
-               'coef_': [float, None]}
+    _params = frozenset(('alpha', 'intercept', 'coef_'))
 
     def __init__(self, alpha=1.0, intercept=True, coef_=None):
         super(Lasso, self).__init__(alpha=alpha, 
@@ -589,8 +586,7 @@ class ElasticNet(Lasso):
         data is assumed to be already centered.
     """
 
-    _params = {'alpha': [float, int], 'rho': float, 
-                'intercept': bool, 'coef_': [list, None]}
+    _params = frozenset(('alpha', 'rho', 'intercept', 'coef_'))
 
     def __init__(self, alpha=1.0, rho=0.5, coef_=None, 
                 intercept=True):
@@ -752,7 +748,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
-    _params = {'eps':float, 'n_alphas':int, 'alphas':list}
+    _params = frozenset(('eps', 'n_alphas', 'alphas'))
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None):
         super(LinearModelCV, self).__init__(eps=eps, n_alphas=n_alphas,
