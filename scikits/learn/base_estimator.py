@@ -26,7 +26,9 @@ class BaseEstimator(object):
 
     def __init__(self, **params):
         assert hasattr(self, '_params'), \
-                    'Estimator class without parameter definition'
+                'Estimator class without parameter definition'
+        assert isinstance(self._params, frozenset), \
+                'Parameter defintion (self._params) should be a frozenset'
         self._set_params(**params)
 
 
