@@ -7,7 +7,7 @@ Density Function, with Applications in Pattern Recognition"
 """
 
 import numpy as np
-from scikits.learn.meanshift import MeanShift
+from scikits.learn.clustering import MeanShift
 
 # ========================
 # = Generate sample data =
