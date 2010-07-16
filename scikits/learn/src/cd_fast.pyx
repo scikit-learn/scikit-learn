@@ -32,7 +32,7 @@ ctypedef np.float64_t DOUBLE
 @cython.wraparound(False)
 def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                              double alpha,
-                             np.ndarray[DOUBLE, ndim=2] X,
+                             np.ndarray[DOUBLE, ndim=2, mode="fortran"] X,
                              np.ndarray[DOUBLE, ndim=1] y,
                              int maxit, int gap_step,
                              double tol):
