@@ -26,9 +26,9 @@
 
 
 
-===========================
-Scikits.learn Documentation
-===========================
+===========================================
+Scikits.learn: machine learning in Python
+===========================================
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
 
