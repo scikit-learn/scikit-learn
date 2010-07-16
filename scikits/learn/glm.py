@@ -698,7 +698,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     return models
 
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              verbose=False, **fit_kwargs):
+              verbose=False, fit_params=dict()):
 
     """Compute Elastic-Net path with coordinate descent
 
@@ -721,7 +721,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         List of alphas where to compute the models.
         If None alphas are set automatically
 
-    fit_kwargs : kwargs
+    fit_params : dict, optional
         keyword arguments passed to the ElasticNet fit method
 
     Returns
@@ -743,7 +743,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     models = []
     for alpha in alphas:
         model = ElasticNet(coef_=coef_, alpha=alpha, rho=rho)
-        model.fit(X, y, **fit_kwargs)
+        model.fit(X, y, **fit_params)
         if verbose: print model
         coef_ = model.coef_.copy()
         models.append(model)
@@ -807,6 +807,7 @@ class LinearModelCV(LinearModel):
                 mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
 
         i_best_alpha = np.argmin(mse_alphas)
+        model = models[i_best_alpha]
 
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
@@ -867,10 +868,14 @@ class ElasticNetCV(LinearModelCV):
     See examples/lasso_path_with_crossvalidation.py for an example.
     """
 
+    _params = {'eps':float, 'n_alphas':int, 'alphas':list, 'rho':0.2}
+
     path = staticmethod(enet_path)
 
-    def __init__(self, rho=0.5, **kwargs):
-        super(ElasticNetCV, self).__init__(rho=rho, **kwargs)
+    def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None):
+        LinearModel.__init__(self, rho=rho,
+                        eps=eps, n_alphas=n_alphas,
+                        alphas=alphas)
 
 
 class LeastAngleRegression(LinearModel):
