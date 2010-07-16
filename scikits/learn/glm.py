@@ -17,7 +17,7 @@ import scipy.linalg
 import scipy.sparse as sp # needed by LeastAngleRegression
 
 from . import cd_fast
-from .utils.extmath import fast_logdet, density
+from .utils.extmath import fast_logdet
 from .cross_val import KFold
 from ._minilearn import lars_fit_wrap
 from .base_estimator import BaseEstimator
@@ -33,12 +33,6 @@ from .base_estimator import BaseEstimator
 
 class LinearModel(BaseEstimator):
     """Base class for Linear Models"""
-
-    def __init__(self, coef=None):
-        # weights of the model (can be lazily initialized by the
-        # ``fit`` method)
-       # TODO: I believe this is not really much used
-        self.coef_ = coef
 
     def predict(self, X):
         """
@@ -81,8 +75,9 @@ class LinearRegression(LinearModel):
     Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
 
     """
+    _params = {'intercept': True}
 
-    def fit(self, X, Y, intercept=True):
+    def fit(self, X, Y, **params):
         """
         Fit linear model.
 
@@ -92,7 +87,7 @@ class LinearRegression(LinearModel):
             Training data
         Y : numpy array of shape [nsamples]
             Target values
-        intercept : boolen
+        intercept : boolean, optional
             wether to calculate the intercept for this model. If set
             to false, no intercept will be used in calculations
             (e.g. data is expected to be already centered).
@@ -101,15 +96,16 @@ class LinearRegression(LinearModel):
         -------
         self : returns an instance of self.
         """
+        self._set_params(**params)
         X = np.asanyarray( X )
         Y = np.asanyarray( Y )
 
-        if intercept:
+        if self.intercept:
             # augmented X array to store the intercept
             X = np.c_[X, np.ones(X.shape[0])]
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, Y)
-        if intercept:
+        if self.intercept:
             self.intercept_ = self.coef_[-1]
             self.coef_ = self.coef_[:-1]
         else:
@@ -121,12 +117,15 @@ class Ridge(LinearModel):
     """
     Ridge regression.
 
-
     Parameters
     ----------
     alpha : float
         Small positive values of alpha improve the coditioning of the
         problem and reduce the variance of the estimates.
+    intercept : boolean
+        wether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
 
     Examples
     --------
@@ -139,11 +138,12 @@ class Ridge(LinearModel):
     >>> clf.fit(X, Y) #doctest: +ELLIPSIS
     <scikits.learn.glm.Ridge object at 0x...>
     """
+    _params = {'alpha': float, 'intercept': bool}
 
-    def __init__(self, alpha=1.0):
-        self.alpha = alpha
+    def __init__(self, alpha=1.0, intercept=True):
+        super(Ridge, self).__init__(alpha=alpha)
 
-    def fit(self, X, Y, intercept=True):
+    def fit(self, X, Y, **params):
         """
         Fit Ridge regression model
 
@@ -158,10 +158,10 @@ class Ridge(LinearModel):
         -------
         self : returns an instance of self.
         """
+        self._set_params(**params)
         nsamples, nfeatures = X.shape
 
-        self._intercept = intercept
-        if self._intercept:
+        if self.intercept:
             self._xmean = X.mean(axis=0)
             self._ymean = Y.mean(axis=0)
             X = X - self._xmean
@@ -169,7 +169,6 @@ class Ridge(LinearModel):
         else:
             self._xmean = 0.
             self._ymean = 0.
-
 
         if nsamples > nfeatures:
             # w = inv(X^t X + alpha*Id) * X.T y
@@ -189,13 +188,16 @@ class BayesianRidge(LinearModel):
     """
     Encapsulate various bayesian regression algorithms
     """
+    _params = {'ll_bool': bool, 'step_th': float, 'th_w':float,
+               'intercept': bool}
 
-    def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12):
-        self.ll_bool = ll_bool
-        self.step_th = step_th
-        self.th_w = th_w
+    def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,
+                intercept=True):
+        super(BayesianRidge, self).__init__(ll_bool=ll_bool,
+                    intercept=intercept,
+                    step_th=step_th, th_w=th_w)
 
-    def fit(self, X, Y, intercept=True):
+    def fit(self, X, Y, **params):
         """
         Parameters
         ----------
@@ -208,11 +210,11 @@ class BayesianRidge(LinearModel):
         -------
         self : returns an instance of self.
         """
+        self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
 
-        self._intercept = intercept
-        if self._intercept:
+        if self.intercept:
             self._xmean = X.mean(axis=0)
             self._ymean = Y.mean(axis=0)
             X = X - self._xmean
@@ -236,14 +238,16 @@ class ARDRegression(LinearModel):
     """
     # TODO: add intercept
 
-    def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,\
-        alpha_th=1.e+16):
-        self.ll_bool = ll_bool
-        self.step_th = step_th
-        self.th_w = th_w
-        self.alpha_th = alpha_th
+    _params = {'ll_bool': bool, 'step_th': float, 'th_w':float,
+               'alpha_th': float}
 
-    def fit(self, X, Y):
+    def __init__(self, ll_bool=False, step_th=300, th_w=1.e-12,
+            alpha_th=1e16):
+        super(BayesianRidge, self).__init__(ll_bool=ll_bool,
+                    step_th=step_th, th_w=th_w, alpha_th=alpha_th)
+
+    def fit(self, X, Y, **params):
+        self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
         self.w ,self.alpha ,self.beta ,self.sigma ,self.log_likelihood = \
@@ -483,7 +487,7 @@ class Lasso(LinearModel):
     The algorithm used to fit the model is coordinate descent.
     """
 
-     _params = {'alpha': [float, int], 'tol': float}
+    _params = {'alpha': [float, int], 'tol': float}
 
     def __init__(self, alpha=1.0, tol=1e-4, intercept=True):
         super(Lasso, self).__init__(alpha=alpha, tol=tol, intercept=intercept)
@@ -514,8 +518,7 @@ class Lasso(LinearModel):
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
 
-        self._intercept = intercept
-        if self._intercept:
+        if self.intercept:
             self._xmean = X.mean(axis=0)
             self._ymean = Y.mean(axis=0)
             X = X - self._xmean
@@ -574,21 +577,29 @@ class ElasticNet(Lasso):
         Constant that multiplies the L1 term. Defaults to 1.0
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
+    corf: ndarray of shape n_features
+        The initial coeffients to warm-start the optimization
+    intercept: bool
+        Whether the intercept should be estimated or not. If False, the
+        data is assumed to be already centered.
     """
 
-    def __init__(self, alpha=1.0, rho=0.5, coef=None, tol=1e-4):
-        self.coef_ = coef
-        self.alpha = alpha
-        self.rho = rho
-        self.tol = tol
+    _params = {'alpha': [float, int], 'tol': float, 'rho': float, 
+                'intercept': bool, 'coef': [list, None]}
 
-    def fit(self, X, Y, intercept=True, maxit=1000):
+    def __init__(self, alpha=1.0, rho=0.5, coef=None, 
+                intercept=True, tol=1e-4):
+        super(ElasticNet, self).__init__(alpha=alpha,
+                        rho=rho, coef=coef, 
+                        intercept=intercept, tol=tol)
+
+    def fit(self, X, Y, maxit=1000, **params):
         """Fit Elastic Net model with coordinate descent"""
+        self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float64)
         Y = np.asanyarray(Y, dtype=np.float64)
 
-        self._intercept = intercept
-        if self._intercept:
+        if self.intercept:
             self._xmean = X.mean(axis=0)
             self._ymean = Y.mean(axis=0)
             X = X - self._xmean
@@ -616,7 +627,6 @@ class ElasticNet(Lasso):
             warnings.warn('Objective did not converge, you might want to increase the number of interations')
 
         self.explained_variance_ = self._explained_variance(X, Y)
-
 
         # return self for chaining fit and predict calls
         return self
@@ -867,8 +877,8 @@ class LinearModelCV(LinearModel):
     _params = {'eps':float, 'n_alphas':int, 'alphas':list}
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, cv=None):
-        super(Lasso, self).__init__(eps=eps, n_alphas=n_alphas, alphas=alphas,
-                                    cv=cv)
+        super(LinearModelCV, self).__init__(eps=eps, n_alphas=n_alphas, 
+                                    alphas=alphas, cv=cv)
 
     def fit(self, X, y, **fit_params):
         """Fit linear model with coordinate descent along decreasing alphas
@@ -887,6 +897,7 @@ class LinearModelCV(LinearModel):
 
         n_samples = y.size
         # init cross-validation generator
+        cv = self.cv 
         cv = cv if cv else KFold(n_samples, 5)
 
         alphas = [model.alpha for model in models]
