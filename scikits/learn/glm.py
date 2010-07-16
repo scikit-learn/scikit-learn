@@ -13,7 +13,7 @@ Generalized Linear models.
 import warnings
 
 import numpy as np
-import scipy.linalg # TODO: use numpy.linalg instead
+import scipy.linalg 
 import scipy.sparse as sp # needed by LeastAngleRegression
 
 from . import cd_fast
@@ -185,7 +185,7 @@ class Ridge(LinearModel):
         return self
 
 
-class BayesianRidge (LinearModel):
+class BayesianRidge(LinearModel):
     """
     Encapsulate various bayesian regression algorithms
     """
@@ -230,7 +230,7 @@ class BayesianRidge (LinearModel):
         return self
 
 
-class ARDRegression (LinearModel):
+class ARDRegression(LinearModel):
     """
     Encapsulate various bayesian regression algorithms
     """
@@ -259,7 +259,7 @@ class ARDRegression (LinearModel):
 ### helper methods
 ### we should homogeneize this
 
-def bayesian_ridge_regression( X , Y, step_th=300, th_w = 1.e-12, ll_bool=False):
+def bayesian_ridge_regression(X , Y, step_th=300, th_w = 1.e-12, ll_bool=False):
     """
     Bayesian ridge regression. Optimize the regularization parameters alpha
     (precision of the weights) and beta (precision of the noise) within a simple
@@ -622,11 +622,9 @@ class ElasticNet(Lasso):
         return self
 
 
-#########################################################################
-#                                                                       #
-# The following classes store linear models along a regularization path #
-#                                                                       #
-#########################################################################
+################################################################################
+# Classes to store linear models along a regularization path 
+################################################################################
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                verbose=False, **fit_kwargs):

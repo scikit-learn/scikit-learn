@@ -2,6 +2,10 @@
 Base class for all estimators.
 
 """
+# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
+
+# License: BSD Style
+
 # XXX: This is work in progress and will probably need refactoring
 
 ################################################################################
