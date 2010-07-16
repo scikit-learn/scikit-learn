@@ -7,6 +7,9 @@ Base class for all estimators.
 ################################################################################
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
+
+        _params: parameters of the model, but not parameters of the
+        estimation algorithm (such as maxiter)
     """
 
     def __init__(self, **params):
@@ -33,7 +36,7 @@ class BaseEstimator(object):
         params_str = '\n   '.join('%s=%s' % (k, v) 
                                   for k, v in self._get_params().iteritems())
         return '%s(%s)' % (
-                self.__class__.name,
+                self.__class__.__name__,
                 params_str
             )
 
