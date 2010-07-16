@@ -9,7 +9,7 @@ class IncorrectEstimator(BaseEstimator):
 
 
 class MyEstimator(BaseEstimator):
-    _params = {'l1': float}
+    _params = frozenset(('l1',))
 
     def __init__(self, l1=0):
         self._set_params(l1=l1)
