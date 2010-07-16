@@ -624,7 +624,8 @@ class ElasticNet(Lasso):
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
         if self.dual_gap_ > self.eps_:
-            warnings.warn('Objective did not converge, you might want to increase the number of interations')
+            warnings.warn('Objective did not converge, you might want'
+                                'to increase the number of interations')
 
         self.explained_variance_ = self._explained_variance(X, Y)
 
@@ -637,7 +638,7 @@ class ElasticNet(Lasso):
 ################################################################################
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
-               verbose=False, **fit_kwargs):
+               verbose=False, fit_params=dict()):
     """
     Compute Lasso path with coordinate descent
 
@@ -660,7 +661,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         List of alphas where to compute the models.
         If None alphas are set automatically
 
-    fit_kwargs : kwargs, optional
+    fit_params : dict, optional
         keyword arguments passed to the Lasso fit method
 
     Returns
@@ -741,134 +742,134 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return models
 
 
-def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
-                                eps=1e-3, **fit_kwargs):
-    """Compute an optimized Lasso model
-
-    Parameters
-    ----------
-    X : numpy array of shape [nsamples,nfeatures]
-        Training data
-
-    Y : numpy array of shape [nsamples]
-        Target values
-
-    rho : float, optional
-        float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties)
-
-    cv : cross-validation generator, optional
-         If None, KFold will be used.
-
-    eps : float, optional
-        Length of the path. eps=1e-3 means that
-        alpha_min / alpha_max = 1e-3.
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
-
-    alphas : numpy array, optional
-        List of alphas where to compute the models.
-        If None alphas are set automatically
-
-    fit_kwargs : kwargs
-        keyword arguments passed to the Lasso fit method
-
-    Returns
-    -------
-    model : a Lasso instance model
-
-    Notes
-    -----
-    See examples/lasso_path_with_crossvalidation.py for an example.
-    """
-    # Start to compute path on full data
-    models = lasso_path(X, y, eps=eps, n_alphas=n_alphas, alphas=alphas,
-                                **fit_kwargs)
-
-    n_samples = y.size
-    # init cross-validation generator
-    cv = cv if cv else KFold(n_samples, 5)
-
-    alphas = [model.alpha for model in models]
-    n_alphas = len(alphas)
-    # Compute path for all folds and compute MSE to get the best alpha
-    mse_alphas = np.zeros(n_alphas)
-    for train, test in cv:
-        models_train = lasso_path(X[train], y[train], eps, n_alphas,
-                                    alphas=alphas, **fit_kwargs)
-        for i_alpha, model in enumerate(models_train):
-            y_ = model.predict(X[test])
-            mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
-
-    i_best_alpha = np.argmin(mse_alphas)
-    return models[i_best_alpha]
-
-
-def optimized_enet(X, y, rho=0.5, cv=None, n_alphas=100, alphas=None,
-                                 eps=1e-3, **fit_kwargs):
-    """Returns an ElasticNet model that is optimized in the sense of
-    cross validation.
-
-    Parameters
-    ----------
-    X : numpy array of shape [nsamples,nfeatures]
-        Training data
-
-    Y : numpy array of shape [nsamples]
-        Target values
-
-    rho : float, optional
-        float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties)
-
-    cv : cross-validation generator, optional
-         If None, KFold will be used.
-
-    eps : float, optional
-        Length of the path. eps=1e-3 means that
-        alpha_min / alpha_max = 1e-3.
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
-
-    alphas : numpy array, optional
-        List of alphas where to compute the models.
-        If None alphas are set automatically
-
-    fit_kwargs : kwargs
-        keyword arguments passed to the ElasticNet fit method
-
-    Returns
-    -------
-    model : a Lasso instance model
-
-    Notes
-    -----
-    See examples/lasso_path_with_crossvalidation.py for an example.
-    """
-    # Start to compute path on full data
-    models = enet_path(X, y, rho=rho, eps=eps, n_alphas=n_alphas,
-                                alphas=alphas, **fit_kwargs)
-
-    n_samples = y.size
-    # init cross-validation generator
-    cv = cv if cv else KFold(n_samples, 5)
-
-    alphas = [model.alpha for model in models]
-    n_alphas = len(alphas)
-    # Compute path for all folds and compute MSE to get the best alpha
-    mse_alphas = np.zeros(n_alphas)
-    for train, test in cv:
-        models_train = enet_path(X[train], y[train], rho=rho,
-                                    alphas=alphas, eps=eps, n_alphas=n_alphas,
-                                    **fit_kwargs)
-        for i_alpha, model in enumerate(models_train):
-            y_ = model.predict(X[test])
-            mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
-
-    i_best_alpha = np.argmin(mse_alphas)
-    return models[i_best_alpha]
+# def optimized_lasso(X, y, cv=None, n_alphas=100, alphas=None,
+#                                 eps=1e-3, **fit_kwargs):
+#     """Compute an optimized Lasso model
+# 
+#     Parameters
+#     ----------
+#     X : numpy array of shape [nsamples,nfeatures]
+#         Training data
+# 
+#     Y : numpy array of shape [nsamples]
+#         Target values
+# 
+#     rho : float, optional
+#         float between 0 and 1 passed to ElasticNet (scaling between
+#         l1 and l2 penalties)
+# 
+#     cv : cross-validation generator, optional
+#          If None, KFold will be used.
+# 
+#     eps : float, optional
+#         Length of the path. eps=1e-3 means that
+#         alpha_min / alpha_max = 1e-3.
+# 
+#     n_alphas : int, optional
+#         Number of alphas along the regularization path
+# 
+#     alphas : numpy array, optional
+#         List of alphas where to compute the models.
+#         If None alphas are set automatically
+# 
+#     fit_kwargs : kwargs
+#         keyword arguments passed to the Lasso fit method
+# 
+#     Returns
+#     -------
+#     model : a Lasso instance model
+# 
+#     Notes
+#     -----
+#     See examples/lasso_path_with_crossvalidation.py for an example.
+#     """
+#     # Start to compute path on full data
+#     models = lasso_path(X, y, eps=eps, n_alphas=n_alphas, alphas=alphas,
+#                                 **fit_kwargs)
+# 
+#     n_samples = y.size
+#     # init cross-validation generator
+#     cv = cv if cv else KFold(n_samples, 5)
+# 
+#     alphas = [model.alpha for model in models]
+#     n_alphas = len(alphas)
+#     # Compute path for all folds and compute MSE to get the best alpha
+#     mse_alphas = np.zeros(n_alphas)
+#     for train, test in cv:
+#         models_train = lasso_path(X[train], y[train], eps, n_alphas,
+#                                     alphas=alphas, **fit_kwargs)
+#         for i_alpha, model in enumerate(models_train):
+#             y_ = model.predict(X[test])
+#             mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
+# 
+#     i_best_alpha = np.argmin(mse_alphas)
+#     return models[i_best_alpha]
+# 
+# 
+# def optimized_enet(X, y, rho=0.5, cv=None, n_alphas=100, alphas=None,
+#                                  eps=1e-3, **fit_kwargs):
+#     """Returns an ElasticNet model that is optimized in the sense of
+#     cross validation.
+# 
+#     Parameters
+#     ----------
+#     X : numpy array of shape [nsamples,nfeatures]
+#         Training data
+# 
+#     Y : numpy array of shape [nsamples]
+#         Target values
+# 
+#     rho : float, optional
+#         float between 0 and 1 passed to ElasticNet (scaling between
+#         l1 and l2 penalties)
+# 
+#     cv : cross-validation generator, optional
+#          If None, KFold will be used.
+# 
+#     eps : float, optional
+#         Length of the path. eps=1e-3 means that
+#         alpha_min / alpha_max = 1e-3.
+# 
+#     n_alphas : int, optional
+#         Number of alphas along the regularization path
+# 
+#     alphas : numpy array, optional
+#         List of alphas where to compute the models.
+#         If None alphas are set automatically
+# 
+#     fit_kwargs : kwargs
+#         keyword arguments passed to the ElasticNet fit method
+# 
+#     Returns
+#     -------
+#     model : a Lasso instance model
+# 
+#     Notes
+#     -----
+#     See examples/lasso_path_with_crossvalidation.py for an example.
+#     """
+#     # Start to compute path on full data
+#     models = enet_path(X, y, rho=rho, eps=eps, n_alphas=n_alphas,
+#                                 alphas=alphas, **fit_kwargs)
+# 
+#     n_samples = y.size
+#     # init cross-validation generator
+#     cv = cv if cv else KFold(n_samples, 5)
+# 
+#     alphas = [model.alpha for model in models]
+#     n_alphas = len(alphas)
+#     # Compute path for all folds and compute MSE to get the best alpha
+#     mse_alphas = np.zeros(n_alphas)
+#     for train, test in cv:
+#         models_train = enet_path(X[train], y[train], rho=rho,
+#                                     alphas=alphas, eps=eps, n_alphas=n_alphas,
+#                                     **fit_kwargs)
+#         for i_alpha, model in enumerate(models_train):
+#             y_ = model.predict(X[test])
+#             mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
+# 
+#     i_best_alpha = np.argmin(mse_alphas)
+#     return models[i_best_alpha]
 
 
 class LinearModelCV(LinearModel):
@@ -876,38 +877,36 @@ class LinearModelCV(LinearModel):
 
     _params = {'eps':float, 'n_alphas':int, 'alphas':list}
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, cv=None):
-        super(LinearModelCV, self).__init__(eps=eps, n_alphas=n_alphas, 
-                                    alphas=alphas, cv=cv)
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None):
+        super(LinearModelCV, self).__init__(eps=eps, n_alphas=n_alphas,
+                                    alphas=alphas)
 
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, cv=None, **fit_params):
         """Fit linear model with coordinate descent along decreasing alphas
         """
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 
-        self.path_ = []
         n_samples = X.shape[0]
-
-        # model = self.path(X, y, cv=cv, eps=self.eps, n_alphas=self.n_alphas,
-        #                             **fit_kwargs)
 
         # Start to compute path on full data
         models = self.path(X, y, fit_params=fit_params, **self._get_params())
 
-        n_samples = y.size
-        # init cross-validation generator
-        cv = self.cv 
-        cv = cv if cv else KFold(n_samples, 5)
-
         alphas = [model.alpha for model in models]
         n_alphas = len(alphas)
+
+        # init cross-validation generator
+        cv = cv if cv else KFold(n_samples, 5)
+
+        params = self._get_params()
+        params['alphas'] = alphas
+        params['n_alphas'] = n_alphas
+
         # Compute path for all folds and compute MSE to get the best alpha
         mse_alphas = np.zeros(n_alphas)
         for train, test in cv:
-            models_train = self.path(X[train], y[train], rho=rho,
-                                        alphas=alphas, eps=eps, n_alphas=n_alphas,
-                                        **fit_params)
+            models_train = self.path(X[train], y[train], fit_params=fit_params,
+                                        **params)
             for i_alpha, model in enumerate(models_train):
                 y_ = model.predict(X[test])
                 mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
@@ -931,11 +930,10 @@ class LassoCV(LinearModelCV):
 class ElasticNetCV(LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path"""
 
-    path = staticmethod(optimized_enet)
+    path = staticmethod(enet_path)
 
     def __init__(self, rho=0.5, **kwargs):
-        super(ElasticNetCV, self).__init__(**kwargs)
-        self.rho = rho
+        super(ElasticNetCV, self).__init__(rho=rho, **kwargs)
 
 
 class LeastAngleRegression (LinearModel):
