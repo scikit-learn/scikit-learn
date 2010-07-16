@@ -18,7 +18,7 @@ class BaseEstimator(object):
     def _set_params(self, **params):
         for key, value in params.iteritems():
             assert key in self._params, 'Specified parameter, %s, unknown'
-            assert isinstance(value, self.params[key])
+            #assert isinstance(value, self.params[key])
             setattr(self, key, value)
 
 
