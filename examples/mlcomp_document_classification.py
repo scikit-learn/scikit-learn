@@ -39,8 +39,8 @@ import sys
 import os
 import numpy as np
 import pylab as pl
+
 from scikits.learn.datasets import load_mlcomp
-from scikits.learn.logistic import LogisticRegression
 from scikits.learn.svm import LinearSVC
 from scikits.learn.metrics import confusion_matrix
 
