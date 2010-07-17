@@ -1,6 +1,7 @@
 """Algorithms for clustering : Meanshift and Affinity propagation
 
 Author: Alexandre Gramfort alexandre.gramfort@inria.fr
+        Gael Varoquaux gael.varoquaux@normalesup.org
 """
 
 import numpy as np
@@ -139,20 +140,22 @@ class MeanShift(BaseEstimator):
 # Affinity Propagation
 ################################################################################
 
-def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5):
+def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
+            copy=True):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
     ===========
 
-    S : array [n_points, n_points]
+    S: array [n_points, n_points]
         Matrix of similarities between points
-
-    p : array [n_points,] or float
+    p: array [n_points,] or float, optional
         Preferences for each point
-
-    damping : float
+    damping : float, optional
         Damping factor
+    copy: boolean, optional
+        If copy is False, the affinity matrix is modified inplace by the 
+        algorithm, for memory efficiency
 
     Returns
     ========
@@ -170,6 +173,9 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5):
     Between Data Points", Science Feb. 2007
 
     """
+    if copy:
+        # Copy the affinity matrix to avoid modifying it inplace
+        S = S.copy()
 
     n_points = S.shape[0]
 
@@ -259,6 +265,8 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5):
         c = np.argmax(S[:, I], axis=1)
         c[I] = np.arange(K)
         labels = I[c]
+        # Reduce labels to a sorted, gapless, list
+        labels = np.searchsorted(np.unique(labels), labels)
     else:
         labels = np.empty((n_points, 1))
         labels.fill(np.nan)
