@@ -35,10 +35,9 @@ p = 10*np.median(S)
 # Compute Affinity Propagation
 ################################################################################
 
-labels = affinity_propagation(S, p)
+cluster_centers_indices, labels = affinity_propagation(S, p)
 
-unique_labels = np.unique(labels)
-n_clusters_ = unique_labels.size
+n_clusters_ = len(cluster_centers_indices)
 
 print 'Estimated number of clusters: %d' % n_clusters_
 
@@ -54,9 +53,9 @@ pl.figure(1)
 pl.clf()
 
 colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
-for k, col in zip(unique_labels, colors):
+for k, col in zip(range(n_clusters_), colors):
     class_members = labels == k
-    cluster_center = X[k]
+    cluster_center = X[cluster_centers_indices[k]]
     pl.plot(X[class_members,0], X[class_members,1], col+'.')
     pl.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
                                     markeredgecolor='k', markersize=14)
