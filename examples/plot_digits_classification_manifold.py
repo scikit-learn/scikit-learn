@@ -36,22 +36,26 @@ data = digits.images.reshape((n_samples, -1))
 
 from scikits.learn.manifold import Isomap
 
-isomap = Isomap(embedded_opts={'nb_coords' : 5, 'neighbors' : 15}, mapping_opts={'neighbors' : 6, 'tol' : 1e-6})
+isomap = Isomap(embedded_opts={'nb_coords' : 5, 'neighbors' : 10},
+    mapping_opts={'neighbors' : 9, 'tol' : 1e-9})
 isomap.fit(data[:n_samples/2])
 
-colors = np.array([(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1), (0,0,0), (1,1,1), (.5, 0, 0), (0, .5, 0), (0, 0, .5)])
+colors = np.array([(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1),
+                   (0,0,0), (1,1,1), (.5, 0, 0), (0, .5, 0), (0, 0, .5)])
 
 from mpl_toolkits.mplot3d import Axes3D
 
 fig2 = pl.figure()
 ax2 = Axes3D(fig2)
-ax2.scatter(isomap.embedding_[:,0], isomap.embedding_[:,1], isomap.embedding_[:,2], c=colors[digits.target[:n_samples/2]])
+ax2.scatter(isomap.embedding_[:,0], isomap.embedding_[:,1],
+    isomap.embedding_[:,2], c=colors[digits.target[:n_samples/2]])
 fig2.suptitle('Training samples in embedded space')
 
 reduced_test_data = isomap.predict(data[n_samples/2:])
 fig3 = pl.figure()
 ax3 = Axes3D(fig3)
-ax3.scatter(reduced_test_data[:,0], reduced_test_data[:,1], reduced_test_data[:,2], c=colors[digits.target[n_samples/2:]])
+ax3.scatter(reduced_test_data[:,0], reduced_test_data[:,1],
+    reduced_test_data[:,2], c=colors[digits.target[n_samples/2:]])
 fig3.suptitle('Predicted samples in embedded space')
 
 # Import a classifier:
