@@ -52,7 +52,6 @@ symbol_dict = {
         'CL'   : 'Colgate-Palmolive',
         'NWS'  : 'News Corporation',
         'GE'   : 'General Electrics',
-        'MS'   : 'Morgan Stanley',
         'WFC'  : 'Wells Fargo',
         'JPM'  : 'JPMorgan Chase',
         'AIG'  : 'AIG',
@@ -92,8 +91,8 @@ close   = np.array([q.close  for q in quotes]).astype(np.float)
 variation = close - open
 correlations = np.corrcoef(variation)
 
-labels = clustering.affinity_propagation(correlations)
+_, labels = clustering.affinity_propagation(correlations)
 
 for i in range(labels.max()+1):
-    print 'Cluster %i: %s' % ((i+1), 
+    print 'Cluster %i: %s' % ((i+1),
                               ', '.join(names[labels==i]))
