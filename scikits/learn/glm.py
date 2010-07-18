@@ -554,7 +554,7 @@ class Lasso(LinearModel):
         X = np.asfortranarray(X) # make data contiguous in memory
         self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.lasso_coordinate_descent(self.coef_,
-                    alpha, X, Y, maxit, 10, tol)
+                    alpha, X, Y, maxit, tol)
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
@@ -622,7 +622,7 @@ class ElasticNet(Lasso):
 
         self.coef_, self.dual_gap_, self.eps_ = \
                 cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
-                                        maxit, 10, tol)
+                                        maxit, tol)
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
