@@ -4,6 +4,7 @@ def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('manifold',parent_package,top_path)
     config.add_subpackage('compression')
+    config.add_subpackage('mapping')
     #config.add_data_dir('examples')
     #config.add_subpackage('projection')
     #config.add_subpackage('regression')

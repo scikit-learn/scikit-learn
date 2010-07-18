@@ -19,7 +19,7 @@ namespace Graph
   namespace Clustering
   {
     // std::isnan is a C99 extension
-    // some compileres do not implement it
+    // some compilers do not implement it
     inline bool isnan(long double element)
     {
       return element != element;

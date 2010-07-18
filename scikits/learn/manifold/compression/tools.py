@@ -18,7 +18,7 @@ def create_graph(samples, **kwargs):
 
   neigh : Neighbors
     A neighboorer (optional). By default, a K-Neighbor research is done.
-    If provided, neigh must be a functor. All parameters passed to this function will be apssed to its constructor.
+    If provided, neigh must be a functor. All parameters passed to this function will be passed to its constructor.
 
   neighbors : int
     The number of K-neighboors to use (optional, default 9) if neigh is not given.
@@ -42,7 +42,7 @@ def create_graph(samples, **kwargs):
   if neigh is None:
     neigh = Neighbors(k=kwargs.get('neighbors', 9))
     neigh.fit(samples, labels)
-  neigh = neigh.kneighbors
+    neigh = neigh.kneighbors
 
   for i in range(0, len(samples)):
     graph[i] = [neighboor for neighboor in neigh(samples[i])]
