@@ -30,7 +30,8 @@ class Barycenter(object):
       self.neigh = Neighbors(k=kwargs.get('neighbors', 9))
     else:
       self.neigh = neigh(**kwargs)
-    
+    self.kwargs = kwargs
+
   def fit(self, X, Y):
     """
     Train the mapping
@@ -59,5 +60,5 @@ class Barycenter(object):
     """
     X = np.atleast_2d(np.asanyarray(X))
     dist, X_neighbors = self.neigh.kneighbors(X)
-    return np.asanyarray([np.dot(barycenter(x, self.__X[neighbors]), self.__Y[neighbors]) for x, neighbors in zip(X, X_neighbors)])
+    return np.asanyarray([np.dot(barycenter(x, self.__X[neighbors], **self.kwargs), self.__Y[neighbors]) for x, neighbors in zip(X, X_neighbors)])
     

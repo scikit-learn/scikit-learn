@@ -51,7 +51,7 @@ def barycenters(samples, **kwargs):
   indptr = asarray(indptr, dtype=intc)
   return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples), len(samples)))
 
-def barycenter(point, neighbors, tol = 1e-3):
+def barycenter(point, neighbors, tol = 1e-3, **kwargs):
   """
   Computes barycenter weights so that point may be reconstructed from its neighbors
   

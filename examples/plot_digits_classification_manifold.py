@@ -36,7 +36,7 @@ data = digits.images.reshape((n_samples, -1))
 
 from scikits.learn.manifold import Isomap
 
-isomap = Isomap(reduction_opts={'nb_coords' : 3, 'neighbors' : 8})
+isomap = Isomap(embedded_opts={'nb_coords' : 5, 'neighbors' : 15}, mapping_opts={'neighbors' : 6})
 isomap.fit(data[:n_samples/2])
 
 colors = np.array([(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1), (0,0,0), (1,1,1), (.5, 0, 0), (0, .5, 0), (0, 0, .5)])
@@ -72,5 +72,13 @@ for index, (image, prediction) in enumerate(zip(
     axes.imshow(image, cmap=pl.cm.gray_r)
     axes.set_title('Prediction: %i' % prediction)
 
+from scikits.learn.metrics import confusion_matrix
+cm = confusion_matrix(digits.target[n_samples/2:], predicted)
+
+print "Correctly predicted samples: ", np.trace(cm), "/", np.sum(cm)
+
+pl.matshow(cm)
+pl.title('Confusion matrix')
+pl.colorbar()
 
 pl.show()
