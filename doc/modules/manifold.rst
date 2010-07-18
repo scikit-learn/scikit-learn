@@ -18,6 +18,8 @@ its advantages and drawbacks, so you will have to select the correct one for you
 Isomap
 ------
 
+Isomap[1]
+
 Locally Linear Embedding (LLE)
 ------------------------------
 
@@ -48,3 +50,10 @@ Piecewise Linear Mapping
 
 Examples
 ========
+
+Notes
+=====
+    .. [1] Tenenbaum, J. B., de Silva, V. and Langford, J. C.,
+           "A Global Geometric Framework for Nonlinear Dimensionality 
+           Reduction,"
+           Science, 290(5500), pp. 2319-2323, 2000

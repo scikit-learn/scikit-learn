@@ -12,6 +12,7 @@ hand-written digits.
 
 # Standard scientific Python imports
 import pylab as pl
+import numpy as np
 
 # The digits dataset
 from scikits.learn import datasets
@@ -48,5 +49,12 @@ for index, (image, prediction) in enumerate(zip(
     pl.imshow(image, cmap=pl.cm.gray_r)
     pl.title('Prediction: %i' % prediction)
 
+from scikits.learn.metrics import confusion_matrix
+cm = confusion_matrix(digits.target[n_samples/2:], predicted)
+print "Correctly predicted samples: ", np.trace(cm), "/", np.sum(cm)
+
+pl.matshow(cm)
+pl.title('Confusion matrix')
+pl.colorbar()
 
 pl.show()

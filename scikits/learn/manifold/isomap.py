@@ -1,5 +1,6 @@
 
 from .mapping import Barycenter
+from .embedding.geodesic_mds import isomap
 
 class Isomap(object):
     """
@@ -53,8 +54,6 @@ class Isomap(object):
       -------
       Self
       """
-      from compression.geodesic_mds import isomap
-      
       self.embedding_, reduced_parameter_set = isomap(X,
                                                       **self.__embedded_opts)
 

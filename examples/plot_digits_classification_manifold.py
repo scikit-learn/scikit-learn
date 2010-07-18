@@ -8,7 +8,7 @@ hand-written digits.
 
 """
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-# Author:Matthieu Brucher <matthieu dot brucher at gmail dot com>
+# Author: Matthieu Brucher <matthieu dot brucher at gmail dot com>
 # License: Simplified BSD
 
 # Standard scientific Python imports
