@@ -55,20 +55,22 @@ class Isomap(object):
     from compression.geodesic_mds import isomap
     
     self.embedding_, reduced_parameter_set = isomap(X, **self.__reduction_opts)
+
     self.mapping = self.__projection(**self.__projection_opts)
+    self.mapping.fit(X, self.embedding_)
 	
     return self
     
-  def predict(self, Y):
+  def predict(self, X):
     """
     Parameters
     ----------
-    Y : array_like
-      The learning dataset
+    X : array_like
+      A new sample
     
     Returns
     -------
     The embedding of the new dataset
     """
-    pass
+    return self.mapping.predict(X)
 	
