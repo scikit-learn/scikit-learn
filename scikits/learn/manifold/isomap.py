@@ -3,18 +3,18 @@ from .mapping import Barycenter
 
 class Isomap(object):
   """
-  Isomap reduction object
+  Isomap embedding object
 
   Parameters
   ----------
-  reduction_opts : dict
-    Dictionary of reduction options
+  embedded_opts : dict
+    Dictionary of embedding options
  
-  projection : dict
-    Projection technique that will be used ("barycenter" by default)
+  mapping : dict
+    mapping technique that will be used ("barycenter" by default)
 
-  projection_opts : dict
-    Dictionary of projection options
+  mapping_opts : dict
+    Dictionary of mapping options
 
   Attributes
   ----------
@@ -36,10 +36,10 @@ class Isomap(object):
   --------  
   
   """
-  def __init__(self, reduction_opts, projection = None, projection_opts = None):
-    self.__reduction_opts = reduction_opts
-    self.__projection = projection if projection is not None else Barycenter
-    self.__projection_opts = projection_opts if projection_opts is not None else {}
+  def __init__(self, embedded_opts, mapping = None, mapping_opts = None):
+    self.__embedded_opts = embedded_opts
+    self.__mapping = mapping if mapping is not None else Barycenter
+    self.__mapping_opts = mapping_opts if mapping_opts is not None else {}
 
   def fit(self, X):
     """
@@ -54,9 +54,9 @@ class Isomap(object):
     """
     from compression.geodesic_mds import isomap
     
-    self.embedding_, reduced_parameter_set = isomap(X, **self.__reduction_opts)
+    self.embedding_, reduced_parameter_set = isomap(X, **self.__embedded_opts)
 
-    self.mapping = self.__projection(**self.__projection_opts)
+    self.mapping = self.__mapping(**self.__mapping_opts)
     self.mapping.fit(X, self.embedding_)
 	
     return self
