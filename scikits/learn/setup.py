@@ -83,7 +83,10 @@ def configuration(parent_package='',top_path=None):
         cblas_libs = ['cblas']
         blas_info.pop('libraries')
     else:
-        cblas_libs = blas_info.pop('libraries')
+        try:
+            cblas_libs = blas_info.pop('libraries')
+        except:
+            cblas_libs = ['blas']
 
     minilearn_sources = [
         join('src', 'minilearn', 'lars.c'),
