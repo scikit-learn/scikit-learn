@@ -36,7 +36,7 @@ data = digits.images.reshape((n_samples, -1))
 
 from scikits.learn.manifold import Isomap
 
-isomap = Isomap(embedded_opts={'nb_coords' : 5, 'neighbors' : 15}, mapping_opts={'neighbors' : 6})
+isomap = Isomap(embedded_opts={'nb_coords' : 5, 'neighbors' : 15}, mapping_opts={'neighbors' : 6, 'tol' : 1e-6})
 isomap.fit(data[:n_samples/2])
 
 colors = np.array([(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1), (0,0,0), (1,1,1), (.5, 0, 0), (0, .5, 0), (0, 0, .5)])
