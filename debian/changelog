@@ -3,7 +3,9 @@ scikit-learn (0.4-2) unstable; urgency=low
   * deb_cython_0.12.1 to use code cythoned with up-to-date cython
     0.12.1
   * Build-Depend on python-numpy providing numpy-ext (Closes: #589590)
-  * Policy compliance 3.9.0 -- no changes were due
+  * Policy compliance 3.9.0:
+    - providing BSD license verbatim and removing references
+      to deprecated BSD license file on Debian systems
   * Nosetesting without suppressing output from code
   * Workaround to allow BFS (Closes: #588595)
 
