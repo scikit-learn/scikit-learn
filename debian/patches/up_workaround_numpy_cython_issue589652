@@ -1,0 +1,25 @@
+--- a/scikits/learn/tests/test_svm.py
++++ b/scikits/learn/tests/test_svm.py
+@@ -190,14 +190,20 @@ def test_margin():
+     Test predict_margin
+     TODO: more tests
+     """
++    print "I: create SVM"
+     clf = svm.SVC()
++    print "I: fit SVM"
+     clf.fit(X, Y)
+-    assert_array_almost_equal(clf.predict_margin(T),
++    print "I: obtain margin"
++    m = clf.predict_margin(T)
++    print "I: printing to avoid FTBFS #588595: ", (m-0)
++    print "I: compare"
++    assert_array_almost_equal(m,
+                               [[ 0.976],
+                                [-0.939],
+                                [-0.619]],
+                               decimal=3)
+-
++    print "I: done if ever"
+ 
+ def test_weight():
+     """

@@ -1,3 +1,14 @@
+scikit-learn (0.4-2) unstable; urgency=low
+
+  * deb_cython_0.12.1 to use code cythoned with up-to-date cython
+    0.12.1
+  * Build-Depend on python-numpy providing numpy-ext (Closes: #589590)
+  * Policy compliance 3.9.0 -- no changes were due
+  * Nosetesting without suppressing output from code
+  * Workaround to allow BFS (Closes: #588595)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 19 Jul 2010 12:32:06 -0400
+
 scikit-learn (0.4-1) unstable; urgency=low
 
   * Fresh upstream release:
