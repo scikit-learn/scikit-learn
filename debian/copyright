@@ -7,7 +7,7 @@ Copyright: Copyright (C)  2007 - 2010 Scikit-Learn Developers.
 License: BSD-3
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-
+  .
   a. Redistributions of source code must retain the above copyright notice,
      this list of conditions and the following disclaimer.
   b. Redistributions in binary form must reproduce the above copyright
@@ -17,8 +17,18 @@ License: BSD-3
      its contributors may be used to endorse or promote products
      derived from this software without specific prior written
      permission.
-On Debian GNU/Linux systems, the complete text of the 3-clause BSD License
-can be found in `/usr/share/common-licenses/BSD'.
+  .
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+  DAMAGE.
 
 Files: doc/sphinxext/*
 Copyright: Copyright (C) 2008 Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
@@ -33,9 +43,7 @@ License: BSD
 Files: debian/*
 Copyright: Copyright 2010,
     Yaroslav Halchenko <debian@onerussian.com>
-License: GPL-2
-  On Debian GNU/Linux systems, the complete text of the GPL-2 License
-  can be found in `/usr/share/common-licenses/GPL-2'.
+License: BSD-3
 
 Files: ./scikits/learn/src/
 Copyright: Copyright (c) 2000-2009 Chih-Chung Chang and Chih-Jen Lin
@@ -46,5 +54,3 @@ License: BSD-3
   the respective packages are used as dependencies. This copy of the libsvm
   code is, however, left in place, as it does not hurt and does not justify
   repackaging of the upstream sources.
-On Debian GNU/Linux systems, the complete text of the 3-clause BSD License
-can be found in `/usr/share/common-licenses/BSD'.
