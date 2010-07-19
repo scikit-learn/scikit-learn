@@ -59,9 +59,9 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X
     cdef np.ndarray[DOUBLE, ndim=1] R = y - np.dot(X, w) # Init residual
 
-    cdef double tmp, w_ii, gap, d_w_max, d_w_ii
+    cdef double tmp, w_ii, d_w_max, d_w_ii
+    cdef double gab = tol + 1.0
     cdef unsigned int ii
-    cdef unsigned int jj
     cdef unsigned int n_iter
     cdef double dual_norm_XtA
 
@@ -98,7 +98,7 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                       <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
                       <DOUBLE*>R.data, 1)
 
-        if d_w_max < tol:
+        if d_w_max < tol or n_iter == maxit - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
@@ -150,8 +150,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double w_ii
     cdef double d_w_max
     cdef double d_w_ii
+    cdef double gab = tol + 1.0
     cdef unsigned int ii
-    cdef unsigned int jj
     cdef unsigned int n_iter
 
     R = y - np.dot(X, w)
@@ -164,13 +164,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w_ii != 0.0:
                 # R += w_ii * X[:,ii]
-                for jj in range(nsamples):
-                    R[jj] += w_ii * X[jj,ii]
+                daxpy(nsamples, w_ii,
+                      <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>R.data, 1)
 
             # tmp = (X[:,ii]*R).sum()
-            tmp = 0.0
-            for jj in range(nsamples):
-                tmp += R[jj] * X[jj,ii]
+            tmp = ddot(nsamples,
+                       <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+                       <DOUBLE*>R.data, 1)
 
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
@@ -182,11 +183,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
-                for jj in range(nsamples):
-                    R[jj] -=  w[ii] * X[jj,ii] # Update residual
+                daxpy(nsamples, -w[ii],
+                      <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>R.data, 1)
 
-
-        if d_w_max < tol:
+        if d_w_max < tol or n_iter == maxit - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
