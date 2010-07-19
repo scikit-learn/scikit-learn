@@ -27,6 +27,12 @@ cdef inline double fsign(double f):
     else:
         return -1.0
 
+cdef extern from "cblas.h":
+    void daxpy "cblas_daxpy"(int N, double alpha, double *X, int incX,
+                             double *Y, int incY)
+    double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
+
+
 ctypedef np.float64_t DOUBLE
 
 @cython.boundscheck(False)
@@ -70,13 +76,14 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w_ii != 0.0:
                 # R += w_ii * X[:,ii]
-                for jj in range(nsamples):
-                    R[jj] += w_ii * X[jj, ii]
+                daxpy(nsamples, w_ii,
+                      <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>R.data, 1)
 
             # tmp = (X[:,ii]*R).sum()
-            tmp = 0.0
-            for jj in range(nsamples):
-                tmp += R[jj] * X[jj, ii]
+            tmp = ddot(nsamples,
+                       <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+                       <DOUBLE*>R.data, 1)
 
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) / norm_cols_X[ii]
 
@@ -87,8 +94,9 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
-                for jj in range(nsamples):
-                    R[jj] -=  w[ii] * X[jj, ii] # Update residual
+                daxpy(nsamples, -w[ii],
+                      <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>R.data, 1)
 
         if d_w_max < tol:
             # the biggest coordinate update of this iteration was smaller than

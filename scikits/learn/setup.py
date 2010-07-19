@@ -112,8 +112,10 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('cd_fast',
                          sources=[join('src', 'cd_fast.c')],
-                         # libraries=['m'],
-                         include_dirs=[numpy.get_include()])
+                         libraries=cblas_libs,
+                         include_dirs=[join('src', 'cblas'),
+                                     numpy.get_include(),
+                                     blas_info.pop('include_dirs', [])])
 
 
     config.add_subpackage('utils')
