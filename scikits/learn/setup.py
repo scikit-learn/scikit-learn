@@ -92,7 +92,6 @@ def configuration(parent_package='',top_path=None):
         join('src', 'minilearn', 'lars.c'),
         join('src', 'minilearn', '_minilearn.c')]
 
-
     config.add_extension('_minilearn',
                          sources = minilearn_sources,
                          libraries = cblas_libs,
@@ -114,8 +113,12 @@ def configuration(parent_package='',top_path=None):
                          sources=[join('src', 'cd_fast.c')],
                          libraries=cblas_libs,
                          include_dirs=[join('src', 'cblas'),
-                                     numpy.get_include(),
-                                     blas_info.pop('include_dirs', [])])
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=['-std=c99'] + \
+                                             blas_info.pop('extra_compile_args', []),
+                         **blas_info
+                         )
 
 
     config.add_subpackage('utils')
