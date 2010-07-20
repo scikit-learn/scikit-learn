@@ -414,6 +414,7 @@ int copy_predict_values(char *predict, struct svm_model *model,
                                 ((double *) dec_values) + i*nr_class);
         free(predict_nodes[i]);
     }
+
     free(predict_nodes);
     return 0;
 }
@@ -422,11 +423,10 @@ int copy_predict_values(char *predict, struct svm_model *model,
 int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict_dims,
                  char *dec_values)
 {
-    register int i;
-    int n, m;
+    npy_intp i, n, m;
     struct svm_node **predict_nodes;
     n = predict_dims[0];
-    m = model->nr_class;
+    m = (npy_intp) model->nr_class;
     if (model->param.kernel_type == PRECOMPUTED) 
         predict_nodes = dense_to_precomputed((double *) predict, predict_dims);
     else
@@ -466,7 +466,7 @@ int free_model(struct svm_model *model)
 
 int free_model_SV(struct svm_model *model)
 {
-    register int i;
+    int i;
     for (i=model->l-1; i>=0; --i) free(model->SV[i]);
     /* svn_destroy_model frees model->SV */
     return 0;
