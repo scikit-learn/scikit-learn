@@ -96,6 +96,10 @@ def test_precomputed():
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
+    clf = svm.SVC(kernel=kfunc)
+    clf.fit(iris.data, iris.target)
+    assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
+
 
 def test_SVR():
     """
