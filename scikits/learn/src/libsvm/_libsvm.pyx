@@ -56,11 +56,11 @@ cdef extern from "svm.h":
 cdef extern from "libsvm_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
     svm_node **dense_to_sparse (char *, np.npy_intp *)
-    svm_parameter *set_parameter(int , int , int , double, double ,
+    svm_parameter *set_parameter (int , int , int , double, double ,
                                   double , double , double , double,
                                   double, int, int, int, char *, char *)
-    svm_problem *set_problem(char *, char *, np.npy_intp *, int)
-    svm_model *set_model(svm_parameter *, int, char *, np.npy_intp *, np.npy_intp *,
+    svm_problem *set_problem (char *, char *, np.npy_intp *, int)
+    svm_model *set_model (svm_parameter *, int, char *, np.npy_intp *, np.npy_intp *,
                          char *, char *, char *, char *, char *, char *)
     void copy_sv_coef   (char *, svm_model *, np.npy_intp *)
     void copy_intercept (char *, svm_model *, np.npy_intp *)
@@ -70,14 +70,14 @@ cdef extern from "libsvm_helper.c":
     int  copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int)
     void copy_nSV     (char *, svm_model *)
     void copy_label   (char *, svm_model *)
-    void copy_probA(char *, svm_model *, np.npy_intp *)
-    void copy_probB(char *, svm_model *, np.npy_intp *)
+    void copy_probA   (char *, svm_model *, np.npy_intp *)
+    void copy_probB   (char *, svm_model *, np.npy_intp *)
     np.npy_intp  get_l  (svm_model *)
     np.npy_intp  get_nr (svm_model *)
-    int  free_problem (svm_problem *)
-    int  free_model   (svm_model *)
-    int  free_model_SV(svm_model *)
-    int  free_param   (svm_parameter *)
+    int  free_problem   (svm_problem *)
+    int  free_model     (svm_model *)
+    int  free_model_SV  (svm_model *)
+    int  free_param     (svm_parameter *)
 
 
 ################################################################################
@@ -134,7 +134,7 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size,
                           C, eps, p, shrinking, probability,
-                          weight.shape[0], weight_label.data, weight.data)
+                          <int> weight.shape[0], weight_label.data, weight.data)
 
     # check parameters
     if (param == NULL or problem == NULL):
@@ -148,19 +148,19 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     # call svm_train, this does the real work
     model = svm_train(problem, param)
 
-    cdef int SV_len = get_l(model)
-    cdef int nr = get_nr(model)
+    cdef np.npy_intp SV_len = get_l(model)
+    cdef np.npy_intp nr     = get_nr(model)
 
     # copy model.sv_coef
     # we create a new array instead of resizing, otherwise
     # it would not erase previous information
-    sv_coef.resize((nr-1, SV_len), refcheck=False)
-    copy_sv_coef(sv_coef.data, model, sv_coef.strides)
+    sv_coef.resize ((nr-1, SV_len), refcheck=False)
+    copy_sv_coef (sv_coef.data, model, sv_coef.strides)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
-    intercept.resize(nr*(nr-1)/2, refcheck=False)
-    copy_intercept(intercept.data, model, intercept.shape)
+    intercept.resize (nr*(nr-1)/2, refcheck=False)
+    copy_intercept (intercept.data, model, intercept.shape)
 
     # copy model.SV
     # we erase any previous information in SV
@@ -244,10 +244,10 @@ def predict_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef svm_model *model
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size, C, eps, p, shrinking,
-                          probability, weight.shape[0], weight_label.data,
+                          probability, <int> weight.shape[0], weight_label.data,
                           weight.data)
 
-    model = set_model(param, nSV.shape[0], SV.data, SV.shape,
+    model = set_model(param, <int> nSV.shape[0], SV.data, SV.shape,
                       sv_coef.strides, sv_coef.data, intercept.data,
                       nSV.data, label.data, probA.data, probB.data)
     #TODO: use check_model
@@ -307,13 +307,13 @@ def predict_prob_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef svm_model *model
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size, C, eps, p, shrinking,
-                          probability, weight.shape[0], weight_label.data,
+                          probability, <int> weight.shape[0], weight_label.data,
                           weight.data)
-    model = set_model(param, nSV.shape[0], SV.data, SV.shape, sv_coef.strides,
+    model = set_model(param, <int> nSV.shape[0], SV.data, SV.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data, label.data,
                       probA.data, probB.data)
 
-    cdef int nr = get_nr(model)    
+    cdef np.npy_intp nr = get_nr(model)    
     dec_values = np.empty((T.shape[0], nr), dtype=np.float64)
     if copy_predict_proba(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
@@ -348,13 +348,13 @@ def predict_margin_from_model_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter *param
     cdef svm_model *model
-    cdef int nr
+    cdef np.npy_intp nr
 
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size, C, eps, p, shrinking,
-                          probability, weight.shape[0], weight_label.data,
+                          probability, <int> weight.shape[0], weight_label.data,
                           weight.data)
-    model = set_model(param, nSV.shape[0], SV.data, SV.shape, sv_coef.strides,
+    model = set_model(param, <int> nSV.shape[0], SV.data, SV.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data, label.data,
                       probA.data, probB.data)
 

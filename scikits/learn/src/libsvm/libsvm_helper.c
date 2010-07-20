@@ -58,7 +58,7 @@ struct svm_model
 struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 {
     struct svm_node **sparse;
-    int i, j, count;                /* number of nonzero elements in row i */
+    npy_intp i, j, count;                /* number of nonzero elements in row i */
     struct svm_node *temp;          /* stack for nonzero elements */
     struct svm_node *T;             /* pointer to the top of the stack */
 
@@ -101,7 +101,7 @@ struct svm_node **dense_to_sparse (double *x, npy_intp *dims)
 struct svm_node **dense_to_precomputed (double *x, npy_intp *dims)
 {
     struct svm_node **sparse;
-    int i, j, count;               /* number of nonzero elements in row i */
+    npy_intp i, j, count;               /* number of nonzero elements in row i */
     struct svm_node *temp;          /* stack for nonzero elements */
     struct svm_node *T;             /* pointer to the top of the stack */
 
@@ -201,7 +201,7 @@ struct svm_problem * set_problem(char *X, char *Y, npy_intp *dims, int kernel_ty
  */
 struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *SV, npy_intp *SV_dims, 
-			    npy_intp *sv_coef_strides, 
+                            npy_intp *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV, char *label, 
                             char *probA, char *probB)
 {
@@ -209,7 +209,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     char *t = sv_coef;
     int i, m;
 
-    m = nr_class*(nr_class-1)/2;
+    m = nr_class * (nr_class-1)/2;
 
     model = (struct svm_model *)  malloc(sizeof(struct svm_model));
     model->nSV =     (int *)      malloc(nr_class * sizeof(int));
@@ -227,7 +227,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
 
     /* 
      * regression and one-class does not use nSV, label.
-     * TODO: does this provoque memory leaks (we just malloc'ed them)?
+     * TODO: does this provoke memory leaks (we just malloc'ed them)?
      */
     if (param->svm_type < 2) {
         memcpy(model->nSV, nSV, model->nr_class * sizeof(int));
@@ -272,7 +272,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
  */
 npy_intp get_l(struct svm_model *model)
 {
-    return model->l;
+    return (npy_intp) model->l;
 }
 
 /*
@@ -281,7 +281,7 @@ npy_intp get_l(struct svm_model *model)
  */
 npy_intp get_nr(struct svm_model *model)
 {
-    return model->nr_class;
+    return (npy_intp) model->nr_class;
 }
 
 /*
@@ -291,10 +291,9 @@ npy_intp get_nr(struct svm_model *model)
  */
 void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
 {
-    register int i;
+    int i, len = model->nr_class-1;
     char *temp = data;
     npy_intp step = strides[0];
-    int len = model->nr_class-1;
     for(i=0; i<len; ++i) {
         memcpy(temp, model->sv_coef[i], step);
         temp += step;
@@ -304,7 +303,7 @@ void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
 void copy_intercept(char *data, struct svm_model *model, npy_intp *dims)
 {
     /* intercept = -rho */
-    int i, n = dims[0];
+    npy_intp i, n = dims[0];
     double t, *ddata = (double *) data;
     for (i=0; i<n; ++i) {
         t = model->rho[i];
@@ -323,8 +322,6 @@ void copy_SV(char *data, struct svm_model *model, npy_intp *dims)
 {
     int i, j, k, n = model->l;
     double *t = (double *) data;
-    int step = dims[1] * sizeof(double);
-    int fsig; /* first significant element */
     if (model->param.kernel_type == PRECOMPUTED) {
         /* first element is special in the case of precomputed kernel */
         for(i=0; i<n; ++i) {
@@ -382,9 +379,8 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
                  char *dec_values)
 {
     double *t = (double *) dec_values;
-    register int i, n;
     struct svm_node **predict_nodes;
-    n = predict_dims[0];
+    npy_intp i;
 
     if (model->param.kernel_type == PRECOMPUTED) 
         predict_nodes = dense_to_precomputed((double *) predict, predict_dims);
@@ -393,7 +389,7 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
 
     if (predict_nodes == NULL)
         return -1;
-    for(i=0; i<n; ++i) {
+    for(i=0; i<predict_dims[0]; ++i) {
         *t = svm_predict(model, predict_nodes[i]);
         free(predict_nodes[i]);
         ++t;
@@ -403,21 +399,19 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
 }
 
 int copy_predict_values(char *predict, struct svm_model *model, 
-                        npy_intp *predict_dims, char *dec_values, int nr)
+                        npy_intp *predict_dims, char *dec_values, int nr_class)
 {
-    register int i;
-    int n, m;
+    npy_intp i;
     struct svm_node **predict_nodes;
-    n = predict_dims[0];
     if (model->param.kernel_type == PRECOMPUTED) 
         predict_nodes = dense_to_precomputed((double *) predict, predict_dims);
     else
         predict_nodes = dense_to_sparse((double *) predict, predict_dims);
     if (predict_nodes == NULL)
         return -1;
-    for(i=0; i<n; ++i) {
+    for(i=0; i<predict_dims[0]; ++i) {
         svm_predict_values(model, predict_nodes[i], 
-                                ((double *) dec_values) + i*nr);
+                                ((double *) dec_values) + i*nr_class);
         free(predict_nodes[i]);
     }
     free(predict_nodes);

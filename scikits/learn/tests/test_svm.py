@@ -1,17 +1,17 @@
 """
-Testing for Support Vector Machine
+Testing for Support Vector Machine module (scikits.learn.svm)
 
-TODO: remove hardcoding numerical results when possible
+TODO: remove hard coded numerical results when possible
 """
 
 import numpy as np
-from scikits.learn import svm, datasets
 from numpy.testing import *
+from scikits.learn import svm, datasets
 
 # test sample 1
-X =  [[-2,-1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-Y =  [1, 1, 1, 2, 2, 2]
-T =  [[-1,-1], [2, 2], [3, 2]]
+X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+Y = [1, 1, 1, 2, 2, 2]
+T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [1, 2, 2]
 
 # test sample 2
@@ -37,7 +37,7 @@ def test_CSVC():
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_equal(clf.dual_coef_, [[ 0.25, -.25]])
-    assert_array_equal(clf.support_, [[-1,-1], [1, 1]])
+    assert_array_equal(clf.support_, [[-1, -1], [1, 1]])
     assert_array_equal(clf.intercept_, [0.])
     assert_array_equal(pred, true_result)
 
@@ -49,11 +49,11 @@ def test_CSVC():
                                [ .072, .16, 0, 0, -.16]], decimal=2)
     # TODO: why are we getting all the dataset as support vectors
     assert_array_equal(clf.support_,
-                       [[ 0.,  0.,  0.],
-                        [ 1.,  1.,  1.],
-                        [ 2.,  0.,  0.],
-                        [ 0.,  0.,  2.],
-                        [ 3.,  3.,  3.]])
+                       [[ 0., 0., 0.],
+                        [ 1., 1., 1.],
+                        [ 2., 0., 0.],
+                        [ 0., 0., 2.],
+                        [ 3., 3., 3.]])
     assert_array_equal(pred, true_result2)
 
 def test_precomputed():
@@ -63,10 +63,10 @@ def test_precomputed():
     We test it with a toy dataset and with iris.
     """
     clf = svm.SVC(kernel='precomputed')
-    # just a linear kernel
+    # we use just a linear kernel
     K = np.dot(X, np.array(X).T)
     clf.fit(K, Y)
-    # gram matrix
+    # KT is the Gram matrix
     KT = np.dot(T, np.array(X).T)
     pred = clf.predict(KT)
 
@@ -75,9 +75,9 @@ def test_precomputed():
     assert_array_almost_equal(clf.support_, [[2], [4]])
     assert_array_equal(pred, true_result)
 
-
-    # same as before, but using function instead of the kernel
+    # same as before, but using a callable function instead of the kernel
     # matrix. kernel is just a linear kernel
+
     kfunc = lambda x, y: np.dot(x, y.T)
     clf = svm.SVC(kernel=kfunc)
     clf.fit(X, Y)
@@ -122,12 +122,12 @@ def test_SVR():
     pred = clf.predict(T)
 
     assert_array_almost_equal(clf.dual_coef_,
-                              [[-0.01441007, -0.51530606, -0.01365979,
-                                 0.51569493, 0.01387495, 0.01380604]])
+                              [[-0.014, -0.515, -0.013, 0.515, 0.013, 0.013]],
+                              decimal=3)
     assert_raises(NotImplementedError, lambda: clf.coef_)
     assert_array_almost_equal(clf.support_, X)
     assert_array_almost_equal(clf.intercept_, [ 1.49997261])
-    assert_array_almost_equal(pred, [ 1.10001274,  1.86682485,  1.73300377])
+    assert_array_almost_equal(pred, [ 1.10001274, 1.86682485, 1.73300377])
 
 
 def test_oneclass():
@@ -139,8 +139,9 @@ def test_oneclass():
     pred = clf.predict(T)
 
     assert_array_almost_equal(pred, [1, -1, -1])
-    assert_array_almost_equal(clf.intercept_, [-1.3514943])
-    assert_array_almost_equal(clf.dual_coef_, [[ 0.75061969,  0.74938031,  0.74996915,  0.75003085]])
+    assert_array_almost_equal(clf.intercept_, [-1.351], decimal=3)
+    assert_array_almost_equal(clf.dual_coef_, [[ 0.750, 0.749, 0.749, 0.750]],
+                              decimal=3)
     assert_raises(NotImplementedError, lambda: clf.coef_)
 
 
@@ -179,13 +180,13 @@ def test_probability():
     T = [[0, 0, 0, 0],
          [2, 2, 2, 2]]
     assert_array_almost_equal(clf.predict_proba(T),
-                [[ 0.993,  0.003,  0.002],
-                 [ 0.740,  0.223  ,  0.035]],
+                [[ 0.993, 0.003, 0.002],
+                 [ 0.740, 0.223  , 0.035]],
                  decimal=2)
 
     # make sure probabilities sum to one
     pprob = clf.predict_proba(X)
-    assert_array_almost_equal( pprob.sum(axis=1),
+    assert_array_almost_equal(pprob.sum(axis=1),
                                np.ones(len(X)))
 
 
@@ -211,7 +212,7 @@ def test_weight():
     # we give a small weights to class 1
     clf.fit(X, Y, {1: 0.1})
     # so all predicted values belong to class 2
-    assert_array_almost_equal(clf.predict(X), [2]*6)
+    assert_array_almost_equal(clf.predict(X), [2] * 6)
 
 
 def test_error():
@@ -256,7 +257,7 @@ def test_LinearSVC():
     assert_array_equal(clf.predict(T), true_result)
 
 
-def test_coef_and_intercept_SVC_vs_LinearSVC():
+def test_SVC_vs_LinearSVC():
     """
     Test that SVC and LinearSVC return the same coef_ and intercept_
     """
