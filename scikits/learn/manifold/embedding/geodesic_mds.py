@@ -82,19 +82,66 @@ def populateDistanceMatrixFromneighbors(points, neighborer):
 
     return distances
 
-def isomap(samples, **kwargs):
+class Isomap(object):
     """
-    Isomap compression:
-      - samples is an array with the samples for the compression
-      - nb_coords is the number of coordinates that must be retained
-      - temp_file is a temporary file used for caching the distance matrix
-      - neigh is the neighboring class that will be used
-      - neighbors is the number of k-neighbors if the K-neighborhood is used
-      - window_size is the window size to use
+    Isomap embedding object
+
+    Parameters
+    ----------
+    temp_file : string
+      name of a file for caching the distance matrix
+
+    neigh : Neighbors
+      A neighboorer (optional). By default, a K-Neighbor research is done.
+      If provided, neigh must be a functor. All parameters passed to this function will be passed to its constructor.
+
+    n_neighbors : int
+      The number of K-neighboors to use (optional, default 9) if neigh is not given.
+
+    Attributes
+    ----------
+    embedding_ : array_like
+        Embedding of the learning data
+    
+    X_ : array_like
+        Original data that is embedded
+
+    See Also
+    --------
+
+   
+    Notes
+    -----
+    
+    .. [1] Tenenbaum, J. B., de Silva, V. and Langford, J. C.,
+           "A Global Geometric Framework for Nonlinear Dimensionality 
+           Reduction,"
+           Science, 290(5500), pp. 2319-2323, 2000
+    
+    Examples
+    --------  
+    
     """
-    def function(*args, **kwargs):
-        return None
-    return reduct(euclidian_mds, function, samples, **kwargs)
+    def __init__(self, **embedded_opts):
+        self.__embedded_opts = embedded_opts
+
+    def transform(self, X):
+        """
+        Parameters
+        ----------
+        X : array_like
+        The learning dataset
+        
+        Returns
+        -------
+        Self
+        """
+        def function(*args, **kwargs):
+            return None
+        self.X_ = X
+        self.embedding_, reduced_parameter_set = reduct(euclidian_mds, 
+            function, X, **self.__embedded_opts)
+        return self
 
 def ccaCompression(samples, nb_coords, **kwargs):
     """

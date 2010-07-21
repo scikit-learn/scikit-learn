@@ -20,32 +20,30 @@ class Barycenter(object):
       A neighboorer (optional). By default, a K-Neighbor research is done.
       If provided, neigh must be a functor. All parameters passed to this function will be passed to its constructor.
 
-    neighbors : int
+    n_neighbors : int
       The number of K-neighboors to use (optional, default 9) if neigh is not given.
 
     """
     def __init__(self, **kwargs):
         neigh = kwargs.get('neigh', None)
         if neigh is None:
-            self.neigh = Neighbors(k=kwargs.get('neighbors', 9))
+            self.neigh = Neighbors(k=kwargs.get('n_neighbors', 9))
         else:
             self.neigh = neigh(**kwargs)
         self.kwargs = kwargs
 
-    def fit(self, X, Y):
+    def fit(self, embedding):
         """
         Train the mapping
         
         Parameters
         ----------
-        X : arraylike
-            The coordinates in an original space
-        Y : arraylike
-            The coordinates in an embedded space
+        embedding : 
+            An embedding (for instance a trained Isomap instance)
         """
-        self.__X = X
-        self.__Y = Y
-        self.neigh.fit(X)
+        self.__X = embedding.X_
+        self.__Y = embedding.embedding_
+        self.neigh.fit(self.__X)
       
     def predict(self, X):
         """
