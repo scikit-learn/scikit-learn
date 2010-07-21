@@ -120,7 +120,19 @@ class Isomap(object):
     
     Examples
     --------  
-    
+    >>> from scikits.learn.manifold import Isomap
+    >>> import numpy
+    >>> samples = numpy.array((0., 0., 0.,
+      1., 0., 0.,
+      0., 1., 0.,
+      1., 1., 0.,
+      0., .5, 0.,
+      .5, 0., 0.,
+      1., 1., 0.5,
+      )).reshape((-1,3))
+    >>> isomap = Isomap()
+    >>> isomap.transform(samples)
+    >>> print isomap.embedding_
     """
     def __init__(self, **embedded_opts):
         self.__embedded_opts = embedded_opts
@@ -139,7 +151,7 @@ class Isomap(object):
         def function(*args, **kwargs):
             return None
         self.X_ = X
-        self.embedding_, reduced_parameter_set = reduct(euclidian_mds, 
+        self.embedding_, self.reduced_parameters_ = reduct(euclidian_mds, 
             function, X, **self.__embedded_opts)
         return self
 
