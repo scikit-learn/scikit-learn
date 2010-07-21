@@ -25,7 +25,7 @@ def barycenters(samples, **kwargs):
     neigh : Neighbors
         A neighboorer (optional). By default, a K-Neighbor research is done. If provided, neigh must be a functor
 
-    neighbors : int
+    n_neighbors : int
         The number of K-neighboors to use (optional, default 9) if neigh is not given.
 
     Returns

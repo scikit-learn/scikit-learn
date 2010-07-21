@@ -36,9 +36,8 @@ data = digits.images.reshape((n_samples, -1))
 
 from scikits.learn.manifold import Isomap
 
-isomap = Isomap(embedded_opts={'nb_coords' : 5, 'neighbors' : 10},
-    mapping_opts={'neighbors' : 9, 'tol' : 1e-9})
-isomap.fit(data[:n_samples/2])
+isomap = Isomap(nb_coords = 5, n_neighbors = 10)
+isomap.transform(data[:n_samples/2])
 
 colors = np.array([(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1),
                    (0,0,0), (1,1,1), (.5, 0, 0), (0, .5, 0), (0, 0, .5)])
@@ -51,7 +50,9 @@ ax2.scatter(isomap.embedding_[:,0], isomap.embedding_[:,1],
     isomap.embedding_[:,2], c=colors[digits.target[:n_samples/2]])
 fig2.suptitle('Training samples in embedded space')
 
-reduced_test_data = isomap.predict(data[n_samples/2:])
+#    mapping_opts={'neighbors' : 9, 'tol' : 1e-9})
+reduced_test_data = data[n_samples/2:]#isomap.predict(data[n_samples/2:])
+
 fig3 = pl.figure()
 ax3 = Axes3D(fig3)
 ax3.scatter(reduced_test_data[:,0], reduced_test_data[:,1],

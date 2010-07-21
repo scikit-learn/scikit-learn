@@ -1,5 +1,4 @@
 
-from .mapping import Barycenter
 from .embedding.geodesic_mds import isomap
 
 class Isomap(object):
@@ -8,14 +7,15 @@ class Isomap(object):
 
     Parameters
     ----------
-    embedded_opts : dict
-       Dictionary of embedding options
-   
-    mapping : dict
-       mapping technique that will be used ("barycenter" by default)
+    temp_file : string
+      name of a file for caching the distance matrix
 
-    mapping_opts : dict
-       Dictionary of mapping options
+    neigh : Neighbors
+      A neighboorer (optional). By default, a K-Neighbor research is done.
+      If provided, neigh must be a functor. All parameters passed to this function will be passed to its constructor.
+
+    n_neighbors : int
+      The number of K-neighboors to use (optional, default 9) if neigh is not given.
 
     Attributes
     ----------
@@ -38,39 +38,20 @@ class Isomap(object):
     --------  
     
     """
-    def __init__(self, embedded_opts, mapping = None, mapping_opts = None):
+    def __init__(self, **embedded_opts):
         self.__embedded_opts = embedded_opts
-        self.__mapping = mapping if mapping is not None else Barycenter
-        self.__mapping_opts = mapping_opts if mapping_opts is not None else {}
 
-    def fit(self, X):
-      """
-      Parameters
-      ----------
-      X : array_like
+    def transform(self, X):
+        """
+        Parameters
+        ----------
+        X : array_like
         The learning dataset
         
-      Returns
-      -------
-      Self
-      """
-      self.embedding_, reduced_parameter_set = isomap(X,
-                                                      **self.__embedded_opts)
-
-      self.mapping = self.__mapping(**self.__mapping_opts)
-      self.mapping.fit(X, self.embedding_)
-    
-      return self
-      
-    def predict(self, X):
-      """
-      Parameters
-      ----------
-      X : array_like
-        A new sample
-      
-      Returns
-      -------
-      The embedding of the new dataset
-      """
-      return self.mapping.predict(X)
+        Returns
+        -------
+        Self
+        """
+        self.embedding_, reduced_parameter_set = isomap(X,
+                                **self.__embedded_opts)
+        return self

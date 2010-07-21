@@ -4,7 +4,7 @@ import unittest
 import numpy
 
 from unittest import TestCase
-from ..distances import parzen, kneigh, NumpyFloyd
+from ..distances import parzen, kneigh, numpy_floyd
 
 class TestParzen(TestCase):
   def test_main(self):

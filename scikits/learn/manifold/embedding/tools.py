@@ -22,7 +22,7 @@ def create_graph(samples, **kwargs):
       A neighboorer (optional). By default, a K-Neighbor research is done.
       If provided, neigh must be a functor. All parameters passed to this function will be passed to its constructor.
 
-    neighbors : int
+    n_neighbors : int
       The number of K-neighboors to use (optional, default 9) if neigh is not given.
 
     Examples
@@ -40,7 +40,7 @@ def create_graph(samples, **kwargs):
 
     neigh = kwargs.get('neigh', None)
     if neigh is None:
-        neigh = Neighbors(k=kwargs.get('neighbors', 9))
+        neigh = Neighbors(k=kwargs.get('n_neighbors', 9))
         neigh.fit(samples, labels)
         neigh = neigh.kneighbors
     else:
@@ -58,13 +58,13 @@ def create_sym_graph(samples, **kwargs):
     Parameters :
       - samples is the points to consider
       - neigh is a neighboorer (optional)
-      - neighboors is the number of K-neighboors to use (optional, default 9) if neigh is not given
+      - n_neighbors is the number of K-neighboors to use (optional, default 9) if neigh is not given
     """
     import toolbox.neighboors
     if 'neigh' in kwargs:
         neighboorer = kwargs['neigh'](samples, **kwargs)
     else:
-        neighboorer = toolbox.neighboors.distances.kneigh(samples, kwargs.get('neighboors', 9))
+        neighboorer = toolbox.neighboors.distances.kneigh(samples, kwargs.get('n_neighbors', 9))
 
     graph = [set() for i in range(len(samples))]
 

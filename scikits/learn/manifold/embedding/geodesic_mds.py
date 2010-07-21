@@ -12,14 +12,12 @@ import math
 #from scikits.optimization import *
 
 from .distances import kneigh as distances_kneigh
-from .distances import NumpyFloyd
+from .distances import numpy_floyd
 from .euclidian_mds import mds as euclidian_mds
-#from .isomap_function import CostFunction as IsomapCostFunction
 #from .cca_function import CostFunction as CCA_CostFunction
 #from .cost_function import CostFunction as RobustCostFunction
 #from .NLM import NLM_CostFunction
 
-#from .dimensionality_reduction import optimize_cost_function
 #from .multiresolution_dimensionality_reduction import \
 #    optimize_cost_function as multiresolution_optimize_cost_function
 #from .cca_multiresolution_dimensionality_reduction import \
@@ -27,16 +25,27 @@ from .euclidian_mds import mds as euclidian_mds
 #from .robust_dimensionality_reduction import optimize_cost_function 
 #    as robust_dimensionality_optimize_cost_function
 
-def reduct(reduction, function, samples, nb_coords, **kwargs):
+def reduct(reduction, function, samples, **kwargs):
     """
-    Data reduction with geodesic distance approximation:
-      - reduction is the algorithm to use
-      - samples is an array with the samples for the compression
-      - nb_coords is the number of coordinates that must be retained
-      - temp_file is a temporary file used for caching the distance matrix
-      - neigh is the neighboring class that will be used
-      - neighbors is the number of k-neighbors if the K-neighborhood is used
-      - window_size is the window size to use
+    Data reduction with geodesic distance approximation
+
+    Parameters
+    ----------
+    reduction:
+      The reduction technique
+
+    samples : matrix
+      The points to consider.
+
+    temp_file : string
+      name of a file for caching the distance matrix
+
+    neigh : Neighbors
+      A neighboorer (optional). By default, a K-Neighbor research is done.
+      If provided, neigh must be a functor. All parameters passed to this function will be passed to its constructor.
+
+    n_neighbors : int
+      The number of K-neighboors to use (optional, default 9) if neigh is not given.
     """
     if 'temp_file' in kwargs and os.path.exists(kwargs['temp_file']):
         dists = numpy.fromfile(kwargs['temp_file'])
@@ -46,15 +55,15 @@ def reduct(reduction, function, samples, nb_coords, **kwargs):
         if 'neigh' in kwargs:
             neighborer = kwargs['neigh'](samples, **kwargs)
         else:
-            neighborer = distances_kneigh(samples, kwargs.get('neighbors', 9))
+            neighborer = distances_kneigh(samples, kwargs.get('n_neighbors', 9))
 
         dists = populateDistanceMatrixFromneighbors(samples, neighborer)
-        NumpyFloyd(dists)
+        numpy_floyd(dists)
         if 'temp_file' in kwargs:
             dists.tofile(kwargs['temp_file'])
         del neighborer
 
-    return reduction(dists, function, nb_coords, **kwargs)
+    return reduction(dists, function, **kwargs)
 
 def populateDistanceMatrixFromneighbors(points, neighborer):
     """
@@ -73,7 +82,7 @@ def populateDistanceMatrixFromneighbors(points, neighborer):
 
     return distances
 
-def isomap(samples, nb_coords, **kwargs):
+def isomap(samples, **kwargs):
     """
     Isomap compression:
       - samples is an array with the samples for the compression
@@ -85,33 +94,7 @@ def isomap(samples, nb_coords, **kwargs):
     """
     def function(*args, **kwargs):
         return None
-    return reduct(euclidian_mds, function, samples, nb_coords, **kwargs)
-
-def isomapCompression(samples, nb_coords, **kwargs):
-    """
-    Isomap compression :
-      - samples is an array with the samples for the compression
-      - nb_coords is the number of coordinates that must be retained
-      - temp_file is a temporary file used for caching the distance matrix
-      - neigh is the neighboring class that will be used
-      - neighbors is the number of k-neighbors if the K-neighborhood is used
-      - window_size is the window size to use
-    """
-    return reduct(optimize_cost_function,
-        IsomapCostFunction, samples, nb_coords, **kwargs)
-
-def multiIsomapCompression(samples, nb_coords, **kwargs):
-    """
-    Isomap compression :
-      - samples is an array with the samples for the compression
-      - nb_coords is the number of coordinates that must be retained
-      - temp_file is a temporary file used for caching the distance matrix
-      - neigh is the neighboring class that will be used
-      - neighbors is the number of k-neighbors if the K-neighborhood is used
-      - window_size is the window size to use
-    """
-    return reduct(multiresolution_optimize_cost_function, IsomapCostFunction,
-        samples, nb_coords, **kwargs)
+    return reduct(euclidian_mds, function, samples, **kwargs)
 
 def ccaCompression(samples, nb_coords, **kwargs):
     """

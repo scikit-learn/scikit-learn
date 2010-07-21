@@ -17,11 +17,13 @@ def reduct(reduction, function, samples, nb_coords, **kwargs):
     distances = dist2hd(samples, samples)
     return reduction(distances, function, nb_coords, **kwargs)
 
-def mds(distances, function, nb_coords, **kargs):
+def mds(distances, function, nb_coords = None, **kargs):
     """
     Computes a new set of coordinates based on the distance matrix passed as a
     parameter, in fact it is a classical MDS
     """
+    if nb_coords is None:
+      raise RuntimeError("You must indicate the number of coordinates 'nb_coords'")
     square_distances = -distances ** 2 / 2.
     correlations = square_distances + numpy.mean(
         square_distances) - numpy.mean(square_distances, axis=0) - numpy.mean(

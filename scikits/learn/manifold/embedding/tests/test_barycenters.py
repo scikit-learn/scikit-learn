@@ -18,7 +18,7 @@ class TestBarycenters(TestCase):
           .5, 0., 0.,
           1., 1., 0.5,
           )).reshape((-1,3))
-        sparse = barycenters(samples, neighbors=5)
+        sparse = barycenters(samples, n_neighbors=5)
         assert(sparse.shape == (7,7))
 
     def test_barycenter(self):

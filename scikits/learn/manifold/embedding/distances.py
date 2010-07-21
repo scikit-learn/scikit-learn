@@ -20,7 +20,7 @@ def parzen(samples, window_size, **kwargs):
 
     return l
 
-def kneigh(samples, neighbors, **kwargs):
+def kneigh(samples, n_neighbors, **kwargs):
     """
     Creates a list of the nearest neighbors in a K-neighborhood
     """
@@ -30,11 +30,11 @@ def kneigh(samples, neighbors, **kwargs):
 
     for dist in d:
         indices = numpy.argsort(dist)
-        l.append(indices[:neighbors])
+        l.append(indices[:n_neighbors])
 
     return l
 
-def NumpyFloyd(dists):
+def numpy_floyd(dists):
     """
     Implementation with Numpy vector operations
     """
