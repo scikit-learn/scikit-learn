@@ -442,7 +442,7 @@ class _BaseHMM(object):
             nbins = 3 * len(lattice_frame)
 
             lattice_min = lattice_frame[lattice_frame > ZEROLOGPROB].min() - 1
-            hst, cdf = np.histogram(lattice_frame, bins=nbins, new=True,
+            hst, cdf = np.histogram(lattice_frame, bins=nbins,
                                     range=(lattice_min, lattice_frame.max()))
         
             # Want to look at the high ranks.
