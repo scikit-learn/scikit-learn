@@ -53,8 +53,6 @@ def configuration(parent_package='',top_path=None):
     # we try to link agains system-wide blas
     blas_info = get_info('blas_opt', 0)
 
-    extra_compile_args = blas_info.pop('extra_compile_args', [])
-
     if not blas_info:
         config.add_library('blas', blas_sources)
         warnings.warn(BlasNotFoundError.__doc__)
@@ -75,7 +73,7 @@ def configuration(parent_package='',top_path=None):
 
     # minilear needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
-    if (not blas_info.has_key('libraries')) or (
+    if (not blas_info) or (
         ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])) :
         config.add_library('cblas',
                            sources=[
@@ -85,7 +83,7 @@ def configuration(parent_package='',top_path=None):
         cblas_libs = ['cblas']
         blas_info.pop('libraries', None)
     else:
-        cblas_libs = blas_info.pop('libraries')
+        cblas_libs = blas_info.pop('libraries', [])
 
     minilearn_sources = [
         join('src', 'minilearn', 'lars.c'),
