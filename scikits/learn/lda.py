@@ -46,7 +46,8 @@ class LDA(BaseEstimator):
     >>> Y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
     >>> clf.fit(X, Y)    #doctest: +ELLIPSIS
-    <scikits.learn.lda.LDA object at 0x...>
+    LDA(priors=None,
+        use_svd=True)
     >>> print clf.predict([[-0.8, -1]])
     [1]
 

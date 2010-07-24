@@ -295,8 +295,19 @@ class SVC(BaseLibsvm):
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = SVC()
-    >>> clf.fit(X, Y)    #doctest: +ELLIPSIS
-    <scikits.learn.svm.SVC object at 0x...>
+    >>> clf.fit(X, Y)
+    SVC(kernel=rbf,
+        C=1.0,
+        probability=0,
+        degree=3,
+        shrinking=1,
+        eps=0.001,
+        p=0.1,
+        impl=c_svc,
+        cache_size=100.0,
+        coef0=0.0,
+        nu=0.5,
+        gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
