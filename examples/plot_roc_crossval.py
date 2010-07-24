@@ -8,15 +8,13 @@ evaluate the quality of the output of a classifier using
 cross-validation.
 """
 
-import random
-
 import numpy as np
 from scipy import interp
 import pylab as pl
 
 from scikits.learn import svm, datasets
 from scikits.learn.metrics import roc, auc
-from scikits.learn.cross_val import KFold
+from scikits.learn.cross_val import StratifiedKFold
 
 ################################################################################
 # Data IO and generation
@@ -27,10 +25,6 @@ X = iris.data
 y = iris.target
 X, y = X[y!=2], y[y!=2]
 n_samples, n_features = X.shape
-p = range(n_samples)
-random.seed(0)
-random.shuffle(p)
-X, y = X[p], y[p]
 
 # Add noisy features
 X = np.c_[X,np.random.randn(n_samples, 200*n_features)]
@@ -39,7 +33,7 @@ X = np.c_[X,np.random.randn(n_samples, 200*n_features)]
 # Classification and ROC analysis
 
 # Run classifier with crossvalidation and plot ROC curves
-cv = KFold(n_samples, 6)
+cv = StratifiedKFold(y, k=6)
 classifier = svm.SVC(kernel='linear', probability=True)
 
 mean_tpr = 0.0
