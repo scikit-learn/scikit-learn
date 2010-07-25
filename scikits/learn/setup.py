@@ -41,8 +41,8 @@ def configuration(parent_package='',top_path=None):
                          libraries=libsvm_libraries,
                          library_dirs=libsvm_library_dirs,
                          depends=[join('src', 'libsvm', 'svm.h'),
-                                  join('src', 'libsvm', 'libsvm_helper.c'),
-                                  ])
+                                  join('src', 'libsvm', 'libsvm_helper.c')]
+                                  )
 
     ### liblinear module
     blas_sources = [join('src', 'blas', 'daxpy.c'),

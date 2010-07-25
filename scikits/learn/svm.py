@@ -37,9 +37,9 @@ class BaseLibsvm(BaseEstimator):
         self.probability = int(probability)
 
         # container for when we call fit
-        self.support_ = np.empty((0,0), dtype=np.float64, order='C')
+        self.support_   = np.empty((0,0), dtype=np.float64, order='C')
         self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
-        self.intercept_ = np.empty(0, dtype=np.float64, order='C')
+        self.intercept_ = np.empty(0,     dtype=np.float64, order='C')
 
         # only used in classification
         self.nSV_ = np.empty(0, dtype=np.int32, order='C')
@@ -323,6 +323,7 @@ class SVC(BaseLibsvm):
         BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
+
 
 
 class SVR(BaseLibsvm):
