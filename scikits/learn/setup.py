@@ -1,7 +1,11 @@
 from os.path import join
 import warnings
 import numpy
-from ConfigParser import ConfigParser
+import sys
+if sys.version_info[0] < 3:
+    from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
