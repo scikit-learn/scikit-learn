@@ -24,7 +24,7 @@ true_result2 = [1, 2, 3]
 
 def test_CSVC():
     """
-    C_SVC algorithm and linear kernel.
+    SVC and sparse SVC with linear kernel.
 
     We test this on two datasets, the first one with two classes and
     the second one with three classes. We check for predicted values
@@ -33,13 +33,11 @@ def test_CSVC():
     TODO: check with different parameters of C, nonlinear kernel
     """
 
-    clf = svm.SVC(kernel='linear')
-    clf.fit(X, Y)
-    pred = clf.predict(T)
+    clf = svm.SVC(kernel='linear').fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[ 0.25, -.25]])
     assert_array_equal(clf.support_, [[-1, -1], [1, 1]])
     assert_array_equal(clf.intercept_, [0.])
-    assert_array_equal(pred, true_result)
+    assert_array_equal(clf.predict(T), true_result)
 
     # the same with other dataset
     clf.fit(X2, Y2)
@@ -55,6 +53,7 @@ def test_CSVC():
                         [ 0., 0., 2.],
                         [ 3., 3., 3.]])
     assert_array_equal(pred, true_result2)
+    
 
 def test_precomputed():
     """
