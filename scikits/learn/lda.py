@@ -5,7 +5,7 @@ import exceptions, warnings
 import numpy as np
 import scipy.linalg as linalg
 
-from scikits.learn.base_estimator import BaseEstimator
+from .base import BaseEstimator
 
 class LDA(BaseEstimator):
     """

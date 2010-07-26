@@ -20,7 +20,7 @@ from . import cd_fast
 from .utils.extmath import fast_logdet
 from .cross_val import KFold
 from ._minilearn import lars_fit_wrap
-from .base_estimator import BaseEstimator
+from .base import BaseEstimator
 
 ###
 ### TODO: intercept for all models
