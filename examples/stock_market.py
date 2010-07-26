@@ -1,4 +1,11 @@
 """
+
+===========================================
+Finding structure in the stock market
+===========================================
+
+
+
 An example of playing with stock market data to try and find some
 structure in it.
 """
