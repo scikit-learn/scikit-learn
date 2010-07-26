@@ -1,158 +1,184 @@
 """
-generate the rst files for the examples by iterating over the pylab examples
-"""
-import os, glob
+Example generation for the scikit learn
 
+Generate the rst files for the examples by iterating over the python
+example files.
+
+Files that generate images should start with 'plot'
+
+"""
 import os
-import re
-import sys
+import shutil
+import traceback
+# Import numpy to avoid an annoying bug in an example due to the use of 
+# execfile
+import numpy as np
+
 fileList = []
 
-def out_of_date(original, derived):
-    """
-    Returns True if derivative is out-of-date wrt original,
-    both of which are full file paths.
+import matplotlib
+matplotlib.use('Agg')
 
-    TODO: this check isn't adequate in some cases.  Eg, if we discover
-    a bug when building the examples, the original and derived will be
-    unchanged but we still want to force a rebuild.
-    """
-    return (not os.path.exists(derived) or
-            os.stat(derived).st_mtime < os.stat(original).st_mtime)
+import token, tokenize      
 
-noplot_regex = re.compile(r"#\s*-\*-\s*noplot\s*-\*-")
+rst_template = """
+
+.. _example_%(short_fname)s:
+
+%(docstring)s
+
+**Source code:** :download:`%(fname)s <%(fname)s>`
+
+.. literalinclude:: %(fname)s
+    :lines: %(end_row)s-
+    """
+
+plot_rst_template = """
+
+.. _example_%(short_fname)s:
+
+%(docstring)s
+
+.. image:: images/%(image_name)s
+    :align: center
+
+**Source code:** :download:`%(fname)s <%(fname)s>`
+
+.. literalinclude:: %(fname)s
+    :lines: %(end_row)s-
+    """
+
+
+def extract_docstring(filename):
+    """ Extract a module-level docstring, if any
+    """
+    lines = file(filename).readlines()
+    start_row = 0
+    if lines[0].startswith('#!'):
+        lines.pop(0)
+        start_row = 1
+
+    docstring = ''
+    first_par = ''
+    tokens = tokenize.generate_tokens(lines.__iter__().next)
+    for tok_type, tok_content, _, (erow, _), _ in tokens:
+        tok_type = token.tok_name[tok_type]    
+        if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
+            continue
+        elif tok_type == 'STRING':
+            docstring = eval(tok_content)
+            # If the docstring is formatted with several paragraphs, extract
+            # the first one:
+            paragraphs = '\n'.join(line.rstrip() 
+                                for line in docstring.split('\n')).split('\n\n')
+            if len(paragraphs) > 0:
+                first_par = paragraphs[0]
+        break
+    return docstring, first_par, erow+1+start_row
+
 
 def generate_example_rst(app):
-    rootdir = os.path.join(app.builder.srcdir, 'mpl_examples')
-    exampledir = os.path.join(app.builder.srcdir, 'examples')
-    if not os.path.exists(exampledir):
-        os.makedirs(exampledir)
+    """ Generate the list of examples, as well as the contents of
+        examples.
+    """ 
+    root_dir = os.path.join(app.builder.srcdir, 'auto_examples')
+    example_dir = os.path.abspath(app.builder.srcdir +  '/../' + 'examples')
+    if not os.path.exists(example_dir):
+        os.makedirs(example_dir)
+    if not os.path.exists(root_dir):
+        os.makedirs(root_dir)
 
-    datad = {}
-    for root, subFolders, files in os.walk(rootdir):
-        for fname in files:
-            if ( fname.startswith('.') or fname.startswith('#') or fname.startswith('_') or
-                 fname.find('.svn')>=0 or not fname.endswith('.py') ):
-                continue
-
-            fullpath = os.path.join(root,fname)
-            contents = file(fullpath).read()
-            # indent
-            relpath = os.path.split(root)[-1]
-            datad.setdefault(relpath, []).append((fullpath, fname, contents))
-
-    subdirs = datad.keys()
-    subdirs.sort()
-
-    fhindex = file(os.path.join(exampledir, 'index.rst'), 'w')
+    # we create an index.rst with all examples
+    fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')
     fhindex.write("""\
 .. _examples-index:
 
-####################
-Matplotlib Examples
-####################
-
-.. htmlonly::
+Examples
+==========
 
     :Release: |version|
     :Date: |today|
-
-.. toctree::
-    :maxdepth: 2
 
 """)
+    # Here we don't use an os.walk, but we recurse only twice: flat is
+    # better than nested.
+    generate_dir_rst('.', fhindex, example_dir, root_dir)
+    for dir in sorted(os.listdir(example_dir)):
+        if dir == '.svn':
+            continue
+        if os.path.isdir(os.path.join(example_dir, dir)):
+            generate_dir_rst(dir, fhindex, example_dir, root_dir)
+    fhindex.flush()
 
-    for subdir in subdirs:
-        rstdir = os.path.join(exampledir, subdir)
-        if not os.path.exists(rstdir):
-            os.makedirs(rstdir)
 
-        outputdir = os.path.join(app.builder.outdir, 'examples')
-        if not os.path.exists(outputdir):
-            os.makedirs(outputdir)
+def generate_dir_rst(dir, fhindex, example_dir, root_dir):
+    """ Generate the rst file for an example directory.
+    """
+    target_dir = os.path.join(root_dir, dir)
+    src_dir = os.path.join(example_dir, dir)
+    if not os.path.exists(os.path.join(src_dir, 'README.txt')):
+        raise IOError('Example directory %s does not have a README.txt file' 
+                        % src_dir)
+    fhindex.write("""
 
-        outputdir = os.path.join(outputdir, subdir)
-        if not os.path.exists(outputdir):
-            os.makedirs(outputdir)
-
-        subdirIndexFile = os.path.join(rstdir, 'index.rst')
-        fhsubdirIndex = file(subdirIndexFile, 'w')
-        fhindex.write('    %s/index.rst\n\n'%subdir)
-
-        fhsubdirIndex.write("""\
-.. _%s-examples-index:
-
-##############################################
-%s Examples
-##############################################
-
-.. htmlonly::
-
-    :Release: |version|
-    :Date: |today|
+%s
 
 .. toctree::
-    :maxdepth: 1
 
-"""%(subdir, subdir))
-
-        sys.stdout.write(subdir + ", ")
-        sys.stdout.flush()
-
-        data = datad[subdir]
-        data.sort()
-
-        for fullpath, fname, contents in data:
-            basename, ext = os.path.splitext(fname)
-            outputfile = os.path.join(outputdir, fname)
-            #thumbfile = os.path.join(thumb_dir, '%s.png'%basename)
-            #print '    static_dir=%s, basename=%s, fullpath=%s, fname=%s, thumb_dir=%s, thumbfile=%s'%(static_dir, basename, fullpath, fname, thumb_dir, thumbfile)
-
-            rstfile = '%s.rst'%basename
-            outrstfile = os.path.join(rstdir, rstfile)
-
-            fhsubdirIndex.write('    %s\n'%rstfile)
-
-            if not out_of_date(fullpath, outrstfile):
-                continue
-
-            fh = file(outrstfile, 'w')
-            fh.write('.. _%s-%s:\n\n'%(subdir, basename))
-            title = '%s example code: %s'%(subdir, fname)
-            #title = '<img src=%s> %s example code: %s'%(thumbfile, subdir, fname)
+""" % file(os.path.join(src_dir, 'README.txt')).read())
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    for fname in sorted(os.listdir(src_dir)):
+        if fname.endswith('py'): 
+            generate_file_rst(fname, target_dir, src_dir)
+            fhindex.write('    %s\n' % (os.path.join(dir, fname[:-3])))
 
 
-            fh.write(title + '\n')
-            fh.write('='*len(title) + '\n\n')
+def generate_file_rst(fname, target_dir, src_dir):
+    """ Generate the rst file for a given example.
+    """
+    image_name = fname[:-2] + 'png'
+    global rst_template, plot_rst_template
+    this_template = rst_template
+    last_dir = os.path.split(src_dir)[-1]
+    # to avoid leading . in file names
+    if last_dir == '.': last_dir = ''
+    else: last_dir += '_'
+    short_fname =  last_dir + fname
+    src_file = os.path.join(src_dir, fname)
+    example_file = os.path.join(target_dir, fname)
+    shutil.copyfile(src_file, example_file)
+    if fname.startswith('plot'):
+        # generate the plot as png image if file name
+        # starts with plot and if it is more recent than an
+        # existing image.
+        if not os.path.exists(
+                            os.path.join(target_dir, 'images')):
+            os.makedirs(os.path.join(target_dir, 'images'))
+        image_file = os.path.join(target_dir, 'images', image_name)
+        if (not os.path.exists(image_file) or
+                os.stat(image_file).st_mtime <= 
+                    os.stat(src_file).st_mtime):
+            print 'plotting %s' % fname
+            import matplotlib.pyplot as plt
+            plt.close('all')
+            try:
+                execfile(example_file)
+                plt.savefig(image_file)
+            except:
+                print 80*'_'
+                print '%s is not compiling:' % fname
+                traceback.print_exc()
+                print 80*'_'
+        this_template = plot_rst_template
 
-            do_plot = (subdir in ('api',
-                                  'pylab_examples',
-                                  'units',
-                                  'mplot3d',
-                                  'axes_grid',
-                                  ) and
-                       not noplot_regex.search(contents))
+    docstring, short_desc, end_row = extract_docstring(example_file)
 
-            if do_plot:
-                fh.write("\n\n.. plot:: %s\n\n::\n\n" % fullpath)
-            else:
-                fh.write("[`source code <%s>`_]\n\n::\n\n" % fname)
-                fhstatic = file(outputfile, 'w')
-                fhstatic.write(contents)
-                fhstatic.close()
+    f = open(os.path.join(target_dir, fname[:-2] + 'rst'),'w')
+    f.write( this_template % locals())
+    f.flush()
 
-            # indent the contents
-            contents = '\n'.join(['    %s'%row.rstrip() for row in contents.split('\n')])
-            fh.write(contents)
-
-            fh.write('\n\nKeywords: python, matplotlib, pylab, example, codex (see :ref:`how-to-search-examples`)')
-            fh.close()
-
-        fhsubdirIndex.close()
-
-    fhindex.close()
-
-    print
 
 def setup(app):
     app.connect('builder-inited', generate_example_rst)
+
