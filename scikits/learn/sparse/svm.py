@@ -11,7 +11,7 @@ License: New BSD
 import numpy as np
 from scipy import sparse
 
-from ..base_estimator import BaseEstimator
+from ..base import BaseEstimator
 from .. import svm, _libsvm
 
 class SparseBaseLibsvm(BaseEstimator):
