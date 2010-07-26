@@ -62,17 +62,17 @@ def test_affinity_propagation():
     #----------------------------------------------------------------------
     # Compute Affinity Propagation
     #----------------------------------------------------------------------
-    labels = affinity_propagation(S, p)
+    cluster_centers_indices, labels = affinity_propagation(S, p)
 
-    unique_labels = np.unique(labels)
-    n_clusters_ = unique_labels.size
+    n_clusters_ = len(cluster_centers_indices)
 
     assert_equal(n_clusters, n_clusters_)
 
     af = AffinityPropagation()
     labels = af.fit(S, p).labels
+    cluster_centers_indices = af.fit(S, p).cluster_centers_indices
 
-    unique_labels = np.unique(labels)
-    n_clusters_ = unique_labels.size
+    n_clusters_ = len(cluster_centers_indices)
+    assert_equal(np.unique(labels).size, n_clusters_)
 
     assert_equal(n_clusters, n_clusters_)

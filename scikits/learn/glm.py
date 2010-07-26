@@ -146,7 +146,8 @@ class Ridge(LinearModel):
     >>> X = np.random.randn(nsamples, nfeatures)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, Y) #doctest: +ELLIPSIS
-    <scikits.learn.glm.Ridge object at 0x...>
+    Ridge(alpha=1.0,
+          fit_intercept=True)
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True):
@@ -492,7 +493,9 @@ class Lasso(LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso Coordinate Descent
+    Lasso(alpha=0.1,
+          coef_=[ 0.85  0.  ],
+          fit_intercept=True)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
@@ -554,7 +557,7 @@ class Lasso(LinearModel):
         X = np.asfortranarray(X) # make data contiguous in memory
         self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.lasso_coordinate_descent(self.coef_,
-                    alpha, X, Y, maxit, 10, tol)
+                    alpha, X, Y, maxit, tol)
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 
@@ -622,7 +625,7 @@ class ElasticNet(Lasso):
 
         self.coef_, self.dual_gap_, self.eps_ = \
                 cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
-                                        maxit, 10, tol)
+                                        maxit, tol)
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
 

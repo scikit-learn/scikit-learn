@@ -160,7 +160,8 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
     Returns
     ========
 
-    cluster_centers: array [n_clusters, n_features]
+    cluster_centers_indices: array [n_clusters]
+        index of clusters centers
 
     labels : array [n_points]
         cluster labels for each point
@@ -266,12 +267,14 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
         c[I] = np.arange(K)
         labels = I[c]
         # Reduce labels to a sorted, gapless, list
-        labels = np.searchsorted(np.unique(labels), labels)
+        cluster_centers_indices = np.unique(labels)
+        labels = np.searchsorted(cluster_centers_indices, labels)
     else:
         labels = np.empty((n_points, 1))
+        cluster_centers_indices = None
         labels.fill(np.nan)
 
-    return labels
+    return cluster_centers_indices, labels
 
 ################################################################################
 class AffinityPropagation(BaseEstimator):
@@ -283,6 +286,6 @@ class AffinityPropagation(BaseEstimator):
     def fit(self, S, p=None, maxit=200, convit=30, **params):
         """compute MeanShift"""
         self._set_params(**params)
-        self.labels = affinity_propagation(S, p, maxit=maxit, convit=convit,
-                                            damping=self.damping)
+        self.cluster_centers_indices, self.labels = affinity_propagation(S, p,
+                maxit=maxit, convit=convit, damping=self.damping)
         return self

@@ -4,7 +4,20 @@
 #include <iostream>
 #include <structmember.h>
 #include "BallTree.h"
-#include "BallTreePoint.h" 
+#include "BallTreePoint.h"
+
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#endif
+
+/* define as extern functions that must be called from python */
+extern "C" {
+#ifdef IS_PY3K
+	PyObject * PyInit_ball_tree (void);
+#else
+	PyMODINIT_FUNC initball_tree(void);
+#endif
+}
 
 /************************************************************
  * BallTree.cpp
@@ -533,8 +546,12 @@ static PyMethodDef BallTree_methods[] = {
 
 //construct the BallTree type from the preceeding functions
 static PyTypeObject PyBallTreeType = {
+#if defined (IS_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
+#endif
     "BallTree.BallTree",       /*tp_name*/
     sizeof(PyBallTreeObject),  /*tp_basicsize*/
     0,                         /*tp_itemsize*/
@@ -542,7 +559,11 @@ static PyTypeObject PyBallTreeType = {
     0,                         /*tp_print*/
     0,                         /*tp_getattr*/
     0,                         /*tp_setattr*/
+#if defined (IS_PY3K)
+    (void *) 0,                /* tp_reserved */
+#else
     0,                         /*tp_compare*/
+#endif
     0,                         /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
@@ -776,41 +797,86 @@ static PyMethodDef BTmodule_methods[] = {
 
 //initialize the module
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
+#define MODULE_DOC 		     \
+"Ball Tree package                                   \n"  \
+" Written by Jake VanderPlas, January 2010           \n"  \
+"   vanderplas@astro.washington.edu                  \n"  \
+"   http://www.astro.washington.edu/users/vanderplas \n"  \
+"                                                    \n"  \
+" A Ball Tree is a data structure which can be used  \n"  \
+"  to perform fast neighbor searches in data sets of \n"  \
+"  very high dimensionality.  For low dimensional    \n"  \
+"  problems (dimension less than 5-10) a KD tree is  \n"  \
+"  a better choice (see, e.g. scipy.spatial.cKDTree) \n"  \
+"                                                    \n"  \
+" This package also provides an optimized brute-force\n"  \
+"  neighbor search (knn_brute) which has better      \n"  \
+"  performance than either tree algorithm for smaller\n"  \
+"  data-sets (number of points less than ~1000),     \n"  \
+"  especially when querying for more than one nearest\n"  \
+"  neighbor.                                         \n"  \
+
+struct module_state {
+    PyObject *error;
+};
+
+#ifdef IS_PY3K
+
+/* Some python3 specific methods */
+
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+
+static int ball_tree_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int ball_tree_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+static struct PyModuleDef BTmodule_def = {
+		PyModuleDef_HEAD_INIT,
+		"ball_tree",
+		MODULE_DOC,
+		sizeof (struct module_state),
+		BTmodule_methods,
+        NULL,
+        ball_tree_traverse,
+        ball_tree_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject * PyInit_ball_tree (void)
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#define INITERROR return
+
+PyMODINIT_FUNC initball_tree(void)
 #endif
-PyMODINIT_FUNC
-initball_tree(void)
 {    
   PyObject* m;   
   PyBallTreeType.tp_new = PyType_GenericNew;
 
-  if (PyType_Ready(&PyBallTreeType) < 0)
-    return;
-
-  m = Py_InitModule3("ball_tree", BTmodule_methods,
-		     "Ball Tree package                                   \n"
-		     " Written by Jake VanderPlas, January 2010           \n"
-		     "   vanderplas@astro.washington.edu                  \n"
-		     "   http://www.astro.washington.edu/users/vanderplas \n"
-		     "                                                    \n"
-		     " A Ball Tree is a data structure which can be used  \n"
-		     "  to perform fast neighbor searches in data sets of \n"
-		     "  very high dimensionality.  For low dimensional    \n"
-		     "  problems (dimension less than 5-10) a KD tree is  \n"
-		     "  a better choice (see, e.g. scipy.spatial.cKDTree) \n"
-		     "                                                    \n"
-		     " This package also provides an optimized brute-force\n"
-		     "  neighbor search (knn_brute) which has better      \n"
-		     "  performance than either tree algorithm for smaller\n"
-		     "  data-sets (number of points less than ~1000),     \n"
-		     "  especially when querying for more than one nearest\n"
-		     "  neighbor.                                         \n");
-
-  if(m==NULL)
-    return;
+#if defined (IS_PY3K)
+  if (PyType_Ready(&PyBallTreeType) < 0) return NULL;
+  m = PyModule_Create(&BTmodule_def);
+  if (m==NULL) return NULL;
+#else
+  if (PyType_Ready(&PyBallTreeType) < 0) return;
+  m = Py_InitModule3("ball_tree", BTmodule_methods, MODULE_DOC);
+  if (m==NULL) return;
+#endif
 
   Py_INCREF(&PyBallTreeType);
   PyModule_AddObject(m,"BallTree", (PyObject*)&PyBallTreeType);
   import_array();
+
+#if defined (IS_PY3K)
+    return m;
+#endif
 }

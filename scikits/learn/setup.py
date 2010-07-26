@@ -1,7 +1,11 @@
 from os.path import join
 import warnings
 import numpy
-from ConfigParser import ConfigParser
+import sys
+if sys.version_info[0] < 3:
+    from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -16,27 +20,29 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('feature_selection')
     config.add_subpackage('utils')
 
-    # libsvm
+    # Section LibSVM
     libsvm_includes = [numpy.get_include()]
     libsvm_libraries = []
     libsvm_library_dirs = []
-    libsvm_sources = [join('src', '_libsvm.c')]
+    libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
 
+    # we try to link against system-wide libsvm
     if site_cfg.has_section('libsvm'):
         libsvm_includes.append(site_cfg.get('libsvm', 'include_dirs'))
         libsvm_libraries.append(site_cfg.get('libsvm', 'libraries'))
         libsvm_library_dirs.append(site_cfg.get('libsvm', 'library_dirs'))
     else:
-        libsvm_sources.append(join('src', 'svm.cpp'))
+        # if not specified, we build our own libsvm
+        libsvm_sources.append(join('src', 'libsvm', 'svm.cpp'))
 
     config.add_extension('_libsvm',
                          sources=libsvm_sources,
                          include_dirs=libsvm_includes,
                          libraries=libsvm_libraries,
                          library_dirs=libsvm_library_dirs,
-                         depends=[join('src', 'svm.h'),
-                                 join('src', 'libsvm_helper.c'),
-                                  ])
+                         depends=[join('src', 'libsvm', 'svm.h'),
+                                  join('src', 'libsvm', 'libsvm_helper.c')]
+                                  )
 
     ### liblinear module
     blas_sources = [join('src', 'blas', 'daxpy.c'),
@@ -50,8 +56,6 @@ def configuration(parent_package='',top_path=None):
 
     # we try to link agains system-wide blas
     blas_info = get_info('blas_opt', 0)
-
-    extra_compile_args = blas_info.pop('extra_compile_args', [])
 
     if not blas_info:
         config.add_library('blas', blas_sources)
@@ -74,21 +78,20 @@ def configuration(parent_package='',top_path=None):
     # minilear needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (
-        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
+        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])) :
         config.add_library('cblas',
                            sources=[
                                join('src', 'cblas', '*.c'),
                                ]
                            )
         cblas_libs = ['cblas']
-        blas_info.pop('libraries')
+        blas_info.pop('libraries', None)
     else:
-        cblas_libs = blas_info.pop('libraries')
+        cblas_libs = blas_info.pop('libraries', [])
 
     minilearn_sources = [
         join('src', 'minilearn', 'lars.c'),
         join('src', 'minilearn', '_minilearn.c')]
-
 
     config.add_extension('_minilearn',
                          sources = minilearn_sources,
@@ -109,8 +112,14 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('cd_fast',
                          sources=[join('src', 'cd_fast.c')],
-                         # libraries=['m'],
-                         include_dirs=[numpy.get_include()])
+                         libraries=cblas_libs,
+                         include_dirs=[join('src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=['-std=c99'] + \
+                                             blas_info.pop('extra_compile_args', []),
+                         **blas_info
+                         )
 
 
     config.add_subpackage('utils')
