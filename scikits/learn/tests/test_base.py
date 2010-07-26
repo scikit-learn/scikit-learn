@@ -1,6 +1,6 @@
 from nose.tools import assert_raises
 
-from scikits.learn.base_estimator import BaseEstimator
+from scikits.learn.base import BaseEstimator
 
 
 class MyEstimator(BaseEstimator):

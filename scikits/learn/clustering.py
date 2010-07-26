@@ -6,7 +6,7 @@ Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 
 import numpy as np
 
-from scikits.learn.base_estimator import BaseEstimator
+from .base import BaseEstimator
 
 ################################################################################
 # MeanShift

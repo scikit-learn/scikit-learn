@@ -7,7 +7,7 @@ neighbor searches in high dimensionality.
 import numpy as np
 from scipy import stats
 
-from .base_estimator import BaseEstimator
+from .base import BaseEstimator
 from .ball_tree import BallTree
 
 class Neighbors(BaseEstimator):

@@ -2,7 +2,7 @@ import numpy as np
 import _libsvm
 import _liblinear
 
-from .base_estimator import BaseEstimator
+from .base import BaseEstimator
 
 class BaseLibsvm(BaseEstimator):
     """
