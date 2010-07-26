@@ -91,7 +91,7 @@ Scikits.learn: machine learning in Python
 Download
 ========
 
-Click `here <https://sourceforge.net/projects/scikit-learn/files/>`_
+Click `here <https://sourceforge.net/projects/scikit-learn/files/>`__
 to download latest release. Previous releases can also be found in
 that directory.
 
@@ -111,7 +111,7 @@ User guide
 
    This documentation is relative to the development version,
    documentation for the stable version can be found `here
-   <http://scikit-learn.sourceforge.net/old_doc/>`_
+   <http://scikit-learn.sourceforge.net/old_doc/>`__
 
 .. toctree::
    :maxdepth: 3
