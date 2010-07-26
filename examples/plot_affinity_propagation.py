@@ -1,4 +1,7 @@
-"""Affinity Propagation clustering algorithm
+"""
+
+Demo of affinity propagation clustering algorithm
+====================================================
 
 Reference:
 Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages

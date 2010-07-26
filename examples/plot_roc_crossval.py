@@ -1,7 +1,7 @@
 """
-=======================================
-Receiver operating characteristic (ROC)
-=======================================
+===============================================================
+Receiver operating characteristic (ROC) with cross validation
+===============================================================
 
 Example of Receiver operating characteristic (ROC) metric to
 evaluate the quality of the output of a classifier using
