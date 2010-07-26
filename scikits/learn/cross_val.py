@@ -8,6 +8,7 @@ Utilities for cross validation.
 
 from math import ceil
 import numpy as np
+
 from scikits.learn.utils.extmath import factorial, combinations
 
 ################################################################################
@@ -207,6 +208,7 @@ class KFold(object):
     def __len__(self):
         return self.k
 
+
 ################################################################################
 class StratifiedKFold(object):
     """
@@ -365,6 +367,7 @@ class LeaveOneLabelOut(object):
     def __len__(self):
         return self.n_labels
 
+
 ################################################################################
 class LeavePLabelOut(object):
     """
@@ -448,6 +451,9 @@ def split(train_indices, test_indices, *args):
     For each arg return a train and test subsets defined by indexes provided
     in train_indices and test_indices
     """
+    import warnings
+    warnings.warn('split is deprecated and will be removed, '
+                    'please use indexing instead')
     ret = []
     for arg in args:
         arg = np.asanyarray(arg)
