@@ -14,7 +14,7 @@ except:
             yield tuple(prod)
 
 
-def grid(**kwargs):
+def iter_grid(**kwargs):
     """ Generators on the combination of the various parameter lists given.
 
         Parameters
@@ -31,7 +31,7 @@ def grid(**kwargs):
 
         Examples
         ---------
-        >>> list(grid(a=[1, 2], b=[True, False]))
+        >>> list(iter_grid(a=[1, 2], b=[True, False]))
         [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
     """
     keys = kwargs.keys()
@@ -127,17 +127,16 @@ class GridSearchCV(object):
 
 
     def fit(self, X, y, **kw):
-        """Run fit with all sets of parameters
-        Returns the best classifier
+        """Run fit with all sets of parameters and select the best classifier
         """
-
-        g = grid(**self.param_grid)
+        grid = iter_grid(**self.param_grid)
         klass = self.estimator.__class__
         orignal_params = self.estimator._get_params()
         out = Parallel(n_jobs=self.n_jobs)(
-            delayed(fit_grid_point)(X, y, klass, orignal_params, clf_params,
-                    self.cross_val_factory,
-                    self.loss_func, **self.fit_params) for clf_params in g)
+                    delayed(fit_grid_point)(X, y, klass, orignal_params, 
+                                            clf_params, self.cross_val_factory,
+                                            self.loss_func, **self.fit_params) 
+                for clf_params in grid)
 
         # Out is a list of pairs: estimator, score
         key = lambda pair: pair[1]
@@ -150,7 +149,6 @@ class GridSearchCV(object):
 
 
 if __name__ == '__main__':
-
     from scikits.learn.cross_val import LeaveOneOut
     from scikits.learn.svm import SVC
     X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
