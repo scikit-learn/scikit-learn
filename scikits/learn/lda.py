@@ -29,8 +29,12 @@ class LDA(BaseEstimator):
     ----------
     `means_` : array-like, shape = [n_classes, n_features]
         Class means
-    `xbar` : float, shape = [n_features]
+    `xbar_` : float, shape = [n_features]
         Over all mean
+    `priors_` : array-like, shape = [n_classes]
+        Class priors (sum to 1)
+    `covariance_` : array-like, shape = [n_features, n_features]
+        Covariance matrix (shared by all classes)
 
     Methods
     -------
@@ -64,7 +68,21 @@ class LDA(BaseEstimator):
         else: self.priors = None
         self.use_svd = use_svd
 
-    def fit(self, X, y, tol=1.0e-4, **params):
+    def fit(self, X, y, store_covariance=False, tol=1.0e-4, **params):
+        """
+        Fit the LDA model according to the given training data and parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [nsamples, nfeatures]
+            Training vector, where nsamples in the number of samples and
+            nfeatures is the number of features.
+        Y : array, shape = [nsamples]
+            Target values (integers)
+        store_covariance : boolean
+            If True the covariance matrix (shared by all classes) is computed
+            and stored in self.covariance_ attribute.
+        """
         self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(y)
@@ -87,6 +105,9 @@ class LDA(BaseEstimator):
         # Group means n_classes*n_features matrix
         means = []
         Xc = []
+	cov = None
+        if store_covariance is True:
+            cov = np.zeros((n_features, n_features))
         for group_indices in classes_indices:
             Xg = X[group_indices, :]
             meang = Xg.mean(0)
@@ -94,8 +115,15 @@ class LDA(BaseEstimator):
             # centered group data
             Xgc = Xg - meang
             Xc.append(Xgc)
+            if store_covariance is True:
+	        cov += np.dot(Xgc.T, Xgc)
+        if store_covariance is True:
+            cov /= (n_samples - n_classes)
+            self.covariance_ = cov
+            
         means = np.asarray(means)
         Xc = np.concatenate(Xc, 0)
+
         # ----------------------------
         # 1) within (univariate) scaling by with classes std-dev
         scaling = np.diag(1 / Xc.std(0))
@@ -120,8 +148,7 @@ class LDA(BaseEstimator):
         xbar = np.dot(self.priors_, means)
         # Scale weighted centers
         X = np.dot(np.dot(np.diag(np.sqrt((n_samples * self.priors_)*fac)),
-                          (means - xbar)),
-                   scaling)
+                          (means - xbar)), scaling)
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use svd to find projection in the space spamed by the
         # (n_classes) centers
@@ -135,7 +162,7 @@ class LDA(BaseEstimator):
         scaling = np.dot(scaling, V.T[:, :rank])
         self.scaling = scaling
         self.means_ = means
-        self.xbar = xbar
+        self.xbar_ = xbar
         self.classes = classes
         return self
 
@@ -161,9 +188,9 @@ class LDA(BaseEstimator):
         scaling = self.scaling
         # Remove overall mean (center) and scale
         # a) data
-        X = np.dot(X - self.xbar, scaling)
+        X = np.dot(X - self.xbar_, scaling)
         # b) centers
-        dm = np.dot(self.means_ - self.xbar, scaling)
+        dm = np.dot(self.means_ - self.xbar_, scaling)
         # for each class k, compute the linear discrinant function(p. 87 Hastie)
         # of sphered (scaled data)
         dist = 0.5*np.sum(dm**2, 1) - np.log(self.priors_) - np.dot(X, dm.T)
