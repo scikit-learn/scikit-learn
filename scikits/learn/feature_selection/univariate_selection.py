@@ -15,16 +15,27 @@ from scipy import stats
 
 class UnivariateFilter(object):
     """
-    General class for filter univariate selection
+    General class for filter univariate selection.
+   
+    Parameters
+    ====================
+    score_func : scoring function. Takes two arrays X and y, and returning two
+                 arrays (scores and pvalues) of size X.shape[1].
+    ranking : ranking function. Heuristic for selecting the features based on
+              both the pvalues or the scores.
+
+    Example
+    =====================
+    >>> import scikits.learn.datasets.samples_generator as sg
+    >>> X,y = sg.sparse_uncorrelated(50,100)
+    >>> univ_filter = UnivariateFilter(SelectKBest(k=5),f_regression)
+    >>> X_r = univ_filter.fit(X, y).transform(X)
+
     """
 
+  
     def __init__(self,ranking,score_func):
-        """
-        Initialize the univariate feature selection.
-        score_func : function taking two arrays X and y, and returning an array.
-                     Returns both scores and pvalues.
-        ranking : ranking function
-        """
+
         assert callable(score_func), ValueError(
                 "The score function should be a callable, '%s' (type %s) "
                 "was passed." % (score_func, type(score_func))
