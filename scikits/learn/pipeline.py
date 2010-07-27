@@ -33,12 +33,12 @@ class Pipeline(BaseEstimator):
         Xt=X
         for transformer in self.transformers:
             Xt=transformer.fit(Xt,y).transform(Xt)
-        estimator.fit(Xt,y)
+        self.estimator.fit(Xt,y)
         return self
     
-    def predict(X)
+    def predict(self,X):
         Xt=X
         for transformer in self.transformers:
             Xt=transformer.transform(Xt)
-        return estimator.predict(Xt,y)
+        return self.estimator.predict(Xt)
         
