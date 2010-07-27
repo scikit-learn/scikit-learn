@@ -3,29 +3,27 @@
 Pipeline Anova SVM
 ==========================
 
-Simple usage of Pipeline made ANOVA | SVM-C
+Simple usages of pipeline:
+- ANOVA SVM-C
 """
-#import numpy as np
-#import pylab as pl
-from  scikits.learn import svm, datasets
-from  scikits.learn.datasets import samples_generator
-import scikits.learn.feature_selection.univariate_selection as ufs
-import scikits.learn.feature_selection.univ_scores as ufs_scores
-from scikits.learn import pipeline
 
-
+from scikits.learn import svm, datasets
+from scikits.learn.datasets import samples_generator
+from scikits.learn.feature_selection.univariate_selection import UnivariateFilter,SelectKBest,f_regression
+from scikits.learn.pipeline import Pipeline
 
 # import some data to play with
 X,y = samples_generator.test_dataset_classif(k=5)
 
-# 1) transformer 
-univariate_filter = ufs.UnivariateFilter(ufs.SelectKBest(k=5),
-    ufs_scores.f_regression)
-# 2) predictor
+
+# ANOVA SVM-C
+# 1) anova filter, take 5 best ranked features 
+anova_filter = UnivariateFilter(SelectKBest(k=5), f_regression)
+# 2) svm
 clf = svm.SVC(kernel='linear')
 
-pipe = pipeline.Pipeline([univariate_filter],clf)
-pipe.fit(X,y)
-pipe.predict(X)
+anova_svm = Pipeline([anova_filter],clf)
+anova_svm.fit(X,y)
+anova_svm.predict(X)
 
 
