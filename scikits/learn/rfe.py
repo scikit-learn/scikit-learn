@@ -27,6 +27,9 @@ class RFE(BaseEstimator):
     `support_` : array-like, shape = [nfeatures]
         Mask of estimated support
 
+    `ranking_` : array-like, shape = [nfeatures]
+        Mask of the ranking of features
+
     Methods
     -------
     fit(X, y) : self
@@ -66,14 +69,18 @@ class RFE(BaseEstimator):
         n_features_total = X.shape[1]
         estimator = self.estimator
         support_ = np.ones(n_features_total, dtype=np.bool)
+        ranking_ = np.ones(n_features_total, dtype=np.int)        
         while np.sum(support_) > self.n_features:
             estimator.fit(X[:,support_], y)
             # rank features based on coef_ (handle multi class)
             abs_coef_ = np.sum(estimator.coef_ ** 2, axis=0)
             sorted_abs_coef_ = np.sort(abs_coef_)
-            thresh = sorted_abs_coef_[-self.n_features]
+            thresh = sorted_abs_coef_[-np.int(np.sum(support_)*self.percentage)]
             support_[support_] = abs_coef_ > thresh
+            ranking_[support_] += 1
+            print np.sum(support_)
         self.support_ = support_
+        self.ranking_ = ranking_
         return self
 
     def transform(self, X, copy=True):
