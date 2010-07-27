@@ -4,6 +4,9 @@ import _liblinear
 
 from .base import BaseEstimator
 
+#
+# TODO: some cleanup: is nSV_ really needed ?
+
 class BaseLibsvm(BaseEstimator):
     """
     Base class for classifiers that use libsvm as library for
@@ -208,7 +211,6 @@ class BaseLibsvm(BaseEstimator):
                       self.probA_, self.probB_)
 
 
-
     @property
     def coef_(self):
         if self.kernel != 'linear':
@@ -224,8 +226,8 @@ class SVC(BaseLibsvm):
     """
     Classification using Support Vector Machines.
 
-    This class implements the most common classification methods
-    (C-SVC, Nu-SVC) using support vector machines.
+    This class implements the most classification methods
+    C-SVC and Nu-SVC using support vector machines.
 
     Parameters
     ----------
@@ -289,6 +291,9 @@ class SVC(BaseLibsvm):
 
     predict_proba(X) : array
         Return probability estimates.
+
+    predict_margin(X) : array
+        Return distance to predicted margin.
 
     Examples
     --------

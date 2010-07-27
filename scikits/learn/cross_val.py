@@ -222,6 +222,8 @@ class StratifiedKFold(object):
     
     """
 
+    # XXX: Should maybe have an argument to raise when 
+    # folds are not balanced
     def __init__(self, y, k):
         """
         K-Folds cross validation iterator:

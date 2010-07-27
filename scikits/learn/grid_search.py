@@ -110,7 +110,7 @@ class GridSearchCV(object):
     >>> print clf.fit(X, y).predict([[-0.8, -1]])
     [ 1.]
     """
-    # XXX: cross_val_factory should have a default
+    
     def __init__(self, estimator, param_grid, loss_func,
                         fit_params={}, n_jobs=1):
         assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
@@ -128,7 +128,6 @@ class GridSearchCV(object):
         """Run fit with all sets of parameters
         Returns the best classifier
         """
-
         if cv is None:
             n_samples = y.size
             from scikits.learn.cross_val import KFold
