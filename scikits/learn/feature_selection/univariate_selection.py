@@ -99,8 +99,8 @@ class SelectFpr(object):
         self.alpha = alpha
 
     def support(self,alpha = None):
-          if alpha is not None:
-                self.alpha=alpha
+        if alpha is not None:
+              self.alpha=alpha
         return (self._pvalues < self.alpha)
 
 
@@ -113,8 +113,8 @@ class SelectFdr(object):
         self.alpha = alpha
 
     def support(self,alpha = None):
-          if alpha is not None:
-                self.alpha=alpha
+        if alpha is not None:
+              self.alpha=alpha
         sv = np.sort(self._pvalues)
         threshold = sv[sv < self.alpha*np.arange(len(self._pvalues))].max()
         return (self._pvalues < threshold)
@@ -128,8 +128,8 @@ class SelectFwe(object):
         self.alpha = alpha
 
     def support(self,alpha = None):
-          if alpha is not None:
-                self.alpha=alpha
+        if alpha is not None:
+              self.alpha=alpha
         return (self._pvalues < self.alpha/len(self._pvalues))
 
 

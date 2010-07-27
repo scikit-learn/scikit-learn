@@ -9,7 +9,7 @@ Simple usage of Pipeline made ANOVA | SVM-C
 #import pylab as pl
 from  scikits.learn import svm, datasets
 from  scikits.learn.datasets import samples_generator
-import scikits.learn.feature_selection.new_univariate_selection as ufs
+import scikits.learn.feature_selection.univariate_selection as ufs
 import scikits.learn.feature_selection.univ_scores as ufs_scores
 from scikits.learn import pipeline
 
