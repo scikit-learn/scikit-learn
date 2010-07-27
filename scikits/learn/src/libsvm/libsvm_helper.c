@@ -150,7 +150,7 @@ struct svm_node **csr_to_sparse (double *values, npy_intp *n_indices,
 
     for (i=0; i<n_indptr[0]-1; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
-        sparse[i] = (struct svm_node *) malloc (n * sizeof(struct svm_node));
+        sparse[i] = (struct svm_node *) malloc ((n+1) * sizeof(struct svm_node));
         temp = sparse[i];
         for (j=0; j<n; ++j) {
             temp[j].value = values[k];
@@ -418,14 +418,13 @@ npy_intp get_nr(struct svm_model *model)
  * model->sv_coef is a double **, whereas data is just a double *,
  * so we have to do some stupid copying.
  */
-void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
+void copy_sv_coef(char *data, struct svm_model *model)
 {
     int i, len = model->nr_class-1;
-    char *temp = data;
-    npy_intp step = strides[0];
+    double *temp = (double *) data;
     for(i=0; i<len; ++i) {
-        memcpy(temp, model->sv_coef[i], step);
-        temp += step;
+        memcpy(temp, model->sv_coef[i], sizeof(double) * model->l);
+        temp += model->l;
     }
 }
 

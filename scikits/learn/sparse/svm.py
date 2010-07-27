@@ -4,6 +4,13 @@ Support Vector Machine algorithms for sparse matrices.
 Warning: this module is a work in progress. It is not tested and surely
 contains bugs.
 
+Notes
+-----
+
+Some fields, like dual_coef_ are not sparse matrices strictly speaking.
+However, they are converted to a sparse matrix for consistency and
+efficiency when multiplying to other sparse matrices.
+
 Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 License: New BSD
 """
@@ -44,14 +51,22 @@ class SparseBaseLibsvm(BaseEstimator):
         self._support_data    = np.empty (0, dtype=np.float64, order='C')
         self._support_indices = np.empty (0, dtype=np.int32, order='C')
         self._support_indptr  = np.empty (0, dtype=np.int32, order='C')
-        self.dual_coef_       = np.empty ((0,0), dtype=np.float64, order='C')
-        self.intercept_       = np.empty (0,     dtype=np.float64, order='C')
+
+        # strictly speaking, dual_coef is not sparse (see Notes above)
+        self._dual_coef_data    = np.empty (0, dtype=np.float64, order='C')
+        self._dual_coef_indices = np.empty (0, dtype=np.int32,   order='C')
+        self._dual_coef_indptr  = np.empty (0, dtype=np.int32,   order='C')
+        self.intercept_         = np.empty (0, dtype=np.float64, order='C')
 
         # only used in classification
         self.nSV_ = np.empty(0, dtype=np.int32, order='C')
 
 
     def fit(self, X, Y, class_weight={}):
+        """
+        X is expected to be a sparse matrix. For maximum effiency, use a 
+        sparse matrix in csr format (scipy.sparse.csr_matrix)
+        """
 
         X = sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
@@ -70,15 +85,30 @@ class SparseBaseLibsvm(BaseEstimator):
                  solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
                  self._support_data, self._support_indices, 
-                 self._support_indptr, self.dual_coef_,
+                 self._support_indptr, self._dual_coef_data,
                  self.intercept_, self.weight_label, self.weight,
                  self.nSV_, self.nu, self.cache_size, self.p,
                  self.shrinking,
                  int(self.probability))
 
+        # TODO: explicitly specify size
         self.support_ = sparse.csr_matrix((self._support_data, 
                                            self._support_indices,
                                            self._support_indptr))
+
+        # TODO: is this always a 1-d array ?
+        n_classes = len(self.label_) - 1
+        dual_coef_indices =  np.tile(np.arange(self.support_.shape[0]),
+                                     n_classes)
+        dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1, 
+                                     dual_coef_indices.size / n_classes)
+        print dual_coef_indices
+        print dual_coef_indptr
+        print self._dual_coef_data
+        self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
+                                             dual_coef_indices,
+                                             dual_coef_indptr))
+
         return self
 
 
@@ -107,7 +137,7 @@ class SparseBaseLibsvm(BaseEstimator):
         return _libsvm.csr_predict_from_model_wrap(T.data, 
                       T.indices, T.indptr, self.support_.data,
                       self.support_.indices, self.support_.indptr,
-                      self.dual_coef_, self.intercept_,
+                      self.dual_coef_.data, self.intercept_,
                       self._svm_types.index(self.impl),
                       kernel_type, self.degree,
                       self.gamma, self.coef0, self.eps, self.C,
@@ -116,6 +146,12 @@ class SparseBaseLibsvm(BaseEstimator):
                       self.shrinking, self.probability,
                       self.nSV_, self.label_, self.probA_,
                       self.probB_)
+
+    @property
+    def coef_(self):
+        if self.kernel != 'linear':
+            raise NotImplementedError('coef_ is only available when using a linear kernel')
+        return np.dot(self.dual_coef_, self.support_)
 
 class SVC(SparseBaseLibsvm):
     """
