@@ -1,10 +1,14 @@
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Vincent Michel <vincent.michel@inria.fr>
+#
+# License: BSD Style.
+
 """Recursive feature elimination
 for feature ranking
 """
 
 import numpy as np
-#from .base import BaseEstimator
-from base import BaseEstimator
+from .base import BaseEstimator
 
 class RFE(BaseEstimator):
     """
@@ -13,7 +17,7 @@ class RFE(BaseEstimator):
     Parameters
     ----------
     estimator : object
-         object 
+         object
 
     n_features : int
         Number of features to select
@@ -40,7 +44,7 @@ class RFE(BaseEstimator):
 
     Examples
     --------
-    >>> 
+    >>>
 
     References
     ----------
@@ -69,7 +73,7 @@ class RFE(BaseEstimator):
         n_features_total = X.shape[1]
         estimator = self.estimator
         support_ = np.ones(n_features_total, dtype=np.bool)
-        ranking_ = np.ones(n_features_total, dtype=np.int)        
+        ranking_ = np.ones(n_features_total, dtype=np.int)
         while np.sum(support_) > self.n_features:
             estimator.fit(X[:,support_], y)
             # rank features based on coef_ (handle multi class)
@@ -96,13 +100,10 @@ class RFE(BaseEstimator):
 
 
 
-
-
-
-class RFECV(BaseEstimator):
+class RFECV(RFE):
     """
     Feature ranking with Recursive feature elimination.
-    Automatic tuning by Cross-validation.    
+    Automatic tuning by Cross-validation.
     """
 
     def __init__(self, estimator=None, n_features=None, percentage=0.1,
@@ -130,71 +131,19 @@ class RFECV(BaseEstimator):
                           percentage=self.percentage)
         self.ranking_ = rfe.fit(X, y).ranking_
         clf = self.estimator
-        self.cv_scores_ = np.zeros(np.size(np.unique(self.ranking_)))
+        n_models = np.max(self.ranking_)
+        self.cv_scores_ = np.zeros(n_models)
+
         for train, test in cv:
-            Xtrain, ytrain, Xtest, ytest = X[train], y[train], X[test], y[test]
-            support_ = rfe.fit(X[train], y[train]).support_
-            ranking_ = rfe.ranking_
-            for i in np.unique(ranking_):
-                clf.fit(Xtrain[:,ranking_<=i],ytrain)
-                pred = clf.predict(Xtest[:,ranking_<=i])
-                self.cv_scores_ += self.loss_func(ytest,pred)
-                print pred,ytest
-        opt_rank = np.argmin(self.cv_scores_)
-        self.support_ = self.ranking_ <= np.unique(self.ranking_)[opt_rank]
+            ranking_ = rfe.fit(X[train], y[train]).ranking_
+
+            assert n_models == np.max(ranking_)
+            for k in range(n_models):
+                mask = ranking_ >= (k+1)
+                clf.fit(X[train][:,mask], y[train])
+                y_pred = clf.predict(X[test][:,mask])
+                self.cv_scores_[k] += self.loss_func(y[test], y_pred)
+
+        self.support_ = self.ranking_ >= (np.argmin(self.cv_scores_) + 1)
         return self
-
-
-    def transform(self, X, copy=True):
-        """Reduce X to the features selected during the fit
-
-        Parameters
-        ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        """
-        X_r = X[:,self.support_]
-        return X_r.copy() if copy else X_r
- 
-
-
-
-
-
- 
-
-if __name__ == '__main__':
-    from scikits.learn.svm import SVC
-    from scikits.learn import datasets
-    iris = datasets.load_iris()
-
-    # Add the noisy data to the informative features
-    X = iris.data
-    y = iris.target
-
-    svc = SVC(kernel='linear')
-    rfe = RFE(estimator=svc, n_features=2, percentage=0.1)
-    rfe.fit(X, y)
-    print rfe.support_
-
-    
-    from scikits.learn.cross_val import StratifiedKFold
-    def loss_func(y1, y2):
-        return np.sum(y1 != y2)
-
-    svc = SVC(kernel='linear')
-    rfecv = RFECV(estimator=svc, n_features=2,
-                    percentage=0.1,loss_func=loss_func)
-    rfecv.fit(X, y, cv=StratifiedKFold(y, 2))
-    print rfe.support_
-
-
-
-
-
-
-
-
-
 
