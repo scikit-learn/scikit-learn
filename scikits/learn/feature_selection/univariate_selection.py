@@ -72,8 +72,6 @@ class SelectPercentile(object):
         alpha = stats.scoreatpercentile(scores[1], self.percentile)
         return (scores[1] <= alpha)
 
-
-
 class SelectKBest(object):
     """
     Filter : Select the k lowest p-values
@@ -89,8 +87,6 @@ class SelectKBest(object):
           alpha = np.sort(scores[1])[self.k-1]
           return (scores[1] <= alpha)
 
-
-
 class SelectFpr(object):
     """
     Filter : Select the pvalues below alpha
@@ -98,11 +94,10 @@ class SelectFpr(object):
     def __init__(self,alpha):
         self.alpha = alpha
 
-    def support(self,alpha = None):
+    def support(self,scores,alpha = None):
         if alpha is not None:
               self.alpha=alpha
-        return (self._pvalues < self.alpha)
-
+        return (scores[1] < self.alpha)
 
 class SelectFdr(object):
     """
@@ -112,13 +107,12 @@ class SelectFdr(object):
     def __init__(self,alpha):
         self.alpha = alpha
 
-    def support(self,alpha = None):
+    def support(self,scores, alpha = None):
         if alpha is not None:
               self.alpha=alpha
-        sv = np.sort(self._pvalues)
-        threshold = sv[sv < self.alpha*np.arange(len(self._pvalues))].max()
-        return (self._pvalues < threshold)
-
+        sv = np.sort(scores[1])
+        threshold = sv[sv < self.alpha*np.arange(len(scores[1]))].max()
+        return (scores[1] < threshold)
 
 class SelectFwe(object):
     """
@@ -127,11 +121,10 @@ class SelectFwe(object):
     def __init__(self,alpha):
         self.alpha = alpha
 
-    def support(self,alpha = None):
+    def support(self,scores,alpha = None):
         if alpha is not None:
               self.alpha=alpha
-        return (self._pvalues < self.alpha/len(self._pvalues))
-
+        return (scores[1] < self.alpha/len(scores[1]))
 
 
 ######################################################################
@@ -159,7 +152,6 @@ def f_classif(X, y):
     X = np.asanyarray(X)
     args = [X[y==k] for k in np.unique(y)]
     return stats.f_oneway(*args)
-
 
 def f_regression(X, y, center=True):
     """
@@ -221,17 +213,21 @@ if __name__ == "__main__":
     X_r_5 = univ_filter.fit(X, y).transform(X)
     X_r_10 = univ_filter.transform(X,k=10)
     univ_filter.ranking.k = 20
+    #univ_filter.selector.k = 20
     X_r_20 = univ_filter.fit(X, y).transform(X)
     univ_filter.ranking = SelectPercentile(percentile = 50)
     X_r_50 = univ_filter.fit(X, y).transform(X)
 
-    #clf = SVR(kernel='linear', C=1.)
-    #y_ = clf.fit(X_r, y).predict(X_r)
-    #print sel
 
-    #### now change k
-    #X_r = univariate_filter.transform(X, k=2)
-    #y_ = clf.fit(X_r, y).predict(X)
-    #print sel
+    
+    univ_filter = UnivariateFilter(SelectKBest(k=5),f_regression)
+    X_r = univ_filter.fit(X, y).transform(X)
+    print "Support :", univ_filter.support
+    clf = SVR(kernel='linear', C=1.)
+    y_ = clf.fit(X_r, y).predict(X_r)
+    ### now change k
+    X_r = univ_filter.transform(X, k=2)
+    y_ = clf.fit(X_r, y).predict(X)
+    print "Support :", univ_filter.support
 
 
