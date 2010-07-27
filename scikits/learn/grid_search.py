@@ -155,6 +155,8 @@ class GridSearchCV(object):
 if __name__ == '__main__':
     from scikits.learn.svm import SVC
     from scikits.learn import datasets
+    from scikits.learn.metrics import zero_one
+
     iris = datasets.load_iris()
 
     # Add the noisy data to the informative features
@@ -162,7 +164,5 @@ if __name__ == '__main__':
     y = iris.target
 
     svc = SVC(kernel='linear')
-    def loss_func(y1, y2):
-        return np.mean(y1 != y2)
-    clf = GridSearchCV(svc, {'C':[1, 10]}, loss_func, n_jobs=2)
+    clf = GridSearchCV(svc, {'C':[1, 10]}, zero_one, n_jobs=2)
     print clf.fit(X, y).predict([[-0.8, -1]])
