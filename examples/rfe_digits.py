@@ -27,9 +27,17 @@ y = digits.target
 # Create the RFE object and compute a cross-validated score, compared to an
 # unvariate feature selection
 
-rfe = RFE(estimator = SVC(kernel="linear",C=1), n_features = 30, percentage =
-0.1)
-rfe.fit(X,y)
+svc = SVC(kernel="linear", C=1)
+rfe = RFE(estimator=svc, n_features=30, percentage=0.1)
+rfe.fit(X, y)
+
+image_support_ = rfe.support_.reshape(digits.images[0].shape)
+
+import pylab as pl
+pl.matshow(image_support_)
+pl.colorbar()
+pl.title('Voxels selected with RFE')
+
 #anova_filter = UnivariateFilter(SelectKBest(k=5), f_regression)
 
 #y_pred_rfe = []
