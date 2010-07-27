@@ -13,6 +13,7 @@ except:
         for prod in result:
             yield tuple(prod)
 
+
 def grid(**kwargs):
     """ Generators on the combination of the various parameter lists given.
 
@@ -38,6 +39,7 @@ def grid(**kwargs):
         params = dict(zip(keys,v))
         yield params
 
+
 def fit_grid_point(X, y, clf_factory, clf_params, cross_val_factory,
                                         loss_func, **fit_params):
     """Run fit on one set of parameters
@@ -53,6 +55,7 @@ def fit_grid_point(X, y, clf_factory, clf_params, cross_val_factory,
 
     score = loss_func(y, y_pred)
     return clf, score
+
 
 class GridSearch(object):
     """
@@ -131,6 +134,7 @@ class GridSearch(object):
                 self.predict = clf.predict
 
         return self.learner
+
 
 if __name__ == '__main__':
 
