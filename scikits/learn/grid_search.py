@@ -40,20 +40,27 @@ def grid(**kwargs):
         yield params
 
 
-def fit_grid_point(X, y, clf_factory, clf_params, cross_val_factory,
+def fit_grid_point(X, y, klass, orignal_params, clf_params, cross_val_factory,
                                         loss_func, **fit_params):
     """Run fit on one set of parameters
     Returns the score and the instance of the classifier
     """
+    params = orignal_params.copy()
+    params.update(clf_params)
     n_samples, n_features = X.shape
-    clf = clf_factory(**clf_params)
+    clf = klass(**params)
     cv = cross_val_factory(n_samples)
-    y_pred = np.zeros_like(y)
+    y_pred = list()
+    y_true = list()
     for train, test in cv:
         clf.fit(X[train], y[train], **fit_params)
-        y_pred[test] = np.asarray(clf.predict(X[test])).astype(np.int)
+        y_pred.append(clf.predict(X[test]))
+        y_true.append(y[test])
 
-    score = loss_func(y, y_pred)
+    y_true = np.concatenate(y_true)
+    y_pred = np.concatenate(y_pred)
+
+    score = loss_func(y_true, y_pred)
     return clf, score
 
 
@@ -69,10 +76,10 @@ class GridSearch(object):
 
     Parameters
     ---------
-    clf_factory : object type that implements the "fit" and "predict" methods
+    estimator: object type that implements the "fit" and "predict" methods
         A object of that type is instanciated for each grid point
 
-    params : dict
+    param_grid: dict
         a dictionary of parameters that are used the generate the grid
 
     cross_val_factory : a generator to run crossvalidation
@@ -103,48 +110,52 @@ class GridSearch(object):
     >>> print clf.fit(X, y).predict([[-0.8, -1]])
     [ 1.]
     """
-    def __init__(self, clf_factory, params, cross_val_factory, loss_func,
+    # XXX: cross_val_factory should have a default
+    def __init__(self, estimator, param_grid, cross_val_factory, loss_func,
                         fit_params={}, n_jobs=1):
-        self.clf_factory = clf_factory
-        self.params = params
+        assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
+            "estimator should a be an estimator implementing 'fit' and " 
+            "'predict' methods, %s (type %s) was passed" % (clf, type(clf))
+            )
+        self.estimator = estimator
+        self.param_grid = param_grid
         self.cross_val_factory = cross_val_factory
         self.loss_func = loss_func
         self.n_jobs = n_jobs
         self.fit_params = fit_params
 
+
     def fit(self, X, y, **kw):
         """Run fit with all sets of parameters
         Returns the best classifier
         """
-        best_score = np.inf
 
-        self.learner = None
-        self.predict = None
-
-        g = grid(**self.params)
+        g = grid(**self.param_grid)
+        klass = self.estimator.__class__
+        orignal_params = self.estimator._get_params()
         out = Parallel(n_jobs=self.n_jobs)(
-            delayed(fit_grid_point)(X, y, self.clf_factory, clf_params,
+            delayed(fit_grid_point)(X, y, klass, orignal_params, clf_params,
                     self.cross_val_factory,
                     self.loss_func, **self.fit_params) for clf_params in g)
 
-        for clf, score in out:
-            if score < best_score:
-                best_score = score
-                self.learner = clf
-                self.predict = clf.predict
+        # Out is a list of pairs: estimator, score
+        key = lambda pair: pair[1]
+        best_estimator = min(out, key=key)[0]
 
-        return self.learner
+        self.best_estimator = best_estimator
+        self.predict = best_estimator.predict
+
+        return self
 
 
 if __name__ == '__main__':
 
-    import numpy as np
     from scikits.learn.cross_val import LeaveOneOut
     from scikits.learn.svm import SVC
     X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     y = np.array([1, 1, 2, 2])
-    parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
+    svc = SVC(kernel='linear') 
     def loss_func(y1, y2):
         return np.mean(y1 != y2)
-    clf = GridSearch(SVC, parameters, LeaveOneOut, loss_func, n_jobs=2)
+    clf = GridSearch(svc, {'C':[1, 10]}, LeaveOneOut, loss_func, n_jobs=2)
     print clf.fit(X, y).predict([[-0.8, -1]])
