@@ -9,7 +9,8 @@ Utilities for cross validation.
 from math import ceil
 import numpy as np
 
-from scikits.learn.utils.extmath import factorial, combinations
+from .utils.extmath import factorial, combinations
+from .grid_search import GridSearchCV
 
 ##############################################################################
 class LeaveOneOut(object):
@@ -299,6 +300,7 @@ class StratifiedKFold(object):
 
     def __len__(self):
         return self.k
+
 
 ##############################################################################
 class LeaveOneLabelOut(object):
