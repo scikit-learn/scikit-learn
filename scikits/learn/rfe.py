@@ -3,8 +3,8 @@ for feature ranking
 """
 
 import numpy as np
-# from .base import BaseEstimator
-from base import BaseEstimator
+from .base import BaseEstimator
+# from base import BaseEstimator
 
 class RFE(BaseEstimator):
     """Recursive feature elimination
@@ -26,7 +26,8 @@ class RFE(BaseEstimator):
         support_ = np.ones(n_features_total, dtype=np.bool)
         while np.sum(support_) > self.n_features:
             estimator.fit(X[:,support_], y)
-            abs_coef_ = np.abs(estimator.coef_)
+            # rank features based on coef_ (handle multi class)
+            abs_coef_ = np.sum(estimator.coef_ ** 2, axis=0)
             sorted_abs_coef_ = np.sort(abs_coef_)
             thresh = sorted_abs_coef_[-self.n_features]
             support_[support_] = abs_coef_ > thresh
