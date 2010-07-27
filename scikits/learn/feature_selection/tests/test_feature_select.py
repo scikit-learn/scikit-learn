@@ -54,6 +54,9 @@ def test_F_test_multi_class():
     assert(pv[:5]<0.05).all()
     assert(pv[5:]>1.e-5).all()
 
+
+
+
 def test_univ_fs_percentile_classif():
     """
     Test whether the relative univariate feature selection
@@ -63,9 +66,10 @@ def test_univ_fs_percentile_classif():
 
     X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectPercentile(us.f_classif)
-    X_r = univariate_filter.fit(X, Y).transform(X, percentile=25)
-    support = univariate_filter.support(percentile=25)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectPercentile(percentile=25),us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
@@ -78,9 +82,10 @@ def test_univ_fs_kbest_classif():
     """
     X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectKBest(us.f_classif)
-    X_r = univariate_filter.fit(X, Y).transform(X, k=5)
-    support = univariate_filter.support(k=5)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectKBest(k=5),us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
@@ -93,9 +98,10 @@ def test_univ_fs_fpr_classif():
     """
     X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectFpr(us.f_classif)
-    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.0001)
-    support = univariate_filter.support(alpha=0.0001)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectFpr(alpha=0.0001),us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
@@ -108,9 +114,10 @@ def test_univ_fs_fdr_classif():
     """
     X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=3)
-    univariate_filter = us.SelectFdr(us.f_classif)
-    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    support = univariate_filter.support(alpha=0.01)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectFdr(alpha=0.01),us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
@@ -123,9 +130,10 @@ def test_univ_fs_fwe_classif():
     """
     X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectFwe(us.f_classif)
-    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    support = univariate_filter.support(alpha=0.01)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectFwe(alpha=0.01),us.f_classif)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert(np.sum(np.abs(support-gtruth))<2)
@@ -144,9 +152,10 @@ def test_univ_fs_percentile_regression():
     """
     X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectPercentile(us.f_regression)
-    X_r = univariate_filter.fit(X, Y).transform(X, percentile=25)
-    support = univariate_filter.support(percentile=25)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectPercentile(percentile=25),us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
@@ -158,9 +167,10 @@ def test_univ_fs_full_percentile_regression():
     """
     X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectPercentile(us.f_regression)
-    X_r = univariate_filter.fit(X, Y).transform(X, percentile=100)
-    support = univariate_filter.support(percentile=100)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectPercentile(percentile=100),us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.ones(20)
     assert_array_equal(support, gtruth)
 
@@ -172,9 +182,10 @@ def test_univ_fs_kbest_regression():
     """
     X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectKBest(us.f_regression)
-    X_r = univariate_filter.fit(X, Y).transform(X, k=5)
-    support = univariate_filter.support(k=5)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectKBest(k=5),us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
@@ -187,9 +198,10 @@ def test_univ_fs_fpr_regression():
     """
     X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectFpr(us.f_regression)
-    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    support = univariate_filter.support(alpha=0.01)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectFpr(alpha=0.01),us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert(support[:5]==1).all()
@@ -203,9 +215,10 @@ def test_univ_fs_fdr_regression():
     """
     X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
                                            seed=2)
-    univariate_filter = us.SelectFdr(us.f_regression)
-    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    support = univariate_filter.support(alpha=0.01)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectFdr(alpha=0.01),us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
@@ -218,9 +231,10 @@ def test_univ_fs_fwe_regression():
     """
     X, Y = sg.test_dataset_reg(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectFwe(us.f_regression)
-    X_r = univariate_filter.fit(X, Y).transform(X, alpha=0.01)
-    support = univariate_filter.support(alpha=0.01)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectFwe(alpha=0.01),us.f_regression)
+    X_r = univariate_filter.fit(X, Y).transform(X)
+    support = univariate_filter.support
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert(support[:5]==1).all()
