@@ -6,7 +6,7 @@ import numpy as np
 from scikits.learn.svm import SVC
 from scikits.learn.cross_val import StratifiedKFold, KFold
 from scikits.learn import datasets
-from scikits.learn.grid_search import GridSearch
+from scikits.learn.grid_search import GridSearchCV
 
 # The Digits dataset
 digits = datasets.load_digits()
@@ -33,7 +33,8 @@ def loss_func(y1, y2):
 def cv(n_samples):
     return KFold(n_samples, 2)
 
-clf = GridSearch(SVC, parameters, cv, loss_func, n_jobs=2)
+svc = SVC()
+clf = GridSearchCV(svc, parameters, cv, loss_func, n_jobs=2)
 
 """
 Run crossvalidation (different than the nested crossvalidation that is used

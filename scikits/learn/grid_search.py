@@ -64,13 +64,13 @@ def fit_grid_point(X, y, klass, orignal_params, clf_params, cross_val_factory,
     return clf, score
 
 
-class GridSearch(object):
+class GridSearchCV(object):
     """
     Object to run a grid search on the parameters of a classifier.
 
     Important memmbers are fit, predict.
 
-    GridSearch implements a "fit" method and a "predict" method like
+    GridSearchCV implements a "fit" method and a "predict" method like
     any classifier except that the parameters of the classifier
     used to predict is optimized by cross-validation
 
@@ -106,7 +106,8 @@ class GridSearch(object):
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> def loss_func(y1, y2):
     ...     return np.mean(y1 != y2)
-    >>> clf = GridSearch(SVC, parameters, LeaveOneOut, loss_func, n_jobs=1)
+    >>> svc = SVC()
+    >>> clf = GridSearchCV(svc, parameters, LeaveOneOut, loss_func, n_jobs=1)
     >>> print clf.fit(X, y).predict([[-0.8, -1]])
     [ 1.]
     """
@@ -157,5 +158,5 @@ if __name__ == '__main__':
     svc = SVC(kernel='linear') 
     def loss_func(y1, y2):
         return np.mean(y1 != y2)
-    clf = GridSearch(svc, {'C':[1, 10]}, LeaveOneOut, loss_func, n_jobs=2)
+    clf = GridSearchCV(svc, {'C':[1, 10]}, LeaveOneOut, loss_func, n_jobs=2)
     print clf.fit(X, y).predict([[-0.8, -1]])
