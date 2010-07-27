@@ -17,7 +17,7 @@ n_samples = len(digits.images)
 X = digits.images.reshape((n_samples, -1))
 y = digits.target
 
-parameters = {'kernel':('linear', 'rbf'), 'C':[0.1, 1]}
+parameters = {'kernel':('rbf', 'linear'), 'C':[0.1, 1], 'gamma':[1e-3, 1e-4]}
 
 def loss_func(y1, y2):
     return np.mean(y1 != y2)
@@ -34,7 +34,7 @@ n_samples, n_features = X.shape
 y_pred = []
 y_true = []
 for train, test in StratifiedKFold(y, 2):
-    cv = StratifiedKFold(y[train], 2)
+    cv = StratifiedKFold(y[train], 5)
     y_pred.append(clf.fit(X[train], y[train], cv=cv).predict(X[test]))
     y_true.append(y[test])
 
