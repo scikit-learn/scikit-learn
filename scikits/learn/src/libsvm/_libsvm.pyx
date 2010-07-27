@@ -68,7 +68,6 @@ cdef extern from "libsvm_helper.c":
                             char *SV_data, np.npy_intp *SV_indices_dims,
                             char *SV_indices, np.npy_intp *SV_intptr_dims,
                             char *SV_intptr,
-                            np.npy_intp *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV, char *label,
                             char *probA, char *probB)
     void copy_sv_coef   (char *, svm_model *)
@@ -451,7 +450,7 @@ def csr_predict_from_model_wrap(np.ndarray[np.float64_t, ndim=1, mode='c'] T_dat
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,
                           SV_indptr.shape, SV_indptr.data,
-                          sv_coef.strides, sv_coef.data, intercept.data,
+                          sv_coef.data, intercept.data,
                           nSV.data, label.data, probA.data, probB.data)
     #TODO: use check_model
     dec_values = np.empty(T_indptr.shape[0]-1)

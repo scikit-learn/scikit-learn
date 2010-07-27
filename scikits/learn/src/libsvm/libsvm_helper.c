@@ -327,12 +327,11 @@ struct svm_model *csr_set_model(struct svm_parameter *param, int nr_class,
                             char *SV_data, npy_intp *SV_indices_dims,
                             char *SV_indices, npy_intp *SV_indptr_dims,
                             char *SV_intptr,
-                            npy_intp *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV, char *label,
                             char *probA, char *probB)
 {
     struct svm_model *model;
-    char *t = sv_coef;
+    double *dsv_coef = (double *) sv_coef;
     int i, m;
 
     m = nr_class * (nr_class-1)/2;
@@ -367,8 +366,8 @@ struct svm_model *csr_set_model(struct svm_parameter *param, int nr_class,
          * svm_destroy_model will free each element of the array.
          */
         model->sv_coef[i] = (double *) malloc((model->l) * sizeof(double));
-        memcpy(model->sv_coef[i], t, (model->l) * sizeof(double));
-        t += sv_coef_strides[0];
+        memcpy(model->sv_coef[i], dsv_coef, (model->l) * sizeof(double));
+        dsv_coef += model->l;
     }
 
     for (i=0; i<m; ++i) {
