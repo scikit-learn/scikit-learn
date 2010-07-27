@@ -226,8 +226,8 @@ class SVC(BaseLibsvm):
     """
     Classification using Support Vector Machines.
 
-    This class implements the most common classification methods
-    (C-SVC, Nu-SVC) using support vector machines.
+    This class implements the most classification methods
+    C-SVC and Nu-SVC using support vector machines.
 
     Parameters
     ----------
@@ -291,6 +291,9 @@ class SVC(BaseLibsvm):
 
     predict_proba(X) : array
         Return probability estimates.
+
+    predict_margin(X) : array
+        Return distance to predicted margin.
 
     Examples
     --------
