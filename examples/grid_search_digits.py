@@ -1,12 +1,20 @@
-"""Run parameter estimation using grid search
-in a nested cross-validation setting.
+"""
+Parameter estimation using grid search with a nested cross-validation
+=======================================================================
+
+The classifier is optimized by "nested" cross-validation using the
+GridSearchCV object.
+
+The performance of the selected parameters is evaluated using
+cross-validation (different than the nested crossvalidation that is used
+to select the best classifier). 
+
 """
 
 import numpy as np
 from scikits.learn.svm import SVC
-from scikits.learn.cross_val import StratifiedKFold
+from scikits.learn.cross_val import StratifiedKFold, GridSearchCV
 from scikits.learn import datasets
-from scikits.learn.grid_search import GridSearchCV
 
 # The Digits dataset
 digits = datasets.load_digits()
@@ -22,14 +30,8 @@ parameters = {'kernel':('linear', 'rbf'), 'C':[0.1, 1]}
 def loss_func(y1, y2):
     return np.mean(y1 != y2)
 
-svc = SVC()
-clf = GridSearchCV(svc, parameters, loss_func, n_jobs=2)
+clf = GridSearchCV(SVC(), parameters, loss_func, n_jobs=2)
 
-"""
-Run crossvalidation (different than the nested crossvalidation that is used
-to select the best classifier). The classifier is optimized by "nested"
-crossvalidation
-"""
 n_samples, n_features = X.shape
 y_pred = []
 y_true = []
