@@ -1,7 +1,8 @@
 
 import numpy as np
 from numpy.testing import *
-from scikits.learn import sparse, svm
+import scipy.sparse
+from scikits.learn import datasets, sparse, svm
 
 # test sample 1
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -24,11 +25,33 @@ def _test_SVC():
 
     clf = svm.SVC(kernel='linear').fit(X, Y)
     sp_clf = sparse.svm.SVC(kernel='linear').fit(X, Y)
+    assert scipy.sparse.issparse(sp_clf.support_)
     assert_array_equal (clf.support_, sp_clf.support_.todense())
-    assert_array_equal(clf.predict(T), sp_clf.predict(T))
-    
+    assert scipy.sparse.issparse (sp_clf.dual_coef_)
+    assert_array_equal (clf.dual_coef_, sp_clf.dual_coef_.todense())
+    assert scipy.sparse.issparse (sp_clf.coef_)
+    assert_array_equal (sp_clf.coef_.todense(), clf.coef_)
+    assert_array_equal (clf.predict(T), sp_clf.predict(T))
+
+    # refit with a different dataset
     clf.fit(X2, Y2)
     sp_clf.fit(X2, Y2)
     assert_array_equal (clf.support_, sp_clf.support_.todense())
-    assert_array_equal(clf.predict(T2), sp_clf.predict(T2))
+    assert_array_equal (clf.dual_coef_, sp_clf.dual_coef_.todense())
+    assert_array_equal (sp_clf.coef_.todense(), clf.coef_)
+    assert_array_equal (clf.predict(T2), sp_clf.predict(T2))
 
+
+def test_SVC_iris():
+    """
+    Test the sparse SVC with the iris dataset
+    """
+    iris = datasets.load_iris()
+    sp_clf = sparse.svm.SVC(kernel='linear').fit(iris.data, iris.target)
+    clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
+    
+    assert_array_equal (clf.support_, sp_clf.support_.todense())
+    assert_array_equal (clf.dual_coef_, sp_clf.dual_coef_.todense())
+    assert_array_equal (clf.coef_, sp_clf.coef_.todense())
+#    assert_array_equal (clf.predict(iris.data), sp_clf.predict(iris.data))
+    

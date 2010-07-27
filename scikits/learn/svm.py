@@ -4,6 +4,9 @@ import _liblinear
 
 from .base import BaseEstimator
 
+#
+# TODO: some cleanup: is nSV_ really needed ?
+
 class BaseLibsvm(BaseEstimator):
     """
     Base class for classifiers that use libsvm as library for
@@ -206,7 +209,6 @@ class BaseLibsvm(BaseEstimator):
                       self.p, self.shrinking, self.probability,
                       self.nSV_, self.label_,
                       self.probA_, self.probB_)
-
 
 
     @property
