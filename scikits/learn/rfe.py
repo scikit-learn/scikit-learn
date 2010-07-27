@@ -3,8 +3,8 @@ for feature ranking
 """
 
 import numpy as np
-from .base import BaseEstimator
-# from base import BaseEstimator
+#from .base import BaseEstimator
+from base import BaseEstimator
 
 class RFE(BaseEstimator):
     """
@@ -94,6 +94,76 @@ class RFE(BaseEstimator):
         X_r = X[:,self.support_]
         return X_r.copy() if copy else X_r
 
+
+
+
+
+
+class RFECV(BaseEstimator):
+    """
+    Feature ranking with Recursive feature elimination.
+    Automatic tuning by Cross-validation.    
+    """
+
+    def __init__(self, estimator=None, n_features=None, percentage=0.1,
+                  loss_func=None):
+        self.n_features = n_features
+        self.percentage = percentage
+        self.estimator = estimator
+        self.loss_func = loss_func
+
+    def fit(self, X, y, cv=None):
+        """Fit the RFE model according to the given training data and
+            parameters. Tuning by cross-validation
+
+        Parameters
+        ----------
+        X : array-like, shape = [nsamples, nfeatures]
+            Training vector, where nsamples in the number of samples and
+            nfeatures is the number of features.
+        y : array, shape = [nsamples]
+            Target values (integers in classification, real numbers in
+            regression)
+        cv : cross-validation instance
+        """
+        rfe = RFE(estimator=self.estimator, n_features=self.n_features,
+                          percentage=self.percentage)
+        self.ranking_ = rfe.fit(X, y).ranking_
+        clf = self.estimator
+        self.cv_scores_ = np.zeros(np.size(np.unique(self.ranking_)))
+        for train, test in cv:
+            Xtrain, ytrain, Xtest, ytest = X[train], y[train], X[test], y[test]
+            support_ = rfe.fit(X[train], y[train]).support_
+            ranking_ = rfe.ranking_
+            for i in np.unique(ranking_):
+                clf.fit(Xtrain[:,ranking_<=i],ytrain)
+                pred = clf.predict(Xtest[:,ranking_<=i])
+                self.cv_scores_ += self.loss_func(ytest,pred)
+                print pred,ytest
+        opt_rank = np.argmin(self.cv_scores_)
+        self.support_ = self.ranking_ <= np.unique(self.ranking_)[opt_rank]
+        return self
+
+
+    def transform(self, X, copy=True):
+        """Reduce X to the features selected during the fit
+
+        Parameters
+        ----------
+        X : array-like, shape = [nsamples, nfeatures]
+            Vector, where nsamples in the number of samples and
+            nfeatures is the number of features.
+        """
+        X_r = X[:,self.support_]
+        return X_r.copy() if copy else X_r
+ 
+
+
+
+
+
+ 
+
 if __name__ == '__main__':
     from scikits.learn.svm import SVC
     from scikits.learn import datasets
@@ -107,3 +177,24 @@ if __name__ == '__main__':
     rfe = RFE(estimator=svc, n_features=2, percentage=0.1)
     rfe.fit(X, y)
     print rfe.support_
+
+    
+    from scikits.learn.cross_val import StratifiedKFold
+    def loss_func(y1, y2):
+        return np.sum(y1 != y2)
+
+    svc = SVC(kernel='linear')
+    rfecv = RFECV(estimator=svc, n_features=2,
+                    percentage=0.1,loss_func=loss_func)
+    rfecv.fit(X, y, cv=StratifiedKFold(y, 2))
+    print rfe.support_
+
+
+
+
+
+
+
+
+
+
