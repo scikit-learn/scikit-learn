@@ -40,7 +40,7 @@ def iter_grid(**kwargs):
         yield params
 
 
-def fit_grid_point(X, y, klass, orignal_params, clf_params, cross_val_factory,
+def fit_grid_point(X, y, klass, orignal_params, clf_params, cv,
                                         loss_func, **fit_params):
     """Run fit on one set of parameters
     Returns the score and the instance of the classifier
@@ -49,7 +49,6 @@ def fit_grid_point(X, y, klass, orignal_params, clf_params, cross_val_factory,
     params.update(clf_params)
     n_samples, n_features = X.shape
     clf = klass(**params)
-    cv = cross_val_factory(n_samples)
     y_pred = list()
     y_true = list()
     for train, test in cv:
@@ -107,36 +106,41 @@ class GridSearchCV(object):
     >>> def loss_func(y1, y2):
     ...     return np.mean(y1 != y2)
     >>> svc = SVC()
-    >>> clf = GridSearchCV(svc, parameters, LeaveOneOut, loss_func, n_jobs=1)
+    >>> clf = GridSearchCV(svc, parameters, loss_func, n_jobs=1)
     >>> print clf.fit(X, y).predict([[-0.8, -1]])
     [ 1.]
     """
     # XXX: cross_val_factory should have a default
-    def __init__(self, estimator, param_grid, cross_val_factory, loss_func,
+    def __init__(self, estimator, param_grid, loss_func,
                         fit_params={}, n_jobs=1):
         assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
-            "estimator should a be an estimator implementing 'fit' and " 
+            "estimator should a be an estimator implementing 'fit' and "
             "'predict' methods, %s (type %s) was passed" % (clf, type(clf))
             )
         self.estimator = estimator
         self.param_grid = param_grid
-        self.cross_val_factory = cross_val_factory
         self.loss_func = loss_func
         self.n_jobs = n_jobs
         self.fit_params = fit_params
 
 
-    def fit(self, X, y, **kw):
-        """Run fit with all sets of parameters and select the best classifier
+    def fit(self, X, y, cv=None, **kw):
+        """Run fit with all sets of parameters
+        Returns the best classifier
         """
+
+        if cv is None:
+            n_samples = y.size
+            from scikits.learn.cross_val import KFold
+            cv = KFold(n_samples, 2)
+
         grid = iter_grid(**self.param_grid)
         klass = self.estimator.__class__
         orignal_params = self.estimator._get_params()
         out = Parallel(n_jobs=self.n_jobs)(
-                    delayed(fit_grid_point)(X, y, klass, orignal_params, 
-                                            clf_params, self.cross_val_factory,
-                                            self.loss_func, **self.fit_params) 
-                for clf_params in grid)
+            delayed(fit_grid_point)(X, y, klass, orignal_params, clf_params,
+                    cv, self.loss_func, **self.fit_params) 
+                    for clf_params in grid)
 
         # Out is a list of pairs: estimator, score
         key = lambda pair: pair[1]
@@ -149,12 +153,16 @@ class GridSearchCV(object):
 
 
 if __name__ == '__main__':
-    from scikits.learn.cross_val import LeaveOneOut
     from scikits.learn.svm import SVC
-    X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    y = np.array([1, 1, 2, 2])
-    svc = SVC(kernel='linear') 
+    from scikits.learn import datasets
+    iris = datasets.load_iris()
+
+    # Add the noisy data to the informative features
+    X = iris.data
+    y = iris.target
+
+    svc = SVC(kernel='linear')
     def loss_func(y1, y2):
         return np.mean(y1 != y2)
-    clf = GridSearchCV(svc, {'C':[1, 10]}, LeaveOneOut, loss_func, n_jobs=2)
+    clf = GridSearchCV(svc, {'C':[1, 10]}, loss_func, n_jobs=2)
     print clf.fit(X, y).predict([[-0.8, -1]])
