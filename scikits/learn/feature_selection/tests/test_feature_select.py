@@ -54,6 +54,9 @@ def test_F_test_multi_class():
     assert(pv[:5]<0.05).all()
     assert(pv[5:]>1.e-5).all()
 
+
+
+
 def test_univ_fs_percentile_classif():
     """
     Test whether the relative univariate feature selection
@@ -63,7 +66,8 @@ def test_univ_fs_percentile_classif():
 
     X, Y = sg.test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter = us.SelectPercentile(us.f_classif)
+    univariate_filter =  us.UnivariateFilter(
+                         us.SelectPercentile(percentile=25),us.f_classif)
     X_r = univariate_filter.fit(X, Y).transform(X, percentile=25)
     support = univariate_filter.support(percentile=25)
     gtruth = np.zeros(20)
