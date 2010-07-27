@@ -75,10 +75,9 @@ class RFE(BaseEstimator):
             # rank features based on coef_ (handle multi class)
             abs_coef_ = np.sum(estimator.coef_ ** 2, axis=0)
             sorted_abs_coef_ = np.sort(abs_coef_)
-            thresh = sorted_abs_coef_[-np.int(np.sum(support_)*self.percentage)]
+            thresh = sorted_abs_coef_[np.int(np.sum(support_)*self.percentage)]
             support_[support_] = abs_coef_ > thresh
             ranking_[support_] += 1
-            print np.sum(support_)
         self.support_ = support_
         self.ranking_ = ranking_
         return self
