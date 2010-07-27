@@ -32,8 +32,9 @@ class Neighbors(BaseEstimator):
   >>> samples = [[0.,0.,1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
   >>> labels = [0,0,1,1]
   >>> neigh = Neighbors(k=3)
-  >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-  <scikits.learn.neighbors.Neighbors instance at 0x...>
+  >>> neigh.fit(samples, labels)
+  Neighbors(k=3,
+            window_size=1)
   >>> print neigh.predict([[0,0,0]])
   [ 0.]
   """
@@ -82,8 +83,9 @@ class Neighbors(BaseEstimator):
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> labels = [0, 0, 1]
     >>> neigh = Neighbors(k=1)
-    >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-    <scikits.learn.neighbors.Neighbors instance at 0x...>
+    >>> neigh.fit(samples, labels)
+    Neighbors(k=1,
+              window_size=1)
     >>> print neigh.kneighbors([1., 1., 1.])
     (array(0.5), array(2))
 
@@ -123,8 +125,9 @@ class Neighbors(BaseEstimator):
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> labels = [0, 0, 1]
     >>> neigh = Neighbors(k=1)
-    >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-    <scikits.learn.neighbors.Neighbors instance at 0x...>
+    >>> neigh.fit(samples, labels)
+    Neighbors(k=1,
+              window_size=1)
     >>> print neigh.predict([.2, .1, .2])
     0
     >>> print neigh.predict([[0., -1., 0.], [3., 2., 0.]])

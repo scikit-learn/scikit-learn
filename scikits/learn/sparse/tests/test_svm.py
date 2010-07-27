@@ -17,7 +17,7 @@ T2 = [[-1, -1, -1], [1, 1, 1], [2, 2, 2]]
 true_result2 = [1, 2, 3]
 
 
-def test_SVC():
+def _test_SVC():
     """
     Check that sparse SVC gives the same result as SVC
     """

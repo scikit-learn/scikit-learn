@@ -9,9 +9,10 @@ Utilities for cross validation.
 from math import ceil
 import numpy as np
 
-from scikits.learn.utils.extmath import factorial, combinations
+from .utils.extmath import factorial, combinations
+from .grid_search import GridSearchCV
 
-################################################################################
+##############################################################################
 class LeaveOneOut(object):
     """
     Leave-One-Out cross validation iterator:
@@ -69,7 +70,7 @@ class LeaveOneOut(object):
         return self.n
 
 
-################################################################################
+##############################################################################
 class LeavePOut(object):
     """
     Leave-P-Out cross validation iterator:
@@ -137,7 +138,7 @@ class LeavePOut(object):
                / factorial(self.p)
 
 
-################################################################################
+##############################################################################
 class KFold(object):
     """
     K-Folds cross validation iterator:
@@ -209,7 +210,7 @@ class KFold(object):
         return self.k
 
 
-################################################################################
+##############################################################################
 class StratifiedKFold(object):
     """
     Stratified K-Folds cross validation iterator:
@@ -300,7 +301,8 @@ class StratifiedKFold(object):
     def __len__(self):
         return self.k
 
-################################################################################
+
+##############################################################################
 class LeaveOneLabelOut(object):
     """
     Leave-One-Label_Out cross-validation iterator:
@@ -368,7 +370,7 @@ class LeaveOneLabelOut(object):
         return self.n_labels
 
 
-################################################################################
+##############################################################################
 class LeavePLabelOut(object):
     """
     Leave-P-Label_Out cross-validation iterator:
