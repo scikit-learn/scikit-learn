@@ -1,4 +1,4 @@
-from joblib import Parallel, delayed
+from .externals.joblib import Parallel, delayed
 
 try:
     from itertools import product
