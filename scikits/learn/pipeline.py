@@ -43,7 +43,7 @@ class Pipeline(BaseEstimator):
         self.transformers = transformers
         self.estimator = estimator
 
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         Xt = X
         for transformer in self.transformers:
             Xt = transformer.fit(Xt, y).transform(Xt)
@@ -56,3 +56,9 @@ class Pipeline(BaseEstimator):
             Xt = transformer.transform(Xt)
         return self.estimator.predict(Xt)
         
+    def score(self, X, y=None):
+        Xt = X
+        for transformer in self.transformers:
+            Xt = transformer.fit(Xt, y).transform(Xt)
+        return self.estimator.score(Xt, y)
+ 
