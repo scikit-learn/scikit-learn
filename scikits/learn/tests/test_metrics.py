@@ -1,10 +1,13 @@
 import random
 import numpy as np
 from scikits.learn import svm, datasets
-from scikits.learn.metrics import roc, auc, precision_recall, confusion_matrix
+from scikits.learn.metrics import roc, auc, precision_recall, \
+            confusion_matrix, zero_one, explained_variance, \
+            mean_square_error
 
 from numpy.testing import assert_array_equal, \
-                          assert_array_almost_equal
+                          assert_array_almost_equal, \
+                          assert_equal, assert_almost_equal
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -43,3 +46,9 @@ def test_confusion_matrix():
     """test confusion matrix"""
     cm = confusion_matrix(y[half:], y_)
     assert_array_equal(cm, [[19, 6],[7, 18]])
+
+def test_losses():
+    """test loss functions"""
+    assert_equal(zero_one(y[half:], y_), 13)
+    assert_almost_equal(mean_square_error(y[half:], y_), 12.999, 2)
+    assert_almost_equal(explained_variance(y[half:], y_), -0.04, 2)

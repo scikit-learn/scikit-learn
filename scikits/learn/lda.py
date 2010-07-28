@@ -1,13 +1,11 @@
-# $Id$
-
 import exceptions, warnings
 
 import numpy as np
 import scipy.linalg as linalg
 
-from .base import BaseEstimator
+from .base import BaseEstimator, MixinClassifier
 
-class LDA(BaseEstimator):
+class LDA(BaseEstimator, MixinClassifier):
     """
     Linear Discriminant Analysis (LDA)
 
@@ -49,7 +47,7 @@ class LDA(BaseEstimator):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> Y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
-    >>> clf.fit(X, Y)    #doctest: +ELLIPSIS
+    >>> clf.fit(X, Y)
     LDA(priors=None,
         use_svd=True)
     >>> print clf.predict([[-0.8, -1]])

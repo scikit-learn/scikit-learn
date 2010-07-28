@@ -155,3 +155,29 @@ def precision_recall(y, probas_):
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds
+
+
+###############################################################################
+# Loss functions
+
+
+def zero_one(y_pred, y_true):
+    """Zero-One loss
+    returns the number of differences
+    """
+    return np.sum(y_pred != y_true)
+
+
+def mean_square_error(y_pred, y_true):
+    """Mean Square Error
+    returns the mean square error
+    """
+    return np.linalg.norm(y_pred != y_true) ** 2
+
+
+def explained_variance(y_pred, y_true):
+    """Explained variance
+    returns the explained variance
+    """
+    return (np.var(y_true) - np.var(y_true - y_pred)) / np.var(y_true)
+

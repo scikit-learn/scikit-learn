@@ -2,7 +2,10 @@ import numpy as np
 import _libsvm
 import _liblinear
 
-from .base import BaseEstimator
+from .base import BaseEstimator, MixinRegressor, MixinClassifier
+
+#
+# TODO: some cleanup: is nSV_ really needed ?
 
 class BaseLibsvm(BaseEstimator):
     """
@@ -208,7 +211,6 @@ class BaseLibsvm(BaseEstimator):
                       self.probA_, self.probB_)
 
 
-
     @property
     def coef_(self):
         if self.kernel != 'linear':
@@ -220,12 +222,12 @@ class BaseLibsvm(BaseEstimator):
 # Public API
 # No processing should go into these classes
 
-class SVC(BaseLibsvm):
+class SVC(BaseLibsvm, MixinClassifier):
     """
     Classification using Support Vector Machines.
 
-    This class implements the most common classification methods
-    (C-SVC, Nu-SVC) using support vector machines.
+    This class implements the most classification methods
+    C-SVC and Nu-SVC using support vector machines.
 
     Parameters
     ----------
@@ -290,6 +292,9 @@ class SVC(BaseLibsvm):
     predict_proba(X) : array
         Return probability estimates.
 
+    predict_margin(X) : array
+        Return distance to predicted margin.
+
     Examples
     --------
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
@@ -326,7 +331,7 @@ class SVC(BaseLibsvm):
 
 
 
-class SVR(BaseLibsvm):
+class SVR(BaseLibsvm, MixinRegressor):
     """
     Support Vector Regression.
 
@@ -475,7 +480,7 @@ class OneClassSVM(BaseLibsvm):
                          shrinking, probability)
 
 
-class LinearSVC(BaseEstimator):
+class LinearSVC(BaseEstimator, MixinClassifier):
     """
     Linear Support Vector Classification.
 

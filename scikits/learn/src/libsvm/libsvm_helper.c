@@ -150,7 +150,7 @@ struct svm_node **csr_to_sparse (double *values, npy_intp *n_indices,
 
     for (i=0; i<n_indptr[0]-1; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
-        sparse[i] = (struct svm_node *) malloc (n * sizeof(struct svm_node));
+        sparse[i] = (struct svm_node *) malloc ((n+1) * sizeof(struct svm_node));
         temp = sparse[i];
         for (j=0; j<n; ++j) {
             temp[j].value = values[k];
@@ -327,12 +327,11 @@ struct svm_model *csr_set_model(struct svm_parameter *param, int nr_class,
                             char *SV_data, npy_intp *SV_indices_dims,
                             char *SV_indices, npy_intp *SV_indptr_dims,
                             char *SV_intptr,
-                            npy_intp *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV, char *label,
                             char *probA, char *probB)
 {
     struct svm_model *model;
-    char *t = sv_coef;
+    double *dsv_coef = (double *) sv_coef;
     int i, m;
 
     m = nr_class * (nr_class-1)/2;
@@ -367,8 +366,8 @@ struct svm_model *csr_set_model(struct svm_parameter *param, int nr_class,
          * svm_destroy_model will free each element of the array.
          */
         model->sv_coef[i] = (double *) malloc((model->l) * sizeof(double));
-        memcpy(model->sv_coef[i], t, (model->l) * sizeof(double));
-        t += sv_coef_strides[0];
+        memcpy(model->sv_coef[i], dsv_coef, (model->l) * sizeof(double));
+        dsv_coef += model->l;
     }
 
     for (i=0; i<m; ++i) {
@@ -418,14 +417,13 @@ npy_intp get_nr(struct svm_model *model)
  * model->sv_coef is a double **, whereas data is just a double *,
  * so we have to do some stupid copying.
  */
-void copy_sv_coef(char *data, struct svm_model *model, npy_intp *strides)
+void copy_sv_coef(char *data, struct svm_model *model)
 {
     int i, len = model->nr_class-1;
-    char *temp = data;
-    npy_intp step = strides[0];
+    double *temp = (double *) data;
     for(i=0; i<len; ++i) {
-        memcpy(temp, model->sv_coef[i], step);
-        temp += step;
+        memcpy(temp, model->sv_coef[i], sizeof(double) * model->l);
+        temp += model->l;
     }
 }
 

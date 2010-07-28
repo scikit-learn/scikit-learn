@@ -10,7 +10,6 @@ from math import ceil
 import numpy as np
 
 from .utils.extmath import factorial, combinations
-from .grid_search import GridSearchCV
 
 ##############################################################################
 class LeaveOneOut(object):
@@ -222,6 +221,8 @@ class StratifiedKFold(object):
     
     """
 
+    # XXX: Should maybe have an argument to raise when 
+    # folds are not balanced
     def __init__(self, y, k):
         """
         K-Folds cross validation iterator:
@@ -446,7 +447,58 @@ class LeavePLabelOut(object):
         return factorial(self.n_labels) / factorial(self.n_labels - self.p) \
                / factorial(self.p)
 
+    
+##############################################################################
+def _default_score_func(estimator, X, y=None):
+    return estimator.score(X, y)
 
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None):
+    """ Evaluate a score by cross-validation.
+
+        Parameters
+        ===========
+        estimator: estimator object implementing 'fit'
+            The object to use to fit the data
+        X: array-like of shape at least 2D
+            The data to fit.
+        y: array-like, optional
+            The target variable to try to predict in the case of
+            supervised learning.
+        score_func: callable, optional
+            callable taking as arguments the fitted estimator, the
+            test data (X_test) and the test target (y_test) if y is
+            not None.
+        cv: cross-validation generator, optional
+            A cross-validation generator. If None, a 3-fold cross
+            validation is used or 3-fold stratified cross-validation
+            when y is supplied.
+    """
+    # XXX: should have a n_jobs to be able to do this in parallel.
+    n_samples = len(X)
+    if cv is None:
+        if y is None:
+            cv = KFold(n_samples, k=3)
+        else:
+            cv = StratifiedKFold(y, k=3)
+    if score_func is None:
+        assert hasattr(estimator, 'score'), ValueError(
+                "If no score_func is specified, the estimator passed "
+                "should have a 'score' method. The estimator %s "
+                "does not." % estimator
+                )
+        score_func = _default_score_func
+    scores = list()
+    for train, test in cv:
+        if y is not None:
+            y_train = y[train]
+            y_test  = y[test]
+        else:
+            y_train = y_test = None
+        X_train = X[train]
+        X_test  = X[test]
+        estimator.fit(X_train, y_train)
+        scores.append(score_func(estimator, X_test, y_test))
+    return np.array(scores)
 
 def split(train_indices, test_indices, *args):
     """

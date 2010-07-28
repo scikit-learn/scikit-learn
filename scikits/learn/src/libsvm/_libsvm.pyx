@@ -68,10 +68,9 @@ cdef extern from "libsvm_helper.c":
                             char *SV_data, np.npy_intp *SV_indices_dims,
                             char *SV_indices, np.npy_intp *SV_intptr_dims,
                             char *SV_intptr,
-                            np.npy_intp *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV, char *label,
                             char *probA, char *probB)
-    void copy_sv_coef   (char *, svm_model *, np.npy_intp *)
+    void copy_sv_coef   (char *, svm_model *)
     void copy_intercept (char *, svm_model *, np.npy_intp *)
     void copy_SV        (char *, svm_model *, np.npy_intp *)
     int copy_predict (char *, svm_model *, np.npy_intp *, char *)
@@ -171,7 +170,7 @@ def train_wrap (  np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     # we create a new array instead of resizing, otherwise
     # it would not erase previous information
     sv_coef.resize ((nr-1, SV_len), refcheck=False)
-    copy_sv_coef (sv_coef.data, model, sv_coef.strides)
+    copy_sv_coef (sv_coef.data, model)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
@@ -223,7 +222,7 @@ def csr_train_wrap ( int n_features,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] SV_data,
                      np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indices,
                      np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indptr,            
-                     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+                     np.ndarray[np.float64_t, ndim=1, mode='c'] sv_coef_data,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
                      np.ndarray[np.int32_t,   ndim=1, mode='c'] weight_label,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
@@ -286,8 +285,8 @@ def csr_train_wrap ( int n_features,
     # copy model.sv_coef
     # we create a new array instead of resizing, otherwise
     # it would not erase previous information
-    sv_coef.resize ((nr-1, SV_len), refcheck=False)
-    copy_sv_coef (sv_coef.data, model, sv_coef.strides)
+    sv_coef_data.resize ((nr-1)*SV_len, refcheck=False)
+    copy_sv_coef (sv_coef_data.data, model)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
@@ -403,7 +402,7 @@ def csr_predict_from_model_wrap(np.ndarray[np.float64_t, ndim=1, mode='c'] T_dat
                             np.ndarray[np.float64_t, ndim=1, mode='c'] SV_data,
                             np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indices,
                             np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indptr,
-                            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+                            np.ndarray[np.float64_t, ndim=1, mode='c'] sv_coef,
                             np.ndarray[np.float64_t, ndim=1, mode='c']
                             intercept, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
@@ -451,7 +450,7 @@ def csr_predict_from_model_wrap(np.ndarray[np.float64_t, ndim=1, mode='c'] T_dat
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,
                           SV_indptr.shape, SV_indptr.data,
-                          sv_coef.strides, sv_coef.data, intercept.data,
+                          sv_coef.data, intercept.data,
                           nSV.data, label.data, probA.data, probB.data)
     #TODO: use check_model
     dec_values = np.empty(T_indptr.shape[0]-1)
