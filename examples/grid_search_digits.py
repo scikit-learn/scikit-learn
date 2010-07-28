@@ -29,8 +29,8 @@ y = digits.target
 
 ################################################################################
 # Set the parameters by cross-validation
-tuned_parameters = {'kernel':('rbf', 'linear'), 
-                    'gamma':[1e-3, 1e-4]}
+tuned_parameters = [{'kernel':('rbf', ), 'gamma':[1e-3, 1e-4]},
+                    {'kernel':('linear', )}]
 
 clf = GridSearchCV(SVC(C=1), tuned_parameters, zero_one, n_jobs=2)
 
