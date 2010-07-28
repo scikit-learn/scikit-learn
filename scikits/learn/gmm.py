@@ -6,7 +6,6 @@
 #
 
 import itertools
-import time
 
 import numpy as np
 from scipy import cluster
@@ -177,9 +176,10 @@ class GMM(object):
 
     Examples
     --------
+    >>> import numpy as np
     >>> gmm = GMM(2, ndim=1)
-    >>> obs = numpy.concatenate((numpy.random.randn(100, 1),
-    ...                          10 + numpy.random.randn(300, 1)))
+    >>> obs = np.concatenate((np.random.randn(100, 1),
+    ...                          10 + np.random.randn(300, 1)))
     >>> gmm.fit(obs)
     >>> gmm.weights, gmm.means, gmm.covars
     (array([ 0.25,  0.75]),
