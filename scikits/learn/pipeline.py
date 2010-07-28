@@ -12,19 +12,20 @@ class Pipeline(BaseEstimator):
     
     >>> from scikits.learn import svm, datasets
     >>> from scikits.learn.datasets import samples_generator
-    >>> from scikits.learn.feature_selection.univariate_selection import UnivariateFilter,SelectKBest,f_regression
+    >>> from scikits.learn.feature_selection import SelectKBest, f_regression
     >>> from scikits.learn.pipeline import Pipeline
 
-    >>> # import some data to play with
-    >>> X,y = samples_generator.test_dataset_classif(k=5)
+    >>> # generate some data to play with
+    >>> X, y = samples_generator.test_dataset_classif(k=5)
 
     >>> # ANOVA SVM-C
-    >>> anova_filter = UnivariateFilter(SelectKBest(k=5), f_regression)
+    >>> anova_filter = SelectKBest(f_regression, k=5)
     >>> clf = svm.SVC(kernel='linear')
     
-    >>> anova_svm = Pipeline([anova_filter],clf)
-    >>> anova_svm.fit(X,y)
-    >>> anova_svm.predict(X)
+    >>> anova_svm = Pipeline([anova_filter], clf)
+    >>> _ = anova_svm.fit(X,y)
+    
+    >>> prediction = anova_svm.predict(X)
     """
     def __init__(self, transformers=[], estimator=None):
         """
