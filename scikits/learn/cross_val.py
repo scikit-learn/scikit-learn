@@ -10,7 +10,6 @@ from math import ceil
 import numpy as np
 
 from .utils.extmath import factorial, combinations
-from .grid_search import GridSearchCV
 
 ##############################################################################
 class LeaveOneOut(object):

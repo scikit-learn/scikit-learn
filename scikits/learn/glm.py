@@ -20,7 +20,7 @@ from . import cd_fast
 from .utils.extmath import fast_logdet
 from .cross_val import KFold
 from ._minilearn import lars_fit_wrap
-from .base import BaseEstimator
+from .base import BaseRegressor
 
 ###
 ### TODO: intercept for all models
@@ -31,7 +31,7 @@ from .base import BaseEstimator
 ### should be squashed into its respective objects.
 ###
 
-class LinearModel(BaseEstimator):
+class LinearModel(BaseRegressor):
     """Base class for Linear Models"""
 
     def predict(self, X):

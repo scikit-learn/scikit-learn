@@ -3,9 +3,9 @@ import exceptions, warnings
 import numpy as np
 import scipy.linalg as linalg
 
-from .base import BaseEstimator
+from .base import BaseClassifier
 
-class LDA(BaseEstimator):
+class LDA(BaseClassifier):
     """
     Linear Discriminant Analysis (LDA)
 

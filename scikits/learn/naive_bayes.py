@@ -2,9 +2,9 @@
 # License: BSD Style.
 import numpy as np
 
-from .base import BaseEstimator
+from .base import BaseClassifier
 
-class GNB(BaseEstimator):
+class GNB(BaseClassifier):
     """
     Gaussian Naive Bayes (GNB)
 
