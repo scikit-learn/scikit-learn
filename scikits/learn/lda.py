@@ -1,5 +1,3 @@
-# $Id$
-
 import exceptions, warnings
 
 import numpy as np
