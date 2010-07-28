@@ -50,9 +50,9 @@ from scikits.learn.feature_selection import univariate_selection as us
 # We use the default selection function: the 10% most significant
 # features
 
-selector = us.UnivariateFilter(us.SelectFpr(alpha=0.1),us.f_classif)
+selector = us.SelectFpr(us.f_classif, alpha=0.1)
 selector.fit(x, y)
-scores = -np.log(selector._scores[1])
+scores = -np.log(selector._scores)
 scores /= scores.max()
 pl.bar(x_indices-.45, scores, width=.3, 
         label=r'Univariate score ($-\log(p\,values)$)', 
