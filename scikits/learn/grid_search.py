@@ -107,13 +107,20 @@ class GridSearchCV(object):
     >>> print clf.fit(X, y).predict([[-0.8, -1]])
     [ 1.]
     """
-    
+
     def __init__(self, estimator, param_grid, loss_func=None,
                         fit_params={}, n_jobs=1):
         assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
             "estimator should a be an estimator implementing 'fit' and "
             "'predict' methods, %s (type %s) was passed" % (clf, type(clf))
             )
+        if loss_func is None:
+            assert hasattr(estimator, 'score'), ValueError(
+                    "If no loss_func is specified, the estimator passed "
+                    "should have a 'score' method. The estimator %s "
+                    "does not." % estimator
+                    )
+
         self.estimator = estimator
         self.param_grid = param_grid
         self.loss_func = loss_func
