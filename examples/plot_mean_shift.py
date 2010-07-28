@@ -57,3 +57,4 @@ for k, col in zip(range(n_clusters_), colors):
     pl.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
                                     markeredgecolor='k', markersize=14)
 pl.title('Estimated number of clusters: %d' % n_clusters_)
+pl.show()
