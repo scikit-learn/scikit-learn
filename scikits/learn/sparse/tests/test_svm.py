@@ -53,5 +53,5 @@ def test_SVC_iris():
     assert_array_equal (clf.support_, sp_clf.support_.todense())
     assert_array_equal (clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_equal (clf.coef_, sp_clf.coef_.todense())
-#    assert_array_equal (clf.predict(iris.data), sp_clf.predict(iris.data))
+    assert_array_equal (clf.predict(iris.data), sp_clf.predict(iris.data))
     

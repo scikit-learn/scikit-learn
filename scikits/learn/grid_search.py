@@ -14,7 +14,7 @@ except:
             yield tuple(prod)
 
 
-def iter_grid(**kwargs):
+def iter_grid(param_grid):
     """ Generators on the combination of the various parameter lists given.
 
         Parameters
@@ -31,14 +31,17 @@ def iter_grid(**kwargs):
 
         Examples
         ---------
-        >>> list(iter_grid(a=[1, 2], b=[True, False]))
+        >>> param_grid = {'a':[1, 2], 'b':[True, False]}
+        >>> list(iter_grid(param_grid))
         [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
     """
-    keys = kwargs.keys()
-    for v in product(*kwargs.values()):
-        params = dict(zip(keys,v))
-        yield params
-
+    if hasattr(param_grid, 'has_key'):
+        param_grid = [param_grid]
+    for p in param_grid:
+        keys = p.keys()
+        for v in product(*p.values()):
+            params = dict(zip(keys,v))
+            yield params
 
 def fit_grid_point(X, y, klass, orignal_params, clf_params, cv,
                                         loss_func, **fit_params):
@@ -133,7 +136,7 @@ class GridSearchCV(object):
             from scikits.learn.cross_val import KFold
             cv = KFold(n_samples, 2)
 
-        grid = iter_grid(**self.param_grid)
+        grid = iter_grid(self.param_grid)
         klass = self.estimator.__class__
         orignal_params = self.estimator._get_params()
         out = Parallel(n_jobs=self.n_jobs)(
@@ -154,6 +157,8 @@ class GridSearchCV(object):
 if __name__ == '__main__':
     from scikits.learn.svm import SVC
     from scikits.learn import datasets
+    from scikits.learn.metrics import zero_one
+
     iris = datasets.load_iris()
 
     # Add the noisy data to the informative features
@@ -161,7 +166,5 @@ if __name__ == '__main__':
     y = iris.target
 
     svc = SVC(kernel='linear')
-    def loss_func(y1, y2):
-        return np.mean(y1 != y2)
-    clf = GridSearchCV(svc, {'C':[1, 10]}, loss_func, n_jobs=2)
+    clf = GridSearchCV(svc, {'C':[1, 10]}, zero_one, n_jobs=2)
     print clf.fit(X, y).predict([[-0.8, -1]])

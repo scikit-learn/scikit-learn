@@ -15,6 +15,7 @@ import numpy as np
 from scikits.learn.svm import SVC
 from scikits.learn.cross_val import StratifiedKFold, GridSearchCV
 from scikits.learn import datasets
+from scikits.learn.metrics import zero_one
 
 ################################################################################
 # Loading the Digits dataset
@@ -28,13 +29,10 @@ y = digits.target
 
 ################################################################################
 # Set the parameters by cross-validation
-tuned_parameters = {'kernel':('rbf', 'linear'), 
-                    'gamma':[1e-3, 1e-4]}
+tuned_parameters = [{'kernel':('rbf', ), 'gamma':[1e-3, 1e-4]},
+                    {'kernel':('linear', )}]
 
-def loss_func(y1, y2):
-    return np.mean(y1 != y2)
-
-clf = GridSearchCV(SVC(C=1), tuned_parameters, loss_func, n_jobs=2)
+clf = GridSearchCV(SVC(C=1), tuned_parameters, zero_one, n_jobs=2)
 
 y_pred = []
 y_true = []

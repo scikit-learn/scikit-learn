@@ -102,9 +102,7 @@ class SparseBaseLibsvm(BaseEstimator):
                                      n_classes)
         dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1, 
                                      dual_coef_indices.size / n_classes)
-        print dual_coef_indices
-        print dual_coef_indptr
-        print self._dual_coef_data
+
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
                                              dual_coef_indptr))
