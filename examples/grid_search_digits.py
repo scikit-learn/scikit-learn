@@ -13,7 +13,8 @@ to select the best classifier).
 
 import numpy as np
 from scikits.learn.svm import SVC
-from scikits.learn.cross_val import StratifiedKFold, GridSearchCV
+from scikits.learn.cross_val import StratifiedKFold
+from scikits.learn.grid_search import GridSearchCV
 from scikits.learn import datasets
 from scikits.learn.metrics import zero_one
 
@@ -32,7 +33,7 @@ y = digits.target
 tuned_parameters = [{'kernel':('rbf', ), 'gamma':[1e-3, 1e-4]},
                     {'kernel':('linear', )}]
 
-clf = GridSearchCV(SVC(C=1), tuned_parameters, zero_one, n_jobs=2)
+clf = GridSearchCV(SVC(C=1), tuned_parameters, n_jobs=2)
 
 y_pred = []
 y_true = []

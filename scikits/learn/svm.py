@@ -2,7 +2,7 @@ import numpy as np
 import _libsvm
 import _liblinear
 
-from .base import BaseEstimator
+from .base import BaseEstimator, MixinRegressor, MixinClassifier
 
 #
 # TODO: some cleanup: is nSV_ really needed ?
@@ -222,7 +222,7 @@ class BaseLibsvm(BaseEstimator):
 # Public API
 # No processing should go into these classes
 
-class SVC(BaseLibsvm):
+class SVC(BaseLibsvm, MixinClassifier):
     """
     Classification using Support Vector Machines.
 
@@ -331,7 +331,7 @@ class SVC(BaseLibsvm):
 
 
 
-class SVR(BaseLibsvm):
+class SVR(BaseLibsvm, MixinRegressor):
     """
     Support Vector Regression.
 
@@ -480,7 +480,7 @@ class OneClassSVM(BaseLibsvm):
                          shrinking, probability)
 
 
-class LinearSVC(BaseEstimator):
+class LinearSVC(BaseEstimator, MixinClassifier):
     """
     Linear Support Vector Classification.
 

@@ -9,6 +9,7 @@ import inspect
 
 import numpy as np
 
+from scikits.learn.metrics import zero_one, mean_square_error
 
 ################################################################################
 class BaseEstimator(object):
@@ -68,3 +69,18 @@ class BaseEstimator(object):
                 params_str
             )
 
+
+class MixinClassifier(object):
+    """ Mixin class for all classifiers in the scikit learn
+    """
+
+    def score(self, X, y):
+        return - zero_one(self.predict(X), y)
+
+class MixinRegressor(object):
+    """ Mixin class for all regression estimators in the scikit learn
+    """
+
+    def score(self, X, y):
+        return - mean_square_error(self.predict(X), y)
+    
