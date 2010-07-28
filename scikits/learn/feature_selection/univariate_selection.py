@@ -8,135 +8,7 @@ Univariate features selection.
 import numpy as np
 from scipy import stats
 
-
-######################################################################
-# General class for filter univariate selection
-######################################################################
-
-class UnivariateFilter(object):
-    """
-    General class for filter univariate selection.
-   
-    Parameters
-    ====================
-    score_func : scoring function. Takes two arrays X and y, and returning two
-                 arrays (scores and pvalues) of size X.shape[1].
-    ranking : ranking function. Heuristic for selecting the features based on
-              both the pvalues or the scores.
-
-    Example
-    =====================
-    >>> import scikits.learn.datasets.samples_generator as sg
-    >>> X,y = sg.sparse_uncorrelated(50,100)
-    >>> univ_filter = UnivariateFilter(SelectKBest(k=5),f_regression)
-    >>> X_r = univ_filter.fit(X, y).transform(X)
-
-    """
-
-  
-    def __init__(self,ranking,score_func):
-
-        assert callable(score_func), ValueError(
-                "The score function should be a callable, '%s' (type %s) "
-                "was passed." % (score_func, type(score_func))
-            )
-        self.score_func = score_func
-        self.ranking = ranking
-
-    def fit(self,X,y):
-        """
-        Evaluate the function
-        """
-        self._scores = self.score_func(X, y)
-        #self._scores = _scores[0]
-        #self._pvalues = _scores[1]
-        #self._rank = np.argsort(self._pvalues)
-        return self
-
-    def transform(self,X,**kwargs):
-        """
-        Transform a new matrix using the selected features
-        """
-        self.support = self.ranking.support(self._scores,**kwargs)
-        return X[:,self.support]
-
-
-
-
-
-######################################################################
-# Specific rankings
-######################################################################
-
-class SelectPercentile(object):
-    """
-    Filter : Select the best percentile of the p_values
-    """
-    def __init__(self,percentile):
-        self.percentile = percentile
-
-    def support(self,scores,percentile=None):
-        if percentile is not None:
-                self.percentile = percentile 
-        assert self.percentile<=100, ValueError('percentile should be \
-                            between 0 and 100 (%f given)' %(self.percentile))
-        alpha = stats.scoreatpercentile(scores[1], self.percentile)
-        return (scores[1] <= alpha)
-
-class SelectKBest(object):
-    """
-    Filter : Select the k lowest p-values
-    """
-    def __init__(self,k):
-        self.k = k
-
-    def support(self,scores,k=None):
-          if k is not None:
-                self.k=k
-          assert self.k<=len(scores[1]), ValueError('cannot select %d features'
-                                  ' among %d ' % (self.k, len(scores[1])))
-          alpha = np.sort(scores[1])[self.k-1]
-          return (scores[1] <= alpha)
-
-class SelectFpr(object):
-    """
-    Filter : Select the pvalues below alpha
-    """
-    def __init__(self,alpha):
-        self.alpha = alpha
-
-    def support(self,scores,alpha = None):
-        if alpha is not None:
-              self.alpha=alpha
-        return (scores[1] < self.alpha)
-
-class SelectFdr(object):
-    """
-    Filter : Select the p-values corresponding to an estimated false
-    discovery rate of alpha. This uses the Benjamini-Hochberg procedure
-    """
-    def __init__(self,alpha):
-        self.alpha = alpha
-
-    def support(self,scores, alpha = None):
-        if alpha is not None:
-              self.alpha=alpha
-        sv = np.sort(scores[1])
-        threshold = sv[sv < self.alpha*np.arange(len(scores[1]))].max()
-        return (scores[1] < threshold)
-
-class SelectFwe(object):
-    """
-    Filter : Select the p-values corresponding to a corrected p-value of alpha
-    """
-    def __init__(self,alpha):
-        self.alpha = alpha
-
-    def support(self,scores,alpha = None):
-        if alpha is not None:
-              self.alpha=alpha
-        return (scores[1] < self.alpha/len(scores[1]))
-
+from ..base import BaseEstimator
 
 ######################################################################
 # Scoring functions
@@ -163,6 +35,7 @@ def f_classif(X, y):
     X = np.asanyarray(X)
     args = [X[y==k] for k in np.unique(y)]
     return stats.f_oneway(*args)
+
 
 def f_regression(X, y, center=True):
     """
@@ -211,34 +84,227 @@ def f_regression(X, y, center=True):
     return F, pv
 
 
+######################################################################
+# General class for filter univariate selection
+######################################################################
 
 
+class _AbstractUnivariateFilter(BaseEstimator):
+    """ Abstract class, not meant to be used directly
+    """
+
+    def __init__(self, score_func):
+        """ Initialize the univariate feature selection.
+
+        Parameters
+        ===========
+        score_func: callable
+            function taking two arrays X and y, and returning 2 arrays:
+            both scores and pvalues
+        """
+        assert callable(score_func), ValueError(
+                "The score function should be a callable, '%s' (type %s) "
+                "was passed." % (score_func, type(score_func))
+            )
+        self.score_func = score_func
 
 
-if __name__ == "__main__":
-    import scikits.learn.datasets.samples_generator as sg
-    from scikits.learn.svm import SVR, SVC
-
-    X,y = sg.sparse_uncorrelated(50,100)
-    univ_filter = UnivariateFilter(SelectKBest(k=5),f_regression)
-    X_r_5 = univ_filter.fit(X, y).transform(X)
-    X_r_10 = univ_filter.transform(X,k=10)
-    univ_filter.ranking.k = 20
-    #univ_filter.selector.k = 20
-    X_r_20 = univ_filter.fit(X, y).transform(X)
-    univ_filter.ranking = SelectPercentile(percentile = 50)
-    X_r_50 = univ_filter.fit(X, y).transform(X)
+    def fit(self, X, y):
+        """
+        Evaluate the function
+        """
+        _scores = self.score_func(X, y)
+        self._scores = _scores[0]
+        self._pvalues = _scores[1]
+        return self
 
 
-    
-    univ_filter = UnivariateFilter(SelectKBest(k=5),f_regression)
-    X_r = univ_filter.fit(X, y).transform(X)
-    print "Support :", univ_filter.support
-    clf = SVR(kernel='linear', C=1.)
-    y_ = clf.fit(X_r, y).predict(X_r)
-    ### now change k
-    X_r = univ_filter.transform(X, k=2)
-    y_ = clf.fit(X_r, y).predict(X)
-    print "Support :", univ_filter.support
+    def transform(self, X, **params):
+        """
+        Transform a new matrix using the selected features
+        """
+        self._set_params(**params)
+        return X[:, self.get_support()]
+
+
+######################################################################
+# Specific filters
+######################################################################
+
+class SelectPercentile(_AbstractUnivariateFilter):
+    """
+    Filter : Select the best percentile of the p_values
+    """
+
+    def __init__(self, score_func, percentile=10):
+        """ Initialize the univariate feature selection.
+
+        Parameters
+        ===========
+        score_func: callable
+            function taking two arrays X and y, and returning 2 arrays:
+            both scores and pvalues
+        percentile: int, optional
+            percent of features to keep
+        """
+        self.percentile = percentile
+        _AbstractUnivariateFilter.__init__(self, score_func)
+
+    def get_support(self):
+        percentile = self.percentile
+        assert percentile<=100, ValueError('percentile should be \
+                            between 0 and 100 (%f given)' %(percentile))
+        alpha = stats.scoreatpercentile(self._pvalues, percentile)
+        return (self._pvalues <= alpha)
+
+
+class SelectKBest(_AbstractUnivariateFilter):
+    """
+    Filter : Select the k lowest p-values
+    """
+    def __init__(self, score_func, k=10):
+        """ Initialize the univariate feature selection.
+
+        Parameters
+        ===========
+        score_func: callable
+            function taking two arrays X and y, and returning 2 arrays:
+            both scores and pvalues
+        percentile: int, optional
+            percent of features to keep
+        """
+        self.k = k
+        _AbstractUnivariateFilter.__init__(self, score_func)
+
+    def get_support(self):
+        k = self.k
+        assert k<=len(self._pvalues), ValueError('cannot select %d features'
+                                    ' among %d ' % (k, len(self._pvalues)))
+        alpha = np.sort(self._pvalues)[k-1]
+        return (self._pvalues <= alpha)
+
+
+class SelectFpr(_AbstractUnivariateFilter):
+    """
+    Filter : Select the pvalues below alpha
+    """
+    def __init__(self, score_func, alpha=5e-2):
+        """ Initialize the univariate feature selection.
+
+        Parameters
+        ===========
+        score_func: callable
+            function taking two arrays X and y, and returning 2 arrays:
+            both scores and pvalues
+        alpha: float, optional
+            the highest p-value for features to keep
+        """
+        self.alpha = alpha
+        _AbstractUnivariateFilter.__init__(self, score_func)
+
+    def get_support(self):
+        alpha = self.alpha
+        return (self._pvalues < alpha)
+
+
+class SelectFdr(_AbstractUnivariateFilter):
+    """
+    Filter : Select the p-values corresponding to an estimated false
+    discovery rate of alpha. This uses the Benjamini-Hochberg procedure
+    """
+    def __init__(self, score_func, alpha=5e-2):
+        """ Initialize the univariate feature selection.
+
+        Parameters
+        ===========
+        score_func: callable
+            function taking two arrays X and y, and returning 2 arrays:
+            both scores and pvalues
+        alpha: float, optional
+            the highest uncorrected p-value for features to keep
+        """
+        self.alpha = alpha
+        _AbstractUnivariateFilter.__init__(self, score_func)
+
+    def get_support(self):
+        alpha = self.alpha
+        sv = np.sort(self._pvalues)
+        threshold = sv[sv < alpha*np.arange(len(self._pvalues))].max()
+        return (self._pvalues < threshold)
+
+
+class SelectFwe(_AbstractUnivariateFilter):
+    """
+    Filter : Select the p-values corresponding to a corrected p-value of alpha
+    """
+    def __init__(self, score_func, alpha=5e-2):
+        """ Initialize the univariate feature selection.
+
+        Parameters
+        ===========
+        score_func: callable
+            function taking two arrays X and y, and returning 2 arrays:
+            both scores and pvalues
+        alpha: float, optional
+            the highest uncorrected p-value for features to keep
+        """
+        self.alpha = alpha
+        _AbstractUnivariateFilter.__init__(self, score_func)
+
+    def get_support(self):
+        alpha = self.alpha
+        return (self._pvalues < alpha/len(self._pvalues))
+
+
+######################################################################
+# Generic filter
+######################################################################
+
+class GenericUnivariateSelect(_AbstractUnivariateFilter):
+    _selection_modes = {'percentile':   SelectPercentile,
+                        'k_best':       SelectKBest,
+                        'fpr':          SelectFpr,
+                        'fdr':          SelectFdr,
+                        'fwe':          SelectFwe,
+                        }
+
+    def __init__(self, score_func, mode='percentile', param=1e-5):
+        """ Initialize the univariate feature selection.
+
+        Parameters
+        ===========
+        score_func: callable
+            Function taking two arrays X and y, and returning 2 arrays:
+            both scores and pvalues
+        mode: {%s}
+            Feature selection mode
+        param: float or int depending on the feature selection mode
+            Parameter of the corresponding mode
+        """ % self._selection_modes.keys()
+        assert callable(score_func), ValueError(
+                "The score function should be a callable, '%s' (type %s) "
+                "was passed." % (score_func, type(score_func))
+            )
+        assert mode in self._selection_modes, ValueError(
+                "The mode passed should be one of %s, '%s', (type %s) "
+                "was passed." % (
+                        self._selection_modes.keys(),
+                        mode, type(mode)))
+        self.score_func = score_func
+        self.mode = mode
+        self.param = param
+
+
+    def get_support(self):
+        selector = self._selection_modes[self.mode](lambda x:x)
+        selector._pvalues = self._pvalues
+        selector._scores  = self._scores
+        # Now make some acrobaties to set the right named parameter in
+        # the selector
+        possible_params = selector._get_param_names()
+        possible_params.remove('score_func')
+        selector._set_params(**{possible_params[0]: self.param})
+        return selector.get_support()
+
 
 
