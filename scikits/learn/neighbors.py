@@ -7,10 +7,10 @@ neighbor searches in high dimensionality.
 import numpy as np
 from scipy import stats
 
-from .base import BaseEstimator, MixinClassifier
+from .base import BaseEstimator, ClassifierMixin
 from .ball_tree import BallTree
 
-class Neighbors(BaseEstimator, MixinClassifier):
+class Neighbors(BaseEstimator, ClassifierMixin):
   """
   Classifier implementing k-Nearest Neighbor Algorithm.
 

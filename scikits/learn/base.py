@@ -70,14 +70,17 @@ class BaseEstimator(object):
             )
 
 
-class MixinClassifier(object):
+################################################################################
+class ClassifierMixin(object):
     """ Mixin class for all classifiers in the scikit learn
     """
 
     def score(self, X, y):
         return - zero_one(self.predict(X), y)
 
-class MixinRegressor(object):
+
+################################################################################
+class RegressorMixin(object):
     """ Mixin class for all regression estimators in the scikit learn
     """
 
