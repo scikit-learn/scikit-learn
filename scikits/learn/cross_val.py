@@ -9,6 +9,7 @@ Utilities for cross validation.
 from math import ceil
 import numpy as np
 
+from .base import ClassifierMixin
 from .utils.extmath import factorial, combinations
 
 ##############################################################################
@@ -476,10 +477,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None):
     # XXX: should have a n_jobs to be able to do this in parallel.
     n_samples = len(X)
     if cv is None:
-        if y is None:
-            cv = KFold(n_samples, k=3)
-        else:
+        if y is not None and isinstance(estimator, ClassifierMixin):
             cv = StratifiedKFold(y, k=3)
+        else:
+            cv = KFold(n_samples, k=3)
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
@@ -500,6 +501,9 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None):
         scores.append(score_func(estimator, X_test, y_test))
     return np.array(scores)
 
+
+################################################################################
+# Depreciated
 def split(train_indices, test_indices, *args):
     """
     For each arg return a train and test subsets defined by indexes provided
