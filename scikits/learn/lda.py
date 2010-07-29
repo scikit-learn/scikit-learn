@@ -14,7 +14,7 @@ class LDA(BaseEstimator, ClassifierMixin):
     X : array-like, shape = [nsamples, nfeatures]
         Training vector, where nsamples in the number of samples and
         nfeatures is the number of features.
-    Y : array, shape = [nsamples]
+    y : array, shape = [nsamples]
         Target vector relative to X
 
     priors : array, optional, shape = [n_classes]
@@ -45,9 +45,9 @@ class LDA(BaseEstimator, ClassifierMixin):
     Examples
     --------
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> Y = np.array([1, 1, 1, 2, 2, 2])
+    >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     LDA(priors=None,
         use_svd=True)
     >>> print clf.predict([[-0.8, -1]])
@@ -75,7 +75,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         X : array-like, shape = [nsamples, nfeatures]
             Training vector, where nsamples in the number of samples and
             nfeatures is the number of features.
-        Y : array, shape = [nsamples]
+        y : array, shape = [nsamples]
             Target values (integers)
         store_covariance : boolean
             If True the covariance matrix (shared by all classes) is computed
@@ -91,7 +91,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         classes = np.unique(y)
         n_classes = classes.size
         if n_classes < 2:
-            raise exceptions.ValueError('Y has less than 2 classes')
+            raise exceptions.ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
             counts = np.array([float(np.sum(group_indices)) \
