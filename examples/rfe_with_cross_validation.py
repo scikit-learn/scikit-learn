@@ -29,4 +29,5 @@ print 'Optimal number of features : %d' % rfecv.support_.sum()
 import pylab as pl
 pl.figure()
 pl.plot(rfecv.cv_scores_)
+pl.show()
 

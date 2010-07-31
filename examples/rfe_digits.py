@@ -36,4 +36,5 @@ import pylab as pl
 pl.matshow(image_ranking_)
 pl.colorbar()
 pl.title('Ranking of voxels with RFE')
+pl.show()
 
