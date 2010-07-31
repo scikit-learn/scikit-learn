@@ -64,7 +64,7 @@ class SparseBaseLibsvm(BaseEstimator):
 
     def fit(self, X, Y, class_weight={}):
         """
-        X is expected to be a sparse matrix. For maximum effiency, use a 
+        X is expected to be a sparse matrix. For maximum effiency, use a
         sparse matrix in csr format (scipy.sparse.csr_matrix)
         """
 
@@ -75,16 +75,16 @@ class SparseBaseLibsvm(BaseEstimator):
         solver_type = self._svm_types.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
 
-        self.weight       = np.asarray(class_weight.values(), 
+        self.weight       = np.asarray(class_weight.values(),
                                       dtype=np.float64, order='C')
-        self.weight_label = np.asarray(class_weight.keys(), 
+        self.weight_label = np.asarray(class_weight.keys(),
                                        dtype=np.int32, order='C')
 
         self.label_, self.probA_, self.probB_ = _libsvm.csr_train_wrap(
                  X.shape[1], X.data, X.indices, X.indptr, Y,
                  solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
-                 self._support_data, self._support_indices, 
+                 self._support_data, self._support_indices,
                  self._support_indptr, self._dual_coef_data,
                  self.intercept_, self.weight_label, self.weight,
                  self.nSV_, self.nu, self.cache_size, self.p,
@@ -92,7 +92,7 @@ class SparseBaseLibsvm(BaseEstimator):
                  int(self.probability))
 
         # TODO: explicitly specify size
-        self.support_ = sparse.csr_matrix((self._support_data, 
+        self.support_ = sparse.csr_matrix((self._support_data,
                                            self._support_indices,
                                            self._support_indptr))
 
@@ -100,7 +100,7 @@ class SparseBaseLibsvm(BaseEstimator):
         n_classes = len(self.label_) - 1
         dual_coef_indices =  np.tile(np.arange(self.support_.shape[0]),
                                      n_classes)
-        dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1, 
+        dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1,
                                      dual_coef_indices.size / n_classes)
 
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
@@ -132,7 +132,7 @@ class SparseBaseLibsvm(BaseEstimator):
         T = sparse.csr_matrix(T)
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
-        return _libsvm.csr_predict_from_model_wrap(T.data, 
+        return _libsvm.csr_predict_from_model_wrap(T.data,
                       T.indices, T.indptr, self.support_.data,
                       self.support_.indices, self.support_.indptr,
                       self.dual_coef_.data, self.intercept_,
@@ -152,16 +152,15 @@ class SparseBaseLibsvm(BaseEstimator):
         return np.dot(self.dual_coef_, self.support_)
 
 class SVC(SparseBaseLibsvm):
-    """
-    SVC for sparse matrices (csr)
-    
+    """SVC for sparse matrices (csr)
+
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
 
     """
     def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0,cache_size=100.0, eps=1e-3, C=1.0,nu=0.5, p=0.1,
+                 coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
                  shrinking=True, probability=False):
 
         SparseBaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
