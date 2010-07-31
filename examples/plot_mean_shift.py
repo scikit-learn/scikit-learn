@@ -58,4 +58,3 @@ for k, col in zip(range(n_clusters_), colors):
                                     markeredgecolor='k', markersize=14)
 pl.title('Estimated number of clusters: %d' % n_clusters_)
 pl.show()
-
