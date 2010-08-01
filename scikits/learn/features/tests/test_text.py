@@ -41,7 +41,7 @@ def test_simple_analyzer():
     assert_equal(sa.analyze(text), expected)
 
 
-def test_tf_idf():
+def test_dense_tf_idf():
     hv = HashingVectorizer(dim=1000, probes=3)
 
     # junk food documents
