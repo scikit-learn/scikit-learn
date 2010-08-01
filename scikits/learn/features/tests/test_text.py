@@ -80,13 +80,13 @@ def test_dense_tf_idf():
 
 
 def test_sparse_tf_idf():
-    hv = SparseHashingVectorizer(dim=10000, probes=3)
+    hv = SparseHashingVectorizer(dim=1000000, probes=3)
     hv.vectorize(JUNK_FOOD_DOCS)
     hv.vectorize(NOTJUNK_FOOD_DOCS)
 
     # extract the TF-IDF data
     X = hv.get_tfidf()
-    assert_equal(X.shape, (11, 10000))
+    assert_equal(X.shape, (11, 1000000))
 
     # label junk food as -1, the others as +1
     y = np.ones(X.shape[0])

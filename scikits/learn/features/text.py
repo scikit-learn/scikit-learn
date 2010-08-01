@@ -230,17 +230,17 @@ class SparseHashingVectorizer(object):
 
     def get_tfidf(self):
         """Compute the TF-log(IDF) vectors of the sampled documents"""
-        if self.tf_vectors is None:
-            return None
-        sparse_idf = sp.lil_matrix((self.dim, self.dim))
-        sparse_idf.setdiag(self.get_idf())
-        # use matrix multiply by a diagonal version of idf to emulate array
-        # broadcasting with a matrix API
-        return self.tf_vectors * sparse_idf
+        coo = self.tf_vectors.tocoo()
+        tf_idf = sp.lil_matrix(coo.shape)
+        idf = self.get_idf()
+        data, row, col = coo.data, coo.row, coo.col
+        for i in xrange(len(data)):
+            tf_idf[row[i], col[i]] = data[i] * idf[col[i]]
+        return tf_idf.tocsr()
 
     def vectorize(self, text_documents):
         """Vectorize a batch of documents in python utf-8 strings or unicode"""
-        tf_vectors = sp.lil_matrix((len(text_documents), self.dim))
+        tf_vectors = sp.dok_matrix((len(text_documents), self.dim))
         for i, text in enumerate(text_documents):
             self._sample_document(text, tf_vectors, i)
 
@@ -251,7 +251,7 @@ class SparseHashingVectorizer(object):
 
     def vectorize_files(self, document_filepaths):
         """Vectorize a batch of utf-8 text files"""
-        tf_vectors = sp.lil_matrix((len(document_filepaths), self.dim))
+        tf_vectors = sp.dok_matrix((len(document_filepaths), self.dim))
         for i, filepath in enumerate(document_filepaths):
             self._sample_document(file(filepath).read(), tf_vectors, i)
 
