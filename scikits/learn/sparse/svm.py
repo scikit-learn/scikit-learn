@@ -148,8 +148,10 @@ class SparseBaseLibsvm(BaseEstimator):
     @property
     def coef_(self):
         if self.kernel != 'linear':
-            raise NotImplementedError('coef_ is only available when using a linear kernel')
+            raise NotImplementedError(
+                'coef_ is only available when using a linear kernel')
         return np.dot(self.dual_coef_, self.support_)
+
 
 class SVC(SparseBaseLibsvm):
     """SVC for sparse matrices (csr)
@@ -157,7 +159,6 @@ class SVC(SparseBaseLibsvm):
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
-
     """
     def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
