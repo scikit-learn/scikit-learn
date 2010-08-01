@@ -84,33 +84,15 @@ class SimpleAnalyzer(object):
             return tokens
 
 
-class HashingVectorizer(object):
-    """Compute term frequencies vectors using hashed term space
+class SparseHashingVectorizer(object):
+    """Compute term frequencies vectors using hashed term space in sparse matrix
 
-    See the Hashing-trick related papers referenced by John Langford on this
-    page to get a grasp on the usefulness of this representation:
-
-      http://hunch.net/~jl/projects/hash_reps/index.html
-
-    dim is the number of buckets, higher dim means lower collision rate but
-    also higher memory requirements and higher processing times on the
-    resulting tfidf vectors.
-
-    Documents is a sequence of lists of tokens to initialize the DF estimates.
-
-    TODO handle bigrams in a smart way such as demonstrated here:
-
-      http://streamhacker.com/2010/05/24/text-classification-sentiment-analysis-stopwords-collocations/
-
+    The logic is the same as HashingVectorizer but it is possible to use much
+    larger dimension vectors without memory issues thanks to the usage of
+    scipy.sparse datastructure to store the tf vectors.
     """
-    # TODO: implement me using the murmurhash that might be faster: but profile
-    # me first :)
 
-    # TODO: make it possible to select between the current dense representation
-    # and sparse alternatives from scipy.sparse once the liblinear and libsvm
-    # wrappers have been updated to be able to handle it efficiently
-
-    def __init__(self, dim=5000, probes=1, analyzer=SimpleAnalyzer(),
+    def __init__(self, dim=50000, probes=1, analyzer=SimpleAnalyzer(),
                  use_idf=True):
         self.dim = dim
         self.probes = probes
