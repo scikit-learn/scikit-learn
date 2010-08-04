@@ -681,6 +681,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     """
     n_samples = X.shape[0]
     if alphas is None:
+        # XXX: Should use numpy.logspace
         alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
         alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
         alphas = np.exp(alphas)
