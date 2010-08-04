@@ -58,8 +58,8 @@ def strip_accents(s):
                     if unicodedata.category(c) != 'Mn'))
 
 
-class SimpleAnalyzer(object):
-    """Simple analyzer: transform a text document into a sequence of tokens
+class WordAnalyzer(object):
+    """Simple analyzer: transform a text document into a sequence of word tokens
 
     This simple implementation does:
         - lower case conversion
@@ -85,6 +85,44 @@ class SimpleAnalyzer(object):
             return tokens
 
 
+class CharNGramAnalyzer(object):
+    """Compute character n-grams features of a text document
+
+    This analyzer is interesting since it is language agnostic and will work
+    well even for language where word segmentation is not as trivial as English
+    such as Chinese and German for instance.
+
+    Because of this, it can be considered a basic morphological analyzer.
+    """
+
+    white_spaces = re.compile(r"\s\s+")
+
+    def __init__(self, default_charset='utf-8', min_n=3, max_n=6):
+        self.charset = default_charset
+        self.min_n = min_n
+        self.max_n = max_n
+
+    def analyze(self, text_document):
+        if isinstance(text_document, str):
+            text_document = text_document.decode(self.charset, 'ignore')
+        text_document = strip_accents(text_document.lower())
+
+        # normalize white spaces
+        text_document = self.white_spaces.sub(" ", text_document)
+
+        text_len = len(text_document)
+        ngrams = []
+        for n in xrange(self.min_n, self.max_n + 1):
+            if text_document < n:
+                continue
+            for i in xrange(text_len - n):
+                ngrams.append(text_document[i: i + n])
+        return ngrams
+
+
+DEFAULT_ANALYZER = CharNGramAnalyzer(min_n=5, max_n=5)
+
+
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space
 
@@ -107,8 +145,8 @@ class HashingVectorizer(object):
     # TODO: implement me using the murmurhash that might be faster: but profile
     # me first :)
 
-    def __init__(self, dim=5000, probes=1, analyzer=SimpleAnalyzer(),
-                 use_idf=True):
+    def __init__(self, dim=5000, probes=1, use_idf=True,
+                 analyzer=DEFAULT_ANALYZER,):
         self.dim = dim
         self.probes = probes
         self.analyzer = analyzer
@@ -187,8 +225,8 @@ class SparseHashingVectorizer(object):
     scipy.sparse datastructure to store the tf vectors.
     """
 
-    def __init__(self, dim=50000, probes=1, analyzer=SimpleAnalyzer(),
-                 use_idf=True):
+    def __init__(self, dim=50000, probes=1, use_idf=True,
+                 analyzer=DEFAULT_ANALYZER):
         self.dim = dim
         self.probes = probes
         self.analyzer = analyzer

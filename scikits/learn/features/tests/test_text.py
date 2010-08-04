@@ -1,5 +1,6 @@
 from scikits.learn.features.text import strip_accents
-from scikits.learn.features.text import SimpleAnalyzer
+from scikits.learn.features.text import WordAnalyzer
+from scikits.learn.features.text import CharNGramAnalyzer
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.features.text import SparseHashingVectorizer
 from scikits.learn.logistic import LogisticRegression
@@ -46,18 +47,34 @@ def test_strip_accents():
     assert_equal(strip_accents(a), expected)
 
 
-def test_simple_analyzer():
-    sa = SimpleAnalyzer()
+def test_word_analyzer():
+    wa = WordAnalyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
                 u'etait', u'pas', u'tres', u'bon']
-    assert_equal(sa.analyze(text), expected)
+    assert_equal(wa.analyze(text), expected)
 
     text = "This is a test, really.\n\n I met Harry yesterday."
     expected = [u'this', u'is', u'test', u'really', u'met', u'harry',
                 u'yesterday']
-    assert_equal(sa.analyze(text), expected)
+    assert_equal(wa.analyze(text), expected)
+
+
+def test_char_ngram_analyzer():
+    cnga = CharNGramAnalyzer(min_n=3, max_n=6)
+
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = [u"j'a", u"'ai", u'ai ', u'i m', u' ma']
+    assert_equal(cnga.analyze(text)[:5], expected)
+    expected = [u's tres', u' tres ', u'tres b', u'res bo', u'es bon']
+    assert_equal(cnga.analyze(text)[-5:], expected)
+
+    text = "This \n\tis a test, really.\n\n I met Harry yesterday."
+    expected = [u'thi', u'his', u'is ', u's i', u' is']
+    assert_equal(cnga.analyze(text)[:5], expected)
+    expected = [u' yeste', u'yester', u'esterd', u'sterda', u'terday']
+    assert_equal(cnga.analyze(text)[-5:], expected)
 
 
 def test_dense_tf_idf():
@@ -93,9 +110,10 @@ def test_sparse_tf_idf():
     y[:6] = -1
 
     # train and test a classifier
-    clf = SVC(kernel='linear', C=10).fit(X[1:-1], y[1:-1])
+    clf = SVC(kernel='linear', C=100).fit(X[1:-1], y[1:-1])
     assert_equal(clf.predict(X[0, :]), [-1])
     assert_equal(clf.predict(X[-1, :]), [1])
+
 
 def test_dense_sparse_idf_sanity():
     hv = HashingVectorizer(dim=100, probes=3)
