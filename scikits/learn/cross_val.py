@@ -11,6 +11,7 @@ import numpy as np
 
 from .base import ClassifierMixin
 from .utils.extmath import factorial, combinations
+from .externals.joblib import Parallel, delayed
 
 ##############################################################################
 class LeaveOneOut(object):
@@ -453,7 +454,9 @@ class LeavePLabelOut(object):
 def _default_score_func(estimator, X, y=None):
     return estimator.score(X, y)
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None):
+
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None, 
+                n_jobs=1):
     """ Evaluate a score by cross-validation.
 
         Parameters
@@ -488,17 +491,16 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None):
                 "does not." % estimator
                 )
         score_func = _default_score_func
-    scores = list()
-    for train, test in cv:
-        if y is not None:
-            y_train = y[train]
-            y_test  = y[test]
-        else:
-            y_train = y_test = None
-        X_train = X[train]
-        X_test  = X[test]
-        estimator.fit(X_train, y_train)
-        scores.append(score_func(estimator, X_test, y_test))
+    if y is not None:
+        scores = Parallel(n_jobs=n_jobs)(
+                        delayed(score_func)(estimator.fit(X[train], y[train]), 
+                                            X[test], y[test])
+                                for train, test in cv)
+    else:
+        scores = Parallel(n_jobs=n_jobs)(
+                        delayed(score_func)(estimator.fit(X[train]), 
+                                            X[test])
+                                for train, test in cv)
     return np.array(scores)
 
 
