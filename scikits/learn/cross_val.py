@@ -461,7 +461,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test):
     """ Inner loop for cross validation.
     """
     if y is None:
-        return score_func(estimator.fit(X[train], X[test]))
+        return score_func(estimator.fit(X[train]), X[test])
     return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
 
 
