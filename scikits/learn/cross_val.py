@@ -452,11 +452,21 @@ class LeavePLabelOut(object):
     
 ##############################################################################
 def _default_score_func(estimator, X, y=None):
+    if y is None:
+        return estimator.score(X)
     return estimator.score(X, y)
 
 
+def _cross_val_score(estimator, X, y, score_func, train, test):
+    """ Inner loop for cross validation.
+    """
+    if y is None:
+        return score_func(estimator.fit(X[train], X[test]))
+    return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
+
+
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, 
-                n_jobs=1):
+                n_jobs=1, verbose=0):
     """ Evaluate a score by cross-validation.
 
         Parameters
@@ -476,6 +486,11 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
             A cross-validation generator. If None, a 3-fold cross
             validation is used or 3-fold stratified cross-validation
             when y is supplied.
+        n_jobs: integer, optional
+            The number of CPUs to use to do the computation. -1 means
+            'all CPUs'.
+        verbose: integer, optional
+            The verbosity level
     """
     # XXX: should have a n_jobs to be able to do this in parallel.
     n_samples = len(X)
@@ -491,16 +506,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
                 "does not." % estimator
                 )
         score_func = _default_score_func
-    if y is not None:
-        scores = Parallel(n_jobs=n_jobs)(
-                        delayed(score_func)(estimator.fit(X[train], y[train]), 
-                                            X[test], y[test])
-                                for train, test in cv)
-    else:
-        scores = Parallel(n_jobs=n_jobs)(
-                        delayed(score_func)(estimator.fit(X[train]), 
-                                            X[test])
-                                for train, test in cv)
+    scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
+                delayed(_cross_val_score)(estimator, X, y, score_func, 
+                                                        train, test)
+                for train, test in cv)
     return np.array(scores)
 
 
