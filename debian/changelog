@@ -1,3 +1,11 @@
+scikit-learn (0.4-2.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Call dh_numpy from debian/rules to add the correct depends for numpy in
+    python:Depends (Closes: #590762)
+
+ -- Nico Golde <nion@debian.org>  Thu, 05 Aug 2010 13:34:19 +0200
+
 scikit-learn (0.4-2) unstable; urgency=low
 
   * deb_cython_0.12.1 to use code cythoned with up-to-date cython
