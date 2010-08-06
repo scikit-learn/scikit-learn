@@ -52,6 +52,7 @@ endif
 	   echo "Moving '$$lib' into '$$tdir'." ; \
 	   mv $$lib $$tdir ; \
 	done
+	if [ -x /usr/bin/dh_numpy ]; then dh_numpy; fi
 
 ## immediately useable documentation and exemplar scripts/data
 override_dh_compress:
