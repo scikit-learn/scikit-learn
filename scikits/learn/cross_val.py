@@ -451,15 +451,12 @@ class LeavePLabelOut(object):
 
     
 ##############################################################################
-def _default_score_func(estimator, X, y=None):
-    if y is None:
-        return estimator.score(X)
-    return estimator.score(X, y)
-
 
 def _cross_val_score(estimator, X, y, score_func, train, test):
     """ Inner loop for cross validation.
     """
+    if score_func is None:
+        score_func = lambda self, *args: estimator.score(*args)
     if y is None:
         return score_func(estimator.fit(X[train]), X[test])
     return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
@@ -505,7 +502,6 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator
                 )
-        score_func = _default_score_func
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(estimator, X, y, score_func, 
                                                         train, test)
