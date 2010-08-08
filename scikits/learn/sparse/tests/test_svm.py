@@ -25,14 +25,14 @@ def test_SVC():
     sp_clf = sparse.svm.SVC(kernel='linear').fit(X, Y)
 
     assert scipy.sparse.issparse(sp_clf.support_)
-    assert_array_equal(clf.support_, sp_clf.support_.todense())
+    assert_array_almost_equal(clf.support_, sp_clf.support_.todense())
 
     assert scipy.sparse.issparse (sp_clf.dual_coef_)
-    assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
+    assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
 
     assert scipy.sparse.issparse (sp_clf.coef_)
-    assert_array_equal(sp_clf.coef_.todense(), clf.coef_)
-    assert_array_equal(clf.predict(T), sp_clf.predict(T))
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
+    assert_array_almost_equal(clf.predict(T), sp_clf.predict(T))
 
     # refit with a different dataset
     clf.fit(X2, Y2)
