@@ -522,7 +522,7 @@ class GaussianHMM(_BaseHMM):
 
     Examples
     --------
-    >>> hmm = HMM('gaussian', nstates=2, ndim=1)
+    >>> ghmm = GaussianHMM(nstates=2, ndim=1)
 
     See Also
     --------
@@ -668,7 +668,7 @@ class MultinomialHMM(_BaseHMM):
 
     Examples
     --------
-    >>> hmm = HMM('multinomial', 3, nstates=2)
+    >>> mhmm = MultinomialHMM(nstates=2, nsymbols=3)
 
     See Also
     --------
@@ -687,8 +687,8 @@ class MultinomialHMM(_BaseHMM):
         nstates : int
             Number of states.
         """
-        super(MultinomialHMM, self).__init__(nstates, startprob, transmat,
-                                             labels)
+        super(MultinomialHMM, self).__init__(nstates, startprob,
+                                             transmat, labels)
         self._nsymbols = nsymbols
         if not emissionprob:
             emissionprob = normalize(np.random.rand(self.nstates,
