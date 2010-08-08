@@ -478,6 +478,12 @@ class OneClassSVM(BaseLibsvm):
         BaseLibsvm.__init__(self, 'one_class', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
+    
+    def fit(self, X, Y=None):
+        if Y is None:
+            n_samples = X.shape[0]
+            Y = [0] * n_samples
+        super(OneClassSVM, self).fit(X, Y)
 
 
 class LinearSVC(BaseEstimator, ClassifierMixin):
