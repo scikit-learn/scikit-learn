@@ -687,8 +687,8 @@ class MultinomialHMM(_BaseHMM):
         nstates : int
             Number of states.
         """
-        super(MultinomialHMM, self).__init__(nstates, startprob,
-                                             transmat, labels)
+        super(MultinomialHMM, self).__init__(nstates, startprob, transmat,
+                                             labels)
         self._nsymbols = nsymbols
         if not emissionprob:
             emissionprob = normalize(np.random.rand(self.nstates,
