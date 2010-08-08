@@ -190,7 +190,7 @@ class GMM(object):
     >>> gmm.decode([0, 2, 9, 10])
     array([0, 0, 1, 1])
     >>> # Refit the model on new data (initial parameters remain the same).
-    >>> gmm.fit(numpy.concatenate((20 * [0], 20 * [10])))
+    >>> gmm.fit(np.concatenate((20 * [0], 20 * [10])))
     """
 
     def __init__(self, nstates=1, ndim=1, cvtype='diag', weights=None,
