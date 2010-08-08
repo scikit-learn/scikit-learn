@@ -12,6 +12,7 @@ Generalized Linear models.
 
 import warnings
 
+from math import log10
 import numpy as np
 import scipy.linalg 
 import scipy.sparse as sp # needed by LeastAngleRegression
@@ -44,7 +45,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
             Returns predicted values.
         """
         X = np.asanyarray(X)
@@ -681,10 +682,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     """
     n_samples = X.shape[0]
     if alphas is None:
-        # XXX: Should use numpy.logspace
         alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
-        alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
-        alphas = np.exp(alphas)
+        alphas = np.logspace(log10(alpha_max*eps), log10(alpha_max),
+                             num=n_alphas)[::-1]
     else:
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
@@ -714,10 +714,10 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Length of the path. eps=1e-3 means that
         alpha_min / alpha_max = 1e-3
 
-    n_alphas : int
+    n_alphas : int, optional
         Number of alphas along the regularization path
 
-    alphas : numpy array
+    alphas : numpy array, optional
         List of alphas where to compute the models.
         If None alphas are set automatically
 
@@ -735,8 +735,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     n_samples = X.shape[0]
     if alphas is None:
         alpha_max = np.abs(np.dot(X.T, y)).max() / (n_samples*rho)
-        alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
-        alphas = np.exp(alphas)
+        alphas = np.logspace(log10(alpha_max*eps), log10(alpha_max),
+                             num=n_alphas)[::-1]
     else:
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
@@ -996,7 +996,7 @@ class LeastAngleRegression(LinearModel):
 
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
             Returns predicted values.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
