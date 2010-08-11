@@ -26,15 +26,19 @@ class BaseEstimator(object):
 
     @classmethod
     def _get_param_names(cls):
-        args, varargs, kw, default = inspect.getargspec(cls.__init__)
-        assert varargs is None, (
-            'scikit learn estimators should always specify their '
-            'parameters in the signature of their init (no varargs).'
-            )
-        # Remove 'self'
-        # XXX: This is going to fail if the init is a staticmethod, but
-        # who would do this?
-        args.pop(0)
+        try:
+            args, varargs, kw, default = inspect.getargspec(cls.__init__)
+            assert varargs is None, (
+                'scikit learn estimators should always specify their '
+                'parameters in the signature of their init (no varargs).'
+                )
+            # Remove 'self'
+            # XXX: This is going to fail if the init is a staticmethod, but
+            # who would do this?
+            args.pop(0)
+        except TypeError:
+            # No explicit __init__
+            args = []
         return args
 
 

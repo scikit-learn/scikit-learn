@@ -178,7 +178,7 @@ multiple interfaces):
 
 :Predictor:
 
-    For suppervised learning, implements::
+    For suppervised learning, or some unsupervised problems, implements::
 
 	target = obj.predict(data)
 

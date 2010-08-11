@@ -3,9 +3,11 @@
 # License: BSD Style.
 """Utilities to build feature vectors from text documents"""
 
+from collections import defaultdict
 import re
 import unicodedata
 import numpy as np
+import scipy.sparse as sp
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -105,10 +107,6 @@ class HashingVectorizer(object):
     # TODO: implement me using the murmurhash that might be faster: but profile
     # me first :)
 
-    # TODO: make it possible to select between the current dense representation
-    # and sparse alternatives from scipy.sparse once the liblinear and libsvm
-    # wrappers have been updated to be able to handle it efficiently
-
     def __init__(self, dim=5000, probes=1, analyzer=SimpleAnalyzer(),
                  use_idf=True):
         self.dim = dim
@@ -120,23 +118,14 @@ class HashingVectorizer(object):
         # computing IDF
         self.df_counts = np.ones(dim, dtype=long)
         self.tf_vectors = None
-        self.sampled = 0
 
     def hash_sign(self, token, probe=0):
+        """Compute the hash of token with number proble and hashed sign"""
         h = hash(token + (probe * u"#"))
         return abs(h) % self.dim, 1.0 if h % 2 == 0 else -1.0
 
-    def sample_document(self, text, tf_vector=None, update_estimates=True):
+    def _sample_document(self, text, tf_vector, update_estimates=True):
         """Extract features from text and update running freq estimates"""
-        if tf_vector is None:
-            # allocate term frequency vector and stack to history
-            tf_vector = np.zeros(self.dim, np.float64)
-            if self.tf_vectors is None:
-                self.tf_vectors = tf_vector.reshape((1, self.dim))
-            else:
-                self.tf_vectors = np.vstack((self.tf_vectors, tf_vector))
-                tf_vector = self.tf_vectors[-1]
-
         tokens = self.analyzer.analyze(text)
         for token in tokens:
             # TODO add support for cooccurence tokens in a sentence
@@ -149,11 +138,11 @@ class HashingVectorizer(object):
         if update_estimates and self.use_idf:
             # update the running DF estimate
             self.df_counts += tf_vector != 0.0
-            self.sampled += 1
         return tf_vector
 
     def get_idf(self):
-        return np.log(float(self.sampled) / self.df_counts)
+        n_samples = float(len(self.tf_vectors))
+        return np.log(n_samples / self.df_counts)
 
     def get_tfidf(self):
         """Compute the TF-log(IDF) vectors of the sampled documents"""
@@ -161,16 +150,115 @@ class HashingVectorizer(object):
             return None
         return self.tf_vectors * self.get_idf()
 
-    def vectorize(self, document_filepaths):
-        """Vectorize a batch of documents"""
-        tf_vectors = np.zeros((len(document_filepaths), self.dim))
-        for i, filepath in enumerate(document_filepaths):
-            self.sample_document(file(filepath).read(), tf_vectors[i])
+    def vectorize(self, text_documents):
+        """Vectorize a batch of documents in python utf-8 strings or unicode"""
+        tf_vectors = np.zeros((len(text_documents), self.dim))
+        for i, text in enumerate(text_documents):
+            self._sample_document(text, tf_vectors[i])
 
         if self.tf_vectors is None:
             self.tf_vectors = tf_vectors
         else:
             self.tf_vectors = np.vstack((self.tf_vectors, tf_vectors))
+
+    def vectorize_files(self, document_filepaths):
+        """Vectorize a batch of documents stored in utf-8 text files"""
+        tf_vectors = np.zeros((len(document_filepaths), self.dim))
+        for i, filepath in enumerate(document_filepaths):
+            self._sample_document(file(filepath).read(), tf_vectors[i])
+
+        if self.tf_vectors is None:
+            self.tf_vectors = tf_vectors
+        else:
+            self.tf_vectors = np.vstack((self.tf_vectors, tf_vectors))
+
+    def get_vectors(self):
+        if self.use_idf:
+            return self.get_tfidf()
+        else:
+            return self.tf_vectors
+
+
+class SparseHashingVectorizer(object):
+    """Compute term freq vectors using hashed term space in a sparse matrix
+
+    The logic is the same as HashingVectorizer but it is possible to use much
+    larger dimension vectors without memory issues thanks to the usage of
+    scipy.sparse datastructure to store the tf vectors.
+    """
+
+    def __init__(self, dim=50000, probes=1, analyzer=SimpleAnalyzer(),
+                 use_idf=True):
+        self.dim = dim
+        self.probes = probes
+        self.analyzer = analyzer
+        self.use_idf = use_idf
+
+        # start counts at one to avoid zero division while
+        # computing IDF
+        self.df_counts = np.ones(dim, dtype=long)
+        self.tf_vectors = None
+
+    def hash_sign(self, token, probe=0):
+        h = hash(token + (probe * u"#"))
+        return abs(h) % self.dim, 1.0 if h % 2 == 0 else -1.0
+
+    def _sample_document(self, text, tf_vectors, idx=0, update_estimates=True):
+        """Extract features from text and update running freq estimates"""
+
+        tokens = self.analyzer.analyze(text)
+        counts = defaultdict(lambda: 0.0)
+        for token in tokens:
+            # TODO add support for cooccurence tokens in a sentence
+            # window
+            for probe in xrange(self.probes):
+                i, incr = self.hash_sign(token, probe)
+                counts[i] += incr
+        for k, v in counts.iteritems():
+            if v == 0.0:
+                # can happen if equally frequent conflicting features
+                continue
+            tf_vectors[idx, k] = v / (len(tokens) * self.probes)
+
+            if update_estimates and self.use_idf:
+                # update the running DF estimate
+                self.df_counts[k] += 1
+
+    def get_idf(self):
+        n_samples = float(self.tf_vectors.shape[0])
+        return np.log(n_samples / self.df_counts)
+
+    def get_tfidf(self):
+        """Compute the TF-log(IDF) vectors of the sampled documents"""
+        coo = self.tf_vectors.tocoo()
+        tf_idf = sp.lil_matrix(coo.shape)
+        idf = self.get_idf()
+        data, row, col = coo.data, coo.row, coo.col
+        for i in xrange(len(data)):
+            tf_idf[row[i], col[i]] = data[i] * idf[col[i]]
+        return tf_idf.tocsr()
+
+    def vectorize(self, text_documents):
+        """Vectorize a batch of documents in python utf-8 strings or unicode"""
+        tf_vectors = sp.dok_matrix((len(text_documents), self.dim))
+        for i, text in enumerate(text_documents):
+            self._sample_document(text, tf_vectors, i)
+
+        if self.tf_vectors is None:
+            self.tf_vectors = tf_vectors
+        else:
+            self.tf_vectors = sp.vstack((self.tf_vectors, tf_vectors))
+
+    def vectorize_files(self, document_filepaths):
+        """Vectorize a batch of utf-8 text files"""
+        tf_vectors = sp.dok_matrix((len(document_filepaths), self.dim))
+        for i, filepath in enumerate(document_filepaths):
+            self._sample_document(file(filepath).read(), tf_vectors, i)
+
+        if self.tf_vectors is None:
+            self.tf_vectors = tf_vectors
+        else:
+            self.tf_vectors = sp.vstack((self.tf_vectors, tf_vectors))
 
     def get_vectors(self):
         if self.use_idf:

@@ -1,10 +1,29 @@
 from scikits.learn.features.text import strip_accents
 from scikits.learn.features.text import SimpleAnalyzer
 from scikits.learn.features.text import HashingVectorizer
+from scikits.learn.features.text import SparseHashingVectorizer
 from scikits.learn.logistic import LogisticRegression
+from scikits.learn.sparse.svm import SVC
 import numpy as np
 from nose.tools import *
+from numpy.testing import assert_array_almost_equal
 
+JUNK_FOOD_DOCS = (
+    "the pizza pizza beer",
+    "the pizza pizza beer",
+    "the the pizza beer beer",
+    "the pizza beer beer",
+    "the coke beer coke",
+    "the coke pizza pizza",
+)
+
+NOTJUNK_FOOD_DOCS = (
+    "the salad celeri",
+    "the salad salad sparkling water",
+    "the the celeri celeri",
+    "the tomato tomato salad water",
+    "the tomato salad water",
+)
 
 def test_strip_accents():
     # check some classical latin accentuated symbols
@@ -41,23 +60,10 @@ def test_simple_analyzer():
     assert_equal(sa.analyze(text), expected)
 
 
-def test_tf_idf():
+def test_dense_tf_idf():
     hv = HashingVectorizer(dim=1000, probes=3)
-
-    # junk food documents
-    hv.sample_document("the pizza pizza beer")
-    hv.sample_document("the pizza pizza beer")
-    hv.sample_document("the the pizza beer beer")
-    hv.sample_document("the pizza beer beer")
-    hv.sample_document("the coke beer coke")
-    hv.sample_document("the coke pizza pizza")
-
-    # not-junk food documents
-    hv.sample_document("the salad celeri")
-    hv.sample_document("the salad salad sparkling water")
-    hv.sample_document("the the celeri celeri")
-    hv.sample_document("the tomato tomato salad water")
-    hv.sample_document("the tomato salad water")
+    hv.vectorize(JUNK_FOOD_DOCS)
+    hv.vectorize(NOTJUNK_FOOD_DOCS)
 
     # extract the TF-IDF data
     X = hv.get_tfidf()
@@ -71,4 +77,46 @@ def test_tf_idf():
     clf = LogisticRegression().fit(X[1:-1], y[1:-1])
     assert_equal(clf.predict([X[0]]), [-1])
     assert_equal(clf.predict([X[-1]]), [1])
+
+
+def test_sparse_tf_idf():
+    hv = SparseHashingVectorizer(dim=1000000, probes=3)
+    hv.vectorize(JUNK_FOOD_DOCS)
+    hv.vectorize(NOTJUNK_FOOD_DOCS)
+
+    # extract the TF-IDF data
+    X = hv.get_tfidf()
+    assert_equal(X.shape, (11, 1000000))
+
+    # label junk food as -1, the others as +1
+    y = np.ones(X.shape[0])
+    y[:6] = -1
+
+    # train and test a classifier
+    clf = SVC(kernel='linear', C=10).fit(X[1:-1], y[1:-1])
+    assert_equal(clf.predict(X[0, :]), [-1])
+    assert_equal(clf.predict(X[-1, :]), [1])
+
+def test_dense_sparse_idf_sanity():
+    hv = HashingVectorizer(dim=100, probes=3)
+    shv = SparseHashingVectorizer(dim=100, probes=3)
+
+    hv.vectorize(JUNK_FOOD_DOCS)
+    shv.vectorize(JUNK_FOOD_DOCS)
+
+    # check that running TF IDF estimates are the same
+    dense_tf_idf = hv.get_tfidf()
+    sparse_tfidf = shv.get_tfidf().todense()
+
+    assert_array_almost_equal(dense_tf_idf, sparse_tfidf)
+
+    # check that incremental behaviour stays the same
+    hv.vectorize(NOTJUNK_FOOD_DOCS)
+    shv.vectorize(NOTJUNK_FOOD_DOCS)
+
+    dense_tf_idf = hv.get_tfidf()
+    sparse_tfidf = shv.get_tfidf().todense()
+
+    assert_array_almost_equal(dense_tf_idf, sparse_tfidf)
+
 

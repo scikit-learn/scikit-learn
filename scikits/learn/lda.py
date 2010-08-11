@@ -103,8 +103,8 @@ class LDA(BaseEstimator, ClassifierMixin):
         # Group means n_classes*n_features matrix
         means = []
         Xc = []
-	cov = None
-        if store_covariance is True:
+        cov = None
+        if store_covariance:
             cov = np.zeros((n_features, n_features))
         for group_indices in classes_indices:
             Xg = X[group_indices, :]
@@ -113,9 +113,9 @@ class LDA(BaseEstimator, ClassifierMixin):
             # centered group data
             Xgc = Xg - meang
             Xc.append(Xgc)
-            if store_covariance is True:
-	        cov += np.dot(Xgc.T, Xgc)
-        if store_covariance is True:
+            if store_covariance:
+                cov += np.dot(Xgc.T, Xgc)
+        if store_covariance:
             cov /= (n_samples - n_classes)
             self.covariance_ = cov
             
@@ -124,11 +124,11 @@ class LDA(BaseEstimator, ClassifierMixin):
 
         # ----------------------------
         # 1) within (univariate) scaling by with classes std-dev
-        scaling = np.diag(1 / Xc.std(0))
+        scaling = 1. / Xc.std(0)
         fac = float(1) / (n_samples - n_classes)
         # ----------------------------
         # 2) Within variance scaling
-        X = np.sqrt(fac) * np.dot(Xc, scaling)
+        X = np.sqrt(fac) * (Xc * scaling)
         # SVD of centered (within)scaled data
         if self.use_svd == True:
             U, S, V = linalg.svd(X, full_matrices=0)
@@ -139,14 +139,14 @@ class LDA(BaseEstimator, ClassifierMixin):
         if rank < n_features:
             warnings.warn("Variables are collinear")
         # Scaling of within covariance is: V' 1/S
-        scaling = np.dot(np.dot(scaling, V.T[:, :rank]), np.diag(1 / S[:rank]))
+        scaling = (scaling * V.T[:, :rank].T).T / S[:rank]
         ## ----------------------------
         ## 3) Between variance scaling
         # Overall mean
         xbar = np.dot(self.priors_, means)
         # Scale weighted centers
-        X = np.dot(np.dot(np.diag(np.sqrt((n_samples * self.priors_)*fac)),
-                          (means - xbar)), scaling)
+        X = np.dot(((np.sqrt((n_samples * self.priors_)*fac)) *
+                          (means - xbar).T).T, scaling)
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use svd to find projection in the space spamed by the
         # (n_classes) centers
@@ -175,13 +175,19 @@ class LDA(BaseEstimator, ClassifierMixin):
         V = V[:X.shape[0], :]
         return S_sort, V
 
-    def predict(self, X):
-        probas = self.predict_proba(X)
-        y_pred = self.classes[probas.argmax(1)]
-        return y_pred
+    def decision_function(self, X):
+        """
+        This function return the decision function values related to each
+        class on an array of test vectors X.
 
-    def predict_proba(self, X):
-        #Ensure X is an array
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples, n_classes]
+        """
         X = np.asanyarray(X)
         scaling = self.scaling
         # Remove overall mean (center) and scale
@@ -191,10 +197,49 @@ class LDA(BaseEstimator, ClassifierMixin):
         dm = np.dot(self.means_ - self.xbar_, scaling)
         # for each class k, compute the linear discrinant function(p. 87 Hastie)
         # of sphered (scaled data)
-        dist = 0.5*np.sum(dm**2, 1) - np.log(self.priors_) - np.dot(X, dm.T)
+        return -0.5 * np.sum(dm ** 2, 1) + \
+                np.log(self.priors_) + np.dot(X, dm.T)
+
+
+    def predict(self, X):
+        """
+        This function does classification on an array of test vectors X.
+
+        The predicted class C for each sample in X is returned.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+        """
+        probas = self.decision_function(X)
+        y_pred = self.classes[probas.argmax(1)]
+        return y_pred
+
         # take exp of min dist
         dist = np.exp(-dist + dist.min(1).reshape(X.shape[0], 1))
         # normalize by p(x)=sum_k p(x|k)
         probas = dist / dist.sum(1).reshape(X.shape[0], 1)
         # classify according to the maximun a posteriori
         return probas
+
+    def predict_proba(self, X):
+        """
+        This function return posterior probabilities of classification
+        according to each class on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples, n_classes]
+        """
+        values = self.decision_function(X)
+        likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
+        # compute posterior probabilities
+        return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
