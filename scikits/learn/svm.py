@@ -478,6 +478,12 @@ class OneClassSVM(BaseLibsvm):
         BaseLibsvm.__init__(self, 'one_class', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
+    
+    def fit(self, X, Y=None):
+        if Y is None:
+            n_samples = X.shape[0]
+            Y = [0] * n_samples
+        super(OneClassSVM, self).fit(X, Y)
 
 
 class LinearSVC(BaseEstimator, ClassifierMixin):
@@ -543,7 +549,7 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
         'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
         'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
         'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
-        'PL1_LL2_D0' : 5, # L2 penalty, L1 Loss, primal problem
+        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0):

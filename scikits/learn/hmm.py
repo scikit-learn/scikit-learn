@@ -29,7 +29,7 @@ def HMM(emission_type='gaussian', *args, **kwargs):
 
 class _BaseHMM(object):
     """Hidden Markov Model base class.
-    
+
     Representation of a hidden Markov model probability distribution.
     This class allows for easy evaluation of, sampling from, and
     maximum-likelihood estimation of the parameters of a HMM.
@@ -246,7 +246,7 @@ class _BaseHMM(object):
         """
         logprob, state_sequence = self.decode(obs, **kwargs)
         return state_sequence
-        
+
     def rvs(self, n=1):
         """Generate random samples from the model.
 
@@ -323,18 +323,18 @@ class _BaseHMM(object):
             Log probabilities of each data point in `obs` for each iteration
         """
         obs = np.asanyarray(obs)
-        
+
         self._init(obs, init_params, **kwargs)
-            
+
         if trainer is None:
             trainer = self._default_trainer
-        
+
         if self.emission_type != trainer.emission_type:
             raise ValueError('trainer has incompatible emission_type')
 
         return trainer.train(self, obs, niter, thresh, params, maxrank,
                              beamlogprob, **kwargs)
-    
+
     @property
     def nstates(self):
         """Number of states in the model."""
@@ -349,7 +349,7 @@ class _BaseHMM(object):
             raise ValueError('startprob must have length nstates')
         if not np.allclose(np.sum(startprob), 1.0):
             raise ValueError('startprob must sum to 1.0')
-        
+
         self._log_startprob = np.log(np.asanyarray(startprob).copy())
 
     startprob = property(_get_startprob, _set_startprob)
@@ -363,17 +363,17 @@ class _BaseHMM(object):
             raise ValueError('transmat must have shape (nstates, nstates)')
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
-        
+
         self._log_transmat = np.log(np.asanyarray(transmat).copy())
         underflow_idx = np.isnan(self._log_transmat)
         self._log_transmat[underflow_idx] = -np.Inf
 
     transmat = property(_get_transmat, _set_transmat)
-    
+
     def _do_viterbi_pass(self, framelogprob, maxrank=None, beamlogprob=-np.Inf):
         nobs = len(framelogprob)
         lattice = np.zeros((nobs, self._nstates))
-        traceback = np.zeros((nobs, self._nstates), dtype=np.int) 
+        traceback = np.zeros((nobs, self._nstates), dtype=np.int)
 
         lattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
@@ -382,7 +382,7 @@ class _BaseHMM(object):
             lattice[n]   = np.max(pr, axis=1) + framelogprob[n]
             traceback[n] = np.argmax(pr, axis=1)
         lattice[lattice <= ZEROLOGPROB] = -np.Inf;
-        
+
         # Do traceback.
         reverse_state_sequence = []
         s = lattice[-1].argmax()
@@ -435,7 +435,7 @@ class _BaseHMM(object):
         """
         # Beam pruning
         threshlogprob = logsum(lattice_frame) + beamlogprob
-        
+
         # Rank pruning
         if maxrank:
             # How big should our rank pruning histogram be?
@@ -444,24 +444,24 @@ class _BaseHMM(object):
             lattice_min = lattice_frame[lattice_frame > ZEROLOGPROB].min() - 1
             hst, cdf = np.histogram(lattice_frame, bins=nbins,
                                     range=(lattice_min, lattice_frame.max()))
-        
+
             # Want to look at the high ranks.
             hst = hst[::-1].cumsum()
             cdf = cdf[::-1]
 
             rankthresh = cdf[hst >= min(maxrank, self._nstates)].max()
-      
+
             # Only change the threshold if it is stricter than the beam
             # threshold.
             threshlogprob = max(threshlogprob, rankthresh)
-    
+
         # Which states are active?
         state_idx, = np.nonzero(lattice_frame >= threshlogprob)
         return state_idx
 
     def _compute_log_likelihood(self, obs):
         pass
-    
+
     def _generate_sample_from_state(self, state):
         pass
 
@@ -522,7 +522,7 @@ class GaussianHMM(_BaseHMM):
 
     Examples
     --------
-    >>> hmm = HMM('gaussian', nstates=2, ndim=1)
+    >>> ghmm = GaussianHMM(nstates=2, ndim=1)
 
     See Also
     --------
@@ -556,7 +556,7 @@ class GaussianHMM(_BaseHMM):
         self._cvtype = cvtype
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
-        
+
         if means is None:
             means = np.zeros((nstates, ndim))
         self.means = means
@@ -618,7 +618,7 @@ class GaussianHMM(_BaseHMM):
 
     def _init(self, obs, params='stmc', **kwargs):
         super(GaussianHMM, self)._init(obs, params=params)
-        
+
 
         if 'm' in params:
             self._means, tmp = sp.cluster.vq.kmeans2(obs[0], self._nstates,
@@ -638,6 +638,8 @@ class MultinomialHMM(_BaseHMM):
     ----------
     nstates : int (read-only)
         Number of states in the model.
+    nsymbols : int
+        Number of symbols (TODO: explain the difference with nstates)
     transmat : array, shape (`nstates`, `nstates`)
         Matrix of transition probabilities between states.
     startprob : array, shape ('nstates`,)
@@ -666,7 +668,7 @@ class MultinomialHMM(_BaseHMM):
 
     Examples
     --------
-    >>> hmm = HMM('multinomial', nstates=2)
+    >>> mhmm = MultinomialHMM(nstates=2, nsymbols=3)
 
     See Also
     --------
@@ -676,7 +678,7 @@ class MultinomialHMM(_BaseHMM):
     emission_type = 'multinomial'
 
     def __init__(self, nstates, nsymbols, startprob=None, transmat=None,
-                 labels=None, emissionprob=None, 
+                 labels=None, emissionprob=None,
                  trainer=hmm_trainers.MultinomialHMMBaumWelchTrainer()):
         """Create a hidden Markov model with multinomial emissions.
 
@@ -711,7 +713,7 @@ class MultinomialHMM(_BaseHMM):
         self._log_emissionprob = np.log(emissionprob)
         underflow_idx = np.isnan(self._log_emissionprob)
         self._log_emissionprob[underflow_idx] = -np.Inf
-        
+
     emissionprob = property(_get_emissionprob, _set_emissionprob)
 
     def _compute_log_likelihood(self, obs):
@@ -798,7 +800,7 @@ class GMMHMM(_BaseHMM):
             for x in xrange(self.nstates):
                 gmms.append(gmm.GMM(nmix, ndim, **kwargs))
         self.gmms = gmms
-        
+
         self._default_trainer = trainer
 
     # Read-only properties.
@@ -819,4 +821,4 @@ class GMMHMM(_BaseHMM):
         allobs = np.concatenate(obs, 0)
         for g in self.gmms:
             g.fit(allobs, niter=0, init_params=params)
-        
+
