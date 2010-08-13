@@ -1,22 +1,21 @@
 """Non linear regression with Support Vector Regression (SVR)
 using RBF kernel
 """
-import numpy as np
-import pylab as pl
-
-from scikits.learn.svm import SVR
-
 ###############################################################################
 # Generate sample data
+import numpy as np
+
 X = np.sort(5*np.random.rand(40, 1), axis=0)
 y = np.sin(X).ravel()
 
 ###############################################################################
-# Add noise
+# Add noise to targets
 y[::5] += 3*(0.5 - np.random.rand(8))
 
 ###############################################################################
 # Fit regression model
+from scikits.learn.svm import SVR
+
 svr_rbf = SVR(kernel='rbf', C=1e4, gamma=0.1)
 svr_lin = SVR(kernel='linear', C=1e4)
 svr_poly = SVR(kernel='poly', C=1e4, degree=2)
