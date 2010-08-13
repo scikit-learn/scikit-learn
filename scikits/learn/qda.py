@@ -121,10 +121,11 @@ class QDA(BaseEstimator):
             rank = np.sum(S > tol)
             if rank < n_features:
                 warnings.warn("Variables are collinear")
+            S2 = (S ** 2) / (len(Xg) - 1)
             if store_covariances is True:
-                # cov = V * (S^2) * V.T
-                cov.append(np.dot((S ** 2) * Vt.T, Vt) / (len(Xg) - 1))
-            scalings.append(S)
+                # cov = V * (S^2 / (n-1)) * V.T
+                cov.append(np.dot(S2 * Vt.T, Vt))
+            scalings.append(S2)
             rotations.append(Vt.T)
         if store_covariances is True:
             self.covariances_ = cov
@@ -153,7 +154,7 @@ class QDA(BaseEstimator):
             R = self.rotations[i]
             S = self.scalings[i]
             Xm = X - self.means_[i]
-            X2 = np.dot(Xm, R) * (S ** (-0.5))
+            X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T # shape : len(X), n_classes
         return -0.5 * (norm2 + np.sum(np.log(self.scalings), 1)) + \
@@ -191,6 +192,6 @@ class QDA(BaseEstimator):
         C : array, shape = [n_samples, n_classes]
         """
         values = self.decision_function(X)
-        likelihood = np.exp(values + values.min(axis=1)[:, np.newaxis])
+        likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
