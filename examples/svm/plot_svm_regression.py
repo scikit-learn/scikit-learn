@@ -25,6 +25,7 @@ y_poly = svr_poly.fit(X, y).predict(X)
 
 ###############################################################################
 # look at the results
+import pylab as pl
 pl.scatter(X, y, c='k', label='data')
 pl.hold('on')
 pl.plot(X, y_rbf, c='g', label='RBF model')
