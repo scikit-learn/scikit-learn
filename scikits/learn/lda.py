@@ -219,13 +219,6 @@ class LDA(BaseEstimator, ClassifierMixin):
         y_pred = self.classes[probas.argmax(1)]
         return y_pred
 
-        # take exp of min dist
-        dist = np.exp(-dist + dist.min(1).reshape(X.shape[0], 1))
-        # normalize by p(x)=sum_k p(x|k)
-        probas = dist / dist.sum(1).reshape(X.shape[0], 1)
-        # classify according to the maximun a posteriori
-        return probas
-
     def predict_proba(self, X):
         """
         This function return posterior probabilities of classification
