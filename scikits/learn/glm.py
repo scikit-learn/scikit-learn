@@ -687,13 +687,16 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.logspace(log10(alpha_max*eps), log10(alpha_max),
                              num=n_alphas)[::-1]
     else:
+        # XXX: Maybe should reorder the models when outputing them, so
+        # that they are ordered in the order of the initial alphas
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
     models = []
     for alpha in alphas:
         model = Lasso(coef_=coef_, alpha=alpha)
         model.fit(X, y, **fit_params)
-        if verbose: print model
+        if verbose: 
+            print model
         coef_ = model.coef_.copy()
         models.append(model)
     return models
