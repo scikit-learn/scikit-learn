@@ -6,12 +6,24 @@ Linear Discriminant Analysis & Quadratic Discriminant Analysis
 Plot the confidence ellipsoids of each class and decision boundary
 """
 
+from scipy import linalg
 import numpy as np
 import pylab as pl
 import matplotlib as mpl
-from matplotlib import collections
+from matplotlib import collections, colors
 
 from scikits.learn.lda import LDA
+from scikits.learn.qda import QDA
+
+################################################################################
+# colormap
+cmap = colors.LinearSegmentedColormap('red_blue_classes',
+    {'red' : [(0, 1, 1), (1, 0.7, 0.7)],
+     'green' : [(0, 0.7, 0.7), (1, 0.7, 0.7)],
+     'blue' : [(0, 0.7, 0.7), (1, 1, 1)]
+    })
+pl.cm.register_cmap(cmap=cmap)
+
 
 ################################################################################
 # generate datasets
@@ -19,9 +31,9 @@ def dataset_fixed_cov():
     '''Generate 2 Gaussians samples with the same covariance matrix'''
     n, dim = 300, 2
     np.random.seed(0)
-    C = np.array([[0., -0.7], [3.5, .7]])
+    C = np.array([[0., -0.23], [0.83, .23]])
     X = np.r_[np.dot(np.random.randn(n, dim), C),
-              np.dot(np.random.randn(n, dim), C) + np.array([3, 3])]
+              np.dot(np.random.randn(n, dim), C) + np.array([1, 1])]
     y = np.hstack((np.zeros(n), np.ones(n)))
     return X, y
 
@@ -29,38 +41,22 @@ def dataset_cov():
     '''Generate 2 Gaussians samples with different covariance matrices'''
     n, dim = 300, 2
     np.random.seed(0)
-    C = np.array([[0., -0.7], [3.5, .7]])
+    C = np.array([[0., -1.], [2.5, .7]]) * 2.
     X = np.r_[np.dot(np.random.randn(n, dim), C),
-              np.dot(np.random.randn(n, dim), C.T) + np.array([3, 3])]
+              np.dot(np.random.randn(n, dim), C.T) + np.array([1, 4])]
     y = np.hstack((np.zeros(n), np.ones(n)))
     return X, y
 
-################################################################################
-# boundaries fonction
-
-def lda_decision_boundary(lda, x):
-    '''
-    lda : lda classifier instance.
-    x :   abscissa coordinate.
-
-    Return ordinate coordinate.
-    '''
-    m0, m1 = lda.means_
-    p0, p1 = lda.priors_
-    S = lda.covariance_
-    Sinv = np.linalg.inv(S)
-    z = np.dot(Sinv, m0 - m1)
-    a = 0.5 * np.dot((m0 + m1).T, z) - np.log(p0 / p1)
-    return (a - x * z[0]) / z[1]
 
 ################################################################################
 # plot functions
-
-def lda_plot(lda, X, y, y_pred, fig_index):
+def plot_data(lda, X, y, y_pred, fig_index):
     splot = pl.subplot(2, 2, fig_index)
     if fig_index == 1:
         pl.title('Linear Discriminant Analysis')
         pl.ylabel('Fixed covariance')
+    elif fig_index == 2:
+        pl.title('Quadratic Discriminant Analysis')
     elif fig_index == 3:
         pl.ylabel('Different covariances')
 
@@ -71,17 +67,6 @@ def lda_plot(lda, X, y, y_pred, fig_index):
     X1_tp, X1_fp = X1[tp1], X1[tp1 != True]
     xmin, xmax = X[:, 0].min(), X[:, 0].max()
     ymin, ymax = X[:, 1].min(), X[:, 1].max()
-    b_xmin, b_xmax = lda_decision_boundary(lda, np.array([xmin, xmax]))
-
-    # class 0: area
-    pl.fill([xmin, xmax, xmax, xmin, xmin],
-            [b_xmin, b_xmax, ymin, ymin, b_xmin],
-            facecolor='#ffbbbb', edgecolor='none') # light red
-
-    # class 1: area
-    pl.fill([xmin, xmax, xmax, xmin, xmin],
-            [b_xmin, b_xmax, ymax, ymax, b_xmin],
-            facecolor='#bbbbff', edgecolor='none') # light blue
 
     # class 0: dots 
     pl.plot(X0_tp[:, 0], X0_tp[:, 1], 'o', color='red')
@@ -91,45 +76,60 @@ def lda_plot(lda, X, y, y_pred, fig_index):
     pl.plot(X1_tp[:, 0], X1_tp[:, 1], 'o', color='blue')
     pl.plot(X1_fp[:, 0], X1_fp[:, 1], '.', color='#000099') # dark blue
 
+    # class 0 and 1 : areas
+    nx, ny = 200, 100
+    x_min, x_max = pl.xlim()
+    y_min, y_max = pl.ylim()
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, nx),
+                         np.linspace(y_min, y_max, ny))
+    Z = lda.predict_proba(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z[:, 1].reshape(xx.shape)
+    pl.pcolormesh(xx, yy, Z, cmap='red_blue_classes',
+                        norm=colors.Normalize(0., 1.))
+    pl.contour(xx, yy, Z, [0.5], linewidths=2., colors='k')
+
     # means
     pl.plot(lda.means_[0][0], lda.means_[0][1],
-            'o', color = 'black', markersize=10)
+            'o', color='black', markersize=10)
     pl.plot(lda.means_[1][0], lda.means_[1][1],
-            'o', color = 'black', markersize=10)
+            'o', color='black', markersize=10)
 
-    # decision boundary
-    pl.plot([xmin, xmax], [b_xmin, b_xmax], '-', color='black')
+    return splot
 
-    # covariances
-    v, w = np.linalg.eigh(lda.covariance_)
-    u = w[0] / np.linalg.norm(w[0])
+def plot_ellipse(splot, mean, cov, color):
+    v, w = linalg.eigh(cov)
+    u = w[0] / linalg.norm(w[0])
     angle = np.arctan(u[1]/u[0])
     angle = 180 * angle / np.pi # convert to degrees
-    ell = mpl.patches.Ellipse(lda.means_[0], v[0], v[1],
-                                180 + angle, color='red')
-    ell.set_clip_box(splot.bbox)
-    ell.set_alpha(0.5)
-    splot.add_artist(ell)
-    ell = mpl.patches.Ellipse (lda.means_[1], v[0], v[1],
-                                180 + angle, color='blue')
+    # filled gaussian at 2 standard deviation
+    ell = mpl.patches.Ellipse(mean, 2 * v[0] ** 0.5, 2 * v[1] ** 0.5,
+                                            180 + angle, color=color)
     ell.set_clip_box(splot.bbox)
     ell.set_alpha(0.5)
     splot.add_artist(ell)
 
+def plot_lda_cov(lda, splot):
+    plot_ellipse(splot, lda.means_[0], lda.covariance_, 'red')
+    plot_ellipse(splot, lda.means_[1], lda.covariance_, 'blue')
+
+def plot_qda_cov(qda, splot):
+    plot_ellipse(splot, qda.means_[0], qda.covariances_[0], 'red')
+    plot_ellipse(splot, qda.means_[1], qda.covariances_[1], 'blue')
+
+################################################################################
+for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
+    # LDA
+    lda = LDA()
+    y_pred = lda.fit(X, y, store_covariance=True).predict(X)
+    splot = plot_data(lda, X, y, y_pred, fig_index=2 * i + 1)
+    plot_lda_cov(lda, splot)
     pl.axis('tight')
 
-def main():
-    for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
-        # LDA
-        lda = LDA()
-        y_pred = lda.fit(X, y, store_covariance=True).predict(X)
-        lda_plot(lda, X, y, y_pred, 2 * i + 1)
-
-        # QDA #FIXME
-        lda = LDA()
-        y_pred = lda.fit(X, y, store_covariance=True).predict(X)
-        lda_plot(lda, X, y, y_pred, 2 * i + 2)
-    pl.suptitle('LDA vs QDA')
-    pl.show()
-
-if __name__ == '__main__': main()
+    # QDA
+    qda = QDA()
+    y_pred = qda.fit(X, y, store_covariances=True).predict(X)
+    splot = plot_data(qda, X, y, y_pred, fig_index=2 * i + 2)
+    plot_qda_cov(qda, splot)
+    pl.axis('tight')
+pl.suptitle('LDA vs QDA')
+pl.show()
