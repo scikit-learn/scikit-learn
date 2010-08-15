@@ -174,8 +174,8 @@ class QDA(BaseEstimator):
         -------
         C : array, shape = [n_samples]
         """
-        probas = self.decision_function(X)
-        y_pred = self.classes[probas.argmax(1)]
+        d = self.decision_function(X)
+        y_pred = self.classes[d.argmax(1)]
         return y_pred
 
     def predict_proba(self, X):
@@ -192,6 +192,8 @@ class QDA(BaseEstimator):
         C : array, shape = [n_samples, n_classes]
         """
         values = self.decision_function(X)
+        # compute the likelihood of the underlying gaussian models
+        # up to a multiplicative constant.
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
