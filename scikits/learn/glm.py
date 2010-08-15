@@ -59,10 +59,11 @@ class LinearModel(BaseEstimator, RegressorMixin):
 
     def __str__(self):
         if self.coef_ is not None:
-            return ("<%s \n  Fitted: explained variance=%s>" %
-                    (repr(self), self.explained_variance_))
+            return ("%s \n%s #... Fitted: explained variance=%s" %
+                    (repr(self), ' '*len(self.__class__.__name__),  
+                     self.explained_variance_))
         else:
-            return "<%s \n  Not fitted to data>" % repr(self)
+            return "%s \n#... Not fitted to data" % repr(self)
 
 
 class LinearRegression(LinearModel):
@@ -815,7 +816,9 @@ class LinearModelCV(LinearModel):
 
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
+        self.explained_variance_ = model.explained_variance_
         self.alpha = model.alpha
+        self.alphas = np.asarray(alphas)
         return self
 
 
@@ -839,7 +842,7 @@ class LassoCV(LinearModelCV):
 
     Notes
     -----
-    See examples/lasso_path_with_crossvalidation.py for an example.
+    See examples/glm/lasso_path_with_crossvalidation.py for an example.
     """
 
     path = staticmethod(lasso_path)
@@ -869,7 +872,7 @@ class ElasticNetCV(LinearModelCV):
 
     Notes
     -----
-    See examples/lasso_path_with_crossvalidation.py for an example.
+    See examples/glm/lasso_path_with_crossvalidation.py for an example.
     """
 
     path = staticmethod(enet_path)

@@ -23,10 +23,10 @@ class QDA(BaseEstimator):
 
     Parameters
     ----------
-    X : array-like, shape = [nsamples, nfeatures]
+    X : array-like, shape = [n_samples, n_features]
         Training vector, where nsamples in the number of samples and
         nfeatures is the number of features.
-    Y : array, shape = [nsamples]
+    y : array, shape = [n_samples]
         Target vector relative to X
 
     priors : array, optional, shape = [n_classes]
@@ -52,20 +52,20 @@ class QDA(BaseEstimator):
     Examples
     --------
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> Y = np.array([1, 1, 1, 2, 2, 2])
+    >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QDA()
-    >>> clf.fit(X, Y)    #doctest: +ELLIPSIS
+    >>> clf.fit(X, y)
     QDA(priors=None)
     >>> print clf.predict([[-0.8, -1]])
     [1]
 
     See also
     --------
-    QDA
+    LDA
 
     """
     def __init__(self, priors=None):
-        if not priors is None:
+        if priors is not None:
             self.priors = np.asarray(priors)
         else: self.priors = None
 
@@ -89,7 +89,7 @@ class QDA(BaseEstimator):
         y = np.asanyarray(y)
         if X.ndim!=2:
             raise exceptions.ValueError('X must be a 2D array')
-        if X.shape[0] != y.shape[0]: 
+        if X.shape[0] != y.shape[0]:
             raise ValueError("Incompatible shapes")
         n_samples = X.shape[0]
         n_features = X.shape[1]
