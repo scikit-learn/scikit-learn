@@ -10,6 +10,7 @@ import exceptions, warnings
 
 import numpy as np
 import scipy.linalg as linalg
+import scipy.ndimage as ndimage
 
 from .base import BaseEstimator
 
@@ -99,14 +100,14 @@ class QDA(BaseEstimator):
             raise exceptions.ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array([float(np.sum(group_indices)) \
-                               for group_indices in classes_indices])
-            self.priors_ = counts / n_samples
+            counts = np.array(ndimage.measurements.sum(np.ones(len(y)),
+                                                    y, index=classes))
+            self.priors_ = counts / float(n_samples)
         else:
             self.priors_ = self.priors
 
         cov = None
-        if store_covariances is True:
+        if store_covariances:
             cov = []
         means = []
         scalings = []
@@ -122,12 +123,12 @@ class QDA(BaseEstimator):
             if rank < n_features:
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
-            if store_covariances is True:
+            if store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
-        if store_covariances is True:
+        if store_covariances:
             self.covariances_ = cov
         self.means_ = np.asarray(means)
         self.scalings = np.asarray(scalings)
@@ -157,6 +158,7 @@ class QDA(BaseEstimator):
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T # shape : len(X), n_classes
+        print self.priors_
         return -0.5 * (norm2 + np.sum(np.log(self.scalings), 1)) + \
                np.log(self.priors_)
 

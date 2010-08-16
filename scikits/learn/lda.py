@@ -2,6 +2,7 @@ import exceptions, warnings
 
 import numpy as np
 import scipy.linalg as linalg
+import scipy.ndimage as ndimage
 
 from .base import BaseEstimator, ClassifierMixin
 
@@ -94,9 +95,9 @@ class LDA(BaseEstimator, ClassifierMixin):
             raise exceptions.ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array([float(np.sum(group_indices)) \
-                               for group_indices in classes_indices])
-            self.priors_ = counts / n_samples
+            counts = np.array(ndimage.measurements.sum(np.ones(len(y)),
+                                                    y, index=classes))
+            self.priors_ = counts / float(n_samples)
         else:
             self.priors_ = self.priors
 
