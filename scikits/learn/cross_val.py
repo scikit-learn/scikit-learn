@@ -11,6 +11,7 @@ import numpy as np
 
 from .base import ClassifierMixin
 from .utils.extmath import factorial, combinations
+from .externals.joblib import Parallel, delayed
 
 ##############################################################################
 class LeaveOneOut(object):
@@ -450,10 +451,19 @@ class LeavePLabelOut(object):
 
     
 ##############################################################################
-def _default_score_func(estimator, X, y=None):
-    return estimator.score(X, y)
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None):
+def _cross_val_score(estimator, X, y, score_func, train, test):
+    """ Inner loop for cross validation.
+    """
+    if score_func is None:
+        score_func = lambda self, *args: estimator.score(*args)
+    if y is None:
+        return score_func(estimator.fit(X[train]), X[test])
+    return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
+
+
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None, 
+                n_jobs=1, verbose=0):
     """ Evaluate a score by cross-validation.
 
         Parameters
@@ -473,6 +483,11 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None):
             A cross-validation generator. If None, a 3-fold cross
             validation is used or 3-fold stratified cross-validation
             when y is supplied.
+        n_jobs: integer, optional
+            The number of CPUs to use to do the computation. -1 means
+            'all CPUs'.
+        verbose: integer, optional
+            The verbosity level
     """
     # XXX: should have a n_jobs to be able to do this in parallel.
     n_samples = len(X)
@@ -487,18 +502,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None):
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator
                 )
-        score_func = _default_score_func
-    scores = list()
-    for train, test in cv:
-        if y is not None:
-            y_train = y[train]
-            y_test  = y[test]
-        else:
-            y_train = y_test = None
-        X_train = X[train]
-        X_test  = X[test]
-        estimator.fit(X_train, y_train)
-        scores.append(score_func(estimator, X_test, y_test))
+    scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
+                delayed(_cross_val_score)(estimator, X, y, score_func, 
+                                                        train, test)
+                for train, test in cv)
     return np.array(scores)
 
 

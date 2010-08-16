@@ -34,7 +34,8 @@ percentiles = (10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
 
 for percentile in percentiles:
     transform._set_params(percentile=percentile)
-    this_scores = cross_val.cross_val_score(clf, X, y)
+    # Compute cross-validation score using all CPUs
+    this_scores = cross_val.cross_val_score(clf, X, y, n_jobs=-1) 
     score_means.append(this_scores.mean())
     score_stds.append(this_scores.std())
 
