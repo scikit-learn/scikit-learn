@@ -158,7 +158,6 @@ class QDA(BaseEstimator):
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T # shape : len(X), n_classes
-        print self.priors_
         return -0.5 * (norm2 + np.sum(np.log(self.scalings), 1)) + \
                np.log(self.priors_)
 
