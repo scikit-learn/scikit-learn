@@ -147,7 +147,7 @@ class Ridge(LinearModel):
     >>> Y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
-    >>> clf.fit(X, Y) #doctest: +ELLIPSIS
+    >>> clf.fit(X, Y)
     Ridge(alpha=1.0,
           fit_intercept=True)
     """
