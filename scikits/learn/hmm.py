@@ -2,13 +2,10 @@
 #
 # Author: Ron Weiss <ronweiss@gmail.com>
 
-import functools
-import itertools
 import string
 
 import numpy as np
 import scipy as sp
-import scipy.cluster
 
 import gmm
 from gmm import *

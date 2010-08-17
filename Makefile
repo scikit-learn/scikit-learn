@@ -13,6 +13,7 @@ clean-build:
 
 clean: clean-build clean-pyc clean-so
 
+in: inplace # just a shortcut
 inplace:
 	python setup.py build_ext -i
 
