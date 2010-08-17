@@ -8,7 +8,7 @@ An example showing univariate feature selection.
 Noisy (non informative) features are added to the iris data and
 univariate feature selection is applied. For each feature, we plot the
 p-values for the univariate feature selection and the corresponding
-weights of an SVM. We can see that univariate feature selection 
+weights of an SVM. We can see that univariate feature selection
 selects the informative features and that these have larger SVM weights.
 
 In the total set of features, only the 4 first ones are significant. We
@@ -45,18 +45,17 @@ x_indices = np.arange(x.shape[-1])
 
 ################################################################################
 # Univariate feature selection
-from scikits.learn.feature_selection import univariate_selection
+from scikits.learn.feature_selection import SelectFpr, f_classif
 # As a scoring function, we use a F test for classification
 # We use the default selection function: the 10% most significant
 # features
-selector = univariate_selection.SelectFpr(
-                score_func=univariate_selection.f_classif)
 
+selector = SelectFpr(f_classif, alpha=0.1)
 selector.fit(x, y)
-scores = -np.log(selector._pvalues)
+scores = -np.log10(selector._pvalues)
 scores /= scores.max()
-pl.bar(x_indices-.45, scores, width=.3, 
-        label=r'Univariate score ($-\log(p\,values)$)', 
+pl.bar(x_indices-.45, scores, width=.3,
+        label=r'Univariate score ($-Log(p_{value})$)',
         color='g')
 
 ################################################################################
@@ -64,7 +63,7 @@ pl.bar(x_indices-.45, scores, width=.3,
 clf = svm.SVC(kernel='linear')
 clf.fit(x, y)
 
-svm_weights = (clf.support_**2).sum(axis=0)
+svm_weights = (clf.coef_**2).sum(axis=0)
 svm_weights /= svm_weights.max()
 pl.bar(x_indices-.15, svm_weights, width=.3, label='SVM weight',
         color='r')
@@ -80,15 +79,14 @@ pl.bar(x_indices-.15, svm_weights, width=.3, label='SVM weight',
 # svm_weights /= svm_weights.max()
 # full_svm_weights = np.zeros(selector.support_.shape)
 # full_svm_weights[selector.support_] = svm_weights
-# pl.bar(x_indices+.15, full_svm_weights, width=.3, 
+# pl.bar(x_indices+.15, full_svm_weights, width=.3,
 #         label='SVM weight after univariate selection',
 #         color='b')
-
 
 pl.title("Comparing feature selection")
 pl.xlabel('Feature number')
 pl.yticks(())
 pl.axis('tight')
-pl.legend()
+pl.legend(loc='upper right')
 pl.show()
- 
+

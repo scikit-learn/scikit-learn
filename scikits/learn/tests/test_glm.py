@@ -1,8 +1,19 @@
 import numpy as np
-from nose.tools import *
-from numpy.testing import *
+from nose.tools import assert_equal, assert_true
+from numpy.testing import (assert_array_almost_equal,
+                           assert_almost_equal)
 
 from scikits.learn import glm
+
+################################################################################
+# Smoke test of different estimators
+################################################################################
+
+
+
+################################################################################
+# Test LeastAngleRegression
+################################################################################
 
 def test_toy():
     """Very simple test on a small dataset"""
@@ -96,7 +107,7 @@ def test_predict():
     Y = np.random.randn(n)
     Y = Y - Y.mean() # center response
 
-    Y_ = glm.LeastAngleRegression().fit(X, Y, intercept=False).predict(X)
+    Y_ = glm.LeastAngleRegression().fit(X, Y, fit_intercept=False).predict(X)
     print np.linalg.norm(Y - Y_)
     assert np.linalg.norm(Y-Y_) < 1e-10
 
@@ -124,7 +135,7 @@ def test_sparse_coding():
     def sparse_encode(vector):
         return glm.LeastAngleRegression().fit(
             D, vector, max_features=max_features, normalize=False,
-            intercept=False
+            fit_intercept=False
         ).coef_
 
     def sparse_decode(vector):

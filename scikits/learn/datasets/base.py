@@ -42,9 +42,9 @@ def load_iris():
 
     >>> data = load_iris()
     >>> print data.target[[10, 25, 50]]
-    [0  0 1]
-    >>> print data.target_names[data.target[[10, 25, 50]]]
-    ['setosa' 'setosaosa' 'versicolor']
+    [0 0 1]
+    >>> print data.target_names
+    ['setosa' 'versicolor' 'virginica']
     """
     
     data_file = csv.reader(open(os.path.dirname(__file__) 

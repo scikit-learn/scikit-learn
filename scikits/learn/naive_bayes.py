@@ -2,7 +2,9 @@
 # License: BSD Style.
 import numpy as np
 
-class GNB(object):
+from .base import BaseEstimator, ClassifierMixin
+
+class GNB(BaseEstimator, ClassifierMixin):
     """
     Gaussian Naive Bayes (GNB)
 
@@ -40,8 +42,8 @@ class GNB(object):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> Y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = GNB()
-    >>> clf.fit(X, Y)    #doctest: +ELLIPSIS
-    <scikits.learn.naive_bayes.GNB object at 0x...>
+    >>> clf.fit(X, Y)
+    GNB()
     >>> print clf.predict([[-0.8, -1]])
     [1]
 
@@ -49,6 +51,8 @@ class GNB(object):
     --------
 
     """
+    def __init__(self):
+        pass
 
     def fit(self, X, y):
         theta = []

@@ -16,11 +16,11 @@ single number, and for instance a multi-dimensional entry (aka
 *multivariate* data), is it said to have several attributes, or
 *features*.
 
-We can separate learning problems in a few large categories: 
+We can separate learning problems in a few large categories:
 
  * **supervised learning**, in which the data comes with additional
    attributes that we want to predict. This problem can be either:
-   
+
     * **classification**: samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
       of un-labeled data. An example of classification problem would
@@ -45,7 +45,7 @@ We can separate learning problems in a few large categories:
 .. topic:: Training set and testing set
 
     Machine learning is about learning some properties of a data set and
-    applying them to new data. This is why a common practice in machine 
+    applying them to new data. This is why a common practice in machine
     learning to evaluate an algorithm is to split the data at hand in two
     sets, one that we call a *training set* on which we learn data
     properties, and one that we call a *testing set*, on which we test
@@ -76,7 +76,7 @@ access to the features that can be used to classify the digits samples::
     array([[  0.,   0.,   5., ...,   0.,   0.,   0.],
            [  0.,   0.,   0., ...,  10.,   0.,   0.],
            [  0.,   0.,   0., ...,  16.,   9.,   0.],
-           ..., 
+           ...,
            [  0.,   0.,   1., ...,   6.,   0.,   0.],
            [  0.,   0.,   2., ...,  12.,   0.,   0.],
            [  0.,   0.,  10., ...,  12.,   1.,   0.]])
@@ -89,7 +89,7 @@ learn:
 array([0, 1, 2, ..., 8, 9, 8])
 
 .. topic:: Shape of the data arrays
-   
+
     The data is always a 2D array, `n_samples, n_features`, although
     the original data may have had a different shape. In the case of the
     digits, each original sample is an image of shape `8, 8` and can be
@@ -106,8 +106,17 @@ array([0, 1, 2, ..., 8, 9, 8])
            [  0.,   0.,   6.,  13.,  10.,   0.,   0.,   0.]])
 
     The :ref:`simple example on this dataset <example_plot_digits_classification.py>`
-    illustrates how starting from the original problem one can shape the 
+    illustrates how starting from the original problem one can shape the
     data for consumption in the `scikit.learn`.
+
+
+``scikits.learn`` also offers the possibility to reuse external datasets coming
+from the http://mlcomp.org online service that provides a repository of public
+datasets for various tasks (binary & multi label classification, regression,
+document classification, ...) along with a runtime environment to compare
+program performance on those datasets. Please refer to the following example for
+for instructions on the ``mlcomp`` dataset loader:
+:ref:`example_mlcomp_document_classification.py`.
 
 
 Learning and Predicting
@@ -158,4 +167,4 @@ resolution. Do you agree with the classifier?
 
 A complete example of this classification problem is available as an
 example that you can run and study:
-:ref:`example_plot_digits_classification.py`. 
+:ref:`example_plot_digits_classification.py`.

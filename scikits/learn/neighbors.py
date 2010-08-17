@@ -6,9 +6,11 @@ neighbor searches in high dimensionality.
 """
 import numpy as np
 from scipy import stats
+
+from .base import BaseEstimator, ClassifierMixin
 from .ball_tree import BallTree
 
-class Neighbors:
+class Neighbors(BaseEstimator, ClassifierMixin):
   """
   Classifier implementing k-Nearest Neighbor Algorithm.
 
@@ -30,18 +32,19 @@ class Neighbors:
   >>> samples = [[0.,0.,1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
   >>> labels = [0,0,1,1]
   >>> neigh = Neighbors(k=3)
-  >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-  <scikits.learn.neighbors.Neighbors instance at 0x...>
+  >>> neigh.fit(samples, labels)
+  Neighbors(k=3,
+            window_size=1)
   >>> print neigh.predict([[0,0,0]])
   [ 0.]
   """
 
-  def __init__(self, k = 5, window_size = 1):
+  def __init__(self, k=5, window_size=1):
     """
     Internally uses the ball tree datastructure and algorithm for fast
     neighbors lookups on high dimensional datasets.
     """
-    self._k = k
+    self.k = k
     self.window_size = window_size
 
   def fit(self, X, Y=()):
@@ -80,8 +83,9 @@ class Neighbors:
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> labels = [0, 0, 1]
     >>> neigh = Neighbors(k=1)
-    >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-    <scikits.learn.neighbors.Neighbors instance at 0x...>
+    >>> neigh.fit(samples, labels)
+    Neighbors(k=1,
+              window_size=1)
     >>> print neigh.kneighbors([1., 1., 1.])
     (array(0.5), array(2))
 
@@ -93,8 +97,8 @@ class Neighbors:
     (array([ 0.5       ,  1.11803399]), array([1, 2]))
 
     """
-    if k is None: k = self._k
-
+    if k is None:
+        k=self.k
     return self.ball_tree.query(data, k=k)
 
 
@@ -121,15 +125,17 @@ class Neighbors:
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> labels = [0, 0, 1]
     >>> neigh = Neighbors(k=1)
-    >>> neigh.fit(samples, labels) #doctest: +ELLIPSIS
-    <scikits.learn.neighbors.Neighbors instance at 0x...>
+    >>> neigh.fit(samples, labels)
+    Neighbors(k=1,
+              window_size=1)
     >>> print neigh.predict([.2, .1, .2])
     0
     >>> print neigh.predict([[0., -1., 0.], [3., 2., 0.]])
     [0 1]
     """
     T = np.asanyarray(T)
-    if k is None: k = self._k
+    if k is None: 
+        k=self.k
     return _predict_from_BallTree(self.ball_tree, self.Y, T, k=k)
 
 

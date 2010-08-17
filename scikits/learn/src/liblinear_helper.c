@@ -32,8 +32,8 @@ struct feature_node **dense_to_sparse (double *x, npy_intp *dims, double bias)
         T = temp; /* reset stack pointer */
 
         for (j=1; j<=dims[1]; ++j) {
-            T->value = *x;
-            if (T->value != 0) {
+            if (*x != 0) {
+                T->value = *x;
                 T->index = j;
                 ++ T;
             }

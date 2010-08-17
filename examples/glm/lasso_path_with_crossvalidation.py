@@ -27,31 +27,18 @@ X_test, y_test = X[n_samples/2:], y[n_samples/2:]
 
 
 ################################################################################
-# Lasso with path and cross-validation using optimized_lasso
-from scikits.learn.cross_val import KFold
-from scikits.learn.glm import optimized_lasso
-
-# Instanciate cross-validation generator
-cv = KFold(n_samples/2, 5)
-
-# # Estimate optimized lasso model
-lasso_opt = optimized_lasso(X_train, y_train, cv, n_alphas=100, eps=1e-3, maxit=100)
-y_ = lasso_opt.predict(X_test)
-
-print lasso_opt
-
-# Compute explained variance on test data
-print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_)**2
-                                      / np.linalg.norm(y_test)**2)
-
-################################################################################
 # Lasso with path and cross-validation using LassoCV path
 from scikits.learn.glm import LassoCV
+from scikits.learn.cross_val import KFold
+
+cv = KFold(n_samples/2, 5)
 lasso_cv = LassoCV()
 
-y_pred = lasso_cv.fit(X_train, y_train).predict(X_test)
+# fit_params = {'maxit':100}
 
-print lasso_cv
+y_ = lasso_cv.fit(X_train, y_train, cv=cv, maxit=100).predict(X_test)
+
+print "Optimal regularization parameter  = %s" % lasso_cv.alpha
 
 # Compute explained variance on test data
 print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_)**2

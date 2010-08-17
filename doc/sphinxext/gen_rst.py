@@ -9,14 +9,16 @@ Files that generate images should start with 'plot'
 """
 import os
 import shutil
+import traceback
+# Import numpy to avoid an annoying bug in an example due to the use of 
+# execfile
+import numpy as np
 
 fileList = []
 
 import matplotlib
 matplotlib.use('Agg')
-import IPython.Shell
-mplshell = IPython.Shell.MatplotlibShell('mpl')
-                          
+
 import token, tokenize      
 
 rst_template = """
@@ -160,8 +162,14 @@ def generate_file_rst(fname, target_dir, src_dir):
             print 'plotting %s' % fname
             import matplotlib.pyplot as plt
             plt.close('all')
-            mplshell.magic_run(example_file)
-            plt.savefig(image_file)
+            try:
+                execfile(example_file)
+                plt.savefig(image_file)
+            except:
+                print 80*'_'
+                print '%s is not compiling:' % fname
+                traceback.print_exc()
+                print 80*'_'
         this_template = plot_rst_template
 
     docstring, short_desc, end_row = extract_docstring(example_file)

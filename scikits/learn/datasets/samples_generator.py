@@ -11,7 +11,8 @@ Samples generator
 # License: BSD 3 clause
 
 
-
+def samples_classif():
+    pass
 
 ######################################################################
 # Generate Dataset for test
