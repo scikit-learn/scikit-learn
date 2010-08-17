@@ -6,10 +6,10 @@ Quadratic Discriminant Analysis
 #
 # License: BSD Style.
 
-import exceptions, warnings
+import exceptions
+import warnings
 
 import numpy as np
-import scipy.linalg as linalg
 import scipy.ndimage as ndimage
 
 from .base import BaseEstimator
