@@ -9,7 +9,7 @@ import inspect
 
 import numpy as np
 
-from scikits.learn.metrics import zero_one, mean_square_error
+from .metrics import zero_one, mean_square_error
 
 ################################################################################
 class BaseEstimator(object):

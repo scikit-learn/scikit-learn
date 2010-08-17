@@ -144,6 +144,8 @@ In addition, we add the following guidelines:
     * Avoid multiple statements on one line. Prefer a line return after
       a control flow statement (`if`/`for`).
 
+    * Use relative imports for references inside scikits.learn.
+
     * **Please don't use `import *` in any case**. It is considered harmful 
       by the `official Python recommandations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.

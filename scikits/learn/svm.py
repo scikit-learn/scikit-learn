@@ -1,7 +1,7 @@
 import numpy as np
-import _libsvm
-import _liblinear
 
+from . import _libsvm
+from . import _liblinear
 from .base import BaseEstimator, RegressorMixin, ClassifierMixin
 
 #
