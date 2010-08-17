@@ -10,7 +10,7 @@ Density Function, with Applications in Pattern Recognition"
 """
 
 import numpy as np
-from scikits.learn.clustering import MeanShift
+from scikits.learn.clustering import MeanShift, estimate_bandwidth
 
 ################################################################################
 # Generate sample data
@@ -21,16 +21,15 @@ n_clusters = 3
 n_points = n_points_per_cluster*n_clusters
 means = np.array([[1,1],[-1,-1],[1,-1]])
 std = .6
-bandwidth = 1.2
 clustMed = []
 
 X = np.empty((0, 2))
 for i in range(n_clusters):
     X = np.r_[X, means[i] + std * np.random.randn(n_points_per_cluster, 2)]
 
-
 ################################################################################
 # Compute clustering with MeanShift
+bandwidth = estimate_bandwidth(X, quantile=0.3)
 ms = MeanShift(bandwidth=bandwidth)
 ms.fit(X).labels
 labels = ms.labels

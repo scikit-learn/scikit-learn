@@ -4,6 +4,7 @@ Author: Alexandre Gramfort alexandre.gramfort@inria.fr
         Gael Varoquaux gael.varoquaux@normalesup.org
 """
 
+from math import floor
 import numpy as np
 
 from .base import BaseEstimator
@@ -12,7 +13,58 @@ from .base import BaseEstimator
 # MeanShift
 ################################################################################
 
-def mean_shift(X, bandwidth):
+def euclidian_distances(X, Y=None):
+    """
+    Considering the rows of X (and Y=X) as vectors, compute the
+    distance matrix between each pair of vector
+
+    Parameters
+    ----------
+    X, array of shape (n_samples_1, n_features)
+
+    Y, array of shape (n_samples_2, n_features), default None
+            if Y is None, then Y=X is used instead
+
+    Returns
+    -------
+    distances, array of shape (n_samples_1, n_samples_2)
+    """
+    if Y is None:
+        Y = X
+    if X.shape[1] != Y.shape[1]:
+        raise ValueError, "incompatible dimension for X and Y matrices"
+
+    XX = np.sum(X * X, axis=1)[:,np.newaxis]
+    if Y is None:
+        YY = XX.T
+    else:
+        YY = np.sum(Y * Y, axis=1)[np.newaxis,:]
+    distances = XX + YY # Using broadcasting
+    distances -= 2 * np.dot(X, Y.T)
+    distances = np.maximum(distances, 0)
+    distances = np.sqrt(distances)
+    return distances
+
+
+def estimate_bandwidth(X, quantile=0.3):
+    """Estimate the bandwith ie the radius to use with an RBF kernel
+    in the MeanShift algorithm
+
+    X: array [n_samples, n_features]
+        Input points
+
+    quantile: float, default 0.3
+        should be between [0, 1]
+        0.5 means that the median is all pairwise distances is used
+    """
+    distances = euclidian_distances(X)
+    distances = np.triu(distances, 1)
+    distances_sorted = np.sort(distances[distances > 0])
+    bandwidth = distances_sorted[floor(quantile * len(distances_sorted))]
+    return bandwidth
+
+
+def mean_shift(X, bandwidth=None):
     """Perform MeanShift Clustering of data using a flat kernel
 
     Parameters
@@ -21,8 +73,10 @@ def mean_shift(X, bandwidth):
     X : array [n_samples, n_features]
         Input points
 
-    bandwidth : float
+    bandwidth : float, optional
         kernel bandwidth
+        If bandwidth is not defined, it is set using
+        a heuristic given by the median of all pairwise distances
 
     Returns
     ========
@@ -40,6 +94,9 @@ def mean_shift(X, bandwidth):
     Density Function, with Applications in Pattern Recognition"
 
     """
+
+    if bandwidth is None:
+        bandwidth = estimate_bandwidth(X)
 
     n_points, n_features = X.shape
 
@@ -126,7 +183,7 @@ def mean_shift(X, bandwidth):
 class MeanShift(BaseEstimator):
     """MeanShift clustering"""
 
-    def __init__(self, bandwidth):
+    def __init__(self, bandwidth=None):
         self.bandwidth = bandwidth
 
     def fit(self, X, **params):
@@ -154,7 +211,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
     damping : float, optional
         Damping factor
     copy: boolean, optional
-        If copy is False, the affinity matrix is modified inplace by the 
+        If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency
 
     Returns

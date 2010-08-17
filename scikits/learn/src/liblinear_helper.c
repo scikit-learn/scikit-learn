@@ -63,6 +63,38 @@ struct feature_node **dense_to_sparse (double *x, npy_intp *dims, double bias)
 }
 
 
+/*
+ * Convert scipy.sparse.csr to libsvm's sparse data structure
+ */
+struct feature_node **csr_to_sparse (double *values, npy_intp *shape_indices,
+		int *indices, npy_intp *shape_indptr, int *indptr, double bias,
+                int n_features)
+{
+    struct feature_node **sparse, *temp;
+    int i, j=0, k=0, n;
+    sparse = (struct feature_node **) malloc (shape_indptr[0] * sizeof(struct feature_node *));
+
+    for (i=0; i<shape_indptr[0]-1; ++i) {
+        n = indptr[i+1] - indptr[i]; /* count elements in row i */
+        sparse[i] = (struct feature_node *) malloc ((n+2) * sizeof(struct feature_node));
+        temp = sparse[i];
+        for (j=0; j<n; ++j) {
+            temp[j].value = values[k];
+            temp[j].index = indices[k] + 1; /* libsvm uses 1-based indexing */
+            ++k;
+        }
+        /* set sentinel */
+        if (bias > 0) {
+            temp[j].value = 1.0;
+            temp[j].index = (int) n_features;
+            ++j;
+        }
+        temp[j].index = -1;
+    }
+
+    return sparse;
+}
+
 struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
 {
     struct problem *problem;
@@ -80,6 +112,25 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
     problem->x = dense_to_sparse((double *) X, dims, bias); /* TODO: free */
     problem->bias = bias;
     if (problem->x == NULL) { 
+        free(problem);
+        return NULL;
+    }
+    return problem;
+}
+
+struct problem * csr_set_problem (char *values, npy_intp *n_indices,
+	char *indices, npy_intp *n_indptr, char *indptr, char *Y,
+        npy_intp n_features, double bias) {
+
+    struct problem *problem;
+    problem = (struct problem *) malloc (sizeof (struct problem));
+    if (problem == NULL) return NULL;
+    problem->l = (int) n_indptr[0] - 1;
+    problem->n = (int) n_features;
+    problem->y = (int *) Y;
+    problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
+			n_indptr, (int *) indptr, bias, n_features);
+    if (problem->x == NULL) {
         free(problem);
         return NULL;
     }
@@ -105,7 +156,7 @@ struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp
 struct model * set_model(struct parameter *param, char *coef, npy_intp *dims, 
                          char *label, double bias)
 {
-    npy_int len_w = dims[0] * dims[1];
+    npy_intp len_w = dims[0] * dims[1];
     int m = (int) dims[0], k = (int) dims[1];
     struct model *model;
 
@@ -164,6 +215,30 @@ int copy_predict(char *train, struct model *model, npy_intp *train_dims,
         ++t;
     }
     free(train_nodes);
+    return 0;
+}
+/*
+ * Predict using a model, where data is expected to be enconded into a csr matrix.
+ */
+int csr_copy_predict(npy_intp n_features, npy_intp *data_size, char *data,
+        npy_intp *index_size,
+        char *index, npy_intp *indptr_shape, char *intptr, struct model *model,
+        char *dec_values) {
+    int *t = (int *) dec_values;
+    struct feature_node **predict_nodes;
+    npy_intp i;
+
+    predict_nodes = csr_to_sparse((double *) data, index_size,
+            (int *) index, indptr_shape, (int *) intptr, model->bias, n_features);
+
+    if (predict_nodes == NULL)
+        return -1;
+    for (i = 0; i < indptr_shape[0] - 1; ++i) {
+        *t = predict(model, predict_nodes[i]);
+        free(predict_nodes[i]);
+        ++t;
+    }
+    free(predict_nodes);
     return 0;
 }
 

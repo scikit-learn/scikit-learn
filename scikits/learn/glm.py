@@ -12,6 +12,7 @@ Generalized Linear models.
 
 import warnings
 
+from math import log10
 import numpy as np
 import scipy.linalg 
 import scipy.sparse as sp # needed by LeastAngleRegression
@@ -44,7 +45,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
             Returns predicted values.
         """
         X = np.asanyarray(X)
@@ -58,10 +59,11 @@ class LinearModel(BaseEstimator, RegressorMixin):
 
     def __str__(self):
         if self.coef_ is not None:
-            return ("<%s \n  Fitted: explained variance=%s>" %
-                    (repr(self), self.explained_variance_))
+            return ("%s \n%s #... Fitted: explained variance=%s" %
+                    (repr(self), ' '*len(self.__class__.__name__),  
+                     self.explained_variance_))
         else:
-            return "<%s \n  Not fitted to data>" % repr(self)
+            return "%s \n#... Not fitted to data" % repr(self)
 
 
 class LinearRegression(LinearModel):
@@ -145,7 +147,7 @@ class Ridge(LinearModel):
     >>> Y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
-    >>> clf.fit(X, Y) #doctest: +ELLIPSIS
+    >>> clf.fit(X, Y)
     Ridge(alpha=1.0,
           fit_intercept=True)
     """
@@ -681,18 +683,20 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     """
     n_samples = X.shape[0]
     if alphas is None:
-        # XXX: Should use numpy.logspace
         alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
-        alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
-        alphas = np.exp(alphas)
+        alphas = np.logspace(log10(alpha_max*eps), log10(alpha_max),
+                             num=n_alphas)[::-1]
     else:
+        # XXX: Maybe should reorder the models when outputing them, so
+        # that they are ordered in the order of the initial alphas
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
     models = []
     for alpha in alphas:
         model = Lasso(coef_=coef_, alpha=alpha)
         model.fit(X, y, **fit_params)
-        if verbose: print model
+        if verbose: 
+            print model
         coef_ = model.coef_.copy()
         models.append(model)
     return models
@@ -714,10 +718,10 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Length of the path. eps=1e-3 means that
         alpha_min / alpha_max = 1e-3
 
-    n_alphas : int
+    n_alphas : int, optional
         Number of alphas along the regularization path
 
-    alphas : numpy array
+    alphas : numpy array, optional
         List of alphas where to compute the models.
         If None alphas are set automatically
 
@@ -735,8 +739,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     n_samples = X.shape[0]
     if alphas is None:
         alpha_max = np.abs(np.dot(X.T, y)).max() / (n_samples*rho)
-        alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
-        alphas = np.exp(alphas)
+        alphas = np.logspace(log10(alpha_max*eps), log10(alpha_max),
+                             num=n_alphas)[::-1]
     else:
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
@@ -812,7 +816,9 @@ class LinearModelCV(LinearModel):
 
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
+        self.explained_variance_ = model.explained_variance_
         self.alpha = model.alpha
+        self.alphas = np.asarray(alphas)
         return self
 
 
@@ -836,7 +842,7 @@ class LassoCV(LinearModelCV):
 
     Notes
     -----
-    See examples/lasso_path_with_crossvalidation.py for an example.
+    See examples/glm/lasso_path_with_crossvalidation.py for an example.
     """
 
     path = staticmethod(lasso_path)
@@ -866,7 +872,7 @@ class ElasticNetCV(LinearModelCV):
 
     Notes
     -----
-    See examples/lasso_path_with_crossvalidation.py for an example.
+    See examples/glm/lasso_path_with_crossvalidation.py for an example.
     """
 
     path = staticmethod(enet_path)
@@ -996,7 +1002,7 @@ class LeastAngleRegression(LinearModel):
 
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
             Returns predicted values.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')

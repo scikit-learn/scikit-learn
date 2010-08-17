@@ -2,6 +2,8 @@
 Support Vector Machines
 =======================
 
+.. TODO: LinearSVC is missing !
+
 **Support vector machines (SVMs)** are a set of supervised learning
 methods used for classification and regression. In simple words, given
 a set of training examples, with each sample marked as belonging to one
@@ -115,6 +117,9 @@ classifiers, except that:
     For a complete example of custom kernels, 
     see :ref:`example_svm_plot_custom_kernel.py` 
 
+
+.. TODO: precomputed kernels.
+
 Regression
 ==========
 
@@ -165,16 +170,25 @@ Examples
 
 See :ref:`svm_examples` for a complete list of examples.
 
-Scaling
-=======
-Support Vector Machine algorithms are not scale-invariant, so it is
-highly recommended to standarize the input vector X to have mean 0 and
-variance 1. Note that the *same* scaling must be applied to the test
-vector to obtain meaningful results.
+Tips on Practical Use
+=====================
 
-See `The CookBook
-<https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_ for
-some examples on scaling.
+  * Support Vector Machine algorithms are not scale-invariant, so it
+  is highly recommended to scale your data. For example, scale each
+  attribute on the input vector X to [0,1] or [-1,+1], or standarize
+  it to have mean 0 and variance 1. Note that the *same* scaling must
+  be applied to the test vector to obtain meaningful results. See `The
+  CookBook
+  <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_ for
+  some examples on scaling.
+
+  * nu in nu-SVC/one-class-SVM/nu-SVR approximates the fraction of
+  training errors and support vectors.
+
+  * If data for classification are unbalanced (e.g. many positive and
+    few negative), try different penalty parameters C.
+
+  * Specify larger cache size (keyworkd cache) for huge problems.
 
 
 Implementation details

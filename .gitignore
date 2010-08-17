@@ -11,3 +11,4 @@ doc/_build/
 doc/auto_examples/
 pip-log.txt
 scikits.learn.egg-info/
+.coverage
