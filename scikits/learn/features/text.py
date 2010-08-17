@@ -187,7 +187,7 @@ class SparseHashingVectorizer(object):
     scipy.sparse datastructure to store the tf vectors.
     """
 
-    def __init__(self, dim=50000, probes=1, analyzer=SimpleAnalyzer(),
+    def __init__(self, dim=100000, probes=1, analyzer=SimpleAnalyzer(),
                  use_idf=True):
         self.dim = dim
         self.probes = probes
