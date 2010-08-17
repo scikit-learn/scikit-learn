@@ -45,6 +45,8 @@ class LDA(BaseEstimator, ClassifierMixin):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from scikits.learn.lda import LDA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
@@ -89,7 +91,7 @@ class LDA(BaseEstimator, ClassifierMixin):
             raise exceptions.ValueError('X must be a 2D array')
         n_samples = X.shape[0]
         n_features = X.shape[1]
-        classes = np.unique(y)
+        classes = np.unique(y).astype(np.int32)
         n_classes = classes.size
         if n_classes < 2:
             raise exceptions.ValueError('y has less than 2 classes')

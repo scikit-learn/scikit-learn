@@ -52,6 +52,8 @@ class QDA(BaseEstimator):
 
     Examples
     --------
+    >>> from scikits.learn.qda import QDA
+    >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QDA()
@@ -94,7 +96,7 @@ class QDA(BaseEstimator):
             raise ValueError("Incompatible shapes")
         n_samples = X.shape[0]
         n_features = X.shape[1]
-        classes = np.unique(y)
+        classes = np.unique(y).astype(np.int32)
         n_classes = classes.size
         if n_classes < 2:
             raise exceptions.ValueError('y has less than 2 classes')
