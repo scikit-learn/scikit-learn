@@ -553,16 +553,21 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 bias=True):
+                 has_intercept=True):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
         self.eps = eps
         self.C = C
-        self.bias = int(bias) - .5 # negative on False, positive on True
+        self.has_intercept = has_intercept
         # Check that the arguments given are valid:
         self._get_solver_type()
 
+    def _get_bias(self):
+        """
+        Due to some pecularities in liblinear
+        """
+        return int(self.has_intercept) - .5
 
     def _get_solver_type(self):
         """ Return the magic number for the solver described by the
@@ -590,10 +595,10 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
         
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.raw_coef_, self.label_, self.bias_ = \
+        self.raw_coef_, self.label_ = \
                        _liblinear.train_wrap(X, Y,
                        self._get_solver_type(),
-                       self.eps, 1.0, self.C, self._weight_label,
+                       self.eps, self._get_bias(), self.C, self._weight_label,
                        self._weight)
         return self
 
@@ -604,7 +609,7 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
-                                      self.bias_)
+                                      self._get_bias())
 
     def predict_proba(self, T):
         raise NotImplementedError(
@@ -612,13 +617,13 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
 
     @property
     def intercept_(self):
-        if self.bias_ > 0:
+        if self.has_intercept > 0:
             return self.raw_coef_[:,-1]
         return 0.0
 
     @property
     def coef_(self):
-        if self.bias_ > 0:
+        if self.has_intercept > 0:
             return self.raw_coef_[:,:-1]
         return self.raw_coef_
 
