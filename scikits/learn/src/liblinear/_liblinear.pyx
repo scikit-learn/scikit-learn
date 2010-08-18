@@ -76,12 +76,12 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         w = np.empty((1, nr_feature))
         copy_w(w.data, model, nr_feature)
     else:
-        len_w = nr_class * nr_feature
-        w = np.empty((nr_class, nr_feature))
+        len_w = (nr_class -1) * nr_feature
+        w = np.empty((nr_class - 1, nr_feature))
         copy_w(w.data, model, len_w)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
-    label = np.empty((nr_class), dtype=np.int32)
+    label = np.empty(nr_class, dtype=np.int32)
     copy_label(label.data, model, nr_class)
 
     ### FREE
@@ -133,8 +133,8 @@ def csr_train_wrap ( int n_features,
         w = np.empty((1, nr_feature))
         copy_w(w.data, model, nr_feature)
     else:
-        len_w = nr_class * nr_feature
-        w = np.empty((nr_class, nr_feature))
+        len_w = (nr_class - 1) * nr_feature
+        w = np.empty((nr_class - 1, nr_feature))
         copy_w(w.data, model, len_w)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label

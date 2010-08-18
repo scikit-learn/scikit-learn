@@ -278,6 +278,13 @@ def test_SVC_vs_LinearSVC():
 
     assert_array_almost_equal (linsvc.predict(X), svc.predict(X))
 
+    svc.fit (X2, Y2)
+    linsvc.fit (X2, Y2)
+  #  assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
+   # assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
+
+    assert_array_almost_equal (linsvc.predict(X2), svc.predict(X2))
+
 
 @decorators.skipif(True, "XFailed test")
 def test_SVC_vs_LinearSVC_iris():
