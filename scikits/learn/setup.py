@@ -17,9 +17,14 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('datasets')
     config.add_subpackage('features')
+    config.add_subpackage('features/tests')
     config.add_subpackage('feature_selection')
+    config.add_subpackage('feature_selection/tests')
     config.add_subpackage('sparse')
+    config.add_subpackage('sparse/tests/')
     config.add_subpackage('utils')
+    config.add_subpackage('utils/tests')
+    config.add_subpackage('externals')
 
     # Section LibSVM
     libsvm_includes = [numpy.get_include()]
