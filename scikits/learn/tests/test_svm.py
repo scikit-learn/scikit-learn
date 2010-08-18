@@ -247,8 +247,8 @@ def test_LinearSVC():
     """
     clf = svm.LinearSVC().fit(X, Y)
 
-    # by default we compute the bias
-    assert clf.bias > 0
+    # by default should have intercept
+    assert clf.has_intercept
 
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.intercept_, [0], decimal=5)

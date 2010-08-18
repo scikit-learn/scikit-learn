@@ -218,6 +218,51 @@ class BaseLibsvm(BaseEstimator):
         return np.dot(self.dual_coef_, self.support_)
 
 
+
+class BaseLibLinear(BaseEstimator):
+    """
+    Base for classes binding liblinear (dense and sparse versions)
+    """
+
+    _solver_type_dict = {
+        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
+        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
+        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
+        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
+        }
+
+    def _get_solver_type(self):
+        """ Return the magic number for the solver described by the
+            settings.
+        """
+        solver_type = "P%s_L%s_D%d"  % (
+            self.penalty.upper(), self.loss.upper(), int(self.dual))
+        if not solver_type in self._solver_type_dict:
+            raise ValueError('Not supported set of arguments: '
+                             + solver_type)
+        return self._solver_type_dict[solver_type]
+
+    @property
+    def intercept_(self):
+        if self.has_intercept > 0:
+            return self.raw_coef_[:,-1]
+        return 0.0
+
+    @property
+    def coef_(self):
+        if self.has_intercept > 0:
+            return self.raw_coef_[:,:-1]
+        return self.raw_coef_
+
+    def predict_proba(self, T):
+        # how can this be, logisitic *does* implement this
+        raise NotImplementedError(
+                'liblinear does not provide this functionality')
+
+
+    def _get_bias(self):
+        return int  (self.has_intercept) - .5
+
 ################################################################################
 # Public API
 # No processing should go into these classes
@@ -486,7 +531,7 @@ class OneClassSVM(BaseLibsvm):
         super(OneClassSVM, self).fit(X, Y)
 
 
-class LinearSVC(BaseEstimator, ClassifierMixin):
+class LinearSVC(BaseLibLinear, ClassifierMixin):
     """
     Linear Support Vector Classification.
 
@@ -545,13 +590,6 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
     _weight_label = np.empty(0, dtype=np.int32)
     _weight = np.empty(0, dtype=np.float64)
 
-    _solver_type_dict = {
-        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
-        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
-        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
-        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
-        }
-
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
                  has_intercept=True):
         self.penalty = penalty
@@ -562,23 +600,6 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
         self.has_intercept = has_intercept
         # Check that the arguments given are valid:
         self._get_solver_type()
-
-    def _get_bias(self):
-        """
-        Due to some pecularities in liblinear
-        """
-        return int(self.has_intercept) - .5
-
-    def _get_solver_type(self):
-        """ Return the magic number for the solver described by the
-            settings.
-        """
-        solver_type = "P%s_L%s_D%d"  % (
-            self.penalty.upper(), self.loss.upper(), int(self.dual))
-        if not solver_type in self._solver_type_dict:
-            raise ValueError('Not supported set of arguments: '
-                             + solver_type)
-        return self._solver_type_dict[solver_type]
 
 
     def fit(self, X, Y, **params):
@@ -611,19 +632,4 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
                                       self._weight, self.label_,
                                       self._get_bias())
 
-    def predict_proba(self, T):
-        raise NotImplementedError(
-                'liblinear does not provide this functionality')
-
-    @property
-    def intercept_(self):
-        if self.has_intercept > 0:
-            return self.raw_coef_[:,-1]
-        return 0.0
-
-    @property
-    def coef_(self):
-        if self.has_intercept > 0:
-            return self.raw_coef_[:,:-1]
-        return self.raw_coef_
 

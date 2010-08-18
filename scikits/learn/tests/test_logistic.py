@@ -15,7 +15,7 @@ def test_predict_2_classes():
     assert_array_almost_equal(clf.intercept_, [-0.08642295])
     assert_array_equal(clf.predict([[-1, -1], [0, 1],]), [0, 1])
 
-    clf = logistic.LogisticRegression(intercept=False).fit(X, Y1)
+    clf = logistic.LogisticRegression(has_intercept=False).fit(X, Y1)
     assert_array_almost_equal(clf.coef_, [[-0.28540916, -0.63236105]])
     assert_array_almost_equal(clf.intercept_, [0])
 
