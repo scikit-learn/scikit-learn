@@ -1,12 +1,14 @@
-
-from scikits.learn import logistic
+import numpy as np
+from scikits.learn import logistic, datasets
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
+                          assert_almost_equal, \
                           decorators
 
 X = [[0, 0], [0, 1], [1, 1]]
 Y1 = [0,1,1]
 Y2 = [0,1,2]
+iris = datasets.load_iris()
 
 def test_predict_2_classes():
     clf = logistic.LogisticRegression().fit(X, Y1)
@@ -22,6 +24,15 @@ def test_predict_2_classes():
 def test_predict_3_classes():
     clf = logistic.LogisticRegression().fit(X, Y2)
     assert_array_equal(clf.predict([[1, 0], [0, 1], [1, 1]]), [0, 1, 2])
+
+@decorators.skipif(True, "XFailed test")
+def test_predict_iris():
+    """Test logisic regression with the iris dataset"""
+
+    clf = logistic.LogisticRegression().fit(iris.data, iris.target)
+    pred = clf.predict(iris.data)
+
+    assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
 @decorators.skipif(True, "XFailed test")
 def test_predict_proba():

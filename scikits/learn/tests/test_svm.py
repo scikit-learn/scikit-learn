@@ -91,7 +91,6 @@ def test_precomputed():
 
     # test a precomputed kernel with the iris dataset
     clf = svm.SVC(kernel='precomputed')
-    iris = datasets.load_iris()
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
     pred = clf.predict(K)
