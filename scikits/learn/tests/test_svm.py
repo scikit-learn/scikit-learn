@@ -21,6 +21,8 @@ Y2 = [1, 2, 2, 2, 3]
 T2 = [[-1, -1, -1], [1, 1, 1], [2, 2, 2]]
 true_result2 = [1, 2, 3]
 
+from scikits.learn import datasets
+iris = datasets.load_iris()
 
 def test_CSVC():
     """
@@ -169,8 +171,6 @@ def test_probability():
 
     This uses cross validation, so we use a slightly bigger testing set.
     """
-    from scikits.learn import datasets
-    iris = datasets.load_iris()
 
     clf = svm.SVC(probability=True)
     clf.fit(iris.data, iris.target)
@@ -276,3 +276,19 @@ def test_SVC_vs_LinearSVC():
     assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
     assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
 
+    assert_array_almost_equal (linsvc.predict(X), svc.predict(X))
+
+
+@decorators.skipif(True, "XFailed test")
+def test_SVC_vs_LinearSVC_iris():
+    """
+    Test also on the iris dataset
+    """
+
+    svc = svm.SVC(kernel='linear', C=1).fit(iris.data, iris.target)
+    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1', dual=True).fit(iris.data, iris.target)
+
+    assert_array_almost_equal (linsvc.coef_, svc.coef_, decimal=3)
+    assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
+
+    assert_array_almost_equal (linsvc.predict(iris.data), svc.predict(iris.data))
