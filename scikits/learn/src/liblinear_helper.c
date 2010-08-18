@@ -86,7 +86,7 @@ struct feature_node **csr_to_sparse (double *values, npy_intp *shape_indices,
         /* set sentinel */
         if (bias > 0) {
             temp[j].value = 1.0;
-            temp[j].index = (int) n_features;
+            temp[j].index = (int) n_features + 1;
             ++j;
         }
         temp[j].index = -1;
@@ -126,7 +126,11 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
     problem = (struct problem *) malloc (sizeof (struct problem));
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] - 1;
-    problem->n = (int) n_features;
+    if (bias > 0){
+        problem->n = (int) n_features + 1;
+    } else {
+        problem->n = (int) n_features;
+    }
     problem->y = (int *) Y;
     problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
 			n_indptr, (int *) indptr, bias, n_features);

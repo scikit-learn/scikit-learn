@@ -247,6 +247,9 @@ def test_LinearSVC():
     """
     clf = svm.LinearSVC().fit(X, Y)
 
+    # by default we compute the bias
+    assert clf.bias > 0
+
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.intercept_, [0], decimal=5)
 
@@ -270,7 +273,6 @@ def test_SVC_vs_LinearSVC():
     svc = svm.SVC(kernel='linear', C=1).fit(X, Y)
     linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1', dual=True).fit(X, Y)
 
-    assert_array_equal(linsvc.coef_.shape, svc.coef_.shape)
     assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
     assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
 
