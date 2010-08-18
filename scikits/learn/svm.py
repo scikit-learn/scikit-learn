@@ -629,7 +629,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
         return self
 
     def predict(self, T):
-        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
+        T = np.asanyarray(T, dtype=np.float64, order='C')
         return _liblinear.predict_wrap(T, self.raw_coef_,
                                       self._get_solver_type(),
                                       self.eps, self.C,
