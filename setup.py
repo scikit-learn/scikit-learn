@@ -6,10 +6,7 @@
 
 descr   = """A set of python modules for machine learning and data mining"""
 
-from os.path import join
 import os
-import sys
-import shutil
 
 DISTNAME            = 'scikits.learn' 
 DESCRIPTION         = 'A set of python modules for machine learning and data mining'
