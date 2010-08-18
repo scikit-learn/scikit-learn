@@ -19,6 +19,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, ClassifierMixin
+from ..svm import BaseLibLinear
 from .. import _libsvm, _liblinear
 
 class SparseBaseLibsvm(BaseEstimator):
@@ -171,7 +172,7 @@ class SVC(SparseBaseLibsvm):
 
 
 
-class LinearSVC(BaseEstimator, ClassifierMixin):
+class LinearSVC(BaseLibLinear, ClassifierMixin):
     """
     Linear Support Vector Classification, Sparse Version
 
@@ -230,13 +231,6 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
     _weight_label = np.empty(0, dtype=np.int32)
     _weight = np.empty(0, dtype=np.float64)
 
-    _solver_type_dict = {
-        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
-        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
-        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
-        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
-        }
-
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
                  has_intercept=True):
         self.penalty = penalty
@@ -247,20 +241,6 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
         self.has_intercept = has_intercept
         # Check that the arguments given are valid:
         self._get_solver_type()
-
-    def _get_bias(self):
-        return int (self.has_intercept) - .5
-
-    def _get_solver_type(self):
-        """ Return the magic number for the solver described by the
-            settings.
-        """
-        solver_type = "P%s_L%s_D%d"  % (
-            self.penalty.upper(), self.loss.upper(), int(self.dual))
-        if not solver_type in self._solver_type_dict:
-            raise ValueError('Not supported set of arguments: '
-                             + solver_type)
-        return self._solver_type_dict[solver_type]
 
 
     def fit(self, X, Y, **params):
@@ -277,8 +257,7 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
         X = sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
-      #  print X.shape[1]
-      #  print self.bias
+
         self.raw_coef_, self.label_ = \
                        _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, Y,
@@ -289,7 +268,6 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
 
     def predict(self, T):
         T = sparse.csr_matrix(T)
-        print T.shape
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         return _liblinear.csr_predict_wrap(T.shape[1],
                                       T.data, T.indices, T.indptr,
@@ -299,10 +277,6 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
                                       self._weight_label,
                                       self._weight, self.label_,
                                       self._get_bias())
-
-    def predict_proba(self, T):
-        raise NotImplementedError(
-                'liblinear does not provide this functionality')
 
     @property
     def intercept_(self):
