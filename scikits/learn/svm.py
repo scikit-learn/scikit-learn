@@ -231,6 +231,17 @@ class BaseLibLinear(BaseEstimator):
         'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
         }
 
+    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
+                 has_intercept=True):
+        self.penalty = penalty
+        self.loss = loss
+        self.dual = dual
+        self.eps = eps
+        self.C = C
+        self.has_intercept = has_intercept
+        # Check that the arguments given are valid:
+        self._get_solver_type()
+
     def _get_solver_type(self):
         """ Return the magic number for the solver described by the
             settings.
@@ -261,6 +272,11 @@ class BaseLibLinear(BaseEstimator):
 
 
     def _get_bias(self):
+        """
+        Due to some pecularities in libliner, parameter bias must be a
+        double indicating if the intercept should be computed:
+        positive for true, negative for false
+        """
         return int  (self.has_intercept) - .5
 
 ################################################################################
@@ -589,17 +605,6 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
 
     _weight_label = np.empty(0, dtype=np.int32)
     _weight = np.empty(0, dtype=np.float64)
-
-    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 has_intercept=True):
-        self.penalty = penalty
-        self.loss = loss
-        self.dual = dual
-        self.eps = eps
-        self.C = C
-        self.has_intercept = has_intercept
-        # Check that the arguments given are valid:
-        self._get_solver_type()
 
 
     def fit(self, X, Y, **params):

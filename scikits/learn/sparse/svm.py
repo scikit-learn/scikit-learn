@@ -19,10 +19,10 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..svm import BaseLibLinear
+from ..svm import BaseLibsvm, BaseLibLinear
 from .. import _libsvm, _liblinear
 
-class SparseBaseLibsvm(BaseEstimator):
+class SparseBaseLibsvm(BaseLibsvm):
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -146,13 +146,6 @@ class SparseBaseLibsvm(BaseEstimator):
                       self.nSV_, self.label_, self.probA_,
                       self.probB_)
 
-    @property
-    def coef_(self):
-        if self.kernel != 'linear':
-            raise NotImplementedError(
-                'coef_ is only available when using a linear kernel')
-        return np.dot(self.dual_coef_, self.support_)
-
 
 class SVC(SparseBaseLibsvm):
     """SVC for sparse matrices (csr)
@@ -231,17 +224,6 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
     _weight_label = np.empty(0, dtype=np.int32)
     _weight = np.empty(0, dtype=np.float64)
 
-    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 has_intercept=True):
-        self.penalty = penalty
-        self.loss = loss
-        self.dual = dual
-        self.eps = eps
-        self.C = C
-        self.has_intercept = has_intercept
-        # Check that the arguments given are valid:
-        self._get_solver_type()
-
 
     def fit(self, X, Y, **params):
         """
@@ -277,16 +259,4 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
                                       self._weight_label,
                                       self._weight, self.label_,
                                       self._get_bias())
-
-    @property
-    def intercept_(self):
-        if self.has_intercept:
-            return self.raw_coef_[:,-1]
-        return 0.0
-
-    @property
-    def coef_(self):
-        if self.has_intercept:
-            return self.raw_coef_[:,:-1]
-        return self.raw_coef_
 
