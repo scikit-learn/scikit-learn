@@ -127,7 +127,7 @@ def csr_train_wrap ( int n_features,
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] w
     cdef int nr_class = get_nr_class(model)
-    cdef int nr_feature = get_nr_feature(model)
+    cdef int nr_feature = n_features
     if bias > 0: nr_feature = nr_feature + 1
     if nr_class == 2:
         w = np.empty((1, nr_feature))
