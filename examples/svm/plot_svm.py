@@ -21,7 +21,7 @@ h=.02 # step size in the mesh
 
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-clf = svm.LinearSVC()
+clf = svm.SVC(kernel='linear')
 clf.fit(X, Y)
 
 # Plot the decision boundary. For that, we will asign a color to each
@@ -39,7 +39,7 @@ pl.pcolormesh(xx, yy, Z)
 # Plot also the training points
 pl.scatter(X[:,0], X[:,1], c=Y)
 # and the support vectors
-#pl.scatter(clf.support_[:,0], clf.support_[:, 1], marker='+')
+pl.scatter(clf.support_[:,0], clf.support_[:, 1], marker='+')
 pl.title('3-Class classification using Support Vector Machine. \n' + \
          'Support Vectors are hightlighted with a +')
 pl.axis('tight')
