@@ -203,18 +203,18 @@ void free_parameter(struct parameter *param)
     free(param);
 }
 
-int copy_predict(char *train, struct model *model, npy_intp *train_dims,
+int copy_predict(char *train, struct model *model_, npy_intp *train_dims,
                  char *dec_values)
 {
     int *t = (int *) dec_values;
     register int i, n;
     struct feature_node **train_nodes;
     n = train_dims[0];
-    train_nodes = dense_to_sparse((double *) train, train_dims, -1.0);
+    train_nodes = dense_to_sparse((double *) train, train_dims, model_->bias);
     if (train_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
-        *t = predict(model, train_nodes[i]);
+        *t = predict(model_, train_nodes[i]);
         free(train_nodes[i]);
         ++t;
     }
@@ -226,19 +226,19 @@ int copy_predict(char *train, struct model *model, npy_intp *train_dims,
  */
 int csr_copy_predict(npy_intp n_features, npy_intp *data_size, char *data,
         npy_intp *index_size,
-        char *index, npy_intp *indptr_shape, char *intptr, struct model *model,
+        char *index, npy_intp *indptr_shape, char *intptr, struct model *model_,
         char *dec_values) {
     int *t = (int *) dec_values;
     struct feature_node **predict_nodes;
     npy_intp i;
 
     predict_nodes = csr_to_sparse((double *) data, index_size,
-            (int *) index, indptr_shape, (int *) intptr, model->bias, n_features);
+            (int *) index, indptr_shape, (int *) intptr, model_->bias, n_features);
 
     if (predict_nodes == NULL)
         return -1;
     for (i = 0; i < indptr_shape[0] - 1; ++i) {
-        *t = predict(model, predict_nodes[i]);
+        *t = predict(model_, predict_nodes[i]);
         free(predict_nodes[i]);
         ++t;
     }
@@ -247,7 +247,7 @@ int csr_copy_predict(npy_intp n_features, npy_intp *data_size, char *data,
 }
 
 
-int copy_prob_predict(char *predict, struct model *model, npy_intp *predict_dims,
+int copy_prob_predict(char *predict, struct model *model_, npy_intp *predict_dims,
                  char *dec_values)
 {
     double *t = (double *) dec_values;
@@ -256,12 +256,12 @@ int copy_prob_predict(char *predict, struct model *model, npy_intp *predict_dims
     double temp;
     int n, m;
     n = predict_dims[0];
-    m = model->nr_class;
-    predict_nodes = dense_to_sparse((double *) predict, predict_dims, -1.0);
+    m = model_->nr_class;
+    predict_nodes = dense_to_sparse((double *) predict, predict_dims, model_->bias);
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
-        predict_probability(model, predict_nodes[i],
+        predict_probability(model_, predict_nodes[i],
                             ((double *) dec_values) + i*m);
         free(predict_nodes[i]);
     }
