@@ -73,7 +73,7 @@ def test_LinearSVC():
 
     assert_array_almost_equal (clf.raw_coef_, sp_clf.raw_coef_, decimal=4)
 
-@decorators.skipif(True, "XFailed test")
+
 def test_LinearSVC_iris():
     """Test the sparse LinearSVC with the iris dataset"""
     iris = datasets.load_iris()
@@ -82,6 +82,6 @@ def test_LinearSVC_iris():
 
     assert_array_almost_equal(clf.label_, sp_clf.label_)
     assert_equal (clf.has_intercept, sp_clf.has_intercept)
-    assert_
+
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
     assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris.data))

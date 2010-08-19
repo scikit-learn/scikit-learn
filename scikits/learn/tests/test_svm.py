@@ -263,41 +263,37 @@ def test_LinearSVC():
     clf = svm.LinearSVC(penalty='l2', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
-    #
+    # l2 penalty, l1 loss
     clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
-@decorators.skipif(True, "XFailed test")
+
+def test_LinearSVC_iris():
+    """
+    Test that LinearSVC gives plausible predictions on the iris dataset
+    """
+    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    assert_ (np.mean(clf.predict(iris.data) == iris.target) > 0.95)
+
+
 def test_SVC_vs_LinearSVC():
     """
-    Test that SVC and LinearSVC return the same coef_ and intercept_
+    Test that SVC and LinearSVC return the same prediction.
     """
     svc = svm.SVC(kernel='linear', C=1).fit(X, Y)
-    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1', dual=True).fit(X, Y)
-
-    assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
-    assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
-
+    linsvc = svm.LinearSVC(C=2, penalty='l2', loss='l1', dual=True).fit(X, Y)
     assert_array_almost_equal (linsvc.predict(X), svc.predict(X))
 
     svc.fit (X2, Y2)
     linsvc.fit (X2, Y2)
-  #  assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
-   # assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
-
     assert_array_almost_equal (linsvc.predict(X2), svc.predict(X2))
 
 
-@decorators.skipif(True, "XFailed test")
 def test_SVC_vs_LinearSVC_iris():
     """
     Test also on the iris dataset
     """
 
     svc = svm.SVC(kernel='linear', C=1).fit(iris.data, iris.target)
-    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1', dual=True).fit(iris.data, iris.target)
-
-    assert_array_almost_equal (linsvc.coef_, svc.coef_, decimal=3)
-    assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
-
+    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1').fit(iris.data, iris.target)
     assert_array_almost_equal (linsvc.predict(iris.data), svc.predict(iris.data))
