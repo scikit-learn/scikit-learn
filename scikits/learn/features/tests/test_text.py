@@ -2,8 +2,8 @@ from scikits.learn.features.text import strip_accents
 from scikits.learn.features.text import SimpleAnalyzer
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.features.text import SparseHashingVectorizer
-from scikits.learn.logistic import LogisticRegression
-from scikits.learn.sparse.svm import SVC
+from scikits.learn.svm import LinearSVC as DenseLinearSVC
+from scikits.learn.sparse.svm import LinearSVC as SparseLinearSVC
 import numpy as np
 from nose.tools import *
 from numpy.testing import assert_array_almost_equal
@@ -74,7 +74,7 @@ def test_dense_tf_idf():
     y[:6] = -1
 
     # train and test a classifier
-    clf = LogisticRegression().fit(X[1:-1], y[1:-1])
+    clf = DenseLinearSVC().fit(X[1:-1], y[1:-1])
     assert_equal(clf.predict([X[0]]), [-1])
     assert_equal(clf.predict([X[-1]]), [1])
 
@@ -93,9 +93,10 @@ def test_sparse_tf_idf():
     y[:6] = -1
 
     # train and test a classifier
-    clf = SVC(kernel='linear', C=10).fit(X[1:-1], y[1:-1])
+    clf = SparseLinearSVC().fit(X[1:-1], y[1:-1])
     assert_equal(clf.predict(X[0, :]), [-1])
     assert_equal(clf.predict(X[-1, :]), [1])
+
 
 def test_dense_sparse_idf_sanity():
     hv = HashingVectorizer(dim=100, probes=3)
