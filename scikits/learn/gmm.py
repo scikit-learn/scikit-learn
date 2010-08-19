@@ -177,23 +177,42 @@ class GMM(object):
     Examples
     --------
     >>> import numpy as np
-    >>> gmm = GMM(2, ndim=1)
+    >>> g = GMM(nstates=2, ndim=1)
+    >>> # The initial parameters are fixed.
+    >>> print np.round(g.weights, 2)
+    [ 0.5  0.5]
+    >>> print np.round(g.means, 2)
+    [[ 0.]
+     [ 0.]]
+    >>> print np.round(g.covars, 2)
+    [[[ 1.]]
+    <BLANKLINE>
+     [[ 1.]]]
+     
+    >>> # Generate random observations with two modes centered on 0
+    >>> # and 10 to use for training.
+    >>> np.random.seed(0)
     >>> obs = np.concatenate((np.random.randn(100, 1),
-    ...                          10 + np.random.randn(300, 1)))
+    ...                       10 + np.random.randn(300, 1)))
+    >>> train_logprobs = g.fit(obs)
+    >>> print np.round(g.weights, 2)
+    [ 0.75  0.25]
+    >>> print np.round(g.means, 2)
+    [[ 9.94]
+     [ 0.06]]
+    >>> print np.round(g.covars, 2)
+    [[[ 1.96]]
+    <BLANKLINE>
+     [[ 2.02]]]
+    >>> test_logprobs, components = g.decode([[0], [2], [9], [10]])
+    >>> print components
+    [1 1 0 0]
 
-    # BROKEN tests: FIXME!
-
-    #>>> _ = gmm.fit(obs)
-    #>>> gmm.weights, gmm.means, gmm.covars
-    #(array([ 0.25,  0.75]),
-    # array([[ -0.22744484],
-    #       [ 10.07096441]]),
-    # array([[ 1.02857617],
-    #       [ 1.11389491]]))
-    #>>> gmm.decode([0, 2, 9, 10])
-    #array([0, 0, 1, 1])
-    #>>> # Refit the model on new data (initial parameters remain the same).
-    #>>> gmm.fit(np.concatenate((20 * [0], 20 * [10])))
+    >>> # Refit the model on new data (initial parameters remain the
+    >>> #same), this time with an even split between the two modes.
+    >>> train_logprobs = g.fit(20 * [[0]] +  20 * [[10]])
+    >>> print np.round(g.weights, 2)
+    [ 0.5  0.5]
     """
 
     def __init__(self, nstates=1, ndim=1, cvtype='diag', weights=None,
@@ -373,6 +392,8 @@ class GMM(object):
 
         Returns
         -------
+        logprobs : array_like, shape (n,)
+            Log probability of each point in `obs` under the model.
         components : array_like, shape (n,)
             Index of the most likelihod mixture components for each observation
         """
@@ -487,7 +508,7 @@ class GMM(object):
             norm = 1.0 / w[:,np.newaxis]
             
             if 'w' in params:
-                self._weights = w / w.sum()
+                self._log_weights = np.log(w / w.sum())
             if 'm' in params:
                 self._means = avg_obs * norm
             if 'c' in params:
