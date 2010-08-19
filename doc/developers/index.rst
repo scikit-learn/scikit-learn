@@ -149,7 +149,7 @@ In addition, we add the following guidelines:
     * **Please don't use `import *` in any case**. It is considered harmful 
       by the `official Python recommandations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
-      It makes the code harder to read as the origine of symbols is no 
+      It makes the code harder to read as the origin of symbols is no 
       longer explicitely referenced, but most important, it prevents
       using a static analysis tool like `pyflakes
       <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
@@ -217,7 +217,7 @@ accept as arguments constants that determine the estimator behavior
 (like the C constant in SVMs).
 
 It should not, however, take the actual training data as argument, as
-this is leaved to the ``fit()`` method::
+this is left to the ``fit()`` method::
 
     clf2 = SVC(C=2.3)
     clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
