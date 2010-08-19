@@ -224,11 +224,16 @@ class BaseLibLinear(BaseEstimator):
     Base for classes binding liblinear (dense and sparse versions)
     """
 
+    _weight_label = np.empty(0, dtype=np.int32)
+    _weight = np.empty(0, dtype=np.float64)
+
     _solver_type_dict = {
+        'PL2_LLR_D0' : 0, # L2 penalty logistic regression
         'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
         'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
         'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
         'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
+        'PL1_LLR_D0' : 6, # L1 penalty logistic regression
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
@@ -252,6 +257,36 @@ class BaseLibLinear(BaseEstimator):
             raise ValueError('Not supported set of arguments: '
                              + solver_type)
         return self._solver_type_dict[solver_type]
+
+    def fit(self, X, Y, **params):
+        """
+        Parameters
+        ==========
+        X : array-like, shape = [nsamples, nfeatures]
+            Training vector, where nsamples in the number of samples and
+            nfeatures is the number of features.
+        Y : array, shape = [nsamples]
+            Target vector relative to X
+        """
+        self._set_params(**params)
+
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        Y = np.asanyarray(Y, dtype=np.int32, order='C')
+        self.raw_coef_, self.label_ = \
+                       _liblinear.train_wrap(X, Y,
+                       self._get_solver_type(),
+                       self.eps, self._get_bias(), self.C, self._weight_label,
+                       self._weight)
+        return self
+
+    def predict(self, T):
+        T = np.asanyarray(T, dtype=np.float64, order='C')
+        return _liblinear.predict_wrap(T, self.raw_coef_,
+                                      self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self._get_bias())
 
     @property
     def intercept_(self):
@@ -362,18 +397,13 @@ class SVC(BaseLibsvm, ClassifierMixin):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel=rbf,
-        C=1.0,
-        probability=0,
-        degree=3,
-        shrinking=1,
-        eps=0.001,
-        p=0.1,
-        impl=c_svc,
-        cache_size=100.0,
-        coef0=0.0,
-        nu=0.5,
-        gamma=0.25)
+    SVC(kernel='rbf', C=1.0, probability=0, degree=3, shrinking=1, eps=0.001,
+      p=0.10000000000000001,
+      impl='c_svc',
+      cache_size=100.0,
+      coef0=0.0,
+      nu=0.5,
+      gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -603,38 +633,6 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
 
     """
 
-    _weight_label = np.empty(0, dtype=np.int32)
-    _weight = np.empty(0, dtype=np.float64)
-
-
-    def fit(self, X, Y, **params):
-        """
-        Parameters
-        ==========
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        Y : array, shape = [nsamples]
-            Target vector relative to X
-        """
-        self._set_params(**params)
-        
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.raw_coef_, self.label_ = \
-                       _liblinear.train_wrap(X, Y,
-                       self._get_solver_type(),
-                       self.eps, self._get_bias(), self.C, self._weight_label,
-                       self._weight)
-        return self
-
-    def predict(self, T):
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        return _liblinear.predict_wrap(T, self.raw_coef_,
-                                      self._get_solver_type(),
-                                      self.eps, self.C,
-                                      self._weight_label,
-                                      self._weight, self.label_,
-                                      self._get_bias())
+    pass
 
 

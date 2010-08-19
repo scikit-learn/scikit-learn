@@ -224,6 +224,9 @@ def test_error():
     """
     Test that it gives proper exception on deficient input
     """
+    # impossible value of C
+    assert_raises (ValueError, svm.SVC(C=-1).fit, X, Y)
+
     # impossible value of nu
     clf = svm.SVC(impl='nu_svc', kernel='linear', nu=0.0)
     assert_raises(ValueError, clf.fit, X, Y)

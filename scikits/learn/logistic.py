@@ -54,38 +54,7 @@ class LogisticRegression(BaseLibLinear):
     LIBLINEAR -- A Library for Large Linear Classification
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
+
     def __init__(self, penalty='l2', eps=1e-4, C=1.0, has_intercept=True):
-        self.solver_type = self._penalties[penalty.lower()]
-        self.eps = eps
-        self.C = C
-        self.has_intercept = has_intercept
-
-    _penalties = {'l2': 0, 'l1' : 6}
-    _weight_label = np.empty(0, dtype=np.int32)
-    _weight = np.empty(0, dtype=np.float64)
-
-    def fit(self, X, Y):
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.raw_coef_, self.label_ = _liblinear.train_wrap(X,
-                                          Y, self.solver_type, self.eps, self._get_bias(),
-                                          self.C,
-                                          self._weight_label,
-                                          self._weight)
-        return self
-
-    def predict(self, T):
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        return _liblinear.predict_wrap(T, self.raw_coef_, self.solver_type,
-                                      self.eps, self.C,
-                                      self._weight_label,
-                                      self._weight, self.label_,
-                                      self._get_bias())
-
-    def predict_proba(self, T):
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        return _liblinear.predict_prob_wrap(T, self.raw_coef_, self.solver_type,
-                                      self.eps, self.C,
-                                      self._weight_label,
-                                      self._weight, self.label_,
-                                      self._get_bias())
+        super(LogisticRegression, self).__init__ (penalty=penalty, loss='lr',
+            dual=False, eps=eps, C=C, has_intercept=has_intercept)
