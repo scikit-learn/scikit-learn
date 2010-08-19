@@ -10,10 +10,10 @@ class LogisticRegression(BaseLibLinear):
 
     Parameters
     ----------
-    X : array-like, shape = [nsamples, nfeatures]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
-    Y : array, shape = [nsamples]
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
+    Y : array, shape = [n_samples]
         Target vector relative to X
 
     penalty : string, 'l1' or 'l2'
@@ -30,10 +30,10 @@ class LogisticRegression(BaseLibLinear):
     Attributes
     ----------
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Coefficient of the features in the decision function.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
 

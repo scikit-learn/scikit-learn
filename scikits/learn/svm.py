@@ -70,10 +70,10 @@ class BaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        Y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        Y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
         weight : dict , {class_label : weight}
@@ -127,7 +127,7 @@ class BaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape = [nsamples, nfeatures]
+        T : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -155,11 +155,11 @@ class BaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape = [nsamples, nfeatures]
+        T : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
-        T : array-like, shape = [nsamples, nclasses]
+        T : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in
             the model, where classes are ordered by arithmetical
             order.
@@ -195,7 +195,7 @@ class BaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape = [nsamples, nfeatures]
+        T : array-like, shape = [n_samples, n_features]
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
@@ -363,17 +363,17 @@ class SVC(BaseLibsvm, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         Constants in decision function.
 
 
@@ -464,17 +464,17 @@ class SVR(BaseLibsvm, RegressorMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
     Methods
@@ -537,18 +537,18 @@ class OneClassSVM(BaseLibsvm):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors
 
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficient of the support vector in the decision function.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
     
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
     Methods
@@ -605,19 +605,19 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficient of the support vector in the decision function,
-        where nclasses is the number of classes and nSV is the number
+        where n_classes is the number of classes and nSV is the number
         of support vectors.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Wiehgiths asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
 
@@ -634,5 +634,3 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
     """
 
     pass
-
-

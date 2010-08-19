@@ -139,8 +139,8 @@ class GridSearchCV(object):
         ----------
 
         X: array, [n_samples, n_features]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
 
         y: array, [n_samples]
             Target vector relative to X
