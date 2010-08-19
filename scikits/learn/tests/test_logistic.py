@@ -29,20 +29,18 @@ def test_error():
     assert_raises (ValueError, logistic.LogisticRegression(C=-1).fit, X, Y1)
 
 
-@decorators.skipif(True, "XFailed test")
 def test_predict_3_classes():
     clf = logistic.LogisticRegression(C=10).fit(X, Y2)
     assert_array_equal(clf.predict(X), Y2)
 
 
-@decorators.skipif(True, "XFailed test")
 def test_predict_iris():
     """Test logisic regression with the iris dataset"""
 
     clf = logistic.LogisticRegression().fit(iris.data, iris.target)
     pred = clf.predict(iris.data)
 
-    assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
+    assert_ ( np.mean(pred == iris.target) > .95 )
 
 @decorators.skipif(True, "XFailed test")
 def test_predict_proba():
