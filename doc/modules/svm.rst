@@ -2,48 +2,54 @@
 Support Vector Machines
 =======================
 
-.. TODO: LinearSVC is missing !
-
 **Support vector machines (SVMs)** are a set of supervised learning
 methods used for classification, regression and outlayer detection.
 
 The advantages of Support Vector Machines are:
 
-    - It is effective
-      high dimensional spaces, and also work gracefully in cases where
-      the number of dimensions is greater than the number of samples.
+    - Effective high dimensional spaces.
+
+    - Still effective in cases where number of dimensions is greater
+      than the number of samples.
 
     - Uses a subset of training points in the decission function (called
       support vectors), so it is also memory efficient.
 
-    - Versatile: different :ref:`svm_kernels <kernels>` can be specified for the decission
-      function. Common kernels are provided, but it is also possibly
-      to specify custom kernels.
+    - Versatile: different :ref:`svm_kernels <kernels>` can be
+      specified for the decission function. Common kernels are
+      provided, but it is also possibly to specify custom kernels.
 
 The dissadvantes of Support Vector Machines include:
 
-    - SVMs do not directly provide probability estimates, so these must be
-      calculated using indirect techniques. In our case, these techniques
-      imply conducting five-fold cross-validation, so performance can suffer.
-      See method predict_proba for more information.
+    - If the number of features is much greater than the number of
+      samples, the method is likely to give poor performance.
+
+    - SVMs do not directly provide probability estimates, so these
+      must be calculated using indirect techniques. In our case, these
+      techniques imply conducting five-fold cross-validation, so
+      performance can suffer.  See method predict_proba for more
+      information.
 
 
 Classification
 ==============
 
+Suppose some given data points each belong to one of N classes, and
+the goal is to decide which class a new data point will be in. The
+classes that permform this task are SVC, NuSVC and LinearSVC.
+
+SVC and NuSVC are similar methods, but accept slightly different set
+of parameters and have different mathematical formulations (see
+section :ref:`svm_mathematical_formulation`). On the other hand,
+LinearSVC is another implemntation of SVC optimized in the case of a
+linear kernel. Note that other classes this one does not accept
+keyword 'kernel', as this is assumed to be linear. It also lacks some
+of the memebrs of SVC and NuSVC, like support\_.
 
 
-Suppose some given data points each belong to one of two classes, and
-the goal is to decide which class a new data point will be in. This
-classification will be performed by creating a hyperplane that
-maximizes the distance between any two classes.
-
-
-.. note::
-
-    See  for an example
-    illustrating the classification problem using a hyperplane.
-
+.. figure:: ../auto_examples/svm/images/plot_iris.png
+   :align: center
+   :scale: 50
 
 
 **Complete class reference:**
@@ -52,12 +58,12 @@ maximizes the distance between any two classes.
    :members:
    :inherited-members:
 
+.. autoclass:: scikits.learn.svm.NuSVC
+   :members:
+   :inherited-members:
 
-The following class is another implemntation of Classification Vector
-Machine, but this time optimized in the case of a linear kernel. Note that
-other classes this one does not accept keyword 'kernel', as this is assumed
-to be linear.
 
+The following class 
 .. autoclass:: scikits.learn.svm.LinearSVC
    :members:
    :inherited-members:
@@ -126,6 +132,9 @@ ____
    :members:
    :inherited-members:
 
+.. autoclass:: scikits.learn.svm.NuSVR
+   :members:
+   :inherited-members:
 
 Density estimation
 =======================
@@ -155,6 +164,14 @@ Examples
 
 See :ref:`svm_examples` for a complete list of examples.
 
+
+Support Vector machines for sparse data
+=======================================
+
+There is support for sparse data given in any matrix in a format
+supported by scipy.sparse. See module scikits.learn.sparse.svm.
+
+
 Tips on Practical Use
 =====================
 
@@ -176,8 +193,25 @@ Tips on Practical Use
   * Specify larger cache size (keyworkd cache) for huge problems.
 
 
+.. _svm_mathematical_formulation:
+
 Mathematical formulation
 ========================
+
+
+A support vector machine constructs a hyperplane or set of hyperplanes
+in a high or infinite dimensional space, which can be used for
+classification, regression or other tasks. Intuitively, a good
+separation is achieved by the hyperplane that has the largest distance
+to the nearest training datapoints of any class (so-called functional
+margin), since in general the larger the margin the lower the
+generalization error of the classifier.
+
+
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane.png
+   :align: center
+   :scale: 50
+
 
 In SVC The decision function in this case will be:
 

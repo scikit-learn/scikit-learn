@@ -10,7 +10,7 @@ Between Data Points", Science Feb. 2007
 """
 
 import numpy as np
-from scikits.learn.clustering import affinity_propagation
+from scikits.learn.clustering import AffinityPropagation
 
 ################################################################################
 # Generate sample data
@@ -38,7 +38,10 @@ p = 10*np.median(S)
 # Compute Affinity Propagation
 ################################################################################
 
-cluster_centers_indices, labels = affinity_propagation(S, p)
+af = AffinityPropagation()
+af.fit(S, p)
+cluster_centers_indices = af.cluster_centers_indices_
+labels = af.labels_
 
 n_clusters_ = len(cluster_centers_indices)
 

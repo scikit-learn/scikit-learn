@@ -64,35 +64,38 @@ def fit_grid_point(X, y, klass, orignal_params, clf_params, cv,
 
 class GridSearchCV(object):
     """
-    Object to run a grid search on the parameters of a classifier.
+    Grid search on the parameters of a classifier.
 
-    Important memmbers are fit, predict.
+    Important members are fit, predict.
 
     GridSearchCV implements a "fit" method and a "predict" method like
     any classifier except that the parameters of the classifier
     used to predict is optimized by cross-validation
 
     Parameters
-    ---------
+    ----------
     estimator: object type that implements the "fit" and "predict" methods
         A object of that type is instanciated for each grid point
 
     param_grid: dict
         a dictionary of parameters that are used the generate the grid
 
-    cross_val_factory : a generator to run crossvalidation
-
     loss_func : function that takes 2 arguments and compares them in
         order to evaluate the performance of prediciton (small is good)
+
+    fit_params : dict
+        parameters to pass to the fit method
 
     n_jobs : int
         number of jobs to run in parallel (default 1)
 
-    Optional Parameters
-    -------------------
-
-    Members
+    Methods
     -------
+    fit(X, Y) : self
+        Fit the model
+
+    predict(X) : array
+        Predict using the model.
 
     Examples
     --------
@@ -131,6 +134,20 @@ class GridSearchCV(object):
     def fit(self, X, y, cv=None, **kw):
         """Run fit with all sets of parameters
         Returns the best classifier
+
+        Parameters
+        ----------
+
+        X: array, [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        y: array, [n_samples]
+            Target vector relative to X
+
+        cv : crossvalidation generator
+            see scikits.learn.cross_val module
+
         """
         if cv is None:
             n_samples = y.size

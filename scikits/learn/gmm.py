@@ -396,11 +396,11 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
+        X : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
-        C : array, shape = [nsamples]
+        C : array, shape = [n_samples]
         """
         logprob, components = self.decode(X)
         return components
