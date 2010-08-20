@@ -363,7 +363,7 @@ class GMMTester():
 
         g.fit(train_obs, n_iter=0, init_params=params,
               minit='points')
-        init_testll = g.lpdf(test_obs).sum()
+        init_testll = g.score(test_obs).sum()
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each

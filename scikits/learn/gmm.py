@@ -173,15 +173,13 @@ class GMM(BaseEstimator):
         posterior distribution over mixture components.
     fit(X)
         Estimate model parameters from `X` using the EM algorithm.
-    lpdf(X)
-        Compute the log likelihood of `X` under the model.
     predict(X)
         Like decode, find most likely mixtures components for each
         observation in `X`.
     rvs(n=1)
         Generate `n` samples from the model.
     score(X)
-        Like lpdf, compute the log likelihood of `X` under the model.
+        Compute the log likelihood of `X` under the model.
 
     Examples
     --------
@@ -215,6 +213,8 @@ class GMM(BaseEstimator):
      [[ 1.02]]]
     >>> print g.predict([[0], [2], [9], [10]])
     [1 1 0 0]
+    >>> print np.round(g.score([[0], [2], [9], [10]]), 2)
+    [-2.32 -4.16 -1.65 -1.19]
 
     >>> # Refit the model on new data (initial parameters remain the
     >>> #same), this time with an even split between the two modes.
@@ -355,7 +355,7 @@ class GMM(BaseEstimator):
         posteriors = np.exp(lpr - logprob[:,np.newaxis])
         return logprob, posteriors
 
-    def lpdf(self, obs):
+    def score(self, obs):
         """Compute the log probability under the model.
 
         Parameters
@@ -371,8 +371,6 @@ class GMM(BaseEstimator):
         """
         logprob, posteriors = self.eval(obs)
         return logprob
-
-    score = lpdf
 
     def decode(self, obs):
         """Find most likely mixture components for each point in `obs`.
