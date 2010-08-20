@@ -23,11 +23,14 @@ Git repo
 
 You can check the latest sources with the command::
 
-    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone git://github.com/scikit-learn/scikit-learn.git
 
 or if you have write privileges::
 
-    git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone git@github.com:scikit-learn/scikit-learn.git
+
+You can also check out the sources online in the web page
+http://github.com/scikit-learn/scikit-learn 
 
 If you have contributed some code and would like to have write
 privileges in subversion repository, please contact me (Fabian
