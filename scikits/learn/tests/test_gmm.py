@@ -363,14 +363,15 @@ class GMMTester():
 
         g.fit(train_obs, n_iter=0, init_params=params,
               minit='points')
-        init_testll = g.lpdf(test_obs).sum()
+        init_testll = g.score(test_obs).sum()
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each
         # iteration.
         trainll = []
         for iter in xrange(20):
-            g.fit(train_obs, n_iter=1, params=params, init_params='')
+            g.fit(train_obs, n_iter=1, params=params, init_params='',
+                  min_covar=1e-1)
             trainll.append(g.score(train_obs).sum())
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to
@@ -379,7 +380,7 @@ class GMMTester():
         # instead of 0.
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
-        post_testll = g.lpdf(test_obs).sum()
+        post_testll = g.score(test_obs).sum()
 
         self.assertTrue(post_testll >= init_testll)
 

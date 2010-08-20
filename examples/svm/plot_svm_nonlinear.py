@@ -3,6 +3,7 @@
 Non-linear SVM
 =================
 
+
 """
 
 import numpy as np
@@ -15,7 +16,7 @@ X = np.random.randn(300, 2)
 Y = np.logical_xor(X[:,0]>0, X[:,1]>0)
 
 # fit the model
-clf = svm.SVC(impl='nu_svc', kernel='rbf', C=100)
+clf = svm.NuSVC()
 clf.fit(X, Y)
 
 # plot the line, the points, and the nearest vectors to the plane

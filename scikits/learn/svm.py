@@ -320,24 +320,10 @@ class BaseLibLinear(BaseEstimator):
 
 class SVC(BaseLibsvm, ClassifierMixin):
     """
-    Classification using Support Vector Machines.
-
-    This class implements the most classification methods
-    C-SVC and Nu-SVC using support vector machines.
+    C-Support Vector Classification.
 
     Parameters
     ----------
-    impl : string, optional
-        SVM implementation to choose from. This refers to different
-        formulations of the SVM optimization problem.
-        Can be one of 'c_svc', 'nu_svc'. By default 'c_svc' will be chosen.
-
-    nu : float, optional
-        An upper bound on the fraction of training errors and a lower
-        bound of the fraction of support vectors. Should be in the
-        interval (0, 1].  By default 0.5 will be taken.  Only
-        available if impl='nu_svc'
-
     kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
@@ -360,6 +346,9 @@ class SVC(BaseLibsvm, ClassifierMixin):
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
+
+    shrinking: boolean, optional
+         use the shrinking heuristic.
 
     Attributes
     ----------
@@ -398,11 +387,8 @@ class SVC(BaseLibsvm, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, Y)
     SVC(kernel='rbf', C=1.0, probability=0, degree=3, shrinking=1, eps=0.001,
-      p=0.10000000000000001,
-      impl='c_svc',
       cache_size=100.0,
       coef0=0.0,
-      nu=0.5,
       gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -412,14 +398,108 @@ class SVC(BaseLibsvm, ClassifierMixin):
     SVR
     """
 
-    def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0,cache_size=100.0, eps=1e-3, C=1.0,nu=0.5, p=0.1,
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0,
+                 coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0,
                  shrinking=True, probability=False):
 
-        BaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
+        BaseLibsvm.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+                         cache_size, eps, C, 0., 0.,
                          shrinking, probability)
 
+
+class NuSVC(BaseLibsvm, ClassifierMixin):
+    """
+    Nu-Support Vector Classification.
+
+    Parameters
+    ----------
+
+    nu : float, optional
+        An upper bound on the fraction of training errors and a lower
+        bound of the fraction of support vectors. Should be in the
+        interval (0, 1].  By default 0.5 will be taken.  Only
+        available if impl='nu_svc'
+
+    kernel : string, optional
+         Specifies the kernel type to be used in the algorithm.
+         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
+         If none is given 'rbf' will be used.
+
+    degree : int, optional
+        degree of kernel function
+        is significant only in poly, rbf, sigmoid
+
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf
+
+    probability: boolean, optional (False by default)
+        enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
+    coef0 : float, optional
+        independent term in kernel function. It is only significant
+        in poly/sigmoid.
+
+    shrinking: boolean, optional
+         use the shrinking heuristic.
+
+
+    Attributes
+    ----------
+    `support_` : array-like, shape = [nSV, n_features]
+        Support vectors.
+
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
+        Coefficients of the support vector in the decision function.
+
+    `coef_` : array, shape = [n_classes-1, n_features]
+        Weights asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+    `intercept_` : array, shape = [n_classes-1]
+        Constants in decision function.
+
+
+    Methods
+    -------
+    fit(X, Y) : self
+        Fit the model
+
+    predict(X) : array
+        Predict using the model.
+
+    predict_proba(X) : array
+        Return probability estimates.
+
+    predict_margin(X) : array
+        Return distance to predicted margin.
+
+    Examples
+    --------
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> Y = np.array([1, 1, 2, 2])
+    >>> clf = NuSVC()
+    >>> clf.fit(X, Y)
+    NuSVC(kernel='rbf', probability=0, degree=3, shrinking=1, eps=0.001,
+       cache_size=100.0,
+       coef0=0.0,
+       nu=0.5,
+       gamma=0.25)
+    >>> print clf.predict([[-0.8, -1]])
+    [ 1.]
+
+    See also
+    --------
+    SVR
+    """
+
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, nu=0.5, shrinking=True,
+                 probability=False):
+
+        BaseLibsvm.__init__(self, 'nu_svc', kernel, degree, gamma, coef0,
+                         cache_size, eps, 0., nu, 0.,
+                         shrinking, probability)
 
 
 class SVR(BaseLibsvm, RegressorMixin):
