@@ -1,5 +1,5 @@
 from scikits.learn.features.text import strip_accents
-from scikits.learn.features.text import WordAnalyzer
+from scikits.learn.features.text import WordNGramAnalyzer
 from scikits.learn.features.text import CharNGramAnalyzer
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.features.text import SparseHashingVectorizer
@@ -47,8 +47,8 @@ def test_strip_accents():
     assert_equal(strip_accents(a), expected)
 
 
-def test_word_analyzer():
-    wa = WordAnalyzer()
+def test_word_analyzer_unigrams():
+    wa = WordNGramAnalyzer(min_n=1, max_n=1)
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
@@ -58,6 +58,17 @@ def test_word_analyzer():
     text = "This is a test, really.\n\n I met Harry yesterday."
     expected = [u'this', u'is', u'test', u'really', u'met', u'harry',
                 u'yesterday']
+    assert_equal(wa.analyze(text), expected)
+
+
+def test_word_analyzer_unigrams_and_bigrams():
+    wa = WordNGramAnalyzer(min_n=1, max_n=2)
+
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi', u'etait',
+                u'pas', u'tres', u'bon', u'ai mange', u'mange du',
+                u'du kangourou', u'kangourou ce', u'ce midi', u'midi etait',
+                u'etait pas', u'pas tres', u'tres bon']
     assert_equal(wa.analyze(text), expected)
 
 

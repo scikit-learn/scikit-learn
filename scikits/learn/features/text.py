@@ -58,7 +58,7 @@ def strip_accents(s):
                     if unicodedata.category(c) != 'Mn'))
 
 
-class WordAnalyzer(object):
+class WordNGramAnalyzer(object):
     """Simple analyzer: transform a text document into a sequence of word tokens
 
     This simple implementation does:
@@ -66,23 +66,44 @@ class WordAnalyzer(object):
         - unicode accents removal
         - token extraction using unicode regexp word bounderies for token of
           minimum size of 2 symbols
+        - output token n-grams (unigram only by default)
     """
 
     token_pattern = re.compile(r"\b\w\w+\b", re.U)
 
-    def __init__(self, default_charset='utf-8', stop_words=None):
+    def __init__(self, default_charset='utf-8', min_n=1, max_n=1,
+                 stop_words=None):
         self.charset = default_charset
         self.stop_words = stop_words
+        self.min_n = min_n
+        self.max_n = max_n
 
     def analyze(self, text_document):
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
+
+        # lowercasing and accents removal
         text_document = strip_accents(text_document.lower())
+
+        # word boundaries tokenizer
         tokens = self.token_pattern.findall(text_document)
+
+        # handle token n-grams
+        if self.min_n != 1 or self.max_n != 1:
+            original_tokens = tokens
+            tokens = []
+            n_original_tokens = len(original_tokens)
+            for n in xrange(self.min_n, self.max_n + 1):
+                if n_original_tokens < n:
+                    continue
+                for i in xrange(n_original_tokens - n + 1):
+                    tokens.append(" ".join(original_tokens[i: i + n]))
+
+        # handle stop words
         if self.stop_words is not None:
-            return [w for w in tokens if w not in self.stop_words]
-        else:
-            return tokens
+            tokens = [w for w in tokens if w not in self.stop_words]
+
+        return tokens
 
 
 class CharNGramAnalyzer(object):
@@ -113,14 +134,14 @@ class CharNGramAnalyzer(object):
         text_len = len(text_document)
         ngrams = []
         for n in xrange(self.min_n, self.max_n + 1):
-            if text_document < n:
+            if text_len < n:
                 continue
             for i in xrange(text_len - n):
                 ngrams.append(text_document[i: i + n])
         return ngrams
 
 
-DEFAULT_ANALYZER = CharNGramAnalyzer(min_n=5, max_n=5)
+DEFAULT_ANALYZER = WordNGramAnalyzer(min_n=1, max_n=1)
 
 
 class HashingVectorizer(object):
@@ -146,7 +167,7 @@ class HashingVectorizer(object):
     # me first :)
 
     def __init__(self, dim=5000, probes=1, use_idf=True,
-                 analyzer=DEFAULT_ANALYZER,):
+                 analyzer=DEFAULT_ANALYZER):
         self.dim = dim
         self.probes = probes
         self.analyzer = analyzer
