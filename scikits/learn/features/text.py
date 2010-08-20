@@ -62,11 +62,11 @@ class WordNGramAnalyzer(object):
     """Simple analyzer: transform a text document into a sequence of word tokens
 
     This simple implementation does:
-        - lower case conversion
-        - unicode accents removal
-        - token extraction using unicode regexp word bounderies for token of
-          minimum size of 2 symbols
-        - output token n-grams (unigram only by default)
+      - lower case conversion
+      - unicode accents removal
+      - token extraction using unicode regexp word bounderies for token of
+        minimum size of 2 symbols
+      - output token n-grams (unigram only by default)
     """
 
     token_pattern = re.compile(r"\b\w\w+\b", re.U)
