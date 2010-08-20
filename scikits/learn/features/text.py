@@ -58,31 +58,90 @@ def strip_accents(s):
                     if unicodedata.category(c) != 'Mn'))
 
 
-class SimpleAnalyzer(object):
-    """Simple analyzer: transform a text document into a sequence of tokens
+class WordNGramAnalyzer(object):
+    """Simple analyzer: transform a text document into a sequence of word tokens
 
     This simple implementation does:
-        - lower case conversion
-        - unicode accents removal
-        - token extraction using unicode regexp word bounderies for token of
-          minimum size of 2 symbols
+      - lower case conversion
+      - unicode accents removal
+      - token extraction using unicode regexp word bounderies for token of
+        minimum size of 2 symbols
+      - output token n-grams (unigram only by default)
     """
 
     token_pattern = re.compile(r"\b\w\w+\b", re.U)
 
-    def __init__(self, default_charset='utf-8', stop_words=None):
+    def __init__(self, default_charset='utf-8', min_n=1, max_n=1,
+                 stop_words=None):
         self.charset = default_charset
         self.stop_words = stop_words
+        self.min_n = min_n
+        self.max_n = max_n
+
+    def analyze(self, text_document):
+        if isinstance(text_document, str):
+            text_document = text_document.decode(self.charset, 'ignore')
+
+        # lowercasing and accents removal
+        text_document = strip_accents(text_document.lower())
+
+        # word boundaries tokenizer
+        tokens = self.token_pattern.findall(text_document)
+
+        # handle token n-grams
+        if self.min_n != 1 or self.max_n != 1:
+            original_tokens = tokens
+            tokens = []
+            n_original_tokens = len(original_tokens)
+            for n in xrange(self.min_n, self.max_n + 1):
+                if n_original_tokens < n:
+                    continue
+                for i in xrange(n_original_tokens - n + 1):
+                    tokens.append(" ".join(original_tokens[i: i + n]))
+
+        # handle stop words
+        if self.stop_words is not None:
+            tokens = [w for w in tokens if w not in self.stop_words]
+
+        return tokens
+
+
+class CharNGramAnalyzer(object):
+    """Compute character n-grams features of a text document
+
+    This analyzer is interesting since it is language agnostic and will work
+    well even for language where word segmentation is not as trivial as English
+    such as Chinese and German for instance.
+
+    Because of this, it can be considered a basic morphological analyzer.
+    """
+
+    white_spaces = re.compile(r"\s\s+")
+
+    def __init__(self, default_charset='utf-8', min_n=3, max_n=6):
+        self.charset = default_charset
+        self.min_n = min_n
+        self.max_n = max_n
 
     def analyze(self, text_document):
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
         text_document = strip_accents(text_document.lower())
-        tokens = self.token_pattern.findall(text_document)
-        if self.stop_words is not None:
-            return [w for w in tokens if w not in self.stop_words]
-        else:
-            return tokens
+
+        # normalize white spaces
+        text_document = self.white_spaces.sub(" ", text_document)
+
+        text_len = len(text_document)
+        ngrams = []
+        for n in xrange(self.min_n, self.max_n + 1):
+            if text_len < n:
+                continue
+            for i in xrange(text_len - n):
+                ngrams.append(text_document[i: i + n])
+        return ngrams
+
+
+DEFAULT_ANALYZER = WordNGramAnalyzer(min_n=1, max_n=1)
 
 
 class HashingVectorizer(object):
@@ -107,8 +166,8 @@ class HashingVectorizer(object):
     # TODO: implement me using the murmurhash that might be faster: but profile
     # me first :)
 
-    def __init__(self, dim=5000, probes=1, analyzer=SimpleAnalyzer(),
-                 use_idf=True):
+    def __init__(self, dim=5000, probes=1, use_idf=True,
+                 analyzer=DEFAULT_ANALYZER):
         self.dim = dim
         self.probes = probes
         self.analyzer = analyzer
@@ -187,8 +246,8 @@ class SparseHashingVectorizer(object):
     scipy.sparse datastructure to store the tf vectors.
     """
 
-    def __init__(self, dim=50000, probes=1, analyzer=SimpleAnalyzer(),
-                 use_idf=True):
+    def __init__(self, dim=100000, probes=1, use_idf=True,
+                 analyzer=DEFAULT_ANALYZER):
         self.dim = dim
         self.probes = probes
         self.analyzer = analyzer

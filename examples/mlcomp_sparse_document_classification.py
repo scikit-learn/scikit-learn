@@ -43,7 +43,7 @@ import scipy.sparse as sp
 import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
-from scikits.learn.sparse.svm import SVC
+from scikits.learn.sparse.svm import LinearSVC
 from scikits.learn.metrics import confusion_matrix
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
@@ -66,12 +66,15 @@ print "n_samples: %d, n_features: %d" % news_train.data.shape
 
 print "Training a linear SVM (hinge loss and L2 regularizer)..."
 parameters = {
-    'kernel': 'linear',
+    'loss': 'l2',
+    'penalty': 'l2',
     'C': 10,
+    'dual': False,
+    'eps': 1e-4,
 }
 print "parameters:", parameters
 t0 = time()
-clf = SVC(**parameters).fit(news_train.data, news_train.target)
+clf = LinearSVC(**parameters).fit(news_train.data, news_train.target)
 print "done in %fs" % (time() - t0)
 print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
 

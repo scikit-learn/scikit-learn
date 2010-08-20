@@ -23,11 +23,14 @@ Git repo
 
 You can check the latest sources with the command::
 
-    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone git://github.com/scikit-learn/scikit-learn.git
 
 or if you have write privileges::
 
-    git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone git@github.com:scikit-learn/scikit-learn.git
+
+You can also check out the sources online in the web page
+http://github.com/scikit-learn/scikit-learn 
 
 If you have contributed some code and would like to have write
 privileges in subversion repository, please contact me (Fabian
@@ -144,10 +147,12 @@ In addition, we add the following guidelines:
     * Avoid multiple statements on one line. Prefer a line return after
       a control flow statement (`if`/`for`).
 
+    * Use relative imports for references inside scikits.learn.
+
     * **Please don't use `import *` in any case**. It is considered harmful 
       by the `official Python recommandations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
-      It makes the code harder to read as the origine of symbols is no 
+      It makes the code harder to read as the origin of symbols is no 
       longer explicitely referenced, but most important, it prevents
       using a static analysis tool like `pyflakes
       <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
@@ -215,11 +220,10 @@ accept as arguments constants that determine the estimator behavior
 (like the C constant in SVMs).
 
 It should not, however, take the actual training data as argument, as
-this is leaved to the ``fit()`` method::
+this is left to the ``fit()`` method::
 
-    clf1 = SVM(impl='c_svm')
-    clf2 = SVM(C=2.3)
-    clf3 = SVM([[1, 2], [2, 3]], [-1, 1]) # WRONG!
+    clf2 = SVC(C=2.3)
+    clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
 
 
 The arguments that go in the `__init__` should all be keyword arguments
@@ -259,6 +263,8 @@ data in the predict method.
     * X : array-like, with shape = [N, D], where N is the number of
       samples and D is the number of features.
     * Y : array, with shape = [N], where N is the number of samples.
+
+    * args, kwargs. Parameters can also be set in the fit method.
 
 X.shape[0] should be the same as Y.shape[0]. If this requisite is not
 met, an exception should be raised.

@@ -13,15 +13,15 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.sourceforge.net for complete documentation.
 """
 
-import cross_val
-import ball_tree
-import gmm
-import glm
-import logistic
-import lda
-import metrics
-import svm
-import features
+from . import cross_val
+from . import ball_tree
+from . import gmm
+from . import glm
+from . import logistic
+from . import lda
+from . import metrics
+from . import svm
+from . import features
 
 __all__ = ['cross_val', 'ball_tree', 'gmm', 'glm', 'logistic', 'lda',
            'metrics', 'svm', 'features']

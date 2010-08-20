@@ -3,75 +3,54 @@ Support Vector Machines
 =======================
 
 **Support vector machines (SVMs)** are a set of supervised learning
-methods used for classification and regression. In simple words, given
-a set of training examples, with each sample marked as belonging to one
-of the multiple categories, an SVM training algorithm builds a model
-that predicts whether a new example falls into one category or the
-other.
+methods used for classification, regression and outlayer detection.
 
-More formally, a support vector machine constructs a hyperplane or set
-of hyperplanes in a high or infinite dimensional space, which can be
-used for classification, regression or other tasks. Intuitively, a
-Support Vector Machine builds the hyperplane that has the largest
-distance to the nearest training data points of any class (so-called
-functional margin), since in general the larger the margin the lower
-the generalization error of the classifier.
+The advantages of Support Vector Machines are:
+
+    - Effective high dimensional spaces.
+
+    - Still effective in cases where number of dimensions is greater
+      than the number of samples.
+
+    - Uses a subset of training points in the decission function (called
+      support vectors), so it is also memory efficient.
+
+    - Versatile: different :ref:`svm_kernels <kernels>` can be
+      specified for the decission function. Common kernels are
+      provided, but it is also possibly to specify custom kernels.
+
+The dissadvantes of Support Vector Machines include:
+
+    - If the number of features is much greater than the number of
+      samples, the method is likely to give poor performance.
+
+    - SVMs do not directly provide probability estimates, so these
+      must be calculated using indirect techniques. In our case, these
+      techniques imply conducting five-fold cross-validation, so
+      performance can suffer.  See method predict_proba for more
+      information.
+
 
 Classification
 ==============
 
-Suppose some given data points each belong to one of two classes, and
-the goal is to decide which class a new data point will be in. This
-classification will be performed by creating a hyperplane that
-maximizes the distance between any two classes.
+Suppose some given data points each belong to one of N classes, and
+the goal is to decide which class a new data point will be in. The
+classes that permform this task are SVC, NuSVC and LinearSVC.
+
+SVC and NuSVC are similar methods, but accept slightly different set
+of parameters and have different mathematical formulations (see
+section :ref:`svm_mathematical_formulation`). On the other hand,
+LinearSVC is another implemntation of SVC optimized in the case of a
+linear kernel. Note that other classes this one does not accept
+keyword 'kernel', as this is assumed to be linear. It also lacks some
+of the memebrs of SVC and NuSVC, like support\_.
 
 
-.. note::
+.. figure:: ../auto_examples/svm/images/plot_iris.png
+   :align: center
+   :scale: 50
 
-    See :ref:`example_svm_plot_svm_hyperplane.py` for an example
-    illustrating the classification problem using a hyperplane.
-
-The original optimal hyperplane algorithm was a linear
-classifier. However, in 1992, Bernhard Boser, Isabelle Guyon and
-Vapnik suggested a way to replace every dot product by a non-linear
-kernel function. This allows the algorithm to fit the maximum-margin
-hyperplane in a transformed feature space. The transformation may be
-non-linear and the transformed space high dimensional; thus though the
-classifier is a hyperplane in the high-dimensional feature space, it
-may be non-linear in the original input space.
-
-The decision function in this case will be:
-
-.. math:: sgn(\sum_{i=1}^l \alpha_i K(x_i, x) + \rho)
-
-where :math:`\alpha, \rho` can be accessed through fields `support_` and
-`intercept_` of the classifier instance, respectevely.
-
-If the kernel used is a Gaussian radial basis function, the
-corresponding feature space is a Hilbert space of infinite
-dimension. Maximum margin classifiers are well regularized, so the
-infinite dimension does not spoil the results. Available kernels are,
-
-  * linear :math:`(<x_i, x_j'>)`
-  * polynomial :math:`(\gamma <x, x'> + r)^d, \gamma > 0`
-  * radial basis :math:`exp(-\gamma |x-x'|^2), \gamma > 0`
-  * sigmoid :math:`tanh(<x_i, x_j> + r)`
-
-where :math:`\gamma, r`, and :math:`d` are kernel parameters.
-
-The exclusive-OR is the simplest problem that cannot be solved using a
-linear kernel. In this problem, point (x, y) belongs has target 1 if
-and only if x > 0 XOR y > 0. In the following example, we create a
-training set of random points X with target Y = XOR(X). We see that
-the SVM correctly draws the decision function.
-
-.. note::
-
-    See :ref:`example_svm_plot_svm_nonlinear.py` for a complete example
-    illustrating the choice of kernel.
-
-
-____
 
 **Complete class reference:**
 
@@ -79,9 +58,21 @@ ____
    :members:
    :inherited-members:
 
+.. autoclass:: scikits.learn.svm.NuSVC
+   :members:
+   :inherited-members:
+
+
+The following class 
+.. autoclass:: scikits.learn.svm.LinearSVC
+   :members:
+   :inherited-members:
+
 
 Using Custom Kernels
 --------------------
+
+.. TODO: this is not restricted to classification
 
 You can also use your own defined kernels by passing a function to the
 keyword `kernel` in the constructor.
@@ -112,8 +103,13 @@ classifiers, except that:
 
 .. note::
 
-    For a complete example of custom kernels, 
-    see :ref:`example_svm_plot_custom_kernel.py` 
+Examples
+--------
+
+For a complete example of custom kernels see
+:ref:`example_svm_plot_custom_kernel.py`. 
+
+.. TODO: precomputed kernels.
 
 Regression
 ==========
@@ -136,6 +132,9 @@ ____
    :members:
    :inherited-members:
 
+.. autoclass:: scikits.learn.svm.NuSVR
+   :members:
+   :inherited-members:
 
 Density estimation
 =======================
@@ -165,16 +164,69 @@ Examples
 
 See :ref:`svm_examples` for a complete list of examples.
 
-Scaling
-=======
-Support Vector Machine algorithms are not scale-invariant, so it is
-highly recommended to standarize the input vector X to have mean 0 and
-variance 1. Note that the *same* scaling must be applied to the test
-vector to obtain meaningful results.
 
-See `The CookBook
-<https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_ for
-some examples on scaling.
+Support Vector machines for sparse data
+=======================================
+
+There is support for sparse data given in any matrix in a format
+supported by scipy.sparse. See module scikits.learn.sparse.svm.
+
+
+Tips on Practical Use
+=====================
+
+  * Support Vector Machine algorithms are not scale-invariant, so it
+  is highly recommended to scale your data. For example, scale each
+  attribute on the input vector X to [0,1] or [-1,+1], or standarize
+  it to have mean 0 and variance 1. Note that the *same* scaling must
+  be applied to the test vector to obtain meaningful results. See `The
+  CookBook
+  <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_ for
+  some examples on scaling.
+
+  * nu in nu-SVC/one-class-SVM/nu-SVR approximates the fraction of
+  training errors and support vectors.
+
+  * If data for classification are unbalanced (e.g. many positive and
+    few negative), try different penalty parameters C.
+
+  * Specify larger cache size (keyworkd cache) for huge problems.
+
+
+.. _svm_mathematical_formulation:
+
+Mathematical formulation
+========================
+
+
+A support vector machine constructs a hyperplane or set of hyperplanes
+in a high or infinite dimensional space, which can be used for
+classification, regression or other tasks. Intuitively, a good
+separation is achieved by the hyperplane that has the largest distance
+to the nearest training datapoints of any class (so-called functional
+margin), since in general the larger the margin the lower the
+generalization error of the classifier.
+
+
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane.png
+   :align: center
+   :scale: 50
+
+
+In SVC The decision function in this case will be:
+
+.. math:: sgn(\sum_{i=1}^l \alpha_i K(x_i, x) + \rho)
+where :math:`\alpha, \rho` can be accessed through fields `support_` and
+`intercept_` of the classifier instance, respectevely.
+
+    - *kernel function*.
+      Can be any of the following: linear :math:`(<x_i, x_j'>)`,
+      polynomial :math:`(\gamma <x, x'> + r)^d, \gamma > 0`
+      radial basis :math:`exp(-\gamma |x-x'|^2), \gamma > 0`
+      sigmoid :math:`tanh(<x_i, x_j> + r)`,
+      where :math:`\gamma, r`, and :math:`d` are kernel parameters.
+
+    - *penalty*. C > 0 is the penalty parameter of the error term.
 
 
 Implementation details

@@ -1,8 +1,8 @@
 import numpy as np
 from . import _liblinear
+from .svm import BaseLibLinear
 
-
-class LogisticRegression(object):
+class LogisticRegression(BaseLibLinear):
     """
     Logistic Regression.
 
@@ -10,10 +10,10 @@ class LogisticRegression(object):
 
     Parameters
     ----------
-    X : array-like, shape = [nsamples, nfeatures]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
-    Y : array, shape = [nsamples]
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
+    Y : array, shape = [n_samples]
         Target vector relative to X
 
     penalty : string, 'l1' or 'l2'
@@ -30,10 +30,10 @@ class LogisticRegression(object):
     Attributes
     ----------
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Coefficient of the features in the decision function.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
 
@@ -54,54 +54,15 @@ class LogisticRegression(object):
     LIBLINEAR -- A Library for Large Linear Classification
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
-    def __init__(self, penalty='l2', eps=1e-4, C=1.0, intercept=True):
-        self.solver_type = self._penalties[penalty.lower()]
-        self.eps = eps
-        self.C = C
-        if intercept:
-            self.bias_ = 1.0
-        else:
-            self.bias_ = -1.0
 
-    _penalties = {'l2': 0, 'l1' : 6}
-    _weight_label = np.empty(0, dtype=np.int32)
-    _weight = np.empty(0, dtype=np.float64)
-
-    def fit(self, X, Y):
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.raw_coef_, self.label_, self.bias_ = _liblinear.train_wrap(X,
-                                          Y, self.solver_type, self.eps, self.bias_,
-                                          self.C,
-                                          self._weight_label,
-                                          self._weight)
-        return self
-
-    def predict(self, T):
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        return _liblinear.predict_wrap(T, self.raw_coef_, self.solver_type,
-                                      self.eps, self.C,
-                                      self._weight_label,
-                                      self._weight, self.label_,
-                                      self.bias_)
+    def __init__(self, penalty='l2', eps=1e-4, C=1.0, has_intercept=True):
+        super(LogisticRegression, self).__init__ (penalty=penalty, loss='lr',
+            dual=False, eps=eps, C=C, has_intercept=has_intercept)
 
     def predict_proba(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return _liblinear.predict_prob_wrap(T, self.raw_coef_, self.solver_type,
+        return _liblinear.predict_prob_wrap(T, self.raw_coef_, self._get_solver_type(),
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
-                                      self.bias_)
-
-    @property
-    def intercept_(self):
-        if self.bias_ > 0:
-            return self.raw_coef_[:,-1]
-        return 0.0
-
-    @property
-    def coef_(self):
-        if self.bias_ > 0:
-            return self.raw_coef_[:,:-1]
-        return self.raw_coef_
-
+                                      self._get_bias())

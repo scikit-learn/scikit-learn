@@ -85,74 +85,63 @@ def mangle_signature(app, what, name, obj, options, sig, retann):
         sig = re.sub(u"^[^(]*", u"", doc['Signature'])
         return sig, u''
 
-def initialize(app):
-    try:
-        app.connect('autodoc-process-signature', mangle_signature)
-    except:
-        monkeypatch_sphinx_ext_autodoc()
-
 def setup(app, get_doc_object_=get_doc_object):
     global get_doc_object
     get_doc_object = get_doc_object_
 
     app.connect('autodoc-process-docstring', mangle_docstrings)
-    app.connect('builder-inited', initialize)
+    app.connect('autodoc-process-signature', mangle_signature)
     app.add_config_value('numpydoc_edit_link', None, False)
     app.add_config_value('numpydoc_use_plots', None, False)
     app.add_config_value('numpydoc_show_class_members', True, True)
 
-    # Extra mangling directives
-    name_type = {
-        'cfunction': 'function',
-        'cmember': 'attribute',
-        'cmacro': 'function',
-        'ctype': 'class',
-        'cvar': 'object',
-        'class': 'class',
+    # Extra mangling domains
+    app.add_domain(NumpyPythonDomain)
+    app.add_domain(NumpyCDomain)
+
+#------------------------------------------------------------------------------
+# Docstring-mangling domains
+#------------------------------------------------------------------------------
+
+from docutils.statemachine import ViewList
+from sphinx.domains.c import CDomain
+from sphinx.domains.python import PythonDomain
+
+class ManglingDomainBase(object):
+    directive_mangling_map = {}
+
+    def __init__(self, *a, **kw):
+        super(ManglingDomainBase, self).__init__(*a, **kw)
+        self.wrap_mangling_directives()
+
+    def wrap_mangling_directives(self):
+        for name, objtype in self.directive_mangling_map.items():
+            self.directives[name] = wrap_mangling_directive(
+                self.directives[name], objtype)
+
+class NumpyPythonDomain(ManglingDomainBase, PythonDomain):
+    name = 'np'
+    directive_mangling_map = {
         'function': 'function',
-        'attribute': 'attribute',
+        'class': 'class',
+        'exception': 'class',
         'method': 'function',
-        'staticmethod': 'function',
         'classmethod': 'function',
+        'staticmethod': 'function',
+        'attribute': 'attribute',
     }
 
-    for name, objtype in name_type.items():
-        app.add_directive('np-' + name, wrap_mangling_directive(name, objtype))
+class NumpyCDomain(ManglingDomainBase, CDomain):
+    name = 'np-c'
+    directive_mangling_map = {
+        'function': 'function',
+        'member': 'attribute',
+        'macro': 'function',
+        'type': 'class',
+        'var': 'object',
+    }
 
-#------------------------------------------------------------------------------
-# Input-mangling directives
-#------------------------------------------------------------------------------
-from docutils.statemachine import ViewList
-
-def get_directive(name):
-    from docutils.parsers.rst import directives
-    try:
-        return directives.directive(name, None, None)[0]
-    except AttributeError:
-        pass
-    try:
-        # docutils 0.4
-        return directives._directives[name]
-    except (AttributeError, KeyError):
-        raise RuntimeError("No directive named '%s' found" % name)
-
-def wrap_mangling_directive(base_directive_name, objtype):
-    base_directive = get_directive(base_directive_name)
-
-    if inspect.isfunction(base_directive):
-        base_func = base_directive
-        class base_directive(Directive):
-            required_arguments = base_func.arguments[0]
-            optional_arguments = base_func.arguments[1]
-            final_argument_whitespace = base_func.arguments[2]
-            option_spec = base_func.options
-            has_content = base_func.content
-            def run(self):
-                return base_func(self.name, self.arguments, self.options,
-                                 self.content, self.lineno,
-                                 self.content_offset, self.block_text,
-                                 self.state, self.state_machine)
-
+def wrap_mangling_directive(base_directive, objtype):
     class directive(base_directive):
         def run(self):
             env = self.state.document.settings.env
@@ -173,24 +162,3 @@ def wrap_mangling_directive(base_directive_name, objtype):
 
     return directive
 
-#------------------------------------------------------------------------------
-# Monkeypatch sphinx.ext.autodoc to accept argspecless autodocs (Sphinx < 0.5)
-#------------------------------------------------------------------------------
-
-def monkeypatch_sphinx_ext_autodoc():
-    global _original_format_signature
-    import sphinx.ext.autodoc
-
-    if sphinx.ext.autodoc.format_signature is our_format_signature:
-        return
-
-    print "[numpydoc] Monkeypatching sphinx.ext.autodoc ..."
-    _original_format_signature = sphinx.ext.autodoc.format_signature
-    sphinx.ext.autodoc.format_signature = our_format_signature
-
-def our_format_signature(what, obj):
-    r = mangle_signature(None, what, None, obj, None, None, None)
-    if r is not None:
-        return r[0]
-    else:
-        return _original_format_signature(what, obj)

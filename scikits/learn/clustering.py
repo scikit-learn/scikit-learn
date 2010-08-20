@@ -68,7 +68,7 @@ def mean_shift(X, bandwidth=None):
     """Perform MeanShift Clustering of data using a flat kernel
 
     Parameters
-    ==========
+    ----------
 
     X : array [n_samples, n_features]
         Input points
@@ -79,15 +79,16 @@ def mean_shift(X, bandwidth=None):
         a heuristic given by the median of all pairwise distances
 
     Returns
-    ========
+    -------
 
-    cluster_centers: array [n_clusters, n_features]
+    cluster_centers : array [n_clusters, n_features]
+        Coordinates of cluster centers
 
     labels : array [n_samples]
         cluster labels for each point
 
-    Notes:
-    =====
+    Notes
+    -----
     See examples/plot_meanshift.py for an example.
 
     K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
@@ -181,7 +182,42 @@ def mean_shift(X, bandwidth=None):
 
 ################################################################################
 class MeanShift(BaseEstimator):
-    """MeanShift clustering"""
+    """MeanShift clustering
+
+
+    Parameters
+    ----------
+
+    bandwidth: float, optional
+        Bandwith used in the RBF kernel
+        If not set, the bandwidth is estimated.
+        See clustering.estimate_bandwidth
+
+    Methods
+    -------
+
+    fit(X):
+        Compute MeanShift clustering
+
+    Attributes
+    ----------
+
+    cluster_centers_: array, [n_clusters, n_features]
+        Coordinates of cluster centers
+
+    labels_:
+        Labels of each point
+
+    Notes
+    -----
+
+    Reference:
+
+    K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
+    Density Function, with Applications in Pattern Recognition"
+
+
+    """
 
     def __init__(self, bandwidth=None):
         self.bandwidth = bandwidth
@@ -189,7 +225,7 @@ class MeanShift(BaseEstimator):
     def fit(self, X, **params):
         """compute MeanShift"""
         self._set_params(**params)
-        self.cluster_centers, self.labels = mean_shift(X, self.bandwidth)
+        self.cluster_centers_, self.labels_ = mean_shift(X, self.bandwidth)
         return self
 
 
@@ -202,7 +238,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
     """Perform Affinity Propagation Clustering of data
 
     Parameters
-    ===========
+    ----------
 
     S: array [n_points, n_points]
         Matrix of similarities between points
@@ -215,7 +251,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
         algorithm, for memory efficiency
 
     Returns
-    ========
+    -------
 
     cluster_centers_indices: array [n_clusters]
         index of clusters centers
@@ -224,9 +260,10 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
         cluster labels for each point
 
     Notes
-    =====
+    -----
     See examples/plot_affinity_propagation.py for an example.
 
+    Reference:
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
 
@@ -335,14 +372,74 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
 
 ################################################################################
 class AffinityPropagation(BaseEstimator):
-    """Affinity Propagation clustering"""
+    """Perform Affinity Propagation Clustering of data
 
-    def __init__(self, damping=.5):
+    Parameters
+    ----------
+
+    damping : float, optional
+        Damping factor
+
+    maxit : int, optional
+        Maximum number of iterations
+
+    convit : int, optional
+        Number of iterations with no change in the number
+        of estimated clusters that stops the convergence.
+
+    copy: boolean, optional
+        Make a copy of input data. True by default.
+
+    Methods
+    -------
+
+    fit:
+        Compute the clustering
+
+    Attributes
+    ----------
+
+    cluster_centers_indices_ : array, [n_clusters]
+        Indices of cluster centers
+
+    labels_ : array, [n_samples]
+        Labels of each point
+
+    Notes
+    -----
+    See examples/plot_affinity_propagation.py for an example.
+
+    Reference:
+
+    Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
+    Between Data Points", Science Feb. 2007
+    """
+
+    def __init__(self, damping=.5, maxit=200, convit=30, copy=True):
         self.damping = damping
+        self.maxit = maxit
+        self.convit = convit
+        self.copy = copy
 
-    def fit(self, S, p=None, maxit=200, convit=30, **params):
-        """compute MeanShift"""
+    def fit(self, S, p=None, **params):
+        """compute MeanShift
+
+        Parameters
+        ----------
+
+        S: array [n_points, n_points]
+            Matrix of similarities between points
+        p: array [n_points,] or float, optional
+            Preferences for each point
+        damping : float, optional
+            Damping factor
+        copy: boolean, optional
+            If copy is False, the affinity matrix is modified inplace by the
+            algorithm, for memory efficiency
+
+        """
         self._set_params(**params)
-        self.cluster_centers_indices, self.labels = affinity_propagation(S, p,
-                maxit=maxit, convit=convit, damping=self.damping)
+        self.cluster_centers_indices_, self.labels_ = affinity_propagation(S, p,
+                maxit=self.maxit, convit=self.convit, damping=self.damping,
+                copy=self.copy)
         return self

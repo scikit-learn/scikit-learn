@@ -28,10 +28,10 @@ class RFE(BaseEstimator):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nfeatures]
+    `support_` : array-like, shape = [n_features]
         Mask of estimated support
 
-    `ranking_` : array-like, shape = [nfeatures]
+    `ranking_` : array-like, shape = [n_features]
         Mask of the ranking of features
 
     Methods
@@ -63,10 +63,10 @@ class RFE(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
         """
@@ -91,9 +91,9 @@ class RFE(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
+        X : array-like, shape = [n_samples, n_features]
+            Vector, where n_samples in the number of samples and
+            n_features is the number of features.
         """
         X_r = X[:,self.support_]
         return X_r.copy() if copy else X_r
@@ -119,10 +119,10 @@ class RFECV(RFE):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
         cv : cross-validation instance

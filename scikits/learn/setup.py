@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from os.path import join
 import warnings
 import numpy
@@ -17,10 +18,15 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('datasets')
     config.add_subpackage('features')
+    config.add_subpackage('features/tests')
     config.add_subpackage('feature_selection')
     config.add_subpackage('manifold')
+    config.add_subpackage('feature_selection/tests')
     config.add_subpackage('sparse')
+    config.add_subpackage('sparse/tests/')
     config.add_subpackage('utils')
+    config.add_subpackage('utils/tests')
+    config.add_subpackage('externals')
 
     # Section LibSVM
     libsvm_includes = [numpy.get_include()]
@@ -54,9 +60,8 @@ def configuration(parent_package='',top_path=None):
                     join('src', 'blas', 'dnrm2.c'),
                     join('src', 'blas', 'dscal.c')]
 
-    liblinear_sources = [join('src', 'linear.cpp'),
-                         join('src', '_liblinear.c'),
-                         join('src', 'tron.cpp')]
+    liblinear_sources = [join('src', 'liblinear', '_liblinear.c'),
+                         join('src', 'liblinear', '*.cpp')]
 
     # we try to link agains system-wide blas
     blas_info = get_info('blas_opt', 0)
@@ -71,10 +76,7 @@ def configuration(parent_package='',top_path=None):
                          include_dirs=['src',
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
-                         depends=[join('src', 'linear.h'),
-                                  join('src', 'tron.h'),
-                                  join('src', 'blas', 'blas.h'),
-                                  join('src', 'blas', 'blasp.h')],
+                         depends=[join('src', 'liblinear', '*.h')],
                          **blas_info)
 
     ## end liblinear module

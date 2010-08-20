@@ -9,7 +9,7 @@ import inspect
 
 import numpy as np
 
-from scikits.learn.metrics import zero_one, mean_square_error
+from .metrics import zero_one, mean_square_error
 
 ################################################################################
 class BaseEstimator(object):
@@ -64,9 +64,25 @@ class BaseEstimator(object):
         options = np.get_printoptions()
         np.set_printoptions(precision=5, threshold=64, edgeitems=2)
         class_name = self.__class__.__name__
-        params_str = (',\n' + (1+len(class_name))*' ').join(
-                                  '%s=%s' % (k, v) 
-                                  for k, v in self._get_params().iteritems())
+
+        # Do a multi-line justified repr:
+        params_list = list()
+        this_line_length = len(class_name)
+        line_sep = ',\n' + (1+len(class_name)/2)*' '
+        for i, (k, v) in enumerate(self._get_params().iteritems()):
+            this_repr  = '%s=%s' % (k, repr(v))
+            if i > 0: 
+                if (this_line_length + len(this_repr) >= 75
+                                            or '\n' in this_repr):
+                    params_list.append(line_sep)
+                    this_line_length += len(line_sep)
+                else:
+                    params_list.append(', ')
+                    this_line_length += 2
+            params_list.append(this_repr)
+            this_line_length += len(this_repr)
+
+        params_str = ''.join(params_list)
         np.set_printoptions(**options)
         return '%s(%s)' % (
                 class_name,
