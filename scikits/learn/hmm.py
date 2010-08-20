@@ -15,17 +15,6 @@ import hmm_trainers
 ZEROLOGPROB = -1e200
 
 
-def HMM(emission_type='gaussian', *args, **kwargs):
-    """Create an HMM object with the given emission_type."""
-    supported_emission_types = dict([(str(x.emission_type).lower(), x)
-                                     for x in _BaseHMM.__subclasses__()])
-    emission_type = str(emission_type).lower()
-    if emission_type in supported_emission_types.keys():
-        return supported_emission_types[emission_type](*args, **kwargs)
-    else:
-        raise ValueError('Unknown emission_type')
-
-
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
 
@@ -774,7 +763,7 @@ class GMMHMM(_BaseHMM):
 
     Examples
     --------
-    >>> hmm = HMM('gmm', n_states=2, n_mix=10, n_dim=3)
+    >>> hmm = GMMHMM(n_states=2, n_mix=10, n_dim=3)
 
     See Also
     --------

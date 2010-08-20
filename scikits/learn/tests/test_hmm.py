@@ -16,27 +16,6 @@ class SeedRandomNumberGeneratorTestCase(TestCase):
         np.random.seed(self.seed)
 
 
-class TestHMM(SeedRandomNumberGeneratorTestCase):
-
-    def test_hmm(self):
-        hmm.HMM(n_states=1)
-
-    def test_gaussian_hmm(self):
-        h = hmm.HMM('gaussian', n_states=1)
-        self.assertEquals(h.emission_type, 'gaussian')
-        self.assertTrue(h.__class__, hmm.GaussianHMM)
-
-    def test_multinomial_hmm(self):
-        h = hmm.HMM('multinomial', n_states=1, nsymbols=1)
-        self.assertEquals(h.emission_type, 'multinomial')
-        self.assertTrue(h.__class__, hmm.MultinomialHMM)
-
-    def test_gmm_hmm(self):
-        h = hmm.HMM('gmm', n_states=1, n_dim=1)
-        self.assertEquals(h.emission_type, 'gmm')
-        self.assertTrue(h.__class__, hmm.GMMHMM)
-
-
 class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
 
     class StubHMM(hmm._BaseHMM):
@@ -253,7 +232,7 @@ class GaussianHMMTester(GaussianHMMParams):
 
     def test_bad_cvtype(self):
         hmm.GaussianHMM(20, 1, self.cvtype)
-        self.assertRaises(ValueError, hmm.HMM, 20, 1, 'badcvtype')
+        self.assertRaises(ValueError, hmm.GaussianHMM, 20, 1, 'badcvtype')
 
     def test_attributes(self):
         h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype)
