@@ -70,10 +70,10 @@ class BaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        Y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        Y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
         weight : dict , {class_label : weight}
@@ -127,7 +127,7 @@ class BaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape = [nsamples, nfeatures]
+        T : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -155,11 +155,11 @@ class BaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape = [nsamples, nfeatures]
+        T : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
-        T : array-like, shape = [nsamples, nclasses]
+        T : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in
             the model, where classes are ordered by arithmetical
             order.
@@ -195,7 +195,7 @@ class BaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape = [nsamples, nfeatures]
+        T : array-like, shape = [n_samples, n_features]
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
@@ -217,6 +217,102 @@ class BaseLibsvm(BaseEstimator):
             raise NotImplementedError('coef_ is only available when using a linear kernel')
         return np.dot(self.dual_coef_, self.support_)
 
+
+
+class BaseLibLinear(BaseEstimator):
+    """
+    Base for classes binding liblinear (dense and sparse versions)
+    """
+
+    _weight_label = np.empty(0, dtype=np.int32)
+    _weight = np.empty(0, dtype=np.float64)
+
+    _solver_type_dict = {
+        'PL2_LLR_D0' : 0, # L2 penalty logistic regression
+        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
+        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
+        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
+        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
+        'PL1_LLR_D0' : 6, # L1 penalty logistic regression
+        }
+
+    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
+                 has_intercept=True):
+        self.penalty = penalty
+        self.loss = loss
+        self.dual = dual
+        self.eps = eps
+        self.C = C
+        self.has_intercept = has_intercept
+        # Check that the arguments given are valid:
+        self._get_solver_type()
+
+    def _get_solver_type(self):
+        """ Return the magic number for the solver described by the
+            settings.
+        """
+        solver_type = "P%s_L%s_D%d"  % (
+            self.penalty.upper(), self.loss.upper(), int(self.dual))
+        if not solver_type in self._solver_type_dict:
+            raise ValueError('Not supported set of arguments: '
+                             + solver_type)
+        return self._solver_type_dict[solver_type]
+
+    def fit(self, X, Y, **params):
+        """
+        Parameters
+        ==========
+        X : array-like, shape = [nsamples, nfeatures]
+            Training vector, where nsamples in the number of samples and
+            nfeatures is the number of features.
+        Y : array, shape = [nsamples]
+            Target vector relative to X
+        """
+        self._set_params(**params)
+
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        Y = np.asanyarray(Y, dtype=np.int32, order='C')
+        self.raw_coef_, self.label_ = \
+                       _liblinear.train_wrap(X, Y,
+                       self._get_solver_type(),
+                       self.eps, self._get_bias(), self.C, self._weight_label,
+                       self._weight)
+        return self
+
+    def predict(self, T):
+        T = np.asanyarray(T, dtype=np.float64, order='C')
+        return _liblinear.predict_wrap(T, self.raw_coef_,
+                                      self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self._get_bias())
+
+    @property
+    def intercept_(self):
+        if self.has_intercept > 0:
+            return self.raw_coef_[:,-1]
+        return 0.0
+
+    @property
+    def coef_(self):
+        if self.has_intercept > 0:
+            return self.raw_coef_[:,:-1]
+        return self.raw_coef_
+
+    def predict_proba(self, T):
+        # how can this be, logisitic *does* implement this
+        raise NotImplementedError(
+                'liblinear does not provide this functionality')
+
+
+    def _get_bias(self):
+        """
+        Due to some pecularities in libliner, parameter bias must be a
+        double indicating if the intercept should be computed:
+        positive for true, negative for false
+        """
+        return int  (self.has_intercept) - .5
 
 ################################################################################
 # Public API
@@ -267,17 +363,17 @@ class SVC(BaseLibsvm, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         Constants in decision function.
 
 
@@ -301,18 +397,13 @@ class SVC(BaseLibsvm, ClassifierMixin):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel=rbf,
-        C=1.0,
-        probability=0,
-        degree=3,
-        shrinking=1,
-        eps=0.001,
-        p=0.1,
-        impl=c_svc,
-        cache_size=100.0,
-        coef0=0.0,
-        nu=0.5,
-        gamma=0.25)
+    SVC(kernel='rbf', C=1.0, probability=0, degree=3, shrinking=1, eps=0.001,
+      p=0.10000000000000001,
+      impl='c_svc',
+      cache_size=100.0,
+      coef0=0.0,
+      nu=0.5,
+      gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -373,17 +464,17 @@ class SVR(BaseLibsvm, RegressorMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
     Methods
@@ -446,18 +537,18 @@ class OneClassSVM(BaseLibsvm):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors
 
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficient of the support vector in the decision function.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
     
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
     Methods
@@ -486,7 +577,7 @@ class OneClassSVM(BaseLibsvm):
         super(OneClassSVM, self).fit(X, Y)
 
 
-class LinearSVC(BaseEstimator, ClassifierMixin):
+class LinearSVC(BaseLibLinear, ClassifierMixin):
     """
     Linear Support Vector Classification.
 
@@ -514,19 +605,19 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficient of the support vector in the decision function,
-        where nclasses is the number of classes and nSV is the number
+        where n_classes is the number of classes and nSV is the number
         of support vectors.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Wiehgiths asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
 
@@ -542,83 +633,4 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
 
     """
 
-    _weight_label = np.empty(0, dtype=np.int32)
-    _weight = np.empty(0, dtype=np.float64)
-
-    _solver_type_dict = {
-        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
-        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
-        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
-        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
-        }
-
-    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 bias=True):
-        self.penalty = penalty
-        self.loss = loss
-        self.dual = dual
-        self.eps = eps
-        self.C = C
-        self.bias = int(bias) - .5 # negative on False, positive on True
-        # Check that the arguments given are valid:
-        self._get_solver_type()
-
-
-    def _get_solver_type(self):
-        """ Return the magic number for the solver described by the
-            settings.
-        """
-        solver_type = "P%s_L%s_D%d"  % (
-            self.penalty.upper(), self.loss.upper(), int(self.dual))
-        if not solver_type in self._solver_type_dict:
-            raise ValueError('Not supported set of arguments: '
-                             + solver_type)
-        return self._solver_type_dict[solver_type]
-
-
-    def fit(self, X, Y, **params):
-        """
-        Parameters
-        ==========
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        Y : array, shape = [nsamples]
-            Target vector relative to X
-        """
-        self._set_params(**params)
-        
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.raw_coef_, self.label_, self.bias_ = \
-                       _liblinear.train_wrap(X, Y,
-                       self._get_solver_type(),
-                       self.eps, 1.0, self.C, self._weight_label,
-                       self._weight)
-        return self
-
-    def predict(self, T):
-        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        return _liblinear.predict_wrap(T, self.raw_coef_,
-                                      self._get_solver_type(),
-                                      self.eps, self.C,
-                                      self._weight_label,
-                                      self._weight, self.label_,
-                                      self.bias_)
-
-    def predict_proba(self, T):
-        raise NotImplementedError(
-                'liblinear does not provide this functionality')
-
-    @property
-    def intercept_(self):
-        if self.bias_ > 0:
-            return self.raw_coef_[:,-1]
-        return 0.0
-
-    @property
-    def coef_(self):
-        if self.bias_ > 0:
-            return self.raw_coef_[:,:-1]
-        return self.raw_coef_
-
+    pass

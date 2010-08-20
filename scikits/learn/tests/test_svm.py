@@ -21,6 +21,8 @@ Y2 = [1, 2, 2, 2, 3]
 T2 = [[-1, -1, -1], [1, 1, 1], [2, 2, 2]]
 true_result2 = [1, 2, 3]
 
+from scikits.learn import datasets
+iris = datasets.load_iris()
 
 def test_CSVC():
     """
@@ -89,7 +91,6 @@ def test_precomputed():
 
     # test a precomputed kernel with the iris dataset
     clf = svm.SVC(kernel='precomputed')
-    iris = datasets.load_iris()
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
     pred = clf.predict(K)
@@ -169,8 +170,6 @@ def test_probability():
 
     This uses cross validation, so we use a slightly bigger testing set.
     """
-    from scikits.learn import datasets
-    iris = datasets.load_iris()
 
     clf = svm.SVC(probability=True)
     clf.fit(iris.data, iris.target)
@@ -225,6 +224,9 @@ def test_error():
     """
     Test that it gives proper exception on deficient input
     """
+    # impossible value of C
+    assert_raises (ValueError, svm.SVC(C=-1).fit, X, Y)
+
     # impossible value of nu
     clf = svm.SVC(impl='nu_svc', kernel='linear', nu=0.0)
     assert_raises(ValueError, clf.fit, X, Y)
@@ -247,6 +249,9 @@ def test_LinearSVC():
     """
     clf = svm.LinearSVC().fit(X, Y)
 
+    # by default should have intercept
+    assert clf.has_intercept
+
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.intercept_, [0], decimal=5)
 
@@ -258,19 +263,27 @@ def test_LinearSVC():
     clf = svm.LinearSVC(penalty='l2', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
-    #
+    # l2 penalty, l1 loss
     clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
 
+def test_LinearSVC_iris():
+    """
+    Test that LinearSVC gives plausible predictions on the iris dataset
+    """
+    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    assert_ (np.mean(clf.predict(iris.data) == iris.target) > 0.95)
+
+
 def test_SVC_vs_LinearSVC():
     """
-    Test that SVC and LinearSVC return the same coef_ and intercept_
+    Test that SVC and LinearSVC return the same prediction.
     """
     svc = svm.SVC(kernel='linear', C=1).fit(X, Y)
-    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1', dual=True).fit(X, Y)
+    linsvc = svm.LinearSVC(C=2, penalty='l2', loss='l1', dual=True).fit(X, Y)
+    assert_array_almost_equal (linsvc.predict(X), svc.predict(X))
 
-    assert_array_equal(linsvc.coef_.shape, svc.coef_.shape)
-    assert_array_almost_equal(linsvc.coef_, svc.coef_, decimal=5)
-    assert_array_almost_equal(linsvc.intercept_, svc.intercept_, decimal=5)
-
+    svc.fit (X2, Y2)
+    linsvc.fit (X2, Y2)
+    assert_array_almost_equal (linsvc.predict(X2), svc.predict(X2))

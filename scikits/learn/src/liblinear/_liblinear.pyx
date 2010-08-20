@@ -76,14 +76,12 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         w = np.empty((1, nr_feature))
         copy_w(w.data, model, nr_feature)
     else:
-        len_w = nr_class * nr_feature
+        len_w = (nr_class) * nr_feature
         w = np.empty((nr_class, nr_feature))
         copy_w(w.data, model, len_w)
 
-    bias = get_bias(model)
-
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
-    label = np.empty((nr_class), dtype=np.int32)
+    label = np.empty(nr_class, dtype=np.int32)
     copy_label(label.data, model, nr_class)
 
     ### FREE
@@ -92,7 +90,7 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     free_parameter(param)
     # destroy_param(param)  don't call this or it will destroy weight_label and weight
 
-    return w, label, bias
+    return w, label
 
 def csr_train_wrap ( int n_features,
                  np.ndarray[np.float64_t, ndim=1, mode='c'] X_values,
@@ -129,17 +127,15 @@ def csr_train_wrap ( int n_features,
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] w
     cdef int nr_class = get_nr_class(model)
-    cdef int nr_feature = get_nr_feature(model)
+    cdef int nr_feature = n_features
     if bias > 0: nr_feature = nr_feature + 1
     if nr_class == 2:
         w = np.empty((1, nr_feature))
         copy_w(w.data, model, nr_feature)
     else:
-        len_w = nr_class * nr_feature
+        len_w = (nr_class * nr_feature)
         w = np.empty((nr_class, nr_feature))
         copy_w(w.data, model, len_w)
-
-    bias = get_bias(model)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
     label = np.empty((nr_class), dtype=np.int32)
@@ -151,7 +147,7 @@ def csr_train_wrap ( int n_features,
     free_parameter(param)
     # destroy_param(param)  don't call this or it will destroy weight_label and weight
 
-    return w, label, bias
+    return w, label
 
 def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                  np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,

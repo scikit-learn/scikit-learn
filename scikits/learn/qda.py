@@ -25,8 +25,8 @@ class QDA(BaseEstimator):
     Parameters
     ----------
     X : array-like, shape = [n_samples, n_features]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
     y : array, shape = [n_samples]
         Target vector relative to X
 
@@ -52,6 +52,8 @@ class QDA(BaseEstimator):
 
     Examples
     --------
+    >>> from scikits.learn.qda import QDA
+    >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QDA()
@@ -76,10 +78,10 @@ class QDA(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array, shape = [n_samples]
             Target values (integers)
         store_covariances : boolean
             If True the covariance matrices are computed and stored in
@@ -94,7 +96,7 @@ class QDA(BaseEstimator):
             raise ValueError("Incompatible shapes")
         n_samples = X.shape[0]
         n_features = X.shape[1]
-        classes = np.unique(y)
+        classes = np.unique(y).astype(np.int32)
         n_classes = classes.size
         if n_classes < 2:
             raise exceptions.ValueError('y has less than 2 classes')

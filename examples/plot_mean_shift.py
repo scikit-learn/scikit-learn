@@ -31,9 +31,9 @@ for i in range(n_clusters):
 # Compute clustering with MeanShift
 bandwidth = estimate_bandwidth(X, quantile=0.3)
 ms = MeanShift(bandwidth=bandwidth)
-ms.fit(X).labels
-labels = ms.labels
-cluster_centers = ms.cluster_centers
+ms.fit(X)
+labels = ms.labels_
+cluster_centers = ms.cluster_centers_
 
 labels_unique = np.unique(labels)
 n_clusters_ = len(labels_unique)

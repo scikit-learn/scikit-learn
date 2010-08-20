@@ -120,6 +120,7 @@ User guide
    tutorial
    supervised_learning
    unsupervised_learning
+   model_selection
    auto_examples/index
-   contribute
+   developers/index
    .. API

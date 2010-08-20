@@ -227,6 +227,15 @@ class SparseHashingVectorizer(object):
 
     def __init__(self, dim=100000, probes=1, use_idf=True,
                  analyzer=DEFAULT_ANALYZER):
+        self.dim = dim
+        self.probes = probes
+        self.analyzer = analyzer
+        self.use_idf = use_idf
+
+        # start counts at one to avoid zero division while
+        # computing IDF
+        self.df_counts = np.ones(dim, dtype=long)
+        self.tf_vectors = None
 
     def hash_sign(self, token, probe=0):
         h = hash(token + (probe * u"#"))

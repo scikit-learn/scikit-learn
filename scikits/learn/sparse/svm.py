@@ -19,9 +19,10 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, ClassifierMixin
+from ..svm import BaseLibsvm, BaseLibLinear
 from .. import _libsvm, _liblinear
 
-class SparseBaseLibsvm(BaseEstimator):
+class SparseBaseLibsvm(BaseLibsvm):
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -123,7 +124,7 @@ class SparseBaseLibsvm(BaseEstimator):
 
         Parameters
         ----------
-        T : scipy.sparse.csr, shape = [nsamples, nfeatures]
+        T : scipy.sparse.csr, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -145,13 +146,6 @@ class SparseBaseLibsvm(BaseEstimator):
                       self.nSV_, self.label_, self.probA_,
                       self.probB_)
 
-    @property
-    def coef_(self):
-        if self.kernel != 'linear':
-            raise NotImplementedError(
-                'coef_ is only available when using a linear kernel')
-        return np.dot(self.dual_coef_, self.support_)
-
 
 class SVC(SparseBaseLibsvm):
     """SVC for sparse matrices (csr)
@@ -171,7 +165,7 @@ class SVC(SparseBaseLibsvm):
 
 
 
-class LinearSVC(BaseEstimator, ClassifierMixin):
+class LinearSVC(BaseLibLinear, ClassifierMixin):
     """
     Linear Support Vector Classification, Sparse Version
 
@@ -199,19 +193,19 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficient of the support vector in the decision function,
-        where nclasses is the number of classes and nSV is the number
+        where n_classes is the number of classes and nSV is the number
         of support vectors.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Wiehgiths asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
 
@@ -230,60 +224,32 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
     _weight_label = np.empty(0, dtype=np.int32)
     _weight = np.empty(0, dtype=np.float64)
 
-    _solver_type_dict = {
-        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
-        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
-        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
-        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
-        }
-
-    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0):
-        self.penalty = penalty
-        self.loss = loss
-        self.dual = dual
-        self.eps = eps
-        self.C = C
-        # Check that the arguments given are valid:
-        self._get_solver_type()
-
-
-    def _get_solver_type(self):
-        """ Return the magic number for the solver described by the
-            settings.
-        """
-        solver_type = "P%s_L%s_D%d"  % (
-            self.penalty.upper(), self.loss.upper(), int(self.dual))
-        if not solver_type in self._solver_type_dict:
-            raise ValueError('Not supported set of arguments: '
-                             + solver_type)
-        return self._solver_type_dict[solver_type]
-
 
     def fit(self, X, Y, **params):
         """
         Parameters
         ==========
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        Y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        Y : array, shape = [n_samples]
             Target vector relative to X
         """
         self._set_params(**params)
         X = sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
-        self.raw_coef_, self.label_, self.bias_ = \
+
+        self.raw_coef_, self.label_ = \
                        _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, Y,
                        self._get_solver_type(),
-                       self.eps, 1.0, self.C, self._weight_label,
+                       self.eps, self._get_bias(), self.C, self._weight_label,
                        self._weight)
         return self
 
     def predict(self, T):
         T = sparse.csr_matrix(T)
-        print T.shape
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         return _liblinear.csr_predict_wrap(T.shape[1],
                                       T.data, T.indices, T.indptr,
@@ -292,21 +258,5 @@ class LinearSVC(BaseEstimator, ClassifierMixin):
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
-                                      self.bias_)
-
-    def predict_proba(self, T):
-        raise NotImplementedError(
-                'liblinear does not provide this functionality')
-
-    @property
-    def intercept_(self):
-        if self.bias_ > 0:
-            return self.raw_coef_[:,-1]
-        return 0.0
-
-    @property
-    def coef_(self):
-        if self.bias_ > 0:
-            return self.raw_coef_[:,:-1]
-        return self.raw_coef
+                                      self._get_bias())
 
