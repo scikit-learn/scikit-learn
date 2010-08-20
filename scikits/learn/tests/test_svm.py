@@ -287,13 +287,3 @@ def test_SVC_vs_LinearSVC():
     svc.fit (X2, Y2)
     linsvc.fit (X2, Y2)
     assert_array_almost_equal (linsvc.predict(X2), svc.predict(X2))
-
-
-def test_SVC_vs_LinearSVC_iris():
-    """
-    Test also on the iris dataset
-    """
-
-    svc = svm.SVC(kernel='linear', C=1).fit(iris.data, iris.target)
-    linsvc = svm.LinearSVC(C=1, penalty='l2', loss='l1').fit(iris.data, iris.target)
-    assert_array_almost_equal (linsvc.predict(iris.data), svc.predict(iris.data))
