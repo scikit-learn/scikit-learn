@@ -98,7 +98,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n=1):
 
     Parameters
     ----------
-    mean : array_like, shape (ndim,)
+    mean : array_like, shape (n_dim,)
         Mean of the distribution.
     covars : array_like
         Covariance of the distribution.  The shape depends on `cvtype`:
@@ -113,7 +113,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n=1):
 
     Returns
     -------
-    obs : array, shape (n, ndim)
+    obs : array, shape (n, n_dim)
         Randomly generated sample
     """
     ndim = len(mean)

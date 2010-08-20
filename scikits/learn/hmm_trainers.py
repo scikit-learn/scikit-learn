@@ -2,7 +2,8 @@ import string
 
 import numpy as np
 
-from gmm import *
+from .gmm import GMM, logsum, normalize
+
 
 class HMMTrainer(object):
     """Base class for HMM training algorithms."""
@@ -11,7 +12,7 @@ class HMMTrainer(object):
     def emission_type(self):
         pass
 
-    def train(self, hmm, obs, niter=10, thresh=1e-2, params=string.letters,
+    def train(self, hmm, obs, n_iter=10, thresh=1e-2, params=string.letters,
               maxrank=None, beamlogprob=-np.Inf, **kwargs):
         """Estimate model parameters.
 
@@ -20,8 +21,8 @@ class HMMTrainer(object):
         hmm : HMM object
             HMM to train.
         obs : list
-            List of array-like observation sequences (shape (n_i, ndim)).
-        niter : int
+            List of array-like observation sequences (shape (n_i, n_dim)).
+        n_iter : int
             Number of iterations to perform.
         thresh : float
             Convergence threshold.
@@ -55,7 +56,7 @@ class HMMTrainer(object):
         or decreasing `covarprior`.
         """
         logprob = []
-        for i in xrange(niter):
+        for i in xrange(n_iter):
             # Expectation step
             stats = self._initialize_sufficient_statistics(hmm)
             curr_logprob = 0
@@ -68,10 +69,9 @@ class HMMTrainer(object):
                 gamma = fwdlattice + bwdlattice
                 posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
                 curr_logprob += lpr
-                self._accumulate_sufficient_statistics(hmm, stats, seq,
-                                                       framelogprob, posteriors,
-                                                       fwdlattice, bwdlattice,
-                                                       params)
+                self._accumulate_sufficient_statistics(
+                    hmm, stats, seq, framelogprob, posteriors, fwdlattice,
+                    bwdlattice, params)
             logprob.append(curr_logprob)
 
             # Check for convergence.
@@ -86,11 +86,11 @@ class HMMTrainer(object):
     def _initialize_sufficient_statistics(self, hmm):
         pass
 
-    def _accumulate_sufficient_statistics(self, hmm, stats, seq, framelogprob, 
+    def _accumulate_sufficient_statistics(self, hmm, stats, seq, framelogprob,
                                           posteriors, fwdlattice,
                                           bwdlattice, params):
         pass
-    
+
     def _do_mstep(self, hmm, stats, params, **kwargs):
         pass
 
@@ -104,12 +104,12 @@ class BaseHMMBaumWelchTrainer(HMMTrainer):
     emission_type = None
 
     def _initialize_sufficient_statistics(self, hmm):
-        stats = {'nobs':  0,
-                 'start': np.zeros(hmm._nstates),
-                 'trans': np.zeros((hmm._nstates, hmm._nstates))}
+        stats = {'nobs': 0,
+                 'start': np.zeros(hmm._n_states),
+                 'trans': np.zeros((hmm._n_states, hmm._n_states))}
         return stats
 
-    def _accumulate_sufficient_statistics(self, hmm, stats, seq, framelogprob, 
+    def _accumulate_sufficient_statistics(self, hmm, stats, seq, framelogprob,
                                           posteriors, fwdlattice, bwdlattice,
                                           params):
         stats['nobs'] += 1
@@ -129,16 +129,16 @@ class BaseHMMBaumWelchTrainer(HMMTrainer):
 
 
 class GaussianHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
-    """Baum-Welch maximum likelihood trainer for HMMs with Gaussian emissions."""
+    """Baum-Welch maximum likelihood trainer for GaussianHMM."""
     emission_type = 'gaussian'
 
     def _initialize_sufficient_statistics(self, hmm):
         stats = super(GaussianHMMBaumWelchTrainer,
                       self)._initialize_sufficient_statistics(hmm)
-        stats['post']      = np.zeros(hmm._nstates)
-        stats['obs']       = np.zeros((hmm._nstates, hmm._ndim))
-        stats['obs**2']    = np.zeros((hmm._nstates, hmm._ndim))
-        stats['obs*obs.T'] = np.zeros((hmm._nstates, hmm._ndim, hmm._ndim))
+        stats['post'] = np.zeros(hmm._n_states)
+        stats['obs'] = np.zeros((hmm._n_states, hmm._n_dim))
+        stats['obs**2'] = np.zeros((hmm._n_states, hmm._n_dim))
+        stats['obs*obs.T'] = np.zeros((hmm._n_states, hmm._n_dim, hmm._n_dim))
         return stats
 
     def _accumulate_sufficient_statistics(self, hmm, stats, obs, framelogprob,
@@ -157,12 +157,12 @@ class GaussianHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
         if 'c' in params:
             if hmm._cvtype in ('spherical', 'diag'):
                 stats['obs**2'] += np.dot(posteriors.T, obs**2)
-            elif hmm._cvtype in ('tied', 'full'):  
+            elif hmm._cvtype in ('tied', 'full'):
                 for t, o in enumerate(obs):
                     obsobsT = np.outer(o, o)
-                    for c in xrange(hmm._nstates):
+                    for c in xrange(hmm._n_states):
                         stats['obs*obs.T'][c] += posteriors[t,c] * obsobsT
-                  
+
     def _do_mstep(self, hmm, stats, params, covarprior=1e-2, **kwargs):
         super(GaussianHMMBaumWelchTrainer, self)._do_mstep(hmm, stats, params)
 
@@ -182,9 +182,9 @@ class GaussianHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
                 elif hmm._cvtype == 'diag':
                     hmm._covars = cv
             elif hmm._cvtype in ('tied', 'full'):
-                cvnum = np.empty((hmm._nstates, hmm._ndim, hmm._ndim))
-                cvprior = np.eye(hmm._ndim) * covarprior
-                for c in xrange(hmm._nstates):
+                cvnum = np.empty((hmm._n_states, hmm._n_dim, hmm._n_dim))
+                cvprior = np.eye(hmm._n_dim) * covarprior
+                for c in xrange(hmm._n_states):
                     cvnum[c] = (stats['obs*obs.T'][c]
                                 - 2 * np.outer(stats['obs'][c], hmm._means[c])
                                 + np.outer(hmm._means[c] * stats['post'][c],
@@ -193,8 +193,9 @@ class GaussianHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
                     hmm._covars = ((cvnum.sum(0) + cvprior)
                                    / (1.0 + stats['post'].sum(0)))
                 elif hmm._cvtype == 'full':
-                    hmm._covars = ((cvnum + cvprior)
-                                   / (1.0 + stats['post'][:,np.newaxis,np.newaxis]))
+                    hmm._covars = (
+                        (cvnum + cvprior)
+                        / (1.0 + stats['post'][:,np.newaxis,np.newaxis]))
 
 
 class GaussianHMMMAPTrainer(GaussianHMMBaumWelchTrainer):
@@ -216,7 +217,8 @@ class GaussianHMMMAPTrainer(GaussianHMMBaumWelchTrainer):
         self.covars_weight = covars_weight
 
     def _do_mstep(self, hmm, stats, params, **kwargs):
-        # Based on Huang, Acero, Hon, "Spoken Language Processing", p. 443 - 445
+        # Based on Huang, Acero, Hon, "Spoken Language Processing",
+        # p. 443 - 445
         if 's' in params:
             prior = self.startprob_prior
             if prior is None:
@@ -266,14 +268,15 @@ class GaussianHMMMAPTrainer(GaussianHMMBaumWelchTrainer):
                 elif hmm._cvtype == 'diag':
                     hmm._covars = (covars_prior + cv_num) / cv_den
             elif hmm._cvtype in ('tied', 'full'):
-                cvnum = np.empty((hmm._nstates, hmm._ndim, hmm._ndim))
-                for c in xrange(hmm._nstates):
-                    cvnum[c] = (means_weight * np.outer(meandiff[c], meandiff[c])
-                                + stats['obs*obs.T'][c] 
+                cvnum = np.empty((hmm._n_states, hmm._n_dim, hmm._n_dim))
+                for c in xrange(hmm._n_states):
+                    cvnum[c] = (means_weight * np.outer(meandiff[c],
+                                                        meandiff[c])
+                                + stats['obs*obs.T'][c]
                                 - 2 * np.outer(stats['obs'][c], hmm._means[c])
                                 + np.outer(hmm._means[c], hmm._means[c])
                                 * stats['post'][c])
-                cvweight = max(covars_weight - hmm._ndim, 0)
+                cvweight = max(covars_weight - hmm._n_dim, 0)
                 if hmm._cvtype == 'tied':
                     hmm._covars = ((covars_prior + cvnum.sum(axis=0))
                                     / (cvweight + stats['post'].sum()))
@@ -281,7 +284,6 @@ class GaussianHMMMAPTrainer(GaussianHMMBaumWelchTrainer):
                     hmm._covars = ((covars_prior + cvnum)
                                    / (cvweight + stats['post'][:,None,None]))
 
- 
 
 class MultinomialHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
     "Baum-Welch maximum likelihood trainer for HMM with multinomial emissions."
@@ -290,7 +292,7 @@ class MultinomialHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
     def _initialize_sufficient_statistics(self, hmm):
         stats = super(MultinomialHMMBaumWelchTrainer,
                       self)._initialize_sufficient_statistics(hmm)
-        stats['obs']  = np.zeros((hmm._nstates, hmm._nsymbols))
+        stats['obs'] = np.zeros((hmm._n_states, hmm._nsymbols))
         return stats
 
     def _accumulate_sufficient_statistics(self, hmm, stats, obs, framelogprob,
@@ -304,7 +306,7 @@ class MultinomialHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
         if 'e' in params:
             for t,symbol in enumerate(obs):
                 stats['obs'][:,symbol] += posteriors[t,:]
-                  
+
     def _do_mstep(self, hmm, stats, params, covarprior=1e-2, **kwargs):
         super(MultinomialHMMBaumWelchTrainer, self)._do_mstep(hmm, stats,
                                                               params)
@@ -336,8 +338,8 @@ class GMMHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
         for state,g in enumerate(hmm.gmms):
             gmm_logprob, gmm_posteriors = g.eval(obs)
             gmm_posteriors *= posteriors[:,state][:,np.newaxis]
-            tmpgmm = GMM(g.nstates, g.ndim, cvtype=g.cvtype)
-            norm = tmpgmm._do_mstep(obs, gmm_posteriors, params, min_covar=0)
+            tmpgmm = GMM(g.n_states, g.n_dim, cvtype=g.cvtype)
+            norm = tmpgmm._do_mstep(obs, gmm_posteriors, params)
 
             stats['norm'][state] += norm
             if 'm' in params:
@@ -347,11 +349,11 @@ class GMMHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
                     stats['covars'][state] += tmpgmm._covars * norm.sum()
                 else:
                     cvnorm = np.copy(norm)
-                    shape = np.ones(tmpgmm._covars.ndim)
+                    shape = np.ones(tmpgmm._covars.n_dim)
                     shape[0] = np.shape(tmpgmm._covars)[0]
                     cvnorm.shape = shape
                     stats['covars'][state] += tmpgmm._covars * cvnorm
-                  
+
     def _do_mstep(self, hmm, stats, params, covarprior=1e-2, **kwargs):
         super(GMMHMMBaumWelchTrainer, self)._do_mstep(hmm, stats, params)
         # All we have left to do is apply covarprior to the parameters
@@ -360,23 +362,23 @@ class GMMHMMBaumWelchTrainer(BaseHMMBaumWelchTrainer):
             norm = stats['norm'][state]
             #print norm
             if 'w' in params:
-                g.weights = normalize(norm) 
+                g.weights = normalize(norm)
             if 'm' in params:
                 g.means = stats['means'][state] / norm[:,np.newaxis]
             if 'c' in params:
                 if g.cvtype == 'tied':
                     g.covars = (stats['covars'][state]
-                                + covarprior * np.eye(g.ndim)) / norm.sum()
+                                + covarprior * np.eye(g.n_dim)) / norm.sum()
                 else:
                     cvnorm = np.copy(norm)
-                    shape = np.ones(g._covars.ndim)
+                    shape = np.ones(g._covars.n_dim)
                     shape[0] = np.shape(g._covars)[0]
                     cvnorm.shape = shape
                     if g.cvtype == 'spherical' or g.cvtype == 'diag':
                         g.covars = (stats['covars'][state]
                                     + covarprior) / cvnorm
                     elif g.cvtype == 'full':
+                        eye = np.eye(g.n_dim)
                         g.covars = ((stats['covars'][state]
-                                     + covarprior*np.eye(g.ndim)[np.newaxis,:,:])
+                                     + covarprior * eye[np.newaxis,:,:])
                                     / cvnorm)
-        

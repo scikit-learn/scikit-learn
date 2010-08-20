@@ -7,12 +7,13 @@ import string
 import numpy as np
 import scipy as sp
 
-import gmm
-from gmm import *
-from gmm import _distribute_covar_matrix_to_match_cvtype #, _validate_covars
+from .base import BaseEstimator
+from .gmm import (GMM, lmvnpdf, logsum, normalize, sample_gaussian,
+                 _distribute_covar_matrix_to_match_cvtype, _validate_covars)
 import hmm_trainers
 
 ZEROLOGPROB = -1e200
+
 
 def HMM(emission_type='gaussian', *args, **kwargs):
     """Create an HMM object with the given emission_type."""
@@ -24,7 +25,8 @@ def HMM(emission_type='gaussian', *args, **kwargs):
     else:
         raise ValueError('Unknown emission_type')
 
-class _BaseHMM(object):
+
+class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
 
     Representation of a hidden Markov model probability distribution.
@@ -36,28 +38,30 @@ class _BaseHMM(object):
 
     Attributes
     ----------
-    nstates : int (read-only)
+    n_states : int (read-only)
         Number of states in the model.
-    transmat : array, shape (`nstates`, `nstates`)
+    transmat : array, shape (`n_states`, `n_states`)
         Matrix of transition probabilities between states.
-    startprob : array, shape ('nstates`,)
+    startprob : array, shape ('n_states`,)
         Initial state occupation distribution.
-    labels : list, len `nstates`
+    labels : list, len `n_states`
         Optional labels for each state.
 
     Methods
     -------
-    eval(obs)
-        Compute the log likelihood of `obs` under the HMM.
-    decode(obs)
-        Find most likely state sequence for each point in `obs` using the
+    eval(X)
+        Compute the log likelihood of `X` under the HMM.
+    decode(X)
+        Find most likely state sequence for each point in `X` using the
         Viterbi algorithm.
     rvs(n=1)
         Generate `n` samples from the HMM.
-    fit(obs)
-        Estimate HMM parameters from `obs`.
-    predict(obs)
-        Like decode, find most likely state sequence corresponding to `obs`.
+    fit(X)
+        Estimate HMM parameters from `X`.
+    predict(X)
+        Like decode, find most likely state sequence corresponding to `X`.
+    score(X)
+        Compute the log likelihood of `X` under the model.
 
     See Also
     --------
@@ -80,20 +84,20 @@ class _BaseHMM(object):
         """String identifier for the emission distribution used by this HMM"""
         return None
 
-    def __init__(self, nstates, startprob=None, transmat=None, labels=None,
+    def __init__(self, n_states, startprob=None, transmat=None, labels=None,
                  trainer=hmm_trainers.BaseHMMBaumWelchTrainer()):
-        self._nstates = nstates
+        self._n_states = n_states
 
         if startprob is None:
-            startprob = np.tile(1.0 / nstates, nstates)
+            startprob = np.tile(1.0 / n_states, n_states)
         self.startprob = startprob
 
         if transmat is None:
-            transmat = np.tile(1.0 / nstates, (nstates, nstates))
+            transmat = np.tile(1.0 / n_states, (n_states, n_states))
         self.transmat = transmat
 
         if labels is None:
-            labels = [None] * nstates
+            labels = [None] * n_states
         self.labels = labels
 
         self._default_trainer = trainer
@@ -106,8 +110,8 @@ class _BaseHMM(object):
 
         Parameters
         ----------
-        obs : array_like, shape (n, ndim)
-            Sequence of ndim-dimensional data points.  Each row
+        obs : array_like, shape (n, n_dim)
+            Sequence of n_dim-dimensional data points.  Each row
             corresponds to a single point in the sequence.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
@@ -123,13 +127,13 @@ class _BaseHMM(object):
         -------
         logprob : array_like, shape (n,)
             Log probabilities of the sequence `obs`
-        posteriors: array_like, shape (n, nstates)
+        posteriors: array_like, shape (n, n_states)
             Posterior probabilities of each state for each
             observation
 
         See Also
         --------
-        lpdf : Compute the log probability under the model
+        score : Compute the log probability under the model
         decode : Find most likely state sequence corresponding to a `obs`
         """
         obs = np.asanyarray(obs)
@@ -146,13 +150,13 @@ class _BaseHMM(object):
         posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
         return logprob, posteriors
 
-    def lpdf(self, obs, maxrank=None, beamlogprob=-np.Inf):
+    def score(self, obs, maxrank=None, beamlogprob=-np.Inf):
         """Compute the log probability under the model.
 
         Parameters
         ----------
-        obs : array_like, shape (n, ndim)
-            Sequence of ndim-dimensional data points.  Each row
+        obs : array_like, shape (n, n_dim)
+            Sequence of n_dim-dimensional data points.  Each row
             corresponds to a single data point.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
@@ -171,13 +175,13 @@ class _BaseHMM(object):
 
         See Also
         --------
-        eval : Compute the log probability under the model and compute posteriors
+        eval : Compute the log probability under the model and posteriors
         decode : Find most likely state sequence corresponding to a `obs`
         """
         obs = np.asanyarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
-        logprob, fwdlattice =  self._do_forward_pass(framelogprob, maxrank,
-                                                     beamlogprob)
+        logprob, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
+                                                    beamlogprob)
         return logprob
 
     def decode(self, obs, maxrank=None, beamlogprob=-np.Inf):
@@ -187,8 +191,8 @@ class _BaseHMM(object):
 
         Parameters
         ----------
-        obs : array_like, shape (n, ndim)
-            List of ndim-dimensional data points.  Each row corresponds to a
+        obs : array_like, shape (n, n_dim)
+            List of n_dim-dimensional data points.  Each row corresponds to a
             single data point.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
@@ -209,8 +213,8 @@ class _BaseHMM(object):
 
         See Also
         --------
-        eval : Compute the log probability under the model and compute posteriors
-        lpdf : Compute the log probability under the model
+        eval : Compute the log probability under the model and posteriors
+        score : Compute the log probability under the model
         """
         obs = np.asanyarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
@@ -223,8 +227,8 @@ class _BaseHMM(object):
 
         Parameters
         ----------
-        obs : array_like, shape (n, ndim)
-            List of ndim-dimensional data points.  Each row corresponds to a
+        obs : array_like, shape (n, n_dim)
+            List of n_dim-dimensional data points.  Each row corresponds to a
             single data point.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
@@ -261,7 +265,7 @@ class _BaseHMM(object):
         startprob_pdf = self.startprob
         startprob_cdf = np.cumsum(startprob_pdf)
         transmat_pdf = self.transmat
-        transmat_cdf = np.cumsum(transmat_pdf, 1);
+        transmat_cdf = np.cumsum(transmat_pdf, 1)
 
         # Initial state.
         rand = np.random.rand()
@@ -275,7 +279,7 @@ class _BaseHMM(object):
 
         return np.array(obs)
 
-    def fit(self, obs, niter=10, thresh=1e-2, params=string.letters,
+    def fit(self, obs, n_iter=10, thresh=1e-2, params=string.letters,
             init_params=string.letters,
             maxrank=None, beamlogprob=-np.Inf, trainer=None, **kwargs):
         """Estimate model parameters with the Baum-Welch algorithm.
@@ -284,13 +288,13 @@ class _BaseHMM(object):
         algorithm. If you want to avoid this step, set the keyword
         argument init_params to the empty string ''. Likewise, if you
         would like just to do an initialization, call this method with
-        niter=0.
+        n_iter=0.
 
         Parameters
         ----------
         obs : list
-            List of array-like observation sequences (shape (n_i, ndim)).
-        niter : int, optional
+            List of array-like observation sequences (shape (n_i, n_dim)).
+        n_iter : int, optional
             Number of iterations to perform.
         thresh : float, optional
             Convergence threshold.
@@ -313,11 +317,6 @@ class _BaseHMM(object):
             Width of the beam-pruning beam in log-probability units.
             Defaults to -numpy.Inf (no beam pruning).  See "The HTK
             Book" for more details.
-
-        Returns
-        -------
-        logprob : list
-            Log probabilities of each data point in `obs` for each iteration
         """
         obs = np.asanyarray(obs)
 
@@ -329,21 +328,22 @@ class _BaseHMM(object):
         if self.emission_type != trainer.emission_type:
             raise ValueError('trainer has incompatible emission_type')
 
-        return trainer.train(self, obs, niter, thresh, params, maxrank,
-                             beamlogprob, **kwargs)
+        trainer.train(self, obs, n_iter, thresh, params, maxrank,
+                      beamlogprob, **kwargs)
+        return self
 
     @property
-    def nstates(self):
+    def n_states(self):
         """Number of states in the model."""
-        return self._nstates
+        return self._n_states
 
     def _get_startprob(self):
         """Mixing startprob for each state."""
         return np.exp(self._log_startprob)
 
     def _set_startprob(self, startprob):
-        if len(startprob) != self._nstates:
-            raise ValueError('startprob must have length nstates')
+        if len(startprob) != self._n_states:
+            raise ValueError('startprob must have length n_states')
         if not np.allclose(np.sum(startprob), 1.0):
             raise ValueError('startprob must sum to 1.0')
 
@@ -356,8 +356,8 @@ class _BaseHMM(object):
         return np.exp(self._log_transmat)
 
     def _set_transmat(self, transmat):
-        if np.asanyarray(transmat).shape != (self._nstates, self._nstates):
-            raise ValueError('transmat must have shape (nstates, nstates)')
+        if np.asanyarray(transmat).shape != (self._n_states, self._n_states):
+            raise ValueError('transmat must have shape (n_states, n_states)')
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
 
@@ -367,18 +367,19 @@ class _BaseHMM(object):
 
     transmat = property(_get_transmat, _set_transmat)
 
-    def _do_viterbi_pass(self, framelogprob, maxrank=None, beamlogprob=-np.Inf):
+    def _do_viterbi_pass(self, framelogprob, maxrank=None,
+                         beamlogprob=-np.Inf):
         nobs = len(framelogprob)
-        lattice = np.zeros((nobs, self._nstates))
-        traceback = np.zeros((nobs, self._nstates), dtype=np.int)
+        lattice = np.zeros((nobs, self._n_states))
+        traceback = np.zeros((nobs, self._n_states), dtype=np.int)
 
         lattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
             idx = self._prune_states(lattice[n-1], maxrank, beamlogprob)
             pr = self._log_transmat[idx].T + lattice[n-1,idx]
-            lattice[n]   = np.max(pr, axis=1) + framelogprob[n]
+            lattice[n] = np.max(pr, axis=1) + framelogprob[n]
             traceback[n] = np.argmax(pr, axis=1)
-        lattice[lattice <= ZEROLOGPROB] = -np.Inf;
+        lattice[lattice <= ZEROLOGPROB] = -np.Inf
 
         # Do traceback.
         reverse_state_sequence = []
@@ -391,9 +392,10 @@ class _BaseHMM(object):
         reverse_state_sequence.reverse()
         return logprob, np.array(reverse_state_sequence)
 
-    def _do_forward_pass(self, framelogprob, maxrank=None, beamlogprob=-np.Inf):
+    def _do_forward_pass(self, framelogprob, maxrank=None,
+                         beamlogprob=-np.Inf):
         nobs = len(framelogprob)
-        fwdlattice = np.zeros((nobs, self._nstates))
+        fwdlattice = np.zeros((nobs, self._n_states))
 
         fwdlattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
@@ -408,7 +410,7 @@ class _BaseHMM(object):
     def _do_backward_pass(self, framelogprob, fwdlattice, maxrank=None,
                           beamlogprob=-np.Inf):
         nobs = len(framelogprob)
-        bwdlattice = np.zeros((nobs, self._nstates))
+        bwdlattice = np.zeros((nobs, self._n_states))
 
         for n in xrange(nobs - 1, 0, -1):
             # Do HTK style pruning (p. 137 of HTK Book version 3.4).
@@ -446,7 +448,7 @@ class _BaseHMM(object):
             hst = hst[::-1].cumsum()
             cdf = cdf[::-1]
 
-            rankthresh = cdf[hst >= min(maxrank, self._nstates)].max()
+            rankthresh = cdf[hst >= min(maxrank, self._n_states)].max()
 
             # Only change the threshold if it is stricter than the beam
             # threshold.
@@ -464,9 +466,9 @@ class _BaseHMM(object):
 
     def _init(self, obs, params, **kwargs):
         if 's' in params:
-            self.startprob[:] = 1.0 / self._nstates
+            self.startprob[:] = 1.0 / self._n_states
         if 't' in params:
-            self.transmat[:] = 1.0 / self._nstates
+            self.transmat[:] = 1.0 / self._n_states
 
 
 class GaussianHMM(_BaseHMM):
@@ -481,45 +483,47 @@ class GaussianHMM(_BaseHMM):
     cvtype : string (read-only)
         String describing the type of covariance parameters used by
         the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    ndim : int (read-only)
+    n_dim : int (read-only)
         Dimensionality of the Gaussian emissions.
-    nstates : int (read-only)
+    n_states : int (read-only)
         Number of states in the model.
-    transmat : array, shape (`nstates`, `nstates`)
+    transmat : array, shape (`n_states`, `n_states`)
         Matrix of transition probabilities between states.
-    startprob : array, shape ('nstates`,)
+    startprob : array, shape ('n_states`,)
         Initial state occupation distribution.
-    means : array, shape (`nstates`, `ndim`)
+    means : array, shape (`n_states`, `n_dim`)
         Mean parameters for each state.
     covars : array
         Covariance parameters for each state.  The shape depends on
         `cvtype`:
-            (`nstates`,)                if 'spherical',
-            (`ndim`, `ndim`)            if 'tied',
-            (`nstates`, `ndim`)         if 'diag',
-            (`nstates`, `ndim`, `ndim`) if 'full'
-    labels : list, len `nstates`
+            (`n_states`,)                   if 'spherical',
+            (`n_dim`, `n_dim`)              if 'tied',
+            (`n_states`, `n_dim`)           if 'diag',
+            (`n_states`, `n_dim`, `n_dim`)  if 'full'
+    labels : list, len `n_states`
         Optional labels for each state.
 
     Methods
     -------
-    eval(obs)
-        Compute the log likelihood of `obs` under the HMM.
-    decode(obs)
-        Find most likely state sequence for each point in `obs` using the
+    eval(X)
+        Compute the log likelihood of `X` under the HMM.
+    decode(X)
+        Find most likely state sequence for each point in `X` using the
         Viterbi algorithm.
     rvs(n=1)
         Generate `n` samples from the HMM.
-    init(obs)
-        Initialize HMM parameters from `obs`.
-    fit(obs)
-        Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
-    predict(obs)
-        Like decode, find most likely state sequence corresponding to `obs`.
+    init(X)
+        Initialize HMM parameters from `X`.
+    fit(X)
+        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
+    predict(X)
+        Like decode, find most likely state sequence corresponding to `X`.
+    score(X)
+        Compute the log likelihood of `X` under the model.
 
     Examples
     --------
-    >>> ghmm = GaussianHMM(nstates=2, ndim=1)
+    >>> ghmm = GaussianHMM(n_states=2, n_dim=1)
 
     See Also
     --------
@@ -528,7 +532,7 @@ class GaussianHMM(_BaseHMM):
 
     emission_type = 'gaussian'
 
-    def __init__(self, nstates, ndim=1, cvtype='diag', startprob=None,
+    def __init__(self, n_states, n_dim=1, cvtype='diag', startprob=None,
                  transmat=None, labels=None, means=None, covars=None,
                  trainer=hmm_trainers.GaussianHMMBaumWelchTrainer()):
         """Create a hidden Markov model with Gaussian emissions.
@@ -538,33 +542,33 @@ class GaussianHMM(_BaseHMM):
 
         Parameters
         ----------
-        nstates : int
+        n_states : int
             Number of states.
-        ndim : int
+        n_dim : int
             Dimensionality of the emissions.
         cvtype : string
             String describing the type of covariance parameters to
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
             Defaults to 'diag'.
         """
-        super(GaussianHMM, self).__init__(nstates, startprob, transmat, labels)
+        super(GaussianHMM, self).__init__(n_states, startprob, transmat,
+                                          labels)
 
-        self._ndim = ndim
+        self._n_dim = n_dim
         self._cvtype = cvtype
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
 
         if means is None:
-            means = np.zeros((nstates, ndim))
+            means = np.zeros((n_states, n_dim))
         self.means = means
 
         if covars is None:
-            covars = _distribute_covar_matrix_to_match_cvtype(np.eye(ndim),
-                                                              cvtype, nstates)
+            covars = _distribute_covar_matrix_to_match_cvtype(np.eye(n_dim),
+                                                              cvtype, n_states)
         self.covars = covars
 
         self._default_trainer = trainer
-
 
     # Read-only properties.
     @property
@@ -576,9 +580,9 @@ class GaussianHMM(_BaseHMM):
         return self._cvtype
 
     @property
-    def ndim(self):
+    def n_dim(self):
         """Dimensionality of the emissions."""
-        return self._ndim
+        return self._n_dim
 
     def _get_means(self):
         """Mean parameters for each state."""
@@ -586,8 +590,8 @@ class GaussianHMM(_BaseHMM):
 
     def _set_means(self, means):
         means = np.asanyarray(means)
-        if means.shape != (self._nstates, self._ndim):
-            raise ValueError('means must have shape (nstates, ndim)')
+        if means.shape != (self._n_states, self._n_dim):
+            raise ValueError('means must have shape (n_states, n_dim)')
         self._means = means.copy()
 
     means = property(_get_means, _set_means)
@@ -598,7 +602,7 @@ class GaussianHMM(_BaseHMM):
 
     def _set_covars(self, covars):
         covars = np.asanyarray(covars)
-        #_validate_covars(covars, self._cvtype, self._nstates, self._ndim)
+        _validate_covars(covars, self._cvtype, self._n_states, self._n_dim)
         self._covars = covars.copy()
 
     covars = property(_get_covars, _set_covars)
@@ -618,14 +622,14 @@ class GaussianHMM(_BaseHMM):
 
 
         if 'm' in params:
-            self._means, tmp = sp.cluster.vq.kmeans2(obs[0], self._nstates,
+            self._means, tmp = sp.cluster.vq.kmeans2(obs[0], self._n_states,
                                                      **kwargs)
         if 'c' in params:
             cv = np.cov(obs[0].T)
             if not cv.shape:
                 cv.shape = (1, 1)
             self._covars = _distribute_covar_matrix_to_match_cvtype(
-                cv, self._cvtype, self._nstates)
+                cv, self._cvtype, self._n_states)
 
 
 class MultinomialHMM(_BaseHMM):
@@ -633,39 +637,41 @@ class MultinomialHMM(_BaseHMM):
 
     Attributes
     ----------
-    nstates : int (read-only)
+    n_states : int (read-only)
         Number of states in the model.
     nsymbols : int
-        Number of symbols (TODO: explain the difference with nstates)
-    transmat : array, shape (`nstates`, `nstates`)
+        Number of symbols (TODO: explain the difference with n_states)
+    transmat : array, shape (`n_states`, `n_states`)
         Matrix of transition probabilities between states.
-    startprob : array, shape ('nstates`,)
+    startprob : array, shape ('n_states`,)
         Initial state occupation distribution.
-    emissionprob: array, shape ('nstates`, K)
+    emissionprob: array, shape ('n_states`, K)
         Probability of emitting a given symbol when in each state.  K
         is the number of possible symbols in the observations.
-    labels : list, len `nstates`
+    labels : list, len `n_states`
         Optional labels for each state.
 
     Methods
     -------
-    eval(obs)
-        Compute the log likelihood of `obs` under the HMM.
-    decode(obs)
-        Find most likely state sequence for each point in `obs` using the
+    eval(X)
+        Compute the log likelihood of `X` under the HMM.
+    decode(X)
+        Find most likely state sequence for each point in `X` using the
         Viterbi algorithm.
     rvs(n=1)
         Generate `n` samples from the HMM.
-    init(obs)
-        Initialize HMM parameters from `obs`.
-    fit(obs)
-        Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
-    predict(obs)
-        Like decode, find most likely state sequence corresponding to `obs`.
+    init(X)
+        Initialize HMM parameters from `X`.
+    fit(X)
+        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
+    predict(X)
+        Like decode, find most likely state sequence corresponding to `X`.
+    score(X)
+        Compute the log likelihood of `X` under the model.
 
     Examples
     --------
-    >>> mhmm = MultinomialHMM(nstates=2, nsymbols=3)
+    >>> mhmm = MultinomialHMM(n_states=2, nsymbols=3)
 
     See Also
     --------
@@ -674,21 +680,21 @@ class MultinomialHMM(_BaseHMM):
 
     emission_type = 'multinomial'
 
-    def __init__(self, nstates, nsymbols, startprob=None, transmat=None,
+    def __init__(self, n_states, nsymbols, startprob=None, transmat=None,
                  labels=None, emissionprob=None,
                  trainer=hmm_trainers.MultinomialHMMBaumWelchTrainer()):
         """Create a hidden Markov model with multinomial emissions.
 
         Parameters
         ----------
-        nstates : int
+        n_states : int
             Number of states.
         """
-        super(MultinomialHMM, self).__init__(nstates, startprob, transmat,
+        super(MultinomialHMM, self).__init__(n_states, startprob, transmat,
                                              labels)
         self._nsymbols = nsymbols
         if not emissionprob:
-            emissionprob = normalize(np.random.rand(self.nstates,
+            emissionprob = normalize(np.random.rand(self.n_states,
                                                     self.nsymbols), 1)
         self.emissionprob = emissionprob
         self._default_trainer = trainer
@@ -704,8 +710,9 @@ class MultinomialHMM(_BaseHMM):
 
     def _set_emissionprob(self, emissionprob):
         emissionprob = np.asanyarray(emissionprob)
-        if emissionprob.shape != (self._nstates, self._nsymbols):
-            raise ValueError('emissionprob must have shape (nstates, nsymbols)')
+        if emissionprob.shape != (self._n_states, self._nsymbols):
+            raise ValueError('emissionprob must have shape '
+                             '(n_states, nsymbols)')
 
         self._log_emissionprob = np.log(emissionprob)
         underflow_idx = np.isnan(self._log_emissionprob)
@@ -726,7 +733,7 @@ class MultinomialHMM(_BaseHMM):
         super(MultinomialHMM, self)._init(obs, params=params)
 
         if 'e' in params:
-            emissionprob = normalize(np.random.rand(self._nstates,
+            emissionprob = normalize(np.random.rand(self._n_states,
                                                     self._nsymbols), 1)
             self.emissionprob = emissionprob
 
@@ -736,36 +743,38 @@ class GMMHMM(_BaseHMM):
 
     Attributes
     ----------
-    nstates : int (read-only)
+    n_states : int (read-only)
         Number of states in the model.
-    transmat : array, shape (`nstates`, `nstates`)
+    transmat : array, shape (`n_states`, `n_states`)
         Matrix of transition probabilities between states.
-    startprob : array, shape ('nstates`,)
+    startprob : array, shape ('n_states`,)
         Initial state occupation distribution.
-    gmms: array of GMM objects, length 'nstates`
+    gmms: array of GMM objects, length 'n_states`
         GMM emission distributions for each state
-    labels : list, len `nstates`
+    labels : list, len `n_states`
         Optional labels for each state.
 
     Methods
     -------
-    eval(obs)
-        Compute the log likelihood of `obs` under the HMM.
-    decode(obs)
-        Find most likely state sequence for each point in `obs` using the
+    eval(X)
+        Compute the log likelihood of `X` under the HMM.
+    decode(X)
+        Find most likely state sequence for each point in `X` using the
         Viterbi algorithm.
     rvs(n=1)
         Generate `n` samples from the HMM.
-    init(obs)
-        Initialize HMM parameters from `obs`.
-    fit(obs)
-        Estimate HMM parameters from `obs` using the Baum-Welch algorithm.
-    predict(obs)
-        Like decode, find most likely state sequence corresponding to `obs`.
+    init(X)
+        Initialize HMM parameters from `X`.
+    fit(X)
+        Estimate HMM parameters from `X` using the Baum-Welch algorithm.
+    predict(X)
+        Like decode, find most likely state sequence corresponding to `X`.
+    score(X)
+        Compute the log likelihood of `X` under the model.
 
     Examples
     --------
-    >>> hmm = HMM('gmm', nstates=2, nmix=10, ndim=3)
+    >>> hmm = HMM('gmm', n_states=2, n_mix=10, n_dim=3)
 
     See Also
     --------
@@ -774,7 +783,7 @@ class GMMHMM(_BaseHMM):
 
     emission_type = 'gmm'
 
-    def __init__(self, nstates, ndim, nmix=1, startprob=None, transmat=None,
+    def __init__(self, n_states, n_dim, n_mix=1, startprob=None, transmat=None,
                  labels=None, gmms=None,
                  trainer=hmm_trainers.GMMHMMBaumWelchTrainer(),
                  **kwargs):
@@ -782,32 +791,31 @@ class GMMHMM(_BaseHMM):
 
         Parameters
         ----------
-        nstates : int
+        n_states : int
             Number of states.
-        ndim : int (read-only)
+        n_dim : int (read-only)
             Dimensionality of the emissions.
         """
-        super(GMMHMM, self).__init__(nstates, startprob, transmat,
-                                     labels)
+        super(GMMHMM, self).__init__(n_states, startprob, transmat, labels)
 
-        self._ndim = ndim
+        self._n_dim = n_dim
 
         if gmms is None:
             gmms = []
-            for x in xrange(self.nstates):
-                gmms.append(gmm.GMM(nmix, ndim, **kwargs))
+            for x in xrange(self.n_states):
+                gmms.append(GMM(n_mix, n_dim, **kwargs))
         self.gmms = gmms
 
         self._default_trainer = trainer
 
     # Read-only properties.
     @property
-    def ndim(self):
+    def n_dim(self):
         """Dimensionality of the emissions from this HMM."""
-        return self._ndim
+        return self._n_dim
 
     def _compute_log_likelihood(self, obs):
-        return np.array([g.lpdf(obs) for g in self.gmms]).T
+        return np.array([g.score(obs) for g in self.gmms]).T
 
     def _generate_sample_from_state(self, state):
         return self.gmms[state].rvs(1).flatten()
@@ -817,5 +825,4 @@ class GMMHMM(_BaseHMM):
 
         allobs = np.concatenate(obs, 0)
         for g in self.gmms:
-            g.fit(allobs, niter=0, init_params=params)
-
+            g.fit(allobs, n_iter=0, init_params=params)
