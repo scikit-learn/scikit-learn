@@ -58,3 +58,11 @@ class LogisticRegression(BaseLibLinear):
     def __init__(self, penalty='l2', eps=1e-4, C=1.0, has_intercept=True):
         super(LogisticRegression, self).__init__ (penalty=penalty, loss='lr',
             dual=False, eps=eps, C=C, has_intercept=has_intercept)
+
+    def predict_proba(self, T):
+        T = np.asanyarray(T, dtype=np.float64, order='C')
+        return _liblinear.predict_prob_wrap(T, self.raw_coef_, self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self._get_bias())
