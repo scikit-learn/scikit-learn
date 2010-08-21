@@ -313,7 +313,7 @@ class _BaseHMM(BaseEstimator):
         aggressive pruning is used.  Decreasing `logprob` is generally
         a sign of overfitting (e.g. a covariance parameter getting too
         small).  You can fix this by getting more training data, or
-        decreasing `covarprior`.
+        decreasing `covars_prior`.
         """
         obs = np.asanyarray(obs)
 
@@ -578,7 +578,9 @@ class GaussianHMM(_BaseHMM):
     
     def __init__(self, n_states=1, n_dim=1, cvtype='diag', startprob=None,
                  transmat=None, labels=None, means=None, covars=None,
-                 startprob_prior=None, transmat_prior=None):
+                 startprob_prior=None, transmat_prior=None,
+                 means_prior=None, means_weight=0,
+                 covars_prior=1e-2, covars_weight=1):
         """Create a hidden Markov model with Gaussian emissions.
 
         Initializes parameters such that every state has zero mean and
@@ -609,10 +611,16 @@ class GaussianHMM(_BaseHMM):
             means = np.zeros((n_states, n_dim))
         self.means = means
 
+        self.means_prior = means_prior
+        self.means_weight = means_weight
+
         if covars is None:
             covars = _distribute_covar_matrix_to_match_cvtype(np.eye(n_dim),
                                                               cvtype, n_states)
         self.covars = covars
+
+        self.covars_prior = covars_prior
+        self.covars_weight = covars_weight
 
     # Read-only properties.
     @property
@@ -684,8 +692,6 @@ class GaussianHMM(_BaseHMM):
                                        self._n_dim))
         return stats
 
-    # FIXME: replace  with GaussianHMMMAPTrainer code?
-
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
                                           posteriors, fwdlattice, bwdlattice,
                                           params):
@@ -706,39 +712,61 @@ class GaussianHMM(_BaseHMM):
                     for c in xrange(self._n_states):
                         stats['obs*obs.T'][c] += posteriors[t,c] * obsobsT
 
-    def _do_mstep(self, stats, params, covarprior=1e-2, **kwargs):
+    def _do_mstep(self, stats, params, **kwargs):
         super(GaussianHMM, self)._do_mstep(stats, params)
 
+        # Based on Huang, Acero, Hon, "Spoken Language Processing",
+        # p. 443 - 445
         denom = stats['post'][:,np.newaxis]
         if 'm' in params:
-            self._means = stats['obs'] / denom
+            prior = self.means_prior
+            weight = self.means_weight
+            if prior is None:
+                weight = 0
+                prior = 0
+            self._means = (weight * prior + stats['obs']) / (weight + denom)
 
         if 'c' in params:
+            covars_prior = self.covars_prior
+            covars_weight = self.covars_weight
+            if covars_prior is None:
+                covars_weight = 0
+                covars_prior = 0
+
+            means_prior = self.means_prior
+            means_weight = self.means_weight
+            if means_prior is None:
+                means_weight = 0
+                means_prior = 0
+            meandiff = self._means - means_prior
+
             if self._cvtype in ('spherical', 'diag'):
-                cv = ((stats['obs**2']
-                       - 2 * self._means * stats['obs']
-                       + self._means**2 * denom
-                       + covarprior)
-                      / (1.0 + denom))
+                cv_num = (means_weight * (meandiff)**2
+                          + stats['obs**2']
+                          - 2 * self._means * stats['obs']
+                          + self._means**2 * denom)
+                cv_den = max(covars_weight - 1, 0) + denom
                 if self._cvtype == 'spherical':
-                    self._covars = cv.mean(axis=1)
+                    self._covars = (covars_prior / cv_den.mean(axis=1)
+                                   + np.mean(cv_num / cv_den, axis=1))
                 elif self._cvtype == 'diag':
-                    self._covars = cv
+                    self._covars = (covars_prior + cv_num) / cv_den
             elif self._cvtype in ('tied', 'full'):
                 cvnum = np.empty((self._n_states, self._n_dim, self._n_dim))
-                cvprior = np.eye(self._n_dim) * covarprior
                 for c in xrange(self._n_states):
-                    cvnum[c] = (stats['obs*obs.T'][c]
+                    cvnum[c] = (means_weight * np.outer(meandiff[c],
+                                                        meandiff[c])
+                                + stats['obs*obs.T'][c]
                                 - 2 * np.outer(stats['obs'][c], self._means[c])
-                                + np.outer(self._means[c] * stats['post'][c],
-                                           self._means[c]))
+                                + np.outer(self._means[c], self._means[c])
+                                * stats['post'][c])
+                cvweight = max(covars_weight - self._n_dim, 0)
                 if self._cvtype == 'tied':
-                    self._covars = ((cvnum.sum(0) + cvprior)
-                                   / (1.0 + stats['post'].sum(0)))
+                    self._covars = ((covars_prior + cvnum.sum(axis=0))
+                                    / (cvweight + stats['post'].sum()))
                 elif self._cvtype == 'full':
-                    self._covars = (
-                        (cvnum + cvprior)
-                        / (1.0 + stats['post'][:,np.newaxis,np.newaxis]))
+                    self._covars = ((covars_prior + cvnum)
+                                   / (cvweight + stats['post'][:,None,None]))
 
 
 class MultinomialHMM(_BaseHMM):
@@ -860,7 +888,7 @@ class MultinomialHMM(_BaseHMM):
             for t,symbol in enumerate(obs):
                 stats['obs'][:,symbol] += posteriors[t,:]
 
-    def _do_mstep(self, stats, params, covarprior=1e-2, **kwargs):
+    def _do_mstep(self, stats, params, **kwargs):
         super(MultinomialHMM, self)._do_mstep(stats, params)
         if 'e' in params:
             self.emissionprob = (stats['obs']
@@ -991,9 +1019,9 @@ class GMMHMM(_BaseHMM):
                     cvnorm.shape = shape
                     stats['covars'][state] += tmpgmm._covars * cvnorm
 
-    def _do_mstep(self, stats, params, covarprior=1e-2, **kwargs):
+    def _do_mstep(self, stats, params, covars_prior=1e-2, **kwargs):
         super(GMMHMM, self)._do_mstep(stats, params)
-        # All we have left to do is apply covarprior to the parameters
+        # All we have left to do is apply covars_prior to the parameters
         # we updated in _accumulate_sufficient_statistics.
         for state,g in enumerate(self.gmms):
             norm = stats['norm'][state]
@@ -1005,7 +1033,7 @@ class GMMHMM(_BaseHMM):
             if 'c' in params:
                 if g.cvtype == 'tied':
                     g.covars = (stats['covars'][state]
-                                + covarprior * np.eye(g.n_dim)) / norm.sum()
+                                + covars_prior * np.eye(g.n_dim)) / norm.sum()
                 else:
                     cvnorm = np.copy(norm)
                     shape = np.ones(g._covars.n_dim)
@@ -1013,9 +1041,9 @@ class GMMHMM(_BaseHMM):
                     cvnorm.shape = shape
                     if g.cvtype == 'spherical' or g.cvtype == 'diag':
                         g.covars = (stats['covars'][state]
-                                    + covarprior) / cvnorm
+                                    + covars_prior) / cvnorm
                     elif g.cvtype == 'full':
                         eye = np.eye(g.n_dim)
                         g.covars = ((stats['covars'][state]
-                                     + covarprior * eye[np.newaxis,:,:])
+                                     + covars_prior * eye[np.newaxis,:,:])
                                     / cvnorm)
