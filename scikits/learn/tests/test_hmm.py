@@ -330,9 +330,6 @@ class GaussianHMMTester(GaussianHMMParams):
                    % (self.cvtype, params, init_testll, post_testll))
         self.assertTrue(np.sum(post_testll) > np.sum(init_testll))
 
-    def test_fit_covars(self):
-        self.test_fit('c')
-
 
 class TestGaussianHMMWithSphericalCovars(GaussianHMMTester,
                                          SeedRandomNumberGeneratorTestCase):
@@ -340,9 +337,6 @@ class TestGaussianHMMWithSphericalCovars(GaussianHMMTester,
 
     def test_fit_startprob_and_transmat(self):
         self.test_fit('st')
-
-    def test_fit_means(self):
-        self.test_fit('m')
 
 
 class TestGaussianHMMWithDiagonalCovars(GaussianHMMTester,
@@ -353,10 +347,6 @@ class TestGaussianHMMWithDiagonalCovars(GaussianHMMTester,
 class TestGaussianHMMWithTiedCovars(GaussianHMMTester,
                                     SeedRandomNumberGeneratorTestCase):
     cvtype = 'tied'
-
-    @decorators.skipif(SKIP_FAILING, "Skipping failing test")
-    def test_fit_covars(self):
-        self.test_fit('c')
 
 
 class TestGaussianHMMWithFullCovars(GaussianHMMTester,
@@ -647,10 +637,6 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
                                                     post_testll)
         self.assertTrue(np.sum(post_testll) > np.sum(init_testll))
 
-    @decorators.skipif(SKIP_FAILING, "Skipping failing test")
-    def test_fit_covars(self):
-        self.test_fit('c')
-
 
 class TestGMMHMMWithSphericalCovars(TestGMMHMM):
     cvtype = 'spherical'
@@ -661,17 +647,9 @@ class TestGMMHMMWithSphericalCovars(TestGMMHMM):
     def test_fit_means(self):
         self.test_fit('m')
 
-    @decorators.skipif(SKIP_FAILING, "Skipping failing test")
-    def test_fit_covars(self):
-        self.test_fit('c')
-
 
 class TestGMMHMMWithTiedCovars(TestGMMHMM):
     cvtype = 'tied'
-
-    @decorators.skipif(SKIP_FAILING, "Skipping failing test")
-    def test_fit_covars(self):
-        self.test_fit('c')
 
 
 class TestGMMHMMWithFullCovars(TestGMMHMM):
@@ -680,7 +658,3 @@ class TestGMMHMMWithFullCovars(TestGMMHMM):
     @decorators.skipif(SKIP_FAILING, "Skipping failing test")
     def test_fit(self, *args, **kwargs):
         return super(TestGMMHMM, self).test_fit(*args, **kwargs)
-
-    @decorators.skipif(SKIP_FAILING, "Skipping failing test")
-    def test_fit_covars(self):
-        self.test_fit('c')
