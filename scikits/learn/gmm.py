@@ -505,7 +505,7 @@ class GMM(BaseEstimator):
     def _do_mstep(self, X, posteriors, params, min_covar=0):
             w = posteriors.sum(axis=0)
             avg_obs = np.dot(posteriors.T, X)
-            norm = 1.0 / w[:,np.newaxis]
+            norm = 1.0 / (w[:,np.newaxis] + 1e-200)
 
             if 'w' in params:
                 self._log_weights = np.log(w / w.sum())
@@ -583,8 +583,8 @@ def _validate_covars(covars, cvtype, nmix, ndim):
             raise ValueError("'tied' covars must have shape (ndim, ndim)")
         elif (not np.allclose(covars, covars.T)
               or np.any(np.linalg.eigvalsh(covars) <= 0)):
-            raise (ValueError,
-                   "'tied' covars must be symmetric, positive-definite")
+            raise ValueError("'tied' covars must be symmetric, "
+                             "positive-definite")
     elif cvtype == 'diag':
         if covars.shape != (nmix, ndim):
             raise ValueError("'diag' covars must have shape (nmix, ndim)")

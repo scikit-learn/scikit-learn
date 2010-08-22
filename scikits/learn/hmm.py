@@ -1014,7 +1014,7 @@ class GMMHMM(_BaseHMM):
                     stats['covars'][state] += tmpgmm._covars * norm.sum()
                 else:
                     cvnorm = np.copy(norm)
-                    shape = np.ones(tmpgmm._covars.n_dim)
+                    shape = np.ones(tmpgmm._covars.ndim)
                     shape[0] = np.shape(tmpgmm._covars)[0]
                     cvnorm.shape = shape
                     stats['covars'][state] += tmpgmm._covars * cvnorm
@@ -1025,7 +1025,6 @@ class GMMHMM(_BaseHMM):
         # we updated in _accumulate_sufficient_statistics.
         for state,g in enumerate(self.gmms):
             norm = stats['norm'][state]
-            #print norm
             if 'w' in params:
                 g.weights = normalize(norm)
             if 'm' in params:
@@ -1036,7 +1035,7 @@ class GMMHMM(_BaseHMM):
                                 + covars_prior * np.eye(g.n_dim)) / norm.sum()
                 else:
                     cvnorm = np.copy(norm)
-                    shape = np.ones(g._covars.n_dim)
+                    shape = np.ones(g._covars.ndim)
                     shape[0] = np.shape(g._covars)[0]
                     cvnorm.shape = shape
                     if g.cvtype == 'spherical' or g.cvtype == 'diag':

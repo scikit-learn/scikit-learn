@@ -306,10 +306,8 @@ class GaussianHMMTester(GaussianHMMParams):
         h.means = 20 * self.means
         h.covars = self.covars[self.cvtype]
 
-        # Create a training and testing set by sampling from the same
-        # distribution.
+        # Create training data by sampling from the HMM.
         train_obs = [h.rvs(n=10) for x in xrange(10)]
-        test_obs = [h.rvs(n=10) for x in xrange(1)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs, n_iter=0, minit='points')
@@ -347,10 +345,8 @@ class GaussianHMMTester(GaussianHMMParams):
                             covars_prior=covars_prior,
                             covars_weight=covars_weight)
 
-        # Create a training and testing set by sampling from the same
-        # distribution.
+        # Create training data by sampling from the HMM.
         train_obs = [h.rvs(n=10) for x in xrange(10)]
-        test_obs = [h.rvs(n=10) for x in xrange(5)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs[:1], n_iter=0, minit='points')
@@ -473,10 +469,8 @@ class TestMultinomialHMM(MultinomialHMMParams,
                                transmat=self.transmat,
                                emissionprob=self.emissionprob)
 
-        # Create a training and testing set by sampling from the same
-        # distribution.
+        # Create training data by sampling from the HMM.
         train_obs = [h.rvs(n=10) for x in xrange(10)]
-        test_obs = [h.rvs(n=10) for x in xrange(1)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.startprob = hmm.normalize(np.random.rand(self.n_states))
@@ -498,9 +492,9 @@ class TestMultinomialHMM(MultinomialHMMParams,
 
 
 class GMMHMMParams(object):
-    n_states = 2
-    n_mix = 4
-    n_dim = 3
+    n_states = 3
+    n_mix = 2
+    n_dim = 2
     cvtype = 'diag'
     startprob = np.random.rand(n_states)
     startprob = startprob / startprob.sum()
@@ -512,11 +506,11 @@ class GMMHMMParams(object):
         from scikits.learn import gmm
 
         means = np.random.randint(-20, 20, (n_mix, n_dim))
-        mincv = 2
-        covars = {'spherical': (1.0 + mincv * np.random.rand(n_mix))**2,
+        mincv = 0.1
+        covars = {'spherical': (mincv + mincv * np.random.rand(n_mix))**2,
                   'tied': _generate_random_spd_matrix(n_dim)
                           + mincv * np.eye(n_dim),
-                  'diag': (1.0 + mincv * np.random.rand(n_mix, n_dim))**2,
+                  'diag': (mincv + mincv * np.random.rand(n_mix, n_dim))**2,
                   'full': np.array([_generate_random_spd_matrix(n_dim)
                                     + mincv * np.eye(n_dim)
                                     for x in xrange(n_mix)])}[cvtype]
@@ -582,18 +576,15 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         samples = h.rvs(n)
         self.assertEquals(samples.shape, (n, self.n_dim))
 
-    @decorators.skipif(SKIP_FAILING, "Skipping failing test")
-    def test_fit(self, params='stmwc', n_iter=15, **kwargs):
+    def test_fit(self, params='stmwc', n_iter=5, **kwargs):
         h = hmm.GMMHMM(self.n_states, self.n_dim)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
                                    + np.diag(np.random.rand(self.n_states)), 1)
         h.gmms = self.gmms
 
-        # Create a training and testing set by sampling from the same
-        # distribution.
+        # Create training data by sampling from the HMM.
         train_obs = [h.rvs(n=10) for x in xrange(10)]
-        test_obs = [h.rvs(n=10) for x in xrange(1)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs, n_iter=0, minit='points')
@@ -626,7 +617,3 @@ class TestGMMHMMWithTiedCovars(TestGMMHMM):
 
 class TestGMMHMMWithFullCovars(TestGMMHMM):
     cvtype = 'full'
-
-    @decorators.skipif(SKIP_FAILING, "Skipping failing test")
-    def test_fit(self, *args, **kwargs):
-        return super(TestGMMHMM, self).test_fit(*args, **kwargs)
