@@ -20,8 +20,11 @@ with the command::
 
     pip install -U scikits.learn
 
-or
+or::
+
     easy_install -U scikits.learn
+
+for easy_install.
 
 
 Windows installer
@@ -46,4 +49,4 @@ python modules. The install command is::
 Bleeding Edge
 -------------
 
-See section :doc:`contribute` no how to get the development version.
+See section :ref:`git_repo` on how to get the development version.
