@@ -154,12 +154,13 @@ class SVC(SparseBaseLibsvm):
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
     """
-    def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
-                 shrinking=True, probability=False):
 
-        SparseBaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, shrinking=True,
+                 probability=False):
+
+        SparseBaseLibsvm.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+                         cache_size, eps, C, 0., 0.,
                          shrinking, probability)
 
 
