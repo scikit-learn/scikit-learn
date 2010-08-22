@@ -213,7 +213,7 @@ def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs):
 
 
 class GaussianHMMParams(object):
-    n_states = 5
+    n_states = 3
     n_dim = 3
     startprob = np.random.rand(n_states)
     startprob = startprob / startprob.sum()
@@ -298,7 +298,7 @@ class GaussianHMMTester(GaussianHMMParams):
         samples = h.rvs(n)
         self.assertEquals(samples.shape, (n, self.n_dim))
 
-    def test_fit(self, params='stmc', n_iter=5, **kwargs):
+    def test_fit(self, params='stmc', n_iter=15, **kwargs):
         h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
@@ -308,12 +308,11 @@ class GaussianHMMTester(GaussianHMMParams):
 
         # Create a training and testing set by sampling from the same
         # distribution.
-        train_obs = [h.rvs(n=10) for x in xrange(50)]
-        test_obs = [h.rvs(n=10) for x in xrange(5)]
+        train_obs = [h.rvs(n=10) for x in xrange(10)]
+        test_obs = [h.rvs(n=10) for x in xrange(1)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs, n_iter=0, minit='points')
-        init_testll = [h.score(x) for x in test_obs]
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)
@@ -323,12 +322,46 @@ class GaussianHMMTester(GaussianHMMParams):
                    % (self.cvtype, params, trainll, np.diff(trainll)))
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
-        post_testll = [h.score(x) for x in test_obs]
-        if not (np.sum(post_testll) > np.sum(init_testll)):
+
+    def test_fit_with_priors(self, params='stmc', n_iter=10):
+        startprob_prior=10*self.startprob + 2.0
+        transmat_prior=10*self.transmat + 2.0
+        means_prior=self.means
+        means_weight=2.0
+        covars_weight = 2.0
+        if self.cvtype in ('full', 'tied'):
+            covars_weight += self.n_dim
+        covars_prior=self.covars[self.cvtype]
+
+        h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype,
+                            startprob=self.startprob,
+                            startprob_prior=startprob_prior,
+                            transmat=hmm.normalize(
+                                self.transmat
+                                + np.diag(np.random.rand(self.n_states)), 1),
+                            transmat_prior=transmat_prior,
+                            means=20 * self.means,
+                            means_prior=means_prior,
+                            means_weight=means_weight,
+                            covars=self.covars[self.cvtype],
+                            covars_prior=covars_prior,
+                            covars_weight=covars_weight)
+
+        # Create a training and testing set by sampling from the same
+        # distribution.
+        train_obs = [h.rvs(n=10) for x in xrange(10)]
+        test_obs = [h.rvs(n=10) for x in xrange(5)]
+
+        # Mess up the parameters and see if we can re-learn them.
+        h.fit(train_obs[:1], n_iter=0, minit='points')
+
+        trainll = train_hmm_and_keep_track_of_log_likelihood(
+            h, train_obs, n_iter=n_iter, params=params)
+        if not np.all(np.diff(trainll) > 0):
             print
-            print ('Test train: %s (%s)\n  %s\n  %s'
-                   % (self.cvtype, params, init_testll, post_testll))
-        self.assertTrue(np.sum(post_testll) > np.sum(init_testll))
+            print ('Test MAP train: %s (%s)\n  %s\n  %s'
+                   % (self.cvtype, params, trainll, np.diff(trainll)))
+        self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
 
 class TestGaussianHMMWithSphericalCovars(GaussianHMMTester,
@@ -352,50 +385,6 @@ class TestGaussianHMMWithTiedCovars(GaussianHMMTester,
 class TestGaussianHMMWithFullCovars(GaussianHMMTester,
                                     SeedRandomNumberGeneratorTestCase):
     cvtype = 'full'
-
-# class GaussianHMMMAPTrainerTester(GaussianHMMParams):
-#
-#     def test_fit(self, params='stmc', n_iter=5):
-#         covars_weight = 2.0
-#         if self.cvtype in ('full', 'tied'):
-#             covars_weight += self.n_dim
-#         trainer = hmm.hmm_trainers.GaussianHMMMAPTrainer(
-#             startprob_prior=10*self.startprob + 2.0,
-#             transmat_prior=10*self.transmat + 2.0,
-#             means_prior=self.means,
-#             means_weight=2.0,
-#             covars_prior=self.covars[self.cvtype],
-#             covars_weight=covars_weight)
-#         h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype)
-#         h.startprob = self.startprob
-#         tmp = self.transmat + np.diag(np.random.rand(self.n_states))
-#         h.transmat = tmp / np.tile(tmp.sum(axis=1), (self.n_states, 1)).T
-#         h.means = 20 * self.means
-#         h.covars = self.covars[self.cvtype]
-#
-#         # Create a training and testing set by sampling from the same
-#         # distribution.
-#         train_obs = [h.rvs(n=10) for x in xrange(10)]
-#         test_obs = [h.rvs(n=10) for x in xrange(5)]
-#
-#         # Mess up the parameters and see if we can re-learn them.
-#         h.fit(train_obs, n_iter=0, minit='points')
-#         init_testll = [h.score(x) for x in test_obs]
-#
-#         trainll = train_hmm_and_keep_track_of_log_likelihood(
-#             h, train_obs, n_iter=n_iter, params=params)
-#         if not np.all(np.diff(trainll) > 0):
-#             print
-#             print ('Test MAP train: %s (%s)\n  %s\n  %s'
-#                    % (self.cvtype, params, trainll, np.diff(trainll)))
-#         self.assertTrue(np.all(np.diff(trainll) > -0.5))
-#
-#         post_testll = [h.score(x) for x in test_obs]
-#         if not (np.sum(post_testll) > np.sum(init_testll)):
-#             print
-#             print ('Test MAP train: %s (%s)\n  %s\n  %s'
-#                    % (self.cvtype, params, init_testll, post_testll))
-#         self.assertTrue(np.sum(post_testll) > np.sum(init_testll))
 
 
 class MultinomialHMMParams(object):
@@ -478,7 +467,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
         self.assertEquals(len(samples), n)
         self.assertEquals(len(np.unique(samples)), self.nsymbols)
 
-    def test_fit(self, params='ste', n_iter=5, **kwargs):
+    def test_fit(self, params='ste', n_iter=15, **kwargs):
         h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
                                startprob=self.startprob,
                                transmat=self.transmat,
@@ -486,8 +475,8 @@ class TestMultinomialHMM(MultinomialHMMParams,
 
         # Create a training and testing set by sampling from the same
         # distribution.
-        train_obs = [h.rvs(n=10) for x in xrange(50)]
-        test_obs = [h.rvs(n=10) for x in xrange(5)]
+        train_obs = [h.rvs(n=10) for x in xrange(10)]
+        test_obs = [h.rvs(n=10) for x in xrange(1)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.startprob = hmm.normalize(np.random.rand(self.n_states))
@@ -496,8 +485,6 @@ class TestMultinomialHMM(MultinomialHMMParams,
         h.emissionprob = hmm.normalize(
             np.random.rand(self.n_states, self.nsymbols), axis=1)
 
-        init_testll = [h.score(x) for x in test_obs]
-
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)
         if not np.all(np.diff(trainll) > 0):
@@ -505,13 +492,6 @@ class TestMultinomialHMM(MultinomialHMMParams,
             print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
                                                     np.diff(trainll))
         self.assertTrue(np.all(np.diff(trainll) > 0))
-
-        post_testll = [h.score(x) for x in test_obs]
-        if not (np.sum(post_testll) > np.sum(init_testll)):
-            print
-            print 'Test train: (%s)\n  %s\n  %s' % (params, init_testll,
-                                                    post_testll)
-        self.assertTrue(np.sum(post_testll) > np.sum(init_testll))
 
     def test_fit_emissionprob(self):
         self.test_fit('e')
@@ -603,7 +583,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         self.assertEquals(samples.shape, (n, self.n_dim))
 
     @decorators.skipif(SKIP_FAILING, "Skipping failing test")
-    def test_fit(self, params='stmwc', n_iter=5, **kwargs):
+    def test_fit(self, params='stmwc', n_iter=15, **kwargs):
         h = hmm.GMMHMM(self.n_states, self.n_dim)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
@@ -612,15 +592,14 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
 
         # Create a training and testing set by sampling from the same
         # distribution.
-        train_obs = [h.rvs(n=10) for x in xrange(50)]
-        test_obs = [h.rvs(n=10) for x in xrange(5)]
+        train_obs = [h.rvs(n=10) for x in xrange(10)]
+        test_obs = [h.rvs(n=10) for x in xrange(1)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs, n_iter=0, minit='points')
         h.transmat = hmm.normalize(np.random.rand(self.n_states,
                                                   self.n_states), axis=1)
         h.startprob = hmm.normalize(np.random.rand(self.n_states))
-        init_testll = [h.score(x) for x in test_obs]
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)
@@ -629,13 +608,6 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
             print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
                                                     np.diff(trainll))
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
-
-        post_testll = [h.score(x) for x in test_obs]
-        if not (np.sum(post_testll) > np.sum(init_testll)):
-            print
-            print 'Test train: (%s)\n  %s\n  %s' % (params, init_testll,
-                                                    post_testll)
-        self.assertTrue(np.sum(post_testll) > np.sum(init_testll))
 
 
 class TestGMMHMMWithSphericalCovars(TestGMMHMM):
