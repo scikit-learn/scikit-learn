@@ -17,6 +17,7 @@ You are also welcomed to post there feature requests and patches.
 Code
 ======
 
+.. _git_repo:
 
 Git repo
 ----------
@@ -59,7 +60,7 @@ world. You might proceed as:
 
 1. Create a patch file. The command::
 
-    git format-patch origin
+    git format-patch origin/master
 
 will create a series of patch files with the changes you made with
 the code base. 
