@@ -36,8 +36,6 @@ def configuration(parent_package='',top_path=None):
 if __name__ == "__main__":
     setup(configuration = configuration,
         name = DISTNAME,
-        install_requires=[
-              'numpy >= 1.1'],
         maintainer  = MAINTAINER,
         include_package_data = True,
         maintainer_email = MAINTAINER_EMAIL,
@@ -47,7 +45,6 @@ if __name__ == "__main__":
         version = VERSION,
         download_url = DOWNLOAD_URL,
         long_description = LONG_DESCRIPTION,
-        test_suite="nose.collector", # for python setup.py test
         zip_safe=False, # the package can run out of an .egg file
         classifiers = 
             ['Intended Audience :: Science/Research',

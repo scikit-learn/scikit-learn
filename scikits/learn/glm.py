@@ -494,8 +494,7 @@ class Lasso(LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(alpha=0.10000000000000001, coef_=array([ 0.85,  0.  ]),
-       fit_intercept=True)
+    Lasso(alpha=0.1, coef_=[ 0.85  0.  ], fit_intercept=True)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
