@@ -55,10 +55,11 @@ Current features
 ------------------
 
 1) **Transparent and fast disk-caching of output value:** a make-like
-   functionality for Python functions that works well with large numpy
-   arrays. The goal is to separate operations in a set of steps with 
-   well-defined inputs and outputs, that are saved and reran only if 
-   necessary, by using standard Python functions::
+   functionality for Python functions that works well for arbitrary
+   Python objects, including very large numpy arrays. The goal is 
+   to separate operations in a set of steps with well-defined inputs and 
+   outputs, that are saved and reran only if necessary, by using standard 
+   Python functions::
 
       >>> from joblib import Memory
       >>> mem = Memory(cachedir='/tmp/joblib')
@@ -105,7 +106,7 @@ them.
 
 """
 
-__version__ = '0.4.3'
+__version__ = '0.4.4'
 
 
 from .memory import Memory

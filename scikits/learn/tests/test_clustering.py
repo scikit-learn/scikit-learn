@@ -34,8 +34,8 @@ def test_mean_shift():
     bandwidth = 1.2
 
     ms = MeanShift(bandwidth=bandwidth)
-    labels = ms.fit(X).labels
-    cluster_centers = ms.cluster_centers
+    labels = ms.fit(X).labels_
+    cluster_centers = ms.cluster_centers_
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert_equal(n_clusters_, n_clusters)
@@ -69,8 +69,8 @@ def test_affinity_propagation():
     assert_equal(n_clusters, n_clusters_)
 
     af = AffinityPropagation()
-    labels = af.fit(S, p).labels
-    cluster_centers_indices = af.fit(S, p).cluster_centers_indices
+    labels = af.fit(S, p).labels_
+    cluster_centers_indices = af.cluster_centers_indices_
 
     n_clusters_ = len(cluster_centers_indices)
     assert_equal(np.unique(labels).size, n_clusters_)

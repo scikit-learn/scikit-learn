@@ -65,7 +65,7 @@ def check_identity_lazy(func, accumulator):
     """
     # Call each function with several arguments, and check that it is
     # evaluated only once per argument.
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     memory.clear(warn=False)
     func = memory.cache(func)
     for i in range(3):
@@ -91,7 +91,7 @@ def test_memory_integration():
         yield test
 
     # Now test clearing
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     # First clear the cache directory, to check that our code can
     # handle that:
     shutil.rmtree(env['dir'])
@@ -115,7 +115,7 @@ def test_no_memory():
     def ff(l):
         accumulator.append(1)
         return l
-    mem = Memory(cachedir=None)
+    mem = Memory(cachedir=None, verbose=0)
     gg = mem.cache(ff)
     for _ in range(4):
         current_accumulator = len(accumulator)
@@ -134,7 +134,7 @@ def test_memory_kwarg():
     for test in check_identity_lazy(g, accumulator):
         yield test
 
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     g = memory.cache(g)
     # Smoke test with an explicit keyword argument:
     nose.tools.assert_equal(g(l=30, m=2), 30)
@@ -157,7 +157,7 @@ def test_memory_lambda():
 
 def test_memory_name_collision():
     " Check that name collisions with functions will raise warnings"
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
 
     @memory.cache
     def name_collision(x):
@@ -191,7 +191,7 @@ def test_memory_name_collision():
 
 def test_memory_warning_lambda_collisions():
     " Check that multiple use of lambda will raise collisions"
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     a = lambda x: x
     a = memory.cache(a)
     b = lambda x: x+1
@@ -216,7 +216,7 @@ def test_memory_warning_collision_detection():
     """ Check that collisions impossible to detect will raise appropriate 
         warnings.
     """
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     a = eval('lambda x: x')
     a = memory.cache(a)
     b = eval('lambda x: x+1')
@@ -255,7 +255,7 @@ def test_memory_partial():
 
 def test_memory_eval():
     " Smoke test memory with a function with a function defined in an eval."
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
 
     m = eval('lambda x: x')
 
@@ -275,7 +275,7 @@ def test_argument_change():
     """ Check that if a function has a side effect in its arguments, it
         should use the hash of changing arguments.
     """
-    mem = Memory(cachedir=env['dir'])
+    mem = Memory(cachedir=env['dir'], verbose=0)
 
     func = mem.cache(count_and_append)
     # call the function for the first time, is should cache it with
@@ -296,7 +296,8 @@ def test_memory_numpy():
             accumulator.append(1)
             return l
 
-        memory = Memory(cachedir=env['dir'], mmap_mode=mmap_mode)
+        memory = Memory(cachedir=env['dir'], mmap_mode=mmap_mode,
+                            verbose=0)
         memory.clear(warn=False)
         cached_n = memory.cache(n)
         for i in range(3):
@@ -309,7 +310,7 @@ def test_memory_numpy():
 def test_memory_exception():
     """ Smoketest the exception handling of Memory. 
     """
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     class MyException(Exception):
         pass
 
@@ -328,7 +329,7 @@ def test_memory_exception():
 
 def test_memory_ignore():
     " Test the ignore feature of memory "
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     accumulator = list()
 
     @memory.cache(ignore=['y'])
@@ -348,7 +349,7 @@ def test_memory_ignore():
 def test_func_dir():
     """ Test the creation of the memory cache directory for the function.
     """
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     path = __name__.split('.')
     path.append('f')
     path = os.path.join(env['dir'], *path)
@@ -378,7 +379,7 @@ def test_func_dir():
 def test_persistence():
     """ Test the memorized functions can be pickled and restored.
     """
-    memory = Memory(cachedir=env['dir'])
+    memory = Memory(cachedir=env['dir'], verbose=0)
     g = memory.cache(f)
     output = g(1)
 

@@ -2,7 +2,8 @@
 Artificial Neural Networks
 ==========================
 
-.. warning:: This module is not tested nor documented. It might
-    disappear in future release. If you are interested in maintaining
-    this module or contributing a similar one, please contact Fabian
-    Pedregosa <fabian.pedregosa@inria.fr>
+.. warning:: This module is deprecated and will be removed in some
+    future release.
+
+    If you want an artificial neural network python package, I
+    would recommend to take a look to into http://pybrain.org/

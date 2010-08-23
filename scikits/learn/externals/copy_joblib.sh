@@ -11,5 +11,5 @@ old_pwd=$(pwd)
 cd tmp/joblib/
 python setup.py install --prefix $old_pwd/tmp
 cd $old_pwd
-cp -r tmp/lib/python2.6/site-packages/joblib .
+cp -r tmp/lib/python2.6/site-packages/joblib-*.egg/joblib .
 rm -rf tmp

@@ -10,10 +10,10 @@ class LogisticRegression(BaseLibLinear):
 
     Parameters
     ----------
-    X : array-like, shape = [nsamples, nfeatures]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
-    Y : array, shape = [nsamples]
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
+    Y : array, shape = [n_samples]
         Target vector relative to X
 
     penalty : string, 'l1' or 'l2'
@@ -30,10 +30,10 @@ class LogisticRegression(BaseLibLinear):
     Attributes
     ----------
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Coefficient of the features in the decision function.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
 
@@ -58,3 +58,11 @@ class LogisticRegression(BaseLibLinear):
     def __init__(self, penalty='l2', eps=1e-4, C=1.0, has_intercept=True):
         super(LogisticRegression, self).__init__ (penalty=penalty, loss='lr',
             dual=False, eps=eps, C=C, has_intercept=has_intercept)
+
+    def predict_proba(self, T):
+        T = np.asanyarray(T, dtype=np.float64, order='C')
+        return _liblinear.predict_prob_wrap(T, self.raw_coef_, self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self._get_bias())

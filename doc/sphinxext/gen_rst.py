@@ -10,9 +10,6 @@ Files that generate images should start with 'plot'
 import os
 import shutil
 import traceback
-# Import numpy to avoid an annoying bug in an example due to the use of 
-# execfile
-import numpy as np
 
 fileList = []
 
@@ -163,7 +160,7 @@ def generate_file_rst(fname, target_dir, src_dir):
             import matplotlib.pyplot as plt
             plt.close('all')
             try:
-                execfile(example_file)
+                execfile(example_file, {'pl' : plt})
                 plt.savefig(image_file)
             except:
                 print 80*'_'

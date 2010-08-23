@@ -124,7 +124,7 @@ class SparseBaseLibsvm(BaseLibsvm):
 
         Parameters
         ----------
-        T : scipy.sparse.csr, shape = [nsamples, nfeatures]
+        T : scipy.sparse.csr, shape = [n_samples, n_features]
 
         Returns
         -------
@@ -154,12 +154,13 @@ class SVC(SparseBaseLibsvm):
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
     """
-    def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
-                 shrinking=True, probability=False):
 
-        SparseBaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, shrinking=True,
+                 probability=False):
+
+        SparseBaseLibsvm.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+                         cache_size, eps, C, 0., 0.,
                          shrinking, probability)
 
 
@@ -193,19 +194,19 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, nfeatures]
+    `support_` : array-like, shape = [nSV, n_features]
         Support vectors
 
-    `dual_coef_` : array, shape = [nclasses-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficient of the support vector in the decision function,
-        where nclasses is the number of classes and nSV is the number
+        where n_classes is the number of classes and nSV is the number
         of support vectors.
 
-    `coef_` : array, shape = [nclasses-1, nfeatures]
+    `coef_` : array, shape = [n_classes-1, n_features]
         Wiehgiths asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [nclasses-1]
+    `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
 
@@ -229,10 +230,10 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
         """
         Parameters
         ==========
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        Y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        Y : array, shape = [n_samples]
             Target vector relative to X
         """
         self._set_params(**params)
