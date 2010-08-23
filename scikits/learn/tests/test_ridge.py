@@ -55,19 +55,19 @@ def test_ridge():
     alpha = 1.0
 
     # With more samples than features
-    nsamples, nfeatures = 10, 5
+    n_samples, n_features = 10, 5
     np.random.seed(0)
-    y = np.random.randn(nsamples)
-    X = np.random.randn(nsamples, nfeatures)
+    y = np.random.randn(n_samples)
+    X = np.random.randn(n_samples, n_features)
 
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
 
     # With more features than samples
-    nsamples, nfeatures = 5, 10
+    n_samples, n_features = 5, 10
     np.random.seed(0)
-    y = np.random.randn(nsamples)
-    X = np.random.randn(nsamples, nfeatures)
+    y = np.random.randn(n_samples)
+    X = np.random.randn(n_samples, n_features)
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
 
@@ -96,7 +96,7 @@ def test_toy_ard_regression():
 def test_toy_ridge_object():
     """
     Test BayesianRegression ridge classifier
-    TODO: test also nsamples > nfeatures
+    TODO: test also n_samples > n_features
     """
     X = np.array([[1], [2]])
     Y = np.array([1, 2])

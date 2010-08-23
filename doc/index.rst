@@ -43,14 +43,11 @@ Scikits.learn: machine learning in Python
     contexts: **machine-learning as a versatile tool for science and
     engineering**.
     
-.. image:: auto_examples/images/plot_digits_classification.png
-    :align: right
-    :scale: 50
-
 
 .. raw:: html
 
     <small>
+    <img src="_images/plot_digits_classification.png" align="right" style="width: 400px"/>
 
 :ref:`A simple Example: recognizing hand-written digits <example_plot_digits_classification.py>` ::
 
@@ -120,6 +117,6 @@ User guide
    tutorial
    supervised_learning
    unsupervised_learning
+   model_selection
    auto_examples/index
    developers/index
-   .. API

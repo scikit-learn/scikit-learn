@@ -69,15 +69,13 @@ Code
 GIT
 ~~~
 
-You can check out the current repository with the command::
+You can check the latest sources with the command::
 
-    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone git://github.com/scikit-learn/scikit-learn.git
 
-Developers with write privileges should instead use the command::
+or if you have write privileges::
 
-    git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
-
-where USERNAME is your sourceforge username.
+    git clone git@github.com:scikit-learn/scikit-learn.git
 
 Bugs
 ----

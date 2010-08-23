@@ -17,17 +17,21 @@ You are also welcomed to post there feature requests and patches.
 Code
 ======
 
+.. _git_repo:
 
 Git repo
 ----------
 
 You can check the latest sources with the command::
 
-    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone git://github.com/scikit-learn/scikit-learn.git
 
 or if you have write privileges::
 
-    git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone git@github.com:scikit-learn/scikit-learn.git
+
+You can also check out the sources online in the web page
+http://github.com/scikit-learn/scikit-learn 
 
 If you have contributed some code and would like to have write
 privileges in subversion repository, please contact me (Fabian
@@ -56,7 +60,7 @@ world. You might proceed as:
 
 1. Create a patch file. The command::
 
-    git format-patch origin
+    git format-patch origin/master
 
 will create a series of patch files with the changes you made with
 the code base. 
@@ -149,7 +153,7 @@ In addition, we add the following guidelines:
     * **Please don't use `import *` in any case**. It is considered harmful 
       by the `official Python recommandations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
-      It makes the code harder to read as the origine of symbols is no 
+      It makes the code harder to read as the origin of symbols is no 
       longer explicitely referenced, but most important, it prevents
       using a static analysis tool like `pyflakes
       <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
@@ -217,7 +221,7 @@ accept as arguments constants that determine the estimator behavior
 (like the C constant in SVMs).
 
 It should not, however, take the actual training data as argument, as
-this is leaved to the ``fit()`` method::
+this is left to the ``fit()`` method::
 
     clf2 = SVC(C=2.3)
     clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
