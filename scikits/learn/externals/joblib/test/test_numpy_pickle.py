@@ -129,11 +129,13 @@ def test_memmap_persistence():
 
 @with_numpy
 def test_masked_array_persistence():
+    # The special-case picker fails, because saving masked_array
+    # not implemented, but it just delegates to the standard pickler.
     a = np.random.random(10)
     a = np.ma.masked_greater(a, 0.5)
     filename = env['filename']
     numpy_pickle.dump(a, filename)
     b = numpy_pickle.load(filename, mmap_mode='r')
-    yield nose.tools.assert_true, isinstance(b, np.ma.masked_array)
+    nose.tools.assert_true, isinstance(b, np.ma.masked_array)
 
 
