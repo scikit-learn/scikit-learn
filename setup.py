@@ -36,8 +36,6 @@ def configuration(parent_package='',top_path=None):
 if __name__ == "__main__":
     setup(configuration = configuration,
         name = DISTNAME,
-        install_requires=[
-              'numpy >= 1.1'],
         maintainer  = MAINTAINER,
         include_package_data = True,
         maintainer_email = MAINTAINER_EMAIL,
