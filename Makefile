@@ -18,4 +18,4 @@ inplace:
 	python setup.py build_ext -i
 
 test:
-	nosetests
+	python setup.py test
