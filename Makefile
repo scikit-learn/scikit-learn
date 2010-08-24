@@ -18,4 +18,5 @@ inplace:
 	python setup.py build_ext -i
 
 test:
-	python setup.py test
+	nosetests --with-doctest --with-coverage scikits/learn/ --cover-package scikits/learn
+	# python setup.py test
