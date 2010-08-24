@@ -70,12 +70,14 @@ class BaseEstimator(object):
         this_line_length = len(class_name)
         line_sep = ',\n' + (1+len(class_name)/2)*' '
         for i, (k, v) in enumerate(self._get_params().iteritems()):
-            if isinstance(v, str):
-                # use repr as representation
-                this_repr  = '%s=%s' % (k, repr(v))
-            else:
-                # use str of the rest
+            if type(v) is float:
+                # use str for representing floating point numbers
+                # this way we get consistent representation across
+                # architectures and versions.
                 this_repr  = '%s=%s' % (k, str(v))
+            else:
+                # use repr of the rest
+                this_repr  = '%s=%s' % (k, repr(v))
             if i > 0: 
                 if (this_line_length + len(this_repr) >= 75
                                             or '\n' in this_repr):
