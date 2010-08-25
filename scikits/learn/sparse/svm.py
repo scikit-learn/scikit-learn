@@ -18,7 +18,7 @@ License: New BSD
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, ClassifierMixin
+from ..base import ClassifierMixin
 from ..svm import BaseLibsvm, BaseLibLinear
 from .. import _libsvm, _liblinear
 

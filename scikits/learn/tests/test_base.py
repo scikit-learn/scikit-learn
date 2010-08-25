@@ -1,5 +1,3 @@
-from nose.tools import assert_raises
-
 from scikits.learn.base import BaseEstimator
 
 

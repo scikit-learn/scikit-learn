@@ -5,10 +5,12 @@
 
 import numpy as np
 
-from numpy.testing import assert_raises, assert_array_equal, \
-     assert_array_almost_equal
+from numpy.testing import assert_array_equal, \
+                          assert_array_almost_equal
 
-from scikits.learn.glm import *
+from scikits.learn.glm import LinearRegression, BayesianRidge, Ridge, \
+                      bayesian_ridge_regression, bayesian_regression_ard, \
+                      ARDRegression
 
 def test_LinearRegression():
     """
