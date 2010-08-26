@@ -547,6 +547,8 @@ def spectral_clustering(adjacency, k=8, mode=None):
         --------
         labels: array of integers, shape: p
             The labels of the clusters.
+        centers: array of integers, shape: k
+            The indices of the cluster centers
 
         Notes
         ------
@@ -555,9 +557,51 @@ def spectral_clustering(adjacency, k=8, mode=None):
     """
     maps = spectral_embedding(adjacency, k=k+1, mode=mode)
     this_maps = maps[:k - 1]
-    _, labels = cluster.vq.kmeans2(this_maps.T, k)
-    return labels
+    centers, labels = cluster.vq.kmeans2(this_maps.T, k)
+    return centers, labels
 
 
+class SpectralClustering(BaseEstimator):
+    """ Spectral clustering: apply k-means to a projection of the 
+        graph laplacian, finds normalized graph cuts.
 
+        Parameters
+        -----------
+        adjacency: array-like or sparse matrix, shape: (p, p)
+            The adjacency matrix of the graph to embed.
+        k: integer, optional
+            The dimension of the projection subspace.
+        mode: {None, 'arpack' or 'amg'}
+            The eigenvalue decomposition strategy to use. AMG (Algebraic
+            MultiGrid) is much faster, but requires pyamg to be
+            installed.
+
+        Methods
+        -------
+
+        fit(X):
+            Compute spectral clustering 
+
+        Attributes
+        ----------
+
+        cluster_centers_: array, [n_clusters, n_features]
+            Coordinates of cluster centers
+
+        labels_:
+            Labels of each point
+
+    """
+
+
+    def __init__(self, k=8, mode=None):
+        self.k = k
+        self.mode = mode
+
+    
+    def fit(self, X, **params):
+        self._set_params(**params)
+        self.cluster_centers_, self.labels_ = spectral_clustering(X, 
+                                k=self.k, mode=self.mode)
+        return self
 
