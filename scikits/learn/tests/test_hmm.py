@@ -1,5 +1,5 @@
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
-                           decorators, TestCase)
+                           TestCase)
 import numpy as np
 
 from scikits.learn import hmm

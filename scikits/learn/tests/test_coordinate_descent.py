@@ -4,11 +4,10 @@
 
 
 import numpy as np
-from numpy.testing import *
-from nose.tools import *
+from numpy.testing import assert_array_almost_equal, assert_almost_equal
 
-from scikits.learn.glm import Lasso, LassoCV, lasso_path, \
-     ElasticNet, ElasticNetCV, enet_path
+from scikits.learn.glm import Lasso, LassoCV, \
+     ElasticNet, ElasticNetCV
 
 def test_lasso_toy():
     """
