@@ -39,14 +39,6 @@ class BaseLibsvm(BaseEstimator):
         self.shrinking = int(shrinking)
         self.probability = int(probability)
 
-        # container for when we call fit
-        self.support_   = np.empty((0,0), dtype=np.float64, order='C')
-        self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
-        self.intercept_ = np.empty(0,     dtype=np.float64, order='C')
-
-        # only used in classification
-        self.nSV_ = np.empty(0, dtype=np.int32, order='C')
-
 
     def _get_kernel(self, X):
         """ Get the kernel type code as well as the data transformed by
@@ -82,6 +74,15 @@ class BaseLibsvm(BaseEstimator):
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.float64, order='C')
+
+        # container for when we call fit
+        self.support_   = np.empty((0,0), dtype=np.float64, order='C')
+        self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
+        self.intercept_ = np.empty(0,     dtype=np.float64, order='C')
+
+        # only used in classification
+        self.nSV_ = np.empty(0, dtype=np.int32, order='C')
+
 
         if callable(self.kernel):
              # you must store a reference to X to compute the kernel in predict
