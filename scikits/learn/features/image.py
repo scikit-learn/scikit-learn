@@ -110,49 +110,5 @@ def img_to_graph(img, mask=None,
 #    return weights
 
 
-def _make_laplacian_sparse(edges, weights):
-    """
-    Sparse implementation
-    """
-    n_voxels = len(np.unique(edges.ravel()))
-    diag = np.arange(n_voxels)
-    i_indices = np.hstack((edges[0], edges[1]))
-    j_indices = np.hstack((edges[1], edges[0]))
-    data = np.hstack((-weights, -weights))
-    lap = sparse.coo_matrix((data, (i_indices, j_indices)), 
-                            shape=(n_voxels, n_voxels))
-    connect = - np.ravel(lap.sum(axis=1)) 
-    lap = sparse.coo_matrix((np.hstack((data, connect)),
-                (np.hstack((i_indices,diag)), np.hstack((j_indices, diag)))), 
-                shape=(n_voxels, n_voxels))
-    return lap.tocsc()
-
-
-def _make_normed_laplacian(edges, weights):
-    """
-    Sparse implementation
-    """
-    n_voxels = len(np.unique(edges.ravel()))
-    i_indices = np.hstack((edges[0], edges[1]))
-    j_indices = np.hstack((edges[1], edges[0]))
-    data = np.hstack((-weights, -weights))
-    lap = sparse.coo_matrix((data, (i_indices, j_indices)), 
-                            shape=(n_voxels, n_voxels))
-    w = -np.ravel(lap.sum(axis=1))
-    data *= 1. / (np.sqrt(w[i_indices]*w[j_indices]))
-    lap = sparse.coo_matrix((-data, (i_indices, j_indices)),
-                            shape=(n_voxels, n_voxels))
-    return lap.tocsc(), w
-
- 
-def graph_laplacien(graph, normed=False, beta=50):
-    if not normed:
-        lap =  _make_laplacian_sparse(edges, weights)
-        del edges, weights
-        return lap
-    else:
-        lap, w = _make_normed_laplacian(edges, weights)
-        del edges, weights
-        return lap, w
 
 
