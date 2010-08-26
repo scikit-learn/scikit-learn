@@ -132,7 +132,7 @@ else:
 
 ################################################################################
 # Graph laplacian
-def _graph_laplacian_sparse(graph, normed=False):
+def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
     n_nodes = graph.shape[0]
     if not graph.format == 'coo':
         lap = -graph.tocoo()
@@ -160,10 +160,12 @@ def _graph_laplacian_sparse(graph, normed=False):
         lap.data[diag_mask] = 1-w_zeros
     else:
         lap.data[diag_mask] = w[lap.row[diag_mask]]
+    if return_diag:
+        return lap, w
     return lap
 
 
-def _graph_laplacian_dense(graph, normed=False):
+def _graph_laplacian_dense(graph, normed=False, return_diag=False):
     n_nodes = graph.shape[0]
     lap = -graph.copy()
     lap.flat[::n_nodes+1] = 0
@@ -177,16 +179,20 @@ def _graph_laplacian_dense(graph, normed=False):
         lap.flat[::n_nodes+1] = 1-w_zeros
     else:
         lap.flat[::n_nodes+1] = w
+    if return_diag:
+        return lap, w
     return lap
     
 
-def graph_laplacian(graph, normed=False):
+def graph_laplacian(graph, normed=False, return_diag=False):
     if normed and (np.issubdtype(graph.dtype, np.int)
                     or np.issubdtype(graph.dtype, np.uint)):
         graph = graph.astype(np.float)
     if sparse.isspmatrix(graph):
-        return _graph_laplacian_sparse(graph, normed=normed)
+        return _graph_laplacian_sparse(graph, normed=normed,
+                                       return_diag=return_diag)
     else:
         # We have a numpy array
-        return _graph_laplacian_dense(graph, normed=normed)
+        return _graph_laplacian_dense(graph, normed=normed,
+                                       return_diag=return_diag)
  

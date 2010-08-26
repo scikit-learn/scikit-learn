@@ -65,7 +65,7 @@ def _mask_edges_weights(mask, edges, weights):
 
 
 def img_to_graph(img, mask=None,
-                    return_as=sparse.csc_matrix):
+                    return_as=sparse.coo_matrix):
     """ Create a graph of the pixel-to-pixel connections with the
         gradient of the image as a the edge value.
 

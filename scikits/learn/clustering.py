@@ -1,13 +1,25 @@
-"""Algorithms for clustering : Meanshift and Affinity propagation
+""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral 
+clustering.
 
 Author: Alexandre Gramfort alexandre.gramfort@inria.fr
         Gael Varoquaux gael.varoquaux@normalesup.org
 """
+import warnings
 
 from math import floor
 import numpy as np
 
+from scipy import cluster, sparse
+from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
+from scipy.sparse.linalg import lobpcg
+try:
+    from pyamg import smoothed_aggregation_solver
+    amg_loaded = True
+except ImportError:
+    amg_loaded = False 
+
 from .base import BaseEstimator
+from .utils.graph import graph_laplacian
 
 ################################################################################
 # MeanShift
@@ -443,3 +455,71 @@ class AffinityPropagation(BaseEstimator):
                 maxit=self.maxit, convit=self.convit, damping=self.damping,
                 copy=self.copy)
         return self
+
+################################################################################
+# Spectral clustering 
+################################################################################
+
+def spectral_embedding(adjacency, k=8, mode=None, take_first=True):
+    """ Spectral embedding: project the sample on the k first
+        eigen vectors. 
+    """
+    if mode == 'amg' and not amg_loaded:
+        warnings.warn('pyamg not available, using scipy.sparse')
+    if mode is None:
+        mode = ('amg' if amg_loaded else 'bf')
+    laplacian, dd = graph_laplacian(adjacency,
+                                    normed=True, return_diag=True)
+    if mode == 'bf' or not sparse.isspmatrix(laplacian):
+        # We need to put the diagonal at zero
+        if not sparse.isspmatrix(laplacian):
+            n_nodes = laplacian.shape[0]
+            laplacian[::n_nodes+1] = 0
+        else:
+            laplacian = laplacian.tocoo()
+            diag_idx = (laplacian.row == laplacian.col)
+            laplacian.data[diag_idx] = 0
+            # If the matrix has a small number of diagonals (as in the
+            # case of structured matrices comming from images), the
+            # dia format might be best suited for matvec products:
+            n_diags = np.unique(laplacian.row - laplacian.col).size
+            if n_diags <= 7:
+                # 3 or less outer diagonals on each side
+                laplacian = laplacian.todia()
+            else:
+                # csr has the fastest matvec and is thus best suited to
+                # arpack
+                laplacian = laplacian.tocsr()
+        lambdas, diffusion_map = eigen_symmetric(-laplacian, k=k, which='LA')
+        if take_first:
+            res = diffusion_map.T[::-1]*dd
+        else: 
+            res = diffusion_map.T[-2::-1]*dd
+    elif mode == 'amg':
+        # Use AMG to get a preconditionner and speed up the eigen value
+        # problem.
+        ml = smoothed_aggregation_solver(laplacian.tocsr())
+        X = np.random.rand(laplacian.shape[0], k) 
+        X[:, 0] = 1. / dd.ravel()
+        M = ml.aspreconditioner()
+        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12, 
+                                        largest=False)
+        if take_first:
+            res = diffusion_map.T * dd
+        else:
+            res = diffusion_map.T[1:] * dd
+    else:
+        raise ValueError("Unknown value for mode: '%s'." % mode)
+    return res
+
+
+def spectral_clustering(adjacency, k=8, mode=None, take_first=False):
+    maps = spectral_embedding(adjacency, k=k+2, mode=mode,
+                                take_first=take_first)
+    this_maps = maps[:k - 1]
+    _, labels = cluster.vq.kmeans2(this_maps.T, k)
+    return labels
+
+
+
+
