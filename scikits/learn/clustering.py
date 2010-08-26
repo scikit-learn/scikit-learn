@@ -462,15 +462,36 @@ class AffinityPropagation(BaseEstimator):
 
 def spectral_embedding(adjacency, k=8, mode=None):
     """ Spectral embedding: project the sample on the k first
-        eigen vectors. 
+        eigen vectors of the graph laplacian. 
+
+        Parameters
+        -----------
+        adjacency: array-like or sparse matrix, shape: (p, p)
+            The adjacency matrix of the graph to embed.
+        k: integer, optional
+            The dimension of the projection subspace.
+        mode: {None, 'arpack' or 'amg'}
+            The eigenvalue decomposition strategy to use. AMG (Algebraic
+            MultiGrid) is much faster, but requires pyamg to be
+            installed.
+
+        Returns
+        --------
+        embedding: array, shape: (p, k)
+            The reduced samples
+
+        Notes
+        ------
+        The graph should contain only one connect component,
+        elsewhere the results make little sens.
     """
     if mode == 'amg' and not amg_loaded:
         warnings.warn('pyamg not available, using scipy.sparse')
     if mode is None:
-        mode = ('amg' if amg_loaded else 'bf')
+        mode = ('amg' if amg_loaded else 'arpack')
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=True, return_diag=True)
-    if mode == 'bf' or not sparse.isspmatrix(laplacian):
+    if mode == 'arpack' or not sparse.isspmatrix(laplacian):
         # We need to put the diagonal at zero
         if not sparse.isspmatrix(laplacian):
             n_nodes = laplacian.shape[0]
@@ -491,7 +512,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
                 # arpack
                 laplacian = laplacian.tocsr()
         lambdas, diffusion_map = eigen_symmetric(-laplacian, k=k, which='LA')
-        res = diffusion_map.T[-2::-1]*dd
+        embedding = diffusion_map.T[-2::-1]*dd
     elif mode == 'amg':
         # Use AMG to get a preconditionner and speed up the eigen value
         # problem.
@@ -501,13 +522,37 @@ def spectral_embedding(adjacency, k=8, mode=None):
         M = ml.aspreconditioner()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12, 
                                         largest=False)
-        res = diffusion_map.T[1:] * dd
+        embedding = diffusion_map.T[1:] * dd
     else:
         raise ValueError("Unknown value for mode: '%s'." % mode)
-    return res
+    return embedding
 
 
 def spectral_clustering(adjacency, k=8, mode=None):
+    """ Spectral clustering: apply k-means to a projection of the 
+        graph laplacian, finds normalized graph cuts.
+
+        Parameters
+        -----------
+        adjacency: array-like or sparse matrix, shape: (p, p)
+            The adjacency matrix of the graph to embed.
+        k: integer, optional
+            The dimension of the projection subspace.
+        mode: {None, 'arpack' or 'amg'}
+            The eigenvalue decomposition strategy to use. AMG (Algebraic
+            MultiGrid) is much faster, but requires pyamg to be
+            installed.
+
+        Returns
+        --------
+        labels: array of integers, shape: p
+            The labels of the clusters.
+
+        Notes
+        ------
+        The graph should contain only one connect component,
+        elsewhere the results make little sens.
+    """
     maps = spectral_embedding(adjacency, k=k+1, mode=mode)
     this_maps = maps[:k - 1]
     _, labels = cluster.vq.kmeans2(this_maps.T, k)
