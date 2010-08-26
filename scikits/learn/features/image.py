@@ -45,9 +45,6 @@ def _compute_gradient_3d(edges, img):
     return gradient
 
 
-# XXX: Notes: what it the difference between the normed and the non
-# normed versions of the laplacien?
-
 # XXX: Why mask the image after computing the weights?
 
 def _mask_edges_weights(mask, edges, weights):
