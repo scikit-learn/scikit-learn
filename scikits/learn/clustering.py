@@ -460,7 +460,7 @@ class AffinityPropagation(BaseEstimator):
 # Spectral clustering 
 ################################################################################
 
-def spectral_embedding(adjacency, k=8, mode=None, take_first=True):
+def spectral_embedding(adjacency, k=8, mode=None):
     """ Spectral embedding: project the sample on the k first
         eigen vectors. 
     """
@@ -491,10 +491,7 @@ def spectral_embedding(adjacency, k=8, mode=None, take_first=True):
                 # arpack
                 laplacian = laplacian.tocsr()
         lambdas, diffusion_map = eigen_symmetric(-laplacian, k=k, which='LA')
-        if take_first:
-            res = diffusion_map.T[::-1]*dd
-        else: 
-            res = diffusion_map.T[-2::-1]*dd
+        res = diffusion_map.T[-2::-1]*dd
     elif mode == 'amg':
         # Use AMG to get a preconditionner and speed up the eigen value
         # problem.
@@ -504,18 +501,14 @@ def spectral_embedding(adjacency, k=8, mode=None, take_first=True):
         M = ml.aspreconditioner()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12, 
                                         largest=False)
-        if take_first:
-            res = diffusion_map.T * dd
-        else:
-            res = diffusion_map.T[1:] * dd
+        res = diffusion_map.T[1:] * dd
     else:
         raise ValueError("Unknown value for mode: '%s'." % mode)
     return res
 
 
-def spectral_clustering(adjacency, k=8, mode=None, take_first=False):
-    maps = spectral_embedding(adjacency, k=k+2, mode=mode,
-                                take_first=take_first)
+def spectral_clustering(adjacency, k=8, mode=None):
+    maps = spectral_embedding(adjacency, k=k+1, mode=mode)
     this_maps = maps[:k - 1]
     _, labels = cluster.vq.kmeans2(this_maps.T, k)
     return labels

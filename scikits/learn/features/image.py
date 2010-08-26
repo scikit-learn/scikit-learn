@@ -101,14 +101,3 @@ def img_to_graph(img, mask=None,
     return return_as(graph)
 
 
-
-################################################################################
-# Graph laplacien
-
-#def _make_weights_3d(edges, data, beta=130, eps=1.e-6):
-#    weights = np.exp(- beta*gradients / (10*data.std())) + eps
-#    return weights
-
-
-
-
