@@ -33,7 +33,7 @@ import numpy as np
 import pylab as pl
 
 from scikits.learn.features import image
-from scikits.learn.clustering import spectral_clustering
+from scikits.learn.cluster import spectral_clustering
 
 ################################################################################
 l = 100

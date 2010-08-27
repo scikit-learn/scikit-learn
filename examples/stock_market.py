@@ -16,7 +16,7 @@ import datetime
 from matplotlib import finance
 import numpy as np
 
-from scikits.learn import clustering
+from scikits.learn import cluster
 
 # Choose a time period reasonnably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
@@ -98,7 +98,7 @@ close   = np.array([q.close  for q in quotes]).astype(np.float)
 variation = close - open
 correlations = np.corrcoef(variation)
 
-_, labels = clustering.affinity_propagation(correlations)
+_, labels = cluster.affinity_propagation(correlations)
 
 for i in range(labels.max()+1):
     print 'Cluster %i: %s' % ((i+1),

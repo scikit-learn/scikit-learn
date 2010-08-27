@@ -19,7 +19,7 @@ import scipy as sp
 import pylab as pl
 
 from scikits.learn.features import image
-from scikits.learn.clustering import spectral_clustering
+from scikits.learn.cluster import spectral_clustering
 
 lena = sp.lena()
 # Downsample the image by a factor of 4
