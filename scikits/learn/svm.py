@@ -36,9 +36,8 @@ class BaseLibsvm(BaseEstimator):
         self.C = C
         self.nu = nu
         self.p = p
-        self.shrinking = int(shrinking)
-        self.probability = int(probability)
-
+        self.shrinking = shrinking
+        self.probability = probability
 
     def _get_kernel(self, X):
         """ Get the kernel type code as well as the data transformed by
@@ -110,7 +109,7 @@ class BaseLibsvm(BaseEstimator):
                  self.support_, self.dual_coef_,
                  self.intercept_, self.weight_label, self.weight,
                  self.nSV_, self.nu, self.cache_size, self.p,
-                 self.shrinking,
+                 int(self.shrinking),
                  int(self.probability))
         return self
 
@@ -144,7 +143,7 @@ class BaseLibsvm(BaseEstimator):
                       self.gamma, self.coef0, self.eps, self.C,
                       self.weight_label, self.weight,
                       self.nu, self.cache_size, self.p,
-                      self.shrinking, self.probability,
+                      int(self.shrinking), int(self.probability),
                       self.nSV_, self.label_, self.probA_,
                       self.probB_)
 
@@ -184,7 +183,7 @@ class BaseLibsvm(BaseEstimator):
                       self.coef0, self.eps, self.C, 
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
-                      self.p, self.shrinking, self.probability,
+                      self.p, int(self.shrinking), int(self.probability),
                       self.nSV_, self.label_,
                       self.probA_, self.probB_)
         return pprob[:, np.argsort(self.label_)]
@@ -207,7 +206,7 @@ class BaseLibsvm(BaseEstimator):
                       self.coef0, self.eps, self.C, 
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
-                      self.p, self.shrinking, self.probability,
+                      self.p, int(self.shrinking), int(self.probability),
                       self.nSV_, self.label_,
                       self.probA_, self.probB_)
 
@@ -356,14 +355,14 @@ class SVC(BaseLibsvm, ClassifierMixin):
     `support_` : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `dual_coef_` : array, shape = [n_class-1, nSV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
 
@@ -387,7 +386,8 @@ class SVC(BaseLibsvm, ClassifierMixin):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=0, degree=3, shrinking=1, eps=0.001,
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
+      eps=0.001,
       cache_size=100.0,
       coef0=0.0,
       gamma=0.25)
@@ -457,7 +457,7 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
 
@@ -481,7 +481,7 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = NuSVC()
     >>> clf.fit(X, Y)
-    NuSVC(kernel='rbf', probability=0, degree=3, shrinking=1, eps=0.001,
+    NuSVC(kernel='rbf', probability=False, degree=3, shrinking=True, eps=0.001,
        cache_size=100.0,
        coef0=0.0,
        nu=0.5,
@@ -555,8 +555,8 @@ class SVR(BaseLibsvm, RegressorMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
-        constants in decision function
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+        Constants in decision function.
 
     Methods
     -------
