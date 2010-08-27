@@ -178,7 +178,7 @@ class KMeans(BaseEstimator):
 
     The worst case complexity is given by O(n^(k+2/p)) with 
     n = n_samples, p = n_features. (D. Arthur and S. Vassilvitskii, 
-    “How slow is the k-means method?” SoCG2006)
+    "How slow is the k-means method?" SoCG2006)
 
     In practice, the K-means algorithm is very fast (on of the fastest
     clustering algorithms available), but it falls in local minimas, and 
