@@ -6,7 +6,7 @@ Testing for Clustering methods
 import numpy as np
 from numpy.testing import assert_equal
 
-from scikits.learn.clustering import AffinityPropagation, \
+from ..affinity_propagation_ import AffinityPropagation, \
                         affinity_propagation
 from .common import generate_clustered_data
 

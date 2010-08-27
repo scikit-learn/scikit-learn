@@ -11,7 +11,7 @@ This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
 """
 
-# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
+# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD
 
 import numpy as np
@@ -39,7 +39,7 @@ graph.data = np.exp(-beta*graph.data/lena.std()) + eps
 
 # Apply spectral clustering (this step goes much faster if you have pyamg
 # installed)
-N_REGIONS = 8
+N_REGIONS = 11
 labels = spectral_clustering(graph, k=N_REGIONS)
 labels = labels.reshape(lena.shape)
 

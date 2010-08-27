@@ -1,11 +1,10 @@
 """ K-means clustering
 """
 
-# Authors: Thomas Rueckstiess <ruecksti@in.tum.de>
-#          Gael Varoquaux <gael.xaroquaux@normalesup.org>
+# Authors: Gael Varoquaux <gael.xaroquaux@normalesup.org>
+#          Thomas Rueckstiess <ruecksti@in.tum.de>
 # License: BSD
 
-__author__ = "Thomas Rueckstiess, ruecksti@in.tum.de"
 
 import numpy as np
 
@@ -66,7 +65,7 @@ def kinit(X, k, n_samples_max=500):
     return np.array(centers)
 
 
-def k_means(X, k, init='k-means++', n_iter=20, 
+def k_means(X, k, init='k-means++', n_iter=300, 
                         thresh=1e-5, missing='warn'):
     """ K-means clustering alorithm.
 
@@ -117,7 +116,7 @@ def k_means(X, k, init='k-means++', n_iter=20,
         k = kinit(X, k)
         init='points'
     return cluster.vq.kmeans2(X, k, minit=init, missing=missing,
-                    iter=n_iter)
+                                iter=n_iter)
 
 
 ################################################################################
@@ -171,7 +170,7 @@ class KMeans(BaseEstimator):
     """
 
 
-    def __init__(self, k=8, init='k-means++', n_iter=10, missing='warn'):
+    def __init__(self, k=8, init='k-means++', n_iter=300, missing='warn'):
         self.k = k
         self.init = init
         self.n_iter = n_iter
