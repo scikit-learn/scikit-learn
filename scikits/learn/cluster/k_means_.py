@@ -67,7 +67,7 @@ def kinit(X, k, n_samples_max=500):
 
 def k_means(X, k, init='k-means++', n_iter=300, 
                         thresh=1e-5, missing='warn'):
-    """ K-means clustering alorithm.
+    """ K-means clustering algorithm.
 
     Parameters
     ----------
@@ -167,6 +167,22 @@ class KMeans(BaseEstimator):
 
     labels_:
         Labels of each point
+
+    Notes
+    ------
+
+    The k-means problem is solved using the Lloyd algorithm.
+
+    The average complexity is given by O(k n T), were n is the number of 
+    samples and T is the number of iteration.
+
+    The worst case complexity is given by O(n^(k+2/p)) with 
+    n = n_samples, p = n_features. (D. Arthur and S. Vassilvitskii, 
+    “How slow is the k-means method?” SoCG2006)
+
+    In practice, the K-means algorithm is very fast (on of the fastest
+    clustering algorithms available), but it falls in local minimas, and 
+    it can be useful to restarts it several times.
     """
 
 

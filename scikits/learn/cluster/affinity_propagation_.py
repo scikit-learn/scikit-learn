@@ -190,6 +190,9 @@ class AffinityPropagation(BaseEstimator):
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
+
+    The algorithmic complexity of affinity propagation is quadratic
+    in the number of points. 
     """
 
     def __init__(self, damping=.5, maxit=200, convit=30, copy=True):

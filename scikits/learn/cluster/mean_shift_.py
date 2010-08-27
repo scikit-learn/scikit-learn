@@ -213,14 +213,23 @@ class MeanShift(BaseEstimator):
     K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
     Density Function, with Applications in Pattern Recognition"
 
-
+    The algorithmic complexity of the mean shift algorithm is O(T n^2)
+    with n the number of samples and T the number of iterations. It is
+    not adviced for a large number of samples.
     """
 
     def __init__(self, bandwidth=None):
         self.bandwidth = bandwidth
 
     def fit(self, X, **params):
-        """compute MeanShift"""
+        """ Compute MeanShift
+        
+            Parameters
+            -----------
+            X : array [n_samples, n_features]
+                Input points
+
+        """
         self._set_params(**params)
         self.cluster_centers_, self.labels_ = mean_shift(X, self.bandwidth)
         return self
