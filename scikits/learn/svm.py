@@ -356,14 +356,14 @@ class SVC(BaseLibsvm, ClassifierMixin):
     `support_` : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `dual_coef_` : array, shape = [n_class-1, nSV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
 
@@ -457,7 +457,7 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
 
@@ -555,8 +555,8 @@ class SVR(BaseLibsvm, RegressorMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
-        constants in decision function
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+        Constants in decision function.
 
     Methods
     -------
