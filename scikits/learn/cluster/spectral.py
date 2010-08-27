@@ -81,8 +81,9 @@ def spectral_embedding(adjacency, k=8, mode=None):
     elif mode == 'amg':
         # Use AMG to get a preconditionner and speed up the eigenvalue
         # problem.
+        laplacian = laplacian.astype(np.float) # lobpcg needs the native float
         ml = smoothed_aggregation_solver(laplacian.tocsr())
-        X = np.random.rand(laplacian.shape[0], k) 
+        X = np.random.rand(laplacian.shape[0], k)
         X[:, 0] = 1. / dd.ravel()
         M = ml.aspreconditioner()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12, 

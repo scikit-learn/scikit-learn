@@ -99,7 +99,7 @@ def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
         w[w_zeros] = 1
         lap.data /= w[lap.row]
         lap.data /= w[lap.col]
-        lap.data[diag_mask] = 1-w_zeros
+        lap.data[diag_mask] = (1-w_zeros).astype(lap.data.dtype)
     else:
         lap.data[diag_mask] = w[lap.row[diag_mask]]
     if return_diag:
