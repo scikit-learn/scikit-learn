@@ -32,7 +32,7 @@ graph = image.img_to_graph(lena)
 
 # Take a decreasing function of the gradient: an exponential
 # The smaller beta is, the more independant the segmentation is of the
-# actual image. For beta=1, the segementation is close to a voronoi
+# actual image. For beta=1, the segmentation is close to a voronoi
 beta = 5
 eps  = 1e-6
 graph.data = np.exp(-beta*graph.data/lena.std()) + eps

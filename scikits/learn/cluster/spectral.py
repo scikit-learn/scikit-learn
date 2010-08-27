@@ -134,8 +134,6 @@ class SpectralClustering(BaseEstimator):
 
         Parameters
         -----------
-        adjacency: array-like or sparse matrix, shape: (p, p)
-            The adjacency matrix of the graph to embed.
         k: integer, optional
             The dimension of the projection subspace.
         mode: {None, 'arpack' or 'amg'}
@@ -164,6 +162,19 @@ class SpectralClustering(BaseEstimator):
 
     
     def fit(self, X, **params):
+        """ Compute the spectral clustering from the adjacency matrix of
+            the graph.
+        
+            Parameters
+            -----------
+            X: array-like or sparse matrix, shape: (p, p)
+                The adjacency matrix of the graph to embed.
+
+            Notes
+            ------
+            If the pyamg package is installed, it is used. This
+            greatly speeds up computation.
+        """
         self._set_params(**params)
         self.labels_ = spectral_clustering(X, 
                                 k=self.k, mode=self.mode)

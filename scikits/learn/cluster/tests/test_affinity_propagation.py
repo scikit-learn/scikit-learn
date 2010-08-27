@@ -19,17 +19,12 @@ def test_affinity_propagation():
     Affinity Propagation algorithm
 
     """
-
-    #----------------------------------------------------------------------
     # Compute similarities
-    #----------------------------------------------------------------------
     X_norms = np.sum(X*X, axis=1)
     S = - X_norms[:,np.newaxis] - X_norms[np.newaxis,:] + 2 * np.dot(X, X.T)
     p = 10*np.median(S)
 
-    #----------------------------------------------------------------------
     # Compute Affinity Propagation
-    #----------------------------------------------------------------------
     cluster_centers_indices, labels = affinity_propagation(S, p)
 
     n_clusters_ = len(cluster_centers_indices)

@@ -157,7 +157,7 @@ class KMeans(BaseEstimator):
     -------
 
     fit(X):
-        Compute MeanShift clustering
+        Compute K-Means clustering
 
     Attributes
     ----------
