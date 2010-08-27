@@ -10,7 +10,7 @@ Between Data Points", Science Feb. 2007
 """
 
 import numpy as np
-from scikits.learn.clustering import AffinityPropagation
+from scikits.learn.cluster import AffinityPropagation
 
 ################################################################################
 # Generate sample data

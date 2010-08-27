@@ -10,7 +10,7 @@ Density Function, with Applications in Pattern Recognition"
 """
 
 import numpy as np
-from scikits.learn.clustering import MeanShift, estimate_bandwidth
+from scikits.learn.cluster import MeanShift, estimate_bandwidth
 
 ################################################################################
 # Generate sample data

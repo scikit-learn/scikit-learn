@@ -31,5 +31,6 @@ def test_rfe():
     rfecv.fit(X, y, cv=StratifiedKFold(y, 2))
     X_r = rfecv.transform(X)
 
+    assert X_r.shape[1] == iris.data.shape[1]
     assert rfecv.support_.sum() == iris.data.shape[1]
 

@@ -1,8 +1,7 @@
-
-import numpy as np
 import scipy.sparse
 from scikits.learn import datasets, sparse, svm
-from numpy.testing import *
+from numpy.testing import assert_array_almost_equal, \
+                          assert_equal
 
 # test sample 1
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]

@@ -5,7 +5,8 @@ TODO: remove hard coded numerical results when possible
 """
 
 import numpy as np
-from numpy.testing import *
+from numpy.testing import assert_array_equal, assert_array_almost_equal, \
+                          assert_almost_equal, assert_raises, assert_
 from scikits.learn import svm, datasets
 
 # test sample 1
@@ -14,7 +15,6 @@ Y = [1, 1, 1, 2, 2, 2]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [1, 2, 2]
 
-from scikits.learn import datasets
 iris = datasets.load_iris()
 
 def test_CSVC():
