@@ -2,7 +2,8 @@ import sys
 import math
 import numpy as np
 
-def fast_logdet(A):
+# XXX: Should be renamed to slogdet
+def _fast_logdet(A):
     """
     Compute log(det(A)) for A symmetric
     Equivalent to : np.log(nl.det(A))
@@ -16,6 +17,12 @@ def fast_logdet(A):
     if not np.isfinite(ld):
         return -np.inf
     return ld
+
+# Numpy >= 1.5 provides a fast logdet
+if hasattr(np.linalg, 'slogdet'):
+    fast_logdet = np.linalg.slogdet
+else:
+    fast_logdet = _fast_logdet
 
 if sys.version_info[1] < 6:
     # math.factorial is only available in 2.6
