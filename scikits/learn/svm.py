@@ -396,7 +396,7 @@ class SVC(BaseLibsvm, ClassifierMixin):
 
     See also
     --------
-    SVR
+    SVR, LinearSVC
     """
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0,
@@ -491,7 +491,7 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
 
     See also
     --------
-    SVR
+    SVC, LinearSVC, SVR
     """
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
@@ -509,11 +509,86 @@ class SVR(BaseLibsvm, RegressorMixin):
 
     Parameters
     ----------
-    impl : string, optional
 
-        SVM implementation to choose from. This refers to different formulations
-        of the SVM optimization problem. Can be one of 'epsilon_svr', 'nu_svr'.
-        By default 'epsilon_svc' will be chosen.
+    nu : float, optional
+        An upper bound on the fraction of training errors and a lower bound of
+        the fraction of support vectors. Should be in the interval (0, 1].  By
+        default 0.5 will be taken.  Only available if impl='nu_svc'
+
+    kernel : string, optional
+         Specifies the kernel type to be used in the algorithm.
+         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
+         If none is given 'rbf' will be used.
+
+    p : float
+        epsilon in the epsilon-SVR model.
+
+    degree : int, optional
+        degree of kernel function
+        is significant only in poly, rbf, sigmoid
+
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf
+
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
+    
+    probability: boolean, optional (False by default)
+        enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
+    coef0 : float, optional
+        independent term in kernel function. It is only significant
+        in poly/sigmoid.
+
+    Attributes
+    ----------
+    `support_` : array-like, shape = [nSV, n_features]
+        Support vectors
+
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
+        Coefficients of the support vector in the decision function.
+
+    `coef_` : array, shape = [n_classes-1, n_features]
+        Weights asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+        Constants in decision function.
+
+    Methods
+    -------
+    fit(X, Y) : self
+        Fit the model
+
+    predict(X) : array
+        Predict using the model.
+
+    predict_proba(X) : array
+        Return probability estimates.
+
+    See also
+    --------
+    NuSVR
+    """
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
+                 shrinking=True, probability=False):
+
+        BaseLibsvm.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
+                         cache_size, eps, C, nu, p,
+                         shrinking, probability)
+
+
+class NuSVR(BaseLibsvm, RegressorMixin):
+    """
+    Nu Support Vector Regression. Similar to NuSVC, for regression,
+    uses a paramter nu to control the number of support
+    vectors. However, unlike NuSVC, where nu replaces with C, here nu
+    replaces with C, here nu replaces with the parameter p of SVR.
+
+    Parameters
+    ----------
 
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
@@ -571,7 +646,7 @@ class SVR(BaseLibsvm, RegressorMixin):
 
     See also
     --------
-    SVC
+    NuSVR
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
@@ -580,6 +655,7 @@ class SVR(BaseLibsvm, RegressorMixin):
         BaseLibsvm.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
+
 
 
 class OneClassSVM(BaseLibsvm):
