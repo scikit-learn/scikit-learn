@@ -47,7 +47,7 @@ Scikits.learn: machine learning in Python
 .. raw:: html
 
     <small>
-    <img src="_images/plot_digits_classification.png" align="right" style="width: 400px"/>
+    <a href="auto_examples/plot_digits_classification.html"><img src="_images/plot_digits_classification.png" align="right" style="width: 400px"/></a>
 
 :ref:`A simple Example: recognizing hand-written digits <example_plot_digits_classification.py>` ::
 
@@ -118,5 +118,9 @@ User guide
    supervised_learning
    unsupervised_learning
    model_selection
+
+.. toctree::
+   :maxdepth: 2
+
    auto_examples/index
    developers/index

@@ -2,12 +2,14 @@
 Support Vector Machines
 =======================
 
+.. currentmodule:: scikits.learn.svm
+
 **Support vector machines (SVMs)** are a set of supervised learning
 methods used for classification, regression and outlayer detection.
 
 The advantages of Support Vector Machines are:
 
-    - Effective high dimensional spaces.
+    - Effective in high dimensional spaces.
 
     - Still effective in cases where number of dimensions is greater
       than the number of samples.
@@ -36,41 +38,79 @@ Classification
 
 Suppose some given data points each belong to one of N classes, and
 the goal is to decide which class a new data point will be in. The
-classes that permform this task are SVC, NuSVC and LinearSVC.
+classes that permform this task are :class:`SVC`, :class:`NuSVC` and
+:class:`LinearSVC`.
 
-SVC and NuSVC are similar methods, but accept slightly different set
-of parameters and have different mathematical formulations (see
-section :ref:`svm_mathematical_formulation`). On the other hand,
-LinearSVC is another implemntation of SVC optimized in the case of a
-linear kernel. Note that other classes this one does not accept
-keyword 'kernel', as this is assumed to be linear. It also lacks some
-of the memebrs of SVC and NuSVC, like support\_.
+:class:`SVC` and :class:`NuSVC` are similar methods, but accept
+slightly different set of parameters and have different mathematical
+formulations (see section :ref:`svm_mathematical_formulation`). On the
+other hand, :class:`LinearSVC` is another implementation of SVC
+optimized in the case of a linear kernel. Note that :class:`LinearSVC`
+does not accept keyword 'kernel', as this is assumed to be linear. It
+also lacks some of the memebrs of SVC and NuSVC, like support\_.
 
 
 .. figure:: ../auto_examples/svm/images/plot_iris.png
+   :target: ../auto_examples/svm/plot_iris.html
+   :align: center
+
+
+
+
+Regression
+==========
+
+The method of Support Vector Classification can be extended to solve
+regression problems. This method is called Support Vector Regression.
+
+The model produced by support vector classification (as described
+above) depends only on a subset of the training data, because the cost
+function for building the model does not care about training points
+that lie beyond the margin. Analogously, the model produced by Support
+Vector Regression depends only on a subset of the training data,
+because the cost function for building the model ignores any training
+data close to the model prediction.
+
+
+There are two flavours of Support Vector Regression: :class:`SVR` and
+:class:`NuSVR`.
+
+
+Density estimation
+=======================
+
+One-class SVM is used for outliers detection, that is, given a set of
+samples, it will detect the soft boundary of that set so as to
+classify new points as belonging to that set or not. The class that
+implement this is called :class:`OneClassSVM`
+
+
+.. note::
+
+    For a complete example on one class SVM see 
+    :ref:`example_svm_plot_oneclass.py` example.
+
+.. figure:: ../auto_examples/svm/images/plot_oneclass.png
+   :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 50
 
 
-**Complete class reference:**
+Examples
+========
 
-.. autoclass:: scikits.learn.svm.SVC
-   :members:
-   :inherited-members:
+See :ref:`svm_examples` for a complete list of examples.
 
-.. autoclass:: scikits.learn.svm.NuSVC
-   :members:
-   :inherited-members:
+Examples
+--------
 
+For a complete example of custom kernels see
+:ref:`example_svm_plot_custom_kernel.py`. 
 
-The following class 
-.. autoclass:: scikits.learn.svm.LinearSVC
-   :members:
-   :inherited-members:
 
 
 Using Custom Kernels
---------------------
+====================
 
 .. TODO: this is not restricted to classification
 
@@ -101,69 +141,6 @@ classifiers, except that:
       between the use of fit() and predict() you will have
       unexpected results.
 
-.. note::
-
-Examples
---------
-
-For a complete example of custom kernels see
-:ref:`example_svm_plot_custom_kernel.py`. 
-
-.. TODO: precomputed kernels.
-
-Regression
-==========
-
-The method of Support Vector Classification can be extended to solve
-the regression problem. This method is called Support Vector
-Regression.
-
-The model produced by support vector classification (as described
-above) depends only on a subset of the training data, because the cost
-function for building the model does not care about training points
-that lie beyond the margin. Analogously, the model produced by Support
-Vector Regression depends only on a subset of the training data,
-because the cost function for building the model ignores any training
-data close to the model prediction.
-
-____
-
-.. autoclass:: scikits.learn.svm.SVR
-   :members:
-   :inherited-members:
-
-.. autoclass:: scikits.learn.svm.NuSVR
-   :members:
-   :inherited-members:
-
-Density estimation
-=======================
-
-One-class SVM is used for outliers detection, that is, given a set of
-samples, it will detect the soft boundary of that set so as to classify
-new points as belonging to that set or not.
-
-____
-
-.. autoclass:: scikits.learn.svm.OneClassSVM
-   :members:
-   :inherited-members:
-
-.. note::
-
-    For a complete example on one class SVM see 
-    :ref:`example_svm_plot_svm_oneclass.py` example.
-
-.. figure:: ../auto_examples/svm/images/plot_svm_oneclass.png
-   :align: center
-   :scale: 50
-
-
-Examples
-========
-
-See :ref:`svm_examples` for a complete list of examples.
-
 
 Support Vector machines for sparse data
 =======================================
@@ -172,20 +149,22 @@ There is support for sparse data given in any matrix in a format
 supported by scipy.sparse. See module scikits.learn.sparse.svm.
 
 
+
+
 Tips on Practical Use
 =====================
 
   * Support Vector Machine algorithms are not scale-invariant, so it
-  is highly recommended to scale your data. For example, scale each
-  attribute on the input vector X to [0,1] or [-1,+1], or standarize
-  it to have mean 0 and variance 1. Note that the *same* scaling must
-  be applied to the test vector to obtain meaningful results. See `The
-  CookBook
-  <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_ for
-  some examples on scaling.
+    is highly recommended to scale your data. For example, scale each
+    attribute on the input vector X to [0,1] or [-1,+1], or standarize
+    it to have mean 0 and variance 1. Note that the *same* scaling
+    must be applied to the test vector to obtain meaningful
+    results. See `The CookBook
+    <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_
+    for some examples on scaling.
 
   * nu in nu-SVC/one-class-SVM/nu-SVR approximates the fraction of
-  training errors and support vectors.
+    training errors and support vectors.
 
   * If data for classification are unbalanced (e.g. many positive and
     few negative), try different penalty parameters C.
