@@ -14,7 +14,7 @@ from ..base import BaseEstimator
 
 # kinit originaly from pybrain:
 # http://github.com/pybrain/pybrain/raw/master/pybrain/auxiliary/kmeans.py
-def kinit(X, k, n_samples_max=500):
+def k_init(X, k, n_samples_max=500):
     """ Init k seeds according to kmeans++
 
         Parameters
@@ -74,19 +74,27 @@ def k_means(X, k, init='k-means++', n_iter=300,
     data : ndarray
         A M by N array of M observations in N dimensions or a length
         M array of M one-dimensional observations.
+
     k : int or ndarray
         The number of clusters to form as well as the number of
         centroids to generate. If minit initialization string is
         'matrix', or if a ndarray is given instead, it is
         interpreted as initial cluster to use instead.
-    iter : int
+
+    n_iter : int
         Number of iterations of the k-means algrithm to run. Note
         that this differs in meaning from the iters parameter to
         the kmeans function.
+
     thresh : float
         (not used yet).
-    minit : {'k-means++', 'random', 'points', 'matrix'}
-        Method for initialization:
+
+    init : {'k-means++', 'random', 'points', 'matrix'}
+        Method for initialization, default to 'k-means++':
+
+        'k-means++' : selects initial cluster centers for k-mean
+        clustering in a smart way to speed up convergence. See section
+        Notes in k_init for more details.
 
         'random': generate k centroids from a Gaussian with mean and
         variance estimated from the data.
@@ -102,6 +110,7 @@ def k_means(X, k, init='k-means++', n_iter=300,
     centroid : ndarray
         A k by N array of centroids found at the last iteration of
         k-means.
+
     label : ndarray
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
@@ -113,7 +122,7 @@ def k_means(X, k, init='k-means++', n_iter=300,
 
     """
     if init == 'k-means++':
-        k = kinit(X, k)
+        k = k_init(X, k)
         init='points'
     return cluster.vq.kmeans2(X, k, minit=init, missing=missing,
                                 iter=n_iter)
@@ -130,19 +139,27 @@ class KMeans(BaseEstimator):
     data : ndarray
         A M by N array of M observations in N dimensions or a length
         M array of M one-dimensional observations.
+
     k : int or ndarray
         The number of clusters to form as well as the number of
-        centroids to generate. If minit initialization string is
+        centroids to generate. If init initialization string is
         'matrix', or if a ndarray is given instead, it is
         interpreted as initial cluster to use instead.
-    iter : int
+
+    n_iter : int
         Number of iterations of the k-means algrithm to run. Note
         that this differs in meaning from the iters parameter to
         the kmeans function.
+
     thresh : float
         (not used yet).
-    minit : {'k-means++', 'random', 'points', 'matrix'}
-        Method for initialization:
+
+    init : {'k-means++', 'random', 'points', 'matrix'}
+        Method for initialization, defaults to 'k-means++':
+
+        'k-means++' : selects initial cluster centers for k-mean
+        clustering in a smart way to speed up convergence. See section
+        Notes in k_init for more details.
 
         'random': generate k centroids from a Gaussian with mean and
         variance estimated from the data.
@@ -178,7 +195,7 @@ class KMeans(BaseEstimator):
 
     The worst case complexity is given by O(n^(k+2/p)) with 
     n = n_samples, p = n_features. (D. Arthur and S. Vassilvitskii, 
-    "How slow is the k-means method?" SoCG2006)
+    'How slow is the k-means method?' SoCG2006)
 
     In practice, the K-means algorithm is very fast (on of the fastest
     clustering algorithms available), but it falls in local minimas, and 
@@ -194,6 +211,7 @@ class KMeans(BaseEstimator):
 
     def fit(self, X, **params):
         """ Compute k-means"""
+        X = np.asanyarray(X)
         self._set_params(**params)
         self.cluster_centers_, self.labels_ = k_means(X, 
                     k=self.k, init=self.init, missing=self.missing,
