@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 =================================
-LASSO with Least Angle Regression
+Lasso with Least Angle Regression
 =================================
 
 """
