@@ -6,8 +6,7 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
 
-from scikits.learn.glm import Lasso, LassoCV, \
-     ElasticNet, ElasticNetCV
+from ..coordinate_descent import Lasso, LassoCV, ElasticNet, ElasticNetCV
 
 def test_lasso_toy():
     """

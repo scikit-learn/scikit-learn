@@ -8,36 +8,9 @@ import numpy as np
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal
 
-from scikits.learn.glm import LinearRegression, BayesianRidge, Ridge, \
-                      ARDRegression
+from ..bayes import bayesian_ridge_regression, \
+        bayesian_regression_ard, BayesianRidge, Ridge, ARDRegression
 
-from scikits.learn.glm.bayes import bayesian_ridge_regression, \
-        bayesian_regression_ard
-
-def test_LinearRegression():
-    """
-    Test LinearRegression on a simple dataset.
-    """
-    # a simple dataset
-    X = [[1], [2]]
-    Y = [1, 2]
-
-    clf = LinearRegression()
-    clf.fit(X, Y)
-
-    assert_array_almost_equal(clf.coef_, [1])
-    assert_array_almost_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.predict(X), [1, 2])
-
-    # test it also for degenerate input
-    X = [[1]]
-    Y = [0]
-
-    clf = LinearRegression()
-    clf.fit(X, Y)
-    assert_array_almost_equal(clf.coef_, [0])
-    assert_array_almost_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.predict(X), [0])
 
 def test_bayesian_ridge():
     """
@@ -54,6 +27,7 @@ def test_bayesian_ridge():
     clf.fit(X, Y)
     Test = [[1], [2], [3], [4]]
     assert_array_almost_equal(clf.predict(Test), [1, 2, 3, 4]) # identity
+
 
 def test_ridge():
     alpha = 1.0
@@ -74,7 +48,6 @@ def test_ridge():
     X = np.random.randn(n_samples, n_features)
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
-
 
 
 def test_toy_ridge_regression():
