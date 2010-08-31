@@ -15,6 +15,7 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 
 from . import cross_val
 from . import ball_tree
+from . import cluster
 from . import gmm
 from . import glm
 from . import logistic
@@ -23,7 +24,7 @@ from . import metrics
 from . import svm
 from . import features
 
-__all__ = ['cross_val', 'ball_tree', 'gmm', 'glm', 'logistic', 'lda',
+__all__ = ['cross_val', 'ball_tree', 'cluster', 'gmm', 'glm', 'logistic', 'lda',
            'metrics', 'svm', 'features']
 
 __version__ = '0.5-git'
