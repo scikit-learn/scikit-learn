@@ -8,7 +8,7 @@ import numpy as np
 
 from .base import LinearModel
 from ..cross_val import KFold
-from .. import cd_fast
+from . import cd_fast
 
 
 class Lasso(LinearModel):

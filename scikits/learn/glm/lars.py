@@ -1,3 +1,7 @@
+# Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#
+# License: BSD Style.
 
 import numpy as np
 from scipy import linalg
@@ -54,6 +58,9 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
     Lasso variant
     store full path
     """
+
+    X = np.atleast_2d(X)
+    y = np.atleast_1d(y)
 
     n_samples, n_features = X.shape
 
@@ -156,7 +163,6 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         if method == 'lasso':
 
             z = - beta[n_iter, active] / b
-            print z
             z[z <= 0.] = np.inf
 
             idx = np.argmin(z)
@@ -222,10 +228,10 @@ class LARS (LinearModel):
     --------
     >>> from scikits.learn import glm
     >>> clf = glm.LARS(n_features=1)
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    LARS(alpha=0.1, coef_=array([ 0.85,  0.  ]))
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
+    LARS(normalize=True, n_features=1)
     >>> print clf.coef_
-    [ 0.85  0.  ]
+    [ 0.         -0.81649658]
 
     Notes
     -----
@@ -241,22 +247,25 @@ class LARS (LinearModel):
         self.normalize = normalize
         self.coef_ = None
 
-    def fit (self, X, Y):
+    def fit (self, X, y, **params):
+        self._set_params(**params)
                 # will only normalize non-zero columns
+
+        X = np.atleast_2d(X)
+        y = np.atleast_1d(y)
 
         if self.normalize:
             self._xmean = X.mean(0)
-            self._ymean = Y.mean(0)
+            self._ymean = y.mean(0)
             X = X - self._xmean
-            Y = Y - self._ymean
+            y = y - self._ymean
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
             nonzeros = np.flatnonzero(self._norms)
             X[:, nonzeros] /= self._norms[nonzeros]
 
         method = 'lar'
-        alphas_, active, coef_path_ = lars_path(X, Y,
+        alphas_, active, coef_path_ = lars_path(X, y,
                                 max_iter=self.n_features, method=method)
-        print alphas_
         self.coef_ = coef_path_[:,-1]
         return self
 
@@ -291,10 +300,10 @@ class LassoLARS (LinearModel):
     --------
     >>> from scikits.learn import glm
     >>> clf = glm.LassoLARS(alpha=0.1)
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    LassoLARS(alpha=0.1, coef_=array([ 0.85,  0.  ]))
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
+    LassoLARS(normalize=True, alpha=0.1)
     >>> print clf.coef_
-    [ 0.85  0.  ]
+    [ 0.         -0.51649658]
 
     Notes
     -----
@@ -302,7 +311,7 @@ class LassoLARS (LinearModel):
     an alternative optimization strategy called 'coordinate descent.'
     """
 
-    def __init__(self, alpha, normalize=True):
+    def __init__(self, alpha=1.0, normalize=True):
         """ XXX : add doc
                 # will only normalize non-zero columns
         """
@@ -310,24 +319,28 @@ class LassoLARS (LinearModel):
         self.normalize = normalize
         self.coef_ = None
 
-    def fit (self, X, Y):
+    def fit (self, X, y, **params):
         """ XXX : add doc
         """
+        self._set_params(**params)
+
+        X = np.atleast_2d(X)
+        y = np.atleast_1d(y)
 
         n_samples = X.shape[0]
         alpha = self.alpha * n_samples # scale alpha with number of samples
 
         if self.normalize:
             self._xmean = X.mean(0)
-            self._ymean = Y.mean(0)
+            self._ymean = y.mean(0)
             X = X - self._xmean
-            Y = Y - self._ymean
+            y = y - self._ymean
             self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
             nonzeros = np.flatnonzero(self._norms)
             X[:, nonzeros] /= self._norms[nonzeros]
 
         method = 'lasso'
-        alphas_, active, coef_path_ = lars_path(X, Y,
+        alphas_, active, coef_path_ = lars_path(X, y,
                                             alpha_min=alpha, method=method)
         self.coef_ = coef_path_[:,-1]
         return self

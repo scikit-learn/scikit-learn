@@ -19,6 +19,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('features')
     config.add_subpackage('features/tests')
     config.add_subpackage('cluster')
+    config.add_subpackage('glm')
     config.add_subpackage('cluster/tests')
     config.add_subpackage('feature_selection')
     config.add_subpackage('feature_selection/tests')
@@ -115,18 +116,6 @@ def configuration(parent_package='',top_path=None):
                          sources=[join('src', 'BallTree.cpp')],
                          include_dirs=[numpy.get_include()]
                          )
-
-    config.add_extension('cd_fast',
-                         sources=[join('src', 'cd_fast.c')],
-                         libraries=cblas_libs,
-                         include_dirs=[join('src', 'cblas'),
-                                       numpy.get_include(),
-                                       blas_info.pop('include_dirs', [])],
-                         extra_compile_args=['-std=c99'] + \
-                                             blas_info.pop('extra_compile_args', []),
-                         **blas_info
-                         )
-
 
     config.add_subpackage('utils')
 
