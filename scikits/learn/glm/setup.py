@@ -10,13 +10,19 @@ else:
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, get_standard_file, BlasNotFoundError
-    config = Configuration('learn',parent_package,top_path)
+    config = Configuration('glm', parent_package, top_path)
 
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
 
     # we try to link agains system-wide blas
     blas_info = get_info('blas_opt', 0)
+
+    ### liblinear module
+    blas_sources = [join('src', 'blas', 'daxpy.c'),
+                    join('src', 'blas', 'ddot.c'),
+                    join('src', 'blas', 'dnrm2.c'),
+                    join('src', 'blas', 'dscal.c')]
 
     if not blas_info:
         config.add_library('blas', blas_sources)
@@ -49,7 +55,7 @@ def configuration(parent_package='', top_path=None):
 
 
     # add the test directory
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
 
     return config
 
