@@ -126,6 +126,7 @@ def lars(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         if method == 'lasso':
 
             z = - beta[n_iter, active] / b
+            print z
             z[z <= 0.] = np.inf
 
             idx = np.argmin(z)
@@ -136,11 +137,6 @@ def lars(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
 
         n_iter += 1
         beta[n_iter, active] = beta[n_iter - 1, active] + gamma_ * b
-        if n_iter == X.shape[1]:
-            # oveeeerkilll 
-            beta[n_iter] =  linalg.lstsq (X, y)[0]
-            alpha = 0.
-            break
 
         if drop:
             n_pred -= 1
@@ -150,6 +146,13 @@ def lars(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
             L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
             sign_active = np.delete(sign_active, idx) # do an append to maintain size
             # should be done using cholesky deletes
+
+        if n_iter == X.shape[1]:
+            # oveeeerkilll 
+            beta[n_iter] =  linalg.lstsq (X, y)[0]
+            alpha = 0.
+            break
+
 
     if alpha < alpha_min: # interpolate
         # interpolation factor 0 <= ss < 1

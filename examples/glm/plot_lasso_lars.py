@@ -14,7 +14,7 @@ import itertools
 import numpy as np
 import pylab as pl
 
-from scikits.learn import lars, glm
+from scikits.learn import glm
 from scikits.learn import datasets
 
 diabetes = datasets.load_diabetes()
@@ -28,13 +28,11 @@ X[:, 6] = -X[:, 6]
 
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-alphas, active, path = lars.lars(X, Y)
+alphas, active, path = glm.lars(X, Y, method='lasso')
 print "This took ", datetime.now() - start
 
 alphas = np.sum(np.abs(path.T), axis=1)
 alphas /= alphas[-1]
-print alphas
-print path.shape
 
 # # Display results
 color_iter = itertools.cycle (['r', 'g', 'b', 'c'])
