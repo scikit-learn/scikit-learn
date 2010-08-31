@@ -9,6 +9,7 @@ and coordinate descent.
 
 """
 
+from .base import LinearRegression
 from .lars import LARS, LassoLARS, lars_path, LeastAngleRegression
 from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV
 from .bayes import Ridge, BayesianRidge, ARDRegression
