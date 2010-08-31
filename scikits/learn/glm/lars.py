@@ -18,7 +18,7 @@ from .._minilearn import lars_fit_wrap
 # optimized by binding (in scipy ?) trsv or trsm
 
 def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
-    """ Compute Least Angular Regression and LASSO path
+    """ Compute Least Angle Regression and LASSO path
 
         Parameters
         -----------
@@ -202,7 +202,7 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
 
 
 class LARS (LinearModel):
-    """ Least Angular Regression model a.k.a. LAR
+    """ Least Angle Regression model a.k.a. LAR
     
     Parameters
     ----------
@@ -236,7 +236,7 @@ class LARS (LinearModel):
     Notes
     -----
     See also scikits.learn.glm.LassoLARS that fits a LASSO model
-    using a variant of Least Angular Regression
+    using a variant of Least Angle Regression
     
     XXX : add ref + wikipedia page
     
@@ -271,7 +271,7 @@ class LARS (LinearModel):
 
 
 class LassoLARS (LinearModel):
-    """ Lasso model fit with Least Angular Regression a.k.a. LARS
+    """ Lasso model fit with Least Angle Regression a.k.a. LARS
     
     It is a Linear Model trained with an L1 prior as regularizer.
     lasso).
