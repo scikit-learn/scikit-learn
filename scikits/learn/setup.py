@@ -7,10 +7,11 @@ if sys.version_info[0] < 3:
 else:
     from configparser import ConfigParser
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, get_standard_file, BlasNotFoundError
-    config = Configuration('learn',parent_package,top_path)
+    from numpy.distutils.system_info import get_info, get_standard_file, \
+        BlasNotFoundError
+    config = Configuration('learn', parent_package, top_path)
 
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
@@ -19,8 +20,8 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('features')
     config.add_subpackage('features/tests')
     config.add_subpackage('cluster')
-    config.add_subpackage('glm')
     config.add_subpackage('cluster/tests')
+    config.add_subpackage('glm')
     config.add_subpackage('feature_selection')
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('sparse')
