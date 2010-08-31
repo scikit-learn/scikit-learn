@@ -13,11 +13,41 @@ from .._minilearn import lars_fit_wrap
 # all linalg.solve solve a triangular system, so this could be heavily
 # optimized by binding (in scipy ?) trsv or trsm
 
-def lars(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
-    """
-    lar -> m <= x.shape[1]
-    lasso -> m can be > x.shape[1]
+def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
+    """ Compute Least Angular Regression and LASSO path
 
+        Parameters
+        -----------
+        X: array, shape: (n, p)
+            Input data
+        y: array, shape: (n)
+            Input targets
+        max_iter: integer, optional
+            The number of 'kink' in the path
+        alpha_min: float, optional
+            The minimum correlation along the path. It corresponds
+            to the regularization parameter alpha parameter in the Lasso.
+        method: 'lar' or 'lasso'
+            Specifies the problem solved: the LAR or its variant the LASSO-LARS
+            that gives the solution of the LASSO problem for any regularization
+            parameter.
+
+        Returns
+        --------
+        alphas: array, shape: (k)
+            The alphas along the path
+        
+        active: array, shape (?)
+            Indices of active variables at the end of the path.
+        
+        coefs: array, shape (p,k)
+            Coefficients along the path
+
+        Notes
+        ------
+        XXX : add reference papers and wikipedia page
+    
+    TODOS:
     precompute : empty for now
 
     TODO: detect stationary points.
@@ -166,7 +196,46 @@ def lars(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
 
 
 class LARS (LinearModel):
+    """ Least Angular Regression model a.k.a. LAR
+    
+    Parameters
+    ----------
+    n_features : int, optional
+        Number of selected active features
 
+    XXX : todo add fit_intercept
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    XXX : add intercept_
+    `intercept_` : float
+        independent term in decision function.
+
+    Examples
+    --------
+    >>> from scikits.learn import glm
+    >>> clf = glm.LARS(n_features=1)
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
+    LARS(alpha=0.1, coef_=array([ 0.85,  0.  ]))
+    >>> print clf.coef_
+    [ 0.85  0.  ]
+
+    Notes
+    -----
+    See also scikits.learn.glm.LassoLARS that fits a LASSO model
+    using a variant of Least Angular Regression
+    
+    XXX : add ref + wikipedia page
+    
+    See examples. XXX : add examples names
+    """
     def __init__(self, n_features, normalize=True):
         self.n_features = n_features
         self.normalize = normalize
@@ -185,7 +254,7 @@ class LARS (LinearModel):
             X[:, nonzeros] /= self._norms[nonzeros]
 
         method = 'lar'
-        alphas_, active, coef_path_ = lars (X, Y,
+        alphas_, active, coef_path_ = lars_path(X, Y,
                                 max_iter=self.n_features, method=method)
         print alphas_
         self.coef_ = coef_path_[:,-1]
@@ -193,14 +262,57 @@ class LARS (LinearModel):
 
 
 class LassoLARS (LinearModel):
+    """ Lasso model fit with Least Angular Regression a.k.a. LARS
+    
+    It is a Linear Model trained with an L1 prior as regularizer.
+    lasso).
+
+    Parameters
+    ----------
+    alpha : float, optional
+        Constant that multiplies the L1 term. Defaults to 1.0
+
+    XXX : todo add fit_intercept
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    XXX : add intercept_
+    `intercept_` : float
+        independent term in decision function.
+
+    Examples
+    --------
+    >>> from scikits.learn import glm
+    >>> clf = glm.LassoLARS(alpha=0.1)
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
+    LassoLARS(alpha=0.1, coef_=array([ 0.85,  0.  ]))
+    >>> print clf.coef_
+    [ 0.85  0.  ]
+
+    Notes
+    -----
+    See also scikits.learn.glm.Lasso that fits the same model using
+    an alternative optimization strategy called 'coordinate descent.'
+    """
 
     def __init__(self, alpha, normalize=True):
+        """ XXX : add doc
+                # will only normalize non-zero columns
+        """
         self.alpha = alpha
         self.normalize = normalize
         self.coef_ = None
 
     def fit (self, X, Y):
-                # will only normalize non-zero columns
+        """ XXX : add doc
+        """
 
         n_samples = X.shape[0]
         alpha = self.alpha * n_samples # scale alpha with number of samples
@@ -215,7 +327,7 @@ class LassoLARS (LinearModel):
             X[:, nonzeros] /= self._norms[nonzeros]
 
         method = 'lasso'
-        alphas_, active, coef_path_ = lars (X, Y,
+        alphas_, active, coef_path_ = lars_path(X, Y,
                                             alpha_min=alpha, method=method)
         self.coef_ = coef_path_[:,-1]
         return self
