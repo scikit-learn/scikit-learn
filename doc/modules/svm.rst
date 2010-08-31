@@ -55,6 +55,26 @@ also lacks some of the memebrs of SVC and NuSVC, like support\_.
    :align: center
 
 
+As other classifiers, SVC and NuSVC have to be fitted with two arrays:
+an array X of size [m_samples, n_features] holding the training
+samples, and an array Y of size [n_samples] holding the target values
+(class labels) for the training samples::
+
+
+    >>> from scikits.learn import svm
+    >>> X = [[0., 0.], [1., 1.]]
+    >>> Y = [0, 1]
+    >>> clf = svm.SVC()
+    >>> clf.fit (X, Y)
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+      cache_size=100.0,
+      shrinking=True,
+      gamma=0.5)
+
+After being fitted, the model can then be used to predict new values::
+
+    >>> clf.predict ([[2., 2.]])
+    array([ 1.])
 
 
 Regression
@@ -85,6 +105,9 @@ classify new points as belonging to that set or not. The class that
 implement this is called :class:`OneClassSVM`
 
 
+In this case, as it is a type of unsupervised learning, the fit method
+will only take as input an array X, as there are no class labels.
+
 .. note::
 
     For a complete example on one class SVM see 
@@ -108,26 +131,6 @@ For a complete example of custom kernels see
 :ref:`example_svm_plot_custom_kernel.py`. 
 
 
-
-Using Custom Kernels
-====================
-
-.. TODO: this is not restricted to classification
-
-You can also use your own defined kernels by passing a function to the
-keyword `kernel` in the constructor.
-
-Your kernel must take as arguments two matrices and return a third matrix.
-
-The following code defines a linear kernel and creates a classifier
-instance that will use that kernel::
-
-    >>> import numpy as np
-    >>> from scikits.learn import svm
-    >>> def my_kernel(x, y):
-    ...     return np.dot(x, y.T)
-    ... 
-    >>> clf = svm.SVC(kernel=my_kernel)
 
 
 Classifiers with custom kernels behave the same way as any other
@@ -163,7 +166,7 @@ Tips on Practical Use
     <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_
     for some examples on scaling.
 
-  * nu in nu-SVC/one-class-SVM/nu-SVR approximates the fraction of
+  * nu in NuSVC/OneClassSVM/NuSVR approximates the fraction of
     training errors and support vectors.
 
   * If data for classification are unbalanced (e.g. many positive and
@@ -174,9 +177,47 @@ Tips on Practical Use
 
 .. _svm_mathematical_formulation:
 
+
+Kernel functions
+================
+
+The *kernel function* can be any of the following: linear
+:math:`(<x_i, x_j'>)`, polynomial :math:`(\gamma <x, x'> + r)^d,
+\gamma > 0` radial basis :math:`exp(-\gamma |x-x'|^2), \gamma > 0`
+sigmoid :math:`tanh(<x_i, x_j> + r)`, where :math:`\gamma, r`, and
+:math:`d` are kernel parameters.
+
+
+Custom Kernels
+--------------
+
+Using python functions as kernels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can also use your own defined kernels by passing a function to the
+keyword `kernel` in the constructor.
+
+Your kernel must take as arguments two matrices and return a third matrix.
+
+The following code defines a linear kernel and creates a classifier
+instance that will use that kernel::
+
+    >>> import numpy as np
+    >>> from scikits.learn import svm
+    >>> def my_kernel(x, y):
+    ...     return np.dot(x, y.T)
+    ... 
+    >>> clf = svm.SVC(kernel=my_kernel)
+
+Passing the gram matrix
+~~~~~~~~~~~~~~~~~~~~~~~
+
+set kernel='precomputed' and pass the gram matrix instead of X in fit.
+
+
+
 Mathematical formulation
 ========================
-
 
 A support vector machine constructs a hyperplane or set of hyperplanes
 in a high or infinite dimensional space, which can be used for
@@ -192,28 +233,28 @@ generalization error of the classifier.
    :scale: 50
 
 
+
+SVC
+---
+
+Given training vectors :math:`x_i \in R^n`, i=1,..., l, in two
+classes, and a vector :math:`y \in R^l`
+
 In SVC The decision function in this case will be:
 
 .. math:: sgn(\sum_{i=1}^l \alpha_i K(x_i, x) + \rho)
-where :math:`\alpha, \rho` can be accessed through fields `support_` and
-`intercept_` of the classifier instance, respectevely.
-
-    - *kernel function*.
-      Can be any of the following: linear :math:`(<x_i, x_j'>)`,
-      polynomial :math:`(\gamma <x, x'> + r)^d, \gamma > 0`
-      radial basis :math:`exp(-\gamma |x-x'|^2), \gamma > 0`
-      sigmoid :math:`tanh(<x_i, x_j> + r)`,
-      where :math:`\gamma, r`, and :math:`d` are kernel parameters.
+where :math:`\alpha, \rho` can be accessed through fields support\_ and
+intercept\_ of the classifier instance, respectevely.
 
     - *penalty*. C > 0 is the penalty parameter of the error term.
 
 
 Implementation details
 ======================
-Internally, we use libsvm[1] to handle all computations. Libsvm is wrapped
-using C and Cython.
 
-.. [1] http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+Internally, we usel `libsvm
+<http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`_ to handle all
+computations. Libsvm is wrapped using C and Cython.
 
 
 References
@@ -221,5 +262,5 @@ References
 For a description of the implementation and details of the algorithms
 used, please refer to
 
-    - http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf
-    - http://en.wikipedia.org/wiki/Support_vector_machine
+    - `LIBSVM: a library for Support Vector Machines
+      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_

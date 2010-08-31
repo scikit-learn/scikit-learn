@@ -7,7 +7,7 @@ from .base import BaseEstimator, RegressorMixin, ClassifierMixin
 #
 # TODO: some cleanup: is nSV_ really needed ?
 
-class BaseLibsvm(BaseEstimator):
+class _BaseLibSVM(BaseEstimator):
     """
     Base class for classifiers that use libsvm as library for
     support vector machine classification and regression.
@@ -318,12 +318,16 @@ class BaseLibLinear(BaseEstimator):
 # Public API
 # No processing should go into these classes
 
-class SVC(BaseLibsvm, ClassifierMixin):
+class SVC(_BaseLibSVM, ClassifierMixin):
     """
     C-Support Vector Classification.
 
     Parameters
     ----------
+
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
+    
     kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
@@ -336,19 +340,22 @@ class SVC(BaseLibsvm, ClassifierMixin):
     gamma : float, optional (default=0.0)
         kernel coefficient for rbf
 
-    C : float, optional (default=1.0)
-        penalty parameter C of the error term.
-    
-    probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
-        to calling prob_predict.
-
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
+    probability: boolean, optional (False by default)
+        enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
     shrinking: boolean, optional
-         use the shrinking heuristic.
+         wether to use the shrinking heuristic.
+
+    eps: float, optional
+         precision for stopping criteria
+
+    cache_size: float, optional
+         specify the size of the cache (in MB)
 
     Attributes
     ----------
@@ -386,10 +393,9 @@ class SVC(BaseLibsvm, ClassifierMixin):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-      eps=0.001,
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
       cache_size=100.0,
-      coef0=0.0,
+      shrinking=True,
       gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -399,16 +405,16 @@ class SVC(BaseLibsvm, ClassifierMixin):
     SVR, LinearSVC
     """
 
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0,
-                 shrinking=True, probability=False):
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
+                 coef0=0.0, shrinking=True, probability=False,
+                 eps=1e-3, cache_size=100.0):
 
-        BaseLibsvm.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+        _BaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
                          cache_size, eps, C, 0., 0.,
                          shrinking, probability)
 
 
-class NuSVC(BaseLibsvm, ClassifierMixin):
+class NuSVC(_BaseLibSVM, ClassifierMixin):
     """
     Nu-Support Vector Classification.
 
@@ -442,7 +448,13 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
         in poly/sigmoid.
 
     shrinking: boolean, optional
-         use the shrinking heuristic.
+         wether to use the shrinking heuristic.
+
+    eps: float, optional
+         precision for stopping criteria
+
+    cache_size: float, optional
+         specify the size of the cache (in MB)
 
 
     Attributes
@@ -481,9 +493,9 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = NuSVC()
     >>> clf.fit(X, Y)
-    NuSVC(kernel='rbf', probability=False, degree=3, shrinking=True, eps=0.001,
+    NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, eps=0.001,
        cache_size=100.0,
-       coef0=0.0,
+       shrinking=True,
        nu=0.5,
        gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
@@ -494,16 +506,16 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
     SVC, LinearSVC, SVR
     """
 
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, nu=0.5, shrinking=True,
-                 probability=False):
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
+                 coef0=0.0, shrinking=True, probability=False,
+                 eps=1e-3, cache_size=100.0):
 
-        BaseLibsvm.__init__(self, 'nu_svc', kernel, degree, gamma, coef0,
+        _BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma, coef0,
                          cache_size, eps, 0., nu, 0.,
                          shrinking, probability)
 
 
-class SVR(BaseLibsvm, RegressorMixin):
+class SVR(_BaseLibSVM, RegressorMixin):
     """
     Support Vector Regression.
 
@@ -575,17 +587,17 @@ class SVR(BaseLibsvm, RegressorMixin):
                  cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
                  shrinking=True, probability=False):
 
-        BaseLibsvm.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
+        _BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
 
 
-class NuSVR(BaseLibsvm, RegressorMixin):
+class NuSVR(_BaseLibSVM, RegressorMixin):
     """
     Nu Support Vector Regression. Similar to NuSVC, for regression,
     uses a paramter nu to control the number of support
     vectors. However, unlike NuSVC, where nu replaces with C, here nu
-    replaces with C, here nu replaces with the parameter p of SVR.
+    replaces with the parameter p of SVR.
 
     Parameters
     ----------
@@ -595,6 +607,10 @@ class NuSVR(BaseLibsvm, RegressorMixin):
         the fraction of support vectors. Should be in the interval (0, 1].  By
         default 0.5 will be taken.  Only available if impl='nu_svc'
 
+
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
+    
     kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
@@ -607,9 +623,6 @@ class NuSVR(BaseLibsvm, RegressorMixin):
     gamma : float, optional (default=0.0)
         kernel coefficient for rbf
 
-    C : float, optional (default=1.0)
-        penalty parameter C of the error term.
-    
     probability: boolean, optional (False by default)
         enable probability estimates. This must be enabled prior
         to calling prob_predict.
@@ -648,32 +661,32 @@ class NuSVR(BaseLibsvm, RegressorMixin):
     --------
     NuSVR
     """
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
-                 shrinking=True, probability=False):
 
-        BaseLibsvm.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
+    def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
+                 gamma=0.0, coef0=0.0, shrinking=True,
+                 probability=False, cache_size=100.0, eps=1e-3):
+
+        _BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
+                         cache_size, eps, C, nu, 0.,
                          shrinking, probability)
 
 
 
-class OneClassSVM(BaseLibsvm):
+class OneClassSVM(_BaseLibSVM):
     """
     Outlayer detection
 
     Parameters
     ----------
 
-    kernel : string, optional
-         Specifies the kernel type to be used in the algorithm. one of 'linear',
-         'poly', 'rbf', 'sigmoid', 'precomputed'. If none is given 'rbf' will be
-         used.
+    kernel : string, optional Specifies the kernel type to be used in
+         the algorithm. one of 'linear', 'poly', 'rbf', 'sigmoid',
+         'precomputed'. If none is given 'rbf' will be used.
 
-    nu : float, optional
-        An upper bound on the fraction of training errors and a lower bound of
-        the fraction of support vectors. Should be in the interval (0, 1].  By
-        default 0.5 will be taken.  Only available if impl='nu_svc'
+    nu : float, optional An upper bound on the fraction of training
+        errors and a lower bound of the fraction of support
+        vectors. Should be in the interval (0, 1].  By default 0.5
+        will be taken. 
 
     degree : int, optional
         degree of kernel function. Significant only in poly, rbf, sigmoid
@@ -723,7 +736,7 @@ class OneClassSVM(BaseLibsvm):
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  cache_size=100.0, eps=1e-3, C=1.0, 
                  nu=0.5, p=0.1, shrinking=True, probability=False):
-        BaseLibsvm.__init__(self, 'one_class', kernel, degree, gamma, coef0,
+        _BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
     

@@ -19,10 +19,10 @@ import numpy as np
 from scipy import sparse
 
 from ..base import ClassifierMixin
-from ..svm import BaseLibsvm, BaseLibLinear
+from ..svm import _BaseLibSVM, BaseLibLinear
 from .. import _libsvm, _liblinear
 
-class SparseBaseLibsvm(BaseLibsvm):
+class _SparseBaseLibSVM(_BaseLibSVM):
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -147,7 +147,7 @@ class SparseBaseLibsvm(BaseLibsvm):
                       self.probB_)
 
 
-class SVC(SparseBaseLibsvm):
+class SVC(_SparseBaseLibSVM):
     """SVC for sparse matrices (csr)
 
     For best results, this accepts a matrix in csr format
@@ -159,7 +159,7 @@ class SVC(SparseBaseLibsvm):
                  cache_size=100.0, eps=1e-3, C=1.0, shrinking=True,
                  probability=False):
 
-        SparseBaseLibsvm.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+        _SparseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
                          cache_size, eps, C, 0., 0.,
                          shrinking, probability)
 
