@@ -1,5 +1,5 @@
 
-from base import LinearRegression
-from .lars import *
-from .coordinate_descent import *
-from .bayes import *
+from .lars import LARS, LassoLARS
+from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV
+from .bayes import Ridge, BayesianRidge, ARDRegression
+
