@@ -4,7 +4,7 @@ Testing for Clustering methods
 """
 
 import numpy as np
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_
 from scipy import sparse
 
 from .. import SpectralClustering
@@ -49,5 +49,5 @@ def test_spectral_clustering_sparse():
     if labels[0] == 0:
         labels = 1 - labels
 
-    assert_equal(labels, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+    assert_(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]) > .9)
 
