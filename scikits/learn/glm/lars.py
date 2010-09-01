@@ -1,36 +1,6 @@
-"""
-Least-angle regression (LARS) is a regression algorithm for
-high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain
-Johnstone and Robert Tibshirani.
-
-The advantages of LARS are:
-
-  - It is computationally just as fast as forward selection and has
-    the same order of complexity as an ordinary least squares.
-
-  - It produces a full piecewise linear solution path, which is
-    useful in cross-validation or similar attempts to tune the model.
-
-  - If two variables are almost equally correlated with the response,
-    then their coefficients should increase at approximately the same
-    rate. The algorithm thus behaves as intuition would expect, and
-    also is more stable.
-
-  - It is easily modified to produce solutions for other estimators,
-    like the Lasso. 
-
-  - It is effective in contexts where p >> n (IE, when the number of
-    dimensions is significantly greater than the number of points)
-
-The disadvantages of the LARS method include:
-
-  - Because LARS is based upon an iterative refitting of the
-    residuals, it would appear to be especially sensitive to the
-    effects of noise. This problem is discussed in detail by Weisberg
-    in the discussion section of the Efron et al. (2004) Annals of
-    Statistics article.
-"""
-
+# Least Angle Regression algorithm. See doc/module/glm for a
+# complete discussion.
+#
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #
