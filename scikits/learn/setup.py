@@ -21,7 +21,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('features/tests')
     config.add_subpackage('cluster')
     config.add_subpackage('cluster/tests')
-    config.add_subpackage('glm')
     config.add_subpackage('feature_selection')
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('sparse')
@@ -119,6 +118,9 @@ def configuration(parent_package='', top_path=None):
                          )
 
     config.add_subpackage('utils')
+
+    # this has to be build *after* cblas
+    config.add_subpackage('glm')
 
     # add the test directory
     config.add_data_dir('tests')
