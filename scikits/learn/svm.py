@@ -129,6 +129,7 @@ class _BaseLibSVM(BaseEstimator):
         ----------
         T : array-like, shape = [n_samples, n_features]
 
+
         Returns
         -------
         C : array, shape = [nsample]
@@ -261,7 +262,7 @@ class BaseLibLinear(BaseEstimator):
     def fit(self, X, Y, **params):
         """
         Parameters
-        ==========
+        ----------
         X : array-like, shape = [nsamples, nfeatures]
             Training vector, where nsamples in the number of samples and
             nfeatures is the number of features.
@@ -280,6 +281,25 @@ class BaseLibLinear(BaseEstimator):
         return self
 
     def predict(self, T):
+        """
+        This function does classification or regression on an array of
+        test vectors T.
+
+        For a classification model, the predicted class for each
+        sample in T is returned.  For a regression model, the function
+        value of T calculated is returned.
+
+        For an one-class model, +1 or -1 is returned.
+
+        Parameters
+        ----------
+        T : array-like, shape = [n_samples, n_features]
+
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+        """
         T = np.asanyarray(T, dtype=np.float64, order='C')
         return _liblinear.predict_wrap(T, self.raw_coef_,
                                       self._get_solver_type(),
@@ -372,20 +392,6 @@ class SVC(_BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Return probability estimates.
-
-    predict_margin(X) : array
-        Return distance to predicted margin.
 
     Examples
     --------
@@ -568,17 +574,6 @@ class SVR(_BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Return probability estimates.
-
     See also
     --------
     NuSVR
@@ -646,17 +641,6 @@ class NuSVR(_BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Return probability estimates.
-
     See also
     --------
     NuSVR
@@ -721,17 +705,6 @@ class OneClassSVM(_BaseLibSVM):
     `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Return probability estimates.
-
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  cache_size=100.0, eps=1e-3, C=1.0, 
@@ -776,30 +749,22 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
+        Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
-        Coefficient of the support vector in the decision function,
-        where n_classes is the number of classes and nSV is the number
-        of support vectors.
+    `dual_coef_` : array, shape = [n_class-1, nSV]
+        Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
-        Wiehgiths asigned to the features (coefficients in the primal
+    `coef_` : array, shape = [n_class-1, n_features]
+        Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
-        constants in decision function
-
+    `intercept_` : array, shape = [n_class-1]
+        Constants in decision function.
 
     Notes
     -----
     Some features of liblinear are still not wrapped, like the Cramer
     & Singer algorithm.
-
-    References
-    ----------
-    LIBLINEAR -- A Library for Large Linear Classification
-    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
     """
 

@@ -2,6 +2,8 @@
 Generalized Linear Models
 =========================
 
+.. currentmodule:: scikits.learn.glm
+
 The following are a set of methods intended for regression in which
 the target value is expected to be a linear combination of the input
 variables. In mathematical notion, if :math:`\hat{y}` is the predicted
@@ -20,8 +22,7 @@ This method minimizes the sum of squared distances between the
 observed responses in the dataset, and the responses predicted by the
 linear approximation.
 
-.. autoclass:: scikits.learn.glm.LinearRegression
-   :members:
+Class :class:`LinearRegression` fits a linera model
 
 Examples
 --------

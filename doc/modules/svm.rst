@@ -264,3 +264,8 @@ used, please refer to
 
     - `LIBSVM: a library for Support Vector Machines
       <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    - `LIBLINEAR -- A Library for Large Linear Classification
+      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_
+
+

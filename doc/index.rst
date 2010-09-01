@@ -123,4 +123,5 @@ User guide
    :maxdepth: 2
 
    auto_examples/index
+   modules/classes
    developers/index
