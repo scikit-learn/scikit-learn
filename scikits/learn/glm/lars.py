@@ -1,3 +1,6 @@
+# Least Angle Regression algorithm. See doc/module/glm for a
+# complete discussion.
+#
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #
@@ -69,7 +72,6 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
 
     max_pred = max_iter # OK for now
 
-    mu       = np.zeros (X.shape[0])
     beta     = np.zeros ((max_iter + 1, X.shape[1]))
     alphas   = np.zeros (max_iter + 1)
     n_iter, n_pred = 0, 0
@@ -88,6 +90,8 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
     Xna = Xt.view(np.ma.MaskedArray) # variables not in the active set
                                      # should have a better name
 
+    Xna.soften_mask()
+
     while 1:
 
 
@@ -97,8 +101,6 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
 
         imax    = np.ma.argmax (np.ma.abs(Cov), fill_value=0.) #rename
         Cov_max =  (Cov [imax])
-        Cov[imax] = np.ma.masked
-
 
         alpha = np.abs(Cov_max) #sum (np.abs(beta[n_iter]))
         alphas [n_iter] = np.max(np.abs(np.dot(Xt, res))) #sum (np.abs(beta[n_iter]))
@@ -121,6 +123,8 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
             n_pred += 1
             active.append(imax)
             Xna[imax] = np.ma.masked
+            Cov[imax] = np.ma.masked
+
             sign_active [n_pred-1] = np.sign (Cov_max)
 
             X_max = Xt[imax]
@@ -157,8 +161,11 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         # one for the border cases
         g = np.ma.concatenate((g1, g2))
 
-        g = g[g >= 0.]
+        g = g[g > 0.]
         gamma_ = np.ma.min (g)
+
+        if n_pred >= X.shape[1]:
+            gamma_ = 1.
 
         if method == 'lasso':
 
@@ -177,17 +184,14 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         if drop:
             n_pred -= 1
             drop_idx = active.pop (idx)
+            # please please please remove this masked arrays pain from me
+            Xna[drop_idx] = Xna.data[drop_idx].copy()
             print 'dropped ', idx, ' at ', n_iter, ' iteration'
             Xa = Xt[active] # duplicate
             L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
-            sign_active = np.delete(sign_active, idx) # do an append to maintain size
+            sign_active = np.delete (sign_active, idx) # do an append to maintain size
+            sign_active = np.append (sign_active, 0.)
             # should be done using cholesky deletes
-
-        if n_iter == X.shape[1]:
-            # oveeeerkilll 
-            beta[n_iter] =  linalg.lstsq (X, y)[0]
-            alpha = 0.
-            break
 
 
     if alpha < alpha_min: # interpolate

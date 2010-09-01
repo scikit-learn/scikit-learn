@@ -21,15 +21,17 @@ from scikits.learn import datasets
 diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
+# someting's wrong with our dataset
 X[:, 6] = -X[:, 6]
 
 ################################################################################
 # Demo path functions
 ################################################################################
 
+
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-alphas, active, path = glm.lars_path(X, y, method='lasso')
+alphas, active, path = glm.lars_path(X, y, method='lasso', max_iter=12)
 print "This took ", datetime.now() - start
 
 alphas = np.sum(np.abs(path.T), axis=1)

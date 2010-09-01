@@ -17,7 +17,7 @@ The advantages of Support Vector Machines are:
     - Uses a subset of training points in the decission function (called
       support vectors), so it is also memory efficient.
 
-    - Versatile: different :ref:`svm_kernels <kernels>` can be
+    - Versatile: different :ref:`svm_kernels` can be
       specified for the decission function. Common kernels are
       provided, but it is also possibly to specify custom kernels.
 
@@ -77,6 +77,14 @@ After being fitted, the model can then be used to predict new values::
     array([ 1.])
 
 
+Examples
+--------
+
+:ref:`example_svm_plot_iris.py`,
+:ref:`example_svm_plot_separating_hyperplane.py`,
+:ref:`example_svm_plot_svm_anova.py`,
+:ref:`example_svm_plot_svm_nonlinear.py`
+
 Regression
 ==========
 
@@ -91,9 +99,18 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-
 There are two flavours of Support Vector Regression: :class:`SVR` and
 :class:`NuSVR`.
+
+Like in the class of classification, the fit method will take as
+argument vectors X, y, only that in this case y is expected to have
+floating point values instead of integer values.
+
+
+
+Examples
+--------
+:ref:`example_svm_plot_svm_regression.py`
 
 
 Density estimation
@@ -120,30 +137,15 @@ will only take as input an array X, as there are no class labels.
 
 
 Examples
-========
+--------
+:ref:`example_svm_plot_oneclass.py`
 
 See :ref:`svm_examples` for a complete list of examples.
 
-Examples
---------
-
-For a complete example of custom kernels see
-:ref:`example_svm_plot_custom_kernel.py`. 
 
 
 
-
-Classifiers with custom kernels behave the same way as any other
-classifiers, except that:
-
-    * Support vectors do no longer represent the vectors, but rather are
-      indices of the support vectors for the training vectors.
-
-    * A reference (and not a copy) of the first argument in the fit()
-      method is stored for future reference. If that array changes
-      between the use of fit() and predict() you will have
-      unexpected results.
-
+.. currentmodule:: scikits.learn.sparse.svm
 
 Support Vector machines for sparse data
 =======================================
@@ -151,7 +153,7 @@ Support Vector machines for sparse data
 There is support for sparse data given in any matrix in a format
 supported by scipy.sparse. See module scikits.learn.sparse.svm.
 
-
+:class:`SVC`
 
 
 Tips on Practical Use
@@ -175,21 +177,37 @@ Tips on Practical Use
   * Specify larger cache size (keyworkd cache) for huge problems.
 
 
-.. _svm_mathematical_formulation:
-
+.. _svm_kernels:
 
 Kernel functions
 ================
 
-The *kernel function* can be any of the following: linear
-:math:`(<x_i, x_j'>)`, polynomial :math:`(\gamma <x, x'> + r)^d,
-\gamma > 0` radial basis :math:`exp(-\gamma |x-x'|^2), \gamma > 0`
-sigmoid :math:`tanh(<x_i, x_j> + r)`, where :math:`\gamma, r`, and
-:math:`d` are kernel parameters.
+The *kernel function* can be any of the following: 
+  * linear: :math:`<x_i, x_j'>`.
+  * polynomial: :math:`(\gamma <x, x'> + r)^d`. d is specified by
+    keyword `degree`.
+  * rbf (:math:`exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
+    specified by keyword gamma.
+  * sigmoid (:math:`tanh(<x_i,x_j> + r)`).
 
 
 Custom Kernels
 --------------
+
+You can define your own kernels by either giving the kernel as a
+python function or by precomputing the Gram matrix.
+
+Classifiers with custom kernels behave the same way as any other
+classifiers, except that:
+
+    * Support vectors do no longer represent the vectors, but rather are
+      indices of the support vectors for the training vectors.
+
+    * A reference (and not a copy) of the first argument in the fit()
+      method is stored for future reference. If that array changes
+      between the use of fit() and predict() you will have
+      unexpected results.
+
 
 Using python functions as kernels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -212,8 +230,16 @@ instance that will use that kernel::
 Passing the gram matrix
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-set kernel='precomputed' and pass the gram matrix instead of X in fit.
+set kernel='precomputed' and pass the gram matrix instead of X in the
+fit method.
 
+
+Examples
+--------
+:ref:`example_svm_plot_custom_kernel.py`. 
+
+
+.. _svm_mathematical_formulation:
 
 
 Mathematical formulation
@@ -264,3 +290,8 @@ used, please refer to
 
     - `LIBSVM: a library for Support Vector Machines
       <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    - `LIBLINEAR -- A Library for Large Linear Classification
+      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_
+
+

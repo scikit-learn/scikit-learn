@@ -15,28 +15,11 @@ def configuration(parent_package='', top_path=None):
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
 
-    # we try to link agains system-wide blas
-    blas_info = get_info('blas_opt', 0)
 
-    ### liblinear module
-    blas_sources = [join('src', 'blas', 'daxpy.c'),
-                    join('src', 'blas', 'ddot.c'),
-                    join('src', 'blas', 'dnrm2.c'),
-                    join('src', 'blas', 'dscal.c')]
-
-    if not blas_info:
-        config.add_library('blas', blas_sources)
-        warnings.warn(BlasNotFoundError.__doc__)
-
-    # cd fast needs BLAS
+    # cd fast needs CBLAS
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (
         ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])) :
-        config.add_library('cblas',
-                           sources=[
-                               join('src', 'cblas', '*.c'),
-                               ]
-                           )
         cblas_libs = ['cblas']
         blas_info.pop('libraries', None)
     else:
@@ -45,7 +28,7 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('cd_fast',
                          sources=[join('src', 'cd_fast.c')],
                          libraries=cblas_libs,
-                         include_dirs=[join('src', 'cblas'),
+                         include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
                          extra_compile_args=['-std=c99'] + \
@@ -54,8 +37,9 @@ def configuration(parent_package='', top_path=None):
                          )
 
 
-    # add the test directory
+    # add other directories
     config.add_subpackage('tests')
+    config.add_subpackage('benchmarks')
 
     return config
 

@@ -103,7 +103,22 @@ class ClassifierMixin(object):
     """
 
     def score(self, X, y):
-        return - zero_one(self.predict(X), y)
+        """
+        Number of samples correctly classified.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training set.
+
+        y : array-like, shape = [n_samples]
+             Labels for X.
+
+        Returns
+        -------
+        z : integer
+        """
+        return np.sum(self.predict(X) == y)
 
 
 ################################################################################
@@ -112,5 +127,19 @@ class RegressorMixin(object):
     """
 
     def score(self, X, y):
+        """
+        Explained variance.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training set.
+
+        y : array-like, shape = [n_samples]
+
+        Returns
+        -------
+        z : float
+        """
         return - mean_square_error(self.predict(X), y)
     

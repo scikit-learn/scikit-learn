@@ -2,6 +2,8 @@
 Generalized Linear Models
 =========================
 
+.. currentmodule:: scikits.learn.glm
+
 The following are a set of methods intended for regression in which
 the target value is expected to be a linear combination of the input
 variables. In mathematical notion, if :math:`\hat{y}` is the predicted
@@ -20,8 +22,10 @@ This method minimizes the sum of squared distances between the
 observed responses in the dataset, and the responses predicted by the
 linear approximation.
 
-.. autoclass:: scikits.learn.glm.LinearRegression
-   :members:
+Class :class:`LinearRegression` fits a model using the algorithm of
+Ordinary Least Squares. It will take in its `fit` method arrays X, y
+and will store the coefficients of the linear model in its `coef\_`
+method.
 
 Examples
 --------
@@ -123,11 +127,50 @@ Examples
 
 
 
-Least Angle Regression
-======================
+LARS algorithm and its variants
+===============================
 
-Least Angle Regression is a regression model similar to the Lasso. It
-is implemented using the LARS algorithm.
+Least-angle regression (LARS) is a regression algorithm for
+high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain
+Johnstone and Robert Tibshirani.
+
+The advantages of LARS are:
+
+  - It is computationally just as fast as forward selection and has
+    the same order of complexity as an ordinary least squares.
+
+  - It produces a full piecewise linear solution path, which is
+    useful in cross-validation or similar attempts to tune the model.
+
+  - If two variables are almost equally correlated with the response,
+    then their coefficients should increase at approximately the same
+    rate. The algorithm thus behaves as intuition would expect, and
+    also is more stable.
+
+  - It is easily modified to produce solutions for other estimators,
+    like the Lasso. 
+
+  - It is effective in contexts where p >> n (IE, when the number of
+    dimensions is significantly greater than the number of points)
+
+The disadvantages of the LARS method include:
+
+  - Because LARS is based upon an iterative refitting of the
+    residuals, it would appear to be especially sensitive to the
+    effects of noise. This problem is discussed in detail by Weisberg
+    in the discussion section of the Efron et al. (2004) Annals of
+    Statistics article.
+
+It is implemented using the LARS algorithm in class :class:`glm.LARS`.
+
+
+Getting the full path
+---------------------
+See function :function:`scikits.learn.glm.lars_path`.
+
+
+Mathematical formulation
+------------------------
 
 The algorithm is similar to forward stepwise regression, but instead
 of including variables at each step, the estimated parameters are
@@ -141,19 +184,9 @@ parameter vector. The full coeffients path is stored in the array
 column is always zero.
 
 
-
-Contrary to the algorithms based on coordinate descent, the LARS
-
-.. warning::
-
-    This class is experimental and might contain bugs.
-
-.. autoclass:: scikits.learn.glm.LeastAngleRegression
-    :members:
-
 Examples
 --------
-:ref:`example_glm_plot_lar.py`
+:ref:`example_glm_plot_lar.py`, :ref:`example_glm_plot_lasso_lars.py`
 
 References
 ----------
