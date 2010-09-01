@@ -37,8 +37,9 @@ def configuration(parent_package='', top_path=None):
                          )
 
 
-    # add the test directory
+    # add other directories
     config.add_subpackage('tests')
+    config.add_subpackage('benchmarks')
 
     return config
 
