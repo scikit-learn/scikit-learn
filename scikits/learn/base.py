@@ -9,8 +9,6 @@ import inspect
 
 import numpy as np
 
-from .metrics import zero_one, mean_square_error
-
 ################################################################################
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
@@ -141,5 +139,6 @@ class RegressorMixin(object):
         -------
         z : float
         """
-        return - mean_square_error(self.predict(X), y)
+        return 1 - np.linalg.norm(y - self.predict(X))**2 \
+                         / np.linalg.norm(y)**2
     
