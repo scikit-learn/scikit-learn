@@ -4,6 +4,7 @@
 #
 # License: BSD Style.
 
+import warnings
 import numpy as np
 
 from .base import LinearModel
