@@ -41,20 +41,35 @@ def test_1():
         ocur = len(cov[ C - eps < abs(cov)])
         assert ocur == i + 1
 
+def test_lasso_gives_lstsq_solution():
+    """
+    Test that LARS Lasso gives least square solution at the end
+    of the path
+    """
+
+    alphas_, active, coef_path_ = lars_path(X, y, method="lasso")
+    coef_lstsq = np.linalg.lstsq(X, y)[0]
+    assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
+
 def test_lasso_lars_vs_lasso_cd():
     """
     Test that LassoLars and Lasso using coordinate descent give the
     same results
     """
-    lasso_lars = LassoLARS(alpha=0.1)
-    lasso_lars.fit(X, y)
+    lasso_lars = LassoLARS(alpha=0.1, normalize=False)
+    lasso = Lasso(alpha=0.1, fit_intercept=False)
+    for alpha in [0.1, 0.01, 0.004]:
+        lasso_lars.alpha = alpha
+        lasso_lars.fit(X, y)
+        lasso.alpha = alpha
+        lasso.fit(X, y, maxit=5000, tol=1e-13)
 
-    # make sure results are the same than with Lasso Coordinate descent
-    lasso = Lasso(alpha=0.1)
-    lasso.fit(X, y, maxit=3000, tol=1e-10)
-
-    error = np.linalg.norm(lasso_lars.coef_ - lasso.coef_)
-    assert error < 1e-5
+        # make sure results are the same than with Lasso Coordinate descent
+        error = np.linalg.norm(lasso_lars.coef_ - lasso.coef_)
+        print lasso.coef_
+        print lasso_lars.coef_
+        print 'Error : ', error
+        assert error < 1e-5
 
 
 

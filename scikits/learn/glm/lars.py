@@ -100,10 +100,11 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         Cov = np.ma.dot (Xna, res)
 
         imax    = np.ma.argmax (np.ma.abs(Cov), fill_value=0.) #rename
-        Cov_max =  (Cov [imax])
+        Cov_max = Cov.data[imax]
 
         alpha = np.abs(Cov_max) #sum (np.abs(beta[n_iter]))
-        alphas [n_iter] = np.max(np.abs(np.dot(Xt, res))) #sum (np.abs(beta[n_iter]))
+        alphas [n_iter] = alpha
+
         if (n_iter >= max_iter or n_pred >= max_pred ):
             break
 
@@ -185,7 +186,7 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
             n_pred -= 1
             drop_idx = active.pop (idx)
             # please please please remove this masked arrays pain from me
-            Xna[drop_idx] = Xna.data[drop_idx].copy()
+            Xna[drop_idx] = Xna.data[drop_idx]
             print 'dropped ', idx, ' at ', n_iter, ' iteration'
             Xa = Xt[active] # duplicate
             L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
