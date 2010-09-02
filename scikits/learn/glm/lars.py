@@ -98,7 +98,6 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         # Calculate covariance matrix and get maximum
         res = y - np.dot (X, beta[n_iter]) # there are better ways
         Cov = np.ma.dot (Xna, res)
-        print Cov
 
         imax    = np.ma.argmax (np.ma.abs(Cov)) #rename
         Cov_max =  Cov.data [imax]
