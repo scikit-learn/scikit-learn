@@ -179,5 +179,5 @@ def explained_variance(y_pred, y_true):
     """Explained variance
     returns the explained variance
     """
-    return (np.var(y_true) - np.var(y_true - y_pred)) / np.var(y_true)
+    return 1 - np.var(y_true - y_pred) / np.var(y_true)
 

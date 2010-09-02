@@ -9,6 +9,8 @@ import inspect
 
 import numpy as np
 
+from .metrics import explained_variance
+
 ################################################################################
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
@@ -139,6 +141,4 @@ class RegressorMixin(object):
         -------
         z : float
         """
-        return 1 - np.linalg.norm(y - self.predict(X))**2 \
-                         / np.linalg.norm(y)**2
-    
+        return explained_variance(y, self.predict(X))
