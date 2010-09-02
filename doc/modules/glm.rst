@@ -18,14 +18,25 @@ Across the module, we designate the vector :math:`w = (w1, ..., w_D)` as
 Ordinary Least Squares
 ======================
 
+In this method we pick the coefficients :math:`w = (w1, ..., w_D)` to
+minimize the residual sum of squares
+
+.. math::
+
+   RSS(w) &= \sum_{i=1}{N} (y_i-f(x_i))^2\\
+          &= \sum {i=1}{N} (y_i - w_0 - \sum_{j=i}{p} x_ij w_j)^2
+
+
 This method minimizes the sum of squared distances between the
 observed responses in the dataset, and the responses predicted by the
 linear approximation.
 
+
+
 Class :class:`LinearRegression` fits a model using the algorithm of
 Ordinary Least Squares. It will take in its `fit` method arrays X, y
-and will store the coefficients of the linear model in its `coef\_`
-method.
+and will store the coefficients :math:`w` of the linear model in its
+`coef\_` member.
 
 Examples
 --------
