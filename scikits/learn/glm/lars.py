@@ -98,9 +98,10 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         # Calculate covariance matrix and get maximum
         res = y - np.dot (X, beta[n_iter]) # there are better ways
         Cov = np.ma.dot (Xna, res)
+        print Cov
 
-        imax    = np.ma.argmax (np.ma.abs(Cov), fill_value=0.) #rename
-        Cov_max = Cov.data[imax]
+        imax    = np.ma.argmax (np.ma.abs(Cov)) #rename
+        Cov_max =  Cov.data [imax]
 
         alpha = np.abs(Cov_max) #sum (np.abs(beta[n_iter]))
         alphas [n_iter] = alpha
@@ -316,13 +317,14 @@ class LassoLARS (LinearModel):
     an alternative optimization strategy called 'coordinate descent.'
     """
 
-    def __init__(self, alpha=1.0, normalize=True):
+    def __init__(self, alpha=1.0, max_iter=None, normalize=True):
         """ XXX : add doc
                 # will only normalize non-zero columns
         """
         self.alpha = alpha
         self.normalize = normalize
         self.coef_ = None
+        self.max_iter = max_iter
 
     def fit (self, X, y, **params):
         """ XXX : add doc
@@ -346,7 +348,9 @@ class LassoLARS (LinearModel):
 
         method = 'lasso'
         alphas_, active, coef_path_ = lars_path(X, y,
-                                            alpha_min=alpha, method=method)
+                                            alpha_min=alpha, method=method,
+                                            max_iter=self.max_iter)
+
         self.coef_ = coef_path_[:,-1]
         return self
 
