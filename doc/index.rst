@@ -125,3 +125,4 @@ User guide
    auto_examples/index
    modules/classes
    developers/index
+   performance

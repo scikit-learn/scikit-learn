@@ -9,78 +9,82 @@ the target value is expected to be a linear combination of the input
 variables. In mathematical notion, if :math:`\hat{y}` is the predicted
 value.
 
-.. math::    \hat{y}(x, w) = w_0 + w_1 x_1 + ... + w_D x_D
+.. math::    \hat{y}(\beta, x) = \beta_0 + \beta_1 x_1 + ... + \beta_D x_D
 
-Across the module, we designate the vector :math:`w = (w1, ..., w_D)` as
-``coef_`` and :math:`w_0` as ``intercept_``.
+Across the module, we designate the vector :math:`\beta = (\beta_1,
+..., \beta_D)` as ``coef_`` and :math:`\beta_0` as ``intercept_``.
 
+
+.. _ordinary_least_squares:
 
 Ordinary Least Squares
 ======================
 
-In this method we pick the coefficients :math:`w = (w1, ..., w_D)` to
-minimize the residual sum of squares
+:class:`LinearRegression` fits a linear model with coefficients
+:math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum of squares
+between the observed responses in the dataset, and the responses
+predicted by the linear approximation:
 
 .. math::
 
-   RSS(w) &= \sum_{i=1}{N} (y_i-f(x_i))^2\\
-          &= \sum {i=1}{N} (y_i - w_0 - \sum_{j=i}{p} x_ij w_j)^2
+   RSS(\beta) &= \sum_{i=1}^N (y_i-f(x_i))^2\\
+              &= \sum_{i=1}^N (y_i - \beta_0 - \sum_{j=i}{p} x_ij \beta_j)^2
 
 
-This method minimizes the sum of squared distances between the
-observed responses in the dataset, and the responses predicted by the
-linear approximation.
-
-
-
-Class :class:`LinearRegression` fits a model using the algorithm of
-Ordinary Least Squares. It will take in its `fit` method arrays X, y
+:class:`LinearRegression` will take in its `fit` method arrays X, y
 and will store the coefficients :math:`w` of the linear model in its
 `coef\_` member.
+
+
+However, coefficient estimates for Ordinary Least Squares rely on the
+independence of the model terms. When terms are correlated and the
+columns of the design matrix :math:`X` have an approximate linear
+dependence, the matrix :math:`X(X^T X)^{-1}` becomes close to singular
+and as a result, the least-squares estimate becomes highly sensitive
+to random errors in the observed response, producing a large
+variance. This situation of *multicollinearity* can arise, for
+example, when data are collected without an experimental design.
+
+Complexity
+----------
+
+This method computes the least squares solution using a singular value
+decomposition of X. If X is a matrix of size (n, p ) this method has a
+cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
+
 
 Examples
 --------
 :ref:`example_glm_plot_ols.py`
 
 
-Regularized Least Squares
-=========================
-
-In the following methods, We add a regularization term to an error
-function in order to control over-fitting.
-
-
 Ridge Regression
 ================
 
-Coefficient estimates for multiple linear regression models rely on
-the independence of the model terms. When terms are correlated and the
-columns of the design matrix :math:`X` have an approximate linear
-dependence, the matrix :math:`X(X^T X)^{-1}` becomes close to
-singular. As a result, the least-squares estimate:
+:class:`Ridge` regression adresses some of the problems of
+:ref:`ordinary_least_squares` by imposing a penalty on the size of
+coefficients. The ridge coefficients minimize a penalized residual sum
+of squares,
 
-.. math::    \hat{\beta} = (X^T X)^{-1} X^T y
 
-becomes highly sensitive to random errors in the observed response
-:math:`y`, producing a large variance. This situation of
-*multicollinearity* can arise, for example, when data are collected
-without an experimental design.
+.. math::
 
-Ridge regression adresses the problem by estimating regression
+   \beta^{ridge} = \underset{\beta}{argmin} { \sum_{i=1}{N} (y_i -
+                 \beta_0 - \sum_{j=1}{p} x_ij \beta_j)^2 + \alpha
+                 \sum_{j=1}{p} \beta_{j}^2}
+
+Here, :math:`\alpha \geq 0`
+
+the problem by estimating regression
 coefficients using:
 
 .. math::    \hat{\beta} = (X^T X + \alpha I)^{-1} X^T y
-
-Reference
----------
-.. autoclass:: scikits.learn.glm.Ridge
-   :members:
 
 
 Lasso
 =====
 
-The Lasso is a linear model trained with L1 prior as regularizer. The
+The :class:`Lasso` is a linear model trained with L1 prior as regularizer. The
 objective function to minimize is:
 
 .. math::  0.5 * ||y - X w||_2 ^ 2 + \alpha * ||w||_1
@@ -99,13 +103,6 @@ fundamental to the field of compressed sensing.
 
 This implementation uses coordinate descent as the algorithm to fit
 the coeffcients. 
-
-Reference
----------
-
-.. autoclass:: scikits.learn.glm.Lasso
-   :members:
-   :inherited-members:
 
 
 The function lasso_path computes the coefficients along the full path
