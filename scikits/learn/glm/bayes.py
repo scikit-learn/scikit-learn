@@ -3,6 +3,8 @@ import numpy as np
 from scipy import linalg
 
 from .base import LinearModel
+from ..utils.extmath import fast_logdet
+
 
 class Ridge(LinearModel):
     """
@@ -57,14 +59,7 @@ class Ridge(LinearModel):
 
         n_samples, n_features = X.shape
 
-        if self.fit_intercept:
-            self._xmean = X.mean(axis=0)
-            self._ymean = Y.mean(axis=0)
-            X = X - self._xmean
-            Y = Y - self._ymean
-        else:
-            self._xmean = 0.
-            self._ymean = 0.
+        X, Y = self._center_data (X, Y)
 
         if n_samples > n_features:
             # w = inv(X^t X + alpha*Id) * X.T y
@@ -110,14 +105,7 @@ class BayesianRidge(LinearModel):
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
 
-        if self.fit_intercept:
-            self._xmean = X.mean(axis=0)
-            self._ymean = Y.mean(axis=0)
-            X = X - self._xmean
-            Y = Y - self._ymean
-        else:
-            self._xmean = 0.
-            self._ymean = 0.
+        X, Y = self._center_data (X, Y)
 
         # todo, shouldn't most of these have trailing underscores ?
         self.coef_, self.alpha, self.beta, self.sigma, self.log_likelihood = \
