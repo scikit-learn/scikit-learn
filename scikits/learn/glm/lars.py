@@ -99,11 +99,12 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         res = y - np.dot (X, beta[n_iter]) # there are better ways
         Cov = np.ma.dot (Xna, res)
 
-        imax    = np.ma.argmax (np.ma.abs(Cov), fill_value=0.) #rename
-        Cov_max =  (Cov [imax])
+        imax    = np.ma.argmax (np.ma.abs(Cov)) #rename
+        Cov_max =  Cov.data [imax]
 
         alpha = np.abs(Cov_max) #sum (np.abs(beta[n_iter]))
-        alphas [n_iter] = np.max(np.abs(np.dot(Xt, res))) #sum (np.abs(beta[n_iter]))
+        alphas [n_iter] = alpha
+
         if (n_iter >= max_iter or n_pred >= max_pred ):
             break
 
@@ -185,7 +186,7 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
             n_pred -= 1
             drop_idx = active.pop (idx)
             # please please please remove this masked arrays pain from me
-            Xna[drop_idx] = Xna.data[drop_idx].copy()
+            Xna[drop_idx] = Xna.data[drop_idx]
             print 'dropped ', idx, ' at ', n_iter, ' iteration'
             Xa = Xt[active] # duplicate
             L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
@@ -305,7 +306,7 @@ class LassoLARS (LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.LassoLARS(alpha=0.1)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(normalize=True, alpha=0.1)
+    LassoLARS(normalize=True, alpha=0.1, max_iter=None)
     >>> print clf.coef_
     [ 0.         -0.51649658]
 
@@ -315,13 +316,14 @@ class LassoLARS (LinearModel):
     an alternative optimization strategy called 'coordinate descent.'
     """
 
-    def __init__(self, alpha=1.0, normalize=True):
+    def __init__(self, alpha=1.0, max_iter=None, normalize=True):
         """ XXX : add doc
                 # will only normalize non-zero columns
         """
         self.alpha = alpha
         self.normalize = normalize
         self.coef_ = None
+        self.max_iter = max_iter
 
     def fit (self, X, y, **params):
         """ XXX : add doc
@@ -345,7 +347,9 @@ class LassoLARS (LinearModel):
 
         method = 'lasso'
         alphas_, active, coef_path_ = lars_path(X, y,
-                                            alpha_min=alpha, method=method)
+                                            alpha_min=alpha, method=method,
+                                            max_iter=self.max_iter)
+
         self.coef_ = coef_path_[:,-1]
         return self
 

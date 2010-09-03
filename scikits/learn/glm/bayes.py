@@ -3,7 +3,8 @@ import numpy as np
 from scipy import linalg
 
 from .base import LinearModel
-from ..utils.extmath import _fast_logdet
+from ..utils.extmath import fast_logdet
+
 
 class Ridge(LinearModel):
     """
@@ -33,7 +34,7 @@ class Ridge(LinearModel):
 
     def __init__(self, alpha=1.0, fit_intercept=True):
         self.alpha = alpha
-        self.fit_intercept = True
+        self.fit_intercept = fit_intercept
 
 
     def fit(self, X, Y, **params):
@@ -52,16 +53,13 @@ class Ridge(LinearModel):
         self : returns an instance of self.
         """
         self._set_params(**params)
+
+        X = np.asanyarray(X, dtype=np.float)
+        Y = np.asanyarray(Y, dtype=np.float)
+
         n_samples, n_features = X.shape
 
-        if self.fit_intercept:
-            self._xmean = X.mean(axis=0)
-            self._ymean = Y.mean(axis=0)
-            X = X - self._xmean
-            Y = Y - self._ymean
-        else:
-            self._xmean = 0.
-            self._ymean = 0.
+        X, Y = self._center_data (X, Y)
 
         if n_samples > n_features:
             # w = inv(X^t X + alpha*Id) * X.T y
@@ -135,7 +133,7 @@ class BayesianRidge(LinearModel):
             + 0.5 * X.shape[0] * np.log(self.alpha_)\
             - 0.5 * self.alpha_ *  np.sum((Y - np.dot(X, self.coef_))**2)\
             - self.lambda_ * np.dot(self.coef_.T,self.coef_)\
-            - 0.5 * _fast_logdet(self.sigma_)\
+            - 0.5 * fast_logdet(self.sigma_)\
             - 0.5 * X.shape[0] * np.log(2*np.pi)
         return ll
 
@@ -157,14 +155,7 @@ class BayesianRidge(LinearModel):
         Y = np.asanyarray(Y, dtype=np.float)
         n_samples, n_features = X.shape
 
-        if self.fit_intercept:
-            self._xmean = X.mean(axis=0)
-            self._ymean = Y.mean(axis=0)
-            X = X - self._xmean
-            Y = Y - self._ymean
-        else:
-            self._xmean = 0.
-            self._ymean = 0.
+        X, Y = self._center_data (X, Y)
 
 
         ### "Dummy" initialization of the values of the parameters

@@ -10,13 +10,8 @@
 Generalized Linear models.
 """
 
-import warnings
-
-from math import log10
 import numpy as np
-import scipy.linalg 
 
-from ..utils.extmath import fast_logdet
 from ..base import BaseEstimator, RegressorMixin
 
 ###
@@ -52,6 +47,23 @@ class LinearModel(BaseEstimator, RegressorMixin):
         ## TODO: this should have a tests.
         return 1 - np.linalg.norm(Y - self.predict(X))**2 \
                          / np.linalg.norm(Y)**2
+
+    def _center_data (self, X, Y):
+        """
+        Centers data to have mean zero along axis 0. This is here
+        because nearly all Linear Models will want it's data to be
+        centered.
+        """
+
+        if self.fit_intercept:
+            self._xmean = X.mean(axis=0)
+            self._ymean = Y.mean(axis=0)
+            return X - self._xmean, Y - self._ymean
+        else:
+            self._xmean = 0.
+            self._ymean = 0.
+            return X, Y
+
 
     def __str__(self):
         if self.coef_ is not None:
@@ -108,15 +120,13 @@ class LinearRegression(LinearModel):
         X = np.asanyarray( X )
         Y = np.asanyarray( Y )
 
-        if self.fit_intercept:
-            # augmented X array to store the intercept
-            X = np.c_[X, np.ones(X.shape[0])]
+        X, Y = self._center_data (X, Y)
+
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, Y)
         if self.fit_intercept:
-            self.intercept_ = self.coef_[-1]
-            self.coef_ = self.coef_[:-1]
+            self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
         else:
-            self.intercept_ = np.zeros(self.coef_X.shape[1])
+            self.intercept_ = 0
         return self
 

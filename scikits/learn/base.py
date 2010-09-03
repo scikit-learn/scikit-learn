@@ -9,7 +9,7 @@ import inspect
 
 import numpy as np
 
-from .metrics import zero_one, mean_square_error
+from .metrics import explained_variance
 
 ################################################################################
 class BaseEstimator(object):
@@ -141,5 +141,4 @@ class RegressorMixin(object):
         -------
         z : float
         """
-        return - mean_square_error(self.predict(X), y)
-    
+        return explained_variance(y, self.predict(X))

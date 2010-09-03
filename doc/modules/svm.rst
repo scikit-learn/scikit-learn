@@ -125,10 +125,6 @@ implement this is called :class:`OneClassSVM`
 In this case, as it is a type of unsupervised learning, the fit method
 will only take as input an array X, as there are no class labels.
 
-.. note::
-
-    For a complete example on one class SVM see 
-    :ref:`example_svm_plot_oneclass.py` example.
 
 .. figure:: ../auto_examples/svm/images/plot_oneclass.png
    :target: ../auto_examples/svm/plot_oneclass.html
@@ -140,8 +136,6 @@ Examples
 --------
 :ref:`example_svm_plot_oneclass.py`
 
-See :ref:`svm_examples` for a complete list of examples.
-
 
 
 
@@ -151,15 +145,23 @@ Support Vector machines for sparse data
 =======================================
 
 There is support for sparse data given in any matrix in a format
-supported by scipy.sparse. See module scikits.learn.sparse.svm.
+supported by scipy.sparse. Classes have the same name, just prefixed
+by the `sparse` namespace, and take the same arguments, with the
+exception of training and test data, which is expected to be in a
+matrix format defined in scipy.sparse.
 
-:class:`SVC`
+For maximum efficiency, use the CSR matrix format as defined in
+`scipy.sparse.csr_matrix
+<http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
+
+See the complete listing of classes in
+:ref:`sparse_svm_class_reference`.
 
 
 Tips on Practical Use
 =====================
 
-  * Support Vector Machine algorithms are not scale-invariant, so it
+  * Support Vector Machine algorithms are not scale invariant, so it
     is highly recommended to scale your data. For example, scale each
     attribute on the input vector X to [0,1] or [-1,+1], or standarize
     it to have mean 0 and variance 1. Note that the *same* scaling
@@ -168,8 +170,8 @@ Tips on Practical Use
     <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_
     for some examples on scaling.
 
-  * nu in NuSVC/OneClassSVM/NuSVR approximates the fraction of
-    training errors and support vectors.
+  * Parameter nu in NuSVC/OneClassSVM/NuSVR approximates the fraction
+    of training errors and support vectors.
 
   * If data for classification are unbalanced (e.g. many positive and
     few negative), try different penalty parameters C.
@@ -183,12 +185,25 @@ Kernel functions
 ================
 
 The *kernel function* can be any of the following: 
+
   * linear: :math:`<x_i, x_j'>`.
+
   * polynomial: :math:`(\gamma <x, x'> + r)^d`. d is specified by
     keyword `degree`.
+
   * rbf (:math:`exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
     specified by keyword gamma.
+
   * sigmoid (:math:`tanh(<x_i,x_j> + r)`).
+
+Different kernels are specified by keword kernel at initialization::
+
+    >>> linear_svc = svm.SVC(kernel='linear')
+    >>> linear_svc.kernel
+    'linear'
+    >>> rbf_svc = svm.SVC (kernel='rbf')
+    >>> rbf_svc.kernel
+    'rbf'
 
 
 Custom Kernels
@@ -230,7 +245,7 @@ instance that will use that kernel::
 Passing the gram matrix
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-set kernel='precomputed' and pass the gram matrix instead of X in the
+Set kernel='precomputed' and pass the gram matrix instead of X in the
 fit method.
 
 
@@ -258,21 +273,70 @@ generalization error of the classifier.
    :align: center
    :scale: 50
 
-
-
 SVC
 ---
 
 Given training vectors :math:`x_i \in R^n`, i=1,..., l, in two
-classes, and a vector :math:`y \in R^l`
+classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
+-1}`, SVC solves the following primal problem:
 
-In SVC The decision function in this case will be:
 
-.. math:: sgn(\sum_{i=1}^l \alpha_i K(x_i, x) + \rho)
-where :math:`\alpha, \rho` can be accessed through fields support\_ and
-intercept\_ of the classifier instance, respectevely.
+.. math::
 
-    - *penalty*. C > 0 is the penalty parameter of the error term.
+    \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
+
+    
+
+    \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
+    & \zeta_i \geq 0, i=1, ..., l
+
+Its dual is
+
+.. math::
+
+   \min_{\alpha} \frac{1}{2} \alpha^T Q \alpha - e^T \alpha
+
+
+   \textrm {subject to } & y^T \alpha = 0\\
+   & 0 \leq \alpha_i \leq C, i=1, ..., l
+
+where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
+is an l by l positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
+x_j)` and :math:`\phi (x_i)^T \ phi (x)` is the kernel. Here training
+vectors are mapped into a higher (maybe infinite) dimensional space by
+the function :math:`\phi`
+
+
+The decision function is:
+
+.. math:: sgn(\sum_{i=1}^l y_i \alpha_i K(x_i, x) + \rho)
+
+
+.. TODO multiclass case ?/
+
+This parameters can accessed through the memebers support\_ and intercept\_:
+
+     - Member support\_ holds the product :math:`y^T \alpha`
+
+     - Member intercept\_ of the classifier holds :math:`-\rho`
+
+References
+~~~~~~~~~~
+
+This algorithm is implemented as described in `Automatic Capacity
+Tuning of Very Large VC-dimension Classifiers
+<http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
+and `Support-vector networks
+<http://www.springerlink.com/content/k238jx04hm87j80g/>`_
+
+
+NuSVC
+-----
+
+We introduce a new parameter :math:`\nu` wich controls the number of
+support vectors and training errors. The parameter :math:`\nu \in (0,
+1]` is an upper bound on the fraction of training errors and a lower
+bound of the fraction of support vectors.
 
 
 Implementation details

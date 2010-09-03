@@ -18,6 +18,18 @@ Support Vector Machines
    svm.NuSVR
    svm.OneClass
 
+.. _sparse_svm_class_reference:
+
+   sparse.svm.SVC
+   sparse.svm.LinearSVC
+   sparse.svm.NuSVC
+   sparse.svm.SVR
+   sparse.svm.NuSVR
+   sparse.svm.OneClass
+
+For sparse data
+-----------------
+
 Generalized Linear Models
 =========================
 
@@ -29,24 +41,3 @@ Generalized Linear Models
    glm.Ridge
    glm.Lasso
    
-
-
-For sparse data
-===============
-
-Support Vector Machines
------------------------
-
-.. currentmodule:: scikits.learn.sparse
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   svm.SVC
-   svm.LinearSVC
-   svm.NuSVC
-   svm.SVR
-   svm.NuSVR
-   svm.OneClassSVM
-
