@@ -68,11 +68,14 @@ def test_ridge_vs_lstsq():
     X = np.random.randn(n_samples, n_features)
 
     ridge = Ridge(alpha=0.)
-    ridge.fit(X, y)
-
     ols = LinearRegression()
+    
+    ridge.fit(X, y)
     ols.fit (X, y)
+    assert np.linalg.norm (ridge.coef_ - ols.coef_) < 1e-10
 
+    ridge.fit(X, y, fit_intercept=False)
+    ols.fit (X, y, fit_intercept=False)
     assert np.linalg.norm (ridge.coef_ - ols.coef_) < 1e-10
 
 
