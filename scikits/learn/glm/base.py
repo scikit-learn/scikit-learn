@@ -10,13 +10,8 @@
 Generalized Linear models.
 """
 
-import warnings
-
-from math import log10
 import numpy as np
-import scipy.linalg 
 
-from ..utils.extmath import fast_logdet
 from ..base import BaseEstimator, RegressorMixin
 
 ###
@@ -117,6 +112,6 @@ class LinearRegression(LinearModel):
             self.intercept_ = self.coef_[-1]
             self.coef_ = self.coef_[:-1]
         else:
-            self.intercept_ = np.zeros(self.coef_X.shape[1])
+            self.intercept_ = 0
         return self
 

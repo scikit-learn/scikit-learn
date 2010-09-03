@@ -32,7 +32,7 @@ class Ridge(LinearModel):
 
     def __init__(self, alpha=1.0, fit_intercept=True):
         self.alpha = alpha
-        self.fit_intercept = True
+        self.fit_intercept = fit_intercept
 
 
     def fit(self, X, Y, **params):
