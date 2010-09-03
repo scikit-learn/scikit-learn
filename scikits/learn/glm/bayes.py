@@ -5,7 +5,6 @@ from scipy import linalg
 from .base import LinearModel
 from ..utils.extmath import fast_logdet
 
-
 class Ridge(LinearModel):
     """
     Ridge regression.
