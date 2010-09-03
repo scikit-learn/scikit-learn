@@ -9,25 +9,8 @@ from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal
 
 from ..base import LinearRegression
-from ..bayes import bayesian_ridge_regression, \
-        bayesian_regression_ard, BayesianRidge, Ridge, ARDRegression
+from ..bayes import BayesianRidge, Ridge, ARDRegression
 
-
-def test_bayesian_ridge():
-    """
-    Test Ridge regression classifier
-    """
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
-    w, alpha, beta, sigma, log_likelihood = bayesian_ridge_regression(X, Y)
-    assert np.abs(1-w)<1.e-3
-
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
-    clf = BayesianRidge()
-    clf.fit(X, Y)
-    Test = [[1], [2], [3], [4]]
-    assert_array_almost_equal(clf.predict(Test), [1, 2, 3, 4]) # identity
 
 
 def test_ridge():
@@ -79,24 +62,6 @@ def test_ridge_vs_lstsq():
     assert np.linalg.norm (ridge.coef_ - ols.coef_) < 1e-10
 
 
-def test_toy_ridge_regression():
-    """
-    Test Ridge regression classifier
-    """
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
-    w, alpha, beta, sigma, log_likelihood = bayesian_ridge_regression(X, Y)
-    assert(np.abs(1-w)<1.e-3)
-
-
-def test_toy_ard_regression():
-    """
-    Test ARD regression classifier
-    """
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
-    w, alpha, beta, sigma, log_likelihood = bayesian_regression_ard(X, Y)
-    assert(np.abs(1-w)<1.e-3)
 
 
 def test_toy_ridge_object():
@@ -116,21 +81,21 @@ def test_toy_bayesian_ridge_object():
     """
     Test BayesianRegression ridge classifier
     """
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
+    X = np.array([[1], [2], [6], [8], [10]])
+    Y = np.array([1, 2, 6, 8, 10])
     clf = BayesianRidge()
     clf.fit(X, Y)
-    Test = [[1], [2], [3], [4]]
-    assert_array_equal(clf.predict(Test), [1, 2, 3, 4]) # identity
+    Test = [[1], [3], [4]]
+    assert(np.abs(clf.predict(Test)-[1, 3, 4]).sum()<1.e-1) # identity
 
 
 def test_toy_ard_object():
     """
     Test BayesianRegression ARD classifier
     """
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
+    X = np.array([[1], [2], [6], [8], [10]])
+    Y = np.array([1, 2, 6, 8, 10])
     clf = ARDRegression()
     clf.fit(X, Y)
-    Test = [[1], [2], [3], [4]]
-    assert(np.abs(clf.predict(Test)-[1, 2, 3, 4]).sum()<1.e-3) # identity
+    Test = [[1], [3], [4]]
+    assert(np.abs(clf.predict(Test)-[1, 3, 4]).sum()<1.e-1) # identity
