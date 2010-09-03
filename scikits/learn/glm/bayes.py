@@ -51,6 +51,10 @@ class Ridge(LinearModel):
         self : returns an instance of self.
         """
         self._set_params(**params)
+
+        X = np.asanyarray(X, dtype=np.float)
+        Y = np.asanyarray(Y, dtype=np.float)
+
         n_samples, n_features = X.shape
 
         if self.fit_intercept:
