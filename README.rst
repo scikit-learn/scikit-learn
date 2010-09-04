@@ -8,7 +8,7 @@ scipy.
 
 The project was started in 2007 by David Cournapeu as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the AUTHORS file for a complete list of contributors.
+the AUTHORS.rst file for a complete list of contributors.
 
 It is currently maintained by a team of volunteers.
 
