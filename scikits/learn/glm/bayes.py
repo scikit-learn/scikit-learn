@@ -74,10 +74,6 @@ class Ridge(LinearModel):
         return self
 
 
-
-
-
-
 class BayesianRidge(LinearModel):
     """
     Bayesian ridge regression. Optimize the regularization parameters lambda
