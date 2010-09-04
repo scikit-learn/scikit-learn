@@ -1,3 +1,9 @@
+""" Transformers to perform common preprocessing steps.
+"""
+
+# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr> 
+# License: BSD
+
 import numpy as np
 
 from .base import BaseEstimator
@@ -24,6 +30,7 @@ class Scaler(BaseEstimator):
     def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
+        # We are taking a view of the X array and modifying it
         Xr = np.rollaxis(X, self.axis)
         Xr -= self.mean
         if self.with_std:
