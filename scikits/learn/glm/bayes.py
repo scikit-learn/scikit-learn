@@ -106,12 +106,6 @@ class BayesianRidge(LinearModel):
     log_likelihood : list of float of size steps.
           Compute (if asked) the log-likelihood of the model.
 
-    Examples
-    --------
-    >>> X = np.array([[1], [2]])
-    >>> Y = np.array([1, 2])
-    >>> w = bayesian_ridge_regression(X,Y)
-
     Notes
     -----
     See Bishop p 167-169 for more details.
