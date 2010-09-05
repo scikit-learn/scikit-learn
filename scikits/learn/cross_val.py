@@ -494,9 +494,9 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
         if y is not None and (isinstance(estimator, ClassifierMixin)
                 or (hasattr(estimator, 'estimator') 
                     and isinstance(estimator.estimator, ClassifierMixin))):
-            cv = StratifiedKFold(y, k=5)
+            cv = StratifiedKFold(y, k=3)
         else:
-            cv = KFold(n_samples, k=5)
+            cv = KFold(n_samples, k=3)
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
