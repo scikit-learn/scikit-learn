@@ -59,5 +59,8 @@ class Pipeline(BaseEstimator):
         return self.estimator.predict(Xt)
 
     def score(self, X, y=None):
-        return self.estimator.score(self.predict(X), y)
+        Xt = X
+        for transformer in self.transformers:
+            Xt = transformer.transform(Xt)
+        return self.estimator.score(Xt, y)
 
