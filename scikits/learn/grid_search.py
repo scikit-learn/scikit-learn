@@ -8,6 +8,8 @@ Tune the parameters of an estimator by cross-validation.
 
 
 from .externals.joblib import Parallel, delayed
+from .cross_val import KFold, StratifiedKFold
+from .base import ClassifierMixin
 
 try:
     from itertools import product
@@ -171,10 +173,15 @@ class GridSearchCV(object):
             see scikits.learn.cross_val module
 
         """
+        estimator = self.estimator
         if cv is None:
-            n_samples = y.size
-            from scikits.learn.cross_val import KFold
-            cv = KFold(n_samples, 2)
+            n_samples = len(X)
+            if y is not None and (isinstance(estimator, ClassifierMixin)
+                    or (hasattr(estimator, 'estimator') 
+                        and isinstance(estimator.estimator, ClassifierMixin))):
+                cv = StratifiedKFold(y, k=3)
+            else:
+                cv = KFold(n_samples, k=3)
 
         grid = iter_grid(self.param_grid)
         klass = self.estimator.__class__
