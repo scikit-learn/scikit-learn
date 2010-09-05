@@ -15,8 +15,13 @@ from scikits.learn.pipeline import Pipeline
 # Import some data to play with
 digits = datasets.load_digits()
 y = digits.target
+# Throw away data, to be in the curse of dimension settings
+y = y[:200]
+X = digits.data[:200]
 n_samples = len(y)
-X = digits.data.reshape((n_samples, -1))
+X = X.reshape((n_samples, -1))
+# add 200 non-informative features
+X = np.hstack((X, 2*np.random.random((n_samples, 200))))
 
 ################################################################################
 # Create a feature-selection transform and an instance of SVM that we
@@ -30,7 +35,7 @@ clf = Pipeline([transform], svm.SVC())
 # Plot the cross-validation score as a function of percentile of features
 score_means = list()
 score_stds  = list()
-percentiles = (10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
+percentiles = (1, 3, 6, 10, 15, 20, 30, 40, 60, 80, 100)
 
 for percentile in percentiles:
     transform._set_params(percentile=percentile)
@@ -44,7 +49,7 @@ pl.errorbar(percentiles, score_means, np.array(score_stds))
 pl.title(
     'Performance of the SVM-Anova varying the percentile of features selected')
 pl.xlabel('Percentile')
-pl.ylabel('Cross-validation errors rate')
+pl.ylabel('Prediction rate')
 
 pl.axis('tight')
 pl.show()
