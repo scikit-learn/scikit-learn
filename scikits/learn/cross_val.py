@@ -456,7 +456,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test):
     """ Inner loop for cross validation.
     """
     if score_func is None:
-        score_func = lambda self, *args: estimator.score(*args)
+        score_func = lambda self, *args: self.score(*args)
     if y is None:
         return score_func(estimator.fit(X[train]), X[test])
     return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
@@ -489,13 +489,14 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
         verbose: integer, optional
             The verbosity level
     """
-    # XXX: should have a n_jobs to be able to do this in parallel.
     n_samples = len(X)
     if cv is None:
-        if y is not None and isinstance(estimator, ClassifierMixin):
-            cv = StratifiedKFold(y, k=3)
+        if y is not None and (isinstance(estimator, ClassifierMixin)
+                or (hasattr(estimator, 'estimator') 
+                    and isinstance(estimator.estimator, ClassifierMixin))):
+            cv = StratifiedKFold(y, k=5)
         else:
-            cv = KFold(n_samples, k=3)
+            cv = KFold(n_samples, k=5)
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
