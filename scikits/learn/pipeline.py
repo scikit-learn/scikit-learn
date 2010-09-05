@@ -6,10 +6,10 @@ class Pipeline(BaseEstimator):
     Sequentialy apply a list of transformers and a final predictor
     A transformer implements fit & transform methods
     A predictor implements fit & predict methods
-    
+
     Example
     =======
-    
+
     >>> from scikits.learn import svm, datasets
     >>> from scikits.learn.datasets import samples_generator
     >>> from scikits.learn.feature_selection import SelectKBest, f_regression
@@ -21,11 +21,12 @@ class Pipeline(BaseEstimator):
     >>> # ANOVA SVM-C
     >>> anova_filter = SelectKBest(f_regression, k=5)
     >>> clf = svm.SVC(kernel='linear')
-    
+
     >>> anova_svm = Pipeline([anova_filter], clf)
     >>> _ = anova_svm.fit(X,y)
-    
+
     >>> prediction = anova_svm.predict(X)
+    >>> score = anova_svm.score(X)
     """
     def __init__(self, transformers=[], estimator=None):
         """
@@ -50,16 +51,13 @@ class Pipeline(BaseEstimator):
             Xt = transformer.fit(Xt, y).transform(Xt)
         self.estimator.fit(Xt, y)
         return self
-    
+
     def predict(self, X):
-        Xt=X
+        Xt = X
         for transformer in self.transformers:
             Xt = transformer.transform(Xt)
         return self.estimator.predict(Xt)
-        
+
     def score(self, X, y=None):
-        Xt = X
-        for transformer in self.transformers:
-            Xt = transformer.fit(Xt, y).transform(Xt)
-        return self.estimator.score(Xt, y)
- 
+        return self.estimator.score(self.predict(X), y)
+
