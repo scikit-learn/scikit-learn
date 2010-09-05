@@ -47,6 +47,7 @@ def confusion_matrix(y, y_):
 
     return cm
 
+
 def roc(y, probas_):
     """compute Receiver operating characteristic (ROC)
 
@@ -88,6 +89,7 @@ def roc(y, probas_):
 
     return fpr, tpr, thresholds
 
+
 def auc(x, y):
     """Compute Area Under the Curve (AUC)
     using the trapezoidal rule
@@ -111,6 +113,7 @@ def auc(x, y):
     h = np.diff(x)
     area = np.sum(h * (y[1:]+y[:-1])) / 2.0
     return area
+
 
 def precision_recall(y, probas_):
     """compute Precision-Recall
