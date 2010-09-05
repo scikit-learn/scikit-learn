@@ -1,3 +1,12 @@
+"""
+Tune the parameters of an estimator by cross-validation.
+"""
+
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
+#         Gael Varoquaux    <gael.varoquaux@normalesup.org>
+# License: BSD Style.
+
+
 from .externals.joblib import Parallel, delayed
 
 try:
@@ -41,8 +50,9 @@ def iter_grid(param_grid):
             params = dict(zip(keys,v))
             yield params
 
+
 def fit_grid_point(X, y, klass, orignal_params, clf_params, cv,
-                                        loss_func, **fit_params):
+                                        loss_func, iid, **fit_params):
     """Run fit on one set of parameters
     Returns the score and the instance of the classifier
     """
@@ -53,11 +63,15 @@ def fit_grid_point(X, y, klass, orignal_params, clf_params, cv,
     score = 0
     for train, test in cv:
         clf.fit(X[train], y[train], **fit_params)
+        y_test = y[test]
         if loss_func is not None:
             y_pred = clf.predict(X[test])
-            score -= loss_func(y[test], y_pred)
+            this_score = -loss_func(y_test, y_pred)
         else:
-            score += clf.score(X[test], y[test])
+            this_score = clf.score(X[test], y_test)
+        if iid:
+            this_score *= len(y_test)
+        score += this_score
 
     return clf, score
 
@@ -80,14 +94,21 @@ class GridSearchCV(object):
     param_grid: dict
         a dictionary of parameters that are used the generate the grid
 
-    loss_func : function that takes 2 arguments and compares them in
+    loss_func: callable, optional
+        function that takes 2 arguments and compares them in
         order to evaluate the performance of prediciton (small is good)
+        if None is passed, the score of the estimator is maximized
 
-    fit_params : dict
+    fit_params : dict, optional
         parameters to pass to the fit method
 
-    n_jobs : int
+    n_jobs: int, optional
         number of jobs to run in parallel (default 1)
+
+    iid: boolean, optional
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
 
     Methods
     -------
@@ -112,7 +133,7 @@ class GridSearchCV(object):
     """
 
     def __init__(self, estimator, param_grid, loss_func=None,
-                        fit_params={}, n_jobs=1):
+                        fit_params={}, n_jobs=1, iid=True):
         assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
             "estimator should a be an estimator implementing 'fit' and "
             "'predict' methods, %s (type %s) was passed" % (clf, type(clf))
@@ -129,6 +150,7 @@ class GridSearchCV(object):
         self.loss_func = loss_func
         self.n_jobs = n_jobs
         self.fit_params = fit_params
+        self.iid = iid
 
 
     def fit(self, X, y, cv=None, **kw):
@@ -159,7 +181,7 @@ class GridSearchCV(object):
         orignal_params = self.estimator._get_params()
         out = Parallel(n_jobs=self.n_jobs)(
             delayed(fit_grid_point)(X, y, klass, orignal_params, clf_params,
-                    cv, self.loss_func, **self.fit_params)
+                    cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
 
         # Out is a list of pairs: estimator, score
