@@ -1,4 +1,4 @@
-from nose.tools import assert_equals
+import numpy as np
 
 from .. import datasets
 from ..pca import PCA
@@ -14,8 +14,8 @@ def test_pca():
 
     pca = PCA(k=2)
     X_r = pca.fit(X).transform(X)
-    assert_equals(X_r.shape[1], 2)
+    np.testing.assert_equal(X_r.shape[1], 2)
 
     pca = PCA()
     pca.fit(X)
-    assert_equals(pca.explained_variance_.sum(), 1.0)
+    np.testing.assert_almost_equal(pca.explained_variance_.sum(),  1.0, 3)
