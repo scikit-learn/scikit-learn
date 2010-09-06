@@ -47,6 +47,12 @@ def unique(ar, return_index=False, return_inverse=False):
         return ar[flag]
 
 
+def _copysign (x1, x2):
+    """
+    (slow) Replacement for np.copysign, which was introduced in numpy 1.4
+    """
+    return np.abs(x1) * np.sign(x2)
+
 def _in1d(ar1, ar2, assume_unique=False):
     """ Replacement for in1d that is provided for numpy >= 1.4
     """
@@ -70,9 +76,10 @@ def _in1d(ar1, ar2, assume_unique=False):
 
 
 if np.__version__ >= '1.4':
-    from numpy import in1d
+    from numpy import in1d, copysign
 else:
     in1d = _in1d
+    copysign = _copysign
 
 
 

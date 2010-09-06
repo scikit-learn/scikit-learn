@@ -11,7 +11,7 @@ from scipy import linalg
 from .base import LinearModel
 import scipy.sparse as sp # needed by LeastAngleRegression
 from .._minilearn import lars_fit_wrap
-
+from ..utils.fixes import copysign
 
 # Notes: np.ma.dot copies the masked array before doing the dot
 # product. Maybe we should implement in C our own masked_dot that does
@@ -148,7 +148,7 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         # Now we go into the normal equations dance.
         # (Golub & Van Loan, 1996)
 
-        b = np.copysign (Cov_max.repeat(n_pred), sign_active[:n_pred])
+        b = copysign (Cov_max.repeat(n_pred), sign_active[:n_pred])
         b = linalg.cho_solve ((L[:n_pred, :n_pred], True),  b)
 
         C = A = np.abs(Cov_max)
