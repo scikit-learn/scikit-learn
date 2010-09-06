@@ -2,9 +2,9 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            TestCase)
 import numpy as np
 
-from scikits.learn import hmm
+from .. import hmm
 
-from test_gmm import _generate_random_spd_matrix
+from .test_gmm import _generate_random_spd_matrix
 
 SKIP_FAILING = True # skip failing tests
 

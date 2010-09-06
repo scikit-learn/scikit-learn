@@ -1,6 +1,7 @@
 import numpy as np
-from scikits.learn import naive_bayes
 from numpy.testing import assert_array_equal
+
+from .. import naive_bayes
 
 # Data is just 6 separable points in the plane
 X = np.array( [[-2,-1], [-1, -1], [-1, -2], [1,1], [1,2], [2, 1]])

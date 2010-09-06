@@ -2,7 +2,7 @@ import numpy as np
 
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_
 
-from scikits.learn.preprocessing import Scaler
+from ..preprocessing import Scaler
 
 def test_scaler():
     """Test scaling of dataset along all axis

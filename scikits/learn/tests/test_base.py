@@ -1,4 +1,4 @@
-from scikits.learn.base import BaseEstimator
+from ..base import BaseEstimator
 
 
 class MyEstimator(BaseEstimator):

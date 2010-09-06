@@ -5,7 +5,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import numpy as np
 import scipy as sp
 
-from scikits.learn import gmm
+from .. import gmm
 
 np.random.seed(0)
 
