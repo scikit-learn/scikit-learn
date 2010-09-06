@@ -35,13 +35,15 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
             Input targets
         max_iter: integer, optional
             The number of 'kink' in the path
+
         alpha_min: float, optional
-            The minimum correlation along the path. It corresponds
-            to the regularization parameter alpha parameter in the Lasso.
+            The minimum correlation along the path. It corresponds to
+            the regularization parameter alpha parameter in the Lasso.
+            
         method: 'lar' or 'lasso'
-            Specifies the problem solved: the LAR or its variant the LASSO-LARS
-            that gives the solution of the LASSO problem for any regularization
-            parameter.
+            Specifies the problem solved: the LAR or its variant the
+            LASSO-LARS that gives the solution of the LASSO problem
+            for any regularization parameter.
 
         Returns
         --------
@@ -75,14 +77,21 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
 
     max_pred = max_iter # OK for now
 
+    # because of some restrictions in Cython, boolean values are
+    # simulated using np.int8
+
     beta     = np.zeros ((max_iter + 1, X.shape[1]))
     alphas   = np.zeros (max_iter + 1)
     n_iter, n_pred = 0, 0
-    active   = list()
+    active      = list()
+    unactive    = range (X.shape[1])
+    active_mask = np.zeros (X.shape[1], dtype=np.uint8)
     # holds the sign of covariance
     sign_active = np.empty (max_pred, dtype=np.int8)
+    Cov         = np.empty (X.shape[1])
+    a           = np.empty (X.shape[1])
     drop = False
-
+    
     # will hold the cholesky factorization
     # only lower part is referenced. We do not create it as
     # empty array because chol_solve calls chkfinite on the
@@ -90,22 +99,23 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
     L = np.zeros ((max_pred, max_pred), dtype=np.float64)
 
     Xt  = X.T
-    Xna = Xt.view(np.ma.MaskedArray) # variables not in the active set
-                                     # should have a better name
-
-    Xna.soften_mask()
 
     while 1:
 
-
-        # Calculate covariance matrix and get maximum
+        n_unactive = X.shape[1] - n_pred # number of unactive elements
         res = y - np.dot (X, beta[n_iter]) # there are better ways
-        Cov = np.ma.dot (Xna, res)
 
-        imax    = np.ma.argmax (np.ma.abs(Cov)) #rename
-        Cov_max =  Cov.data [imax]
+        if n_unactive:
+        # Calculate covariance matrix and get maximum
+            arrayfuncs.dot_over (X.T, res, active_mask, np.False_, Cov)  
+            imax  = np.argmax (np.abs(Cov[:n_unactive])) #rename
+            C_    = Cov [imax]
+            # np.delete (Cov, imax) # very ugly, has to be fixed
+        else:
+            # special case when all elements are in the active set
+            C_ = np.dot (X.T[0], res)
 
-        alpha = np.abs(Cov_max) #sum (np.abs(beta[n_iter]))
+        alpha = np.abs(C_) # ugly alpha vs alphas
         alphas [n_iter] = alpha
 
         if (n_iter >= max_iter or n_pred >= max_pred ):
@@ -116,20 +126,21 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
 
         if not drop:
 
+            imax  = unactive.pop (imax)
+
+
             # Update the Cholesky factorization of (Xa * Xa') #
             #                                                 #
-            #          ( L   0 )                              #
-            #   L  ->  (       )  , where L * w = b           #
-            #          ( w   z )    z = 1 - ||w||             #
+            #            ( L   0 )                            #
+            #     L  ->  (       )  , where L * w = b         #
+            #            ( w   z )    z = 1 - ||w||           #
             #                                                 #
             #   where u is the last added to the active set   #
 
             n_pred += 1
             active.append(imax)
-            Xna[imax] = np.ma.masked
-            Cov[imax] = np.ma.masked
 
-            sign_active [n_pred-1] = np.sign (Cov_max)
+            sign_active [n_pred-1] = np.sign (C_)
 
             X_max = Xt[imax]
 
@@ -143,8 +154,6 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
                 L [n_pred-1, :n_pred-1] = linalg.solve (L[:n_pred-1, :n_pred-1], b)
                 v = np.dot(L [n_pred-1, :n_pred-1], L [n_pred - 1, :n_pred -1])
                 L [n_pred-1,  n_pred-1] = np.sqrt (c - v)
-        else:
-            drop = False
 
         Xa = Xt[active] # also Xna[~Xna.mask]
 
@@ -154,19 +163,25 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
         b = copysign (Cov_max.repeat(n_pred), sign_active[:n_pred])
         b = linalg.cho_solve ((L[:n_pred, :n_pred], True),  b)
 
-        C = A = np.abs(Cov_max)
+        C = A = np.abs(C_)
         u = np.dot (Xa.T, b)
-        a = np.ma.dot (Xna, u)
+        arrayfuncs.dot_over (X.T, u, active_mask, np.False_, a)
 
         # equation 2.13, there's probably a simpler way
-        g1 = (C - Cov) / (A - a)
-        g2 = (C + Cov) / (A + a)
+        g1 = (C - Cov[:n_unactive]) / (A - a[:n_unactive])
+        g2 = (C + Cov[:n_unactive]) / (A + a[:n_unactive])
+
+        if not drop:
+            # Quickfix
+            active_mask [imax] = np.True_
+        else:
+            drop = False
 
         # one for the border cases
-        g = np.ma.concatenate((g1, g2))
+        g = np.concatenate((g1, g2, [1.]))
 
         g = g[g > 0.]
-        gamma_ = np.ma.min (g)
+        gamma_ = np.min (g)
 
         if n_pred >= X.shape[1]:
             gamma_ = 1.
@@ -188,10 +203,9 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
         if drop:
             n_pred -= 1
             drop_idx = active.pop (idx)
+            unactive.append(drop_idx)
             # please please please remove this masked arrays pain from me
-            Xna[drop_idx] = Xna.data[drop_idx]
-            if verbose:
-                print 'dropped %s at %s iteration' % (idx, n_iter)
+            active_mask[drop_idx] = False
             Xa = Xt[active] # duplicate
             L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
             sign_active = np.delete (sign_active, idx) # do an append to maintain size
