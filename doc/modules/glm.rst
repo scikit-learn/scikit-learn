@@ -87,6 +87,21 @@ the amount of shrinkage: the larger the value of :math:`\alpha`, the
 greater the amount of shrinkage.
 
 
+    >>> from scikits.learn import glm
+    >>> clf = glm.Ridge (alpha = .5)
+    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    Ridge(alpha=0.5, fit_intercept=True)
+    >>> clf.coef_
+    array([ 0.34545455,  0.34545455])
+    >>> clf.intercept_
+    0.13636363636363638
+
+Complexity
+----------
+
+This method has the same order of complexity than an
+:ref:`ordinary_least_squares`.
+
 Lasso
 =====
 
@@ -102,17 +117,27 @@ parameter vector.
 
 
 This formulation is useful in some context due to its tendency to
-prefer solutions with fewer parameter values, effectively reducing
-the number of variables upon which the given solution is
-dependent. For this reason, the LASSO and its variants are
-fundamental to the field of compressed sensing.
+prefer solutions with fewer parameter values, effectively reducing the
+number of variables upon which the given solution is dependent. For
+this reason, the Lasso and its variants are fundamental to the field
+of compressed sensing.
 
 This implementation uses coordinate descent as the algorithm to fit
-the coeffcients. 
+the coeffcients. See :ref:`lars_algorithm` for another implementation.
 
+    >>> clf = glm.Lasso(alpha = 0.1)
+    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
+    Lasso(alpha=0.1, coef_=array([ 0.6,  0. ]), fit_intercept=True)
+    >>> clf.predict ([[1, 1]])
+    array([ 0.8])
 
 The function lasso_path computes the coefficients along the full path
 of possible values.
+
+Examples
+--------
+:ref:`example_glm_lasso_and_elasticnet.py`,
+:ref:`example_glm_lasso_path_with_crossvalidation.py`
 
 
 Elastic Net
@@ -129,9 +154,11 @@ The objective function to minize is in this case
 Examples
 --------
 
+:ref:`example_glm_lasso_and_elasticnet.py`
 :ref:`example_plot_lasso_coordinate_descent_path.py`
 
 
+.. _lars_algorithm:
 
 LARS algorithm and its variants
 ===============================
@@ -168,6 +195,22 @@ The disadvantages of the LARS method include:
     Statistics article.
 
 It is implemented using the LARS algorithm in class :class:`glm.LARS`.
+
+
+LARS Lasso
+==========
+
+This implementation is based on the LARS algorithm, and unlike the
+implementation based on coordinate_descent, this yields the exact
+solution, which is piecewise linear as a function of the norm of its
+coefficients.
+
+
+   >>> clf = glm.LassoLARS(alpha=.1)
+   >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
+   LassoLARS(normalize=True, alpha=0.1, max_iter=None)
+   >>> clf.coef_
+   array([ 0.50710678,  0.        ])
 
 
 Getting the full path
