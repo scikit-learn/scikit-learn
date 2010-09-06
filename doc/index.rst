@@ -76,29 +76,19 @@ Scikits.learn: machine learning in Python
     </small>
 
 
-**Features:**
+:Features:
+  * **Solid**: supervised learning: classification, regression
 
- * **Solid**: supervised learning: classification, regression
+  * **Work in progress**: unsupervised learning: clustering, mixture modeling,
+    manifold learning
 
- * **Work in progress**: unsupervised learning: clustering, mixture modeling,
-   manifold learning
+  * **Planed**: Gaussian graphical models, matrix factorization, ICA
 
- * **Planed**: Gaussian graphical models, matrix factorization, ICA
-
-Download
-========
-
-Click `here <https://sourceforge.net/projects/scikit-learn/files/>`__
-to download latest release. Previous releases can also be found in
-that directory.
-
-Mailing List
-============
-
-Visit `this page
-<https://lists.sourceforge.net/lists/listinfo/scikit-learn-general>`_
-to subscribe to the mailing list and keep informed about scikit-learn
-development
+:Download packages: 
+  https://sourceforge.net/projects/scikit-learn/files/
+                            
+:Mailing list:
+  https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
 
 
 User guide
