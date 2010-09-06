@@ -5,6 +5,9 @@ Contributing
 This project is a community effort, and everyone is welcomed to
 contribute.
 
+.. contents:: This page
+    :local:
+
 Submitting a bug report 
 =========================
 
@@ -14,13 +17,10 @@ to submit a ticket to the
 
 You are also welcomed to post there feature requests and patches.
 
-Code
-======
-
 .. _git_repo:
 
-Git repo
-----------
+Retriving the latest code
+===========================
 
 You can check the latest sources with the command::
 
@@ -46,35 +46,51 @@ extension in place::
     python setup.py build_ext --inplace
 
 
-Patches
--------
-Patches are the prefered way to contribute to a project if you do not
-have write privileges.
+Contributing code
+===========================
 
-Before submitting a patch, be sure to read the coding style guidelines
-(below).
+How to contribute
+-------------------
 
-Let's suppose that you have the latest sources for subversion and that
-you just made some modifications that you'd like to share with the
-world. You might proceed as:
+The prefered way to contribute to `scikit-learn` is to fork the main
+repository on
+`github <http://github.com/scikit-learn/scikit-learn/>`__:
 
-1. Create a patch file. The command::
+ 1. `Create an account <https://github.com/signup/free>`_ on 
+    github
+ 
+ 2. Fork the `scikit-learn repo
+    <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
+    button, at the top, center of the page. This creates a copy of
+    the code on the github server where you can work.
 
-    git format-patch origin/master
+ 3. Clone this copy to your local disk (you need the `git` program to do
+    this)::
 
-will create a series of patch files with the changes you made with
-the code base. 
+        $ git clone git@github.com:YourLogin/scikit-learn.git
 
-2. Send that file to the mailing list or attach it to an
-issue in the issue tracker and some devs will push that patch to the
-main repository.
+ 4. Work on this copy, on your computer, using git to do the version
+    control::
 
-3. Wait for a reply. You should soon receive a reply on whether your
-patch was committed.
+        $ git add modified_files
+        $ git commit
+        $ git push origin master
 
+    and so on.
+
+When you are ready, and you have pushed your changes on your github repo,
+go the web page of the repo, and click on 'Pull request' to send us a
+pull request. Send us a mail with your pull request, and we can look at
+your changes, and integrate them.
+
+**Before asking for a pull or a review**, be sure to read the 
+`coding-guidelines`_ (below).
+
+Also, make sure that your code is tested, and that all the tests for the
+scikit pass.
 
 EasyFix Issues
-^^^^^^^^^^^^^^
+---------------
 
 The best way to get your feet wet is to pick up an issue from the
 `issue tracker
@@ -94,19 +110,13 @@ be implemented in the following releases.
 .. _packaging:
 
 Packaging
-^^^^^^^^^
+----------
 
 You can also help making binary distributions for windows, OsX or packages for some
 distribution.
 
-Developers web site
-=====================
-More information can be found at the developer's web site:
-http://sourceforge.net/apps/trac/scikit-learn/wiki , which contains a
-wiki, an issue tracker, and a Roadmap
-
 Documentation
-===============
+----------------------
 
 We are glad to accept any sort of documentation: function docstrings,
 rst docs (like this one), tutorials, etc. Rst docs live in the source
@@ -118,6 +128,15 @@ directory _build/html/ with html files that are viewable in a web
 browser.
 
 
+Developers web site
+----------------------
+
+More information can be found at the developer's web site:
+http://sourceforge.net/apps/trac/scikit-learn/wiki , which contains a
+wiki, an issue tracker, and a Roadmap
+
+.. _coding-guidelines:
+
 Coding guidelines
 ===================
 
@@ -127,15 +146,8 @@ exceptions to these rules. However, following these rules when
 submitting new code makes the review easier so new code can be
 integrated in less time.
 
-Coding guidelines
--------------------
-
-Coding style
-^^^^^^^^^^^^^
-
-Uniformly formated code makes it easier to share code ownership.
-
-The scikit learn tries to follow closely the officiel Python guidelines
+Uniformly formated code makes it easier to share code ownership. The
+scikit learn tries to follow closely the officiel Python guidelines
 detailed in `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ that
 details how code should be formatted, and indented. Please read it and
 follow it.
@@ -163,7 +175,7 @@ A good example of code that we like can be found `here
 <https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
 
 APIs of scikit learn objects
------------------------------
+=============================
 
 To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
@@ -171,7 +183,7 @@ try to adopt simple conventions and limit to a minimum the number of
 methods an object has to implement.
 
 Different objects
-^^^^^^^^^^^^^^^^^^
+-------------------
 
 The main objects of the scikit learn are (one class can implement
 multiple interfaces):
@@ -203,7 +215,7 @@ multiple interfaces):
 	score = obj.score(data)
 
 Estimators
-^^^^^^^^^^^
+--------------
 
 The API has one predominant object: the estimator. A estimator is an
 object that fits a model based on some training data and is capable of
@@ -214,7 +226,7 @@ classifier or a regressor. All estimators implement the fit method::
 
 
 Instantiation
-................
+^^^^^^^^^^^^^^
 
 This concerns the object creation. The object's __init__ method might
 accept as arguments constants that determine the estimator behavior
@@ -245,7 +257,7 @@ doing model selection.
 All estimators should inherit from `scikit.learn.base.BaseEstimator`
 
 Fitting
-........
+^^^^^^^^^^^^^^
 
 The next thing you'll probably want to do is to estimate some
 parameters in the model. This is implemented in the .fit() method.
@@ -276,7 +288,7 @@ The method should return the object (self).
 
 
 Python tuples
-...............
+^^^^^^^^^^^^^^
 
 In addition to numpy arrays, all methods should be able to accept
 python tuples as arguments. In practice, this means you should call
@@ -285,14 +297,14 @@ arrays.
 
 
 Optional Arguments
-.....................
+^^^^^^^^^^^^^^^^^^^
 
 In iterative algorithms, number of iterations should be specified by
 an int called ``n_iter``.
 
+Unresolved API issues
+----------------------
 
-TODO
-^^^^^
 Some things are must still be decided:
 
     * what should happen when predict is called before than fit() ?
@@ -301,7 +313,7 @@ Some things are must still be decided:
 
 
 Specific models
-^^^^^^^^^^^^^^^^
+-----------------
 
 In linear models, coefficients are stored in an array called ``coef_``,
 and independent term is stored in ``intercept_``.
