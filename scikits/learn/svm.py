@@ -5,7 +5,7 @@ from . import _liblinear
 from .base import BaseEstimator, RegressorMixin, ClassifierMixin
 
 #
-# TODO: some cleanup: is nSV_ really needed ?
+# TODO: some cleanup: is n_support_ really needed ?
 
 class _BaseLibSVM(BaseEstimator):
     """
@@ -80,7 +80,7 @@ class _BaseLibSVM(BaseEstimator):
         self.intercept_ = np.empty(0,     dtype=np.float64, order='C')
 
         # only used in classification
-        self.nSV_ = np.empty(0, dtype=np.int32, order='C')
+        self.n_support_ = np.empty(0, dtype=np.int32, order='C')
 
 
         if callable(self.kernel):
@@ -108,7 +108,7 @@ class _BaseLibSVM(BaseEstimator):
                  self.gamma, self.coef0, self.eps, self.C,
                  self.support_, self.dual_coef_,
                  self.intercept_, self.weight_label, self.weight,
-                 self.nSV_, self.nu, self.cache_size, self.p,
+                 self.n_support_, self.nu, self.cache_size, self.p,
                  int(self.shrinking),
                  int(self.probability))
         return self
@@ -145,7 +145,7 @@ class _BaseLibSVM(BaseEstimator):
                       self.weight_label, self.weight,
                       self.nu, self.cache_size, self.p,
                       int(self.shrinking), int(self.probability),
-                      self.nSV_, self.label_, self.probA_,
+                      self.n_support_, self.label_, self.probA_,
                       self.probB_)
 
 
@@ -185,7 +185,7 @@ class _BaseLibSVM(BaseEstimator):
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
                       self.p, int(self.shrinking), int(self.probability),
-                      self.nSV_, self.label_,
+                      self.n_support_, self.label_,
                       self.probA_, self.probB_)
         return pprob[:, np.argsort(self.label_)]
         
@@ -208,7 +208,7 @@ class _BaseLibSVM(BaseEstimator):
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
                       self.p, int(self.shrinking), int(self.probability),
-                      self.nSV_, self.label_,
+                      self.n_support_, self.label_,
                       self.probA_, self.probB_)
 
 
@@ -379,8 +379,12 @@ class SVC(_BaseLibSVM, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
-        Support vectors.
+
+    `support_` : array-like, shape = [n_SV, n_features]
+        Support vectors, where n_SV is the number of support vectors.
+
+    `n_support_` : array-like, dtype=int32, shape = [n_class]
+        number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_class-1, nSV]
         Coefficients of the support vector in the decision function.

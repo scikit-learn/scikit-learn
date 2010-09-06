@@ -76,6 +76,19 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict ([[2., 2.]])
     array([ 1.])
 
+SVMs perform classification as a function of some subset of the
+training data, called the support vectors. These vectors can be
+accessed in member `support_`:
+
+    >>> clf.support_
+    array([[ 0.,  0.],
+           [ 1.,  1.]])
+
+Member `n_support_` holds the number of support vectors for each class:
+
+    >>> clf.n_support_
+    array([1, 1], dtype=int32)
+
 
 Examples
 --------
@@ -338,6 +351,15 @@ support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
 
+
+Frequently Asked Questions
+==========================
+
+     * Q: Can I get the indices of the support vectors instead of the
+       support vectors ?
+
+       A: The underlying C implementation does not provide this
+       information.
 
 Implementation details
 ======================
