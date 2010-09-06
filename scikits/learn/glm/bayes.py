@@ -5,74 +5,6 @@ from scipy import linalg
 from .base import LinearModel
 from ..utils.extmath import fast_logdet
 
-class Ridge(LinearModel):
-    """
-    Ridge regression.
-
-    Parameters
-    ----------
-    alpha : float
-        Small positive values of alpha improve the coditioning of the
-        problem and reduce the variance of the estimates.
-    fit_intercept : boolean
-        wether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> Y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = Ridge(alpha=1.0)
-    >>> clf.fit(X, Y)
-    Ridge(alpha=1.0, fit_intercept=True)
-    """
-
-    def __init__(self, alpha=1.0, fit_intercept=True):
-        self.alpha = alpha
-        self.fit_intercept = fit_intercept
-
-
-    def fit(self, X, Y, **params):
-        """
-        Fit Ridge regression model
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-            Training data
-        Y : numpy array of shape [n_samples]
-            Target values
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params(**params)
-
-        X = np.asanyarray(X, dtype=np.float)
-        Y = np.asanyarray(Y, dtype=np.float)
-
-        n_samples, n_features = X.shape
-
-        X, Y = self._center_data (X, Y)
-
-        if n_samples > n_features:
-            # w = inv(X^t X + alpha*Id) * X.T y
-            self.coef_ = linalg.solve(
-                np.dot(X.T, X) + self.alpha * np.eye(n_features),
-                np.dot(X.T, Y))
-        else:
-            # w = X.T * inv(X X^t + alpha*Id) y
-            self.coef_ = np.dot(X.T, linalg.solve(
-                np.dot(X, X.T) + self.alpha * np.eye(n_samples), Y))
-
-        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
-        return self
-
 
 class BayesianRidge(LinearModel):
     """
@@ -148,23 +80,23 @@ class BayesianRidge(LinearModel):
 
 
         ### "Dummy" initialization of the values of the parameters
-        self.alpha_ = 1./np.var(Y)
+        self.alpha_ = 1. / np.var(Y)
         self.lambda_ = 1.0
         self.log_likelihood_ = []
         U, S, V = linalg.svd(X, full_matrices=False)
         self.eigen_vals_ = S**2
-        self.X_XT = np.dot(X,X.T)
-        self.XT_Y = np.dot(X.T,Y)
+        self.X_XT = np.dot(X, X.T)
+        self.XT_Y = np.dot(X.T, Y)
 
         ### Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
 
             ### Compute mu and sigma (using Woodbury matrix identity)
-            self.sigma_ =  np.dot(linalg.pinv(np.eye(n_samples)/self.alpha_ +
-                                  self.X_XT/self.lambda_), X/self.lambda_)
+            self.sigma_ =  np.dot(linalg.pinv(np.eye(n_samples) / self.alpha_ +
+                                  self.X_XT / self.lambda_), X / self.lambda_)
             self.sigma_ = - np.dot(X.T/self.lambda_, self.sigma_)
-            self.sigma_.flat[::(self.sigma_.shape[1]+1)] += 1./self.lambda_
-            self.coef_ = self.alpha_ *np.dot(self.sigma_,self.XT_Y)
+            self.sigma_.flat[::(self.sigma_.shape[1]+1)] += 1. / self.lambda_
+            self.coef_ = self.alpha_ * np.dot(self.sigma_, self.XT_Y)
 
             ### Update alpha and lambda
             self.gamma_ =  np.sum((self.alpha_ * self.eigen_vals_)\

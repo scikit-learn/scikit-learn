@@ -21,19 +21,27 @@ Ordinary Least Squares
 ======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum of squares
-between the observed responses in the dataset, and the responses
-predicted by the linear approximation:
+:math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum
+of squares between the observed responses in the dataset, and the
+responses predicted by the linear approximation.
 
-.. math::
 
-   RSS(\beta) &= \sum_{i=1}^N (y_i-f(x_i))^2\\
-              &= \sum_{i=1}^N (y_i - \beta_0 - \sum_{j=i}{p} x_ij \beta_j)^2
-
+.. figure:: ../auto_examples/glm/images/plot_ols.png
+   :target: ../auto_examples/glm/plot_ols.html
+   :scale: 50%
+   :align: center
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
 and will store the coefficients :math:`w` of the linear model in its
 `coef\_` member.
+
+
+    >>> from scikits.learn import glm
+    >>> clf = glm.LinearRegression()
+    >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    LinearRegression(fit_intercept=True)
+    >>> clf.coef_
+    array([ 0.5,  0.5])
 
 
 However, coefficient estimates for Ordinary Least Squares rely on the
@@ -44,6 +52,7 @@ and as a result, the least-squares estimate becomes highly sensitive
 to random errors in the observed response, producing a large
 variance. This situation of *multicollinearity* can arise, for
 example, when data are collected without an experimental design.
+
 
 Complexity
 ----------
@@ -73,19 +82,16 @@ of squares,
                  \beta_0 - \sum_{j=1}{p} x_ij \beta_j)^2 + \alpha
                  \sum_{j=1}{p} \beta_{j}^2}
 
-Here, :math:`\alpha \geq 0`
-
-the problem by estimating regression
-coefficients using:
-
-.. math::    \hat{\beta} = (X^T X + \alpha I)^{-1} X^T y
+Here, :math:`\alpha \geq 0` is a complexity parameter that controls
+the amount of shrinkage: the larger the value of :math:`\alpha`, the
+greater the amount of shrinkage.
 
 
 Lasso
 =====
 
-The :class:`Lasso` is a linear model trained with L1 prior as regularizer. The
-objective function to minimize is:
+The :class:`Lasso` is a linear model trained with L1 prior as
+regularizer. The objective function to minimize is:
 
 .. math::  0.5 * ||y - X w||_2 ^ 2 + \alpha * ||w||_1
 
@@ -108,24 +114,16 @@ the coeffcients.
 The function lasso_path computes the coefficients along the full path
 of possible values.
 
-.. autofunction:: scikits.learn.glm.lasso_path
-
 
 Elastic Net
 ===========
-Elastic Net is a linear model trained with L1 and L2 prior as
+:class:`ElasticNet` is a linear model trained with L1 and L2 prior as
 regularizer.
 
 
 The objective function to minize is in this case
 
 .. math::        0.5 * ||y - X w||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
-
-Reference
----------
-
-.. autoclass:: scikits.learn.glm.ElasticNet
-   :members:
 
 
 Examples

@@ -128,8 +128,8 @@ class GridSearchCV(object):
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = SVR()
-    >>> clf = GridSearchCV(svc, parameters, n_jobs=1)
+    >>> svr = SVR()
+    >>> clf = GridSearchCV(svr, parameters, n_jobs=1)
     >>> print clf.fit(X, y).predict([[-0.8, -1]])
     [ 1.]
     """
