@@ -27,6 +27,14 @@ class PCA(BaseEstimator):
     copy : bool
         If False, data passed to fit are overwritten
 
+    components_ : array, [n_features, k]
+        Components with maximum variance
+
+    explained_variance_ : array, [k]
+        Percentage of variance explained by each of the selected components.
+        k is not set then all components are stored and the sum of
+        explained variances is equal to 1.0
+
     Methods
     -------
     fit(X) : self
@@ -64,13 +72,12 @@ class PCA(BaseEstimator):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
         U, S, V = linalg.svd(X, full_matrices=False)
-        scores = np.dot(U, S)
-        S /= sqrt(n_samples-1)
-        latent = S**2
-        
+        self.explained_variance_ = S**2
+        self.explained_variance_ /= self.explained_variance_.sum()
         self.components_ = V
         if self.k is not None:
             self.components_ = self.components_[:,:self.k]
+            self.explained_variance_ = self.explained_variance_[:self.k]
 
         return self
 

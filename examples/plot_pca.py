@@ -18,6 +18,9 @@ target_names = iris.target_names
 pca = PCA(k=2)
 X_r = pca.fit(X).transform(X)
 
+# Percentage of variance explained for each components
+print pca.explained_variance_
+
 pl.figure()
 pl.hold('on')
 for c, i, target_name in zip("rgb", [0, 1, 2], target_names):
