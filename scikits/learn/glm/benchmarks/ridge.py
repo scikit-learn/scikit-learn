@@ -7,6 +7,7 @@ Data comes from a random square matrix.
 from datetime import datetime
 import numpy as np
 from scikits.learn import glm
+from scikits.learn.utils.bench import total_seconds
 import pylab as pl
 
 
@@ -33,18 +34,18 @@ if __name__ == '__main__':
         start = datetime.now()
         ridge = glm.Ridge(alpha=0.)
         ridge.fit (X, Y)
-        time_ridge[i] = (datetime.now() - start).total_seconds()
+        time_ridge[i] = total_seconds(datetime.now() - start)
 
         start = datetime.now()
         ols = glm.LinearRegression()
         ols.fit (X, Y)
-        time_ols[i] = (datetime.now() - start).total_seconds()
+        time_ols[i] = total_seconds(datetime.now() - start)
 
 
         start = datetime.now()
         lasso = glm.LassoLARS()
         lasso.fit (X, Y)
-        time_lasso[i] = (datetime.now() - start).total_seconds()
+        time_lasso[i] = total_seconds(datetime.now() - start)
 
         
 
