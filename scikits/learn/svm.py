@@ -472,6 +472,9 @@ class NuSVC(_BaseLibSVM, ClassifierMixin):
     `support_` : array-like, shape = [nSV, n_features]
         Support vectors.
 
+    `n_support_` : array-like, dtype=int32, shape = [n_class]
+        number of support vector for each class.
+
     `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficients of the support vector in the decision function.
 
