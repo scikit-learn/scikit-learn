@@ -20,15 +20,46 @@
     div.bodywrapper h1 {
         text-align: center;
         font-size: 300% ;
+        color: #000;
+        border: none;
+        background-color: #FFFFFF;
+        padding: 3px 0 0 0;
+        margin: 0 0 -16px 0;
     }
   
   </style>
 
-
-
 ===========================================
 Scikits.learn: machine learning in Python
 ===========================================
+
+.. |banner1| image:: auto_examples/cluster/images/plot_affinity_propagation.png
+   :height: 150
+   :target: auto_examples/cluster/plot_affinity_propagation.html
+
+
+.. |banner2| image:: auto_examples/svm/images/plot_custom_kernel.png
+   :height: 150
+   :target: auto_examples/svm/plot_custom_kernel.html
+
+.. |banner3| image:: auto_examples/svm/images/plot_oneclass.png
+   :height: 150
+   :target: auto_examples/svm/plot_oneclass.html
+
+.. |banner4| image:: auto_examples/cluster/images/plot_lena_segmentation.png
+   :height: 150
+   :target: auto_examples/cluster/plot_lena_segmentation.html
+
+.. |center-div| raw:: html
+
+    <div style="text-align: center; margin: 0px 0 -5px 0;">
+
+.. |end-div| raw:: html
+
+    </div>
+
+
+|center-div| |banner1| |banner2| |banner3| |banner4| |end-div| 
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
 
@@ -84,12 +115,8 @@ Scikits.learn: machine learning in Python
 
   * **Planed**: Gaussian graphical models, matrix factorization, ICA
 
-:Download packages: 
-  https://sourceforge.net/projects/scikit-learn/files/
-                            
-:Mailing list:
-  https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
-
+:License:
+  Open source, commercially usable: **BSD license** (3 clause)
 
 User guide
 ======================
