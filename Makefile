@@ -6,10 +6,10 @@ NOSETESTS ?= nosetests
 all: clean inplace test
 
 clean-pyc:
-	find -name "*.pyc" | xargs rm -f
+	find . -name "*.pyc" | xargs rm -f
 
 clean-so:
-	find -name "*.so" | xargs rm -f
+	find . -name "*.so" | xargs rm -f
 
 clean-build:
 	rm -rf build
