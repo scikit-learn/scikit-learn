@@ -19,7 +19,7 @@ def test_copysign():
     a = np.array([-1, 1, -1])
     b = np.array([ 1, -1, 1])
 
-    assert_array_equal (np.copysign (a, b), b)
-    assert_array_equal (np.copysign (b, a), a)
+    assert_array_equal (_copysign (a, b), b)
+    assert_array_equal (_copysign (b, a), a)
 
 
