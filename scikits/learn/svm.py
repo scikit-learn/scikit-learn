@@ -62,7 +62,7 @@ class _BaseLibSVM(BaseEstimator):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
         Y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
@@ -96,9 +96,9 @@ class _BaseLibSVM(BaseEstimator):
                                        dtype=np.int32, order='C')
 
         # check dimensions
-        if _X.shape[0] != Y.shape[0]: 
-            raise ValueError("Incompatible shapes")
         solver_type = self._svm_types.index(self.impl)
+        if solver_type != 2 and _X.shape[0] != Y.shape[0]: 
+            raise ValueError("Incompatible shapes")
 
         if (self.gamma == 0): 
             self.gamma = 1.0/_X.shape[0]
@@ -434,8 +434,7 @@ class NuSVC(_BaseLibSVM, ClassifierMixin):
     nu : float, optional
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
-        interval (0, 1].  By default 0.5 will be taken.  Only
-        available if impl='nu_svc'
+        interval (0, 1].  By default 0.5 will be taken.
 
     kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
@@ -665,42 +664,43 @@ class NuSVR(_BaseLibSVM, RegressorMixin):
 
 class OneClassSVM(_BaseLibSVM):
     """
-    Outlayer detection
+    Outliers detection
 
     Parameters
     ----------
 
-    kernel : string, optional Specifies the kernel type to be used in
-         the algorithm. one of 'linear', 'poly', 'rbf', 'sigmoid',
-         'precomputed'. If none is given 'rbf' will be used.
+    kernel : string, optional
+        Specifies the kernel type to be used in
+        the algorithm. Can be one of 'linear', 'poly', 'rbf', 'sigmoid',
+        'precomputed'. If none is given 'rbf' will be used.
 
-    nu : float, optional An upper bound on the fraction of training
+    nu : float, optional
+        An upper bound on the fraction of training
         errors and a lower bound of the fraction of support
-        vectors. Should be in the interval (0, 1].  By default 0.5
+        vectors. Should be in the interval (0, 1]. By default 0.5
         will be taken. 
 
     degree : int, optional
-        degree of kernel function. Significant only in poly, rbf, sigmoid
+        Degree of kernel function. Significant only in poly, rbf, sigmoid.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf.
+        Kernel coefficient for rbf.
 
     C : float, optional (default=1.0)
-        penalty parameter C of the error term.
+        Penalty parameter C of the error term.
     
     probability: boolean, optional (False by default)
-        enable probability estimates. Must be enabled prior to calling
+        Enable probability estimates. Must be enabled prior to calling
         prob_predict.
 
     coef0 : float, optional
-        independent term in kernel function. It is only significant in
+        Independent term in kernel function. It is only significant in
         poly/sigmoid.
 
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
-
+        Support vectors.
 
     `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficient of the support vector in the decision function.
@@ -710,21 +710,27 @@ class OneClassSVM(_BaseLibSVM):
         problem). This is only available in the case of linear kernel.
     
     `intercept_` : array, shape = [n_classes-1]
-        constants in decision function
+        Constants in decision function.
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  cache_size=100.0, eps=1e-3, C=1.0, 
                  nu=0.5, p=0.1, shrinking=True, probability=False):
         _BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
-                         shrinking, probability)
+                             cache_size, eps, C, nu, p, shrinking, probability)
     
-    def fit(self, X, Y=None):
-        if Y is None:
-            n_samples = X.shape[0]
-            Y = [0] * n_samples
-        super(OneClassSVM, self).fit(X, Y)
+    def fit(self, X):
+        """
+        Detects the soft boundary (aka soft boundary) of the set of samples X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Set of samples, where n_samples is the number of samples and
+            n_features is the number of features.
+        
+        """
+        super(OneClassSVM, self).fit(X, [])
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin):

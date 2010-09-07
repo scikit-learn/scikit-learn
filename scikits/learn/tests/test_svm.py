@@ -128,7 +128,7 @@ def test_oneclass():
     Test OneClassSVM
     """
     clf = svm.OneClassSVM()
-    clf.fit(X, Y)
+    clf.fit(X)
     pred = clf.predict(T)
 
     assert_array_almost_equal(pred, [1, -1, -1])
