@@ -28,10 +28,10 @@ X[:, 6] = -X[:, 6]
 # Demo path functions
 ################################################################################
 
-
+G = np.dot(X.T, X)
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-alphas, active, path = glm.lars_path(X, y, method='lasso', max_iter=12)
+alphas, active, path = glm.lars_path(X, y, Gram = G, method='lasso', max_iter=12)
 print "This took ", datetime.now() - start
 
 alphas = np.sum(np.abs(path.T), axis=1)

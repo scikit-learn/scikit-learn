@@ -23,8 +23,7 @@ from ..utils.fixes import copysign
 # all linalg.solve solve a triangular system, so this could be heavily
 # optimized by binding (in scipy ?) trsv or trsm
 
-def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", 
-                    verbose=False, precompute=True):
+def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precompute=True):
     """ Compute Least Angle Regression and LASSO path
 
         Parameters
@@ -100,19 +99,28 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
 
     Xt  = X.T
 
+    if Gram is not None:
+        res_init = np.dot (X.T, y)
+
     while 1:
 
         n_unactive = X.shape[1] - n_pred # number of unactive elements
-        res = y - np.dot (X, beta[n_iter]) # there are better ways
 
         if n_unactive:
-        # Calculate covariance matrix and get maximum
-            arrayfuncs.dot_over (X.T, res, active_mask, np.False_, Cov)  
+            # Calculate covariance matrix and get maximum
+            if Gram is None:
+                res = y - np.dot (X, beta[n_iter]) # there are better ways
+                arrayfuncs.dot_over (X.T, res, active_mask, np.False_, Cov)
+            else:
+                # could use dot_over
+                Cov = res_init - np.dot (Gram, beta[n_iter])
+
             imax  = np.argmax (np.abs(Cov[:n_unactive])) #rename
             C_    = Cov [imax]
             # np.delete (Cov, imax) # very ugly, has to be fixed
         else:
             # special case when all elements are in the active set
+            # error, no res
             C_ = np.dot (X.T[0], res)
 
         alpha = np.abs(C_) # ugly alpha vs alphas
@@ -142,9 +150,12 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
 
             sign_active [n_pred-1] = np.sign (C_)
 
-            X_max = Xt[imax]
+            if Gram is None:
+                X_max = Xt[imax]
+                c = np.dot (X_max, X_max)
+            else:
+                c = Gram[imax, imax]
 
-            c = np.dot (X_max, X_max)
             L [n_pred-1, n_pred-1] = c
 
             if n_pred > 1:
@@ -160,12 +171,15 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar",
         # Now we go into the normal equations dance.
         # (Golub & Van Loan, 1996)
 
-        b = copysign (Cov_max.repeat(n_pred), sign_active[:n_pred])
+        b = copysign (C_.repeat(n_pred), sign_active[:n_pred])
         b = linalg.cho_solve ((L[:n_pred, :n_pred], True),  b)
 
         C = A = np.abs(C_)
-        u = np.dot (Xa.T, b)
-        arrayfuncs.dot_over (X.T, u, active_mask, np.False_, a)
+        if Gram is None:
+            u = np.dot (Xa.T, b)
+            arrayfuncs.dot_over (X.T, u, active_mask, np.False_, a)
+        else:
+            a = np.dot (Gram.T[active], b)
 
         # equation 2.13, there's probably a simpler way
         g1 = (C - Cov[:n_unactive]) / (A - a[:n_unactive])
@@ -270,7 +284,7 @@ class LARS (LinearModel):
         self.normalize = normalize
         self.coef_ = None
 
-    def fit (self, X, y, **params):
+    def fit (self, X, y, Gram=None, **params):
         self._set_params(**params)
                 # will only normalize non-zero columns
 
