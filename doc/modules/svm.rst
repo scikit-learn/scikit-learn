@@ -5,7 +5,7 @@ Support Vector Machines
 .. currentmodule:: scikits.learn.svm
 
 **Support vector machines (SVMs)** are a set of supervised learning
-methods used for classification, regression and outlayer detection.
+methods used for classification, regression and outliers detection.
 
 The advantages of Support Vector Machines are:
 
@@ -14,17 +14,17 @@ The advantages of Support Vector Machines are:
     - Still effective in cases where number of dimensions is greater
       than the number of samples.
 
-    - Uses a subset of training points in the decission function (called
+    - Uses a subset of training points in the decision function (called
       support vectors), so it is also memory efficient.
 
     - Versatile: different :ref:`svm_kernels` can be
       specified for the decission function. Common kernels are
-      provided, but it is also possibly to specify custom kernels.
+      provided, but it is also possible to specify custom kernels.
 
-The dissadvantes of Support Vector Machines include:
+The dissadvantages of Support Vector Machines include:
 
     - If the number of features is much greater than the number of
-      samples, the method is likely to give poor performance.
+      samples, the method is likely to give poor performances.
 
     - SVMs do not directly provide probability estimates, so these
       must be calculated using indirect techniques. In our case, these
@@ -36,18 +36,18 @@ The dissadvantes of Support Vector Machines include:
 Classification
 ==============
 
-Suppose some given data points each belong to one of N classes, and
+Suppose some given data points each belonging to one of N classes, and
 the goal is to decide which class a new data point will be in. The
-classes that permform this task are :class:`SVC`, :class:`NuSVC` and
+classes that perform this task are :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC`.
 
 :class:`SVC` and :class:`NuSVC` are similar methods, but accept
-slightly different set of parameters and have different mathematical
+slightly different sets of parameters and have different mathematical
 formulations (see section :ref:`svm_mathematical_formulation`). On the
 other hand, :class:`LinearSVC` is another implementation of SVC
 optimized in the case of a linear kernel. Note that :class:`LinearSVC`
 does not accept keyword 'kernel', as this is assumed to be linear. It
-also lacks some of the memebrs of SVC and NuSVC, like support\_.
+also lacks some of the members of SVC and NuSVC, like support\_.
 
 
 .. figure:: ../auto_examples/svm/images/plot_iris.png
@@ -132,7 +132,7 @@ Density estimation
 One-class SVM is used for outliers detection, that is, given a set of
 samples, it will detect the soft boundary of that set so as to
 classify new points as belonging to that set or not. The class that
-implement this is called :class:`OneClassSVM`
+implements this is called :class:`OneClassSVM`
 
 
 In this case, as it is a type of unsupervised learning, the fit method
@@ -327,7 +327,7 @@ The decision function is:
 
 .. TODO multiclass case ?/
 
-This parameters can accessed through the memebers support\_ and intercept\_:
+This parameters can be accessed through the members support\_ and intercept\_:
 
      - Member support\_ holds the product :math:`y^T \alpha`
 
@@ -364,7 +364,7 @@ Frequently Asked Questions
 Implementation details
 ======================
 
-Internally, we usel `libsvm
+Internally, we use `libsvm
 <http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`_ to handle all
 computations. Libsvm is wrapped using C and Cython.
 
