@@ -47,12 +47,11 @@ class PCA(BaseEstimator):
     Examples
     --------
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> pca = PCA(k=1)
+    >>> pca = PCA(k=2)
     >>> pca.fit(X)
-    PCA(k=1, copy=True)
-    >>> print pca.components_
-    [[ 0.83849224]
-     [-0.54491354]]
+    PCA(k=2, copy=True)
+    >>> print pca.explained_variance_
+    [ 0.99244289  0.00755711]
 
     See also
     --------
