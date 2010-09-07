@@ -30,6 +30,7 @@ chronological order:
   * Angel Soler Gollonet (Graphical Design)
   * Yaroslav Halchenko (maintainer for Debian OS)
   * Ron Weiss
+  * Virgile Fritsch <virgile.fritsch@gmail.com>. Bug fixes.
 
 If I forgot anyone, do not hesitate to send me an email to
 fabian.pedregosa@inria.fr and I'll include you in the list.
