@@ -29,7 +29,6 @@ responses predicted by the linear approximation.
 .. figure:: ../auto_examples/glm/images/plot_ols.png
    :target: ../auto_examples/glm/plot_ols.html
    :scale: 50%
-   :align: center
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
 and will store the coefficients :math:`w` of the linear model in its

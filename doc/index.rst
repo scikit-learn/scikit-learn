@@ -1,36 +1,6 @@
-.. raw:: html
-
-  <style type="text/css">
-    li.toctree-l1 {
-        padding: 0.5em 0 1em 0 ;
-        list-style-type: none;
-        font-size: 150% ;
-        }
-
-    li.toctree-l2 {
-        font-size: 70% ;
-        list-style-type: square;
-        }
-
-    li.toctree-l3 {
-        font-size: 85% ;
-        list-style-type: circle;
-        }
-
-    div.bodywrapper h1 {
-        text-align: center;
-        font-size: 300% ;
-        color: #000;
-        border: none;
-        background-color: #FFFFFF;
-        padding: 3px 0 0 0;
-        margin: 0 0 -16px 0;
-    }
-  
-  </style>
 
 ===========================================
-Scikits.learn: machine learning in Python
+scikits.learn: machine learning in python
 ===========================================
 
 .. |banner1| image:: auto_examples/cluster/images/plot_affinity_propagation.png
@@ -38,7 +8,7 @@ Scikits.learn: machine learning in Python
    :target: auto_examples/cluster/plot_affinity_propagation.html
 
 
-.. |banner2| image:: auto_examples/svm/images/plot_custom_kernel.png
+.. |banner2| image:: auto_examples/glm/images/plot_lasso_lars.png
    :height: 150
    :target: auto_examples/svm/plot_custom_kernel.html
 
@@ -75,10 +45,22 @@ Scikits.learn: machine learning in Python
     engineering**.
     
 
+
+:Features:
+  * **Solid**: :ref:`supervised-learning`: classification, regression
+
+  * **Work in progress**: :ref:`unsupervised-learning`: :ref:`clustering`, 
+    :ref:`gmm`, manifold learning, ICA
+
+  * **Planed**: Gaussian graphical models, matrix factorization
+
+:License:
+  Open source, commercially usable: **BSD license** (3 clause)
+
+
 .. raw:: html
 
-    <small>
-    <a href="auto_examples/plot_digits_classification.html"><img src="_images/plot_digits_classification.png" align="right" style="width: 400px"/></a>
+   <div class="example_digits">
 
 :ref:`A simple Example: recognizing hand-written digits <example_plot_digits_classification.py>` ::
 
@@ -101,22 +83,15 @@ Scikits.learn: machine learning in Python
         pl.subplot(2, 4, index+5)
         pl.imshow(image, cmap=pl.cm.gray_r)
         pl.title('Prediction: %i' % classifier.predict(image.ravel()))
-    
+
+.. image:: images/plot_digits_classification.png
+   :height: 140
+   :target: auto_examples/plot_digits_classification.html
+
 .. raw:: html
 
-    </small>
+    </div>
 
-
-:Features:
-  * **Solid**: :ref:`supervised-learning`: classification, regression
-
-  * **Work in progress**: :ref:`unsupervised-learning`: :ref:`clustering`, 
-    :ref:`gmm`, manifold learning, ICA
-
-  * **Planed**: Gaussian graphical models, matrix factorization
-
-:License:
-  Open source, commercially usable: **BSD license** (3 clause)
 
 User guide
 ======================
@@ -131,16 +106,39 @@ User guide
    :maxdepth: 3
 
    install
+
+Tutorial
+========
+
+.. toctree::
+   :maxdepth: 2
+
    tutorial
+
+Reference
+=========
+
+.. toctree::
+   :maxdepth: 2
+
    supervised_learning
    unsupervised_learning
    model_selection
    cross_validation
+   modules/classes
+
+Gallery
+=======
 
 .. toctree::
    :maxdepth: 2
 
    auto_examples/index
-   modules/classes
+
+Developement
+============
+.. toctree::
+   :maxdepth: 2
+
    developers/index
    performance
