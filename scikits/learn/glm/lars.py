@@ -120,7 +120,8 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precomp
             # np.delete (Cov, imax) # very ugly, has to be fixed
         else:
             # special case when all elements are in the active set
-            # error, no res
+
+            res = y - np.dot (X, beta[n_iter])
             C_ = np.dot (X.T[0], res)
 
         alpha = np.abs(C_) # ugly alpha vs alphas
@@ -130,7 +131,6 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precomp
             break
 
         if (alpha < alpha_min): break
-
 
         if not drop:
 
@@ -159,7 +159,10 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precomp
             L [n_pred-1, n_pred-1] = c
 
             if n_pred > 1:
-                b = np.dot (X_max, Xa.T)
+                if Gram is None:
+                    b = np.dot (X_max, Xa.T)
+                else:
+                    b = Gram[imax, active[:-1]]
 
                 # please refactor me, using linalg.solve is overkill
                 L [n_pred-1, :n_pred-1] = linalg.solve (L[:n_pred-1, :n_pred-1], b)
@@ -179,7 +182,7 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precomp
             u = np.dot (Xa.T, b)
             arrayfuncs.dot_over (X.T, u, active_mask, np.False_, a)
         else:
-            a = np.dot (Gram.T[active], b)
+            a = np.dot (Gram[active].T, b)
 
         # equation 2.13, there's probably a simpler way
         g1 = (C - Cov[:n_unactive]) / (A - a[:n_unactive])
