@@ -237,8 +237,173 @@ Examples
 --------
 :ref:`example_glm_plot_lar.py`, :ref:`example_glm_plot_lasso_lars.py`
 
-References
-----------
-Original Algorithm is detailed in the 
-`paper <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_ by Hastie et al.
+References 
+---------- 
+Original Algorithm is detailed in the `paper
+<http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+by Hastie et al.
 
+
+
+
+
+Bayesian Regression
+===================
+
+Bayesian regression techniques can be used to include regularization parameters
+in the estimation procedure. This can be done by introducing some prior
+knowledge over the parameters. 
+For example, penalization by weighted :math:`\ell_{2}` norm is equivalent to
+setting Gaussian priors on the weights. 
+
+The advantages of *Bayesian Regression* are:
+
+    - It adapts to the data at hand.
+
+    - It can be used to include regularization parameters in the
+        estimation procedure.
+
+The dissadvantages of *Bayesian Regression* include:
+
+    - Inference of the model can be time consuming.
+
+
+Bayesian Ridge Regression
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to avoid the overfit issue of :ref:`ordinary_least_squares`, one can
+add the following prior on :math:`\beta`:
+
+.. math:: p(\beta|\lambda) =  
+    \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
+
+The resulting model is called *Bayesian Ridge Regression*, and is
+similar to the classical :class:`Ridge`.  :math:`\lambda` is an
+*hyper-parameter* and the prior over :math:`\beta` performs a
+shrinkage or regularization, by constraining the values of the weights
+to be small. Indeed, with a large value of :math:`\lambda`, the
+Gaussian is narrowed around 0 which does not allow large values of
+:math:`\beta`, and with low value of :math:`\lambda`, the Gaussian is
+very flattened which allows values of :math:`\beta`.  Here, we use a
+*non-informative* prior for :math:`\lambda`.
+
+
+The parameters are estimated by maximizing the *marginal log likelihood*.
+
+
+.. figure:: ../auto_examples/glm/images/plot_bayesian_ridge.png
+   :target: ../auto_examples/glm/plot_bayesian_ridge.html
+   :align: center
+
+
+*Bayesian Ridge Regression* is used for regression:
+
+    >>> from scikits.learn import glm
+    >>> X = [[0., 0.], [1., 2.], [2., -1.], [3., -1.]]
+    >>> Y = [0., 1., 2., 3.]
+    >>> clf = glm.BayesianRidge()
+    >>> clf.fit (X, Y)
+    BayesianRidge(n_iter=300, th_w=1e-12, compute_ll=False, fit_intercept=True)
+
+After being fitted, the model can then be used to predict new values::
+
+    >>> clf.predict ([[-1.5, 0.]])
+    array([ 1.5])
+
+
+The weights :math:`\beta` of the model can be access:
+
+    >>> clf.coef_
+    array([ 0.93688528, -0.03034525])
+
+Due to the Bayesian framework, the weights found are slightly different to the
+ones found by :ref:`ordinary_least_squares`. However, *Bayesian Ridge
+Regression* is more robust to ill-posed problem.
+
+
+Examples
+~~~~~~~~
+:ref:`example_glm_plot_bayesian_ridge.py`
+
+References
+~~~~~~~~~~
+More details can be found in the article
+`paper
+<http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=
+pdf>`_ by MacKay, David J. C.
+
+
+
+
+
+Automatic Relevance Determination - ARD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A more sophisticated prior :math:`\beta` can be added, where we assume that
+each weight :math:`\beta_{i}` is drawn in a Gaussian distribution, centered on zero
+and with a precision  :math:`\lambda_{i}`:
+
+.. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
+
+with :math:`diag \; (A) = lambda = \{\lambda_{1},...,\lambda_{p}\}`.
+We use a *non-informative* prior for :math:`\lambda`.
+
+
+.. figure:: ../auto_examples/glm/images/plot_ard.png
+   :target: ../auto_examples/glm/plot_ard.html
+   :align: center
+
+
+
+Examples
+~~~~~~~~
+:ref:`example_glm_plot_ard.py`
+
+Mathematical formulation
+------------------------
+
+A prior is introduced as a distribution :math:`p(\theta)` over the parameters.
+This distribution is set before processing the data. The parameters of a prior
+distribution are called *hyper-parameters*. This description is based on the
+Bayes theorem :
+
+.. math:: p(\theta|\{X,y\})
+   = \frac{p(\{X,y\}|\theta)p(\theta)}{p(\{X,y\})}
+
+With :
+    - :math:`p({X, y}|\theta)` the likelihood : it expresses how probable it is
+      to observe :math:`{X,y}` given :math:`\theta`.
+
+    - :math:`p({X, y})` the marginal probability of the data : it can be
+      considered as a normalizing constant, and is computed by integrating
+      :math:`p({X, y}|\theta)` with respect to :math:`\theta`.
+
+    - :math:`p(\theta)` the prior over the parameters : it expresses the
+      knowledge that we can have about :math:`\theta` before processing the
+      data.
+
+    - :math:`p(\theta|{X, y})` the conditional probability (or posterior
+      probability) : it expresses the uncertainty in :math:`\theta`  after
+      observing the data.
+
+
+All the following regressions are based on the following Gaussian
+assumption:
+
+.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
+
+where :math:`\alpha` is the precision of the noise.
+
+
+
+References
+~~~~~~~~~~
+Original Algorithm is detailed in the  book *Bayesian learning for neural
+networks* by Radford M. Neal
+
+
+
+
+
+
+ 

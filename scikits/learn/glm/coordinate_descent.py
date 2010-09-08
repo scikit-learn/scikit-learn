@@ -181,6 +181,76 @@ class ElasticNet(Lasso):
         return self
 
 
+
+class ElasticNetab(Lasso):
+    """Linear Model trained with L1 and L2 prior as regularizer
+
+    rho=1 is the lasso penalty. Currently, rho <= 0.01 is not
+    reliable, unless you supply your own sequence of alpha.
+
+    Parameters
+    ----------
+    alpha : float
+        Constant that multiplies the L1 term. Defaults to 1.0
+    rho : float
+        The ElasticNet mixing parameter, with 0 < rho <= 1.
+    corf: ndarray of shape n_features
+        The initial coeffients to warm-start the optimization
+    fit_intercept: bool
+        Whether the intercept should be estimated or not. If False, the
+        data is assumed to be already centered.
+    """
+
+    def __init__(self, alpha=1.0, beta=0.5, coef_=None, 
+                fit_intercept=True):
+        self.alpha = alpha
+        self.beta = beta
+        self.coef_ = coef_
+        self.fit_intercept = fit_intercept
+
+
+    def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
+        """Fit Elastic Net model with coordinate descent"""
+        self._set_params(**params)
+        X = np.asanyarray(X, dtype=np.float64)
+        Y = np.asanyarray(Y, dtype=np.float64)
+
+        if self.fit_intercept:
+            self._xmean = X.mean(axis=0)
+            self._ymean = Y.mean(axis=0)
+            X = X - self._xmean
+            Y = Y - self._ymean
+        else:
+            self._xmean = np.zeros(X.shape[1])
+            self._ymean = np.zeros(X.shape[0])
+
+        if self.coef_ is None:
+            self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
+
+        n_samples = X.shape[0]
+        alpha = self.alpha * n_samples
+        beta = self.beta
+
+        X = np.asfortranarray(X) # make data contiguous in memory
+
+        self.coef_, self.dual_gap_, self.eps_ = \
+                cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
+                                        maxit, tol)
+
+        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+
+        if self.dual_gap_ > self.eps_:
+            warnings.warn('Objective did not converge, you might want'
+                                'to increase the number of interations')
+
+        # Store explained variance for __str__
+        self.explained_variance_ = self._explained_variance(X, Y)
+
+        # return self for chaining fit and predict calls
+        return self
+
+
+
 ################################################################################
 # Classes to store linear models along a regularization path 
 ################################################################################
