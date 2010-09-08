@@ -8,39 +8,48 @@ from ..utils.extmath import fast_logdet
 
 class BayesianRidge(LinearModel):
     """
-    Bayesian ridge regression. Optimize the regularization parameters lambda
-    (precision of the weights) and alpha (precision of the noise) within a
-    simple bayesian framework (MAP).
+    Bayesian ridge regression.
+
+    Fit a Ridge model and optimize the regularization parameters
+    lambda (precision of the weights) and alpha (precision of the
+    noise) within a simple bayesian framework (MAP).
 
     Parameters
     ----------
     X : numpy array of shape (length,features)
-    data
+        Training vectors.
+
     Y : numpy array of shape (length)
-    target
-    step_th : int (defaut is 300)
-      Stop the algorithm after a given number of steps.
+        Target values for training vectors.
+
+    n_iter : int (defaut is 300)
+        Stop the algorithm after a given number of steps.
+
     th_w : float (defaut is 1.e-12)
-    Stop the algorithm if w has converged.
-    ll_bool  : boolean (default is False).
+        Stop the algorithm if w has converged.
+
+    compute_ll  : boolean (default is False).
         If True, compute the log-likelihood at each step of the model.
 
-    Returns
-    -------
-    w : numpy array of shape (nb_features)
-      mean of the weights distribution.
-    alpha : float
-    precision of the weights.
-    beta : float
-    precision of the noise.
-    sigma : numpy array of shape (nb_features,nb_features)
-    variance-covariance matrix of the weights
+    fit_itercept : boolean, optional (True by default)
+
+    Attributes
+    ----------
+    coef_ : array-like
+        Mean of the weights distribution.
+
+    lambda_ : float
+        Precision parameter.
+
+    beta_ : float
+        Precision of the noise.
+
+    sigma_ : array-like, shape [n_features,n_features]
+        Variance-covariance matrix of the weights
+
     log_likelihood : list of float of size steps.
           Compute (if asked) the log-likelihood of the model.
 
-    Notes
-    -----
-    See Bishop p 167-169 for more details.
     """
     def __init__(self, n_iter=300, th_w=1.e-12, compute_ll=False,
         fit_intercept=True):

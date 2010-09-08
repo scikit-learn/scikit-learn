@@ -1,11 +1,20 @@
+"""
+Pipeline: chain transforms and estimators to build a composite estimator.
+"""
+# Author: Edouard Duchesnay
+#         Gael Varoquaux
+#         Virgile Fritsch
+# Licence: BSD
+
 from .base import BaseEstimator
+
 
 class Pipeline(BaseEstimator):
     """
-    Pipeline of transformers with a final predictor
-    Sequentialy apply a list of transformers and a final predictor
-    A transformer implements fit & transform methods
-    A predictor implements fit & predict methods
+    Pipeline of transformers with a final estimator 
+    Sequentialy apply a list of transformers and a final estimator 
+    A transform implements fit & transform methods
+    A estimator implements fit & predict methods
 
     Example
     =======

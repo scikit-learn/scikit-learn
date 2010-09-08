@@ -13,9 +13,7 @@ from . import cd_fast
 
 
 class Lasso(LinearModel):
-    """
-    Linear Model trained with L1 prior as regularizer (a.k.a. the
-    lasso).
+    """Linear Model trained with L1 prior as regularizer (aka the Lasso)
 
     Parameters
     ----------
@@ -55,7 +53,6 @@ class Lasso(LinearModel):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.coef_ = coef_
-
 
     def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """
@@ -142,7 +139,6 @@ class ElasticNet(Lasso):
         self.rho = rho
         self.coef_ = coef_
         self.fit_intercept = fit_intercept
-
 
     def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """Fit Elastic Net model with coordinate descent"""
@@ -314,9 +310,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         models.append(model)
     return models
 
+
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
               verbose=False, fit_params=dict()):
-
     """Compute Elastic-Net path with coordinate descent
 
     Parameters
@@ -374,7 +370,6 @@ class LinearModelCV(LinearModel):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
-
 
     def fit(self, X, y, cv=None, **fit_params):
         """Fit linear model with coordinate descent along decreasing alphas
@@ -495,3 +490,4 @@ class ElasticNetCV(LinearModelCV):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
+

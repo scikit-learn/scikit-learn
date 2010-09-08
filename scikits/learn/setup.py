@@ -21,6 +21,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('features/tests')
     config.add_subpackage('cluster')
     config.add_subpackage('cluster/tests')
+    config.add_subpackage('covariance')
+    config.add_subpackage('covariance/tests')
     config.add_subpackage('feature_selection')
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('sparse')
