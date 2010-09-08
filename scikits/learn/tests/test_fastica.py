@@ -23,7 +23,6 @@ def center_and_norm(x, axis=-1):
     x /= x.std(axis=0)
 
 
-
 def test_gs():
     """
     Test gram schmidt orthonormalization
@@ -37,7 +36,7 @@ def test_gs():
     u = fastica._gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
     assert((tmp[:5]**2).sum()<1.e-10)
-    
+
 
 def test_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
@@ -93,7 +92,12 @@ def test_fastica(add_noise=False):
                     np.dot(s1_, s1)/n_samples, 1, decimal=1)
                 np.testing.assert_almost_equal(
                     np.dot(s2_, s2)/n_samples, 1, decimal=1)
-            
+
+    # Test FastICA class
+    ica = fastica.FastICA(fun=nl, algorithm=algo)
+    ica.fit(m)
+    ica.get_mixing_matrix()
+
 
 def test_non_square_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
@@ -135,8 +139,6 @@ def test_non_square_fastica(add_noise=False):
     if add_noise==False:
         np.testing.assert_almost_equal(np.dot(s1_, s1)/n_samples, 1, decimal=3)
         np.testing.assert_almost_equal(np.dot(s2_, s2)/n_samples, 1, decimal=3)
-
-
 
 
 """
