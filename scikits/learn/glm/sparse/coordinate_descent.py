@@ -8,7 +8,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import LinearModel
-#from . import cd_fast
+from . import cd_fast
 
 
 class ElasticNet(LinearModel):
