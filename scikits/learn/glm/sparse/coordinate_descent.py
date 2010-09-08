@@ -8,7 +8,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import LinearModel
-from . import cd_fast
+from . import cd_fast_sparse
 
 
 class ElasticNet(LinearModel):
@@ -69,9 +69,9 @@ class ElasticNet(LinearModel):
 
         # TODO: add support for non centered data
         coef_, self.dual_gap_, self.eps_ = \
-                cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
-                                                X.data, X.indices, X.indptr,
-                                                Y, maxit, tol)
+                cd_fast_sparse.enet_coordinate_descent(
+                    self.coef_, alpha, beta, X.data, X.indices, X.indptr, Y,
+                    maxit, tol)
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)

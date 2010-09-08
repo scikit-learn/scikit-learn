@@ -18,8 +18,8 @@ def configuration(parent_package='', top_path=None):
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
 
-    config.add_extension('cd_fast',
-                         sources=[join('src', 'cd_fast.c')],
+    config.add_extension('cd_fast_sparse',
+                         sources=[join('src', 'cd_fast_sparse.c')],
                          include_dirs=[numpy.get_include()],
                          extra_compile_args=['-std=c99'])
 
