@@ -199,6 +199,19 @@ class ARDRegression(LinearModel):
         self.X_XT = np.dot(X,X.T)
         self.XT_Y = np.dot(X.T,Y)
 
+        ### Launch the convergence loop
+        self.loop_ard(X,Y)
+        
+        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+        # Store explained variance for __str__
+        self.explained_variance_ = self._explained_variance(X, Y)
+        return self
+
+    
+    def loop_ard(self,X,Y):
+      
+        n_samples, n_features = X.shape
+      
         ### Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
 
@@ -230,11 +243,6 @@ class ARDRegression(LinearModel):
                     break
             self.coef_old_ = np.copy(self.coef_)
 
-        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
-        # Store explained variance for __str__
-        self.explained_variance_ = self._explained_variance(X, Y)
-        return self
-
 
 
 
@@ -247,9 +255,61 @@ class ARDRegression(LinearModel):
                 #log_likelihood.append(-0.5*ll)
 
 
+class RVM_R(ARDRegression):
+    """
+    See Bishop chapter 7.2. for more details.
+    This should be resived. It is not efficient and I wonder if we
+    can't use libsvm for this.
+    """
+
+    def __init__(self, n_iter=300, th_w=1.e-12, th_lb=1.e-12, kernel = "linear",
+                        compute_ll=False, fit_intercept=True):
+        self.n_iter = n_iter
+        self.th_w = th_w
+        self.th_lb = th_lb
+        self.kernel = kernel
+        self.compute_ll = compute_ll
+        self.fit_intercept = fit_intercept
 
 
+    def fit(self, X, Y, **params):
+        self._set_params(**params)
+        X = np.asanyarray(X, dtype=np.float)
+        Y = np.asanyarray(Y, dtype=np.float)
+        if self.kernel == "linear":
+            self.X_save = X
+            X = np.dot(X,X.T)
+        n_samples, n_features = X.shape
+
+        if self.fit_intercept:
+            self._xmean = X.mean(axis=0)
+            self._ymean = Y.mean(axis=0)
+            X = X - self._xmean
+            Y = Y - self._ymean
+        else:
+            self._xmean = 0.
+            self._ymean = 0.
 
 
+        ### "Dummy" initialization of the values of the parameters
+        self.alpha_ = 1./np.var(Y)
+        self.lambda_ = np.ones(n_features)
+        self.log_likelihood_ = []
+        self.X_XT = np.dot(X,X.T)
+        self.XT_Y = np.dot(X.T,Y)
+
+        ### Launch the convergence loop
+        self.loop_ard(X,Y)
+        
+        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+        # Store explained variance for __str__
+        #self.explained_variance_ = self._explained_variance(X, Y)
+        return self
+
+    def predict(self,Xtest):
+        Xtest = np.asanyarray(Xtest)
+        Xtest = np.dot(self.X_save,Xtest.T)
+        return np.dot(Xtest, self.coef_) + self.intercept_
+        
 
 
