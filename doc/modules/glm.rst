@@ -215,7 +215,7 @@ coefficients.
 
 Getting the full path
 ---------------------
-See function :function:`scikits.learn.glm.lars_path`.
+See function scikits.learn.glm.lars_path.
 
 
 Mathematical formulation
@@ -238,12 +238,10 @@ Examples
 :ref:`example_glm_plot_lar.py`, :ref:`example_glm_plot_lasso_lars.py`
 
 References 
----------- 
+----------
 Original Algorithm is detailed in the `paper
 <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
 by Hastie et al.
-
-
 
 
 
@@ -261,7 +259,7 @@ The advantages of *Bayesian Regression* are:
     - It adapts to the data at hand.
 
     - It can be used to include regularization parameters in the
-        estimation procedure.
+      estimation procedure.
 
 The dissadvantages of *Bayesian Regression* include:
 
@@ -269,15 +267,16 @@ The dissadvantages of *Bayesian Regression* include:
 
 
 Bayesian Ridge Regression
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 
-In order to avoid the overfit issue of :ref:`ordinary_least_squares`, one can
-add the following prior on :math:`\beta`:
+:class:`BayesianRidge` tries to avoid the overfit issue of
+:ref:`ordinary_least_squares`, by adding the following prior on
+:math:`\beta`:
 
 .. math:: p(\beta|\lambda) =  
     \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
 
-The resulting model is called *Bayesian Ridge Regression*, and is
+The resulting model is called *Bayesian Ridge Regression*, it is
 similar to the classical :class:`Ridge`.  :math:`\lambda` is an
 *hyper-parameter* and the prior over :math:`\beta` performs a
 shrinkage or regularization, by constraining the values of the weights
@@ -322,11 +321,11 @@ Regression* is more robust to ill-posed problem.
 
 
 Examples
-~~~~~~~~
+--------
 :ref:`example_glm_plot_bayesian_ridge.py`
 
 References
-~~~~~~~~~~
+----------
 More details can be found in the article
 `paper
 <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=
@@ -337,13 +336,14 @@ pdf>`_ by MacKay, David J. C.
 
 
 Automatic Relevance Determination - ARD
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=======================================
 
-A more sophisticated prior :math:`\beta` can be added, where we assume that
-each weight :math:`\beta_{i}` is drawn in a Gaussian distribution, centered on zero
-and with a precision  :math:`\lambda_{i}`:
+:class:`ARDRegression` adds a more sophisticated prior :math:`\beta`,
+where we assume that each weight :math:`\beta_{i}` is drawn in a
+Gaussian distribution, centered on zero and with a precision
+:math:`\lambda_{i}`:
 
-.. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
+.. math:: p(\beta|\lambda) = \mathcal{N}(\beta|0,A^{-1})
 
 with :math:`diag \; (A) = lambda = \{\lambda_{1},...,\lambda_{p}\}`.
 We use a *non-informative* prior for :math:`\lambda`.
@@ -354,9 +354,8 @@ We use a *non-informative* prior for :math:`\lambda`.
    :align: center
 
 
-
 Examples
-~~~~~~~~
+--------
 :ref:`example_glm_plot_ard.py`
 
 Mathematical formulation
@@ -397,13 +396,7 @@ where :math:`\alpha` is the precision of the noise.
 
 
 References
-~~~~~~~~~~
+----------
 Original Algorithm is detailed in the  book *Bayesian learning for neural
 networks* by Radford M. Neal
 
-
-
-
-
-
- 
