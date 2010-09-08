@@ -48,7 +48,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
     """
     n_nodes = adjacency.shape[0]
     # XXX: Should we check that the matrices given is symmetric
-    if mode == 'amg' and not amg_loaded:
+    if not amg_loaded:
         warnings.warn('pyamg not available, using scipy.sparse')
     if mode is None:
         mode = ('amg' if amg_loaded else 'arpack')
