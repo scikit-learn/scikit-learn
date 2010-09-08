@@ -12,6 +12,8 @@ import numpy as np
 from scipy import linalg
 import types
 
+from .base import BaseEstimator
+
 __all__ = ['fastica']
 
 
@@ -275,3 +277,32 @@ def fastica(X, n_comp=None,
         return W, S
 
 
+class FastICA(BaseEstimator):
+    """FastICA
+    
+    """
+    def __init__(self, n_comp=None, algorithm='parallel', whiten=True,
+                fun='logcosh', fun_prime='', fun_args={}, maxit=200, tol=1e-4,
+                w_init=None):
+        super(FastICA, self).__init__()
+        self.n_comp = n_comp
+        self.algorithm = algorithm
+        self.whiten = whiten
+        self.fun = fun
+        self.fun_prime = fun_prime
+        self.fun_args = fun_args
+        self.maxit = maxit
+        self.tol = tol
+        self.w_init = w_init
+
+    def fit(self, X, **params):
+        self._set_params(**params)
+        K, W, S = fastica(X, self.n_comp, self.algorithm, self.whiten,
+                        self.fun, self.fun_prime, self.fun_args, self.maxit,
+                        self.tol, self.w_init)
+        self.unmixing_matrix_ = W
+        return self
+
+    def transform(self, X):
+        return np.dot(self.unmixing_matrix_, X)
+    
