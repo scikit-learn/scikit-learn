@@ -27,12 +27,11 @@ class LinearModel(BaseEstimator, RegressorMixin):
     """Base class for Linear Models"""
 
     def predict(self, X):
-        """
-        Predict using the linear model
+        """Predict using the linear model
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : numpy array of shape [n_samples, n_features]
 
         Returns
         -------
