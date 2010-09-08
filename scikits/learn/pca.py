@@ -7,6 +7,7 @@ import numpy as np
 from scipy import linalg
 
 from .base import BaseEstimator
+from .utils.extmath import fast_logdet
 
 def _assess_dimension_(spect, rk, n, dim):
     """
@@ -94,10 +95,10 @@ class PCA(BaseEstimator):
     copy : bool
         If False, data passed to fit are overwritten
 
-    components_ : array, [n_features, k]
+    components_ : array, [n_features, n_comp]
         Components with maximum variance
 
-    explained_variance_ : array, [k]
+    explained_variance_ : array, [n_comp]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
@@ -130,6 +131,7 @@ class PCA(BaseEstimator):
 
     def fit(self, X, **params):
         self._set_params(**params)
+        self.dim = X.shape[1]
         n_samples = X.shape[0]
         X = np.atleast_2d(X)
         if self.copy:
@@ -138,8 +140,9 @@ class PCA(BaseEstimator):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
         U, S, V = linalg.svd(X, full_matrices=False)
-        self.explained_variance_ = S**2
-        self.explained_variance_ /= self.explained_variance_.sum()
+        self.explained_variance_ = (S**2)/n_samples
+        self.explained_variance_ratio_ = self.explained_variance_/\
+                                        self.explained_variance_.sum()
         self.components_ = V.T
         if self.n_comp=='mle':
             self.n_comp = _infer_dimension_(self.explained_variance_,
@@ -158,4 +161,55 @@ class PCA(BaseEstimator):
         Xr = np.dot(Xr, self.components_)
         return Xr
 
-    
+
+class ProbabilisticPCA(PCA):
+    """ Additional layer on top of PCA that add a probabilistic evaluation
+    """
+
+    def fit(self, X, homoscedastic=True):
+        """Additionally to PCA.fit, learns a covariance model
+
+        Parameters
+        ----------
+        X: array of shape(n_samples, n_dim), test data
+        homoscedastic: bool, optional,
+                       if True, average variance across remaining dimensions
+        """
+        PCA.fit(self, X)
+        Xr = X - self.mean_
+        Xr -= np.dot(np.dot(Xr, self.components_), self.components_.T)
+        n_samples = X.shape[0]
+        if self.dim<=self.n_comp:
+            delta = np.zeros(self.dim)
+        elif homoscedastic:
+            #delta = (Xr**2).sum()/(n_samples*(self.dim-self.n_comp)) *\
+            #        np.ones(self.dim)
+            delta = (Xr**2).sum()/(n_samples*(self.dim)) * np.ones(self.dim)
+        else:
+            delta = (Xr**2).mean(0)/(self.dim-self.n_comp)
+        self.covariance = np.diag(delta)
+        for k in range(self.n_comp):
+            add_cov =  np.dot(
+                self.components_[:, k:k+1], self.components_[:, k:k+1].T)
+            self.covariance += self.explained_variance_[k] * add_cov
+        return self
+        
+    def score(self, X):
+        """Return a scoreassociated to new data
+
+        Parameters
+        ----------
+        X: array of shape(n_samples, n_dim), test data
+
+        Returns
+        -------
+        ll: array of shape (n_samples),
+            log-likelihood of each row of X under the current model
+        """
+        Xr = X - self.mean_
+        log_like = np.zeros(X.shape[0])
+        self.precision = np.linalg.inv(self.covariance)
+        for i in range(X.shape[0]):
+            log_like[i] = -.5 * np.dot(np.dot(self.precision, Xr[i]), Xr[i])
+        log_like += fast_logdet(self.precision) - self.dim/2*np.log(2*np.pi)
+        return log_like
