@@ -107,6 +107,7 @@ class Pipeline(BaseEstimator):
             named_steps = dict()
             for step, name in zip(steps, names):
                 named_steps[name] = step
+        self.names = names
         self._named_steps = named_steps
         self.estimator = estimator
 
@@ -133,7 +134,7 @@ class Pipeline(BaseEstimator):
         else:
             for name, step in self._named_steps.iteritems():
                 for key, value in step._get_params().iteritems():
-                    out['%s_%s' (name, key)] = value
+                    out['%s_%s' % (name, key)] = value
         return out
 
 
@@ -157,8 +158,17 @@ class Pipeline(BaseEstimator):
                                         % params)
 
 
+    def _reinit(self):
+        """Clone the estimator without estimated parameters.
+        """
+        return self.__class__(
+                    transforms=[t._reinit() for t in self.transforms], 
+                    estimator=self.estimator._reinit(),
+                    names=self.names)
+
+
     # XXX: should be done
-    def __repr__(self):
+    def a__repr__(self):
         options = np.get_printoptions()
         np.set_printoptions(precision=5, threshold=64, edgeitems=2)
         class_name = self.__class__.__name__
@@ -193,8 +203,6 @@ class Pipeline(BaseEstimator):
                 class_name,
                 params_str
             )
-
-
 
     
     #---------------------------------------------------------------------------

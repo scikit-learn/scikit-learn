@@ -2,7 +2,7 @@
 Test the pipeline module.
 """
 
-from nose.tools import assert_true, assert_raises, assert_equal
+from nose.tools import assert_raises, assert_equal
 
 from ..pipeline import Pipeline
 from ..svm import SVC
@@ -50,6 +50,8 @@ def test_pipeline_init():
     assert_raises(AssertionError, Pipeline, 
                 transforms=[filter1, filter1], estimator=clf)
     # But that it's OK when specifying names
-    Pipeline(transforms=[filter1, filter1], estimator=clf, 
-                names=['filter1', 'filter2'])
-  
+    pipe = Pipeline(transforms=[filter1, filter1], estimator=clf, 
+                    names=['filter1', 'filter2'])
+    pipe2 = pipe._reinit()
+
+    assert_equal(pipe._get_params(), pipe2._get_params())
