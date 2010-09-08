@@ -6,7 +6,7 @@ class MyEstimator(BaseEstimator):
     def __init__(self, l1=0):
         self.l1 = l1
 
-def test_renew():
+def test_reinit():
     """Tests that BaseEstimator._new() creates a correct deep copy.
 
     We create an estimator, make a copy of its original state
@@ -21,7 +21,7 @@ def test_renew():
     assert_true(selector is not new_selector)
     assert_equal(selector._get_params(), new_selector._get_params())
     
-def test_renew_2():
+def test_reinit_2():
     """Tests that BaseEstimator._new() doesn't copy everything.
 
     We first create an estimator, give it an own attribute, and
