@@ -61,7 +61,7 @@ def test_LinearSVC():
     clf = svm.LinearSVC().fit(X, Y)
     sp_clf = sparse.svm.LinearSVC().fit(X, Y)
 
-    assert sp_clf.has_intercept
+    assert sp_clf.fit_intercept
     
     assert_array_almost_equal (clf.raw_coef_, sp_clf.raw_coef_, decimal=4)
 
@@ -80,7 +80,7 @@ def test_LinearSVC_iris():
     clf = svm.LinearSVC().fit(iris.data, iris.target)
 
     assert_array_almost_equal(clf.label_, sp_clf.label_)
-    assert_equal (clf.has_intercept, sp_clf.has_intercept)
+    assert_equal (clf.fit_intercept, sp_clf.fit_intercept)
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
     assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris.data))
