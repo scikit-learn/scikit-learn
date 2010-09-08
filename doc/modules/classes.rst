@@ -40,4 +40,13 @@ Generalized Linear Models
    glm.LinearRegression
    glm.Ridge
    glm.Lasso
-   
+
+
+Bayesian Regression
+===================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+   glm.BayesianRidge
+   glm.ARDRegression   
