@@ -30,23 +30,20 @@ def _gs_decorrelation(w, W, j):
     assumes that W is orthogonal
     w changed in place
     """
-    t = np.zeros_like(w)
-    for u in range(j):
-        t = t + np.dot(w, W[u]) * W[u]
-
-    w -= t
+    w -= np.dot(np.dot(w, W[:j].T), W[:j])
     return w
 
 
 def _sym_decorrelation(W):
-    """ Symmetric decorrelation """
+    """ Symmetric decorrelation
+    i.e. W <- (W * W.T) ^{-1/2} * W
+    """
     K = np.dot(W, W.T)
     s, u = linalg.eigh(K) 
     # u (resp. s) contains the eigenvectors (resp. square roots of 
-    # the eigenvalues) of W * W.T 
-    u, W = [np.asmatrix(e) for e in (u, W)]
-    W = (u * np.diag(1.0/np.sqrt(s)) * u.T) * W  # W = (W * W.T) ^{-1/2} * W
-    return np.asarray(W)
+    # the eigenvalues) of W * W.T
+    W = np.dot(np.dot(np.dot(u, np.diag(1.0/np.sqrt(s))),u.T), W)
+    return W 
 
 
 def _ica_def(X, tol, g, gprime, fun_args, maxit, w_init):
@@ -89,7 +86,7 @@ def _ica_def(X, tol, g, gprime, fun_args, maxit, w_init):
 def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
     """Parallel FastICA.
 
-    Used internally by FastICA.
+    Used internally by FastICA --main loop
 
     """
     n, p = X.shape
@@ -122,8 +119,9 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
 
     Parameters
     ----------
-    X : (n, p) array
-        Array with n observations (statistical units) measured on p variables.
+    X : (n, p) array of shape = [n_samples, n_features]
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
     n_comp : int, optional
         Number of components to extract. If None no dimension reduction
         is performed.
@@ -164,7 +162,7 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
     W : (n_comp, n_comp) array
         estimated un-mixing matrix
         The mixing matrix can be obtained by::
-            w = np.asmatrix(W) * K.T
+            w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
     S : (n_comp, n) array
         estimated source matrix
@@ -248,7 +246,7 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
         # in X has been projected onto a subspace by PCA
     else:
         X1 = X.copy()
-    X1 *= np.sqrt(n)
+    X1 *= np.sqrt(p)
 
     if w_init is None:
         w_init = np.random.normal(size=(n_comp, n_comp))

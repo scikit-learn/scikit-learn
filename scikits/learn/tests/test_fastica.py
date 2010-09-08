@@ -39,14 +39,9 @@ def test_gs():
     assert((tmp[:5]**2).sum()<1.e-10)
     
 
-def test_fastica(demo=False, figure=None):
+def test_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
 
-        Parameters
-        ----------
-        demo: boolean, optional
-            If demo is True, plot a figure to illustrate the algorithm
-        figure: int, option
     """
 
     n_samples = 1000
@@ -64,44 +59,41 @@ def test_fastica(demo=False, figure=None):
                        [np.sin(phi), -np.cos(phi)]])
     m  = np.dot(mixing, s)
 
-    ####
-    #m = np.vstack((m, np.random.randn(n_samples)))
-    ####
+    if add_noise:
+        m = np.vstack((m, np.random.randn( 1, n_samples)))
     
     center_and_norm(m)
-    k_, mixing_, s_ = fastica.fastica(m)
 
-    # Check that the mixing model described in the docstring holds:
-    np.testing.assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
+    algorithm = ['parallel', 'deflation']
+    non_linearity = ['logcosh', 'exp', 'cube']
+    for nl in non_linearity:
+        for algo in algorithm:
+            k_, mixing_, s_ = fastica.fastica(
+                m, n_comp=2, fun=nl, algorithm=algo)
 
-    center_and_norm(s_)
-    s1_, s2_ = s_
-    # Check to see if the sources have been estimated in the wrong order
-    if abs(np.dot(s1_, s2)) > abs(np.dot(s1_, s1)):
-        s2_, s1_ = s_
-    s1_ *= np.sign(np.dot(s1_, s1))
-    s2_ *= np.sign(np.dot(s2_, s2))
+            # Check that the mixing model described in the docstring holds:
+            np.testing.assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
 
-    # Check that we have estimated the original sources
-    np.testing.assert_almost_equal(np.dot(s1_, s1)/n_samples, 1, decimal=3)
-    np.testing.assert_almost_equal(np.dot(s2_, s2)/n_samples, 1, decimal=3)
+            center_and_norm(s_)
+            s1_, s2_ = s_
+            # Check to see if the sources have been estimated
+            # in the wrong order
+            if abs(np.dot(s1_, s2)) > abs(np.dot(s1_, s1)):
+                s2_, s1_ = s_
+            s1_ *= np.sign(np.dot(s1_, s1))
+            s2_ *= np.sign(np.dot(s2_, s2))
 
+            # Check that we have estimated the original sources
+            if add_noise==False:
+                np.testing.assert_almost_equal(
+                    np.dot(s1_, s1)/n_samples, 1, decimal=3)
+                np.testing.assert_almost_equal(
+                    np.dot(s2_, s2)/n_samples, 1, decimal=3)
 
-    if demo:
-        import pylab as pl
-        pl.figure(figure, figsize=(9, 7))
-        pl.clf()
-        pl.plot(t, m[0] + 3,    'g', label='Signal 1')
-        pl.plot(t, m[1] + 3,    'c', label='Signal 2')
-        pl.plot(t, s1      ,  'r', label='Source 1')
-        pl.plot(t, s1_    , 'k--', label='Estimated source 1')
-        pl.plot(t, s2 - 3,  'b', label='Source 2')
-        pl.plot(t, s2_ - 3, 'k--', label='Estimated source 2')
-        pl.legend()
-        pl.title('FastICA demo')
 
 
 if __name__ == '__main__':
-    #test_gs()
+    test_gs()
     test_fastica()
+    test_fastica(True)
 
