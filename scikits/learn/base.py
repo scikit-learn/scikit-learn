@@ -42,6 +42,17 @@ class BaseEstimator(object):
         return args
 
 
+    def _reinit(self):
+        """ Constructs a new estimator with the same parameters
+        than self. It's a kind of deep copy without actually copying
+        attached data.
+        """
+        klass = self.__class__
+        new_object_params = self._get_params()
+        new_object = klass(**new_object_params)
+        
+        return new_object
+
     def _get_params(self):
         out = dict()
         for key in self._get_param_names():
