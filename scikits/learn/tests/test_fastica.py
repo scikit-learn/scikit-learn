@@ -63,6 +63,11 @@ def test_fastica(demo=False, figure=None):
     mixing = np.array([[np.cos(phi),  np.sin(phi)], 
                        [np.sin(phi), -np.cos(phi)]])
     m  = np.dot(mixing, s)
+
+    ####
+    #m = np.vstack((m, np.random.randn(n_samples)))
+    ####
+    
     center_and_norm(m)
     k_, mixing_, s_ = fastica.fastica(m)
 
@@ -97,6 +102,6 @@ def test_fastica(demo=False, figure=None):
 
 
 if __name__ == '__main__':
-    test_gs()
+    #test_gs()
     test_fastica()
 

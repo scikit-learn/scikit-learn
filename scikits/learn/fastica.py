@@ -38,6 +38,17 @@ def _gs_decorrelation(w, W, j):
     return w
 
 
+def _sym_decorrelation(W):
+    """ Symmetric decorrelation """
+    K = np.dot(W, W.T)
+    s, u = linalg.eigh(K) 
+    # u (resp. s) contains the eigenvectors (resp. square roots of 
+    # the eigenvalues) of W * W.T 
+    u, W = [np.asmatrix(e) for e in (u, W)]
+    W = (u * np.diag(1.0/np.sqrt(s)) * u.T) * W  # W = (W * W.T) ^{-1/2} * W
+    return np.asarray(W)
+
+
 def _ica_def(X, tol, g, gprime, fun_args, maxit, w_init):
     """Deflationary FastICA using fun approx to neg-entropy function
 
@@ -74,16 +85,6 @@ def _ica_def(X, tol, g, gprime, fun_args, maxit, w_init):
     return W
 
 
-def _sym_decorrelation(W):
-    """ Symmetric decorrelation """
-    K = np.dot(W, W.T)
-    s, u = linalg.eigh(K) 
-    # u (resp. s) contains the eigenvectors (resp. square roots of 
-    # the eigenvalues) of W * W.T 
-    u, W = [np.asmatrix(e) for e in (u, W)]
-    W = (u * np.diag(1.0/np.sqrt(s)) * u.T) * W  # W = (W * W.T) ^{-1/2} * W
-    return np.asarray(W)
-
 
 def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
     """Parallel FastICA.
@@ -94,7 +95,7 @@ def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
     n, p = X.shape
 
     W = _sym_decorrelation(w_init)
-
+    
     # we set lim to tol+1 to be sure to enter at least once in next while
     lim = tol + 1 
     it = 0
@@ -102,7 +103,8 @@ def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
         wtx = np.dot(W, X)
         gwtx = g(wtx, fun_args)
         g_wtx = gprime(wtx, fun_args)
-        W1 = np.dot(gwtx, X.T)/float(p) - np.dot(np.diag(g_wtx.mean(axis=1)), W)
+        W1 = np.dot(gwtx, X.T)/float(p) \
+             - np.dot(np.diag(g_wtx.mean(axis=1)), W)
  
         W1 = _sym_decorrelation(W1)
         
@@ -113,14 +115,14 @@ def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
     return W
 
 
-def fastica(X, n_comp=None,
-            algorithm="parallel", whiten=True, fun="logcosh", fun_prime='', 
-            fun_args={}, maxit=200, tol=1e-04, w_init=None):
+def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
+            fun="logcosh", fun_prime='', fun_args={}, maxit=200,
+            tol=1e-04, w_init=None):
     """Perform Fast Independent Component Analysis.
 
     Parameters
     ----------
-    X : (p, n) array
+    X : (n, p) array
         Array with n observations (statistical units) measured on p variables.
     n_comp : int, optional
         Number of components to extract. If None no dimension reduction
@@ -172,7 +174,7 @@ def fastica(X, n_comp=None,
     -----
 
     The data matrix X is considered to be a linear combination of
-    non-Gaussian (independent) components i.e. X = SA where columns of S
+    non-Gaussian (independent) components i.e. X = AS where columns of S
     contain the independent components and A is a linear mixing
     matrix. In short ICA attempts to `un-mix' the data by estimating an
     un-mixing matrix W where S = W K X.
@@ -223,7 +225,7 @@ def fastica(X, n_comp=None,
         def gprime(x, fun_args):
             return fun_prime(x, **fun_args)
 
-    p, n = X.shape
+    n, p = X.shape
 
     if n_comp is None:
         n_comp = min(n, p)
@@ -231,17 +233,18 @@ def fastica(X, n_comp=None,
         n_comp = min(n, p)
         print("n_comp is too large: it will be set to %s" % n_comp)
 
-
     if whiten:
         # Centering the columns (ie the variables)
         X = X - X.mean(axis=-1)[:, np.newaxis]
 
         # Whitening and preprocessing by PCA
         u, d, _ = linalg.svd(X, full_matrices=False)
+                
         del _
         K = (u/d).T[:n_comp]  # see (6.33) p.140
         del u, d
-        X1 = np.dot(K, X) # see (13.6) p.267 Here X1 is white and data 
+        X1 = np.dot(K, X)
+        # see (13.6) p.267 Here X1 is white and data 
         # in X has been projected onto a subspace by PCA
     else:
         X1 = X.copy()
@@ -251,9 +254,9 @@ def fastica(X, n_comp=None,
         w_init = np.random.normal(size=(n_comp, n_comp))
     else:
         w_init = np.asarray(w_init)
-        if w_init.shape != (n_comp,n_comp):
+        if w_init.shape != (n_comp, n_comp):
             raise ValueError("w_init has invalid shape -- should be %(shape)s"
-                             % {'shape': (n_comp,n_comp)})
+                             % {'shape': (n_comp, n_comp)})
 
     kwargs = {'tol': tol,
               'g': g,
