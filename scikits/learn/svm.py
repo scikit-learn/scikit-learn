@@ -69,6 +69,11 @@ class _BaseLibSVM(BaseEstimator):
         weight : dict , {class_label : weight}
             Weights associated with classes. If not given, all classes
             are supposed to have weight one.
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.float64, order='C')
@@ -193,6 +198,14 @@ class _BaseLibSVM(BaseEstimator):
         Parameters
         ----------
         T : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the decision function of the sample for each class
+            in the model, where classes are ordered by arithmetical
+            order.
+
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
@@ -232,13 +245,13 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 has_intercept=True):
+                 fit_intercept=True):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
         self.eps = eps
         self.C = C
-        self.has_intercept = has_intercept
+        self.fit_intercept = fit_intercept
         # Check that the arguments given are valid:
         self._get_solver_type()
 
@@ -255,6 +268,9 @@ class BaseLibLinear(BaseEstimator):
 
     def fit(self, X, Y, **params):
         """
+        Fit the model according to the given training data and
+        parameters.
+
         Parameters
         ----------
         X : array-like, shape = [nsamples, nfeatures]
@@ -262,6 +278,11 @@ class BaseLibLinear(BaseEstimator):
             nfeatures is the number of features.
         Y : array, shape = [nsamples]
             Target vector relative to X
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
         self._set_params(**params)
 
@@ -304,13 +325,13 @@ class BaseLibLinear(BaseEstimator):
 
     @property
     def intercept_(self):
-        if self.has_intercept > 0:
+        if self.fit_intercept > 0:
             return self.raw_coef_[:,-1]
         return 0.0
 
     @property
     def coef_(self):
-        if self.has_intercept > 0:
+        if self.fit_intercept > 0:
             return self.raw_coef_[:,:-1]
         return self.raw_coef_
 
@@ -326,7 +347,7 @@ class BaseLibLinear(BaseEstimator):
         double indicating if the intercept should be computed:
         positive for true, negative for false
         """
-        return int  (self.has_intercept) - .5
+        return int  (self.fit_intercept) - .5
 
 ################################################################################
 # Public API
@@ -555,6 +576,9 @@ class SVR(_BaseLibSVM, RegressorMixin):
         enable probability estimates. This must be enabled prior
         to calling prob_predict.
 
+    eps: float, optional
+         precision for stopping criteria
+
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
@@ -617,6 +641,9 @@ class NuSVR(_BaseLibSVM, RegressorMixin):
 
     gamma : float, optional (default=0.0)
         kernel coefficient for rbf
+
+    eps: float, optional
+         precision for stopping criteria
 
     probability: boolean, optional (False by default)
         enable probability estimates. This must be enabled prior
@@ -692,6 +719,9 @@ class OneClassSVM(_BaseLibSVM):
         Independent term in kernel function. It is only significant in
         poly/sigmoid.
 
+    eps: float, optional
+         precision for stopping criteria
+
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, n_features]
@@ -753,6 +783,8 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
         Select the algorithm to either solve the dual or primal
         optimization problem.
 
+    eps: float, optional
+         precision for stopping criteria
 
     Attributes
     ----------
