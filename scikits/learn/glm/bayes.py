@@ -87,7 +87,6 @@ class BayesianRidge(LinearModel):
 
         X, Y = self._center_data (X, Y)
 
-
         ### "Dummy" initialization of the values of the parameters
         self.alpha_ = 1. / np.var(Y)
         self.lambda_ = 1.0
@@ -132,21 +131,27 @@ class BayesianRidge(LinearModel):
 
 
 class ARDRegression(LinearModel):
-    """
-    Bayesian ard-based regression. Optimize the regularization parameters alpha
-    (vector of precisions of the weights) and beta (precision of the noise).
+    """Bayesian ard-based regression.
+
+    Fit an ARD model and Optimize the regularization parameters alpha
+    (vector of precisions of the weights) and beta (precision of the
+    noise).
 
 
     Parameters
     ----------
     X : numpy array of shape (length,features)
-    data
+        Training vectors.
+
     Y : numpy array of shape (length)
-    target
-    step_th : int (defaut is 300)
-          Stop the algorithm after a given number of steps.
+        Target values for training vectors
+
+    n_iter : int (defaut is 300)
+        Maximum number of interations.
+
     th_w : float (defaut is 1.e-12)
        Stop the algorithm if w has converged.
+
     alpha_th : number
            threshold on the alpha, to avoid divergence. Remove those features
        from the weights computation if is alpha > alpha_th  (default is
