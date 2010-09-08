@@ -139,11 +139,15 @@ def test_non_square_fastica(add_noise=False):
 
 
 
-
+"""
 if __name__ == '__main__':
     test_gs()
     test_fastica()
     test_fastica(True)
     test_non_square_fastica()
     test_non_square_fastica(True)
+"""
 
+if __name__ == '__main__':
+    import nose
+    nose.run(argv=['', __file__])
