@@ -105,7 +105,7 @@ class BayesianRidge(LinearModel):
             self.alpha_ = (n_samples - self.gamma_)\
                           /np.sum((Y - np.dot(X, self.coef_))**2)
 
-            #### Compute the log likelihood
+            ### Compute the log likelihood
             if self.compute_ll:
                 self.log_likelihood_.append(self.compute_log_likelihood(X,Y))
 
@@ -118,6 +118,8 @@ class BayesianRidge(LinearModel):
         # Store explained variance for __str__
         self.explained_variance_ = self._explained_variance(X, Y)
         return self
+
+
 
 
 class ARDRegression(LinearModel):
@@ -312,4 +314,169 @@ class RVM_R(ARDRegression):
         return np.dot(Xtest, self.coef_) + self.intercept_
         
 
+
+
+class VariationalBayes(object):
+
+    def __init__(self,Q_,nb_iter_,save=True,verbose=True):
+        self.Q_ = Q_
+        self.nb_iter_ = nb_iter_
+        self.save = save
+        self.verbose = verbose
+        self.priors = False
+
+    def set_priors(self,alpha1_,alpha2_,lambda1_,lambda2_,
+                        pjq_,etaq_):
+        self.alpha1_ = alpha1_
+        self.alpha2_ = alpha2_
+        self.lambda1_ = lambda1_
+        self.lambda2_ = lambda2_
+        self.pjq_ = pjq_
+        self.etaq_ = etaq_
+        self.all_time_ = []
+        self.all_coef_ = []
+        self.all_pjq_ = []
+        self.all_qzjq_ = []
+        self.all_alpha_ = []
+        self.all_lambda_ = []
+        self.all_training_mse_ = []
+        self.all_classes_ = []
+
+class Variational_MVM_R(MVM):
+
+    def predict(self,y_t):
+        y_t = y_t - self.mean_X_
+        self.prediction = np.dot(y_t, self.coef_) + self.ymean_
+        return np.ravel(self.prediction)
+
+    def fit(self, X, y, qzjq_=None, fixed_z = -1):
+
+        ### Add the interecpt
+        self.ymean_ = np.mean(y)
+        y = y - self.ymean_
+        self.y = np.reshape(y,[np.size(y),1])
+        self.mean_X_ = np.mean(X,0)
+        self.X = X - self.mean_X_
+        self.XT_ = np.transpose(self.X)
+        self.Gram_ = np.dot(self.XT_,self.X)
+        self.XTy_ = np.dot(self.XT_,self.y)
+        self.n_ = np.size(self.y)
+        self.p_ = np.size(self.X,1)
+
+
+        ### Initiate the parameters
+        print "Initialize parameters"
+        self.a1_ = np.copy(self.alpha1_)
+        self.a2_ = np.copy(self.alpha2_)
+        if qzjq_ == None :
+            self.qzjq_ = (1./self.Q_)*np.ones([self.p_,self.Q_])
+        else :
+            self.qzjq_ = qzjq_
+        self.l1_ = np.copy(self.lambda1_)
+        self.l2_ = np.copy(self.lambda2_)
+        self.dq_ = np.copy(self.etaq_)
+
+        ######
+        ### Estimation Loop
+        ######
+        for ite in range(self.nb_iter_):
+
+            start_time_ = time.time()
+
+            ### w
+            self.A = np.sum((self.l1_/self.l2_)*self.qzjq_,1)
+            invA = np.diag(1./self.A)
+            invMat = nl.pinv(np.eye(self.n_)*self.a2_/self.a1_\
+                      + np.dot(self.X, np.dot(invA, self.XT_)))
+            invAX = np.dot(invA, self.XT_)
+            self.Sigma_ = invA - np.dot(invAX, np.dot(invMat,invAX.T))
+            self.mu_ = (self.a1_/self.a2_*np.dot(self.Sigma_,self.XTy_))
+            self.muj_sigmajj_ = np.ravel(self.mu_)**2+np.diag(self.Sigma_)
+            self.muj_sigmajj_ = np.reshape(self.muj_sigmajj_, [self.p_,1])
+            self.coef_ = np.copy(self.mu_)
+
+            ### lambda
+            self.l1_ = self.lambda1_ + 0.5*np.sum(self.qzjq_, 0)
+            self.l2_ = self.lambda2_ + 0.5*np.sum(self.muj_sigmajj_ *
+                                                            self.qzjq_, 0)
+
+
+            ### alpha
+            self.a1_ = self.alpha1_ + 0.5*self.n_
+            yXw = self.y - np.dot(self.X,self.mu_)
+            trace = np.sum(np.multiply(self.Sigma_,self.Gram_))
+            self.a2_ = np.float(self.alpha2_ + 0.5*np.dot(yXw.T, yXw) + trace)
+            lambda_time_ = time.time()
+
+
+            ### q(zj = q)
+            if ite >= fixed_z:
+                self.qzjq_ = np.exp(-0.5*self.muj_sigmajj_*self.l1_/self.l2_\
+                              + np.log(self.pjq_)\
+                              + 0.5*(sps.digamma(self.l1_)-np.log(self.l2_)))
+                norm = np.reshape(np.sum(self.qzjq_,1),[self.p_])
+                for q in range(self.Q_) :
+                    self.qzjq_[norm!=0,q] /= norm[norm!=0]
+                    self.qzjq_[norm==0,q] = 1.*np.ones(np.sum(norm==0))/self.Q_
+
+                ### deltaq
+                self.dq_ = self.etaq_ + np.sum(self.qzjq_,0)
+                self.pjq_ = np.exp(sps.digamma(self.dq_)-
+                            sps.digamma(np.sum(self.dq_)))
+
+
+
+            #### output and save
+            mse_ = np.sqrt(np.sum(yXw**2))
+            self.all_time_.append(time.time() - start_time_)
+            classes_ = np.copy(np.zeros(self.Q_))
+            #for q in range(self.Q_):
+                #classes_[q] = \
+                #np.size(np.where(np.argmax(self.qzjq_,1)==q))
+            #self.all_classes_.append(classes_)
+            print 50*"#"
+            print "Iteration : ",ite
+            print "Total step time : ",self.all_time_[-1]
+            print "Training MSE : ",np.sqrt(mse_)
+            self.all_training_mse_.append(mse_)
+            if self.save == True :
+                self.all_coef_.append(np.copy(self.coef_))
+                self.all_alpha_.append(self.a1_/self.a2_)
+                self.all_lambda_.append(self.l1_/self.l2_)
+                self.all_pjq_.append(np.copy(self.pjq_))
+                self.all_qzjq_.append(np.copy(self.qzjq_))
+            if self.verbose == True :
+                #print "Classes : ",classes_
+                print "alpha : ",self.a1_/self.a2_
+                print "a1 : ",self.a1_
+                print "a2 : ",self.a2_
+                print "lambda : ",self.l1_/self.l2_
+                print "l1 : ",self.l1_
+                print "l2 : ",self.l2_
+                print "dq : ",self.dq_
+        return self
+
+
+
+
+
+
+
+
+
+
+
+
+#def fit(self, X):
+        #"""
+        #Detects the soft boundary (aka soft boundary) of the set of samples X.
+
+        #Parameters
+        #----------
+        #X : array-like, shape = [n_samples, n_features]
+            #Set of samples, where n_samples is the number of samples and
+            #n_features is the number of features.
+
+        #"""
+        #super(OneClassSVM, self).fit(X, [])
 
