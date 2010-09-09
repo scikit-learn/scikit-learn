@@ -102,7 +102,9 @@ class _BaseLibSVM(BaseEstimator):
         # check dimensions
         solver_type = self._svm_types.index(self.impl)
         if solver_type != 2 and _X.shape[0] != Y.shape[0]:
-            raise ValueError("Incompatible shapes")
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "X has %s features, but Y has %s." % \
+                             (_X.shape[0], Y.shape[0]))
 
         if (self.gamma == 0):
             self.gamma = 1.0/_X.shape[0]

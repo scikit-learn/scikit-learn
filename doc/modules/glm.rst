@@ -215,7 +215,7 @@ coefficients.
 
 Getting the full path
 ---------------------
-See function :function:`scikits.learn.glm.lars_path`.
+See function scikits.learn.glm.lars_path.
 
 
 Mathematical formulation
@@ -237,12 +237,11 @@ Examples
 --------
 :ref:`example_glm_plot_lar.py`, :ref:`example_glm_plot_lasso_lars.py`
 
-References
+References 
 ----------
-Original Algorithm is detailed in the 
-`paper <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_ by Hastie et al.
-
-
+Original Algorithm is detailed in the `paper
+<http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+by Hastie et al.
 
 
 
@@ -255,22 +254,132 @@ knowledge over the parameters.
 For example, penalization by weighted :math:`\ell_{2}` norm is equivalent to
 setting Gaussian priors on the weights. 
 
-
-
 The advantages of *Bayesian Regression* are:
 
-    - It enable to adapt to the data at hand.
+    - It adapts to the data at hand.
 
-    - It can be used to include regularization parameters in the estimation
-        procedure.
+    - It can be used to include regularization parameters in the
+      estimation procedure.
 
 The dissadvantages of *Bayesian Regression* include:
 
     - Inference of the model can be time consuming.
 
 
+Bayesian Ridge Regression
+-------------------------
+
+:class:`BayesianRidge` tries to avoid the overfit issue of
+:ref:`ordinary_least_squares`, by adding the following prior on
+:math:`\beta`:
+
+.. math:: p(\beta|\lambda) =  
+    \mathcal{N}(\beta|0,\lambda^{-1}\bold{I_{p}})
+
+The resulting model is called *Bayesian Ridge Regression*, it is
+similar to the classical :class:`Ridge`.  :math:`\lambda` is an
+*hyper-parameter* and the prior over :math:`\beta` performs a
+shrinkage or regularization, by constraining the values of the weights
+to be small. Indeed, with a large value of :math:`\lambda`, the
+Gaussian is narrowed around 0 which does not allow large values of
+:math:`\beta`, and with low value of :math:`\lambda`, the Gaussian is
+very flattened which allows values of :math:`\beta`.  Here, we use a
+*non-informative* prior for :math:`\lambda`.
+The parameters are estimated by maximizing the *marginal log likelihood*.
+There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
+
+.. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
+    {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
 
 
+.. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
+    {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
+    
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
+ very slightly informative priors.
+
+
+
+
+
+
+.. figure:: ../auto_examples/glm/images/plot_bayesian_ridge.png
+   :target: ../auto_examples/glm/plot_bayesian_ridge.html
+   :align: center
+
+
+*Bayesian Ridge Regression* is used for regression:
+
+    >>> from scikits.learn import glm
+    >>> X = [[0., 0.], [1., 2.], [2., -1.], [3., -1.]]
+    >>> Y = [0., 1., 2., 3.]
+    >>> clf = glm.BayesianRidge()
+    >>> clf.fit (X, Y)
+    BayesianRidge(n_iter=300, th_w=1e-12, compute_ll=False, fit_intercept=True)
+
+After being fitted, the model can then be used to predict new values::
+
+    >>> clf.predict ([[-1.5, 0.]])
+    array([ 1.5])
+
+
+The weights :math:`\beta` of the model can be access:
+
+    >>> clf.coef_
+    array([ 0.93688528, -0.03034525])
+
+Due to the Bayesian framework, the weights found are slightly different to the
+ones found by :ref:`ordinary_least_squares`. However, *Bayesian Ridge
+Regression* is more robust to ill-posed problem.
+
+
+Examples
+--------
+:ref:`example_glm_plot_bayesian_ridge.py`
+
+References
+----------
+More details can be found in the article
+`paper
+<http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=
+pdf>`_ by MacKay, David J. C.
+
+
+
+
+
+Automatic Relevance Determination - ARD
+=======================================
+
+:class:`ARDRegression` adds a more sophisticated prior :math:`\beta`,
+where we assume that each weight :math:`\beta_{i}` is drawn in a
+Gaussian distribution, centered on zero and with a precision
+:math:`\lambda_{i}`:
+
+.. math:: p(\beta|\lambda) = \mathcal{N}(\beta|0,A^{-1})
+
+with :math:`diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
+There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
+
+.. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
+    {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
+
+
+.. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
+    {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
+    
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
+ very slightly informative priors.
+
+
+.. figure:: ../auto_examples/glm/images/plot_ard.png
+   :target: ../auto_examples/glm/plot_ard.html
+   :align: center
+
+
+Examples
+--------
+:ref:`example_glm_plot_ard.py`
 
 Mathematical formulation
 ------------------------
@@ -309,110 +418,8 @@ where :math:`\alpha` is the precision of the noise.
 
 
 
-
-
-Bayesian Ridge Regression
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In order to avoid the overfit issue of :ref:`ordinary_least_squares`, one can
-add the following prior on :math:`w`:
-
-.. math:: p(w|\lambda) =  
-    \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
-
-The resulting model is called *Bayesian Ridge Regression*, and is similar to
-the classical :class:`Ridge`.
-:math:`\lambda` is an *hyper-parameter* and the prior over :math:`w` performs a
-shrinkage or regularization, by constraining the values of the weights to be
-small. Indeed, with a large value of :math:`\lambda`, the Gaussian is narrowed
-around 0 which does not allow large values of :math:`w`, and with low value of
-:math:`\lambda`, the Gaussian is very flattened which allows values of
-:math:`w`.
-Here, we use a *non-informative* prior for :math:`\lambda`.
-
-The parameters are estimated by maximizing the *marginal log likelihood*.
-
-
-.. figure:: ../auto_examples/glm/images/plot_bayesian_ridge.png
-   :target: ../auto_examples/glm/plot_bayesian_ridge.html
-   :align: center
-
-
-*Bayesian Ridge Regression* is used for regression:
-
-    >>> from scikits.learn import glm
-    >>> X = [[0., 0.], [1., 2.], [2., -1.], [3., -1.]]
-    >>> Y = [0., 1., 2., 3.]
-    >>> clf = glm.BayesianRidge()
-    >>> clf.fit (X, Y)
-    BayesianRidge(n_iter=300, th_w=1e-12, compute_ll=False, fit_intercept=True)
-
-After being fitted, the model can then be used to predict new values::
-
-    >>> clf.predict ([[-1.5, 0.]])
-    array([ 1.5])
-
-
-The weights :math:`w` of the model can be access:
-
-    >>> clf.coef_
-    array([ 0.93688528, -0.03034525])
-
-Due to the Bayesian framework, the weights found are slightly different to the
-ones found by :ref:`ordinary_least_squares`. However, *Bayesian Ridge
-Regression* is more robust to ill-posed problem.
-
-
-
-
-
-
-Examples
-~~~~~~~~
-:ref:`example_glm_plot_bayesian_ridge.py`
-
 References
-~~~~~~~~~~
-More details can be found in the article
-`paper
-<http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=
-pdf>`_ by MacKay, David J. C.
-
-
-
-
-
-Automatic Relevance Determination - ARD
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A more sophisticated prior :math:`w` can be added, where we assume that
-each weight :math:`w_{i}` is drawn in a Gaussian distribution, centered on zero
-and with a precision  :math:`\lambda_{i}`:
-
-.. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
-
-with :math:`diag \; (A) = lambda = \{\lambda_{1},...,\lambda_{p}\}`.
-We use a *non-informative* prior for :math:`\lambda`.
-
-
-.. figure:: ../auto_examples/glm/images/plot_ard.png
-   :target: ../auto_examples/glm/plot_ard.html
-   :align: center
-
-
-
-Examples
-~~~~~~~~
-:ref:`example_glm_plot_ard.py`
-
-References
-~~~~~~~~~~
+----------
 Original Algorithm is detailed in the  book *Bayesian learning for neural
 networks* by Radford M. Neal
 
-
-
-
-
-
- 
