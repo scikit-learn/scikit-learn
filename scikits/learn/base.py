@@ -56,8 +56,11 @@ class BaseEstimator(object):
     def _get_params(self, deep=False):
         """ Get parameters for current estimator
 
-            deep = True will return the parameters for this estimator and
-            contained subobjects.
+            Parameters
+            ==========
+            deep: boolean, optional
+                If True, will return the parameters for this estimator and
+                contained subobjects that are estimators.
         """
         out = dict()
         for key in self._get_param_names():
