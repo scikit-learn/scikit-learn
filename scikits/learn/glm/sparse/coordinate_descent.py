@@ -59,7 +59,9 @@ class ElasticNet(LinearModel):
         self._set_params(**params)
         X = sparse.csc_matrix(X)
         Y = np.asanyarray(Y, dtype=np.float64)
-        # do not center data to avoid breaking the sparsity of X
+
+        # NOTE: we are explicitly not centering the data the naive way to
+        # avoid breaking the sparsity of X
 
         n_samples, n_features = X.shape[0], X.shape[1]
         if self.coef_ is None:
