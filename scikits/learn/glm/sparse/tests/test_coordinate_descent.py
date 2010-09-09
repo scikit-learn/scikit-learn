@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import sparse
-from numpy.testing import assert_array_almost_equal, assert_almost_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_
 
 from ..coordinate_descent import ElasticNet
 
@@ -84,5 +86,30 @@ def test_enet_toy_explicit_sparse_input():
     assert_array_almost_equal(clf.coef_, [0.45454], 3)
     assert_array_almost_equal(pred, [0.9090,  1.3636,  1.8181], 3)
     #assert_almost_equal(clf.dual_gap_, 0)
+
+
+def test_sparse_enet_not_as_toy_dataset():
+
+    # build an ill-posed linear regression problem with many noisy features and
+    # comparatively few samples
+    n_samples, n_features, maxit = 100, 100, 50
+    np.random.seed(42)
+
+    # generate a ground truth model
+    w = np.random.randn(n_features)
+    w[10:] = 0.0 # only the top 10 features are impacting the model
+
+    X = np.random.randn(n_samples, n_features)
+    rnd = np.random.uniform(size=(n_samples, n_features))
+    X[rnd > 0.5] = 0.0 # 50% for zeros in input signal
+
+    # generate training ground truth labels
+    y = np.dot(X, w)
+
+    X_train, X_test = X[:n_samples / 2], X[n_samples / 2:]
+    y_train, y_test = y[:n_samples / 2], y[n_samples / 2:]
+
+    clf = ElasticNet(alpha=0.1, rho=0.8).fit(X_train, y_train, maxit=maxit)
+    assert_almost_equal(clf.score(X_test, y_test), 0.75, 1)
 
 
