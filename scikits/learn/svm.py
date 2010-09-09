@@ -421,9 +421,7 @@ class SVC(_BaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
-      cache_size=100.0,
-      shrinking=True,
-      gamma=0.25)
+      cache_size=100.0, shrinking=True, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -523,10 +521,7 @@ class NuSVC(_BaseLibSVM, ClassifierMixin):
     >>> clf = NuSVC()
     >>> clf.fit(X, Y)
     NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, eps=0.001,
-       cache_size=100.0,
-       shrinking=True,
-       nu=0.5,
-       gamma=0.25)
+       cache_size=100.0, shrinking=True, nu=0.5, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
