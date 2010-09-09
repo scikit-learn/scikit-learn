@@ -135,6 +135,7 @@ User guide
    supervised_learning
    unsupervised_learning
    model_selection
+   cross_validation
 
 .. toctree::
    :maxdepth: 2
