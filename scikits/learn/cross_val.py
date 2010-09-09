@@ -51,7 +51,6 @@ class LeaveOneOut(object):
         """
         self.n = n
 
-
     def __iter__(self):
         n = self.n
         for i in xrange(n):
@@ -59,7 +58,6 @@ class LeaveOneOut(object):
             test_index[i] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(n=%i)' % (self.__class__.__module__,
@@ -114,7 +112,6 @@ class LeavePOut(object):
         self.n = n
         self.p = p
 
-
     def __iter__(self):
         n = self.n
         p = self.p
@@ -124,7 +121,6 @@ class LeavePOut(object):
             test_index[np.array(idx)] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(n=%i, p=%i)' % (
@@ -184,7 +180,6 @@ class KFold(object):
         self.n = n
         self.k = k
 
-
     def __iter__(self):
         n = self.n
         k = self.k
@@ -198,7 +193,6 @@ class KFold(object):
                 test_index[i*j:] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(n=%i, k=%i)' % (
@@ -217,14 +211,14 @@ class StratifiedKFold(object):
     """
     Stratified K-Folds cross validation iterator:
     Provides train/test indexes to split data in train test sets
-    
+
     This cross-validation object is a variation of KFold, which
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
-    
+
     """
 
-    # XXX: Should maybe have an argument to raise when 
+    # XXX: Should maybe have an argument to raise when
     # folds are not balanced
     def __init__(self, y, k):
         """
@@ -268,7 +262,6 @@ class StratifiedKFold(object):
         self.y = y
         self.k = k
 
-
     def __iter__(self):
         y = self.y.copy()
         k = self.k
@@ -295,7 +288,6 @@ class StratifiedKFold(object):
 
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(labels=%s, k=%i)' % (
@@ -355,7 +347,6 @@ class LeaveOneLabelOut(object):
         self.labels = labels
         self.n_labels = np.unique(labels).size
 
-
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
@@ -364,7 +355,6 @@ class LeaveOneLabelOut(object):
             test_index[labels==i] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
@@ -453,7 +443,7 @@ class LeavePLabelOut(object):
         return factorial(self.n_labels) / factorial(self.n_labels - self.p) \
                / factorial(self.p)
 
-    
+
 ##############################################################################
 
 def _cross_val_score(estimator, X, y, score_func, train, test):
@@ -466,7 +456,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test):
     return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
 
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None, 
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
                 n_jobs=1, verbose=0):
     """ Evaluate a score by cross-validation.
 
@@ -496,7 +486,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
     n_samples = len(X)
     if cv is None:
         if y is not None and (isinstance(estimator, ClassifierMixin)
-                or (hasattr(estimator, 'estimator') 
+                or (hasattr(estimator, 'estimator')
                     and isinstance(estimator.estimator, ClassifierMixin))):
             cv = StratifiedKFold(y, k=3)
         else:
@@ -508,7 +498,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
                 "does not." % estimator
                 )
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-                delayed(_cross_val_score)(estimator, X, y, score_func, 
+                delayed(_cross_val_score)(estimator, X, y, score_func,
                                                         train, test)
                 for train, test in cv)
     return np.array(scores)
@@ -532,3 +522,4 @@ def split(train_indices, test_indices, *args):
         ret.append(arg_train)
         ret.append(arg_test)
     return ret
+
