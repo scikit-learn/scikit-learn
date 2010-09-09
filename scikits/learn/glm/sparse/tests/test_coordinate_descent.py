@@ -113,13 +113,13 @@ def test_sparse_enet_not_as_toy_dataset():
     s_clf = SparseENet(alpha=0.1, rho=0.8, fit_intercept=False)
     s_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert_almost_equal(s_clf.score(X_test, y_test), 0.82, 1)
+    assert_(s_clf.score(X_test, y_test) > 0.7)
 
     # check the convergence is the same as the dense version
     d_clf = DenseENet(alpha=0.1, rho=0.8, fit_intercept=False)
     d_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert_almost_equal(d_clf.score(X_test, y_test), 0.82, 1)
+    assert_(d_clf.score(X_test, y_test) > 0.7)
 
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
 
