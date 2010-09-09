@@ -109,6 +109,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     R[X_indices[jj]] -= X_data[jj] * w[ii]
 
 
+        if d_w_max < tol:
+            break
+
+# TODO: implement sparse version of the dual gap check
 #        if d_w_max < tol or n_iter == maxit - 1:
 #            # the biggest coordinate update of this iteration was smaller than
 #            # the tolerance: check the duality gap as ultimate stopping
