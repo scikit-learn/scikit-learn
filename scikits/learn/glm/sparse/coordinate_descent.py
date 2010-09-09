@@ -105,7 +105,8 @@ class ElasticNet(LinearModel):
         array, shape = [n_samples] with the predicted real values
         """
         # np.dot only works correctly if both arguments are sparse matrices
-        assert sparse.issparse(X)
+        if not sparse.issparse(X):
+            X = sparse.csr_matrix(X)
         return np.ravel(np.dot(self.sparse_coef_, X.T).todense()
                         + self.intercept_)
 
