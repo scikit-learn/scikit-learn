@@ -20,9 +20,18 @@ def test_sparse_predict():
 def test_enet_toy():
     """Test ElasticNet for various parameters of alpha and rho"""
 
-    X = [[-1], [0], [1]]
-    Y = [-1, 0, 1]       # just a straight line
-    T = [[2], [3], [4]]  # test sample
+    # training samples
+    X = sparse.lil_matrix((3, 1))
+    X[0, 0] = -1
+    # X[1, 0] = 0
+    X[2, 0] = 1
+    Y = [-1, 0, 1]       # just a straight line (the identity function)
+
+    # test samples
+    T = sparse.lil_matrix((3, 1))
+    T[0, 0] = 2
+    T[1, 0] = 3
+    T[2, 0] = 4
 
     # this should be the same as lasso
     clf = ElasticNet(alpha=0, rho=1.0)

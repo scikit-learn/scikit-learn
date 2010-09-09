@@ -4,6 +4,7 @@
 # License: BSD Style.
 """Implementation of coordinate descent for the Elastic Net with sparse data."""
 
+import warnings
 import numpy as np
 from scipy import sparse
 
@@ -52,7 +53,7 @@ class ElasticNet(LinearModel):
     def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
         """Fit Elastic Net model with coordinate descent
 
-        X is expected to be a sparse matrix. For maximum effiency, use a
+        X is expected to be a sparse matrix. For maximum efficiency, use a
         sparse matrix in csr format (scipy.sparse.csc_matrix)
         """
         self._set_params(**params)
@@ -66,11 +67,12 @@ class ElasticNet(LinearModel):
 
         alpha = self.alpha * self.rho * n_samples
         beta = self.alpha * (1.0 - self.rho) * n_samples
+        X_data = np.array(X.data, np.float64)
 
         # TODO: add support for non centered data
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
-                    self.coef_, alpha, beta, X.data, X.indices, X.indptr, Y,
+                    self.coef_, alpha, beta, X_data, X.indices, X.indptr, Y,
                     maxit, tol)
 
         # update self.coef_ and self.sparse_coef_ consistently

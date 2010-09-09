@@ -55,7 +55,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = np.zeros(n_features,
                                                            np.float64)
     for ii in xrange(n_features):
-        norm_cols_X[ii] = (X_data[X_indptr[ii]:X_indices[ii + 1]] ** 2).sum()
+        norm_cols_X[ii] = (X_data[X_indptr[ii]:X_indptr[ii + 1]] ** 2).sum()
 
     # initial value of the residuals
     cdef np.ndarray[DOUBLE, ndim=1] R
@@ -71,10 +71,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     # initialize the residuals
     R = np.zeros(n_features, dtype=np.float64)
     for ii in xrange(n_features):
-        X_ii = X_data[X_indptr[ii]:X_indices[ii + 1]]
+        X_ii_data = X_data[X_indptr[ii]:X_indptr[ii + 1]]
         tmp = 0.0
         for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
-            tmp += X_ii[jj] + w[X_indices[jj]]
+            tmp += X_ii_data[jj] * w[ii]
         R[ii] = y[ii] - tmp
 
     tol = tol * linalg.norm(y) ** 2
