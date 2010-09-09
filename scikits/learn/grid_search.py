@@ -10,7 +10,7 @@ import copy
 
 from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
-from .base import ClassifierMixin
+from .base import ClassifierMixin, clone
 
 try:
     from itertools import product
@@ -185,7 +185,7 @@ class GridSearchCV(object):
                 cv = KFold(n_samples, k=3)
 
         grid = iter_grid(self.param_grid)
-        base_clf = self.estimator._reinit()
+        base_clf = clone(self.estimator)
         out = Parallel(n_jobs=self.n_jobs)(
             delayed(fit_grid_point)(X, y, base_clf, clf_params,
                     cv, self.loss_func, self.iid, **self.fit_params)
