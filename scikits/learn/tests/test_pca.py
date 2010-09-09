@@ -3,10 +3,10 @@ from numpy.random import randn
 from nose.tools import assert_true
 
 
-from scikits.learn import datasets
-from scikits.learn.pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
-#from .. import datasets
-#from ..pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
+#from scikits.learn import datasets
+#from scikits.learn.pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
+from .. import datasets
+from ..pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
 
 iris = datasets.load_iris()
 
