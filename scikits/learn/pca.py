@@ -1,54 +1,52 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-from math import sqrt
-
 import numpy as np
 from scipy import linalg
 
 from .base import BaseEstimator
 from .utils.extmath import fast_logdet
 
-def _assess_dimension_(spect, rk, n, dim):
+def _assess_dimension_(spect, rk, n_samples, dim):
     """
-    Compute the likelihood of a rank rk dataset 
+    Compute the likelihood of a rank rk dataset
     embedded in gaussian noise of shape(n, dimf) having spectrum spect
-    
+
     Parameters
     ----------
     spect: array of shape (n)
            data spectrum
     rk: int,  tested rank value
-    n: int, number of samples
+    n_samples: int, number of samples
     dim: int, embedding/emprical dimension
-    
+
     Returns
     -------
     ll, float, The log-likelihood
-    
+
     Note
-    ---- 
+    ----
     This implements the method of Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
     """
     if rk>dim:
         raise ValueError, "the dimension cannot exceed dim"
     from scipy.special import gammaln
-    
+
     pu = -rk*np.log(2)
     for i in range(rk):
         pu += gammaln((dim - i)/2) - np.log(np.pi) * (dim - i)/2
-        
-    pl = np.sum(np.log(spect[:rk]))
-    pl = -pl * n/2
 
-    if rk==dim:
+    pl = np.sum(np.log(spect[:rk]))
+    pl = -pl * n_samples / 2
+
+    if rk == dim:
         pv = 0
         v = 1
     else:
         v = np.sum(spect[rk:dim]) / (dim - rk)
-        pv = -np.log(v) * n * (dim - rk)/2
-    
+        pv = -np.log(v) * n_samples * (dim - rk)/2
+
     m = dim * rk - rk * (rk + 1) / 2
     pp = np.log(2 * np.pi) * (m + rk + 1)/2
 
@@ -57,10 +55,10 @@ def _assess_dimension_(spect, rk, n, dim):
     spectrum_[rk:dim] = v
     for i in range(rk):
         for j in range (i + 1, dim):
-            pa += np.log((spect[i] - spect[j])*\
-                         (1./spectrum_[j] - 1./spectrum_[i])) + np.log(n)
+            pa += np.log((spect[i] - spect[j]) * \
+                     (1./spectrum_[j] - 1./spectrum_[i])) + np.log(n_samples)
 
-    ll = pu + pl + pv + pp -pa/2 - rk*np.log(n)/2
+    ll = pu + pl + pv + pp -pa/2 - rk*np.log(n_samples)/2
 
     return ll
 
@@ -74,10 +72,9 @@ def _infer_dimension_(spect, n, p):
         ll.append(_assess_dimension_(spect, rk, n, p))
     ll = np.array(ll)
     return ll.argmax()
-        
+
 class PCA(BaseEstimator):
-    """
-    Principal component analysis (PCA)
+    """Principal component analysis (PCA)
 
     Parameters
     ----------
@@ -131,9 +128,8 @@ class PCA(BaseEstimator):
 
     def fit(self, X, **params):
         self._set_params(**params)
-        self.dim = X.shape[1]
-        n_samples = X.shape[0]
         X = np.atleast_2d(X)
+        n_samples = X.shape[0]
         if self.copy:
             X = X.copy()
         # Center data
@@ -141,7 +137,7 @@ class PCA(BaseEstimator):
         X -= self.mean_
         U, S, V = linalg.svd(X, full_matrices=False)
         self.explained_variance_ = (S**2)/n_samples
-        self.explained_variance_ratio_ = self.explained_variance_/\
+        self.explained_variance_ratio_ = self.explained_variance_ / \
                                         self.explained_variance_.sum()
         self.components_ = V.T
         if self.n_comp=='mle':
@@ -149,11 +145,11 @@ class PCA(BaseEstimator):
                                             n_samples, X.shape[1])
             self.components_ = self.components_[:, :self.n_comp]
             self.explained_variance_ = self.explained_variance_[:self.n_comp]
-        
+
         elif self.n_comp is not None:
             self.components_ = self.components_[:, :self.n_comp]
             self.explained_variance_ = self.explained_variance_[:self.n_comp]
-        
+
         return self
 
     def transform(self, X):
@@ -176,24 +172,25 @@ class ProbabilisticPCA(PCA):
                        if True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
+        self.dim = X.shape[1]
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_), self.components_.T)
         n_samples = X.shape[0]
-        if self.dim<=self.n_comp:
+        if self.dim <= self.n_comp:
             delta = np.zeros(self.dim)
         elif homoscedastic:
             #delta = (Xr**2).sum()/(n_samples*(self.dim-self.n_comp)) *\
             #        np.ones(self.dim)
-            delta = (Xr**2).sum()/(n_samples*(self.dim)) * np.ones(self.dim)
+            delta = (Xr**2).sum() / (n_samples * self.dim) * np.ones(self.dim)
         else:
-            delta = (Xr**2).mean(0)/(self.dim-self.n_comp)
+            delta = (Xr**2).mean(0) / (self.dim-self.n_comp)
         self.covariance_ = np.diag(delta)
         for k in range(self.n_comp):
             add_cov =  np.dot(
                 self.components_[:, k:k+1], self.components_[:, k:k+1].T)
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
-        
+
     def score(self, X):
         """Return a scoreassociated to new data
 
@@ -208,8 +205,9 @@ class ProbabilisticPCA(PCA):
         """
         Xr = X - self.mean_
         log_like = np.zeros(X.shape[0])
-        self.precision = np.linalg.inv(self.covariance_)
+        self.precision_ = np.linalg.inv(self.covariance_)
         for i in range(X.shape[0]):
-            log_like[i] = -.5 * np.dot(np.dot(self.precision, Xr[i]), Xr[i])
-        log_like += fast_logdet(self.precision) - self.dim/2*np.log(2*np.pi)
+            log_like[i] = -.5 * np.dot(np.dot(self.precision_, Xr[i]), Xr[i])
+        log_like += fast_logdet(self.precision_) - \
+                                    self.dim / 2 * np.log(2 * np.pi)
         return log_like
