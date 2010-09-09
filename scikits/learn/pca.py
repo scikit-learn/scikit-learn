@@ -117,8 +117,8 @@ class PCA(BaseEstimator):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = PCA(n_comp=2)
     >>> pca.fit(X)
-    PCA(k=2, copy=True)
-    >>> print pca.explained_variance_
+    PCA(n_comp=2, copy=True)
+    >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
     See also
@@ -187,11 +187,11 @@ class ProbabilisticPCA(PCA):
             delta = (Xr**2).sum()/(n_samples*(self.dim)) * np.ones(self.dim)
         else:
             delta = (Xr**2).mean(0)/(self.dim-self.n_comp)
-        self.covariance = np.diag(delta)
+        self.covariance_ = np.diag(delta)
         for k in range(self.n_comp):
             add_cov =  np.dot(
                 self.components_[:, k:k+1], self.components_[:, k:k+1].T)
-            self.covariance += self.explained_variance_[k] * add_cov
+            self.covariance_ += self.explained_variance_[k] * add_cov
         return self
         
     def score(self, X):
@@ -208,7 +208,7 @@ class ProbabilisticPCA(PCA):
         """
         Xr = X - self.mean_
         log_like = np.zeros(X.shape[0])
-        self.precision = np.linalg.inv(self.covariance)
+        self.precision = np.linalg.inv(self.covariance_)
         for i in range(X.shape[0]):
             log_like[i] = -.5 * np.dot(np.dot(self.precision, Xr[i]), Xr[i])
         log_like += fast_logdet(self.precision) - self.dim/2*np.log(2*np.pi)
