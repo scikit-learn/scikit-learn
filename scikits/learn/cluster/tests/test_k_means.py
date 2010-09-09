@@ -21,3 +21,5 @@ def test_k_means():
     assert_equal(np.unique(labels[:20]).size, 1)
     assert_equal(np.unique(labels[20:40]).size, 1)
     assert_equal(np.unique(labels[40:]).size, 1)
+
+
