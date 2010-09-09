@@ -285,9 +285,22 @@ Gaussian is narrowed around 0 which does not allow large values of
 :math:`\beta`, and with low value of :math:`\lambda`, the Gaussian is
 very flattened which allows values of :math:`\beta`.  Here, we use a
 *non-informative* prior for :math:`\lambda`.
-
-
 The parameters are estimated by maximizing the *marginal log likelihood*.
+There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
+
+.. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
+    {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
+
+
+.. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
+    {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
+    
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
+ very slightly informative priors.
+
+
+
+
 
 
 .. figure:: ../auto_examples/glm/images/plot_bayesian_ridge.png
@@ -345,8 +358,18 @@ Gaussian distribution, centered on zero and with a precision
 
 .. math:: p(\beta|\lambda) = \mathcal{N}(\beta|0,A^{-1})
 
-with :math:`diag \; (A) = lambda = \{\lambda_{1},...,\lambda_{p}\}`.
-We use a *non-informative* prior for :math:`\lambda`.
+with :math:`diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
+There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
+
+.. math:: g(\alpha|\alpha_1,\alpha_2) = \frac{\alpha_2^{\alpha_1}}
+    {\Gamma(\alpha_1)} \alpha^{\alpha_1-1} e^{-\alpha_2 {\alpha}}
+
+
+.. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
+    {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
+    
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
+ very slightly informative priors.
 
 
 .. figure:: ../auto_examples/glm/images/plot_ard.png

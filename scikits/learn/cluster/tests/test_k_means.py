@@ -14,6 +14,7 @@ X = generate_clustered_data(n_clusters=n_clusters, std=.1)
 
 
 def test_k_means():
+    np.random.seed(1)
     k_means = KMeans().fit(X, k=3) 
     cluster_centers_indices = k_means.cluster_centers_
     labels = k_means.labels_

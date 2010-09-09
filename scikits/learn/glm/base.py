@@ -56,13 +56,23 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """
 
         if self.fit_intercept:
-            self._xmean = X.mean(axis=0)
-            self._ymean = Y.mean(axis=0)
-            return X - self._xmean, Y - self._ymean
+            Xmean = X.mean(axis=0)
+            Ymean = Y.mean()
+            X = X - Xmean
+            Y = Y - Ymean
         else:
-            self._xmean = 0.
-            self._ymean = 0.
-            return X, Y
+            Xmean = np.zeros(X.shape[1])
+            Ymean = 0.
+        return X, Y, Xmean, Ymean
+
+
+    def _set_intercept(self, Xmean, Ymean):
+        """Set the intercept_
+        """
+        if self.fit_intercept:
+            self.intercept_ = Ymean - np.dot(Xmean, self.coef_)
+        else:
+            self.intercept_ = 0
 
 
     def __str__(self):
@@ -120,13 +130,11 @@ class LinearRegression(LinearModel):
         X = np.asanyarray( X )
         Y = np.asanyarray( Y )
 
-        X, Y = self._center_data (X, Y)
+        X, Y, Xmean, Ymean = self._center_data (X, Y)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, Y)
-        if self.fit_intercept:
-            self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
-        else:
-            self.intercept_ = 0
+
+        self._set_intercept(Xmean, Ymean)
         return self
 

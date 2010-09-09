@@ -56,7 +56,7 @@ class Ridge(LinearModel):
 
         n_samples, n_features = X.shape
 
-        X, Y = self._center_data (X, Y)
+        X, Y, Xmean, Ymean = self._center_data (X, Y)
 
         if n_samples > n_features:
             # w = inv(X^t X + alpha*Id) * X.T y
@@ -68,7 +68,7 @@ class Ridge(LinearModel):
             self.coef_ = np.dot(X.T, linalg.solve(
                 np.dot(X, X.T) + self.alpha * np.eye(n_samples), Y))
 
-        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+        self._set_intercept(Xmean, Ymean)
         return self
 
 
