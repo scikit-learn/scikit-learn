@@ -257,8 +257,8 @@ class StratifiedKFold(object):
         assert k>0, ValueError('cannot have k below 1')
         assert k<n, ValueError('cannot have k=%d greater than the number '
                                'of samples %d' % (k, n))
-        _, y_sorted = np.unique(y, return_inverse=True)
-        assert k<np.min(np.bincount(y_sorted))
+        _, y_sorted = np.unique1d(y, return_inverse=True)
+        assert k <= np.min(np.bincount(y_sorted))
         self.y = y
         self.k = k
 
