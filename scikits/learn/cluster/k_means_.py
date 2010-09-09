@@ -308,7 +308,7 @@ class KMeans(BaseEstimator):
     """
 
 
-    def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300):
+    def __init__(self, k=8, init='random', n_init=10, max_iter=300):
         self.k = k
         self.init = init
         self.max_iter = max_iter
