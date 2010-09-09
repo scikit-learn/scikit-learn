@@ -38,7 +38,7 @@ score_stds  = list()
 percentiles = (1, 3, 6, 10, 15, 20, 30, 40, 60, 80, 100)
 
 for percentile in percentiles:
-    transform._set_params(percentile=percentile)
+    clf._set_params(percentile=percentile)
     # Compute cross-validation score using all CPUs
     this_scores = cross_val.cross_val_score(clf, X, y, n_jobs=1)
     score_means.append(this_scores.mean())

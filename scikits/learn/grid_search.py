@@ -6,6 +6,7 @@ Tune the parameters of an estimator by cross-validation.
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
+import copy
 
 from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
@@ -53,15 +54,15 @@ def iter_grid(param_grid):
             yield params
 
 
-def fit_grid_point(X, y, klass, orignal_params, clf_params, cv,
-                                        loss_func, iid, **fit_params):
+def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
+                   **fit_params):
     """Run fit on one set of parameters
     Returns the score and the instance of the classifier
     """
-    params = orignal_params.copy()
-    params.update(clf_params)
-    n_samples, n_features = X.shape
-    clf = klass(**params)
+    # update parameters of the classifier after a copy of its base structure
+    clf = copy.deepcopy(base_clf)
+    clf._set_params(**clf_params)
+    
     score = 0
     for train, test in cv:
         clf.fit(X[train], y[train], **fit_params)
@@ -184,13 +185,12 @@ class GridSearchCV(object):
                 cv = KFold(n_samples, k=3)
 
         grid = iter_grid(self.param_grid)
-        klass = self.estimator.__class__
-        orignal_params = self.estimator._get_params()
+        base_clf = self.estimator._reinit()
         out = Parallel(n_jobs=self.n_jobs)(
-            delayed(fit_grid_point)(X, y, klass, orignal_params, clf_params,
+            delayed(fit_grid_point)(X, y, base_clf, clf_params,
                     cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
-
+        
         # Out is a list of pairs: estimator, score
         key = lambda pair: pair[1]
         best_estimator = max(out, key=key)[0] # get maximum score
