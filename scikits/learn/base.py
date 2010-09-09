@@ -53,22 +53,35 @@ class BaseEstimator(object):
         
         return new_object
 
-    def _get_params(self):
+    def _get_params(self, deep=False):
+        """ Get parameters for current estimator
+
+            deep = True will return the parameters for this estimator and
+            contained subobjects.
+        """
         out = dict()
         for key in self._get_param_names():
-            out[key] = getattr(self, key)
+            value = getattr (self, key)
+            if deep and hasattr (value, '_get_params'):
+                deep_items = value._get_params().items()
+                out.update((key + '__' + k, val) for k, val in deep_items)
+            else:
+                out[key] = value
         return out
-
 
     def _set_params(self, **params):
         """ Set the parameters of the estimator.
         """
         valid_params = self._get_param_names()
         for key, value in params.iteritems():
-            assert key in valid_params, ('Invalid parameter %s '
-                'for estimator %s' %
-                (key, self.__class__.__name__))
-            setattr(self, key, value)
+            split = key.split('__', 1)
+            if len(split) > 1:
+                getattr (self, split[0])._set_params(**{split[1]:value})
+            else:
+                assert key in valid_params, ('Invalid parameter %s '
+                                             'for estimator %s' %
+                                             (key, self.__class__.__name__))
+                setattr(self, key, value)
 
 
     def __repr__(self):

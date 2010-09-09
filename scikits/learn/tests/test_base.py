@@ -43,3 +43,26 @@ def test_repr():
     my_estimator = MyEstimator()
     repr(my_estimator)
 
+
+def test_get_params():
+
+    class K (BaseEstimator):
+        def __init__ (self, c=None, d=None):
+            self.c = c
+            self.d = d
+            pass
+
+    class T (BaseEstimator):
+        def __init__ (self, a=None, b=None):
+            self.a = a
+            self.b = b
+
+    test = T(K(),K())
+
+    assert_true ('a__d' in test._get_params(deep=True))
+    assert_true ('a__d' not in test._get_params(deep=False))
+
+
+    test._set_params (a__d=2)
+    assert test.a.d == 2
+
