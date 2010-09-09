@@ -1,5 +1,5 @@
 """
-Basic covariance estimators
+Ledoit-Wolf covariance estimator
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -8,57 +8,10 @@ Basic covariance estimators
 # License: BSD Style.
 
 import numpy as np
-from scipy import linalg
 
-from ..base import BaseEstimator
-from ..utils.extmath import fast_logdet as exact_logdet
+from .covariance import Covariance
 
-################################################################################
-# Covariance estimator
-
-class Covariance(BaseEstimator):
-    """Basic covariance estimator
-
-    Parameters
-    ----------
-    store_covariance : bool
-        Specify if the estimated covariance is stored
-
-    Attributes
-    ----------
-    `covariance_` : 2D ndarray, shape (n_features, n_features)
-        Estimated covariance matrix
-        (stored only is store_covariance is True)
-
-    `precision_` : 2D ndarray, shape (n_features, n_features)
-        Estimated precision matrix
-
-    """
-    def __init__(self, store_covariance=True):
-        self.store_covariance = True
-
-
-    def fit(self, X):
-        n_samples = X.shape[0]
-        covariance_ = np.dot(X.T, X) / n_samples
-        if self.store_covariance:
-            self.covariance_ = covariance_
-        self.precision_ = linalg.inv(covariance_)
-        return self
-
-
-    def score(self, X_test):
-        n_samples = X_test.shape[0]
-        test_cov = np.dot(X_test.T, X_test) / n_samples
-        return self.log_likelihood(test_cov)
-
-
-    def log_likelihood(self, test_cov):
-        return -np.sum(test_cov*self.precision_) + \
-                                            exact_logdet(self.precision_)
-
-
-################################################################################
+###########################################################################################################
 # Ledoit-Wolf estimator
 
 def ledoit_wolf(X, return_shrinkage=False):
@@ -152,40 +105,8 @@ class LedoitWolf(Covariance):
 
     def fit(self, X):
         covariance_, shrinkage = ledoit_wolf(X, return_shrinkage=True)
-        if self.store_covariance:
-            self.covariance_ = covariance_
-        self.precision_ = linalg.inv(covariance_)
         self.shrinkage_ = shrinkage
+        self._set_precision(covariance_)
         return self
 
-
-################################################################################
-# Shrinkage estimator
-
-def shrunk_covariance(X, shrinkage=0.1, data_is_cov=False):
-    """ Calculate a covariance matrix shrunk on the diagonal
-
-    Returns
-    -------
-    regularised_cov: 2D ndarray
-        Regularized covariance
-
-    Notes
-    -----
-    The regularized covariance is given by
-
-        (1 - shrinkage)*cov
-                + shrinkage*mu*np.identity(n_features)
-
-    where mu = trace(cov) / n_features
-
-    """
-    n_samples, n_features = X.shape
-    if data_is_cov:
-        emp_cov = X
-    else:
-        emp_cov = np.dot(X.T, X) / n_samples
-    mu = np.trace(emp_cov) / n_features
-    shrunk_cov = (1.-shrinkage)*emp_cov + shrinkage*mu*np.eye(n_features)
-    return shrunk_cov
 

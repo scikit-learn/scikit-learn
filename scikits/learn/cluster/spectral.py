@@ -124,7 +124,7 @@ def spectral_clustering(adjacency, k=8, mode=None):
     """
     maps = spectral_embedding(adjacency, k=k, mode=mode)
     maps = maps[1:]
-    _, labels = k_means(maps.T, k)
+    _, labels, _ = k_means(maps.T, k)
     return labels
 
 
