@@ -30,8 +30,8 @@ class BayesianRidge(LinearModel):
     n_iter : int (defaut is 300)
         Maximum number of interations.
 
-    eps : float (defaut is 1.e-6)
-        Stop the algorithm if rmse has converged.
+    eps : float (defaut is 1.e-3)
+        Stop the algorithm if w has converged.
        
     alpha_1 : float (defaut is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
@@ -91,7 +91,7 @@ class BayesianRidge(LinearModel):
     """
     
     
-    def __init__(self, n_iter=300, eps=1.e-6, alpha_1 = 1.e-6, alpha_2 = 1.e-6, 
+    def __init__(self, n_iter=300, eps=1.e-3, alpha_1 = 1.e-6, alpha_2 = 1.e-6, 
                 lambda_1 = 1.e-6, lambda_2 = 1.e-6, compute_score = False,
                 fit_intercept = True):
         """
@@ -100,8 +100,8 @@ class BayesianRidge(LinearModel):
         n_iter : int (defaut is 300)
             Maximum number of interations.
 
-        eps : float (defaut is 1.e-6)
-            Stop the algorithm if rmse has converged.
+        eps : float (defaut is 1.e-3)
+            Stop the algorithm if w has converged.
         
         alpha_1 : float (defaut is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
@@ -196,11 +196,12 @@ class BayesianRidge(LinearModel):
                 self.all_score_.append(self.objective_function(X))
 
             ### Check for convergence
-            if iter_ != 0 and np.abs(self.rmse_old_ - self.rmse_) < self.eps:
+            if iter_ != 0 and \
+                np.sum(np.abs(self.coef_old_ - self.coef_)) < self.eps:
                 print "Convergence after ",str(iter_)," iterations"
                 break
-            self.rmse_old_ = np.copy(self.rmse_)
-            
+            self.coef_old_ = np.copy(self.coef_)
+
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
         # Store explained variance for __str__
         self.explained_variance_ = self._explained_variance(X, Y)
@@ -270,8 +271,8 @@ class ARDRegression(LinearModel):
     n_iter : int (defaut is 300)
         Maximum number of interations.
 
-    eps : float (defaut is 1.e-6)
-        Stop the algorithm if rmse has converged.
+    eps : float (defaut is 1.e-3)
+        Stop the algorithm if w has converged.
         
     alpha_1 : float (defaut is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
@@ -334,7 +335,7 @@ class ARDRegression(LinearModel):
   
     """
 
-    def __init__(self, n_iter=300, eps=1.e-6, alpha_1 = 1.e-6, alpha_2 = 1.e-6,
+    def __init__(self, n_iter=300, eps=1.e-3, alpha_1 = 1.e-6, alpha_2 = 1.e-6,
                   lambda_1 = 1.e-6, lambda_2 = 1.e-6, compute_score = False,
                   threshold_lambda = 1.e+4, fit_intercept = True):
         """
@@ -343,8 +344,8 @@ class ARDRegression(LinearModel):
         n_iter : int (defaut is 300)
             Maximum number of interations.
 
-        eps : float (defaut is 1.e-6)
-            Stop the algorithm if rmse has converged.
+        eps : float (defaut is 1.e-3)
+            Stop the algorithm if w has converged.
             
         alpha_1 : float (defaut is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
@@ -485,10 +486,11 @@ class ARDRegression(LinearModel):
                 self.all_score_.append(self.objective_function(X))
 
             ### Check for convergence
-            if iter_ != 0 and np.abs(self.rmse_old_ - self.rmse_) < self.eps:
+            if iter_ != 0 and \
+                np.sum(np.abs(self.coef_old_ - self.coef_)) < self.eps:
                 print "Convergence after ",str(iter_)," iterations"
                 break
-            self.rmse_old_ = np.copy(self.rmse_)
+            self.coef_old_ = np.copy(self.coef_)
 
 
     def objective_function(self, X):
@@ -508,84 +510,16 @@ class ARDRegression(LinearModel):
         
         self.score_ = (self.lambda_1 * np.log(self.lambda_) - self.lambda_2\
                        * self.lambda_).sum()
-        print "nEw"
         self.score_ += self.alpha_1 * np.log(self.alpha_) - self.alpha_2\
                        * self.alpha_
         self.score_ += 0.5 * (fast_logdet(self.sigma_)  + X.shape[0]\
                           * np.log(self.alpha_) + np.sum(np.log(self.lambda_)))
-        print self.score_
         self.score_ -= 0.5 * (self.alpha_ * self.rmse_\
                               + (self.lambda_ * self.coef_**2).sum())
-        print self.score_
         return self.score_
 
 
 
 
-
-
-
-
-
-
-
-
-
-class RVM_R(ARDRegression):
-    """
-    See Bishop chapter 7.2. for more details.
-    This should be resived. It is not efficient and I wonder if we
-    can't use libsvm for this.
-    """
-
-    def __init__(self, n_iter=300, eps=1.e-12, th_lb=1.e-12, kernel = "linear",
-                        compute_ll=False, fit_intercept=True):
-        self.n_iter = n_iter
-        self.eps = eps
-        self.th_lb = th_lb
-        self.kernel = kernel
-        self.compute_ll = compute_ll
-        self.fit_intercept = fit_intercept
-
-
-    def fit(self, X, Y, **params):
-        self._set_params(**params)
-        X = np.asanyarray(X, dtype=np.float)
-        Y = np.asanyarray(Y, dtype=np.float)
-        if self.kernel == "linear":
-            self.X_save = X
-            X = np.dot(X,X.T)
-        n_samples, n_features = X.shape
-
-        if self.fit_intercept:
-            self._xmean = X.mean(axis=0)
-            self._ymean = Y.mean(axis=0)
-            X = X - self._xmean
-            Y = Y - self._ymean
-        else: 
-            self._xmean = 0.
-            self._ymean = 0.
-
-
-        ### "Dummy" initialization of the values of the parameters
-        self.alpha_ = 1./np.var(Y)
-        self.lambda_ = np.ones(n_features)
-        self.log_likelihood_ = []
-        self.X_XT = np.dot(X,X.T)
-        self.XT_Y = np.dot(X.T,Y)
-
-        ### Launch the convergence loop
-        self.loop_ard(X,Y)
-        
-        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
-        # Store explained variance for __str__
-        #self.explained_variance_ = self._explained_variance(X, Y)
-        return self
-
-    def predict(self,Xtest):
-        Xtest = np.asanyarray(Xtest)
-        Xtest = np.dot(self.X_save,Xtest.T)
-        return np.dot(Xtest, self.coef_) + self.intercept_
-        
 
 
