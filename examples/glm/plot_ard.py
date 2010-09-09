@@ -1,6 +1,6 @@
 """
 ==================================================
-Automatic Relevance Determination
+Automatic Relevance Determination Regression
 ==================================================
 """
 
