@@ -15,7 +15,9 @@ from .metrics import explained_variance
 def clone(estimator):
     """ Constructs a new estimator with the same parameters.
 
-    It's a kind of deep copy without actually copying attached data.
+    Clone does a deep copy of the model in an estimator
+    without actually copying attached data. It yields a new estimator
+    with the same parameters that has not been fit on any data.
     """
     klass = estimator.__class__
     new_object_params = estimator._get_params(deep=False)
