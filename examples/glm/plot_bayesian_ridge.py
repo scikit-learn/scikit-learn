@@ -16,7 +16,7 @@ import scipy.stats as st
 
 ### Parameters of the example
 nr.seed(0)
-n_samples = 100
+n_samples = 50
 n_features = 100
 ### Create gaussian data
 X = nr.randn(n_samples, n_features)
@@ -36,27 +36,26 @@ Y = np.dot(X, w) + noise
 
 ################################################################################
 ### Fit the Bayesian Ridge Regression
-clf = BayesianRidge()
+clf = BayesianRidge(compute_score = True)
 clf.fit(X, Y)
 
-print "Precision alpha of the noise:"
-print "True: ", alpha_, " - Estimated: ",clf.alpha_
 
 
 ################################################################################
 ### Plot the true weights, the estimated weights and the histogram of the
 ### weights
 
+
 pl.figure()
 axe = pl.axes([0.1,0.6,0.8,0.325])
-axe.set_title("Weights of the model")
+axe.set_title("Bayesian Ridge - Weights of the model")
 axe.plot(clf.coef_, 'b-', label="Estimate")
 axe.plot(w, 'g-', label="Ground truth")
 axe.set_xlabel("Features")
 axe.set_ylabel("Values of the weights")
 axe.legend(loc=1)
 
-axe = pl.axes([0.1,0.1,0.8,0.325])
+axe = pl.axes([0.1,0.1,0.45,0.325])
 axe.set_title("Histogram of the weights")
 axe.hist(clf.coef_, bins=n_features, log=True)
 axe.plot(clf.coef_[relevant_features],5*np.ones(len(relevant_features)),'ro',
@@ -65,10 +64,12 @@ axe.set_ylabel("Features")
 axe.set_xlabel("Values of the weights")
 axe.legend(loc=1)
 
+axe = pl.axes([0.65,0.1,0.3,0.325])
+axe.set_title("Objective function")
+axe.plot(clf.all_score_)
+axe.set_ylabel("Score")
+axe.set_xlabel("Iterations")
 pl.show()
-
-
-
 
 
 
