@@ -12,6 +12,68 @@ import numpy as np
 from .metrics import explained_variance
 
 ################################################################################
+def clone(estimator):
+    """ Constructs a new estimator with the same parameters.
+
+    Clone does a deep copy of the model in an estimator
+    without actually copying attached data. It yields a new estimator
+    with the same parameters that has not been fit on any data.
+    """
+    klass = estimator.__class__
+    new_object_params = estimator._get_params(deep=False)
+    for name, param in new_object_params.iteritems():
+        if hasattr(param, '_get_params'):
+            new_object_params[name] = clone(param)
+    new_object = klass(**new_object_params)
+    
+    return new_object
+
+
+################################################################################
+def _pprint(params, offset=0, printer=repr):
+    """ Pretty print the dictionnary 'params'
+
+        Parameters
+        ==========
+        params: dict
+            The dictionnary to pretty print
+        offset: int
+            The offset in characters to add at the begin of each line.
+        printer:
+            The function to convert entries to strings, typically
+            the builtin str or repr
+    """
+    # Do a multi-line justified repr:
+    options = np.get_printoptions()
+    np.set_printoptions(precision=5, threshold=64, edgeitems=2)
+    params_list = list()
+    this_line_length = offset
+    line_sep = ',\n' + (1+offset/2)*' '
+    for i, (k, v) in enumerate(params.iteritems()):
+        if type(v) is float:
+            # use str for representing floating point numbers
+            # this way we get consistent representation across
+            # architectures and versions.
+            this_repr  = '%s=%s' % (k, str(v))
+        else:
+            # use repr of the rest
+            this_repr  = '%s=%s' % (k, printer(v))
+        if i > 0: 
+            if (this_line_length + len(this_repr) >= 75
+                                        or '\n' in this_repr):
+                params_list.append(line_sep)
+                this_line_length = len(line_sep)
+            else:
+                params_list.append(', ')
+                this_line_length += 2
+        params_list.append(this_repr)
+        this_line_length += len(this_repr)
+
+    np.set_printoptions(**options)
+    return ''.join(params_list)
+
+
+################################################################################
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
 
@@ -24,8 +86,10 @@ class BaseEstimator(object):
 
     """
 
-    @classmethod
+    @classmethod 
     def _get_param_names(cls):
+        """ Get parameter names for the estimator
+        """
         try:
             args, varargs, kw, default = inspect.getargspec(cls.__init__)
             assert varargs is None, (
@@ -41,59 +105,65 @@ class BaseEstimator(object):
             args = []
         return args
 
+    def _get_params(self, deep=False):
+        """ Get parameters for the estimator
 
-    def _get_params(self):
+            Parameters
+            ==========
+            deep: boolean, optional
+                If True, will return the parameters for this estimator and
+                contained subobjects that are estimators.
+        """
         out = dict()
         for key in self._get_param_names():
-            out[key] = getattr(self, key)
+            value = getattr (self, key)
+            if deep and hasattr (value, '_get_params'):
+                deep_items = value._get_params().items()
+                out.update((key + '__' + k, val) for k, val in deep_items)
+            out[key] = value
         return out
-
 
     def _set_params(self, **params):
         """ Set the parameters of the estimator.
         """
-        valid_params = self._get_param_names()
+        valid_params = self._get_params(deep=True)
         for key, value in params.iteritems():
-            assert key in valid_params, ('Invalid parameter %s '
-                'for estimator %s' %
-                (key, self.__class__.__name__))
-            setattr(self, key, value)
-
+            split = key.split('__', 1)
+            if len(split) > 1:
+                name, sub_name = split
+                assert name in valid_params, ('Invalid parameter %s '
+                                              'for estimator %s' %
+                                             (name, self))
+                sub_object = valid_params[name]
+                assert hasattr(sub_object, '_get_params'), (
+                    'Parameter %s of %s is not an estimator, cannot set '
+                    'sub parameter %s' %
+                        (sub_name, self.__class__.__name__, sub_name)
+                    )
+                sub_object._set_params(**{sub_name:value})
+            else:
+                assert key in valid_params, ('Invalid parameter %s '
+                                              'for estimator %s' %
+                                             (key, self.__class__.__name__))
+                setattr(self, key, value)
 
     def __repr__(self):
-        options = np.get_printoptions()
-        np.set_printoptions(precision=5, threshold=64, edgeitems=2)
         class_name = self.__class__.__name__
-
-        # Do a multi-line justified repr:
-        params_list = list()
-        this_line_length = len(class_name)
-        line_sep = ',\n' + (1+len(class_name)/2)*' '
-        for i, (k, v) in enumerate(self._get_params().iteritems()):
-            if type(v) is float:
-                # use str for representing floating point numbers
-                # this way we get consistent representation across
-                # architectures and versions.
-                this_repr  = '%s=%s' % (k, str(v))
-            else:
-                # use repr of the rest
-                this_repr  = '%s=%s' % (k, repr(v))
-            if i > 0: 
-                if (this_line_length + len(this_repr) >= 75
-                                            or '\n' in this_repr):
-                    params_list.append(line_sep)
-                    this_line_length += len(line_sep)
-                else:
-                    params_list.append(', ')
-                    this_line_length += 2
-            params_list.append(this_repr)
-            this_line_length += len(this_repr)
-
-        params_str = ''.join(params_list)
-        np.set_printoptions(**options)
         return '%s(%s)' % (
                 class_name,
-                params_str
+                _pprint(self._get_params(deep=False),
+                        offset=len(class_name),
+                ),
+            )
+
+    def __str__(self):
+        class_name = self.__class__.__name__
+        return '%s(%s)' % (
+                class_name,
+                _pprint(self._get_params(deep=True),
+                        offset=len(class_name),
+                        printer=str,
+                ),
             )
 
 

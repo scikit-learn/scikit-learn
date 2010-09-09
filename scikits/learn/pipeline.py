@@ -8,68 +8,96 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 
 from .base import BaseEstimator
 
-
 class Pipeline(BaseEstimator):
+    """ Pipeline of transforms with a final estimator 
+
+        Sequentialy apply a list of transforms and a final estimator 
+        A transform implements fit & transform methods
+        A estimator implements fit & predict methods
+
+        Example
+        =======
+
+        >>> from scikits.learn import svm, datasets
+        >>> from scikits.learn.datasets import samples_generator
+        >>> from scikits.learn.feature_selection import SelectKBest, f_regression
+        >>> from scikits.learn.pipeline import Pipeline
+
+        >>> # generate some data to play with
+        >>> X, y = samples_generator.test_dataset_classif(k=5)
+
+        >>> # ANOVA SVM-C
+        >>> anova_filter = SelectKBest(f_regression, k=5)
+        >>> clf = svm.SVC(kernel='linear')
+
+        >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
+        >>> _ = anova_svm.fit(X, y)
+
+        >>> prediction = anova_svm.predict(X)
+        >>> score = anova_svm.score(X)
     """
-    Pipeline of transformers with a final estimator 
-    Sequentialy apply a list of transformers and a final estimator 
-    A transform implements fit & transform methods
-    A estimator implements fit & predict methods
 
-    Example
-    =======
+    #---------------------------------------------------------------------------
+    # BaseEstimator interface
+    #---------------------------------------------------------------------------
 
-    >>> from scikits.learn import svm, datasets
-    >>> from scikits.learn.datasets import samples_generator
-    >>> from scikits.learn.feature_selection import SelectKBest, f_regression
-    >>> from scikits.learn.pipeline import Pipeline
-
-    >>> # generate some data to play with
-    >>> X, y = samples_generator.test_dataset_classif(k=5)
-
-    >>> # ANOVA SVM-C
-    >>> anova_filter = SelectKBest(f_regression, k=5)
-    >>> clf = svm.SVC(kernel='linear')
-
-    >>> anova_svm = Pipeline([anova_filter], clf)
-    >>> _ = anova_svm.fit(X,y)
-
-    >>> prediction = anova_svm.predict(X)
-    >>> score = anova_svm.score(X)
-    """
-    def __init__(self, transformers=[], estimator=None):
+    def __init__(self, steps):
         """
-        methods: list of UnivRanking objects,
-        ie.: with fit/reduce/getSelectedFeatures methods
+        Parameters
+        ==========
+        steps: list
+            List of (name, transform) object (implementing
+            fit/transform) that are chained, in the order in which
+            they are chained, with the last object an estimator.
         """
-        for t in  transformers:
+        self._named_steps = dict(steps)
+        names, estimators = zip(*steps)
+        self.steps = steps
+        assert len(self._named_steps) == len(steps), ("Names provided are "
+            "not unique: %s" % names)
+        transforms = estimators[:-1]
+        estimator = estimators[-1]
+        for t in  transforms:
             assert hasattr(t, "fit") and hasattr(t, "transform"), ValueError(
-                "All transformers should implement fit and transform",
-                "'%s' (type %s) )" % (t, type(t))
-        )
-        assert hasattr(estimator, "fit") and hasattr(estimator, "predict"), \
-            ValueError("Predictor should implement fit and predict",
-                "'%s' (type %s) )" % (t, type(t))
-        )
-        self.transformers = transformers
-        self.estimator = estimator
+                "All intermediate steps a the chain should be transforms "
+                "and implement fit and transform",
+                "'%s' (type %s) doesn't)" % (t, type(t))
+            )
+        assert hasattr(estimator, "fit"), \
+            ("Last step of chain should implement fit",
+                "'%s' (type %s) doesn't)" % (estimator, type(estimator))
+            )
+
+    def _get_params(self, deep=False):
+        if not deep:
+            return super(Pipeline, self)._get_params(deep=False)
+        else:
+            out = self._named_steps.copy()
+            for name, step in self._named_steps.iteritems():
+                for key, value in step._get_params(deep=True).iteritems():
+                    out['%s__%s' % (name, key)] = value
+        return out
+    
+    #---------------------------------------------------------------------------
+    # Estimator interface
+    #---------------------------------------------------------------------------
 
     def fit(self, X, y=None):
         Xt = X
-        for transformer in self.transformers:
-            Xt = transformer.fit(Xt, y).transform(Xt)
-        self.estimator.fit(Xt, y)
+        for name, transform in self.steps[:-1]:
+            Xt = transform.fit(Xt, y).transform(Xt)
+        self.steps[-1][-1].fit(Xt, y)
         return self
 
     def predict(self, X):
         Xt = X
-        for transformer in self.transformers:
-            Xt = transformer.transform(Xt)
-        return self.estimator.predict(Xt)
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].predict(Xt)
 
     def score(self, X, y=None):
         Xt = X
-        for transformer in self.transformers:
-            Xt = transformer.transform(Xt)
-        return self.estimator.score(Xt, y)
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].score(Xt, y)
 

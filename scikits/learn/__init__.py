@@ -13,6 +13,7 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.sourceforge.net for complete documentation.
 """
 
+from .base import clone
 from . import cross_val
 from . import ball_tree
 from . import cluster
@@ -26,7 +27,7 @@ from . import svm
 from . import features
 
 __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'gmm', 'glm',
-           'logistic', 'lda', 'metrics', 'svm', 'features']
+           'logistic', 'lda', 'metrics', 'svm', 'features', 'clone']
 
 __version__ = '0.5-git'
 
