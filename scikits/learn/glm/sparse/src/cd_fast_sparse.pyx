@@ -108,34 +108,35 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     R[X_indices[jj]] -= X_data[jj] * w[ii]
 
+        if d_w_max < tol or n_iter == maxit - 1:
+            # the biggest coordinate update of this iteration was smaller than
+            # the tolerance: check the duality gap as ultimate stopping
+            # criterion
 
-        if d_w_max < tol:
-            break
+            # sparse X.T / dense R dot product
+            X_T_R = np.zeros(n_features)
+            for ii in xrange(n_features):
+                for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                    X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
 
-# TODO: implement sparse version of the dual gap check
-#        if d_w_max < tol or n_iter == maxit - 1:
-#            # the biggest coordinate update of this iteration was smaller than
-#            # the tolerance: check the duality gap as ultimate stopping
-#            # criterion
-#
-#            dual_norm_XtA = linalg.norm(np.dot(X.T, R) - beta * w, np.inf)
-#            # TODO: use C sqrt
-#            R_norm = linalg.norm(R)
-#            w_norm = linalg.norm(w, 2)
-#            if (dual_norm_XtA > alpha):
-#                const =  alpha / dual_norm_XtA
-#                A_norm = R_norm * const
-#                gap = 0.5 * (R_norm**2 + A_norm**2)
-#            else:
-#                const = 1.0
-#                gap = R_norm**2
-#
-#            gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
-#                  0.5 * beta * (1 + const**2) * (w_norm**2)
-#
-#            if gap < tol:
-#                # return if we reached desired tolerance
-#                break
+            dual_norm_XtA = linalg.norm(X_T_R - beta * w, np.inf)
+            # TODO: use C sqrt
+            R_norm = linalg.norm(R)
+            w_norm = linalg.norm(w, 2)
+            if (dual_norm_XtA > alpha):
+                const =  alpha / dual_norm_XtA
+                A_norm = R_norm * const
+                gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
+            else:
+                const = 1.0
+                gap = R_norm ** 2
+
+            gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
+                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+
+            if gap < tol:
+                # return if we reached desired tolerance
+                break
 
     return w, gap, tol
 

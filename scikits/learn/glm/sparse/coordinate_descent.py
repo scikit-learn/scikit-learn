@@ -31,10 +31,14 @@ class ElasticNet(LinearModel):
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
+
+        TODO: fit_intercept=True is not yet implemented
     """
 
     def __init__(self, alpha=1.0, rho=0.5, coef_=None,
-                fit_intercept=True):
+                fit_intercept=False):
+        if fit_intercept:
+            raise NotImplementedError("fit_intercept=True is not implemented")
         self.alpha = alpha
         self.rho = rho
         self.fit_intercept = fit_intercept
