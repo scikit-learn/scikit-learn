@@ -29,6 +29,8 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=1] X_data,
@@ -69,13 +71,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_iter
 
     # initialize the residuals
-    R = np.zeros(n_features, dtype=np.float64)
+    R = y.copy()
     for ii in xrange(n_features):
-        X_ii_data = X_data[X_indptr[ii]:X_indptr[ii + 1]]
-        tmp = 0.0
+        # sparse X column / dense w dot product
         for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
-            tmp += X_ii_data[jj] * w[ii]
-        R[ii] = y[ii] - tmp
+            R[X_indices[jj]] -= X_data[jj] * w[ii]
 
     tol = tol * linalg.norm(y) ** 2
 
@@ -87,10 +87,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w_ii != 0.0:
                 # R += w_ii * X[:,ii]
-                pass # TODO
+                for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                    R[X_indices[jj]] += X_data[jj] * w_ii
 
             # tmp = (X[:,ii] * R).sum()
-            # TODO
+            tmp = 0.0
+            for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                tmp += R[X_indices[jj]] * X_data[jj]
 
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
@@ -102,7 +105,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
-                pass # TODO
+                for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                    R[X_indices[jj]] -= X_data[jj] * w[ii]
+
 
 #        if d_w_max < tol or n_iter == maxit - 1:
 #            # the biggest coordinate update of this iteration was smaller than
