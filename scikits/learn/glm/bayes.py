@@ -12,6 +12,8 @@ from scipy import linalg
 from .base import LinearModel
 from ..utils.extmath import fast_logdet
 
+###############################################################################
+# BayesianRidge regression
 
 class BayesianRidge(LinearModel):
     """Bayesian ridge regression
@@ -32,46 +34,46 @@ class BayesianRidge(LinearModel):
 
     eps : float (defaut is 1.e-3)
         Stop the algorithm if w has converged.
-       
+
     alpha_1 : float (defaut is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the alpha parameter.
-    
+
     alpha_2 : float (defaut is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the alpha parameter.
-    
+
     lambda_1 : float (defaut is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the lambda parameter.
-    
+
     lambda_2 : float (defaut is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the lambda parameter.
-                      
+
     compute_score : boolean (default is False)
         If True, compute the objective function at each step of the model.
-        
+
     fit_intercept : boolean (default is True)
         wether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
-            
+
     Attributes
     ----------
     coef_ : numpy array of shape (nb_features)
         Coefficients of the regression model (mean of the weights
         distribution.)
-        
+
     alpha_ : float
        estimated precision of the noise.
-       
+
     lambda_ : numpy array of shape (nb_features)
        estimated precisions of the weights.
-       
+
     sigma_ : numpy array of shape (nb_features,nb_features)
         estimated variance-covariance matrix of the weights
-        
+
     score_ : float
         if computed, value of the objective function (to be maximized)
 
@@ -82,16 +84,15 @@ class BayesianRidge(LinearModel):
 
     predict(X) : array
         Predict using the model.
-        
-    
-        
+
+
     Examples
     --------
-  
+
     """
-    
-    
-    def __init__(self, n_iter=300, eps=1.e-3, alpha_1 = 1.e-6, alpha_2 = 1.e-6, 
+
+
+    def __init__(self, n_iter=300, eps=1.e-3, alpha_1 = 1.e-6, alpha_2 = 1.e-6,
                 lambda_1 = 1.e-6, lambda_2 = 1.e-6, compute_score = False,
                 fit_intercept = True):
         """
@@ -102,33 +103,32 @@ class BayesianRidge(LinearModel):
 
         eps : float (defaut is 1.e-3)
             Stop the algorithm if w has converged.
-        
+
         alpha_1 : float (defaut is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the alpha parameter.
-        
+
         alpha_2 : float (defaut is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the alpha parameter.
-        
+
         lambda_1 : float (defaut is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the lambda parameter.
-        
+
         lambda_2 : float (defaut is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the lambda parameter.
-            
+
         compute_score : boolean (default is False)
             If True, compute the objective function at each step of the model.
-            
+
         fit_intercept : boolean (default is True)
           wether to calculate the intercept for this model. If set
           to false, no intercept will be used in calculations
           (e.g. data is expected to be already centered).
-            
+
         """
-        
         self.n_iter = n_iter
         self.eps = eps
         self.alpha_1 = alpha_1
@@ -137,7 +137,6 @@ class BayesianRidge(LinearModel):
         self.lambda_2 = lambda_2
         self.compute_score = compute_score
         self.fit_intercept = fit_intercept
-        
 
     def fit(self, X, Y, **params):
         """
@@ -155,9 +154,8 @@ class BayesianRidge(LinearModel):
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
-        X, Y = self._center_data (X, Y)
+        X, Y, Xmean, Ymean = self._center_data (X, Y)
         n_samples, n_features = X.shape
-
 
         ### Initialization of the values of the parameters
         self.alpha_ = 1./np.var(Y)
@@ -167,7 +165,6 @@ class BayesianRidge(LinearModel):
         U, S, V = linalg.svd(X, full_matrices=False)
         self.eigen_vals_ = S**2
         self.all_score_ = []
-        
 
         ### Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
@@ -179,17 +176,14 @@ class BayesianRidge(LinearModel):
             self.sigma_.flat[::(self.sigma_.shape[1]+1)] += 1. / self.lambda_
             self.coef_ = self.alpha_ * np.dot(self.sigma_, self.XT_Y)
 
-
             ### Update alpha and lambda
             self.rmse_ = np.sum((Y - np.dot(X, self.coef_))**2)
-            
             self.gamma_ =  np.sum((self.alpha_ * self.eigen_vals_)\
-                            /(self.lambda_ + self.alpha_ * self.eigen_vals_))
+                            / (self.lambda_ + self.alpha_ * self.eigen_vals_))
             self.lambda_ =  (self.gamma_ + 2*self.lambda_1)\
-                            /(np.sum(self.coef_**2) + 2*self.lambda_2)
+                            / (np.sum(self.coef_**2) + 2*self.lambda_2)
             self.alpha_ = (n_samples - self.gamma_ +  2*self.alpha_1)\
-                          /(self.rmse_ + 2*self.alpha_2)
-
+                          / (self.rmse_ + 2*self.alpha_2)
 
             ### Compute the objective function
             if self.compute_score:
@@ -202,58 +196,48 @@ class BayesianRidge(LinearModel):
                 break
             self.coef_old_ = np.copy(self.coef_)
 
-        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+
+        self._set_intercept(Xmean, Ymean)
         # Store explained variance for __str__
         self.explained_variance_ = self._explained_variance(X, Y)
         return self
 
-      
+
     def objective_function(self, X):
         """
         Compute the objective function.
-        
+
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
-            
+
         Returns
         -------
         score_ : value of the objective function (to be maximized)
         """
-        
-        self.score_ = self.lambda_1 * np.log(self.lambda_) - self.lambda_2\
+
+        self.score_ = self.lambda_1 * np.log(self.lambda_) - self.lambda_2 \
                        * self.lambda_
-        self.score_ += self.alpha_1 * np.log(self.alpha_) - self.alpha_2\
+        self.score_ += self.alpha_1 * np.log(self.alpha_) - self.alpha_2 \
                        * self.alpha_
-        self.score_ += 0.5 * X.shape[1] * np.log(self.lambda_)\
-                       + 0.5 * X.shape[0] * np.log(self.alpha_)\
-                       - 0.5 * self.alpha_ *  self.rmse_\
-                       - 0.5 * (self.lambda_ * np.sum(self.coef_**2))\
-                       - 0.5 * fast_logdet(self.sigma_)\
+        self.score_ += 0.5 * X.shape[1] * np.log(self.lambda_) \
+                       + 0.5 * X.shape[0] * np.log(self.alpha_) \
+                       - 0.5 * self.alpha_ *  self.rmse_ \
+                       - 0.5 * (self.lambda_ * np.sum(self.coef_**2)) \
+                       - 0.5 * fast_logdet(self.sigma_) \
                        - 0.5 * X.shape[0] * np.log(2*np.pi)
         return self.score_
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
 
+
+###############################################################################
+# ARD (Automatic Relevance Determination) regression
 
 
 class ARDRegression(LinearModel):
     """Bayesian ARD regression.
-    
+
     Fit the weights of a regression model, using an ARD prior. The weights of
     the regression model are assumed to be in Gaussian distributions.
     Also estimate the parameters lambda (precisions of the distributions of the
@@ -273,50 +257,50 @@ class ARDRegression(LinearModel):
 
     eps : float (defaut is 1.e-3)
         Stop the algorithm if w has converged.
-        
+
     alpha_1 : float (defaut is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the alpha parameter.
-    
+
     alpha_2 : float (defaut is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the alpha parameter.
-    
+
     lambda_1 : float (defaut is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the lambda parameter.
-    
+
     lambda_2 : float (defaut is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the lambda parameter.
-                      
+
     compute_score : boolean (default is False)
         If True, compute the objective function at each step of the model.
-                   
+
     threshold_lambda : float (default is 1.e+4)
         threshold for removing (pruning) weights with high precision from
         the computation.
-            
+
     fit_intercept : boolean (default is True)
         wether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).        
-            
+        (e.g. data is expected to be already centered).
+
     Attributes
     ----------
     coef_ : numpy array of shape (nb_features)
         Coefficients of the regression model (mean of the weights
         distribution.)
-        
+
     alpha_ : float
        estimated precision of the noise.
-       
+
     lambda_ : numpy array of shape (nb_features)
        estimated precisions of the weights.
-       
+
     sigma_ : numpy array of shape (nb_features,nb_features)
         estimated variance-covariance matrix of the weights
-        
+
     score_ : float
         if computed, value of the objective function (to be maximized)
 
@@ -327,12 +311,10 @@ class ARDRegression(LinearModel):
 
     predict(X) : array
         Predict using the model.
-        
-    
-        
+
+
     Examples
     --------
-  
     """
 
     def __init__(self, n_iter=300, eps=1.e-3, alpha_1 = 1.e-6, alpha_2 = 1.e-6,
@@ -346,36 +328,35 @@ class ARDRegression(LinearModel):
 
         eps : float (defaut is 1.e-3)
             Stop the algorithm if w has converged.
-            
+
         alpha_1 : float (defaut is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the alpha parameter.
-        
+
         alpha_2 : float (defaut is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the alpha parameter.
-        
+
         lambda_1 : float (defaut is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the lambda parameter.
-        
+
         lambda_2 : float (defaut is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the lambda parameter.
-            
+
         compute_score : boolean (default is False)
             If True, compute the objective function at each step of the model.
-            
+
         threshold_lambda : float (default is 1.e+4)
             threshold for removing (pruning) weights with high precision from
             the computation.
-            
+
         fit_intercept : boolean (default is True)
             wether to calculate the intercept for this model. If set
             to false, no intercept will be used in calculations
             (e.g. data is expected to be already centered).
         """
-        
         self.n_iter = n_iter
         self.eps = eps
         self.fit_intercept = fit_intercept
@@ -399,32 +380,33 @@ class ARDRegression(LinearModel):
             n_features is the number of features.
         Y : array, shape = [n_samples]
             Target values (integers)
-            
+
         Returns
         -------
         self : returns an instance of self.
         """
         self._set_params(**params)
+
         X = np.asanyarray(X, dtype=np.float)
         Y = np.asanyarray(Y, dtype=np.float)
-        X, Y = self._center_data (X, Y)
+
         n_samples, n_features = X.shape
 
+        X, Y, Xmean, Ymean = self._center_data (X, Y)
 
         ### Initialization of the values of the parameters
         self.alpha_ = 1./np.var(Y)
         self.lambda_ = np.ones(n_features)
         self.all_score_ = []
-        
+
         ### Launch the convergence loop
-        self.evidence_maximization(X,Y)
-        
-        self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
+        self.evidence_maximization(X, Y)
+
+        self._set_intercept(Xmean, Ymean)
         # Store explained variance for __str__
         self.explained_variance_ = self._explained_variance(X, Y)
         return self
 
-    
     def evidence_maximization(self,X,Y):
         """
         Iterative procedure for estimating the ARDRegression model according to
@@ -437,18 +419,18 @@ class ARDRegression(LinearModel):
             n_features is the number of features.
         Y : array, shape = [n_samples]
             Target values (integers)
-            
+
         Attributes
         ----------
         keep_lambda : boolean numpy array of shape (nb_features)
             Lambda under a given threshold, to be keep for the computation.
             Avoid divergence when lambda is to high
         """
-        
+
         n_samples, n_features = X.shape
         self.coef_ = np.zeros(n_features)
         self.keep_lambda = np.ones(n_features,dtype=bool)
-        
+
         ### Iterative procedure of ARDRegression
         for iter_ in range(self.n_iter):
 
@@ -464,10 +446,10 @@ class ARDRegression(LinearModel):
                           [-1,1]) * X[:,self.keep_lambda].T ,self.sigma_)
             self.sigma_.flat[::(self.sigma_.shape[1]+1)] += \
                           1./self.lambda_[self.keep_lambda]
-            self.coef_[self.keep_lambda] = self.alpha_\
-                            *np.dot(self.sigma_,np.dot(X[:,self.keep_lambda].T,
+            self.coef_[self.keep_lambda] = self.alpha_ \
+                            * np.dot(self.sigma_,np.dot(X[:,self.keep_lambda].T,
                             Y))
-                            
+
             ### Update alpha and lambda
             self.rmse_ = np.sum((Y - np.dot(X, self.coef_))**2)
             self.gamma_ =  1. - self.lambda_[self.keep_lambda]\
@@ -480,7 +462,7 @@ class ARDRegression(LinearModel):
             ### Prune the weights with a precision over a threshold
             self.keep_lambda = self.lambda_ < self.threshold_lambda
             self.coef_[self.keep_lambda == False] = 0
-            
+
             ### Compute the objective function
             if self.compute_score:
                 self.all_score_.append(self.objective_function(X))
@@ -496,18 +478,18 @@ class ARDRegression(LinearModel):
     def objective_function(self, X):
         """
         Compute the objective function.
-        
+
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
-            
+
         Returns
         -------
         score_ : value of the objective function (to be maximized)
         """
-        
+
         self.score_ = (self.lambda_1 * np.log(self.lambda_) - self.lambda_2\
                        * self.lambda_).sum()
         self.score_ += self.alpha_1 * np.log(self.alpha_) - self.alpha_2\
@@ -517,9 +499,6 @@ class ARDRegression(LinearModel):
         self.score_ -= 0.5 * (self.alpha_ * self.rmse_\
                               + (self.lambda_ * self.coef_**2).sum())
         return self.score_
-
-
-
 
 
 

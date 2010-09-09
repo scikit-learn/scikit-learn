@@ -20,7 +20,7 @@ def test_toy_bayesian_ridge_object():
     clf = BayesianRidge(compute_score = True)
     clf.fit(X, Y)
     Test = [[1], [3], [4]]
-    assert(np.abs(clf.predict(Test)-[1, 3, 4]).sum()<1.e-2) # identity
+    assert(np.abs(clf.predict(Test)-[1, 3, 4]).sum() < 1.e-2) # identity
 
 
 def test_toy_ard_object():
@@ -32,4 +32,4 @@ def test_toy_ard_object():
     clf = ARDRegression(compute_score = True)
     clf.fit(X, Y)
     Test = [[1], [3], [4]]
-    assert(np.abs(clf.predict(Test)-[1, 3, 4]).sum()<1.e-3) # identity
+    assert(np.abs(clf.predict(Test)-[1, 3, 4]).sum() < 1.e-3) # identity

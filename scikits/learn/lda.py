@@ -1,8 +1,12 @@
-import exceptions, warnings
+"""
+LDA: Linear Discriminant Analysis
+"""
+# Author: Matthieu Perrot
+
+import warnings
 
 import numpy as np
-import scipy.linalg as linalg
-import scipy.ndimage as ndimage
+from scipy import linalg, ndimage
 
 from .base import BaseEstimator, ClassifierMixin
 
@@ -86,14 +90,15 @@ class LDA(BaseEstimator, ClassifierMixin):
         self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(y)
-        if X.ndim!=2:
-            raise exceptions.ValueError('X must be a 2D array')
+        if X.ndim != 2:
+            raise ValueError('X must be a 2D array')
         n_samples = X.shape[0]
         n_features = X.shape[1]
+        # We need int32 to be able to use ndimage.measurements
         classes = np.unique(y).astype(np.int32)
         n_classes = classes.size
         if n_classes < 2:
-            raise exceptions.ValueError('y has less than 2 classes')
+            raise ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
             counts = np.array(ndimage.measurements.sum(np.ones(len(y)),
@@ -153,7 +158,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         # Use svd to find projection in the space spamed by the
         # (n_classes) centers
         if self.use_svd:
-            U, S, V = linalg.svd(X, full_matrices=0)
+            _, S, V = linalg.svd(X, full_matrices=0)
         else:
             S, V = self._svd(X)
 
@@ -201,7 +206,6 @@ class LDA(BaseEstimator, ClassifierMixin):
         # of sphered (scaled data)
         return -0.5 * np.sum(dm ** 2, 1) + \
                 np.log(self.priors_) + np.dot(X, dm.T)
-
 
     def predict(self, X):
         """
