@@ -10,5 +10,6 @@ to the theory of Gaussian Graphical Models.
 
 """
 
-from .ledoit_wolf import ledoit_wolf, LedoitWolf, Covariance, shrunk_covariance
+from .ledoit_wolf import ledoit_wolf, LedoitWolf, Covariance, \
+                         shrunk_covariance, ShrunkCovariance
 
