@@ -30,8 +30,8 @@ class Pipeline(BaseEstimator):
         >>> anova_filter = SelectKBest(f_regression, k=5)
         >>> clf = svm.SVC(kernel='linear')
 
-        >>> anova_svm = Pipeline([anova_filter], clf)
-        >>> _ = anova_svm.fit(X,y)
+        >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
+        >>> _ = anova_svm.fit(X, y)
 
         >>> prediction = anova_svm.predict(X)
         >>> score = anova_svm.score(X)
