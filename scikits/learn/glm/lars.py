@@ -457,6 +457,7 @@ class LeastAngleRegression(LinearModel):
 
         self.coef_ = np.ravel(self.coef_path_[:, max_features])
 
+        # XXX : should use self._set_intercept
         if fit_intercept:
             self.intercept_ = self._ymean
         else:
