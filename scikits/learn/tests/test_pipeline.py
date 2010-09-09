@@ -21,6 +21,8 @@ def test_pipeline_init():
     # Check that params are set
     pipe._set_params(C=0.1)
     assert_equal(clf.C, 0.1)
+    # Smoke test the repr:
+    repr(pipe)
     
     # Test with two objects
     clf = SVC()
@@ -33,6 +35,8 @@ def test_pipeline_init():
     # Check that params are set
     pipe._set_params(C=0.1)
     assert_equal(clf.C, 0.1)
+    # Smoke test the repr:
+    repr(pipe)
 
     # Test with two named objects
     clf = SVC()
@@ -52,6 +56,9 @@ def test_pipeline_init():
     # But that it's OK when specifying names
     pipe = Pipeline(transforms=[filter1, filter1], estimator=clf, 
                     names=['filter1', 'filter2'])
-    pipe2 = pipe._reinit()
+    # Smoke test the repr:
+    repr(pipe)
 
+    # Test reinit
+    pipe2 = pipe._reinit()
     assert_equal(pipe._get_params(), pipe2._get_params())

@@ -167,25 +167,20 @@ class Pipeline(BaseEstimator):
                     names=self.names)
 
 
-    # XXX: should be done
-    def a__repr__(self):
-        options = np.get_printoptions()
-        np.set_printoptions(precision=5, threshold=64, edgeitems=2)
+    def __repr__(self):
         class_name = self.__class__.__name__
+        params = dict(transforms=self.transforms,
+                      estimator=self.estimator,
+                      names=self.names)
+        if self.names is None:
+            params.pop('names')
 
         # Do a multi-line justified repr:
         params_list = list()
         this_line_length = len(class_name)
         line_sep = ',\n' + (1+len(class_name)/2)*' '
-        for i, (k, v) in enumerate(self._get_params().iteritems()):
-            if type(v) is float:
-                # use str for representing floating point numbers
-                # this way we get consistent representation across
-                # architectures and versions.
-                this_repr  = '%s=%s' % (k, str(v))
-            else:
-                # use repr of the rest
-                this_repr  = '%s=%s' % (k, repr(v))
+        for i, (k, v) in enumerate(params.iteritems()):
+            this_repr  = '%s=%s' % (k, repr(v))
             if i > 0: 
                 if (this_line_length + len(this_repr) >= 75
                                             or '\n' in this_repr):
@@ -198,7 +193,6 @@ class Pipeline(BaseEstimator):
             this_line_length += len(this_repr)
 
         params_str = ''.join(params_list)
-        np.set_printoptions(**options)
         return '%s(%s)' % (
                 class_name,
                 params_str
