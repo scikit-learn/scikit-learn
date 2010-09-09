@@ -29,7 +29,7 @@ X = np.hstack((X, 2*np.random.random((n_samples, 200))))
 
 transform = feature_selection.SelectPercentile(feature_selection.f_classif)
 
-clf = Pipeline([transform], svm.SVC())
+clf = Pipeline([('anova', transform), ('svc', svm.SVC())])
 
 ################################################################################
 # Plot the cross-validation score as a function of percentile of features
@@ -38,7 +38,7 @@ score_stds  = list()
 percentiles = (1, 3, 6, 10, 15, 20, 30, 40, 60, 80, 100)
 
 for percentile in percentiles:
-    clf._set_params(percentile=percentile)
+    clf._set_params(anova__percentile=percentile)
     # Compute cross-validation score using all CPUs
     this_scores = cross_val.cross_val_score(clf, X, y, n_jobs=1)
     score_means.append(this_scores.mean())
