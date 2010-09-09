@@ -419,7 +419,7 @@ class ARDRegression(LinearModel):
         self.explained_variance_ = self._explained_variance(X, Y)
         return self
 
-    def evidence_maximization(self,X,Y):
+    def evidence_maximization(self, X, Y):
         """
         Iterative procedure for estimating the ARDRegression model according to
         the given training data and parameters.
@@ -441,39 +441,39 @@ class ARDRegression(LinearModel):
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
-        self.keep_lambda = np.ones(n_features,dtype=bool)
+        keep_lambda = np.ones(n_features,dtype=bool)
 
         ### Iterative procedure of ARDRegression
         for iter_ in range(self.n_iter):
 
             ### Compute mu and sigma (using Woodbury matrix identity)
             self.sigma_ = linalg.pinv(np.eye(n_samples)/self.alpha_ +
-                          np.dot(X[:,self.keep_lambda] *
-                          np.reshape(1./self.lambda_[self.keep_lambda],[1,-1]),
-                          X[:,self.keep_lambda].T))
-            self.sigma_ = np.dot(self.sigma_,X[:,self.keep_lambda]
-                          * np.reshape(1./self.lambda_[self.keep_lambda],
+                          np.dot(X[:,keep_lambda] *
+                          np.reshape(1./self.lambda_[keep_lambda],[1,-1]),
+                          X[:,keep_lambda].T))
+            self.sigma_ = np.dot(self.sigma_,X[:,keep_lambda]
+                          * np.reshape(1./self.lambda_[keep_lambda],
                           [1,-1]))
-            self.sigma_ = - np.dot(np.reshape(1./self.lambda_[self.keep_lambda],
-                          [-1,1]) * X[:,self.keep_lambda].T ,self.sigma_)
+            self.sigma_ = - np.dot(np.reshape(1./self.lambda_[keep_lambda],
+                          [-1,1]) * X[:,keep_lambda].T ,self.sigma_)
             self.sigma_.flat[::(self.sigma_.shape[1]+1)] += \
-                          1./self.lambda_[self.keep_lambda]
-            coef_[self.keep_lambda] = self.alpha_ \
-                            * np.dot(self.sigma_,np.dot(X[:,self.keep_lambda].T,
+                          1./self.lambda_[keep_lambda]
+            coef_[keep_lambda] = self.alpha_ \
+                            * np.dot(self.sigma_,np.dot(X[:,keep_lambda].T,
                             Y))
 
             ### Update alpha and lambda
             self.rmse_ = np.sum((Y - np.dot(X, coef_))**2)
-            self.gamma_ =  1. - self.lambda_[self.keep_lambda]\
+            self.gamma_ =  1. - self.lambda_[keep_lambda]\
                                           *np.diag(self.sigma_)
-            self.lambda_[self.keep_lambda] = (self.gamma_ + 2*self.lambda_1)\
-                        /((coef_[self.keep_lambda])**2 + 2*self.lambda_2)
+            self.lambda_[keep_lambda] = (self.gamma_ + 2*self.lambda_1)\
+                        /((coef_[keep_lambda])**2 + 2*self.lambda_2)
             self.alpha_ = (n_samples - self.gamma_.sum() +  2*self.alpha_1)\
                             /(self.rmse_ + 2*self.alpha_2)
 
             ### Prune the weights with a precision over a threshold
-            self.keep_lambda = self.lambda_ < self.threshold_lambda
-            coef_[self.keep_lambda == False] = 0
+            keep_lambda = self.lambda_ < self.threshold_lambda
+            coef_[keep_lambda == False] = 0
 
             self.coef_ = coef_
 
