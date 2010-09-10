@@ -54,7 +54,7 @@ coef_ = enet.fit(X, y, alpha=alpha_optim).coef_
 # Plot results functions
 
 import pylab as pl
-pl.close('all')
+pl.subplot(2, 1, 1)
 pl.semilogx(alphas, train_errors, label='Train')
 pl.semilogx(alphas, test_errors, label='Test')
 pl.vlines(alpha_optim, pl.ylim()[0], np.max(test_errors),
@@ -65,9 +65,10 @@ pl.xlabel('Regularization parameter')
 pl.ylabel('Performance')
 
 # Show estimated coef_ vs true coef
-pl.figure()
+pl.subplot(2, 1, 2)
 pl.plot(coef, label='True coef')
 pl.plot(coef_, label='Estimated coef')
 pl.legend()
+pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
 pl.show()
 
