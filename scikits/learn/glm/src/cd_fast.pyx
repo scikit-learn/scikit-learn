@@ -88,7 +88,7 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) / norm_cols_X[ii]
 
             # update the maximum absolute coefficient update
-            d_wii = fabs(w[ii] - w_ii)
+            d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
                 d_w_max = d_w_ii
 
@@ -118,7 +118,8 @@ def lasso_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     return w, gap, tol
 
-
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
@@ -177,7 +178,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     / (norm_cols_X[ii] + beta)
 
             # update the maximum absolute coefficient update
-            d_wii = fabs(w[ii] - w_ii)
+            d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
                 d_w_max = d_w_ii
 
