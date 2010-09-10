@@ -2,9 +2,12 @@ import numpy as np
 from scipy import sparse
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
+from numpy.testing import assert_equal
 from numpy.testing import assert_
 
+from scikits.learn.glm.sparse.coordinate_descent import Lasso as SparseLasso
 from scikits.learn.glm.sparse.coordinate_descent import ElasticNet as SparseENet
+from scikits.learn.glm.coordinate_descent import Lasso as DenseLasso
 from scikits.learn.glm.coordinate_descent import ElasticNet as DenseENet
 
 
@@ -27,7 +30,7 @@ def test_enet_toy_list_input():
     Y = [-1, 0, 1]       # just a straight line
     T = [[2], [3], [4]]  # test sample
 
-    # this should be the same as lasso
+    # this should be the same as unregularized least squares
     clf = SparseENet(alpha=0, rho=1.0)
     clf.fit(X, Y)
     pred = clf.predict(T)
@@ -89,23 +92,30 @@ def test_enet_toy_explicit_sparse_input():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def test_sparse_enet_not_as_toy_dataset():
+def make_sparse_data(n_samples, n_features, n_informative, seed=42):
+    rng = np.random.RandomState(seed)
 
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
-    n_samples, n_features, maxit = 100, 100, 1000
-    np.random.seed(42)
 
     # generate a ground truth model
-    w = np.random.randn(n_features)
-    w[10:] = 0.0 # only the top 10 features are impacting the model
+    w = rng.randn(n_features)
+    w[n_informative:] = 0.0 # only the top features are impacting the model
 
-    X = np.random.randn(n_samples, n_features)
-    rnd = np.random.uniform(size=(n_samples, n_features))
+    X = rng.randn(n_samples, n_features)
+    rnd = rng.uniform(size=(n_samples, n_features))
     X[rnd > 0.5] = 0.0 # 50% of zeros in input signal
 
     # generate training ground truth labels
     y = np.dot(X, w)
+    return X, y
+
+
+def test_sparse_enet_not_as_toy_dataset():
+    n_samples, n_features, maxit = 100, 100, 1000
+    n_informative = 10
+
+    X, y = make_sparse_data(n_samples, n_features, n_informative)
 
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
@@ -122,5 +132,32 @@ def test_sparse_enet_not_as_toy_dataset():
     assert_(d_clf.score(X_test, y_test) > 0.7)
 
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
+
+    # check that the coefs are sparse
+    assert_(np.sum(s_clf.coef_ != 0.0) < 2 * n_informative)
+
+
+def test_sparse_lasso_not_as_toy_dataset():
+    n_samples, n_features, maxit = 100, 100, 1000
+    n_informative = 10
+
+    X, y = make_sparse_data(n_samples, n_features, n_informative)
+
+    X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
+    y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
+
+    s_clf = SparseLasso(alpha=0.1, fit_intercept=False)
+    s_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
+    assert_almost_equal(s_clf.dual_gap_, 0, 4)
+    assert_(s_clf.score(X_test, y_test) > 0.7)
+
+    # check the convergence is the same as the dense version
+    d_clf = DenseLasso(alpha=0.1, fit_intercept=False)
+    d_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
+    assert_almost_equal(d_clf.dual_gap_, 0, 4)
+    assert_(d_clf.score(X_test, y_test) > 0.7)
+
+    # check that the coefs are sparse
+    assert_equal(np.sum(s_clf.coef_ != 0.0), n_informative)
 
 

@@ -114,3 +114,27 @@ class ElasticNet(LinearModel):
         return np.ravel(np.dot(self.sparse_coef_, X.T).todense()
                         + self.intercept_)
 
+
+
+class Lasso(ElasticNet):
+    """Linear Model trained with L1 prior as regularizer
+
+    This implementation works on scipy.sparse X and dense coef_. Technically
+    this is the same as Elastic Net with the L2 penalty set to zero.
+
+    Parameters
+    ----------
+    alpha : float
+        Constant that multiplies the L1 term. Defaults to 1.0
+    coef_ : ndarray of shape n_features
+        The initial coeffients to warm-start the optimization
+    fit_intercept: bool
+        Whether the intercept should be estimated or not. If False, the
+        data is assumed to be already centered.
+
+    """
+
+    def __init__(self, alpha=1.0, coef_=None, fit_intercept=False):
+        super(Lasso, self).__init__(alpha=alpha, rho=1.0, coef_=coef_,
+                                    fit_intercept=fit_intercept)
+
