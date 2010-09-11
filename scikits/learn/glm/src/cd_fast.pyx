@@ -67,6 +67,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
+    cdef double w_max
     cdef double d_w_ii
     cdef double gab = tol + 1.0
     cdef unsigned int ii
@@ -75,7 +76,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     R = y - np.dot(X, w)
     tol = tol * linalg.norm(y) ** 2
 
+
     for n_iter in range(maxit):
+        w_max = 0.0
         d_w_max = 0.0
         for ii in xrange(nfeatures): # Loop over coordinates
             w_ii = w[ii] # Store previous value
@@ -105,7 +108,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                       <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
                       <DOUBLE*>R.data, 1)
 
-        if d_w_max < tol or n_iter == maxit - 1:
+            if w[ii] > w_max:
+                w_max = w[ii]
+
+        if w_max == 0.0 or d_w_max / w_max < tol or n_iter == maxit - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
