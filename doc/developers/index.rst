@@ -240,7 +240,7 @@ this is left to the ``fit()`` method::
 
 
 The arguments that go in the `__init__` should all be keyword arguments
-with a defaut value. In other words, a user should be able to instanciate
+with a default value. In other words, a user should be able to instanciate
 an estimator without passing to it any arguments.
 
 The arguments in given at instanciation of an estimator should all

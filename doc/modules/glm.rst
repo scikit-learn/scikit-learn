@@ -110,13 +110,13 @@ regularizer. The objective function to minimize is:
 
 .. math::  0.5 * ||y - X w||_2 ^ 2 + \alpha * ||w||_1
 
-The lasso estimate solves thus solves the minization of the
+The lasso estimate thus solves the minization of the
 least-squares penalty with :math:`\alpha * ||w||_1` added, where
 :math:`\alpha` is a constant and :math:`||w||_1` is the L1-norm of the
 parameter vector.
 
 
-This formulation is useful in some context due to its tendency to
+This formulation is useful in some contexts due to its tendency to
 prefer solutions with fewer parameter values, effectively reducing the
 number of variables upon which the given solution is dependent. For
 this reason, the Lasso and its variants are fundamental to the field

@@ -29,25 +29,25 @@ class BayesianRidge(LinearModel):
     Y : numpy array of shape (length)
         Target values for training vectors
 
-    n_iter : int (defaut is 300)
+    n_iter : int (default is 300)
         Maximum number of interations.
 
-    eps : float (defaut is 1.e-3)
+    eps : float (default is 1.e-3)
         Stop the algorithm if w has converged.
 
-    alpha_1 : float (defaut is 1.e-6)
+    alpha_1 : float (default is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the alpha parameter.
 
-    alpha_2 : float (defaut is 1.e-6)
+    alpha_2 : float (default is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the alpha parameter.
 
-    lambda_1 : float (defaut is 1.e-6)
+    lambda_1 : float (default is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the lambda parameter.
 
-    lambda_2 : float (defaut is 1.e-6)
+    lambda_2 : float (default is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the lambda parameter.
 
@@ -95,25 +95,25 @@ class BayesianRidge(LinearModel):
         """
         Parameters
         ----------
-        n_iter : int (defaut is 300)
+        n_iter : int (default is 300)
             Maximum number of interations.
 
-        eps : float (defaut is 1.e-3)
+        eps : float (default is 1.e-3)
             Stop the algorithm if w has converged.
 
-        alpha_1 : float (defaut is 1.e-6)
+        alpha_1 : float (default is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the alpha parameter.
 
-        alpha_2 : float (defaut is 1.e-6)
+        alpha_2 : float (default is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the alpha parameter.
 
-        lambda_1 : float (defaut is 1.e-6)
+        lambda_1 : float (default is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the lambda parameter.
 
-        lambda_2 : float (defaut is 1.e-6)
+        lambda_2 : float (default is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the lambda parameter.
 
@@ -264,25 +264,25 @@ class ARDRegression(LinearModel):
     Y : numpy array of shape (length)
         Target values for training vectors
 
-    n_iter : int (defaut is 300)
+    n_iter : int (default is 300)
         Maximum number of interations.
 
-    eps : float (defaut is 1.e-3)
+    eps : float (default is 1.e-3)
         Stop the algorithm if w has converged.
 
-    alpha_1 : float (defaut is 1.e-6)
+    alpha_1 : float (default is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the alpha parameter.
 
-    alpha_2 : float (defaut is 1.e-6)
+    alpha_2 : float (default is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the alpha parameter.
 
-    lambda_1 : float (defaut is 1.e-6)
+    lambda_1 : float (default is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the lambda parameter.
 
-    lambda_2 : float (defaut is 1.e-6)
+    lambda_2 : float (default is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the lambda parameter.
 
@@ -335,25 +335,25 @@ class ARDRegression(LinearModel):
         """
         Parameters
         ----------
-        n_iter : int (defaut is 300)
+        n_iter : int (default is 300)
             Maximum number of interations.
 
-        eps : float (defaut is 1.e-3)
+        eps : float (default is 1.e-3)
             Stop the algorithm if w has converged.
 
-        alpha_1 : float (defaut is 1.e-6)
+        alpha_1 : float (default is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the alpha parameter.
 
-        alpha_2 : float (defaut is 1.e-6)
+        alpha_2 : float (default is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the alpha parameter.
 
-        lambda_1 : float (defaut is 1.e-6)
+        lambda_1 : float (default is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the lambda parameter.
 
-        lambda_2 : float (defaut is 1.e-6)
+        lambda_2 : float (default is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the lambda parameter.
 
