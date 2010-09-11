@@ -8,6 +8,18 @@ from numpy.testing import assert_array_almost_equal, assert_almost_equal, assert
 
 from ..coordinate_descent import Lasso, LassoCV, ElasticNet, ElasticNetCV
 
+
+def test_lasso_zero():
+    """Check that the lasso can handle zero data without crashing"""
+    X = [[0], [0], [0]]
+    y = [0, 0, 0]
+    clf = Lasso(alpha=0).fit(X, y)
+    pred = clf.predict([[1], [2], [3]])
+    assert_array_almost_equal(clf.coef_, [0])
+    assert_array_almost_equal(pred, [0, 0, 0])
+    assert_almost_equal(clf.dual_gap_,  0)
+
+
 def test_lasso_toy():
     """
     Test Lasso on a toy example for various values of alpha.

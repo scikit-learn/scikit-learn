@@ -37,6 +37,7 @@ ctypedef np.float64_t DOUBLE
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
@@ -79,6 +80,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         w_max = 0.0
         d_w_max = 0.0
         for ii in xrange(n_features): # Loop over coordinates
+            if norm_cols_X[ii] == 0.0:
+                continue
+
             w_ii = w[ii] # Store previous value
 
             if w_ii != 0.0:
