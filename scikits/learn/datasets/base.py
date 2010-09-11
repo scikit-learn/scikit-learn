@@ -40,11 +40,14 @@ def load_iris():
     Let's say you are interested in the samples 10, 25, and 50, and want to
     know their class name.
 
+    >>> from scikits.learn.datasets import load_iris
     >>> data = load_iris()
-    >>> print data.target[[10, 25, 50]]
-    [0 0 1]
-    >>> print data.target_names
-    ['setosa' 'versicolor' 'virginica']
+    >>> data.target[[10, 25, 50]]
+    array([0, 0, 1])
+    >>> data.target_names
+    array(['setosa', 'versicolor', 'virginica'],
+          dtype='|S10')
+
     """
     
     data_file = csv.reader(open(os.path.dirname(__file__) 

@@ -1,6 +1,8 @@
-# Least Angle Regression algorithm. See doc/module/glm for a
-# complete discussion.
-#
+"""
+Least Angle Regression algorithm. See the documentation on the
+Generalized Linear Model for a complete discussion.
+"""
+
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #
@@ -8,8 +10,9 @@
 
 import numpy as np
 from scipy import linalg
-from .base import LinearModel
 import scipy.sparse as sp # needed by LeastAngleRegression
+
+from .base import LinearModel
 from .._minilearn import lars_fit_wrap
 from ..utils.fixes import copysign
 
@@ -20,7 +23,8 @@ from ..utils.fixes import copysign
 # all linalg.solve solve a triangular system, so this could be heavily
 # optimized by binding (in scipy ?) trsv or trsm
 
-def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
+def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", 
+                    verbose=False, precompute=True):
     """ Compute Least Angle Regression and LASSO path
 
         Parameters
@@ -186,7 +190,8 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
             drop_idx = active.pop (idx)
             # please please please remove this masked arrays pain from me
             Xna[drop_idx] = Xna.data[drop_idx]
-            print 'dropped ', idx, ' at ', n_iter, ' iteration'
+            if verbose:
+                print 'dropped %s at %s iteration' % (idx, n_iter)
             Xa = Xt[active] # duplicate
             L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
             sign_active = np.delete (sign_active, idx) # do an append to maintain size

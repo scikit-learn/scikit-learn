@@ -416,8 +416,10 @@ class SVC(_BaseLibSVM, ClassifierMixin):
 
     Examples
     --------
+    >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
+    >>> from scikits.learn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
@@ -516,8 +518,10 @@ class NuSVC(_BaseLibSVM, ClassifierMixin):
 
     Examples
     --------
+    >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
+    >>> from scikits.learn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, Y)
     NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, eps=0.001,

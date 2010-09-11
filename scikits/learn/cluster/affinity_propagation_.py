@@ -1,9 +1,11 @@
 """ Algorithms for clustering : Meanshift,  Affinity propagation and spectral 
 clustering.
 
-Author: Alexandre Gramfort alexandre.gramfort@inria.fr
-        Gael Varoquaux gael.varoquaux@normalesup.org
 """
+# Author: Alexandre Gramfort alexandre.gramfort@inria.fr
+#        Gael Varoquaux gael.varoquaux@normalesup.org
+
+# License: BSD
 
 import numpy as np
 
@@ -11,7 +13,7 @@ from ..base import BaseEstimator
 
 
 def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
-            copy=True):
+            copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
@@ -26,6 +28,8 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
     copy: boolean, optional
         If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency
+    verbose: boolean, optional
+        The verbosity level
 
     Returns
     -------
@@ -117,10 +121,12 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
             se = np.sum(e, axis=1);
             unconverged = np.sum((se == convit) + (se == 0)) != n_points
             if (not unconverged and (K>0)) or (it==maxit):
-                print "Converged after %d iterations." % it
+                if verbose:
+                    print "Converged after %d iterations." % it
                 break
     else:
-        print "Did not converged"
+        if verbose:
+            print "Did not converged"
 
     I = np.where(np.diag(A+R) > 0)[0]
     K = I.size # Identify exemplars

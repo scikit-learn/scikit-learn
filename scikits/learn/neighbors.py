@@ -31,6 +31,7 @@ class Neighbors(BaseEstimator, ClassifierMixin):
   --------
   >>> samples = [[0.,0.,1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
   >>> labels = [0,0,1,1]
+  >>> from scikits.learn.neighbors import Neighbors
   >>> neigh = Neighbors(k=3)
   >>> neigh.fit(samples, labels)
   Neighbors(k=3, window_size=1)
@@ -78,9 +79,9 @@ class Neighbors(BaseEstimator, ClassifierMixin):
     array representing our data set and ask who's the closest point to
     [1,1,1]
 
-    >>> import numpy as np
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> labels = [0, 0, 1]
+    >>> from scikits.learn.neighbors import Neighbors
     >>> neigh = Neighbors(k=1)
     >>> neigh.fit(samples, labels)
     Neighbors(k=1, window_size=1)
@@ -119,9 +120,9 @@ class Neighbors(BaseEstimator, ClassifierMixin):
 
     Examples
     --------
-    >>> import numpy as np
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> labels = [0, 0, 1]
+    >>> from scikits.learn.neighbors import Neighbors
     >>> neigh = Neighbors(k=1)
     >>> neigh.fit(samples, labels)
     Neighbors(k=1, window_size=1)

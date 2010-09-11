@@ -1,3 +1,7 @@
+"""
+Ridge regression
+"""
+
 import numpy as np
 from scipy import linalg
 
@@ -19,6 +23,7 @@ class Ridge(LinearModel):
 
     Examples
     --------
+    >>> from scikits.learn.glm import Ridge
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
     >>> np.random.seed(0)
