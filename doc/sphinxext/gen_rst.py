@@ -24,7 +24,7 @@ rst_template = """
 
 %(docstring)s
 
-**Source code:** :download:`%(fname)s <%(fname)s>`
+**Python source code:** :download:`%(fname)s <%(fname)s>`
 
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
@@ -39,7 +39,7 @@ plot_rst_template = """
 .. image:: images/%(image_name)s
     :align: center
 
-**Source code:** :download:`%(fname)s <%(fname)s>`
+**Python source code:** :download:`%(fname)s <%(fname)s>`
 
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
