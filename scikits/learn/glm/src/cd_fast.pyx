@@ -75,7 +75,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     R = y - np.dot(X, w)
     tol = tol * linalg.norm(y) ** 2
 
-
     for n_iter in range(maxit):
         w_max = 0.0
         d_w_max = 0.0
@@ -96,16 +95,16 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
 
-            # update the maximum absolute coefficient update
-            d_w_ii = fabs(w[ii] - w_ii)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
-
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
                 daxpy(n_samples, -w[ii],
                       <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
                       <DOUBLE*>R.data, 1)
+
+            # update the maximum absolute coefficient update
+            d_w_ii = fabs(w[ii] - w_ii)
+            if d_w_ii > d_w_max:
+                d_w_max = d_w_ii
 
             if w[ii] > w_max:
                 w_max = w[ii]
