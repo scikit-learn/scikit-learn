@@ -54,9 +54,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     """
 
     # get the data information into easy vars
-    cdef unsigned int nsamples = X.shape[0]
-    cdef unsigned int nfeatures = X.shape[1]
-    cdef unsigned int nclasses = w.shape[1]
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
@@ -80,18 +79,18 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     for n_iter in range(maxit):
         w_max = 0.0
         d_w_max = 0.0
-        for ii in xrange(nfeatures): # Loop over coordinates
+        for ii in xrange(n_features): # Loop over coordinates
             w_ii = w[ii] # Store previous value
 
             if w_ii != 0.0:
                 # R += w_ii * X[:,ii]
-                daxpy(nsamples, w_ii,
-                      <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+                daxpy(n_samples, w_ii,
+                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
                       <DOUBLE*>R.data, 1)
 
             # tmp = (X[:,ii]*R).sum()
-            tmp = ddot(nsamples,
-                       <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+            tmp = ddot(n_samples,
+                       <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
                        <DOUBLE*>R.data, 1)
 
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
@@ -104,8 +103,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
-                daxpy(nsamples, -w[ii],
-                      <DOUBLE*>(X.data + ii * nsamples * sizeof(DOUBLE)), 1,
+                daxpy(n_samples, -w[ii],
+                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
                       <DOUBLE*>R.data, 1)
 
             if w[ii] > w_max:
