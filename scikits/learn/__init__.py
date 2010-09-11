@@ -26,8 +26,25 @@ from . import metrics
 from . import svm
 from . import features
 
+try:
+    from numpy.testing import nosetester
+    class NoseTester(nosetester.NoseTester):
+        """ Subclass numpy's NoseTester to add doctests by default
+        """
+        def test(self, label='fast', verbose=1, extra_argv=None, 
+                        doctests=True, coverage=False):
+            return super(NoseTester, self).test(label=label, verbose=verbose,
+                                    extra_argv=extra_argv,
+                                    doctests=doctests, coverage=coverage)
+        
+    test = NoseTester().test
+    del nosetester
+except:
+    pass
+
 __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'gmm', 'glm',
-           'logistic', 'lda', 'metrics', 'svm', 'features', 'clone']
+           'logistic', 'lda', 'metrics', 'svm', 'features', 'clone', 
+           'test']
 
 __version__ = '0.5-git'
 
