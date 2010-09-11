@@ -31,10 +31,8 @@ X_r = pca.fit(X).transform(X)
 print pca.explained_variance_
 
 pl.figure()
-pl.hold('on')
 for c, i, target_name in zip("rgb", [0, 1, 2], target_names):
    pl.scatter(X_r[y==i,0], X_r[y==i,1], c=c, label=target_name)
-pl.hold('off')
 pl.legend()
 pl.title('PCA of IRIS dataset')
 
