@@ -31,7 +31,7 @@ try:
     class NoseTester(nosetester.NoseTester):
         """ Subclass numpy's NoseTester to add doctests by default
         """
-        def test(self, label='fast', verbose=1, extra_argv=None, 
+        def test(self, label='fast', verbose=1, extra_argv=['--exe'], 
                         doctests=True, coverage=False):
             return super(NoseTester, self).test(label=label, verbose=verbose,
                                     extra_argv=extra_argv,
