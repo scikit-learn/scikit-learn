@@ -1,7 +1,16 @@
 """
 =========================================
-Plot PCA 2d projection of of Iris dataset
+PCA 2d projection of of Iris dataset
 =========================================
+
+The Iris dataset represents 3 kind of Iris flowers (Setosa, Versicolour
+and Virginica) with 4 attributes: sepal length, sepal width, petal length
+and petal width.
+
+Principal Component Analysis (PCA) applied to this data identifies the
+combination of attributes (principal components, or directions in the
+feature space) that account for the most variance in the data. Here we
+plot the different samples on the 2 first principal components.
 """
 
 import pylab as pl
@@ -15,7 +24,7 @@ X = iris.data
 y = iris.target
 target_names = iris.target_names
 
-pca = PCA(k=2)
+pca = PCA(n_comp=2)
 X_r = pca.fit(X).transform(X)
 
 # Percentage of variance explained for each components
