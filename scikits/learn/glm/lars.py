@@ -54,14 +54,13 @@ def lars_path(X, y, max_iter=None, alpha_min=0, method="lar", precompute=True):
         ------
         XXX : add reference papers and wikipedia page
     
-    TODOS:
-    precompute : empty for now
-
-    TODO: detect stationary points.
-    Lasso variant
-    store full path
     """
-
+    # TODO: precompute : empty for now
+    #
+    # TODO: detect stationary points.
+    # Lasso variant
+    # store full path
+ 
     X = np.atleast_2d(X)
     y = np.atleast_1d(y)
 
