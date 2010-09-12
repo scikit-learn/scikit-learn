@@ -153,7 +153,7 @@ The objective function to minize is in this case
 .. topic:: Examples:
 
   * :ref:`example_glm_lasso_and_elasticnet.py`
-  * :ref:`example_plot_lasso_coordinate_descent_path.py`
+  * :ref:`example_glm_plot_lasso_coordinate_descent_path.py`
 
 
 .. _lars_algorithm:
