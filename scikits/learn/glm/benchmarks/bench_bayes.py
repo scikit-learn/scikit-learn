@@ -8,11 +8,11 @@ from datetime import datetime
 import numpy as np
 from scikits.learn import glm
 from scikits.learn.utils.bench import total_seconds
-import pylab as pl
 
 
 if __name__ == '__main__':
 
+    import pylab as pl
     
     n_iter = 20
 
