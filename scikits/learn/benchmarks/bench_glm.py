@@ -66,6 +66,7 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
     delta = (time() - tstart)
     # stop time
 
+    print "duration: %fms" % (delta * 1000)
     print "rmse: %f" % rmse(Y_test, clf.predict(X_test))
     print "mean coef abs diff: %f" % abs(ref_coef - clf.coef_.ravel()).mean()
     return delta
