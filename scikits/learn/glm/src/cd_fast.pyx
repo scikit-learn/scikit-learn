@@ -12,8 +12,6 @@ cimport cython
 cdef extern from "math.h":
     double fabs(double f)
     double sqrt(double f)
-    double exp(double f)
-    double rand()
 
 cdef inline double fmax(double x, double y):
     if x > y: return x
