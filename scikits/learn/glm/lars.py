@@ -15,15 +15,13 @@ import scipy.sparse as sp # needed by LeastAngleRegression
 from .base import LinearModel
 from .._minilearn import lars_fit_wrap
 from ..utils.fixes import copysign
-
-# Notes: np.ma.dot copies the masked array before doing the dot
-# product. Maybe we should implement in C our own masked_dot that does
-# not make unnecessary copies.
+from ..utils import arrayfuncs
 
 # all linalg.solve solve a triangular system, so this could be heavily
 # optimized by binding (in scipy ?) trsv or trsm
 
-def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precompute=True):
+def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
+              method="lar", precompute=True):
     """ Compute Least Angle Regression and LASSO path
 
         Parameters
@@ -113,16 +111,19 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precomp
                 arrayfuncs.dot_over (X.T, res, active_mask, np.False_, Cov)
             else:
                 # could use dot_over
-                Cov = res_init - np.dot (Gram, beta[n_iter])
+                d = np.dot (Gram[unactive], beta[n_iter])
+                Cov = res_init[unactive] - d
 
             imax  = np.argmax (np.abs(Cov[:n_unactive])) #rename
             C_    = Cov [imax]
             # np.delete (Cov, imax) # very ugly, has to be fixed
         else:
             # special case when all elements are in the active set
-
-            res = y - np.dot (X, beta[n_iter])
-            C_ = np.dot (X.T[0], res)
+            if Gram is None:
+                res = y - np.dot (X, beta[n_iter])
+                C_ = np.dot (X.T[0], res)
+            else:
+                C_ = np.dot(Gram[0], beta[n_iter]) - res_init[0]
 
         alpha = np.abs(C_) # ugly alpha vs alphas
         alphas [n_iter] = alpha
@@ -145,24 +146,23 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precomp
             #                                                 #
             #   where u is the last added to the active set   #
 
-            n_pred += 1
-            active.append(imax)
 
-            sign_active [n_pred-1] = np.sign (C_)
+            sign_active [n_pred] = np.sign (C_)
 
             if Gram is None:
                 X_max = Xt[imax]
                 c = np.dot (X_max, X_max)
+                b = np.dot (X_max, X[:, active])
             else:
                 c = Gram[imax, imax]
+                b = Gram[imax, active]
+
+            n_pred += 1
+            active.append(imax)
 
             L [n_pred-1, n_pred-1] = c
 
             if n_pred > 1:
-                if Gram is None:
-                    b = np.dot (X_max, Xa.T)
-                else:
-                    b = Gram[imax, active[:-1]]
 
                 # please refactor me, using linalg.solve is overkill
                 L [n_pred-1, :n_pred-1] = linalg.solve (L[:n_pred-1, :n_pred-1], b)
@@ -178,7 +178,7 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0, method="lar", precomp
         b = linalg.cho_solve ((L[:n_pred, :n_pred], True),  b)
 
         C = A = np.abs(C_)
-        if Gram is None:
+        if True: #Gram is None:
             u = np.dot (Xa.T, b)
             arrayfuncs.dot_over (X.T, u, active_mask, np.False_, a)
         else:
