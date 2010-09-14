@@ -37,11 +37,11 @@ typedef struct{
   int dim; 
   std::vector<BallTree_Point*> *Points;
   PyObject* data;
-} PyBallTreeObject;  
+} BallTreeObject;  
 
 //deallocation of BallTree Object
 static void 
-BallTree_dealloc(PyBallTreeObject* self) 
+BallTree_dealloc(BallTreeObject* self) 
 { 
   if( self->Points != NULL ){
     for(size_t i=0; i<self->Points->size(); i++)
@@ -64,7 +64,7 @@ BallTree_dealloc(PyBallTreeObject* self)
 //initialization of BallTree object
 // argument is a single array of size [D,N]
 static int 
-BallTree_init(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
+BallTree_init(BallTreeObject *self, PyObject *args, PyObject *kwds){
   //we use goto statements : all variables should be declared up front
   PyObject *arg=NULL;
   PyObject *arr=NULL;
@@ -118,7 +118,7 @@ BallTree_init(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
 //query the ball tree.  Arguments are the array of search points
 // and the number of nearest neighbors, k (optional)
 static PyObject *
-BallTree_query(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
+BallTree_query(BallTreeObject *self, PyObject *args, PyObject *kwds){
   //we use goto statements : all variables should be declared up front
   int return_distance = 1;
   long int k = 1;
@@ -300,7 +300,7 @@ BallTree_query(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
 //query the ball tree.  Arguments are the array of search points
 // and the radius around each point to search
 static PyObject *
-BallTree_queryball(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
+BallTree_queryball(BallTreeObject *self, PyObject *args, PyObject *kwds){
   //we use goto statements : all variables should be declared up front
   int count_only = 0;
   double r;
@@ -468,11 +468,11 @@ BallTree_queryball(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
 
 //define the data members of BallTree
 static PyMemberDef BallTree_members[] = {
-  {"size", T_INT, offsetof(PyBallTreeObject,size),0,
+  {"size", T_INT, offsetof(BallTreeObject,size),0,
    "Number of points in the Ball Tree"},
-  {"dim", T_INT, offsetof(PyBallTreeObject,dim),0, 
+  {"dim", T_INT, offsetof(BallTreeObject,dim),0, 
    "Dimension of the Ball Tree"},
-  {"data", T_OBJECT_EX, offsetof(PyBallTreeObject,data),0, 
+  {"data", T_OBJECT_EX, offsetof(BallTreeObject,data),0, 
    "View of data making up the Ball Tree"},
   {NULL} /* Sentinel */
 };
@@ -545,7 +545,7 @@ static PyMethodDef BallTree_methods[] = {
 };
 
 //construct the BallTree type from the preceeding functions
-static PyTypeObject PyBallTreeType = {
+static PyTypeObject BallTreeType = {
 #if defined (IS_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
 #else
@@ -553,7 +553,7 @@ static PyTypeObject PyBallTreeType = {
     0,                         /*ob_size*/
 #endif
     "BallTree.BallTree",       /*tp_name*/
-    sizeof(PyBallTreeObject),  /*tp_basicsize*/
+    sizeof(BallTreeObject),  /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)BallTree_dealloc, /*tp_dealloc*/
     0,                         /*tp_print*/
@@ -860,20 +860,20 @@ PyMODINIT_FUNC initball_tree(void)
 #endif
 {    
   PyObject* m;   
-  PyBallTreeType.tp_new = PyType_GenericNew;
+  BallTreeType.tp_new = PyType_GenericNew;
 
 #if defined (IS_PY3K)
-  if (PyType_Ready(&PyBallTreeType) < 0) return NULL;
+  if (PyType_Ready(&BallTreeType) < 0) return NULL;
   m = PyModule_Create(&BTmodule_def);
   if (m==NULL) return NULL;
 #else
-  if (PyType_Ready(&PyBallTreeType) < 0) return;
+  if (PyType_Ready(&BallTreeType) < 0) return;
   m = Py_InitModule3("ball_tree", BTmodule_methods, MODULE_DOC);
   if (m==NULL) return;
 #endif
 
-  Py_INCREF(&PyBallTreeType);
-  PyModule_AddObject(m,"BallTree", (PyObject*)&PyBallTreeType);
+  Py_INCREF(&BallTreeType);
+  PyModule_AddObject(m,"BallTree", (PyObject*)&BallTreeType);
   import_array();
 
 #if defined (IS_PY3K)
