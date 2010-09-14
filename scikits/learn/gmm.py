@@ -216,8 +216,8 @@ class GMM(BaseEstimator):
     array([[ 9.94],
            [ 0.06]])
     >>> np.round(g.covars, 2)
+    ... #doctest: +NORMALIZE_WHITESPACE
     array([[[ 0.96]],
-    <BLANKLINE>
            [[ 1.02]]])
     >>> g.predict([[0], [2], [9], [10]])
     array([1, 1, 0, 0])

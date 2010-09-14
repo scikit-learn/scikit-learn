@@ -78,7 +78,7 @@ class _BaseHMM(BaseEstimator):
         if startprob_prior is None:
             startprob_prior = 1.0
         self.startprob_prior = startprob_prior
-        
+
         if transmat is None:
             transmat = np.tile(1.0 / n_states, (n_states, n_states))
         self.transmat = transmat
@@ -486,7 +486,7 @@ class _BaseHMM(BaseEstimator):
             self.transmat[:] = 1.0 / self._n_states
 
     # Methods used by self.fit()
-    
+
     def _initialize_sufficient_statistics(self):
         stats = {'nobs': 0,
                  'start': np.zeros(self._n_states),
@@ -586,7 +586,7 @@ class GaussianHMM(_BaseHMM):
     --------
     GMM : Gaussian mixture model
     """
-    
+
     def __init__(self, n_states=1, n_dim=1, cvtype='diag', startprob=None,
                  transmat=None, labels=None, means=None, covars=None,
                  startprob_prior=None, transmat_prior=None,
@@ -820,7 +820,7 @@ class MultinomialHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import MultinomialHMM
-    >>> MultinomialHMM(n_states=2, nsymbols=3) #doctest: +ELLIPSIS +REPORT_NDIFF
+    >>> MultinomialHMM(n_states=2, nsymbols=3) #doctest: +ELLIPSIS
     MultinomialHMM(n_states=2,
             emissionprob=array([[ ...],
            [ ...]]),
@@ -952,8 +952,9 @@ class GMMHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import GMMHMM
-    >>> GMMHMM(n_states=2, n_mix=10, n_dim=3) #doctest: +SKIP
-    GMMHMM(n_dim=3, n_mix=10, n_states=2, cvtype=None, labels=[None, None], ...
+    >>> GMMHMM(n_states=2, n_mix=10, n_dim=3)
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    GMMHMM(n_dim=3, n_mix=10, n_states=2, cvtype=None, labels=[None, None], ...)
 
     See Also
     --------
@@ -1025,7 +1026,7 @@ class GMMHMM(_BaseHMM):
         super(GMMHMM, self)._accumulate_sufficient_statistics(
             stats, obs, framelogprob, posteriors, fwdlattice, bwdlattice,
             params)
-        
+
         for state,g in enumerate(self.gmms):
             gmm_logprob, gmm_posteriors = g.eval(obs)
             gmm_posteriors *= posteriors[:,state][:,np.newaxis]
