@@ -30,6 +30,11 @@ cdef extern from "cblas.h":
                  int incX)
 
 
+cdef extern from "src/cholesky_delete.c":
+    int c_cholesky_delete "cholesky_delete" (int m, int n, double *L, int go_out)
+    
+
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint8_t   BOOL
 # cython has no support for np.bool type. See
@@ -73,3 +78,12 @@ def solve_triangular (
     cblas_dtrsv (CblasRowMajor, CblasLower, CblasNoTrans,
                  CblasNonUnit, <int> X.shape[0], <double *> X.data,
                  lda, <double *> y.data, 1);
+
+
+def cholesky_delete (
+    np.ndarray[DOUBLE, ndim=2] L,
+    int go_out):
+
+    cdef int n = <int> L.shape[0]
+    cdef int m = <int> L.strides[0] / sizeof (double)
+    c_cholesky_delete (m, n, <double *> L.data, go_out)

@@ -221,12 +221,14 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
         beta[n_iter, active] = beta[n_iter - 1, active] + gamma_ * b
 
         if drop:
+            arrayfuncs.cholesky_delete (L[:n_pred, :n_pred], idx)
             n_pred -= 1
             drop_idx = active.pop (idx)
             unactive.append(drop_idx)
             active_mask[drop_idx] = False
-            Xa = Xt[active] # duplicate
-            L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
+            # pdb.set_trace()
+            # Xa = Xt[active] # duplicate
+            # L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
             sign_active = np.delete (sign_active, idx) # do an append to maintain size
             sign_active = np.append (sign_active, 0.)
             # should be done using cholesky deletes
