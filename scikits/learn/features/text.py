@@ -148,6 +148,132 @@ class CharNGramAnalyzer(object):
 
 DEFAULT_ANALYZER = WordNGramAnalyzer(min_n=1, max_n=1)
 
+class Vectorizer(object):
+    """
+    Convert a document collection to a document-term matrix.
+
+
+    Parameters
+    ----------
+    vocabulary: dict, optional
+        a dictionary where keys are tokens and values are indices in the matrix
+
+
+    analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
+        an object used to extract tokens from documents
+
+    """
+
+    def __init__(self, vocabulary={}, analyzer=DEFAULT_ANALYZER):
+        self.analyzer = analyzer
+        self.vocabulary = vocabulary
+
+    def _build_vocab(self, text_documents):
+        vocab = {}
+        docs = []
+
+        for doc in text_documents:
+            doc_dict = {} # token => count
+
+            for token in self.analyzer.analyze(doc):
+                vocab[token] = 1
+                doc_dict[token] = doc_dict.get(token, 0) + 1
+
+            docs.append(doc_dict)
+
+        sorted_terms = sorted(vocab.keys())
+        # token => index in the matrix
+        vocab = dict([(t, i) for i, t in enumerate(sorted_terms)])
+
+        # convert to a document-token matrix
+        matrix = np.zeros((len(docs), len(vocab)), dtype=long)
+
+        for i, doc_dict in enumerate(docs):
+            for token, count in doc_dict.iteritems():
+                matrix[i, vocab[token]] = count
+
+        return matrix, vocab
+
+    def _build_vectors(self, text_documents):
+        matrix = np.zeros((len(text_documents), len(self.vocabulary)), dtype=long)
+
+        for i, doc in enumerate(text_documents):
+            for token in self.analyzer.analyze(doc):
+                try:
+                    matrix[i, self.vocabulary[token]] += 1
+                except KeyError:
+                    # ignore out-of-vocabulary tokens
+                    pass
+
+        return matrix
+
+    def get_idc(self):
+        """
+        Return inverse document counts, i.e, how many documents include each
+        token.
+
+        Returns
+        -------
+        vector: array, [n_features,]
+        """
+        return np.sum(self.vectors > 0, axis=0)
+
+    def get_idf(self):
+        """
+        Return inverse document frequency.
+
+        Returns
+        -------
+        vector: array, [n_features,]
+        """
+        return np.log(self.vectors.shape[0] / self.get_idc())
+
+    def get_tf(self):
+        """
+        Return term-frequencies matrix (normalized counts).
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
+        return self.vectors.astype(np.float64) / \
+               np.sum(self.vectors, axis=1)[:,np.newaxis]
+
+    def get_tfidf(self):
+        """
+        Compute tf-idf matrix.
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
+        return self.get_tf() * self.get_idf()
+
+    def vectorize(self, text_documents):
+        """
+        Run the vectorization.
+
+        Parameters
+        ----------
+
+        text_documents: list
+            a list of document strings to vectorize
+
+        """
+        if len(self.vocabulary) == 0:
+            self.vectors, self.vocabulary = self._build_vocab(text_documents)
+        else:
+            self.vectors = self._build_vectors(text_documents)
+
+    def get_vectors(self):
+        """
+        Return document-term matrix (word counts).
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
+        return self.vectors
 
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space

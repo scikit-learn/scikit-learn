@@ -1,6 +1,7 @@
 from scikits.learn.features.text import strip_accents
 from scikits.learn.features.text import WordNGramAnalyzer
 from scikits.learn.features.text import CharNGramAnalyzer
+from scikits.learn.features.text import Vectorizer
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.features.text import SparseHashingVectorizer
 from scikits.learn.svm import LinearSVC as DenseLinearSVC
@@ -148,4 +149,28 @@ def test_dense_sparse_idf_sanity():
 
     assert_array_almost_equal(dense_tf_idf, sparse_tfidf)
 
+
+def test_dense_vectorizer():
+    # test without vocabulary
+    v = Vectorizer()
+    v.vectorize(JUNK_FOOD_DOCS[:-1])
+    assert_equal(v.get_vectors()[0, v.vocabulary["pizza"]], 2)
+
+    # test with a pre-existing vocabulary
+    v2 = Vectorizer(vocabulary=v.vocabulary)
+    v2.vectorize([JUNK_FOOD_DOCS[-1]])
+    assert_equal(v2.get_vectors()[0, v.vocabulary["coke"]], 1)
+
+    # a few sanity checks
+    idc = v.get_idc()
+    assert_equal(len(idc), len(v.vocabulary))
+    assert_equal(idc[v.vocabulary["beer"]], 5)
+
+    assert_equal(len(v.get_idf()), len(v.vocabulary))
+
+    tf = v.get_tf()
+    assert_array_almost_equal(tf.sum(axis=1), [1.0] * (len(JUNK_FOOD_DOCS)-1))
+
+    assert_equal(v.get_tfidf().shape,
+                 (len(JUNK_FOOD_DOCS)-1, len(v.vocabulary)))
 
