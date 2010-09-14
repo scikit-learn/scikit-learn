@@ -20,5 +20,5 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
-test:
+test: in
 	$(NOSETESTS) --with-doctest --with-coverage scikits/learn/ --cover-package scikits/learn
