@@ -179,11 +179,13 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
         b = linalg.cho_solve ((L[:n_pred, :n_pred], True),  b)
 
         C = A = np.abs(C_)
-        if True: #Gram is None:
+        if Gram is None:
             u = np.dot (Xt[active].T, b)
             arrayfuncs.dot_over (X.T, u, active_mask, np.False_, a)
+
         else:
-            a = np.dot (Gram[unactive].T, b)
+            # Not sure that this is not not buggy ...
+            arrayfuncs.dot_over (Gram[active].T, b, active_mask, np.False_, a)
 
         # equation 2.13, there's probably a simpler way
         g1 = (C - Cov[:n_unactive]) / (A - a[:n_unactive])
