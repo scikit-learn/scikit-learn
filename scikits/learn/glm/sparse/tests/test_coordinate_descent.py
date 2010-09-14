@@ -23,6 +23,17 @@ def test_sparse_predict():
     np.testing.assert_array_equal([0.5, -1.0, 0.0], predicted)
 
 
+def test_lasso_zero():
+    """Check that the sparse lasso can handle zero data without crashing"""
+    X = sparse.csc_matrix((3, 1))
+    y = [0, 0, 0]
+    clf = SparseLasso().fit(X, y)
+    pred = clf.predict([[1], [2], [3]])
+    assert_array_almost_equal(clf.coef_, [0])
+    assert_array_almost_equal(pred, [0, 0, 0])
+    assert_almost_equal(clf.dual_gap_,  0)
+
+
 def test_enet_toy_list_input():
     """Test ElasticNet for various parameters of alpha and rho with list X"""
 
@@ -123,13 +134,13 @@ def test_sparse_enet_not_as_toy_dataset():
     s_clf = SparseENet(alpha=0.1, rho=0.8, fit_intercept=False)
     s_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert_(s_clf.score(X_test, y_test) > 0.7)
+    assert_(s_clf.score(X_test, y_test) > 0.85)
 
     # check the convergence is the same as the dense version
     d_clf = DenseENet(alpha=0.1, rho=0.8, fit_intercept=False)
     d_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert_(d_clf.score(X_test, y_test) > 0.7)
+    assert_(d_clf.score(X_test, y_test) > 0.85)
 
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
 
@@ -149,13 +160,13 @@ def test_sparse_lasso_not_as_toy_dataset():
     s_clf = SparseLasso(alpha=0.1, fit_intercept=False)
     s_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert_(s_clf.score(X_test, y_test) > 0.7)
+    assert_(s_clf.score(X_test, y_test) > 0.85)
 
     # check the convergence is the same as the dense version
     d_clf = DenseLasso(alpha=0.1, fit_intercept=False)
     d_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert_(d_clf.score(X_test, y_test) > 0.7)
+    assert_(d_clf.score(X_test, y_test) > 0.85)
 
     # check that the coefs are sparse
     assert_equal(np.sum(s_clf.coef_ != 0.0), n_informative)

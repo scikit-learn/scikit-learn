@@ -31,6 +31,7 @@ ctypedef np.int32_t INTEGER
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=1] X_data,
@@ -65,8 +66,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
+    cdef double w_max
     cdef double d_w_ii
     cdef double gap = tol + 1.0
+    cdef double d_w_tol = tol
     cdef unsigned int jj
     cdef unsigned int n_iter
 
@@ -81,8 +84,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     for n_iter in range(maxit):
 
+        w_max = 0.0
         d_w_max = 0.0
+
         for ii in xrange(n_features): # Loop over coordinates
+            if norm_cols_X[ii] == 0.0:
+                continue
+
             w_ii = w[ii] # Store previous value
 
             if w_ii != 0.0:
@@ -98,17 +106,20 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
 
-            # update the maximum absolute coefficient update
-            d_wii = fabs(w[ii] - w_ii)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
-
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     R[X_indices[jj]] -= X_data[jj] * w[ii]
 
-        if d_w_max < tol or n_iter == maxit - 1:
+            # update the maximum absolute coefficient update
+            d_w_ii = fabs(w[ii] - w_ii)
+            if d_w_ii > d_w_max:
+                d_w_max = d_w_ii
+
+            if w[ii] > w_max:
+                w_max = w[ii]
+
+        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
@@ -120,7 +131,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
 
             dual_norm_XtA = linalg.norm(X_T_R - beta * w, np.inf)
-            # TODO: use C sqrt
+            # TODO: use squared L2 norm directly
             R_norm = linalg.norm(R)
             w_norm = linalg.norm(w, 2)
             if (dual_norm_XtA > alpha):

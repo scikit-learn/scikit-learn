@@ -119,7 +119,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # criterion
 
             dual_norm_XtA = linalg.norm(np.dot(X.T, R) - beta * w, np.inf)
-            # TODO: use C sqrt
+            # TODO: use squared L2 norm directly
             R_norm = linalg.norm(R)
             w_norm = linalg.norm(w, 2)
             if (dual_norm_XtA > alpha):
