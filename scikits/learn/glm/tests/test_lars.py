@@ -55,7 +55,7 @@ def test_lasso_gives_lstsq_solution():
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
 
-def test_lasso_lars_vs_lasso_cd():
+def test_lasso_lars_vs_lasso_cd(verbose=False):
     """
     Test that LassoLars and Lasso using coordinate descent give the
     same results
@@ -70,7 +70,8 @@ def test_lasso_lars_vs_lasso_cd():
 
         # make sure results are the same than with Lasso Coordinate descent
         error = np.linalg.norm(lasso_lars.coef_ - lasso.coef_)
-        print 'Error : ', error
+        if verbose:
+            print 'Error : ', error
         assert error < 1e-5
 
 
@@ -161,7 +162,7 @@ def test_feature_selection():
     assert_equal((sparse_coef[10:] != 0.0).sum(), 0)
 
 
-def test_predict():
+def test_predict(verbose=False):
     """
     Just see if predicted values are close from known response.
     """
@@ -172,7 +173,8 @@ def test_predict():
     Y = Y - Y.mean() # center response
 
     Y_ = LeastAngleRegression().fit(X, Y, fit_intercept=False).predict(X)
-    print np.linalg.norm(Y - Y_)
+    if verbose:
+        print np.linalg.norm(Y - Y_)
     assert np.linalg.norm(Y-Y_) < 1e-10
 
 

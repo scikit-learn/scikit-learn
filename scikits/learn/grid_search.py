@@ -6,10 +6,11 @@ Tune the parameters of an estimator by cross-validation.
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
+import copy
 
 from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
-from .base import ClassifierMixin
+from .base import ClassifierMixin, clone
 
 try:
     from itertools import product
@@ -40,9 +41,11 @@ def iter_grid(param_grid):
 
         Examples
         ---------
+        >>> from scikits.learn.grid_search import iter_grid
         >>> param_grid = {'a':[1, 2], 'b':[True, False]}
         >>> list(iter_grid(param_grid))
         [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+
     """
     if hasattr(param_grid, 'has_key'):
         param_grid = [param_grid]
@@ -53,15 +56,15 @@ def iter_grid(param_grid):
             yield params
 
 
-def fit_grid_point(X, y, klass, orignal_params, clf_params, cv,
-                                        loss_func, iid, **fit_params):
+def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
+                   **fit_params):
     """Run fit on one set of parameters
     Returns the score and the instance of the classifier
     """
-    params = orignal_params.copy()
-    params.update(clf_params)
-    n_samples, n_features = X.shape
-    clf = klass(**params)
+    # update parameters of the classifier after a copy of its base structure
+    clf = copy.deepcopy(base_clf)
+    clf._set_params(**clf_params)
+    
     score = 0
     for train, test in cv:
         clf.fit(X[train], y[train], **fit_params)
@@ -78,6 +81,7 @@ def fit_grid_point(X, y, klass, orignal_params, clf_params, cv,
     return clf, score
 
 
+################################################################################
 class GridSearchCV(object):
     """
     Grid search on the parameters of a classifier.
@@ -125,13 +129,14 @@ class GridSearchCV(object):
     >>> import numpy as np
     >>> from scikits.learn.cross_val import LeaveOneOut
     >>> from scikits.learn.svm import SVR
+    >>> from scikits.learn.grid_search import GridSearchCV
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svr = SVR()
     >>> clf = GridSearchCV(svr, parameters, n_jobs=1)
-    >>> print clf.fit(X, y).predict([[-0.8, -1]])
-    [ 1.]
+    >>> clf.fit(X, y).predict([[-0.8, -1]])
+    array([ 1.])
     """
 
     def __init__(self, estimator, param_grid, loss_func=None,
@@ -184,13 +189,12 @@ class GridSearchCV(object):
                 cv = KFold(n_samples, k=3)
 
         grid = iter_grid(self.param_grid)
-        klass = self.estimator.__class__
-        orignal_params = self.estimator._get_params()
+        base_clf = clone(self.estimator)
         out = Parallel(n_jobs=self.n_jobs)(
-            delayed(fit_grid_point)(X, y, klass, orignal_params, clf_params,
+            delayed(fit_grid_point)(X, y, base_clf, clf_params,
                     cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
-
+        
         # Out is a list of pairs: estimator, score
         key = lambda pair: pair[1]
         best_estimator = max(out, key=key)[0] # get maximum score

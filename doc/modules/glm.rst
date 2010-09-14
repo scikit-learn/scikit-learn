@@ -17,8 +17,8 @@ Across the module, we designate the vector :math:`\beta = (\beta_1,
 
 .. _ordinary_least_squares:
 
-Ordinary Least Squares
-======================
+Ordinary Least Squares (OLS)
+==============================
 
 :class:`LinearRegression` fits a linear model with coefficients
 :math:`\beta = (\beta_1, ..., \beta_D)` to minimize the residual sum
@@ -53,18 +53,17 @@ to random errors in the observed response, producing a large
 variance. This situation of *multicollinearity* can arise, for
 example, when data are collected without an experimental design.
 
+.. topic:: Examples:
 
-Complexity
-----------
+   * :ref:`example_glm_plot_ols.py`
+
+
+OLS Complexity
+------------------
 
 This method computes the least squares solution using a singular value
 decomposition of X. If X is a matrix of size (n, p ) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
-
-
-Examples
---------
-:ref:`example_glm_plot_ols.py`
 
 
 Ridge Regression
@@ -96,8 +95,8 @@ greater the amount of shrinkage.
     >>> clf.intercept_
     0.13636363636363638
 
-Complexity
-----------
+Ridge Complexity
+--------------------
 
 This method has the same order of complexity than an
 :ref:`ordinary_least_squares`.
@@ -110,13 +109,13 @@ regularizer. The objective function to minimize is:
 
 .. math::  0.5 * ||y - X w||_2 ^ 2 + \alpha * ||w||_1
 
-The lasso estimate solves thus solves the minization of the
+The lasso estimate thus solves the minization of the
 least-squares penalty with :math:`\alpha * ||w||_1` added, where
 :math:`\alpha` is a constant and :math:`||w||_1` is the L1-norm of the
 parameter vector.
 
 
-This formulation is useful in some context due to its tendency to
+This formulation is useful in some contexts due to its tendency to
 prefer solutions with fewer parameter values, effectively reducing the
 number of variables upon which the given solution is dependent. For
 this reason, the Lasso and its variants are fundamental to the field
@@ -134,10 +133,10 @@ the coeffcients. See :ref:`lars_algorithm` for another implementation.
 The function lasso_path computes the coefficients along the full path
 of possible values.
 
-Examples
---------
-:ref:`example_glm_lasso_and_elasticnet.py`,
-:ref:`example_glm_lasso_path_with_crossvalidation.py`
+.. topic:: Examples:
+
+  * :ref:`example_glm_lasso_and_elasticnet.py`,
+  * :ref:`example_glm_lasso_path_with_crossvalidation.py`
 
 
 Elastic Net
@@ -151,11 +150,10 @@ The objective function to minize is in this case
 .. math::        0.5 * ||y - X w||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
 
 
-Examples
---------
+.. topic:: Examples:
 
-:ref:`example_glm_lasso_and_elasticnet.py`
-:ref:`example_plot_lasso_coordinate_descent_path.py`
+  * :ref:`example_glm_lasso_and_elasticnet.py`
+  * :ref:`example_glm_plot_lasso_coordinate_descent_path.py`
 
 
 .. _lars_algorithm:
@@ -213,10 +211,18 @@ coefficients.
    array([ 0.50710678,  0.        ])
 
 
+.. topic:: Examples:
+
+ * :ref:`example_glm_plot_lar.py`
+ * :ref:`example_glm_plot_lasso_lars.py`
+
+
 Getting the full path
 ---------------------
-See function scikits.learn.glm.lars_path.
+See function scikits.learn.glm.lars_path:
 
+.. autofunction:: lars_path
+ 
 
 Mathematical formulation
 ------------------------
@@ -232,16 +238,11 @@ parameter vector. The full coeffients path is stored in the array
 ``coef_path_``, which has size (n_features, max_features+1). The first
 column is always zero.
 
+.. topic:: References:
 
-Examples
---------
-:ref:`example_glm_plot_lar.py`, :ref:`example_glm_plot_lasso_lars.py`
-
-References 
-----------
-Original Algorithm is detailed in the `paper
-<http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
-by Hastie et al.
+ * Original Algorithm is detailed in the `paper
+   <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+   by Hastie et al.
 
 
 
@@ -300,9 +301,6 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
 
 
 
-
-
-
 .. figure:: ../auto_examples/glm/images/plot_bayesian_ridge.png
    :target: ../auto_examples/glm/plot_bayesian_ridge.html
    :align: center
@@ -332,19 +330,14 @@ Due to the Bayesian framework, the weights found are slightly different to the
 ones found by :ref:`ordinary_least_squares`. However, *Bayesian Ridge
 Regression* is more robust to ill-posed problem.
 
+.. topic:: Examples:
 
-Examples
---------
-:ref:`example_glm_plot_bayesian_ridge.py`
+ * :ref:`example_glm_plot_bayesian_ridge.py`
 
-References
-----------
-More details can be found in the article
-`paper
-<http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=
-pdf>`_ by MacKay, David J. C.
+.. topic:: References
 
-
+  * More details can be found in the article `paper <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_ 
+    by MacKay, David J. C.
 
 
 
@@ -377,9 +370,9 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
    :align: center
 
 
-Examples
---------
-:ref:`example_glm_plot_ard.py`
+.. topic:: Examples:
+
+  * :ref:`example_glm_plot_ard.py`
 
 Mathematical formulation
 ------------------------
@@ -417,9 +410,8 @@ assumption:
 where :math:`\alpha` is the precision of the noise.
 
 
+.. topic:: References
 
-References
-----------
-Original Algorithm is detailed in the  book *Bayesian learning for neural
-networks* by Radford M. Neal
+ * Original Algorithm is detailed in the  book *Bayesian learning for neural
+   networks* by Radford M. Neal
 

@@ -9,14 +9,20 @@ using a majority vote among the k neighbors.
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification problems, including handwritten digits
 or satellite image scenes. It is ofter successful in situation where
-the decission boundary is very irregular.
+the decision boundary is very irregular.
 
 Classification
 ==============
 
+The `Neighbors` estimators implements the nearest-neighbors method:
 
 .. autoclass:: scikits.learn.neighbors.Neighbors
    :members:
+
+.. topic:: Usage examples:
+
+  * :ref:`example_plot_neighbors.py`: an example of classification
+    using nearest neighbor.
 
 Regression
 ==========
@@ -24,14 +30,8 @@ Regression
 Nearest neighbor regression is not (yet) implemented, yet it should be
 straightforward using the BallTree class.
 
-Examples
-========
-
-See :ref:`example_plot_neighbors.py` for an example of classification
-using nearest neighbor.
-
-BallTree
-========
+Efficient implementation: the ball tree
+==========================================
 
 Behind the scenes, nearest neighbor search is done by the object
 BallTree, which is a fast way to perform neighbor searches in data
@@ -45,7 +45,8 @@ where more traditional tree searches (e.g. KD-Trees) perform poorly.
 The cost is a slightly longer construction time, though for repeated
 queries, this added construction time quickly becomes insignificant.
 
-A Ball Tree reduces the number of candidate points for a neighbor search through use of the triangle inequality:
+A Ball Tree reduces the number of candidate points for a neighbor search
+through use of the triangle inequality:
 
 .. math::   |x+y| \leq |x| + |y|
 
@@ -57,8 +58,17 @@ on the distance to all points within the node.  Carefully taking
 advantage of this property leads to determining neighbors in O[log(N)]
 time, as opposed to O[N] time for a brute-force search.
 
+.. topic:: References:
+
+ * *"Five balltree construction algorithms"*, Omohundro, S.M.,
+   International Computer Science Institute Technical Report 
+   http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.91.8209&rep=rep1&type=pdf
+
+**Useful objects and functions:**
 
 .. autoclass:: scikits.learn.ball_tree.BallTree
    :members:
 
 .. autofunction:: scikits.learn.ball_tree.knn_brute
+
+

@@ -108,12 +108,12 @@ Scikits.learn: machine learning in Python
 
 
 :Features:
-  * **Solid**: supervised learning: classification, regression
+  * **Solid**: :ref:`supervised-learning`: classification, regression
 
-  * **Work in progress**: unsupervised learning: clustering, mixture modeling,
-    manifold learning
+  * **Work in progress**: :ref:`unsupervised-learning`: :ref:`clustering`, 
+    :ref:`gmm`, manifold learning, ICA
 
-  * **Planed**: Gaussian graphical models, matrix factorization, ICA
+  * **Planed**: Gaussian graphical models, matrix factorization
 
 :License:
   Open source, commercially usable: **BSD license** (3 clause)

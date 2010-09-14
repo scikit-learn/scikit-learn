@@ -19,6 +19,7 @@
 
   </style>
 
+.. _supervised-learning:
 
 Supervised learning
 -----------------------

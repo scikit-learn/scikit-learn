@@ -33,6 +33,7 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
 
     Examples
     --------
+    >>> from scikits.learn.utils.graph import single_source_shortest_path_length
     >>> import numpy as np
     >>> graph = np.array([[ 0, 1, 0, 0],
     ...                   [ 1, 0, 1, 0],
@@ -127,6 +128,8 @@ def _graph_laplacian_dense(graph, normed=False, return_diag=False):
     
 
 def graph_laplacian(graph, normed=False, return_diag=False):
+    """ Return the Laplacian of the given graph.
+    """
     if normed and (np.issubdtype(graph.dtype, np.int)
                     or np.issubdtype(graph.dtype, np.uint)):
         graph = graph.astype(np.float)
