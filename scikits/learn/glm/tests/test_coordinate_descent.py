@@ -113,8 +113,7 @@ def test_lasso_path():
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
-    rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_(rmse < 0.09)
+    assert_(clf.score(X_test, y_test) > 0.85)
 
 def test_enet_path():
 
@@ -134,6 +133,5 @@ def test_enet_path():
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
-    rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_almost_equal(rmse, 2.27085, 2)
+    assert_(clf.score(X_test, y_test) > 0.85)
 
