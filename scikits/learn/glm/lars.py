@@ -19,7 +19,7 @@ from ..utils import arrayfuncs
 
 # all linalg.solve solve a triangular system, so this could be heavily
 # optimized by binding (in scipy ?) trsv or trsm
-@profile
+
 def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
               method="lar", precompute=True):
     """ Compute Least Angle Regression and LASSO path
