@@ -56,7 +56,10 @@ def strip_accents(s):
     """Transform accentuated unicode symbols into their simple counterpart"""
     return ''.join((c for c in unicodedata.normalize('NFD', s)
                     if unicodedata.category(c) != 'Mn'))
+def strip_tags(s):
+    return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
 
+DEFAULT_FILTERS = [unicode.lower, strip_tags, strip_accents]
 
 class WordNGramAnalyzer(object):
     """Simple analyzer: transform a text document into a sequence of word tokens
@@ -69,21 +72,23 @@ class WordNGramAnalyzer(object):
       - output token n-grams (unigram only by default)
     """
 
-    token_pattern = re.compile(r"\b\w\w+\b", re.U)
+    token_pattern = re.compile(r"\b\w\w+\b", re.UNICODE)
 
     def __init__(self, default_charset='utf-8', min_n=1, max_n=1,
-                 stop_words=None):
+                 filters=DEFAULT_FILTERS, stop_words=None):
         self.charset = default_charset
         self.stop_words = stop_words
         self.min_n = min_n
         self.max_n = max_n
+        self.filters = filters
 
     def analyze(self, text_document):
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
 
-        # lowercasing and accents removal
-        text_document = strip_accents(text_document.lower())
+        # apply filters
+        for filter_ in self.filters:
+            text_document = filter_(text_document)
 
         # word boundaries tokenizer
         tokens = self.token_pattern.findall(text_document)
