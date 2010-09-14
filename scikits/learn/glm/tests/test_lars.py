@@ -20,7 +20,7 @@ def test_1():
     Principle of LARS is to keep covariances tied and decreasing
     """
     max_pred = 10
-    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, max_pred, method="lar")
+    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, max_iter=max_pred, method="lar")
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)

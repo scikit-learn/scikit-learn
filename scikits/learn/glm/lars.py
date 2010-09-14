@@ -20,8 +20,6 @@ from ..utils import arrayfuncs
 # all linalg.solve solve a triangular system, so this could be heavily
 # optimized by binding (in scipy ?) trsv or trsm
 
-import pdb
-
 def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
               method="lar", precompute=True):
     """ Compute Least Angle Regression and LASSO path
@@ -226,9 +224,6 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
             drop_idx = active.pop (idx)
             unactive.append(drop_idx)
             active_mask[drop_idx] = False
-            # pdb.set_trace()
-            # Xa = Xt[active] # duplicate
-            # L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
             sign_active = np.delete (sign_active, idx) # do an append to maintain size
             sign_active = np.append (sign_active, 0.)
             # should be done using cholesky deletes
