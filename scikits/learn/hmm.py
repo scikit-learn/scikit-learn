@@ -820,15 +820,15 @@ class MultinomialHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import MultinomialHMM
-    >>> MultinomialHMM(n_states=2, nsymbols=3)
+    >>> MultinomialHMM(n_states=2, nsymbols=3) #doctest: +ELLIPSIS +REPORT_NDIFF
     MultinomialHMM(n_states=2,
-                emissionprob=array([[ 0.3663 ,  0.12783,  0.50587],
-               [ 0.35851,  0.21559,  0.42589]]),
-                labels=[None, None], startprob_prior=1.0,
-                startprob=array([ 0.5,  0.5]),
-                transmat=array([[ 0.5,  0.5],
-               [ 0.5,  0.5]]), nsymbols=3,
-                transmat_prior=1.0)
+            emissionprob=array([[ ...],
+           [ ...]]),
+            labels=[None, None], startprob_prior=1.0,
+            startprob=array([ 0.5,  0.5]),
+            transmat=array([[ 0.5,  0.5],
+           [ 0.5,  0.5]]), nsymbols=3,
+            transmat_prior=1.0)
     
     See Also
     --------
@@ -952,8 +952,8 @@ class GMMHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import GMMHMM
-    >>> GMMHMM(n_states=2, n_mix=10, n_dim=3) # doctest: +ELLIPSIS
-    GMMHMM(n_dim=3, n_mix=10, n_states=2, cvtype=None, labels=[None, None], ...)
+    >>> GMMHMM(n_states=2, n_mix=10, n_dim=3) #doctest: +SKIP
+    GMMHMM(n_dim=3, n_mix=10, n_states=2, cvtype=None, labels=[None, None], ...
 
     See Also
     --------

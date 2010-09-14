@@ -70,7 +70,10 @@ def _pprint(params, offset=0, printer=repr):
         this_line_length += len(this_repr)
 
     np.set_printoptions(**options)
-    return ''.join(params_list)
+    lines = ''.join(params_list)
+    # Strip trailing space to avoid nightmare in doctests
+    lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
+    return lines 
 
 
 ################################################################################

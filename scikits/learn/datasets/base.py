@@ -45,7 +45,7 @@ def load_iris():
     >>> data.target[[10, 25, 50]]
     array([0, 0, 1])
     >>> data.target_names
-    array(['setosa', 'versicolor', 'virginica'],
+    array(['setosa', 'versicolor', 'virginica'], 
           dtype='|S10')
 
     """
