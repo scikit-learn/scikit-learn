@@ -7,7 +7,27 @@ import  numpy as np
 
 
 cdef extern from "cblas.h":
-    double cblas_ddot(int N, double *X, int incX, double *Y, int incY)
+   enum CBLAS_ORDER:
+       CblasRowMajor=101
+       CblasColMajor=102
+   enum CBLAS_TRANSPOSE:
+       CblasNoTrans=111
+       CblasTrans=112
+       CblasConjTrans=113
+       AtlasConj=114
+   enum CBLAS_UPLO:
+       CblasUpper=121
+       CblasLower=122
+   enum CBLAS_DIAG:
+       CblasNonUnit=131
+       CblasUnit=132
+
+   double cblas_ddot(int N, double *X, int incX, double *Y, int incY)
+
+   void cblas_dtrsv(CBLAS_ORDER Order,  CBLAS_UPLO Uplo,
+                 CBLAS_TRANSPOSE TransA,  CBLAS_DIAG Diag,
+                 int N, double *A, int lda, double *X,
+                 int incX)
 
 
 ctypedef np.float64_t DOUBLE
@@ -37,3 +57,19 @@ def dot_over (
         if mask[i] == val:
             out[j] = cblas_ddot (N, X_ptr + i*incXY, incX, <double *> y.data, incY)
             j += 1
+
+
+def solve_triangular (
+    np.ndarray[DOUBLE, ndim=2] X,
+    np.ndarray[DOUBLE, ndim=1] y
+    ):
+    """
+    Solves a triangular system (overwrites y)
+
+    TODO: option for upper, lower, etc.
+    """
+    cdef int lda = <int> X.strides[0] / sizeof(double)
+
+    cblas_dtrsv (CblasRowMajor, CblasLower, CblasNoTrans,
+                 CblasNonUnit, <int> X.shape[0], <double *> X.data,
+                 lda, <double *> y.data, 1);

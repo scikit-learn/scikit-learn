@@ -24,6 +24,21 @@ y = diabetes.target
 # someting's wrong with our dataset
 X[:, 6] = -X[:, 6]
 
+
+# m, n = 200, 200
+# np.random.seed(0)
+# X = np.random.randn(m, n)
+# y = np.random.randn(m)
+
+
+# _xmean = X.mean(0)
+# _ymean = y.mean(0)
+# X = X - _xmean
+# y = y - _ymean
+# _norms = np.apply_along_axis (np.linalg.norm, 0, X)
+# nonzeros = np.flatnonzero(_norms)
+# X[:, nonzeros] /= _norms[nonzeros]
+
 ################################################################################
 # Demo path functions
 ################################################################################

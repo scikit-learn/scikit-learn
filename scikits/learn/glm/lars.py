@@ -20,6 +20,8 @@ from ..utils import arrayfuncs
 # all linalg.solve solve a triangular system, so this could be heavily
 # optimized by binding (in scipy ?) trsv or trsm
 
+import pdb
+
 def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
               method="lar", precompute=True):
     """ Compute Least Angle Regression and LASSO path
@@ -165,11 +167,12 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
             if n_pred > 1:
 
                 # please refactor me, using linalg.solve is overkill
-                L [n_pred-1, :n_pred-1] = linalg.solve (L[:n_pred-1, :n_pred-1], b)
+                #L [n_pred-1, :n_pred-1] = linalg.solve (L[:n_pred-1, :n_pred-1], b)
+                arrayfuncs.solve_triangular (L[:n_pred-1, :n_pred-1],
+                                             b)
+                L [n_pred-1, :n_pred-1] = b[:]
                 v = np.dot(L [n_pred-1, :n_pred-1], L [n_pred - 1, :n_pred -1])
                 L [n_pred-1,  n_pred-1] = np.sqrt (c - v)
-
-        Xa = Xt[active] # also Xna[~Xna.mask]
 
         # Now we go into the normal equations dance.
         # (Golub & Van Loan, 1996)
@@ -179,10 +182,10 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
 
         C = A = np.abs(C_)
         if True: #Gram is None:
-            u = np.dot (Xa.T, b)
+            u = np.dot (Xt[active].T, b)
             arrayfuncs.dot_over (X.T, u, active_mask, np.False_, a)
         else:
-            a = np.dot (Gram[active].T, b)
+            a = np.dot (Gram[unactive].T, b)
 
         # equation 2.13, there's probably a simpler way
         g1 = (C - Cov[:n_unactive]) / (A - a[:n_unactive])
@@ -221,7 +224,6 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
             n_pred -= 1
             drop_idx = active.pop (idx)
             unactive.append(drop_idx)
-            # please please please remove this masked arrays pain from me
             active_mask[drop_idx] = False
             Xa = Xt[active] # duplicate
             L[:n_pred, :n_pred] = linalg.cholesky(np.dot(Xa, Xa.T), lower=True)
