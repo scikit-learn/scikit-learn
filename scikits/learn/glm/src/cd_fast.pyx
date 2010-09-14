@@ -68,10 +68,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double w_max
     cdef double d_w_ii
     cdef double gab = tol + 1.0
+    cdef double d_w_tol = tol
     cdef unsigned int ii
     cdef unsigned int n_iter
 
     R = y - np.dot(X, w)
+
     tol = tol * linalg.norm(y) ** 2
 
     for n_iter in range(maxit):
@@ -111,7 +113,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if w[ii] > w_max:
                 w_max = w[ii]
 
-        if w_max == 0.0 or d_w_max / w_max < tol or n_iter == maxit - 1:
+        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
