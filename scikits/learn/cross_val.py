@@ -9,7 +9,7 @@ Utilities for cross validation.
 from math import ceil
 import numpy as np
 
-from .base import is_classifier
+from .base import is_classifier, clone
 from .utils.extmath import factorial, combinations
 from .externals.joblib import Parallel, delayed
 
@@ -495,8 +495,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator
                 )
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickable.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-                delayed(_cross_val_score)(estimator, X, y, score_func,
+                delayed(_cross_val_score)(clone(estimator), X, y, score_func,
                                                         train, test)
                 for train, test in cv)
     return np.array(scores)
