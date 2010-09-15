@@ -28,15 +28,20 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
         -----------
         X: array, shape: (n, p)
             Input data
+
         y: array, shape: (n)
             Input targets
+
         max_iter: integer, optional
             The number of 'kink' in the path
+
+        Gram: array, shape: (p, p), optional
+            Precomputed Gram matrix (X' * X)
 
         alpha_min: float, optional
             The minimum correlation along the path. It corresponds to
             the regularization parameter alpha parameter in the Lasso.
-            
+
         method: 'lar' or 'lasso'
             Specifies the problem solved: the LAR or its variant the
             LASSO-LARS that gives the solution of the LASSO problem
@@ -46,24 +51,26 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
         --------
         alphas: array, shape: (k)
             The alphas along the path
-        
+
         active: array, shape (?)
             Indices of active variables at the end of the path.
-        
+
         coefs: array, shape (p,k)
             Coefficients along the path
 
         Notes
         ------
-        XXX : add reference papers and wikipedia page
-    
+        http://en.wikipedia.org/wiki/Least-angle_regression
+        http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
+        XXX : add reference papers
+
     """
     # TODO: precompute : empty for now
     #
     # TODO: detect stationary points.
     # Lasso variant
     # store full path
- 
+
     X = np.atleast_2d(X)
     y = np.atleast_1d(y)
 
@@ -88,7 +95,7 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
     Cov         = np.empty (X.shape[1])
     a           = np.empty (X.shape[1])
     drop = False
-    
+
     # will hold the cholesky factorization
     # only lower part is referenced. We do not create it as
     # empty array because chol_solve calls chkfinite on the
@@ -244,13 +251,12 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
 
 class LARS (LinearModel):
     """ Least Angle Regression model a.k.a. LAR
-    
+
     Parameters
     ----------
     n_features : int, optional
         Number of selected active features
 
-    XXX : todo add fit_intercept
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -261,7 +267,6 @@ class LARS (LinearModel):
     `coef_` : array, shape = [n_features]
         parameter vector (w in the fomulation formula)
 
-    XXX : add intercept_
     `intercept_` : float
         independent term in decision function.
 
@@ -278,9 +283,9 @@ class LARS (LinearModel):
     -----
     See also scikits.learn.glm.LassoLARS that fits a LASSO model
     using a variant of Least Angle Regression
-    
-    XXX : add ref + wikipedia page
-    
+
+    http://en.wikipedia.org/wiki/Least_angle_regression
+
     See examples. XXX : add examples names
     """
     def __init__(self, n_features, normalize=True):
@@ -295,14 +300,12 @@ class LARS (LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
+        X, y, Xmean, Ymean = self._center_data(X, y)
+
         if self.normalize:
-            self._xmean = X.mean(0)
-            self._ymean = y.mean(0)
-            X = X - self._xmean
-            y = y - self._ymean
-            self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
-            nonzeros = np.flatnonzero(self._norms)
-            X[:, nonzeros] /= self._norms[nonzeros]
+            norms = np.sqrt(np.sum(X**2, axis=0))
+            nonzeros = np.flatnonzero(norms)
+            X[:, nonzeros] /= norms[nonzeros]
 
         method = 'lar'
         alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
@@ -313,7 +316,7 @@ class LARS (LinearModel):
 
 class LassoLARS (LinearModel):
     """ Lasso model fit with Least Angle Regression a.k.a. LARS
-    
+
     It is a Linear Model trained with an L1 prior as regularizer.
     lasso).
 
@@ -322,7 +325,6 @@ class LassoLARS (LinearModel):
     alpha : float, optional
         Constant that multiplies the L1 term. Defaults to 1.0
 
-    XXX : todo add fit_intercept
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -333,7 +335,6 @@ class LassoLARS (LinearModel):
     `coef_` : array, shape = [n_features]
         parameter vector (w in the fomulation formula)
 
-    XXX : add intercept_
     `intercept_` : float
         independent term in decision function.
 
@@ -352,7 +353,8 @@ class LassoLARS (LinearModel):
     an alternative optimization strategy called 'coordinate descent.'
     """
 
-    def __init__(self, alpha=1.0, max_iter=None, normalize=True):
+    def __init__(self, alpha=1.0, max_iter=None, normalize=True,
+                        fit_intercept=True):
         """ XXX : add doc
                 # will only normalize non-zero columns
         """
@@ -360,6 +362,7 @@ class LassoLARS (LinearModel):
         self.normalize = normalize
         self.coef_ = None
         self.max_iter = max_iter
+        self.fit_intercept = fit_intercept
 
     def fit (self, X, y, Gram=None, **params):
         """ XXX : add doc
@@ -369,17 +372,16 @@ class LassoLARS (LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
+        X, y, Xmean, Ymean = self._center_data(X, y)
+
         n_samples = X.shape[0]
         alpha = self.alpha * n_samples # scale alpha with number of samples
 
+        # XXX : should handle also unnormalized datasets
         if self.normalize:
-            self._xmean = X.mean(0)
-            self._ymean = y.mean(0)
-            X = X - self._xmean
-            y = y - self._ymean
-            self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
-            nonzeros = np.flatnonzero(self._norms)
-            X[:, nonzeros] /= self._norms[nonzeros]
+            norms = np.sqrt(np.sum(X**2, axis=0))
+            nonzeros = np.flatnonzero(norms)
+            X[:, nonzeros] /= norms[nonzeros]
 
         method = 'lasso'
         alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
@@ -387,6 +389,9 @@ class LassoLARS (LinearModel):
                                             max_iter=self.max_iter)
 
         self.coef_ = coef_path_[:,-1]
+
+        self._set_intercept(Xmean, Ymean)
+
         return self
 
 
@@ -522,4 +527,4 @@ class LeastAngleRegression(LinearModel):
         return  np.dot(X, self.coef_) + self.intercept_
 
 
-    
+
