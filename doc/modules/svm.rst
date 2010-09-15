@@ -5,7 +5,8 @@ Support Vector Machines
 .. currentmodule:: scikits.learn.svm
 
 **Support vector machines (SVMs)** are a set of supervised learning
-methods used for classification, regression and outliers detection.
+methods used for classification_, regression_
+and :ref:`outliers detection <svm_outlier_detection>`.
 
 The advantages of Support Vector Machines are:
 
@@ -90,13 +91,12 @@ Member `n_support_` holds the number of support vectors for each class:
     array([1, 1], dtype=int32)
 
 
-Examples
---------
+.. topic:: Examples:
 
-:ref:`example_svm_plot_iris.py`,
-:ref:`example_svm_plot_separating_hyperplane.py`,
-:ref:`example_svm_plot_svm_anova.py`,
-:ref:`example_svm_plot_svm_nonlinear.py`
+ * :ref:`example_svm_plot_iris.py`,
+ * :ref:`example_svm_plot_separating_hyperplane.py`,
+ * :ref:`example_svm_plot_svm_anova.py`,
+ * :ref:`example_svm_plot_svm_nonlinear.py`
 
 Regression
 ==========
@@ -115,19 +115,19 @@ data close to the model prediction.
 There are two flavours of Support Vector Regression: :class:`SVR` and
 :class:`NuSVR`.
 
-Like in the class of classification, the fit method will take as
+As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
 floating point values instead of integer values.
 
 
+.. topic:: Examples:
 
-Examples
---------
-:ref:`example_svm_plot_svm_regression.py`
+ * :ref:`example_svm_plot_svm_regression.py`
 
+.. _svm_outlier_detection:
 
-Density estimation
-=======================
+Density estimation, outliers detection
+=======================================
 
 One-class SVM is used for outliers detection, that is, given a set of
 samples, it will detect the soft boundary of that set so as to
@@ -145,11 +145,9 @@ will only take as input an array X, as there are no class labels.
    :scale: 50
 
 
-Examples
---------
-:ref:`example_svm_plot_oneclass.py`
+.. topic:: Examples:
 
-
+ * :ref:`example_svm_plot_oneclass.py`
 
 
 .. currentmodule:: scikits.learn.sparse.svm
@@ -262,9 +260,9 @@ Set kernel='precomputed' and pass the gram matrix instead of X in the
 fit method.
 
 
-Examples
---------
-:ref:`example_svm_plot_custom_kernel.py`. 
+.. topic:: Examples:
+
+ * :ref:`example_svm_plot_custom_kernel.py`. 
 
 
 .. _svm_mathematical_formulation:
@@ -333,14 +331,16 @@ This parameters can be accessed through the members support\_ and intercept\_:
 
      - Member intercept\_ of the classifier holds :math:`-\rho`
 
-References
-~~~~~~~~~~
+.. topic:: References:
 
-This algorithm is implemented as described in `Automatic Capacity
-Tuning of Very Large VC-dimension Classifiers
-<http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
-and `Support-vector networks
-<http://www.springerlink.com/content/k238jx04hm87j80g/>`_
+ * *"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"*
+   I Guyon, B Boser, V Vapnik - Advances in neural information processing
+   1993,
+   http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215
+   
+ * *"Support-vector networks"* C. Cortes, V. Vapnik, 
+   Machine Leaming, 20, 273-297 (1995)
+   http://www.springerlink.com/content/k238jx04hm87j80g/
 
 
 NuSVC
@@ -368,11 +368,10 @@ Internally, we use `libsvm
 <http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`_ to handle all
 computations. Libsvm is wrapped using C and Cython.
 
+.. topic:: References:
 
-References
-==========
-For a description of the implementation and details of the algorithms
-used, please refer to
+  For a description of the implementation and details of the algorithms
+  used, please refer to
 
     - `LIBSVM: a library for Support Vector Machines
       <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_

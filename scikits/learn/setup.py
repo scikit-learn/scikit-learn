@@ -119,13 +119,13 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()]
                          )
 
-    config.add_subpackage('utils')
 
     # this has to be build *after* cblas
     config.add_subpackage('glm')
+    config.add_subpackage('utils')
 
     # add the test directory
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
 
     return config
 

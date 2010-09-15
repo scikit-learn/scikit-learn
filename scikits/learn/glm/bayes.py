@@ -29,25 +29,25 @@ class BayesianRidge(LinearModel):
     Y : numpy array of shape (length)
         Target values for training vectors
 
-    n_iter : int (defaut is 300)
+    n_iter : int (default is 300)
         Maximum number of interations.
 
-    eps : float (defaut is 1.e-3)
+    eps : float (default is 1.e-3)
         Stop the algorithm if w has converged.
 
-    alpha_1 : float (defaut is 1.e-6)
+    alpha_1 : float (default is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the alpha parameter.
 
-    alpha_2 : float (defaut is 1.e-6)
+    alpha_2 : float (default is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the alpha parameter.
 
-    lambda_1 : float (defaut is 1.e-6)
+    lambda_1 : float (default is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the lambda parameter.
 
-    lambda_2 : float (defaut is 1.e-6)
+    lambda_2 : float (default is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the lambda parameter.
 
@@ -95,25 +95,25 @@ class BayesianRidge(LinearModel):
         """
         Parameters
         ----------
-        n_iter : int (defaut is 300)
+        n_iter : int (default is 300)
             Maximum number of interations.
 
-        eps : float (defaut is 1.e-3)
+        eps : float (default is 1.e-3)
             Stop the algorithm if w has converged.
 
-        alpha_1 : float (defaut is 1.e-6)
+        alpha_1 : float (default is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the alpha parameter.
 
-        alpha_2 : float (defaut is 1.e-6)
+        alpha_2 : float (default is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the alpha parameter.
 
-        lambda_1 : float (defaut is 1.e-6)
+        lambda_1 : float (default is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the lambda parameter.
 
-        lambda_2 : float (defaut is 1.e-6)
+        lambda_2 : float (default is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the lambda parameter.
 
@@ -135,7 +135,7 @@ class BayesianRidge(LinearModel):
         self.compute_score = compute_score
         self.fit_intercept = fit_intercept
 
-    def fit(self, X, Y, **params):
+    def fit(self, X, Y, verbose=False, **params):
         """
         Parameters
         ----------
@@ -204,9 +204,9 @@ class BayesianRidge(LinearModel):
                 self.all_score_.append(self.objective_function(X))
 
             ### Check for convergence
-            if iter_ != 0 and \
-                np.sum(np.abs(coef_old_ - coef_)) < self.eps:
-                print "Convergence after ", str(iter_), " iterations"
+            if (iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.eps):
+                if verbose:
+                    print "Convergence after ", str(iter_), " iterations"
                 break
             coef_old_ = np.copy(coef_)
 
@@ -264,25 +264,25 @@ class ARDRegression(LinearModel):
     Y : numpy array of shape (length)
         Target values for training vectors
 
-    n_iter : int (defaut is 300)
+    n_iter : int (default is 300)
         Maximum number of interations.
 
-    eps : float (defaut is 1.e-3)
+    eps : float (default is 1.e-3)
         Stop the algorithm if w has converged.
 
-    alpha_1 : float (defaut is 1.e-6)
+    alpha_1 : float (default is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the alpha parameter.
 
-    alpha_2 : float (defaut is 1.e-6)
+    alpha_2 : float (default is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the alpha parameter.
 
-    lambda_1 : float (defaut is 1.e-6)
+    lambda_1 : float (default is 1.e-6)
         Hyper-parameter : shape parameter for the Gamma distribution prior over
         the lambda parameter.
 
-    lambda_2 : float (defaut is 1.e-6)
+    lambda_2 : float (default is 1.e-6)
         Hyper-parameter : inverse scale parameter (rate parameter) for the Gamma
         distribution prior over the lambda parameter.
 
@@ -335,25 +335,25 @@ class ARDRegression(LinearModel):
         """
         Parameters
         ----------
-        n_iter : int (defaut is 300)
+        n_iter : int (default is 300)
             Maximum number of interations.
 
-        eps : float (defaut is 1.e-3)
+        eps : float (default is 1.e-3)
             Stop the algorithm if w has converged.
 
-        alpha_1 : float (defaut is 1.e-6)
+        alpha_1 : float (default is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the alpha parameter.
 
-        alpha_2 : float (defaut is 1.e-6)
+        alpha_2 : float (default is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the alpha parameter.
 
-        lambda_1 : float (defaut is 1.e-6)
+        lambda_1 : float (default is 1.e-6)
             Hyper-parameter : shape parameter for the Gamma distribution prior
             over the lambda parameter.
 
-        lambda_2 : float (defaut is 1.e-6)
+        lambda_2 : float (default is 1.e-6)
             Hyper-parameter : inverse scale parameter (rate parameter) for the
             Gamma distribution prior over the lambda parameter.
 
@@ -419,7 +419,7 @@ class ARDRegression(LinearModel):
         self.explained_variance_ = self._explained_variance(X, Y)
         return self
 
-    def evidence_maximization(self, X, Y):
+    def evidence_maximization(self, X, Y, verbose=False):
         """
         Iterative procedure for estimating the ARDRegression model according to
         the given training data and parameters.
@@ -482,9 +482,9 @@ class ARDRegression(LinearModel):
                 self.all_score_.append(self.objective_function(X))
 
             ### Check for convergence
-            if iter_ != 0 and \
-                np.sum(np.abs(coef_old_ - coef_)) < self.eps:
-                print "Convergence after ",str(iter_)," iterations"
+            if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.eps:
+                if verbose:
+                    print "Convergence after %s iterations" % iter_
                 break
             coef_old_ = np.copy(coef_)
 

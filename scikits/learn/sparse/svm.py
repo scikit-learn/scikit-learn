@@ -107,7 +107,6 @@ class _SparseBaseLibSVM(_BaseLibSVM):
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
                                              dual_coef_indptr))
-
         return self
 
 

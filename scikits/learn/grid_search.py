@@ -41,9 +41,11 @@ def iter_grid(param_grid):
 
         Examples
         ---------
+        >>> from scikits.learn.grid_search import iter_grid
         >>> param_grid = {'a':[1, 2], 'b':[True, False]}
         >>> list(iter_grid(param_grid))
         [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+
     """
     if hasattr(param_grid, 'has_key'):
         param_grid = [param_grid]
@@ -79,6 +81,7 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     return clf, score
 
 
+################################################################################
 class GridSearchCV(object):
     """
     Grid search on the parameters of a classifier.
@@ -126,13 +129,14 @@ class GridSearchCV(object):
     >>> import numpy as np
     >>> from scikits.learn.cross_val import LeaveOneOut
     >>> from scikits.learn.svm import SVR
+    >>> from scikits.learn.grid_search import GridSearchCV
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svr = SVR()
     >>> clf = GridSearchCV(svr, parameters, n_jobs=1)
-    >>> print clf.fit(X, y).predict([[-0.8, -1]])
-    [ 1.]
+    >>> clf.fit(X, y).predict([[-0.8, -1]])
+    array([ 1.])
     """
 
     def __init__(self, estimator, param_grid, loss_func=None,

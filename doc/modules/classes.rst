@@ -16,19 +16,23 @@ Support Vector Machines
    svm.NuSVC
    svm.SVR
    svm.NuSVR
-   svm.OneClass
+   svm.OneClassSVM
+
+For sparse data
+-----------------
 
 .. _sparse_svm_class_reference:
+
+.. autosummary::
+   :toctree: generated/
 
    sparse.svm.SVC
    sparse.svm.LinearSVC
    sparse.svm.NuSVC
    sparse.svm.SVR
    sparse.svm.NuSVR
-   sparse.svm.OneClass
+   sparse.svm.OneClassSVM
 
-For sparse data
------------------
 
 Generalized Linear Models
 =========================
@@ -48,6 +52,7 @@ Bayesian Regression
 .. autosummary::
    :toctree: generated/
    :template: class.rst
+
    glm.BayesianRidge
    glm.ARDRegression   
 
@@ -57,6 +62,7 @@ Cross-validation
 .. autosummary::
    :toctree: generated/
    :template: class.rst
+   
    cross_val.LeaveOneOut
    cross_val.LeavePOut
    cross_val.KFold

@@ -20,6 +20,7 @@
  
   </style>
 
+.. _unsupervised-learning:
 
 Unsupervised learning
 -----------------------

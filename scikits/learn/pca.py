@@ -76,6 +76,9 @@ def _infer_dimension_(spect, n, p):
     return ll.argmax()
 
 
+
+###############################################################################
+
 class PCA(BaseEstimator):
     """Principal component analysis (PCA)
 
@@ -114,7 +117,9 @@ class PCA(BaseEstimator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> from scikits.learn.pca import PCA
     >>> pca = PCA(n_comp=2)
     >>> pca.fit(X)
     PCA(n_comp=2, copy=True)
@@ -160,6 +165,8 @@ class PCA(BaseEstimator):
         Xr = np.dot(Xr, self.components_)
         return Xr
 
+
+##############################################################################
 
 class ProbabilisticPCA(PCA):
     """ Additional layer on top of PCA that add a probabilistic evaluation

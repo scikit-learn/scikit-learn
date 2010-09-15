@@ -78,7 +78,7 @@ class _BaseHMM(BaseEstimator):
         if startprob_prior is None:
             startprob_prior = 1.0
         self.startprob_prior = startprob_prior
-        
+
         if transmat is None:
             transmat = np.tile(1.0 / n_states, (n_states, n_states))
         self.transmat = transmat
@@ -486,7 +486,7 @@ class _BaseHMM(BaseEstimator):
             self.transmat[:] = 1.0 / self._n_states
 
     # Methods used by self.fit()
-    
+
     def _initialize_sufficient_statistics(self):
         stats = {'nobs': 0,
                  'start': np.zeros(self._n_states),
@@ -569,13 +569,24 @@ class GaussianHMM(_BaseHMM):
 
     Examples
     --------
-    >>> ghmm = GaussianHMM(n_states=2, n_dim=1)
+    >>> from scikits.learn.hmm import GaussianHMM
+    >>> GaussianHMM(n_states=2, n_dim=1)
+    GaussianHMM(n_dim=1, cvtype='diag', n_states=2, means_weight=0,
+          means=array([[ 0.],
+           [ 0.]]),
+          covars=array([[ 1.],
+           [ 1.]]), labels=[None, None],
+          startprob=array([ 0.5,  0.5]),
+          transmat=array([[ 0.5,  0.5],
+           [ 0.5,  0.5]]),
+          startprob_prior=1.0, transmat_prior=1.0, means_prior=None,
+          covars_weight=1, covars_prior=0.01)
 
     See Also
     --------
     GMM : Gaussian mixture model
     """
-    
+
     def __init__(self, n_states=1, n_dim=1, cvtype='diag', startprob=None,
                  transmat=None, labels=None, means=None, covars=None,
                  startprob_prior=None, transmat_prior=None,
@@ -808,8 +819,17 @@ class MultinomialHMM(_BaseHMM):
 
     Examples
     --------
-    >>> mhmm = MultinomialHMM(n_states=2, nsymbols=3)
-
+    >>> from scikits.learn.hmm import MultinomialHMM
+    >>> MultinomialHMM(n_states=2, nsymbols=3) #doctest: +ELLIPSIS
+    MultinomialHMM(n_states=2,
+            emissionprob=array([[ ...],
+           [ ...]]),
+            labels=[None, None], startprob_prior=1.0,
+            startprob=array([ 0.5,  0.5]),
+            transmat=array([[ 0.5,  0.5],
+           [ 0.5,  0.5]]), nsymbols=3,
+            transmat_prior=1.0)
+    
     See Also
     --------
     GaussianHMM : HMM with Gaussian emissions
@@ -931,7 +951,10 @@ class GMMHMM(_BaseHMM):
 
     Examples
     --------
-    >>> hmm = GMMHMM(n_states=2, n_mix=10, n_dim=3)
+    >>> from scikits.learn.hmm import GMMHMM
+    >>> GMMHMM(n_states=2, n_mix=10, n_dim=3)
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    GMMHMM(n_dim=3, n_mix=10, n_states=2, cvtype=None, labels=[None, None], ...)
 
     See Also
     --------
@@ -957,6 +980,10 @@ class GMMHMM(_BaseHMM):
 
         self._n_dim = n_dim
 
+        # XXX: Hotfit for n_mix that is incompatible with the scikit's
+        # BaseEstimator API
+        self.n_mix = n_mix
+        self.cvtype= cvtype
         if gmms is None:
             gmms = []
             for x in xrange(self.n_states):
@@ -999,7 +1026,7 @@ class GMMHMM(_BaseHMM):
         super(GMMHMM, self)._accumulate_sufficient_statistics(
             stats, obs, framelogprob, posteriors, fwdlattice, bwdlattice,
             params)
-        
+
         for state,g in enumerate(self.gmms):
             gmm_logprob, gmm_posteriors = g.eval(obs)
             gmm_posteriors *= posteriors[:,state][:,np.newaxis]

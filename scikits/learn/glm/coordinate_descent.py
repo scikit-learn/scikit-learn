@@ -11,109 +11,11 @@ from .base import LinearModel
 from ..cross_val import KFold
 from . import cd_fast
 
-###############################################################################
-# Lasso model
-
-class Lasso(LinearModel):
-    """Linear Model trained with L1 prior as regularizer (aka the Lasso)
-
-    Parameters
-    ----------
-    alpha : float, optional
-        Constant that multiplies the L1 term. Defaults to 1.0
-
-    fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
-
-    Attributes
-    ----------
-    `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
-
-    `intercept_` : float
-        independent term in decision function.
-
-    Examples
-    --------
-    >>> from scikits.learn import glm
-    >>> clf = glm.Lasso(alpha=0.1)
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(alpha=0.1, coef_=array([ 0.85,  0.  ]), fit_intercept=True)
-    >>> print clf.coef_
-    [ 0.85  0.  ]
-    >>> print clf.intercept_
-    0.15
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-    """
-
-    def __init__(self, alpha=1.0, fit_intercept=True, coef_=None):
-        self.alpha = alpha
-        self.fit_intercept = fit_intercept
-        self.coef_ = coef_
-
-    def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
-        """
-        Fit Lasso model.
-
-        Parameters
-        ----------
-        X: numpy array of shape [n_samples,n_features]
-            Training data
-
-        Y: numpy array of shape [n_samples]
-            Target values
-
-        maxit: int, optional
-            maximum number of coordinate descent iterations used to
-            fit the model. In case
-
-        tol: float, optional
-            fit tolerance
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params(**params)
-
-        X = np.asanyarray(X, dtype=np.float64)
-        Y = np.asanyarray(Y, dtype=np.float64)
-
-        X, Y, Xmean, Ymean = self._center_data (X, Y)
-
-        n_samples = X.shape[0]
-        alpha = self.alpha * n_samples
-
-        if self.coef_ is None:
-            self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
-
-        X = np.asfortranarray(X) # make data contiguous in memory
-        self.coef_, self.dual_gap_, self.eps_ = \
-                    cd_fast.lasso_coordinate_descent(self.coef_,
-                    alpha, X, Y, maxit, tol)
-
-        self._set_intercept(Xmean, Ymean)
-
-        if self.dual_gap_ > self.eps_:
-            warnings.warn('Objective did not converge, you might want '
-                                'to increase the number of interations')
-
-        # Store explained variance for __str__
-        self.explained_variance_ = self._explained_variance(X, Y)
-
-        # return self for chaining fit and predict calls
-        return self
-
 
 ###############################################################################
 # ElasticNet model
 
-class ElasticNet(Lasso):
+class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
 
     rho=1 is the lasso penalty. Currently, rho <= 0.01 is not
@@ -171,6 +73,54 @@ class ElasticNet(Lasso):
 
         # return self for chaining fit and predict calls
         return self
+
+
+###############################################################################
+# Lasso model
+
+class Lasso(ElasticNet):
+    """Linear Model trained with L1 prior as regularizer (aka the Lasso)
+
+    Technically the Lasso model is optimizing the same objective function as the
+    Elastic Net with rho=1.0 (no L2 penalty).
+
+    Parameters
+    ----------
+    alpha : float, optional
+        Constant that multiplies the L1 term. Defaults to 1.0
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    Examples
+    --------
+    >>> from scikits.learn import glm
+    >>> clf = glm.Lasso(alpha=0.1)
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
+    Lasso(alpha=0.1, coef_=array([ 0.85,  0.  ]), fit_intercept=True)
+    >>> print clf.coef_
+    [ 0.85  0.  ]
+    >>> print clf.intercept_
+    0.15
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+    """
+
+    def __init__(self, alpha=1.0, fit_intercept=True, coef_=None):
+        super(Lasso, self).__init__(alpha=alpha, rho=1.0,
+                                    fit_intercept=fit_intercept, coef_=coef_)
 
 ###############################################################################
 # Classes to store linear models along a regularization path 

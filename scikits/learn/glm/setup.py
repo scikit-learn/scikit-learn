@@ -31,8 +31,7 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
-                         extra_compile_args=['-std=c99'] + \
-                                             blas_info.pop('extra_compile_args', []),
+                         extra_compile_args=blas_info.pop('extra_compile_args', []),
                          **blas_info
                          )
 
@@ -40,6 +39,7 @@ def configuration(parent_package='', top_path=None):
     # add other directories
     config.add_subpackage('tests')
     config.add_subpackage('benchmarks')
+    config.add_subpackage('sparse')
 
     return config
 

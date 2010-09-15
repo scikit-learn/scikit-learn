@@ -15,12 +15,12 @@ diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 
 
-def test_1():
+def test_simple():
     """
     Principle of LARS is to keep covariances tied and decreasing
     """
     max_pred = 10
-    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, max_pred, method="lar")
+    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, max_iter=max_pred, method="lar")
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
@@ -32,6 +32,27 @@ def test_1():
         else:
             # no more than max_pred variables can go into the active set
             assert ocur == max_pred
+
+
+def test_simple_precomputed():
+    """
+    The same, with precomputed Gram matrix
+    """
+    max_pred = 10
+    G = np.dot (diabetes.data.T, diabetes.data)
+    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, Gram=G, max_iter=max_pred, method="lar")
+    for (i, coef_) in enumerate(coef_path_.T):
+        res =  y - np.dot(X, coef_)
+        cov = np.dot(X.T, res)
+        C = np.max(abs(cov))
+        eps = 1e-3
+        ocur = len(cov[ C - eps < abs(cov)])
+        if i < max_pred:
+            assert ocur == i+1
+        else:
+            # no more than max_pred variables can go into the active set
+            assert ocur == max_pred
+
 
 
 def test_lars_lstsq():
@@ -55,7 +76,7 @@ def test_lasso_gives_lstsq_solution():
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
 
-def test_lasso_lars_vs_lasso_cd():
+def test_lasso_lars_vs_lasso_cd(verbose=False):
     """
     Test that LassoLars and Lasso using coordinate descent give the
     same results
@@ -70,7 +91,8 @@ def test_lasso_lars_vs_lasso_cd():
 
         # make sure results are the same than with Lasso Coordinate descent
         error = np.linalg.norm(lasso_lars.coef_ - lasso.coef_)
-        print 'Error : ', error
+        if verbose:
+            print 'Error : ', error
         assert error < 1e-5
 
 
@@ -161,7 +183,7 @@ def test_feature_selection():
     assert_equal((sparse_coef[10:] != 0.0).sum(), 0)
 
 
-def test_predict():
+def test_predict(verbose=False):
     """
     Just see if predicted values are close from known response.
     """
@@ -172,7 +194,8 @@ def test_predict():
     Y = Y - Y.mean() # center response
 
     Y_ = LeastAngleRegression().fit(X, Y, fit_intercept=False).predict(X)
-    print np.linalg.norm(Y - Y_)
+    if verbose:
+        print np.linalg.norm(Y - Y_)
     assert np.linalg.norm(Y-Y_) < 1e-10
 
 

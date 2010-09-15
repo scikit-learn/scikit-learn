@@ -2,7 +2,7 @@
 Testing for grid search module (scikits.learn.grid_search)
 
 """
-from nose.tools import assert_true, assert_false, assert_equal
+from nose.tools import assert_equal
 
 import numpy as np
 from scikits.learn.base import BaseEstimator
@@ -32,10 +32,8 @@ class MockClassifier(BaseEstimator):
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
 
+
 def test_GridSearch():
-    """
-    
-    """
     clf = MockClassifier()
-    cross_validation = GridSearchCV(clf, {'foo_param':[1,2,3]})
-    assert_equal(cross_validation.fit(X,y).best_estimator.foo_param, 2)
+    cross_validation = GridSearchCV(clf, {'foo_param':[1, 2, 3]})
+    assert_equal(cross_validation.fit(X, y).best_estimator.foo_param, 2)

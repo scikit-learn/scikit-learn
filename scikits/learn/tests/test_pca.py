@@ -37,7 +37,7 @@ def test_pca_check_projection():
     Xt = 0.1* randn(1, p) + np.array([3, 4, 5])
     Yt = pca.transform(Xt)
     Yt /= np.sqrt((Yt**2).sum())
-    np.testing.assert_almost_equal(Yt[0][0], 1., 1)
+    np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
 
 
 def test_pca_dim():

@@ -8,6 +8,18 @@ from numpy.testing import assert_array_almost_equal, assert_almost_equal, assert
 
 from ..coordinate_descent import Lasso, LassoCV, ElasticNet, ElasticNetCV
 
+
+def test_lasso_zero():
+    """Check that the lasso can handle zero data without crashing"""
+    X = [[0], [0], [0]]
+    y = [0, 0, 0]
+    clf = Lasso(alpha=0).fit(X, y)
+    pred = clf.predict([[1], [2], [3]])
+    assert_array_almost_equal(clf.coef_, [0])
+    assert_array_almost_equal(pred, [0, 0, 0])
+    assert_almost_equal(clf.dual_gap_,  0)
+
+
 def test_lasso_toy():
     """
     Test Lasso on a toy example for various values of alpha.
@@ -101,8 +113,7 @@ def test_lasso_path():
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
-    rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_(rmse < 0.09)
+    assert_(clf.score(X_test, y_test) > 0.85)
 
 def test_enet_path():
 
@@ -115,13 +126,12 @@ def test_enet_path():
     X = np.random.randn(n_samples, n_features)
     y = np.dot(X, w)
 
-    clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.2)
+    clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95)
     clf.fit(X, y, maxit=maxit)
     assert_almost_equal(clf.alpha, 0.01315, 2)
 
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
-    rmse = np.sqrt(((y_test - clf.predict(X_test)) ** 2).mean())
-    assert_almost_equal(rmse, 2.27085, 2)
+    assert_(clf.score(X_test, y_test) > 0.85)
 

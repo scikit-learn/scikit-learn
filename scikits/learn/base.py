@@ -70,7 +70,10 @@ def _pprint(params, offset=0, printer=repr):
         this_line_length += len(this_repr)
 
     np.set_printoptions(**options)
-    return ''.join(params_list)
+    lines = ''.join(params_list)
+    # Strip trailing space to avoid nightmare in doctests
+    lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
+    return lines 
 
 
 ################################################################################
@@ -125,11 +128,17 @@ class BaseEstimator(object):
 
     def _set_params(self, **params):
         """ Set the parameters of the estimator.
+
+        The method works on simple estimators as well as on nested
+        objects (such as pipelines). The former have parameters of the
+        form <component>__<parameter> so that the its possible to
+        update each component of the nested object.
         """
         valid_params = self._get_params(deep=True)
         for key, value in params.iteritems():
             split = key.split('__', 1)
             if len(split) > 1:
+                # nested objects case
                 name, sub_name = split
                 assert name in valid_params, ('Invalid parameter %s '
                                               'for estimator %s' %
@@ -142,6 +151,7 @@ class BaseEstimator(object):
                     )
                 sub_object._set_params(**{sub_name:value})
             else:
+                # simple objects case
                 assert key in valid_params, ('Invalid parameter %s '
                                               'for estimator %s' %
                                              (key, self.__class__.__name__))
@@ -209,4 +219,4 @@ class RegressorMixin(object):
             -------
             z : float
         """
-        return explained_variance(y, self.predict(X))
+        return explained_variance(self.predict(X), y)

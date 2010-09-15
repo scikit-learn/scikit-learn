@@ -12,13 +12,41 @@ class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator 
 
         Sequentialy apply a list of transforms and a final estimator 
-        A transform implements fit & transform methods
-        A estimator implements fit & predict methods
+        Intermediate steps of the pipeline must be 'transforms', that
+        is that they must implements fit & transform methods
+        The final estimator need only implements fit.
+
+        The purpose of the pipeline is to assemble several steps that can
+        be cross-validated together while setting different parameters.
+        For this, it enables to setting parameters of the various steps
+        using their names and the parameter name separated by a '__',
+        as in the example below.
+
+        Attributes
+        ===========
+        steps: list of (names, object)
+            List of the named object that compose the pipeline, in the
+            order that they are applied on the data.
+
+        Methods
+        =======
+        fit:
+            Fit all the transforms one after the other and transform the
+            data, then fit the transformed data using the final estimator
+        predict:
+            Applied transforms to the data, and the predict method of the 
+            final estimator. Valid only if the final estimator implements
+            predict.
+        score:
+            Applied transforms to the data, and the score method of the 
+            final estimator. Valid only if the final estimator implements
+            score.
+
 
         Example
         =======
 
-        >>> from scikits.learn import svm, datasets
+        >>> from scikits.learn import svm
         >>> from scikits.learn.datasets import samples_generator
         >>> from scikits.learn.feature_selection import SelectKBest, f_regression
         >>> from scikits.learn.pipeline import Pipeline
@@ -29,9 +57,14 @@ class Pipeline(BaseEstimator):
         >>> # ANOVA SVM-C
         >>> anova_filter = SelectKBest(f_regression, k=5)
         >>> clf = svm.SVC(kernel='linear')
-
         >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
-        >>> _ = anova_svm.fit(X, y)
+
+        >>> # You can set the parameters using the names issued
+        >>> # For instance, fit using a k of 10 in the SelectKBest
+        >>> # and a parameter 'C' of the svn
+        >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
+        Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, eps=0.001,
+          cache_size=100.0, shrinking=True, gamma=0.01))])
 
         >>> prediction = anova_svm.predict(X)
         >>> score = anova_svm.score(X)
@@ -82,7 +115,8 @@ class Pipeline(BaseEstimator):
     # Estimator interface
     #---------------------------------------------------------------------------
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **params):
+        self._set_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.fit(Xt, y).transform(Xt)
