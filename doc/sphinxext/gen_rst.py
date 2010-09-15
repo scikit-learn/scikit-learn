@@ -10,9 +10,6 @@ Files that generate images should start with 'plot'
 import os
 import shutil
 import traceback
-# Import numpy to avoid an annoying bug in an example due to the use of 
-# execfile
-import numpy as np
 
 fileList = []
 
@@ -27,7 +24,7 @@ rst_template = """
 
 %(docstring)s
 
-**Source code:** :download:`%(fname)s <%(fname)s>`
+**Python source code:** :download:`%(fname)s <%(fname)s>`
 
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
@@ -42,7 +39,7 @@ plot_rst_template = """
 .. image:: images/%(image_name)s
     :align: center
 
-**Source code:** :download:`%(fname)s <%(fname)s>`
+**Python source code:** :download:`%(fname)s <%(fname)s>`
 
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
@@ -163,7 +160,7 @@ def generate_file_rst(fname, target_dir, src_dir):
             import matplotlib.pyplot as plt
             plt.close('all')
             try:
-                execfile(example_file)
+                execfile(example_file, {'pl' : plt})
                 plt.savefig(image_file)
             except:
                 print 80*'_'

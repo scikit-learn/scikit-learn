@@ -22,11 +22,22 @@ sys.path.insert(0, os.path.abspath('sphinxext'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'numpydoc', 'sphinx.ext.pngmath',
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 
+              'sphinx.ext.pngmath',
               'gen_rst']
+try:
+    import numpy_ext.numpydoc
+    extensions.append('numpy_ext.numpydoc')
+    # With older versions of sphinx, this causes a crash
+    autosummary_generate=True
+except:
+    # Older version of sphinx
+    extensions.append('numpy_ext_old.numpydoc')
+
+autodoc_default_flags=['inherited-members']
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'

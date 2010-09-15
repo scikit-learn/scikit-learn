@@ -205,12 +205,16 @@ class Parallel(Logger):
 
     def __call__(self, iterable):
         n_jobs = self.n_jobs
+        if n_jobs == -1:
+            if multiprocessing is None:
+                 n_jobs = 1
+            else:
+                n_jobs = multiprocessing.cpu_count()
+
         if n_jobs is None or multiprocessing is None or n_jobs == 1:
             n_jobs = 1
             from __builtin__ import apply
         else:
-            if n_jobs == -1:
-                n_jobs = multiprocessing.cpu_count()
             pool = multiprocessing.Pool(n_jobs)
             apply = pool.apply_async
 

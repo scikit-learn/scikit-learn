@@ -17,7 +17,6 @@ the number of dimensions.
 In both cases, only 10% of the features are informative.
 """
 import numpy as np
-import pylab as pl
 import gc
 from time import time
 
@@ -67,6 +66,7 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
     delta = (time() - tstart)
     # stop time
 
+    print "duration: %fms" % (delta * 1000)
     print "rmse: %f" % rmse(Y_test, clf.predict(X_test))
     print "mean coef abs diff: %f" % abs(ref_coef - clf.coef_.ravel()).mean()
     return delta
@@ -75,6 +75,8 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
 if __name__ == '__main__':
     from glmnet.elastic_net import Lasso as GlmnetLasso
     from scikits.learn.glm import Lasso as ScikitLasso
+    # Delayed import of pylab
+    import pylab as pl
 
     scikit_results = []
     glmnet_results = []

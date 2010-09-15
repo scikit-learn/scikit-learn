@@ -8,7 +8,11 @@ Test the logger module.
 
 import shutil
 import os
+import sys
+import StringIO
 from tempfile import mkdtemp
+
+import nose
 
 from ..logger import PrintTime
 
@@ -37,12 +41,20 @@ def teardown():
 def test_print_time():
     """ A simple smoke test for PrintTime.
     """
-    print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
-    print_time('Foo')
-    # Create a second time, to smoke test log rotation.
-    print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
-    print_time('Foo')
-    # And a third time 
-    print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
-    print_time('Foo')
+    try:
+        orig_stderr = sys.stderr
+        sys.stderr = StringIO.StringIO()
+        print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
+        print_time('Foo')
+        # Create a second time, to smoke test log rotation.
+        print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
+        print_time('Foo')
+        # And a third time 
+        print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
+        print_time('Foo')
+        nose.tools.assert_equal(sys.stderr.getvalue(),
+            "Foo: 0.0s, 0.0min\nFoo: 0.0s, 0.0min\nFoo: 0.0s, 0.0min\n"
+            )
+    finally:
+        sys.stderr = orig_stderr
 

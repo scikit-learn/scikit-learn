@@ -1,6 +1,8 @@
 import numpy as np
-from scikits.learn import logistic, datasets
-from numpy.testing import *
+from numpy.testing import assert_array_equal, assert_raises, \
+                assert_, assert_array_almost_equal, decorators
+
+from .. import logistic, datasets
 
 X = [[-1, 0], [0, 1], [1, 1]]
 Y1 = [0, 1, 1]
@@ -18,7 +20,7 @@ def test_predict_2_classes():
     clf = logistic.LogisticRegression(C=100).fit(X, Y1)
     assert_array_equal(clf.predict(X), Y1)
 
-    clf = logistic.LogisticRegression(has_intercept=False).fit(X, Y1)
+    clf = logistic.LogisticRegression(fit_intercept=False).fit(X, Y1)
     assert_array_equal(clf.predict(X), Y1)
 
 

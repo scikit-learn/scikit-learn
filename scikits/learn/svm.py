@@ -6,9 +6,9 @@ from . import _liblinear
 from .base import BaseEstimator, RegressorMixin, ClassifierMixin
 
 #
-# TODO: some cleanup: is nSV_ really needed ?
+# TODO: some cleanup: is n_support_ really needed ?
 
-class BaseLibsvm(BaseEstimator):
+class _BaseLibSVM(BaseEstimator):
     """
     Base class for classifiers that use libsvm as library for
     support vector machine classification and regression.
@@ -37,17 +37,8 @@ class BaseLibsvm(BaseEstimator):
         self.C = C
         self.nu = nu
         self.p = p
-        self.shrinking = int(shrinking)
-        self.probability = int(probability)
-
-        # container for when we call fit
-        self.support_   = np.empty((0,0), dtype=np.float64, order='C')
-        self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
-        self.intercept_ = np.empty(0,     dtype=np.float64, order='C')
-
-        # only used in classification
-        self.nSV_ = np.empty(0, dtype=np.int32, order='C')
-
+        self.shrinking = shrinking
+        self.probability = probability
 
     def _get_kernel(self, X):
         """ Get the kernel type code as well as the data transformed by
@@ -56,14 +47,13 @@ class BaseLibsvm(BaseEstimator):
         if callable(self.kernel):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
-            _X = np.asanyarray(self.kernel(X, self.__Xfit), 
+            _X = np.asanyarray(self.kernel(X, self.__Xfit),
                                dtype=np.float64, order='C')
             kernel_type = 4
-        else: 
+        else:
             kernel_type = self._kernel_types.index(self.kernel)
             _X = X
         return kernel_type, _X
-
 
     def fit(self, X, Y, class_weight={}):
         """
@@ -72,7 +62,7 @@ class BaseLibsvm(BaseEstimator):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
         Y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
@@ -80,9 +70,23 @@ class BaseLibsvm(BaseEstimator):
         weight : dict , {class_label : weight}
             Weights associated with classes. If not given, all classes
             are supposed to have weight one.
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.float64, order='C')
+
+        # container for when we call fit
+        self.support_   = np.empty((0,0), dtype=np.float64, order='C')
+        self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
+        self.intercept_ = np.empty(0,     dtype=np.float64, order='C')
+
+        # only used in classification
+        self.n_support_ = np.empty(0, dtype=np.int32, order='C')
+
 
         if callable(self.kernel):
              # you must store a reference to X to compute the kernel in predict
@@ -91,17 +95,19 @@ class BaseLibsvm(BaseEstimator):
             self.__Xfit = X
         kernel_type, _X = self._get_kernel(X)
 
-        self.weight = np.asarray(class_weight.values(), 
+        self.weight = np.asarray(class_weight.values(),
                                  dtype=np.float64, order='C')
-        self.weight_label = np.asarray(class_weight.keys(), 
+        self.weight_label = np.asarray(class_weight.keys(),
                                        dtype=np.int32, order='C')
 
         # check dimensions
-        if _X.shape[0] != Y.shape[0]: 
-            raise ValueError("Incompatible shapes")
         solver_type = self._svm_types.index(self.impl)
+        if solver_type != 2 and _X.shape[0] != Y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "X has %s features, but Y has %s." % \
+                             (_X.shape[0], Y.shape[0]))
 
-        if (self.gamma == 0): 
+        if (self.gamma == 0):
             self.gamma = 1.0/_X.shape[0]
 
         self.label_, self.probA_, self.probB_ = _libsvm.train_wrap(_X, Y,
@@ -109,11 +115,10 @@ class BaseLibsvm(BaseEstimator):
                  self.gamma, self.coef0, self.eps, self.C,
                  self.support_, self.dual_coef_,
                  self.intercept_, self.weight_label, self.weight,
-                 self.nSV_, self.nu, self.cache_size, self.p,
-                 self.shrinking,
+                 self.n_support_, self.nu, self.cache_size, self.p,
+                 int(self.shrinking),
                  int(self.probability))
         return self
-
 
     def predict(self, T):
         """
@@ -130,6 +135,7 @@ class BaseLibsvm(BaseEstimator):
         ----------
         T : array-like, shape = [n_samples, n_features]
 
+
         Returns
         -------
         C : array, shape = [nsample]
@@ -144,10 +150,9 @@ class BaseLibsvm(BaseEstimator):
                       self.gamma, self.coef0, self.eps, self.C,
                       self.weight_label, self.weight,
                       self.nu, self.cache_size, self.p,
-                      self.shrinking, self.probability,
-                      self.nSV_, self.label_, self.probA_,
+                      int(self.shrinking), int(self.probability),
+                      self.n_support_, self.label_, self.probA_,
                       self.probB_)
-
 
     def predict_proba(self, T):
         """
@@ -178,17 +183,16 @@ class BaseLibsvm(BaseEstimator):
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
         pprob = _libsvm.predict_prob_from_model_wrap(T, self.support_,
-                      self.dual_coef_, self.intercept_, 
+                      self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl),
                       kernel_type, self.degree, self.gamma,
-                      self.coef0, self.eps, self.C, 
+                      self.coef0, self.eps, self.C,
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
-                      self.p, self.shrinking, self.probability,
-                      self.nSV_, self.label_,
+                      self.p, int(self.shrinking), int(self.probability),
+                      self.n_support_, self.label_,
                       self.probA_, self.probB_)
         return pprob[:, np.argsort(self.label_)]
-        
 
     def predict_margin(self, T):
         """
@@ -197,27 +201,33 @@ class BaseLibsvm(BaseEstimator):
         Parameters
         ----------
         T : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the decision function of the sample for each class
+            in the model, where classes are ordered by arithmetical
+            order.
+
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
         return _libsvm.predict_margin_from_model_wrap(T, self.support_,
-                      self.dual_coef_, self.intercept_, 
+                      self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl),
                       kernel_type, self.degree, self.gamma,
-                      self.coef0, self.eps, self.C, 
+                      self.coef0, self.eps, self.C,
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
-                      self.p, self.shrinking, self.probability,
-                      self.nSV_, self.label_,
+                      self.p, int(self.shrinking), int(self.probability),
+                      self.n_support_, self.label_,
                       self.probA_, self.probB_)
-
 
     @property
     def coef_(self):
         if self.kernel != 'linear':
             raise NotImplementedError('coef_ is only available when using a linear kernel')
         return np.dot(self.dual_coef_, self.support_)
-
 
 
 class BaseLibLinear(BaseEstimator):
@@ -238,13 +248,13 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 has_intercept=True):
+                 fit_intercept=True):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
         self.eps = eps
         self.C = C
-        self.has_intercept = has_intercept
+        self.fit_intercept = fit_intercept
         # Check that the arguments given are valid:
         self._get_solver_type()
 
@@ -261,13 +271,21 @@ class BaseLibLinear(BaseEstimator):
 
     def fit(self, X, Y, **params):
         """
+        Fit the model according to the given training data and
+        parameters.
+
         Parameters
-        ==========
+        ----------
         X : array-like, shape = [nsamples, nfeatures]
             Training vector, where nsamples in the number of samples and
             nfeatures is the number of features.
         Y : array, shape = [nsamples]
             Target vector relative to X
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
         self._set_params(**params)
 
@@ -281,6 +299,25 @@ class BaseLibLinear(BaseEstimator):
         return self
 
     def predict(self, T):
+        """
+        This function does classification or regression on an array of
+        test vectors T.
+
+        For a classification model, the predicted class for each
+        sample in T is returned.  For a regression model, the function
+        value of T calculated is returned.
+
+        For an one-class model, +1 or -1 is returned.
+
+        Parameters
+        ----------
+        T : array-like, shape = [n_samples, n_features]
+
+
+        Returns
+        -------
+        C : array, shape = [nsample]
+        """
         T = np.asanyarray(T, dtype=np.float64, order='C')
         return _liblinear.predict_wrap(T, self.raw_coef_,
                                       self._get_solver_type(),
@@ -291,13 +328,13 @@ class BaseLibLinear(BaseEstimator):
 
     @property
     def intercept_(self):
-        if self.has_intercept > 0:
+        if self.fit_intercept > 0:
             return self.raw_coef_[:,-1]
         return 0.0
 
     @property
     def coef_(self):
-        if self.has_intercept > 0:
+        if self.fit_intercept > 0:
             return self.raw_coef_[:,:-1]
         return self.raw_coef_
 
@@ -313,18 +350,22 @@ class BaseLibLinear(BaseEstimator):
         double indicating if the intercept should be computed:
         positive for true, negative for false
         """
-        return int  (self.has_intercept) - .5
+        return int  (self.fit_intercept) - .5
 
 ################################################################################
 # Public API
 # No processing should go into these classes
 
-class SVC(BaseLibsvm, ClassifierMixin):
+class SVC(_BaseLibSVM, ClassifierMixin):
     """
     C-Support Vector Classification.
 
     Parameters
     ----------
+
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
+
     kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
          one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
@@ -337,78 +378,71 @@ class SVC(BaseLibsvm, ClassifierMixin):
     gamma : float, optional (default=0.0)
         kernel coefficient for rbf
 
-    C : float, optional (default=1.0)
-        penalty parameter C of the error term.
-    
-    probability: boolean, optional (False by default)
-        enable probability estimates. This must be enabled prior
-        to calling prob_predict.
-
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
+    probability: boolean, optional (False by default)
+        enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
     shrinking: boolean, optional
-         use the shrinking heuristic.
+         wether to use the shrinking heuristic.
+
+    eps: float, optional
+         precision for stopping criteria
+
+    cache_size: float, optional
+         specify the size of the cache (in MB)
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
-        Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `support_` : array-like, shape = [n_SV, n_features]
+        Support vectors, where n_SV is the number of support vectors.
+
+    `n_support_` : array-like, dtype=int32, shape = [n_class]
+        number of support vector for each class.
+
+    `dual_coef_` : array, shape = [n_class-1, nSV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
 
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Return probability estimates.
-
-    predict_margin(X) : array
-        Return distance to predicted margin.
-
     Examples
     --------
+    >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
+    >>> from scikits.learn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=0, degree=3, shrinking=1, eps=0.001,
-      cache_size=100.0,
-      coef0=0.0,
-      gamma=0.25)
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+      cache_size=100.0, shrinking=True, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
     See also
     --------
-    SVR
+    SVR, LinearSVC
     """
 
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0,
-                 shrinking=True, probability=False):
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
+                 coef0=0.0, shrinking=True, probability=False,
+                 eps=1e-3, cache_size=100.0):
 
-        BaseLibsvm.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+        _BaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
                          cache_size, eps, C, 0., 0.,
                          shrinking, probability)
 
 
-class NuSVC(BaseLibsvm, ClassifierMixin):
+class NuSVC(_BaseLibSVM, ClassifierMixin):
     """
     Nu-Support Vector Classification.
 
@@ -418,8 +452,7 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
     nu : float, optional
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
-        interval (0, 1].  By default 0.5 will be taken.  Only
-        available if impl='nu_svc'
+        interval (0, 1].  By default 0.5 will be taken.
 
     kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
@@ -442,13 +475,22 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
         in poly/sigmoid.
 
     shrinking: boolean, optional
-         use the shrinking heuristic.
+         wether to use the shrinking heuristic.
+
+    eps: float, optional
+         precision for stopping criteria
+
+    cache_size: float, optional
+         specify the size of the cache (in MB)
 
 
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, n_features]
         Support vectors.
+
+    `n_support_` : array-like, dtype=int32, shape = [n_class]
+        number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficients of the support vector in the decision function.
@@ -457,7 +499,7 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
 
@@ -477,48 +519,118 @@ class NuSVC(BaseLibsvm, ClassifierMixin):
 
     Examples
     --------
+    >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
+    >>> from scikits.learn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, Y)
-    NuSVC(kernel='rbf', probability=0, degree=3, shrinking=1, eps=0.001,
-       cache_size=100.0,
-       coef0=0.0,
-       nu=0.5,
-       gamma=0.25)
+    NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, eps=0.001,
+       cache_size=100.0, shrinking=True, nu=0.5, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
     See also
     --------
-    SVR
+    SVC, LinearSVC, SVR
     """
 
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, nu=0.5, shrinking=True,
-                 probability=False):
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
+                 coef0=0.0, shrinking=True, probability=False,
+                 eps=1e-3, cache_size=100.0):
 
-        BaseLibsvm.__init__(self, 'nu_svc', kernel, degree, gamma, coef0,
+        _BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma, coef0,
                          cache_size, eps, 0., nu, 0.,
                          shrinking, probability)
 
 
-class SVR(BaseLibsvm, RegressorMixin):
+class SVR(_BaseLibSVM, RegressorMixin):
     """
     Support Vector Regression.
 
     Parameters
     ----------
-    impl : string, optional
-
-        SVM implementation to choose from. This refers to different formulations
-        of the SVM optimization problem. Can be one of 'epsilon_svr', 'nu_svr'.
-        By default 'epsilon_svc' will be chosen.
 
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
         the fraction of support vectors. Should be in the interval (0, 1].  By
         default 0.5 will be taken.  Only available if impl='nu_svc'
+
+    kernel : string, optional
+         Specifies the kernel type to be used in the algorithm.
+         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
+         If none is given 'rbf' will be used.
+
+    p : float
+        epsilon in the epsilon-SVR model.
+
+    degree : int, optional
+        degree of kernel function
+        is significant only in poly, rbf, sigmoid
+
+    gamma : float, optional (default=0.0)
+        kernel coefficient for rbf
+
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
+
+    probability: boolean, optional (False by default)
+        enable probability estimates. This must be enabled prior
+        to calling prob_predict.
+
+    eps: float, optional
+         precision for stopping criteria
+
+    coef0 : float, optional
+        independent term in kernel function. It is only significant
+        in poly/sigmoid.
+
+    Attributes
+    ----------
+    `support_` : array-like, shape = [nSV, n_features]
+        Support vectors
+
+    `dual_coef_` : array, shape = [n_classes-1, nSV]
+        Coefficients of the support vector in the decision function.
+
+    `coef_` : array, shape = [n_classes-1, n_features]
+        Weights asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+        Constants in decision function.
+
+    See also
+    --------
+    NuSVR
+    """
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
+                 shrinking=True, probability=False):
+
+        _BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
+                         cache_size, eps, C, nu, p,
+                         shrinking, probability)
+
+
+class NuSVR(_BaseLibSVM, RegressorMixin):
+    """
+    Nu Support Vector Regression. Similar to NuSVC, for regression,
+    uses a paramter nu to control the number of support
+    vectors. However, unlike NuSVC, where nu replaces with C, here nu
+    replaces with the parameter p of SVR.
+
+    Parameters
+    ----------
+
+    nu : float, optional
+        An upper bound on the fraction of training errors and a lower bound of
+        the fraction of support vectors. Should be in the interval (0, 1].  By
+        default 0.5 will be taken.  Only available if impl='nu_svc'
+
+
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
 
     kernel : string, optional
          Specifies the kernel type to be used in the algorithm.
@@ -532,9 +644,9 @@ class SVR(BaseLibsvm, RegressorMixin):
     gamma : float, optional (default=0.0)
         kernel coefficient for rbf
 
-    C : float, optional (default=1.0)
-        penalty parameter C of the error term.
-    
+    eps: float, optional
+         precision for stopping criteria
+
     probability: boolean, optional (False by default)
         enable probability estimates. This must be enabled prior
         to calling prob_predict.
@@ -555,72 +667,67 @@ class SVR(BaseLibsvm, RegressorMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
-        constants in decision function
-
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Return probability estimates.
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+        Constants in decision function.
 
     See also
     --------
-    SVC
+    NuSVR
     """
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
-                 shrinking=True, probability=False):
 
-        BaseLibsvm.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
+    def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
+                 gamma=0.0, coef0=0.0, shrinking=True,
+                 probability=False, cache_size=100.0, eps=1e-3):
+
+        _BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
+                         cache_size, eps, C, nu, 0.,
                          shrinking, probability)
 
 
-class OneClassSVM(BaseLibsvm):
-    """
-    Outlayer detection
+
+class OneClassSVM(_BaseLibSVM):
+    """Unsupervised outliers detection
+
+    Estimate the support of a high-dimensional distribution.
 
     Parameters
     ----------
 
     kernel : string, optional
-         Specifies the kernel type to be used in the algorithm. one of 'linear',
-         'poly', 'rbf', 'sigmoid', 'precomputed'. If none is given 'rbf' will be
-         used.
+        Specifies the kernel type to be used in
+        the algorithm. Can be one of 'linear', 'poly', 'rbf', 'sigmoid',
+        'precomputed'. If none is given 'rbf' will be used.
 
     nu : float, optional
-        An upper bound on the fraction of training errors and a lower bound of
-        the fraction of support vectors. Should be in the interval (0, 1].  By
-        default 0.5 will be taken.  Only available if impl='nu_svc'
+        An upper bound on the fraction of training
+        errors and a lower bound of the fraction of support
+        vectors. Should be in the interval (0, 1]. By default 0.5
+        will be taken.
 
     degree : int, optional
-        degree of kernel function. Significant only in poly, rbf, sigmoid
+        Degree of kernel function. Significant only in poly, rbf, sigmoid.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf.
+        Kernel coefficient for rbf.
 
     C : float, optional (default=1.0)
-        penalty parameter C of the error term.
-    
+        Penalty parameter C of the error term.
+
     probability: boolean, optional (False by default)
-        enable probability estimates. Must be enabled prior to calling
+        Enable probability estimates. Must be enabled prior to calling
         prob_predict.
 
     coef0 : float, optional
-        independent term in kernel function. It is only significant in
+        Independent term in kernel function. It is only significant in
         poly/sigmoid.
+
+    eps: float, optional
+         precision for stopping criteria
 
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
-
+        Support vectors.
 
     `dual_coef_` : array, shape = [n_classes-1, nSV]
         Coefficient of the support vector in the decision function.
@@ -628,34 +735,29 @@ class OneClassSVM(BaseLibsvm):
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
-    
+
     `intercept_` : array, shape = [n_classes-1]
-        constants in decision function
-
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
-    predict_proba(X) : array
-        Return probability estimates.
+        Constants in decision function.
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, 
+                 cache_size=100.0, eps=1e-3, C=1.0,
                  nu=0.5, p=0.1, shrinking=True, probability=False):
-        BaseLibsvm.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
-                         shrinking, probability)
-    
-    def fit(self, X, Y=None):
-        if Y is None:
-            n_samples = X.shape[0]
-            Y = [0] * n_samples
-        super(OneClassSVM, self).fit(X, Y)
+        _BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
+                             cache_size, eps, C, nu, p, shrinking, probability)
+
+    def fit(self, X):
+        """
+        Detects the soft boundary (aka soft boundary) of the set of samples X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Set of samples, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        """
+        super(OneClassSVM, self).fit(X, [])
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin):
@@ -683,35 +785,30 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
         Select the algorithm to either solve the dual or primal
         optimization problem.
 
+    eps: float, optional
+         precision for stopping criteria
 
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
+        Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
-        Coefficient of the support vector in the decision function,
-        where n_classes is the number of classes and nSV is the number
-        of support vectors.
+    `dual_coef_` : array, shape = [n_class-1, nSV]
+        Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
-        Wiehgiths asigned to the features (coefficients in the primal
+    `coef_` : array, shape = [n_class-1, n_features]
+        Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
-        constants in decision function
-
+    `intercept_` : array, shape = [n_class-1]
+        Constants in decision function.
 
     Notes
     -----
     Some features of liblinear are still not wrapped, like the Cramer
     & Singer algorithm.
 
-    References
-    ----------
-    LIBLINEAR -- A Library for Large Linear Classification
-    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
-
     """
 
+    # all the implementation is provided by the mixins
     pass

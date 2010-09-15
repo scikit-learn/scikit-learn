@@ -1,14 +1,13 @@
-import numpy as np
-import numpy.random as nr
-
-
 """
-Samples generator
-
+Generate samples of synthetic data sets.
 """
 
 # Author: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel
 # License: BSD 3 clause
+
+import numpy as np
+import numpy.random as nr
+
 
 
 def samples_classif():
@@ -122,9 +121,9 @@ def sparse_uncorrelated(nb_samples=100, nb_features=10):
     Parameters
     ----------
     nb_samples : int
-                 number of samples (defaut is 100).
+                 number of samples (default is 100).
     nb_features : int
-                  number of features (defaut is 5).
+                  number of features (default is 5).
 
     Returns
     -------
@@ -148,9 +147,9 @@ def friedman(nb_samples=100, nb_features=10,noise_std=1):
     Parameters
     ----------
     nb_samples : int
-                 number of samples (defaut is 100).
+                 number of samples (default is 100).
     nb_features : int
-                  number of features (defaut is 10).
+                  number of features (default is 10).
     noise_std : float
 		std of the noise, which is added as noise_std*NR.normal(0,1)
     Returns

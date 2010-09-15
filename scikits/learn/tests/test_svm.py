@@ -5,8 +5,10 @@ TODO: remove hard coded numerical results when possible
 """
 
 import numpy as np
-from numpy.testing import *
-from scikits.learn import svm, datasets
+from numpy.testing import assert_array_equal, assert_array_almost_equal, \
+                          assert_almost_equal, assert_raises, assert_
+
+from .. import svm, datasets
 
 # test sample 1
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -14,7 +16,6 @@ Y = [1, 1, 1, 2, 2, 2]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [1, 2, 2]
 
-from scikits.learn import datasets
 iris = datasets.load_iris()
 
 def test_CSVC():
@@ -127,7 +128,7 @@ def test_oneclass():
     Test OneClassSVM
     """
     clf = svm.OneClassSVM()
-    clf.fit(X, Y)
+    clf.fit(X)
     pred = clf.predict(T)
 
     assert_array_almost_equal(pred, [1, -1, -1])
@@ -248,7 +249,7 @@ def test_LinearSVC():
     clf = svm.LinearSVC().fit(X, Y)
 
     # by default should have intercept
-    assert clf.has_intercept
+    assert clf.fit_intercept
 
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.intercept_, [0], decimal=5)

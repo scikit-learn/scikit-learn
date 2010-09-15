@@ -1,6 +1,7 @@
-#
-# Gaussian Mixture Models
-#
+"""
+Gaussian Mixture Models
+"""
+
 # Author: Ron Weiss <ronweiss@gmail.com>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
@@ -98,7 +99,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n=1):
 
     Parameters
     ----------
-    mean : array_like, shape (ndim,)
+    mean : array_like, shape (n_dim,)
         Mean of the distribution.
     covars : array_like
         Covariance of the distribution.  The shape depends on `cvtype`:
@@ -113,7 +114,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n=1):
 
     Returns
     -------
-    obs : array, shape (n, ndim)
+    obs : array, shape (n, n_dim)
         Randomly generated sample
     """
     ndim = len(mean)
@@ -184,43 +185,56 @@ class GMM(BaseEstimator):
     Examples
     --------
     >>> import numpy as np
+    >>> from scikits.learn.gmm import GMM
     >>> g = GMM(n_states=2, n_dim=1)
     >>> # The initial parameters are fixed.
-    >>> print np.round(g.weights, 2)
-    [ 0.5  0.5]
-    >>> print np.round(g.means, 2)
-    [[ 0.]
-     [ 0.]]
-    >>> print np.round(g.covars, 2)
-    [[[ 1.]]
+    >>> np.round(g.weights, 2)
+    array([ 0.5,  0.5])
+    >>> np.round(g.means, 2)
+    array([[ 0.],
+           [ 0.]])
+    >>> np.round(g.covars, 2)
+    array([[[ 1.]],
     <BLANKLINE>
-     [[ 1.]]]
+           [[ 1.]]])
 
     >>> # Generate random observations with two modes centered on 0
     >>> # and 10 to use for training.
     >>> np.random.seed(0)
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
-    >>> _ = g.fit(obs)
-    >>> print np.round(g.weights, 2)
-    [ 0.75  0.25]
-    >>> print np.round(g.means, 2)
-    [[ 9.94]
-     [ 0.06]]
-    >>> print np.round(g.covars, 2)
-    [[[ 0.96]]
-    <BLANKLINE>
-     [[ 1.02]]]
-    >>> print g.predict([[0], [2], [9], [10]])
-    [1 1 0 0]
-    >>> print np.round(g.score([[0], [2], [9], [10]]), 2)
-    [-2.32 -4.16 -1.65 -1.19]
+    >>> g.fit(obs) #doctest: +ELLIPSIS
+    GMM(n_dim=1, cvtype='diag',
+      means=array([[ ...],
+           [ ...]]),
+      covars=[array([[ ...]]), array([[ ...]])], n_states=2,
+      weights=array([ 0.75,  0.25]))
+
+    >>> np.round(g.weights, 2)
+    array([ 0.75,  0.25])
+    >>> np.round(g.means, 2)
+    array([[ 9.94],
+           [ 0.06]])
+    >>> np.round(g.covars, 2)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    array([[[ 0.96]],
+           [[ 1.02]]])
+    >>> g.predict([[0], [2], [9], [10]])
+    array([1, 1, 0, 0])
+    >>> np.round(g.score([[0], [2], [9], [10]]), 2)
+    array([-2.32, -4.16, -1.65, -1.19])
 
     >>> # Refit the model on new data (initial parameters remain the
     >>> #same), this time with an even split between the two modes.
-    >>> _ = g.fit(20 * [[0]] +  20 * [[10]])
-    >>> print np.round(g.weights, 2)
-    [ 0.5  0.5]
+    >>> g.fit(20 * [[0]] +  20 * [[10]])
+    GMM(n_dim=1, cvtype='diag',
+      means=array([[ 10.],
+           [  0.]]),
+      covars=[array([[ 0.001]]), array([[ 0.001]])], n_states=2,
+      weights=array([ 0.5,  0.5]))
+
+    >>> np.round(g.weights, 2)
+    array([ 0.5,  0.5])
     """
 
     def __init__(self, n_states=1, n_dim=1, cvtype='diag', weights=None,
@@ -505,7 +519,7 @@ class GMM(BaseEstimator):
     def _do_mstep(self, X, posteriors, params, min_covar=0):
             w = posteriors.sum(axis=0)
             avg_obs = np.dot(posteriors.T, X)
-            norm = 1.0 / w[:,np.newaxis]
+            norm = 1.0 / (w[:,np.newaxis] + 1e-200)
 
             if 'w' in params:
                 self._log_weights = np.log(w / w.sum())
@@ -583,8 +597,8 @@ def _validate_covars(covars, cvtype, nmix, ndim):
             raise ValueError("'tied' covars must have shape (ndim, ndim)")
         elif (not np.allclose(covars, covars.T)
               or np.any(np.linalg.eigvalsh(covars) <= 0)):
-            raise (ValueError,
-                   "'tied' covars must be symmetric, positive-definite")
+            raise ValueError("'tied' covars must be symmetric, "
+                             "positive-definite")
     elif cvtype == 'diag':
         if covars.shape != (nmix, ndim):
             raise ValueError("'diag' covars must have shape (nmix, ndim)")

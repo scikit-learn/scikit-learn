@@ -1,5 +1,7 @@
-"""Non linear regression with Support Vector Regression (SVR)
-using RBF kernel
+"""
+================================================
+Support Vector Regression (SVR) using RBF kernel
+================================================
 """
 ###############################################################################
 # Generate sample data

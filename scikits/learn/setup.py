@@ -8,10 +8,11 @@ if sys.version_info[0] < 3:
 else:
     from configparser import ConfigParser
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, get_standard_file, BlasNotFoundError
-    config = Configuration('learn',parent_package,top_path)
+    from numpy.distutils.system_info import get_info, get_standard_file, \
+        BlasNotFoundError
+    config = Configuration('learn', parent_package, top_path)
 
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
@@ -19,6 +20,10 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('datasets')
     config.add_subpackage('features')
     config.add_subpackage('features/tests')
+    config.add_subpackage('cluster')
+    config.add_subpackage('cluster/tests')
+    config.add_subpackage('covariance')
+    config.add_subpackage('covariance/tests')
     config.add_subpackage('feature_selection')
     config.add_subpackage('manifold')
     config.add_subpackage('feature_selection/tests')
@@ -116,22 +121,13 @@ def configuration(parent_package='',top_path=None):
                          include_dirs=[numpy.get_include()]
                          )
 
-    config.add_extension('cd_fast',
-                         sources=[join('src', 'cd_fast.c')],
-                         libraries=cblas_libs,
-                         include_dirs=[join('src', 'cblas'),
-                                       numpy.get_include(),
-                                       blas_info.pop('include_dirs', [])],
-                         extra_compile_args=['-std=c99'] + \
-                                             blas_info.pop('extra_compile_args', []),
-                         **blas_info
-                         )
 
-
+    # this has to be build *after* cblas
+    config.add_subpackage('glm')
     config.add_subpackage('utils')
 
     # add the test directory
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
 
     return config
 

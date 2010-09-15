@@ -4,11 +4,12 @@ Testing Recursive feature elimination
 """
 
 import numpy as np
-from scikits.learn.svm import SVC
-from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn import datasets
-from scikits.learn.rfe import RFECV
-from scikits.learn.metrics import zero_one
+
+from ..svm import SVC
+from ..cross_val import StratifiedKFold
+from .. import datasets
+from ..rfe import RFECV
+from ..metrics import zero_one
 
 ################################################################################
 # Loading a dataset
@@ -31,5 +32,6 @@ def test_rfe():
     rfecv.fit(X, y, cv=StratifiedKFold(y, 2))
     X_r = rfecv.transform(X)
 
+    assert X_r.shape[1] == iris.data.shape[1]
     assert rfecv.support_.sum() == iris.data.shape[1]
 

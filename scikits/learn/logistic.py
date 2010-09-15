@@ -1,8 +1,10 @@
 import numpy as np
 from . import _liblinear
+
+from .base import ClassifierMixin
 from .svm import BaseLibLinear
 
-class LogisticRegression(BaseLibLinear):
+class LogisticRegression(BaseLibLinear, ClassifierMixin):
     """
     Logistic Regression.
 
@@ -23,7 +25,7 @@ class LogisticRegression(BaseLibLinear):
         Specifies the strength of the regularization. The smaller it is
         the bigger in the regularization.
 
-    intercept : bool, default: True
+    fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added the decision function
 
@@ -55,9 +57,9 @@ class LogisticRegression(BaseLibLinear):
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
 
-    def __init__(self, penalty='l2', eps=1e-4, C=1.0, has_intercept=True):
+    def __init__(self, penalty='l2', eps=1e-4, C=1.0, fit_intercept=True):
         super(LogisticRegression, self).__init__ (penalty=penalty, loss='lr',
-            dual=False, eps=eps, C=C, has_intercept=has_intercept)
+            dual=False, eps=eps, C=C, fit_intercept=fit_intercept)
 
     def predict_proba(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')

@@ -18,11 +18,11 @@ License: New BSD
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, ClassifierMixin
-from ..svm import BaseLibsvm, BaseLibLinear
+from ..base import ClassifierMixin
+from ..svm import _BaseLibSVM, BaseLibLinear
 from .. import _libsvm, _liblinear
 
-class SparseBaseLibsvm(BaseLibsvm):
+class _SparseBaseLibSVM(_BaseLibSVM):
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -107,7 +107,6 @@ class SparseBaseLibsvm(BaseLibsvm):
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
                                              dual_coef_indptr))
-
         return self
 
 
@@ -147,21 +146,104 @@ class SparseBaseLibsvm(BaseLibsvm):
                       self.probB_)
 
 
-class SVC(SparseBaseLibsvm):
+class SVC(_SparseBaseLibSVM):
     """SVC for sparse matrices (csr)
 
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
     """
-    def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
-                 shrinking=True, probability=False):
 
-        SparseBaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, shrinking=True,
+                 probability=False):
+
+        _SparseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
+                         cache_size, eps, C, 0., 0.,
                          shrinking, probability)
 
+
+
+class NuSVC (_SparseBaseLibSVM):
+    """NuSVC for sparse matrices (csr)
+
+    For best results, this accepts a matrix in csr format
+    (scipy.sparse.csr), but should be able to convert from any array-like
+    object (including other sparse representations).
+    """
+
+
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
+                 coef0=0.0, shrinking=True, probability=False,
+                 eps=1e-3, cache_size=100.0):
+
+        _SparseBaseLibSVM.__init__(self, 'nu_svc', kernel, degree,
+                         gamma, coef0, cache_size, eps, 0., nu, 0.,
+                         shrinking, probability)
+
+
+
+
+class SVR (_SparseBaseLibSVM):
+    """SVR for sparse matrices (csr)
+
+    For best results, this accepts a matrix in csr format
+    (scipy.sparse.csr), but should be able to convert from any array-like
+    object (including other sparse representations).
+    """
+
+
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
+                 shrinking=True, probability=False):
+
+        _SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
+                         degree, gamma, coef0, cache_size, eps, C, nu,
+                         p, shrinking, probability)
+
+
+
+
+
+class NuSVR (_SparseBaseLibSVM):
+    """NuSVR for sparse matrices (csr)
+
+    For best results, this accepts a matrix in csr format
+    (scipy.sparse.csr), but should be able to convert from any array-like
+    object (including other sparse representations).
+    """
+
+    def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
+                 gamma=0.0, coef0=0.0, shrinking=True,
+                 probability=False, cache_size=100.0, eps=1e-3):
+
+        _SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
+                         degree, gamma, coef0, cache_size, eps, C, nu,
+                         0., shrinking, probability)
+
+
+
+class OneClassSVM (_SparseBaseLibSVM):
+    """NuSVR for sparse matrices (csr)
+
+    For best results, this accepts a matrix in csr format
+    (scipy.sparse.csr), but should be able to convert from any array-like
+    object (including other sparse representations).
+    """
+
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 cache_size=100.0, eps=1e-3, C=1.0, 
+                 nu=0.5, p=0.1, shrinking=True, probability=False):
+
+        _SparseBaseLibSVM.__init__(self, 'one_class', kernel, degree,
+                         gamma, coef0, cache_size, eps, C, nu, p,
+                         shrinking, probability)
+    
+    def fit(self, X, Y=None):
+        if Y is None:
+            n_samples = X.shape[0]
+            Y = [0] * n_samples
+        super(OneClassSVM, self).fit(X, Y)
 
 
 

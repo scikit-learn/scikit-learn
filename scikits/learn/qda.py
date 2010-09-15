@@ -12,13 +12,13 @@ import warnings
 import numpy as np
 import scipy.ndimage as ndimage
 
-from .base import BaseEstimator
+from .base import BaseEstimator, ClassifierMixin
 
 # FIXME :
 # - in fit(X, y) method, many checks are common with other models (in particular
 #   LDA model) and should be factorized : may be in BaseEstimator ?
 
-class QDA(BaseEstimator):
+class QDA(BaseEstimator, ClassifierMixin):
     """
     Quadratic Discriminant Analysis (QDA)
 

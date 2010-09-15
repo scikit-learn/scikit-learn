@@ -2,13 +2,16 @@ import sys
 import math
 import numpy as np
 
-def fast_logdet(A):
+#XXX: We should have a function with numpy's slogdet API
+def _fast_logdet(A):
     """
     Compute log(det(A)) for A symmetric
     Equivalent to : np.log(nl.det(A))
     but more robust
     It returns -Inf if det(A) is non positive or is not defined.
     """
+    # XXX: Should be implemented as in numpy, using ATLAS
+    # http://projects.scipy.org/numpy/browser/trunk/numpy/linalg/linalg.py#L1559
     ld = np.sum(np.log(np.diag(A)))
     a = np.exp(ld/A.shape[0])
     d = np.linalg.det(A/a)
@@ -16,6 +19,25 @@ def fast_logdet(A):
     if not np.isfinite(ld):
         return -np.inf
     return ld
+
+def _fast_logdet_numpy(A):
+    """
+    Compute log(det(A)) for A symmetric
+    Equivalent to : np.log(nl.det(A))
+    but more robust
+    It returns -Inf if det(A) is non positive or is not defined.
+    """
+    sign, ld = np.linalg.slogdet(A)
+    if not sign > 0:
+        return -np.inf
+    return ld
+
+
+# Numpy >= 1.5 provides a fast logdet
+if hasattr(np.linalg, 'slogdet'):
+    fast_logdet = _fast_logdet_numpy
+else:
+    fast_logdet = _fast_logdet
 
 if sys.version_info[1] < 6:
     # math.factorial is only available in 2.6

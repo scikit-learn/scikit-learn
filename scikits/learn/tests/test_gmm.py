@@ -3,10 +3,9 @@ import unittest
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import numpy as np
-import scipy as sp
-import scipy.stats
+from scipy import stats
 
-from scikits.learn import gmm
+from .. import gmm
 
 np.random.seed(0)
 
@@ -164,7 +163,7 @@ class TestLmvnpdf(unittest.TestCase):
         stds = np.sqrt(covars)
         for c, (mu, std) in enumerate(itertools.izip(means, stds)):
             for o, currobs in enumerate(obs):
-                lpr[o,c] = np.log(sp.stats.norm.pdf(currobs, mu, std)).sum()
+                lpr[o,c] = np.log(stats.norm.pdf(currobs, mu, std)).sum()
         return lpr
 
     def _test_lmvnpdfdiag(self, n_dim, n_states, nobs=100):
