@@ -63,7 +63,7 @@ display_embedding(X_r, 'Diffusion Map embedding of IRIS dataset')
 
 ################################################################################
 # Hessian Map
-print "Computing Diffusion Map embedding"
+print "Computing Hessian Map embedding"
 from scikits.learn.manifold import HessianMap
 embedding = HessianMap(n_coords=3)
 X_r = embedding.fit(X).embedding_
