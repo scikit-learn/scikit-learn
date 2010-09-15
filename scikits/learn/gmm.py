@@ -194,8 +194,8 @@ class GMM(BaseEstimator):
     array([[ 0.],
            [ 0.]])
     >>> np.round(g.covars, 2)
-    ... #doctest: +NORMALIZE_WHITESPACE
     array([[[ 1.]],
+    <BLANKLINE>
            [[ 1.]]])
 
     >>> # Generate random observations with two modes centered on 0
@@ -203,13 +203,12 @@ class GMM(BaseEstimator):
     >>> np.random.seed(0)
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
-    >>> g.fit(obs)
-    ... #doctest: +NORMALIZE_WHITESPACE
+    >>> g.fit(obs) #doctest: +ELLIPSIS
     GMM(n_dim=1, cvtype='diag',
-        means=array([[ 9.94199],
-                     [ 0.05981]]),
-        covars=[array([[ 0.96081]]), array([[ 1.01683]])], n_states=2,
-        weights=array([ 0.75,  0.25]))
+      means=array([[ ...],
+           [ ...]]),
+      covars=[array([[ ...]]), array([[ ...]])], n_states=2,
+      weights=array([ 0.75,  0.25]))
 
     >>> np.round(g.weights, 2)
     array([ 0.75,  0.25])
@@ -228,12 +227,11 @@ class GMM(BaseEstimator):
     >>> # Refit the model on new data (initial parameters remain the
     >>> #same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]])
-    ... #doctest: +NORMALIZE_WHITESPACE
     GMM(n_dim=1, cvtype='diag',
-        means=array([[ 10.],
-                     [  0.]]),
-        covars=[array([[ 0.001]]), array([[ 0.001]])], n_states=2,
-        weights=array([ 0.5,  0.5]))
+      means=array([[ 10.],
+           [  0.]]),
+      covars=[array([[ 0.001]]), array([[ 0.001]])], n_states=2,
+      weights=array([ 0.5,  0.5]))
 
     >>> np.round(g.weights, 2)
     array([ 0.5,  0.5])

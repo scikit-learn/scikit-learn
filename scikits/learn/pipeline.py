@@ -62,13 +62,9 @@ class Pipeline(BaseEstimator):
         >>> # You can set the parameters using the names issued
         >>> # For instance, fit using a k of 10 in the SelectKBest
         >>> # and a parameter 'C' of the svn
-        >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1)
-        ... #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-        Pipeline(steps=[('anova', SelectKBest(k=10,
-          score_func=<function f_regression at ...>)),
-          ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3,
-           coef0=0.0, eps=0.001, cache_size=100.0, shrinking=True,
-           gamma=0.01))])
+        >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
+        Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, eps=0.001,
+          cache_size=100.0, shrinking=True, gamma=0.01))])
 
         >>> prediction = anova_svm.predict(X)
         >>> score = anova_svm.score(X)

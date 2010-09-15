@@ -820,17 +820,16 @@ class MultinomialHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import MultinomialHMM
-    >>> MultinomialHMM(n_states=2, nsymbols=3)
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> MultinomialHMM(n_states=2, nsymbols=3) #doctest: +ELLIPSIS
     MultinomialHMM(n_states=2,
-                emissionprob=array([[ 0.3663 ,  0.12783,  0.50587],
-               [ 0.35851,  0.21559,  0.42589]]),
-                labels=[None, None], startprob_prior=1.0,
-                startprob=array([ 0.5,  0.5]),
-                transmat=array([[ 0.5,  0.5],
-               [ 0.5,  0.5]]), nsymbols=3,
-                transmat_prior=1.0)
-
+            emissionprob=array([[ ...],
+           [ ...]]),
+            labels=[None, None], startprob_prior=1.0,
+            startprob=array([ 0.5,  0.5]),
+            transmat=array([[ 0.5,  0.5],
+           [ 0.5,  0.5]]), nsymbols=3,
+            transmat_prior=1.0)
+    
     See Also
     --------
     GaussianHMM : HMM with Gaussian emissions
