@@ -9,7 +9,7 @@ Utilities for cross validation.
 from math import ceil
 import numpy as np
 
-from .base import ClassifierMixin
+from .base import is_classifier
 from .utils.extmath import factorial, combinations
 from .externals.joblib import Parallel, delayed
 
@@ -485,9 +485,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
     """
     n_samples = len(X)
     if cv is None:
-        if y is not None and (isinstance(estimator, ClassifierMixin)
-                or (hasattr(estimator, 'estimator')
-                    and isinstance(estimator.estimator, ClassifierMixin))):
+        if y is not None and is_classifier(estimator):
             cv = StratifiedKFold(y, k=3)
         else:
             cv = KFold(n_samples, k=3)

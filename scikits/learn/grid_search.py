@@ -10,7 +10,7 @@ import copy
 
 from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
-from .base import BaseEstimator, ClassifierMixin, clone
+from .base import BaseEstimator, is_classifier, clone
 
 try:
     from itertools import product
@@ -187,9 +187,7 @@ class GridSearchCV(BaseEstimator):
         estimator = self.estimator
         if cv is None:
             n_samples = len(X)
-            if y is not None and (isinstance(estimator, ClassifierMixin)
-                    or (hasattr(estimator, 'estimator') 
-                        and isinstance(estimator.estimator, ClassifierMixin))):
+            if y is not None and is_classifier(estimator):
                 cv = StratifiedKFold(y, k=3)
             else:
                 cv = KFold(n_samples, k=3)
