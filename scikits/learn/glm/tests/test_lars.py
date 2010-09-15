@@ -15,12 +15,12 @@ diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 
 
-def test_1():
+def test_simple():
     """
     Principle of LARS is to keep covariances tied and decreasing
     """
     max_pred = 10
-    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, max_pred, method="lar")
+    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, max_iter=max_pred, method="lar")
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
@@ -32,6 +32,27 @@ def test_1():
         else:
             # no more than max_pred variables can go into the active set
             assert ocur == max_pred
+
+
+def test_simple_precomputed():
+    """
+    The same, with precomputed Gram matrix
+    """
+    max_pred = 10
+    G = np.dot (diabetes.data.T, diabetes.data)
+    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, Gram=G, max_iter=max_pred, method="lar")
+    for (i, coef_) in enumerate(coef_path_.T):
+        res =  y - np.dot(X, coef_)
+        cov = np.dot(X.T, res)
+        C = np.max(abs(cov))
+        eps = 1e-3
+        ocur = len(cov[ C - eps < abs(cov)])
+        if i < max_pred:
+            assert ocur == i+1
+        else:
+            # no more than max_pred variables can go into the active set
+            assert ocur == max_pred
+
 
 
 def test_lars_lstsq():
