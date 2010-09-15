@@ -305,7 +305,7 @@ class LARS (LinearModel):
             X[:, nonzeros] /= self._norms[nonzeros]
 
         method = 'lar'
-        alphas_, active, coef_path_ = lars_path(X, y,
+        alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
                                 max_iter=self.n_features, method=method)
         self.coef_ = coef_path_[:,-1]
         return self
@@ -361,7 +361,7 @@ class LassoLARS (LinearModel):
         self.coef_ = None
         self.max_iter = max_iter
 
-    def fit (self, X, y, **params):
+    def fit (self, X, y, Gram=None, **params):
         """ XXX : add doc
         """
         self._set_params(**params)
@@ -382,7 +382,7 @@ class LassoLARS (LinearModel):
             X[:, nonzeros] /= self._norms[nonzeros]
 
         method = 'lasso'
-        alphas_, active, coef_path_ = lars_path(X, y,
+        alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
                                             alpha_min=alpha, method=method,
                                             max_iter=self.max_iter)
 
