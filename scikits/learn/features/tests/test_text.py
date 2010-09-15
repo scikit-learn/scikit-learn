@@ -1,6 +1,9 @@
 from scikits.learn.features.text import strip_accents
 from scikits.learn.features.text import WordNGramAnalyzer
 from scikits.learn.features.text import CharNGramAnalyzer
+from scikits.learn.features.text import TermCountVectorizer
+from scikits.learn.features.text import TfidfTransformer
+from scikits.learn.features.text import TfidfVectorizer
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.features.text import SparseHashingVectorizer
 from scikits.learn.svm import LinearSVC as DenseLinearSVC
@@ -149,3 +152,48 @@ def test_dense_sparse_idf_sanity():
     assert_array_almost_equal(dense_tf_idf, sparse_tfidf)
 
 
+def test_dense_vectorizer():
+    wa = WordNGramAnalyzer()
+    train_data = [wa.analyze(d) for d in JUNK_FOOD_DOCS[:-1]]
+    test_data = [wa.analyze(JUNK_FOOD_DOCS[-1])]
+
+    # test without vocabulary
+    v1 = TermCountVectorizer()
+    counts_train = v1.transform(train_data)
+    assert_equal(counts_train[0, v1.vocabulary["pizza"]], 2)
+
+    v2 = TermCountVectorizer(vocabulary=v1.vocabulary)
+
+    # test with a pre-existing vocabulary
+    for v in (v1, v2):
+        counts_test = v.transform(test_data)
+        assert_equal(counts_test[0, v.vocabulary["coke"]], 1)
+
+    # test tf-idf
+    t1 = TfidfTransformer()
+    tfidf = t1.fit(counts_train).transform(counts_train)
+    assert_equal(len(t1.idf), len(v1.vocabulary))
+    assert_equal(tfidf.shape,
+                 (len(train_data), len(v1.vocabulary)))
+
+    # test tf-idf with new data
+    tfidf_test = t1.transform(counts_test)
+    assert_equal(tfidf_test.shape,
+                 (len(test_data), len(v1.vocabulary)))
+
+    # test tf alone
+    t2 = TfidfTransformer(use_idf=False)
+    tf = t2.fit(counts_train).transform(counts_train)
+    assert_equal(t2.idf, None)
+    assert_array_almost_equal(np.sum(tf, axis=1),
+                              [1.0] * len(train_data))
+
+    # test the direct tfidf vectorizer
+    # (equivalent to term count vectorizer + tfidf transformer)
+    tv = TfidfVectorizer()
+    tfidf2 = tv.fit(train_data).transform(train_data)
+    assert_array_almost_equal(tfidf, tfidf2)
+
+    # test the direct tfidf vectorizer with new data
+    tfidf_test2 = tv.transform(test_data)
+    assert_array_almost_equal(tfidf_test, tfidf_test2)
