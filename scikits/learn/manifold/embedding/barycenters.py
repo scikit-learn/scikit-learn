@@ -9,11 +9,12 @@ import scipy.sparse
 from numpy import asarray, dot, eye, ones, sum, trace, zeros, intc
 from numpy.linalg import solve
 
-from .tools import create_graph
+from .tools import create_graph, create_neighborer
 
 __all__ = ['barycenters', ]
 
-def barycenters(samples, **kwargs):
+def barycenters(samples, neigh = None, n_neighbors = None,
+    neigh_alternate_arguments = None):
     """
     Computes the barycenters of samples given as parameters and returns them.
     
@@ -22,11 +23,17 @@ def barycenters(samples, **kwargs):
     samples : matrix
         The points to consider.
 
-    neigh : Neighbors
-        A neighboorer (optional). By default, a K-Neighbor research is done. If provided, neigh must be a functor
-
     n_neighbors : int
-        The number of K-neighboors to use (optional, default 9) if neigh is not given.
+      The number of K-neighboors to use (optional, default 9) if neigh is not
+      given.
+
+    neigh : Neighbors
+      A neighboorer (optional). By default, a K-Neighbor research is done.
+      If provided, neigh must be a functor class . `neigh_alternate_arguments` 
+      will be passed to this class constructor.
+
+    neigh_alternate_arguments : dictionary
+      Dictionary of arguments that will be passed to the `neigh` constructor
 
     Returns
     -------
@@ -34,7 +41,8 @@ def barycenters(samples, **kwargs):
     """
     bary = zeros((len(samples), len(samples)))
 
-    graph = create_graph(samples, **kwargs)
+    graph = create_graph(samples, neigh, n_neighbors,
+        neigh_alternate_arguments)
 
     W = []
     indices=[]
@@ -49,11 +57,13 @@ def barycenters(samples, **kwargs):
     W = asarray(W)
     indices = asarray(indices, dtype=intc)
     indptr = asarray(indptr, dtype=intc)
-    return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples), len(samples)))
+    return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples),
+        len(samples)))
 
 def barycenter(point, point_neighbors, tol = 1e-3, **kwargs):
     """
-    Computes barycenter weights so that point may be reconstructed from its neighbors
+    Computes barycenter weights so that point may be reconstructed from its
+    neighbors
     
     Parameters
     ----------

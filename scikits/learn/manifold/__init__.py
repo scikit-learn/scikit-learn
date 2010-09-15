@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 
 """
 Manifold Learning Module
 """
 
-from .embedding.geodesic_mds import Isomap
+from .embedding.similarities import LLE, HessianMap
+from .embedding.similarities_mds import LaplacianEigenmap, DiffusionMap
 
 from .mapping.barycenter import Barycenter
