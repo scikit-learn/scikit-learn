@@ -292,6 +292,7 @@ class LARS (LinearModel):
         self.n_features = n_features
         self.normalize = normalize
         self.coef_ = None
+        self.fit_intercept = True
 
     def fit (self, X, y, Gram=None, **params):
         self._set_params(**params)
@@ -343,7 +344,7 @@ class LassoLARS (LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.LassoLARS(alpha=0.1)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(normalize=True, alpha=0.1, max_iter=None)
+    LassoLARS(normalize=True, alpha=0.1, max_iter=None, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.51649658]
 
