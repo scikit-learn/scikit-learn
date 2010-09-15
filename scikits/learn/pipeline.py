@@ -9,9 +9,9 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 from .base import BaseEstimator
 
 class Pipeline(BaseEstimator):
-    """ Pipeline of transforms with a final estimator 
+    """ Pipeline of transforms with a final estimator
 
-        Sequentialy apply a list of transforms and a final estimator 
+        Sequentialy apply a list of transforms and a final estimator
         Intermediate steps of the pipeline must be 'transforms', that
         is that they must implements fit & transform methods
         The final estimator need only implements fit.
@@ -34,11 +34,15 @@ class Pipeline(BaseEstimator):
             Fit all the transforms one after the other and transform the
             data, then fit the transformed data using the final estimator
         predict:
-            Applied transforms to the data, and the predict method of the 
+            Applied transforms to the data, and the predict method of the
             final estimator. Valid only if the final estimator implements
             predict.
+        transform:
+            Applied transforms to the data, and the transform method of the
+            final estimator. Valid only if the final estimator implements
+            transform.
         score:
-            Applied transforms to the data, and the score method of the 
+            Applied transforms to the data, and the score method of the
             final estimator. Valid only if the final estimator implements
             score.
 
@@ -110,7 +114,7 @@ class Pipeline(BaseEstimator):
                 for key, value in step._get_params(deep=True).iteritems():
                     out['%s__%s' % (name, key)] = value
         return out
-    
+
     #---------------------------------------------------------------------------
     # Estimator interface
     #---------------------------------------------------------------------------
@@ -128,6 +132,12 @@ class Pipeline(BaseEstimator):
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt)
+
+    def transform(self, X):
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].transform(Xt)
 
     def score(self, X, y=None):
         Xt = X
