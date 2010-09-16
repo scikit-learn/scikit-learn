@@ -33,16 +33,21 @@ class Pipeline(BaseEstimator):
         fit:
             Fit all the transforms one after the other and transform the
             data, then fit the transformed data using the final estimator
+        fit_transform:
+            Fit all the transforms one after the other and transform the
+            data, then use fit_transform on transformed data using the final
+            estimator. Valid only if the final estimator implements
+            fit_transform.
         predict:
-            Applied transforms to the data, and the predict method of the
+            Applies transforms to the data, and the predict method of the
             final estimator. Valid only if the final estimator implements
             predict.
         transform:
-            Applied transforms to the data, and the transform method of the
+            Applies transforms to the data, and the transform method of the
             final estimator. Valid only if the final estimator implements
             transform.
         score:
-            Applied transforms to the data, and the score method of the
+            Applies transforms to the data, and the score method of the
             final estimator. Valid only if the final estimator implements
             score.
 
@@ -120,7 +125,8 @@ class Pipeline(BaseEstimator):
     # Estimator interface
     #---------------------------------------------------------------------------
 
-    def fit(self, X, y=None, **params):
+
+    def _pre_transform(self, X, y=None, **params):
         self._set_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -128,8 +134,16 @@ class Pipeline(BaseEstimator):
                 Xt = transform.fit_transform(Xt, y)
             else:
                 Xt = transform.fit(Xt, y).transform(Xt)
+        return Xt
+
+    def fit(self, X, y=None, **params):
+        Xt = self._pre_transform(X, y, **params)
         self.steps[-1][-1].fit(Xt, y)
         return self
+
+    def fit_transform(self, X, y=None, **params):
+        Xt = self._pre_transform(X, y, **params)
+        return self.steps[-1][-1].fit_transform(Xt, y)
 
     def predict(self, X):
         Xt = X
