@@ -204,7 +204,8 @@ class GridSearchCV(BaseEstimator):
 
         self.best_estimator = best_estimator
         self.predict = best_estimator.predict
-        self.score = best_estimator.score
+        if hasattr(best_estimator, 'score'):
+            self.score = best_estimator.score
 
         # Store the computed scores
         grid = iter_grid(self.param_grid)
@@ -215,11 +216,10 @@ class GridSearchCV(BaseEstimator):
 
 
     def score(self, X, y=None):
-        if hasattr(self.estimator, 'score'):
-            return self.estimator.score(X, y)
-        else:
-            y_predicted = self.predict(X)
-            return -self.loss_func(y_predicted, y)
+        # This method is overridden during the fit if the best estimator
+        # found has a score function.
+        y_predicted = self.predict(X)
+        return -self.loss_func(y_predicted, y)
 
 if __name__ == '__main__':
     from scikits.learn.svm import SVC
