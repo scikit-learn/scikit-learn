@@ -6,6 +6,7 @@ Tune the parameters of an estimator by cross-validation.
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
+import numpy as np
 import copy
 
 from .externals.joblib import Parallel, delayed
@@ -64,16 +65,23 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     # update parameters of the classifier after a copy of its base structure
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
-    
+
     score = 0
     for train, test in cv:
-        clf.fit(X[train], y[train], **fit_params)
+        if isinstance(X, list) or isinstance(X, tuple):
+            X_train = [X[i] for i, cond in enumerate(train) if cond]
+            X_test = [X[i] for i, cond in enumerate(test) if cond]
+        else:
+            X_train = X[train]
+            X_test = X[test]
+
+        clf.fit(X_train, y[train], **fit_params)
         y_test = y[test]
         if loss_func is not None:
-            y_pred = clf.predict(X[test])
+            y_pred = clf.predict(X_test)
             this_score = -loss_func(y_test, y_pred)
         else:
-            this_score = clf.score(X[test], y_test)
+            this_score = clf.score(X_test, y_test)
         if iid:
             this_score *= len(y_test)
         score += this_score
@@ -182,7 +190,7 @@ class GridSearchCV(object):
         if cv is None:
             n_samples = len(X)
             if y is not None and (isinstance(estimator, ClassifierMixin)
-                    or (hasattr(estimator, 'estimator') 
+                    or (hasattr(estimator, 'estimator')
                         and isinstance(estimator.estimator, ClassifierMixin))):
                 cv = StratifiedKFold(y, k=3)
             else:
@@ -194,7 +202,7 @@ class GridSearchCV(object):
             delayed(fit_grid_point)(X, y, base_clf, clf_params,
                     cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
-        
+
         # Out is a list of pairs: estimator, score
         key = lambda pair: pair[1]
         best_estimator = max(out, key=key)[0] # get maximum score
