@@ -10,7 +10,7 @@ import copy
 
 from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
-from .base import BaseEstimator, ClassifierMixin, clone
+from .base import BaseEstimator, is_classifier, clone
 
 try:
     from itertools import product
@@ -187,9 +187,7 @@ class GridSearchCV(BaseEstimator):
         estimator = self.estimator
         if cv is None:
             n_samples = len(X)
-            if y is not None and (isinstance(estimator, ClassifierMixin)
-                    or (hasattr(estimator, 'estimator') 
-                        and isinstance(estimator.estimator, ClassifierMixin))):
+            if y is not None and is_classifier(estimator):
                 cv = StratifiedKFold(y, k=3)
             else:
                 cv = KFold(n_samples, k=3)
@@ -206,7 +204,8 @@ class GridSearchCV(BaseEstimator):
 
         self.best_estimator = best_estimator
         self.predict = best_estimator.predict
-        self.score = best_estimator.score
+        if hasattr(best_estimator, 'score'):
+            self.score = best_estimator.score
 
         # Store the computed scores
         grid = iter_grid(self.param_grid)
@@ -215,6 +214,12 @@ class GridSearchCV(BaseEstimator):
 
         return self
 
+
+    def score(self, X, y=None):
+        # This method is overridden during the fit if the best estimator
+        # found has a score function.
+        y_predicted = self.predict(X)
+        return -self.loss_func(y_predicted, y)
 
 if __name__ == '__main__':
     from scikits.learn.svm import SVC
