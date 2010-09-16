@@ -171,28 +171,26 @@ class CountVectorizer(BaseEstimator):
         self.vocabulary = vocabulary
 
     def _build_vectors_and_vocab(self, raw_documents):
-        vocab = {}
+        vocab = {} # token => idx
         docs = []
 
         for doc in raw_documents:
-            doc_dict = {} # token => count
+            doc_dict = {} # idx => count
 
             for token in self.analyzer.analyze(doc):
-                vocab[token] = 1
-                doc_dict[token] = doc_dict.get(token, 0) + 1
+                if not token in vocab:
+                    vocab[token] = len(vocab)
+                idx = vocab[token]
+                doc_dict[idx] = doc_dict.get(idx, 0) + 1
 
             docs.append(doc_dict)
-
-        sorted_terms = sorted(vocab.keys())
-        # token => index in the matrix
-        vocab = dict([(t, i) for i, t in enumerate(sorted_terms)])
 
         # convert to a document-token matrix
         matrix = np.zeros((len(docs), len(vocab)), dtype=long)
 
         for i, doc_dict in enumerate(docs):
-            for token, count in doc_dict.iteritems():
-                matrix[i, vocab[token]] = count
+            for idx, count in doc_dict.iteritems():
+                matrix[i, idx] = count
 
         return matrix, vocab
 
