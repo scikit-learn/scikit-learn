@@ -247,11 +247,9 @@ class CountVectorizer(BaseEstimator):
         vectors: array, [n_samples, n_features]
         """
         if len(self.vocabulary) == 0:
-            vectors, self.vocabulary = self._build_vocab(raw_documents)
-        else:
-            vectors = self._build_vectors(raw_documents)
+            raise ValueError, "No vocabulary dictionary available..."
 
-        return vectors
+        return self._build_vectors(raw_documents)
 
 class TfidfTransformer(BaseEstimator):
     """
