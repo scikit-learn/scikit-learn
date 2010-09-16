@@ -13,12 +13,8 @@ from scipy import linalg
 import scipy.sparse as sp # needed by LeastAngleRegression
 
 from .base import LinearModel
-from .._minilearn import lars_fit_wrap
 from ..utils.fixes import copysign
 from ..utils import arrayfuncs
-
-# all linalg.solve solve a triangular system, so this could be heavily
-# optimized by binding (in scipy ?) trsv or trsm
 
 def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
               method="lar", precompute=True):
@@ -65,8 +61,6 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
         XXX : add reference papers
 
     """
-    # TODO: precompute : empty for now
-    #
     # TODO: detect stationary points.
     # Lasso variant
     # store full path
@@ -394,138 +388,4 @@ class LassoLARS (LinearModel):
         self._set_intercept(Xmean, Ymean)
 
         return self
-
-
-#### OLD C-based LARS : will probably be removed
-
-
-class LeastAngleRegression(LinearModel):
-    """
-    Least Angle Regression using the LARS algorithm.
-
-    Attributes
-    ----------
-    `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
-
-    `intercept_` : float
-        independent term in decision function.
-
-    `coef_path_` : array, shape = [max_features + 1, n_features]
-         Full coeffients path.
-
-    Notes
-    -----
-    predict does only work correctly in the case of normalized
-    predictors.
-
-    See also
-    --------
-    scikits.learn.glm.Lasso
-
-    """
-
-    def __init__(self):
-        self.alphas_ = np.empty(0, dtype=np.float64)
-        self._chol   = np.empty(0, dtype=np.float64)
-        self.beta_    = np.empty(0, dtype=np.float64)
-
-    def fit (self, X, Y, fit_intercept=True, max_features=None, normalize=True):
-        """
-        Fit the model according to data X, Y.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-            Training data
-
-        Y : numpy array of shape [n_samples]
-            Target values
-
-        fit_intercept : boolean, optional
-            wether to calculate the intercept for this model. If set
-            to false, no intercept will be used in calculations
-            (e.g. data is expected to be already centered).
-
-        max_features : int, optional
-            number of features to get into the model. The iterative
-            will stop just before the `max_features` variable enters
-            in the active set. If not specified, min(N, p) - 1
-            will be used.
-
-        normalize : boolean
-            whether to normalize (make all non-zero columns have mean
-            0 and norm 1).
-        """
-        ## TODO: resize (not create) arrays, check shape,
-        ##    add a real intercept
-
-        X  = np.asanyarray(X, dtype=np.float64, order='C')
-        _Y = np.asanyarray(Y, dtype=np.float64, order='C')
-
-        if Y is _Y: Y = _Y.copy()
-        else: Y = _Y
-
-        if max_features is None:
-            max_features = min(*X.shape)-1
-
-        sum_k = max_features * (max_features + 1) /2
-        self.alphas_.resize(max_features + 1)
-        self._chol.resize(sum_k)
-        self.beta_.resize(sum_k)
-        coef_row = np.zeros(sum_k, dtype=np.int32)
-        coef_col = np.zeros(sum_k, dtype=np.int32)
-
-
-        if normalize:
-            # will only normalize non-zero columns
-            self._xmean = X.mean(0)
-            self._ymean = Y.mean(0)
-            X = X - self._xmean
-            Y = Y - self._ymean
-            self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
-            nonzeros = np.flatnonzero(self._norms)
-            X[:, nonzeros] /= self._norms[nonzeros]
-        else:
-            self._xmean = 0.
-            self._ymean = 0.
-
-        lars_fit_wrap(0, X, Y, self.beta_, self.alphas_, coef_row,
-                      coef_col, self._chol, max_features)
-
-        self.coef_path_ = sp.coo_matrix((self.beta_,
-                                        (coef_row, coef_col)),
-                                        shape=(X.shape[1], max_features+1)).todense()
-
-        self.coef_ = np.ravel(self.coef_path_[:, max_features])
-
-        # XXX : should use self._set_intercept
-        if fit_intercept:
-            self.intercept_ = self._ymean
-        else:
-            self.intercept_ = 0.
-
-        return self
-
-
-    def predict(self, X, normalize=True):
-        """
-        Predict using the linear model.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-            Returns predicted values.
-        """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        if normalize:
-            X -= self._xmean
-            X /= self._norms
-        return  np.dot(X, self.coef_) + self.intercept_
-
-
 
