@@ -95,7 +95,8 @@ class Pipeline(BaseEstimator):
         transforms = estimators[:-1]
         estimator = estimators[-1]
         for t in  transforms:
-            assert hasattr(t, "fit") and hasattr(t, "transform"), ValueError(
+            assert (hasattr(t, "fit") or hasattr(t, "fit_transform")) and \
+                    hasattr(t, "transform"), ValueError(
                 "All intermediate steps a the chain should be transforms "
                 "and implement fit and transform",
                 "'%s' (type %s) doesn't)" % (t, type(t))
@@ -123,7 +124,10 @@ class Pipeline(BaseEstimator):
         self._set_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.fit(Xt, y).transform(Xt)
+            if hasattr(transform, "fit_transform"):
+                Xt = transform.fit_transform(Xt, y)
+            else:
+                Xt = transform.fit(Xt, y).transform(Xt)
         self.steps[-1][-1].fit(Xt, y)
         return self
 
