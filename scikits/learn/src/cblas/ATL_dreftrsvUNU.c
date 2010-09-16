@@ -3,14 +3,11 @@
  * -- Automatically Tuned Linear Algebra Software (ATLAS)
  *    (C) Copyright 2000 All Rights Reserved
  *
- * -- ATLAS routine -- Version 3.2 -- December 25, 2000
- *
- * -- Suggestions,  comments,  bugs reports should be sent to the follo-
- *    wing e-mail address: atlas@cs.utk.edu
+ * -- ATLAS routine -- Version 3.9.24 -- December 25, 2000
  *
  * Author         : Antoine P. Petitet
- * University of Tennessee - Innovative Computing Laboratory
- * Knoxville TN, 37996-1301, USA.
+ * Originally developed at the University of Tennessee,
+ * Innovative Computing Laboratory, Knoxville TN, 37996-1301, USA.
  *
  * ---------------------------------------------------------------------
  *
@@ -53,7 +50,7 @@
 #include "atlas_reflvl2.h"
 #include "atlas_reflevel2.h"
 
-void ATL_dreftpsvLNU
+void ATL_dreftrsvUNU
 (
    const int                  N,
    const double               * A,
@@ -66,13 +63,13 @@ void ATL_dreftpsvLNU
  * Purpose
  * =======
  *
- * ATL_dreftpsvLNU( ... )
+ * ATL_dreftrsvUNU( ... )
  *
  * <=>
  *
- * ATL_dreftpsv( AtlasLower, AtlasNoTrans, AtlasUnit, ... )
+ * ATL_dreftrsv( AtlasUpper, AtlasNoTrans, AtlasUnit, ... )
  *
- * See ATL_dreftpsv for details.
+ * See ATL_dreftrsv for details.
  *
  * ---------------------------------------------------------------------
  */
@@ -80,19 +77,19 @@ void ATL_dreftpsvLNU
  * .. Local Variables ..
  */
    register double            t0;
-   int                        i, iaij, ix, j, jaj, jx, lda = LDA;
+   int                        i, iaij, ix, j, jaj, jx;
 /* ..
  * .. Executable Statements ..
  *
  */
-   for( j = 0, jaj = 0, jx  = 0; j < N; j++, jx += INCX )
+   for( j = N-1,     jaj  = (N-1)*LDA, jx  = (N-1)*INCX;
+        j >= 0; j--, jaj -= LDA,       jx -= INCX )
    {
-      t0  = X[jx];
-      for( i = j+1,    iaij  = jaj+1, ix  = jx + INCX;
-           i < N; i++, iaij += 1,     ix += INCX ) { X[ix] -= t0 * A[iaij]; }
-      jaj += lda; lda -= 1;
+      t0 = X[jx];
+      for( i = 0, iaij = jaj, ix = 0; i < j; i++, iaij += 1, ix += INCX )
+      { X[ix] -= t0 * A[iaij]; }
    }
 /*
- * End of ATL_dreftpsvLNU
+ * End of ATL_dreftrsvUNU
  */
 }
