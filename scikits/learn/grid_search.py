@@ -214,6 +214,13 @@ class GridSearchCV(BaseEstimator):
         return self
 
 
+    def score(self, X, y=None):
+        if hasattr(self.estimator, 'score'):
+            return self.estimator.score(X, y)
+        else:
+            y_predicted = self.predict(X)
+            return -self.loss_func(y_predicted, y)
+
 if __name__ == '__main__':
     from scikits.learn.svm import SVC
     from scikits.learn import datasets
