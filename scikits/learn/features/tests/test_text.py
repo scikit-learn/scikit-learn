@@ -160,7 +160,8 @@ def test_dense_sparse_idf_sanity():
 
 def test_dense_vectorizer():
     # raw documents
-    train_data = JUNK_FOOD_DOCS[:-1]
+    train_data = iter(JUNK_FOOD_DOCS[:-1])
+    n_train = len(JUNK_FOOD_DOCS[:-1])
     test_data = [JUNK_FOOD_DOCS[-1]]
 
     # test without vocabulary
@@ -180,7 +181,7 @@ def test_dense_vectorizer():
     tfidf = t1.fit(counts_train).transform(counts_train)
     assert_equal(len(t1.idf), len(v1.vocabulary))
     assert_equal(tfidf.shape,
-                 (len(train_data), len(v1.vocabulary)))
+                 (n_train, len(v1.vocabulary)))
 
     # test tf-idf with new data
     tfidf_test = t1.transform(counts_test)
@@ -192,12 +193,13 @@ def test_dense_vectorizer():
     tf = t2.fit(counts_train).transform(counts_train)
     assert_equal(t2.idf, None)
     assert_array_almost_equal(np.sum(tf, axis=1),
-                              [1.0] * len(train_data))
+                              [1.0] * n_train)
 
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
+    train_data = iter(JUNK_FOOD_DOCS[:-1])
     tv = Vectorizer()
-    tfidf2 = tv.fit(train_data).transform(train_data)
+    tfidf2 = tv.fit_transform(train_data)
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data

@@ -312,7 +312,7 @@ class TfidfTransformer(BaseEstimator):
 
         return vectors
 
-class Vectorizer(Pipeline):
+class Vectorizer(BaseEstimator):
     """
     Convert a collection of raw documents to a matrix.
 
@@ -320,9 +320,42 @@ class Vectorizer(Pipeline):
     """
 
     def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
-        tc = CountVectorizer(analyzer)
-        tfidf = TfidfTransformer(use_tf, use_idf)
-        super(Vectorizer, self).__init__([("tc", tc), ("tfidf", tfidf)])
+        self.tc = CountVectorizer(analyzer)
+        self.tfidf = TfidfTransformer(use_tf, use_idf)
+
+    def fit_transform(self, raw_documents):
+        """
+        Learn the representation and return the vectors.
+
+        Parameters
+        ----------
+
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file object
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
+        X = self.tc.fit_transform(raw_documents)
+        return self.tfidf.fit(X).transform(X)
+
+    def transform(self, raw_documents):
+        """
+        Return the vectors.
+
+        Parameters
+        ----------
+
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file object
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
+        X = self.tc.transform(raw_documents)
+        return self.tfidf.transform(X)
 
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space
