@@ -35,6 +35,7 @@
  */
 #ifndef ATLAS_LEVEL2_H
 #define ATLAS_LEVEL2_H
+#include "atlas_refalias2.h"
 
 /*
  * Routines with standard 4 prefixes (S, D, C, Z)

@@ -31,8 +31,10 @@
 /*
  * Prototypes ATLAS Level 1 functions not defined in atlas_aux.h
  */
+
 #ifndef ATLAS_LEVEL1_H
 #define ATLAS_LEVEL1_H
+#include "atlas_refalias1.h"
 
 /*
  * Many level one blas routines actually taken care of by atlas auxiliary

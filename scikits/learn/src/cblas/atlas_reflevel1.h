@@ -44,9 +44,9 @@
  * ---------------------------------------------------------------------
  */
 
-#include "atlas_refalias1.h"
 #ifndef ATLAS_REFLEVEL1_H
 #define ATLAS_REFLEVEL1_H
+
 /*
  * =====================================================================
  * Prototypes for Level 1 Reference ATLAS BLAS routines
