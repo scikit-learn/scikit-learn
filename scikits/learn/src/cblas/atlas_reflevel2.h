@@ -46,6 +46,8 @@
  *
  * ---------------------------------------------------------------------
  */
+
+#include "atlas_refalias2.h"
 #ifndef ATLAS_REFLEVEL2_H
 #define ATLAS_REFLEVEL2_H
 
