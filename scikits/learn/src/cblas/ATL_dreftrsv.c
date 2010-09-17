@@ -3,14 +3,11 @@
  * -- Automatically Tuned Linear Algebra Software (ATLAS)
  *    (C) Copyright 2000 All Rights Reserved
  *
- * -- ATLAS routine -- Version 3.2 -- December 25, 2000
- *
- * -- Suggestions,  comments,  bugs reports should be sent to the follo-
- *    wing e-mail address: atlas@cs.utk.edu
+ * -- ATLAS routine -- Version 3.9.24 -- December 25, 2000
  *
  * Author         : Antoine P. Petitet
- * University of Tennessee - Innovative Computing Laboratory
- * Knoxville TN, 37996-1301, USA.
+ * Originally developed at the University of Tennessee,
+ * Innovative Computing Laboratory, Knoxville TN, 37996-1301, USA.
  *
  * ---------------------------------------------------------------------
  *
@@ -49,16 +46,18 @@
 /*
  * Include files
  */
-
 #include "atlas_refmisc.h"
+#include "atlas_reflvl2.h"
+#include "atlas_reflevel2.h"
 
-void ATL_dtpsv
+void ATL_dreftrsv
 (
    const enum ATLAS_UPLO      UPLO,
    const enum ATLAS_TRANS     TRANS,
    const enum ATLAS_DIAG      DIAG,
    const int                  N,
    const double               * A,
+   const int                  LDA,
    double                     * X,
    const int                  INCX
 )
@@ -67,12 +66,12 @@ void ATL_dtpsv
  * Purpose
  * =======
  *
- * ATL_dreftpsv solves one of the systems of equations
+ * ATL_dreftrsv solves one of the systems of equations
  *
  *    A * x = b,   or   A' * x = b,
  *
  * where b and x are n-element vectors and  A is an n by n unit, or non-
- * unit, upper or lower triangular matrix, supplied in packed form.
+ * unit, upper or lower triangular matrix.
  *
  * No test for  singularity  or  near-singularity  is included  in  this
  * routine. Such tests must be performed before calling this routine.
@@ -121,19 +120,22 @@ void ATL_dtpsv
  *
  * A       (input)                       const double *
  *         On entry,  A  points  to an array of size equal to or greater
- *         than   (( n*(n+1) ) / 2) * sizeof(   double  ).  Before entry
- *         with UPLO = AtlasUpper, the array  A  must  contain the upper
- *         triangular matrix packed sequentially, column by  column,  so
- *         that A[ 0 ] contains a(0,0), A[ 1 ] and A[ 2 ] contain a(0,1)
- *         and  a(1,1)  respectively,  and  so  on.  Before  entry  with
- *         UPLO = AtlasLower, the array  A  must contain the  lower tri-
- *         angular matrix packed sequentially, column by column, so that
- *         A[ 0 ] contains a(0,0), A[ 1 ] and A[ 2 ] contain a(1,0)  and
- *         a( 2, 0 ) respectively, and so on.
+ *         than   LDA * n * sizeof(   double  ).   Before   entry   with
+ *         UPLO = AtlasUpper, the leading  n by n  upper triangular part
+ *         of the array  A must contain the upper triangular  matrix and
+ *         the strictly lower triangular part of  A  is  not referenced.
+ *         Before entry with UPLO = AtlasLower, the leading n by n lower
+ *         triangular  part of the array A must contain the lower trian-
+ *         gular matrix  and the strictly upper triangular part  of A is
+ *         not referenced. Unchanged on exit.
  *
  *         Note that when  DIAG = AtlasUnit,  the diagonal elements of A
- *         are not referenced,  but are  assumed to be unity.  Unchanged
- *         on exit.
+ *         are not referenced  either,  but are assumed to be unity.
+ *
+ * LDA     (input)                       const int
+ *         On entry, LDA  specifies the leading dimension of A as decla-
+ *         red  in  the  calling  (sub) program.  LDA  must be  at least
+ *         MAX( 1, n ). Unchanged on exit.
  *
  * X       (input/output)                double *
  *         On entry,  X  points to the  first entry to be accessed of an
@@ -161,22 +163,22 @@ void ATL_dtpsv
       {
          if( DIAG == AtlasNonUnit )
          {
-            ATL_dreftpsvUNN( N,    A, 1,   X, INCX );
+            ATL_dreftrsvUNN( N,    A, LDA, X, INCX );
          }
          else
          {
-            ATL_dreftpsvUNU( N,    A, 1,   X, INCX );
+            ATL_dreftrsvUNU( N,    A, LDA, X, INCX );
          }
       }
       else
       {
          if( DIAG == AtlasNonUnit )
          {
-            ATL_dreftpsvUTN( N,    A, 1,   X, INCX );
+            ATL_dreftrsvUTN( N,    A, LDA, X, INCX );
          }
          else
          {
-            ATL_dreftpsvUTU( N,    A, 1,   X, INCX );
+            ATL_dreftrsvUTU( N,    A, LDA, X, INCX );
          }
       }
    }
@@ -186,26 +188,26 @@ void ATL_dtpsv
       {
          if( DIAG == AtlasNonUnit )
          {
-            ATL_dreftpsvLNN( N,    A, N,   X, INCX );
+            ATL_dreftrsvLNN( N,    A, LDA, X, INCX );
          }
          else
          {
-            ATL_dreftpsvLNU( N,    A, N,   X, INCX );
+            ATL_dreftrsvLNU( N,    A, LDA, X, INCX );
          }
       }
       else
       {
          if( DIAG == AtlasNonUnit )
          {
-            ATL_dreftpsvLTN( N,    A, N,   X, INCX );
+            ATL_dreftrsvLTN( N,    A, LDA, X, INCX );
          }
          else
          {
-            ATL_dreftpsvLTU( N,    A, N,   X, INCX );
+            ATL_dreftrsvLTU( N,    A, LDA, X, INCX );
          }
       }
    }
 /*
- * End of ATL_dreftpsv
+ * End of ATL_dreftrsv
  */
 }

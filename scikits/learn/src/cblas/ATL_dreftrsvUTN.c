@@ -3,14 +3,11 @@
  * -- Automatically Tuned Linear Algebra Software (ATLAS)
  *    (C) Copyright 2000 All Rights Reserved
  *
- * -- ATLAS routine -- Version 3.2 -- December 25, 2000
- *
- * -- Suggestions,  comments,  bugs reports should be sent to the follo-
- *    wing e-mail address: atlas@cs.utk.edu
+ * -- ATLAS routine -- Version 3.9.24 -- December 25, 2000
  *
  * Author         : Antoine P. Petitet
- * University of Tennessee - Innovative Computing Laboratory
- * Knoxville TN, 37996-1301, USA.
+ * Originally developed at the University of Tennessee,
+ * Innovative Computing Laboratory, Knoxville TN, 37996-1301, USA.
  *
  * ---------------------------------------------------------------------
  *
@@ -53,7 +50,7 @@
 #include "atlas_reflvl2.h"
 #include "atlas_reflevel2.h"
 
-void ATL_dreftpsvUTU
+void ATL_dreftrsvUTN
 (
    const int                  N,
    const double               * A,
@@ -66,13 +63,13 @@ void ATL_dreftpsvUTU
  * Purpose
  * =======
  *
- * ATL_dreftpsvUTU( ... )
+ * ATL_dreftrsvUTN( ... )
  *
  * <=>
  *
- * ATL_dreftpsv( AtlasUpper, AtlasTrans, AtlasUnit, ... )
+ * ATL_dreftrsv( AtlasUpper, AtlasTrans, AtlasNonUnit, ... )
  *
- * See ATL_dreftpsv for details.
+ * See ATL_dreftrsv for details.
  *
  * ---------------------------------------------------------------------
  */
@@ -80,19 +77,19 @@ void ATL_dreftpsvUTU
  * .. Local Variables ..
  */
    register double            t0;
-   int                        i, iaij, ix, j, jaj, jx, lda = LDA;
+   int                        i, iaij, ix, j, jaj, jx;
 /* ..
  * .. Executable Statements ..
  *
  */
-   for( j = 0, jaj = 0, jx = 0; j < N; j++, jx += INCX )
+   for( j = 0, jaj = 0,jx = 0; j < N; j++, jaj += LDA, jx += INCX )
    {
       t0 = X[jx];
       for( i = 0, iaij = jaj, ix = 0; i < j; i++, iaij += 1, ix += INCX )
       { t0 -= A[iaij] * X[ix]; }
-      X[jx] = t0; jaj += lda; lda += 1;
+      t0 /= A[iaij]; X[jx] = t0;
    }
 /*
- * End of ATL_dreftpsvUTU
+ * End of ATL_dreftrsvUTN
  */
 }

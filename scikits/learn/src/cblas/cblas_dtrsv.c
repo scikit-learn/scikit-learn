@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.6.0
+ *             Automatically Tuned Linear Algebra Software v3.9.25
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,17 @@
  */
 
 #define DREAL
-#include "atlas_refmisc.h"
+#include "atlas_misc.h"
 #include "cblas.h"
 #ifdef ATL_USEPTHREADS
    #include "atlas_ptalias2.h"
 #endif
-#include "atlas_reflevel2.h"
+#include "atlas_level2.h"
 
-void cblas_dtpsv(const enum CBLAS_ORDER Order, const enum CBLAS_UPLO Uplo,
+void cblas_dtrsv(const enum CBLAS_ORDER Order, const enum CBLAS_UPLO Uplo,
                  const enum CBLAS_TRANSPOSE TA, const enum CBLAS_DIAG Diag,
-                 const int N, const double *A, double *X, const int incX)
+                 const int N, const double *A, const int lda,
+                 double *X, const int incX)
 {
    int info = 2000;
    enum CBLAS_UPLO uplo;
@@ -62,22 +63,25 @@ void cblas_dtpsv(const enum CBLAS_ORDER Order, const enum CBLAS_UPLO Uplo,
 
    if (N < 0) info = cblas_errprn(5, info,
                         "N cannot be less than zero; is set to %d.", N);
-   if (!incX) info = cblas_errprn(8, info,
+   if (lda < N || lda < 1)
+      info = cblas_errprn(7, info, "lda must be >= MAX(N,1): lda=%d N=%d",
+                          lda, N);
+   if (!incX) info = cblas_errprn(9, info,
                                   "incX cannot be zero; is set to %d.", incX);
    if (info != 2000)
    {
-      cblas_xerbla(info, "cblas_dtpsv", "");
+      cblas_xerbla(info, "cblas_dtrsv", "");
       return;
    }
 #endif
    if (incX < 0) x += (1-N)*incX;
    if (Order == CblasColMajor)
-      ATL_dtpsv(Uplo, TA, Diag, N, A, x, incX);
+      ATL_dtrsv(Uplo, TA, Diag, N, A, lda, x, incX);
    else
    {
       uplo = ( (Uplo == CblasUpper) ? CblasLower : CblasUpper );
       if (TA == CblasNoTrans) ta = CblasTrans;
       else ta = CblasNoTrans;
-      ATL_dtpsv(uplo, ta, Diag, N, A, x, incX);
+      ATL_dtrsv(uplo, ta, Diag, N, A, lda, x, incX);
    }
 }
