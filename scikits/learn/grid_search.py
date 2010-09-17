@@ -6,6 +6,7 @@ Tune the parameters of an estimator by cross-validation.
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
+import numpy as np
 import copy
 
 from .externals.joblib import Parallel, delayed
@@ -66,17 +67,24 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     # update parameters of the classifier after a copy of its base structure
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
-    
+
     score = 0.
     n_test_samples = 0.
     for train, test in cv:
-        clf.fit(X[train], y[train], **fit_params)
+        if isinstance(X, list) or isinstance(X, tuple):
+            X_train = [X[i] for i, cond in enumerate(train) if cond]
+            X_test = [X[i] for i, cond in enumerate(test) if cond]
+        else:
+            X_train = X[train]
+            X_test = X[test]
+
+        clf.fit(X_train, y[train], **fit_params)
         y_test = y[test]
         if loss_func is not None:
-            y_pred = clf.predict(X[test])
+            y_pred = clf.predict(X_test)
             this_score = -loss_func(y_test, y_pred)
         else:
-            this_score = clf.score(X[test], y_test)
+            this_score = clf.score(X_test, y_test)
         if iid:
             this_score *= len(y_test)
             n_test_samples += len(y_test)
@@ -187,7 +195,13 @@ class GridSearchCV(BaseEstimator):
         estimator = self.estimator
         if cv is None:
             n_samples = len(X)
+<<<<<<< HEAD
             if y is not None and is_classifier(estimator):
+=======
+            if y is not None and (isinstance(estimator, ClassifierMixin)
+                    or (hasattr(estimator, 'estimator')
+                        and isinstance(estimator.estimator, ClassifierMixin))):
+>>>>>>> 91f0814802975a0bb73bae914bac9576371d99f8
                 cv = StratifiedKFold(y, k=3)
             else:
                 cv = KFold(n_samples, k=3)
@@ -198,9 +212,16 @@ class GridSearchCV(BaseEstimator):
             delayed(fit_grid_point)(X, y, base_clf, clf_params,
                     cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
-        
+<<<<<<< HEAD
+
         # Out is a list of pairs: score, estimator
         best_estimator = max(out)[1] # get maximum score
+=======
+
+        # Out is a list of pairs: estimator, score
+        key = lambda pair: pair[1]
+        best_estimator = max(out, key=key)[0] # get maximum score
+>>>>>>> 91f0814802975a0bb73bae914bac9576371d99f8
 
         self.best_estimator = best_estimator
         self.predict = best_estimator.predict
@@ -209,7 +230,7 @@ class GridSearchCV(BaseEstimator):
 
         # Store the computed scores
         grid = iter_grid(self.param_grid)
-        self.grid_points_scores_ = dict((tuple(clf_params.items()), score) 
+        self.grid_points_scores_ = dict((tuple(clf_params.items()), score)
                     for clf_params, (score, _) in zip(grid, out))
 
         return self

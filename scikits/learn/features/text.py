@@ -61,7 +61,7 @@ def strip_accents(s):
 def strip_tags(s):
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
 
-DEFAULT_FILTERS = [unicode.lower, strip_tags, strip_accents]
+DEFAULT_FILTERS = [lambda x: x.lower(), strip_tags, strip_accents]
 
 class WordNGramAnalyzer(object):
     """Simple analyzer: transform a text document into a sequence of word tokens
@@ -85,6 +85,9 @@ class WordNGramAnalyzer(object):
         self.filters = filters
 
     def analyze(self, text_document):
+        if isinstance(text_document, file):
+            text_document = text_document.read()
+
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
 
@@ -150,98 +153,120 @@ class CharNGramAnalyzer(object):
 
 DEFAULT_ANALYZER = WordNGramAnalyzer(min_n=1, max_n=1)
 
-class TermCountVectorizer(BaseEstimator):
+class CountVectorizer(BaseEstimator):
     """
-    Convert a document collection to a document-term matrix.
+    Convert a collection of raw documents to a matrix of token counts.
 
     Parameters
     ----------
+    analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
+
     vocabulary: dict, optional
         A dictionary where keys are tokens and values are indices in the matrix.
         This is useful in order to fix the vocabulary in advance.
     """
 
-    def __init__(self, vocabulary={}):
+    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}):
+        self.analyzer = analyzer
         self.vocabulary = vocabulary
 
-    def _build_vocab(self, tokenized_documents):
-        vocab = {}
+    def _build_vectors_and_vocab(self, raw_documents):
+        vocab = {} # token => idx
         docs = []
 
-        for tokens in tokenized_documents:
-            doc_dict = {} # token => count
+        for doc in raw_documents:
+            doc_dict = {} # idx => count
 
-            for token in tokens:
-                vocab[token] = 1
-                doc_dict[token] = doc_dict.get(token, 0) + 1
+            for token in self.analyzer.analyze(doc):
+                if not token in vocab:
+                    vocab[token] = len(vocab)
+                idx = vocab[token]
+                doc_dict[idx] = doc_dict.get(idx, 0) + 1
 
             docs.append(doc_dict)
-
-        sorted_terms = sorted(vocab.keys())
-        # token => index in the matrix
-        vocab = dict([(t, i) for i, t in enumerate(sorted_terms)])
 
         # convert to a document-token matrix
         matrix = np.zeros((len(docs), len(vocab)), dtype=long)
 
         for i, doc_dict in enumerate(docs):
-            for token, count in doc_dict.iteritems():
-                matrix[i, vocab[token]] = count
+            for idx, count in doc_dict.iteritems():
+                matrix[i, idx] = count
 
         return matrix, vocab
 
-    def _build_vectors(self, tokenized_documents):
-        matrix = np.zeros((len(tokenized_documents), len(self.vocabulary)), dtype=long)
-
-        for i, tokens in enumerate(tokenized_documents):
-            for token in tokens:
+    def _build_vectors(self, raw_documents):
+        # raw_documents is an iterable so we don't know its length
+        vectors = []
+        for i, doc in enumerate(raw_documents):
+            vector = np.zeros(len(self.vocabulary), dtype=long)
+            for token in self.analyzer.analyze(doc):
                 try:
-                    matrix[i, self.vocabulary[token]] += 1
+                    vector[self.vocabulary[token]] += 1
                 except KeyError:
                     # ignore out-of-vocabulary tokens
                     pass
+            vectors.append(vector)
 
-        return matrix
+        return np.array(vectors)
 
-    def fit(self, tokenized_documents, y=None):
+    def fit_transform(self, raw_documents, y=None):
         """
-        The learning is postponed to the first time transform() is called
-        so this method doesn't actually do anything.
-        """
-        # To avoid aving to do two passes on the dataset, which would require
-        # to retain it in memory, the learning is done the first time
-        # transform() is called.
-        return self
-
-    def transform(self, tokenized_documents):
-        """
-        Learn the vocabulary dictionary if necessary and return the vectors.
+        Learn the vocabulary dictionary and return the vectors.
 
         Parameters
         ----------
 
-        tokenized_documents: list
-            a list of tokenized documents
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file object
 
         Returns
         -------
         vectors: array, [n_samples, n_features]
         """
         if len(self.vocabulary) == 0:
-            vectors, self.vocabulary = self._build_vocab(tokenized_documents)
+            vectors, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
         else:
-            vectors = self._build_vectors(tokenized_documents)
+            vectors = self._build_vectors(raw_documents)
 
         return vectors
+
+    def transform(self, raw_documents):
+        """
+        Return the vectors.
+
+        Parameters
+        ----------
+
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file object
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
+        if len(self.vocabulary) == 0:
+            raise ValueError, "No vocabulary dictionary available..."
+
+        return self._build_vectors(raw_documents)
 
 class TfidfTransformer(BaseEstimator):
     """
     Transform a count matrix to a TF (term-frequency)
     or TF-IDF (term-frequency inverse-document-frequency)
     representation.
+
+    Parameters
+    ----------
+
+    use_tf: boolean
+        enable term-frequency normalization
+
+    use_idf: boolean
+        enable inverse-document-frequency reweighting
     """
 
-    def __init__(self, use_idf=True):
+    def __init__(self, use_tf=True, use_idf=True):
+        self.use_tf = use_tf
         self.use_idf = use_idf
         self.idf = None
 
@@ -276,20 +301,61 @@ class TfidfTransformer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        # term-frequencies (normalized counts)
-        vectors = X / np.sum(X, axis=1).astype(np.float64)[:,np.newaxis]
+        vectors = X
+
+        if self.use_tf:
+            # term-frequencies (normalized counts)
+            vectors = vectors / np.sum(X, axis=1).astype(np.float64)[:,np.newaxis]
 
         if self.use_idf:
-            vectors *= self.idf
+            vectors = vectors * self.idf
 
         return vectors
 
-class TfidfVectorizer(Pipeline):
+class Vectorizer(BaseEstimator):
+    """
+    Convert a collection of raw documents to a matrix.
 
-    def __init__(self, use_idf=True):
-        tc = TermCountVectorizer()
-        tfidf = TfidfTransformer(use_idf)
-        super(TfidfVectorizer, self).__init__([("tc", tc), ("tfidf", tfidf)])
+    Equivalent to CountVectorizer followed by TfidfTransformer.
+    """
+
+    def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
+        self.tc = CountVectorizer(analyzer)
+        self.tfidf = TfidfTransformer(use_tf, use_idf)
+
+    def fit_transform(self, raw_documents):
+        """
+        Learn the representation and return the vectors.
+
+        Parameters
+        ----------
+
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file object
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
+        X = self.tc.fit_transform(raw_documents)
+        return self.tfidf.fit(X).transform(X)
+
+    def transform(self, raw_documents):
+        """
+        Return the vectors.
+
+        Parameters
+        ----------
+
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file object
+
+        Returns
+        -------
+        vectors: array, [n_samples, n_features]
+        """
+        X = self.tc.transform(raw_documents)
+        return self.tfidf.transform(X)
 
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space

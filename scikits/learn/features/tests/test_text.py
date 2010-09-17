@@ -1,16 +1,22 @@
 from scikits.learn.features.text import strip_accents
 from scikits.learn.features.text import WordNGramAnalyzer
 from scikits.learn.features.text import CharNGramAnalyzer
-from scikits.learn.features.text import TermCountVectorizer
+from scikits.learn.features.text import CountVectorizer
 from scikits.learn.features.text import TfidfTransformer
-from scikits.learn.features.text import TfidfVectorizer
+from scikits.learn.features.text import Vectorizer
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.features.text import SparseHashingVectorizer
 from scikits.learn.svm import LinearSVC as DenseLinearSVC
 from scikits.learn.sparse.svm import LinearSVC as SparseLinearSVC
+from scikits.learn.cross_val import LeaveOneOut
+from scikits.learn.grid_search import GridSearchCV
+from scikits.learn.pipeline import Pipeline
+
 import numpy as np
 from nose.tools import *
 from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer",
@@ -153,16 +159,17 @@ def test_dense_sparse_idf_sanity():
 
 
 def test_dense_vectorizer():
-    wa = WordNGramAnalyzer()
-    train_data = [wa.analyze(d) for d in JUNK_FOOD_DOCS[:-1]]
-    test_data = [wa.analyze(JUNK_FOOD_DOCS[-1])]
+    # raw documents
+    train_data = iter(JUNK_FOOD_DOCS[:-1])
+    n_train = len(JUNK_FOOD_DOCS[:-1])
+    test_data = [JUNK_FOOD_DOCS[-1]]
 
     # test without vocabulary
-    v1 = TermCountVectorizer()
-    counts_train = v1.transform(train_data)
+    v1 = CountVectorizer()
+    counts_train = v1.fit_transform(train_data)
     assert_equal(counts_train[0, v1.vocabulary["pizza"]], 2)
 
-    v2 = TermCountVectorizer(vocabulary=v1.vocabulary)
+    v2 = CountVectorizer(vocabulary=v1.vocabulary)
 
     # test with a pre-existing vocabulary
     for v in (v1, v2):
@@ -174,7 +181,7 @@ def test_dense_vectorizer():
     tfidf = t1.fit(counts_train).transform(counts_train)
     assert_equal(len(t1.idf), len(v1.vocabulary))
     assert_equal(tfidf.shape,
-                 (len(train_data), len(v1.vocabulary)))
+                 (n_train, len(v1.vocabulary)))
 
     # test tf-idf with new data
     tfidf_test = t1.transform(counts_test)
@@ -186,14 +193,45 @@ def test_dense_vectorizer():
     tf = t2.fit(counts_train).transform(counts_train)
     assert_equal(t2.idf, None)
     assert_array_almost_equal(np.sum(tf, axis=1),
-                              [1.0] * len(train_data))
+                              [1.0] * n_train)
 
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
-    tv = TfidfVectorizer()
-    tfidf2 = tv.fit(train_data).transform(train_data)
+    train_data = iter(JUNK_FOOD_DOCS[:-1])
+    tv = Vectorizer()
+    tfidf2 = tv.fit_transform(train_data)
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
     tfidf_test2 = tv.transform(test_data)
     assert_array_almost_equal(tfidf_test, tfidf_test2)
+
+def test_dense_vectorizer_pipeline_grid_selection():
+    # raw documents
+    data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
+    # simulate iterables
+    train_data = iter(data[1:-1])
+    test_data = iter([data[0], data[-1]])
+
+    # label junk food as -1, the others as +1
+    y = np.ones(len(data))
+    y[:6] = -1
+    y_train = y[1:-1]
+    y_test = np.array([y[0],y[-1]])
+
+    pipeline = Pipeline([('vect', CountVectorizer()), ('svc', DenseLinearSVC())])
+
+    parameters = {
+        'vect__analyzer': (WordNGramAnalyzer(min_n=1, max_n=1),
+                           WordNGramAnalyzer(min_n=1, max_n=2)),
+        'svc__loss'  : ('l1', 'l2')
+    }
+
+    # pipeline.fit(train_data, y_train)
+    # pred = pipeline.predict(test_data)
+
+    clf = GridSearchCV(pipeline, parameters, n_jobs=1)
+    # cross-validation doesn't work if the length of the data is not known
+    pred = clf.fit(list(train_data), y_train).predict(list(test_data))
+    assert_array_equal(pred, y_test)
+
