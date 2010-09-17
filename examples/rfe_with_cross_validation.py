@@ -8,7 +8,7 @@ Recursive feature elimination with cross-validation
 
 from scikits.learn.svm import SVC
 from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.rfe import RFECV
+from scikits.learn.feature_selection import RFECV
 from scikits.learn.datasets import samples_generator
 from scikits.learn.metrics import zero_one
 

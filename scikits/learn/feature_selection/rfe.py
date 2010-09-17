@@ -6,7 +6,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from .base import BaseEstimator
+from ..base import BaseEstimator
 
 class RFE(BaseEstimator):
     """
@@ -194,4 +194,5 @@ class RFECV(RFE):
 
         self.support_ = self.ranking_ >= (np.argmin(self.cv_scores_) + 1)
         return self
+
 
