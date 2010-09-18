@@ -195,13 +195,7 @@ class GridSearchCV(BaseEstimator):
         estimator = self.estimator
         if cv is None:
             n_samples = len(X)
-<<<<<<< HEAD
             if y is not None and is_classifier(estimator):
-=======
-            if y is not None and (isinstance(estimator, ClassifierMixin)
-                    or (hasattr(estimator, 'estimator')
-                        and isinstance(estimator.estimator, ClassifierMixin))):
->>>>>>> 91f0814802975a0bb73bae914bac9576371d99f8
                 cv = StratifiedKFold(y, k=3)
             else:
                 cv = KFold(n_samples, k=3)
@@ -212,16 +206,9 @@ class GridSearchCV(BaseEstimator):
             delayed(fit_grid_point)(X, y, base_clf, clf_params,
                     cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
-<<<<<<< HEAD
 
         # Out is a list of pairs: score, estimator
         best_estimator = max(out)[1] # get maximum score
-=======
-
-        # Out is a list of pairs: estimator, score
-        key = lambda pair: pair[1]
-        best_estimator = max(out, key=key)[0] # get maximum score
->>>>>>> 91f0814802975a0bb73bae914bac9576371d99f8
 
         self.best_estimator = best_estimator
         self.predict = best_estimator.predict
