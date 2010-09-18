@@ -11,6 +11,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator
 from ..pipeline import Pipeline
 
+
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
     "all", "almost", "alone", "along", "already", "also", "although", "always",
@@ -58,10 +59,14 @@ def strip_accents(s):
     """Transform accentuated unicode symbols into their simple counterpart"""
     return ''.join((c for c in unicodedata.normalize('NFD', s)
                     if unicodedata.category(c) != 'Mn'))
+
+
 def strip_tags(s):
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
 
+
 DEFAULT_FILTERS = [lambda x: x.lower(), strip_tags, strip_accents]
+
 
 class WordNGramAnalyzer(object):
     """Simple analyzer: transform a text document into a sequence of word tokens
@@ -153,6 +158,7 @@ class CharNGramAnalyzer(object):
 
 DEFAULT_ANALYZER = WordNGramAnalyzer(min_n=1, max_n=1)
 
+
 class CountVectorizer(BaseEstimator):
     """
     Convert a collection of raw documents to a matrix of token counts.
@@ -209,6 +215,11 @@ class CountVectorizer(BaseEstimator):
 
         return np.array(vectors)
 
+    def fit(self, raw_documents, y=None):
+        _, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
+
+        return self
+
     def fit_transform(self, raw_documents, y=None):
         """
         Learn the vocabulary dictionary and return the vectors.
@@ -223,10 +234,7 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        if len(self.vocabulary) == 0:
-            vectors, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
-        else:
-            vectors = self._build_vectors(raw_documents)
+        vectors, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
 
         return vectors
 
@@ -248,6 +256,7 @@ class CountVectorizer(BaseEstimator):
             raise ValueError, "No vocabulary dictionary available..."
 
         return self._build_vectors(raw_documents)
+
 
 class TfidfTransformer(BaseEstimator):
     """
@@ -312,6 +321,7 @@ class TfidfTransformer(BaseEstimator):
 
         return vectors
 
+
 class Vectorizer(BaseEstimator):
     """
     Convert a collection of raw documents to a matrix.
@@ -322,6 +332,11 @@ class Vectorizer(BaseEstimator):
     def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
         self.tc = CountVectorizer(analyzer)
         self.tfidf = TfidfTransformer(use_tf, use_idf)
+
+    def fit(self, raw_documents):
+        X = self.tc.fit_transform(raw_documents)
+        self.tfidf.fit(X)
+        return self
 
     def fit_transform(self, raw_documents):
         """
@@ -356,6 +371,7 @@ class Vectorizer(BaseEstimator):
         """
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X)
+
 
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space
@@ -537,5 +553,3 @@ class SparseHashingVectorizer(object):
             return self.get_tfidf()
         else:
             return self.tf_vectors
-
-
