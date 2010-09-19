@@ -68,7 +68,7 @@ def strip_tags(s):
 DEFAULT_FILTERS = [lambda x: x.lower(), strip_tags, strip_accents]
 
 
-class WordNGramAnalyzer(object):
+class WordNGramAnalyzer(BaseEstimator):
     """Simple analyzer: transform a text document into a sequence of word tokens
 
     This simple implementation does:
@@ -81,9 +81,9 @@ class WordNGramAnalyzer(object):
 
     token_pattern = re.compile(r"\b\w\w+\b", re.UNICODE)
 
-    def __init__(self, default_charset='utf-8', min_n=1, max_n=1,
+    def __init__(self, charset='utf-8', min_n=1, max_n=1,
                  filters=DEFAULT_FILTERS, stop_words=None):
-        self.charset = default_charset
+        self.charset = charset
         self.stop_words = stop_words
         self.min_n = min_n
         self.max_n = max_n
@@ -121,7 +121,7 @@ class WordNGramAnalyzer(object):
         return tokens
 
 
-class CharNGramAnalyzer(object):
+class CharNGramAnalyzer(BaseEstimator):
     """Compute character n-grams features of a text document
 
     This analyzer is interesting since it is language agnostic and will work
@@ -133,8 +133,8 @@ class CharNGramAnalyzer(object):
 
     white_spaces = re.compile(r"\s\s+")
 
-    def __init__(self, default_charset='utf-8', min_n=3, max_n=6):
-        self.charset = default_charset
+    def __init__(self, charset='utf-8', min_n=3, max_n=6):
+        self.charset = charset
         self.min_n = min_n
         self.max_n = max_n
 

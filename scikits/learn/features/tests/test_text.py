@@ -27,6 +27,7 @@ JUNK_FOOD_DOCS = (
     "the coke pizza pizza",
 )
 
+
 NOTJUNK_FOOD_DOCS = (
     "the salad celeri",
     "the salad salad sparkling water",
@@ -34,6 +35,7 @@ NOTJUNK_FOOD_DOCS = (
     "the tomato tomato salad water",
     "the tomato salad water",
 )
+
 
 def test_strip_accents():
     # check some classical latin accentuated symbols
@@ -206,6 +208,7 @@ def test_dense_vectorizer():
     tfidf_test2 = tv.transform(test_data)
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
+
 def test_dense_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -227,11 +230,17 @@ def test_dense_vectorizer_pipeline_grid_selection():
         'svc__loss'  : ('l1', 'l2')
     }
 
-    # pipeline.fit(train_data, y_train)
-    # pred = pipeline.predict(test_data)
 
+    # find the best parameters for both the feature extraction and the
+    # classifier
     clf = GridSearchCV(pipeline, parameters, n_jobs=1)
-    # cross-validation doesn't work if the length of the data is not known
+
+    # cross-validation doesn't work if the length of the data is not known,
+    # hence use lists instead of iterators
     pred = clf.fit(list(train_data), y_train).predict(list(test_data))
     assert_array_equal(pred, y_test)
+
+    # check that the bigram representation yields higher predictive accurracy
+    assert_equal(clf.best_estimator.steps[0][1].analyzer.max_n, 2)
+
 

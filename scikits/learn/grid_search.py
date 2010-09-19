@@ -173,7 +173,6 @@ class GridSearchCV(BaseEstimator):
         self.fit_params = fit_params
         self.iid = iid
 
-
     def fit(self, X, y, cv=None, **kw):
         """Run fit with all sets of parameters
         Returns the best classifier
@@ -222,12 +221,12 @@ class GridSearchCV(BaseEstimator):
 
         return self
 
-
     def score(self, X, y=None):
         # This method is overridden during the fit if the best estimator
         # found has a score function.
         y_predicted = self.predict(X)
         return -self.loss_func(y_predicted, y)
+
 
 if __name__ == '__main__':
     from scikits.learn.svm import SVC
