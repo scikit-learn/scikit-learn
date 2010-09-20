@@ -185,7 +185,7 @@ class RFECV(RFE):
         for train, test in cv:
             ranking_ = rfe.fit(X[train], y[train]).ranking_
 
-            assert n_models == np.max(ranking_)
+            # assert n_models == np.max(ranking_)
             for k in range(n_models):
                 mask = ranking_ >= (k+1)
                 clf.fit(X[train][:,mask], y[train])
