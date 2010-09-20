@@ -20,7 +20,8 @@ def test_simple():
     Principle of LARS is to keep covariances tied and decreasing
     """
     max_pred = 10
-    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, max_iter=max_pred, method="lar")
+    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target,
+                                            max_iter=max_pred, method="lar")
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
@@ -40,7 +41,8 @@ def test_simple_precomputed():
     """
     max_pred = 10
     G = np.dot (diabetes.data.T, diabetes.data)
-    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, Gram=G, max_iter=max_pred, method="lar")
+    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target,
+                                    Gram=G, max_iter=max_pred, method="lar")
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
@@ -54,14 +56,14 @@ def test_simple_precomputed():
             assert ocur == max_pred
 
 
-
 def test_lars_lstsq():
     """
     Test that LARS gives least square solution at the end
     of the path
     """
     # test that it arrives to a least squares solution
-    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target, method="lar")
+    alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target,
+                                                                method="lar")
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_path_.T[-1], coef_lstsq)
 
@@ -75,6 +77,7 @@ def test_lasso_gives_lstsq_solution():
     alphas_, active, coef_path_ = lars_path(X, y, max_iter=12, method="lasso")
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
+
 
 def test_lasso_lars_vs_lasso_cd(verbose=False):
     """
