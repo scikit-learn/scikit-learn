@@ -17,12 +17,15 @@ import numpy as np
 
 from bench_glm import make_data
 
-def bench(clf, X_train, Y_train, X_test, Y_test):
+def bench(clf, X_train, Y_train, X_test, Y_test, Gram=None):
     gc.collect()
 
     # start time
     tstart = time()
-    clf = clf.fit(X_train, Y_train)
+    if Gram is not None:
+        clf = clf.fit(X_train, Y_train, Gram=Gram)
+    else:
+        clf = clf.fit(X_train, Y_train)
     delta = (time() - tstart)
     # stop time
 
@@ -37,11 +40,11 @@ def compute_bench(alpha, n_samples, n_features):
         return Lasso(alpha=alpha, fit_intercept=False)
 
     def LassoLARSFactory(alpha):
-        return LassoLARS(alpha=alpha, normalize=False)
-        # return LassoLARS(alpha=alpha, fit_intercept=False, normalize=False)
+        return LassoLARS(alpha=alpha, fit_intercept=False, normalize=False)
 
     lasso_results = []
     larslasso_results = []
+    larslasso_gram_results = []
 
     n_tests = 1000
     it = 0
@@ -65,8 +68,11 @@ def compute_bench(alpha, n_samples, n_features):
             print "benching LassoLARS: "
             larslasso_results.append(bench(LassoLARSFactory(alpha),
                                                 X, Y, X_test, Y_test))
+            print "benching LassoLARS (precomp. Gram): "
+            larslasso_gram_results.append(bench(LassoLARSFactory(alpha),
+                                        X, Y, X_test, Y_test, Gram=np.dot(X.T, X)))
 
-    return lasso_results, larslasso_results
+    return lasso_results, larslasso_results, larslasso_gram_results
 
 if __name__ == '__main__':
     from scikits.learn.glm import Lasso, LassoLARS
@@ -76,28 +82,30 @@ if __name__ == '__main__':
 
     n_features = 500
     list_n_samples = range(500, 10001, 500);
-    lasso_results, larslasso_results = compute_bench(alpha, list_n_samples,
-                                                                [n_features])
+    lasso_results, larslasso_results, larslasso_gram_results = \
+                    compute_bench(alpha, list_n_samples, [n_features])
 
     pl.close('all')
     pl.title('Lasso benchmark (%d features - alpha=%s)' % (n_features, alpha))
     pl.plot(list_n_samples, lasso_results, 'b-', label='Lasso')
     pl.plot(list_n_samples, larslasso_results,'r-', label='LassoLARS')
-    pl.legend()
+    pl.plot(list_n_samples, larslasso_gram_results,'g-', label='LassoLARS (Gram)')
+    pl.legend(loc='upper left')
     pl.xlabel('number of samples')
     pl.ylabel('time (in seconds)')
     pl.show()
 
     n_samples = 500
     list_n_features = range(500, 3001, 500);
-    lasso_results, larslasso_results = compute_bench(alpha, [n_samples],
-                                                                list_n_features)
+    lasso_results, larslasso_results, larslasso_gram_results = \
+                        compute_bench(alpha, [n_samples], list_n_features)
 
     pl.figure()
     pl.title('Lasso benchmark (%d samples - alpha=%s)' % (n_samples, alpha))
     pl.plot(list_n_features, lasso_results, 'b-', label='Lasso')
     pl.plot(list_n_features, larslasso_results,'r-', label='LassoLARS')
-    pl.legend()
+    pl.plot(list_n_features, larslasso_gram_results,'g-', label='LassoLARS (Gram)')
+    pl.legend(loc='upper left')
     pl.xlabel('number of features')
     pl.ylabel('time (in seconds)')
     pl.show()
