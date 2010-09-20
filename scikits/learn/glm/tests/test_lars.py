@@ -1,10 +1,9 @@
 import numpy as np
-from numpy.testing import (assert_array_almost_equal,
-                           assert_almost_equal)
+from numpy.testing import assert_array_almost_equal
 
-from nose.tools import assert_equal, assert_true
+# from nose.tools import assert_equal, assert_true
 
-from ..lars import lars_path, LassoLARS, LARS
+from ..lars import lars_path, LassoLARS
 from ..coordinate_descent import Lasso
 
 from scikits.learn import datasets
@@ -19,41 +18,41 @@ def test_simple():
     """
     Principle of LARS is to keep covariances tied and decreasing
     """
-    max_pred = 10
+    max_features = 10
     alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target,
-                                            max_iter=max_pred, method="lar")
+                                        max_features=max_features, method="lar")
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
         C = np.max(abs(cov))
         eps = 1e-3
         ocur = len(cov[ C - eps < abs(cov)])
-        if i < max_pred:
+        if i < max_features:
             assert ocur == i+1
         else:
             # no more than max_pred variables can go into the active set
-            assert ocur == max_pred
+            assert ocur == max_features
 
 
 def test_simple_precomputed():
     """
     The same, with precomputed Gram matrix
     """
-    max_pred = 10
+    max_features = 10
     G = np.dot (diabetes.data.T, diabetes.data)
     alphas_, active, coef_path_ = lars_path(diabetes.data, diabetes.target,
-                                    Gram=G, max_iter=max_pred, method="lar")
+                                Gram=G, max_features=max_features, method="lar")
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
         C = np.max(abs(cov))
         eps = 1e-3
         ocur = len(cov[ C - eps < abs(cov)])
-        if i < max_pred:
+        if i < max_features:
             assert ocur == i+1
         else:
             # no more than max_pred variables can go into the active set
-            assert ocur == max_pred
+            assert ocur == max_features
 
 
 def test_lars_lstsq():
@@ -74,7 +73,7 @@ def test_lasso_gives_lstsq_solution():
     of the path
     """
 
-    alphas_, active, coef_path_ = lars_path(X, y, max_iter=12, method="lasso")
+    alphas_, active, coef_path_ = lars_path(X, y, method="lasso")
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
 
@@ -88,7 +87,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     lasso = Lasso(alpha=0.1, fit_intercept=False)
     for alpha in [0.1, 0.01, 0.004]:
         lasso_lars.alpha = alpha
-        lasso_lars.fit(X, y, max_iter=12)
+        lasso_lars.fit(X, y)
         lasso.alpha = alpha
         lasso.fit(X, y, maxit=5000, tol=1e-13)
 

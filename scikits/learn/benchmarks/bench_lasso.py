@@ -27,7 +27,8 @@ def bench(clf, X_train, Y_train, X_test, Y_test):
     # stop time
 
     as_size = np.sum(np.abs(clf.coef_) > 0)
-    print "active set size: %s (%s %%)" % (as_size, float(as_size) / X_train.shape[1])
+    print "active set size: %s (%s %%)" % (as_size, float(as_size) /
+                                                            X_train.shape[1])
     return delta
 
 def compute_bench(alpha, n_samples, n_features):

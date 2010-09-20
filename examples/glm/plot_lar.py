@@ -33,7 +33,7 @@ X[:,6] *= -1 # To reproduce wikipedia LAR page
 
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-alphas_, _, coefs_ = glm.lars_path(X, y, max_iter=9, method="lar")
+alphas_, _, coefs_ = glm.lars_path(X, y, max_features=9, method="lar")
 print "This took ", datetime.now() - start
 
 ###############################################################################
