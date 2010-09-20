@@ -8,7 +8,6 @@ Generalized Linear Model for a complete discussion.
 #
 # License: BSD Style.
 
-import bisect
 from math import fabs, sqrt
 import numpy as np
 from scipy import linalg
@@ -60,6 +59,8 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
         http://en.wikipedia.org/wiki/Least-angle_regression
         http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
         XXX : add reference papers
+        
+        XXX : make sure it works with non-normalized columns of X
 
     """
     # TODO: detect stationary points.
@@ -81,8 +82,7 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
     alphas = np.zeros(max_iter + 1)
     n_iter, n_active = 0, 0
     active = list()
-    unactive = range(n_features)
-    n_unactive = n_features
+    n_inactive = n_features
     active_mask = np.zeros(n_features, dtype=np.uint8)
     # holds the sign of covariance
     sign_active = np.empty(max_features, dtype=np.int8)
@@ -96,6 +96,7 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
     # whole array, which can cause problems.
     L = np.zeros((max_features, max_features), dtype=np.float64)
 
+    X = np.asfortranarray(X) # make sure data are contiguous in memory
     Xt  = X.T
 
     if Gram is not None:
@@ -108,10 +109,12 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
 
     while 1:
 
-        n_unactive = n_features - n_active # number of unactive elements
+        n_inactive = n_features - n_active # number of inactive elements
+        inactive_mask = np.logical_not(active_mask)
+        inactive = np.where(inactive_mask)[0]
 
         # Calculate covariance matrix and get maximum
-        if n_unactive:
+        if n_inactive:
             if Gram is None:
                 # Compute X[:,inactive].T * res where res = y - X beta
                 # To get the most correlated variable not already in the active set
@@ -119,27 +122,26 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
             else:
                 # could use dot_over
                 arrayfuncs.dot_over(Gram, coefs[n_iter], active_mask, np.False_, a)
-                Cov = Xty[unactive] - a[:n_unactive]
+                Cov = Xty[inactive_mask] - a[:n_inactive]
 
-            imax = np.argmax(np.abs(Cov[:n_unactive])) #rename
+            imax = np.argmax(np.abs(Cov[:n_inactive])) # rename
             C_ = Cov[imax]
-            # np.delete(Cov, imax) # very ugly, has to be fixed
         else: # special case when all elements are in the active set
             if Gram is None:
-                C_ = np.dot(X.T[0], res)
+                C_ = np.dot(Xt[0], res)
             else:
                 C_ = np.dot(Gram[0], coefs[n_iter]) - Xty[0]
 
-        C = alpha = fabs(C_) # ugly alpha vs alphas
-        alphas[n_iter] = alpha
+        C = fabs(C_)
+        alphas[n_iter] = C
 
         if n_active >= max_features:
             break
 
-        if (alpha < alpha_min): break
+        if (C < alpha_min): break
 
         if not drop:
-            imax = unactive.pop(imax) # needs to be sorted for this to work
+            imax = inactive[imax] # needs to be sorted for this to work
 
             # Update the Cholesky factorization of (Xa * Xa') #
             #                                                 #
@@ -172,7 +174,7 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
 
             if verbose:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, imax+1, '',
-                                                            n_active, alpha)
+                                                            n_active, C)
 
         # Now we go into the normal equations dance.
         # (Golub & Van Loan, 1996)
@@ -197,10 +199,10 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
             gamma_ = C / AA
         else:
             # correlation between active variables and eqiangular vector
-            arrayfuncs.dot_over(X.T, eqdir, active_mask, np.False_, a)
+            arrayfuncs.dot_over(Xt, eqdir, active_mask, np.False_, a)
             # equation 2.13
-            g1 = (C - Cov[:n_unactive]) / (AA - a[:n_unactive])
-            g2 = (C + Cov[:n_unactive]) / (AA + a[:n_unactive])
+            g1 = (C - Cov[:n_inactive]) / (AA - a[:n_inactive])
+            g2 = (C + Cov[:n_inactive]) / (AA + a[:n_inactive])
             gamma_ = np.r_[g1[g1 > 0], g2[g2 > 0], C / AA].min()
 
         if not drop:
@@ -237,7 +239,6 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
             arrayfuncs.cholesky_delete(L[:n_active, :n_active], idx)
             n_active -= 1
             drop_idx = active.pop(idx)
-            bisect.insort(unactive, drop_idx) # KEEP unactive list sorted !!!
             active_mask[drop_idx] = False
             # do an append to maintain size
             sign_active = np.delete(sign_active, idx)
@@ -246,7 +247,7 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx+1,
                                                             n_active, C)
 
-    if alpha < alpha_min: # interpolate
+    if C < alpha_min: # interpolate
         # interpolation factor 0 <= ss < 1
         ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] - alphas[n_iter])
         coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] - coefs[n_iter-1]);
@@ -256,6 +257,7 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
     coefs = coefs[:n_iter+1]
 
     return alphas, active, coefs.T
+
 
 class LARS(LinearModel):
     """Least Angle Regression model a.k.a. LAR
