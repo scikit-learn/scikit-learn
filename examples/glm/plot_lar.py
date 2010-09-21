@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 """
-======================
-Least Angle Regression
-======================
+============================
+Least Angle Regression (LAR)
+============================
+
+Compute LAR path on diabetes dataset.
+
+See: http://en.wikipedia.org/wiki/Least-angle_regression
 
 """
+print __doc__
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
 from datetime import datetime
-import itertools
 import numpy as np
 import pylab as pl
 
@@ -22,28 +26,24 @@ diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
+X[:,6] *= -1 # To reproduce wikipedia LAR page
 
 ################################################################################
-# Demo path functions
-################################################################################
+# Compute path functions
 
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-# should not use a fit predict to get the path
-clf = glm.LeastAngleRegression().fit(X, y, normalize=True)
+_, _, coefs_ = glm.lars_path(X, y, max_features=10, method="lar")
 print "This took ", datetime.now() - start
 
-alphas = -np.log10(clf.alphas_)
-
-# # Display results
-color_iter = itertools.cycle(['r', 'g', 'b', 'c'])
-
-for coef_, color in zip(clf.coef_path_, color_iter):
-    pl.plot(alphas, coef_.T, color)
-
+###############################################################################
+# Display path
+xx = np.sum(np.abs(coefs_), axis=0)
+xx /= xx[-1]
+pl.plot(xx, coefs_.T)
 ymin, ymax = pl.ylim()
-pl.vlines(alphas, ymin, ymax, linestyle='dashed')
-pl.xlabel('-Log(lambda)') # XXX : wrong label
+pl.vlines(xx, ymin, ymax, linestyle='dashed')
+pl.xlabel('|coef| / max|coef|')
 pl.ylabel('Coefficients')
 pl.title('Least Angle Regression (LAR) Path')
 pl.axis('tight')
