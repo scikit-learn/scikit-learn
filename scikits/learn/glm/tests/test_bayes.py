@@ -6,13 +6,14 @@
 import numpy as np
 
 from numpy.testing import assert_array_equal, \
-                          assert_array_almost_equal
+                          assert_array_almost_equal, decorators
 
 from ..bayes import BayesianRidge, ARDRegression
 
 from scikits.learn import datasets
 
-def XFailed_test_bayesian_on_diabetes():
+@decorators.skipif(True, "XFailed test")
+def test_bayesian_on_diabetes():
     """
     Test BayesianRidge on diabetes
     """

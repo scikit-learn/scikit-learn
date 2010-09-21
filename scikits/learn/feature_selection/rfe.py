@@ -3,12 +3,10 @@
 #
 # License: BSD Style.
 
-"""Recursive feature elimination
-for feature ranking
-"""
+"""Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from .base import BaseEstimator
+from ..base import BaseEstimator
 
 class RFE(BaseEstimator):
     """
@@ -17,7 +15,14 @@ class RFE(BaseEstimator):
     Parameters
     ----------
     estimator : object
-         object
+         A supervised learning estimator with a fit method that updates a
+         coef_ attributes that holds the fitted parameters. The first
+         dimension of the coef_ array must be equal n_features an important
+         features must yield high absolute values in the coef_ array.
+
+         For instance this is the case for most supervised learning
+         algorithms such as Support Vector Classifiers and Generalized
+         Linear Models from the svm and glm package.
 
     n_features : int
         Number of features to select
@@ -44,7 +49,7 @@ class RFE(BaseEstimator):
 
     Examples
     --------
-    >>>
+    >>> # TODO!
 
     References
     ----------
@@ -79,8 +84,8 @@ class RFE(BaseEstimator):
             # rank features based on coef_ (handle multi class)
             abs_coef_ = np.sum(estimator.coef_ ** 2, axis=0)
             sorted_abs_coef_ = np.sort(abs_coef_)
-            thresh = sorted_abs_coef_[np.int(np.sum(support_)*self.percentage)]
-            support_[support_] = abs_coef_ > thresh
+            threshold = sorted_abs_coef_[np.int(np.sum(support_) * self.percentage)]
+            support_[support_] = abs_coef_ > threshold
             ranking_[support_] += 1
         self.support_ = support_
         self.ranking_ = ranking_
@@ -99,11 +104,53 @@ class RFE(BaseEstimator):
         return X_r.copy() if copy else X_r
 
 
-
 class RFECV(RFE):
-    """
-    Feature ranking with Recursive feature elimination.
-    Automatic tuning by Cross-validation.
+    """Feature ranking with Recursive feature elimination and cross validation
+
+    Parameters
+    ----------
+    estimator : object
+         A supervised learning estimator with a fit method that updates a
+         coef_ attributes that holds the fitted parameters. The first
+         dimension of the coef_ array must be equal n_features an important
+         features must yield high absolute values in the coef_ array.
+
+         For instance this is the case for most supervised learning
+         algorithms such as Support Vector Classifiers and Generalized
+         Linear Models from the svm and glm package.
+
+    n_features : int
+        Number of features to select
+
+    percentage : float
+        The percentage of features to remove at each iteration
+        Should be between (0, 1].  By default 0.1 will be taken.
+
+    Attributes
+    ----------
+    `support_` : array-like, shape = [n_features]
+        Mask of estimated support
+
+    `ranking_` : array-like, shape = [n_features]
+        Mask of the ranking of features
+
+    Methods
+    -------
+    fit(X, y) : self
+        Fit the model
+
+    transform(X) : array
+        Reduce X to support
+
+    Examples
+    --------
+    >>> # TODO!
+
+    References
+    ----------
+    Guyon, I., Weston, J., Barnhill, S., & Vapnik, V. (2002). Gene
+    selection for cancer classification using support vector
+    machines. Mach. Learn., 46(1-3), 389--422.
     """
 
     def __init__(self, estimator=None, n_features=None, percentage=0.1,
@@ -114,8 +161,9 @@ class RFECV(RFE):
         self.loss_func = loss_func
 
     def fit(self, X, y, cv=None):
-        """Fit the RFE model according to the given training data and
-            parameters. Tuning by cross-validation
+        """Fit the RFE model according to the given training data and parameters.
+
+        The final size of the support is tuned by cross validation.
 
         Parameters
         ----------
@@ -137,7 +185,7 @@ class RFECV(RFE):
         for train, test in cv:
             ranking_ = rfe.fit(X[train], y[train]).ranking_
 
-            assert n_models == np.max(ranking_)
+            # assert n_models == np.max(ranking_)
             for k in range(n_models):
                 mask = ranking_ >= (k+1)
                 clf.fit(X[train][:,mask], y[train])
@@ -146,4 +194,5 @@ class RFECV(RFE):
 
         self.support_ = self.ranking_ >= (np.argmin(self.cv_scores_) + 1)
         return self
+
 

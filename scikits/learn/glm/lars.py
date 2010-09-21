@@ -8,20 +8,16 @@ Generalized Linear Model for a complete discussion.
 #
 # License: BSD Style.
 
+from math import fabs, sqrt
 import numpy as np
 from scipy import linalg
-import scipy.sparse as sp # needed by LeastAngleRegression
 
 from .base import LinearModel
-from .._minilearn import lars_fit_wrap
-from ..utils.fixes import copysign
 from ..utils import arrayfuncs
 
-# all linalg.solve solve a triangular system, so this could be heavily
-# optimized by binding (in scipy ?) trsv or trsm
 
-def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
-              method="lar", precompute=True):
+def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
+              method="lar", verbose=False):
     """ Compute Least Angle Regression and LASSO path
 
         Parameters
@@ -32,8 +28,8 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
         y: array, shape: (n)
             Input targets
 
-        max_iter: integer, optional
-            The number of 'kink' in the path
+        max_features: integer, optional
+            The number of selected features
 
         Gram: array, shape: (p, p), optional
             Precomputed Gram matrix (X' * X)
@@ -63,87 +59,89 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
         http://en.wikipedia.org/wiki/Least-angle_regression
         http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
         XXX : add reference papers
+        
+        XXX : make sure it works with non-normalized columns of X
 
     """
-    # TODO: precompute : empty for now
-    #
     # TODO: detect stationary points.
-    # Lasso variant
-    # store full path
 
     X = np.atleast_2d(X)
     y = np.atleast_1d(y)
 
     n_samples, n_features = X.shape
 
-    if max_iter is None:
-        max_iter = min(n_samples, n_features)
+    if max_features is None:
+        max_features = min(n_samples, n_features)
 
-    max_pred = max_iter # OK for now
+    max_iter = max_features # OK for now but can be expanded dynomically
+                            # for the lasso case
 
     # because of some restrictions in Cython, boolean values are
     # simulated using np.int8
-
-    beta     = np.zeros ((max_iter + 1, X.shape[1]))
-    alphas   = np.zeros (max_iter + 1)
-    n_iter, n_pred = 0, 0
-    active      = list()
-    unactive    = range (X.shape[1])
-    active_mask = np.zeros (X.shape[1], dtype=np.uint8)
+    coefs = np.zeros((max_iter + 1, n_features))
+    alphas = np.zeros(max_iter + 1)
+    n_iter, n_active = 0, 0
+    active = list()
+    n_inactive = n_features
+    active_mask = np.zeros(n_features, dtype=np.uint8)
     # holds the sign of covariance
-    sign_active = np.empty (max_pred, dtype=np.int8)
-    Cov         = np.empty (X.shape[1])
-    a           = np.empty (X.shape[1])
+    sign_active = np.empty(max_features, dtype=np.int8)
+    Cov = np.empty(n_features)
+    a = np.empty(n_features)
     drop = False
 
     # will hold the cholesky factorization
     # only lower part is referenced. We do not create it as
     # empty array because chol_solve calls chkfinite on the
     # whole array, which can cause problems.
-    L = np.zeros ((max_pred, max_pred), dtype=np.float64)
+    L = np.zeros((max_features, max_features), dtype=np.float64)
 
+    X = np.asfortranarray(X) # make sure data are contiguous in memory
     Xt  = X.T
 
     if Gram is not None:
-        res_init = np.dot (X.T, y)
+        Xty = np.dot(Xt, y)
+    else:
+        res = y.copy() # Residual to be kept up to date
+
+    if verbose:
+        print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
 
     while 1:
 
-        n_unactive = X.shape[1] - n_pred # number of unactive elements
+        n_inactive = n_features - n_active # number of inactive elements
+        inactive_mask = np.logical_not(active_mask)
+        inactive = np.where(inactive_mask)[0]
 
-        if n_unactive:
-            # Calculate covariance matrix and get maximum
+        # Calculate covariance matrix and get maximum
+        if n_inactive:
             if Gram is None:
-                res = y - np.dot (X, beta[n_iter]) # there are better ways
-                arrayfuncs.dot_over (X.T, res, active_mask, np.False_, Cov)
+                # Compute X[:,inactive].T * res where res = y - X beta
+                # To get the most correlated variable not already in the active set
+                arrayfuncs.dot_over(Xt, res, active_mask, np.False_, Cov)
             else:
                 # could use dot_over
-                arrayfuncs.dot_over (Gram, beta[n_iter], active_mask, np.False_, a)
-                Cov = res_init[unactive] - a[:n_unactive]
+                arrayfuncs.dot_over(Gram, coefs[n_iter], active_mask, np.False_, a)
+                Cov = Xty[inactive_mask] - a[:n_inactive]
 
-            imax  = np.argmax (np.abs(Cov[:n_unactive])) #rename
-            C_    = Cov [imax]
-            # np.delete (Cov, imax) # very ugly, has to be fixed
-        else:
-            # special case when all elements are in the active set
+            imax = np.argmax(np.abs(Cov[:n_inactive])) # rename
+            C_ = Cov[imax]
+        else: # special case when all elements are in the active set
             if Gram is None:
-                res = y - np.dot (X, beta[n_iter])
-                C_ = np.dot (X.T[0], res)
+                C_ = np.dot(Xt[0], res)
             else:
-                C_ = np.dot(Gram[0], beta[n_iter]) - res_init[0]
+                C_ = np.dot(Gram[0], coefs[n_iter]) - Xty[0]
 
-        alpha = np.abs(C_) # ugly alpha vs alphas
-        alphas [n_iter] = alpha
+        C = fabs(C_)
+        alphas[n_iter] = C
 
-        if (n_iter >= max_iter or n_pred >= max_pred ):
+        if n_active >= max_features:
             break
 
-        if (alpha < alpha_min): break
+        if (C < alpha_min): break
 
         if not drop:
-
-            imax  = unactive.pop (imax)
-
+            imax = inactive[imax] # needs to be sorted for this to work
 
             # Update the Cholesky factorization of (Xa * Xa') #
             #                                                 #
@@ -153,104 +151,116 @@ def lars_path(X, y, Gram=None, max_iter=None, alpha_min=0,
             #                                                 #
             #   where u is the last added to the active set   #
 
-
-            sign_active [n_pred] = np.sign (C_)
+            sign_active[n_active] = np.sign(C_)
 
             if Gram is None:
                 X_max = Xt[imax]
-                c = np.dot (X_max, X_max)
-                b = np.dot (X_max, X[:, active])
+                c = linalg.norm(X_max)**2
+                b = np.dot(X_max, X[:, active])
             else:
                 c = Gram[imax, imax]
                 b = Gram[imax, active]
 
-            n_pred += 1
+            # Do cholesky update of the Gram matrix of the active set
+            L[n_active, n_active] = c
             active.append(imax)
+            if n_active > 0:
+                arrayfuncs.solve_triangular(L[:n_active, :n_active], b)
+                L[n_active, :n_active] = b[:]
+                v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
+                L[n_active,  n_active] = np.sqrt(c - v)
 
-            L [n_pred-1, n_pred-1] = c
+            n_active += 1
 
-            if n_pred > 1:
-
-                # please refactor me, using linalg.solve is overkill
-                #L [n_pred-1, :n_pred-1] = linalg.solve (L[:n_pred-1, :n_pred-1], b)
-                arrayfuncs.solve_triangular (L[:n_pred-1, :n_pred-1],
-                                             b)
-                L [n_pred-1, :n_pred-1] = b[:]
-                v = np.dot(L [n_pred-1, :n_pred-1], L [n_pred - 1, :n_pred -1])
-                L [n_pred-1,  n_pred-1] = np.sqrt (c - v)
+            if verbose:
+                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, imax+1, '',
+                                                            n_active, C)
 
         # Now we go into the normal equations dance.
         # (Golub & Van Loan, 1996)
 
-        b = copysign (C_.repeat(n_pred), sign_active[:n_pred])
-        b = linalg.cho_solve ((L[:n_pred, :n_pred], True),  b)
-
-        C = A = np.abs(C_)
+        # compute eqiangular vector
         if Gram is None:
-            u = np.dot (Xt[active].T, b)
-            arrayfuncs.dot_over (X.T, u, active_mask, np.False_, a)
-
+            b = linalg.cho_solve((L[:n_active, :n_active], True),
+                                                       sign_active[:n_active])
+            AA = 1. / sqrt(np.sum(b * sign_active[:n_active]))
+            b *= AA
         else:
-            # Not sure that this is not not buggy ...
-            arrayfuncs.dot_over (Gram[active].T, b, active_mask, np.False_, a)
+            S = sign_active[:n_active][:,None] * sign_active[:n_active][None,:]
+            b = linalg.inv(Gram[active][:,active] * S)
+            b = np.sum(b, axis=1)
+            AA = 1. / sqrt(b.sum())
+            b *= sign_active[:n_active]
+            b *= AA
 
-        # equation 2.13, there's probably a simpler way
-        g1 = (C - Cov[:n_unactive]) / (A - a[:n_unactive])
-        g2 = (C + Cov[:n_unactive]) / (A + a[:n_unactive])
+        eqdir = np.dot(X[:,active], b) # equiangular direction (unit vector)
+
+        if n_active >= n_features:
+            gamma_ = C / AA
+        else:
+            # correlation between active variables and eqiangular vector
+            arrayfuncs.dot_over(Xt, eqdir, active_mask, np.False_, a)
+            # equation 2.13
+            g1 = (C - Cov[:n_inactive]) / (AA - a[:n_inactive])
+            g2 = (C + Cov[:n_inactive]) / (AA + a[:n_inactive])
+            gamma_ = np.r_[g1[g1 > 0], g2[g2 > 0], C / AA].min()
 
         if not drop:
             # Quickfix
-            active_mask [imax] = np.True_
-        else:
-            drop = False
-
-        # one for the border cases
-        g = np.concatenate((g1, g2, [1.]))
-
-        g = g[g > 0.]
-        gamma_ = np.min (g)
-
-        if n_pred >= X.shape[1]:
-            gamma_ = 1.
+            active_mask[imax] = np.True_
 
         if method == 'lasso':
-
-            z = - beta[n_iter, active] / b
-            z[z <= 0.] = np.inf
-
-            idx = np.argmin(z)
-
-            if z[idx] < gamma_:
-                gamma_ = z[idx]
-                drop = True
+            drop = False
+            z = - coefs[n_iter, active] / b
+            z_pos = z[z > 0.]
+            if z_pos.size > 0:
+                gamma_tilde_ = np.r_[z_pos, gamma_].min()
+                if gamma_tilde_ < gamma_:
+                    idx = np.where(z == gamma_tilde_)[0]
+                    gamma_ = gamma_tilde_
+                    drop = True
 
         n_iter += 1
-        beta[n_iter, active] = beta[n_iter - 1, active] + gamma_ * b
+
+        if n_iter > max_iter: # resize
+            coefs = np.r_[coefs, np.zeros((max_iter + 1, n_features))]
+            alphas = np.r_[alphas, np.zeros(max_iter + 1)]
+            max_iter += max_iter
+
+        coefs[n_iter, active] = coefs[n_iter - 1, active] + gamma_ * b
+
+        if Gram is None:
+            res -= gamma_ * eqdir # update residual
+
+        if n_active > n_features:
+            break
 
         if drop:
-            arrayfuncs.cholesky_delete (L[:n_pred, :n_pred], idx)
-            n_pred -= 1
-            drop_idx = active.pop (idx)
-            unactive.append(drop_idx)
+            arrayfuncs.cholesky_delete(L[:n_active, :n_active], idx)
+            n_active -= 1
+            drop_idx = active.pop(idx)
             active_mask[drop_idx] = False
-            sign_active = np.delete (sign_active, idx) # do an append to maintain size
-            sign_active = np.append (sign_active, 0.)
-            # should be done using cholesky deletes
+            # do an append to maintain size
+            sign_active = np.delete(sign_active, idx)
+            sign_active = np.append(sign_active, 0.)
+            if verbose:
+                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx+1,
+                                                            n_active, C)
 
-
-    if alpha < alpha_min: # interpolate
+    if C < alpha_min: # interpolate
         # interpolation factor 0 <= ss < 1
         ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] - alphas[n_iter])
-        beta[n_iter] = beta[n_iter-1] + ss*(beta[n_iter] - beta[n_iter-1]);
+        coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] - coefs[n_iter-1]);
         alphas[n_iter] = alpha_min
-        alphas = alphas[:n_iter+1]
-        beta = beta[:n_iter+1]
 
-    return alphas, active, beta.T
+    alphas = alphas[:n_iter+1]
+    coefs = coefs[:n_iter+1]
+
+    return alphas, active, coefs.T
 
 
-class LARS (LinearModel):
-    """ Least Angle Regression model a.k.a. LAR
+class LARS(LinearModel):
+    """Least Angle Regression model a.k.a. LAR
 
     Parameters
     ----------
@@ -310,7 +320,7 @@ class LARS (LinearModel):
 
         method = 'lar'
         alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
-                                max_iter=self.n_features, method=method)
+                                max_features=self.n_features, method=method)
         self.coef_ = coef_path_[:,-1]
         return self
 
@@ -344,7 +354,7 @@ class LassoLARS (LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.LassoLARS(alpha=0.1)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(normalize=True, alpha=0.1, max_iter=None, fit_intercept=True)
+    LassoLARS(max_features=None, alpha=0.1, normalize=True, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.51649658]
 
@@ -354,7 +364,7 @@ class LassoLARS (LinearModel):
     an alternative optimization strategy called 'coordinate descent.'
     """
 
-    def __init__(self, alpha=1.0, max_iter=None, normalize=True,
+    def __init__(self, alpha=1.0, max_features=None, normalize=True,
                         fit_intercept=True):
         """ XXX : add doc
                 # will only normalize non-zero columns
@@ -362,7 +372,7 @@ class LassoLARS (LinearModel):
         self.alpha = alpha
         self.normalize = normalize
         self.coef_ = None
-        self.max_iter = max_iter
+        self.max_features = max_features
         self.fit_intercept = fit_intercept
 
     def fit (self, X, y, Gram=None, **params):
@@ -387,145 +397,11 @@ class LassoLARS (LinearModel):
         method = 'lasso'
         alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
                                             alpha_min=alpha, method=method,
-                                            max_iter=self.max_iter)
+                                            max_features=self.max_features)
 
         self.coef_ = coef_path_[:,-1]
 
         self._set_intercept(Xmean, Ymean)
 
         return self
-
-
-#### OLD C-based LARS : will probably be removed
-
-
-class LeastAngleRegression(LinearModel):
-    """
-    Least Angle Regression using the LARS algorithm.
-
-    Attributes
-    ----------
-    `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
-
-    `intercept_` : float
-        independent term in decision function.
-
-    `coef_path_` : array, shape = [max_features + 1, n_features]
-         Full coeffients path.
-
-    Notes
-    -----
-    predict does only work correctly in the case of normalized
-    predictors.
-
-    See also
-    --------
-    scikits.learn.glm.Lasso
-
-    """
-
-    def __init__(self):
-        self.alphas_ = np.empty(0, dtype=np.float64)
-        self._chol   = np.empty(0, dtype=np.float64)
-        self.beta_    = np.empty(0, dtype=np.float64)
-
-    def fit (self, X, Y, fit_intercept=True, max_features=None, normalize=True):
-        """
-        Fit the model according to data X, Y.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-            Training data
-
-        Y : numpy array of shape [n_samples]
-            Target values
-
-        fit_intercept : boolean, optional
-            wether to calculate the intercept for this model. If set
-            to false, no intercept will be used in calculations
-            (e.g. data is expected to be already centered).
-
-        max_features : int, optional
-            number of features to get into the model. The iterative
-            will stop just before the `max_features` variable enters
-            in the active set. If not specified, min(N, p) - 1
-            will be used.
-
-        normalize : boolean
-            whether to normalize (make all non-zero columns have mean
-            0 and norm 1).
-        """
-        ## TODO: resize (not create) arrays, check shape,
-        ##    add a real intercept
-
-        X  = np.asanyarray(X, dtype=np.float64, order='C')
-        _Y = np.asanyarray(Y, dtype=np.float64, order='C')
-
-        if Y is _Y: Y = _Y.copy()
-        else: Y = _Y
-
-        if max_features is None:
-            max_features = min(*X.shape)-1
-
-        sum_k = max_features * (max_features + 1) /2
-        self.alphas_.resize(max_features + 1)
-        self._chol.resize(sum_k)
-        self.beta_.resize(sum_k)
-        coef_row = np.zeros(sum_k, dtype=np.int32)
-        coef_col = np.zeros(sum_k, dtype=np.int32)
-
-
-        if normalize:
-            # will only normalize non-zero columns
-            self._xmean = X.mean(0)
-            self._ymean = Y.mean(0)
-            X = X - self._xmean
-            Y = Y - self._ymean
-            self._norms = np.apply_along_axis (np.linalg.norm, 0, X)
-            nonzeros = np.flatnonzero(self._norms)
-            X[:, nonzeros] /= self._norms[nonzeros]
-        else:
-            self._xmean = 0.
-            self._ymean = 0.
-
-        lars_fit_wrap(0, X, Y, self.beta_, self.alphas_, coef_row,
-                      coef_col, self._chol, max_features)
-
-        self.coef_path_ = sp.coo_matrix((self.beta_,
-                                        (coef_row, coef_col)),
-                                        shape=(X.shape[1], max_features+1)).todense()
-
-        self.coef_ = np.ravel(self.coef_path_[:, max_features])
-
-        # XXX : should use self._set_intercept
-        if fit_intercept:
-            self.intercept_ = self._ymean
-        else:
-            self.intercept_ = 0.
-
-        return self
-
-
-    def predict(self, X, normalize=True):
-        """
-        Predict using the linear model.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-            Returns predicted values.
-        """
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        if normalize:
-            X -= self._xmean
-            X /= self._norms
-        return  np.dot(X, self.coef_) + self.intercept_
-
-
 

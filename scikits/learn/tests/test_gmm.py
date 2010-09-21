@@ -107,8 +107,8 @@ class TestSampleGaussian(unittest.TestCase):
     def test_sample_gaussian_diag_2D(self):
         self._test_sample_gaussian_diag(2)
 
-    def test_sample_gaussian_diag_10D(self):
-        self._test_sample_gaussian_diag(10)
+    def test_sample_gaussian_diag_5D(self):
+        self._test_sample_gaussian_diag(5)
 
     def _test_sample_gaussian_spherical(self, n_dim, n=10000):
         mu = np.random.randint(10) * np.random.rand(n_dim)
@@ -130,12 +130,12 @@ class TestSampleGaussian(unittest.TestCase):
     def test_sample_gaussian_spherical_2D(self):
         self._test_sample_gaussian_spherical(2)
 
-    def test_sample_gaussian_spherical_10D(self):
-        self._test_sample_gaussian_spherical(10)
+    def test_sample_gaussian_spherical_5D(self):
+        self._test_sample_gaussian_spherical(5)
 
     def _test_sample_gaussian_full(self, n_dim, n=10000):
         mu = np.random.randint(10) * np.random.rand(n_dim)
-        cv = _generate_random_spd_matrix(n_dim)
+        cv = _generate_random_spd_matrix(n_dim) 
 
         samples = gmm.sample_gaussian(mu, cv, cvtype='full', n=n)
 
@@ -152,8 +152,8 @@ class TestSampleGaussian(unittest.TestCase):
     def test_sample_gaussian_full_2D(self):
         self._test_sample_gaussian_full(2)
 
-    def test_sample_gaussian_full_10D(self):
-        self._test_sample_gaussian_full(10)
+    def test_sample_gaussian_full_5D(self):
+        self._test_sample_gaussian_full(5)
 
 
 class TestLmvnpdf(unittest.TestCase):
@@ -284,10 +284,11 @@ class GMMTester():
     weights = np.random.rand(n_states)
     weights = weights / weights.sum()
     means = np.random.randint(-20, 20, (n_states, n_dim))
+    I = np.eye(n_dim)
     covars = {'spherical': (0.1 + 2 * np.random.rand(n_states)) ** 2,
-              'tied': _generate_random_spd_matrix(n_dim),
+              'tied': _generate_random_spd_matrix(n_dim) + 5 * I,
               'diag': (0.1 + 2 * np.random.rand(n_states, n_dim)) ** 2,
-              'full': np.array([_generate_random_spd_matrix(n_dim)
+              'full': np.array([_generate_random_spd_matrix(n_dim) + 5 * I
                                 for x in xrange(n_states)])}
 
     def test_bad_cvtype(self):
@@ -355,14 +356,11 @@ class GMMTester():
         g.means = self.means
         g._covars = 20 * self.covars[self.cvtype]
 
-        # Create a training and testing set by sampling from the same
-        # distribution.
+        # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n=100)
-        test_obs = g.rvs(n=2)
 
         g.fit(train_obs, n_iter=0, init_params=params,
               minit='points')
-        init_testll = g.score(test_obs).sum()
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each
@@ -377,11 +375,8 @@ class GMMTester():
         # the addition of min_covar to the covariance (to prevent
         # underflow).  This is why the threshold is set to -0.5
         # instead of 0.
+        print trainll, np.diff(trainll)
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
-
-        post_testll = g.score(test_obs).sum()
-
-        self.assertTrue(post_testll >= init_testll)
 
 
 class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):

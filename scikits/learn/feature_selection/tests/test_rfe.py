@@ -5,11 +5,11 @@ Testing Recursive feature elimination
 
 import numpy as np
 
-from ..svm import SVC
-from ..cross_val import StratifiedKFold
-from .. import datasets
+from ...svm import SVC
+from ...cross_val import StratifiedKFold
+from ... import datasets
 from ..rfe import RFECV
-from ..metrics import zero_one
+from ...metrics import zero_one
 
 ################################################################################
 # Loading a dataset

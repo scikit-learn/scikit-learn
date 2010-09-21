@@ -1,6 +1,10 @@
+
+# Author: Gael Varoquaux
+# License: BSD
+
 from nose.tools import assert_true, assert_false, assert_equal, \
     assert_raises
-from ..base import BaseEstimator, clone
+from ..base import BaseEstimator, clone, is_classifier
 
 ################################################################################
 # A few test classes
@@ -74,7 +78,6 @@ def test_str():
 
 
 def test_get_params():
-
     test = T(K(), K())
 
     assert_true('a__d' in test._get_params(deep=True))
@@ -83,4 +86,16 @@ def test_get_params():
     test._set_params(a__d=2)
     assert test.a.d == 2
     assert_raises(AssertionError, test._set_params, a__a=2)
+
+
+def test_is_classifier():
+    from ..svm import SVC
+    from ..pipeline import Pipeline
+    from ..grid_search import GridSearchCV
+    svc = SVC()
+    assert_true(is_classifier(svc))
+    assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
+    assert_true(is_classifier(Pipeline([('svc', svc)])))
+    assert_true(is_classifier(Pipeline([('svc_cv', 
+                              GridSearchCV(svc, {'C': [0.1, 1]}))])))
 

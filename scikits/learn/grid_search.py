@@ -10,7 +10,7 @@ import copy
 
 from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
-from .base import ClassifierMixin, clone
+from .base import BaseEstimator, is_classifier, clone
 
 try:
     from itertools import product
@@ -50,9 +50,11 @@ def iter_grid(param_grid):
     if hasattr(param_grid, 'has_key'):
         param_grid = [param_grid]
     for p in param_grid:
-        keys = p.keys()
-        for v in product(*p.values()):
-            params = dict(zip(keys,v))
+        # Always sort the keys of a dictionary, for reproducibility
+        items = sorted(p.items())
+        keys, values = zip(*items)
+        for v in product(*values):
+            params = dict(zip(keys, v))
             yield params
 
 
@@ -65,7 +67,8 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
     
-    score = 0
+    score = 0.
+    n_test_samples = 0.
     for train, test in cv:
         clf.fit(X[train], y[train], **fit_params)
         y_test = y[test]
@@ -76,13 +79,16 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
             this_score = clf.score(X[test], y_test)
         if iid:
             this_score *= len(y_test)
+            n_test_samples += len(y_test)
         score += this_score
+    if iid:
+        score /= n_test_samples
 
-    return clf, score
+    return score, clf
 
 
 ################################################################################
-class GridSearchCV(object):
+class GridSearchCV(BaseEstimator):
     """
     Grid search on the parameters of a classifier.
 
@@ -181,9 +187,7 @@ class GridSearchCV(object):
         estimator = self.estimator
         if cv is None:
             n_samples = len(X)
-            if y is not None and (isinstance(estimator, ClassifierMixin)
-                    or (hasattr(estimator, 'estimator') 
-                        and isinstance(estimator.estimator, ClassifierMixin))):
+            if y is not None and is_classifier(estimator):
                 cv = StratifiedKFold(y, k=3)
             else:
                 cv = KFold(n_samples, k=3)
@@ -195,15 +199,27 @@ class GridSearchCV(object):
                     cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
         
-        # Out is a list of pairs: estimator, score
-        key = lambda pair: pair[1]
-        best_estimator = max(out, key=key)[0] # get maximum score
+        # Out is a list of pairs: score, estimator
+        best_estimator = max(out)[1] # get maximum score
 
         self.best_estimator = best_estimator
         self.predict = best_estimator.predict
+        if hasattr(best_estimator, 'score'):
+            self.score = best_estimator.score
+
+        # Store the computed scores
+        grid = iter_grid(self.param_grid)
+        self.grid_points_scores_ = dict((tuple(clf_params.items()), score) 
+                    for clf_params, (score, _) in zip(grid, out))
 
         return self
 
+
+    def score(self, X, y=None):
+        # This method is overridden during the fit if the best estimator
+        # found has a score function.
+        y_predicted = self.predict(X)
+        return -self.loss_func(y_predicted, y)
 
 if __name__ == '__main__':
     from scikits.learn.svm import SVC
