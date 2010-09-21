@@ -4,44 +4,15 @@
 
 import os
 import numpy as np
-from scikits.learn.datasets.base import Bunch
+from scikits.learn.datasets.base import load_text_files
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.features.text import SparseHashingVectorizer
 
 
-def _load_document_classification(dataset_path, metadata, set_, sparse, **kw):
-    """Loader implementation for the DocumentClassification format"""
-    target = []
-    target_names = {}
-    filenames = []
-    vectorizer = kw.get('vectorizer')
-    if vectorizer is None:
-        if sparse:
-            vectorizer = SparseHashingVectorizer()
-        else:
-            vectorizer = HashingVectorizer()
-
-    # TODO: make it possible to plug a several pass system to filter-out tokens
-    # that occur in more than 30% of the documents for instance.
-
-    # TODO: use joblib.Parallel or multiprocessing to parallelize the following
-    # (provided this is not IO bound)
-
-    dataset_path = os.path.join(dataset_path, set_)
-    folders = [f for f in sorted(os.listdir(dataset_path))
-               if os.path.isdir(os.path.join(dataset_path, f))]
-    for label, folder in enumerate(folders):
-        target_names[label] = folder
-        folder_path = os.path.join(dataset_path, folder)
-        documents = [os.path.join(folder_path, d)
-                     for d in sorted(os.listdir(folder_path))]
-        vectorizer.vectorize_files(documents)
-        target.extend(len(documents) * [label])
-        filenames.extend(documents)
-
-    return Bunch(data=vectorizer.get_vectors(), target=np.array(target),
-                 target_names=target_names, filenames=filenames,
-                 DESCR=metadata.get('description'))
+def _load_document_classification(dataset_path, metadata, set_=None):
+    if set_ is not None:
+        dataset_path = os.path.join(dataset_path, set_)
+    return load_text_files(dataset_path, metadata.get('description'))
 
 
 LOADERS = {
@@ -50,8 +21,7 @@ LOADERS = {
 }
 
 
-def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, sparse=False,
-                **kwargs):
+def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     """Load a datasets as downloaded from http://mlcomp.org
 
     Parameters
@@ -66,19 +36,17 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, sparse=False,
                   are stored, if mlcomp_root is None, the MLCOMP_DATASETS_HOME
                   environment variable is looked up instead.
 
-    sparse : boolean if True then use a scipy.sparse matrix for the data field,
-             False by default
-
     **kwargs : domain specific kwargs to be passed to the dataset loader.
 
     Returns
     -------
 
     data : Bunch
-        Dictionnary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, and 'DESCR', the
-        full description of the dataset.
+        Dictionary-like object, the interesting attributes are:
+        'filenames', the files holding the raw to learn, 'target', the
+        classification labels (integer index), 'target_names',
+        the meaning of the labels, and 'DESCR', the full description of the
+        dataset.
 
     Note on the lookup process: depending on the type of name_or_id,
     will choose between integer id lookup or metadata name lookup by
@@ -134,6 +102,6 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, sparse=False,
     loader = LOADERS.get(format)
     if loader is None:
         raise ValueError("No loader implemented for format: " + format)
-    return loader(dataset_path, metadata, set_=set_, sparse=sparse, **kwargs)
+    return loader(dataset_path, metadata, set_=set_, **kwargs)
 
 
