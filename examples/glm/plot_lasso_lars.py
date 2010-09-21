@@ -4,6 +4,8 @@
 Lasso with Least Angle Regression
 =================================
 
+Computes Lasso Path with the LARS algorithm
+
 """
 print __doc__
 
@@ -12,7 +14,6 @@ print __doc__
 # License: BSD Style.
 
 from datetime import datetime
-import itertools
 import numpy as np
 import pylab as pl
 
@@ -22,30 +23,22 @@ from scikits.learn import datasets
 diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
-# someting's wrong with our dataset
-X[:, 6] = -X[:, 6]
+X[:,6] *= -1 # To reproduce wikipedia LASSO page
 
 ################################################################################
 # Demo path functions
 
-G = np.dot(X.T, X)
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-alphas, active, path = glm.lars_path(X, y, Gram=G, method='lasso')
+alphas_, _, coefs_ = glm.lars_path(X, y, method='lasso')
 print "This took ", datetime.now() - start
 
-alphas = np.sum(np.abs(path.T), axis=1)
-alphas /= alphas[-1]
-
-# # Display results
-color_iter = itertools.cycle(['r', 'g', 'b', 'c'])
-
-for coef_, color in zip(path, color_iter):
-    pl.plot(alphas, coef_.T, color)
-
+xx = np.sum(np.abs(coefs_.T), axis=1)
+xx /= xx[-1]
+pl.plot(xx, coefs_.T)
 ymin, ymax = pl.ylim()
-pl.vlines(alphas, ymin, ymax, linestyle='dashed')
-pl.xlabel('-Log(lambda)') # XXX : wrong label
+pl.vlines(xx, ymin, ymax, linestyle='dashed')
+pl.xlabel('|coef| / max|coef|')
 pl.ylabel('Coefficients')
 pl.title('LASSO Path')
 pl.axis('tight')
