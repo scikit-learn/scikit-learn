@@ -296,7 +296,7 @@ class LARS(LinearModel):
 
     http://en.wikipedia.org/wiki/Least_angle_regression
 
-    See examples. XXX : add examples names
+    See examples/glm/plot_lar.py for an example.
     """
     def __init__(self, n_features, normalize=True):
         self.n_features = n_features
@@ -360,6 +360,8 @@ class LassoLARS (LinearModel):
 
     Notes
     -----
+    See examples/glm/plot_lasso_lars.py for an example.
+
     See also scikits.learn.glm.Lasso that fits the same model using
     an alternative optimization strategy called 'coordinate descent.'
     """

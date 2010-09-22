@@ -262,7 +262,7 @@ The advantages of *Bayesian Regression* are:
     - It can be used to include regularization parameters in the
       estimation procedure.
 
-The dissadvantages of *Bayesian Regression* include:
+The disadvantages of *Bayesian Regression* include:
 
     - Inference of the model can be time consuming.
 
