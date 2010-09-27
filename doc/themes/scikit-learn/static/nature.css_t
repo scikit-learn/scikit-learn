@@ -162,7 +162,11 @@ div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
     margin: 0;
     padding: 5px 10px;
-    text-shadow: 1px 1px 0 white
+    background-color: #BED4EB;
+    font-weight: normal;
+    color: #212224;
+    margin: 20px;
+    border:  1px solid #CCC;
 }
  
  
@@ -183,10 +187,6 @@ div.sphinxsidebar ul ul {
     margin-right: 0;
 }
  
-div.sphinxsidebar a {
-    color: #444;
-}
-
 
 div.sphinxsidebar {
     width: 170px;
@@ -198,6 +198,7 @@ div.sphinxsidebar {
     border-top-width: 0;
     border-left-width: 0;
     border-bottom-width: 0;
+    margin-top: 20px;
 }
 
 div.sphinxsidebar h3 {

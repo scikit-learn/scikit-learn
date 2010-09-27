@@ -20,12 +20,10 @@
           </p>
         {%- endif %}
 
-
-
           {%- block navbar -%}
           <div class="navbar">
           <ul>
-            <li><a href="http://sourceforge.net/projects/scikit-learn/files/">download</a></li>
+            <li><a href="{{pathto('install')}}">download</a></li>
             <li><a href="{{pathto('support')}}">support</a></li>
             <li><a href="{{pathto('modules/classes')}}">reference</a></li>
             <li><a href="{{pathto('auto_examples/index')}}">gallery</a></li>
@@ -64,9 +62,22 @@
           {%- if not loop.last %}{{ reldelim2 }}{% endif %}
           {%- endfor %}
         </div>
+        {% else %}
+        <h3>News</h3>
+
+       <p>scikits.learn 0.4 is available
+         for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
+         See <a href="{{pathto('whats_new')}}">what's new</a> and tips
+         on <a href="{{pathto('install')}}">installing</a>.</p>
+
+
+        <h3>Videos</h3>
+        <p>Watch the 2010
+        ICML <a href="http://videolectures.net/icml2010_varaquaux_scik/">Introductory
+        Video</a> by Gaël Varoquaux.</p>
         {% endif %}
 
-            <h3><a href="{{ pathto(master_doc) }}">{{ _('Table Of Contents') }}</a></h3>
+            <h3>{{ _('Contents') }}</h3>
          {{ toc }}
 
         </div>
