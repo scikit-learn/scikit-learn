@@ -15,7 +15,6 @@ from scipy import linalg
 from .base import LinearModel
 from ..utils import arrayfuncs
 
-
 def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
               method="lar", verbose=False):
     """ Compute Least Angle Regression and LASSO path
@@ -96,7 +95,11 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
     # whole array, which can cause problems.
     L = np.zeros((max_features, max_features), dtype=np.float64)
 
-    X = np.asfortranarray(X) # make sure data are contiguous in memory
+    if Gram is None:
+        # setting the array to be fortran-ordered speeds up the
+        # calculation of the (partial) Gram matrix, but not very
+        # useful if the Gram matrix is already precomputed.
+        X = np.asfortranarray(X)
     Xt  = X.T
 
     if Gram is not None:
@@ -120,7 +123,6 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
                 # To get the most correlated variable not already in the active set
                 arrayfuncs.dot_over(Xt, res, active_mask, np.False_, Cov)
             else:
-                # could use dot_over
                 arrayfuncs.dot_over(Gram, coefs[n_iter], active_mask, np.False_, a)
                 Cov = Xty[inactive_mask] - a[:n_inactive]
 
@@ -180,26 +182,23 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
         # (Golub & Van Loan, 1996)
 
         # compute eqiangular vector
-        if Gram is None:
-            b = linalg.cho_solve((L[:n_active, :n_active], True),
-                                                       sign_active[:n_active])
-            AA = 1. / sqrt(np.sum(b * sign_active[:n_active]))
-            b *= AA
-        else:
-            S = sign_active[:n_active][:,None] * sign_active[:n_active][None,:]
-            b = linalg.inv(Gram[active][:,active] * S)
-            b = np.sum(b, axis=1)
-            AA = 1. / sqrt(b.sum())
-            b *= sign_active[:n_active]
-            b *= AA
+        b = linalg.cho_solve((L[:n_active, :n_active], True),
+                             sign_active[:n_active])
+        AA = 1. / sqrt(np.sum(b * sign_active[:n_active]))
+        b *= AA
 
-        eqdir = np.dot(X[:,active], b) # equiangular direction (unit vector)
+        if Gram is None:
+            eqdir = np.dot(X[:,active], b) # equiangular direction (unit vector)
+            # correlation between active variables and eqiangular vector
+            arrayfuncs.dot_over(Xt, eqdir, active_mask, np.False_, a)
+        else:
+            # in the case of huge number of features, this takes 50% of time
+            # to avoid the copies, we could reorder the rows of Gram ...
+            arrayfuncs.dot_over (Gram[active].T, b, active_mask, np.False_, a)
 
         if n_active >= n_features:
             gamma_ = C / AA
         else:
-            # correlation between active variables and eqiangular vector
-            arrayfuncs.dot_over(Xt, eqdir, active_mask, np.False_, a)
             # equation 2.13
             g1 = (C - Cov[:n_inactive]) / (AA - a[:n_inactive])
             g2 = (C + Cov[:n_inactive]) / (AA + a[:n_inactive])

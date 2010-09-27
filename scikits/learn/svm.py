@@ -88,8 +88,8 @@ class _BaseLibSVM(BaseEstimator):
 
 
         if callable(self.kernel):
-             # you must store a reference to X to compute the kernel in predict
-             # there's a way around this, but it involves patching libsvm
+            # you must store a reference to X to compute the kernel in predict
+            # there's a way around this, but it involves patching libsvm
             # TODO: put keyword copy to copy on demand
             self.__Xfit = X
         kernel_type, _X = self._get_kernel(X)
@@ -612,6 +612,27 @@ class SVR(_BaseLibSVM, RegressorMixin):
                          shrinking, probability)
 
 
+    def fit(self, X, Y):
+        """
+        Fit the SVM model according to the given training data and parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+        Y : array, shape = [n_samples]
+            Target values. Array of floating-point numbers.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        # we copy this method because SVR does not accept class_weight
+        return _BaseLibSVM.fit(self, X, Y)
+
+
 class NuSVR(_BaseLibSVM, RegressorMixin):
     """
     Nu Support Vector Regression. Similar to NuSVC, for regression,
@@ -681,6 +702,26 @@ class NuSVR(_BaseLibSVM, RegressorMixin):
         _BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, 0.,
                          shrinking, probability)
+
+    def fit(self, X, Y):
+        """
+        Fit the SVM model according to the given training data and parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+        Y : array, shape = [n_samples]
+            Target values. Array of floating-point numbers.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        # we copy this method because SVR does not accept class_weight
+        return _BaseLibSVM.fit(self, X, Y)
 
 
 

@@ -15,7 +15,7 @@ import gc
 from time import time
 import numpy as np
 
-from bench_glm import make_data
+from bench_glmnet import make_data
 
 def bench(clf, X_train, Y_train, X_test, Y_test, Gram=None):
     gc.collect()
@@ -69,8 +69,9 @@ def compute_bench(alpha, n_samples, n_features):
             larslasso_results.append(bench(LassoLARSFactory(alpha),
                                                 X, Y, X_test, Y_test))
             print "benching LassoLARS (precomp. Gram): "
+            Gram = np.dot(X.T, X)
             larslasso_gram_results.append(bench(LassoLARSFactory(alpha),
-                                        X, Y, X_test, Y_test, Gram=np.dot(X.T, X)))
+                                        X, Y, X_test, Y_test, Gram=Gram))
 
     return lasso_results, larslasso_results, larslasso_gram_results
 
