@@ -8,6 +8,7 @@
  * :license: BSD, see LICENSE for details.
  *
  */
+/* @import url("minimalist.css") /\* google custom search  *\/ */
 @import url("basic.css");
 /* -- page layout ----------------------------------------------------------- */
  
@@ -28,7 +29,13 @@ div.header-wrapper {
     border-radius: 15px;
     -moz-border-radius: 15px;
     margin-top: 10px;
-}    
+}
+
+div.header {
+    /* for the logo to correctly expand when showing results
+       but remain cut when not */
+    overflow: hidden; 
+}
 
 
 p.logo {
@@ -36,19 +43,20 @@ p.logo {
     margin-left: 20px;
     float: left;
     margin: 0 0 0 20px;
+    height: 50px;
 }
 
 span.legend {
     font-family: Verdana;
-    font-size: 13px;
+    font-size: 15px;
     position: relative;
     left: -35px;
     top: -3px;
 }
 
 div.navbar {
-    padding-top: 13px;
-    margin-left: 230px;
+    padding-top: 15px;
+    margin-left: 220px;
 }    
 
 div.navbar ul {
@@ -84,12 +92,23 @@ div.navbar ul li a:hover {
 /*     display: inline; */
 /* } */
 
-form.search {
-    margin-left: 15px;
-    display: inline;
+/* div.search { */
+/*     margin-left: 15px; */
+/*     display: inline; */
+/* } */
+
+.gsc-input {
+    width: 180px;
+    float: right;
 }
-#search_input {
-    color: #CCC;
+
+.search_form {
+    margin-top: -23px;
+    z-index: -1;
+}
+
+.gsc-branding {
+    display: none;
 }
 
 div.content-wrapper {
@@ -155,7 +174,8 @@ div.related a {
 }
 
 div.rel {
-    padding: 15px 15px 0 15px;
+    text-align: center;
+    margin-top: 20px;
 }
 
 div.sphinxsidebar h3,
@@ -165,13 +185,13 @@ div.sphinxsidebar h4 {
     background-color: #BED4EB;
     font-weight: normal;
     color: #212224;
-    margin: 20px;
+    margin: 30px 20px 0;
     border:  1px solid #CCC;
 }
  
  
 div.sphinxsidebar p {
-    padding: 5px 20px;
+    padding: 0px 20px;
 }
  
 div.sphinxsidebar p.topless {
@@ -189,7 +209,7 @@ div.sphinxsidebar ul ul {
  
 
 div.sphinxsidebar {
-    width: 170px;
+    width: 200px;
     float: left;
     margin-left: 0;
     background-color: inherit;
@@ -198,11 +218,10 @@ div.sphinxsidebar {
     border-top-width: 0;
     border-left-width: 0;
     border-bottom-width: 0;
-    margin-top: 20px;
+    margin-top: 5px;
 }
 
 div.sphinxsidebar h3 {
-    margin-top: 10px;
     text-align: center;
     font-size: 16px;
 }
@@ -223,6 +242,7 @@ input {
     text-shadow: none;
     font-family: Arial;
     font-size: 1em;
+    padding: 3px;
 }
 
 div.sphinxsidebar input[type=text]{

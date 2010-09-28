@@ -30,15 +30,23 @@
             <li><a href="{{pathto('developers/index')}}">development</a></li>
        </ul>
 
-          <form class="search" action="{{ pathto('search') }}" method="get">
-            <input id="search_input"
-                   type="text" name="q" size="18" value=" search..."
-                   onfocus="if(this.value==this.defaultValue)this.value='';this.style.color='black'"
-                   onblur="if(this.value=='') { this.value=this.defaultValue;this.style.color='#cccccc'}"/>
-            <input type="submit" value="{{ _('Go') }}" />
-            <input type="hidden" name="check_keywords" value="yes" />
-            <input type="hidden" name="area" value="default" />
-          </form>
+<div class="search_form">
+
+<div id="cse" style="width: 100%;">.</div>
+<script src="http://www.google.com/jsapi" type="text/javascript"></script>
+<script type="text/javascript">
+  google.load('search', '1', {language : 'en'});
+  google.setOnLoadCallback(function() {
+    var customSearchControl = new google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
+    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+    var options = new google.search.DrawOptions();
+    options.setAutoComplete(true);
+    customSearchControl.draw('cse', options);
+  }, true);
+</script>
+
+</div>
+
           </div> <!-- end navbar -->
           {%- endblock -%}
 
@@ -75,9 +83,21 @@
         <p>Watch the 2010
         ICML <a href="http://videolectures.net/icml2010_varaquaux_scik/">Introductory
         Video</a> by Gaël Varoquaux.</p>
+
+        <h3>Participate</h3> 
+
+        <p>Fork
+        the <a href="http://github.com/scikit-learn/scikit-learn">source
+        code</a>, join the
+        <a href="{{pathto('support')}}#mailing-list">mailing
+        lists</a>, <a href="http://sourceforge.net/apps/trac/scikit-learn/report/1">issue
+        tracker</a> or participate in the next
+        <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>.
+        </p>
+
         {% endif %}
 
-            <h3>{{ _('Contents') }}</h3>
+        <h3>{{ _('Contents') }}</h3>
          {{ toc }}
 
         </div>
