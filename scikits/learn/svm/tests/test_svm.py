@@ -8,7 +8,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal, assert_raises, assert_
 
-from .. import svm, datasets
+from scikits.learn import svm, datasets
 
 # test sample 1
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
