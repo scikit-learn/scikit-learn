@@ -6,7 +6,7 @@ only ship the reference implementation for the algorithms we need,
 which can be found at
 $(prefix)/ATLAS/src/blas/reference/level*. Header files are taken from
 $(prefix)/ATLAS/include, the only change being the inclusion of
-"atlas_refalias*.h" into "atlas_level*.h".
+"atlas_refalias*.h" into its respective "atlas_level*.h" file.
 
 To add new algorithms, the only thing that should be done is to copy
 the reference implementation from
