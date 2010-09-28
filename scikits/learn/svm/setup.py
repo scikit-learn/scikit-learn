@@ -9,6 +9,9 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('svm', parent_package, top_path)
 
+    config.add_subpackage('tests')
+    config.add_subpackage('sparse')
+
     # we parse site.cfg file for section libsvm
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))

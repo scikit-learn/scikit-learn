@@ -7,3 +7,4 @@ documentation.
 
 from .libsvm import SVC, NuSVC, SVR, NuSVR, OneClassSVM
 from .liblinear import LinearSVC
+from . import sparse

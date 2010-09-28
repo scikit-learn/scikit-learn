@@ -26,12 +26,12 @@ For sparse data
 .. autosummary::
    :toctree: generated/
 
-   sparse.svm.SVC
-   sparse.svm.LinearSVC
-   sparse.svm.NuSVC
-   sparse.svm.SVR
-   sparse.svm.NuSVR
-   sparse.svm.OneClassSVM
+   svm.sparse.SVC
+   svm.sparse.LinearSVC
+   svm.sparse.NuSVC
+   svm.sparse.SVR
+   svm.sparse.NuSVR
+   svm.sparse.OneClassSVM
 
 
 Generalized Linear Models

@@ -150,7 +150,7 @@ will only take as input an array X, as there are no class labels.
  * :ref:`example_svm_plot_oneclass.py`
 
 
-.. currentmodule:: scikits.learn.sparse.svm
+.. currentmodule:: scikits.learn.svm.sparse
 
 Support Vector machines for sparse data
 =======================================

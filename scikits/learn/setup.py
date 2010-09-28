@@ -2,7 +2,6 @@ from os.path import join
 import warnings
 import numpy
 import sys
-from ConfigParser import ConfigParser
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -11,7 +10,6 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('learn', parent_package, top_path)
 
     config.add_subpackage('svm')
-    config.add_subpackage('svm/tests/')
     config.add_subpackage('datasets')
     config.add_subpackage('features')
     config.add_subpackage('features/tests')

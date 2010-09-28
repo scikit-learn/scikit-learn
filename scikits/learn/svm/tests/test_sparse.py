@@ -1,5 +1,5 @@
 import scipy.sparse
-from scikits.learn import datasets, sparse, svm
+from scikits.learn import datasets, svm
 from numpy.testing import assert_array_almost_equal, \
                           assert_equal
 
@@ -21,7 +21,7 @@ def test_SVC():
     """Check that sparse SVC gives the same result as SVC"""
 
     clf = svm.SVC(kernel='linear').fit(X, Y)
-    sp_clf = sparse.svm.SVC(kernel='linear').fit(X, Y)
+    sp_clf = svm.sparse.SVC(kernel='linear').fit(X, Y)
 
     assert scipy.sparse.issparse(sp_clf.support_)
     assert_array_almost_equal(clf.support_, sp_clf.support_.todense())
@@ -45,7 +45,7 @@ def test_SVC():
 def test_SVC_iris():
     """Test the sparse SVC with the iris dataset"""
     iris = datasets.load_iris()
-    sp_clf = sparse.svm.SVC(kernel='linear').fit(iris.data, iris.target)
+    sp_clf = svm.sparse.SVC(kernel='linear').fit(iris.data, iris.target)
     clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
 
     assert_array_almost_equal(clf.support_, sp_clf.support_.todense())
@@ -59,7 +59,7 @@ def test_LinearSVC():
     Similar to test_SVC
     """
     clf = svm.LinearSVC().fit(X, Y)
-    sp_clf = sparse.svm.LinearSVC().fit(X, Y)
+    sp_clf = svm.sparse.LinearSVC().fit(X, Y)
 
     assert sp_clf.fit_intercept
     
@@ -76,7 +76,7 @@ def test_LinearSVC():
 def test_LinearSVC_iris():
     """Test the sparse LinearSVC with the iris dataset"""
     iris = datasets.load_iris()
-    sp_clf = sparse.svm.LinearSVC().fit(iris.data, iris.target)
+    sp_clf = svm.sparse.LinearSVC().fit(iris.data, iris.target)
     clf = svm.LinearSVC().fit(iris.data, iris.target)
 
     assert_array_almost_equal(clf.label_, sp_clf.label_)
