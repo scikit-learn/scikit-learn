@@ -5,8 +5,9 @@ Support Vector Machines
 .. currentmodule:: scikits.learn.svm
 
 **Support vector machines (SVMs)** are a set of supervised learning
-methods used for classification_, regression_
-and :ref:`outliers detection <svm_outlier_detection>`.
+methods used for :ref:`classification <svm_classification>`,
+:ref:`regression <svm_regression>` and :ref:`outliers detection
+<svm_outlier_detection>`.
 
 The advantages of Support Vector Machines are:
 
@@ -33,6 +34,8 @@ The dissadvantages of Support Vector Machines include:
       performance can suffer.  See method predict_proba for more
       information.
 
+
+.. _svm_classification:
 
 Classification
 ==============
@@ -97,6 +100,8 @@ Member `n_support_` holds the number of support vectors for each class:
  * :ref:`example_svm_plot_separating_hyperplane.py`,
  * :ref:`example_svm_plot_svm_anova.py`,
  * :ref:`example_svm_plot_svm_nonlinear.py`
+
+.. _svm_regression:
 
 Regression
 ==========

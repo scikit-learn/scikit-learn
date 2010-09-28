@@ -7,7 +7,7 @@ from scikits.learn.features.text import TfidfVectorizer
 from scikits.learn.features.text import HashingVectorizer
 from scikits.learn.features.text import SparseHashingVectorizer
 from scikits.learn.svm import LinearSVC as DenseLinearSVC
-from scikits.learn.sparse.svm import LinearSVC as SparseLinearSVC
+from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
 import numpy as np
 from nose.tools import *
 from numpy.testing import assert_array_almost_equal
