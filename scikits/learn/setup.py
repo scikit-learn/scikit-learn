@@ -29,12 +29,11 @@ def configuration(parent_package='', top_path=None):
     if (not blas_info) or (
         ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])) :
         config.add_library('cblas',
-                           sources=[
-                               join('src', 'cblas', '*.c'),
-                               ]
+                           sources=[join('src', 'cblas', '*.c')]
                            )
         cblas_libs = ['cblas']
         blas_info.pop('libraries', None)
+        warnings.warn(BlasNotFoundError.__doc__)
     else:
         cblas_libs = blas_info.pop('libraries', [])
 
