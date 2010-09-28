@@ -10,6 +10,7 @@ clean-pyc:
 
 clean-so:
 	find . -name "*.so" | xargs rm -f
+	find . -name "*.pyd" | xargs rm -f
 
 clean-build:
 	rm -rf build
