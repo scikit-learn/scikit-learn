@@ -23,3 +23,6 @@ inplace:
 
 test: in
 	$(NOSETESTS) --with-doctest --with-coverage scikits/learn/ --cover-package scikits/learn
+
+test-doc:
+	$(NOSETESTS) --doctest-extension=rst doc/
