@@ -10,6 +10,7 @@ clean-pyc:
 
 clean-so:
 	find . -name "*.so" | xargs rm -f
+	find . -name "*.pyd" | xargs rm -f
 
 clean-build:
 	rm -rf build
@@ -22,3 +23,6 @@ inplace:
 
 test: in
 	$(NOSETESTS) --with-doctest --with-coverage scikits/learn/ --cover-package scikits/learn
+
+test-doc:
+	$(NOSETESTS) --doctest-extension=rst doc/

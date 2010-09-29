@@ -16,7 +16,7 @@ particular couple of *learning set* and *test set*.
 A solution is to split the whole data in different learning set and test set,
 and to return the the averaged value of the prediction scores obtained with
 the different sets. Such a procedure is called *cross-validation*. This approach
-can  be computationally expensive, but does not waste to much data (as it is the
+can  be computationally expensive, but does not waste too much data (as it is the
 case when fixing an arbitrary test set), which is a major advantage in problem
 such as inverse inference where the number of samples is very small.
 
@@ -239,29 +239,5 @@ scikits.learn.cross_val.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
 [False False False False  True  True] [ True  True  True  True False False]
 [False False  True  True False False] [ True  True False False  True  True]
 [ True  True False False False False] [False False  True  True  True  True]
-
-
-
-..
-    Frequently Asked Questions
-    ==========================
-
-        * Q: Can I get the indices of the support vectors instead of the
-          support vectors ?
-
-          A: The underlying C implementation does not provide this
-          information.
-
-
-    References
-    ==========
-    For a description of the implementation and details of the algorithms
-    used, please refer to
-
-        - `LIBSVM: a library for Support Vector Machines
-          <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
-
-        - `LIBLINEAR -- A Library for Large Linear Classification
-          <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_
 
 

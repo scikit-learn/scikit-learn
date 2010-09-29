@@ -2,6 +2,10 @@
 Class reference
 ===============
 
+
+.. TODO: put some order here. Alphabetical ?
+
+
 Support Vector Machines
 =======================
 
@@ -25,13 +29,23 @@ For sparse data
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
 
-   sparse.svm.SVC
-   sparse.svm.LinearSVC
-   sparse.svm.NuSVC
-   sparse.svm.SVR
-   sparse.svm.NuSVR
-   sparse.svm.OneClassSVM
+   svm.sparse.SVC
+   svm.sparse.LinearSVC
+   svm.sparse.NuSVC
+   svm.sparse.SVR
+   svm.sparse.NuSVR
+   svm.sparse.OneClassSVM
+
+Logistic Regression
+===================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   logistic.LogisticRegression
 
 
 Generalized Linear Models
@@ -55,6 +69,74 @@ Bayesian Regression
 
    glm.BayesianRidge
    glm.ARDRegression   
+
+Naive Bayes
+===========
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   naive_bayes.GNB
+
+
+Nearest Neighbors
+=================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   neighbors.Neighbors
+
+
+Gaussian Mixture Models
+=======================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   gmm.GMM
+
+
+Hidden Markov Models
+====================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   hmm.GaussianHMM
+   hmm.MultinomialHMM
+   hmm.GMMHMM
+
+
+Clustering
+==========
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   cluster.KMeans
+   cluster.MeanShift
+   cluster.SpectralClustering
+   cluster.AffinityPropagation
+
+
+Covariance estimators
+=====================
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   covariance.Covariance
+   covariance.ShrunkCovariance
+   covariance.LedoitWolf
+
 
 Cross-validation
 ===================

@@ -2,6 +2,9 @@
 0.4
 ===
 
+Changelog
+---------
+
 Major changes in this release include:
 
    - Coordinate Descent algorithm (Lasso, ElasticNet) refactoring & 

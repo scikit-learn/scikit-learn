@@ -8,25 +8,21 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal, assert_raises, assert_
 
-from .. import svm, datasets
+from scikits.learn import svm, datasets
 
-# test sample 1
+# toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 Y = [1, 1, 1, 2, 2, 2]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [1, 2, 2]
 
+# also load the iris dataset
 iris = datasets.load_iris()
 
-def test_CSVC():
+
+def test_libsvm_parameters():
     """
-    SVC and sparse SVC with linear kernel.
-
-    We test this on two datasets, the first one with two classes and
-    the second one with three classes. We check for predicted values
-    and estimated parameters.
-
-    TODO: check with different parameters of C, nonlinear kernel
+    Test parameters on classes that make use of libsvm.
     """
 
     clf = svm.SVC(kernel='linear').fit(X, Y)
@@ -35,20 +31,15 @@ def test_CSVC():
     assert_array_equal(clf.intercept_, [0.])
     assert_array_equal(clf.predict(X), Y)
 
-    clf.fit (iris.data, iris.target)
-    assert np.mean(clf.predict(iris.data) == iris.target) > 0.98
 
-def test_NuSVC():
+def test_libsvm_iris():
     """
-    Test NuSVC on simple datasets
+    Check consistency on dataset iris.
     """
+    for k in ('linear', 'rbf'):
+        clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
+        assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
     
-    clf = svm.NuSVC(kernel='linear').fit(X, Y)
-    assert_array_equal(clf.predict(X), Y)
-
-    clf.fit (iris.data, iris.target)
-    assert np.mean(clf.predict(iris.data) == iris.target) > 0.97
-
 
 def test_precomputed():
     """
@@ -235,11 +226,10 @@ def test_error():
     assert_raises(AssertionError, svm.SVC, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    Xt = np.array(X).transpose()
-    Yt = [1, 2]
+    Xf = np.asfortranarray(X)
     clf = svm.SVC()
-    clf.fit(Xt, Yt)
-    assert_array_equal(clf.predict(T), [1, 2, 2])
+    clf.fit(Xf, Y)
+    assert_array_equal(clf.predict(T), true_result)
 
 
 def test_LinearSVC():
