@@ -21,8 +21,9 @@ class SVC(BaseLibSVM, ClassifierMixin):
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
-    gamma : float, optional (default=0.0)
-        kernel coefficient for rbf
+    gamma : float, optional
+        kernel coefficient for rbf, by default 1/n_features will be
+        taken.
 
     coef0 : float, optional
         independent term in kernel function. It is only significant
@@ -109,8 +110,9 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
-    gamma : float, optional (default=0.0)
-        kernel coefficient for rbf
+    gamma : float, optional
+        kernel coefficient for rbf, by default 1/n_features will be
+        taken.
 
     probability: boolean, optional (False by default)
         enable probability estimates. This must be enabled prior
@@ -214,8 +216,9 @@ class SVR(BaseLibSVM, RegressorMixin):
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
-    gamma : float, optional (default=0.0)
-        kernel coefficient for rbf
+    gamma : float, optional
+        kernel coefficient for rbf, by default 1/n_features will be
+        taken.
 
     C : float, optional (default=1.0)
         penalty parameter C of the error term.
@@ -308,8 +311,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         degree of kernel function
         is significant only in poly, rbf, sigmoid
 
-    gamma : float, optional (default=0.0)
-        kernel coefficient for rbf
+    gamma : float, optional
+        kernel coefficient for rbf, by default 1/n_features will be
+        taken.
 
     eps: float, optional
          precision for stopping criteria
@@ -394,8 +398,9 @@ class OneClassSVM(BaseLibSVM):
     degree : int, optional
         Degree of kernel function. Significant only in poly, rbf, sigmoid.
 
-    gamma : float, optional (default=0.0)
-        Kernel coefficient for rbf.
+    gamma : float, optional
+        kernel coefficient for rbf, by default 1/n_features will be
+        taken.
 
     C : float, optional (default=1.0)
         Penalty parameter C of the error term.

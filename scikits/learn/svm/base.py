@@ -106,7 +106,8 @@ class BaseLibSVM(BaseEstimator):
                              "X has %s features, but Y has %s." % \
                              (_X.shape[0], Y.shape[0]))
 
-        if (self.gamma == 0):
+        if (kernel_type == 2) and (self.gamma == 0):
+            # if custom gamma is not provided ...
             self.gamma = 1.0/_X.shape[0]
 
         self.label_, self.probA_, self.probB_ = _libsvm.train_wrap(_X, Y,
