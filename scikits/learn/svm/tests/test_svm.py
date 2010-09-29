@@ -18,7 +18,7 @@ true_result = [1, 2, 2]
 
 iris = datasets.load_iris()
 
-def test_CSVC():
+def test_SVC():
     """
     SVC and sparse SVC with linear kernel.
 
@@ -235,11 +235,10 @@ def test_error():
     assert_raises(AssertionError, svm.SVC, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    Xt = np.array(X).transpose()
-    Yt = [1, 2]
+    Xf = np.asfortranarray(X)
     clf = svm.SVC()
-    clf.fit(Xt, Yt)
-    assert_array_equal(clf.predict(T), [1, 2, 2])
+    clf.fit(Xf, Y)
+    assert_array_equal(clf.predict(T), true_result)
 
 
 def test_LinearSVC():
