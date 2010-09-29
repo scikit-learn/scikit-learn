@@ -25,14 +25,14 @@ def test_bayesian_on_diabetes():
     # Test with more samples than features
     clf.fit(X, y)
     # Test that scores are increasing at each iteration
-    assert_array_equal(np.diff(clf.all_score_) > 0, True)
+    assert_array_equal(np.diff(clf.scores_) > 0, True)
 
     # Test with more features than samples
     X = X[:5,:]
     y = y[:5]
     clf.fit(X, y)
     # Test that scores are increasing at each iteration
-    assert_array_equal(np.diff(clf.all_score_) > 0, True)
+    assert_array_equal(np.diff(clf.scores_) > 0, True)
 
 
 def test_toy_bayesian_ridge_object():
