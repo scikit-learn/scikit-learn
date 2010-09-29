@@ -45,8 +45,8 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.C = C
         self.nu = nu
         self.p = p
-        self.shrinking = int(shrinking)
-        self.probability = int(probability)
+        self.shrinking = shrinking
+        self.probability = probability
 
         # container for when we call fit
         self._support_data    = np.empty (0, dtype=np.float64, order='C')
@@ -60,7 +60,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.intercept_         = np.empty (0, dtype=np.float64, order='C')
 
         # only used in classification
-        self.nSV_ = np.empty(0, dtype=np.int32, order='C')
+        self.n_support = np.empty(0, dtype=np.int32, order='C')
 
 
     def fit(self, X, Y, class_weight={}):
@@ -81,6 +81,10 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.weight_label = np.asarray(class_weight.keys(),
                                        dtype=np.int32, order='C')
 
+        if (kernel_type == 2) and (self.gamma == 0):
+            # if custom gamma is not provided ...
+            self.gamma = 1.0/X.shape[0]
+
         self.label_, self.probA_, self.probB_ = _libsvm.csr_train_wrap(
                  X.shape[1], X.data, X.indices, X.indptr, Y,
                  solver_type, kernel_type, self.degree,
@@ -88,25 +92,30 @@ class SparseBaseLibSVM(BaseLibSVM):
                  self._support_data, self._support_indices,
                  self._support_indptr, self._dual_coef_data,
                  self.intercept_, self.weight_label, self.weight,
-                 self.nSV_, self.nu, self.cache_size, self.p,
-                 self.shrinking,
+                 self.n_support, self.nu, self.cache_size, self.p,
+                 int(self.shrinking),
                  int(self.probability))
 
-        # TODO: explicitly specify size
+        n_class = len(self.label_) - 1
+        n_SV = self._support_indptr.size - 1
+
+        dual_coef_indices = np.tile(np.arange(n_SV), n_class)
+        dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1,
+                                     dual_coef_indices.size / n_class)
+
+        # this will fail if n_SV is zero. This is a limitation
+        # in scipy.sparse, which does not permit empty matrices
         self.support_ = sparse.csr_matrix((self._support_data,
                                            self._support_indices,
-                                           self._support_indptr))
-
-        # TODO: is this always a 1-d array ?
-        n_classes = len(self.label_) - 1
-        dual_coef_indices =  np.tile(np.arange(self.support_.shape[0]),
-                                     n_classes)
-        dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1,
-                                     dual_coef_indices.size / n_classes)
+                                           self._support_indptr),
+                                          shape=(n_SV, X.shape[1])
+                                          )
 
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
-                                             dual_coef_indptr))
+                                             dual_coef_indptr),
+                                            shape=(n_class, n_SV)
+                                            )
         return self
 
 
@@ -142,7 +151,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.weight_label, self.weight,
                       self.nu, self.cache_size, self.p,
                       self.shrinking, self.probability,
-                      self.nSV_, self.label_, self.probA_,
+                      self.n_support, self.label_, self.probA_,
                       self.probB_)
 
 
