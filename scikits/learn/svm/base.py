@@ -106,7 +106,7 @@ class BaseLibSVM(BaseEstimator):
                              "X has %s features, but Y has %s." % \
                              (_X.shape[0], Y.shape[0]))
 
-        if (kernel_type == 2) and (self.gamma == 0):
+        if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
             self.gamma = 1.0/_X.shape[0]
 

@@ -22,8 +22,8 @@ class SVC(BaseLibSVM, ClassifierMixin):
         is significant only in poly, rbf, sigmoid
 
     gamma : float, optional
-        kernel coefficient for rbf, by default 1/n_features will be
-        taken.
+        kernel coefficient for rbf and poly, by default 1/n_features
+        will be taken.
 
     coef0 : float, optional
         independent term in kernel function. It is only significant
@@ -111,8 +111,8 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
         is significant only in poly, rbf, sigmoid
 
     gamma : float, optional
-        kernel coefficient for rbf, by default 1/n_features will be
-        taken.
+        kernel coefficient for rbf and poly, by default 1/n_features
+        will be taken.
 
     probability: boolean, optional (False by default)
         enable probability estimates. This must be enabled prior
@@ -217,8 +217,8 @@ class SVR(BaseLibSVM, RegressorMixin):
         is significant only in poly, rbf, sigmoid
 
     gamma : float, optional
-        kernel coefficient for rbf, by default 1/n_features will be
-        taken.
+        kernel coefficient for rbf and poly, by default 1/n_features
+        will be taken.
 
     C : float, optional (default=1.0)
         penalty parameter C of the error term.
@@ -312,8 +312,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         is significant only in poly, rbf, sigmoid
 
     gamma : float, optional
-        kernel coefficient for rbf, by default 1/n_features will be
-        taken.
+        kernel coefficient for rbf and poly, by default 1/n_features
+        will be taken.
 
     eps: float, optional
          precision for stopping criteria
@@ -399,8 +399,8 @@ class OneClassSVM(BaseLibSVM):
         Degree of kernel function. Significant only in poly, rbf, sigmoid.
 
     gamma : float, optional
-        kernel coefficient for rbf, by default 1/n_features will be
-        taken.
+        kernel coefficient for rbf and poly, by default 1/n_features
+        will be taken.
 
     C : float, optional (default=1.0)
         Penalty parameter C of the error term.
