@@ -10,7 +10,7 @@ scikits.learn: machine learning in python
 
 .. |banner2| image:: auto_examples/glm/images/plot_lasso_lars.png
    :height: 150
-   :target: auto_examples/svm/plot_custom_kernel.html
+   :target: auto_examples/glm/plot_lasso_lars.html
 
 .. |banner3| image:: auto_examples/svm/images/plot_oneclass.png
    :height: 150
