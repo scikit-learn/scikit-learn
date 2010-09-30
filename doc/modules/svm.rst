@@ -318,7 +318,7 @@ Its dual is
 
 where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
 is an l by l positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
-x_j)` and :math:`\phi (x_i)^T \ phi (x)` is the kernel. Here training
+x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
 vectors are mapped into a higher (maybe infinite) dimensional space by
 the function :math:`\phi`
 
