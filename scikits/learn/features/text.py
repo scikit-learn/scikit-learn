@@ -9,8 +9,6 @@ import unicodedata
 import numpy as np
 import scipy.sparse as sp
 from ..base import BaseEstimator
-from ..pipeline import Pipeline
-
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -59,7 +57,6 @@ def strip_accents(s):
     """Transform accentuated unicode symbols into their simple counterpart"""
     return ''.join((c for c in unicodedata.normalize('NFD', s)
                     if unicodedata.category(c) != 'Mn'))
-
 
 def strip_tags(s):
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
@@ -159,22 +156,29 @@ class CharNGramAnalyzer(BaseEstimator):
 DEFAULT_ANALYZER = WordNGramAnalyzer(min_n=1, max_n=1)
 
 
-class CountVectorizer(BaseEstimator):
+class BaseCountVectorizer(BaseEstimator):
     """
     Convert a collection of raw documents to a matrix of token counts.
+
+    This class can't be used directly, use either CountVectorizer or
+    SparseCountVectorizer.
 
     Parameters
     ----------
     analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
 
     vocabulary: dict, optional
-        A dictionary where keys are tokens and values are indices in the matrix.
+        A dictionary where keys are tokens and values are indices in the
+        matrix.
         This is useful in order to fix the vocabulary in advance.
     """
 
     def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}):
         self.analyzer = analyzer
         self.vocabulary = vocabulary
+
+    def _init_matrix(self, shape):
+        raise NotImplementedError
 
     def _build_vectors_and_vocab(self, raw_documents):
         vocab = {} # token => idx
@@ -192,7 +196,7 @@ class CountVectorizer(BaseEstimator):
             docs.append(doc_dict)
 
         # convert to a document-token matrix
-        matrix = np.zeros((len(docs), len(vocab)), dtype=long)
+        matrix = self._init_matrix((len(docs), len(vocab)))
 
         for i, doc_dict in enumerate(docs):
             for idx, count in doc_dict.iteritems():
@@ -201,22 +205,41 @@ class CountVectorizer(BaseEstimator):
         return matrix, vocab
 
     def _build_vectors(self, raw_documents):
-        # raw_documents is an iterable so we don't know its length
-        vectors = []
+        # raw_documents is an iterable so we don't know its size in advance
+        vectors = None
+
         for i, doc in enumerate(raw_documents):
-            vector = np.zeros(len(self.vocabulary), dtype=long)
+            vector = self._init_matrix((1, len(self.vocabulary)))
             for token in self.analyzer.analyze(doc):
                 try:
-                    vector[self.vocabulary[token]] += 1
+                    vector[0, self.vocabulary[token]] += 1
                 except KeyError:
                     # ignore out-of-vocabulary tokens
                     pass
-            vectors.append(vector)
 
-        return np.array(vectors)
+            if vectors is None:
+                vectors = vector
+            else:
+                vstack = sp.vstack if sp.issparse(vector) else np.vstack
+                vectors = vstack((vectors, vector))
+
+        return vectors
 
     def fit(self, raw_documents, y=None):
-        _, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
+        """
+        Learn the vocabulary dictionary.
+
+        Parameters
+        ----------
+
+        raw_documents: iterable
+            an iterable which yields either str, unicode or file objects
+
+        Returns
+        -------
+        self
+        """
+        self.fit_transform(raw_documents)
 
         return self
 
@@ -224,11 +247,13 @@ class CountVectorizer(BaseEstimator):
         """
         Learn the vocabulary dictionary and return the vectors.
 
+        This is more efficient than calling fit followed by transform.
+
         Parameters
         ----------
 
         raw_documents: iterable
-            an iterable which yields either str, unicode or file object
+            an iterable which yields either str, unicode or file objects
 
         Returns
         -------
@@ -246,7 +271,7 @@ class CountVectorizer(BaseEstimator):
         ----------
 
         raw_documents: iterable
-            an iterable which yields either str, unicode or file object
+            an iterable which yields either str, unicode or file objects
 
         Returns
         -------
@@ -257,12 +282,24 @@ class CountVectorizer(BaseEstimator):
 
         return self._build_vectors(raw_documents)
 
+class CountVectorizer(BaseCountVectorizer):
 
-class TfidfTransformer(BaseEstimator):
+    def _init_matrix(self, shape):
+        return np.zeros(shape, dtype=long)
+
+class SparseCountVectorizer(BaseCountVectorizer):
+
+    def _init_matrix(self, shape):
+        return sp.dok_matrix(shape, dtype=long)
+
+class BaseTfidfTransformer(BaseEstimator):
     """
     Transform a count matrix to a TF (term-frequency)
     or TF-IDF (term-frequency inverse-document-frequency)
     representation.
+
+    This class can't be used directly, use either TfidfTransformer or
+    SparseTfidfTransformer.
 
     Parameters
     ----------
@@ -278,6 +315,8 @@ class TfidfTransformer(BaseEstimator):
         self.use_tf = use_tf
         self.use_idf = use_idf
         self.idf = None
+
+class TfidfTransformer(BaseTfidfTransformer):
 
     def fit(self, X, y=None):
         """
@@ -297,7 +336,7 @@ class TfidfTransformer(BaseEstimator):
 
         return self
 
-    def transform(self, X):
+    def transform(self, X, copy=True):
         """
         Transform a count matrix to a TF or TF-IDF representation.
 
@@ -310,28 +349,78 @@ class TfidfTransformer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        vectors = X
+        X = np.array(X, dtype=np.float64, copy=copy)
 
         if self.use_tf:
             # term-frequencies (normalized counts)
-            vectors = vectors / np.sum(X, axis=1).astype(np.float64)[:,np.newaxis]
+            X /= np.sum(X, axis=1)[:,np.newaxis]
 
         if self.use_idf:
-            vectors = vectors * self.idf
+            X *= self.idf
 
-        return vectors
+        return X
 
+class SparseTfidfTransformer(BaseTfidfTransformer):
 
-class Vectorizer(BaseEstimator):
+    def fit(self, X, y=None):
+        """
+        Learn the IDF vector (global term weights).
+
+        Parameters
+        ----------
+        X: sparse matrix, [n_samples, n_features]
+            a matrix of term/token counts
+
+        """
+        n_samples, n_features = X.shape
+        if self.use_idf:
+            # how many documents include each token?
+            idc = np.zeros(n_features, dtype=np.float64)
+            for doc, token in zip(*X.nonzero()):
+                idc[token] += 1
+            self.idf = np.log(float(X.shape[0]) / idc)
+
+        return self
+
+    def transform(self, X, copy=True):
+        """
+        Transform a count matrix to a TF or TF-IDF representation.
+
+        Parameters
+        ----------
+        X: sparse matrix, [n_samples, n_features]
+            a matrix of term/token counts
+
+        Returns
+        -------
+        vectors: sparse matrix, [n_samples, n_features]
+        """
+        X = sp.dok_matrix(X, dtype=np.float64, copy=copy)
+        n_samples, n_features = X.shape
+
+        if self.use_tf:
+            # term-frequencies (normalized counts)
+            sums = np.zeros(n_samples)
+
+            for doc, token in zip(*X.nonzero()):
+                sums[doc] += X[doc,token]
+
+        for doc, token in zip(*X.nonzero()):
+            if self.use_tf:
+                X[doc, token] /= sums[doc]
+
+            if self.use_idf:
+                X[doc, token] *= self.idf[token]
+
+        return X
+
+class BaseVectorizer(BaseEstimator):
     """
     Convert a collection of raw documents to a matrix.
 
-    Equivalent to CountVectorizer followed by TfidfTransformer.
+    This class can't be used directly, use either Vectorizer or
+    SparseVectorizer.
     """
-
-    def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
-        self.tc = CountVectorizer(analyzer)
-        self.tfidf = TfidfTransformer(use_tf, use_idf)
 
     def fit(self, raw_documents):
         X = self.tc.fit_transform(raw_documents)
@@ -346,7 +435,7 @@ class Vectorizer(BaseEstimator):
         ----------
 
         raw_documents: iterable
-            an iterable which yields either str, unicode or file object
+            an iterable which yields either str, unicode or file objects
 
         Returns
         -------
@@ -355,7 +444,7 @@ class Vectorizer(BaseEstimator):
         X = self.tc.fit_transform(raw_documents)
         return self.tfidf.fit(X).transform(X)
 
-    def transform(self, raw_documents):
+    def transform(self, raw_documents, copy=True):
         """
         Return the vectors.
 
@@ -363,15 +452,36 @@ class Vectorizer(BaseEstimator):
         ----------
 
         raw_documents: iterable
-            an iterable which yields either str, unicode or file object
+            an iterable which yields either str, unicode or file objects
 
         Returns
         -------
         vectors: array, [n_samples, n_features]
         """
         X = self.tc.transform(raw_documents)
-        return self.tfidf.transform(X)
+        return self.tfidf.transform(X, copy)
 
+class Vectorizer(BaseVectorizer):
+    """
+    Convert a collection of raw documents to a matrix.
+
+    Equivalent to CountVectorizer followed by TfidfTransformer.
+    """
+
+    def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
+        self.tc = CountVectorizer(analyzer)
+        self.tfidf = TfidfTransformer(use_tf, use_idf)
+
+class SparseVectorizer(BaseVectorizer):
+    """
+    Convert a collection of raw documents to a sparse matrix.
+
+    Equivalent to SparseCountVectorizer followed by SparseTfidfTransformer.
+    """
+
+    def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
+        self.tc = SparseCountVectorizer(analyzer)
+        self.tfidf = SparseTfidfTransformer(use_tf, use_idf)
 
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space
@@ -553,3 +663,4 @@ class SparseHashingVectorizer(object):
             return self.get_tfidf()
         else:
             return self.tf_vectors
+
