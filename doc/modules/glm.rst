@@ -239,7 +239,7 @@ column is always zero.
 
 .. topic:: References:
 
- * Original Algorithm is detailed in the `paper
+ * Original Algorithm is detailed in the paper `Least Angle Regression
    <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
