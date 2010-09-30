@@ -58,6 +58,8 @@ Generalized Linear Models
    glm.LinearRegression
    glm.Ridge
    glm.Lasso
+   glm.LARS
+   glm.LassoLARS
 
 
 Bayesian Regression
