@@ -93,10 +93,8 @@ class BayesianRidge(LinearModel):
     BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
            fit_intercept=True, eps=0.001, alpha_2=1e-06, alpha_1=1e-06,
            compute_score=False)
-    >>> print clf.coef_
-    [ 0.49999975  0.49999975]
-    >>> print clf.intercept_
-    5.02041075379e-07
+    >>> clf.predict([[1, 1]])
+    array([ 1.])
 
     Notes
     -----
@@ -306,10 +304,8 @@ class ARDRegression(LinearModel):
     ARDRegression(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
            fit_intercept=True, eps=0.001, threshold_lambda=10000.0,
            alpha_2=1e-06, alpha_1=1e-06, compute_score=False)
-    >>> print clf.coef_
-    [ 0.49986097  0.49986097]
-    >>> print clf.intercept_
-    0.000278067476205
+    >>> clf.predict([[1, 1]])
+    array([ 1.])
 
     Notes
     --------
