@@ -3,33 +3,36 @@
 scikits.learn: machine learning in python
 ===========================================
 
-.. |banner1| image:: auto_examples/cluster/images/plot_affinity_propagation.png
-   :height: 150
-   :target: auto_examples/cluster/plot_affinity_propagation.html
+.. only:: html
+
+    .. |banner1| image:: auto_examples/cluster/images/plot_affinity_propagation.png
+       :height: 150
+       :target: auto_examples/cluster/plot_affinity_propagation.html
 
 
-.. |banner2| image:: auto_examples/glm/images/plot_lasso_lars.png
-   :height: 150
-   :target: auto_examples/glm/plot_lasso_lars.html
+    .. |banner2| image:: auto_examples/glm/images/plot_lasso_lars.png
+       :height: 150
+       :target: auto_examples/glm/plot_lasso_lars.html
 
-.. |banner3| image:: auto_examples/svm/images/plot_oneclass.png
-   :height: 150
-   :target: auto_examples/svm/plot_oneclass.html
+    .. |banner3| image:: auto_examples/svm/images/plot_oneclass.png
+       :height: 150
+       :target: auto_examples/svm/plot_oneclass.html
 
-.. |banner4| image:: auto_examples/cluster/images/plot_lena_segmentation.png
-   :height: 150
-   :target: auto_examples/cluster/plot_lena_segmentation.html
+    .. |banner4| image:: auto_examples/cluster/images/plot_lena_segmentation.png
+       :height: 150
+       :target: auto_examples/cluster/plot_lena_segmentation.html
 
-.. |center-div| raw:: html
+    .. |center-div| raw:: html
 
-    <div style="text-align: center; margin: 0px 0 -5px 0;">
+        <div style="text-align: center; margin: 0px 0 -5px 0;">
 
-.. |end-div| raw:: html
+    .. |end-div| raw:: html
 
-    </div>
+        </div>
 
 
-|center-div| |banner1| |banner2| |banner3| |banner4| |end-div| 
+    |center-div| |banner1| |banner2| |banner3| |banner4| |end-div| 
+
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
 
@@ -58,39 +61,41 @@ scikits.learn: machine learning in python
   Open source, commercially usable: **BSD license** (3 clause)
 
 
-.. raw:: html
+.. only:: html
 
-   <div class="example_digits">
+    .. raw:: html
 
-:ref:`A simple Example: recognizing hand-written digits <example_plot_digits_classification.py>` ::
+       <div class="example_digits">
 
-    import pylab as pl
+    :ref:`A simple Example: recognizing hand-written digits <example_plot_digits_classification.py>` ::
 
-    from scikits.learn import datasets, svm
-    digits = datasets.load_digits()
-    for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
-        pl.subplot(2, 4, index+1)
-        pl.imshow(image, cmap=pl.cm.gray_r)
-        pl.title('Training: %i' % label)
-    
-    n_samples = len(digits.images)
-    data = digits.images.reshape((n_samples, -1))
-    
-    classifier = svm.SVC()
-    classifier.fit(data[:n_samples/2], digits.target[:n_samples/2])
-    
-    for index, image in enumerate(digits.images[n_samples/2:n_samples/2+4]):
-        pl.subplot(2, 4, index+5)
-        pl.imshow(image, cmap=pl.cm.gray_r)
-        pl.title('Prediction: %i' % classifier.predict(image.ravel()))
+        import pylab as pl
 
-.. image:: images/plot_digits_classification.png
-   :height: 140
-   :target: auto_examples/plot_digits_classification.html
+        from scikits.learn import datasets, svm
+        digits = datasets.load_digits()
+        for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
+            pl.subplot(2, 4, index+1)
+            pl.imshow(image, cmap=pl.cm.gray_r)
+            pl.title('Training: %i' % label)
 
-.. raw:: html
+        n_samples = len(digits.images)
+        data = digits.images.reshape((n_samples, -1))
 
-    </div>
+        classifier = svm.SVC()
+        classifier.fit(data[:n_samples/2], digits.target[:n_samples/2])
+
+        for index, image in enumerate(digits.images[n_samples/2:n_samples/2+4]):
+            pl.subplot(2, 4, index+5)
+            pl.imshow(image, cmap=pl.cm.gray_r)
+            pl.title('Prediction: %i' % classifier.predict(image.ravel()))
+
+    .. image:: images/plot_digits_classification.png
+       :height: 140
+       :target: auto_examples/plot_digits_classification.html
+
+    .. raw:: html
+
+        </div>
 
 
 User guide
@@ -127,13 +132,15 @@ Reference
    cross_validation
    modules/classes
 
-Gallery
-=======
+.. only:: html
 
-.. toctree::
-   :maxdepth: 2
+    Gallery
+    =======
 
-   auto_examples/index
+    .. toctree::
+       :maxdepth: 2
+
+       auto_examples/index
 
 Developement
 ============
