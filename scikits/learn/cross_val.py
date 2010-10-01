@@ -148,7 +148,7 @@ class KFold(object):
         Provides train/test indexes to split data in train test sets
 
         Parameters
-        ===========
+        ----------
         n: int
             Total number of elements
         k: int
@@ -170,8 +170,8 @@ class KFold(object):
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         TRAIN: [ True  True False False] TEST: [False False  True  True]
 
-        Note
-        ====
+        Notes
+        -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
         assert k>0, ('cannot have k below 1')
@@ -226,14 +226,14 @@ class StratifiedKFold(object):
         Provides train/test indexes to split data in train test sets
 
         Parameters
-        ===========
+        ----------
         y: array, [n_samples]
             Samples to split in K folds
         k: int
             number of folds
 
         Examples
-        ========
+        --------
         >>> from scikits.learn import cross_val
         >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
         >>> y = [0, 0, 1, 1]
@@ -248,8 +248,8 @@ class StratifiedKFold(object):
         TRAIN: [False  True False  True] TEST: [ True False  True False]
         TRAIN: [ True False  True False] TEST: [False  True False  True]
 
-        Note
-        ====
+        Notes
+        -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
         y = np.asanyarray(y)
@@ -461,7 +461,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
     """ Evaluate a score by cross-validation.
 
         Parameters
-        ===========
+        ----------
         estimator: estimator object implementing 'fit'
             The object to use to fit the data
         X: array-like of shape at least 2D
