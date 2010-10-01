@@ -170,8 +170,9 @@ For maximum efficiency, use the CSR matrix format as defined in
 `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
-See the complete listing of classes in
-:ref:`sparse_svm_class_reference`.
+Implemented classes are :class:`SVC`, :class:`NuSVC`,
+:class:`SVR`, :class:`NuSVR`, :class:`OneClassSVM`,
+:class:`LinearSVC`.
 
 
 Tips on Practical Use

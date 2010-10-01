@@ -25,18 +25,16 @@ Support Vector Machines
 For sparse data
 -----------------
 
-.. _sparse_svm_class_reference:
-
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
    svm.sparse.SVC
-   svm.sparse.LinearSVC
    svm.sparse.NuSVC
    svm.sparse.SVR
    svm.sparse.NuSVR
    svm.sparse.OneClassSVM
+   svm.sparse.LinearSVC
 
 Logistic Regression
 ===================
