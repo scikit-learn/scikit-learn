@@ -45,12 +45,17 @@ def setup_module():
     print 'test_memory setup'
     print 80*'_'
     
+def _rmtree_onerror(func, path, excinfo):
+    print '!'*79
+    print 'os function failed:', repr(func)
+    print 'file to be removed:', path
+    print 'exception was:', excinfo[1]
+    print '!'*79
 
 def teardown_module():
     """ Test teardown.
     """
-    #return True
-    shutil.rmtree(env['dir'])
+    shutil.rmtree(env['dir'], False, _rmtree_onerror)
     print 80*'_'
     print 'test_memory teardown'
     print 80*'_'
@@ -93,8 +98,11 @@ def test_memory_integration():
     # Now test clearing
     memory = Memory(cachedir=env['dir'], verbose=0)
     # First clear the cache directory, to check that our code can
-    # handle that:
-    shutil.rmtree(env['dir'])
+    # handle that
+    # NOTE: this line would raise an exception, as the database file is still
+    # open; we ignore the error since we want to test what happens if the
+    # directory disappears
+    shutil.rmtree(env['dir'], ignore_errors=True)
     g = memory.cache(f)
     g(1)
     g.clear(warn=False)
@@ -258,8 +266,9 @@ def test_memory_eval():
     memory = Memory(cachedir=env['dir'], verbose=0)
 
     m = eval('lambda x: x')
+    mm = memory.cache(m)
 
-    yield nose.tools.assert_equal, 1, m(1)
+    yield nose.tools.assert_equal, 1, mm(1)
 
 
 def count_and_append(x=[]):
@@ -276,7 +285,6 @@ def test_argument_change():
         should use the hash of changing arguments.
     """
     mem = Memory(cachedir=env['dir'], verbose=0)
-
     func = mem.cache(count_and_append)
     # call the function for the first time, is should cache it with
     # argument x=[]
@@ -352,7 +360,7 @@ def test_func_dir():
     memory = Memory(cachedir=env['dir'], verbose=0)
     path = __name__.split('.')
     path.append('f')
-    path = os.path.join(env['dir'], *path)
+    path = os.path.join(env['dir'], 'joblib', *path)
 
     g = memory.cache(f)
     # Test that the function directory is created on demand
@@ -368,7 +376,7 @@ def test_func_dir():
         g._check_previous_func_code()
 
     # Test the robustness to failure of loading previous results.
-    dir = g.get_output_dir(1)
+    dir, _ = g.get_output_dir(1)
     a = g(1)
     yield nose.tools.assert_true, os.path.exists(dir)
     os.remove(os.path.join(dir, 'output.pkl'))
@@ -385,7 +393,7 @@ def test_persistence():
 
     h = pickle.loads(pickle.dumps(g))
 
-    output_dir = g.get_output_dir(1)
+    output_dir, _ = g.get_output_dir(1)
     yield nose.tools.assert_equal, output, h.load_output(output_dir)
 
 
@@ -407,7 +415,4 @@ def test_format_signature():
 def test_format_signature_numpy():
     """ Test the format signature formatting with numpy.
     """
-
-# FIXME: Need to test that memmapping does not force recomputing.
-
 

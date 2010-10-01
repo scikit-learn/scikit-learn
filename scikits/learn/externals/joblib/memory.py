@@ -37,6 +37,7 @@ from .hashing import hash
 from .func_inspect import get_func_code, get_func_name, filter_args
 from .logger import Logger, format_time
 from . import numpy_pickle
+from .disk import rm_subdirs
 
 FIRST_LINE_TEXT = "# first line:"
 
@@ -156,7 +157,7 @@ class MemorizedFunc(Logger):
     def __call__(self, *args, **kwargs):
         # Compare the function code with the previous to see if the
         # function code has changed
-        output_dir = self.get_output_dir(*args, **kwargs)
+        output_dir, _ = self.get_output_dir(*args, **kwargs)
         # FIXME: The statements below should be try/excepted
         if not (self._check_previous_func_code(stacklevel=3) and 
                                  os.path.exists(output_dir)):
@@ -164,14 +165,14 @@ class MemorizedFunc(Logger):
         else:
             try:
                 return self.load_output(output_dir)
-            except Exception, e:
+            except Exception:
                 # XXX: Should use an exception logger
                 self.warn(
                 'Exception while loading results for '
                 '(args=%s, kwargs=%s)\n %s' %
                     (args, kwargs, traceback.format_exc())
                     )
-                      
+
                 shutil.rmtree(output_dir)
                 return self.call(*args, **kwargs)
 
@@ -209,7 +210,7 @@ class MemorizedFunc(Logger):
                              coerce_mmap=coerce_mmap)
         output_dir = os.path.join(self._get_func_dir(self.func),
                                     argument_hash)
-        return output_dir
+        return output_dir, argument_hash
         
 
     def _write_func_code(self, filename, func_code, first_line):
@@ -244,7 +245,8 @@ class MemorizedFunc(Logger):
         # changed?
 
         if old_first_line == first_line == -1:
-            _, func_name = get_func_name(self.func, resolv_alias=False)
+            _, func_name = get_func_name(self.func, resolv_alias=False,
+                                         win_characters=False)
             if not first_line == -1:
                 func_description = '%s (%s:%i)' % (func_name, 
                                                 source_file, first_line)
@@ -298,17 +300,17 @@ class MemorizedFunc(Logger):
         """ Force the execution of the function with the given arguments and 
             persist the output values.
         """
+        start_time = time.time()
         if self._verbose:
             print self.format_call(*args, **kwargs)
-            start_time = time.time()
-        output_dir = self.get_output_dir(*args, **kwargs)
+        output_dir, argument_hash = self.get_output_dir(*args, **kwargs)
         output = self.func(*args, **kwargs)
         self._persist_output(output, output_dir)
-        self._persist_input(output_dir, *args, **kwargs)
+        input_repr = self._persist_input(output_dir, *args, **kwargs)
+        duration = time.time() - start_time
         if self._verbose:
             _, name = get_func_name(self.func)
-            msg = '%s - %s' % (name, 
-                               format_time(time.time() - start_time))
+            msg = '%s - %s' % (name, format_time(duration))
             print max(0, (80 - len(msg)))*'_' + msg
         return output
 
@@ -374,12 +376,14 @@ class MemorizedFunc(Logger):
         """
         argument_dict = filter_args(self.func, self.ignore,
                                     *args, **kwargs)
+
+        input_repr = dict((k, repr(v)) for k, v in argument_dict.iteritems())
         if json is not None:
             json.dump(
-                dict((k, repr(v)) 
-                    for k, v in argument_dict.iteritems()),
+                input_repr,
                 file(os.path.join(output_dir, 'input_args.json'), 'w'),
                 )
+        return input_repr
 
     def load_output(self, output_dir):
         """ Read the results of a previous calculation from the directory
@@ -448,11 +452,14 @@ class Memory(Logger):
         # XXX: Bad explaination of the None value of cachedir
         Logger.__init__(self)
         self._verbose = verbose
-        self.cachedir = cachedir
         self.save_npy = save_npy
         self.mmap_mode = mmap_mode
-        if cachedir is not None and not os.path.exists(self.cachedir):
-            os.makedirs(self.cachedir)
+        if cachedir is None:
+            self.cachedir = None
+        else:
+            self.cachedir = os.path.join(cachedir, 'joblib')
+            if not os.path.exists(self.cachedir):
+                os.makedirs(self.cachedir)
 
 
     def cache(self, func=None, ignore=None):
@@ -485,8 +492,7 @@ class Memory(Logger):
         """
         if warn:
             self.warn('Flushing completely the cache')
-        shutil.rmtree(self.cachedir)
-        os.makedirs(self.cachedir)
+        rm_subdirs(self.cachedir)
 
 
     def eval(self, func, *args, **kwargs):
