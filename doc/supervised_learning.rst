@@ -30,7 +30,6 @@ Supervised learning
     modules/glm
     modules/neighbors
     modules/logistic
-    modules/ann
     modules/feature_selection
 
 
