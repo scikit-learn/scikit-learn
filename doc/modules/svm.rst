@@ -20,10 +20,10 @@ The advantages of Support Vector Machines are:
       support vectors), so it is also memory efficient.
 
     - Versatile: different :ref:`svm_kernels` can be
-      specified for the decission function. Common kernels are
+      specified for the decision function. Common kernels are
       provided, but it is also possible to specify custom kernels.
 
-The dissadvantages of Support Vector Machines include:
+The disadvantages of Support Vector Machines include:
 
     - If the number of features is much greater than the number of
       samples, the method is likely to give poor performances.
@@ -117,7 +117,7 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are two flavours of Support Vector Regression: :class:`SVR` and
+There are two flavors of Support Vector Regression: :class:`SVR` and
 :class:`NuSVR`.
 
 As with classification classes, the fit method will take as
@@ -180,7 +180,7 @@ Tips on Practical Use
 
   * Support Vector Machine algorithms are not scale invariant, so it
     is highly recommended to scale your data. For example, scale each
-    attribute on the input vector X to [0,1] or [-1,+1], or standarize
+    attribute on the input vector X to [0,1] or [-1,+1], or standardize
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
     results. See `The CookBook
@@ -193,7 +193,7 @@ Tips on Practical Use
   * If data for classification are unbalanced (e.g. many positive and
     few negative), try different penalty parameters C.
 
-  * Specify larger cache size (keyworkd cache) for huge problems.
+  * Specify larger cache size (keyword cache) for huge problems.
 
 
 .. _svm_kernels:
@@ -213,7 +213,7 @@ The *kernel function* can be any of the following:
 
   * sigmoid (:math:`tanh(<x_i,x_j> + r)`).
 
-Different kernels are specified by keword kernel at initialization::
+Different kernels are specified by keyword kernel at initialization::
 
     >>> linear_svc = svm.SVC(kernel='linear')
     >>> linear_svc.kernel
@@ -277,11 +277,11 @@ fit method.
 Mathematical formulation
 ========================
 
-A support vector machine constructs a hyperplane or set of hyperplanes
+A support vector machine constructs a hyper-plane or set of hyper-planes
 in a high or infinite dimensional space, which can be used for
 classification, regression or other tasks. Intuitively, a good
-separation is achieved by the hyperplane that has the largest distance
-to the nearest training datapoints of any class (so-called functional
+separation is achieved by the hyper-plane that has the largest distance
+to the nearest training data points of any class (so-called functional
 margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
@@ -352,7 +352,7 @@ This parameters can be accessed through the members support\_ and intercept\_:
 NuSVC
 -----
 
-We introduce a new parameter :math:`\nu` wich controls the number of
+We introduce a new parameter :math:`\nu` which controls the number of
 support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
