@@ -142,3 +142,10 @@ Developement
 
    developers/index
    performance
+
+About
+=====
+.. toctree::
+   :maxdepth: 2
+
+   about
