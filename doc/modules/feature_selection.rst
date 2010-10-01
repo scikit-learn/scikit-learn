@@ -13,7 +13,7 @@ univariate test statistic. Although it can seen as a preprocessing step
 to an estimator, `scikit.learn` exposes an object to wrap as existing
 estimator with feature selection and expose a new estimator:
 
-.. autofunction:: scikits.learn.feature_selection.univ_selection.UnivSelection
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.UnivSelection
 
 This object takes another estimator, a scoring function that returns
 univariate p values, and a selection function that selects attributes.
@@ -29,25 +29,25 @@ Feature scoring functions
 For classification
 .......................
 
-.. autofunction:: scikits.learn.feature_selection.univ_selection.f_classif
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.f_classif
 
 For regression
 .................
 
-.. autofunction:: scikits.learn.feature_selection.univ_selection.f_regression
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.f_regression
 
 Feature selection functions
 ----------------------------
 
-.. autofunction:: scikits.learn.feature_selection.univ_selection.select_k_best
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.select_k_best
 
-.. autofunction:: scikits.learn.feature_selection.univ_selection.select_percentile
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.select_percentile
 
-.. autofunction:: scikits.learn.feature_selection.univ_selection.select_fpr
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.select_fpr
 
-.. autofunction:: scikits.learn.feature_selection.univ_selection.select_fdr
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.select_fdr
 
-.. autofunction:: scikits.learn.feature_selection.univ_selection.select_fwe
+.. autofunction:: scikits.learn.feature_selection.univariate_selection.select_fwe
 
 
 Examples
