@@ -126,7 +126,7 @@ K-fold
 
 The *K-fold* divides all the samples in *K* groups of samples, called folds (if
 :math:`K = n`, we retrieve the *LOO*), of equal sizes (if possible). The
-prediction function is learned using *K − 1* folds, and the fold left out is
+prediction function is learned using *K - 1* folds, and the fold left out is
 used for test. 
 
 
