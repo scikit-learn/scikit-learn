@@ -88,7 +88,13 @@ Nearest Neighbors
    :template: class.rst
 
    neighbors.Neighbors
+   ball_tree.BallTree
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   ball_tree.knn_brute
 
 Gaussian Mixture Models
 =======================
