@@ -98,30 +98,28 @@ scikits.learn: machine learning in python
         </div>
 
 
-User guide
-======================
-
 .. warning:: 
 
    This documentation is relative to the development version,
    documentation for the stable version can be found `here
    <http://scikit-learn.sourceforge.net/old_doc/>`__
 
+
+First steps
+======================
+
 .. toctree::
    :maxdepth: 3
 
    install
-
-Tutorial
-========
 
 .. toctree::
    :maxdepth: 2
 
    tutorial
 
-Reference
-=========
+User guide
+==========
 
 .. toctree::
    :maxdepth: 2
@@ -130,6 +128,10 @@ Reference
    unsupervised_learning
    model_selection
    cross_validation
+
+.. toctree::
+   :maxdepth: 1
+
    modules/classes
 
 .. only:: html
