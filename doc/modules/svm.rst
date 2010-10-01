@@ -339,14 +339,16 @@ This parameters can be accessed through the members support\_ and intercept\_:
 
 .. topic:: References:
 
- * *"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"*
-   I Guyon, B Boser, V Vapnik - Advances in neural information processing
-   1993,
-   http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215
+ * `"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
+   I Guyon, B Boser, V Vapnik - Advances in neural information
+   processing 1993,
    
- * *"Support-vector networks"* C. Cortes, V. Vapnik, 
-   Machine Leaming, 20, 273-297 (1995)
-   http://www.springerlink.com/content/k238jx04hm87j80g/
+   
+ * `"Support-vector networks"
+   <http://www.springerlink.com/content/k238jx04hm87j80g/>`_
+   C. Cortes, V. Vapnik, Machine Leaming, 20, 273-297 (1995)
+   
 
 
 NuSVC
