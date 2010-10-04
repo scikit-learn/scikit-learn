@@ -5,8 +5,9 @@ Support Vector Machines
 .. currentmodule:: scikits.learn.svm
 
 **Support vector machines (SVMs)** are a set of supervised learning
-methods used for classification_, regression_
-and :ref:`outliers detection <svm_outlier_detection>`.
+methods used for :ref:`classification <svm_classification>`,
+:ref:`regression <svm_regression>` and :ref:`outliers detection
+<svm_outlier_detection>`.
 
 The advantages of Support Vector Machines are:
 
@@ -19,10 +20,10 @@ The advantages of Support Vector Machines are:
       support vectors), so it is also memory efficient.
 
     - Versatile: different :ref:`svm_kernels` can be
-      specified for the decission function. Common kernels are
+      specified for the decision function. Common kernels are
       provided, but it is also possible to specify custom kernels.
 
-The dissadvantages of Support Vector Machines include:
+The disadvantages of Support Vector Machines include:
 
     - If the number of features is much greater than the number of
       samples, the method is likely to give poor performances.
@@ -33,6 +34,8 @@ The dissadvantages of Support Vector Machines include:
       performance can suffer.  See method predict_proba for more
       information.
 
+
+.. _svm_classification:
 
 Classification
 ==============
@@ -98,6 +101,8 @@ Member `n_support_` holds the number of support vectors for each class:
  * :ref:`example_svm_plot_svm_anova.py`,
  * :ref:`example_svm_plot_svm_nonlinear.py`
 
+.. _svm_regression:
+
 Regression
 ==========
 
@@ -112,7 +117,7 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are two flavours of Support Vector Regression: :class:`SVR` and
+There are two flavors of Support Vector Regression: :class:`SVR` and
 :class:`NuSVR`.
 
 As with classification classes, the fit method will take as
@@ -150,7 +155,7 @@ will only take as input an array X, as there are no class labels.
  * :ref:`example_svm_plot_oneclass.py`
 
 
-.. currentmodule:: scikits.learn.sparse.svm
+.. currentmodule:: scikits.learn.svm.sparse
 
 Support Vector machines for sparse data
 =======================================
@@ -165,8 +170,9 @@ For maximum efficiency, use the CSR matrix format as defined in
 `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
-See the complete listing of classes in
-:ref:`sparse_svm_class_reference`.
+Implemented classes are :class:`SVC`, :class:`NuSVC`,
+:class:`SVR`, :class:`NuSVR`, :class:`OneClassSVM`,
+:class:`LinearSVC`.
 
 
 Tips on Practical Use
@@ -174,7 +180,7 @@ Tips on Practical Use
 
   * Support Vector Machine algorithms are not scale invariant, so it
     is highly recommended to scale your data. For example, scale each
-    attribute on the input vector X to [0,1] or [-1,+1], or standarize
+    attribute on the input vector X to [0,1] or [-1,+1], or standardize
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
     results. See `The CookBook
@@ -187,7 +193,7 @@ Tips on Practical Use
   * If data for classification are unbalanced (e.g. many positive and
     few negative), try different penalty parameters C.
 
-  * Specify larger cache size (keyworkd cache) for huge problems.
+  * Specify larger cache size (keyword cache) for huge problems.
 
 
 .. _svm_kernels:
@@ -207,7 +213,7 @@ The *kernel function* can be any of the following:
 
   * sigmoid (:math:`tanh(<x_i,x_j> + r)`).
 
-Different kernels are specified by keword kernel at initialization::
+Different kernels are specified by keyword kernel at initialization::
 
     >>> linear_svc = svm.SVC(kernel='linear')
     >>> linear_svc.kernel
@@ -271,11 +277,11 @@ fit method.
 Mathematical formulation
 ========================
 
-A support vector machine constructs a hyperplane or set of hyperplanes
+A support vector machine constructs a hyper-plane or set of hyper-planes
 in a high or infinite dimensional space, which can be used for
 classification, regression or other tasks. Intuitively, a good
-separation is achieved by the hyperplane that has the largest distance
-to the nearest training datapoints of any class (so-called functional
+separation is achieved by the hyper-plane that has the largest distance
+to the nearest training data points of any class (so-called functional
 margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
@@ -313,7 +319,7 @@ Its dual is
 
 where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
 is an l by l positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
-x_j)` and :math:`\phi (x_i)^T \ phi (x)` is the kernel. Here training
+x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
 vectors are mapped into a higher (maybe infinite) dimensional space by
 the function :math:`\phi`
 
@@ -333,20 +339,22 @@ This parameters can be accessed through the members support\_ and intercept\_:
 
 .. topic:: References:
 
- * *"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"*
-   I Guyon, B Boser, V Vapnik - Advances in neural information processing
-   1993,
-   http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215
+ * `"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
+   I Guyon, B Boser, V Vapnik - Advances in neural information
+   processing 1993,
    
- * *"Support-vector networks"* C. Cortes, V. Vapnik, 
-   Machine Leaming, 20, 273-297 (1995)
-   http://www.springerlink.com/content/k238jx04hm87j80g/
+   
+ * `"Support-vector networks"
+   <http://www.springerlink.com/content/k238jx04hm87j80g/>`_
+   C. Cortes, V. Vapnik, Machine Leaming, 20, 273-297 (1995)
+   
 
 
 NuSVC
 -----
 
-We introduce a new parameter :math:`\nu` wich controls the number of
+We introduce a new parameter :math:`\nu` which controls the number of
 support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.

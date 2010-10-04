@@ -7,14 +7,6 @@ import warnings
 
 import numpy as np
 
-from scipy import sparse
-from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
-from scipy.sparse.linalg import lobpcg
-try:
-    from pyamg import smoothed_aggregation_solver
-    amg_loaded = True
-except ImportError:
-    amg_loaded = False 
 
 from ..base import BaseEstimator
 from ..utils.graph import graph_laplacian
@@ -46,6 +38,16 @@ def spectral_embedding(adjacency, k=8, mode=None):
         The graph should contain only one connect component,
         elsewhere the results make little sens.
     """
+
+    from scipy import sparse
+    from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
+    from scipy.sparse.linalg import lobpcg
+    try:
+        from pyamg import smoothed_aggregation_solver
+        amg_loaded = True
+    except ImportError:
+        amg_loaded = False 
+
     n_nodes = adjacency.shape[0]
     # XXX: Should we check that the matrices given is symmetric
     if not amg_loaded:

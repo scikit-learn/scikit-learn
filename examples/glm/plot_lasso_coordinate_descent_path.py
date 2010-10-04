@@ -42,16 +42,15 @@ coefs_enet = np.array([model.coef_ for model in models])
 ################################################################################
 # Display results
 
-color_iter = cycle(['b', 'g', 'r', 'c', 'm', 'y', 'k'])
-for color, coef_lasso, coef_enet in zip(color_iter,
-                            coefs_lasso.T, coefs_enet.T):
-    pl.plot(-np.log10(alphas_lasso), coef_lasso, color)
-    pl.plot(-np.log10(alphas_enet), coef_enet, color + '--')
+ax = pl.gca()
+ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
+l1 = pl.plot(coefs_lasso)
+l2 = pl.plot(coefs_enet, linestyle='--')
 
 pl.xlabel('-Log(lambda)')
 pl.ylabel('weights')
 pl.title('Lasso and Elastic-Net Paths')
-pl.legend(['Lasso','Elastic-Net'])
+pl.legend((l1[-1], l2[-1]), ('Lasso', 'Elastic-Net'), loc='lower left')
 pl.axis('tight')
 pl.show()
 

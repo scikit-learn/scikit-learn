@@ -220,17 +220,3 @@ class GridSearchCV(BaseEstimator):
         # found has a score function.
         y_predicted = self.predict(X)
         return -self.loss_func(y_predicted, y)
-
-if __name__ == '__main__':
-    from scikits.learn.svm import SVC
-    from scikits.learn import datasets
-
-    iris = datasets.load_iris()
-
-    # Add the noisy data to the informative features
-    X = iris.data
-    y = iris.target
-
-    svc = SVC(kernel='linear')
-    clf = GridSearchCV(svc, {'C':[1, 10]}, n_jobs=1)
-    print clf.fit(X, y).predict([[-0.8, -1]])

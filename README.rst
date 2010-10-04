@@ -87,6 +87,6 @@ Testing
 To execute the test suite, run from the project's top directory (you
 will need to have nosetest installed)::
 
-    nosetests
+    python test.py
 
 

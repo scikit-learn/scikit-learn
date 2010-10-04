@@ -11,7 +11,7 @@ import pickle
 import hashlib
 import sys
 import cStringIO
-
+import types
 
 class Hasher(pickle.Pickler):
     """ A subclass of pickler, to do cryptographic hashing, rather than
@@ -31,9 +31,18 @@ class Hasher(pickle.Pickler):
         if return_digest:
             return self._hash.hexdigest()
 
+    def save(self, obj):
+        if isinstance(obj, types.MethodType):
+            # the Pickler cannot pickle instance methods; here we decompose
+            # them into components that make them uniquely identifiable
+            func_name = obj.im_func.__name__
+            inst = obj.im_self
+            cls = obj.im_class
+            obj = (func_name, inst, cls)
+        pickle.Pickler.save(self, obj)
 
 class NumpyHasher(Hasher):
-    """ Special case the haser for when numpy is loaded.
+    """ Special case the hasher for when numpy is loaded.
     """
 
     def __init__(self, hash_name='md5', coerce_mmap=False):

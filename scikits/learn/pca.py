@@ -25,8 +25,8 @@ def _assess_dimension_(spect, rk, n_samples, dim):
     -------
     ll, float, The log-likelihood
 
-    Note
-    ----
+    Notes
+    -----
     This implements the method of Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
     """

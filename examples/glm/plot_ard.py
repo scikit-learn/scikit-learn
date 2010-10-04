@@ -1,50 +1,47 @@
 """
 ==================================================
-Automatic Relevance Determination Regression
+Automatic Relevance Determination Regression (ARD)
 ==================================================
-"""
 
-from scikits.learn.glm import ARDRegression
+Fit regression model with ARD
+"""
+print __doc__
+
 import numpy as np
 import pylab as pl
-import numpy.random as nr
-import scipy.stats as st
+from scipy import stats
 
+from scikits.learn.glm import ARDRegression
 
 ################################################################################
 # Generating simulated data with Gaussian weigthts
 
 ### Parameters of the example
-nr.seed(0)
-n_samples = 50
-n_features = 100
+np.random.seed(0)
+n_samples, n_features = 50, 100
 ### Create gaussian data
-X = nr.randn(n_samples, n_features)
+X = np.random.randn(n_samples, n_features)
 ### Create weigts with a precision lambda_ of 4.
 lambda_ = 4.
 w = np.zeros(n_features)
 ### Only keep 10 weights of interest
-relevant_features = nr.randint(0,n_features,10)
+relevant_features = np.random.randint(0, n_features, 10)
 for i in relevant_features:
-  w[i] = st.norm.rvs(loc = 0, scale = 1./np.sqrt(lambda_))
+    w[i] = stats.norm.rvs(loc=0, scale=1. / np.sqrt(lambda_))
 ### Create noite with a precision alpha of 50.
 alpha_ = 50.
-noise =  st.norm.rvs(loc = 0, scale = 1./np.sqrt(alpha_), size = n_samples)
+noise =  stats.norm.rvs(loc=0, scale=1. / np.sqrt(alpha_), size=n_samples)
 ### Create the target
-Y = np.dot(X, w) + noise
-
+y = np.dot(X, w) + noise
 
 ################################################################################
 ### Fit the ARD Regression
 clf = ARDRegression(compute_score = True)
-clf.fit(X, Y)
-
-
+clf.fit(X, y)
 
 ################################################################################
 ### Plot the true weights, the estimated weights and the histogram of the
 ### weights
-
 pl.figure()
 axe = pl.axes([0.1,0.6,0.8,0.325])
 axe.set_title("ARD - Weights of the model")
@@ -65,7 +62,7 @@ axe.legend(loc=1)
 
 axe = pl.axes([0.65,0.1,0.3,0.325])
 axe.set_title("Objective function")
-axe.plot(clf.all_score_)
+axe.plot(clf.scores_)
 axe.set_ylabel("Score")
 axe.set_xlabel("Iterations")
 pl.show()

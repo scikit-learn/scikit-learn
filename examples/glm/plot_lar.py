@@ -33,15 +33,17 @@ X[:,6] *= -1 # To reproduce wikipedia LAR page
 
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-alphas_, _, coefs_ = glm.lars_path(X, y, max_features=9, method="lar")
+_, _, coefs_ = glm.lars_path(X, y, max_features=10, method="lar")
 print "This took ", datetime.now() - start
 
 ###############################################################################
 # Display path
-pl.plot(-np.log10(alphas_), coefs_.T)
+xx = np.sum(np.abs(coefs_), axis=0)
+xx /= xx[-1]
+pl.plot(xx, coefs_.T)
 ymin, ymax = pl.ylim()
-pl.vlines(-np.log10(alphas_), ymin, ymax, linestyle='dashed')
-pl.xlabel('-Log(lambda)') # XXX : wrong label
+pl.vlines(xx, ymin, ymax, linestyle='dashed')
+pl.xlabel('|coef| / max|coef|')
 pl.ylabel('Coefficients')
 pl.title('Least Angle Regression (LAR) Path')
 pl.axis('tight')

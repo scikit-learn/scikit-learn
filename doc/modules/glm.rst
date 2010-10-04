@@ -29,7 +29,6 @@ responses predicted by the linear approximation.
 .. figure:: ../auto_examples/glm/images/plot_ols.png
    :target: ../auto_examples/glm/plot_ols.html
    :scale: 50%
-   :align: center
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
 and will store the coefficients :math:`w` of the linear model in its
@@ -69,7 +68,7 @@ cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
 Ridge Regression
 ================
 
-:class:`Ridge` regression adresses some of the problems of
+:class:`Ridge` regression addresses some of the problems of
 :ref:`ordinary_least_squares` by imposing a penalty on the size of
 coefficients. The ridge coefficients minimize a penalized residual sum
 of squares,
@@ -109,7 +108,7 @@ regularizer. The objective function to minimize is:
 
 .. math::  0.5 * ||y - X w||_2 ^ 2 + \alpha * ||w||_1
 
-The lasso estimate thus solves the minization of the
+The lasso estimate thus solves the minimization of the
 least-squares penalty with :math:`\alpha * ||w||_1` added, where
 :math:`\alpha` is a constant and :math:`||w||_1` is the L1-norm of the
 parameter vector.
@@ -122,7 +121,7 @@ this reason, the Lasso and its variants are fundamental to the field
 of compressed sensing.
 
 This implementation uses coordinate descent as the algorithm to fit
-the coeffcients. See :ref:`lars_algorithm` for another implementation.
+the coefficients. See :ref:`lars_algorithm` for another implementation.
 
     >>> clf = glm.Lasso(alpha = 0.1)
     >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
@@ -145,7 +144,7 @@ Elastic Net
 regularizer.
 
 
-The objective function to minize is in this case
+The objective function to minimize is in this case
 
 .. math::        0.5 * ||y - X w||_2 ^ 2 + \alpha * \rho * ||w||_1 + \alpha * (1-\rho) * 0.5 * ||w||_2 ^ 2
 
@@ -181,7 +180,7 @@ The advantages of LARS are:
   - It is easily modified to produce solutions for other estimators,
     like the Lasso. 
 
-  - It is effective in contexts where p >> n (IE, when the number of
+  - It is effective in contexts where p >> n (i.e., when the number of
     dimensions is significantly greater than the number of points)
 
 The disadvantages of the LARS method include:
@@ -240,7 +239,7 @@ column is always zero.
 
 .. topic:: References:
 
- * Original Algorithm is detailed in the `paper
+ * Original Algorithm is detailed in the paper `Least Angle Regression
    <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
@@ -249,11 +248,11 @@ column is always zero.
 Bayesian Regression
 ===================
 
-Bayesian regression techniques can be used to include regularization parameters
-in the estimation procedure. This can be done by introducing some prior
-knowledge over the parameters. 
-For example, penalization by weighted :math:`\ell_{2}` norm is equivalent to
-setting Gaussian priors on the weights. 
+Bayesian regression techniques can be used to include regularization
+parameters in the estimation procedure. This can be done by
+introducing some prior knowledge over the parameters.  For example,
+penalization by weighted :math:`\ell_{2}` norm is equivalent to
+setting Gaussian priors on the weights.
 
 The advantages of *Bayesian Regression* are:
 
@@ -262,7 +261,7 @@ The advantages of *Bayesian Regression* are:
     - It can be used to include regularization parameters in the
       estimation procedure.
 
-The dissadvantages of *Bayesian Regression* include:
+The disadvantages of *Bayesian Regression* include:
 
     - Inference of the model can be time consuming.
 

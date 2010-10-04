@@ -91,7 +91,6 @@ def test_infer_dim_3():
     pca = PCA(n_comp=p)
     pca.fit(X)
     spect = pca.explained_variance_
-    print _infer_dimension_(spect, n, p)
     assert_true(_infer_dimension_(spect, n, p) > 2)
 
 
