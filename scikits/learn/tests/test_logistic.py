@@ -1,6 +1,9 @@
 import numpy as np
-from numpy.testing import assert_array_equal, assert_raises, \
-                assert_, assert_array_almost_equal, decorators
+
+from numpy.testing import assert_array_equal, \
+     assert_array_almost_equal
+import nose
+from nose.tools import assert_raises
 
 from .. import logistic, datasets
 
@@ -42,13 +45,13 @@ def test_predict_iris():
     clf = logistic.LogisticRegression().fit(iris.data, iris.target)
     pred = clf.predict(iris.data)
 
-    assert_ ( np.mean(pred == iris.target) > .95 )
+    assert np.mean(pred == iris.target) > .95
 
-@decorators.skipif(True, "XFailed test")
 def test_predict_proba():
     """
     I think this test is wrong. Is there a way to know the right results ?
     """
+    raise nose.SkipTest("XFailed test")
     clf = logistic.LogisticRegression().fit(X, Y2)
     assert_array_almost_equal(clf.predict_proba([[1, 1]]),
                               [[ 0.21490268,  0.32639437,  0.45870294]])

@@ -6,17 +6,19 @@
 import numpy as np
 
 from numpy.testing import assert_array_equal, \
-                          assert_array_almost_equal, decorators
+                          assert_array_almost_equal
+
+import nose
 
 from ..bayes import BayesianRidge, ARDRegression
 
 from scikits.learn import datasets
 
-@decorators.skipif(True, "XFailed test")
 def test_bayesian_on_diabetes():
     """
     Test BayesianRidge on diabetes
     """
+    raise nose.SkipTest("XFailed Test")
     diabetes = datasets.load_diabetes()
     X, y = diabetes.data, diabetes.target
 

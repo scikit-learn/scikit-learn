@@ -130,6 +130,7 @@ def test_sparse_tf_idf():
 
 
 def test_dense_sparse_idf_sanity():
+
     hv = HashingVectorizer(dim=100, probes=3)
     shv = SparseHashingVectorizer(dim=100, probes=3)
 

@@ -2,19 +2,21 @@ import numpy as np
 import scipy.sparse
 from scikits.learn import datasets, svm
 from numpy.testing import assert_array_almost_equal, \
-     assert_array_equal, assert_equal, assert_raises
+     assert_array_equal, assert_equal
+
+from nose.tools import assert_raises
 
 # test sample 1
-X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 Y = [1, 1, 1, 2, 2, 2]
-T = [[-1, -1], [2, 2], [3, 2]]
+T = np.array([[-1, -1], [2, 2], [3, 2]])
 true_result = [1, 2, 2]
 
 # test sample 2
-X2 = [[0, 0, 0], [1, 1, 1], [2, 0, 0, ],
-      [0, 0, 2], [3, 3, 3]]
+X2 = np.array([[0, 0, 0], [1, 1, 1], [2, 0, 0, ],
+               [0, 0, 2], [3, 3, 3]])
 Y2 = [1, 2, 2, 2, 3]
-T2 = [[-1, -1, -1], [1, 1, 1], [2, 2, 2]]
+T2 = np.array([[-1, -1, -1], [1, 1, 1], [2, 2, 2]])
 true_result2 = [1, 2, 3]
 
 

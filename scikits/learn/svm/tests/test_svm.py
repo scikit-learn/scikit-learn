@@ -6,7 +6,8 @@ TODO: remove hard coded numerical results when possible
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
-                          assert_almost_equal, assert_raises, assert_
+                          assert_almost_equal
+from nose.tools import assert_raises
 
 from scikits.learn import svm, datasets
 
@@ -262,5 +263,5 @@ def test_LinearSVC_iris():
     Test that LinearSVC gives plausible predictions on the iris dataset
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
-    assert_ (np.mean(clf.predict(iris.data) == iris.target) > 0.95)
+    assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
