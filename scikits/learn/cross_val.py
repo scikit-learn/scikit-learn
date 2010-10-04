@@ -11,6 +11,7 @@ import numpy as np
 
 from .base import is_classifier, clone
 from .utils.extmath import factorial, combinations
+from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
 ##############################################################################
@@ -257,7 +258,7 @@ class StratifiedKFold(object):
         assert k>0, ValueError('cannot have k below 1')
         assert k<n, ValueError('cannot have k=%d greater than the number '
                                'of samples %d' % (k, n))
-        _, y_sorted = np.unique1d(y, return_inverse=True)
+        _, y_sorted = unique(y, return_inverse=True)
         assert k <= np.min(np.bincount(y_sorted))
         self.y = y
         self.k = k
@@ -267,7 +268,7 @@ class StratifiedKFold(object):
         k = self.k
         n = y.size
 
-        classes = np.unique(y)
+        classes = unique(y)
 
         idx_c = dict()
         j_c = dict()
@@ -345,12 +346,12 @@ class LeaveOneLabelOut(object):
 
         """
         self.labels = labels
-        self.n_labels = np.unique(labels).size
+        self.n_labels = unique(labels).size
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
-        for i in np.unique(labels):
+        for i in unique(labels):
             test_index  = np.zeros(len(labels), dtype=np.bool)
             test_index[labels==i] = True
             train_index = np.logical_not(test_index)
@@ -412,14 +413,14 @@ class LeavePLabelOut(object):
 
         """
         self.labels = labels
-        self.unique_labels = np.unique(self.labels)
+        self.unique_labels = unique(self.labels)
         self.n_labels = self.unique_labels.size
         self.p = p
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
-        unique_labels = np.unique(labels)
+        unique_labels = unique(labels)
         n_labels = unique_labels.size
         comb = combinations(range(n_labels), self.p)
 

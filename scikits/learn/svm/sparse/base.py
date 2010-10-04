@@ -108,13 +108,13 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.support_ = sparse.csr_matrix((self._support_data,
                                            self._support_indices,
                                            self._support_indptr),
-                                          shape=(n_SV, X.shape[1])
+                                          (n_SV, X.shape[1])
                                           )
 
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
                                              dual_coef_indptr),
-                                            shape=(n_class, n_SV)
+                                            (n_class, n_SV)
                                             )
         return self
 
