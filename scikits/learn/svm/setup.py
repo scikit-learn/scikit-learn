@@ -51,6 +51,9 @@ def configuration(parent_package='', top_path=None):
     liblinear_sources = [join('src', 'liblinear', '_liblinear.c'),
                          join('src', 'liblinear', '*.cpp')]
 
+    liblinear_depends = [join('src', 'liblinear', '*.h'),
+                         join('src', 'liblinear', 'liblinear_helper.c')]
+
     # we try to link agains system-wide blas
     blas_info = get_info('blas_opt', 0)
 
@@ -64,7 +67,7 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=['src',
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
-                         depends=[join('src', 'liblinear', '*.h')],
+                         depends=liblinear_depends,
                          **blas_info)
 
     ## end liblinear module
