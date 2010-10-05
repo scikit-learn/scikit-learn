@@ -24,7 +24,7 @@ from . import logistic
 from . import lda
 from . import metrics
 from . import svm
-from . import features
+from . import feature_selection
 
 try:
     from numpy.testing import nosetester
