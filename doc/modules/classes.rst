@@ -158,3 +158,14 @@ Cross-validation
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
 
+.. _feature_selection_ref:
+
+Feature Selection
+=================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_selection.rfe.RFE
+   feature_selection.rfe.RFECV
