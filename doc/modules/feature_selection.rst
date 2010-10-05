@@ -49,6 +49,6 @@ For regression
 Examples
 ----------
 
-.. literalinclude:: ../../examples/plot_feature_selection.py
+:ref:`example_plot_feature_selection.py`
 
 
