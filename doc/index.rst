@@ -109,13 +109,9 @@ First steps
 ======================
 
 .. toctree::
-   :maxdepth: 3
-
-   install
-
-.. toctree::
    :maxdepth: 2
 
+   install
    tutorial
 
 User guide
