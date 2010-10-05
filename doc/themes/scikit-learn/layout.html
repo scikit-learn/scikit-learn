@@ -90,26 +90,30 @@
         the <a href="http://github.com/scikit-learn/scikit-learn">source
         code</a>, join the
         <a href="{{pathto('support')}}#mailing-list">mailing
-        lists</a>, <a href="http://sourceforge.net/apps/trac/scikit-learn/report/1">issue
+        lists</a>, report bugs to
+        the <a href="http://sourceforge.net/apps/trac/scikit-learn/report/1">issue
         tracker</a> or participate in the next
         <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>.
         </p>
 
-        <h3>Funding</h3>
-        <p>Funding provided by <a href="http://www.inria.fr">INRIA</a> and
-        <a href="http://http://code.google.com/opensource/">Google</a>.</p>
-        <p style="text-align: center;"><a href="http://www.inria.fr"><img src="{{pathto('_static',1)}}/inria-small.jpg"
-        alt="INRIA"/></a></p>
-        <p></p>
-        <p style="text-align: center;"><a href="http://http://code.google.com/opensource/"><img src="{{pathto('_static',1)}}/google-logo.png"
-        alt="INRIA"/></a></p>
-
-        <p>See section <a href="{{pathto('about')}}">about</a> for
-        more information. </p>
         {% endif %}
 
         <h3>{{ _('Contents') }}</h3>
          {{ toc }}
+
+        {% if pagename == 'index' %}
+        <h3>Funding</h3>
+        <p>Generous funding provided
+        by <a href="http://www.inria.fr">INRIA</a>,
+        <a href="http://http://code.google.com/opensource/">Google</a>
+        and others.</p>
+        <p style="text-align: center;"><a href="http://www.inria.fr"><img src="{{pathto('_static',1)}}/inria-small.jpg"
+        alt="INRIA"/></a></p>
+        <p style="text-align: center;"><a href="http://http://code.google.com/opensource/"><img src="{{pathto('_static',1)}}/google-logo.png"
+        alt="INRIA"/></a></p>
+
+        <p><a href="{{pathto('about')}}">Read more ...</a></p>
+        {% endif %}
 
         </div>
 

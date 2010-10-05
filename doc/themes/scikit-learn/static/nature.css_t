@@ -185,7 +185,11 @@ div.sphinxsidebar h4 {
     background-color: #4EACC5;
     font-weight: normal;
     color: white;
-    margin: 30px 20px 0;
+    margin: 25px 20px 0;
+}
+
+div.sphinxsidebar img {
+    margin: 5px;
 }
  
  
