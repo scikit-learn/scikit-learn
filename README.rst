@@ -85,12 +85,9 @@ https://sourceforge.net/apps/trac/scikit-learn/report
 Testing
 -------
 
-To execute the test suite, you must first compile the sources inplace::
-
-   python setup.py build_ext --inplace
-
-and then run from the same directory (you will need to have nosetest
-installed)::
+After having installed the software, you can launch the test suite by
+executing the script test.py in this diretory (you will need to have
+nosetest installed)::
 
     python test.py
 

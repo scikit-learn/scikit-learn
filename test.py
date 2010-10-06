@@ -7,4 +7,8 @@
 import nose
 
 if __name__ == '__main__':
-    nose.run('scikits.learn')
+    try:
+        import scikits.learn as skl
+        skl.test()
+    except ImportError:
+        nose.run('scikits.learn')
