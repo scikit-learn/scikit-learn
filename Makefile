@@ -1,5 +1,7 @@
 # simple makefile to simplify repetetive build env management tasks under posix
 
+# caution: testing won't work on windows, see README
+
 PYTHON ?= python
 NOSETESTS ?= nosetests
 
@@ -22,6 +24,6 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test: in
-	$(PYTHON) test.py
+	$(NOSETESTS)
 test-doc:
 	$(NOSETESTS) --doctest-extension=rst doc/
