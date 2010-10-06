@@ -1,3 +1,9 @@
+scikit-learn (0.5~rc3-1) unstable; urgency=low
+
+  * New upstream release-candidate
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 06 Oct 2010 15:05:40 -0400
+
 scikit-learn (0.4-3) unstable; urgency=low
 
   * Acknowledging Nico's NMU
