@@ -169,3 +169,34 @@ Feature Selection
 
    feature_selection.rfe.RFE
    feature_selection.rfe.RFECV
+
+.. _feature_extraction_ref:
+
+Feature Extraction
+==================
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   feature_extraction.image.img_to_graph
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_extraction.text.WordNGramAnalyzer
+   feature_extraction.text.CharNGramAnalyzer
+   feature_extraction.text.TermCountVectorizer
+   feature_extraction.text.TfidfTransformer
+   feature_extraction.text.TfidfVectorizer
+   feature_extraction.text.SparseHashingVectorizer 
+
+Pipeline
+========
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   pipeline.Pipeline

@@ -1,4 +1,6 @@
 
+.. _feature_selection_doc:
+
 =======================
 Feature selection
 =======================

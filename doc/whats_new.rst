@@ -9,25 +9,57 @@
 Changelog
 ---------
 
-New modules
-~~~~~~~~~~~
+New classes
+~~~~~~~~~~~~
 
-    - New Hidden Markov Models module (:ref:`scikits.learn.hmm`)
+    - Support for sparse matrices in some classifiers of modules
+      ``svm`` and ``glm`` (see :class:`svm.sparse.SVC`,
+      :class:`svm.sparse.SVR`, :class:`svm.sparse.LinearSVC`,
+      :class:`glm.sparse.ElasticNet`, :class:`glm.sparse.Lasso`)
 
-    - Support for sparse matrices in modules ``svm`` and ``glm``.
-
-    - Add a Pipeline object to compose different estimators.
+    - New :class:`pipeline.Pipeline` object to compose different estimators.
 
     - Recursive Feature Elimination routines in module
-      :ref:`modules/feature_selection`.
+      :ref:`feature_selection_doc`.
 
     - Addition of various classes capable of cross validation in the
       glm module (:class:`glm.LassoCV`, :class:`glm.ElasticNetCV`,
       etc.).
 
-    - New pure-python LARS algorithm implementation
-      (scikits.learn.glm.lars).
+    - New, more efficient LARS algorithm implementation. The Lasso
+      variant of the algorithm is also implemented. See
+      :class:`glm.lars_path`, :class:`glm.LARS` and
+      :class:`glm.LassoLARS`.
 
+    - New Hidden Markov Models module (see classes
+      :class:`hmm.GaussianHMM`, :class:`hmm.MultinomialHMM`,
+      :class:`hmm.GMMHMM`)
+
+    - New module feature_extraction (see :ref:`class reference
+      <feature_extraction_ref>`)
+
+
+Documentation
+~~~~~~~~~~~~~
+
+    - Improved documentation for many modules, now separating
+      narrative documentation from the class reference. As an example,
+      see `documentation for the SVM module
+      <http://scikit-learn.sourceforge.net/modules/svm.html>`_ and the
+      complete `class reference
+      <http://scikit-learn.sourceforge.net/modules/classes.html>`_.
+
+Fixes
+~~~~~
+
+    - API changes: adhere variable names to PEP-8, give more
+      meaningful names.
+
+    - Fixes for svm module to run on a shared memory context
+      (multiprocessing).
+
+    - It is again possible to generate latex (and thus PDF) from the
+      sphinx docs.
 
 Examples
 ~~~~~~~~
@@ -36,14 +68,9 @@ Examples
       :ref:`example_mlcomp_sparse_document_classification.py`,
       :ref:`example_mlcomp_document_classification.py`
 
-    - Many more examaples.
-
-Fixes
-~~~~~
-
-    - API changes: adhere variable names to PEP-8, give more
-      meaningful names.
-
+    - Many more examaples. `See here
+      <http://scikit-learn.sourceforge.net/auto_examples/index.html>`_
+      the full list of examples.
 
 
 External dependencies
@@ -58,6 +85,11 @@ Removed modules
     - Module ann (Artificial Neural Networks) has been removed from
       the distribution. Users wanting this sort of algorithms should
       take a look into pybrain.
+
+Misc
+~~~~
+
+    - New sphinx theme for the web page.
 
 0.4
 ===
