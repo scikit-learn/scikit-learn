@@ -121,5 +121,5 @@ User guide
    supervised_learning
    unsupervised_learning
    auto_examples/index
-   contribute
+   developers/index
    .. API

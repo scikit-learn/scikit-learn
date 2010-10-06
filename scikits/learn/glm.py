@@ -12,6 +12,7 @@ Generalized Linear models.
 
 import warnings
 
+from math import log10
 import numpy as np
 import scipy.linalg 
 import scipy.sparse as sp # needed by LeastAngleRegression
@@ -20,7 +21,7 @@ from . import cd_fast
 from .utils.extmath import fast_logdet
 from .cross_val import KFold
 from ._minilearn import lars_fit_wrap
-from .base import BaseEstimator, MixinRegressor
+from .base import BaseEstimator, RegressorMixin
 
 ###
 ### TODO: intercept for all models
@@ -31,7 +32,7 @@ from .base import BaseEstimator, MixinRegressor
 ### should be squashed into its respective objects.
 ###
 
-class LinearModel(BaseEstimator, MixinRegressor):
+class LinearModel(BaseEstimator, RegressorMixin):
     """Base class for Linear Models"""
 
     def predict(self, X):
@@ -40,11 +41,11 @@ class LinearModel(BaseEstimator, MixinRegressor):
 
         Parameters
         ----------
-        X : numpy array of shape [nsamples,nfeatures]
+        X : numpy array of shape [n_samples,n_features]
 
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
             Returns predicted values.
         """
         X = np.asanyarray(X)
@@ -58,10 +59,11 @@ class LinearModel(BaseEstimator, MixinRegressor):
 
     def __str__(self):
         if self.coef_ is not None:
-            return ("<%s \n  Fitted: explained variance=%s>" %
-                    (repr(self), self.explained_variance_))
+            return ("%s \n%s #... Fitted: explained variance=%s" %
+                    (repr(self), ' '*len(self.__class__.__name__),  
+                     self.explained_variance_))
         else:
-            return "<%s \n  Not fitted to data>" % repr(self)
+            return "%s \n#... Not fitted to data" % repr(self)
 
 
 class LinearRegression(LinearModel):
@@ -93,9 +95,9 @@ class LinearRegression(LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [nsamples,nfeatures]
+        X : numpy array of shape [n_samples,n_features]
             Training data
-        Y : numpy array of shape [nsamples]
+        Y : numpy array of shape [n_samples]
             Target values
         fit_intercept : boolean, optional
             wether to calculate the intercept for this model. If set
@@ -140,14 +142,13 @@ class Ridge(LinearModel):
     Examples
     --------
     >>> import numpy as np
-    >>> nsamples, nfeatures = 10, 5
+    >>> n_samples, n_features = 10, 5
     >>> np.random.seed(0)
-    >>> Y = np.random.randn(nsamples)
-    >>> X = np.random.randn(nsamples, nfeatures)
+    >>> Y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
-    >>> clf.fit(X, Y) #doctest: +ELLIPSIS
-    Ridge(alpha=1.0,
-          fit_intercept=True)
+    >>> clf.fit(X, Y)
+    Ridge(alpha=1.0, fit_intercept=True)
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True):
@@ -161,9 +162,9 @@ class Ridge(LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [nsamples,nfeatures]
+        X : numpy array of shape [n_samples,n_features]
             Training data
-        Y : numpy array of shape [nsamples]
+        Y : numpy array of shape [n_samples]
             Target values
 
         Returns
@@ -171,7 +172,7 @@ class Ridge(LinearModel):
         self : returns an instance of self.
         """
         self._set_params(**params)
-        nsamples, nfeatures = X.shape
+        n_samples, n_features = X.shape
 
         if self.fit_intercept:
             self._xmean = X.mean(axis=0)
@@ -182,15 +183,15 @@ class Ridge(LinearModel):
             self._xmean = 0.
             self._ymean = 0.
 
-        if nsamples > nfeatures:
+        if n_samples > n_features:
             # w = inv(X^t X + alpha*Id) * X.T y
             self.coef_ = scipy.linalg.solve(
-                np.dot(X.T, X) + self.alpha * np.eye(nfeatures),
+                np.dot(X.T, X) + self.alpha * np.eye(n_features),
                 np.dot(X.T, Y))
         else:
             # w = X.T * inv(X X^t + alpha*Id) y
             self.coef_ = np.dot(X.T, scipy.linalg.solve(
-                np.dot(X, X.T) + self.alpha * np.eye(nsamples), Y))
+                np.dot(X, X.T) + self.alpha * np.eye(n_samples), Y))
 
         self.intercept_ = self._ymean - np.dot(self._xmean, self.coef_)
         return self
@@ -213,9 +214,9 @@ class BayesianRidge(LinearModel):
         """
         Parameters
         ----------
-        X : numpy array of shape [nsamples,nfeatures]
+        X : numpy array of shape [n_samples,n_features]
             Training data
-        Y : numpy array of shape [nsamples]
+        Y : numpy array of shape [n_samples]
             Target values
 
         Returns
@@ -482,7 +483,7 @@ class Lasso(LinearModel):
 
     Attributes
     ----------
-    `coef_` : array, shape = [nfeatures]
+    `coef_` : array, shape = [n_features]
         parameter vector (w in the fomulation formula)
 
     `intercept_` : float
@@ -493,9 +494,8 @@ class Lasso(LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(alpha=0.1,
-          coef_=[ 0.85  0.  ],
-          fit_intercept=True)
+    Lasso(alpha=0.10000000000000001, coef_=array([ 0.85,  0.  ]),
+       fit_intercept=True)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
@@ -518,10 +518,10 @@ class Lasso(LinearModel):
 
         Parameters
         ----------
-        X: numpy array of shape [nsamples,nfeatures]
+        X: numpy array of shape [n_samples,n_features]
             Training data
 
-        Y: numpy array of shape [nsamples]
+        Y: numpy array of shape [n_samples]
             Target values
 
         maxit: int, optional
@@ -548,8 +548,8 @@ class Lasso(LinearModel):
             self._xmean = np.zeros(X.shape[1])
             self._ymean = np.zeros(X.shape[0])
 
-        nsamples = X.shape[0]
-        alpha = self.alpha * nsamples
+        n_samples = X.shape[0]
+        alpha = self.alpha * n_samples
 
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
@@ -617,9 +617,9 @@ class ElasticNet(Lasso):
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
 
-        nsamples = X.shape[0]
-        alpha = self.alpha * self.rho * nsamples
-        beta = self.alpha * (1.0 - self.rho) * nsamples
+        n_samples = X.shape[0]
+        alpha = self.alpha * self.rho * n_samples
+        beta = self.alpha * (1.0 - self.rho) * n_samples
 
         X = np.asfortranarray(X) # make data contiguous in memory
 
@@ -651,10 +651,10 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : numpy array of shape [nsamples,nfeatures]
+    X : numpy array of shape [n_samples,n_features]
         Training data
 
-    Y : numpy array of shape [nsamples]
+    Y : numpy array of shape [n_samples]
         Target values
 
     eps : float, optional
@@ -679,19 +679,22 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
-    nsamples = X.shape[0]
+    n_samples = X.shape[0]
     if alphas is None:
-        alpha_max = np.abs(np.dot(X.T, y)).max() / nsamples
-        alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
-        alphas = np.exp(alphas)
+        alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
+        alphas = np.logspace(log10(alpha_max*eps), log10(alpha_max),
+                             num=n_alphas)[::-1]
     else:
+        # XXX: Maybe should reorder the models when outputing them, so
+        # that they are ordered in the order of the initial alphas
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
     models = []
     for alpha in alphas:
         model = Lasso(coef_=coef_, alpha=alpha)
         model.fit(X, y, **fit_params)
-        if verbose: print model
+        if verbose: 
+            print model
         coef_ = model.coef_.copy()
         models.append(model)
     return models
@@ -703,20 +706,20 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : numpy array of shape [nsamples,nfeatures]
+    X : numpy array of shape [n_samples,n_features]
         Training data
 
-    Y : numpy array of shape [nsamples]
+    Y : numpy array of shape [n_samples]
         Target values
 
     eps : float
         Length of the path. eps=1e-3 means that
         alpha_min / alpha_max = 1e-3
 
-    n_alphas : int
+    n_alphas : int, optional
         Number of alphas along the regularization path
 
-    alphas : numpy array
+    alphas : numpy array, optional
         List of alphas where to compute the models.
         If None alphas are set automatically
 
@@ -731,11 +734,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
-    nsamples = X.shape[0]
+    n_samples = X.shape[0]
     if alphas is None:
-        alpha_max = np.abs(np.dot(X.T, y)).max() / (nsamples*rho)
-        alphas = np.linspace(np.log(alpha_max), np.log(eps * alpha_max), n_alphas)
-        alphas = np.exp(alphas)
+        alpha_max = np.abs(np.dot(X.T, y)).max() / (n_samples*rho)
+        alphas = np.logspace(log10(alpha_max*eps), log10(alpha_max),
+                             num=n_alphas)[::-1]
     else:
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
@@ -765,10 +768,10 @@ class LinearModelCV(LinearModel):
         Parameters
         ----------
 
-        X : numpy array of shape [nsamples,nfeatures]
+        X : numpy array of shape [n_samples,n_features]
             Training data
 
-        Y : numpy array of shape [nsamples]
+        Y : numpy array of shape [n_samples]
             Target values
 
         cv : cross-validation generator, optional
@@ -811,7 +814,9 @@ class LinearModelCV(LinearModel):
 
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
+        self.explained_variance_ = model.explained_variance_
         self.alpha = model.alpha
+        self.alphas = np.asarray(alphas)
         return self
 
 
@@ -835,7 +840,7 @@ class LassoCV(LinearModelCV):
 
     Notes
     -----
-    See examples/lasso_path_with_crossvalidation.py for an example.
+    See examples/glm/lasso_path_with_crossvalidation.py for an example.
     """
 
     path = staticmethod(lasso_path)
@@ -865,7 +870,7 @@ class ElasticNetCV(LinearModelCV):
 
     Notes
     -----
-    See examples/lasso_path_with_crossvalidation.py for an example.
+    See examples/glm/lasso_path_with_crossvalidation.py for an example.
     """
 
     path = staticmethod(enet_path)
@@ -914,10 +919,10 @@ class LeastAngleRegression(LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [nsamples,nfeatures]
+        X : numpy array of shape [n_samples,n_features]
             Training data
 
-        Y : numpy array of shape [nsamples]
+        Y : numpy array of shape [n_samples]
             Target values
 
         fit_intercept : boolean, optional
@@ -991,11 +996,11 @@ class LeastAngleRegression(LinearModel):
 
         Parameters
         ----------
-        X : numpy array of shape [nsamples,nfeatures]
+        X : numpy array of shape [n_samples,n_features]
 
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
             Returns predicted values.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')

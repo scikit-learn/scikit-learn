@@ -6,14 +6,20 @@ import os
 import numpy as np
 from scikits.learn.datasets.base import Bunch
 from scikits.learn.features.text import HashingVectorizer
+from scikits.learn.features.text import SparseHashingVectorizer
 
 
-def _load_document_classification(dataset_path, metadata, set_, **kw):
+def _load_document_classification(dataset_path, metadata, set_, sparse, **kw):
     """Loader implementation for the DocumentClassification format"""
     target = []
     target_names = {}
     filenames = []
-    vectorizer = kw.get('vectorizer', HashingVectorizer())
+    vectorizer = kw.get('vectorizer')
+    if vectorizer is None:
+        if sparse:
+            vectorizer = SparseHashingVectorizer()
+        else:
+            vectorizer = HashingVectorizer()
 
     # TODO: make it possible to plug a several pass system to filter-out tokens
     # that occur in more than 30% of the documents for instance.
@@ -29,7 +35,7 @@ def _load_document_classification(dataset_path, metadata, set_, **kw):
         folder_path = os.path.join(dataset_path, folder)
         documents = [os.path.join(folder_path, d)
                      for d in sorted(os.listdir(folder_path))]
-        vectorizer.vectorize(documents)
+        vectorizer.vectorize_files(documents)
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
@@ -44,7 +50,8 @@ LOADERS = {
 }
 
 
-def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
+def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, sparse=False,
+                **kwargs):
     """Load a datasets as downloaded from http://mlcomp.org
 
     Parameters
@@ -58,6 +65,9 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     mlcomp_root : the filesystem path to the root folder where MLComp datasets
                   are stored, if mlcomp_root is None, the MLCOMP_DATASETS_HOME
                   environment variable is looked up instead.
+
+    sparse : boolean if True then use a scipy.sparse matrix for the data field,
+             False by default
 
     **kwargs : domain specific kwargs to be passed to the dataset loader.
 
@@ -124,6 +134,6 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     loader = LOADERS.get(format)
     if loader is None:
         raise ValueError("No loader implemented for format: " + format)
-    return loader(dataset_path, metadata, set_=set_, **kwargs)
+    return loader(dataset_path, metadata, set_=set_, sparse=sparse, **kwargs)
 
 

@@ -12,7 +12,7 @@ from scikits.learn import svm, datasets, feature_selection, cross_val
 from scikits.learn.pipeline import Pipeline
 
 ################################################################################
-# Omport some data to play with
+# Import some data to play with
 digits = datasets.load_digits()
 y = digits.target
 n_samples = len(y)
@@ -34,7 +34,8 @@ percentiles = (10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
 
 for percentile in percentiles:
     transform._set_params(percentile=percentile)
-    this_scores = cross_val.cross_val_score(clf, X, y)    
+    # Compute cross-validation score using all CPUs
+    this_scores = cross_val.cross_val_score(clf, X, y, n_jobs=-1) 
     score_means.append(this_scores.mean())
     score_stds.append(this_scores.std())
 
@@ -43,7 +44,7 @@ pl.errorbar(percentiles, score_means, np.array(score_stds))
 pl.title(
     'Performance of the SVM-Anova varying the percentile of features selected')
 pl.xlabel('Percentile')
-pl.ylabel('Cross-validation score')
+pl.ylabel('Cross-validation errors rate')
 
 pl.axis('tight')
 pl.show()

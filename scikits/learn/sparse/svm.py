@@ -18,10 +18,11 @@ License: New BSD
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator
-from .. import svm, _libsvm
+from ..base import BaseEstimator, ClassifierMixin
+from ..svm import BaseLibsvm, BaseLibLinear
+from .. import _libsvm, _liblinear
 
-class SparseBaseLibsvm(BaseEstimator):
+class SparseBaseLibsvm(BaseLibsvm):
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -64,7 +65,7 @@ class SparseBaseLibsvm(BaseEstimator):
 
     def fit(self, X, Y, class_weight={}):
         """
-        X is expected to be a sparse matrix. For maximum effiency, use a 
+        X is expected to be a sparse matrix. For maximum effiency, use a
         sparse matrix in csr format (scipy.sparse.csr_matrix)
         """
 
@@ -75,16 +76,16 @@ class SparseBaseLibsvm(BaseEstimator):
         solver_type = self._svm_types.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
 
-        self.weight       = np.asarray(class_weight.values(), 
+        self.weight       = np.asarray(class_weight.values(),
                                       dtype=np.float64, order='C')
-        self.weight_label = np.asarray(class_weight.keys(), 
+        self.weight_label = np.asarray(class_weight.keys(),
                                        dtype=np.int32, order='C')
 
         self.label_, self.probA_, self.probB_ = _libsvm.csr_train_wrap(
                  X.shape[1], X.data, X.indices, X.indptr, Y,
                  solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
-                 self._support_data, self._support_indices, 
+                 self._support_data, self._support_indices,
                  self._support_indptr, self._dual_coef_data,
                  self.intercept_, self.weight_label, self.weight,
                  self.nSV_, self.nu, self.cache_size, self.p,
@@ -92,7 +93,7 @@ class SparseBaseLibsvm(BaseEstimator):
                  int(self.probability))
 
         # TODO: explicitly specify size
-        self.support_ = sparse.csr_matrix((self._support_data, 
+        self.support_ = sparse.csr_matrix((self._support_data,
                                            self._support_indices,
                                            self._support_indptr))
 
@@ -100,7 +101,7 @@ class SparseBaseLibsvm(BaseEstimator):
         n_classes = len(self.label_) - 1
         dual_coef_indices =  np.tile(np.arange(self.support_.shape[0]),
                                      n_classes)
-        dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1, 
+        dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1,
                                      dual_coef_indices.size / n_classes)
 
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
@@ -132,7 +133,7 @@ class SparseBaseLibsvm(BaseEstimator):
         T = sparse.csr_matrix(T)
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
-        return _libsvm.csr_predict_from_model_wrap(T.data, 
+        return _libsvm.csr_predict_from_model_wrap(T.data,
                       T.indices, T.indptr, self.support_.data,
                       self.support_.indices, self.support_.indptr,
                       self.dual_coef_.data, self.intercept_,
@@ -145,26 +146,117 @@ class SparseBaseLibsvm(BaseEstimator):
                       self.nSV_, self.label_, self.probA_,
                       self.probB_)
 
-    @property
-    def coef_(self):
-        if self.kernel != 'linear':
-            raise NotImplementedError('coef_ is only available when using a linear kernel')
-        return np.dot(self.dual_coef_, self.support_)
 
 class SVC(SparseBaseLibsvm):
-    """
-    SVC for sparse matrices (csr)
-    
+    """SVC for sparse matrices (csr)
+
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
-
     """
     def __init__(self, impl='c_svc', kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0,cache_size=100.0, eps=1e-3, C=1.0,nu=0.5, p=0.1,
+                 coef0=0.0, cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
                  shrinking=True, probability=False):
 
         SparseBaseLibsvm.__init__(self, impl, kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
+
+
+
+
+class LinearSVC(BaseLibLinear, ClassifierMixin):
+    """
+    Linear Support Vector Classification, Sparse Version
+
+    Similar to SVC with parameter kernel='linear', but uses internally
+    liblinear rather than libsvm, so it has more flexibility in the
+    choice of penalties and loss functions and should be faster for
+    huge datasets.
+
+    Parameters
+    ----------
+    loss : string, 'l1' or 'l2' (default 'l2')
+        Specifies the loss function. With 'l1' it is the standard SVM
+        loss (a.k.a. hinge Loss) while with 'l2' it is the squared loss.
+        (a.k.a. squared hinge Loss)
+
+    penalty : string, 'l1' or 'l2' (default 'l2')
+        Specifies the norm used in the penalization. The 'l2'
+        penalty is the standard used in SVC. The 'l1' leads to coef_
+        vectors that are sparse.
+
+    dual : bool, (default True)
+        Select the algorithm to either solve the dual or primal
+        optimization problem.
+
+
+    Attributes
+    ----------
+    `support_` : array-like, shape = [nSV, nfeatures]
+        Support vectors
+
+    `dual_coef_` : array, shape = [nclasses-1, nSV]
+        Coefficient of the support vector in the decision function,
+        where nclasses is the number of classes and nSV is the number
+        of support vectors.
+
+    `coef_` : array, shape = [nclasses-1, nfeatures]
+        Wiehgiths asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+    `intercept_` : array, shape = [nclasses-1]
+        constants in decision function
+
+
+    Notes
+    -----
+    Some features of liblinear are still not wrapped, like the Cramer
+    & Singer algorithm.
+
+    References
+    ----------
+    LIBLINEAR -- A Library for Large Linear Classification
+    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
+    """
+
+    _weight_label = np.empty(0, dtype=np.int32)
+    _weight = np.empty(0, dtype=np.float64)
+
+
+    def fit(self, X, Y, **params):
+        """
+        Parameters
+        ==========
+        X : array-like, shape = [nsamples, nfeatures]
+            Training vector, where nsamples in the number of samples and
+            nfeatures is the number of features.
+        Y : array, shape = [nsamples]
+            Target vector relative to X
+        """
+        self._set_params(**params)
+        X = sparse.csr_matrix(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        Y = np.asanyarray(Y, dtype=np.int32, order='C')
+
+        self.raw_coef_, self.label_ = \
+                       _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
+                       X.indptr, Y,
+                       self._get_solver_type(),
+                       self.eps, self._get_bias(), self.C, self._weight_label,
+                       self._weight)
+        return self
+
+    def predict(self, T):
+        T = sparse.csr_matrix(T)
+        T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
+        return _liblinear.csr_predict_wrap(T.shape[1],
+                                      T.data, T.indices, T.indptr,
+                                      self.raw_coef_,
+                                      self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self._get_bias())
 

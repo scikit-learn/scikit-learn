@@ -144,6 +144,8 @@ In addition, we add the following guidelines:
     * Avoid multiple statements on one line. Prefer a line return after
       a control flow statement (`if`/`for`).
 
+    * Use relative imports for references inside scikits.learn.
+
     * **Please don't use `import *` in any case**. It is considered harmful 
       by the `official Python recommandations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
@@ -178,7 +180,7 @@ multiple interfaces):
 
 :Predictor:
 
-    For suppervised learning, implements::
+    For suppervised learning, or some unsupervised problems, implements::
 
 	target = obj.predict(data)
 
@@ -217,9 +219,8 @@ accept as arguments constants that determine the estimator behavior
 It should not, however, take the actual training data as argument, as
 this is leaved to the ``fit()`` method::
 
-    clf1 = SVM(impl='c_svm')
-    clf2 = SVM(C=2.3)
-    clf3 = SVM([[1, 2], [2, 3]], [-1, 1]) # WRONG!
+    clf2 = SVC(C=2.3)
+    clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
 
 
 The arguments that go in the `__init__` should all be keyword arguments
@@ -259,6 +260,8 @@ data in the predict method.
     * X : array-like, with shape = [N, D], where N is the number of
       samples and D is the number of features.
     * Y : array, with shape = [N], where N is the number of samples.
+
+    * args, kwargs. Parameters can also be set in the fit method.
 
 X.shape[0] should be the same as Y.shape[0]. If this requisite is not
 met, an exception should be raised.
