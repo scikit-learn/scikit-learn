@@ -1,4 +1,5 @@
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
+# Authors: Olivier Grisel <olivier.grisel@ensta.org>
+#          Mathieu Blondel
 #
 # License: BSD Style.
 """Utilities to build feature vectors from text documents"""
@@ -309,11 +310,15 @@ class BaseTfidfTransformer(BaseEstimator):
 
     use_idf: boolean
         enable inverse-document-frequency reweighting
+
+    normalize: boolean
+        normalize vectors to unit-length
     """
 
-    def __init__(self, use_tf=True, use_idf=True):
+    def __init__(self, use_tf=True, use_idf=True, normalize=False):
         self.use_tf = use_tf
         self.use_idf = use_idf
+        self.normalize = normalize
         self.idf = None
 
 class TfidfTransformer(BaseTfidfTransformer):
@@ -358,6 +363,9 @@ class TfidfTransformer(BaseTfidfTransformer):
         if self.use_idf:
             X *= self.idf
 
+        if self.normalize:
+            X /= np.sqrt(np.sum(X ** 2, axis=1))[:,np.newaxis]
+
         return X
 
 class SparseTfidfTransformer(BaseTfidfTransformer):
@@ -399,11 +407,15 @@ class SparseTfidfTransformer(BaseTfidfTransformer):
         n_samples, n_features = X.shape
 
         if self.use_tf:
-            # term-frequencies (normalized counts)
+            # sums of counts
             sums = np.zeros(n_samples)
 
             for doc, token in zip(*X.nonzero()):
                 sums[doc] += X[doc,token]
+
+        if self.normalize:
+            # norms
+            norms = np.zeros(n_samples)
 
         for doc, token in zip(*X.nonzero()):
             if self.use_tf:
@@ -411,6 +423,15 @@ class SparseTfidfTransformer(BaseTfidfTransformer):
 
             if self.use_idf:
                 X[doc, token] *= self.idf[token]
+
+            if self.normalize:
+                norms[doc] += X[doc, token] ** 2
+
+        if self.normalize:
+            norms = np.sqrt(norms)
+
+            for doc, token in zip(*X.nonzero()):
+                X[doc, token] /= norms[doc]
 
         return X
 
@@ -468,9 +489,13 @@ class Vectorizer(BaseVectorizer):
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
+    def __init__(self,
+                 analyzer=DEFAULT_ANALYZER,
+                 use_tf=True,
+                 use_idf=True,
+                 normalize=False):
         self.tc = CountVectorizer(analyzer)
-        self.tfidf = TfidfTransformer(use_tf, use_idf)
+        self.tfidf = TfidfTransformer(use_tf, use_idf, normalize)
 
 class SparseVectorizer(BaseVectorizer):
     """
@@ -479,9 +504,13 @@ class SparseVectorizer(BaseVectorizer):
     Equivalent to SparseCountVectorizer followed by SparseTfidfTransformer.
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
+    def __init__(self,
+                 analyzer=DEFAULT_ANALYZER,
+                 use_tf=True,
+                 use_idf=True,
+                 normalize=False):
         self.tc = SparseCountVectorizer(analyzer)
-        self.tfidf = SparseTfidfTransformer(use_tf, use_idf)
+        self.tfidf = SparseTfidfTransformer(use_tf, use_idf, normalize=False)
 
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space

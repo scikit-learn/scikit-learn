@@ -15,6 +15,7 @@ from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
 
 import numpy as np
+import numpy.linalg as la
 from nose.tools import *
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -208,6 +209,11 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     assert_equal(t2.idf, None)
     assert_array_almost_equal(np.sum(tf, axis=1),
                               [1.0] * n_train)
+
+    # test normalization
+    t3 = tf_class(normalize=True)
+    tfidf_n = toarray(t3.fit(counts_train).transform(counts_train))
+    assert_equal(la.norm(tfidf_n[0]), 1.0)
 
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
