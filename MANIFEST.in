@@ -1,1 +1,4 @@
-prune Makefile
+include *.rst
+include test.py
+recursive-include doc *
+recursive-include examples *
