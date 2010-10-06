@@ -120,25 +120,16 @@ User guide
 .. toctree::
    :maxdepth: 2
 
-   supervised_learning
-   unsupervised_learning
-   model_selection
-   cross_validation
+   user_guide
+
+Gallery
+=======
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   modules/classes
+   auto_examples/index
 
-.. only:: html
-
-    Gallery
-    =======
-
-    .. toctree::
-       :maxdepth: 2
-
-       auto_examples/index
 
 Developement
 ============

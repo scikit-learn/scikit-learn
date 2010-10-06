@@ -184,13 +184,14 @@ htmlhelp_basename = 'scikit-learndoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'scikits.learn.tex', u'scikits.learn documentation',
+  ('user_guide', 'user_guide.tex', u'scikits.learn user guide',
    u'scikits.learn developers', 'manual'),
+
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+latex_logo = "logos/scikit-learn-logo.png"
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
