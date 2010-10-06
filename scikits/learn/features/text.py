@@ -414,7 +414,6 @@ class SparseTfidfTransformer(BaseTfidfTransformer):
                 sums[doc] += X[doc,token]
 
         if self.normalize:
-            # norms
             norms = np.zeros(n_samples)
 
         for doc, token in zip(*X.nonzero()):
@@ -510,7 +509,7 @@ class SparseVectorizer(BaseVectorizer):
                  use_idf=True,
                  normalize=False):
         self.tc = SparseCountVectorizer(analyzer)
-        self.tfidf = SparseTfidfTransformer(use_tf, use_idf, normalize=False)
+        self.tfidf = SparseTfidfTransformer(use_tf, use_idf, normalize)
 
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space
