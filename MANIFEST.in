@@ -3,5 +3,4 @@ include test.py
 include scikits/__init__.py
 recursive-include doc *
 recursive-include examples *
-recursive-include scikits/learn/datasets/data *
-recursive-include scikits/learn/datasets/descr *
+recursive-include scikits *.c *.h *.pyx
