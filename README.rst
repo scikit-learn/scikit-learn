@@ -85,10 +85,12 @@ https://sourceforge.net/apps/trac/scikit-learn/report
 Testing
 -------
 
-After having installed the software, you can launch the test suite by
-executing the script test.py in this diretory (you will need to have
-nosetest installed)::
+After installation, you can launch the test suite(you will need to
+have nosetest installed)::
 
-    python test.py
+    python -c "import scikits.learn as skl; skl.test()"
+
+See web page http://scikit-learn.sourceforge.net/developers/ for
+complete documentation on developement
 
 
