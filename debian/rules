@@ -63,4 +63,12 @@ override_dh_compress:
 override_dh_installdocs:
 	: # Use jquery from Debian package, so prune shipped one
 	-rm doc/_build/html/_static/jquery.js
-	dh_installdocs -A AUTHORS README.rst
+	dh_installdocs -A AUTHORS.rst README*.rst
+
+dfsg: dfsg-master
+dfsg-%:
+	git checkout dfsg
+	-git merge --no-commit $*
+	-git rm -rf scikits/learn/externals/joblib
+	git commit -m "Merge $* into DFSG (pruning externals: joblib)" -a
+	git checkout debian
