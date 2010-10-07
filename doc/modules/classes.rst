@@ -56,9 +56,30 @@ Generalized Linear Models
    glm.LinearRegression
    glm.Ridge
    glm.Lasso
+   glm.LassoCV
+   glm.ElasticNet
+   glm.ElasticNetCV
    glm.LARS
    glm.LassoLARS
 
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   glm.lars_path
+
+
+For sparse data
+---------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   glm.sparse.Lasso
+   glm.sparse.ElasticNet
+        
 
 Bayesian Regression
 ===================

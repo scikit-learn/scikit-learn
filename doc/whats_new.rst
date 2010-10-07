@@ -15,7 +15,7 @@ New classes
     - Support for sparse matrices in some classifiers of modules
       ``svm`` and ``glm`` (see :class:`svm.sparse.SVC`,
       :class:`svm.sparse.SVR`, :class:`svm.sparse.LinearSVC`,
-      :class:`glm.sparse.ElasticNet`, :class:`glm.sparse.Lasso`)
+      :class:`glm.sparse.Lasso`, :class:`glm.sparse.ElasticNet`)
 
     - New :class:`pipeline.Pipeline` object to compose different estimators.
 
@@ -90,6 +90,27 @@ Misc
 ~~~~
 
     - New sphinx theme for the web page.
+
+
+Authors
+-------
+
+The following is a list of authors for this release, preceeded by
+number of commits:
+
+     * 252  Fabian Pedregosa
+     * 240  Gael Varoquaux
+     * 149  Alexandre Gramfort
+     * 116  Olivier Grisel
+     *  40  Vincent Michel
+     *  38  Ron Weiss
+     *  23  Matthieu Perrot
+     *  10  Bertrand Thirion
+     *   9  VirgileFritsch
+     *   6  Edouard Duchesnay
+     *   4  Mathieu Blondel
+     *   1  Ariel Rokem
+     *   1  Matthieu Brucher
 
 0.4
 ===
