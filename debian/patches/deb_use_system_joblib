@@ -1,0 +1,17 @@
+--- a/scikits/learn/externals/setup.py
++++ b/scikits/learn/externals/setup.py
+@@ -3,8 +3,6 @@
+ def configuration(parent_package='', top_path=None):
+     from numpy.distutils.misc_util import Configuration
+     config = Configuration('externals',parent_package,top_path)
+-    config.add_subpackage('joblib')
+-    config.add_subpackage('joblib/test')
+ 
+     return config
+ 
+--- /dev/null
++++ b/scikits/learn/externals/joblib/__init__.py
+@@ -0,0 +1,3 @@
++# yoh: use system-wide joblib
++
++from joblib import *
