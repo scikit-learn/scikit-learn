@@ -1,4 +1,4 @@
 deb_use_system_joblib
 deb_use_system_libraries
-deb_libsvm_verbosity_control
+up_libsvm_verbosity_control
 deb_libsvm_cythoning
