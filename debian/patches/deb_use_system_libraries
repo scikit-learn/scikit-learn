@@ -1,5 +1,5 @@
 From: Yaroslav Halchenko <debian@onerussian.com>
-Subject:
+Subject: Use system libraries as specified in site.cfg
 
 --- a/site.cfg
 +++ b/site.cfg

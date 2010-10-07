@@ -1,5 +1,6 @@
 From: Yaroslav Halchenko <debian@onerussian.com>
-Subject:
+Subject: Temporary workaround for DBTS#588595
+Bug-Debian: http://bugs.debian.org/588595
 
 --- a/scikits/learn/tests/test_svm.py
 +++ b/scikits/learn/tests/test_svm.py

@@ -1,5 +1,5 @@
 From: Yaroslav Halchenko <debian@onerussian.com>
-Subject:
+Subject: Allow to build _libsvm.so against system-wide LIBSVM's svm.h
 
 --- a/scikits/learn/svm/setup.py
 +++ b/scikits/learn/svm/setup.py

@@ -1,5 +1,5 @@
 From: Yaroslav Halchenko <debian@onerussian.com>
-Subject:
+Subject: re-ran Cython 0.12.1 on top of patched upstream _libsvm.pyx
 
 --- a/scikits/learn/svm/src/libsvm/_libsvm.c
 +++ b/scikits/learn/svm/src/libsvm/_libsvm.c

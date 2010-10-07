@@ -1,5 +1,7 @@
 From: Yaroslav Halchenko <debian@onerussian.com>
-Subject:
+Subject: use system-wide joblib and do not attempt to install joblib/test
+
+ Relies on DFSG-ed sources with no joblib present
 
 Index: scikit-learn/scikits/learn/externals/setup.py
 ===================================================================
