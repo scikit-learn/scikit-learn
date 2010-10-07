@@ -1,3 +1,6 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject:
+
 Index: scikit-learn/scikits/learn/externals/setup.py
 ===================================================================
 --- scikit-learn.orig/scikits/learn/externals/setup.py	2010-10-07 15:18:37.000000000 -0400

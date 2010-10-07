@@ -1,3 +1,6 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject:
+
 --- a/site.cfg
 +++ b/site.cfg
 @@ -1,9 +1,9 @@

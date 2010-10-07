@@ -1,3 +1,6 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject:
+
 --- a/scikits/learn/tests/test_svm.py
 +++ b/scikits/learn/tests/test_svm.py
 @@ -190,14 +190,20 @@ def test_margin():

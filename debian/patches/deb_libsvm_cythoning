@@ -1,3 +1,6 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject:
+
 --- a/scikits/learn/svm/src/libsvm/_libsvm.c
 +++ b/scikits/learn/svm/src/libsvm/_libsvm.c
 @@ -1,4 +1,4 @@

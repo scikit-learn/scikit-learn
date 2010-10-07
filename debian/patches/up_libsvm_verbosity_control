@@ -1,3 +1,12 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject: API to control LIBSVM verbosity without patching
+
+  ATM scikits.learn uses preprocessor's ifdefs to remove verbose
+  output -- it would be better to provide an ability for a user to get
+  control over the verbosity within Python interface.
+
+  By default -- no verbose output should be printed
+
 --- a/scikits/learn/svm/src/libsvm/libsvm_helper.c
 +++ b/scikits/learn/svm/src/libsvm/libsvm_helper.c
 @@ -669,5 +669,33 @@ int free_param(struct svm_parameter *par
