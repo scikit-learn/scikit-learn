@@ -3,6 +3,9 @@ scikit-learn (0.5~rc3-1) experimental; urgency=low
   * New upstream release-candidate
     - pruning joblib in favor of external package
       added patch deb_use_system_joblib 
+  * New patches for upstream
+    - up_libsvm_verbosity_control -- API for controlling libsvm verbosity
+    - up_system_libsvm_no_svmhdepends -- do not use shipped svm.h
   * Deprecated patches:
     - up_workaround_numpy_cython_issue589652
     - deb_cython_0.12.1

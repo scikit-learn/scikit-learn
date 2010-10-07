@@ -1,4 +1,5 @@
+up_system_libsvm_no_svmhdepends
+up_libsvm_verbosity_control
 deb_use_system_joblib
 deb_use_system_libraries
-up_libsvm_verbosity_control
 deb_libsvm_cythoning
