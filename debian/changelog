@@ -1,6 +1,7 @@
 scikit-learn (0.5~rc3-1) unstable; urgency=low
 
   * New upstream release-candidate
+    - pruning joblib in favor of external package
   * Deprecated patches:
     - up_workaround_numpy_cython_issue589652
     - deb_cython_0.12.1

@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: NeuroDebian Team <team@neuro.debian.net>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>, Michael Hanke <michael.hanke@gmail.com>
-Build-Depends: debhelper (>= 7.0.50), python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy, python-scipy, libsvm-dev (>= 2.84.0), python-sphinx (>= 1.0~), graphviz, python-nose, python-setuptools, cython (>= 0.12~), python-matplotlib, ipython, swig
+Build-Depends: debhelper (>= 7.0.50), python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy, python-scipy, libsvm-dev (>= 2.84.0), python-sphinx (>= 1.0~), graphviz, python-nose, python-setuptools, cython (>= 0.12~), python-matplotlib, ipython, swig, python-joblib (>= 0.4.5)
 Standards-Version: 3.9.0
 XS-Python-Version: >= 2.5
 Homepage: http://scikit-learn.sourceforge.net
@@ -16,7 +16,7 @@ Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-scipy, python-scikits-learn-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Recommends: python-nose, python-psyco, python-matplotlib
+Recommends: python-nose, python-psyco, python-matplotlib, python-joblib (>= 0.4.5)
 Suggests: python-dap, python-scikits-optimization, python-scikits-learn-doc
 Description: Python modules for machine learning and data mining
  scikit-learn is a collection of Python modules relevant to
