@@ -18,6 +18,7 @@ import numpy as np
 import pylab as pl
 import gc
 from datetime import datetime
+from scikits.learn.utils.bench
 
 # to store the results
 scikit_results = []

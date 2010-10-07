@@ -1,17 +1,22 @@
+""" Naives Bayes classifiers.
+"""
+
 # Author: Vincent Michel <vincent.michel@inria.fr>
 # License: BSD Style.
 import numpy as np
 
-class GNB(object):
+from .base import BaseEstimator, ClassifierMixin
+
+class GNB(BaseEstimator, ClassifierMixin):
     """
     Gaussian Naive Bayes (GNB)
 
     Parameters
     ----------
-    X : array-like, shape = [nsamples, nfeatures]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
-    y : array, shape = [nsamples]
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
+    y : array, shape = [n_samples]
         Target vector relative to X
 
     Attributes
@@ -37,11 +42,13 @@ class GNB(object):
 
     Examples
     --------
+    >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> Y = np.array([1, 1, 1, 2, 2, 2])
+    >>> from scikits.learn.naive_bayes import GNB
     >>> clf = GNB()
-    >>> clf.fit(X, Y)    #doctest: +ELLIPSIS
-    <scikits.learn.naive_bayes.GNB object at 0x...>
+    >>> clf.fit(X, Y)
+    GNB()
     >>> print clf.predict([[-0.8, -1]])
     [1]
 
@@ -49,6 +56,8 @@ class GNB(object):
     --------
 
     """
+    def __init__(self):
+        pass
 
     def fit(self, X, y):
         theta = []

@@ -1,0 +1,6 @@
+include *.rst
+include test.py
+include scikits/__init__.py
+recursive-include doc *
+recursive-include examples *
+recursive-include scikits *.c *.h *.pyx

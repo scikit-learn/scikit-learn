@@ -47,6 +47,7 @@ def confusion_matrix(y, y_):
 
     return cm
 
+
 def roc(y, probas_):
     """compute Receiver operating characteristic (ROC)
 
@@ -88,6 +89,7 @@ def roc(y, probas_):
 
     return fpr, tpr, thresholds
 
+
 def auc(x, y):
     """Compute Area Under the Curve (AUC)
     using the trapezoidal rule
@@ -111,6 +113,7 @@ def auc(x, y):
     h = np.diff(x)
     area = np.sum(h * (y[1:]+y[:-1])) / 2.0
     return area
+
 
 def precision_recall(y, probas_):
     """compute Precision-Recall
@@ -155,3 +158,29 @@ def precision_recall(y, probas_):
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds
+
+
+###############################################################################
+# Loss functions
+
+
+def zero_one(y_pred, y_true):
+    """Zero-One loss
+    returns the number of differences
+    """
+    return np.sum(y_pred != y_true)
+
+
+def mean_square_error(y_pred, y_true):
+    """Mean Square Error
+    returns the mean square error
+    """
+    return np.linalg.norm(y_pred != y_true) ** 2
+
+
+def explained_variance(y_pred, y_true):
+    """Explained variance
+    returns the explained variance
+    """
+    return 1 - np.var(y_true - y_pred) / np.var(y_true)
+

@@ -4,7 +4,20 @@
 #include <iostream>
 #include <structmember.h>
 #include "BallTree.h"
-#include "BallTreePoint.h" 
+#include "BallTreePoint.h"
+
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#endif
+
+/* define as extern functions that must be called from python */
+extern "C" {
+#ifdef IS_PY3K
+	PyObject * PyInit_ball_tree (void);
+#else
+	PyMODINIT_FUNC initball_tree(void);
+#endif
+}
 
 /************************************************************
  * BallTree.cpp
@@ -24,11 +37,11 @@ typedef struct{
   int dim; 
   std::vector<BallTree_Point*> *Points;
   PyObject* data;
-} PyBallTreeObject;  
+} BallTreeObject;  
 
 //deallocation of BallTree Object
 static void 
-BallTree_dealloc(PyBallTreeObject* self) 
+BallTree_dealloc(BallTreeObject* self) 
 { 
   if( self->Points != NULL ){
     for(size_t i=0; i<self->Points->size(); i++)
@@ -51,7 +64,7 @@ BallTree_dealloc(PyBallTreeObject* self)
 //initialization of BallTree object
 // argument is a single array of size [D,N]
 static int 
-BallTree_init(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
+BallTree_init(BallTreeObject *self, PyObject *args, PyObject *kwds){
   //we use goto statements : all variables should be declared up front
   PyObject *arg=NULL;
   PyObject *arr=NULL;
@@ -105,7 +118,7 @@ BallTree_init(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
 //query the ball tree.  Arguments are the array of search points
 // and the number of nearest neighbors, k (optional)
 static PyObject *
-BallTree_query(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
+BallTree_query(BallTreeObject *self, PyObject *args, PyObject *kwds){
   //we use goto statements : all variables should be declared up front
   int return_distance = 1;
   long int k = 1;
@@ -287,7 +300,7 @@ BallTree_query(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
 //query the ball tree.  Arguments are the array of search points
 // and the radius around each point to search
 static PyObject *
-BallTree_queryball(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
+BallTree_queryball(BallTreeObject *self, PyObject *args, PyObject *kwds){
   //we use goto statements : all variables should be declared up front
   int count_only = 0;
   double r;
@@ -455,11 +468,11 @@ BallTree_queryball(PyBallTreeObject *self, PyObject *args, PyObject *kwds){
 
 //define the data members of BallTree
 static PyMemberDef BallTree_members[] = {
-  {"size", T_INT, offsetof(PyBallTreeObject,size),0,
+  {"size", T_INT, offsetof(BallTreeObject,size),0,
    "Number of points in the Ball Tree"},
-  {"dim", T_INT, offsetof(PyBallTreeObject,dim),0, 
+  {"dim", T_INT, offsetof(BallTreeObject,dim),0, 
    "Dimension of the Ball Tree"},
-  {"data", T_OBJECT_EX, offsetof(PyBallTreeObject,data),0, 
+  {"data", T_OBJECT_EX, offsetof(BallTreeObject,data),0, 
    "View of data making up the Ball Tree"},
   {NULL} /* Sentinel */
 };
@@ -474,28 +487,28 @@ static PyMethodDef BallTree_methods[] = {
      "                                                     \n"
      "Parameters                                           \n"
      "----------                                           \n"
-     " x : array-like, last dimension self.dim             \n"
-     "       An array of points to query                   \n"
-     " k : integer  (default = 1)                          \n"
-     "       The number of nearest neighbors to return     \n"
-     " return_distance : boolean (default = True)          \n"
-     "       if True, return a tuple (d,i)                 \n"
-     "       if False, return array i                      \n"
+     "x : array-like, last dimension self.dim              \n"
+     "      An array of points to query                    \n"
+     "k : integer  (default = 1)                           \n"
+     "      The number of nearest neighbors to return      \n"
+     "return_distance : boolean (default = True)           \n"
+     "      if True, return a tuple (d,i)                  \n"
+     "      if False, return array i                       \n"
      "                                                     \n"
-     " Returns                                             \n"
-     " -------                                             \n"
-     "  i    : if return_distance == False                 \n"
-     " (d,i) : if return_distance == True                  \n"
+     "Returns                                              \n"
+     "-------                                              \n"
+     "i    : if return_distance == False                   \n"
+     "(d,i) : if return_distance == True                   \n"
      "                                                     \n"
-     "   d : array of doubles - shape: x.shape[:-1] + (k,) \n"
-     "        each entry gives the list of distances to the\n"
-     "         neighbors of the corresponding point        \n"
-     "           (note that distances are not sorted)      \n"
+     "d : array of doubles - shape: x.shape[:-1] + (k,)    \n"
+     "    each entry gives the list of distances to the    \n"
+     "    neighbors of the corresponding point             \n"
+     "    (note that distances are not sorted)             \n"
      "                                                     \n"
-     "   i : array of integers - shape: x.shape[:-1] + (k,)\n"
-     "        each entry gives the list of indices of      \n"
-     "         neighbors of the corresponding point        \n"
-     "           (note that neighbors are not sorted)      \n"
+     "i : array of integers - shape: x.shape[:-1] + (k,)   \n"
+     "    each entry gives the list of indices of          \n"
+     "    neighbors of the corresponding point             \n"
+     "    (note that neighbors are not sorted)             \n"
     },
     {"query_ball", (PyCFunction)BallTree_queryball, METH_VARARGS|METH_KEYWORDS,
      "query_ball(x,r,count_only = False)                   \n"
@@ -517,32 +530,35 @@ static PyMethodDef BallTree_methods[] = {
      "                                                     \n"
      " Returns                                             \n"
      " -------                                             \n"
-     " i : if count_only is False:                         \n"
-     "       array of integer-arrays - shape: x.shape[:-1] \n"
-     "        each entry gives the list of neighbors of    \n"
-     "        the corresponding point                      \n"
-     "          (note that neighbors are not sorted)       \n"
-     "                                                     \n"
-     "     if count_only is True:                          \n"
-     "       array of integers - shape: x.shape[:-1]       \n"
-     "        each entry gives the number of neighbors     \n"
-     "        of the corresponding point                   \n"
+     " i : array of integers, shape: x.shape[:-1]          \n"
+     "     if count_only is False each entry gives the     \n"
+     "     list of neighbors of the corresponding point    \n"
+     "     (note that neighbors are not sorted). Otherwise \n"
+     "     return only the number of neighbors.            \n"
     },
     {NULL}  /* Sentinel */
 };
 
 //construct the BallTree type from the preceeding functions
-static PyTypeObject PyBallTreeType = {
+static PyTypeObject BallTreeType = {
+#if defined (IS_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
+#endif
     "BallTree.BallTree",       /*tp_name*/
-    sizeof(PyBallTreeObject),  /*tp_basicsize*/
+    sizeof(BallTreeObject),  /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)BallTree_dealloc, /*tp_dealloc*/
     0,                         /*tp_print*/
     0,                         /*tp_getattr*/
     0,                         /*tp_setattr*/
+#if defined (IS_PY3K)
+    (void *) 0,                /* tp_reserved */
+#else
     0,                         /*tp_compare*/
+#endif
     0,                         /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
@@ -755,62 +771,107 @@ static PyMethodDef BTmodule_methods[] = {
    METH_VARARGS|METH_KEYWORDS,
    "knn_brute(x, pt, k=1)                                     \n"
    "                                                          \n"
-   "     Brute-Force k-nearest neighbor search.               \n"
+   "  Brute-Force k-nearest neighbor search.                  \n"
    "                                                          \n"
    "  Parameters                                              \n"
    "  ----------                                              \n"
-   "    x  : an array of shape [N,D] representing N points    \n"
-   "          in D dimensions                                 \n"
-   "    pt : array-like, last dimension D                     \n"
-   "          An array of points to query                     \n"
-   "    k  : a positive integer, giving the number of nearest \n"
-   "         neighbors to query                               \n"
+   "  x  : array of shape [N,D]                               \n"
+   "       representing N points in D dimensions              \n"
+   "  pt : array-like, last dimension D                       \n"
+   "       An array of points to query                        \n"
+   "  k  : a positive integer, giving the number of nearest   \n"
+   "       neighbors to query                                 \n"
    "                                                          \n"
    "  Returns                                                 \n"
    "  -------                                                 \n"
-   "    nbrs : array of integers - shape: pt.shape[:-1] + (k,)\n"
-   "             each entry gives the list of indices of      \n"
-   "             neighbors of the corresponding point         \n"},
+   "  nbrs : array of integers - shape: pt.shape[:-1] + (k,)  \n"
+   "           each entry gives the list of indices of        \n"
+   "           neighbors of the corresponding point           \n"},
   {NULL, NULL, 0, NULL}        /* End of Methods */
 };
 
 //initialize the module
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
+#define MODULE_DOC 		     \
+"Ball Tree package                                   \n"  \
+" Written by Jake VanderPlas, January 2010           \n"  \
+"   vanderplas@astro.washington.edu                  \n"  \
+"   http://www.astro.washington.edu/users/vanderplas \n"  \
+"                                                    \n"  \
+" A Ball Tree is a data structure which can be used  \n"  \
+"  to perform fast neighbor searches in data sets of \n"  \
+"  very high dimensionality.  For low dimensional    \n"  \
+"  problems (dimension less than 5-10) a KD tree is  \n"  \
+"  a better choice (see, e.g. scipy.spatial.cKDTree) \n"  \
+"                                                    \n"  \
+" This package also provides an optimized brute-force\n"  \
+"  neighbor search (knn_brute) which has better      \n"  \
+"  performance than either tree algorithm for smaller\n"  \
+"  data-sets (number of points less than ~1000),     \n"  \
+"  especially when querying for more than one nearest\n"  \
+"  neighbor.                                         \n"  \
+
+struct module_state {
+    PyObject *error;
+};
+
+#ifdef IS_PY3K
+
+/* Some python3 specific methods */
+
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+
+static int ball_tree_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int ball_tree_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+static struct PyModuleDef BTmodule_def = {
+		PyModuleDef_HEAD_INIT,
+		"ball_tree",
+		MODULE_DOC,
+		sizeof (struct module_state),
+		BTmodule_methods,
+        NULL,
+        ball_tree_traverse,
+        ball_tree_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject * PyInit_ball_tree (void)
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#define INITERROR return
+
+PyMODINIT_FUNC initball_tree(void)
 #endif
-PyMODINIT_FUNC
-initball_tree(void)
 {    
   PyObject* m;   
-  PyBallTreeType.tp_new = PyType_GenericNew;
+  BallTreeType.tp_new = PyType_GenericNew;
 
-  if (PyType_Ready(&PyBallTreeType) < 0)
-    return;
+#if defined (IS_PY3K)
+  if (PyType_Ready(&BallTreeType) < 0) return NULL;
+  m = PyModule_Create(&BTmodule_def);
+  if (m==NULL) return NULL;
+#else
+  if (PyType_Ready(&BallTreeType) < 0) return;
+  m = Py_InitModule3("ball_tree", BTmodule_methods, MODULE_DOC);
+  if (m==NULL) return;
+#endif
 
-  m = Py_InitModule3("ball_tree", BTmodule_methods,
-		     "Ball Tree package                                   \n"
-		     " Written by Jake VanderPlas, January 2010           \n"
-		     "   vanderplas@astro.washington.edu                  \n"
-		     "   http://www.astro.washington.edu/users/vanderplas \n"
-		     "                                                    \n"
-		     " A Ball Tree is a data structure which can be used  \n"
-		     "  to perform fast neighbor searches in data sets of \n"
-		     "  very high dimensionality.  For low dimensional    \n"
-		     "  problems (dimension less than 5-10) a KD tree is  \n"
-		     "  a better choice (see, e.g. scipy.spatial.cKDTree) \n"
-		     "                                                    \n"
-		     " This package also provides an optimized brute-force\n"
-		     "  neighbor search (knn_brute) which has better      \n"
-		     "  performance than either tree algorithm for smaller\n"
-		     "  data-sets (number of points less than ~1000),     \n"
-		     "  especially when querying for more than one nearest\n"
-		     "  neighbor.                                         \n");
-
-  if(m==NULL)
-    return;
-
-  Py_INCREF(&PyBallTreeType);
-  PyModule_AddObject(m,"BallTree", (PyObject*)&PyBallTreeType);
+  Py_INCREF(&BallTreeType);
+  PyModule_AddObject(m,"BallTree", (PyObject*)&BallTreeType);
   import_array();
+
+#if defined (IS_PY3K)
+    return m;
+#endif
 }

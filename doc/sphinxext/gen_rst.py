@@ -9,14 +9,13 @@ Files that generate images should start with 'plot'
 """
 import os
 import shutil
+import traceback
 
 fileList = []
 
 import matplotlib
 matplotlib.use('Agg')
-import IPython.Shell
-mplshell = IPython.Shell.MatplotlibShell('mpl')
-                          
+
 import token, tokenize      
 
 rst_template = """
@@ -25,7 +24,7 @@ rst_template = """
 
 %(docstring)s
 
-**Source code:** :download:`%(fname)s <%(fname)s>`
+**Python source code:** :download:`%(fname)s <%(fname)s>`
 
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
@@ -40,7 +39,7 @@ plot_rst_template = """
 .. image:: images/%(image_name)s
     :align: center
 
-**Source code:** :download:`%(fname)s <%(fname)s>`
+**Python source code:** :download:`%(fname)s <%(fname)s>`
 
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
@@ -160,8 +159,14 @@ def generate_file_rst(fname, target_dir, src_dir):
             print 'plotting %s' % fname
             import matplotlib.pyplot as plt
             plt.close('all')
-            mplshell.magic_run(example_file)
-            plt.savefig(image_file)
+            try:
+                execfile(example_file, {'pl' : plt})
+                plt.savefig(image_file)
+            except:
+                print 80*'_'
+                print '%s is not compiling:' % fname
+                traceback.print_exc()
+                print 80*'_'
         this_template = plot_rst_template
 
     docstring, short_desc, end_row = extract_docstring(example_file)

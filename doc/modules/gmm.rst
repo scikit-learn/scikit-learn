@@ -1,3 +1,5 @@
+.. _gmm:
+
 ===================================================
 Gaussian mixture models
 ===================================================
@@ -30,6 +32,9 @@ GMM classifier
 Examples
 --------
 
-See :ref:`example_plot_gmm.py` for an example on plotting the
+See :ref:`example_gmm_plot_gmm.py` for an example on plotting the
 confidence ellipsoids.
+
+See :ref:`example_gmm_plot_gmm_pdf.py` for an example on plotting the density
+estimation.
 
