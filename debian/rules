@@ -21,23 +21,18 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	 cd doc; $(MAKE) html
 endif
 
-
 override_dh_clean:
 	rm -rf build doc/_build doc/auto_examples *-stamp scikits.learn.egg-info scikits/learn/datasets/__config__.py
 	dh_clean
 
-# Prune toplevel scikits/__init__.py to avoid conflicts across future
-# scikits- packages, and rely on pysupport to create such one if
-# necessary
-override_dh_auto_install: ${PYVERS:%=python-install%}
-	find debian -wholename \*scikits/__init__.py -delete
 
+override_dh_auto_install: ${PYVERS:%=python-install%}
 # Per Python version logic -- install, test, move .so into -lib
 python-install%:
 	python$* setup.py install --install-layout=deb --root=$(PACKAGE_ROOT_DIR)
 
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	: # Run unittests
+	: # Run unittests here against installed scikits.learn
 	export PYTHONPATH=`/bin/ls -d $$PWD/build/lib.*$*` MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
 	 python$* /usr/bin/nosetests -s --exclude '(manifold|test_gmm_em)' \
 	  $(PACKAGE_ROOT_DIR)/usr/lib/python$*/*/scikits/learn; \
@@ -46,6 +41,9 @@ else
 	: # Skip unittests due to nocheck
 endif
 
+
+## move binary libraries into -lib
+override_dh_pysupport:
 	: # Move platform-specific libraries into -lib
 	for lib in $$(find $(PACKAGE_ROOT_DIR)/usr -name '*.so'); do \
 	   sdir=$$(dirname $$lib) ; \
@@ -55,6 +53,9 @@ endif
 	   mv $$lib $$tdir ; \
 	done
 	if [ -x /usr/bin/dh_numpy ]; then dh_numpy; fi
+	: # Prune scikits/__init__.py to avoid conflicts
+	find debian -wholename \*scikits/__init__.py -delete
+	dh_pysupport
 
 ## immediately useable documentation and exemplar scripts/data
 override_dh_compress:
@@ -65,6 +66,8 @@ override_dh_installdocs:
 	-rm doc/_build/html/_static/jquery.js
 	dh_installdocs -A AUTHORS.rst README*.rst
 
+
+## to prepare next Debian upstream source tarball
 dfsg: dfsg-master
 dfsg-%:
 	git checkout dfsg
