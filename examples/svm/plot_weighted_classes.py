@@ -11,10 +11,10 @@ from scikits.learn import svm
 
 # we create 40 separable points
 np.random.seed(0)
-nsamples_1 = 1000
-nsamples_2 = 100
-X = np.r_[1.5*np.random.randn(nsamples_1, 2), 0.5*np.random.randn(nsamples_2, 2) + [2, 2]]
-Y = [0]*(nsamples_1) + [1]*(nsamples_2)
+n_samples_1 = 1000
+n_samples_2 = 100
+X = np.r_[1.5*np.random.randn(n_samples_1, 2), 0.5*np.random.randn(n_samples_2, 2) + [2, 2]]
+Y = [0]*(n_samples_1) + [1]*(n_samples_2)
 
 # fit the model and get the separating hyperplane
 clf = svm.SVC(kernel='linear')

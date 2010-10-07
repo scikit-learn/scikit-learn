@@ -26,12 +26,12 @@ class Bunch(dict):
 
 def load_iris():
     """load the iris dataset and returns it.
-    
+
     Returns
     -------
     data : Bunch
         Dictionnary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels, 
+        'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, and 'DESCR', the
         full description of the dataset.
 
@@ -40,16 +40,19 @@ def load_iris():
     Let's say you are interested in the samples 10, 25, and 50, and want to
     know their class name.
 
+    >>> from scikits.learn.datasets import load_iris
     >>> data = load_iris()
-    >>> print data.target[[10, 25, 50]]
-    [0 0 1]
-    >>> print data.target_names
-    ['setosa' 'versicolor' 'virginica']
+    >>> data.target[[10, 25, 50]]
+    array([0, 0, 1])
+    >>> data.target_names
+    array(['setosa', 'versicolor', 'virginica'], 
+          dtype='|S10')
+
     """
-    
-    data_file = csv.reader(open(os.path.dirname(__file__) 
+
+    data_file = csv.reader(open(os.path.dirname(__file__)
                         + '/data/iris.csv'))
-    fdescr = open(os.path.dirname(__file__) 
+    fdescr = open(os.path.dirname(__file__)
                         + '/descr/iris.rst')
     temp = data_file.next()
     n_samples = int(temp[0])
@@ -60,20 +63,20 @@ def load_iris():
     for i, ir in enumerate(data_file):
         data[i] = np.asanyarray(ir[:-1], dtype=np.float)
         target[i] = np.asanyarray(ir[-1], dtype=np.int)
-    return Bunch(data=data, target=target, target_names=target_names, 
+    return Bunch(data=data, target=target, target_names=target_names,
                  DESCR=fdescr.read())
 
 
 def load_digits():
     """load the digits dataset and returns it.
-    
+
     Returns
     -------
     data : Bunch
         Dictionnary-like object, the interesting attributes are:
         'data', the data to learn, `images`, the images corresponding
         to each sample, 'target', the classification labels for each
-        sample, 'target_names', the meaning of the labels, and 'DESCR', 
+        sample, 'target_names', the meaning of the labels, and 'DESCR',
         the full description of the dataset.
 
     Example
@@ -87,17 +90,17 @@ def load_digits():
         pl.matshow(digits.raw_data[0])
 
     """
-    
-    data = np.loadtxt(os.path.join(os.path.dirname(__file__) 
+
+    data = np.loadtxt(os.path.join(os.path.dirname(__file__)
                         + '/data/digits.csv.gz'), delimiter=',')
-    fdescr = open(os.path.join(os.path.dirname(__file__) 
+    fdescr = open(os.path.join(os.path.dirname(__file__)
                         + '/descr/digits.rst'))
     target = data[:, -1]
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
-    return Bunch(data=flat_data, target=target.astype(np.int), 
-                 target_names=np.arange(10), 
+    return Bunch(data=flat_data, target=target.astype(np.int),
+                 target_names=np.arange(10),
                  images=images,
                  DESCR=fdescr.read())
 

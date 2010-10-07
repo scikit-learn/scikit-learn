@@ -1,4 +1,6 @@
 
+.. _supervised-learning:
+
 Supervised learning
 -----------------------
 
@@ -7,7 +9,7 @@ Supervised learning
     modules/svm
     modules/glm
     modules/neighbors
-    modules/ann
+    modules/logistic
     modules/feature_selection
 
 

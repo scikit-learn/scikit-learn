@@ -38,11 +38,9 @@ clf = GridSearchCV(SVC(C=1), tuned_parameters, n_jobs=2)
 y_pred = []
 y_true = []
 for train, test in StratifiedKFold(y, 2):
-    cv = StratifiedKFold(y[train], 5)
-    y_pred.append(clf.fit(X[train], y[train], cv=cv).predict(X[test]))
-    y_true.append(y[test])
+    clf.fit(X[train], y[train], cv=StratifiedKFold(y[train], 5))
+    y_pred = np.append(y_pred, clf.predict(X[test]))
+    y_true = np.append(y_true, y[test])
 
-y_pred = np.concatenate(y_pred)
-y_true = np.concatenate(y_true)
 classif_rate = np.mean(y_pred == y_true) * 100
 print "Classification rate : %f" % classif_rate

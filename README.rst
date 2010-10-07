@@ -6,9 +6,9 @@ About
 scikits.learn is a python module for machine learning built on top of
 scipy.
 
-The project was started in 2007 by David Cournapeu as a Google Summer
+The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the AUTHORS file for a complete list of contributors.
+the AUTHORS.rst file for a complete list of contributors.
 
 It is currently maintained by a team of volunteers.
 
@@ -25,13 +25,10 @@ Dependencies
 ============
 
 The required dependencies to build the software are python >= 2.5,
-NumPy >= 1.1, SciPy and a working C++ compiler.
+NumPy >= 1.1, SciPy >= 0.6 (although having at least 0.7 is highly
+recommended and required by some modules) and a working C++ compiler.
 
-Optional dependencies are scikits.optimization and the Boost libraries
-for module scikits.learn.manifold.
-
-To run the tests you will also need nosetests and python-dap
-(http://pypi.python.org/pypi/dap/).
+To run the tests you will also need nose >= 0.10.
 
 
 Install
@@ -69,15 +66,13 @@ Code
 GIT
 ~~~
 
-You can check out the current repository with the command::
+You can check the latest sources with the command::
 
-    git clone git://scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
+    git clone git://github.com/scikit-learn/scikit-learn.git
 
-Developers with write privileges should instead use the command::
+or if you have write privileges::
 
-    git clone ssh://USERNAME@scikit-learn.git.sourceforge.net/gitroot/scikit-learn/scikit-learn
-
-where USERNAME is your sourceforge username.
+    git clone git@github.com:scikit-learn/scikit-learn.git
 
 Bugs
 ----
@@ -90,9 +85,12 @@ https://sourceforge.net/apps/trac/scikit-learn/report
 Testing
 -------
 
-To execute the test suite, run from the project's top directory (you
-will need to have nosetest installed)::
+After installation, you can launch the test suite(you will need to
+have nosetest installed)::
 
-    python setup.py test
+    python -c "import scikits.learn as skl; skl.test()"
+
+See web page http://scikit-learn.sourceforge.net/developers/ for
+complete documentation on developement
 
 

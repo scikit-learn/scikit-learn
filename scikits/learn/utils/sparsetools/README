@@ -1,0 +1,3 @@
+This directory is backported from scipy 0.9:
+scipy.sparse.sparsetools
+

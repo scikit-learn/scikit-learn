@@ -12,21 +12,21 @@ import warnings
 import numpy as np
 import scipy.ndimage as ndimage
 
-from .base import BaseEstimator
+from .base import BaseEstimator, ClassifierMixin
 
 # FIXME :
 # - in fit(X, y) method, many checks are common with other models (in particular
 #   LDA model) and should be factorized : may be in BaseEstimator ?
 
-class QDA(BaseEstimator):
+class QDA(BaseEstimator, ClassifierMixin):
     """
     Quadratic Discriminant Analysis (QDA)
 
     Parameters
     ----------
     X : array-like, shape = [n_samples, n_features]
-        Training vector, where nsamples in the number of samples and
-        nfeatures is the number of features.
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
     y : array, shape = [n_samples]
         Target vector relative to X
 
@@ -78,10 +78,10 @@ class QDA(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array, shape = [n_samples]
             Target values (integers)
         store_covariances : boolean
             If True the covariance matrices are computed and stored in

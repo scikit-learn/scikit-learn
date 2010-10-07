@@ -154,6 +154,11 @@ class SelectPercentile(_AbstractUnivariateFilter):
         percentile = self.percentile
         assert percentile<=100, ValueError('percentile should be \
                             between 0 and 100 (%f given)' %(percentile))
+        # Cater for Nans
+        if percentile == 100:
+            return np.ones(len(self._pvalues), dtype=np.bool)
+        elif percentile == 0:
+            return np.zeros(len(self._pvalues), dtype=np.bool)
         alpha = stats.scoreatpercentile(self._pvalues, percentile)
         return (self._pvalues <= alpha)
 

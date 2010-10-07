@@ -8,7 +8,7 @@ A recursive feature elimination is performed prior to SVM classification.
 from scikits.learn.svm import SVC
 from scikits.learn.cross_val import StratifiedKFold
 from scikits.learn import datasets
-from scikits.learn.rfe import RFE, RFECV
+from scikits.learn.feature_selection import RFE, RFECV
 from scikits.learn.metrics import zero_one
 
 

@@ -9,8 +9,9 @@ Utilities for cross validation.
 from math import ceil
 import numpy as np
 
-from .base import ClassifierMixin
+from .base import is_classifier, clone
 from .utils.extmath import factorial, combinations
+from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
 ##############################################################################
@@ -51,7 +52,6 @@ class LeaveOneOut(object):
         """
         self.n = n
 
-
     def __iter__(self):
         n = self.n
         for i in xrange(n):
@@ -59,7 +59,6 @@ class LeaveOneOut(object):
             test_index[i] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(n=%i)' % (self.__class__.__module__,
@@ -114,7 +113,6 @@ class LeavePOut(object):
         self.n = n
         self.p = p
 
-
     def __iter__(self):
         n = self.n
         p = self.p
@@ -124,7 +122,6 @@ class LeavePOut(object):
             test_index[np.array(idx)] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(n=%i, p=%i)' % (
@@ -152,7 +149,7 @@ class KFold(object):
         Provides train/test indexes to split data in train test sets
 
         Parameters
-        ===========
+        ----------
         n: int
             Total number of elements
         k: int
@@ -174,15 +171,15 @@ class KFold(object):
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         TRAIN: [ True  True False False] TEST: [False False  True  True]
 
-        Note
-        ====
+        Notes
+        -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
-        assert k>0, ValueError('cannot have k below 1')
-        assert k<n, ValueError('cannot have k=%d greater than %d'% (k, n))
+        assert k>0, ('cannot have k below 1')
+        assert k<n, ('cannot have k=%d greater than the number '
+                            'of samples: %d'% (k, n))
         self.n = n
         self.k = k
-
 
     def __iter__(self):
         n = self.n
@@ -197,7 +194,6 @@ class KFold(object):
                 test_index[i*j:] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(n=%i, k=%i)' % (
@@ -216,14 +212,14 @@ class StratifiedKFold(object):
     """
     Stratified K-Folds cross validation iterator:
     Provides train/test indexes to split data in train test sets
-    
+
     This cross-validation object is a variation of KFold, which
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
-    
+
     """
 
-    # XXX: Should maybe have an argument to raise when 
+    # XXX: Should maybe have an argument to raise when
     # folds are not balanced
     def __init__(self, y, k):
         """
@@ -231,14 +227,14 @@ class StratifiedKFold(object):
         Provides train/test indexes to split data in train test sets
 
         Parameters
-        ===========
+        ----------
         y: array, [n_samples]
             Samples to split in K folds
         k: int
             number of folds
 
         Examples
-        ========
+        --------
         >>> from scikits.learn import cross_val
         >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
         >>> y = [0, 0, 1, 1]
@@ -253,24 +249,26 @@ class StratifiedKFold(object):
         TRAIN: [False  True False  True] TEST: [ True False  True False]
         TRAIN: [ True False  True False] TEST: [False  True False  True]
 
-        Note
-        ====
+        Notes
+        -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
         y = np.asanyarray(y)
         n = y.size
         assert k>0, ValueError('cannot have k below 1')
-        assert k<n, ValueError('cannot have k=%d greater than %d'% (k, n))
+        assert k<n, ValueError('cannot have k=%d greater than the number '
+                               'of samples %d' % (k, n))
+        _, y_sorted = unique(y, return_inverse=True)
+        assert k <= np.min(np.bincount(y_sorted))
         self.y = y
         self.k = k
-
 
     def __iter__(self):
         y = self.y.copy()
         k = self.k
         n = y.size
 
-        classes = np.unique(y)
+        classes = unique(y)
 
         idx_c = dict()
         j_c = dict()
@@ -291,7 +289,6 @@ class StratifiedKFold(object):
 
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(labels=%s, k=%i)' % (
@@ -349,18 +346,16 @@ class LeaveOneLabelOut(object):
 
         """
         self.labels = labels
-        self.n_labels = np.unique(labels).size
-
+        self.n_labels = unique(labels).size
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
-        for i in np.unique(labels):
+        for i in unique(labels):
             test_index  = np.zeros(len(labels), dtype=np.bool)
             test_index[labels==i] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
-
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
@@ -418,14 +413,14 @@ class LeavePLabelOut(object):
 
         """
         self.labels = labels
-        self.unique_labels = np.unique(self.labels)
+        self.unique_labels = unique(self.labels)
         self.n_labels = self.unique_labels.size
         self.p = p
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
-        unique_labels = np.unique(labels)
+        unique_labels = unique(labels)
         n_labels = unique_labels.size
         comb = combinations(range(n_labels), self.p)
 
@@ -449,25 +444,25 @@ class LeavePLabelOut(object):
         return factorial(self.n_labels) / factorial(self.n_labels - self.p) \
                / factorial(self.p)
 
-    
+
 ##############################################################################
 
 def _cross_val_score(estimator, X, y, score_func, train, test):
     """ Inner loop for cross validation.
     """
     if score_func is None:
-        score_func = lambda self, *args: estimator.score(*args)
+        score_func = lambda self, *args: self.score(*args)
     if y is None:
         return score_func(estimator.fit(X[train]), X[test])
     return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
 
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None, 
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
                 n_jobs=1, verbose=0):
     """ Evaluate a score by cross-validation.
 
         Parameters
-        ===========
+        ----------
         estimator: estimator object implementing 'fit'
             The object to use to fit the data
         X: array-like of shape at least 2D
@@ -489,10 +484,9 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
         verbose: integer, optional
             The verbosity level
     """
-    # XXX: should have a n_jobs to be able to do this in parallel.
     n_samples = len(X)
     if cv is None:
-        if y is not None and isinstance(estimator, ClassifierMixin):
+        if y is not None and is_classifier(estimator):
             cv = StratifiedKFold(y, k=3)
         else:
             cv = KFold(n_samples, k=3)
@@ -502,8 +496,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator
                 )
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickable.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-                delayed(_cross_val_score)(estimator, X, y, score_func, 
+                delayed(_cross_val_score)(clone(estimator), X, y, score_func,
                                                         train, test)
                 for train, test in cv)
     return np.array(scores)
@@ -527,3 +523,4 @@ def split(train_indices, test_indices, *args):
         ret.append(arg_train)
         ret.append(arg_test)
     return ret
+

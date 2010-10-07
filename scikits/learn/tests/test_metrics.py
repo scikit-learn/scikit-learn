@@ -1,13 +1,14 @@
 import random
 import numpy as np
-from scikits.learn import svm, datasets
-from scikits.learn.metrics import roc, auc, precision_recall, \
-            confusion_matrix, zero_one, explained_variance, \
-            mean_square_error
 
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
                           assert_equal, assert_almost_equal
+
+from .. import svm, datasets
+from ..metrics import roc, auc, precision_recall, \
+            confusion_matrix, zero_one, explained_variance, \
+            mean_square_error
 
 # import some data to play with
 iris = datasets.load_iris()

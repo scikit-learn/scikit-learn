@@ -1,7 +1,7 @@
-import numpy as np
-from scikits.learn import neighbors
 
 from numpy.testing import assert_array_equal
+
+from .. import neighbors
 
 def test_neighbors_1D():
     """
