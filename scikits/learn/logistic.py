@@ -1,8 +1,8 @@
 import numpy as np
-from . import _liblinear
 
 from .base import ClassifierMixin
-from .svm import BaseLibLinear
+from .svm.base import BaseLibLinear
+from .svm import _liblinear
 
 class LogisticRegression(BaseLibLinear, ClassifierMixin):
     """

@@ -2,6 +2,8 @@
 Nearest Neighbors
 =================
 
+.. currentmodule:: scikits.learn.neighbors
+
 The principle behind nearest neighbor methods is to find the k
 training points closest in euclidean distance to x0, and then classify
 using a majority vote among the k neighbors.
@@ -14,12 +16,10 @@ the decision boundary is very irregular.
 Classification
 ==============
 
-The `Neighbors` estimators implements the nearest-neighbors method:
+The :class:`Neighbors` estimators implements the nearest-neighbors
+method.
 
-.. autoclass:: scikits.learn.neighbors.Neighbors
-   :members:
-
-.. topic:: Usage examples:
+.. topic:: Examples:
 
   * :ref:`example_plot_neighbors.py`: an example of classification
     using nearest neighbor.
@@ -30,11 +30,14 @@ Regression
 Nearest neighbor regression is not (yet) implemented, yet it should be
 straightforward using the BallTree class.
 
+
+.. currentmodule:: scikits.learn.ball_tree
+
 Efficient implementation: the ball tree
 ==========================================
 
 Behind the scenes, nearest neighbor search is done by the object
-BallTree, which is a fast way to perform neighbor searches in data
+:class:`BallTree`, which is a fast way to perform neighbor searches in data
 sets of very high dimensionality.
 
 This class provides an interface to an optimized BallTree
@@ -50,7 +53,7 @@ through use of the triangle inequality:
 
 .. math::   |x+y| \leq |x| + |y|
 
-Each node of the Ball Tree defines a centroid, C, and a radius r such
+Each node of the :class:`BallTree` defines a centroid, C, and a radius r such
 that each point in the node lies within the hyper-sphere of radius r,
 centered at C.  With this setup, a single distance calculation between
 a test point and the centroid is sufficient to determine a lower bound
@@ -58,17 +61,15 @@ on the distance to all points within the node.  Carefully taking
 advantage of this property leads to determining neighbors in O[log(N)]
 time, as opposed to O[N] time for a brute-force search.
 
+A pure C implementation of brute-force search is also provided in
+function :func:`knn_brute`.
+
 .. topic:: References:
 
- * *"Five balltree construction algorithms"*, Omohundro, S.M.,
-   International Computer Science Institute Technical Report 
-   http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.91.8209&rep=rep1&type=pdf
-
-**Useful objects and functions:**
-
-.. autoclass:: scikits.learn.ball_tree.BallTree
-   :members:
-
-.. autofunction:: scikits.learn.ball_tree.knn_brute
+   * `"Five balltree construction algorithms"
+     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.91.8209&rep=rep1&type=pdf>`_,
+     Omohundro, S.M., International Computer Science Institute
+     Technical Report
+     
 
 

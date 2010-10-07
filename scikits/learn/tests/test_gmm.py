@@ -375,7 +375,6 @@ class GMMTester():
         # the addition of min_covar to the covariance (to prevent
         # underflow).  This is why the threshold is set to -0.5
         # instead of 0.
-        print trainll, np.diff(trainll)
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
 

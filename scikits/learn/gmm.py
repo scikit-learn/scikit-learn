@@ -9,7 +9,6 @@ Gaussian Mixture Models
 import itertools
 
 import numpy as np
-from scipy import cluster
 
 from .base import BaseEstimator
 
@@ -47,6 +46,7 @@ def logsum(A, axis=None):
     return Asum
 
 
+# TODO: this lacks a docstring
 def normalize(A, axis=None):
     A += np.finfo(float).eps
     Asum = A.sum(axis)
@@ -486,6 +486,7 @@ class GMM(BaseEstimator):
         X = np.asanyarray(X, dtype=np.float64)
 
         if 'm' in init_params:
+            from scipy import cluster
             if not 'minit' in kwargs:
                 kwargs.update({'minit': 'points'})
             self._means, tmp = cluster.vq.kmeans2(X, self._n_states, **kwargs)

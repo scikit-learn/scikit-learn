@@ -101,9 +101,8 @@ def _pprint(params, offset=0, printer=repr):
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
 
-        Note
-        =====
-
+        Notes
+        -----
         All estimators should specify all the parameters that can be set
         at the class level in their __init__ as explicit keyword
         arguments (no *args, **kwargs).

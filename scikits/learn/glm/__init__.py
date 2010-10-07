@@ -17,3 +17,4 @@ from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV, \
                                 lasso_path, enet_path
 from .ridge import Ridge
 
+from . import sparse

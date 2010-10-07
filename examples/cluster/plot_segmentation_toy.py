@@ -32,7 +32,7 @@ separating the objects one from the other, and not from the background.
 import numpy as np
 import pylab as pl
 
-from scikits.learn.features import image
+from scikits.learn.feature_extraction import image
 from scikits.learn.cluster import spectral_clustering
 
 ################################################################################

@@ -25,9 +25,10 @@ Dependencies
 ============
 
 The required dependencies to build the software are python >= 2.5,
-NumPy >= 1.1, SciPy and a working C++ compiler.
+NumPy >= 1.1, SciPy >= 0.6 (although having at least 0.7 is highly
+recommended and required by some modules) and a working C++ compiler.
 
-To run the tests you will also need nosetests.
+To run the tests you will also need nose >= 0.10.
 
 
 Install
@@ -84,9 +85,12 @@ https://sourceforge.net/apps/trac/scikit-learn/report
 Testing
 -------
 
-To execute the test suite, run from the project's top directory (you
-will need to have nosetest installed)::
+After installation, you can launch the test suite(you will need to
+have nosetest installed)::
 
-    nosetests
+    python -c "import scikits.learn as skl; skl.test()"
+
+See web page http://scikit-learn.sourceforge.net/developers/ for
+complete documentation on developement
 
 

@@ -29,12 +29,12 @@ for i in relevant_features:
 alpha_ = 50.
 noise =  stats.norm.rvs(loc = 0, scale = 1./np.sqrt(alpha_), size = n_samples)
 # Create the target
-Y = np.dot(X, w) + noise
+y = np.dot(X, w) + noise
 
 ################################################################################
 # Fit the Bayesian Ridge Regression
 clf = BayesianRidge(compute_score=True)
-clf.fit(X, Y)
+clf.fit(X, y)
 
 ################################################################################
 # Plot true weights, estimated weights and histogram of the weights
@@ -45,7 +45,7 @@ axe.plot(clf.coef_, 'b-', label="Estimate")
 axe.plot(w, 'g-', label="Ground truth")
 axe.set_xlabel("Features")
 axe.set_ylabel("Values of the weights")
-axe.legend(loc=1)
+axe.legend(loc="upper right")
 
 axe = pl.axes([0.1,0.1,0.45,0.325])
 axe.set_title("Histogram of the weights")
@@ -54,11 +54,11 @@ axe.plot(clf.coef_[relevant_features],5*np.ones(len(relevant_features)),'ro',
 label="Relevant features")
 axe.set_ylabel("Features")
 axe.set_xlabel("Values of the weights")
-axe.legend(loc=1)
+axe.legend(loc="lower left")
 
 axe = pl.axes([0.65,0.1,0.3,0.325])
 axe.set_title("Objective function")
-axe.plot(clf.all_score_)
+axe.plot(clf.scores_)
 axe.set_ylabel("Score")
 axe.set_xlabel("Iterations")
 pl.show()

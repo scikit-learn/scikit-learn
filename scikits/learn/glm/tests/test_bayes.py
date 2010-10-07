@@ -6,17 +6,19 @@
 import numpy as np
 
 from numpy.testing import assert_array_equal, \
-                          assert_array_almost_equal, decorators
+                          assert_array_almost_equal
+
+import nose
 
 from ..bayes import BayesianRidge, ARDRegression
 
 from scikits.learn import datasets
 
-@decorators.skipif(True, "XFailed test")
 def test_bayesian_on_diabetes():
     """
     Test BayesianRidge on diabetes
     """
+    raise nose.SkipTest("XFailed Test")
     diabetes = datasets.load_diabetes()
     X, y = diabetes.data, diabetes.target
 
@@ -25,14 +27,14 @@ def test_bayesian_on_diabetes():
     # Test with more samples than features
     clf.fit(X, y)
     # Test that scores are increasing at each iteration
-    assert_array_equal(np.diff(clf.all_score_) > 0, True)
+    assert_array_equal(np.diff(clf.scores_) > 0, True)
 
     # Test with more features than samples
     X = X[:5,:]
     y = y[:5]
     clf.fit(X, y)
     # Test that scores are increasing at each iteration
-    assert_array_equal(np.diff(clf.all_score_) > 0, True)
+    assert_array_equal(np.diff(clf.scores_) > 0, True)
 
 
 def test_toy_bayesian_ridge_object():
