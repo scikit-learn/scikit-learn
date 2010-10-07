@@ -1,16 +1,19 @@
---- a/scikits/learn/externals/setup.py
-+++ b/scikits/learn/externals/setup.py
-@@ -3,8 +3,6 @@
- def configuration(parent_package='', top_path=None):
+Index: scikit-learn/scikits/learn/externals/setup.py
+===================================================================
+--- scikit-learn.orig/scikits/learn/externals/setup.py	2010-10-07 15:18:37.000000000 -0400
++++ scikit-learn/scikits/learn/externals/setup.py	2010-10-07 15:22:07.000000000 -0400
+@@ -4,7 +4,6 @@
      from numpy.distutils.misc_util import Configuration
      config = Configuration('externals',parent_package,top_path)
--    config.add_subpackage('joblib')
+     config.add_subpackage('joblib')
 -    config.add_subpackage('joblib/test')
  
      return config
  
---- /dev/null
-+++ b/scikits/learn/externals/joblib/__init__.py
+Index: scikit-learn/scikits/learn/externals/joblib/__init__.py
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ scikit-learn/scikits/learn/externals/joblib/__init__.py	2010-10-07 15:18:38.000000000 -0400
 @@ -0,0 +1,3 @@
 +# yoh: use system-wide joblib
 +
