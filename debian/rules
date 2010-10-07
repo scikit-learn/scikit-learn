@@ -26,15 +26,16 @@ override_dh_clean:
 	dh_clean
 
 
-override_dh_auto_install: ${PYVERS:%=python-install%}
+override_dh_auto_install: ${PYVERS:%=python-install%} ${PYVERS:%=python-test%}
 # Per Python version logic -- install, test, move .so into -lib
 python-install%:
 	python$* setup.py install --install-layout=deb --root=$(PACKAGE_ROOT_DIR)
 
+python-test%: python-install%
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	: # Run unittests here against installed scikits.learn
-	export PYTHONPATH=`/bin/ls -d $$PWD/build/lib.*$*` MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
-	 python$* /usr/bin/nosetests -s --exclude '(manifold|test_gmm_em)' \
+	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE_ROOT_DIR)/usr/lib/python$*/*/` MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
+	 python$* /usr/bin/nosetests -s scikits.learn \
 	  $(PACKAGE_ROOT_DIR)/usr/lib/python$*/*/scikits/learn; \
 	 python$* /usr/bin/nosetests --doctest-extension=rst doc/
 else
