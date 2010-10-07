@@ -70,5 +70,6 @@ dfsg-%:
 	git checkout dfsg
 	-git merge --no-commit $*
 	-git rm -rf scikits/learn/externals/joblib
+	-git rm -f ./scikits/learn/svm/src/libsvm/svm.*
 	git commit -m "Merge $* into DFSG (pruning externals: joblib)" -a
 	git checkout debian
