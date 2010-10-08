@@ -13,34 +13,36 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('tests')
     config.add_subpackage('sparse')
 
-    # we parse site.cfg file for section libsvm
-    site_cfg  = ConfigParser()
-    site_cfg.read(get_standard_file('site.cfg'))
-
     # Section LibSVM
+    libsvm_macros = [('_DENSE_REP', 1)] 
     libsvm_includes = [numpy.get_include()]
-    libsvm_libraries = []
     libsvm_library_dirs = []
     libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
     libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c')]
 
-    # we try to link against system-wide libsvm
-    if site_cfg.has_section('libsvm'):
-        libsvm_includes.append(site_cfg.get('libsvm', 'include_dirs'))
-        libsvm_libraries.append(site_cfg.get('libsvm', 'libraries'))
-        libsvm_library_dirs.append(site_cfg.get('libsvm', 'library_dirs'))
-    else:
-        # if not specified, we build our own libsvm
-        libsvm_sources.append(join('src', 'libsvm', 'svm.cpp'))
-        libsvm_depends.append(join('src', 'libsvm', 'svm.h'))
+    libsvm_sources = [join('src', 'libsvm', 'svm.cpp')]
+    libsvm_depends = [join('src', 'libsvm', 'svm.h')]
 
     config.add_extension('_libsvm',
                          sources=libsvm_sources,
                          include_dirs=libsvm_includes,
-                         libraries=libsvm_libraries,
                          library_dirs=libsvm_library_dirs,
                          depends=libsvm_depends,
                          )
+
+    libsvm_sparse_sources = [join('src', 'libsvm', '_libsvm_sparse.c'),
+                             join('src', 'libsvm', 'svm.cpp')]
+
+    config.add_extension('_libsvm_sparse',
+                         sources=libsvm_sparse_sources,
+                         include_dirs=libsvm_includes,
+                         library_dirs=libsvm_library_dirs,
+                         depends=[join('src', 'libsvm', 'svm.h'),
+                                  join('src', 'libsvm', 'libsvm_sparse_helper.c')],
+                         extra_compile_args=['-O0 -fno-inline -pg']
+                                  )
+                         
+                         
 
 
     ### liblinear module
