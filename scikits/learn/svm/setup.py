@@ -22,6 +22,7 @@ def configuration(parent_package='', top_path=None):
     libsvm_libraries = []
     libsvm_library_dirs = []
     libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
+    libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c')]
 
     # we try to link against system-wide libsvm
     if site_cfg.has_section('libsvm'):
@@ -31,15 +32,15 @@ def configuration(parent_package='', top_path=None):
     else:
         # if not specified, we build our own libsvm
         libsvm_sources.append(join('src', 'libsvm', 'svm.cpp'))
+        libsvm_depends.append(join('src', 'libsvm', 'svm.h'))
 
     config.add_extension('_libsvm',
                          sources=libsvm_sources,
                          include_dirs=libsvm_includes,
                          libraries=libsvm_libraries,
                          library_dirs=libsvm_library_dirs,
-                         depends=[join('src', 'libsvm', 'svm.h'),
-                                  join('src', 'libsvm', 'libsvm_helper.c')],
-                                  )
+                         depends=libsvm_depends,
+                         )
 
 
     ### liblinear module
