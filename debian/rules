@@ -12,14 +12,6 @@ PYVER = $(shell pyversions  -vd)
 	: # Explicit build system to avoid use of all-in-1 Makefile
 	dh $@ --buildsystem=python_distutils
 
-# Build docs during build
-override_dh_auto_build:
-	dh_auto_build
-	: # Build Documentation
-ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	export PYTHONPATH=`/bin/ls -d $$PWD/build/lib.*$(PYVER)` MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
-	 cd doc; $(MAKE) html
-endif
 
 override_dh_clean:
 	rm -rf build doc/_build doc/auto_examples *-stamp scikits.learn.egg-info scikits/learn/datasets/__config__.py
@@ -37,11 +29,25 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE_ROOT_DIR)/usr/lib/python$*/*/`; \
 	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
 	cd build/; python$* /usr/bin/nosetests -s scikits.learn; \
-			   python$* /usr/bin/nosetests --doctest-extension=rst ../doc/
+			   python$* /usr/bin/nosetests --with-doctest --doctest-extension=rst ../doc/
 else
 	: # Skip unittests due to nocheck
 endif
 
+
+override_dh_installdocs:
+	: # Build Documentation using installed scikits.learn
+ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
+	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE_ROOT_DIR)/usr/lib/python$(PYVER)/*`; \
+	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
+	 cd doc; $(MAKE) html
+endif
+	: # Use jquery from Debian package, so prune shipped one
+	-rm doc/_build/html/_static/jquery.js
+	dh_installdocs -A AUTHORS.rst README*.rst
+
+override_dh_installchangelogs:
+	dh_installchangelogs doc/whats_new.rst
 
 ## move binary libraries into -lib
 override_dh_pysupport:
@@ -61,11 +67,6 @@ override_dh_pysupport:
 ## immediately useable documentation and exemplar scripts/data
 override_dh_compress:
 	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc
-
-override_dh_installdocs:
-	: # Use jquery from Debian package, so prune shipped one
-	-rm doc/_build/html/_static/jquery.js
-	dh_installdocs -A AUTHORS.rst README*.rst
 
 
 ## to prepare next Debian upstream source tarball
