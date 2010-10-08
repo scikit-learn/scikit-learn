@@ -1,6 +1,7 @@
 import numpy as np
 
-from . import _libsvm
+from ._libsvm import libsvm_train, libsvm_predict, libsvm_predict_proba, \
+     libsvm_decision_function
 from . import _liblinear
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 
@@ -79,7 +80,6 @@ class BaseLibSVM(BaseEstimator):
         Y = np.asanyarray(Y, dtype=np.float64, order='C')
 
         # container for when we call fit
-        self.support_   = np.empty((0,0), dtype=np.float64, order='C')
         self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
         self.intercept_ = np.empty(0,     dtype=np.float64, order='C')
 
@@ -110,14 +110,14 @@ class BaseLibSVM(BaseEstimator):
             # if custom gamma is not provided ...
             self.gamma = 1.0/_X.shape[0]
 
-        self.label_, self.probA_, self.probB_ = _libsvm.train_wrap(_X, Y,
-                 solver_type, kernel_type, self.degree,
-                 self.gamma, self.coef0, self.eps, self.C,
-                 self.support_, self.dual_coef_,
+        self.support_, self.support_vectors_, self.label_, \
+                 self.probA_, self.probB_ =  libsvm_train (_X, Y,
+                 solver_type, kernel_type, self.degree, self.gamma,
+                 self.coef0, self.eps, self.C, self.dual_coef_,
                  self.intercept_, self.weight_label, self.weight,
                  self.n_support_, self.nu, self.cache_size, self.p,
-                 int(self.shrinking),
-                 int(self.probability))
+                 int(self.shrinking), int(self.probability))
+
         return self
 
     def predict(self, T):
@@ -141,17 +141,16 @@ class BaseLibSVM(BaseEstimator):
         C : array, shape = [nsample]
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-
         kernel_type, T = self._get_kernel(T)
-        return _libsvm.predict_from_model_wrap(T, self.support_,
+
+        return libsvm_predict (T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
-                      self._svm_types.index(self.impl),
-                      kernel_type, self.degree,
-                      self.gamma, self.coef0, self.eps, self.C,
-                      self.weight_label, self.weight,
-                      self.nu, self.cache_size, self.p,
-                      int(self.shrinking), int(self.probability),
-                      self.n_support_, self.label_, self.probA_,
+                      self._svm_types.index(self.impl), kernel_type,
+                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.C, self.weight_label, self.weight, self.nu,
+                      self.cache_size, self.p, int(self.shrinking),
+                      int(self.probability), self.n_support_,
+                      self.support_, self.label_, self.probA_,
                       self.probB_)
 
     def predict_proba(self, T):
@@ -182,7 +181,7 @@ class BaseLibSVM(BaseEstimator):
                     "probability estimates must be enabled to use this method")
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
-        pprob = _libsvm.predict_prob_from_model_wrap(T, self.support_,
+        pprob = libsvm_predict_proba(T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl),
                       kernel_type, self.degree, self.gamma,
@@ -190,7 +189,7 @@ class BaseLibSVM(BaseEstimator):
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
                       self.p, int(self.shrinking), int(self.probability),
-                      self.n_support_, self.label_,
+                      self.n_support_, self.support_, self.label_,
                       self.probA_, self.probB_)
         return pprob[:, np.argsort(self.label_)]
 
@@ -212,7 +211,7 @@ class BaseLibSVM(BaseEstimator):
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
-        return _libsvm.predict_margin_from_model_wrap(T, self.support_,
+        return libsvm_decision_function (T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl),
                       kernel_type, self.degree, self.gamma,
@@ -220,14 +219,14 @@ class BaseLibSVM(BaseEstimator):
                       self.weight_label, self.weight,
                       self.nu, self.cache_size,
                       self.p, int(self.shrinking), int(self.probability),
-                      self.n_support_, self.label_,
+                      self.n_support_, self.support_, self.label_,
                       self.probA_, self.probB_)
 
     @property
     def coef_(self):
         if self.kernel != 'linear':
             raise NotImplementedError('coef_ is only available when using a linear kernel')
-        return np.dot(self.dual_coef_, self.support_)
+        return np.dot(self.dual_coef_, self.support_vectors_)
 
 
 class BaseLibLinear(BaseEstimator):

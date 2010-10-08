@@ -20,7 +20,7 @@ from scipy import sparse
 
 from ...base import ClassifierMixin
 from ..base import BaseLibSVM, BaseLibLinear
-from .. import _libsvm
+from .._libsvm_sparse import libsvm_sparse_train, libsvm_sparse_predict
 
 class SparseBaseLibSVM(BaseLibSVM):
 
@@ -85,7 +85,7 @@ class SparseBaseLibSVM(BaseLibSVM):
             # if custom gamma is not provided ...
             self.gamma = 1.0/X.shape[0]
 
-        self.label_, self.probA_, self.probB_ = _libsvm.csr_train_wrap(
+        self.label_, self.probA_, self.probB_ = libsvm_sparse_train (
                  X.shape[1], X.data, X.indices, X.indptr, Y,
                  solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
@@ -141,17 +141,16 @@ class SparseBaseLibSVM(BaseLibSVM):
         T = sparse.csr_matrix(T)
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
-        return _libsvm.csr_predict_from_model_wrap(T.data,
-                      T.indices, T.indptr, self.support_.data,
-                      self.support_.indices, self.support_.indptr,
-                      self.dual_coef_.data, self.intercept_,
-                      self._svm_types.index(self.impl),
-                      kernel_type, self.degree,
-                      self.gamma, self.coef0, self.eps, self.C,
-                      self.weight_label, self.weight,
-                      self.nu, self.cache_size, self.p,
-                      self.shrinking, self.probability,
-                      self.n_support, self.label_, self.probA_,
-                      self.probB_)
+
+        return libsvm_sparse_predict (T.data, T.indices, T.indptr,
+                      self.support_.data, self.support_.indices,
+                      self.support_.indptr, self.dual_coef_.data,
+                      self.intercept_,
+                      self._svm_types.index(self.impl), kernel_type,
+                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.C, self.weight_label, self.weight, self.nu,
+                      self.cache_size, self.p, self.shrinking,
+                      self.probability, self.n_support, self.label_,
+                      self.probA_, self.probB_)
 
 

@@ -23,7 +23,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('utils/tests')
     config.add_subpackage('externals')
 
-
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (
