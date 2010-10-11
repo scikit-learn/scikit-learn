@@ -38,6 +38,8 @@ New classes
     - New module feature_extraction (see :ref:`class reference
       <feature_extraction_ref>`)
 
+    - New FastICA algorithm in module scikits.learn.fastica
+
 
 Documentation
 ~~~~~~~~~~~~~
@@ -98,7 +100,7 @@ Authors
 The following is a list of authors for this release, preceeded by
 number of commits:
 
-     * 252  Fabian Pedregosa
+     * 262  Fabian Pedregosa
      * 240  Gael Varoquaux
      * 149  Alexandre Gramfort
      * 116  Olivier Grisel
@@ -106,6 +108,7 @@ number of commits:
      *  38  Ron Weiss
      *  23  Matthieu Perrot
      *  10  Bertrand Thirion
+     *   7  Yaroslav Halchenko
      *   9  VirgileFritsch
      *   6  Edouard Duchesnay
      *   4  Mathieu Blondel
