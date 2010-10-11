@@ -1,4 +1,13 @@
-scikit-learn (0.5~rc3-1) experimental; urgency=low
+scikit-learn (0.5-1) experimental; urgency=low
+
+  * New upstream release.  Absorbed patches:
+    - up_libsvm_verbosity_control
+    - up_system_libsvm_no_svmhdepends
+    - deb_libsvm_cythoning
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 11 Oct 2010 10:00:11 -0400
+
+scikit-learn (0.5~rc3-1) UNRELEASED; urgency=low
 
   * New upstream release-candidate
     - pruning joblib in favor of external package
