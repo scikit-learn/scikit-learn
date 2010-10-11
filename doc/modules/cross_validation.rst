@@ -49,27 +49,25 @@ data as only one sample is removed from the learning set.
 
 
 
->>> from scikits.learn.cross_val import LeaveOneOut
->>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
->>> Y = [0, 1, 0, 1]
->>> loo = LeaveOneOut(len(Y))
->>> print loo
-scikits.learn.cross_val.LeaveOneOut(n=4)
->>> for train, test in loo: print train,test
-[False  True  True  True] [ True False False False]
-[ True False  True  True] [False  True False False]
-[ True  True False  True] [False False  True False]
-[ True  True  True False] [False False False  True]
+    >>> import numpy as np
+    >>> from scikits.learn.cross_val import LeaveOneOut
+    >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
+    >>> Y = np.array([0, 1, 0, 1])
+    >>> loo = LeaveOneOut(len(Y))
+    >>> print loo
+    scikits.learn.cross_val.LeaveOneOut(n=4)
+    >>> for train, test in loo: print train,test
+    [False  True  True  True] [ True False False False]
+    [ True False  True  True] [False  True False False]
+    [ True  True False  True] [False False  True False]
+    [ True  True  True False] [False False False  True]
 
 
 Each fold is constitued by two arrays: the first one is related to the
 *training set*, and the second one to the *test set*.
 Thus, one can create the training/test sets using:
 
->>> import numpy as np
->>> X = np.asanyarray(X)
->>> Y = np.asanyarray(Y)
->>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
+    >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
 
 
 
@@ -108,7 +106,7 @@ sets using:
 >>> import numpy as np
 >>> X = np.asanyarray(X)
 >>> Y = np.asanyarray(Y)
->>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
+>>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
 
 
 
@@ -168,10 +166,8 @@ Example of stratified 2-fold:
 >>> print loo
 scikits.learn.cross_val.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
 >>> for train, test in loo: print train,test
-[False False  True False  True  True True] [ True  True False  True False False
-False]
-[ True  True False  True False False False] [False False  True False  True  True
- True]
+[False False  True False  True  True  True] [ True  True False  True False False False]
+[ True  True False  True False False False] [False False  True False  True  True  True]
  
 
 
