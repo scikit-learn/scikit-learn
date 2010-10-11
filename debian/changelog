@@ -4,6 +4,7 @@ scikit-learn (0.5-1) experimental; urgency=low
     - up_libsvm_verbosity_control
     - up_system_libsvm_no_svmhdepends
     - deb_libsvm_cythoning
+  * Boost policy compliance to 3.9.1 -- no changes
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 11 Oct 2010 10:00:11 -0400
 
