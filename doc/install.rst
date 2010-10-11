@@ -19,30 +19,6 @@ There are different ways to get scikits.learn installed:
     brand-new code.
 
 
-.. _install_by_distribution:
-
-Third party distributions of scikits.learn
-==========================================
-
-Some third-party distributions are now providing versions of
-scikits.learn integrated with their package-management systems. 
-
-These can make installation and upgrading much easier for users since
-the integration includes the ability to automatically install
-dependencies (numpy, scipy) that scikits.learn requires.
-
-The following is a list of linux distributions that provide their own
-version of scikits.learn:
-
-
-Debian and derivatives (Ubuntu)
--------------------------------
-
-The Debian package is named python-scikits-learn and can be install
-using the following commands with root privileges::
-
-      apt-get install python-scikits-learn
-
 
 .. _install_official_release:
 
@@ -83,6 +59,32 @@ This packages uses distutils, which is the default way of installing
 python modules. The install command is::
 
   python setup.py install
+
+
+.. _install_by_distribution:
+
+Third party distributions of scikits.learn
+==========================================
+
+Some third-party distributions are now providing versions of
+scikits.learn integrated with their package-management systems. 
+
+These can make installation and upgrading much easier for users since
+the integration includes the ability to automatically install
+dependencies (numpy, scipy) that scikits.learn requires.
+
+The following is a list of linux distributions that provide their own
+version of scikits.learn:
+
+
+Debian and derivatives (Ubuntu)
+-------------------------------
+
+The Debian package is named python-scikits-learn and can be install
+using the following commands with root privileges::
+
+      apt-get install python-scikits-learn
+
 
 
 .. _install_bleeding_edge:

@@ -98,11 +98,11 @@ scikits.learn: machine learning in python
         </div>
 
 
-.. warning:: 
+.. .. warning:: 
 
-   This documentation is relative to the development version,
-   documentation for the stable version can be found `here
-   <http://scikit-learn.sourceforge.net/old_doc/>`__
+..    This documentation is relative to the development version,
+..    documentation for the stable version can be found `here
+..    <http://scikit-learn.sourceforge.net/old_doc/>`__
 
 
 First steps

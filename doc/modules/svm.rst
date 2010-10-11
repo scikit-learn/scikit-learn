@@ -71,9 +71,7 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> clf = svm.SVC()
     >>> clf.fit (X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
-      cache_size=100.0,
-      shrinking=True,
-      gamma=0.5)
+      cache_size=100.0, shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
 

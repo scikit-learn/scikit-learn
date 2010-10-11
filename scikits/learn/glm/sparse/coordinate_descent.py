@@ -55,10 +55,10 @@ class ElasticNet(LinearModel):
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
     def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
-        """Fit Elastic Net model with coordinate descent
+        """Fit current model with coordinate descent
 
         X is expected to be a sparse matrix. For maximum efficiency, use a
-        sparse matrix in csr format (scipy.sparse.csc_matrix)
+        sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
         self._set_params(**params)
         X = sparse.csc_matrix(X)

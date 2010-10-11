@@ -352,3 +352,5 @@ class BaseLibLinear(BaseEstimator):
         """
         return int  (self.fit_intercept) - .5
 
+
+_libsvm.set_verbosity_wrap(0)

@@ -16,7 +16,7 @@ MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr'
 URL                 = 'http://scikit-learn.sourceforge.net'
 LICENSE             = 'new BSD'
 DOWNLOAD_URL        = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION             = '0.5-rc3'
+VERSION             = '0.5'
 
 import setuptools # we are using a setuptools namespace
 from numpy.distutils.core import setup
