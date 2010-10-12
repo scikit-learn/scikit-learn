@@ -66,7 +66,7 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     # update parameters of the classifier after a copy of its base structure
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
-    
+
     score = 0.
     n_test_samples = 0.
     for train, test in cv:
@@ -165,8 +165,7 @@ class GridSearchCV(BaseEstimator):
         self.fit_params = fit_params
         self.iid = iid
 
-
-    def fit(self, X, y, cv=None, **kw):
+    def fit(self, X, y, refit=True, cv=None, **kw):
         """Run fit with all sets of parameters
         Returns the best classifier
 
@@ -183,6 +182,8 @@ class GridSearchCV(BaseEstimator):
         cv : crossvalidation generator
             see scikits.learn.cross_val module
 
+        refit: boolean
+            refit the best estimator with the entire dataset
         """
         estimator = self.estimator
         if cv is None:
@@ -198,9 +199,13 @@ class GridSearchCV(BaseEstimator):
             delayed(fit_grid_point)(X, y, base_clf, clf_params,
                     cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
-        
+
         # Out is a list of pairs: score, estimator
         best_estimator = max(out)[1] # get maximum score
+
+        if refit:
+            # fit the best estimator using the entire dataset
+            best_estimator.fit(X, y)
 
         self.best_estimator = best_estimator
         self.predict = best_estimator.predict
@@ -209,7 +214,7 @@ class GridSearchCV(BaseEstimator):
 
         # Store the computed scores
         grid = iter_grid(self.param_grid)
-        self.grid_points_scores_ = dict((tuple(clf_params.items()), score) 
+        self.grid_points_scores_ = dict((tuple(clf_params.items()), score)
                     for clf_params, (score, _) in zip(grid, out))
 
         return self
