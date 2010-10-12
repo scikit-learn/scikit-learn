@@ -210,7 +210,7 @@ Tips on Practical Use
 Kernel functions
 ================
 
-The *kernel function* can be any of the following: 
+The *kernel function* can be any of the following:
 
   * linear: :math:`<x_i, x_j'>`.
 
@@ -265,7 +265,7 @@ instance that will use that kernel::
     >>> from scikits.learn import svm
     >>> def my_kernel(x, y):
     ...     return np.dot(x, y.T)
-    ... 
+    ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
 Passing the gram matrix
@@ -277,7 +277,7 @@ fit method.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_custom_kernel.py`. 
+ * :ref:`example_svm_plot_custom_kernel.py`.
 
 
 .. _svm_mathematical_formulation:
@@ -311,7 +311,7 @@ classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
 
     \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
 
-    
+
 
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
     & \zeta_i \geq 0, i=1, ..., l
@@ -352,12 +352,12 @@ This parameters can be accessed through the members support\_ and intercept\_:
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
    I Guyon, B Boser, V Vapnik - Advances in neural information
    processing 1993,
-   
-   
+
+
  * `"Support-vector networks"
    <http://www.springerlink.com/content/k238jx04hm87j80g/>`_
    C. Cortes, V. Vapnik, Machine Leaming, 20, 273-297 (1995)
-   
+
 
 
 NuSVC
@@ -377,6 +377,7 @@ Frequently Asked Questions
 
        A: The underlying C implementation does not provide this
        information.
+
 
 Implementation details
 ======================
