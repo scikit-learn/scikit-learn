@@ -173,6 +173,17 @@ Implemented classes are :class:`SVC`, :class:`NuSVC`,
 :class:`LinearSVC`.
 
 
+Complexity
+==========
+
+Support Vector Machines are powerful tools, but their compute and
+storage requirements increase rapidly with the number of training
+vectors. The core of an SVM is a quadratic programming problem (QP),
+separating support vectors from the rest of the training data. The QP
+solver used by this implementation scales with the cube of the number
+of training vectors (:math:`O(k^3)`).
+
+
 Tips on Practical Use
 =====================
 
