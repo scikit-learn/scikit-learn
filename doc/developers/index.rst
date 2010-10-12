@@ -33,11 +33,6 @@ or if you have write privileges::
 You can also check out the sources online in the web page
 http://github.com/scikit-learn/scikit-learn 
 
-If you have contributed some code and would like to have write
-privileges in subversion repository, please contact me (Fabian
-Pedregosa <fabian.pedregosa@inria.fr>) and We'll give you write
-privileges.
-
 If you run the development version, it is cumbersome to re-install the
 package each time you update the sources. It is thus preferred that
 you add the scikit-directory to your PYTHONPATH and build the

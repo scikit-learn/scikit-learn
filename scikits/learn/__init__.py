@@ -46,5 +46,5 @@ __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'gmm', 'glm',
            'logistic', 'lda', 'metrics', 'svm', 'features', 'clone', 
            'test']
 
-__version__ = '0.5.rc3'
+__version__ = '0.6.git'
 

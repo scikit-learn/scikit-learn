@@ -26,4 +26,4 @@ inplace:
 test: in
 	$(NOSETESTS)
 test-doc:
-	$(NOSETESTS) --doctest-extension=rst doc/
+	$(NOSETESTS) --with-doctest --doctest-tests --doctest-extension=rst doc/ doc/modules/

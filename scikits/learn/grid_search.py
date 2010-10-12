@@ -173,7 +173,7 @@ class GridSearchCV(BaseEstimator):
         self.fit_params = fit_params
         self.iid = iid
 
-    def fit(self, X, y, cv=None, **kw):
+    def fit(self, X, y, refit=True, cv=None, **kw):
         """Run fit with all sets of parameters
         Returns the best classifier
 
@@ -190,6 +190,8 @@ class GridSearchCV(BaseEstimator):
         cv : crossvalidation generator
             see scikits.learn.cross_val module
 
+        refit: boolean
+            refit the best estimator with the entire dataset
         """
         estimator = self.estimator
         if cv is None:
@@ -208,6 +210,10 @@ class GridSearchCV(BaseEstimator):
 
         # Out is a list of pairs: score, estimator
         best_estimator = max(out)[1] # get maximum score
+
+        if refit:
+            # fit the best estimator using the entire dataset
+            best_estimator.fit(X, y)
 
         self.best_estimator = best_estimator
         self.predict = best_estimator.predict

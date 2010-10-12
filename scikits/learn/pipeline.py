@@ -119,7 +119,7 @@ class Pipeline(BaseEstimator):
             for name, step in self._named_steps.iteritems():
                 for key, value in step._get_params(deep=True).iteritems():
                     out['%s__%s' % (name, key)] = value
-        return out
+            return out
 
     #---------------------------------------------------------------------------
     # Estimator interface

@@ -71,9 +71,7 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> clf = svm.SVC()
     >>> clf.fit (X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
-      cache_size=100.0,
-      shrinking=True,
-      gamma=0.5)
+      cache_size=100.0, shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -173,6 +171,17 @@ For maximum efficiency, use the CSR matrix format as defined in
 Implemented classes are :class:`SVC`, :class:`NuSVC`,
 :class:`SVR`, :class:`NuSVR`, :class:`OneClassSVM`,
 :class:`LinearSVC`.
+
+
+Complexity
+==========
+
+Support Vector Machines are powerful tools, but their compute and
+storage requirements increase rapidly with the number of training
+vectors. The core of an SVM is a quadratic programming problem (QP),
+separating support vectors from the rest of the training data. The QP
+solver used by this implementation scales with the cube of the number
+of training vectors (:math:`O(k^3)`).
 
 
 Tips on Practical Use
