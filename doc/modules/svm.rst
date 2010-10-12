@@ -155,6 +155,7 @@ will only take as input an array X, as there are no class labels.
 
 .. currentmodule:: scikits.learn.svm.sparse
 
+
 Support Vector machines for sparse data
 =======================================
 
@@ -180,8 +181,17 @@ Support Vector Machines are powerful tools, but their compute and
 storage requirements increase rapidly with the number of training
 vectors. The core of an SVM is a quadratic programming problem (QP),
 separating support vectors from the rest of the training data. The QP
-solver used by this implementation scales with the cube of the number
-of training vectors (:math:`O(k^3)`).
+solver used by this `libsvm`_-based implementation scales between
+:math:O(n_{features} \times n_{samples}^2) and
+:math:O(n_{features} \times n_{samples}^3) depending on how efficiently
+the `libsvm`_ cache is used in practice (dataset dependent). If the data
+is very sparse :math:n_{features} should be replaced by the average number
+of non-zero features in a sample vector
+
+Also note that for the linear case, the algorithm used in
+:class:`LinearSVC` by the `liblinear`_ implementation is much more
+efficient than its `libsvm`_-based :class:`SVC` counterpart and can
+scale almost linearly to millions of samples and/or features.
 
 
 Tips on Practical Use
@@ -282,7 +292,6 @@ fit method.
 
 .. _svm_mathematical_formulation:
 
-
 Mathematical formulation
 ========================
 
@@ -382,9 +391,11 @@ Frequently Asked Questions
 Implementation details
 ======================
 
-Internally, we use `libsvm
-<http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`_ to handle all
-computations. Libsvm is wrapped using C and Cython.
+Internally, we use `libsvm`_ and `liblinear`_ to handle all
+computations. These libraries are wrapped using C and Cython.
+
+.. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 
