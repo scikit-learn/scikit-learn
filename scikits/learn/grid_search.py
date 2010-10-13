@@ -231,5 +231,4 @@ class GridSearchCV(BaseEstimator):
         # This method is overridden during the fit if the best estimator
         # found has a score function.
         y_predicted = self.predict(X)
-        return -self.loss_func(y_predicted, y)
-
+        return -self.loss_func(y, y_predicted)
