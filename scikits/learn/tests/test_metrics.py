@@ -3,7 +3,8 @@ import numpy as np
 
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
-                          assert_equal, assert_almost_equal
+                          assert_equal, assert_almost_equal, \
+                          assert_
 
 from .. import svm, datasets
 from ..metrics import roc, auc, precision_recall_curve, \
@@ -54,6 +55,18 @@ def test_losses():
     assert_equal(zero_one(y[half:], y_), 13)
     assert_almost_equal(mean_square_error(y[half:], y_), 12.999, 2)
     assert_almost_equal(explained_variance(y[half:], y_), -0.04, 2)
+
+def test_symmetry():
+    """test the symmetry of score and loss functions"""
+    # symmetric
+    assert_equal(zero_one(y[half:], y_),
+                 zero_one(y_      , y[half:]))
+    assert_almost_equal(mean_square_error(y[half:], y_),
+                        mean_square_error(y_      , y[half:]))
+    # not symmetric
+    assert_(explained_variance(y[half:], y_) != \
+            explained_variance(y_      , y[half:]))
+    # FIXME: precision and recall aren't symmetric either
 
 def test_precision_recall_multilabel():
     # Y[i,j] = 1 means sample i has label j

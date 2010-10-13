@@ -224,21 +224,21 @@ def precision_recall_curve(y, probas_):
 # Loss functions
 
 
-def zero_one(y_pred, y_true):
+def zero_one(y_true, y_pred):
     """Zero-One loss
     returns the number of differences
     """
     return np.sum(y_pred != y_true)
 
 
-def mean_square_error(y_pred, y_true):
+def mean_square_error(y_true, y_pred):
     """Mean Square Error
     returns the mean square error
     """
     return np.linalg.norm(y_pred != y_true) ** 2
 
 
-def explained_variance(y_pred, y_true):
+def explained_variance(y_true, y_pred):
     """Explained variance
     returns the explained variance
     """
