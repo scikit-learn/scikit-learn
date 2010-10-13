@@ -48,7 +48,7 @@ def confusion_matrix(y, y_):
     return cm
 
 
-def roc(y, probas_):
+def roc_curve(y, probas_):
     """compute Receiver operating characteristic (ROC)
 
     Parameters

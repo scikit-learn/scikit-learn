@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal, \
                           assert_
 
 from .. import svm, datasets
-from ..metrics import roc, auc, precision_recall_curve, \
+from ..metrics import roc_curve, auc, precision_recall_curve, \
             confusion_matrix, zero_one, explained_variance, \
             mean_square_error, precision, recall, precision_recall, \
             f1_score
@@ -33,13 +33,13 @@ classifier = svm.SVC(kernel='linear', probability=True)
 probas_ = classifier.fit(X[:half],y[:half]).predict_proba(X[half:])
 y_ = classifier.predict(X[half:])
 
-def test_roc():
+def test_roc_curve():
     """test Receiver operating characteristic (ROC)"""
-    fpr, tpr, thresholds = roc(y[half:], probas_[:,1])
+    fpr, tpr, thresholds = roc_curve(y[half:], probas_[:,1])
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.80, decimal=2)
 
-def test_precision_recall():
+def test_precision_recall_curve():
     """test Precision-Recall"""
     precision, recall, thresholds = precision_recall_curve(y[half:],
                                                            probas_[:,1])
