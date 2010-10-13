@@ -9,7 +9,8 @@ from numpy.testing import assert_array_equal, \
 from .. import svm, datasets
 from ..metrics import roc, auc, precision_recall_curve, \
             confusion_matrix, zero_one, explained_variance, \
-            mean_square_error, precision, recall, precision_recall
+            mean_square_error, precision, recall, precision_recall, \
+            f1_score
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -87,7 +88,10 @@ def test_precision_recall_multilabel():
     n_labeled = 7.0
     p = n_corr_pred / n_pred
     r = n_corr_pred / n_labeled
+    f1 = 2 * p * r / (p + r)
 
     assert_equal(p, precision(Y_true, Y_pred))
     assert_equal(r, recall(Y_true, Y_pred))
     assert_equal((p,r), precision_recall(Y_true, Y_pred))
+    assert_equal(f1, f1_score(Y_true, Y_pred))
+

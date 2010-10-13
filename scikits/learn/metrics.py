@@ -1,5 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#
+# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD Style.
 
 import numpy as np
@@ -218,6 +218,51 @@ def precision_recall_curve(y, probas_):
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds
+
+def fbeta_score(y_true, y_pred, beta):
+    """
+    Compute fbeta score.
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    beta: float
+
+    Returns
+    =======
+    fbeta_score: float
+    """
+    assert(beta > 0)
+    p, r = precision_recall(y_true, y_pred)
+    beta2 = beta ** 2
+    return (1+beta2) * (p * r) / (beta2 * p + r)
+
+def f1_score(y_true, y_pred):
+    """
+    Compute f1 score.
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    Returns
+    =======
+    f1_score: float
+
+    References
+    ==========
+    http://en.wikipedia.org/wiki/F1_score
+    """
+    return fbeta_score(y_true, y_pred, 1)
 
 
 ###############################################################################
