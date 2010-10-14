@@ -571,7 +571,7 @@ def _lmvnpdffull(obs, means, covars):
     nmix = len(means)
     lpr = np.empty((nobs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
-        icv = np.linalg.inv(cv)
+        icv = np.linalg.pinv(cv)
         lpr[:,c] = -0.5 * (ndim * np.log(2 * np.pi)
                            + np.log(np.linalg.det(cv)))
         for o, currobs in enumerate(obs):
@@ -647,17 +647,15 @@ def _covar_mstep_spherical(*args):
 
 
 def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
-    print "THIS IS BROKEN"
     # Eq. 12 from K. Murphy, "Fitting a Conditional Linear Gaussian
     # Distribution"
-    avg_obs2 = np.dot(obs.T, obs)
-    #avg_obs2 = np.dot(obs.T, avg_obs)
     cv = np.empty((gmm._n_states, gmm.n_dim, gmm.n_dim))
     for c in xrange(gmm._n_states):
-        wobs = obs.T * posteriors[:,c]
-        avg_obs2 = np.dot(wobs, obs) / posteriors[:,c].sum()
+        post = posteriors[:,c]
+        wobs = post * obs.T
+        avg_obs2 = np.dot(wobs, obs) / post.sum()
         mu = gmm._means[c][np.newaxis]
-        cv[c] = (avg_obs2 - np.dot(mu, mu.T)
+        cv[c] = (avg_obs2 - np.dot(mu.T, mu)
                  + min_covar * np.eye(gmm.n_dim))
     return cv
 
@@ -701,7 +699,7 @@ def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
 _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
                       'diag': _covar_mstep_diag,
                       #'tied': _covar_mstep_tied,
-                      #'full': _covar_mstep_full,
+                      'full': _covar_mstep_full,
                       'tied': _covar_mstep_slow,
-                      'full': _covar_mstep_slow
+                      #'full': _covar_mstep_slow
                       }
