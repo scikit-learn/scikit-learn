@@ -31,6 +31,10 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
     eps: float, optional
          precision for stopping criteria
 
+    multi_class: boolean, optional
+         perform multi-class SVM by Cramer and Singer. If active,
+         options loss, penalty and dual will be ignored.
+
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, n_features]
@@ -45,11 +49,6 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
 
     `intercept_` : array, shape = [n_class-1]
         Constants in decision function.
-
-    Notes
-    -----
-    Some features of liblinear are still not wrapped, like the Cramer
-    & Singer algorithm.
 
     """
 

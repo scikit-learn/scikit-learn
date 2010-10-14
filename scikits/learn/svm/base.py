@@ -243,18 +243,20 @@ class BaseLibLinear(BaseEstimator):
         'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
         'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
         'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
+        'MC_SVC'     : 4, # Multi-class Support Vector Classification
         'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
         'PL1_LLR_D0' : 6, # L1 penalty logistic regression
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 fit_intercept=True):
+                 multi_class=False, fit_intercept=True):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
         self.eps = eps
         self.C = C
         self.fit_intercept = fit_intercept
+        self.multi_class = multi_class
         # Check that the arguments given are valid:
         self._get_solver_type()
 
@@ -262,8 +264,11 @@ class BaseLibLinear(BaseEstimator):
         """ Return the magic number for the solver described by the
             settings.
         """
-        solver_type = "P%s_L%s_D%d"  % (
-            self.penalty.upper(), self.loss.upper(), int(self.dual))
+        if self.multi_class:
+            solver_type = 'MC_SVC'
+        else:
+            solver_type = "P%s_L%s_D%d"  % (
+                self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
             raise ValueError('Not supported set of arguments: '
                              + solver_type)
