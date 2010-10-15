@@ -6,9 +6,9 @@ Computes barycenters weights from a graph and saves it in a sparse matrix
 
 import math
 
-import scipy.sparse
-from numpy import asarray, dot, eye, ones, sum, trace, zeros, intc
-from numpy.linalg import solve
+import numpy as np
+from scipy import linalg
+from scipy import sparse
 
 from .tools import create_graph, create_neighborer
 
@@ -40,7 +40,7 @@ def barycenters(samples, neigh=None, n_neighbors=None,
     -------
     A CSR sparse matrix containing the barycenters weights
     """
-    bary = zeros((len(samples), len(samples)))
+    bary = np.zeros((len(samples), len(samples)))
 
     graph = create_graph(samples, neigh, n_neighbors,
         neigh_alternate_arguments)
@@ -55,10 +55,10 @@ def barycenters(samples, neigh=None, n_neighbors=None,
         indices.extend(neighs)
         indptr.append(indptr[-1] + len(neighs))
 
-    W = asarray(W)
-    indices = asarray(indices, dtype=intc)
-    indptr = asarray(indptr, dtype=intc)
-    return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples),
+    W = np.asarray(W)
+    indices = np.asarray(indices, dtype=np.intc)
+    indptr = np.asarray(indptr, dtype=np.intc)
+    return sparse.csr_matrix((W, indices, indptr), shape=(len(samples),
         len(samples)))
 
 
@@ -83,8 +83,9 @@ def barycenter(point, point_neighbors, tol=1e-3, **kwargs):
     Barycenter weights
     """
     z = point - point_neighbors
-    Gram = dot(z, z.T)
-    Gram += eye(len(point_neighbors), len(point_neighbors)) * tol * trace(Gram)
-    wi = solve(Gram, ones(len(point_neighbors)))
-    wi /= sum(wi)
+    Gram = np.dot(z, z.T)
+    Gram += np.eye(len(point_neighbors), len(point_neighbors)) * tol *\
+       np.trace(Gram)
+    wi = linalg.solve(Gram, np.ones(len(point_neighbors)))
+    wi /= np.sum(wi)
     return wi

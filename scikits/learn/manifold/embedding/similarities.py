@@ -11,8 +11,8 @@ from ..mapping import builder as mapping_builder
 
 from barycenters import barycenters
 
-import numpy
-from numpy import linalg
+import numpy as np
+from scipy import linalg
 import scipy.sparse
 from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
 import math
@@ -70,8 +70,8 @@ class LLE(Embedding):
     Examples
     --------
     >>> from scikits.learn.manifold import LLE
-    >>> import numpy
-    >>> samples = numpy.array((0., 0., 0., \
+    >>> import numpy as np
+    >>> samples = np.array((0., 0., 0., \
       1., 0., 0., \
       0., 1., 0., \
       1., 1., 0., \
@@ -98,20 +98,20 @@ class LLE(Embedding):
         -------
         Self
         """
-        self.X_ = numpy.asanyarray(X)
+        self.X_ = np.asanyarray(X)
         W = barycenters(self.X_, neigh=self.neigh,
             n_neighbors=self.n_neighbors,
             neigh_alternate_arguments=self.neigh_alternate_arguments)
-        t = numpy.eye(len(self.X_), len(self.X_)) - W
-        M = numpy.asarray(numpy.dot(t.T, t))
+        t = np.eye(len(self.X_), len(self.X_)) - W
+        M = np.asarray(np.dot(t.T, t))
 
-        w, vectors = numpy.linalg.eigh(M)
-        index = numpy.argsort(w)[1:1+self.n_coords]
+        w, vectors = linalg.eigh(M)
+        index = np.argsort(w)[1:1+self.n_coords]
 
         t = scipy.sparse.eye(len(self.X_), len(self.X_)) - W
         M = t.T * t
 
-        self.embedding_ = numpy.sqrt(len(self.X_)) * vectors[:,index]
+        self.embedding_ = np.sqrt(len(self.X_)) * vectors[:,index]
         self.mapping = mapping_builder(self, self.mapping_kind,
             neigh=self.neigh, n_neighbors=self.n_neighbors - 1,
             neigh_alternate_arguments=self.neigh_alternate_arguments)
@@ -130,25 +130,25 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
     W = method(samples, **kwargs)
 
     if scipy.sparse.issparse(W):
-        D = numpy.sqrt(W.sum(axis=0))
+        D = np.sqrt(W.sum(axis=0))
         Di = 1./D
         dia = scipy.sparse.dia_matrix((Di, (0,)), shape=W.shape)
         L = dia * W * dia
 
         w, vectors = eigen_symmetric(L, k=n_coords+1)
-        vectors = numpy.asarray(vectors)
-        D = numpy.asarray(D)
-        Di = numpy.asarray(Di).squeeze()
+        vectors = np.asarray(vectors)
+        D = np.asarray(D)
+        Di = np.asarray(Di).squeeze()
 
     else:
-        D = numpy.sqrt(numpy.sum(W, axis=0))
+        D = np.sqrt(np.sum(W, axis=0))
         Di = 1./D
-        L = Di * W * Di[:,numpy.newaxis]
+        L = Di * W * Di[:,np.newaxis]
         w, vectors = scipy.linalg.eigh(L)
 
-    index = numpy.argsort(w)[-2:-2-n_coords:-1]
+    index = np.argsort(w)[-2:-2-n_coords:-1]
 
-    return numpy.sqrt(len(samples)) * Di[:,numpy.newaxis] * vectors[:,index] * math.sqrt(numpy.sum(D))
+    return np.sqrt(len(samples)) * Di[:,np.newaxis] * vectors[:,index] * math.sqrt(np.sum(D))
 
 
 def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
@@ -163,14 +163,14 @@ def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
     for i in range(len(samples)):
         neighs = graph[i]
         z = samples[i] - samples[neighs]
-        wi = numpy.sum(z ** 2, axis = 1) / kernel_width
-        W.extend(numpy.exp(-wi))
+        wi = np.sum(z ** 2, axis = 1) / kernel_width
+        W.extend(np.exp(-wi))
         indices.extend(neighs)
         indptr.append(indptr[-1] + len(neighs))
 
-    W = numpy.asarray(W)
-    indices = numpy.asarray(indices, dtype=numpy.intc)
-    indptr = numpy.asarray(indptr, dtype=numpy.intc)
+    W = np.asarray(W)
+    indices = np.asarray(indices, dtype=np.intc)
+    indptr = np.asarray(indptr, dtype=np.intc)
     return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples), len(samples)))
 
 
@@ -181,7 +181,7 @@ def heat_kernel(samples, kernel_width=.5, **kwargs):
     from tools import dist2hd
     distances = dist2hd(samples, samples)**2
 
-    return numpy.exp(-distances/kernel_width)
+    return np.exp(-distances/kernel_width)
 
 
 def normalized_heat_kernel(samples, **kwargs):
@@ -189,8 +189,8 @@ def normalized_heat_kernel(samples, **kwargs):
     Uses a heat kernel for computing similarities in the whole array
     """
     similarities = heat_kernel(samples, **kwargs)
-    p1 = 1./numpy.sqrt(numpy.sum(similarities, axis=0))
-    return p1[:, numpy.newaxis] * similarities * p1
+    p1 = 1./np.sqrt(np.sum(similarities, axis=0))
+    return p1[:, np.newaxis] * similarities * p1
 
 
 def hessianMap(samples, n_coords, **kwargs):
@@ -204,15 +204,15 @@ def hessianMap(samples, n_coords, **kwargs):
     """
     graph = create_graph(samples, **kwargs)
     dp = n_coords * (n_coords + 1) / 2
-    W = numpy.zeros((len(samples) * dp, len(samples)))
+    W = np.zeros((len(samples) * dp, len(samples)))
 
     for i in range(len(samples)):
         neighs = graph[i][1]
-        neighborhood = samples[neighs] - numpy.mean(samples[neighs], axis=0)
+        neighborhood = samples[neighs] - np.mean(samples[neighs], axis=0)
         u, s, vh = linalg.svd(neighborhood.T, full_matrices=False)
         tangent = vh.T[:,:n_coords]
 
-        Yi = numpy.zeros((len(tangent), dp))
+        Yi = np.zeros((len(tangent), dp))
         ct = 0
         for j in range(n_coords):
             startp = tangent[:,j]
@@ -220,24 +220,24 @@ def hessianMap(samples, n_coords, **kwargs):
                 Yi[:, ct + k - j] = startp * tangent[:,k]
             ct = ct + n_coords - j
 
-        Yi = numpy.hstack((numpy.ones((len(neighs), 1)), tangent, Yi))
+        Yi = np.hstack((np.ones((len(neighs), 1)), tangent, Yi))
 
         Yt = mgs(Yi)
         Pii = Yt[:, n_coords + 1:]
-        means = numpy.mean(Pii, axis=0)[:,None]
-        means[numpy.where(means < 0.0001)[0]] = 1
+        means = np.mean(Pii, axis=0)[:,None]
+        means[np.where(means < 0.0001)[0]] = 1
         W[i * dp:(i+1) * dp, neighs] = Pii.T / means
 
-    G = numpy.dot(W.T, W)
+    G = np.dot(W.T, W)
     w, v = linalg.eigh(G)
 
-    index = numpy.argsort(w)
+    index = np.argsort(w)
     ws = w[index]
-    too_small = numpy.sum(ws < 10 * numpy.finfo(numpy.float).eps)
+    too_small = np.sum(ws < 10 * np.finfo(np.float).eps)
 
     index = index[too_small:too_small+n_coords]
 
-    return numpy.sqrt(len(samples)) * v[:,index]
+    return np.sqrt(len(samples)) * v[:,index]
 
 
 class HessianMap(Embedding):
@@ -292,8 +292,8 @@ class HessianMap(Embedding):
     Examples
     --------
     >>> from scikits.learn.manifold import HessianMap
-    >>> import numpy
-    >>> samples = numpy.array((0., 0., 0., \
+    >>> import numpy as np
+    >>> samples = np.array((0., 0., 0., \
       1., 0., 0., \
       0., 1., 0., \
       1., 1., 0., \
@@ -320,7 +320,7 @@ class HessianMap(Embedding):
         -------
         Self
         """
-        self.X_ = numpy.asanyarray(X)
+        self.X_ = np.asanyarray(X)
         self.embedding_ = hessianMap(self.X_, n_coords=self.n_coords,
             neigh=self.neigh, n_neighbors=self.n_neighbors,
             neigh_alternate_arguments=self.neigh_alternate_arguments)
@@ -333,14 +333,14 @@ def mgs(A):
     """
     Computes a Gram-Schmidt orthogonalization
     """
-    V = numpy.array(A)
+    V = np.array(A)
     m, n = V.shape
-    R = numpy.zeros((n, n))
+    R = np.zeros((n, n))
 
     for i in range(0, n):
         R[i, i] = linalg.norm(V[:, i])
         V[:, i] /= R[i, i]
         for j in range(i+1, n):
-            R[i, j] = numpy.dot(V[:, i].T, V[:, j])
+            R[i, j] = np.dot(V[:, i].T, V[:, j])
             V[:, j] -= R[i, j] * V[:, i]
     return V

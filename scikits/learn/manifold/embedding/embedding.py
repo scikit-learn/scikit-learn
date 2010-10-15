@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import numpy
-import math
-
 from ...base import BaseEstimator
 
 class Embedding(BaseEstimator):

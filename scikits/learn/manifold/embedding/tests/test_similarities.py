@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import numpy
+import numpy as np
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
                           assert_raises
@@ -14,7 +14,7 @@ from nose.tools import raises
 from ..tools import create_neighborer, dist2hd
 from ..similarities import LLE, HessianMap
 
-samples = numpy.array((0., 0., 0.,
+samples = np.array((0., 0., 0.,
   1., 0., 0.,
   0., 1., 0.,
   1., 1., 0.,
@@ -27,7 +27,7 @@ from .test_similarities_mds import close
 
 class TestLLE(TestCase):
     def test_fit(self):
-        numpy.random.seed(0)
+        np.random.seed(0)
         lle = LLE(n_coords=2, mapping_kind=None, n_neighbors=4)
         assert(lle.fit(samples) == lle)
         assert(hasattr(lle, 'embedding_'))
@@ -41,13 +41,13 @@ class TestLLE(TestCase):
 
     @raises(RuntimeError)
     def test_transform_raises(self):
-        numpy.random.seed(0)
+        np.random.seed(0)
         lle = LLE(n_coords=2, mapping_kind=None, n_neighbors=3)
         lle.fit(samples[:3])
         lle.transform(samples[0])
 
     def test_transform(self):
-        numpy.random.seed(0)
+        np.random.seed(0)
         lle = LLE(n_coords=2, n_neighbors=3)
         lle.fit(samples[:3])
         mapped = lle.transform(samples)
@@ -55,7 +55,7 @@ class TestLLE(TestCase):
 
 class TestHessianMap(TestCase):
     def test_fit(self):
-        numpy.random.seed(0)
+        np.random.seed(0)
         hessian = HessianMap(n_coords=2, mapping_kind=None, n_neighbors=5)
         assert(hessian.fit(samples) == hessian)
         assert(hasattr(hessian, 'embedding_'))
@@ -69,13 +69,13 @@ class TestHessianMap(TestCase):
 
     @raises(RuntimeError)
     def test_transform_raises(self):
-        numpy.random.seed(0)
+        np.random.seed(0)
         hessian = HessianMap(n_coords=2, mapping_kind=None, n_neighbors=3)
         hessian.fit(samples[:3,:2])
         hessian.transform(samples[0,:2])
 
     def test_transform(self):
-        numpy.random.seed(0)
+        np.random.seed(0)
         hessian = HessianMap(n_coords=2, n_neighbors=3)
         hessian.fit(samples[:3,:2])
         mapped = hessian.transform(samples[:,:2])

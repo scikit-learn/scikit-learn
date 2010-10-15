@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import numpy
+import numpy as np
 from numpy.testing import assert_array_equal, \
                           assert_array_almost_equal, \
                           assert_raises
@@ -14,7 +14,7 @@ from nose.tools import raises
 from ..tools import create_neighborer, dist2hd
 from ..similarities_mds import LaplacianEigenmap, DiffusionMap
 
-samples = numpy.array((0., 0., 0.,
+samples = np.array((0., 0., 0.,
   1., 0., 0.,
   0., 1., 0.,
   1., 1., 0.,

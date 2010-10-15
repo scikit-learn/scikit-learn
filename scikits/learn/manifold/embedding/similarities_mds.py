@@ -4,9 +4,7 @@
 Dimensionality reduction with similarities
 """
 
-import numpy
-import numpy.random
-import numpy.linalg
+import numpy as np
 import math
 
 #__all__ = ['LaplacianEigenmap', 'DiffusionMap', ]
@@ -71,8 +69,8 @@ class LaplacianEigenmap(Embedding):
     Examples
     --------
     >>> from scikits.learn.manifold import LaplacianEigenmap
-    >>> import numpy
-    >>> samples = numpy.array((0., 0., 0., \
+    >>> import numpy as np
+    >>> samples = np.array((0., 0., 0., \
       1., 0., 0., \
       0., 1., 0., \
       1., 1., 0., \
@@ -102,7 +100,7 @@ class LaplacianEigenmap(Embedding):
         -------
         Self
         """
-        self.X_ = numpy.asanyarray(X)
+        self.X_ = np.asanyarray(X)
         self.embedding_ = laplacian_maps(self.X_, n_coords=self.n_coords,
             neigh=self.neigh, n_neighbors=self.n_neighbors,
             neigh_alternate_arguments=self.neigh_alternate_arguments,
@@ -165,8 +163,8 @@ class DiffusionMap(Embedding):
     Examples
     --------
     >>> from scikits.learn.manifold import DiffusionMap
-    >>> import numpy
-    >>> samples = numpy.array((0., 0., 0., \
+    >>> import numpy as np
+    >>> samples = np.array((0., 0., 0., \
       1., 0., 0., \
       0., 1., 0., \
       1., 1., 0., \
@@ -196,7 +194,7 @@ class DiffusionMap(Embedding):
         -------
         Self
         """
-        self.X_ = numpy.asanyarray(X)
+        self.X_ = np.asanyarray(X)
         self.embedding_ = laplacian_maps(centered_normalized(self.X_),
             n_coords = self.n_coords,
             neigh = self.neigh, n_neighbors = self.n_neighbors,
