@@ -9,7 +9,7 @@ import numpy as np
 
 from ...base import BaseEstimator
 
-from ..embedding.barycenters import barycenter
+from ..embedding.barycenters import barycenter_weights
 from ..embedding.tools import create_neighborer
 
 class Barycenter(BaseEstimator):
@@ -77,6 +77,6 @@ class Barycenter(BaseEstimator):
         """
         X = np.atleast_2d(np.asanyarray(X))
         dist, X_neighbors = self.neigh.predict(X)
-        return np.asanyarray([np.dot(barycenter(x, self.__X[neighbors],
+        return np.asanyarray([np.dot(barycenter_weights(x, self.__X[neighbors],
             self.tol), self.__Y[neighbors]) for x, neighbors in zip(X,
             X_neighbors)])

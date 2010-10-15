@@ -50,7 +50,7 @@ def barycenters(samples, neigh=None, n_neighbors=None,
     indptr=[0]
     for i in range(len(samples)):
         neighs, ind = graph[i]
-        wi = barycenter(samples[i], samples[ind])
+        wi = barycenter_weights(samples[i], samples[ind])
         W.extend(wi)
         indices.extend(neighs)
         indptr.append(indptr[-1] + len(neighs))
@@ -62,7 +62,7 @@ def barycenters(samples, neigh=None, n_neighbors=None,
         len(samples)))
 
 
-def barycenter(point, point_neighbors, tol=1e-3, **kwargs):
+def barycenter_weights(point, point_neighbors, tol=1e-3, **kwargs):
     """
     Computes barycenter weights so that point may be reconstructed from its
     neighbors
