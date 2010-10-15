@@ -5,9 +5,7 @@ import numpy as np
 
 from unittest import TestCase
 from ..barycenters import barycenters, barycenter_weights
-from numpy.testing import assert_array_equal, \
-                          assert_array_almost_equal, \
-                          assert_raises
+from numpy.testing import assert_array_almost_equal
 
 class TestBarycenters(TestCase):
     def test_barycenters(self):

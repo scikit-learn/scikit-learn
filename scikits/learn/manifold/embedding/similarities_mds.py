@@ -5,9 +5,6 @@ Dimensionality reduction with similarities
 """
 
 import numpy as np
-import math
-
-#__all__ = ['LaplacianEigenmap', 'DiffusionMap', ]
 
 from .embedding import Embedding
 from ..mapping import builder as mapping_builder

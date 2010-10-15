@@ -4,13 +4,11 @@
 Computes barycenters weights from a graph and saves it in a sparse matrix
 """
 
-import math
-
 import numpy as np
 from scipy import linalg
 from scipy import sparse
 
-from .tools import create_graph, create_neighborer
+from .tools import create_graph
 
 __all__ = ['barycenters', ]
 
@@ -40,8 +38,6 @@ def barycenters(samples, neigh=None, n_neighbors=None,
     -------
     A CSR sparse matrix containing the barycenters weights
     """
-    bary = np.zeros((len(samples), len(samples)))
-
     graph = create_graph(samples, neigh, n_neighbors,
         neigh_alternate_arguments)
 

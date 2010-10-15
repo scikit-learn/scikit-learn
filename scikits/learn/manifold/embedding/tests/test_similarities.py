@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import unittest
 import numpy as np
 from numpy.testing import assert_array_equal, \
-                          assert_array_almost_equal, \
-                          assert_raises
+                          assert_array_almost_equal
 
 from unittest import TestCase
 
 from nose.tools import raises
 
-from ..tools import create_neighborer, dist2hd
+from ..tools import create_neighborer
 from ..similarities import LLE, HessianMap
 
 samples = np.array((0., 0., 0.,
