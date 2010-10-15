@@ -6,25 +6,9 @@ Gaussian Mixture Models
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
-import itertools
-
 import numpy as np
 
 from .base import BaseEstimator
-
-#######################################################
-#
-# This module is experimental. It is meant to replace
-# the em module, but before that happens, some work
-# must be done:
-#
-#   - migrate the plotting methods from em (see
-#     em.gauss_mix.GM.plot)
-#   - profile and benchmark
-#   - adopt naming scheme used in other modules (svm, glm)
-#     for estimated parameters (trailing underscore, etc.)
-#
-#######################################################
 
 
 def logsum(A, axis=None):
@@ -127,7 +111,8 @@ def sample_gaussian(mean, covar, cvtype='diag', n=1):
     elif cvtype == 'diag':
         rand = np.dot(np.diag(np.sqrt(covar)), rand)
     else:
-        U, s, V = np.linalg.svd(covar)
+        from scipy import linalg
+        U, s, V = linalg.svd(covar)
         sqrtS = np.diag(np.sqrt(s))
         sqrt_covar = np.dot(U, np.dot(sqrtS, V))
         rand = np.dot(sqrt_covar, rand)
@@ -555,10 +540,11 @@ def _lmvnpdfspherical(obs, means=0.0, covars=1.0):
 
 
 def _lmvnpdftied(obs, means, covars):
+    from scipy import linalg
     nobs, ndim = obs.shape
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
-    icv = np.linalg.inv(covars)
-    lpr = -0.5 * (ndim * np.log(2 * np.pi) + np.log(np.linalg.det(covars))
+    icv = linalg.pinv(covars)
+    lpr = -0.5 * (ndim * np.log(2 * np.pi) + np.log(linalg.det(covars))
                   + np.sum(obs * np.dot(obs, icv), 1)[:,np.newaxis]
                   - 2 * np.dot(np.dot(obs, icv), means.T)
                   + np.sum(means * np.dot(means, icv), 1))
@@ -567,23 +553,23 @@ def _lmvnpdftied(obs, means, covars):
 
 def _lmvnpdffull(obs, means, covars):
     # FIXME: this representation of covars is going to lose for caching
+    from scipy import linalg
+    import itertools
     nobs, ndim = obs.shape
     nmix = len(means)
     lpr = np.empty((nobs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
-        icv = np.linalg.pinv(cv)
+        icv = linalg.pinv(cv)
         lpr[:,c] = -0.5 * (ndim * np.log(2 * np.pi)
-                           + np.log(np.linalg.det(cv)))
+                           + np.log(linalg.det(cv)))
         for o, currobs in enumerate(obs):
             dzm = (currobs - mu)
             lpr[o,c] += -0.5 * np.dot(np.dot(dzm, icv), dzm.T)
-        #dzm = (obs - mu)
-        #lpr[:,c] = -0.5 * (np.dot(np.dot(dzm, np.linalg.inv(cv)), dzm.T)
-        #                   + np.log(2 * np.pi) + np.linalg.det(cv)).diagonal()
     return lpr
 
 
 def _validate_covars(covars, cvtype, nmix, ndim):
+    from scipy import linalg
     if cvtype == 'spherical':
         if len(covars) != nmix:
             raise ValueError("'spherical' covars must have length nmix")
@@ -593,7 +579,7 @@ def _validate_covars(covars, cvtype, nmix, ndim):
         if covars.shape != (ndim, ndim):
             raise ValueError("'tied' covars must have shape (ndim, ndim)")
         elif (not np.allclose(covars, covars.T)
-              or np.any(np.linalg.eigvalsh(covars) <= 0)):
+              or np.any(linalg.eigvalsh(covars) <= 0)):
             raise ValueError("'tied' covars must be symmetric, "
                              "positive-definite")
     elif cvtype == 'diag':
@@ -607,7 +593,7 @@ def _validate_covars(covars, cvtype, nmix, ndim):
                              "(nmix, ndim, ndim)")
         for n,cv in enumerate(covars):
             if (not np.allclose(cv, cv.T)
-                or np.any(np.linalg.eigvalsh(cv) <= 0)):
+                or np.any(linalg.eigvalsh(cv) <= 0)):
                 raise ValueError("component %d of 'full' covars must be "
                                  "symmetric, positive-definite" % n)
 
@@ -652,10 +638,9 @@ def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     cv = np.empty((gmm._n_states, gmm.n_dim, gmm.n_dim))
     for c in xrange(gmm._n_states):
         post = posteriors[:,c]
-        wobs = post * obs.T
-        avg_obs2 = np.dot(wobs, obs) / post.sum()
+        avg_cv = np.dot(post * obs.T, obs) / post.sum()
         mu = gmm._means[c][np.newaxis]
-        cv[c] = (avg_obs2 - np.dot(mu.T, mu)
+        cv[c] = (avg_cv - np.dot(mu.T, mu)
                  + min_covar * np.eye(gmm.n_dim))
     return cv
 
@@ -701,5 +686,4 @@ _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
                       #'tied': _covar_mstep_tied,
                       'full': _covar_mstep_full,
                       'tied': _covar_mstep_slow,
-                      #'full': _covar_mstep_slow
                       }
