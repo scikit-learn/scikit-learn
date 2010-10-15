@@ -11,8 +11,8 @@ import numpy as np
 
 from ...neighbors import Neighbors
 
-def create_neighborer(samples, neigh = None, n_neighbors = None,
-    neigh_alternate_arguments = None):
+def create_neighborer(samples, neigh=None, n_neighbors=None,
+    neigh_alternate_arguments=None):
     """
     Computes the barycenters of samples given as parameters and returns them.
     
@@ -43,7 +43,9 @@ def create_neighborer(samples, neigh = None, n_neighbors = None,
         neigh.fit(samples)
     return neigh
 
-def create_graph(samples, neigh = None, n_neighbors = None, neigh_alternate_arguments = None):
+
+def create_graph(samples, neigh=None, n_neighbors=None,
+    neigh_alternate_arguments=None):
     """
     Creates a list of list containing the nearest neighboors for each point in
     the dataset
@@ -78,23 +80,25 @@ def create_graph(samples, neigh = None, n_neighbors = None, neigh_alternate_argu
       .5, 0., 0., \
       1., 1., 0.5, \
       )).reshape((-1,3))
-    >>> graph = create_graph(samples, n_neighbors = 3)
+    >>> graph = create_graph(samples, n_neighbors=3)
     >>> print graph[0]
     [array([ 0. ,  0.5,  0.5]), array([0, 5, 4])]
     """
     n = len(samples)
     labels, graph = np.zeros(n), [None]*n
 
-    neigh = create_neighborer(samples, neigh = neigh,
-        n_neighbors = n_neighbors,
-        neigh_alternate_arguments = neigh_alternate_arguments)
+    neigh = create_neighborer(samples, neigh=neigh,
+        n_neighbors=n_neighbors,
+        neigh_alternate_arguments=neigh_alternate_arguments)
 
     for i in range(0, len(samples)):
         graph[i] = [neighboor for neighboor in neigh.predict(samples[i])]
 
     return graph
 
-def create_sym_graph(samples, neigh = None, n_neighbors = None, neigh_alternate_arguments = None):
+
+def create_sym_graph(samples, neigh=None, n_neighbors=None,
+    neigh_alternate_arguments=None):
     """
     Creates a list of lists containing the nearest neighboors for each point in
     the dataset. The list of lists is symmetric
@@ -129,13 +133,13 @@ def create_sym_graph(samples, neigh = None, n_neighbors = None, neigh_alternate_
       .5, 0., 0., \
       1., 1., 0.5, \
       )).reshape((-1,3))
-    >>> graph = create_sym_graph(samples, n_neighbors = 3)
+    >>> graph = create_sym_graph(samples, n_neighbors=3)
     >>> print graph[0]
     [0, 1, 4, 5]
     """
-    neigh = create_neighborer(samples, neigh = neigh,
-        n_neighbors = n_neighbors,
-        neigh_alternate_arguments = neigh_alternate_arguments)
+    neigh = create_neighborer(samples, neigh=neigh,
+        n_neighbors=n_neighbors,
+        neigh_alternate_arguments=neigh_alternate_arguments)
 
     graph = [set() for i in range(len(samples))]
 
@@ -145,6 +149,7 @@ def create_sym_graph(samples, neigh = None, n_neighbors = None, neigh_alternate_
             graph[vertex].add(point)
 
     return [list(el) for el in graph]
+
 
 def centered_normalized(samples):
     """
@@ -172,6 +177,7 @@ def centered_normalized(samples):
     centered = samples - np.mean(samples, axis=0)
     centered /= np.std(centered, axis=0)
     return centered
+
 
 def dist2hd(x,y):
     """

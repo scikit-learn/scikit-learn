@@ -79,11 +79,11 @@ class LLE(Embedding):
       .5, 0., 0., \
       1., 1., 0.5, \
       )).reshape((-1,3))
-    >>> lle = LLE(n_coords = 2, mapping_kind = None, n_neighbors = 3)
+    >>> lle = LLE(n_coords=2, mapping_kind=None, n_neighbors=3)
     >>> lle = lle.fit(samples)
     """
-    def __init__(self, n_coords, n_neighbors = None, neigh = None,
-        neigh_alternate_arguments = None, mapping_kind = "Barycenter"):
+    def __init__(self, n_coords, n_neighbors=None, neigh=None,
+        neigh_alternate_arguments=None, mapping_kind="Barycenter"):
         Embedding.__init__(self, n_coords, n_neighbors,
             neigh,neigh_alternate_arguments, mapping_kind)
 
@@ -99,9 +99,9 @@ class LLE(Embedding):
         Self
         """
         self.X_ = numpy.asanyarray(X)
-        W = barycenters(self.X_, neigh = self.neigh,
-            n_neighbors = self.n_neighbors,
-            neigh_alternate_arguments = self.neigh_alternate_arguments)
+        W = barycenters(self.X_, neigh=self.neigh,
+            n_neighbors=self.n_neighbors,
+            neigh_alternate_arguments=self.neigh_alternate_arguments)
         t = numpy.eye(len(self.X_), len(self.X_)) - W
         M = numpy.asarray(numpy.dot(t.T, t))
 
@@ -113,8 +113,8 @@ class LLE(Embedding):
 
         self.embedding_ = numpy.sqrt(len(self.X_)) * vectors[:,index]
         self.mapping = mapping_builder(self, self.mapping_kind,
-            neigh = self.neigh, n_neighbors = self.n_neighbors - 1,
-            neigh_alternate_arguments = self.neigh_alternate_arguments)
+            neigh=self.neigh, n_neighbors=self.n_neighbors - 1,
+            neigh_alternate_arguments=self.neigh_alternate_arguments)
         return self
 
 def laplacian_maps(samples, n_coords, method, **kwargs):
@@ -150,7 +150,8 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
 
     return numpy.sqrt(len(samples)) * Di[:,numpy.newaxis] * vectors[:,index] * math.sqrt(numpy.sum(D))
 
-def sparse_heat_kernel(samples, kernel_width = .5, **kwargs):
+
+def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
     """
     Uses a heat kernel for computing similarities in a neighborhood
     """
@@ -172,7 +173,8 @@ def sparse_heat_kernel(samples, kernel_width = .5, **kwargs):
     indptr = numpy.asarray(indptr, dtype=numpy.intc)
     return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples), len(samples)))
 
-def heat_kernel(samples, kernel_width = .5, **kwargs):
+
+def heat_kernel(samples, kernel_width=.5, **kwargs):
     """
     Uses a heat kernel for computing similarities in the whole array
     """
@@ -181,6 +183,7 @@ def heat_kernel(samples, kernel_width = .5, **kwargs):
 
     return numpy.exp(-distances/kernel_width)
 
+
 def normalized_heat_kernel(samples, **kwargs):
     """
     Uses a heat kernel for computing similarities in the whole array
@@ -188,6 +191,7 @@ def normalized_heat_kernel(samples, **kwargs):
     similarities = heat_kernel(samples, **kwargs)
     p1 = 1./numpy.sqrt(numpy.sum(similarities, axis=0))
     return p1[:, numpy.newaxis] * similarities * p1
+
 
 def hessianMap(samples, n_coords, **kwargs):
     """
@@ -234,6 +238,7 @@ def hessianMap(samples, n_coords, **kwargs):
     index = index[too_small:too_small+n_coords]
 
     return numpy.sqrt(len(samples)) * v[:,index]
+
 
 class HessianMap(Embedding):
     """
@@ -299,8 +304,8 @@ class HessianMap(Embedding):
     >>> hessian = HessianMap(n_coords = 2, mapping_kind = None, n_neighbors = 4)
     >>> hessian = hessian.fit(samples)
     """
-    def __init__(self, n_coords, n_neighbors = None, neigh = None,
-        neigh_alternate_arguments = None, mapping_kind = "Barycenter"):
+    def __init__(self, n_coords, n_neighbors=None, neigh=None,
+        neigh_alternate_arguments=None, mapping_kind="Barycenter"):
         Embedding.__init__(self, n_coords, n_neighbors,
             neigh,neigh_alternate_arguments, mapping_kind)
 
@@ -316,12 +321,12 @@ class HessianMap(Embedding):
         Self
         """
         self.X_ = numpy.asanyarray(X)
-        self.embedding_ = hessianMap(self.X_, n_coords = self.n_coords,
-            neigh = self.neigh, n_neighbors = self.n_neighbors,
-            neigh_alternate_arguments = self.neigh_alternate_arguments)
+        self.embedding_ = hessianMap(self.X_, n_coords=self.n_coords,
+            neigh=self.neigh, n_neighbors=self.n_neighbors,
+            neigh_alternate_arguments=self.neigh_alternate_arguments)
         self.mapping = mapping_builder(self, self.mapping_kind,
-            neigh = self.neigh, n_neighbors = self.n_neighbors - 1,
-            neigh_alternate_arguments = self.neigh_alternate_arguments)
+            neigh=self.neigh, n_neighbors=self.n_neighbors - 1,
+            neigh_alternate_arguments=self.neigh_alternate_arguments)
         return self
 
 def mgs(A):

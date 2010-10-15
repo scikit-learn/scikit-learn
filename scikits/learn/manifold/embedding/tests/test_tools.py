@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import unittest
 import numpy
@@ -19,8 +20,8 @@ class TestCreateGraph(TestCase):
           .5, 0., 0.,
           1., 1., 0.5,
           )).reshape((-1,3))
-        g = create_graph(samples, n_neighbors = 3, neigh = None,
-            neigh_alternate_arguments = None)
+        g = create_graph(samples, n_neighbors=3, neigh=None,
+            neigh_alternate_arguments=None)
         for l in g:
             assert(len(l) == 2)
             assert(len(l[0]) == 3)
@@ -36,8 +37,8 @@ class TestCreateGraph(TestCase):
           .5, 0., 0.,
           1., 1., 0.5,
           )).reshape((-1,3))
-        g = create_graph(samples, neigh = NewNeighbors, n_neighbors = None,
-            neigh_alternate_arguments = {'k' : 3})
+        g = create_graph(samples, neigh=NewNeighbors, n_neighbors=None,
+            neigh_alternate_arguments={'k' : 3})
         for l in g:
             assert(len(l) == 2)
             assert(len(l[0]) == 3)

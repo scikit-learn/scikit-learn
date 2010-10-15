@@ -6,16 +6,16 @@ from ...base import BaseEstimator
 
 from barycenter import Barycenter
 
-def builder(embedding, kind = "Barycenter", n_neighbors = None, neigh = None,
-    neigh_alternate_arguments = None):
+def builder(embedding, kind="Barycenter", n_neighbors=None, neigh=None,
+    neigh_alternate_arguments=None):
     """
     Function that will create a builder depending on the arguments it is passed
-    
+
     Parameters
     ----------
     embedding :
         A usable embedding instance
-    
+
     kind : object
         The type of mapper to use. Can be:
             * None : no mapping built
@@ -40,13 +40,13 @@ def builder(embedding, kind = "Barycenter", n_neighbors = None, neigh = None,
     if kind == None:
         return None
     elif kind == "Barycenter":
-        mapping = Barycenter(n_neighbors = n_neighbors, neigh = neigh,
-        neigh_alternate_arguments = neigh_alternate_arguments)
+        mapping = Barycenter(n_neighbors=n_neighbors, neigh=neigh,
+        neigh_alternate_arguments=neigh_alternate_arguments)
     elif isinstance(kind, BaseEstimator):
         mapping = kind
     elif inspect.isclass(kind) and issubclass(kind, BaseEstimator):
-        mapping = kind(n_neighbors = n_neighbors, neigh = neigh,
-            neigh_alternate_arguments = neigh_alternate_arguments)
+        mapping = kind(n_neighbors=n_neighbors, neigh=neigh,
+            neigh_alternate_arguments=neigh_alternate_arguments)
     else:
       raise RuntimeError(
           "Argument 'kind' should be a BaseEstimator subclass or instance")

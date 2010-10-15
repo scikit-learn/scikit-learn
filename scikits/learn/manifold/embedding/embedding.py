@@ -51,8 +51,8 @@ class Embedding(BaseEstimator):
     -----
 
     """
-    def __init__(self, n_coords, n_neighbors = None, neigh = None,
-        neigh_alternate_arguments = None, mapping_kind = "Barycenter"):
+    def __init__(self, n_coords, n_neighbors=None, neigh=None,
+        neigh_alternate_arguments=None, mapping_kind="Barycenter"):
         self.n_coords = n_coords
         self.n_neighbors = n_neighbors if n_neighbors is not None else 9
         self.neigh = neigh

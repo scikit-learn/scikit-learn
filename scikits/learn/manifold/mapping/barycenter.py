@@ -15,7 +15,7 @@ from ..embedding.tools import create_neighborer
 class Barycenter(BaseEstimator):
     """
     Barycenter Mapping
-    
+
     Parameters
     ----------
     n_neighbors : int
@@ -37,13 +37,12 @@ class Barycenter(BaseEstimator):
     ----------
     embedding_ : array_like
         Embedding of the learning data
-    
+
     X_ : array_like
         Original data that is embedded
-
     """
-    def __init__(self, n_neighbors = None, neigh = None,
-        neigh_alternate_arguments = None, tol = 1e-3):
+    def __init__(self, n_neighbors=None, neigh=None,
+        neigh_alternate_arguments=None, tol=1e-3):
         self.n_neighbors = n_neighbors
         self.neigh = neigh
         self.neigh_alternate_arguments = neigh_alternate_arguments
@@ -71,12 +70,13 @@ class Barycenter(BaseEstimator):
         ----------
         X : arraylike
             The coordinates in an original space
-        
+
         Returns
         -------
         Coordinates in the embedded space
         """
         X = np.atleast_2d(np.asanyarray(X))
         dist, X_neighbors = self.neigh.predict(X)
-        return np.asanyarray([np.dot(barycenter(x, self.__X[neighbors], self.tol),
-            self.__Y[neighbors]) for x, neighbors in zip(X, X_neighbors)])
+        return np.asanyarray([np.dot(barycenter(x, self.__X[neighbors],
+            self.tol), self.__Y[neighbors]) for x, neighbors in zip(X,
+            X_neighbors)])

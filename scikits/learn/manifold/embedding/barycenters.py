@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 """
 Computes barycenters weights from a graph and saves it in a sparse matrix
@@ -13,11 +14,11 @@ from .tools import create_graph, create_neighborer
 
 __all__ = ['barycenters', ]
 
-def barycenters(samples, neigh = None, n_neighbors = None,
-    neigh_alternate_arguments = None):
+def barycenters(samples, neigh=None, n_neighbors=None,
+    neigh_alternate_arguments=None):
     """
     Computes the barycenters of samples given as parameters and returns them.
-    
+
     Parameters
     ----------
     samples : matrix
@@ -60,19 +61,20 @@ def barycenters(samples, neigh = None, n_neighbors = None,
     return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples),
         len(samples)))
 
-def barycenter(point, point_neighbors, tol = 1e-3, **kwargs):
+
+def barycenter(point, point_neighbors, tol=1e-3, **kwargs):
     """
     Computes barycenter weights so that point may be reconstructed from its
     neighbors
-    
+
     Parameters
     ----------
     point : array
         a 1D array
-    
+
     point_neighbors : array
         a 2D array containing samples
-    
+
     tol : float
         tolerance
 

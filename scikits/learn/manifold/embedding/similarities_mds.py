@@ -80,12 +80,12 @@ class LaplacianEigenmap(Embedding):
       .5, 0., 0., \
       1., 1., 0.5, \
       )).reshape((-1,3))
-    >>> laplacian = LaplacianEigenmap(n_coords = 2, mapping_kind = None,\
-          n_neighbors = 3, kernel_width = .5)
+    >>> laplacian = LaplacianEigenmap(n_coords=2, mapping_kind=None,\
+          n_neighbors=3, kernel_width=.5)
     >>> laplacian = laplacian.fit(samples)
     """
-    def __init__(self, n_coords, n_neighbors = None, neigh = None,
-        neigh_alternate_arguments = None, mapping_kind = "Barycenter",
+    def __init__(self, n_coords, n_neighbors=None, neigh=None,
+        neigh_alternate_arguments=None, mapping_kind="Barycenter",
         kernel_width = .5):
         Embedding.__init__(self, n_coords, n_neighbors,
             neigh,neigh_alternate_arguments, mapping_kind)
@@ -103,13 +103,13 @@ class LaplacianEigenmap(Embedding):
         Self
         """
         self.X_ = numpy.asanyarray(X)
-        self.embedding_ = laplacian_maps(self.X_, n_coords = self.n_coords,
-            neigh = self.neigh, n_neighbors = self.n_neighbors,
-            neigh_alternate_arguments = self.neigh_alternate_arguments,
-            method=sparse_heat_kernel, kernel_width = self.kernel_width)
+        self.embedding_ = laplacian_maps(self.X_, n_coords=self.n_coords,
+            neigh=self.neigh, n_neighbors=self.n_neighbors,
+            neigh_alternate_arguments=self.neigh_alternate_arguments,
+            method=sparse_heat_kernel, kernel_width=self.kernel_width)
         self.mapping = mapping_builder(self, self.mapping_kind,
-            neigh = self.neigh, n_neighbors = self.n_neighbors - 1,
-            neigh_alternate_arguments = self.neigh_alternate_arguments)
+            neigh=self.neigh, n_neighbors=self.n_neighbors - 1,
+            neigh_alternate_arguments=self.neigh_alternate_arguments)
         return self
 
 class DiffusionMap(Embedding):
@@ -174,13 +174,13 @@ class DiffusionMap(Embedding):
       .5, 0., 0., \
       1., 1., 0.5, \
       )).reshape((-1,3))
-    >>> diffusion = DiffusionMap(n_coords = 2, mapping_kind = None,\
-          n_neighbors = 3, kernel_width = .5)
+    >>> diffusion = DiffusionMap(n_coords=2, mapping_kind=None,\
+          n_neighbors=3, kernel_width=.5)
     >>> diffusion = diffusion.fit(samples)
     """
-    def __init__(self, n_coords, n_neighbors = None, neigh = None,
-        neigh_alternate_arguments = None, mapping_kind = "Barycenter",
-        kernel_width = .5):
+    def __init__(self, n_coords, n_neighbors=None, neigh=None,
+        neigh_alternate_arguments=None, mapping_kind="Barycenter",
+        kernel_width=.5):
         Embedding.__init__(self, n_coords, n_neighbors,
             neigh,neigh_alternate_arguments, mapping_kind)
         self.kernel_width = kernel_width
@@ -201,8 +201,8 @@ class DiffusionMap(Embedding):
             n_coords = self.n_coords,
             neigh = self.neigh, n_neighbors = self.n_neighbors,
             neigh_alternate_arguments = self.neigh_alternate_arguments,
-            method=normalized_heat_kernel, kernel_width = self.kernel_width)
+            method=normalized_heat_kernel, kernel_width=self.kernel_width)
         self.mapping = mapping_builder(self, self.mapping_kind,
-            neigh = self.neigh, n_neighbors = self.n_neighbors - 1,
-            neigh_alternate_arguments = self.neigh_alternate_arguments)
+            neigh=self.neigh, n_neighbors=self.n_neighbors - 1,
+            neigh_alternate_arguments=self.neigh_alternate_arguments)
         return self
