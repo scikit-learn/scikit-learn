@@ -193,7 +193,7 @@ def normalized_heat_kernel(samples, **kwargs):
     return p1[:, np.newaxis] * similarities * p1
 
 
-def hessianMap(samples, n_coords, **kwargs):
+def hessian_map(samples, n_coords, **kwargs):
     """
     Computes a Hessian eigenmap for a manifold
     Parameters:
@@ -321,7 +321,7 @@ class HessianMap(Embedding):
         Self
         """
         self.X_ = np.asanyarray(X)
-        self.embedding_ = hessianMap(self.X_, n_coords=self.n_coords,
+        self.embedding_ = hessian_map(self.X_, n_coords=self.n_coords,
             neigh=self.neigh, n_neighbors=self.n_neighbors,
             neigh_alternate_arguments=self.neigh_alternate_arguments)
         self.mapping = mapping_builder(self, self.mapping_kind,
