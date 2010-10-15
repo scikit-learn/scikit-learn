@@ -11,6 +11,8 @@ import numpy as np
 
 from ...neighbors import Neighbors
 
+from ...preprocessing import Scaler
+
 def create_neighborer(samples, neigh=None, n_neighbors=None,
     neigh_alternate_arguments=None):
     """
@@ -174,9 +176,9 @@ def centered_normalized(samples):
            [ 0.        , -1.08012345, -0.40824829],
            [ 1.08012345,  1.08012345,  2.44948974]])
     """
-    centered = samples - np.mean(samples, axis=0)
-    centered /= np.std(centered, axis=0)
-    return centered
+    scaler = Scaler(with_std=True)
+    scaler.fit(samples)
+    return scaler.transform(samples)
 
 
 def dist2hd(x,y):
