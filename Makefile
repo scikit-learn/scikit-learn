@@ -27,3 +27,6 @@ test: in
 	$(NOSETESTS)
 test-doc:
 	$(NOSETESTS) --with-doctest --doctest-tests --doctest-extension=rst doc/ doc/modules/
+
+test-coverage:
+	$(NOSETESTS) --with-coverage

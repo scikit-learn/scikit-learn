@@ -18,6 +18,7 @@ from . import cross_val
 from . import ball_tree
 from . import cluster
 from . import covariance
+from . import datasets
 from . import gmm
 from . import glm
 from . import logistic
@@ -42,7 +43,7 @@ try:
 except:
     pass
 
-__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'gmm', 'glm',
+__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets', 'gmm', 'glm',
            'logistic', 'lda', 'metrics', 'svm', 'features', 'clone', 
            'test']
 
