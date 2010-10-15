@@ -6,7 +6,7 @@ Computes coordinates based on the similarities given as parameters
 
 __all__ = ['LLE', 'HessianMap']
 
-from .embedding import Embedding
+from .base_embedding import BaseEmbedding
 from ..mapping import builder as mapping_builder
 
 from barycenters import barycenters
@@ -18,7 +18,7 @@ from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
 import math
 from .tools import create_graph, create_sym_graph
 
-class LLE(Embedding):
+class LLE(BaseEmbedding):
     """
     LLE embedding object
 
@@ -51,7 +51,7 @@ class LLE(Embedding):
     Attributes
     ----------
     embedding_ : array_like
-        Embedding of the learning data
+        BaseEmbedding of the learning data
 
     X_ : array_like
         Original data that is embedded
@@ -64,7 +64,7 @@ class LLE(Embedding):
     -----
 
     .. [1] Sam T. Roweis  and Lawrence K. Saul,
-           "Nonlinear Dimensionality Reduction by Locally Linear Embedding",
+           "Nonlinear Dimensionality Reduction by Locally Linear BaseEmbedding",
            Science, Vol. 290. no. 5500, pp. 2323 -- 2326, 22 December 2000
 
     Examples
@@ -84,7 +84,7 @@ class LLE(Embedding):
     """
     def __init__(self, n_coords, n_neighbors=None, neigh=None,
         neigh_alternate_arguments=None, mapping_kind="Barycenter"):
-        Embedding.__init__(self, n_coords, n_neighbors,
+        BaseEmbedding.__init__(self, n_coords, n_neighbors,
             neigh,neigh_alternate_arguments, mapping_kind)
 
     def fit(self, X):
@@ -240,7 +240,7 @@ def hessian_map(samples, n_coords, **kwargs):
     return np.sqrt(len(samples)) * v[:,index]
 
 
-class HessianMap(Embedding):
+class HessianMap(BaseEmbedding):
     """
     Hessian Map embedding object
 
@@ -273,7 +273,7 @@ class HessianMap(Embedding):
     Attributes
     ----------
     embedding_ : array_like
-        Embedding of the learning data
+        BaseEmbedding of the learning data
 
     X_ : array_like
         Original data that is embedded
@@ -306,7 +306,7 @@ class HessianMap(Embedding):
     """
     def __init__(self, n_coords, n_neighbors=None, neigh=None,
         neigh_alternate_arguments=None, mapping_kind="Barycenter"):
-        Embedding.__init__(self, n_coords, n_neighbors,
+        BaseEmbedding.__init__(self, n_coords, n_neighbors,
             neigh,neigh_alternate_arguments, mapping_kind)
 
     def fit(self, X):

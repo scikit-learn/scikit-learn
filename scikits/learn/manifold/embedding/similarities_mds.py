@@ -6,14 +6,14 @@ Dimensionality reduction with similarities
 
 import numpy as np
 
-from .embedding import Embedding
+from .base_embedding import BaseEmbedding
 from ..mapping import builder as mapping_builder
 
 from .similarities import laplacian_maps, sparse_heat_kernel, \
     normalized_heat_kernel
 from .tools import centered_normalized
 
-class LaplacianEigenmap(Embedding):
+class LaplacianEigenmap(BaseEmbedding):
     """
     Laplacian Eigenmap embedding object
 
@@ -49,7 +49,7 @@ class LaplacianEigenmap(Embedding):
     Attributes
     ----------
     embedding_ : array_like
-        Embedding of the learning data
+        BaseEmbedding of the learning data
 
     X_ : array_like
         Original data that is embedded
@@ -82,7 +82,7 @@ class LaplacianEigenmap(Embedding):
     def __init__(self, n_coords, n_neighbors=None, neigh=None,
         neigh_alternate_arguments=None, mapping_kind="Barycenter",
         kernel_width = .5):
-        Embedding.__init__(self, n_coords, n_neighbors,
+        BaseEmbedding.__init__(self, n_coords, n_neighbors,
             neigh,neigh_alternate_arguments, mapping_kind)
         self.kernel_width = kernel_width
 
@@ -107,7 +107,7 @@ class LaplacianEigenmap(Embedding):
             neigh_alternate_arguments=self.neigh_alternate_arguments)
         return self
 
-class DiffusionMap(Embedding):
+class DiffusionMap(BaseEmbedding):
     """
     Diffusion Map embedding object
 
@@ -143,7 +143,7 @@ class DiffusionMap(Embedding):
     Attributes
     ----------
     embedding_ : array_like
-        Embedding of the learning data
+        BaseEmbedding of the learning data
 
     X_ : array_like
         Original data that is embedded
@@ -176,7 +176,7 @@ class DiffusionMap(Embedding):
     def __init__(self, n_coords, n_neighbors=None, neigh=None,
         neigh_alternate_arguments=None, mapping_kind="Barycenter",
         kernel_width=.5):
-        Embedding.__init__(self, n_coords, n_neighbors,
+        BaseEmbedding.__init__(self, n_coords, n_neighbors,
             neigh,neigh_alternate_arguments, mapping_kind)
         self.kernel_width = kernel_width
 
