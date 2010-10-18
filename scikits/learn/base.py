@@ -154,6 +154,9 @@ class BaseEstimator(object):
         form <component>__<parameter> so that the its possible to
         update each component of the nested object.
         """
+        if not params:
+            # Simple optimisation to gain speed (inspect is slow)
+            return 
         valid_params = self._get_params(deep=True)
         for key, value in params.iteritems():
             split = key.split('__', 1)
