@@ -39,7 +39,7 @@ def configuration(parent_package='', top_path=None):
                          library_dirs=libsvm_library_dirs,
                          depends=[join('src', 'libsvm', 'svm.h'),
                                   join('src', 'libsvm', 'libsvm_sparse_helper.c')],
-                         extra_compile_args=['-O0 -fno-inline -pg']
+#                         extra_compile_args=['-O0 -fno-inline -pg']
                                   )
                          
                          
