@@ -239,7 +239,7 @@ class RegressorMixin(object):
             -------
             z : float
         """
-        return explained_variance(self.predict(X), y)
+        return explained_variance(y, self.predict(X))
 
 
 ################################################################################
