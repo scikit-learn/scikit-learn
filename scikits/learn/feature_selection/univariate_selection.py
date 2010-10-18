@@ -34,6 +34,8 @@ def f_classif(X, y):
     """
     X = np.atleast_2d(X)
     y = np.atleast_1d(y)
+    if y.ndim > 1:
+        y = y.ravel()
     args = [X[y==k] for k in np.unique(y)]
     return stats.f_oneway(*args)
 
