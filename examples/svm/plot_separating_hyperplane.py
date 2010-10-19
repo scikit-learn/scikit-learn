@@ -1,8 +1,11 @@
 """
 ===========================================
-SVM: Maximum separating margin hyperplane
+SVM: Maximum margin separating hyperplane
 ===========================================
 
+Plot the maximum margin separating hyperplane within a two-class
+separable dataset using a Support Vector Machines classifier with
+linear kernel.
 """
 
 import numpy as np
@@ -26,9 +29,9 @@ yy = a*xx - (clf.intercept_[0])/w[1]
 
 # plot the parallels to the separating hyperplane that pass through the
 # support vectors
-b = clf.support_[0]
+b = clf.support_vectors_[0]
 yy_down = a*xx + (b[1] - a*b[0])
-b = clf.support_[-1]
+b = clf.support_vectors_[-1]
 yy_up = a*xx + (b[1] - a*b[0])
 
 # plot the line, the points, and the nearest vectors to the plane
@@ -37,7 +40,7 @@ pl.plot(xx, yy, 'k-')
 pl.plot(xx, yy_down, 'k--')
 pl.plot(xx, yy_up, 'k--')
 pl.scatter(X[:,0], X[:,1], c=Y)
-pl.scatter(clf.support_[:,0], clf.support_[:,1], marker='+')
+pl.scatter(clf.support_vectors_[:,0], clf.support_vectors_[:,1], c='white')
 
 pl.axis('tight')
 pl.show()
