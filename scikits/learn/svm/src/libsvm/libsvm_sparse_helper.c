@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <numpy/arrayobject.h>
+#include "svm.h"
 
 /*
  * Convert scipy.sparse.csr to libsvm's sparse data structure
@@ -331,3 +334,33 @@ int free_model_SV(struct svm_model *model)
     /* svn_destroy_model frees model->SV */
     return 0;
 }
+
+
+/* rely on built-in facility to control verbose output
+ * in the versions of libsvm >= 2.89
+ */
+#if LIBSVM_VERSION && LIBSVM_VERSION >= 289
+
+/* borrowed from original libsvm code */
+static void print_null(const char *s) {}
+
+static void print_string_stdout(const char *s)
+{
+	fputs(s,stdout);
+	fflush(stdout);
+}
+
+/* provide convenience wrapper */
+void set_verbosity(int verbosity_flag){
+	if (verbosity_flag)
+# if LIBSVM_VERSION < 291
+		svm_print_string = &print_string_stdout;
+	else
+		svm_print_string = &print_null;
+# else
+		svm_set_print_string_function(&print_string_stdout);
+	else
+		svm_set_print_string_function(&print_null);
+# endif
+}
+#endif
