@@ -19,12 +19,15 @@ def test_predict_2_classes():
     """
     clf = logistic.LogisticRegression().fit(X, Y1)
     assert_array_equal(clf.predict(X), Y1)
+    assert_array_equal(clf.predict_proba(X).argmax(axis=1), Y1)
 
     clf = logistic.LogisticRegression(C=100).fit(X, Y1)
     assert_array_equal(clf.predict(X), Y1)
+    assert_array_equal(clf.predict_proba(X).argmax(axis=1), Y1)
 
     clf = logistic.LogisticRegression(fit_intercept=False).fit(X, Y1)
     assert_array_equal(clf.predict(X), Y1)
+    assert_array_equal(clf.predict_proba(X).argmax(axis=1), Y1)
 
 
 def test_error():
@@ -37,14 +40,17 @@ def test_error():
 def test_predict_3_classes():
     clf = logistic.LogisticRegression(C=10).fit(X, Y2)
     assert_array_equal(clf.predict(X), Y2)
-
+    assert_array_equal(clf.predict_proba(X).argmax(axis=1), Y2)
 
 def test_predict_iris():
     """Test logisic regression with the iris dataset"""
 
     clf = logistic.LogisticRegression().fit(iris.data, iris.target)
-    pred = clf.predict(iris.data)
 
+    pred = clf.predict(iris.data)
+    assert np.mean(pred == iris.target) > .95
+
+    pred = clf.predict_proba(iris.data).argmax(axis=1)
     assert np.mean(pred == iris.target) > .95
 
 def test_predict_proba():

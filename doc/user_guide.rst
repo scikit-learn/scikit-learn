@@ -1,6 +1,10 @@
 
 .. _supervised-learning:
 
+This is the html version of user guide. A PDF version for pinting can
+be found `here
+<http://sourceforge.net/projects/scikit-learn/files/user_guide.pdf/download>`_.
+
 Supervised learning
 -----------------------
 

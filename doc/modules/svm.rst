@@ -71,9 +71,7 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> clf = svm.SVC()
     >>> clf.fit (X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
-      cache_size=100.0,
-      shrinking=True,
-      gamma=0.5)
+      cache_size=100.0, shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -157,6 +155,7 @@ will only take as input an array X, as there are no class labels.
 
 .. currentmodule:: scikits.learn.svm.sparse
 
+
 Support Vector machines for sparse data
 =======================================
 
@@ -173,6 +172,26 @@ For maximum efficiency, use the CSR matrix format as defined in
 Implemented classes are :class:`SVC`, :class:`NuSVC`,
 :class:`SVR`, :class:`NuSVR`, :class:`OneClassSVM`,
 :class:`LinearSVC`.
+
+
+Complexity
+==========
+
+Support Vector Machines are powerful tools, but their compute and
+storage requirements increase rapidly with the number of training
+vectors. The core of an SVM is a quadratic programming problem (QP),
+separating support vectors from the rest of the training data. The QP
+solver used by this `libsvm`_-based implementation scales between
+:math:O(n_{features} \times n_{samples}^2) and
+:math:O(n_{features} \times n_{samples}^3) depending on how efficiently
+the `libsvm`_ cache is used in practice (dataset dependent). If the data
+is very sparse :math:n_{features} should be replaced by the average number
+of non-zero features in a sample vector
+
+Also note that for the linear case, the algorithm used in
+:class:`LinearSVC` by the `liblinear`_ implementation is much more
+efficient than its `libsvm`_-based :class:`SVC` counterpart and can
+scale almost linearly to millions of samples and/or features.
 
 
 Tips on Practical Use
@@ -201,7 +220,7 @@ Tips on Practical Use
 Kernel functions
 ================
 
-The *kernel function* can be any of the following: 
+The *kernel function* can be any of the following:
 
   * linear: :math:`<x_i, x_j'>`.
 
@@ -256,7 +275,7 @@ instance that will use that kernel::
     >>> from scikits.learn import svm
     >>> def my_kernel(x, y):
     ...     return np.dot(x, y.T)
-    ... 
+    ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
 Passing the gram matrix
@@ -268,11 +287,10 @@ fit method.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_custom_kernel.py`. 
+ * :ref:`example_svm_plot_custom_kernel.py`.
 
 
 .. _svm_mathematical_formulation:
-
 
 Mathematical formulation
 ========================
@@ -302,7 +320,7 @@ classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
 
     \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
 
-    
+
 
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
     & \zeta_i \geq 0, i=1, ..., l
@@ -343,12 +361,12 @@ This parameters can be accessed through the members support\_ and intercept\_:
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
    I Guyon, B Boser, V Vapnik - Advances in neural information
    processing 1993,
-   
-   
+
+
  * `"Support-vector networks"
    <http://www.springerlink.com/content/k238jx04hm87j80g/>`_
    C. Cortes, V. Vapnik, Machine Leaming, 20, 273-297 (1995)
-   
+
 
 
 NuSVC
@@ -369,12 +387,15 @@ Frequently Asked Questions
        A: The underlying C implementation does not provide this
        information.
 
+
 Implementation details
 ======================
 
-Internally, we use `libsvm
-<http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`_ to handle all
-computations. Libsvm is wrapped using C and Cython.
+Internally, we use `libsvm`_ and `liblinear`_ to handle all
+computations. These libraries are wrapped using C and Cython.
+
+.. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 

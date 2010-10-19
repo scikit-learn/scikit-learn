@@ -254,7 +254,7 @@ class StratifiedKFold(object):
         All the folds have size trunc(n/k), the last one has the complementary
         """
         y = np.asanyarray(y)
-        n = y.size
+        n = y.shape[0]
         assert k>0, ValueError('cannot have k below 1')
         assert k<n, ValueError('cannot have k=%d greater than the number '
                                'of samples %d' % (k, n))
@@ -266,7 +266,7 @@ class StratifiedKFold(object):
     def __iter__(self):
         y = self.y.copy()
         k = self.k
-        n = y.size
+        n = y.shape[0]
 
         classes = unique(y)
 
