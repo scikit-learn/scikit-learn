@@ -1,11 +1,11 @@
-from scikits.learn.features.text import strip_accents
-from scikits.learn.features.text import WordNGramAnalyzer
-from scikits.learn.features.text import CharNGramAnalyzer
-from scikits.learn.features.text import TermCountVectorizer
-from scikits.learn.features.text import TfidfTransformer
-from scikits.learn.features.text import TfidfVectorizer
-from scikits.learn.features.text import HashingVectorizer
-from scikits.learn.features.text import SparseHashingVectorizer
+from scikits.learn.feature_extraction.text import strip_accents
+from scikits.learn.feature_extraction.text import WordNGramAnalyzer
+from scikits.learn.feature_extraction.text import CharNGramAnalyzer
+from scikits.learn.feature_extraction.text import TermCountVectorizer
+from scikits.learn.feature_extraction.text import TfidfTransformer
+from scikits.learn.feature_extraction.text import TfidfVectorizer
+from scikits.learn.feature_extraction.text import HashingVectorizer
+from scikits.learn.feature_extraction.text import SparseHashingVectorizer
 from scikits.learn.svm import LinearSVC as DenseLinearSVC
 from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
 import numpy as np
@@ -130,6 +130,7 @@ def test_sparse_tf_idf():
 
 
 def test_dense_sparse_idf_sanity():
+
     hv = HashingVectorizer(dim=100, probes=3)
     shv = SparseHashingVectorizer(dim=100, probes=3)
 

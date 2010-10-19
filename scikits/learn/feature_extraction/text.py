@@ -391,6 +391,8 @@ class SparseHashingVectorizer(object):
     The logic is the same as HashingVectorizer but it is possible to use much
     larger dimension vectors without memory issues thanks to the usage of
     scipy.sparse datastructure to store the tf vectors.
+
+    This function requires scipy 0.7 or higher.
     """
 
     def __init__(self, dim=100000, probes=1, use_idf=True,

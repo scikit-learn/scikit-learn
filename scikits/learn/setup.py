@@ -11,8 +11,8 @@ def configuration(parent_package='', top_path=None):
 
     config.add_subpackage('svm')
     config.add_subpackage('datasets')
-    config.add_subpackage('features')
-    config.add_subpackage('features/tests')
+    config.add_subpackage('feature_extraction')
+    config.add_subpackage('feature_extraction/tests')
     config.add_subpackage('cluster')
     config.add_subpackage('cluster/tests')
     config.add_subpackage('covariance')

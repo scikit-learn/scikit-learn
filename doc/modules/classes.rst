@@ -56,9 +56,30 @@ Generalized Linear Models
    glm.LinearRegression
    glm.Ridge
    glm.Lasso
+   glm.LassoCV
+   glm.ElasticNet
+   glm.ElasticNetCV
    glm.LARS
    glm.LassoLARS
 
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   glm.lars_path
+
+
+For sparse data
+---------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   glm.sparse.Lasso
+   glm.sparse.ElasticNet
+        
 
 Bayesian Regression
 ===================
@@ -158,3 +179,45 @@ Cross-validation
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
 
+.. _feature_selection_ref:
+
+Feature Selection
+=================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_selection.rfe.RFE
+   feature_selection.rfe.RFECV
+
+.. _feature_extraction_ref:
+
+Feature Extraction
+==================
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   feature_extraction.image.img_to_graph
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_extraction.text.WordNGramAnalyzer
+   feature_extraction.text.CharNGramAnalyzer
+   feature_extraction.text.TermCountVectorizer
+   feature_extraction.text.TfidfTransformer
+   feature_extraction.text.TfidfVectorizer
+   feature_extraction.text.SparseHashingVectorizer 
+
+Pipeline
+========
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   pipeline.Pipeline

@@ -92,7 +92,7 @@ def img_to_graph(img, mask=None,
     graph = sparse.coo_matrix((np.hstack((weights, weights, img)),
                               (np.hstack((i_idx, diag_idx)),
                                np.hstack((j_idx, diag_idx)))),
-                              shape=(n_voxels, n_voxels))
+                              (n_voxels, n_voxels))
     if return_as is np.ndarray:
         return graph.todense()
     return return_as(graph)

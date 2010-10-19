@@ -5,8 +5,8 @@
 import os
 import numpy as np
 from scikits.learn.datasets.base import Bunch
-from scikits.learn.features.text import HashingVectorizer
-from scikits.learn.features.text import SparseHashingVectorizer
+from scikits.learn.feature_extraction.text import HashingVectorizer
+from scikits.learn.feature_extraction.text import SparseHashingVectorizer
 
 
 def _load_document_classification(dataset_path, metadata, set_, sparse, **kw):

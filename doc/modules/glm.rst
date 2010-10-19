@@ -203,9 +203,10 @@ solution, which is piecewise linear as a function of the norm of its
 coefficients.
 
 
+   >>> from scikits.learn import glm
    >>> clf = glm.LassoLARS(alpha=.1)
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-   LassoLARS(normalize=True, alpha=0.1, max_iter=None)
+   LassoLARS(max_features=None, alpha=0.1, normalize=True, fit_intercept=True)
    >>> clf.coef_
    array([ 0.50710678,  0.        ])
 
@@ -308,22 +309,24 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
 *Bayesian Ridge Regression* is used for regression:
 
     >>> from scikits.learn import glm
-    >>> X = [[0., 0.], [1., 2.], [2., -1.], [3., -1.]]
+    >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> clf = glm.BayesianRidge()
     >>> clf.fit (X, Y)
-    BayesianRidge(n_iter=300, th_w=1e-12, compute_ll=False, fit_intercept=True)
+    BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
+           fit_intercept=True, eps=0.001, alpha_2=1e-06, alpha_1=1e-06,
+           compute_score=False)
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> clf.predict ([[-1.5, 0.]])
-    array([ 1.5])
+    >>> clf.predict ([[1, 0.]])
+    array([ 0.50000013])
 
 
 The weights :math:`\beta` of the model can be access:
 
     >>> clf.coef_
-    array([ 0.93688528, -0.03034525])
+    array([ 0.49999993,  0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
 ones found by :ref:`ordinary_least_squares`. However, *Bayesian Ridge

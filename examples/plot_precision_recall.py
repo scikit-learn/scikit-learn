@@ -11,7 +11,7 @@ import random
 import pylab as pl
 import numpy as np
 from scikits.learn import svm, datasets
-from scikits.learn.metrics import precision_recall
+from scikits.learn.metrics import precision_recall_curve
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -34,7 +34,7 @@ classifier = svm.SVC(kernel='linear', probability=True)
 probas_ = classifier.fit(X[:half],y[:half]).predict_proba(X[half:])
 
 # Compute Precision-Recall and plot curve
-precision, recall, thresholds = precision_recall(y[half:], probas_[:,1])
+precision, recall, thresholds = precision_recall_curve(y[half:], probas_[:,1])
 
 pl.figure(-1)
 pl.clf()
