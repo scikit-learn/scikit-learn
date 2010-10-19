@@ -55,6 +55,10 @@ class LinearModel(BaseEstimator):
 	penalty_types = {"l2":2, "l1":1, "elasticnet":3}
 	try:
 	    self.penalty_type = penalty_types[self.penalty]
+	    if self.penalty_type == 2:
+		self.rho = 1.0
+	    elif self.penalty_type == 1:
+		self.rho = 0.0
 	except KeyError:
 	    raise ValueError("The penalty %s is not supported. " % self.penalty)
 
