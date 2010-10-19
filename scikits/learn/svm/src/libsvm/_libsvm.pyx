@@ -83,7 +83,7 @@ cdef extern from "libsvm_helper.c":
     int  free_model     (svm_model *)
     int  free_param     (svm_parameter *)
     void svm_free_and_destroy_model(svm_model** model_ptr_ptr)    
-
+    void set_verbosity(int)
 
 ################################################################################
 # Wrapper functions
@@ -387,3 +387,8 @@ def libsvm_decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     free_param(param)
     return dec_values
 
+def set_verbosity_wrap(int verbosity):
+    """
+    Control verbosity of libsvm library
+    """
+    set_verbosity(verbosity)

@@ -20,7 +20,9 @@ from scipy import sparse
 
 from ...base import ClassifierMixin
 from ..base import BaseLibSVM, BaseLibLinear
-from .._libsvm_sparse import libsvm_sparse_train, libsvm_sparse_predict
+
+from .._libsvm_sparse import libsvm_sparse_train, \
+     libsvm_sparse_predict, set_verbosity_wrap
 
 class SparseBaseLibSVM(BaseLibSVM):
 
@@ -105,11 +107,10 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         # this will fail if n_SV is zero. This is a limitation
         # in scipy.sparse, which does not permit empty matrices
-        self.support_ = sparse.csr_matrix((self._support_data,
+        self.support_vectors_ = sparse.csr_matrix((self._support_data,
                                            self._support_indices,
                                            self._support_indptr),
-                                          (n_SV, X.shape[1])
-                                          )
+                                           (n_SV, X.shape[1]) )
 
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
@@ -143,9 +144,10 @@ class SparseBaseLibSVM(BaseLibSVM):
         kernel_type = self._kernel_types.index(self.kernel)
 
         return libsvm_sparse_predict (T.data, T.indices, T.indptr,
-                      self.support_.data, self.support_.indices,
-                      self.support_.indptr, self.dual_coef_.data,
-                      self.intercept_,
+                      self.support_vectors_.data,
+                      self.support_vectors_.indices,
+                      self.support_vectors_.indptr,
+                      self.dual_coef_.data, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.eps,
                       self.C, self.weight_label, self.weight, self.nu,
@@ -154,3 +156,5 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.probA_, self.probB_)
 
 
+
+set_verbosity_wrap(0)

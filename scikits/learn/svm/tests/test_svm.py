@@ -58,6 +58,7 @@ def test_precomputed():
     pred = clf.predict(KT)
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.support_, [1, 3])    
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [1, 3])
     assert_array_equal(pred, true_result)
