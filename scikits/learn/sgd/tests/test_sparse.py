@@ -30,7 +30,7 @@ def test_sgd():
     assert_array_equal(clf.coef_, np.zeros((len(clf.coef_),)))
 
 def test_rcv1():
-    ds = bolt.io.MemoryDataset.load("/home/pprett/corpora/rcv1-ccat/test.npy")
+    ds = bolt.io.MemoryDataset.load("/home/peter/corpora/rcv1-ccat/test.npy")
     m, n = ds.n, ds.dim
     X = sparse.lil_matrix((m, n), dtype = np.float32)
     print "Build sparse matrix... ", 
@@ -43,7 +43,9 @@ def test_rcv1():
     print "Fitting model... "
     clf = sgd.sparse.SGD(penalty='l2', alpha = 0.0001, fit_intercept = True)
     clf.fit(X, Y)
-    #clf.score(X,Y)
+    score = clf.score(X,Y)
+    print "training score: ", score
+    print "training error: ", ((1.0 - score) * 100.0)
 
 if __name__ == "__main__":
     test_rcv1()

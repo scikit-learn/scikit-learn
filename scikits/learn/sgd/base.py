@@ -15,16 +15,20 @@ class LinearModel(BaseEstimator):
     
     Parameters
     ----------
-    loss : Loss
+    loss : str, ('hinge'|'log'|'modifiedhuber')
         The loss function to be used. 
     penalty : str, ('l2'|'l1'|'elasticnet')
         The penalty (aka regularization term) to be used.
+    reg : float
+        The regularization parameter, i.e. tradeoff between loss and penalty.
     alpha : float
-        Constant that multiplies the penalty. Defaults to 0.0001.
+        Constant that multiplies the L1 term. Defaults to 1.0
     rho : float
-        The ElasticNet mixing parameter, with 0 < rho <= 1. 
+        The ElasticNet mixing parameter, with 0 < rho <= 1.
     coef_ : ndarray of shape n_features
         The initial coeffients to warm-start the optimization
+    intercept_ : float
+        The initial intercept to warm-start the optimization
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
@@ -39,16 +43,17 @@ class LinearModel(BaseEstimator):
 
     """
 
-    def __init__(self, penalty='l2', loss="hinge", alpha = 0.0001,
+    def __init__(self, loss = "hinge", penalty = 'l2', alpha = 0.0001,
 		 rho = 0.85, coef_ = None, intercept_ = 0.0,
 		 fit_intercept = True):
-        self.penalty = penalty
         self.loss = loss
+	self.penalty = penalty
 	self.alpha = alpha
         self.rho = rho
 	self.coef_ = coef_
 	self.intercept_ = intercept_
         self.fit_intercept = fit_intercept
+	self._get_loss_function()
 	self._get_penalty_type()
 
     def _get_penalty_type(self):
