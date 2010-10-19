@@ -19,7 +19,7 @@ class SGD(LinearModel, ClassifierMixin):
     
     Parameters
     ----------
-    loss : Loss
+    loss : str, ('hinge'|'log'|'modifiedhuber')
         The loss function to be used. 
     penalty : str, ('l2'|'l1'|'elasticnet')
         The penalty (aka regularization term) to be used.
@@ -46,6 +46,16 @@ class SGD(LinearModel, ClassifierMixin):
         Constants in decision function.
 
     """
+
+    def _get_loss_function(self):
+	loss_functions = {"hinge" : sgd_fast_sparse.Hinge(),
+			  "log" : sgd_fast_sparse.Log(),
+			  "modifiedhuber" : sgd_fast_sparse.ModifiedHuber(),
+			  }
+	try:
+	    self.loss_function = loss_functions[self.loss]
+	except KeyError:
+	    raise ValueError("The loss %s is not supported. " % self.loss)
     
     def _set_coef(self, coef_):
         self.coef_ = coef_
@@ -56,13 +66,14 @@ class SGD(LinearModel, ClassifierMixin):
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
-    def fit(self, X, Y, n_iter=5, **params):
+    def fit(self, X, Y, n_iter = 5, **params):
         """Fit current model with SGD
 
         X is expected to be a sparse matrix. For maximum efficiency, use a
         sparse matrix in CSR format (scipy.sparse.csr_matrix)
         """
         self._set_params(**params)
+	self.n_iter = int(n_iter)
         X = sparse.csr_matrix(X)
         Y = np.asanyarray(Y, dtype = np.float64)
 
@@ -70,19 +81,20 @@ class SGD(LinearModel, ClassifierMixin):
         if self.coef_ is None:
             self.coef_ = np.zeros(n_features, dtype=np.float64, order = "c")
         
-        X_data = np.array(X.data, np.float32, order = "c")
+        X_data = np.array(X.data, np.float64, order = "c")
 	X_indices = X.indices
 	X_indptr = X.indptr
-	loss = sgd_fast_sparse.Hinge()
 	verbose = 2
 	shuffle = 0
+	print "norm: ", self.penalty_type
+	print "rho: ", self.rho
+	print "alpha:", self.alpha
 	coef_, intercept_ = sgd_fast_sparse.plain_sgd(self.coef_, self.intercept_,
-						      loss, int(self.penalty_type),
+						      self.loss_function, self.penalty_type,
 						      self.alpha, self.rho, X_data,
 						      X_indices, X_indptr, Y,
-						      int(n_iter),
-						      int(self.fit_intercept),
-						      int(verbose), int(shuffle))
+						      self.n_iter, int(self.fit_intercept),
+						      verbose, int(shuffle))
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)
@@ -91,32 +103,32 @@ class SGD(LinearModel, ClassifierMixin):
         # return self for chaining fit and predict calls
         return self
 
-    ## def predict(self, X):
-## 	"""Predict using the linear model
+    def predict(self, X):
+        """Predict using the linear model
 
-##         Parameters
-##         ----------
-##         X : numpy array of shape [n_samples, n_features]
+        Parameters
+        ----------
+        X : scipy.sparse matrix of shape [n_samples, n_features]
 
-##         Returns
-##         -------
-##         C : array, shape = [n_samples]
-##             Returns predicted class labeles (either 1 or -1 or 0).
-##         """
-## 	raise NotImplemented("not implemented yet")
+        Returns
+        -------
+        array, shape = [n_samples] with the predicted class labels (either -1, 1, or 0).
+        """        
+        return np.sign(self.predict_margin(X))
 
-##     def predict_margin(self, T):
-## 	"""Predict signed 'distance' to the hyperplane (aka confidence score). 
+    def predict_margin(self, X):
+        """Predict signed 'distance' to the hyperplane (aka confidence score). 
 
-## 	If 
+        Parameters
+        ----------
+        X : scipy.sparse matrix of shape [n_samples, n_features]
 
-##         Parameters
-##         ----------
-##         X : numpy array of shape [n_samples, n_features]
-
-##         Returns
-##         -------
-##         C : array, shape = [n_samples]
-##             Returns signed 'distance' to the hyperplane
-##         """
-## 	raise NotImplemented("not implemented yet")
+        Returns
+        -------
+        array, shape = [n_samples] with signed 'distances' to the hyperplane.
+        """
+        # np.dot only works correctly if both arguments are sparse matrices
+        if not sparse.issparse(X):
+            X = sparse.csr_matrix(X)
+        return np.ravel(np.dot(self.sparse_coef_, X.T).todense()
+                        + self.intercept_)
