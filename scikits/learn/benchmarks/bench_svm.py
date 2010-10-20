@@ -49,7 +49,7 @@ def bench_svm(X, Y):
     bench with swig-generated wrappers that come with libsvm
     """
 
-    import svmutil
+    import svm
 
     X1 = X.tolist()
     Y1 = Y.tolist()
@@ -58,12 +58,11 @@ def bench_svm(X, Y):
 
     # start time
     tstart = datetime.now()
-    problem = svmutil.svm_problem(Y1, X1)
-    param = svmutil.svm_parameter()
-    param.svm_type=0
-    param.kernel_type=2
-    model = svmutil.svm_train(problem, param)
-    svmutil.svm_predict([0]*len(X1), X1, model)
+    problem = svm.svm_problem(Y1, X1)
+    param = svm.svm_parameter(svm_type=0, kernel_type=2)
+    model = svm.svm_model(problem, param)
+    for i in X1:
+        model.predict(i)
     delta = (datetime.now() - tstart)
     # stop time
     svm_results.append(delta.seconds + delta.microseconds/mu_second)
@@ -112,7 +111,7 @@ if __name__ == '__main__':
     pl.subplot(211)
     pl.title('SVM with varying number of samples')
     pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
-    pl.plot(xx, svm_results,'r-', label='libsvm (ctypes binding)')
+    pl.plot(xx, svm_results,'r-', label='libsvm-swig')
     pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
     pl.legend()
     pl.xlabel('number of samples to classify')
@@ -141,7 +140,7 @@ if __name__ == '__main__':
         print '============================================'
         dim += step
         X, Y = np.random.randn(100, dim), np.random.randn(100)
-        Y = (10*Y).astype(np.int)
+        Y = Y.astype(np.int)
         bench_scikit(X, Y)
         bench_svm(X, Y)
         bench_pymvpa(X, Y)
@@ -150,7 +149,7 @@ if __name__ == '__main__':
     pl.subplot(212)
     pl.title('Classification in high dimensional spaces')
     pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
-    pl.plot(xx, svm_results,'r-', label='libsvm (ctypes binding)')
+    pl.plot(xx, svm_results,'r-', label='libsvm-swig')
     pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
     pl.legend()
     pl.xlabel('number of dimensions')
