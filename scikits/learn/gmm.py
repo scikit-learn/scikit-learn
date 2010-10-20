@@ -44,8 +44,7 @@ def normalize(A, axis=None):
 
 
 def lmvnpdf(obs, means, covars, cvtype='diag'):
-    """Compute the log probability under a multivariate Gaussian
-    distribution.
+    """Compute the log probability under a multivariate Gaussian distribution.
 
     Parameters
     ----------
@@ -223,7 +222,7 @@ class GMM(BaseEstimator):
     array([ 0.5,  0.5])
     """
 
-    def __init__(self, n_states=1, cvtype='diag', weights=None,
+    def __init__(self, n_states=1, n_dim=1, cvtype='diag', weights=None,
                  means=None, covars=None):
         """Create a Gaussian mixture model
 
@@ -243,6 +242,7 @@ class GMM(BaseEstimator):
         """
 
         self._n_states = n_states
+        self.n_dim = n_dim
         self._cvtype = cvtype
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
@@ -251,6 +251,15 @@ class GMM(BaseEstimator):
         if weights is None:
             weights = np.tile(1.0 / n_states, n_states)
         self.weights = weights
+
+        if means is None:
+            means = np.zeros((n_states, n_dim))
+        self.means = means
+
+        if covars is None:
+            covars = _distribute_covar_matrix_to_match_cvtype(
+                np.eye(n_dim), cvtype, n_states)
+        self.covars = covars
 
         self.labels = [None] * n_states
 
@@ -292,11 +301,9 @@ class GMM(BaseEstimator):
 
     def _set_means(self, means):
         means = np.asarray(means)
-        if hasattr(self, 'n_dim') and \
-               means.shape != (self._n_states, self.n_dim):
+        if means.shape != (self._n_states, self.n_dim):
             raise ValueError('means must have shape (n_states, n_dim)')
         self._means = means.copy()
-        self.n_dim = self._means.shape[1]
 
     means = property(_get_means, _set_means)
 
@@ -459,20 +466,11 @@ class GMM(BaseEstimator):
 
         X = np.asanyarray(X)
 
-        if hasattr(self, 'n_dim') and self.n_dim != X.shape[1]:
-            raise ValueError('Unexpected number of dimensions, got %s but expected %s' % (X.shape[1], self.n_dim))
-
-        self.n_dim = X.shape[1]
-
         if 'm' in init_params:
             from scipy import cluster
             if not 'minit' in kwargs:
                 kwargs.update({'minit': 'points'})
             self._means, tmp = cluster.vq.kmeans2(X, self._n_states, **kwargs)
-        else:
-            if not hasattr(self, 'means'):
-                means = np.zeros((self.n_states, self.n_dim))
-
 
         if 'w' in init_params:
             self.weights = np.tile(1.0 / self._n_states, self._n_states)
@@ -483,10 +481,6 @@ class GMM(BaseEstimator):
                 cv.shape = (1, 1)
             self._covars = _distribute_covar_matrix_to_match_cvtype(
                 cv, self._cvtype, self._n_states)
-        else:
-            if not hasattr(self, 'covars'):
-                self.covars = _distribute_covar_matrix_to_match_cvtype(
-                    np.eye(self.n_dim), cvtype, n_states)
 
         # EM algorithm
         logprob = []
@@ -556,26 +550,22 @@ def _lmvnpdftied(obs, means, covars):
                   + np.sum(means * np.dot(means, icv), 1))
     return lpr
 
+
 def _lmvnpdffull(obs, means, covars):
+    # FIXME: this representation of covars is going to lose for caching
     from scipy import linalg
     import itertools
-    if hasattr(linalg, 'solve_triangular'):
-        # only in scipy since 0.9
-        solve_triangular = linalg.solve_triangular
-    else:
-        # slower, but works
-        solve_triangular = linalg.solve
     nobs, ndim = obs.shape
     nmix = len(means)
-    log_prob = np.empty((nobs,nmix))
+    lpr = np.empty((nobs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
-        cv_chol = linalg.cholesky(cv, lower=True)
-        cv_det  = np.prod(np.diagonal(cv_chol))**2
-        cv_sol  = linalg.solve_triangular(cv_chol, (obs - mu).T, lower=True)
-        log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=0) + \
-                           ndim * np.log(2 * np.pi) + np.log(cv_det))
-
-    return log_prob
+        icv = linalg.pinv(cv)
+        lpr[:,c] = -0.5 * (ndim * np.log(2 * np.pi)
+                           + np.log(linalg.det(cv)))
+        for o, currobs in enumerate(obs):
+            dzm = (currobs - mu)
+            lpr[o,c] += -0.5 * np.dot(np.dot(dzm, icv), dzm.T)
+    return lpr
 
 
 def _validate_covars(covars, cvtype, nmix, ndim):
