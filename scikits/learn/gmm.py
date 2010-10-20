@@ -557,9 +557,6 @@ def _lmvnpdftied(obs, means, covars):
     return lpr
 
 def _lmvnpdffull(obs, means, covars):
-    """
-    Calculate the log density with a full covariance matrix
-    """
     from scipy import linalg
     import itertools
     if hasattr(linalg, 'solve_triangular'):
@@ -572,9 +569,9 @@ def _lmvnpdffull(obs, means, covars):
     nmix = len(means)
     log_prob = np.empty((nobs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
-        cv_chol = linalg.cholesky(cv)
+        cv_chol = linalg.cholesky(cv, lower=True)
         cv_det  = np.prod(np.diagonal(cv_chol))**2
-        cv_sol  = solve_triangular(cv_chol, (obs - mu).T)
+        cv_sol  = solve_triangular(cv_chol, (obs - mu).T, lower=True)
         log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=0) + \
                            ndim * np.log(2 * np.pi) + np.log(cv_det))
 
