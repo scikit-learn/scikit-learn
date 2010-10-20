@@ -14,6 +14,31 @@
  * Author: 2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
  */
 
+struct svm_model
+{
+    struct svm_parameter param;   // parameter
+    int nr_class;                 // number of classes, = 2 in
+                                  // regression/one class svm
+    int l;                        // total #SV
+    struct svm_node **SV;         // SVs (SV[l])
+    double **sv_coef;             // coefficients for SVs in decision
+                                  // functions (sv_coef[k-1][l])
+    double *rho;                  // constants in decision functions
+                                  // (rho[k*(k-1)/2])
+    double *probA;                // pairwise probability information
+    double *probB;
+
+    // for classification only
+
+    int *label;     // label of each class (label[k])
+    int *nSV;       // number of SVs for each class (nSV[k])
+                    // nSV[0] + nSV[1] + ... + nSV[k-1] = l
+    // XXX
+    int free_sv;    // 1 if svm_model is created by svm_load_model
+                    // 0 if svm_model is created by svm_train
+};
+
+
 
 /*
  * Convert matrix to sparse representation suitable for libsvm. x is
@@ -23,7 +48,7 @@
  * this case. We create a temporary array temp that collects non-zero
  * elements and after we just memcpy that to the proper array.
  *
- * Special care must be taken with indinces, since libsvm indices start
+ * Special care must be taken with indices, since libsvm indices start
  * at 1 and not at 0.
  *
  * Strictly speaking, the C standard does not require that structs are
@@ -32,23 +57,22 @@
  */
 struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
 {
-    struct svm_node *node;
+    struct svm_node *sparse;
+    npy_intp i, j, count;                /* number of nonzero elements in row i */
     npy_intp len_row = dims[1];
     double *tx = x;
-    int i;
 
-    node = (struct svm_node *) malloc (dims[0] * sizeof(struct svm_node));
+    sparse = (struct svm_node *) malloc (dims[0] * sizeof(struct svm_node));
 
-    if (node == NULL) return NULL;
+    if (sparse == NULL) return NULL;
+
     for (i=0; i<dims[0]; ++i) {
-        node[i].values = tx;
-        node[i].dim = (int) len_row;
-        node[i].ind = i; /* only used if kernel=precomputed, but not
-                            too much overhead */
+        sparse[i].values = tx;
+        sparse[i].dim = (int) len_row;
         tx += len_row;
     }
 
-    return node;
+    return sparse;
 }
 
 
@@ -133,19 +157,12 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     model->sv_coef = (double **)  malloc((nr_class-1)*sizeof(double *));
     model->rho =     (double *)   malloc( m * sizeof(double));
 
+    model->SV = dense_to_libsvm((double *) SV, SV_dims);
     model->nr_class = nr_class;
     model->param = *param;
     model->l = (int) support_dims[0];
+    model->sv_ind = (int *) support;
 
-    if (param->kernel_type == PRECOMPUTED) {
-        model->SV = (struct svm_node *) malloc ((model->l) * sizeof(struct svm_node));
-        for (i=0; i<model->l; ++i) {
-            model->SV[i].ind = ((int *) support)[i];
-            model->SV[i].values = NULL;
-        }
-    } else {
-        model->SV = dense_to_libsvm((double *) SV, SV_dims);
-    }
     /* 
      * regression and one-class does not use nSV, label.
      * TODO: does this provoke memory leaks (we just malloc'ed them)?
@@ -361,19 +378,15 @@ int free_model(struct svm_model *model)
 {
     /* like svm_free_and_destroy_model, but does not free sv_coef[i] */
     if (model == NULL) return -1;
-    free(model->SV);
+    svm_destroy_model(model);
+    return 0;
+}
 
-    /* We don't free sv_ind, since we did not create them in
-       set_model */
-    /* free(model->sv_ind); */
-    free(model->sv_coef);
-    free(model->rho);
-    free(model->label);
-    free(model->probA);
-    free(model->probB);
-    free(model->nSV);
-    free(model);
-
+int free_model_SV(struct svm_model *model)
+{
+    int i;
+    for (i=model->l-1; i>=0; --i) free(model->SV[i]);
+    /* svn_destroy_model frees model->SV */
     return 0;
 }
 
@@ -383,7 +396,6 @@ int free_param(struct svm_parameter *param)
     free(param);
     return 0;
 }
-       
 
 /* rely on built-in facility to control verbose output
  * in the versions of libsvm >= 2.89
@@ -413,3 +425,4 @@ void set_verbosity(int verbosity_flag){
 # endif
 }
 #endif
+

@@ -31,8 +31,9 @@ def test_SVC():
 
     assert_array_equal(sp_clf.predict(T), true_result)
 
-    assert scipy.sparse.issparse(sp_clf.support_vectors_)
-    assert_array_almost_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
+
+    assert scipy.sparse.issparse(sp_clf.support_)
+    assert_array_almost_equal(clf.support_, sp_clf.support_.todense())
 
     assert scipy.sparse.issparse (sp_clf.dual_coef_)
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
@@ -44,7 +45,7 @@ def test_SVC():
     # refit with a different dataset
     clf.fit(X2, Y2)
     sp_clf.fit(X2, Y2)
-    assert_array_almost_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
+    assert_array_almost_equal(clf.support_, sp_clf.support_.todense())
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
@@ -56,7 +57,7 @@ def test_SVC_iris():
         sp_clf = svm.sparse.SVC(kernel=k).fit(iris.data, iris.target)
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
 
-        assert_array_almost_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
+        assert_array_almost_equal(clf.support_, sp_clf.support_.todense())
         assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
         assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris.data))
         if k == 'linear':

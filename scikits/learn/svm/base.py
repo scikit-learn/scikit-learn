@@ -1,7 +1,7 @@
 import numpy as np
 
 from ._libsvm import libsvm_train, libsvm_predict, libsvm_predict_proba, \
-     libsvm_decision_function, set_verbosity_wrap
+     libsvm_decision_function
 from . import _liblinear
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 
@@ -357,4 +357,4 @@ class BaseLibLinear(BaseEstimator):
         return int  (self.fit_intercept) - .5
 
 
-set_verbosity_wrap(0)
+_libsvm.set_verbosity_wrap(0)

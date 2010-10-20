@@ -51,7 +51,7 @@ cdef extern from "libsvm_sparse_helper.c":
     int  free_param     (svm_parameter *)
     int free_model_SV(svm_model *model)
     void svm_free_and_destroy_model(svm_model** model_ptr_ptr)    
-    void set_verbosity(int)
+
 
 
 def libsvm_sparse_train ( int n_features,
@@ -244,11 +244,3 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     free_model(model)
     free_param(param)
     return dec_values
-
-
-
-def set_verbosity_wrap(int verbosity):
-    """
-    Control verbosity of libsvm library
-    """
-    set_verbosity(verbosity)

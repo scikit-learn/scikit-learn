@@ -14,16 +14,19 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('sparse')
 
     # Section LibSVM
+    libsvm_macros = [('_DENSE_REP', 1)] 
     libsvm_includes = [numpy.get_include()]
-    libsvm_sources = [join('src', 'libsvm', '_libsvm.c'),
-                      join('src', 'libsvm', 'svm.cpp')]
-    libsvm_depends = [join('src', 'libsvm', 'svm.h'),
-                      join('src', 'libsvm', 'libsvm_helper.c')]
+    libsvm_library_dirs = []
+    libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
+    libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c')]
+
+    libsvm_sources = [join('src', 'libsvm', 'svm.cpp')]
+    libsvm_depends = [join('src', 'libsvm', 'svm.h')]
 
     config.add_extension('_libsvm',
                          sources=libsvm_sources,
-                         define_macros=[('_DENSE_REP', 1)],
                          include_dirs=libsvm_includes,
+                         library_dirs=libsvm_library_dirs,
                          depends=libsvm_depends,
                          )
 
@@ -33,10 +36,14 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('_libsvm_sparse',
                          sources=libsvm_sparse_sources,
                          include_dirs=libsvm_includes,
+                         library_dirs=libsvm_library_dirs,
                          depends=[join('src', 'libsvm', 'svm.h'),
                                   join('src', 'libsvm', 'libsvm_sparse_helper.c')],
+#                         extra_compile_args=['-O0 -fno-inline -pg']
                                   )
                          
+                         
+
 
     ### liblinear module
     blas_sources = [join('src', 'blas', 'daxpy.c'),
