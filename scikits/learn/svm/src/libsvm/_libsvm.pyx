@@ -6,14 +6,6 @@ access svm_model.sv_coeff (and other fields), but libsvm does not
 provide an accessor. Our solution is to export svm_model and access it
 manually, this is done un function see svm_train_wrap.
 
-libsvm uses an sparse representation for the training vectors. In
-method dense_to_sparse we translate a dense matrix representation as
-those produced by NumPy to a sparse representation that libsvm can
-understand.
-
-We define arrays to be the same type as those in libsvm, usually of 
-type C double and C int.
-
 Low-level memory management is done in libsvm_helper.c. If we happen
 to run out of memory a MemoryError will be raised. In practice this is
 not very helpful since hight changes are malloc fails inside svm.cpp,
@@ -70,8 +62,8 @@ cdef extern from "libsvm_helper.c":
     void copy_SV        (char *, svm_model *, np.npy_intp *)
     int copy_support (char *data, svm_model *model)
     int copy_predict (char *, svm_model *, np.npy_intp *, char *)
-    int  copy_predict_proba (char *, svm_model *, np.npy_intp *, char *)
-    int  copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int)
+    int copy_predict_proba (char *, svm_model *, np.npy_intp *, char *)
+    int copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int)
     np.npy_intp get_nonzero_SV ( svm_model *)
     void copy_nSV     (char *, svm_model *)
     void copy_label   (char *, svm_model *)
@@ -100,30 +92,45 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                   double nu, double cache_size, double p,
                   int shrinking, int probability):
     """
-    Wrap svm_train from libsvm
+    Train the model
 
     Parameters
     ----------
-    X: array-like, dtype=float, size=[N, D]
+    X: array-like, dtype=float, size=[n_samples, n_features]
 
-    Y: array, dtype=float, size=[N]
+    Y: array, dtype=float, size=[n_samples]
         target vector
 
-    ...
+    svm_type : {0, 1, 2, 3, 4}
+        Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
 
-    Notes
-    -------------------
-    See scikits.learn.svm.predict for a complete list of parameters.
+    kernel_type : {0, 1, 2, 3, 4}
+        Kernel to use in the model: linear, polynomial, RBF, sigmoid
+        or precomputed.
+
+    degree : int
+        Degree of the polynomial kernel (only relevant if kernel is
+        set to polynomial)
+
+    gamma : float
+        Gamma parameter in RBF kernel (only relevant if kernel is set
+        to RBF)
+
+    coef0 : float
+        Independent parameter in poly/sigmoid kernel.
+
+    eps : float
+        Stopping criteria.
 
     Return
     ------
-    sv_coef: array of coeficients for support vector in decision
-            function (aka alphas)
-    intercept : array
-        constants in decision functions
-    SV : array-like
-        support vectors
-    TODO
+    support : index of support vectors
+    support_vectors : support vectors
+    label : labels for different classes (only relevant in classification).
+    probA : probability estimates
+    probB : probability estimates
+
+    TODO: put default values when possible
     """
 
     cdef svm_parameter *param
@@ -152,6 +159,8 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     # call svm_train, this does the real work
     model = svm_train(problem, param)
 
+    # from here until the end, we just copy the data returned by
+    # svm_train
     cdef np.npy_intp SV_len = get_l(model)
     cdef np.npy_intp nr     = get_nr(model)
 
@@ -265,9 +274,6 @@ def libsvm_predict (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     free_model(model)
     free_param(param)
     return dec_values
-
-
-
 
 
 
