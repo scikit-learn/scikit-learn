@@ -21,7 +21,7 @@ from scipy import sparse
 from ...base import ClassifierMixin
 from ..base import BaseLibSVM, BaseLibLinear
 
-from .._libsvm_sparse import libsvm_sparse_train, \
+from ._libsvm_sparse import libsvm_sparse_train, \
      libsvm_sparse_predict, set_verbosity_wrap
 
 class SparseBaseLibSVM(BaseLibSVM):

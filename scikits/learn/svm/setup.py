@@ -27,17 +27,6 @@ def configuration(parent_package='', top_path=None):
                          depends=libsvm_depends,
                          )
 
-    libsvm_sparse_sources = [join('src', 'libsvm', '_libsvm_sparse.c'),
-                             join('src', 'libsvm', 'svm.cpp')]
-
-    config.add_extension('_libsvm_sparse',
-                         sources=libsvm_sparse_sources,
-                         include_dirs=libsvm_includes,
-                         depends=[join('src', 'libsvm', 'svm.h'),
-                                  join('src', 'libsvm', 'libsvm_sparse_helper.c')],
-                                  )
-                         
-
     ### liblinear module
     blas_sources = [join('src', 'blas', 'daxpy.c'),
                     join('src', 'blas', 'ddot.c'),
