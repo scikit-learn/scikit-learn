@@ -172,28 +172,29 @@ class GMM(BaseEstimator):
     --------
     >>> import numpy as np
     >>> from scikits.learn.gmm import GMM
-    >>> g = GMM(n_states=2)
-    >>> g.fit([[0], [1]]) #doctest: +SKIP
-    GMM(cvtype='diag', covars=[array([[ 0.001]]), array([[ 0.001]])], n_states=2,
-      weights=array([ 0.5,  0.5]),
-      means=array([[  7.26246e-218],
-           [  1.00000e+000]]))
+    >>> g = GMM(n_states=2, n_dim=1)
     >>> # The initial parameters are fixed.
     >>> np.round(g.weights, 2)
     array([ 0.5,  0.5])
-    >>> np.round(g.means, 2) #doctest: +SKIP
+    >>> np.round(g.means, 2)
     array([[ 0.],
-           [ 1.]])
+           [ 0.]])
+    >>> np.round(g.covars, 2)
+    array([[[ 1.]],
+    <BLANKLINE>
+           [[ 1.]]])
+
     >>> # Generate random observations with two modes centered on 0
     >>> # and 10 to use for training.
     >>> np.random.seed(0)
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs) #doctest: +ELLIPSIS
-    GMM(cvtype='diag', covars=[array([[ 0.96081]]), array([[ 1.01683]])],
-      n_states=2, weights=array([ 0.75,  0.25]),
-      means=array([[ 9.94199],
-           [ 0.05981]]))
+    GMM(n_dim=1, cvtype='diag',
+      means=array([[ ...],
+           [ ...]]),
+      covars=[array([[ ...]]), array([[ ...]])], n_states=2,
+      weights=array([ 0.75,  0.25]))
 
     >>> np.round(g.weights, 2)
     array([ 0.75,  0.25])
@@ -212,10 +213,11 @@ class GMM(BaseEstimator):
     >>> # Refit the model on new data (initial parameters remain the
     >>> #same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]])
-    GMM(cvtype='diag', covars=[array([[ 0.001]]), array([[ 0.001]])], n_states=2,
-      weights=array([ 0.5,  0.5]),
+    GMM(n_dim=1, cvtype='diag',
       means=array([[ 10.],
-           [  0.]]))
+           [  0.]]),
+      covars=[array([[ 0.001]]), array([[ 0.001]])], n_states=2,
+      weights=array([ 0.5,  0.5]))
 
     >>> np.round(g.weights, 2)
     array([ 0.5,  0.5])
@@ -469,7 +471,7 @@ class GMM(BaseEstimator):
             self._means, tmp = cluster.vq.kmeans2(X, self._n_states, **kwargs)
         else:
             if not hasattr(self, 'means'):
-                self._means = np.zeros((self.n_states, self.n_dim))
+                means = np.zeros((self.n_states, self.n_dim))
 
 
         if 'w' in init_params:
@@ -483,7 +485,7 @@ class GMM(BaseEstimator):
                 cv, self._cvtype, self._n_states)
         else:
             if not hasattr(self, 'covars'):
-                self._covars = _distribute_covar_matrix_to_match_cvtype(
+                self.covars = _distribute_covar_matrix_to_match_cvtype(
                     np.eye(self.n_dim), cvtype, n_states)
 
         # EM algorithm
