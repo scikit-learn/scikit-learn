@@ -447,17 +447,20 @@ class LeavePLabelOut(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test):
+def _cross_val_score(estimator, X, y, score_func, train, test, iid):
     """ Inner loop for cross validation.
     """
     if score_func is None:
         score_func = lambda self, *args: self.score(*args)
     if y is None:
-        return score_func(estimator.fit(X[train]), X[test])
-    return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
+        score = score_func(estimator.fit(X[train]), X[test])
+    else:
+        score = score_func(estimator.fit(X[train], y[train]), X[test], y[test])
+    if iid:
+        score *= len(y[test])
+    return score
 
-
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
                 n_jobs=1, verbose=0):
     """ Evaluate a score by cross-validation.
 
@@ -478,6 +481,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
             A cross-validation generator. If None, a 3-fold cross
             validation is used or 3-fold stratified cross-validation
             when y is supplied.
+        iid: boolean, optional
+            If True, the data is assumed to be identically distributed across
+            the folds, and the loss minimized is the total loss per sample,
+            and not the mean loss across the folds.
         n_jobs: integer, optional
             The number of CPUs to use to do the computation. -1 means
             'all CPUs'.
@@ -500,7 +507,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
     # independent, and that it is pickable.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                                        train, test)
+                                                        train, test, iid)
                 for train, test in cv)
     return np.array(scores)
 
