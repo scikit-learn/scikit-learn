@@ -63,7 +63,13 @@ def strip_tags(s):
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
 
 
-DEFAULT_FILTERS = [lambda x: x.lower(), strip_tags, strip_accents]
+class Filter(object):
+
+    def filter(self, text):
+        return strip_accents(strip_tags(text.lower()))
+
+
+DEFAULT_FILTER = Filter()
 
 
 class WordNGramAnalyzer(BaseEstimator):
@@ -80,12 +86,12 @@ class WordNGramAnalyzer(BaseEstimator):
     token_pattern = re.compile(r"\b\w\w+\b", re.UNICODE)
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
-                 filters=DEFAULT_FILTERS, stop_words=None):
+                 filter=DEFAULT_FILTER, stop_words=None):
         self.charset = charset
         self.stop_words = stop_words
         self.min_n = min_n
         self.max_n = max_n
-        self.filters = filters
+        self.filter = filter
 
     def analyze(self, text_document):
         if isinstance(text_document, file):
@@ -94,9 +100,7 @@ class WordNGramAnalyzer(BaseEstimator):
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
 
-        # apply filters
-        for filter_ in self.filters:
-            text_document = filter_(text_document)
+        text_document = self.filter.filter(text_document)
 
         # word boundaries tokenizer
         tokens = self.token_pattern.findall(text_document)

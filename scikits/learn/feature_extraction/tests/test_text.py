@@ -13,12 +13,14 @@ from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
 from scikits.learn.svm import LinearSVC as DenseLinearSVC
 from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
+
 import numpy as np
 import numpy.linalg as la
 from nose.tools import *
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
+import pickle
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer",
@@ -277,4 +279,10 @@ def test_dense_vectorizer_pipeline_grid_selection():
     # this test is unstable...
     #assert_equal(clf.best_estimator.steps[0][1].analyzer.max_n, 2)
 
+def test_pickle():
+    for obj in (CountVectorizer(), SparseCountVectorizer(),
+                TfidfTransformer(), SparseTfidfTransformer(),
+                Vectorizer(), SparseVectorizer()):
 
+        s = pickle.dumps(obj)
+        assert_equal(type(pickle.loads(s)), obj.__class__)
