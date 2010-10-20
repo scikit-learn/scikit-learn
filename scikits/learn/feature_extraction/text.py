@@ -176,11 +176,15 @@ class BaseCountVectorizer(BaseEstimator):
         A dictionary where keys are tokens and values are indices in the
         matrix.
         This is useful in order to fix the vocabulary in advance.
+
+    dtype: type, optional
+        Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}):
+    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, dtype=long):
         self.analyzer = analyzer
         self.vocabulary = vocabulary
+        self.dtype = dtype
 
     def _init_matrix(self, shape):
         raise NotImplementedError
@@ -290,12 +294,12 @@ class BaseCountVectorizer(BaseEstimator):
 class CountVectorizer(BaseCountVectorizer):
 
     def _init_matrix(self, shape):
-        return np.zeros(shape, dtype=long)
+        return np.zeros(shape, dtype=self.dtype)
 
 class SparseCountVectorizer(BaseCountVectorizer):
 
     def _init_matrix(self, shape):
-        return sp.dok_matrix(shape, dtype=long)
+        return sp.dok_matrix(shape, dtype=self.dtype)
 
 class BaseTfidfTransformer(BaseEstimator):
     """
@@ -497,7 +501,7 @@ class Vectorizer(BaseVectorizer):
                  use_tf=True,
                  use_idf=True,
                  normalize=False):
-        self.tc = CountVectorizer(analyzer)
+        self.tc = CountVectorizer(analyzer, dtype=np.float64)
         self.tfidf = TfidfTransformer(use_tf, use_idf, normalize)
 
 class SparseVectorizer(BaseVectorizer):
@@ -512,7 +516,7 @@ class SparseVectorizer(BaseVectorizer):
                  use_tf=True,
                  use_idf=True,
                  normalize=False):
-        self.tc = SparseCountVectorizer(analyzer)
+        self.tc = SparseCountVectorizer(analyzer, dtype=np.float64)
         self.tfidf = SparseTfidfTransformer(use_tf, use_idf, normalize)
 
 class HashingVectorizer(object):
