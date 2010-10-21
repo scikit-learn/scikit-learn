@@ -13,16 +13,34 @@ from ..text import BaseCountVectorizer, BaseTfidfTransformer, BaseVectorizer, \
 
 from ...preprocessing.sparse import Normalizer
 
+
 class CountVectorizer(BaseCountVectorizer):
+    """Convert a collection of raw documents to a matrix of token counts
+
+    This implementation produces a sparse representation of the counts using
+    a scipy.sparse.dok_matrix (dictionary of keys).
+
+    Parameters
+    ----------
+    analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
+
+    vocabulary: dict, optional
+        A dictionary where keys are tokens and values are indices in the
+        matrix.
+        This is useful in order to fix the vocabulary in advance.
+
+    dtype: type, optional
+        Type of the matrix returned by fit_transform() or transform().
+    """
 
     def _init_matrix(self, shape):
         return sp.dok_matrix(shape, dtype=self.dtype)
 
+
 class TfidfTransformer(BaseTfidfTransformer):
 
     def fit(self, X, y=None):
-        """
-        Learn the IDF vector (global term weights).
+        """Learn the IDF vector (global term weights)
 
         Parameters
         ----------
@@ -41,8 +59,7 @@ class TfidfTransformer(BaseTfidfTransformer):
         return self
 
     def transform(self, X, copy=True):
-        """
-        Transform a count matrix to a TF or TF-IDF representation.
+        """Transform a count matrix to a TF or TF-IDF representation
 
         Parameters
         ----------
@@ -67,9 +84,9 @@ class TfidfTransformer(BaseTfidfTransformer):
 
         return X
 
+
 class Vectorizer(BaseVectorizer):
-    """
-    Convert a collection of raw documents to a sparse matrix.
+    """Convert a collection of raw documents to a sparse matrix
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
@@ -80,6 +97,10 @@ class Vectorizer(BaseVectorizer):
                  use_idf=True):
         self.tc = CountVectorizer(analyzer, dtype=np.float64)
         self.tfidf = TfidfTransformer(use_tf, use_idf)
+
+
+# TODO: refactor the HashingVectorizer implementation to reuse the
+# BaseVectorizer infrastructure as mush as possible and align the API
 
 class HashingVectorizer(object):
     """Compute term freq vectors using hashed term space in a sparse matrix

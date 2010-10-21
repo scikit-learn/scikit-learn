@@ -167,7 +167,7 @@ class BaseCountVectorizer(BaseEstimator):
     """Convert a collection of raw documents to a matrix of token counts
 
     This class can't be used directly, use either CountVectorizer or
-    SparseCountVectorizer.
+    sparse.CountVectorizer.
 
     Parameters
     ----------
@@ -292,14 +292,14 @@ class CountVectorizer(BaseCountVectorizer):
     """Convert a collection of raw documents to a matrix of token counts
 
     This implementation produces a dense representation of the counts using
-    numpy array.
+    a numpy array.
 
     If you do not provide an a-priori dictionary and you do not use
     an analyzer that does some kind of feature selection then the number of
     features (the vocabulary size found by analysing the data) might be very
     large and the count vectors might not fit in memory.
 
-    For this case it is either recommended to use the SparseCountVectorizer
+    For this case it is either recommended to use the sparse.CountVectorizer
     variant of this class or a HashingVectorizer that will reduce the
     dimensionality to an arbitrary number by using random projection.
 
@@ -322,13 +322,15 @@ class CountVectorizer(BaseCountVectorizer):
 
 
 class BaseTfidfTransformer(BaseEstimator):
-    """
-    Transform a count matrix to a TF (term-frequency)
-    or TF-IDF (term-frequency inverse-document-frequency)
-    representation.
+    """Transform a count matrix to a TF or TF-IDF representation
+
+    TF means term-frequency while TF-IDF means term-frequency times inverse
+    document-frequency:
+
+      http://en.wikipedia.org/wiki/TF-IDF
 
     This class can't be used directly, use either TfidfTransformer or
-    SparseTfidfTransformer.
+    sparse.TfidfTransformer.
 
     Parameters
     ----------
@@ -347,7 +349,30 @@ class BaseTfidfTransformer(BaseEstimator):
 
 
 class TfidfTransformer(BaseTfidfTransformer):
-    # TODO: write docstring!
+    """Transform a count matrix to a TF or TF-IDF representation
+
+    TF means term-frequency while TF-IDF means term-frequency times inverse
+    document-frequency:
+
+      http://en.wikipedia.org/wiki/TF-IDF
+
+    The goal of using TF-IDF instead of the raw frequencies of occurrence of a
+    token in a given document is to scale down the impact of tokens that occur
+    very frequently in a given corpus and that are hence empirically less
+    informative than feature that occur in a small fraction of the training
+    corpus.
+
+    TF-IDF can be seen as a smooth alternative to the stop words filtering.
+
+    Parameters
+    ----------
+
+    use_tf: boolean
+        enable term-frequency normalization
+
+    use_idf: boolean
+        enable inverse-document-frequency reweighting
+    """
 
     def fit(self, X, y=None):
         """Learn the IDF vector (global term weights)
@@ -394,7 +419,7 @@ class BaseVectorizer(BaseEstimator):
     """Convert a collection of raw documents to a matrix
 
     This class can't be used directly, use either Vectorizer or
-    SparseVectorizer.
+    sparse.Vectorizer.
     """
 
     def fit(self, raw_documents):
