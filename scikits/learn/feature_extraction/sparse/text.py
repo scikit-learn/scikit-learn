@@ -64,13 +64,6 @@ class TfidfTransformer(BaseTfidfTransformer):
             d.setdiag(self.idf)
             X = X * d
 
-        if self.normalize:
-            norms = X.multiply(X).sum(axis=1)
-            norms = np.sqrt(np.array(norms).ravel())
-
-            for doc, token in zip(*X.nonzero()):
-                X[doc, token] /= norms[doc]
-
         return X
 
 class Vectorizer(BaseVectorizer):
@@ -83,10 +76,9 @@ class Vectorizer(BaseVectorizer):
     def __init__(self,
                  analyzer=DEFAULT_ANALYZER,
                  use_tf=True,
-                 use_idf=True,
-                 normalize=False):
+                 use_idf=True):
         self.tc = CountVectorizer(analyzer, dtype=np.float64)
-        self.tfidf = TfidfTransformer(use_tf, use_idf, normalize)
+        self.tfidf = TfidfTransformer(use_tf, use_idf)
 
 class HashingVectorizer(object):
     """Compute term freq vectors using hashed term space in a sparse matrix

@@ -313,15 +313,11 @@ class BaseTfidfTransformer(BaseEstimator):
 
     use_idf: boolean
         enable inverse-document-frequency reweighting
-
-    normalize: boolean
-        normalize vectors to unit-length
     """
 
-    def __init__(self, use_tf=True, use_idf=True, normalize=False):
+    def __init__(self, use_tf=True, use_idf=True):
         self.use_tf = use_tf
         self.use_idf = use_idf
-        self.normalize = normalize
         self.idf = None
 
 class TfidfTransformer(BaseTfidfTransformer):
@@ -365,9 +361,6 @@ class TfidfTransformer(BaseTfidfTransformer):
 
         if self.use_idf:
             X *= self.idf
-
-        if self.normalize:
-            X /= np.sqrt(np.sum(X ** 2, axis=1))[:,np.newaxis]
 
         return X
 
@@ -428,10 +421,9 @@ class Vectorizer(BaseVectorizer):
     def __init__(self,
                  analyzer=DEFAULT_ANALYZER,
                  use_tf=True,
-                 use_idf=True,
-                 normalize=False):
+                 use_idf=True):
         self.tc = CountVectorizer(analyzer, dtype=np.float64)
-        self.tfidf = TfidfTransformer(use_tf, use_idf, normalize)
+        self.tfidf = TfidfTransformer(use_tf, use_idf)
 
 
 class HashingVectorizer(object):
