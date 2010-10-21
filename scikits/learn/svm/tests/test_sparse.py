@@ -114,3 +114,7 @@ def test_LinearSVC_iris():
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
     assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris.data))
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

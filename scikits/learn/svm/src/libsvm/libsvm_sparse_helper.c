@@ -1,20 +1,23 @@
 #include <stdlib.h>
 #include <numpy/arrayobject.h>
-#include "svm.h"
+#include "svm_csr.h"
+
+
 
 /*
  * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
-struct svm_node **csr_to_sparse (double *values, npy_intp *n_indices,
+struct svm_csr_node **csr_to_libsvm (double *values, npy_intp *n_indices,
 		int *indices, npy_intp *n_indptr, int *indptr)
 {
-    struct svm_node **sparse, *temp;
+    struct svm_csr_node **sparse, *temp;
     int i, j=0, k=0, n;
-    sparse = (struct svm_node **) malloc (n_indptr[0] * sizeof(struct svm_node *));
+    sparse = (struct svm_csr_node **) malloc (n_indptr[0] * sizeof(struct svm_csr_node *));
 
     for (i=0; i<n_indptr[0]-1; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
-        sparse[i] = (struct svm_node *) malloc ((n+1) * sizeof(struct svm_node));
+        sparse[i] = (struct svm_csr_node *) malloc ((n+1) * 
+                                 sizeof(struct svm_csr_node));
         temp = sparse[i];
         for (j=0; j<n; ++j) {
             temp[j].value = values[k];
@@ -58,20 +61,20 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
 
 
 /*
- * Create and return a svm_problem struct from a scipy.sparse.csr matrix. It is
+ * Create and return a svm_csr_problem struct from a scipy.sparse.csr matrix. It is
  * up to the user to free resulting structure.
  *
  * TODO: precomputed kernel.
  */
-struct svm_problem * csr_set_problem (char *values, npy_intp *n_indices,
+struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
 		char *indices, npy_intp *n_indptr, char *indptr, char *Y, int kernel_type) {
 
-	struct svm_problem *problem;
-	problem = (struct svm_problem *) malloc (sizeof (struct svm_problem));
+	struct svm_csr_problem *problem;
+	problem = (struct svm_csr_problem *) malloc (sizeof (struct svm_csr_problem));
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] - 1;
     problem->y = (double *) Y;
-    problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
+    problem->x = csr_to_libsvm((double *) values, n_indices, (int *) indices,
 			n_indptr, (int *) indptr);
     if (problem->x == NULL) {
         free(problem);
@@ -103,7 +106,7 @@ struct svm_model *csr_set_model(struct svm_parameter *param, int nr_class,
     /* in the case of precomputed kernels we do not use
        dense_to_precomputed because we don't want the leading 0. As
        indices start at 1 (not at 0) this will work */
-    model->SV = csr_to_sparse((double *) SV_data, SV_indices_dims,
+    model->SV = csr_to_libsvm((double *) SV_data, SV_indices_dims,
     		(int *) SV_indices, SV_indptr_dims, (int *) SV_intptr);
     model->nr_class = nr_class;
     model->param = *param;
@@ -201,16 +204,16 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
 		char *index, npy_intp *intptr_size, char *intptr, struct svm_model *model,
 		char *dec_values) {
     double *t = (double *) dec_values;
-    struct svm_node **predict_nodes;
+    struct svm_csr_node **predict_nodes;
     npy_intp i;
 
-    predict_nodes = csr_to_sparse((double *) data, index_size,
+    predict_nodes = csr_to_libsvm((double *) data, index_size,
     		(int *) index, intptr_size, (int *) intptr);
 
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i < intptr_size[0] - 1; ++i) {
-        *t = svm_predict(model, predict_nodes[i]);
+        *t = svm_csr_predict(model, predict_nodes[i]);
         free(predict_nodes[i]);
         ++t;
     }
@@ -292,7 +295,7 @@ void copy_probB(char *data, struct svm_model *model, npy_intp * dims)
  * sharing happens across objects (they *must* be called in the
  * correct order)
  */
-int free_problem(struct svm_problem *problem)
+int free_problem(struct svm_csr_problem *problem)
 {
     register int i;
     if (problem == NULL) return -1;

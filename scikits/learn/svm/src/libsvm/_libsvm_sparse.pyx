@@ -5,15 +5,14 @@ cimport numpy as np
 ################################################################################
 # Includes
 
-cdef extern from "svm.h":
+cdef extern from "svm_csr.h":
     cdef struct svm_node
     cdef struct svm_model
     cdef struct svm_parameter
     cdef struct svm_problem
-    char *svm_check_parameter(svm_problem *, svm_parameter *)
-    svm_model *svm_train(svm_problem *, svm_parameter *)
-
-
+    char *svm_csr_check_parameter(svm_problem *, svm_parameter *)
+    svm_model *svm_csr_train(svm_problem *, svm_parameter *)
+    void svm_csr_free_and_destroy_model(svm_model** model_ptr_ptr)    
 
 cdef extern from "libsvm_sparse_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
@@ -50,7 +49,6 @@ cdef extern from "libsvm_sparse_helper.c":
     int  free_model     (svm_model *)
     int  free_param     (svm_parameter *)
     int free_model_SV(svm_model *model)
-    void svm_free_and_destroy_model(svm_model** model_ptr_ptr)    
     void set_verbosity(int)
 
 
@@ -112,14 +110,14 @@ def libsvm_sparse_train ( int n_features,
     # check parameters
     if (param == NULL or problem == NULL):
         raise MemoryError("Seems we've run out of of memory")
-    error_msg = svm_check_parameter(problem, param);
+    error_msg = svm_csr_check_parameter(problem, param);
     if error_msg:
         free_problem(problem)
         free_param(param)
         raise ValueError(error_msg)
 
     # call svm_train, this does the real work
-    model = svm_train(problem, param)
+    model = svm_csr_train(problem, param)
 
     cdef np.npy_intp SV_len = get_l(model)
     cdef np.npy_intp nr     = get_nr(model)
@@ -168,7 +166,7 @@ def libsvm_sparse_train ( int n_features,
         copy_probA(probA.data, model, probA.shape)
         copy_probB(probB.data, model, probB.shape)
 
-    svm_free_and_destroy_model (&model)
+    svm_csr_free_and_destroy_model (&model)
     free_problem(problem)
     free_param(param)
 

@@ -48,7 +48,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <float.h>
 #include <string.h>
 #include <stdarg.h>
-#include "svm.h"
+
+/* yeah, this is ugly.  It helps us to have unique names for both sparse
+and dense versions of this library */
+#ifdef _DENSE_REP
+  #include "svm.h"
+  #define PREFIX(name) svm_##name
+#else
+  #include "svm_csr.h"
+  #define PREFIX(name) svm_csr_##name
+  #define svm_node svm_csr_node
+  #define svm_problem svm_csr_problem
+#endif
+
 int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
 typedef signed char schar;
@@ -2049,19 +2061,19 @@ static void svm_binary_svc_probability(
 			subparam.weight_label[1]=-1;
 			subparam.weight[0]=Cp;
 			subparam.weight[1]=Cn;
-			struct svm_model *submodel = svm_train(&subprob,&subparam);
+			struct svm_model *submodel = PREFIX(train)(&subprob,&subparam);
 			for(j=begin;j<end;j++)
 			{
 #ifdef _DENSE_REP
-				svm_predict_values(submodel,(prob->x+perm[j]),&(dec_values[perm[j]])); 
+                                PREFIX(predict_values)(submodel,(prob->x+perm[j]),&(dec_values[perm[j]])); 
 #else
-				svm_predict_values(submodel,prob->x[perm[j]],&(dec_values[perm[j]])); 
+				PREFIX(predict_values)(submodel,prob->x[perm[j]],&(dec_values[perm[j]])); 
 #endif
 				// ensure +1 -1 order; reason not using CV subroutine
 				dec_values[perm[j]] *= submodel->label[0];
 			}		
-			svm_free_and_destroy_model(&submodel);
-			svm_destroy_param(&subparam);
+			PREFIX(free_and_destroy_model)(&submodel);
+			PREFIX(destroy_param)(&subparam);
 		}
 		free(subprob.x);
 		free(subprob.y);
@@ -2082,7 +2094,7 @@ static double svm_svr_probability(
 
 	svm_parameter newparam = *param;
 	newparam.probability = 0;
-	svm_cross_validation(prob,&newparam,nr_fold,ymv);
+	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv);
 	for(i=0;i<prob->l;i++)
 	{
 		ymv[i]=prob->y[i]-ymv[i];
@@ -2166,7 +2178,7 @@ static void svm_group_classes(const svm_problem *prob, int *nr_class_ret, int **
 //
 // Interface functions
 //
-svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
+svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 {
 	svm_model *model = Malloc(svm_model,1);
 	model->param = *param;
@@ -2427,7 +2439,7 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 }
 
 // Stratified cross validation
-void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, int nr_fold, double *target)
+void PREFIX(cross_validation)(const svm_problem *prob, const svm_parameter *param, int nr_fold, double *target)
 {
 	int i;
 	int *fold_start = Malloc(int,nr_fold+1);
@@ -2526,27 +2538,27 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, i
 			subprob.y[k] = prob->y[perm[j]];
 			++k;
 		}
-		struct svm_model *submodel = svm_train(&subprob,param);
+		struct svm_model *submodel = PREFIX(train)(&subprob,param);
 		if(param->probability && 
 		   (param->svm_type == C_SVC || param->svm_type == NU_SVC))
 		{
-			double *prob_estimates=Malloc(double,svm_get_nr_class(submodel));
+			double *prob_estimates=Malloc(double, PREFIX(get_nr_class)(submodel));
 			for(j=begin;j<end;j++)
 #ifdef _DENSE_REP
-				target[perm[j]] = svm_predict_probability(submodel,(prob->x + perm[j]),prob_estimates);
+				target[perm[j]] = PREFIX(predict_probability)(submodel,(prob->x + perm[j]),prob_estimates);
 #else
-				target[perm[j]] = svm_predict_probability(submodel,prob->x[perm[j]],prob_estimates);
+                                target[perm[j]] = PREFIX(predict_probability)(submodel,prob->x[perm[j]],prob_estimates);
 #endif
 			free(prob_estimates);			
 		}
 		else
 			for(j=begin;j<end;j++)
 #ifdef _DENSE_REP
-				target[perm[j]] = svm_predict(submodel,prob->x+perm[j]);
+				target[perm[j]] = PREFIX(predict)(submodel,prob->x+perm[j]);
 #else
-				target[perm[j]] = svm_predict(submodel,prob->x[perm[j]]);
+                target[perm[j]] = PREFIX(predict)(submodel,prob->x[perm[j]]);
 #endif
-		svm_free_and_destroy_model(&submodel);
+		PREFIX(free_and_destroy_model)(&submodel);
 		free(subprob.x);
 		free(subprob.y);
 	}		
@@ -2555,24 +2567,24 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, i
 }
 
 
-int svm_get_svm_type(const svm_model *model)
+int PREFIX(get_svm_type)(const svm_model *model)
 {
 	return model->param.svm_type;
 }
 
-int svm_get_nr_class(const svm_model *model)
+int PREFIX(get_nr_class)(const svm_model *model)
 {
 	return model->nr_class;
 }
 
-void svm_get_labels(const svm_model *model, int* label)
+void PREFIX(get_labels)(const svm_model *model, int* label)
 {
 	if (model->label != NULL)
 		for(int i=0;i<model->nr_class;i++)
 			label[i] = model->label[i];
 }
 
-double svm_get_svr_probability(const svm_model *model)
+double PREFIX(get_svr_probability)(const svm_model *model)
 {
 	if ((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR) &&
 	    model->probA!=NULL)
@@ -2584,7 +2596,7 @@ double svm_get_svr_probability(const svm_model *model)
 	}
 }
 
-double svm_predict_values(const svm_model *model, const svm_node *x, double* dec_values)
+double PREFIX(predict_values)(const svm_model *model, const svm_node *x, double* dec_values)
 {
         int i;
 	if(model->param.svm_type == ONE_CLASS ||
@@ -2671,7 +2683,7 @@ double svm_predict_values(const svm_model *model, const svm_node *x, double* dec
 	}
 }
 
-double svm_predict(const svm_model *model, const svm_node *x)
+double PREFIX(predict)(const svm_model *model, const svm_node *x)
 {
 	int nr_class = model->nr_class;
 	double *dec_values;
@@ -2681,12 +2693,12 @@ double svm_predict(const svm_model *model, const svm_node *x)
 		dec_values = Malloc(double, 1);
 	else 
 		dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-	double pred_result = svm_predict_values(model, x, dec_values);
+	double pred_result = PREFIX(predict_values)(model, x, dec_values);
 	free(dec_values);
 	return pred_result;
 }
 
-double svm_predict_probability(
+double PREFIX(predict_probability)(
 	const svm_model *model, const svm_node *x, double *prob_estimates)
 {
 	if ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
@@ -2695,7 +2707,7 @@ double svm_predict_probability(
 		int i;
 		int nr_class = model->nr_class;
 		double *dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-		svm_predict_values(model, x, dec_values);
+		PREFIX(predict_values)(model, x, dec_values);
 
 		double min_prob=1e-7;
 		double **pairwise_prob=Malloc(double *,nr_class);
@@ -2722,7 +2734,7 @@ double svm_predict_probability(
 		return model->label[prob_max_idx];
 	}
 	else 
-		return svm_predict(model, x);
+		return PREFIX(predict)(model, x);
 }
 
 static const char *svm_type_table[] =
@@ -2735,384 +2747,7 @@ static const char *kernel_type_table[]=
 	"linear","polynomial","rbf","sigmoid","precomputed",NULL
 };
 
-int svm_save_model(const char *model_file_name, const svm_model *model)
-{
-	FILE *fp = fopen(model_file_name,"w");
-	if(fp==NULL) return -1;
-
-	const svm_parameter& param = model->param;
-
-	fprintf(fp,"svm_type %s\n", svm_type_table[param.svm_type]);
-	fprintf(fp,"kernel_type %s\n", kernel_type_table[param.kernel_type]);
-
-	if(param.kernel_type == POLY)
-		fprintf(fp,"degree %d\n", param.degree);
-
-	if(param.kernel_type == POLY || param.kernel_type == RBF || param.kernel_type == SIGMOID)
-		fprintf(fp,"gamma %g\n", param.gamma);
-
-	if(param.kernel_type == POLY || param.kernel_type == SIGMOID)
-		fprintf(fp,"coef0 %g\n", param.coef0);
-
-	int nr_class = model->nr_class;
-	int l = model->l;
-	fprintf(fp, "nr_class %d\n", nr_class);
-	fprintf(fp, "total_sv %d\n",l);
-	
-	{
-		fprintf(fp, "rho");
-		for(int i=0;i<nr_class*(nr_class-1)/2;i++)
-			fprintf(fp," %g",model->rho[i]);
-		fprintf(fp, "\n");
-	}
-	
-	if(model->label)
-	{
-		fprintf(fp, "label");
-		for(int i=0;i<nr_class;i++)
-			fprintf(fp," %d",model->label[i]);
-		fprintf(fp, "\n");
-	}
-
-	if(model->probA) // regression has probA only
-	{
-		fprintf(fp, "probA");
-		for(int i=0;i<nr_class*(nr_class-1)/2;i++)
-			fprintf(fp," %g",model->probA[i]);
-		fprintf(fp, "\n");
-	}
-	if(model->probB)
-	{
-		fprintf(fp, "probB");
-		for(int i=0;i<nr_class*(nr_class-1)/2;i++)
-			fprintf(fp," %g",model->probB[i]);
-		fprintf(fp, "\n");
-	}
-
-	if(model->nSV)
-	{
-		fprintf(fp, "nr_sv");
-		for(int i=0;i<nr_class;i++)
-			fprintf(fp," %d",model->nSV[i]);
-		fprintf(fp, "\n");
-	}
-
-	fprintf(fp, "SV\n");
-	const double * const *sv_coef = model->sv_coef;
-#ifdef _DENSE_REP
-	const svm_node *SV = model->SV;
-#else
-	const svm_node * const *SV = model->SV;
-#endif
-
-	for(int i=0;i<l;i++)
-	{
-		for(int j=0;j<nr_class-1;j++)
-			fprintf(fp, "%.16g ",sv_coef[j][i]);
-
-#ifdef _DENSE_REP
-		const svm_node *p = (SV + i);
-
-		if(param.kernel_type == PRECOMPUTED) /* this is wrong as we changed indices */
-			fprintf(fp,"0:%d ",(int)(p->values[0]));
-		else
-			for (int j = 0; j < p->dim; j++)
-				if (p->values[j] != 0.0)
-					fprintf(fp,"%d:%.8g ",j, p->values[j]);
-#else
-		const svm_node *p = SV[i];
-
-		if(param.kernel_type == PRECOMPUTED)
-			fprintf(fp,"0:%d ",(int)(p->value));
-		else
-			while(p->index != -1)
-			{
-				fprintf(fp,"%d:%.8g ",p->index,p->value);
-				p++;
-			}
-#endif
-		fprintf(fp, "\n");
-	}
-	if (ferror(fp) != 0 || fclose(fp) != 0) return -1;
-	else return 0;
-}
-
-static char *line = NULL;
-static int max_line_len;
-
-static char* readline(FILE *input)
-{
-	int len;
-
-	if(fgets(line,max_line_len,input) == NULL)
-		return NULL;
-
-	while(strrchr(line,'\n') == NULL)
-	{
-		max_line_len *= 2;
-		line = (char *) realloc(line,max_line_len);
-		len = (int) strlen(line);
-		if(fgets(line+len,max_line_len-len,input) == NULL)
-			break;
-	}
-	return line;
-}
-
-svm_model *svm_load_model(const char *model_file_name)
-{
-	FILE *fp = fopen(model_file_name,"rb");
-	if(fp==NULL) return NULL;
-	
-	// read parameters
-
-	svm_model *model = Malloc(svm_model,1);
-	svm_parameter& param = model->param;
-	model->rho = NULL;
-	model->probA = NULL;
-	model->probB = NULL;
-	model->label = NULL;
-	model->nSV = NULL;
-
-	char cmd[81];
-	while(1)
-	{
-		fscanf(fp,"%80s",cmd);
-
-		if(strcmp(cmd,"svm_type")==0)
-		{
-			fscanf(fp,"%80s",cmd);
-			int i;
-			for(i=0;svm_type_table[i];i++)
-			{
-				if(strcmp(svm_type_table[i],cmd)==0)
-				{
-					param.svm_type=i;
-					break;
-				}
-			}
-			if(svm_type_table[i] == NULL)
-			{
-				fprintf(stderr,"unknown svm type.\n");
-				free(model->rho);
-				free(model->label);
-				free(model->nSV);
-				free(model);
-				return NULL;
-			}
-		}
-		else if(strcmp(cmd,"kernel_type")==0)
-		{		
-			fscanf(fp,"%80s",cmd);
-			int i;
-			for(i=0;kernel_type_table[i];i++)
-			{
-				if(strcmp(kernel_type_table[i],cmd)==0)
-				{
-					param.kernel_type=i;
-					break;
-				}
-			}
-			if(kernel_type_table[i] == NULL)
-			{
-				fprintf(stderr,"unknown kernel function.\n");
-				free(model->rho);
-				free(model->label);
-				free(model->nSV);
-				free(model);
-				return NULL;
-			}
-		}
-		else if(strcmp(cmd,"degree")==0)
-			fscanf(fp,"%d",&param.degree);
-		else if(strcmp(cmd,"gamma")==0)
-			fscanf(fp,"%lf",&param.gamma);
-		else if(strcmp(cmd,"coef0")==0)
-			fscanf(fp,"%lf",&param.coef0);
-		else if(strcmp(cmd,"nr_class")==0)
-			fscanf(fp,"%d",&model->nr_class);
-		else if(strcmp(cmd,"total_sv")==0)
-			fscanf(fp,"%d",&model->l);
-		else if(strcmp(cmd,"rho")==0)
-		{
-			int n = model->nr_class * (model->nr_class-1)/2;
-			model->rho = Malloc(double,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->rho[i]);
-		}
-		else if(strcmp(cmd,"label")==0)
-		{
-			int n = model->nr_class;
-			model->label = Malloc(int,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%d",&model->label[i]);
-		}
-		else if(strcmp(cmd,"probA")==0)
-		{
-			int n = model->nr_class * (model->nr_class-1)/2;
-			model->probA = Malloc(double,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->probA[i]);
-		}
-		else if(strcmp(cmd,"probB")==0)
-		{
-			int n = model->nr_class * (model->nr_class-1)/2;
-			model->probB = Malloc(double,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->probB[i]);
-		}
-		else if(strcmp(cmd,"nr_sv")==0)
-		{
-			int n = model->nr_class;
-			model->nSV = Malloc(int,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%d",&model->nSV[i]);
-		}
-		else if(strcmp(cmd,"SV")==0)
-		{
-			while(1)
-			{
-				int c = getc(fp);
-				if(c==EOF || c=='\n') break;	
-			}
-			break;
-		}
-		else
-		{
-			fprintf(stderr,"unknown text in model file: [%s]\n",cmd);
-			free(model->rho);
-			free(model->label);
-			free(model->nSV);
-			free(model);
-			return NULL;
-		}
-	}
-
-	// read sv_coef and SV
-
-	int elements = 0;
-	long pos = ftell(fp);
-
-	max_line_len = 1024;
-	line = Malloc(char,max_line_len);
-	char *p,*endptr,*idx,*val;
-
-#ifdef _DENSE_REP
-	int max_index = 1;
-	// read the max dimension of all vectors
-	while(readline(fp) != NULL)
-	{
-		char *p;
-		p = strrchr(line, ':');
-		if(p != NULL)
-		{			
-			while(*p != ' ' && *p != '\t' && p > line)
-				p--;
-			if(p > line)
-				max_index = (int) strtol(p,&endptr,10) + 1;
-		}		
-		if(max_index > elements)
-			elements = max_index;
-	}
-#else
-	while(readline(fp)!=NULL)
-	{
-		p = strtok(line,":");
-		while(1)
-		{
-			p = strtok(NULL,":");
-			if(p == NULL)
-				break;
-			++elements;
-		}
-	}
-	elements += model->l;
-
-#endif
-	fseek(fp,pos,SEEK_SET);
-
-	int m = model->nr_class - 1;
-	int l = model->l;
-	model->sv_coef = Malloc(double *,m);
-	int i;
-	for(i=0;i<m;i++)
-		model->sv_coef[i] = Malloc(double,l);
-
-#ifdef _DENSE_REP
-	int index;
-	model->SV = Malloc(svm_node,l);
-
-	for(i=0;i<l;i++)
-	{
-		readline(fp);
-
-		model->SV[i].values = Malloc(double, elements);
-		model->SV[i].dim = 0;
-
-		p = strtok(line, " \t");
-		model->sv_coef[0][i] = strtod(p,&endptr);
-		for(int k=1;k<m;k++)
-		{
-			p = strtok(NULL, " \t");
-			model->sv_coef[k][i] = strtod(p,&endptr);
-		}
-
-		int *d = &(model->SV[i].dim);
-		while(1)
-		{
-			idx = strtok(NULL, ":");
-			val = strtok(NULL, " \t");
-
-			if(val == NULL)
-				break;
-			index = (int) strtol(idx,&endptr,10);
-			while (*d < index)
-				model->SV[i].values[(*d)++] = 0.0;
-			model->SV[i].values[(*d)++] = strtod(val,&endptr);
-		}
-	}
-#else
-	model->SV = Malloc(svm_node*,l);
-	svm_node *x_space = NULL;
-	if(l>0) x_space = Malloc(svm_node,elements);
-	int j=0;
-	for(i=0;i<l;i++)
-	{
-		readline(fp);
-		model->SV[i] = &x_space[j];
-
-		p = strtok(line, " \t");
-		model->sv_coef[0][i] = strtod(p,&endptr);
-		for(int k=1;k<m;k++)
-		{
-			p = strtok(NULL, " \t");
-			model->sv_coef[k][i] = strtod(p,&endptr);
-		}
-
-		while(1)
-		{
-			idx = strtok(NULL, ":");
-			val = strtok(NULL, " \t");
-
-			if(val == NULL)
-				break;
-			x_space[j].index = (int) strtol(idx,&endptr,10);
-			x_space[j].value = strtod(val,&endptr);
-
-			++j;
-		}
-		x_space[j++].index = -1;
-	}
-#endif
-	free(line);
-
-	if (ferror(fp) != 0 || fclose(fp) != 0)
-		return NULL;
-
-	model->free_sv = 1;	// XXX
-	return model;
-}
-
-void svm_free_model_content(svm_model* model_ptr)
+void PREFIX(free_model_content)(svm_model* model_ptr)
 {
 	if(model_ptr->free_sv && model_ptr->l > 0)
 #ifdef _DENSE_REP
@@ -3133,29 +2768,29 @@ void svm_free_model_content(svm_model* model_ptr)
 	free(model_ptr->nSV);
 }
 
-void svm_free_and_destroy_model(svm_model** model_ptr_ptr)
+void PREFIX(free_and_destroy_model)(svm_model** model_ptr_ptr)
 {
 	svm_model* model_ptr = *model_ptr_ptr;
 	if(model_ptr != NULL)
 	{
-		svm_free_model_content(model_ptr);
+		PREFIX(free_model_content)(model_ptr);
 		free(model_ptr);
 	}
 }
 
-void svm_destroy_model(svm_model* model_ptr)
+void PREFIX(destroy_model)(svm_model* model_ptr)
 {
 	fprintf(stderr,"warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(svm_model **model_ptr_ptr)\n");
-	svm_free_and_destroy_model(&model_ptr);
+	PREFIX(free_and_destroy_model)(&model_ptr);
 }
 
-void svm_destroy_param(svm_parameter* param)
+void PREFIX(destroy_param)(svm_parameter* param)
 {
 	free(param->weight_label);
 	free(param->weight);
 }
 
-const char *svm_check_parameter(const svm_problem *prob, const svm_parameter *param)
+const char *PREFIX(check_parameter)(const svm_problem *prob, const svm_parameter *param)
 {
 	// svm_type
 
@@ -3276,7 +2911,7 @@ const char *svm_check_parameter(const svm_problem *prob, const svm_parameter *pa
 	return NULL;
 }
 
-int svm_check_probability_model(const svm_model *model)
+int PREFIX(check_probability_model)(const svm_model *model)
 {
 	return ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
 		model->probA!=NULL && model->probB!=NULL) ||
