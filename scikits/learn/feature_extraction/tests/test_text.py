@@ -277,10 +277,12 @@ def test_dense_vectorizer_pipeline_grid_selection():
     pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
     assert_array_equal(pred, y_test)
 
-    # on this toy dataset bigram representation yields higher predictive
-    # accurracy
-    # TODO: unstable test...
-    # assert_equal(grid_search.best_estimator.steps[0][1].analyzer.max_n, 2)
+    # on this toy dataset bigram representation which is used in the last of the
+    # grid_search is considered the best estimator since they all converge to
+    # 100% accurracy models
+    assert_equal(grid_search.best_score, 1.0)
+    best_vectorizer = grid_search.best_estimator.named_steps['vect']
+    assert_equal(best_vectorizer.analyzer.max_n, 2)
 
 
 def test_pickle():

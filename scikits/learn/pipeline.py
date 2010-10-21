@@ -92,10 +92,10 @@ class Pipeline(BaseEstimator):
             fit/transform) that are chained, in the order in which
             they are chained, with the last object an estimator.
         """
-        self._named_steps = dict(steps)
+        self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         self.steps = steps
-        assert len(self._named_steps) == len(steps), ("Names provided are "
+        assert len(self.named_steps) == len(steps), ("Names provided are "
             "not unique: %s" % names)
         transforms = estimators[:-1]
         estimator = estimators[-1]
@@ -115,8 +115,8 @@ class Pipeline(BaseEstimator):
         if not deep:
             return super(Pipeline, self)._get_params(deep=False)
         else:
-            out = self._named_steps.copy()
-            for name, step in self._named_steps.iteritems():
+            out = self.named_steps.copy()
+            for name, step in self.named_steps.iteritems():
                 for key, value in step._get_params(deep=True).iteritems():
                     out['%s__%s' % (name, key)] = value
             return out

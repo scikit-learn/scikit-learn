@@ -62,6 +62,7 @@ def iter_grid(param_grid):
 def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
                    **fit_params):
     """Run fit on one set of parameters
+
     Returns the score and the instance of the classifier
     """
     # update parameters of the classifier after a copy of its base structure
@@ -209,7 +210,7 @@ class GridSearchCV(BaseEstimator):
                     for clf_params in grid)
 
         # Out is a list of pairs: score, estimator
-        best_estimator = max(out)[1] # get maximum score
+        self.best_score, best_estimator = max(out) # get maximum score
 
         if refit:
             # fit the best estimator using the entire dataset
