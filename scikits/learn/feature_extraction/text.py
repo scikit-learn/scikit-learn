@@ -415,27 +415,18 @@ class SparseTfidfTransformer(BaseTfidfTransformer):
         n_samples, n_features = X.shape
 
         if self.use_tf:
-            # sums of counts
-            sums = np.zeros(n_samples)
-
+            sums = np.array(X.sum(axis=1)).ravel()
             for doc, token in zip(*X.nonzero()):
-                sums[doc] += X[doc,token]
+                    X[doc, token] /= sums[doc]
+
+        if self.use_idf:
+            d = sp.lil_matrix((len(self.idf), len(self.idf)))
+            d.setdiag(self.idf)
+            X = X * d
 
         if self.normalize:
-            norms = np.zeros(n_samples)
-
-        for doc, token in zip(*X.nonzero()):
-            if self.use_tf:
-                X[doc, token] /= sums[doc]
-
-            if self.use_idf:
-                X[doc, token] *= self.idf[token]
-
-            if self.normalize:
-                norms[doc] += X[doc, token] ** 2
-
-        if self.normalize:
-            norms = np.sqrt(norms)
+            norms = X.multiply(X).sum(axis=1)
+            norms = np.sqrt(np.array(norms).ravel())
 
             for doc, token in zip(*X.nonzero()):
                 X[doc, token] /= norms[doc]
