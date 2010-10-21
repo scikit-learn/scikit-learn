@@ -11,12 +11,13 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('sparse', parent_package, top_path)
 
 
-    libsvm_sparse_sources = [join('..', 'src', 'libsvm', '_libsvm_sparse.c'),
-                             join('..', 'src', 'libsvm', 'svm.cpp')]
+    libsvm_sparse_sources = [join('..', 'src', 'libsvm', '_libsvm_sparse.c')]
 
     config.add_extension('_libsvm_sparse',
+                         libraries=['libsvm-skl'],
                          sources=libsvm_sparse_sources,
-                         include_dirs=[numpy.get_include()],
+                         include_dirs=[numpy.get_include(),
+                                       join('..', 'src', 'libsvm')],
                          depends=[join('..', 'src', 'libsvm', 'svm.h'),
                                   join('..', 'src', 'libsvm', 'libsvm_sparse_helper.c')],
                                   )

@@ -50,21 +50,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <float.h>
 #include <string.h>
 #include <stdarg.h>
+#include "svm.h"
 
-/* yeah, this is ugly.  It helps us to have unique names for both sparse
-and dense versions of this library */
-#ifdef _DENSE_REP
-  #include "svm.h"
-  #define PREFIX(name) svm_##name
-  namespace svm {
-#else
-  #include "svm_csr.h"
-  #define PREFIX(name) svm_csr_##name
-  #define svm_node svm_csr_node
-  #define svm_problem svm_csr_problem
-  namespace svm_csr {
-#endif
-
+#ifndef _LIBSVM_CPP
 int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
 typedef signed char schar;
@@ -114,6 +102,35 @@ static void info(const char *fmt,...)
 #else
 static void info(const char *fmt,...) {}
 #endif
+#endif
+#define _LIBSVM_CPP
+
+
+/* yeah, this is ugly.  It helps us to have unique names for both sparse
+and dense versions of this library */
+#ifdef _DENSE_REP
+  #ifdef PREFIX
+    #undef PREFIX  
+  #endif
+  #ifdef NAMESPACE
+    #undef NAMESPACE
+  #endif
+  #define PREFIX(name) svm_##name
+  #define NAMESPACE svm
+  namespace svm {
+#else
+  /* sparse representation */
+  #ifdef PREFIX
+    #undef PREFIX  
+  #endif
+  #ifdef NAMESPACE
+    #undef NAMESPACE
+  #endif
+  #define PREFIX(name) svm_csr_##name
+  #define NAMESPACE svm_csr
+  namespace svm_csr {
+#endif
+
 
 //
 // Kernel Cache
@@ -259,13 +276,13 @@ public:
 class Kernel: public QMatrix {
 public:
 #ifdef _DENSE_REP
-	Kernel(int l, svm_node * x, const svm_parameter& param);
+	Kernel(int l, PREFIX(node) * x, const svm_parameter& param);
 #else
-	Kernel(int l, svm_node * const * x, const svm_parameter& param);
+	Kernel(int l, PREFIX(node) * const * x, const svm_parameter& param);
 #endif
 	virtual ~Kernel();
 
-	static double k_function(const svm_node *x, const svm_node *y,
+	static double k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 				 const svm_parameter& param);
 	virtual Qfloat *get_Q(int column, int len) const = 0;
 	virtual double *get_QD() const = 0;
@@ -280,9 +297,9 @@ protected:
 
 private:
 #ifdef _DENSE_REP
-	svm_node *x;
+	PREFIX(node) *x;
 #else
-	const svm_node **x;
+	const PREFIX(node) **x;
 #endif
 	double *x_square;
 
@@ -292,9 +309,9 @@ private:
 	const double gamma;
 	const double coef0;
 
-	static double dot(const svm_node *px, const svm_node *py);
+	static double dot(const PREFIX(node) *px, const PREFIX(node) *py);
 #ifdef _DENSE_REP
-	static double dot(const svm_node &px, const svm_node &py);
+	static double dot(const PREFIX(node) &px, const PREFIX(node) &py);
 #endif
 
 	double kernel_linear(int i, int j) const
@@ -324,9 +341,9 @@ private:
 };
 
 #ifdef _DENSE_REP
-Kernel::Kernel(int l, svm_node * x_, const svm_parameter& param)
+Kernel::Kernel(int l, PREFIX(node) * x_, const svm_parameter& param)
 #else
-Kernel::Kernel(int l, svm_node * const * x_, const svm_parameter& param)
+Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param)
 #endif
 :kernel_type(param.kernel_type), degree(param.degree),
  gamma(param.gamma), coef0(param.coef0)
@@ -369,7 +386,7 @@ Kernel::~Kernel()
 }
 
 #ifdef _DENSE_REP
-double Kernel::dot(const svm_node *px, const svm_node *py)
+double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 {
 	double sum = 0;
 
@@ -379,7 +396,7 @@ double Kernel::dot(const svm_node *px, const svm_node *py)
 	return sum;
 }
 
-double Kernel::dot(const svm_node &px, const svm_node &py)
+double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py)
 {
 	double sum = 0;
 
@@ -389,7 +406,7 @@ double Kernel::dot(const svm_node &px, const svm_node &py)
 	return sum;
 }
 #else
-double Kernel::dot(const svm_node *px, const svm_node *py)
+double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 {
 	double sum = 0;
 	while(px->index != -1 && py->index != -1)
@@ -412,7 +429,7 @@ double Kernel::dot(const svm_node *px, const svm_node *py)
 }
 #endif
 
-double Kernel::k_function(const svm_node *x, const svm_node *y,
+double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			  const svm_parameter& param)
 {
 	switch(param.kernel_type)
@@ -1370,7 +1387,7 @@ double Solver_NU::calculate_rho()
 class SVC_Q: public Kernel
 { 
 public:
-	SVC_Q(const svm_problem& prob, const svm_parameter& param, const schar *y_)
+	SVC_Q(const PREFIX(problem)& prob, const svm_parameter& param, const schar *y_)
 	:Kernel(prob.l, prob.x, param)
 	{
 		clone(y,y_,prob.l);
@@ -1420,7 +1437,7 @@ private:
 class ONE_CLASS_Q: public Kernel
 {
 public:
-	ONE_CLASS_Q(const svm_problem& prob, const svm_parameter& param)
+	ONE_CLASS_Q(const PREFIX(problem)& prob, const svm_parameter& param)
 	:Kernel(prob.l, prob.x, param)
 	{
 		cache = new Cache(prob.l,(long int)(param.cache_size*(1<<20)));
@@ -1466,7 +1483,7 @@ private:
 class SVR_Q: public Kernel
 { 
 public:
-	SVR_Q(const svm_problem& prob, const svm_parameter& param)
+	SVR_Q(const PREFIX(problem)& prob, const svm_parameter& param)
 	:Kernel(prob.l, prob.x, param)
 	{
 		l = prob.l;
@@ -1542,7 +1559,7 @@ private:
 // construct and solve various formulations
 //
 static void solve_c_svc(
-	const svm_problem *prob, const svm_parameter* param,
+	const PREFIX(problem) *prob, const svm_parameter* param,
 	double *alpha, Solver::SolutionInfo* si, double Cp, double Cn)
 {
 	int l = prob->l;
@@ -1577,7 +1594,7 @@ static void solve_c_svc(
 }
 
 static void solve_nu_svc(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
 	int i;
@@ -1632,7 +1649,7 @@ static void solve_nu_svc(
 }
 
 static void solve_one_class(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
 	int l = prob->l;
@@ -1664,7 +1681,7 @@ static void solve_one_class(
 }
 
 static void solve_epsilon_svr(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
 	int l = prob->l;
@@ -1702,7 +1719,7 @@ static void solve_epsilon_svr(
 }
 
 static void solve_nu_svr(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
 	int l = prob->l;
@@ -1749,7 +1766,7 @@ struct decision_function
 };
 
 static decision_function svm_train_one(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double Cp, double Cn)
 {
 	double *alpha = Malloc(double,prob->l);
@@ -1994,7 +2011,7 @@ static void multiclass_probability(int k, double **r, double *p)
 
 // Cross-validation decision values for probability estimates
 static void svm_binary_svc_probability(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double Cp, double Cn, double& probA, double& probB)
 {
 	int i;
@@ -2014,13 +2031,13 @@ static void svm_binary_svc_probability(
 		int begin = i*prob->l/nr_fold;
 		int end = (i+1)*prob->l/nr_fold;
 		int j,k;
-		struct svm_problem subprob;
+		struct PREFIX(problem) subprob;
 
 		subprob.l = prob->l-(end-begin);
 #ifdef _DENSE_REP
-		subprob.x = Malloc(struct svm_node,subprob.l);
+		subprob.x = Malloc(struct PREFIX(node),subprob.l);
 #else
-		subprob.x = Malloc(struct svm_node*,subprob.l);
+		subprob.x = Malloc(struct PREFIX(node)*,subprob.l);
 #endif
 		subprob.y = Malloc(double,subprob.l);
 			
@@ -2065,7 +2082,7 @@ static void svm_binary_svc_probability(
 			subparam.weight_label[1]=-1;
 			subparam.weight[0]=Cp;
 			subparam.weight[1]=Cn;
-			struct svm_model *submodel = PREFIX(train)(&subprob,&subparam);
+			struct PREFIX(model) *submodel = PREFIX(train)(&subprob,&subparam);
 			for(j=begin;j<end;j++)
 			{
 #ifdef _DENSE_REP
@@ -2089,7 +2106,7 @@ static void svm_binary_svc_probability(
 
 // Return parameter of a Laplace distribution 
 static double svm_svr_probability(
-	const svm_problem *prob, const svm_parameter *param)
+	const PREFIX(problem) *prob, const svm_parameter *param)
 {
 	int i;
 	int nr_fold = 5;
@@ -2122,7 +2139,7 @@ static double svm_svr_probability(
 
 // label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
 // perm, length l, must be allocated before calling this subroutine
-static void svm_group_classes(const svm_problem *prob, int *nr_class_ret, int **label_ret, int **start_ret, int **count_ret, int *perm)
+static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, int **label_ret, int **start_ret, int **count_ret, int *perm)
 {
 	int l = prob->l;
 	int max_nr_class = 16;
@@ -2180,17 +2197,13 @@ static void svm_group_classes(const svm_problem *prob, int *nr_class_ret, int **
 }
 
 } /* end namespace */
-#ifdef _DENSE_REP
-using namespace svm;
-#else
-using namespace svm_csr;
-#endif
+
 //
 // Interface functions
 //
-svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
+PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *param)
 {
-	svm_model *model = Malloc(svm_model,1);
+	PREFIX(model) *model = Malloc(PREFIX(model),1);
 	model->param = *param;
 	model->free_sv = 0;	// XXX
 
@@ -2210,10 +2223,10 @@ svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 		    param->svm_type == NU_SVR))
 		{
 			model->probA = Malloc(double,1);
-			model->probA[0] = svm_svr_probability(prob,param);
+			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param);
 		}
 
-		decision_function f = svm_train_one(prob,param,0,0);
+                NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0);
 		model->rho = Malloc(double,1);
 		model->rho[0] = f.rho;
 
@@ -2223,9 +2236,9 @@ svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 			if(fabs(f.alpha[i]) > 0) ++nSV;
 		model->l = nSV;
 #ifdef _DENSE_REP
-		model->SV = Malloc(svm_node,nSV);
+		model->SV = Malloc(PREFIX(node),nSV);
 #else
-		model->SV = Malloc(svm_node *,nSV);
+		model->SV = Malloc(PREFIX(node) *,nSV);
 #endif
                 model->sv_ind = Malloc(int, nSV);
 		model->sv_coef[0] = Malloc(double, nSV);
@@ -2252,11 +2265,11 @@ svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 		int *perm = Malloc(int,l);
 
 		// group training data of the same class
-		svm_group_classes(prob,&nr_class,&label,&start,&count,perm);		
+                NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);		
 #ifdef _DENSE_REP
-		svm_node *x = Malloc(svm_node,l);
+		PREFIX(node) *x = Malloc(PREFIX(node),l);
 #else
-		svm_node **x = Malloc(svm_node *,l);
+		PREFIX(node) **x = Malloc(PREFIX(node) *,l);
 #endif
 		int i;
 		for(i=0;i<l;i++)
@@ -2284,7 +2297,7 @@ svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 		bool *nonzero = Malloc(bool,l);
 		for(i=0;i<l;i++)
 			nonzero[i] = false;
-		decision_function *f = Malloc(decision_function,nr_class*(nr_class-1)/2);
+                NAMESPACE::decision_function *f = Malloc(NAMESPACE::decision_function,nr_class*(nr_class-1)/2);
 
 		double *probA=NULL,*probB=NULL;
 		if (param->probability)
@@ -2297,14 +2310,14 @@ svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 		for(i=0;i<nr_class;i++)
 			for(int j=i+1;j<nr_class;j++)
 			{
-				svm_problem sub_prob;
+				PREFIX(problem) sub_prob;
 				int si = start[i], sj = start[j];
 				int ci = count[i], cj = count[j];
 				sub_prob.l = ci+cj;
 #ifdef _DENSE_REP
-				sub_prob.x = Malloc(svm_node,sub_prob.l);
+				sub_prob.x = Malloc(PREFIX(node),sub_prob.l);
 #else
-				sub_prob.x = Malloc(svm_node *,sub_prob.l);
+				sub_prob.x = Malloc(PREFIX(node) *,sub_prob.l);
 #endif
 				sub_prob.y = Malloc(double,sub_prob.l);
 				int k;
@@ -2320,9 +2333,9 @@ svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 				}
 
 				if(param->probability)
-					svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p]);
+                                    NAMESPACE::svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p]);
 
-				f[p] = svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j]);
+				f[p] = NAMESPACE::svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j]);
 				for(k=0;k<ci;k++)
 					if(!nonzero[si+k] && fabs(f[p].alpha[k]) > 0)
 						nonzero[si+k] = true;
@@ -2378,14 +2391,14 @@ svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 			nz_count[i] = nSV;
 		}
 
-		info("Total nSV = %d\n",total_sv);
+                info("Total nSV = %d\n",total_sv);
 
 		model->l = total_sv;
                 model->sv_ind = Malloc(int, total_sv);
 #ifdef _DENSE_REP
-		model->SV = Malloc(svm_node,total_sv);
+		model->SV = Malloc(PREFIX(node),total_sv);
 #else
-		model->SV = Malloc(svm_node *,total_sv);
+		model->SV = Malloc(PREFIX(node) *,total_sv);
 #endif
 		p = 0;
 		for(i=0;i<l;i++) {
@@ -2449,7 +2462,7 @@ svm_model *PREFIX(train)(const svm_problem *prob, const svm_parameter *param)
 }
 
 // Stratified cross validation
-void PREFIX(cross_validation)(const svm_problem *prob, const svm_parameter *param, int nr_fold, double *target)
+void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *param, int nr_fold, double *target)
 {
 	int i;
 	int *fold_start = Malloc(int,nr_fold+1);
@@ -2465,7 +2478,7 @@ void PREFIX(cross_validation)(const svm_problem *prob, const svm_parameter *para
 		int *start = NULL;
 		int *label = NULL;
 		int *count = NULL;
-		svm_group_classes(prob,&nr_class,&label,&start,&count,perm);
+                NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);
 
 		// random shuffle and then data grouped by fold using the array perm
 		int *fold_count = Malloc(int,nr_fold);
@@ -2525,13 +2538,13 @@ void PREFIX(cross_validation)(const svm_problem *prob, const svm_parameter *para
 		int begin = fold_start[i];
 		int end = fold_start[i+1];
 		int j,k;
-		struct svm_problem subprob;
+		struct PREFIX(problem) subprob;
 
 		subprob.l = l-(end-begin);
 #ifdef _DENSE_REP
-		subprob.x = Malloc(struct svm_node,subprob.l);
+		subprob.x = Malloc(struct PREFIX(node),subprob.l);
 #else
-		subprob.x = Malloc(struct svm_node*,subprob.l);
+		subprob.x = Malloc(struct PREFIX(node)*,subprob.l);
 #endif
 		subprob.y = Malloc(double,subprob.l);
 			
@@ -2548,7 +2561,7 @@ void PREFIX(cross_validation)(const svm_problem *prob, const svm_parameter *para
 			subprob.y[k] = prob->y[perm[j]];
 			++k;
 		}
-		struct svm_model *submodel = PREFIX(train)(&subprob,param);
+		struct PREFIX(model) *submodel = PREFIX(train)(&subprob,param);
 		if(param->probability && 
 		   (param->svm_type == C_SVC || param->svm_type == NU_SVC))
 		{
@@ -2577,24 +2590,24 @@ void PREFIX(cross_validation)(const svm_problem *prob, const svm_parameter *para
 }
 
 
-int PREFIX(get_svm_type)(const svm_model *model)
+int PREFIX(get_svm_type)(const PREFIX(model) *model)
 {
 	return model->param.svm_type;
 }
 
-int PREFIX(get_nr_class)(const svm_model *model)
+int PREFIX(get_nr_class)(const PREFIX(model) *model)
 {
 	return model->nr_class;
 }
 
-void PREFIX(get_labels)(const svm_model *model, int* label)
+void PREFIX(get_labels)(const PREFIX(model) *model, int* label)
 {
 	if (model->label != NULL)
 		for(int i=0;i<model->nr_class;i++)
 			label[i] = model->label[i];
 }
 
-double PREFIX(get_svr_probability)(const svm_model *model)
+double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 {
 	if ((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR) &&
 	    model->probA!=NULL)
@@ -2606,7 +2619,7 @@ double PREFIX(get_svr_probability)(const svm_model *model)
 	}
 }
 
-double PREFIX(predict_values)(const svm_model *model, const svm_node *x, double* dec_values)
+double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values)
 {
         int i;
 	if(model->param.svm_type == ONE_CLASS ||
@@ -2619,9 +2632,9 @@ double PREFIX(predict_values)(const svm_model *model, const svm_node *x, double*
 		
 		for(i=0;i<model->l;i++)
 #ifdef _DENSE_REP
-			sum += sv_coef[i] * Kernel::k_function(x,model->SV+i,model->param);
+                    sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
 #else
-			sum += sv_coef[i] * Kernel::k_function(x,model->SV[i],model->param);
+                sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
 #endif
 		sum -= model->rho[0];
 		*dec_values = sum;
@@ -2640,9 +2653,9 @@ double PREFIX(predict_values)(const svm_model *model, const svm_node *x, double*
 		double *kvalue = Malloc(double,l);
 		for(i=0;i<l;i++)
 #ifdef _DENSE_REP
-			kvalue[i] = Kernel::k_function(x,model->SV+i,model->param);
+                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
 #else
-			kvalue[i] = Kernel::k_function(x,model->SV[i],model->param);
+                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
 #endif
 
 		int *start = Malloc(int,nr_class);
@@ -2693,7 +2706,7 @@ double PREFIX(predict_values)(const svm_model *model, const svm_node *x, double*
 	}
 }
 
-double PREFIX(predict)(const svm_model *model, const svm_node *x)
+double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x)
 {
 	int nr_class = model->nr_class;
 	double *dec_values;
@@ -2709,7 +2722,7 @@ double PREFIX(predict)(const svm_model *model, const svm_node *x)
 }
 
 double PREFIX(predict_probability)(
-	const svm_model *model, const svm_node *x, double *prob_estimates)
+	const PREFIX(model) *model, const PREFIX(node) *x, double *prob_estimates)
 {
 	if ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
 	    model->probA!=NULL && model->probB!=NULL)
@@ -2727,11 +2740,11 @@ double PREFIX(predict_probability)(
 		for(i=0;i<nr_class;i++)
 			for(int j=i+1;j<nr_class;j++)
 			{
-				pairwise_prob[i][j]=min(max(sigmoid_predict(dec_values[k],model->probA[k],model->probB[k]),min_prob),1-min_prob);
+                            pairwise_prob[i][j]=min(max(NAMESPACE::sigmoid_predict(dec_values[k],model->probA[k],model->probB[k]),min_prob),1-min_prob);
 				pairwise_prob[j][i]=1-pairwise_prob[i][j];
 				k++;
 			}
-		multiclass_probability(nr_class,pairwise_prob,prob_estimates);
+                NAMESPACE::multiclass_probability(nr_class,pairwise_prob,prob_estimates);
 
 		int prob_max_idx = 0;
 		for(i=1;i<nr_class;i++)
@@ -2747,17 +2760,8 @@ double PREFIX(predict_probability)(
 		return PREFIX(predict)(model, x);
 }
 
-static const char *svm_type_table[] =
-{
-	"c_svc","nu_svc","one_class","epsilon_svr","nu_svr",NULL
-};
 
-static const char *kernel_type_table[]=
-{
-	"linear","polynomial","rbf","sigmoid","precomputed",NULL
-};
-
-void PREFIX(free_model_content)(svm_model* model_ptr)
+void PREFIX(free_model_content)(PREFIX(model)* model_ptr)
 {
 	if(model_ptr->free_sv && model_ptr->l > 0)
 #ifdef _DENSE_REP
@@ -2778,9 +2782,9 @@ void PREFIX(free_model_content)(svm_model* model_ptr)
 	free(model_ptr->nSV);
 }
 
-void PREFIX(free_and_destroy_model)(svm_model** model_ptr_ptr)
+void PREFIX(free_and_destroy_model)(PREFIX(model)** model_ptr_ptr)
 {
-	svm_model* model_ptr = *model_ptr_ptr;
+	PREFIX(model)* model_ptr = *model_ptr_ptr;
 	if(model_ptr != NULL)
 	{
 		PREFIX(free_model_content)(model_ptr);
@@ -2788,9 +2792,9 @@ void PREFIX(free_and_destroy_model)(svm_model** model_ptr_ptr)
 	}
 }
 
-void PREFIX(destroy_model)(svm_model* model_ptr)
+void PREFIX(destroy_model)(PREFIX(model)* model_ptr)
 {
-	fprintf(stderr,"warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(svm_model **model_ptr_ptr)\n");
+	fprintf(stderr,"warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(PREFIX(model) **model_ptr_ptr)\n");
 	PREFIX(free_and_destroy_model)(&model_ptr);
 }
 
@@ -2800,7 +2804,7 @@ void PREFIX(destroy_param)(svm_parameter* param)
 	free(param->weight);
 }
 
-const char *PREFIX(check_parameter)(const svm_problem *prob, const svm_parameter *param)
+const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_parameter *param)
 {
 	// svm_type
 
@@ -2921,7 +2925,7 @@ const char *PREFIX(check_parameter)(const svm_problem *prob, const svm_parameter
 	return NULL;
 }
 
-int PREFIX(check_probability_model)(const svm_model *model)
+int PREFIX(check_probability_model)(const PREFIX(model) *model)
 {
 	return ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
 		model->probA!=NULL && model->probB!=NULL) ||
@@ -2929,7 +2933,7 @@ int PREFIX(check_probability_model)(const svm_model *model)
 		 model->probA!=NULL);
 }
 
-void svm_set_print_string_function(void (*print_func)(const char *))
+void PREFIX(set_print_string_function)(void (*print_func)(const char *))
 {
 	if(print_func == NULL)
 		svm_print_string = &print_string_stdout;

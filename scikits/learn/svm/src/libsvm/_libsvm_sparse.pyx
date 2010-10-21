@@ -5,20 +5,20 @@ cimport numpy as np
 ################################################################################
 # Includes
 
-cdef extern from "svm_csr.h":
-    cdef struct svm_node
-    cdef struct svm_model
+cdef extern from "svm.h":
+    cdef struct svm_csr_node
+    cdef struct svm_csr_model
     cdef struct svm_parameter
-    cdef struct svm_problem
-    char *svm_csr_check_parameter(svm_problem *, svm_parameter *)
-    svm_model *svm_csr_train(svm_problem *, svm_parameter *)
-    void svm_csr_free_and_destroy_model(svm_model** model_ptr_ptr)    
+    cdef struct svm_csr_problem
+    char *svm_csr_check_parameter(svm_csr_problem *, svm_parameter *)
+    svm_csr_model *svm_csr_train(svm_csr_problem *, svm_parameter *)
+    void svm_csr_free_and_destroy_model(svm_csr_model** model_ptr_ptr)    
 
 cdef extern from "libsvm_sparse_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
-    svm_problem * csr_set_problem (char *, np.npy_intp *,
+    svm_csr_problem * csr_set_problem (char *, np.npy_intp *,
          char *, np.npy_intp *, char *, char *, int )
-    svm_model *csr_set_model(svm_parameter *param, int nr_class,
+    svm_csr_model *csr_set_model(svm_parameter *param, int nr_class,
                             char *SV_data, np.npy_intp *SV_indices_dims,
                             char *SV_indices, np.npy_intp *SV_intptr_dims,
                             char *SV_intptr,
@@ -27,28 +27,28 @@ cdef extern from "libsvm_sparse_helper.c":
     svm_parameter *set_parameter (int , int , int , double, double ,
                                   double , double , double , double,
                                   double, int, int, int, char *, char *)
-    void copy_sv_coef   (char *, svm_model *)
-    void copy_intercept (char *, svm_model *, np.npy_intp *)
-    int copy_predict (char *, svm_model *, np.npy_intp *, char *)
+    void copy_sv_coef   (char *, svm_csr_model *)
+    void copy_intercept (char *, svm_csr_model *, np.npy_intp *)
+    int copy_predict (char *, svm_csr_model *, np.npy_intp *, char *)
     int csr_copy_predict (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
         	char *index, np.npy_intp *intptr_size, char *size,
-                svm_model *model, char *dec_values)
-    int  copy_predict_proba (char *, svm_model *, np.npy_intp *, char *)
-    int  copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int)
+                svm_csr_model *model, char *dec_values)
+    int  copy_predict_proba (char *, svm_csr_model *, np.npy_intp *, char *)
+    int  copy_predict_values(char *, svm_csr_model *, np.npy_intp *, char *, int)
     int  csr_copy_SV (char *values, np.npy_intp *n_indices,
         	char *indices, np.npy_intp *n_indptr, char *indptr,
-                svm_model *model, int n_features)
-    np.npy_intp get_nonzero_SV ( svm_model *)
-    void copy_nSV     (char *, svm_model *)
-    void copy_label   (char *, svm_model *)
-    void copy_probA   (char *, svm_model *, np.npy_intp *)
-    void copy_probB   (char *, svm_model *, np.npy_intp *)
-    np.npy_intp  get_l  (svm_model *)
-    np.npy_intp  get_nr (svm_model *)
-    int  free_problem   (svm_problem *)
-    int  free_model     (svm_model *)
+                svm_csr_model *model, int n_features)
+    np.npy_intp get_nonzero_SV ( svm_csr_model *)
+    void copy_nSV     (char *, svm_csr_model *)
+    void copy_label   (char *, svm_csr_model *)
+    void copy_probA   (char *, svm_csr_model *, np.npy_intp *)
+    void copy_probB   (char *, svm_csr_model *, np.npy_intp *)
+    np.npy_intp  get_l  (svm_csr_model *)
+    np.npy_intp  get_nr (svm_csr_model *)
+    int  free_problem   (svm_csr_problem *)
+    int  free_model     (svm_csr_model *)
     int  free_param     (svm_parameter *)
-    int free_model_SV(svm_model *model)
+    int free_model_SV(svm_csr_model *model)
     void set_verbosity(int)
 
 
@@ -93,8 +93,8 @@ def libsvm_sparse_train ( int n_features,
     """
 
     cdef svm_parameter *param
-    cdef svm_problem *problem
-    cdef svm_model *model
+    cdef svm_csr_problem *problem
+    cdef svm_csr_model *model
     cdef char *error_msg
 
     # set libsvm problem
@@ -219,7 +219,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     """
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter *param
-    cdef svm_model *model
+    cdef svm_csr_model *model
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size, C, eps, p, shrinking,
                           probability, <int> weight.shape[0], weight_label.data,

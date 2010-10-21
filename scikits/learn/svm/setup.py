@@ -11,20 +11,23 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('svm', parent_package, top_path)
 
     config.add_subpackage('tests')
-    config.add_subpackage('sparse')
 
     # Section LibSVM
-    libsvm_includes = [numpy.get_include()]
-    libsvm_sources = [join('src', 'libsvm', '_libsvm.c'),
-                      join('src', 'libsvm', 'svm.cpp')]
-    libsvm_depends = [join('src', 'libsvm', 'svm.h'),
-                      join('src', 'libsvm', 'libsvm_helper.c')]
+
+    # we compile both libsvm and lisvm_sparse
+    config.add_library('libsvm-skl',
+                       sources=[join('src', 'libsvm', 'libsvm_template.cpp')],
+                       depends=[join('src', 'libsvm', 'svm.cpp'),
+                                join('src', 'libsvm', 'svm.h')]
+                       )
+    libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
+    libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c')]
 
     config.add_extension('_libsvm',
                          sources=libsvm_sources,
-                         define_macros=[('_DENSE_REP', 1)],
-                         include_dirs=libsvm_includes,
-                         depends=libsvm_depends,
+                         include_dirs=[numpy.get_include()],
+                         libraries=['libsvm-skl'],
+                         depends=libsvm_depends
                          )
 
     ### liblinear module
@@ -56,6 +59,10 @@ def configuration(parent_package='', top_path=None):
                          **blas_info)
 
     ## end liblinear module
+
+    # this should go *after* libsvm-skl
+    config.add_subpackage('sparse')
+
 
     return config
 
