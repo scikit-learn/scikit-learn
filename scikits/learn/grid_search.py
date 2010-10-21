@@ -6,6 +6,7 @@ Tune the parameters of an estimator by cross-validation.
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
+import numpy as np
 import copy
 
 from .externals.joblib import Parallel, delayed
@@ -70,13 +71,20 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     score = 0.
     n_test_samples = 0.
     for train, test in cv:
-        clf.fit(X[train], y[train], **fit_params)
+        if isinstance(X, list) or isinstance(X, tuple):
+            X_train = [X[i] for i, cond in enumerate(train) if cond]
+            X_test = [X[i] for i, cond in enumerate(test) if cond]
+        else:
+            X_train = X[train]
+            X_test = X[test]
+
+        clf.fit(X_train, y[train], **fit_params)
         y_test = y[test]
         if loss_func is not None:
-            y_pred = clf.predict(X[test])
+            y_pred = clf.predict(X_test)
             this_score = -loss_func(y_test, y_pred)
         else:
-            this_score = clf.score(X[test], y_test)
+            this_score = clf.score(X_test, y_test)
         if iid:
             this_score *= len(y_test)
             n_test_samples += len(y_test)
@@ -218,7 +226,6 @@ class GridSearchCV(BaseEstimator):
                     for clf_params, (score, _) in zip(grid, out))
 
         return self
-
 
     def score(self, X, y=None):
         # This method is overridden during the fit if the best estimator

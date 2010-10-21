@@ -19,6 +19,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('covariance/tests')
     config.add_subpackage('feature_selection')
     config.add_subpackage('feature_selection/tests')
+    config.add_subpackage('preprocessing')
     config.add_subpackage('utils')
     config.add_subpackage('utils/tests')
     config.add_subpackage('externals')

@@ -1,16 +1,31 @@
-from scikits.learn.feature_extraction.text import strip_accents
-from scikits.learn.feature_extraction.text import WordNGramAnalyzer
 from scikits.learn.feature_extraction.text import CharNGramAnalyzer
-from scikits.learn.feature_extraction.text import TermCountVectorizer
+from scikits.learn.feature_extraction.text import WordNGramAnalyzer
+from scikits.learn.feature_extraction.text import strip_accents
+
+from scikits.learn.feature_extraction.text import CountVectorizer
 from scikits.learn.feature_extraction.text import TfidfTransformer
-from scikits.learn.feature_extraction.text import TfidfVectorizer
+from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.feature_extraction.text import HashingVectorizer
-from scikits.learn.feature_extraction.text import SparseHashingVectorizer
+
+import scikits.learn.feature_extraction.sparse.text as st
+
+SparseCountVectorizer = st.CountVectorizer
+SparseTfidfTransformer = st.TfidfTransformer
+SparseVectorizer = st.Vectorizer
+SparseHashingVectorizer = st.HashingVectorizer
+
+from scikits.learn.grid_search import GridSearchCV
+from scikits.learn.pipeline import Pipeline
 from scikits.learn.svm import LinearSVC as DenseLinearSVC
 from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
+
 import numpy as np
+import numpy.linalg as la
 from nose.tools import *
 from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+
+import pickle
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer",
@@ -21,6 +36,7 @@ JUNK_FOOD_DOCS = (
     "the coke pizza pizza",
 )
 
+
 NOTJUNK_FOOD_DOCS = (
     "the salad celeri",
     "the salad salad sparkling water",
@@ -28,6 +44,7 @@ NOTJUNK_FOOD_DOCS = (
     "the tomato tomato salad water",
     "the tomato salad water",
 )
+
 
 def test_strip_accents():
     # check some classical latin accentuated symbols
@@ -152,18 +169,26 @@ def test_dense_sparse_idf_sanity():
 
     assert_array_almost_equal(dense_tf_idf, sparse_tfidf)
 
+def toarray(a):
+    if hasattr(a, "toarray"):
+        a = a.toarray()
+    return a
 
-def test_dense_vectorizer():
-    wa = WordNGramAnalyzer()
-    train_data = [wa.analyze(d) for d in JUNK_FOOD_DOCS[:-1]]
-    test_data = [wa.analyze(JUNK_FOOD_DOCS[-1])]
+def _test_vectorizer(cv_class, tf_class, v_class):
+    # results to be compared
+    res = []
+
+    # raw documents
+    train_data = iter(JUNK_FOOD_DOCS[:-1])
+    n_train = len(JUNK_FOOD_DOCS[:-1])
+    test_data = [JUNK_FOOD_DOCS[-1]]
 
     # test without vocabulary
-    v1 = TermCountVectorizer()
-    counts_train = v1.transform(train_data)
+    v1 = cv_class()
+    counts_train = v1.fit_transform(train_data)
     assert_equal(counts_train[0, v1.vocabulary["pizza"]], 2)
 
-    v2 = TermCountVectorizer(vocabulary=v1.vocabulary)
+    v2 = cv_class(vocabulary=v1.vocabulary)
 
     # test with a pre-existing vocabulary
     for v in (v1, v2):
@@ -171,30 +196,93 @@ def test_dense_vectorizer():
         assert_equal(counts_test[0, v.vocabulary["coke"]], 1)
 
     # test tf-idf
-    t1 = TfidfTransformer()
-    tfidf = t1.fit(counts_train).transform(counts_train)
+    t1 = tf_class()
+    tfidf = toarray(t1.fit(counts_train).transform(counts_train))
     assert_equal(len(t1.idf), len(v1.vocabulary))
     assert_equal(tfidf.shape,
-                 (len(train_data), len(v1.vocabulary)))
+                 (n_train, len(v1.vocabulary)))
+
+    res.append(tfidf)
+    res.append(t1.idf)
 
     # test tf-idf with new data
-    tfidf_test = t1.transform(counts_test)
+    tfidf_test = toarray(t1.transform(counts_test))
     assert_equal(tfidf_test.shape,
                  (len(test_data), len(v1.vocabulary)))
 
     # test tf alone
-    t2 = TfidfTransformer(use_idf=False)
-    tf = t2.fit(counts_train).transform(counts_train)
+    t2 = tf_class(use_idf=False)
+    tf = toarray(t2.fit(counts_train).transform(counts_train))
     assert_equal(t2.idf, None)
     assert_array_almost_equal(np.sum(tf, axis=1),
-                              [1.0] * len(train_data))
+                              [1.0] * n_train)
 
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
-    tv = TfidfVectorizer()
-    tfidf2 = tv.fit(train_data).transform(train_data)
+    train_data = iter(JUNK_FOOD_DOCS[:-1])
+    tv = v_class()
+    tfidf2 = toarray(tv.fit_transform(train_data))
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
-    tfidf_test2 = tv.transform(test_data)
+    tfidf_test2 = toarray(tv.transform(test_data))
     assert_array_almost_equal(tfidf_test, tfidf_test2)
+
+    return res
+
+def test_vectorizer():
+    res_dense =_test_vectorizer(CountVectorizer,
+                                TfidfTransformer,
+                                Vectorizer)
+    res_sparse = _test_vectorizer(SparseCountVectorizer,
+                                  SparseTfidfTransformer,
+                                  SparseVectorizer)
+
+    for i in xrange(len(res_sparse)):
+        # check that the dense and sparse implementations
+        # return the same results
+        assert_array_equal(res_dense[i], res_sparse[i])
+
+def test_dense_vectorizer_pipeline_grid_selection():
+    # raw documents
+    data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
+    # simulate iterables
+    train_data = iter(data[1:-1])
+    test_data = iter([data[0], data[-1]])
+
+    # label junk food as -1, the others as +1
+    y = np.ones(len(data))
+    y[:6] = -1
+    y_train = y[1:-1]
+    y_test = np.array([y[0],y[-1]])
+
+    pipeline = Pipeline([('vect', CountVectorizer()),
+                         ('svc', DenseLinearSVC())])
+
+    parameters = {
+        'vect__analyzer': (WordNGramAnalyzer(min_n=1, max_n=1),
+                           WordNGramAnalyzer(min_n=1, max_n=2)),
+        'svc__loss'  : ('l1', 'l2')
+    }
+
+
+    # find the best parameters for both the feature extraction and the
+    # classifier
+    clf = GridSearchCV(pipeline, parameters, n_jobs=1)
+
+    # cross-validation doesn't work if the length of the data is not known,
+    # hence use lists instead of iterators
+    pred = clf.fit(list(train_data), y_train).predict(list(test_data))
+    assert_array_equal(pred, y_test)
+
+    # check that the bigram representation yields higher predictive accurracy
+    # this test is unstable...
+    #assert_equal(clf.best_estimator.steps[0][1].analyzer.max_n, 2)
+
+def test_pickle():
+    for obj in (CountVectorizer(), SparseCountVectorizer(),
+                TfidfTransformer(), SparseTfidfTransformer(),
+                Vectorizer(), SparseVectorizer()):
+
+        s = pickle.dumps(obj)
+        assert_equal(type(pickle.loads(s)), obj.__class__)
