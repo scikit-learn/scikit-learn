@@ -1,3 +1,3 @@
 
-from .text import SparseCountVectorizer, SparseTfidfTransformer, \
-                  SparseVectorizer, SparseHashingVectorizer
+from .text import CountVectorizer, TfidfTransformer, Vectorizer, \
+                  HashingVectorizer

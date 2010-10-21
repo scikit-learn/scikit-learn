@@ -1,14 +1,19 @@
 from scikits.learn.feature_extraction.text import CharNGramAnalyzer
-from scikits.learn.feature_extraction.text import CountVectorizer
-from scikits.learn.feature_extraction.text import HashingVectorizer
-from scikits.learn.feature_extraction.text import TfidfTransformer
-from scikits.learn.feature_extraction.text import Vectorizer
-from scikits.learn.feature_extraction.sparse.text import SparseCountVectorizer
-from scikits.learn.feature_extraction.sparse.text import SparseHashingVectorizer
-from scikits.learn.feature_extraction.sparse.text import SparseTfidfTransformer
-from scikits.learn.feature_extraction.sparse.text import SparseVectorizer
 from scikits.learn.feature_extraction.text import WordNGramAnalyzer
 from scikits.learn.feature_extraction.text import strip_accents
+
+from scikits.learn.feature_extraction.text import CountVectorizer
+from scikits.learn.feature_extraction.text import TfidfTransformer
+from scikits.learn.feature_extraction.text import Vectorizer
+from scikits.learn.feature_extraction.text import HashingVectorizer
+
+import scikits.learn.feature_extraction.sparse.text as st
+
+SparseCountVectorizer = st.CountVectorizer
+SparseTfidfTransformer = st.TfidfTransformer
+SparseVectorizer = st.Vectorizer
+SparseHashingVectorizer = st.HashingVectorizer
+
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
 from scikits.learn.svm import LinearSVC as DenseLinearSVC

@@ -11,12 +11,12 @@ import scipy.sparse as sp
 from ..text import BaseCountVectorizer, BaseTfidfTransformer, BaseVectorizer, \
                    DEFAULT_ANALYZER
 
-class SparseCountVectorizer(BaseCountVectorizer):
+class CountVectorizer(BaseCountVectorizer):
 
     def _init_matrix(self, shape):
         return sp.dok_matrix(shape, dtype=self.dtype)
 
-class SparseTfidfTransformer(BaseTfidfTransformer):
+class TfidfTransformer(BaseTfidfTransformer):
 
     def fit(self, X, y=None):
         """
@@ -73,11 +73,11 @@ class SparseTfidfTransformer(BaseTfidfTransformer):
 
         return X
 
-class SparseVectorizer(BaseVectorizer):
+class Vectorizer(BaseVectorizer):
     """
     Convert a collection of raw documents to a sparse matrix.
 
-    Equivalent to SparseCountVectorizer followed by SparseTfidfTransformer.
+    Equivalent to CountVectorizer followed by TfidfTransformer.
     """
 
     def __init__(self,
@@ -85,10 +85,10 @@ class SparseVectorizer(BaseVectorizer):
                  use_tf=True,
                  use_idf=True,
                  normalize=False):
-        self.tc = SparseCountVectorizer(analyzer, dtype=np.float64)
-        self.tfidf = SparseTfidfTransformer(use_tf, use_idf, normalize)
+        self.tc = CountVectorizer(analyzer, dtype=np.float64)
+        self.tfidf = TfidfTransformer(use_tf, use_idf, normalize)
 
-class SparseHashingVectorizer(object):
+class HashingVectorizer(object):
     """Compute term freq vectors using hashed term space in a sparse matrix
 
     The logic is the same as HashingVectorizer but it is possible to use much
