@@ -63,13 +63,13 @@ def strip_tags(s):
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
 
 
-class Filter(object):
+class DefaultPreprocessor(object):
 
-    def filter(self, text):
+    def preprocess(self, text):
         return strip_accents(strip_tags(text.lower()))
 
 
-DEFAULT_FILTER = Filter()
+DEFAULT_PREPROCESSOR = DefaultPreprocessor()
 
 
 class WordNGramAnalyzer(BaseEstimator):
@@ -86,12 +86,12 @@ class WordNGramAnalyzer(BaseEstimator):
     token_pattern = re.compile(r"\b\w\w+\b", re.UNICODE)
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
-                 filter=DEFAULT_FILTER, stop_words=None):
+                 preprocessor=DEFAULT_PREPROCESSOR, stop_words=None):
         self.charset = charset
         self.stop_words = stop_words
         self.min_n = min_n
         self.max_n = max_n
-        self.filter = filter
+        self.preprocessor = preprocessor
 
     def analyze(self, text_document):
         if isinstance(text_document, file):
@@ -100,7 +100,7 @@ class WordNGramAnalyzer(BaseEstimator):
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
 
-        text_document = self.filter.filter(text_document)
+        text_document = self.preprocessor.preprocess(text_document)
 
         # word boundaries tokenizer
         tokens = self.token_pattern.findall(text_document)
@@ -135,15 +135,17 @@ class CharNGramAnalyzer(BaseEstimator):
 
     white_spaces = re.compile(r"\s\s+")
 
-    def __init__(self, charset='utf-8', min_n=3, max_n=6):
+    def __init__(self, charset='utf-8', preprocessor=DEFAULT_PREPROCESSOR,
+                 min_n=3, max_n=6):
         self.charset = charset
         self.min_n = min_n
         self.max_n = max_n
+        self.preprocessor = preprocessor
 
     def analyze(self, text_document):
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
-        text_document = strip_accents(text_document.lower())
+        text_document = self.preprocessor.preprocess(text_document)
 
         # normalize white spaces
         text_document = self.white_spaces.sub(" ", text_document)
@@ -162,8 +164,7 @@ DEFAULT_ANALYZER = WordNGramAnalyzer(min_n=1, max_n=1)
 
 
 class BaseCountVectorizer(BaseEstimator):
-    """
-    Convert a collection of raw documents to a matrix of token counts.
+    """Convert a collection of raw documents to a matrix of token counts
 
     This class can't be used directly, use either CountVectorizer or
     SparseCountVectorizer.
@@ -235,8 +236,7 @@ class BaseCountVectorizer(BaseEstimator):
         return vectors
 
     def fit(self, raw_documents, y=None):
-        """
-        Learn the vocabulary dictionary.
+        """Learn a vocabulary dictionary of all tokens in the raw documents
 
         Parameters
         ----------
@@ -249,12 +249,10 @@ class BaseCountVectorizer(BaseEstimator):
         self
         """
         self.fit_transform(raw_documents)
-
         return self
 
     def fit_transform(self, raw_documents, y=None):
-        """
-        Learn the vocabulary dictionary and return the vectors.
+        """Learn the vocabulary dictionary and return the count vectors
 
         This is more efficient than calling fit followed by transform.
 
@@ -269,12 +267,10 @@ class BaseCountVectorizer(BaseEstimator):
         vectors: array, [n_samples, n_features]
         """
         vectors, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
-
         return vectors
 
     def transform(self, raw_documents):
-        """
-        Return the vectors.
+        """Extract token counts out of raw text documents
 
         Parameters
         ----------
@@ -291,10 +287,39 @@ class BaseCountVectorizer(BaseEstimator):
 
         return self._build_vectors(raw_documents)
 
+
 class CountVectorizer(BaseCountVectorizer):
+    """Convert a collection of raw documents to a matrix of token counts
+
+    This implementation produces a dense representation of the counts using
+    numpy array.
+
+    If you do not provide an a-priori dictionary and you do not use
+    an analyzer that does some kind of feature selection then the number of
+    features (the vocabulary size found by analysing the data) might be very
+    large and the count vectors might not fit in memory.
+
+    For this case it is either recommended to use the SparseCountVectorizer
+    variant of this class or a HashingVectorizer that will reduce the
+    dimensionality to an arbitrary number by using random projection.
+
+    Parameters
+    ----------
+    analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
+
+    vocabulary: dict, optional
+        A dictionary where keys are tokens and values are indices in the
+        matrix.
+        This is useful in order to fix the vocabulary in advance.
+
+    dtype: type, optional
+        Type of the matrix returned by fit_transform() or transform().
+    """
+
 
     def _init_matrix(self, shape):
         return np.zeros(shape, dtype=self.dtype)
+
 
 class BaseTfidfTransformer(BaseEstimator):
     """
@@ -320,11 +345,12 @@ class BaseTfidfTransformer(BaseEstimator):
         self.use_idf = use_idf
         self.idf = None
 
+
 class TfidfTransformer(BaseTfidfTransformer):
+    # TODO: write docstring!
 
     def fit(self, X, y=None):
-        """
-        Learn the IDF vector (global term weights).
+        """Learn the IDF vector (global term weights)
 
         Parameters
         ----------
@@ -341,8 +367,7 @@ class TfidfTransformer(BaseTfidfTransformer):
         return self
 
     def transform(self, X, copy=True):
-        """
-        Transform a count matrix to a TF or TF-IDF representation.
+        """Transform a count matrix to a TF or TF-IDF representation
 
         Parameters
         ----------
@@ -364,9 +389,9 @@ class TfidfTransformer(BaseTfidfTransformer):
 
         return X
 
+
 class BaseVectorizer(BaseEstimator):
-    """
-    Convert a collection of raw documents to a matrix.
+    """Convert a collection of raw documents to a matrix
 
     This class can't be used directly, use either Vectorizer or
     SparseVectorizer.
@@ -413,9 +438,9 @@ class BaseVectorizer(BaseEstimator):
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X, copy)
 
+
 class Vectorizer(BaseVectorizer):
-    """
-    Convert a collection of raw documents to a matrix.
+    """Convert a collection of raw documents to a matrix
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
@@ -427,6 +452,9 @@ class Vectorizer(BaseVectorizer):
         self.tc = CountVectorizer(analyzer, dtype=np.float64)
         self.tfidf = TfidfTransformer(use_tf, use_idf)
 
+
+# TODO: refactor the HashingVectorizer implementation to reuse the
+# BaseVectorizer infrastructure as mush as possible and align the API
 
 class HashingVectorizer(object):
     """Compute term frequencies vectors using hashed term space
