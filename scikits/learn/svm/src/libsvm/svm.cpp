@@ -39,6 +39,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    - Return indicies for support vectors, Fabian Pedregosa
      <fabian.pedregosa@inria.fr>
 
+   - Fixes to avoid name collision, Fabian Pedregosa
+
  */
 
 #include <math.h>
@@ -54,11 +56,13 @@ and dense versions of this library */
 #ifdef _DENSE_REP
   #include "svm.h"
   #define PREFIX(name) svm_##name
+  namespace svm {
 #else
   #include "svm_csr.h"
   #define PREFIX(name) svm_csr_##name
   #define svm_node svm_csr_node
   #define svm_problem svm_csr_problem
+  namespace svm_csr {
 #endif
 
 int libsvm_version = LIBSVM_VERSION;
@@ -2175,6 +2179,12 @@ static void svm_group_classes(const svm_problem *prob, int *nr_class_ret, int **
 	free(data_label);
 }
 
+} /* end namespace */
+#ifdef _DENSE_REP
+using namespace svm;
+#else
+using namespace svm_csr;
+#endif
 //
 // Interface functions
 //
