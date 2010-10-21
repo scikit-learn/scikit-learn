@@ -68,6 +68,9 @@ class DefaultPreprocessor(object):
     def preprocess(self, text):
         return strip_accents(strip_tags(text.lower()))
 
+    def __repr__(self):
+        return "DefaultPreprocessor()"
+
 
 DEFAULT_PREPROCESSOR = DefaultPreprocessor()
 
