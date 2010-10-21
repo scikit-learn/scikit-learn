@@ -1,12 +1,12 @@
 """ Transformers to perform common preprocessing steps.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr> 
+# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD
 
 import numpy as np
 
-from .base import BaseEstimator
+from ..base import BaseEstimator
 
 
 def _mean_and_std(X, axis=0, with_std=True):
@@ -31,10 +31,10 @@ def scale(X, axis=0, with_std=True, copy=True):
 
 class Scaler(BaseEstimator):
     """Object to standardize a dataset
-    
-    It centers the dataset and optionaly scales to 
+
+    It centers the dataset and optionaly scales to
     fix the variance to 1 for each feature
-    
+
     """
     def __init__(self, with_std=True):
         self.with_std = with_std
