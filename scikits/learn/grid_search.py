@@ -210,7 +210,20 @@ class GridSearchCV(BaseEstimator):
                     for clf_params in grid)
 
         # Out is a list of pairs: score, estimator
-        self.best_score, best_estimator = max(out) # get maximum score
+
+        # Note: we do not use max(out) to make ties deterministic even if
+        # comparison on estimator instances is not deterministic
+        best_score = None
+        for score, estimator in out:
+            if best_score is None:
+                best_score = score
+                best_estimator = estimator
+            else:
+                if score >= best_score:
+                    best_score = score
+                    best_estimator = estimator
+
+        self.best_score = best_score
 
         if refit:
             # fit the best estimator using the entire dataset
