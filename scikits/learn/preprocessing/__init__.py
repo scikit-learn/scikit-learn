@@ -2,6 +2,7 @@
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD
 
 import numpy as np
@@ -51,4 +52,61 @@ class Scaler(BaseEstimator):
         X -= self.mean_
         if self.with_std:
             X /= self.std_
+        return X
+
+class Normalizer(BaseEstimator):
+    """
+    Normalize vectors such that they sum to 1.
+    """
+
+    def fit(self, X, y=None, **params):
+        self._set_params(**params)
+        return self
+
+    def transform(self, X, y=None, copy=True):
+        if copy:
+            X = X.copy()
+
+        X /= X.sum(axis=1)[:,np.newaxis]
+
+        return X
+
+class LengthNormalizer(BaseEstimator):
+    """
+    Normalize vectors to unit vectors.
+    """
+
+    def fit(self, X, y=None, **params):
+        self._set_params(**params)
+        return self
+
+    def transform(self, X, y=None, copy=True):
+        if copy:
+            X = X.copy()
+
+        X /= np.sqrt(np.sum(X ** 2, axis=1))[:,np.newaxis]
+
+        return X
+
+class Binarizer(BaseEstimator):
+    """
+    Binarize data according to a threshold.
+    """
+
+    def __init__(self, threshold=0.0):
+        self.threshold = threshold
+
+    def fit(self, X, y=None, **params):
+        self._set_params(**params)
+        return self
+
+    def transform(self, X, y=None, copy=True):
+        if copy:
+            X = X.copy()
+
+        cond = X > self.threshold
+        not_cond = np.logical_not(cond)
+        X[cond] = 1
+        X[not_cond] = 0
+
         return X
