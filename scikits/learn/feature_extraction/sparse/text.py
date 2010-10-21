@@ -11,6 +11,8 @@ import scipy.sparse as sp
 from ..text import BaseCountVectorizer, BaseTfidfTransformer, BaseVectorizer, \
                    DEFAULT_ANALYZER
 
+from ...preprocessing.sparse import Normalizer
+
 class CountVectorizer(BaseCountVectorizer):
 
     def _init_matrix(self, shape):
@@ -51,17 +53,16 @@ class TfidfTransformer(BaseTfidfTransformer):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        X = sp.dok_matrix(X, dtype=np.float64, copy=copy)
+        X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
         n_samples, n_features = X.shape
 
         if self.use_tf:
-            sums = np.array(X.sum(axis=1)).ravel()
-            for doc, token in zip(*X.nonzero()):
-                    X[doc, token] /= sums[doc]
+            X = Normalizer().transform(X)
 
         if self.use_idf:
             d = sp.lil_matrix((len(self.idf), len(self.idf)))
             d.setdiag(self.idf)
+            # *= doesn't work
             X = X * d
 
         return X

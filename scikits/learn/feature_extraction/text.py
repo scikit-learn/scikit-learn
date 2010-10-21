@@ -392,7 +392,9 @@ class BaseVectorizer(BaseEstimator):
         vectors: array, [n_samples, n_features]
         """
         X = self.tc.fit_transform(raw_documents)
-        return self.tfidf.fit(X).transform(X)
+        # X is already a transformed view of raw_documents so
+        # we set copy to False
+        return self.tfidf.fit(X).transform(X, copy=False)
 
     def transform(self, raw_documents, copy=True):
         """
