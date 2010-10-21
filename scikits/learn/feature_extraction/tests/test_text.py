@@ -108,7 +108,7 @@ def test_char_ngram_analyzer():
     assert_equal(cnga.analyze(text)[-5:], expected)
 
 
-def test_dense_tf_idf():
+def test_dense_hashed_tf_idf():
     hv = HashingVectorizer(dim=1000, probes=3)
     hv.vectorize(JUNK_FOOD_DOCS)
     hv.vectorize(NOTJUNK_FOOD_DOCS)
@@ -127,7 +127,7 @@ def test_dense_tf_idf():
     assert_equal(clf.predict([X[-1]]), [1])
 
 
-def test_sparse_tf_idf():
+def test_sparse_hashed_tf_idf():
     hv = SparseHashingVectorizer(dim=1000000, probes=3)
     hv.vectorize(JUNK_FOOD_DOCS)
     hv.vectorize(NOTJUNK_FOOD_DOCS)
@@ -146,7 +146,7 @@ def test_sparse_tf_idf():
     assert_equal(clf.predict(X[-1, :]), [1])
 
 
-def test_dense_sparse_idf_sanity():
+def test_dense_sparse_hashed_tf_idf_sanity():
 
     hv = HashingVectorizer(dim=100, probes=3)
     shv = SparseHashingVectorizer(dim=100, probes=3)
@@ -230,6 +230,7 @@ def _test_vectorizer(cv_class, tf_class, v_class):
 
     return res
 
+
 def test_vectorizer():
     res_dense =_test_vectorizer(CountVectorizer,
                                 TfidfTransformer,
@@ -242,6 +243,7 @@ def test_vectorizer():
         # check that the dense and sparse implementations
         # return the same results
         assert_array_equal(res_dense[i], res_sparse[i])
+
 
 def test_dense_vectorizer_pipeline_grid_selection():
     # raw documents
@@ -268,16 +270,18 @@ def test_dense_vectorizer_pipeline_grid_selection():
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    clf = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
 
     # cross-validation doesn't work if the length of the data is not known,
     # hence use lists instead of iterators
-    pred = clf.fit(list(train_data), y_train).predict(list(test_data))
+    pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
     assert_array_equal(pred, y_test)
 
-    # check that the bigram representation yields higher predictive accurracy
-    # this test is unstable...
-    #assert_equal(clf.best_estimator.steps[0][1].analyzer.max_n, 2)
+    # on this toy dataset bigram representation yields higher predictive
+    # accurracy
+    # TODO: unstable test...
+    # assert_equal(grid_search.best_estimator.steps[0][1].analyzer.max_n, 2)
+
 
 def test_pickle():
     for obj in (CountVectorizer(), SparseCountVectorizer(),
@@ -286,3 +290,4 @@ def test_pickle():
 
         s = pickle.dumps(obj)
         assert_equal(type(pickle.loads(s)), obj.__class__)
+
