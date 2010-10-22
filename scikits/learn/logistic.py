@@ -63,8 +63,10 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
 
     def predict_proba(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')
-        return _liblinear.predict_prob_wrap(T, self.raw_coef_, self._get_solver_type(),
+        probas = _liblinear.predict_prob_wrap(T, self.raw_coef_,
+                                      self._get_solver_type(),
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
                                       self._get_bias())
+        return probas[:,np.argsort(self.label_)]
