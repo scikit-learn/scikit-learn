@@ -33,12 +33,12 @@ static void default_print(const char *buf)
 
 void TRON::info(const char *fmt,...)
 {
-	char buf[BUFSIZ];
-	va_list ap;
-	va_start(ap,fmt);
-	vsprintf(buf,fmt,ap);
-	va_end(ap);
-	(*tron_print_string)(buf);
+	// char buf[BUFSIZ];
+	// va_list ap;
+	// va_start(ap,fmt);
+	// vsprintf(buf,fmt,ap);
+	// va_end(ap);
+	// (*tron_print_string)(buf);
 }
 
 TRON::TRON(const function *fun_obj, double eps, int max_iter)
