@@ -10,7 +10,7 @@ from scikits.learn import datasets
 
 X = [[-1, 0], [0, 1], [1, 1]]
 Y1 = [0, 1, 1]
-Y2 = [0, 1, 2]
+Y2 = [2, 1, 0]
 iris = datasets.load_iris()
 
 def test_predict_2_classes():
