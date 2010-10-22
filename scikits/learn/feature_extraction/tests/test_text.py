@@ -7,7 +7,7 @@ from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.feature_extraction.text import HashingVectorizer
 
-import scikits.learn.feature_extraction.sparse.text as st
+import scikits.learn.feature_extraction.text.sparse as st
 
 SparseCountVectorizer = st.CountVectorizer
 SparseTfidfTransformer = st.TfidfTransformer

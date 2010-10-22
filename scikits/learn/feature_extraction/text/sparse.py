@@ -8,7 +8,7 @@ from collections import defaultdict
 import numpy as np
 import scipy.sparse as sp
 
-from ..text import BaseCountVectorizer, BaseTfidfTransformer, BaseVectorizer, \
+from .dense import BaseCountVectorizer, BaseTfidfTransformer, BaseVectorizer, \
                    DEFAULT_ANALYZER
 
 from ...preprocessing.sparse import Normalizer

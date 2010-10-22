@@ -6,7 +6,7 @@ import os
 import numpy as np
 from scikits.learn.datasets.base import load_text_files
 from scikits.learn.feature_extraction.text import HashingVectorizer
-from scikits.learn.feature_extraction.sparse.text import HashingVectorizer as \
+from scikits.learn.feature_extraction.text.sparse import HashingVectorizer as \
                                                          SparseCountVectorizer
 
 

@@ -9,7 +9,7 @@ import re
 import unicodedata
 import numpy as np
 import scipy.sparse as sp
-from ..base import BaseEstimator
+from ...base import BaseEstimator
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
