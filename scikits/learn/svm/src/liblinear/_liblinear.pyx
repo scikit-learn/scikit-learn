@@ -16,7 +16,7 @@ cdef extern from "linear.h":
     model *train (problem *prob, parameter *param)
     int get_nr_feature (model *model)
     int get_nr_class (model *model)
-    void destroy_model (model *)
+    void free_and_destroy_model (model **)
     void destroy_param (parameter *)
 
 cdef extern from "liblinear_helper.c":
@@ -85,7 +85,7 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     copy_label(label.data, model, nr_class)
 
     ### FREE
-    destroy_model(model)
+    free_and_destroy_model(&model)
     free_problem(problem)
     free_parameter(param)
     # destroy_param(param)  don't call this or it will destroy weight_label and weight
@@ -142,7 +142,7 @@ def csr_train_wrap ( int n_features,
     copy_label(label.data, model, nr_class)
 
     ### FREE
-    destroy_model(model)
+    free_and_destroy_model(&model)
     free_problem(problem)
     free_parameter(param)
     # destroy_param(param)  don't call this or it will destroy weight_label and weight
@@ -171,7 +171,7 @@ def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 
     ### FREE
     free_parameter(param)
-    destroy_model(model)
+    free_and_destroy_model(&model)
     return dec_values
                           
 
@@ -209,7 +209,7 @@ def csr_predict_wrap(
 
     ### FREE
     free_parameter(param)
-    destroy_model(model)
+    free_and_destroy_model(&model)
     return dec_values
 
     
@@ -263,6 +263,45 @@ def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 
     ### FREE
     free_parameter(param)
-    destroy_model(model)
+    free_and_destroy_model(&model)
 
+    return dec_values
+
+
+
+def csr_predict_wprob_rap(
+        int n_features,
+        np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
+        np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
+        np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
+        np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+        int solver_type, double eps, double C,
+        np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
+        np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+        np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+        double bias):
+    """
+    Predict probability from model
+
+    Test data given in CSR format
+    """
+
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] dec_values
+    cdef parameter *param
+    cdef model *model
+
+    param = set_parameter(solver_type, eps, C, weight.shape[0], weight_label.data, weight.data)
+
+    model = set_model(param, coef_.data, coef_.shape, label.data, bias)
+
+    dec_values = np.empty(T_indptr.shape[0] - 1, dtype=np.int32)
+    if csr_copy_predict_proba(n_features, T_values.shape, T_values.data,
+                        T_indices.shape, T_indices.data,
+                        T_indptr.shape, T_indptr.data,
+                        model, dec_values.data) < 0:
+        raise MemoryError("We've run out of of memory")
+
+    ### FREE
+    free_parameter(param)
+    free_and_destroy_model(&model)
     return dec_values

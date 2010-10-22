@@ -31,7 +31,6 @@ static void default_print(const char *buf)
 	fflush(stdout);
 }
 
-#if 0
 void TRON::info(const char *fmt,...)
 {
 	char buf[BUFSIZ];
@@ -41,9 +40,6 @@ void TRON::info(const char *fmt,...)
 	va_end(ap);
 	(*tron_print_string)(buf);
 }
-#else
-void TRON::info(const char *fmt, ...) {}
-#endif
 
 TRON::TRON(const function *fun_obj, double eps, int max_iter)
 {

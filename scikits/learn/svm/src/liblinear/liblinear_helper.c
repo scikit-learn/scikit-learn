@@ -270,6 +270,29 @@ int copy_prob_predict(char *predict, struct model *model_, npy_intp *predict_dim
 }
 
 
+int csr_copy_predict_proba(char *predict, struct model *model_, 
+                           npy_intp *predict_dims, char *dec_values)
+{
+    struct feature_node **predict_nodes;
+    register int i;
+    double temp;
+    int n, m;
+    n = predict_dims[0];
+    m = model_->nr_class;
+    predict_nodes = csr_to_sparse((double *) predict, 
+                                  predict_dims, model_->bias);
+    if (predict_nodes == NULL)
+        return -1;
+    for(i=0; i<n; ++i) {
+        predict_probability(model_, predict_nodes[i],
+                            ((double *) dec_values) + i*m);
+        free(predict_nodes[i]);
+    }
+    free(predict_nodes);
+    return 0;
+}
+
+
 int copy_label(char *data, struct model *model_, int nr_class)
 {
     memcpy(data, model_->label, nr_class * sizeof(int));
