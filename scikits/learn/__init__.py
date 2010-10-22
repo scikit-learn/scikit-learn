@@ -21,7 +21,6 @@ from . import covariance
 from . import datasets
 from . import gmm
 from . import glm
-from . import logistic
 from . import lda
 from . import metrics
 from . import svm
@@ -43,9 +42,9 @@ try:
 except:
     pass
 
-__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets', 'gmm', 'glm',
-           'logistic', 'lda', 'metrics', 'svm', 'features', 'clone', 
-           'test']
+__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance',
+           'datasets', 'gmm', 'glm', 'lda', 'metrics', 'svm',
+           'features', 'clone', 'test']
 
 __version__ = '0.6.git'
 

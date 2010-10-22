@@ -34,6 +34,13 @@ cdef extern from "liblinear_helper.c":
     int csr_copy_predict (np.npy_intp n_features, np.npy_intp *data_size, char *data, np.npy_intp *index_size,
 		char *index, np.npy_intp *intptr_size, char *intptr, model *model,
 		char *dec_values)
+
+    int csr_copy_predict_proba(np.npy_intp n_features, np.npy_intp *data_size, 
+                           char *data, np.npy_intp *index_size,
+                           char *index, np.npy_intp *indptr_shape, 
+                           char *indptr, model *model_,
+                           char *dec_values)
+
     int copy_prob_predict(char *, model *, np.npy_intp *, char *)
     int copy_label(char *, model *, int)
     double get_bias(model *)
@@ -269,7 +276,7 @@ def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 
 
 
-def csr_predict_wprob_rap(
+def csr_predict_prob(
         int n_features,
         np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
@@ -286,15 +293,17 @@ def csr_predict_wprob_rap(
     Test data given in CSR format
     """
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] dec_values
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef parameter *param
     cdef model *model
 
-    param = set_parameter(solver_type, eps, C, weight.shape[0], weight_label.data, weight.data)
+    param = set_parameter(solver_type, eps, C, weight.shape[0],
+                          weight_label.data, weight.data)
 
     model = set_model(param, coef_.data, coef_.shape, label.data, bias)
+    cdef int nr_class = get_nr_class(model)
+    dec_values = np.empty((T_indptr.shape[0]-1, nr_class), dtype=np.float64)
 
-    dec_values = np.empty(T_indptr.shape[0] - 1, dtype=np.int32)
     if csr_copy_predict_proba(n_features, T_values.shape, T_values.data,
                         T_indices.shape, T_indices.data,
                         T_indptr.shape, T_indptr.data,

@@ -5,7 +5,8 @@ from numpy.testing import assert_array_equal, \
 import nose
 from nose.tools import assert_raises
 
-from .. import logistic, datasets
+from scikits.learn.glm.sparse import logistic
+from scikits.learn import datasets
 
 X = [[-1, 0], [0, 1], [1, 1]]
 Y1 = [0, 1, 1]
@@ -53,15 +54,8 @@ def test_predict_iris():
     pred = clf.predict_proba(iris.data).argmax(axis=1)
     assert np.mean(pred == iris.target) > .95
 
-def test_predict_proba():
-    """
-    I think this test is wrong. Is there a way to know the right results ?
-    """
-    raise nose.SkipTest("XFailed test")
-    clf = logistic.LogisticRegression().fit(X, Y2)
-    assert_array_almost_equal(clf.predict_proba([[1, 1]]),
-                              [[ 0.21490268,  0.32639437,  0.45870294]])
 
-    clf = logistic.LogisticRegression(penalty='l1').fit(X, Y2)
-    assert_array_almost_equal(clf.predict_proba([[2, 2]]),
-                              [[ 0.33333333,  0.33333333,  0.33333333]])
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

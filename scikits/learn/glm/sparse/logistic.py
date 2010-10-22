@@ -1,8 +1,16 @@
-import numpy as np
+"""
+Sparse Logistic Regression module
 
-from .base import ClassifierMixin
-from .svm.base import BaseLibLinear
-from .svm import _liblinear
+This module has the same API as scikits.learn.glm.logistic, but is
+designed to handle efficiently data in sparse matrix format.
+"""
+
+import numpy as np
+from scipy import sparse
+
+from ...base import ClassifierMixin
+from ...svm.base import BaseLibLinear
+from ...svm._liblinear import csr_predict_prob
 
 class LogisticRegression(BaseLibLinear, ClassifierMixin):
     """
@@ -12,11 +20,6 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-    Y : array, shape = [n_samples]
-        Target vector relative to X
 
     penalty : string, 'l1' or 'l2'
         Used to specify the norm used in the penalization
@@ -69,11 +72,19 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
             fit_intercept=fit_intercept)
 
     def predict_proba(self, T):
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        probas = _liblinear.predict_prob_wrap(T, self.raw_coef_,
-                                      self._get_solver_type(),
-                                      self.eps, self.C,
-                                      self._weight_label,
-                                      self._weight, self.label_,
-                                      self._get_bias())
+        """
+        Probability estimates.
+
+        The returned estimates for all classes are ordered by the
+        label of classes.
+        """
+        T = sparse.csr_matrix(T)
+        T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
+        probas = csr_predict_prob(T.shape[1], T.data, T.indices,
+                                  T.indptr, self.raw_coef_,
+                                  self._get_solver_type(),
+                                  self.eps, self.C,
+                                  self._weight_label,
+                                  self._weight, self.label_,
+                                  self._get_bias())
         return probas[:,np.argsort(self.label_)]
