@@ -91,8 +91,8 @@ greater the amount of shrinkage.
     Ridge(alpha=0.5, fit_intercept=True)
     >>> clf.coef_
     array([ 0.34545455,  0.34545455])
-    >>> clf.intercept_
-    0.13636363636363638
+    >>> clf.intercept_ #doctest: +ELLIPSIS
+    0.13636...
 
 Ridge Complexity
 --------------------
