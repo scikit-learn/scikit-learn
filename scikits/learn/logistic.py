@@ -21,6 +21,10 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
     penalty : string, 'l1' or 'l2'
         Used to specify the norm used in the penalization
 
+    dual : boolean
+        Dual or primal formulation. Dual formulation is only
+        implemented for l2 penalty.
+
     C : float
         Specifies the strength of the regularization. The smaller it is
         the bigger in the regularization.
@@ -57,9 +61,12 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
 
-    def __init__(self, penalty='l2', eps=1e-4, C=1.0, fit_intercept=True):
-        super(LogisticRegression, self).__init__ (penalty=penalty, loss='lr',
-            dual=False, eps=eps, C=C, fit_intercept=fit_intercept)
+    def __init__(self, penalty='l2', dual=False, eps=1e-4, C=1.0,
+                 fit_intercept=True):
+
+        super(LogisticRegression, self).__init__ (penalty=penalty,
+            dual=dual, loss='lr', eps=eps, C=C,
+            fit_intercept=fit_intercept)
 
     def predict_proba(self, T):
         T = np.asanyarray(T, dtype=np.float64, order='C')

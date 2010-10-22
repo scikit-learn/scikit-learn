@@ -250,10 +250,8 @@ int csr_copy_predict(npy_intp n_features, npy_intp *data_size, char *data,
 int copy_prob_predict(char *predict, struct model *model_, npy_intp *predict_dims,
                  char *dec_values)
 {
-    double *t = (double *) dec_values;
     struct feature_node **predict_nodes;
     register int i;
-    double temp;
     int n, m;
     n = predict_dims[0];
     m = model_->nr_class;
@@ -270,17 +268,20 @@ int copy_prob_predict(char *predict, struct model *model_, npy_intp *predict_dim
 }
 
 
-int csr_copy_predict_proba(char *predict, struct model *model_, 
-                           npy_intp *predict_dims, char *dec_values)
+int csr_copy_predict_proba(npy_intp n_features, npy_intp *data_size, 
+                           char *data, npy_intp *index_size,
+                           char *index, npy_intp *indptr_shape, 
+                           char *indptr, struct model *model_,
+                           char *dec_values)
 {
     struct feature_node **predict_nodes;
     register int i;
     double temp;
     int n, m;
-    n = predict_dims[0];
-    m = model_->nr_class;
-    predict_nodes = csr_to_sparse((double *) predict, 
-                                  predict_dims, model_->bias);
+    predict_nodes = csr_to_sparse((double *) data, index_size,
+                                  (int *) index, indptr_shape, 
+                                  (int *) indptr, model_->bias, 
+                                  n_features);
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<n; ++i) {
