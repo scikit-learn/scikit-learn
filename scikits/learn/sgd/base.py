@@ -19,12 +19,10 @@ class LinearModel(BaseEstimator):
         The loss function to be used. 
     penalty : str, ('l2'|'l1'|'elasticnet')
         The penalty (aka regularization term) to be used.
-    reg : float
-        The regularization parameter, i.e. tradeoff between loss and penalty.
     alpha : float
-        Constant that multiplies the L1 term. Defaults to 1.0
+        Constant that multiplies the regularization term. Defaults to 0.0001
     rho : float
-        The ElasticNet mixing parameter, with 0 < rho <= 1.
+        The Elastic Net mixing parameter, with 0 < rho <= 1.
     coef_ : ndarray of shape n_features
         The initial coeffients to warm-start the optimization
     intercept_ : float
@@ -32,20 +30,25 @@ class LinearModel(BaseEstimator):
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
+    n_iter: int
+        The number of passes over the training data (aka epochs).
+    shuffle: bool
+        Whether or not the training data should be shuffled after each epoch.
+	Defaults to False. 
 
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
         Weights asigned to the features.
 
-    `intercept_` : float, shape = [n_class-1]
+    `intercept_` : float
         Constants in decision function.
 
     """
 
     def __init__(self, loss = "hinge", penalty = 'l2', alpha = 0.0001,
 		 rho = 0.85, coef_ = None, intercept_ = 0.0,
-		 fit_intercept = True):
+		 fit_intercept = True, n_iter = 5, shuffle = False):
         self.loss = loss
 	self.penalty = penalty
 	self.alpha = alpha
@@ -53,6 +56,12 @@ class LinearModel(BaseEstimator):
 	self.coef_ = coef_
 	self.intercept_ = intercept_
         self.fit_intercept = fit_intercept
+	self.n_iter = int(n_iter)
+	if self.n_iter <= 0:
+	    raise ValueError("n_iter must be greater than zero.")
+	if not isinstance(shuffle, bool):
+	    raise ValueError("shuffle must be either True or False")
+	self.shuffle = shuffle
 	self._get_loss_function()
 	self._get_penalty_type()
 
@@ -66,41 +75,3 @@ class LinearModel(BaseEstimator):
 		self.rho = 0.0
 	except KeyError:
 	    raise ValueError("The penalty %s is not supported. " % self.penalty)
-
-    def predict(self, X):
-	"""Predict using the linear model
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-            Returns predicted class labeles (either 1 or -1 or 0).
-        """
-	X = np.asanyarray(X)
-	# FIXME what if prediction is 0 - break randomly?
-        return np.sign(np.dot(X, self.coef_) + self.intercept_)
-
-    def predict_margin(self, T):
-	"""Predict signed 'distance' to the hyperplane (aka confidence score). 
-
-	If 
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-            Returns signed 'distance' to the hyperplane
-        """
-	X = np.asanyarray(X)
-        return np.dot(X, self.coef_) + self.intercept_
-
-    def predict_proba(self, T):
-        # how can this be, logisitic *does* implement this
-        raise NotImplementedError(
-                'sgd does not provide this functionality')
