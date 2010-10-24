@@ -13,7 +13,8 @@ except:
     import pickle
     PickleError = pickle.PicklingError
 
-from ..parallel import Parallel, delayed, JoblibException, SafeFunction
+from ..parallel import Parallel, delayed, SafeFunction
+from ..my_exceptions import JoblibException
 
 import nose
 
@@ -64,9 +65,14 @@ def test_parallel_pickling():
 
 
 def test_error_capture():
-    """ Check that error are captured
+    """ Check that error are captured, and that correct exceptions
+        are raised.
     """
     nose.tools.assert_raises(JoblibException,
+                                Parallel(n_jobs=2),
+                    [delayed(division)(x, y) for x, y in zip((0, 1), (1, 0))],
+                        )
+    nose.tools.assert_raises(ZeroDivisionError,
                                 Parallel(n_jobs=2),
                     [delayed(division)(x, y) for x, y in zip((0, 1), (1, 0))],
                         )

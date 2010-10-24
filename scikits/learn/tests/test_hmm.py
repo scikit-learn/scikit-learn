@@ -1,10 +1,11 @@
-from numpy.testing import (assert_array_equal, assert_array_almost_equal,
-                           TestCase)
+
 import numpy as np
 
-from .. import hmm
-
+from numpy.testing import assert_array_equal, assert_array_almost_equal
+from unittest import TestCase
 from .test_gmm import _generate_random_spd_matrix
+
+from .. import hmm
 
 SKIP_FAILING = True # skip failing tests
 

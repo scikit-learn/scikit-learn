@@ -1,5 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#
+# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD Style.
 
 import numpy as np
@@ -48,7 +48,7 @@ def confusion_matrix(y, y_):
     return cm
 
 
-def roc(y, probas_):
+def roc_curve(y, probas_):
     """compute Receiver operating characteristic (ROC)
 
     Parameters
@@ -114,13 +114,80 @@ def auc(x, y):
     area = np.sum(h * (y[1:]+y[:-1])) / 2.0
     return area
 
-
-def precision_recall(y, probas_):
-    """compute Precision-Recall
+def precision(y_true, y_pred):
+    """
+    Compute precision.
 
     Parameters
     ==========
+    y_true : array, shape = [n_samples]
+        true targets
 
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    Returns
+    =======
+    precision : float
+    """
+    true_pos = np.sum(y_true[y_pred == 1]==1)
+    false_pos = np.sum(y_true[y_pred == 1]==0)
+    return true_pos / float(true_pos + false_pos)
+
+def recall(y_true, y_pred):
+    """
+    Compute recall.
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    Returns
+    =======
+    recall : float
+    """
+    true_pos = np.sum(y_true[y_pred == 1]==1)
+    false_neg = np.sum(y_true[y_pred == 0]==1)
+    return true_pos / float(true_pos + false_neg)
+
+def precision_recall(y_true, y_pred):
+    """
+    Compute precision and recall.
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    Returns
+    =======
+    precision: float
+    recall : float
+
+    References
+    ==========
+    http://en.wikipedia.org/wiki/Precision_and_recall
+    """
+    true_pos = np.sum(y_true[y_pred == 1]==1)
+    false_pos = np.sum(y_true[y_pred == 1]==0)
+    false_neg = np.sum(y_true[y_pred == 0]==1)
+    precision = true_pos / float(true_pos + false_pos)
+    recall = true_pos / float(true_pos + false_neg)
+    return precision, recall
+
+def precision_recall_curve(y, probas_):
+    """
+    Compute precision-recall pairs for different probability thresholds.
+
+    Parameters
+    ==========
     y : array, shape = [n_samples]
         true targets
 
@@ -137,10 +204,6 @@ def precision_recall(y, probas_):
 
     thresholds : array, shape = [n]
         Thresholds on proba_ used to compute precision and recall
-
-    References
-    ==========
-    http://en.wikipedia.org/wiki/Precision_and_recall
     """
     y = y.ravel()
     probas_ = probas_.ravel()
@@ -149,36 +212,78 @@ def precision_recall(y, probas_):
     precision = np.empty(n_thresholds)
     recall = np.empty(n_thresholds)
     for i, t in enumerate(thresholds):
-        true_pos = np.sum(y[probas_>=t]==1)
-        false_pos = np.sum(y[probas_>=t]==0)
-        false_neg = np.sum(y[probas_<t]==1)
-        precision[i] = true_pos / float(true_pos + false_pos)
-        recall[i] = true_pos / float(true_pos + false_neg)
-
+        y_pred = np.ones(len(y))
+        y_pred[probas_ < t] = 0
+        precision[i], recall[i] = precision_recall(y, y_pred)
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds
+
+def fbeta_score(y_true, y_pred, beta):
+    """
+    Compute fbeta score.
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    beta: float
+
+    Returns
+    =======
+    fbeta_score: float
+    """
+    assert(beta > 0)
+    p, r = precision_recall(y_true, y_pred)
+    beta2 = beta ** 2
+    return (1+beta2) * (p * r) / (beta2 * p + r)
+
+def f1_score(y_true, y_pred):
+    """
+    Compute f1 score.
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    Returns
+    =======
+    f1_score: float
+
+    References
+    ==========
+    http://en.wikipedia.org/wiki/F1_score
+    """
+    return fbeta_score(y_true, y_pred, 1)
 
 
 ###############################################################################
 # Loss functions
 
 
-def zero_one(y_pred, y_true):
+def zero_one(y_true, y_pred):
     """Zero-One loss
     returns the number of differences
     """
     return np.sum(y_pred != y_true)
 
 
-def mean_square_error(y_pred, y_true):
+def mean_square_error(y_true, y_pred):
     """Mean Square Error
     returns the mean square error
     """
     return np.linalg.norm(y_pred != y_true) ** 2
 
 
-def explained_variance(y_pred, y_true):
+def explained_variance(y_true, y_pred):
     """Explained variance
     returns the explained variance
     """

@@ -110,36 +110,36 @@ def test_hash_memmap():
                 if not os.name == 'nt':
                     raise e
 
-@with_numpy
-def test_hash_numpy_performance():
-    """ Check the performance of hashing numpy arrays:
+# @with_numpy
+# def test_hash_numpy_performance():
+#     """ Check the performance of hashing numpy arrays:
 
-        In [22]: a = np.random.random(1000000)
+#         In [22]: a = np.random.random(1000000)
 
-        In [23]: %timeit hashlib.md5(a).hexdigest()
-        100 loops, best of 3: 20.7 ms per loop
+#         In [23]: %timeit hashlib.md5(a).hexdigest()
+#         100 loops, best of 3: 20.7 ms per loop
 
-        In [24]: %timeit hashlib.md5(pickle.dumps(a, protocol=2)).hexdigest()
-        1 loops, best of 3: 73.1 ms per loop
+#         In [24]: %timeit hashlib.md5(pickle.dumps(a, protocol=2)).hexdigest()
+#         1 loops, best of 3: 73.1 ms per loop
 
-        In [25]: %timeit hashlib.md5(cPickle.dumps(a, protocol=2)).hexdigest()
-        10 loops, best of 3: 53.9 ms per loop
+#         In [25]: %timeit hashlib.md5(cPickle.dumps(a, protocol=2)).hexdigest()
+#         10 loops, best of 3: 53.9 ms per loop
 
-        In [26]: %timeit hash(a)
-        100 loops, best of 3: 20.8 ms per loop
-    """
-    a = np.random.random(1000000)
-    md5_hash = lambda x: hashlib.md5(np.getbuffer(x)).hexdigest()
+#         In [26]: %timeit hash(a)
+#         100 loops, best of 3: 20.8 ms per loop
+#     """
+#     a = np.random.random(1000000)
+#     md5_hash = lambda x: hashlib.md5(np.getbuffer(x)).hexdigest()
 
-    relative_diff = relative_time(md5_hash, hash, a)
-    yield nose.tools.assert_true, relative_diff < 0.05
+#     relative_diff = relative_time(md5_hash, hash, a)
+#     yield nose.tools.assert_true, relative_diff < 0.05
 
-    # Check that hashing an tuple of 3 arrays takes approximately
-    # 3 times as much as hashing one array
-    time_hashlib = 3*time_func(md5_hash, a)
-    time_hash = time_func(hash, (a, a, a))
-    relative_diff = 0.5*( abs(time_hash - time_hashlib)
-                          /  (time_hash + time_hashlib) )
+#     # Check that hashing an tuple of 3 arrays takes approximately
+#     # 3 times as much as hashing one array
+#     time_hashlib = 3*time_func(md5_hash, a)
+#     time_hash = time_func(hash, (a, a, a))
+#     relative_diff = 0.5*( abs(time_hash - time_hashlib)
+#                           /  (time_hash + time_hashlib) )
 
-    yield nose.tools.assert_true, relative_diff < 0.1
+#     yield nose.tools.assert_true, relative_diff < 0.1
 

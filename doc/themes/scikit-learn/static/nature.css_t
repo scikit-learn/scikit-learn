@@ -182,11 +182,14 @@ div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
     margin: 0;
     padding: 5px 10px;
-    background-color: #BED4EB;
+    background-color: #4EACC5;
     font-weight: normal;
-    color: #212224;
-    margin: 30px 20px 0;
-    border:  1px solid #CCC;
+    color: white;
+    margin: 25px 20px 0;
+}
+
+div.sphinxsidebar img {
+    margin: 5px;
 }
  
  

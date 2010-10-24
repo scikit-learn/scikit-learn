@@ -11,6 +11,7 @@ import numpy as np
 
 from .base import is_classifier, clone
 from .utils.extmath import factorial, combinations
+from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
 ##############################################################################
@@ -148,7 +149,7 @@ class KFold(object):
         Provides train/test indexes to split data in train test sets
 
         Parameters
-        ===========
+        ----------
         n: int
             Total number of elements
         k: int
@@ -170,8 +171,8 @@ class KFold(object):
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         TRAIN: [ True  True False False] TEST: [False False  True  True]
 
-        Note
-        ====
+        Notes
+        -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
         assert k>0, ('cannot have k below 1')
@@ -226,14 +227,14 @@ class StratifiedKFold(object):
         Provides train/test indexes to split data in train test sets
 
         Parameters
-        ===========
+        ----------
         y: array, [n_samples]
             Samples to split in K folds
         k: int
             number of folds
 
         Examples
-        ========
+        --------
         >>> from scikits.learn import cross_val
         >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
         >>> y = [0, 0, 1, 1]
@@ -248,16 +249,16 @@ class StratifiedKFold(object):
         TRAIN: [False  True False  True] TEST: [ True False  True False]
         TRAIN: [ True False  True False] TEST: [False  True False  True]
 
-        Note
-        ====
+        Notes
+        -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
         y = np.asanyarray(y)
-        n = y.size
+        n = y.shape[0]
         assert k>0, ValueError('cannot have k below 1')
         assert k<n, ValueError('cannot have k=%d greater than the number '
                                'of samples %d' % (k, n))
-        _, y_sorted = np.unique1d(y, return_inverse=True)
+        _, y_sorted = unique(y, return_inverse=True)
         assert k <= np.min(np.bincount(y_sorted))
         self.y = y
         self.k = k
@@ -265,9 +266,9 @@ class StratifiedKFold(object):
     def __iter__(self):
         y = self.y.copy()
         k = self.k
-        n = y.size
+        n = y.shape[0]
 
-        classes = np.unique(y)
+        classes = unique(y)
 
         idx_c = dict()
         j_c = dict()
@@ -345,12 +346,12 @@ class LeaveOneLabelOut(object):
 
         """
         self.labels = labels
-        self.n_labels = np.unique(labels).size
+        self.n_labels = unique(labels).size
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
-        for i in np.unique(labels):
+        for i in unique(labels):
             test_index  = np.zeros(len(labels), dtype=np.bool)
             test_index[labels==i] = True
             train_index = np.logical_not(test_index)
@@ -412,14 +413,14 @@ class LeavePLabelOut(object):
 
         """
         self.labels = labels
-        self.unique_labels = np.unique(self.labels)
+        self.unique_labels = unique(self.labels)
         self.n_labels = self.unique_labels.size
         self.p = p
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
-        unique_labels = np.unique(labels)
+        unique_labels = unique(labels)
         n_labels = unique_labels.size
         comb = combinations(range(n_labels), self.p)
 
@@ -446,22 +447,25 @@ class LeavePLabelOut(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test):
+def _cross_val_score(estimator, X, y, score_func, train, test, iid):
     """ Inner loop for cross validation.
     """
     if score_func is None:
         score_func = lambda self, *args: self.score(*args)
     if y is None:
-        return score_func(estimator.fit(X[train]), X[test])
-    return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
+        score = score_func(estimator.fit(X[train]), X[test])
+    else:
+        score = score_func(estimator.fit(X[train], y[train]), X[test], y[test])
+    if iid:
+        score *= len(y[test])
+    return score
 
-
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
                 n_jobs=1, verbose=0):
     """ Evaluate a score by cross-validation.
 
         Parameters
-        ===========
+        ----------
         estimator: estimator object implementing 'fit'
             The object to use to fit the data
         X: array-like of shape at least 2D
@@ -477,6 +481,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
             A cross-validation generator. If None, a 3-fold cross
             validation is used or 3-fold stratified cross-validation
             when y is supplied.
+        iid: boolean, optional
+            If True, the data is assumed to be identically distributed across
+            the folds, and the loss minimized is the total loss per sample,
+            and not the mean loss across the folds.
         n_jobs: integer, optional
             The number of CPUs to use to do the computation. -1 means
             'all CPUs'.
@@ -499,7 +507,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
     # independent, and that it is pickable.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                                        train, test)
+                                                        train, test, iid)
                 for train, test in cv)
     return np.array(scores)
 

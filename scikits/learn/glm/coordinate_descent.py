@@ -81,8 +81,8 @@ class ElasticNet(LinearModel):
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer (aka the Lasso)
 
-    Technically the Lasso model is optimizing the same objective function as the
-    Elastic Net with rho=1.0 (no L2 penalty).
+    Technically the Lasso model is optimizing the same objective function as
+    the Elastic Net with rho=1.0 (no L2 penalty).
 
     Parameters
     ----------

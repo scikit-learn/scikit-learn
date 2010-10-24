@@ -16,17 +16,17 @@ if __name__ == '__main__':
     
     n_iter = 20
 
-    time_ridge   = np.empty (n_iter)
-    time_ols     = np.empty (n_iter)
-    time_lasso   = np.empty (n_iter)
+    time_ridge = np.empty(n_iter)
+    time_ols = np.empty(n_iter)
+    time_lasso = np.empty(n_iter)
 
     dimensions = 10 * np.arange(n_iter)
 
-    n, m = 100, 100
+    n_samples, n_features = 100, 100
 
-    X = np.random.randn (n, m) 
-    Y = np.random.randn (n)
+    X = np.random.randn(n_samples, n_features) 
+    y = np.random.randn(n_samples)
 
     start = datetime.now()
     ridge = glm.BayesianRidge()
-    ridge.fit (X, Y)
+    ridge.fit(X, y)

@@ -12,6 +12,8 @@ from math import fabs, sqrt
 import numpy as np
 from scipy import linalg
 
+
+
 from .base import LinearModel
 from ..utils import arrayfuncs
 
@@ -55,13 +57,12 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
 
         Notes
         ------
-        http://en.wikipedia.org/wiki/Least-angle_regression
-        http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
-        XXX : add reference papers
-        
-        XXX : make sure it works with non-normalized columns of X
+        * http://en.wikipedia.org/wiki/Least-angle_regression
 
+        * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
     """
+    # : make sure it works with non-normalized columns of X
+
     # TODO: detect stationary points.
 
     X = np.atleast_2d(X)
@@ -295,7 +296,7 @@ class LARS(LinearModel):
 
     http://en.wikipedia.org/wiki/Least_angle_regression
 
-    See examples. XXX : add examples names
+    See examples/glm/plot_lar.py for an example.
     """
     def __init__(self, n_features, normalize=True):
         self.n_features = n_features
@@ -359,6 +360,8 @@ class LassoLARS (LinearModel):
 
     Notes
     -----
+    See examples/glm/plot_lasso_lars.py for an example.
+
     See also scikits.learn.glm.Lasso that fits the same model using
     an alternative optimization strategy called 'coordinate descent.'
     """

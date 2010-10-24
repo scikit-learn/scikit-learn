@@ -66,7 +66,7 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     # update parameters of the classifier after a copy of its base structure
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
-    
+
     score = 0.
     n_test_samples = 0.
     for train, test in cv:
@@ -142,7 +142,7 @@ class GridSearchCV(BaseEstimator):
     >>> svr = SVR()
     >>> clf = GridSearchCV(svr, parameters, n_jobs=1)
     >>> clf.fit(X, y).predict([[-0.8, -1]])
-    array([ 1.])
+    array([ 1.14])
     """
 
     def __init__(self, estimator, param_grid, loss_func=None,
@@ -165,8 +165,7 @@ class GridSearchCV(BaseEstimator):
         self.fit_params = fit_params
         self.iid = iid
 
-
-    def fit(self, X, y, cv=None, **kw):
+    def fit(self, X, y, refit=True, cv=None, **kw):
         """Run fit with all sets of parameters
         Returns the best classifier
 
@@ -183,6 +182,8 @@ class GridSearchCV(BaseEstimator):
         cv : crossvalidation generator
             see scikits.learn.cross_val module
 
+        refit: boolean
+            refit the best estimator with the entire dataset
         """
         estimator = self.estimator
         if cv is None:
@@ -198,9 +199,13 @@ class GridSearchCV(BaseEstimator):
             delayed(fit_grid_point)(X, y, base_clf, clf_params,
                     cv, self.loss_func, self.iid, **self.fit_params)
                     for clf_params in grid)
-        
+
         # Out is a list of pairs: score, estimator
         best_estimator = max(out)[1] # get maximum score
+
+        if refit:
+            # fit the best estimator using the entire dataset
+            best_estimator.fit(X, y)
 
         self.best_estimator = best_estimator
         self.predict = best_estimator.predict
@@ -209,7 +214,7 @@ class GridSearchCV(BaseEstimator):
 
         # Store the computed scores
         grid = iter_grid(self.param_grid)
-        self.grid_points_scores_ = dict((tuple(clf_params.items()), score) 
+        self.grid_points_scores_ = dict((tuple(clf_params.items()), score)
                     for clf_params, (score, _) in zip(grid, out))
 
         return self
@@ -219,18 +224,4 @@ class GridSearchCV(BaseEstimator):
         # This method is overridden during the fit if the best estimator
         # found has a score function.
         y_predicted = self.predict(X)
-        return -self.loss_func(y_predicted, y)
-
-if __name__ == '__main__':
-    from scikits.learn.svm import SVC
-    from scikits.learn import datasets
-
-    iris = datasets.load_iris()
-
-    # Add the noisy data to the informative features
-    X = iris.data
-    y = iris.target
-
-    svc = SVC(kernel='linear')
-    clf = GridSearchCV(svc, {'C':[1, 10]}, n_jobs=1)
-    print clf.fit(X, y).predict([[-0.8, -1]])
+        return -self.loss_func(y, y_predicted)

@@ -32,7 +32,10 @@ def f_classif(X, y):
     pval : array of shape(m),
         the set of p-values
     """
-    X = np.asanyarray(X)
+    X = np.atleast_2d(X)
+    y = np.atleast_1d(y)
+    if y.ndim > 1:
+        y = y.ravel()
     args = [X[y==k] for k in np.unique(y)]
     return stats.f_oneway(*args)
 
@@ -66,20 +69,20 @@ def f_regression(X, y, center=True):
     """
 
     # orthogonalize everything wrt to confounds
-    y = y.copy()
+    y = y.copy().ravel()
     X = X.copy()
     if center:
         y -= np.mean(y)
         X -= np.mean(X, 0)
 
     # compute the correlation
-    X /= np.sqrt(np.sum(X**2,0))
+    X /= np.sqrt(np.sum(X**2, 0))
     y /= np.sqrt(np.sum(y**2))
     corr = np.dot(y, X)
 
     # convert to p-value
-    dof = y.size-2
-    F = corr**2/(1-corr**2)*dof
+    dof = y.size - 2
+    F = corr**2 / (1 - corr**2) * dof
     pv = stats.f.sf(F, 1, dof)
     return F, pv
 

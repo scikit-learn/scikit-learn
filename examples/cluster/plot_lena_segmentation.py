@@ -18,7 +18,7 @@ import numpy as np
 import scipy as sp
 import pylab as pl
 
-from scikits.learn.features import image
+from scikits.learn.feature_extraction import image
 from scikits.learn.cluster import spectral_clustering
 
 lena = sp.lena()

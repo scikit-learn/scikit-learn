@@ -25,7 +25,7 @@
           <ul>
             <li><a href="{{pathto('install')}}">download</a></li>
             <li><a href="{{pathto('support')}}">support</a></li>
-            <li><a href="{{pathto('modules/classes')}}">reference</a></li>
+            <li><a href="{{pathto('reference')}}">reference</a></li>
             <li><a href="{{pathto('auto_examples/index')}}">gallery</a></li>
             <li><a href="{{pathto('developers/index')}}">development</a></li>
        </ul>
@@ -73,7 +73,7 @@
         {% else %}
         <h3>News</h3>
 
-       <p>scikits.learn 0.4 is available
+       <p>scikits.learn 0.5 is available
          for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
          See <a href="{{pathto('whats_new')}}">what's new</a> and tips
          on <a href="{{pathto('install')}}">installing</a>.</p>
@@ -90,15 +90,30 @@
         the <a href="http://github.com/scikit-learn/scikit-learn">source
         code</a>, join the
         <a href="{{pathto('support')}}#mailing-list">mailing
-        lists</a>, <a href="http://sourceforge.net/apps/trac/scikit-learn/report/1">issue
+        lists</a>, report bugs to
+        the <a href="http://sourceforge.net/apps/trac/scikit-learn/report/1">issue
         tracker</a> or participate in the next
-        <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>.
+        <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>. <a href="{{pathto('developers/index')}}">Read More...</a>
         </p>
 
         {% endif %}
 
         <h3>{{ _('Contents') }}</h3>
          {{ toc }}
+
+        {% if pagename == 'index' %}
+        <h3>Funding</h3>
+        <p>Generous funding provided
+        by <a href="http://www.inria.fr">INRIA</a>,
+        <a href="http://http://code.google.com/opensource/">Google</a>
+        and others.</p>
+        <p style="text-align: center;"><a href="http://www.inria.fr"><img src="{{pathto('_static',1)}}/inria-small.jpg"
+        alt="INRIA"/></a></p>
+        <p style="text-align: center;"><a href="http://http://code.google.com/opensource/"><img src="{{pathto('_static',1)}}/google-logo.png"
+        alt="INRIA"/></a></p>
+
+        <p><a href="{{pathto('about')}}">Read more ...</a></p>
+        {% endif %}
 
         </div>
 

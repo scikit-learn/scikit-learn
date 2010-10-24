@@ -6,7 +6,7 @@ import numpy as np
 def _fast_logdet(A):
     """
     Compute log(det(A)) for A symmetric
-    Equivalent to : np.log(nl.det(A))
+    Equivalent to : np.log(np.linalg.det(A))
     but more robust
     It returns -Inf if det(A) is non positive or is not defined.
     """

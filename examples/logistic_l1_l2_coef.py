@@ -12,7 +12,7 @@ with l1 and l2 penalty
 
 import numpy as np
 
-from scikits.learn.logistic import LogisticRegression
+from scikits.learn.glm import LogisticRegression
 from scikits.learn import datasets
 
 iris = datasets.load_iris()

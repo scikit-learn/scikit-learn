@@ -1,6 +1,9 @@
 """Compressed Sparse graph algorithms"""
 # Backported from scipy 0.9: scipy.sparse.csgraph
 
+# Some compatibility fixes for scipy 0.6
+# Fabian Pedregosa, October 2010
+
 __docformat__ = "restructuredtext en"
 
 __all__ = ['cs_graph_components']
@@ -9,8 +12,8 @@ import numpy as np
 
 from sparsetools import cs_graph_components as _cs_graph_components
 
-from scipy.sparse.csr import csr_matrix
-from scipy.sparse.base import isspmatrix
+from scipy.sparse import csr_matrix
+from scipy.sparse import isspmatrix
 
 _msg0 = 'x must be a symmetric square matrix!'
 _msg1 = _msg0 + '(has shape %s)'

@@ -101,9 +101,8 @@ def _pprint(params, offset=0, printer=repr):
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
 
-        Note
-        =====
-
+        Notes
+        -----
         All estimators should specify all the parameters that can be set
         at the class level in their __init__ as explicit keyword
         arguments (no *args, **kwargs).
@@ -155,6 +154,9 @@ class BaseEstimator(object):
         form <component>__<parameter> so that the its possible to
         update each component of the nested object.
         """
+        if not params:
+            # Simple optimisation to gain speed (inspect is slow)
+            return 
         valid_params = self._get_params(deep=True)
         for key, value in params.iteritems():
             split = key.split('__', 1)
@@ -240,7 +242,7 @@ class RegressorMixin(object):
             -------
             z : float
         """
-        return explained_variance(self.predict(X), y)
+        return explained_variance(y, self.predict(X))
 
 
 ################################################################################
