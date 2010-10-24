@@ -49,6 +49,7 @@ def test_sgd():
     #assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
     assert_array_equal(clf.predict(T), true_result)
 
+
 def test_sgd_penalties():
     """Check whether penalties and hyperparameters are set properly"""
     clf = sgd.sparse.SGD(penalty='l2')
@@ -57,6 +58,7 @@ def test_sgd_penalties():
     assert clf.rho == 0.0
     clf = sgd.sparse.SGD(penalty='elasticnet', rho=0.85)
     assert clf.rho == 0.85
+
 
 def test_sgd_params():
     """Test parameter validity check"""
@@ -75,6 +77,7 @@ def test_sgd_params():
     else:
         assert False
 
+
 def test_sgd_multiclass():
     """SGD is not able to handle multi class problems"""
     clf = sgd.sparse.SGD()
@@ -84,6 +87,7 @@ def test_sgd_multiclass():
         pass
     else:
         assert False
+
 
 def test_sgd_l1():
     n = len(X4)
@@ -96,6 +100,5 @@ def test_sgd_l1():
                          fit_intercept=False,
                          n_iter=1000)
     clf.fit(X, Y)
-    print clf.coef_
     assert_array_equal(clf.coef_[1:-1], np.zeros((4,)))
 
