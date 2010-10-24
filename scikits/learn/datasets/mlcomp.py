@@ -4,7 +4,7 @@
 
 import os
 import numpy as np
-from scikits.learn.datasets.base import load_text_files
+from scikits.learn.datasets.base import load_files
 from scikits.learn.feature_extraction.text import HashingVectorizer
 from scikits.learn.feature_extraction.text.sparse import HashingVectorizer as \
                                                          SparseCountVectorizer
@@ -13,7 +13,7 @@ from scikits.learn.feature_extraction.text.sparse import HashingVectorizer as \
 def _load_document_classification(dataset_path, metadata, set_=None):
     if set_ is not None:
         dataset_path = os.path.join(dataset_path, set_)
-    return load_text_files(dataset_path, metadata.get('description'))
+    return load_files(dataset_path, metadata.get('description'))
 
 
 LOADERS = {
