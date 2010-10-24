@@ -68,7 +68,7 @@ pos = 0 # alt.atheism
 neg = 1 # comp.graphics
 pos_idx = np.where(target == pos)[0]
 neg_idx = np.where(target == neg)[0]
-idx = np.concatenate((pos_idx,neg_idx))
+idx = np.concatenate((pos_idx, neg_idx))
 np.random.seed(13)
 np.random.shuffle(idx)
 data = news_train.data[idx]
@@ -79,8 +79,7 @@ print ""
 print "Training a linear SVM (hinge loss and L2 regularizer) using SGD.\n"\
       "SGD(n_iter=50,alpha=0.00001,fit_intercept=True)"
 t0 = time()
-clf = SGD(n_iter=50,alpha=0.00001,fit_intercept=True)
-#clf = LinearSVC(**parameters)
+clf = SGD(n_iter=50, alpha=0.00001, fit_intercept=True)
 clf.fit(data, target)
 print "done in %fs" % (time() - t0)
 print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
@@ -93,7 +92,7 @@ print "done in %fs" % (time() - t0)
 target = news_test.target
 pos_idx = np.where(target == pos)[0]
 neg_idx = np.where(target == neg)[0]
-idx = np.concatenate((pos_idx,neg_idx))
+idx = np.concatenate((pos_idx, neg_idx))
 data = news_test.data[idx]
 target = news_test.target[idx]
 
