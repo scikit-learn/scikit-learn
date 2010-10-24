@@ -95,9 +95,6 @@ class SGD(LinearModel, ClassifierMixin):
         X_indices = X.indices
         X_indptr = X.indptr
         verbose = 0#2
-        print self.fit_intercept
-        print self.alpha
-        print self.rho
         coef_, intercept_ = sgd_fast_sparse.plain_sgd(self.coef_,
                                                       self.intercept_,
                                                       self.loss_function,
