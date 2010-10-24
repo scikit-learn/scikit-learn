@@ -55,17 +55,21 @@ cdef class LossFunction:
 
 
 cdef class Regression(LossFunction):
-    """Base class for loss functions for regression."""
+    """Base class for loss functions for regression"""
+
     cpdef double loss(self,double p, double y):
         raise NotImplementedError()
+
     cpdef double dloss(self,double p, double y):
         raise NotImplementedError()
 
 
 cdef class Classification(LossFunction):
-    """Base class for loss functions for classification."""
+    """Base class for loss functions for classification"""
+
     cpdef double loss(self, double p, double y):
         raise NotImplementedError()
+
     cpdef double dloss(self, double p, double y):
         raise NotImplementedError()
 
