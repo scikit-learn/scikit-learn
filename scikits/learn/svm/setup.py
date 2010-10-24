@@ -56,7 +56,7 @@ def configuration(parent_package='', top_path=None):
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
                          depends=liblinear_depends,
-                         extra_compile_args=['-O0 -fno-inline'],
+                         # extra_compile_args=['-O0 -fno-inline'],
                          **blas_info)
 
     ## end liblinear module
