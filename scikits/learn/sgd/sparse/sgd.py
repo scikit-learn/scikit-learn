@@ -3,7 +3,6 @@
 # License: BSD Style.
 """Implementation of Stochastic Gradient Descent (SGD) with sparse data."""
 
-import warnings
 import numpy as np
 from scipy import sparse
 
@@ -38,7 +37,7 @@ class SGD(LinearModel, ClassifierMixin):
         The number of passes over the training data (aka epochs).
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
-	Defaults to False. 
+        Defaults to False. 
 
     Attributes
     ----------
@@ -51,21 +50,20 @@ class SGD(LinearModel, ClassifierMixin):
     """
 
     def _get_loss_function(self):
-	loss_functions = {"hinge" : sgd_fast_sparse.Hinge(),
-			  "log" : sgd_fast_sparse.Log(),
-			  "modifiedhuber" : sgd_fast_sparse.ModifiedHuber(),
-			  }
-	try:
-	    self.loss_function = loss_functions[self.loss]
-	except KeyError:
-	    raise ValueError("The loss %s is not supported. " % self.loss)
+        loss_functions = {"hinge" : sgd_fast_sparse.Hinge(),
+                          "log" : sgd_fast_sparse.Log(),
+                          "modifiedhuber" : sgd_fast_sparse.ModifiedHuber(),
+                          }
+        try:
+            self.loss_function = loss_functions[self.loss]
+        except KeyError:
+            raise ValueError("The loss %s is not supported. " % self.loss)
     
     def _set_coef(self, coef_):
         self.coef_ = coef_
         if coef_ is None:
             self.sparse_coef_ = None
         else:
-            n_features = len(coef_)
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
@@ -77,43 +75,44 @@ class SGD(LinearModel, ClassifierMixin):
         """
         self._set_params(**params)
         X = sparse.csr_matrix(X)
-        Y = np.asanyarray(Y, dtype = np.float64)
-	classes = np.unique(Y)
-	if len(classes) != 2:
-	    raise ValueError("SGD supports binary classification only.")
-	self.classes = classes
+        Y = np.asanyarray(Y, dtype=np.float64)
+        classes = np.unique(Y)
+        if len(classes) != 2:
+            raise ValueError("SGD supports binary classification only.")
+        self.classes = classes
 
-	# encode original class labels as 1 (classes[0]) or -1 (classes[1]). 
-	Y_new = np.ones(Y.shape, dtype = np.float64)
-	Y_new *= -1.0
-	Y_new[Y == classes[0]] = 1.0
-	Y = Y_new
+        # encode original class labels as 1 (classes[0]) or -1 (classes[1]). 
+        Y_new = np.ones(Y.shape, dtype=np.float64)
+        Y_new *= -1.0
+        Y_new[Y == classes[0]] = 1.0
+        Y = Y_new
 
         n_samples, n_features = X.shape[0], X.shape[1]
         if self.coef_ is None:
-            self.coef_ = np.zeros(n_features, dtype=np.float64, order = "c")
+            self.coef_ = np.zeros(n_features, dtype=np.float64, order="c")
         
-        X_data = np.array(X.data, np.float64, order = "c")
-	X_indices = X.indices
-	X_indptr = X.indptr
-	verbose = 0#2
-	print self.fit_intercept
-	print self.alpha
-	print self.rho
-	coef_, intercept_ = sgd_fast_sparse.plain_sgd(self.coef_,
-						      self.intercept_,
-						      self.loss_function,
-						      self.penalty_type,
-						      self.alpha, self.rho,
-						      X_data,
-						      X_indices, X_indptr, Y,
-						      self.n_iter,
-						      int(self.fit_intercept),
-						      verbose, int(self.shuffle))
+        X_data = np.array(X.data, dtype=np.float64, order="c")
+        X_indices = X.indices
+        X_indptr = X.indptr
+        verbose = 0#2
+        print self.fit_intercept
+        print self.alpha
+        print self.rho
+        coef_, intercept_ = sgd_fast_sparse.plain_sgd(self.coef_,
+                                                      self.intercept_,
+                                                      self.loss_function,
+                                                      self.penalty_type,
+                                                      self.alpha, self.rho,
+                                                      X_data,
+                                                      X_indices, X_indptr, Y,
+                                                      self.n_iter,
+                                                      int(self.fit_intercept),
+                                                      verbose, 
+                                                      int(self.shuffle))
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)
-	self.intercept_ = intercept_
+        self.intercept_ = intercept_
 
         # return self for chaining fit and predict calls
         return self
@@ -127,13 +126,14 @@ class SGD(LinearModel, ClassifierMixin):
 
         Returns
         -------
-        array, shape = [n_samples] with the predicted class labels (either -1, 1, or 0).
+        array, shape = [n_samples] 
+           Array containing the predicted class labels (either -1 or 1).
         """        
         sign = np.sign(self.predict_margin(X))
-	sign[sign == 1] = 0
-	sign[sign == -1] = 1
-	# FIXME what if sign == 0? break randomly?
-	return np.array([self.classes[p] for p in sign])
+        sign[sign == 1] = 0
+        sign[sign == -1] = 1
+        # FIXME what if sign == 0? break randomly?
+        return np.array([self.classes[p] for p in sign])
 
     def predict_margin(self, X):
         """Predict signed 'distance' to the hyperplane (aka confidence score). 
@@ -153,6 +153,17 @@ class SGD(LinearModel, ClassifierMixin):
                         + self.intercept_)
 
     def predict_proba(self, X):
+        """Predict class membership probability. 
+
+        Parameters
+        ----------
+        X : scipy.sparse matrix of shape [n_samples, n_features]
+
+        Returns
+        -------
+        array, shape = [n_samples] 
+            Contains the membership probabilities of the positive class.
+        """
         # how can this be, logisitic *does* implement this
         raise NotImplementedError(
                 'sgd does not provide this functionality')
