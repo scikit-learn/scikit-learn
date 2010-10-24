@@ -54,7 +54,30 @@ def test_sgd_penalties():
     assert clf.rho == 0.0
     clf = sgd.sparse.SGD(penalty='elasticnet', rho=0.85)
     assert clf.rho == 0.85
+    try:
+        clf = sgd.sparse.SGD(penalty='foobar', rho=0.85)
+    except ValueError:
+        pass
+    else:
+        assert False
 
+def test_sgd_losses():
+    """Check whether losses and hyperparameters are set properly"""
+    clf = sgd.sparse.SGD(loss='hinge')
+    assert isinstance(clf.loss_function,
+                      sgd.sparse.sgd.sgd_fast_sparse.Hinge)
+    clf = sgd.sparse.SGD(loss='log')
+    assert isinstance(clf.loss_function,
+                      sgd.sparse.sgd.sgd_fast_sparse.Log)
+    clf = sgd.sparse.SGD(loss='modifiedhuber')
+    assert isinstance(clf.loss_function,
+                      sgd.sparse.sgd.sgd_fast_sparse.ModifiedHuber)
+    try:
+        clf = sgd.sparse.SGD(loss="foobar")
+    except ValueError:
+        pass
+    else:
+        assert False
 
 def test_sgd_params():
     """Test parameter validity check"""
@@ -73,6 +96,10 @@ def test_sgd_params():
     else:
         assert False
 
+def test_set_coef():
+    clf = sgd.sparse.SGD()
+    clf._set_coef(None)
+    assert clf.sparse_coef_ == None
 
 def test_sgd_multiclass():
     """SGD is not able to handle multi class problems.
@@ -85,6 +112,18 @@ def test_sgd_multiclass():
     else:
         assert False
 
+def test_sgd_proba():
+    """Test that SGD raises NotImplementedError when clf.proba is called."""
+    clf = sgd.sparse.SGD(penalty='l2', alpha=0.01,
+                         fit_intercept=True,
+                         n_iter=10, shuffle=True)
+    clf.fit(X, Y)
+    try:
+        p = clf.predict_proba([3, 2])
+    except NotImplementedError:
+        pass
+    else:
+        assert False
 
 def test_sgd_l1():
     n = len(X4)
