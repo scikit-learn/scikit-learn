@@ -2,7 +2,6 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-# filename: sgd.pyx
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
@@ -54,17 +53,17 @@ cdef class LossFunction:
 
 cdef class Regression(LossFunction):
     """Base class for loss functions for regression."""
-    cpdef double loss(self,double p,double y):
+    cpdef double loss(self,double p, double y):
         raise NotImplementedError()
-    cpdef double dloss(self,double p,double y):
+    cpdef double dloss(self,double p, double y):
         raise NotImplementedError()
 
 
 cdef class Classification(LossFunction):
     """Base class for loss functions for classification."""
-    cpdef double loss(self,double p,double y):
+    cpdef double loss(self, double p, double y):
         raise NotImplementedError()
-    cpdef double dloss(self,double p,double y):
+    cpdef double dloss(self, double p, double y):
         raise NotImplementedError()
 
 cdef class ModifiedHuber(Classification):
@@ -77,7 +76,7 @@ cdef class ModifiedHuber(Classification):
     Large Scale Linear Prediction Problems Using
     Stochastic Gradient Descent', ICML'04.
     """
-    cpdef double loss(self,double p,double y):
+    cpdef double loss(self, double p,double y):
         cdef double z = p*y
         if z >= 1:
             return 0
@@ -86,7 +85,7 @@ cdef class ModifiedHuber(Classification):
         else:
             return -4*z
 
-    cpdef double dloss(self,double p,double y):
+    cpdef double dloss(self, double p, double y):
         cdef double z = p*y
         if z >= 1:
             return 0
@@ -102,12 +101,12 @@ cdef class Hinge(Classification):
     """SVM classification loss for binary
     classification tasks with y in {-1,1}.
     """
-    cpdef  double loss(self,double p,double y):
+    cpdef  double loss(self, double p, double y):
         cdef double z = p*y
         if z < 1.0:
             return (1 - z)
         return 0
-    cpdef  double dloss(self,double p,double y):
+    cpdef  double dloss(self, double p, double y):
         cdef double z = p*y
         if z < 1.0:
             return y
@@ -121,7 +120,7 @@ cdef class Log(Classification):
     """Logistic regression loss for binary classification
     tasks with y in {-1,1}.
     """
-    cpdef double loss(self,double p,double y):
+    cpdef double loss(self, double p, double y):
         cdef double z = p*y
         if z > 18:
             return exp(-z)
@@ -129,7 +128,7 @@ cdef class Log(Classification):
             return -z * y
         return log(1.0+exp(-z)) 
 
-    cpdef  double dloss(self,double p,double y):
+    cpdef  double dloss(self, double p, double y):
         cdef double z = p*y
         if z > 18:
             return exp(-z) * y
@@ -143,9 +142,9 @@ cdef class Log(Classification):
 cdef class SquaredError(Regression):
     """
     """
-    cpdef  double loss(self,double p,double y):
+    cpdef  double loss(self, double p, double y):
         return 0.5 * (p-y) * (p-y)
-    cpdef  double dloss(self,double p,double y):
+    cpdef  double dloss(self, double p, double y):
         return y - p
 
     def __reduce__(self):
@@ -157,7 +156,7 @@ cdef class Huber(Regression):
     cdef double c
     def __init__(self,c):
         self.c = c
-    cpdef  double loss(self,double p,double y):
+    cpdef  double loss(self, double p, double y):
         cdef double r = p-y
         cdef double abs_r = abs(r)
         if abs_r <= self.c:
@@ -165,7 +164,7 @@ cdef class Huber(Regression):
         else:
             return self.c * abs_r - (0.5*self.c*self.c)
 
-    cpdef  double dloss(self,double p,double y):
+    cpdef  double dloss(self, double p, double y):
         cdef double r = y - p 
         cdef double abs_r = abs(r)
         if abs_r <= self.c:
@@ -199,8 +198,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
     cdef unsigned int n_features = w.shape[0]
-
-    # FIXME double to double
+    
     cdef double *w_data_ptr = <double *>w.data
     cdef double *X_data_ptr = <double *>X_data.data
     cdef int *X_indptr_ptr = <int *>X_indptr.data
@@ -208,7 +206,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
 
     # FIXME unsined int?
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
-                                                                 dtype = np.int32)
+                                                             dtype = np.int32)
     cdef int *index_ptr = <int *>index.data
     cdef int offset = 0
     cdef int xnnz = 0
@@ -273,12 +271,16 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         # report epoche information
         if verbose > 0:
             wnorm = sqrt(np.dot(w, w) * wscale * wscale)
-            print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, Avg. loss: %.6f" % (wnorm, w.nonzero()[0].shape[0],
-                                                                                intercept, count, sumloss / count))
+            print("Norm: %.2f, NNZs: %d, "\
+            "Bias: %.6f, T: %d, Avg. loss: %.6f" % (wnorm, 
+                                                    w.nonzero()[0].shape[0],
+                                                    intercept, count, 
+                                                    sumloss / count))
             print("Total training time: %.2f seconds." % (time()-t_start))
 
         # floating-point under-/overflow check.
-        if np.any(np.isinf(w)) or np.any(np.isnan(w)) or np.isnan(intercept) or np.isinf(intercept):
+        if np.any(np.isinf(w)) or np.any(np.isnan(w)) \
+           or np.isnan(intercept) or np.isinf(intercept):
             raise ValueError("floating-point under-/overflow occured.")     
 
     w *= wscale
@@ -318,7 +320,9 @@ cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
 
 cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
                     int *X_indices_ptr, int offset, int xnnz, double u):
-    """Applys the L1 penalty. This implements the truncated gradient approach by [
+    """Applys the L1 penalty to each updated feature. 
+    This implements the truncated gradient approach by 
+    [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
     """
     cdef double z = 0.0
     cdef int j = 0
@@ -334,9 +338,15 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
                                                         / wscale) )
         q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))
 
-cdef void finall1penalty(double *w_data_ptr, double wscale, unsigned int n_features,
+cdef void finall1penalty(double *w_data_ptr, double wscale, 
+                         unsigned int n_features, 
                          double *q_data_ptr, double u):
-    """Applys the L1 penalty. This implements the truncated gradient approach by [
+    """Applys the L1 penalty to all feature. 
+    This implements the truncated gradient approach by 
+    [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
+
+    Experimental: this was proposed by Bob Carpenter (LingPipe). 
+    
     """
     cdef double z = 0.0
     cdef int j = 0
