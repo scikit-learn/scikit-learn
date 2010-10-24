@@ -310,7 +310,7 @@ class GaussianHMMTester(GaussianHMMParams):
         train_obs = [h.rvs(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs, n_iter=0, minit='points')
+        h.fit(train_obs, n_iter=0)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)
@@ -350,7 +350,7 @@ class GaussianHMMTester(GaussianHMMParams):
         train_obs = [h.rvs(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs[:1], n_iter=0, minit='points')
+        h.fit(train_obs[:1], n_iter=0)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params)
@@ -577,7 +577,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         samples = h.rvs(n)
         self.assertEquals(samples.shape, (n, self.n_dim))
 
-    def test_fit(self, params='stmwc', n_iter=5, verbose=False, **kwargs):
+    def test_fit(self, params='stmwc', n_iter=5, verbose=True, **kwargs):
         h = hmm.GMMHMM(self.n_states, self.n_dim)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
@@ -588,13 +588,14 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         train_obs = [h.rvs(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs, n_iter=0, minit='points')
+        h.fit(train_obs, n_iter=0)
         h.transmat = hmm.normalize(np.random.rand(self.n_states,
                                                   self.n_states), axis=1)
         h.startprob = hmm.normalize(np.random.rand(self.n_states))
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
-            h, train_obs, n_iter=n_iter, params=params, **kwargs)
+            h, train_obs, n_iter=n_iter, params=params,
+            covars_prior=1.0, **kwargs)
         if not np.all(np.diff(trainll) > 0) and verbose:
             print
             print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,

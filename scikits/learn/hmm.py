@@ -5,11 +5,11 @@
 import string
 
 import numpy as np
-import scipy as sp
 
 from .base import BaseEstimator
 from .gmm import (GMM, lmvnpdf, logsum, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
+from . import cluster
 
 ZEROLOGPROB = -1e200
 
@@ -317,7 +317,7 @@ class _BaseHMM(BaseEstimator):
         """
         obs = np.asanyarray(obs)
 
-        self._init(obs, init_params, **kwargs)
+        self._init(obs, init_params)
 
         logprob = []
         for i in xrange(n_iter):
@@ -479,7 +479,7 @@ class _BaseHMM(BaseEstimator):
     def _generate_sample_from_state(self, state):
         pass
 
-    def _init(self, obs, params, **kwargs):
+    def _init(self, obs, params):
         if 's' in params:
             self.startprob[:] = 1.0 / self._n_states
         if 't' in params:
@@ -680,13 +680,12 @@ class GaussianHMM(_BaseHMM):
             cv = self._covars[state]
         return sample_gaussian(self._means[state], cv, self._cvtype)
 
-    def _init(self, obs, params='stmc', **kwargs):
+    def _init(self, obs, params='stmc'):
         super(GaussianHMM, self)._init(obs, params=params)
 
-
         if 'm' in params:
-            self._means, tmp = sp.cluster.vq.kmeans2(obs[0], self._n_states,
-                                                     **kwargs)
+            self._means = cluster.KMeans(
+                k=self._n_states).fit(obs[0]).cluster_centers_
         if 'c' in params:
             cv = np.cov(obs[0].T)
             if not cv.shape:
@@ -885,7 +884,7 @@ class MultinomialHMM(_BaseHMM):
         symbol = (cdf > rand).argmax()
         return symbol
 
-    def _init(self, obs, params='ste', **kwargs):
+    def _init(self, obs, params='ste'):
         super(MultinomialHMM, self)._init(obs, params=params)
 
         if 'e' in params:
@@ -1006,7 +1005,7 @@ class GMMHMM(_BaseHMM):
     def _generate_sample_from_state(self, state):
         return self.gmms[state].rvs(1).flatten()
 
-    def _init(self, obs, params='stwmc', **kwargs):
+    def _init(self, obs, params='stwmc'):
         super(GMMHMM, self)._init(obs, params=params)
 
         allobs = np.concatenate(obs, 0)
