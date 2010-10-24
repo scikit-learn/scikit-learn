@@ -359,8 +359,7 @@ class GMMTester():
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n=100)
 
-        g.fit(train_obs, n_iter=0, init_params=params,
-              minit='points')
+        g.fit(train_obs, n_iter=0, init_params=params)
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each

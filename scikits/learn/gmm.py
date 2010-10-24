@@ -9,9 +9,9 @@ Gaussian Mixture Models
 import itertools
 
 import numpy as np
-from scipy import cluster
 
 from .base import BaseEstimator
+from . import cluster
 
 #######################################################
 #
@@ -205,22 +205,22 @@ class GMM(BaseEstimator):
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs) #doctest: +ELLIPSIS
     GMM(n_dim=1, cvtype='diag',
-      means=array([[ ...],
-           [ ...]]),
-      covars=[array([[ ...]]), array([[ ...]])], n_states=2,
-      weights=array([ 0.75,  0.25]))
+      means=array([[ 0.05981],
+           [ 9.94199]]),
+      covars=[array([[ 1.01683]]), array([[ 0.96081]])], n_states=2,
+      weights=array([ 0.25,  0.75]))
 
     >>> np.round(g.weights, 2)
-    array([ 0.75,  0.25])
+    array([ 0.25,  0.75])
     >>> np.round(g.means, 2)
-    array([[ 9.94],
-           [ 0.06]])
+    array([[ 0.06],
+           [ 9.94]])
     >>> np.round(g.covars, 2)
     ... #doctest: +NORMALIZE_WHITESPACE
-    array([[[ 0.96]],
-           [[ 1.02]]])
+    array([[[ 1.02]],
+           [[ 0.96]]])
     >>> g.predict([[0], [2], [9], [10]])
-    array([1, 1, 0, 0])
+    array([0, 0, 1, 1])
     >>> np.round(g.score([[0], [2], [9], [10]]), 2)
     array([-2.32, -4.16, -1.65, -1.19])
 
@@ -447,7 +447,7 @@ class GMM(BaseEstimator):
         return obs
 
     def fit(self, X, n_iter=10, min_covar=1e-3, thresh=1e-2, params='wmc',
-            init_params='wmc', **kwargs):
+            init_params='wmc'):
         """Estimate model parameters with the expectation-maximization
         algorithm.
 
@@ -477,8 +477,6 @@ class GMM(BaseEstimator):
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-        kwargs : keyword, optional
-            Keyword arguments passed to scipy.cluster.vq.kmeans2
         """
 
         ## initialization step
@@ -486,9 +484,7 @@ class GMM(BaseEstimator):
         X = np.asanyarray(X, dtype=np.float64)
 
         if 'm' in init_params:
-            if not 'minit' in kwargs:
-                kwargs.update({'minit': 'points'})
-            self._means, tmp = cluster.vq.kmeans2(X, self._n_states, **kwargs)
+            self._means = cluster.KMeans(k=self._n_states).fit(X).cluster_centers_
 
         if 'w' in init_params:
             self.weights = np.tile(1.0 / self._n_states, self._n_states)
