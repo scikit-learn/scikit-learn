@@ -256,20 +256,25 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                 if fit_intercept == 1:
                     intercept += update * 0.01
             if penalty_type != L1:
-                wscale *= (1 - rho * eta * alpha)
+                wscale *= (1 - (rho * eta * alpha))
                 if wscale < 1e-9:
                     w *= wscale
                     wscale = 1.0
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1 - rho) * eta * alpha)
-                l1penalty(w_data_ptr, wscale, q_data_ptr, X_indices_ptr, offset, xnnz, u)
+                l1penalty(w_data_ptr, wscale, q_data_ptr,
+                          X_indices_ptr, offset, xnnz, u)
             t += 1
             count += 1
+        if penalty_type == L1 or penalty_type == ELASTICNET:
+            u += ((1 - rho) * eta * alpha)
+            finall1penalty(w_data_ptr, wscale, n_features, q_data_ptr, u)
+	    
         # report epoche information
         if verbose > 0:
             wnorm = sqrt(np.dot(w, w) * wscale * wscale)
             print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, Avg. loss: %.6f" % (wnorm, w.nonzero()[0].shape[0],
-										intercept, count, sumloss / count))
+                                                                                intercept, count, sumloss / count))
             print("Total training time: %.2f seconds." % (time()-t_start))
 
         # floating-point under-/overflow check.
@@ -322,8 +327,26 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
         idx = X_indices_ptr[offset + j]
         z = w_data_ptr[idx]
         if (wscale * w_data_ptr[idx]) > 0:
-            w_data_ptr[idx] = max(0, w_data_ptr[idx] - ((u + q_data_ptr[idx]) / wscale) )
+            w_data_ptr[idx] = max(0, w_data_ptr[idx] - ((u + q_data_ptr[idx])
+                                                        / wscale) )
         elif (wscale * w_data_ptr[idx]) < 0:
-            w_data_ptr[idx] = min(0, w_data_ptr[idx] + ((u - q_data_ptr[idx]) / wscale) )
+            w_data_ptr[idx] = min(0, w_data_ptr[idx] + ((u - q_data_ptr[idx])
+                                                        / wscale) )
         q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))
 
+cdef void finall1penalty(double *w_data_ptr, double wscale, unsigned int n_features,
+                         double *q_data_ptr, double u):
+    """Applys the L1 penalty. This implements the truncated gradient approach by [
+    """
+    cdef double z = 0.0
+    cdef int j = 0
+    for j from 0 <= j < n_features:
+        z = w_data_ptr[j]
+        if (wscale * w_data_ptr[j]) > 0:
+            w_data_ptr[j] = max(0, w_data_ptr[j] - ((u + q_data_ptr[j])
+                                                    / wscale) )
+        elif (wscale * w_data_ptr[j]) < 0:
+            w_data_ptr[j] = min(0, w_data_ptr[j] + ((u - q_data_ptr[j])
+                                                    / wscale) )
+        q_data_ptr[j] += (wscale * (w_data_ptr[j] - z))
+    
