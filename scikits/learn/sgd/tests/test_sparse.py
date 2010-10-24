@@ -1,10 +1,6 @@
 import numpy as np
-from scipy import sparse
-from scikits.learn import datasets, sgd, svm
-from numpy.testing import assert_array_almost_equal, \
-     assert_array_equal, assert_equal, assert_almost_equal
-
-from nose.tools import assert_raises
+from scikits.learn import sgd
+from numpy.testing import assert_array_equal
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -96,8 +92,7 @@ def test_sgd_l1():
     np.random.shuffle(idx)
     X = X4[idx, :]
     Y = Y4[idx, :]
-    clf = sgd.sparse.SGD(penalty='l1', alpha=.2,
-                         fit_intercept=False,
+    clf = sgd.sparse.SGD(penalty='l1', alpha=.2, fit_intercept=False,
                          n_iter=1000)
     clf.fit(X, Y)
     assert_array_equal(clf.coef_[1:-1], np.zeros((4,)))

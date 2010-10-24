@@ -82,23 +82,24 @@ cdef class ModifiedHuber(Classification):
     See T. Zhang 'Solving Large Scale Linear Prediction Problems Using
     Stochastic Gradient Descent', ICML'04.
     """
-    cpdef double loss(self, double p, double y):
+
+    cpdef double loss(self, double p,double y):
         cdef double z = p * y
-        if z >= 1:
-            return 0
-        elif z >= -1:
-            return (1 - z) * (1 - z)
+        if z >= 1.0:
+            return 0.0
+        elif z >= -1.0:
+            return (1.0 - z) * (1.0 - z)
         else:
-            return -4 * z
+            return -4.0 * z
 
     cpdef double dloss(self, double p, double y):
         cdef double z = p * y
-        if z >= 1:
-            return 0
-        elif z >= -1:
-            return 2 * (1 - z) * y
+        if z >= 1.0:
+            return 0.0
+        elif z >= -1.0:
+            return 2.0 * (1.0 - z) * y
         else:
-            return 4 * y
+            return 4.0 * y
 
     def __reduce__(self):
         return ModifiedHuber, ()
@@ -107,16 +108,17 @@ cdef class ModifiedHuber(Classification):
 cdef class Hinge(Classification):
     """SVM classification loss for binary classification with y in {-1, 1}"""
 
-    cpdef  double loss(self, double p, double y):
+    cpdef double loss(self, double p, double y):
         cdef double z = p * y
         if z < 1.0:
             return (1 - z)
-        return 0
-    cpdef  double dloss(self, double p, double y):
+        return 0.0
+
+    cpdef double dloss(self, double p, double y):
         cdef double z = p * y
         if z < 1.0:
             return y
-        return 0
+        return 0.0
 
     def __reduce__(self):
         return Hinge, ()
@@ -134,11 +136,11 @@ cdef class Log(Classification):
             return -z * y
         return log(1.0 + exp(-z))
 
-    cpdef  double dloss(self, double p, double y):
-        cdef double z = p*y
-        if z > 18:
+    cpdef double dloss(self, double p, double y):
+        cdef double z = p * y
+        if z > 18.0:
             return exp(-z) * y
-        if z < -18:
+        if z < -18.0:
             return y
         return y / (exp(z) + 1.0)
 
@@ -149,10 +151,10 @@ cdef class Log(Classification):
 cdef class SquaredError(Regression):
     """Squared euclidean norm of difference (regression loss)"""
 
-    cpdef  double loss(self, double p, double y):
+    cpdef double loss(self, double p, double y):
         return 0.5 * (p - y) * (p - y)
 
-    cpdef  double dloss(self, double p, double y):
+    cpdef double dloss(self, double p, double y):
         return y - p
 
     def __reduce__(self):
@@ -176,26 +178,27 @@ cdef class Huber(Regression):
     def __init__(self,c):
         self.c = c
 
-    cpdef  double loss(self, double p, double y):
-        cdef double r = p-y
+    cpdef double loss(self, double p, double y):
+        cdef double r = p - y
         cdef double abs_r = abs(r)
         if abs_r <= self.c:
             return 0.5 * r * r
         else:
-            return self.c * abs_r - (0.5*self.c*self.c)
+            return self.c * abs_r - (0.5 * self.c * self.c)
 
-    cpdef  double dloss(self, double p, double y):
+    cpdef double dloss(self, double p, double y):
         cdef double r = y - p
         cdef double abs_r = abs(r)
         if abs_r <= self.c:
             return r
-        elif r > 0:
+        elif r > 0.0:
             return self.c
         else:
             return -self.c
 
     def __reduce__(self):
         return Huber, (self.c,)
+
 
 
 @cython.boundscheck(False)
@@ -267,24 +270,24 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                      offset, xnnz) * wscale) + intercept
             sumloss += loss.loss(p, y)
             update = eta * loss.dloss(p, y)
-            if update != 0:
+            if update != 0.0:
                 add(w_data_ptr, wscale, X_data_ptr, X_indices_ptr,
                     offset, xnnz, update)
                 if fit_intercept == 1:
                     intercept += update * 0.01
             if penalty_type != L1:
-                wscale *= (1 - (rho * eta * alpha))
+                wscale *= (1.0 - (rho * eta * alpha))
                 if wscale < 1e-9:
                     w *= wscale
                     wscale = 1.0
             if penalty_type == L1 or penalty_type == ELASTICNET:
-                u += ((1 - rho) * eta * alpha)
+                u += ((1.0 - rho) * eta * alpha)
                 l1penalty(w_data_ptr, wscale, q_data_ptr,
                           X_indices_ptr, offset, xnnz, u)
             t += 1
             count += 1
         if penalty_type == L1 or penalty_type == ELASTICNET:
-            u += ((1 - rho) * eta * alpha)
+            u += ((1.0 - rho) * eta * alpha)
             finall1penalty(w_data_ptr, wscale, n_features, q_data_ptr, u)
 
         # report epoch progress information
@@ -354,11 +357,11 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
     for j from 0 <= j < xnnz:
         idx = X_indices_ptr[offset + j]
         z = w_data_ptr[idx]
-        if (wscale * w_data_ptr[idx]) > 0:
-            w_data_ptr[idx] = max(0, w_data_ptr[idx] - ((u + q_data_ptr[idx])
+        if (wscale * w_data_ptr[idx]) > 0.0:
+            w_data_ptr[idx] = max(0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx])
                                                         / wscale) )
-        elif (wscale * w_data_ptr[idx]) < 0:
-            w_data_ptr[idx] = min(0, w_data_ptr[idx] + ((u - q_data_ptr[idx])
+        elif (wscale * w_data_ptr[idx]) < 0.0:
+            w_data_ptr[idx] = min(0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx])
                                                         / wscale) )
         q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))
 
@@ -377,11 +380,11 @@ cdef void finall1penalty(double *w_data_ptr, double wscale,
     cdef int j = 0
     for j from 0 <= j < n_features:
         z = w_data_ptr[j]
-        if (wscale * w_data_ptr[j]) > 0:
-            w_data_ptr[j] = max(0, w_data_ptr[j] - ((u + q_data_ptr[j])
+        if (wscale * w_data_ptr[j]) > 0.0:
+            w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
                                                     / wscale) )
-        elif (wscale * w_data_ptr[j]) < 0:
-            w_data_ptr[j] = min(0, w_data_ptr[j] + ((u - q_data_ptr[j])
+        elif (wscale * w_data_ptr[j]) < 0.0:
+            w_data_ptr[j] = min(0.0, w_data_ptr[j] + ((u - q_data_ptr[j])
                                                     / wscale) )
         q_data_ptr[j] += (wscale * (w_data_ptr[j] - z))
 
