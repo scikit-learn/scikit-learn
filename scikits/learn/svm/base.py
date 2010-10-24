@@ -234,17 +234,15 @@ class BaseLibLinear(BaseEstimator):
     Base for classes binding liblinear (dense and sparse versions)
     """
 
-    _weight_label = np.empty(0, dtype=np.int32)
-    _weight = np.empty(0, dtype=np.float64)
-
     _solver_type_dict = {
-        'PL2_LLR_D0' : 0, # L2 penalty logistic regression
-        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual problem
-        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal problem
-        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual problem
+        'PL2_LLR_D0' : 0, # L2 penalty, logistic regression
+        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual form
+        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal form
+        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual form
         'MC_SVC'     : 4, # Multi-class Support Vector Classification
-        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal problem
-        'PL1_LLR_D0' : 6, # L1 penalty logistic regression
+        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal form
+        'PL1_LLR_D0' : 6, # L1 penalty, logistic regression
+        'PL2_LLR_D1' : 7, # L2 penalty, logistic regression, dual form
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
@@ -256,6 +254,10 @@ class BaseLibLinear(BaseEstimator):
         self.C = C
         self.fit_intercept = fit_intercept
         self.multi_class = multi_class
+
+        self._weight_label = np.empty(0, dtype=np.int32)
+        self._weight = np.empty(0, dtype=np.float64)
+
         # Check that the arguments given are valid:
         self._get_solver_type()
 
@@ -343,7 +345,7 @@ class BaseLibLinear(BaseEstimator):
         return self.raw_coef_
 
     def predict_proba(self, T):
-        # how can this be, logisitic *does* implement this
+        # only available for logistic regression
         raise NotImplementedError(
                 'liblinear does not provide this functionality')
 

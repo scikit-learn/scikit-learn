@@ -50,12 +50,6 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
     `intercept_` : array, shape = [n_classes-1]
         constants in decision function
 
-
-    Notes
-    -----
-    Some features of liblinear are still not wrapped, like the Cramer
-    & Singer algorithm.
-
     References
     ----------
     LIBLINEAR -- A Library for Large Linear Classification
@@ -63,14 +57,10 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
 
     """
 
-    _weight_label = np.empty(0, dtype=np.int32)
-    _weight = np.empty(0, dtype=np.float64)
-
-
     def fit(self, X, Y, **params):
         """
         Parameters
-        ==========
+        ----------
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.

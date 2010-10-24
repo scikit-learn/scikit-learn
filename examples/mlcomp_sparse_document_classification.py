@@ -43,7 +43,7 @@ import scipy.sparse as sp
 import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
-from scikits.learn.sparse.svm import LinearSVC
+from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.metrics import confusion_matrix
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:

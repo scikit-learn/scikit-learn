@@ -122,7 +122,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *probA, char *probB)
 {
     struct svm_model *model;
-    double *dsv_coef = sv_coef;
+    double *dsv_coef = (double *) sv_coef;
     int i, m;
 
     m = nr_class * (nr_class-1)/2;

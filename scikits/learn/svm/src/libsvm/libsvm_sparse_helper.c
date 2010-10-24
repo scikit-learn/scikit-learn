@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <numpy/arrayobject.h>
-#include "svm_csr.h"
-
+#include "svm.h"
 
 
 /*
@@ -84,20 +83,20 @@ struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
 }
 
 
-struct svm_model *csr_set_model(struct svm_parameter *param, int nr_class,
+struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
                             char *SV_data, npy_intp *SV_indices_dims,
                             char *SV_indices, npy_intp *SV_indptr_dims,
                             char *SV_intptr,
                             char *sv_coef, char *rho, char *nSV, char *label,
                             char *probA, char *probB)
 {
-    struct svm_model *model;
+    struct svm_csr_model *model;
     double *dsv_coef = (double *) sv_coef;
     int i, m;
 
     m = nr_class * (nr_class-1)/2;
 
-    model = (struct svm_model *)  malloc(sizeof(struct svm_model));
+    model = (struct svm_csr_model *)  malloc(sizeof(struct svm_csr_model));
     model->nSV =     (int *)      malloc(nr_class * sizeof(int));
     model->label =   (int *)      malloc(nr_class * sizeof(int));;
     model->sv_coef = (double **)  malloc((nr_class-1)*sizeof(double *));
@@ -161,7 +160,7 @@ struct svm_model *csr_set_model(struct svm_parameter *param, int nr_class,
  */
 int csr_copy_SV (char *data, npy_intp *n_indices,
 		char *indices, npy_intp *n_indptr, char *indptr,
-		struct svm_model *model, int n_features)
+		struct svm_csr_model *model, int n_features)
 {
 	int i, j, k=0, index;
 	double *dvalues = (double *) data;
@@ -183,7 +182,7 @@ int csr_copy_SV (char *data, npy_intp *n_indices,
 }
 
 /* get number of nonzero coefficients in support vectors */
-npy_intp get_nonzero_SV (struct svm_model *model) {
+npy_intp get_nonzero_SV (struct svm_csr_model *model) {
 	int i, j;
 	npy_intp count=0;
 	for (i=0; i<model->l; ++i) {
@@ -201,7 +200,7 @@ npy_intp get_nonzero_SV (struct svm_model *model) {
  * Predict using a model, where data is expected to be enconded into a csr matrix.
  */
 int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
-		char *index, npy_intp *intptr_size, char *intptr, struct svm_model *model,
+		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
 		char *dec_values) {
     double *t = (double *) dec_values;
     struct svm_csr_node **predict_nodes;
@@ -221,12 +220,12 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     return 0;
 }
 
-npy_intp get_nr(struct svm_model *model)
+npy_intp get_nr(struct svm_csr_model *model)
 {
     return (npy_intp) model->nr_class;
 }
 
-void copy_intercept(char *data, struct svm_model *model, npy_intp *dims)
+void copy_intercept(char *data, struct svm_csr_model *model, npy_intp *dims)
 {
     /* intercept = -rho */
     npy_intp i, n = dims[0];
@@ -245,7 +244,7 @@ void copy_intercept(char *data, struct svm_model *model, npy_intp *dims)
  * model->sv_coef is a double **, whereas data is just a double *,
  * so we have to do some stupid copying.
  */
-void copy_sv_coef(char *data, struct svm_model *model)
+void copy_sv_coef(char *data, struct svm_csr_model *model)
 {
     int i, len = model->nr_class-1;
     double *temp = (double *) data;
@@ -258,12 +257,12 @@ void copy_sv_coef(char *data, struct svm_model *model)
 /*
  * Get the number of support vectors in a model.
  */
-npy_intp get_l(struct svm_model *model)
+npy_intp get_l(struct svm_csr_model *model)
 {
     return (npy_intp) model->l;
 }
 
-void copy_nSV(char *data, struct svm_model *model)
+void copy_nSV(char *data, struct svm_csr_model *model)
 {
     if (model->label == NULL) return;
     memcpy(data, model->nSV, model->nr_class * sizeof(int));
@@ -273,18 +272,18 @@ void copy_nSV(char *data, struct svm_model *model)
  * same as above with model->label
  * TODO: maybe merge into the previous?
  */
-void copy_label(char *data, struct svm_model *model)
+void copy_label(char *data, struct svm_csr_model *model)
 {
     if (model->label == NULL) return;
     memcpy(data, model->label, model->nr_class * sizeof(int));
 }
 
-void copy_probA(char *data, struct svm_model *model, npy_intp * dims)
+void copy_probA(char *data, struct svm_csr_model *model, npy_intp * dims)
 {
     memcpy(data, model->probA, dims[0] * sizeof(double));
 }
 
-void copy_probB(char *data, struct svm_model *model, npy_intp * dims)
+void copy_probB(char *data, struct svm_csr_model *model, npy_intp * dims)
 {
     memcpy(data, model->probB, dims[0] * sizeof(double));
 }
@@ -306,7 +305,7 @@ int free_problem(struct svm_csr_problem *problem)
     return 0;
 }
 
-int free_model(struct svm_model *model)
+int free_model(struct svm_csr_model *model)
 {
     /* like svm_free_and_destroy_model, but does not free sv_coef[i] */
     if (model == NULL) return -1;
@@ -330,7 +329,7 @@ int free_param(struct svm_parameter *param)
 }
 
 
-int free_model_SV(struct svm_model *model)
+int free_model_SV(struct svm_csr_model *model)
 {
     int i;
     for (i=model->l-1; i>=0; --i) free(model->SV[i]);
