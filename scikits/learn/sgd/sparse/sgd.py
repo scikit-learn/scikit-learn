@@ -10,16 +10,17 @@ from ...base import ClassifierMixin
 from ..base import LinearModel
 from . import sgd_fast_sparse
 
+
 class SGD(LinearModel, ClassifierMixin):
     """Linear Model trained by minimizing a regularized training
     error using SGD.
 
     This implementation works on scipy.sparse X and dense coef_.
-    
+
     Parameters
     ----------
     loss : str, ('hinge'|'log'|'modifiedhuber')
-        The loss function to be used. 
+        The loss function to be used.
     penalty : str, ('l2'|'l1'|'elasticnet')
         The penalty (aka regularization term) to be used.
     alpha : float
@@ -37,7 +38,7 @@ class SGD(LinearModel, ClassifierMixin):
         The number of passes over the training data (aka epochs).
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False. 
+        Defaults to False.
 
     Attributes
     ----------
@@ -58,7 +59,7 @@ class SGD(LinearModel, ClassifierMixin):
             self.loss_function = loss_functions[self.loss]
         except KeyError:
             raise ValueError("The loss %s is not supported. " % self.loss)
-    
+
     def _set_coef(self, coef_):
         self.coef_ = coef_
         if coef_ is None:
@@ -81,20 +82,19 @@ class SGD(LinearModel, ClassifierMixin):
             raise ValueError("SGD supports binary classification only.")
         self.classes = classes
 
-        # encode original class labels as 1 (classes[0]) or -1 (classes[1]). 
+        # encode original class labels as 1 (classes[0]) or -1 (classes[1]).
         Y_new = np.ones(Y.shape, dtype=np.float64)
-        Y_new *= -1.0
-        Y_new[Y == classes[0]] = 1.0
+        Y_new[Y == classes[1]] = - 1.0
         Y = Y_new
 
         n_samples, n_features = X.shape[0], X.shape[1]
         if self.coef_ is None:
             self.coef_ = np.zeros(n_features, dtype=np.float64, order="c")
-        
+
         X_data = np.array(X.data, dtype=np.float64, order="c")
         X_indices = X.indices
         X_indptr = X.indptr
-        verbose = 0#2
+        verbose = 0#2 # XXX : shouldn't verbose be a instance param
         coef_, intercept_ = sgd_fast_sparse.plain_sgd(self.coef_,
                                                       self.intercept_,
                                                       self.loss_function,
@@ -104,7 +104,7 @@ class SGD(LinearModel, ClassifierMixin):
                                                       X_indices, X_indptr, Y,
                                                       self.n_iter,
                                                       int(self.fit_intercept),
-                                                      verbose, 
+                                                      verbose,
                                                       int(self.shuffle))
 
         # update self.coef_ and self.sparse_coef_ consistently
@@ -123,17 +123,14 @@ class SGD(LinearModel, ClassifierMixin):
 
         Returns
         -------
-        array, shape = [n_samples] 
+        array, shape = [n_samples]
            Array containing the predicted class labels (either -1 or 1).
-        """        
-        sign = np.sign(self.predict_margin(X))
-        sign[sign == 1] = 0
-        sign[sign == -1] = 1
-        # FIXME what if sign == 0? break randomly?
-        return np.array([self.classes[p] for p in sign])
+        """
+        indices = np.array(self.predict_margin(X) < 0, dtype=np.int)
+        return self.classes[indices]
 
     def predict_margin(self, X):
-        """Predict signed 'distance' to the hyperplane (aka confidence score). 
+        """Predict signed 'distance' to the hyperplane (aka confidence score).
 
         Parameters
         ----------
@@ -150,7 +147,7 @@ class SGD(LinearModel, ClassifierMixin):
                         + self.intercept_)
 
     def predict_proba(self, X):
-        """Predict class membership probability. 
+        """Predict class membership probability.
 
         Parameters
         ----------
@@ -158,7 +155,7 @@ class SGD(LinearModel, ClassifierMixin):
 
         Returns
         -------
-        array, shape = [n_samples] 
+        array, shape = [n_samples]
             Contains the membership probabilities of the positive class.
         """
         # how can this be, logisitic *does* implement this

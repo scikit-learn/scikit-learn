@@ -40,13 +40,12 @@ from time import time
 import sys
 import os
 import numpy as np
-import scipy.sparse as sp
-import pylab as pl
+# import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.metrics import confusion_matrix
 
-from scikits.learn.svm.sparse import LinearSVC
+# from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.sgd.sparse import SGD
 
 
@@ -68,7 +67,7 @@ pos = 0 # alt.atheism
 neg = 1 # comp.graphics
 pos_idx = np.where(target == pos)[0]
 neg_idx = np.where(target == neg)[0]
-idx = np.concatenate((pos_idx,neg_idx))
+idx = np.concatenate((pos_idx, neg_idx))
 np.random.seed(13)
 np.random.shuffle(idx)
 data = news_train.data[idx]
@@ -77,9 +76,9 @@ target = news_train.target[idx]
 print "num train docs: ", data.shape[0]
 print ""
 print "Training a linear SVM (hinge loss and L2 regularizer) using SGD.\n"\
-      "SGD(n_iter=50,alpha=0.00001,fit_intercept=True)"
+      "SGD(n_iter=50, alpha=0.00001, fit_intercept=True)"
 t0 = time()
-clf = SGD(n_iter=50,alpha=0.00001,fit_intercept=True)
+clf = SGD(n_iter=50, alpha=0.00001, fit_intercept=True)
 #clf = LinearSVC(**parameters)
 clf.fit(data, target)
 print "done in %fs" % (time() - t0)
@@ -93,7 +92,7 @@ print "done in %fs" % (time() - t0)
 target = news_test.target
 pos_idx = np.where(target == pos)[0]
 neg_idx = np.where(target == neg)[0]
-idx = np.concatenate((pos_idx,neg_idx))
+idx = np.concatenate((pos_idx, neg_idx))
 data = news_test.data[idx]
 target = news_test.target[idx]
 
