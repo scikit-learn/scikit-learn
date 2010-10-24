@@ -40,13 +40,12 @@ from time import time
 import sys
 import os
 import numpy as np
-import scipy.sparse as sp
-import pylab as pl
+# import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.metrics import confusion_matrix
 
-from scikits.learn.svm.sparse import LinearSVC
+# from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.sgd.sparse import SGD
 
 
@@ -76,12 +75,11 @@ target = news_train.target[idx]
 
 print "num train docs: ", data.shape[0]
 print ""
-print "Training a linear SVM (hinge loss and L2 regularizer) using SGD:"
-
-clf = SGD(n_iter=50, alpha=0.00001, fit_intercept=True)
-print clf
-
+print "Training a linear SVM (hinge loss and L2 regularizer) using SGD.\n"\
+      "SGD(n_iter=50, alpha=0.00001, fit_intercept=True)"
 t0 = time()
+clf = SGD(n_iter=50, alpha=0.00001, fit_intercept=True)
+#clf = LinearSVC(**parameters)
 clf.fit(data, target)
 print "done in %fs" % (time() - t0)
 print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)

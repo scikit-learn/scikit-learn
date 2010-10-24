@@ -1,4 +1,3 @@
-import numpy
 from ConfigParser import ConfigParser
 
 def configuration(parent_package='', top_path=None):

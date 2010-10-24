@@ -10,6 +10,7 @@ from ...base import ClassifierMixin
 from ..base import LinearModel
 from . import sgd_fast_sparse
 
+
 class SGD(LinearModel, ClassifierMixin):
     """Linear Model trained by minimizing a regularized training
     error using SGD.
@@ -83,8 +84,7 @@ class SGD(LinearModel, ClassifierMixin):
 
         # encode original class labels as 1 (classes[0]) or -1 (classes[1]).
         Y_new = np.ones(Y.shape, dtype=np.float64)
-        Y_new *= -1.0
-        Y_new[Y == classes[0]] = 1.0
+        Y_new[Y == classes[1]] = - 1.0
         Y = Y_new
 
         n_samples, n_features = X.shape[0], X.shape[1]
@@ -94,7 +94,7 @@ class SGD(LinearModel, ClassifierMixin):
         X_data = np.array(X.data, dtype=np.float64, order="c")
         X_indices = X.indices
         X_indptr = X.indptr
-        verbose = 0#2
+        verbose = 0#2 # XXX : shouldn't verbose be a instance param
         coef_, intercept_ = sgd_fast_sparse.plain_sgd(self.coef_,
                                                       self.intercept_,
                                                       self.loss_function,
@@ -126,11 +126,8 @@ class SGD(LinearModel, ClassifierMixin):
         array, shape = [n_samples]
            Array containing the predicted class labels (either -1 or 1).
         """
-        sign = np.sign(self.predict_margin(X))
-        sign[sign == 1] = 0
-        sign[sign == -1] = 1
-        # FIXME what if sign == 0? break randomly?
-        return np.array([self.classes[p] for p in sign])
+        indices = np.array(self.predict_margin(X) < 0, dtype=np.int)
+        return self.classes[indices]
 
     def predict_margin(self, X):
         """Predict signed 'distance' to the hyperplane (aka confidence score).
