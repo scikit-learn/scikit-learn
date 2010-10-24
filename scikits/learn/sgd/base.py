@@ -5,14 +5,20 @@
 
 from ..base import BaseEstimator
 
+
 class LinearModel(BaseEstimator):
-    """Linear Model trained by minimizing a regularized training
-    error using SGD.
-    
+    """Linear Model trained by regularized Stochastic Gradient Descent
+
+    SGD works by iteratively minimizing (sample by sample) the sum a
+    running estimate of a loss function (e.g. hinge loss or quadratic
+    loss) and a regularizer (e.g. the squared euclidean (L2) norm of the
+    coefs) that encodes apriori knowledge of the distribution of the coefs
+    (e.g. centered guaussian distribution for the L2 regularizer.
+
     Parameters
     ----------
     loss : str, ('hinge'|'log'|'modifiedhuber')
-        The loss function to be used. 
+        The loss function to be used.
     penalty : str, ('l2'|'l1'|'elasticnet')
         The penalty (aka regularization term) to be used.
     alpha : float
@@ -30,7 +36,7 @@ class LinearModel(BaseEstimator):
         The number of passes over the training data (aka epochs).
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False. 
+        Defaults to False.
 
     Attributes
     ----------
@@ -62,7 +68,7 @@ class LinearModel(BaseEstimator):
         self._get_penalty_type()
 
     def _get_penalty_type(self):
-        penalty_types = {"l2":2, "l1":1, "elasticnet":3}
+        penalty_types = {"l2": 2, "l1": 1, "elasticnet": 3}
         try:
             self.penalty_type = penalty_types[self.penalty]
             if self.penalty_type == 2:
@@ -71,3 +77,4 @@ class LinearModel(BaseEstimator):
                 self.rho = 0.0
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % self.penalty)
+
