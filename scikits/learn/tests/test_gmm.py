@@ -137,7 +137,7 @@ def test_lmvnpdf_full():
 def test_GMM_attributes():
     n_states, n_dim = 10, 4
     cvtype = 'diag'
-    g = gmm.GMM(n_states, n_dim, cvtype)
+    g = gmm.GMM(n_states, cvtype)
     weights = np.random.rand(n_states)
     weights = weights / weights.sum()
     means = np.random.randint(-20, 20, (n_states, n_dim))
@@ -166,8 +166,7 @@ def test_GMM_attributes():
     assert_raises(ValueError, g.__setattr__, 'covars',
                       np.zeros((n_states - 2, n_dim)))
 
-
-    assert_raises(ValueError, gmm.GMM, 20, 1, 'badcvtype')
+    assert_raises(ValueError, gmm.GMM, n_states=20, cvtype='badcvtype')
 
 class GMMTester():
     n_states = 10
@@ -184,11 +183,12 @@ class GMMTester():
 
 
     def test_eval(self):
-        g = gmm.GMM(self.n_states, self.n_dim, self.cvtype)
+        g = gmm.GMM(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
         g._covars = self.covars[self.cvtype]
+        g.weights = self.weights
 
         gaussidx = np.repeat(range(self.n_states), 5)
         nobs = len(gaussidx)
@@ -202,18 +202,18 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = gmm.GMM(self.n_states, self.n_dim, self.cvtype)
+        g = gmm.GMM(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
         g._covars = np.maximum(self.covars[self.cvtype], 0.1)
-        # g.weights = self.weights
+        g.weights = self.weights
 
         samples = g.rvs(n)
         self.assertEquals(samples.shape, (n, self.n_dim))
 
     def test_train(self, params='wmc'):
-        g = gmm.GMM(self.n_states, self.n_dim, self.cvtype)
+        g = gmm.GMM(self.n_states, self.cvtype)
         g.weights = self.weights
         g.means = self.means
         g._covars = 20 * self.covars[self.cvtype]

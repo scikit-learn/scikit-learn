@@ -323,15 +323,15 @@ class GaussianHMMTester(GaussianHMMParams):
 
 
     def test_fit_with_priors(self, params='stmc', n_iter=10,
-                                        verbose=False):
-        startprob_prior=10*self.startprob + 2.0
-        transmat_prior=10*self.transmat + 2.0
-        means_prior=self.means
-        means_weight=2.0
+                             verbose=False):
+        startprob_prior = 10*self.startprob + 2.0
+        transmat_prior = 10*self.transmat + 2.0
+        means_prior = self.means
+        means_weight = 2.0
         covars_weight = 2.0
         if self.cvtype in ('full', 'tied'):
             covars_weight += self.n_dim
-        covars_prior=self.covars[self.cvtype]
+        covars_prior = self.covars[self.cvtype]
 
         h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype,
                             startprob=self.startprob,
@@ -507,18 +507,19 @@ class GMMHMMParams(object):
     def create_random_gmm(n_mix, n_dim, cvtype):
         from scikits.learn import gmm
 
-        means = np.random.randint(-20, 20, (n_mix, n_dim))
+        g = gmm.GMM(n_mix, cvtype=cvtype)
+        g.means = np.random.randint(-20, 20, (n_mix, n_dim))
         mincv = 0.1
-        covars = {'spherical': (mincv + mincv * np.random.rand(n_mix))**2,
-                  'tied': _generate_random_spd_matrix(n_dim)
-                          + mincv * np.eye(n_dim),
-                  'diag': (mincv + mincv * np.random.rand(n_mix, n_dim))**2,
-                  'full': np.array([_generate_random_spd_matrix(n_dim)
-                                    + mincv * np.eye(n_dim)
-                                    for x in xrange(n_mix)])}[cvtype]
-        weights = hmm.normalize(np.random.rand(n_mix))
-        return gmm.GMM(n_mix, n_dim, cvtype=cvtype, weights=weights,
-                       means=means, covars=covars)
+        g.covars = {'spherical': (mincv + mincv * np.random.rand(n_mix))**2,
+                    'tied': _generate_random_spd_matrix(n_dim)
+                           + mincv * np.eye(n_dim),
+                    'diag': (mincv + mincv * np.random.rand(n_mix, n_dim))**2,
+                    'full': np.array([_generate_random_spd_matrix(n_dim)
+                                      + mincv * np.eye(n_dim)
+                                      for x in xrange(n_mix)])}[cvtype]
+        g.weights = hmm.normalize(np.random.rand(n_mix))
+
+        return g
 
 
 class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):

@@ -172,30 +172,22 @@ class GMM(BaseEstimator):
     --------
     >>> import numpy as np
     >>> from scikits.learn.gmm import GMM
-    >>> g = GMM(n_states=2, n_dim=1)
-    >>> # The initial parameters are fixed.
-    >>> np.round(g.weights, 2)
-    array([ 0.5,  0.5])
-    >>> np.round(g.means, 2)
-    array([[ 0.],
-           [ 0.]])
-    >>> np.round(g.covars, 2)
-    array([[[ 1.]],
-    <BLANKLINE>
-           [[ 1.]]])
+    >>> g = GMM(n_states=2)
 
     >>> # Generate random observations with two modes centered on 0
     >>> # and 10 to use for training.
     >>> np.random.seed(0)
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
-    >>> g.fit(obs) #doctest: +ELLIPSIS
-    GMM(n_dim=1, cvtype='diag',
-      means=array([[ 0.05981],
-           [ 9.94199]]),
-      covars=[array([[ 1.01683]]), array([[ 0.96081]])], n_states=2,
-      weights=array([ 0.25,  0.75]))
-
+    >>> g.fit(obs)
+    GMM(cvtype='diag', n_states=2)
+    >>> g.weights
+    array([ 0.25,  0.75])
+    >>> g.means
+    array([[ 0.05980802],
+           [ 9.94199467]])
+    >>> g.covars
+    [array([[ 1.01682662]]), array([[ 0.96080513]])]
     >>> np.round(g.weights, 2)
     array([ 0.25,  0.75])
     >>> np.round(g.means, 2)
@@ -211,20 +203,14 @@ class GMM(BaseEstimator):
     array([-2.32, -4.16, -1.65, -1.19])
 
     >>> # Refit the model on new data (initial parameters remain the
-    >>> #same), this time with an even split between the two modes.
+    >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]])
-    GMM(n_dim=1, cvtype='diag',
-      means=array([[ 10.],
-           [  0.]]),
-      covars=[array([[ 0.001]]), array([[ 0.001]])], n_states=2,
-      weights=array([ 0.5,  0.5]))
-
+    GMM(cvtype='diag', n_states=2)
     >>> np.round(g.weights, 2)
     array([ 0.5,  0.5])
     """
 
-    def __init__(self, n_states=1, n_dim=1, cvtype='diag', weights=None,
-                 means=None, covars=None):
+    def __init__(self, n_states=1, cvtype='diag'):
         """Create a Gaussian mixture model
 
         Initializes parameters such that every mixture component has
@@ -243,24 +229,11 @@ class GMM(BaseEstimator):
         """
 
         self._n_states = n_states
-        self.n_dim = n_dim
         self._cvtype = cvtype
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
 
-        if weights is None:
-            weights = np.tile(1.0 / n_states, n_states)
-        self.weights = weights
-
-        if means is None:
-            means = np.zeros((n_states, n_dim))
-        self.means = means
-
-        if covars is None:
-            covars = _distribute_covar_matrix_to_match_cvtype(
-                np.eye(n_dim), cvtype, n_states)
-        self.covars = covars
 
         self.labels = [None] * n_states
 
@@ -302,9 +275,11 @@ class GMM(BaseEstimator):
 
     def _set_means(self, means):
         means = np.asarray(means)
-        if means.shape != (self._n_states, self.n_dim):
+        if hasattr(self, 'n_dim') and \
+               means.shape != (self._n_states, self.n_dim):
             raise ValueError('means must have shape (n_states, n_dim)')
         self._means = means.copy()
+        self.n_dim = self._means.shape[1]
 
     means = property(_get_means, _set_means)
 
@@ -464,10 +439,19 @@ class GMM(BaseEstimator):
 
         X = np.asanyarray(X)
 
-        if 'm' in init_params:
-            self._means = cluster.KMeans(k=self._n_states).fit(X).cluster_centers_
+        if hasattr(self, 'n_dim') and self.n_dim != X.shape[1]:
+            raise ValueError('Unexpected number of dimensions, got %s but '
+                             'expected %s' % (X.shape[1], self.n_dim))
 
-        if 'w' in init_params:
+        self.n_dim = X.shape[1]
+
+        if 'm' in init_params:
+            self._means = cluster.KMeans(
+                k=self._n_states).fit(X).cluster_centers_
+        elif not hasattr(self, 'means'):
+                self._means = np.zeros((self.n_states, self.n_dim))
+
+        if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self._n_states, self._n_states)
 
         if 'c' in init_params:
@@ -476,6 +460,9 @@ class GMM(BaseEstimator):
                 cv.shape = (1, 1)
             self._covars = _distribute_covar_matrix_to_match_cvtype(
                 cv, self._cvtype, self._n_states)
+        elif not hasattr(self, 'covars'):
+                self.covars = _distribute_covar_matrix_to_match_cvtype(
+                    np.eye(self.n_dim), cvtype, n_states)
 
         # EM algorithm
         logprob = []
@@ -547,20 +534,25 @@ def _lmvnpdftied(obs, means, covars):
 
 
 def _lmvnpdffull(obs, means, covars):
-    # FIXME: this representation of covars is going to lose for caching
     from scipy import linalg
     import itertools
+    if hasattr(linalg, 'solve_triangular'):
+        # only in scipy since 0.9
+        solve_triangular = linalg.solve_triangular
+    else:
+        # slower, but works
+        solve_triangular = linalg.solve
     nobs, ndim = obs.shape
     nmix = len(means)
-    lpr = np.empty((nobs,nmix))
+    log_prob = np.empty((nobs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
-        icv = linalg.pinv(cv)
-        lpr[:,c] = -0.5 * (ndim * np.log(2 * np.pi)
-                           + np.log(linalg.det(cv)))
-        for o, currobs in enumerate(obs):
-            dzm = (currobs - mu)
-            lpr[o,c] += -0.5 * np.dot(np.dot(dzm, icv), dzm.T)
-    return lpr
+        cv_chol = linalg.cholesky(cv, lower=True)
+        cv_det  = np.prod(np.diagonal(cv_chol))**2
+        cv_sol  = solve_triangular(cv_chol, (obs - mu).T, lower=True)
+        log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=0) + \
+                           ndim * np.log(2 * np.pi) + np.log(cv_det))
+
+    return log_prob
 
 
 def _validate_covars(covars, cvtype, nmix, ndim):

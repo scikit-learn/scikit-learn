@@ -780,6 +780,7 @@ class GaussianHMM(_BaseHMM):
                     self._covars = ((covars_prior + cvnum)
                                    / (cvweight + stats['post'][:,None,None]))
 
+
 class MultinomialHMM(_BaseHMM):
     """Hidden Markov Model with multinomial (discrete) emissions
 
@@ -988,9 +989,9 @@ class GMMHMM(_BaseHMM):
             gmms = []
             for x in xrange(self.n_states):
                 if cvtype is None:
-                    g = GMM(n_mix, n_dim)
+                    g = GMM(n_mix)
                 else:
-                    g = GMM(n_mix, n_dim, cvtype=cvtype)
+                    g = GMM(n_mix, cvtype=cvtype)
                 gmms.append(g)
         self.gmms = gmms
 
@@ -1030,7 +1031,10 @@ class GMMHMM(_BaseHMM):
         for state,g in enumerate(self.gmms):
             gmm_logprob, gmm_posteriors = g.eval(obs)
             gmm_posteriors *= posteriors[:,state][:,np.newaxis]
-            tmpgmm = GMM(g.n_states, g.n_dim, cvtype=g.cvtype)
+            tmpgmm = GMM(g.n_states, cvtype=g.cvtype)
+            tmpgmm.n_dim = g.n_dim
+            tmpgmm.covars = _distribute_covar_matrix_to_match_cvtype(
+                np.eye(g.n_dim), g.cvtype, g.n_states)
             norm = tmpgmm._do_mstep(obs, gmm_posteriors, params)
 
             stats['norm'][state] += norm
@@ -1048,8 +1052,8 @@ class GMMHMM(_BaseHMM):
 
     def _do_mstep(self, stats, params, covars_prior=1e-2, **kwargs):
         super(GMMHMM, self)._do_mstep(stats, params)
-        # All we have left to do is apply covars_prior to the parameters
-        # we updated in _accumulate_sufficient_statistics.
+        # All that is left to do is to apply covars_prior to the
+        # parameters updated in _accumulate_sufficient_statistics.
         for state,g in enumerate(self.gmms):
             norm = stats['norm'][state]
             if 'w' in params:
