@@ -4,8 +4,17 @@ Stochastic Gradient Descent
 
 .. currentmodule:: scikits.learn.sgd
 
-**Stochastic Gradient Descent (SGD)** is ...
-.
+**Stochastic Gradient Descent (SGD)** is a simple yet very efficient approach 
+to discriminative learning of linear classifiers under convex loss functions 
+such as Support Vector Machines and Logistic Regression. 
+Even though SGD has been around in the ML community for a long time, 
+it has received a considerable amount of attention just recently in the 
+context of large-scale learning. 
+
+SGD has been successfully applied to large-scale and sparse machine learning 
+problems often encountered in text classification and natural language processing. 
+Given that the data is sparse, the classifiers in this module easily scale 
+to problems with more than 10^5 training examples and more than 10^4 features. 
 
 The advantages of Stochastic Gradient Descent are:
 
@@ -27,14 +36,6 @@ The disadvantages of Stochastic Gradient Descent include:
       techniques imply conducting five-fold cross-validation, so
       performance can suffer.  See method predict_proba for more
       information.
-
-
-.. _sgd_classification:
-
-Classification
-==============
-
-
 
 .. currentmodule:: scikits.learn.svm.sparse
 
@@ -58,22 +59,12 @@ Implemented classes are :class:`SGD`.
 Complexity
 ==========
 
-Support Vector Machines are powerful tools, but their compute and
-storage requirements increase rapidly with the number of training
-vectors. The core of an SVM is a quadratic programming problem (QP),
-separating support vectors from the rest of the training data. The QP
-solver used by this `libsvm`_-based implementation scales between
-:math:O(n_{features} \times n_{samples}^2) and
-:math:O(n_{features} \times n_{samples}^3) depending on how efficiently
-the `libsvm`_ cache is used in practice (dataset dependent). If the data
-is very sparse :math:n_{features} should be replaced by the average number
-of non-zero features in a sample vector
-
-Also note that for the linear case, the algorithm used in
-:class:`LinearSVC` by the `liblinear`_ implementation is much more
-efficient than its `libsvm`_-based :class:`SVC` counterpart and can
-scale almost linearly to millions of samples and/or features.
-
+The major advantage of SGD is its efficiency, which is basically 
+linear in the number of training examples. Recent theoretical 
+results, however, show that the runtime to get some desired optimization 
+accuracy does not increase as the training set size increases. 
+In fact, for PEGASOS training indeed decreases as the size of the training set 
+increases.
 
 Tips on Practical Use
 =====================
@@ -89,8 +80,14 @@ Tips on Practical Use
     scale (e.g. word frequencies, indicator features) scaling is 
     not needed. 
 
+  * Finding a reasonable regularization term :math:`\alpha` is 
+    best done using grid search. 
 
-.. _svm_mathematical_formulation:
+  * Empirically, I found that SGD converges after observing 
+    approx. 10^6 training examples. Thus, a reasonable first guess 
+    for the number of iterations is `n_iter = 10**6 / n`.
+
+.. _sgd_mathematical_formulation:
 
 Mathematical formulation
 ========================
@@ -104,11 +101,11 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane.png
+.. figure:: ../auto_examples/sgd/images/plot_loss_functions.png
    :align: center
    :scale: 50
 
-SVC
+SGD
 ---
 
 Given training vectors :math:`x_i \in R^n`, i=1,..., l, in two
@@ -187,9 +184,10 @@ Frequently Asked Questions
 Implementation details
 ======================
 
-The implementation of SGD is based on the `Stochastic Gradient SVM <http://leon.bottou.org/projects/sgd>`_ 
-of Léon Bottou. Similar to SvmSGD, the weight vector is represented as the product of a scalar 
-and a vector which allows an efficient weight update in the case of L2 regularization. 
+The implementation of SGD is based on the `Stochastic Gradient SVM 
+<http://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD, 
+the weight vector is represented as the product of a scalar and a vector 
+which allows an efficient weight update in the case of L2 regularization. 
 The code is written in Cython.
 
 .. topic:: References:
