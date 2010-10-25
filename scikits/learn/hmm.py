@@ -764,10 +764,12 @@ class GaussianHMM(_BaseHMM):
             elif self._cvtype in ('tied', 'full'):
                 cvnum = np.empty((self._n_states, self._n_dim, self._n_dim))
                 for c in xrange(self._n_states):
+                    obsmean = np.outer(stats['obs'][c], self._means[c])
+
                     cvnum[c] = (means_weight * np.outer(meandiff[c],
                                                         meandiff[c])
                                 + stats['obs*obs.T'][c]
-                                - 2 * np.outer(stats['obs'][c], self._means[c])
+                                - obsmean - obsmean.T
                                 + np.outer(self._means[c], self._means[c])
                                 * stats['post'][c])
                 cvweight = max(covars_weight - self._n_dim, 0)
@@ -777,7 +779,6 @@ class GaussianHMM(_BaseHMM):
                 elif self._cvtype == 'full':
                     self._covars = ((covars_prior + cvnum)
                                    / (cvweight + stats['post'][:,None,None]))
-
 
 class MultinomialHMM(_BaseHMM):
     """Hidden Markov Model with multinomial (discrete) emissions
