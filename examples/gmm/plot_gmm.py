@@ -21,7 +21,7 @@ C = np.array([[0., -0.7], [3.5, .7]])
 X = np.r_[np.dot(np.random.randn(n, 2), C),
           np.random.randn(n, 2) + np.array([3, 3])]
 
-clf = gmm.GMM(n_states=2, n_dim=2, cvtype='full')
+clf = gmm.GMM(n_states=2, cvtype='full')
 clf.fit(X)
 
 splot = pl.subplot(111, aspect='equal')
