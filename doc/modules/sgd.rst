@@ -85,8 +85,8 @@ Tips on Practical Use
     must be applied to the test vector to obtain meaningful
     results. See `The CookBook
     <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_
-    for some examples on scaling. If your attributes have an inherent
-    scale (e.g. word frequencies, indicator features) scaling is
+    for some examples on scaling. If your attributes have an intrinsic
+    scale (e.g. word frequencies, indicator features) scaling is 
     not needed. 
 
 
@@ -166,11 +166,11 @@ This parameters can be accessed through the members support\_ and intercept\_:
    Y. Tsuruoka, J. Tsujii, S. Ananiadou -  In Proceedings of the AFNLP/ACL '09.
 
  * `"Solving large scale linear prediction problems using stochastic gradient descent algorithms"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_ 
    T. Zhang - In Proceedings of ICML '04.
    
-  * `"Regularization and variable selection via the elastic net"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
+ * `"Regularization and variable selection via the elastic net"
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_ 
    H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B, 67 (2), 301-320.
 
 
@@ -187,12 +187,10 @@ Frequently Asked Questions
 Implementation details
 ======================
 
-The implementation of SGD is based on the Stochastic Gradient SVM of Léon Bottou. 
-Similar to SvmSGD in `sgd`_ the weight vector is represented as the product of a scalar 
+The implementation of SGD is based on the `Stochastic Gradient SVM <http://leon.bottou.org/projects/sgd>`_ 
+of Léon Bottou. Similar to SvmSGD, the weight vector is represented as the product of a scalar 
 and a vector which allows an efficient weight update in the case of L2 regularization. 
 The code is written in Cython.
-
-.. _`sgd`: http://leon.bottou.org/projects/sgd
 
 .. topic:: References:
 
