@@ -547,19 +547,20 @@ def _lmvnpdftied(obs, means, covars):
 
 
 def _lmvnpdffull(obs, means, covars):
-    # FIXME: this representation of covars is going to lose for caching
+    """
+    Log probability for full covariance matrices.
+    """
     from scipy import linalg
     import itertools
     nobs, ndim = obs.shape
-    nmix = len(means)
-    lpr = np.empty((nobs,nmix))
+    n_mix = len(means)
+    lpr = np.empty((nobs,n_mix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
-        icv = linalg.pinv(cv)
-        lpr[:,c] = -0.5 * (ndim * np.log(2 * np.pi)
-                           + np.log(linalg.det(cv)))
-        for o, currobs in enumerate(obs):
-            dzm = (currobs - mu)
-            lpr[o,c] += -0.5 * np.dot(np.dot(dzm, icv), dzm.T)
+        cv_inv = linalg.pinv(cv)
+        cv_det = np.log(linalg.det(cv))
+        m_obs  = obs - mu
+        temp = np.sum(np.dot(m_obs, cv_inv) * m_obs, axis=1)
+        lpr[:,c] = -0.5 * (temp + ndim * np.log(2 * np.pi) + cv_det)
     return lpr
 
 
