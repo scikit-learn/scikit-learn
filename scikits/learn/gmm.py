@@ -534,6 +534,9 @@ def _lmvnpdftied(obs, means, covars):
 
 
 def _lmvnpdffull(obs, means, covars):
+    """
+    Log probability for full covariance matrices.
+    """
     from scipy import linalg
     import itertools
     if hasattr(linalg, 'solve_triangular'):
