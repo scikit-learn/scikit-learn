@@ -92,56 +92,51 @@ Tips on Practical Use
 Mathematical formulation
 ========================
 
-A support vector machine constructs a hyper-plane or set of hyper-planes
-in a high or infinite dimensional space, which can be used for
-classification, regression or other tasks. Intuitively, a good
-separation is achieved by the hyper-plane that has the largest distance
-to the nearest training data points of any class (so-called functional
-margin), since in general the larger the margin the lower the
-generalization error of the classifier.
+Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where 
+:math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{-1,1\}`, our goal is to 
+learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
+:math:`w \in \mathbf{R}^n` and intercept :math:`b \in \mathbf{R}`. In order
+to make predictions, we simply look at the sign of :math:`f(x)`.
+A common choice to find the model parameters is by minimizing the regularized 
+training error given by
+
+.. math::
+
+    E(w,b) = \sum_{i=1, l} L(y_i, f(x_i)) + \alpha R(w)
+
+where :math:`L` is a loss function that measures model (mis)fit and :math:`R` is a
+regularization term (aka penalty) that penalizes model complexity; :math:`\alpha > 0`
+is a non-negative hyperparameter. 
+
+
 
 
 .. figure:: ../auto_examples/sgd/images/plot_loss_functions.png
    :align: center
    :scale: 50
 
+.. figure:: ../auto_examples/sgd/images/plot_penalties.png
+   :align: center
+   :scale: 50
+
 SGD
 ---
 
-Given training vectors :math:`x_i \in R^n`, i=1,..., l, in two
-classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
--1}`, SVC solves the following primal problem:
+Stochastic gradient descent is an optimization method for unconstrained 
+optimization problems. In contrast to (batch) gradient descent, SGD
+approximates the true gradient of :math:`E(w,b)` by considering a 
+single training example at a time. 
 
-
-.. math::
-
-    \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
-
-
-
-    \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
-    & \zeta_i \geq 0, i=1, ..., l
-
-Its dual is
+The class SGD implements a simple first-order SGD learning routine, which 
+considers the first derivative of the loss function. The algorithm iterates
+over the training examples and for each example updates the model parameters 
+according to the update rule given by
 
 .. math::
 
-   \min_{\alpha} \frac{1}{2} \alpha^T Q \alpha - e^T \alpha
+    w <- w + ...
 
 
-   \textrm {subject to } & y^T \alpha = 0\\
-   & 0 \leq \alpha_i \leq C, i=1, ..., l
-
-where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
-is an l by l positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
-x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
-vectors are mapped into a higher (maybe infinite) dimensional space by
-the function :math:`\phi`
-
-
-The decision function is:
-
-.. math:: sgn(\sum_{i=1}^l y_i \alpha_i K(x_i, x) + \rho)
 
 
 .. TODO multiclass case ?/
