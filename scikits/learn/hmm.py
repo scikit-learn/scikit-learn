@@ -5,11 +5,11 @@
 import string
 
 import numpy as np
-import scipy as sp
 
 from .base import BaseEstimator
 from .gmm import (GMM, lmvnpdf, logsum, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
+from . import cluster
 
 ZEROLOGPROB = -1e200
 
@@ -317,7 +317,7 @@ class _BaseHMM(BaseEstimator):
         """
         obs = np.asanyarray(obs)
 
-        self._init(obs, init_params, **kwargs)
+        self._init(obs, init_params)
 
         logprob = []
         for i in xrange(n_iter):
@@ -479,7 +479,7 @@ class _BaseHMM(BaseEstimator):
     def _generate_sample_from_state(self, state):
         pass
 
-    def _init(self, obs, params, **kwargs):
+    def _init(self, obs, params):
         if 's' in params:
             self.startprob[:] = 1.0 / self._n_states
         if 't' in params:
@@ -680,13 +680,12 @@ class GaussianHMM(_BaseHMM):
             cv = self._covars[state]
         return sample_gaussian(self._means[state], cv, self._cvtype)
 
-    def _init(self, obs, params='stmc', **kwargs):
+    def _init(self, obs, params='stmc'):
         super(GaussianHMM, self)._init(obs, params=params)
 
-
         if 'm' in params:
-            self._means, tmp = sp.cluster.vq.kmeans2(obs[0], self._n_states,
-                                                     **kwargs)
+            self._means = cluster.KMeans(
+                k=self._n_states).fit(obs[0]).cluster_centers_
         if 'c' in params:
             cv = np.cov(obs[0].T)
             if not cv.shape:
@@ -765,10 +764,12 @@ class GaussianHMM(_BaseHMM):
             elif self._cvtype in ('tied', 'full'):
                 cvnum = np.empty((self._n_states, self._n_dim, self._n_dim))
                 for c in xrange(self._n_states):
+                    obsmean = np.outer(stats['obs'][c], self._means[c])
+
                     cvnum[c] = (means_weight * np.outer(meandiff[c],
                                                         meandiff[c])
                                 + stats['obs*obs.T'][c]
-                                - 2 * np.outer(stats['obs'][c], self._means[c])
+                                - obsmean - obsmean.T
                                 + np.outer(self._means[c], self._means[c])
                                 * stats['post'][c])
                 cvweight = max(covars_weight - self._n_dim, 0)
@@ -885,7 +886,7 @@ class MultinomialHMM(_BaseHMM):
         symbol = (cdf > rand).argmax()
         return symbol
 
-    def _init(self, obs, params='ste', **kwargs):
+    def _init(self, obs, params='ste'):
         super(MultinomialHMM, self)._init(obs, params=params)
 
         if 'e' in params:
@@ -988,9 +989,9 @@ class GMMHMM(_BaseHMM):
             gmms = []
             for x in xrange(self.n_states):
                 if cvtype is None:
-                    g = GMM(n_mix, n_dim)
+                    g = GMM(n_mix)
                 else:
-                    g = GMM(n_mix, n_dim, cvtype=cvtype)
+                    g = GMM(n_mix, cvtype=cvtype)
                 gmms.append(g)
         self.gmms = gmms
 
@@ -1006,7 +1007,7 @@ class GMMHMM(_BaseHMM):
     def _generate_sample_from_state(self, state):
         return self.gmms[state].rvs(1).flatten()
 
-    def _init(self, obs, params='stwmc', **kwargs):
+    def _init(self, obs, params='stwmc'):
         super(GMMHMM, self)._init(obs, params=params)
 
         allobs = np.concatenate(obs, 0)
@@ -1030,7 +1031,10 @@ class GMMHMM(_BaseHMM):
         for state,g in enumerate(self.gmms):
             gmm_logprob, gmm_posteriors = g.eval(obs)
             gmm_posteriors *= posteriors[:,state][:,np.newaxis]
-            tmpgmm = GMM(g.n_states, g.n_dim, cvtype=g.cvtype)
+            tmpgmm = GMM(g.n_states, cvtype=g.cvtype)
+            tmpgmm.n_dim = g.n_dim
+            tmpgmm.covars = _distribute_covar_matrix_to_match_cvtype(
+                np.eye(g.n_dim), g.cvtype, g.n_states)
             norm = tmpgmm._do_mstep(obs, gmm_posteriors, params)
 
             stats['norm'][state] += norm
@@ -1048,8 +1052,8 @@ class GMMHMM(_BaseHMM):
 
     def _do_mstep(self, stats, params, covars_prior=1e-2, **kwargs):
         super(GMMHMM, self)._do_mstep(stats, params)
-        # All we have left to do is apply covars_prior to the parameters
-        # we updated in _accumulate_sufficient_statistics.
+        # All that is left to do is to apply covars_prior to the
+        # parameters updated in _accumulate_sufficient_statistics.
         for state,g in enumerate(self.gmms):
             norm = stats['norm'][state]
             if 'w' in params:
