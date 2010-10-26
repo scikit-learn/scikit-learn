@@ -67,7 +67,7 @@ class BaseLibSVM(BaseEstimator):
         Y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-        weight : dict , {class_label : weight}
+        class_weight : dict , {class_label : weight}
             Weights associated with classes. If not given, all classes
             are supposed to have weight one.
 
@@ -255,9 +255,6 @@ class BaseLibLinear(BaseEstimator):
         self.fit_intercept = fit_intercept
         self.multi_class = multi_class
 
-        self._weight_label = np.empty(0, dtype=np.int32)
-        self._weight = np.empty(0, dtype=np.float64)
-
         # Check that the arguments given are valid:
         self._get_solver_type()
 
@@ -275,7 +272,7 @@ class BaseLibLinear(BaseEstimator):
                              + solver_type)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, Y, **params):
+    def fit(self, X, Y, class_weight={},**params):
         """
         Fit the model according to the given training data and
         parameters.
@@ -287,6 +284,9 @@ class BaseLibLinear(BaseEstimator):
             nfeatures is the number of features.
         Y : array, shape = [nsamples]
             Target vector relative to X
+        class_weight : dict , {class_label : weight}
+            Weights associated with classes. If not given, all classes
+            are supposed to have weight one.
 
         Returns
         -------
@@ -294,6 +294,12 @@ class BaseLibLinear(BaseEstimator):
             Returns self.
         """
         self._set_params(**params)
+
+
+        self._weight = np.asarray(class_weight.values(),
+                                 dtype=np.float64, order='C')
+        self._weight_label = np.asarray(class_weight.keys(),
+                                       dtype=np.int32, order='C')
 
         X = np.asanyarray(X, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')

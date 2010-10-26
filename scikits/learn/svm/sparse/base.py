@@ -160,7 +160,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
 class SparseBaseLibLinear(BaseLibLinear):
 
-    def fit(self, X, Y, **params):
+    def fit(self, X, Y, class_weight={}, **params):
         """
         Parameters
         ----------
@@ -174,6 +174,11 @@ class SparseBaseLibLinear(BaseLibLinear):
         X = sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         Y = np.asanyarray(Y, dtype=np.int32, order='C')
+
+        self._weight       = np.asarray(class_weight.values(),
+                                      dtype=np.float64, order='C')
+        self._weight_label = np.asarray(class_weight.keys(),
+                                       dtype=np.int32, order='C')
 
         self.raw_coef_, self.label_ = \
                        _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,

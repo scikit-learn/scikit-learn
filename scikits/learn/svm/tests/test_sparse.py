@@ -1,10 +1,11 @@
 import numpy as np
 import scipy.sparse
-from scikits.learn import datasets, svm
+from scikits.learn import datasets, svm, glm
 from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
 from nose.tools import assert_raises
+from scikits.learn.datasets.samples_generator import test_dataset_classif
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -92,7 +93,7 @@ def test_LinearSVC():
     sp_clf = svm.sparse.LinearSVC().fit(X, Y)
 
     assert sp_clf.fit_intercept
-    
+
     assert_array_almost_equal (clf.raw_coef_, sp_clf.raw_coef_, decimal=4)
 
     assert_array_almost_equal (clf.predict(X), sp_clf.predict(X))
@@ -114,6 +115,21 @@ def test_LinearSVC_iris():
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
     assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris.data))
+
+def test_weight():
+    """
+    Test class weights
+    """
+
+    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5,1],
+                                  seed=0)
+    X_ = scipy.sparse.csr_matrix(X_)
+    for clf in (glm.sparse.LogisticRegression(),
+                svm.sparse.LinearSVC(),
+                svm.sparse.SVC()):
+        clf.fit(X_[:180], y_[:180], class_weight={0:5})
+        y_pred = clf.predict(X_[180:])
+        assert np.sum(y_pred == y_[180:]) >= 11
 
 if __name__ == '__main__':
     import nose

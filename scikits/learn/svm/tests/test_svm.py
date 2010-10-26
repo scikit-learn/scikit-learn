@@ -9,7 +9,8 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
 from nose.tools import assert_raises
 
-from scikits.learn import svm, datasets
+from scikits.learn import svm, glm, datasets
+from scikits.learn.datasets.samples_generator import test_dataset_classif
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -19,7 +20,6 @@ true_result = [1, 2, 2]
 
 # also load the iris dataset
 iris = datasets.load_iris()
-
 
 def test_libsvm_parameters():
     """
@@ -41,7 +41,7 @@ def test_libsvm_iris():
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
-    
+
 
 def test_precomputed():
     """
@@ -58,7 +58,7 @@ def test_precomputed():
     pred = clf.predict(KT)
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
-    assert_array_equal(clf.support_, [1, 3])    
+    assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [1, 3])
     assert_array_equal(pred, true_result)
@@ -212,6 +212,13 @@ def test_weight():
     clf.fit(X, Y, {1: 0.1})
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2] * 6)
+
+    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5,1],
+                                  seed=0)
+    for clf in (glm.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
+        clf.fit(X_[:180], y_[:180], class_weight={0:5})
+        y_pred = clf.predict(X_[180:])
+        assert np.sum(y_pred == y_[180:]) >= 11
 
 
 def test_error():
