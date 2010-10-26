@@ -317,6 +317,8 @@ def f1_score(y_true, y_pred):
 def zero_one(y_true, y_pred):
     """Zero-One classification loss
 
+    Positive integer (number of misclassifications). The best score is 0.
+
     return the number of differences
     """
     return np.sum(y_pred != y_true)
@@ -325,13 +327,19 @@ def zero_one(y_true, y_pred):
 def mean_square_error(y_true, y_pred):
     """Mean square error regression loss
 
+    Positive floating point value: the best value is 0.0.
+
     return the mean square error
     """
-    return np.linalg.norm(y_pred != y_true) ** 2
+    return np.linalg.norm(y_pred - y_true) ** 2
 
 
 def explained_variance(y_true, y_pred):
     """Explained variance regression loss
+
+    Best possible score is 1.0, lower values are worst.
+
+    Note: the explained variance is not a symmetric function.
 
     return the explained variance
     """
