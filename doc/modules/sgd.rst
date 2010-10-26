@@ -18,7 +18,7 @@ to problems with more than 10^5 training examples and more than 10^4 features.
 
 The advantages of Stochastic Gradient Descent are:
 
-    - Efficiency
+    - Efficiency.
 
     - Ease of implementation (lots of opportunities for code tuning). 
 
@@ -27,15 +27,14 @@ The disadvantages of Stochastic Gradient Descent include:
     - SGD requires a number of hyperparameters including the regularization
       parameter and the number of iterations. 
 
-    - SGD is sensitive to feature scaling. If your features do not have 
-      an intrinsic scale (e.g. after applying PCA), make sure you standardize
-      them to zero mean and unit variance. 
+    - SGD is sensitive to feature scaling. 
 
-    - SVMs do not directly provide probability estimates, so these
-      must be calculated using indirect techniques. In our case, these
-      techniques imply conducting five-fold cross-validation, so
-      performance can suffer.  See method predict_proba for more
-      information.
+Classification
+==============
+
+.. topic:: Examples:
+
+ * :ref:`example_sgd_plot_separating_hyperplane.py`,
 
 .. currentmodule:: scikits.learn.svm.sparse
 
@@ -55,7 +54,6 @@ For maximum efficiency, use the CSR matrix format as defined in
 
 Implemented classes are :class:`SGD`.
 
-
 Complexity
 ==========
 
@@ -63,7 +61,7 @@ The major advantage of SGD is its efficiency, which is basically
 linear in the number of training examples. Recent theoretical 
 results, however, show that the runtime to get some desired optimization 
 accuracy does not increase as the training set size increases. 
-In fact, for PEGASOS training indeed decreases as the size of the training set 
+For PEGASOS, training time indeed decreases as the size of the training set 
 increases.
 
 Tips on Practical Use
@@ -81,11 +79,12 @@ Tips on Practical Use
     not needed. 
 
   * Finding a reasonable regularization term :math:`\alpha` is 
-    best done using grid search. 
+    best done using grid search `for alpha in 10.0**-np.arange(1,7)`.
 
-  * Empirically, I found that SGD converges after observing 
+  * Empirically, we found that SGD converges after observing 
     approx. 10^6 training examples. Thus, a reasonable first guess 
-    for the number of iterations is `n_iter = 10**6 / n`.
+    for the number of iterations is `n_iter = np.ceil(10**6 / n)`, 
+    where `n` is the size of the training set.
 
 .. _sgd_mathematical_formulation:
 
@@ -102,18 +101,33 @@ training error given by
 
 .. math::
 
-    E(w,b) = \sum_{i=1, l} L(y_i, f(x_i)) + \alpha R(w)
+    E(w,b) = \sum_{i=1}^{n} L(y_i, f(x_i)) + \alpha R(w)
 
 where :math:`L` is a loss function that measures model (mis)fit and :math:`R` is a
 regularization term (aka penalty) that penalizes model complexity; :math:`\alpha > 0`
 is a non-negative hyperparameter. 
 
+Different choices for :math:`L` entail different classifiers such as 
 
+   - Hinge: (soft-margin) Support Vector Machines.
+   - Log:   Logistic Regression.
+   - Least-Squares: Ridge Regression. 
 
+All of the above loss functions can be regarded as an upper bound on the 
+misclassification error (0-1 loss) as shown on the Figure below. 
 
 .. figure:: ../auto_examples/sgd/images/plot_loss_functions.png
    :align: center
    :scale: 50
+
+Popular choices for :math:`R` include:
+
+   - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{i=1}^{n} w_i^2`, 
+   - L1 norm: :math:`R(w) := \sum_{i=1}^{n} |w_i|`, which leadsin sparse solutions.
+   - Elastic Net: :math:`R(w) := \rho \frac{1}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1. 
+
+The Figure below shows the contours of the different regularization terms 
+in the parameter space when :math:`R(w) = 1`. 
 
 .. figure:: ../auto_examples/sgd/images/plot_penalties.png
    :align: center
@@ -127,39 +141,36 @@ optimization problems. In contrast to (batch) gradient descent, SGD
 approximates the true gradient of :math:`E(w,b)` by considering a 
 single training example at a time. 
 
-The class SGD implements a simple first-order SGD learning routine, which 
-considers the first derivative of the loss function. The algorithm iterates
-over the training examples and for each example updates the model parameters 
-according to the update rule given by
+The class SGD implements a first-order SGD learning routine. The algorithm 
+iterates over the training examples and for each example updates the model 
+parameters according to the update rule given by
 
 .. math::
 
-    w <- w + ...
+    w \leftarrow w - \eta (\alpha \frac{\partial R(w)}{\partial w} 
+    + \frac{\partial L(w^T x_i + b, y_i)}{\partial w})
 
-
-
+where :math:`\eta` is the learning rate which controls the step-size 
+in the parameter space. 
+The intercept :math:`b` is updated similarly but without regularization.
 
 .. TODO multiclass case ?/
 
-This parameters can be accessed through the members support\_ and intercept\_:
+The model parameters can be accessed through the members coef\_ and intercept\_:
 
-     - Member support\_ holds the product :math:`y^T \alpha`
+     - Member coef\_ holds the weights :math:`w`
 
-     - Member intercept\_ of the classifier holds :math:`-\rho`
+     - Member intercept\_ holds :math:`b`
 
 .. topic:: References:
-
- * `"Pegasos: Primal estimated sub-gradient solver for svm" 
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
-   S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
-
- * `"Stochastic gradient descent training for l1-regularized log-linear models with cumulative penalty"
-   <www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
-   Y. Tsuruoka, J. Tsujii, S. Ananiadou -  In Proceedings of the AFNLP/ACL '09.
 
  * `"Solving large scale linear prediction problems using stochastic gradient descent algorithms"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_ 
    T. Zhang - In Proceedings of ICML '04.
+
+ * `"Pegasos: Primal estimated sub-gradient solver for svm" 
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+   S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
    
  * `"Regularization and variable selection via the elastic net"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_ 
@@ -169,21 +180,29 @@ This parameters can be accessed through the members support\_ and intercept\_:
 Frequently Asked Questions
 ==========================
 
-     * Q: Can I get the indices of the support vectors instead of the
-       support vectors ?
 
-       A: The underlying C implementation does not provide this
-       information.
 
 
 Implementation details
 ======================
 
-The implementation of SGD is based on the `Stochastic Gradient SVM 
+The implementation of SGD is influenced by the `Stochastic Gradient SVM 
 <http://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD, 
 the weight vector is represented as the product of a scalar and a vector 
-which allows an efficient weight update in the case of L2 regularization. 
+which allows an efficient weight update in the case of L2 regularization
+and the intercept is updated with a smaller learning rate (multiplied by 0.01) 
+to account for the fact that it is updated more frequently. 
+
+For L1 regularization (and the Elastic Net) we use the truncated gradient
+algorithm proposed by Tsuruoka et al. 2009. 
+
 The code is written in Cython.
 
 .. topic:: References:
 
+ * `"Stochastic Gradient Descent" <leon.bottou.org/projects/sgd>`_
+    L. Bottou - Website, 2010
+
+ * `"Stochastic gradient descent training for l1-regularized log-linear models with cumulative penalty"
+   <www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
+   Y. Tsuruoka, J. Tsujii, S. Ananiadou -  In Proceedings of the AFNLP/ACL '09.

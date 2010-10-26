@@ -45,8 +45,8 @@ pl.plot(xs, -1.0 * el(xs, alpha), "y-")
 pl.plot(-1*xs, el(xs, alpha), "y-")
 pl.plot(-1*xs, -1.0 * el(xs, alpha), "y-")
 
-pl.xlabel(r"$\beta_0$")
-pl.ylabel(r"$\beta_1$")
+pl.xlabel(r"$w_0$")
+pl.ylabel(r"$w_1$")
 pl.legend()
 
 pl.axis("equal")
