@@ -25,6 +25,7 @@ from . import lda
 from . import metrics
 from . import svm
 from . import feature_selection
+from . import sgd
 
 try:
     from numpy.testing import nosetester
@@ -42,9 +43,9 @@ try:
 except:
     pass
 
-__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance',
-           'datasets', 'gmm', 'glm', 'lda', 'metrics', 'svm',
-           'features', 'clone', 'test']
+__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets', 'gmm', 'glm',
+           'logistic', 'lda', 'metrics', 'svm', 'features', 'clone', 
+           'test', 'sgd']
 
 __version__ = '0.6.git'
 
