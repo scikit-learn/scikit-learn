@@ -24,6 +24,8 @@ from ..base import BaseLibSVM, BaseLibLinear
 from ._libsvm_sparse import libsvm_sparse_train, \
      libsvm_sparse_predict, set_verbosity_wrap
 
+from .. import _liblinear
+
 class SparseBaseLibSVM(BaseLibSVM):
 
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
@@ -155,6 +157,43 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.probability, self.n_support, self.label_,
                       self.probA_, self.probB_)
 
+
+class SparseBaseLibLinear(BaseLibLinear):
+
+    def fit(self, X, Y, **params):
+        """
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        Y : array, shape = [n_samples]
+            Target vector relative to X
+        """
+        self._set_params(**params)
+        X = sparse.csr_matrix(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        Y = np.asanyarray(Y, dtype=np.int32, order='C')
+
+        self.raw_coef_, self.label_ = \
+                       _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
+                       X.indptr, Y,
+                       self._get_solver_type(),
+                       self.eps, self._get_bias(), self.C, self._weight_label,
+                       self._weight)
+        return self
+
+    def predict(self, T):
+        T = sparse.csr_matrix(T)
+        T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
+        return _liblinear.csr_predict_wrap(T.shape[1],
+                                      T.data, T.indices, T.indptr,
+                                      self.raw_coef_,
+                                      self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self._get_bias())
 
 
 set_verbosity_wrap(0)
