@@ -86,6 +86,11 @@ Tips on Practical Use
     for the number of iterations is `n_iter = np.ceil(10**6 / n)`, 
     where `n` is the size of the training set.
 
+.. topic:: References:
+
+ * `"Efficient BackProp" <yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_ 
+   Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks of the Trade 1998.
+
 .. _sgd_mathematical_formulation:
 
 Mathematical formulation
