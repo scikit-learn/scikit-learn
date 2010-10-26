@@ -5,11 +5,9 @@
 import numpy as np
 
 def confusion_matrix(y, y_):
-    """
-    compute confusion matrix
-    to evaluate the accuracy of a classification result
+    """Compute confusion matrix to evaluate the accuracy of a classification
 
-    By definition a confusion matrix cm is such that
+    By definition a confusion matrix cm is such that:
 
     cm[i,j] is equal to the number of observations known to be in group i
     but predicted to be in group j
@@ -91,8 +89,7 @@ def roc_curve(y, probas_):
 
 
 def auc(x, y):
-    """Compute Area Under the Curve (AUC)
-    using the trapezoidal rule
+    """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     Parameters
     ==========
@@ -111,12 +108,19 @@ def auc(x, y):
     x = np.asanyarray(x)
     y = np.asanyarray(y)
     h = np.diff(x)
-    area = np.sum(h * (y[1:]+y[:-1])) / 2.0
+    area = np.sum(h * (y[1:] + y[:-1])) / 2.0
     return area
 
+
 def precision(y_true, y_pred):
-    """
-    Compute precision.
+    """Compute the precision
+
+    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
+    true positives and fp the number of false positives. The precision is
+    intuitively the ability of the classifier not to label as positive a sample
+    that is negative.
+
+    The best value is 1 and the worst value is 0.
 
     Parameters
     ==========
@@ -134,9 +138,15 @@ def precision(y_true, y_pred):
     false_pos = np.sum(y_true[y_pred == 1]==0)
     return true_pos / float(true_pos + false_pos)
 
+
 def recall(y_true, y_pred):
-    """
-    Compute recall.
+    """Compute the recall
+
+    The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
+    true positives and fn the number of false negatives. The recall is
+    intuitively the ability of the classifier to find all the positive samples.
+
+    The best value is 1 and the worst value is 0.
 
     Parameters
     ==========
@@ -154,9 +164,18 @@ def recall(y_true, y_pred):
     false_neg = np.sum(y_true[y_pred == 0]==1)
     return true_pos / float(true_pos + false_neg)
 
+
 def precision_recall(y_true, y_pred):
-    """
-    Compute precision and recall.
+    """Compute precision and recall at the same time.
+
+    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
+    true positives and fp the number of false positives. The precision is
+    intuitively the ability of the classifier not to label as positive a sample
+    that is negative.
+
+    The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
+    true positives and fn the number of false negatives. The recall is
+    intuitively the ability of the classifier to find all the positive samples.
 
     Parameters
     ==========
@@ -182,9 +201,18 @@ def precision_recall(y_true, y_pred):
     recall = true_pos / float(true_pos + false_neg)
     return precision, recall
 
+
 def precision_recall_curve(y, probas_):
-    """
-    Compute precision-recall pairs for different probability thresholds.
+    """Compute precision-recall pairs for different probability thresholds
+
+    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
+    true positives and fp the number of false positives. The precision is
+    intuitively the ability of the classifier not to label as positive a sample
+    that is negative.
+
+    The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
+    true positives and fn the number of false negatives. The recall is
+    intuitively the ability of the classifier to find all the positive samples.
 
     Parameters
     ==========
@@ -219,9 +247,17 @@ def precision_recall_curve(y, probas_):
     recall[-1] = 0.0
     return precision, recall, thresholds
 
+
 def fbeta_score(y_true, y_pred, beta):
-    """
-    Compute fbeta score.
+    """Compute fbeta score
+
+    The F_beta score can be interpreted as a weighted average of the precision
+    and recall, where an F_beta score reaches its best value at 1 and worst
+    score at 0.
+
+    F_beta weights recall beta as much as precision.
+
+    See: http://en.wikipedia.org/wiki/F1_score
 
     Parameters
     ==========
@@ -240,11 +276,20 @@ def fbeta_score(y_true, y_pred, beta):
     assert(beta > 0)
     p, r = precision_recall(y_true, y_pred)
     beta2 = beta ** 2
-    return (1+beta2) * (p * r) / (beta2 * p + r)
+    return (1 + beta2) * (p * r) / (beta2 * p + r)
+
 
 def f1_score(y_true, y_pred):
-    """
-    Compute f1 score.
+    """Compute f1 score
+
+    The F1 score can be interpreted as a weighted average of the precision
+    and recall, where an F1 score reaches its best value at 1 and worst
+    score at 0. The relative contribution of precision and recall to the f1
+    score are equal.
+
+        :math:`F_1 = 2 \cdot \frac{p \cdot r}{p + r}`
+
+    See: http://en.wikipedia.org/wiki/F1_score
 
     Parameters
     ==========
@@ -270,22 +315,25 @@ def f1_score(y_true, y_pred):
 
 
 def zero_one(y_true, y_pred):
-    """Zero-One loss
-    returns the number of differences
+    """Zero-One classification loss
+
+    return the number of differences
     """
     return np.sum(y_pred != y_true)
 
 
 def mean_square_error(y_true, y_pred):
-    """Mean Square Error
-    returns the mean square error
+    """Mean square error regression loss
+
+    return the mean square error
     """
     return np.linalg.norm(y_pred != y_true) ** 2
 
 
 def explained_variance(y_true, y_pred):
-    """Explained variance
-    returns the explained variance
+    """Explained variance regression loss
+
+    return the explained variance
     """
     return 1 - np.var(y_true - y_pred) / np.var(y_true)
 
