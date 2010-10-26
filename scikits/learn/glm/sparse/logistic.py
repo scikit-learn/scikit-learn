@@ -9,10 +9,10 @@ import numpy as np
 from scipy import sparse
 
 from ...base import ClassifierMixin
-from ...svm.base import BaseLibLinear
+from ...svm.sparse.base import SparseBaseLibLinear
 from ...svm._liblinear import csr_predict_prob
 
-class LogisticRegression(BaseLibLinear, ClassifierMixin):
+class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
     """
     Logistic Regression.
 
