@@ -32,6 +32,77 @@ The disadvantages of Stochastic Gradient Descent include:
 Classification
 ==============
 
+Currently, this module provides functionality for binary classification only. The
+class :class:`SGD` implements a plain stochastic gradient descent learning routine 
+which supports different convex loss functions and penalties.
+
+As other classifiers, SGD has to be fitted with two arrays:
+an array X of size [m_samples, n_features] holding the training
+samples, and an array Y of size [n_samples] holding the target values
+(class labels) for the training samples::
+
+    >>> from scikits.learn import sgd
+    >>> X = [[0., 0.], [1., 1.]]
+    >>> Y = [0, 1]
+    >>> clf = sgd.sparse.SGD(loss="hinge", penalty="l2")
+    >>> clf.fit(X, Y)
+    SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5, penalty='l2',
+      coef_=array([-9.9009, -9.9009]), rho=1.0, alpha=0.0001,
+      intercept_=0.398111820662)
+
+After being fitted, the model can then be used to predict new values::
+
+    >>> clf.predict([[2., 2.]])
+    array([ 1.])
+
+SGD fits a linear model to the training data. The member `coef_` holds the 
+model parameters:
+
+    >>> clf.coef_
+    array([-9.90090187, -9.90090187])
+
+Member `intercept_` holds the intercept (aka offset or bias):
+
+    >>> clf.intercept_
+    0.39811182066217121
+
+Whether or not the model should use an intercept, i.e. a biased hyperplane, is 
+controlled by the parameter `fit_intercept`.
+
+To get the signed distance to the hyperplane use `predict_margin`:
+
+    >>> clf.predict_margin([[2., 2.]])
+    array([ 39.20549567])
+
+If `loss="log"` you get a probability estimate P(y=C|x) using `predict_proba`, where `C` is the largest class label: 
+   
+    >>> clf = sgd.sparse.SGD(loss="log").fit(X, Y)
+    >>> clf.predict_proba([[1., 1.]])
+    array([ 0.9999528])
+
+The concrete loss function can be set via the `loss` parameter. `SGD` supports the
+following loss functions: 
+
+  - `loss="hinge"`: (soft-margin) linear Support Vector Machine.
+  - `loss="modifiedhuber"`: smoothed hinge loss. 
+  - `loss="log"`: Logistic Regression
+
+The first two loss functions are lazy, they only update the model parameters if 
+an example violates the margin constraint, which makes training very efficient. 
+Log loss, on the other hand, provides probability estimates.
+
+The concrete penalty can be set via the `penalty` parameter. `SGD` supports the
+following penalties: 
+
+  - `penalty="l2"`: L2 norm penalty on `coef_`.
+  - `penalty="l1"`: L1 norm penalty on `coef_`.
+  - `penalty="elasticnet"`: `rho * L2 + (1 - rho) * L1`. 
+
+The default setting is `penalty="l2"`. The L1 penalty leads to sparse solutions, 
+that is most coefficients are zero. The Elastic Net solves some deficiencies of 
+the L1 penalty in the presence of highly correlated attributes. The parameter `rho`
+has to be specified by the user. 
+
 .. topic:: Examples:
 
  * :ref:`example_sgd_plot_separating_hyperplane.py`,
