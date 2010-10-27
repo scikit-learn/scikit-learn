@@ -82,7 +82,7 @@ cdef class ModifiedHuber(Classification):
     See T. Zhang 'Solving Large Scale Linear Prediction Problems Using
     Stochastic Gradient Descent', ICML'04.
     """
-    cpdef double loss(self, double p,double y):
+    cpdef double loss(self, double p, double y):
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -129,18 +129,16 @@ cdef class Log(Classification):
 
     cpdef double loss(self, double p, double y):
         cdef double z = p * y
-<<<<<<< HEAD
-        # TODO: explain where does this 18 comes from
-=======
->>>>>>> 280eaec... sgd module code review
+        # approximately equal and saves the computation of the log
         if z > 18:
             return exp(-z)
         if z < -18:
-            return -z * y
+            return -z * y 
         return log(1.0+exp(-z))
 
     cpdef double dloss(self, double p, double y):
         cdef double z = p * y
+        # approximately equal and saves the computation of the log
         if z > 18.0:
             return exp(-z) * y
         if z < -18.0:
