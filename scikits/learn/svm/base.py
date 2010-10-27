@@ -5,8 +5,6 @@ from ._libsvm import libsvm_train, libsvm_predict, libsvm_predict_proba, \
 from . import _liblinear
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 
-#
-# TODO: some cleanup: is n_support_ really needed ?
 
 class BaseLibSVM(BaseEstimator):
     """
@@ -57,7 +55,8 @@ class BaseLibSVM(BaseEstimator):
 
     def fit(self, X, y, class_weight={}):
         """
-        Fit the SVM model according to the given training data and parameters.
+        Fit the SVM model according to the given training data and
+        parameters.
 
         Parameters
         ----------
@@ -78,14 +77,6 @@ class BaseLibSVM(BaseEstimator):
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.float64, order='C')
-
-        # container for when we call fit
-        self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
-        self.intercept_ = np.empty(0,     dtype=np.float64, order='C')
-
-        # only used in classification
-        self.n_support_ = np.empty(0, dtype=np.int32, order='C')
-
 
         if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
@@ -110,13 +101,15 @@ class BaseLibSVM(BaseEstimator):
             # if custom gamma is not provided ...
             self.gamma = 1.0/_X.shape[0]
 
-        self.support_, self.support_vectors_, self.label_, \
-                 self.probA_, self.probB_ =  libsvm_train (_X, y,
-                 solver_type, kernel_type, self.degree, self.gamma,
-                 self.coef0, self.eps, self.C, self.dual_coef_,
-                 self.intercept_, self.weight_label, self.weight,
-                 self.n_support_, self.nu, self.cache_size, self.p,
-                 int(self.shrinking), int(self.probability))
+        self.support_, self.support_vectors_, self.n_support_, \
+        self.dual_coef_, self.intercept_, self.label_, self.probA_, \
+        self.probB_ = \
+        libsvm_train( _X, Y, solver_type, kernel_type, self.degree,
+                          self.gamma, self.coef0, self.eps, self.C,
+                          self.weight_label, self.weight,
+                          self.nu, self.cache_size,
+                          self.p, int(self.shrinking),
+                          int(self.probability))
 
         return self
 
