@@ -78,8 +78,9 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
         else:
             this_score = clf.score(X[test], y_test)
         if iid:
-            this_score *= len(y_test)
-            n_test_samples += len(y_test)
+            this_n_test_samples = y.shape[0] 
+            this_score *= this_n_test_samples
+            n_test_samples += this_n_test_samples
         score += this_score
     if iid:
         score /= n_test_samples
@@ -149,7 +150,8 @@ class GridSearchCV(BaseEstimator):
                         fit_params={}, n_jobs=1, iid=True):
         assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
             "estimator should a be an estimator implementing 'fit' and "
-            "'predict' methods, %s (type %s) was passed" % (clf, type(clf))
+            "'predict' methods, %s (type %s) was passed" % 
+                    (estimator, type(estimator))
             )
         if loss_func is None:
             assert hasattr(estimator, 'score'), ValueError(
@@ -187,7 +189,7 @@ class GridSearchCV(BaseEstimator):
         """
         estimator = self.estimator
         if cv is None:
-            n_samples = len(X)
+            n_samples = X.shape[0]
             if y is not None and is_classifier(estimator):
                 cv = StratifiedKFold(y, k=3)
             else:
