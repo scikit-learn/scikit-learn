@@ -47,8 +47,8 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> clf = sgd.sparse.SGD(loss="hinge", penalty="l2")
     >>> clf.fit(X, Y)
     SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5, penalty='l2',
-      coef_=array([-9.9009, -9.9009]), rho=1.0, alpha=0.0001,
-      intercept_=0.398111820662)
+      coef_=array([ 9.9009,  9.9009]), rho=1.0, alpha=0.0001,
+      intercept_=-0.398111820662)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -59,12 +59,12 @@ SGD fits a linear model to the training data. The member `coef_` holds the
 model parameters:
 
     >>> clf.coef_
-    array([-9.90090187, -9.90090187])
+    array([ 9.90090187,  9.90090187])
 
 Member `intercept_` holds the intercept (aka offset or bias):
 
     >>> clf.intercept_
-    0.39811182066217121
+    -0.39811182066217121
 
 Whether or not the model should use an intercept, i.e. a biased hyperplane, is 
 controlled by the parameter `fit_intercept`.
@@ -217,9 +217,9 @@ optimization problems. In contrast to (batch) gradient descent, SGD
 approximates the true gradient of :math:`E(w,b)` by considering a 
 single training example at a time. 
 
-The class SGD implements a first-order SGD learning routine. The algorithm 
-iterates over the training examples and for each example updates the model 
-parameters according to the update rule given by
+The class :class:`SGD` implements a first-order SGD learning routine. 
+The algorithm iterates over the training examples and for each example 
+updates the model parameters according to the update rule given by
 
 .. math::
 
