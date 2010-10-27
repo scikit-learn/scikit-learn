@@ -14,8 +14,8 @@ Y2 = [2, 1, 0]
 iris = datasets.load_iris()
 
 def test_predict_2_classes():
-    """
-    Simple sanity check on a 2 classes dataset.
+    """Simple sanity check on a 2 classes dataset
+
     Make sure it predicts the correct result on simple datasets.
     """
     clf = logistic.LogisticRegression().fit(X, Y1)
@@ -32,9 +32,7 @@ def test_predict_2_classes():
 
 
 def test_error():
-    """
-    test for appropriate exception on errors
-    """
+    """Test for appropriate exception on errors"""
     assert_raises (ValueError, logistic.LogisticRegression(C=-1).fit, X, Y1)
 
 
@@ -58,3 +56,4 @@ def test_predict_iris():
 if __name__ == '__main__':
     import nose
     nose.runmodule()
+
