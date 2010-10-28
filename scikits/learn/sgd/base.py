@@ -7,39 +7,42 @@ from ..base import BaseEstimator
 
 
 class LinearModel(BaseEstimator):
-    """Linear Model trained by regularized Stochastic Gradient Descent
+    """Linear Model trained by minimizing a regularized training
+    error using SGD.
 
-    SGD works by iteratively minimizing (sample by sample) the sum a
-    running estimate of a loss function (e.g. hinge loss or quadratic
-    loss) and a regularizer (e.g. the squared euclidean (L2) norm of the
-    coefs) that encodes apriori knowledge of the distribution of the coefs
-    (e.g. centered guaussian distribution for the L2 regularizer.
+    This implementation works on scipy.sparse X and dense coef_.
 
     Parameters
     ----------
     loss : str, ('hinge'|'log'|'modifiedhuber')
-        The loss function to be used.
+        The loss function to be used. Defaults to 'hinge'. 
     penalty : str, ('l2'|'l1'|'elasticnet')
-        The penalty (aka regularization term) to be used.
+        The penalty (aka regularization term) to be used. Defaults to 'l2'.
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
     rho : float
         The Elastic Net mixing parameter, with 0 < rho <= 1.
+        Defaults to 0.85.
     coef_ : ndarray of shape n_features
-        The initial coeffients to warm-start the optimization
+        The initial coeffients to warm-start the optimization.
     intercept_ : float
-        The initial intercept to warm-start the optimization
+        The initial intercept to warm-start the optimization.
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
-        data is assumed to be already centered.
+        data is assumed to be already centered. Defaults to True.
     n_iter: int
         The number of passes over the training data (aka epochs).
+        Defaults to 5. 
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
+    verbose: int
+        Verbose output. If > 0, learning statistics are printed to stdout.
+        Defaults to 0.
 
     Attributes
     ----------
+    FIXME adhere to SVM signature [n_classes, n_features].
     `coef_` : array, shape = [n_features]
         Weights asigned to the features.
 
@@ -67,8 +70,9 @@ class LinearModel(BaseEstimator):
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 rho=0.85, coef_=None, intercept_=0.0,
-                 fit_intercept=True, n_iter=5, shuffle=False):
+                 rho=0.85, coef_=None, intercept_=None,
+                 fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0):
         self.loss = loss
         self.penalty = penalty
         self.alpha = alpha
@@ -82,6 +86,7 @@ class LinearModel(BaseEstimator):
         if not isinstance(shuffle, bool):
             raise ValueError("shuffle must be either True or False")
         self.shuffle = shuffle
+        self.verbose = verbose
         self._get_loss_function()
         self._get_penalty_type()
 
