@@ -39,8 +39,8 @@ def test_sgd():
     """Check that sparse SGD gives any results :-)"""
 
     clf = sgd.sparse.SGD(penalty='l2', alpha=0.01,
-             fit_intercept=True,
-             n_iter=10, shuffle=True)
+                         fit_intercept=True,
+                         n_iter=10, shuffle=True)
     clf.fit(X, Y)
     #assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
     assert_array_equal(clf.predict(T), true_result)
@@ -65,13 +65,13 @@ def test_sgd_losses():
     """Check whether losses and hyperparameters are set properly"""
     clf = sgd.sparse.SGD(loss='hinge')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.sgd.sgd_fast_sparse.Hinge)
+                      sgd.sparse.sgd.Hinge)
     clf = sgd.sparse.SGD(loss='log')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.sgd.sgd_fast_sparse.Log)
+                      sgd.sparse.sgd.Log)
     clf = sgd.sparse.SGD(loss='modifiedhuber')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.sgd.sgd_fast_sparse.ModifiedHuber)
+                      sgd.sparse.sgd.ModifiedHuber)
     try:
         clf = sgd.sparse.SGD(loss="foobar")
     except ValueError:
@@ -102,15 +102,18 @@ def test_set_coef():
     assert clf.sparse_coef_ == None
 
 def test_sgd_multiclass():
-    """SGD is not able to handle multi class problems.
+    """Multiclass test case.
     """
-    clf = sgd.sparse.SGD()
-    try:
-        clf.fit(X2, Y2)
-    except ValueError:
-        pass
-    else:
-        assert False
+    from scikits.learn import datasets
+    iris = datasets.load_iris()
+    X = iris.data[:, :2]
+    Y = iris.target
+
+    clf = sgd.sparse.SGD(alpha=0.01, n_iter=20).fit(X, Y)
+    assert clf.coef_.shape == (3,2)
+    assert clf.intercept_.shape == (3,)
+    assert clf.predict_margin([4, 4]).shape == (1, 3)
+    assert clf.predict([4, 4]) == np.array([ 0])
 
 def test_sgd_proba():
     """Test that SGD raises NotImplementedError when clf.predict_proba
