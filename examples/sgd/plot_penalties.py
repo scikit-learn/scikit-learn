@@ -16,9 +16,9 @@ def l2(xs): return np.array([np.sqrt(1.0-x**2.0) for x in xs])
 
 def el(xs, z):
     return np.array([(2 - 2*x - 2*z + 4*x*z -
-		   (4*z**2 - 8*x*z**2 + 8*x**2*z**2 -
-		    16*x**2*z**3 + 8*x*z**3 + 4*x**2*z**4)**(1/2) -
-		   2*x*z**2)/(2 - 4*z) for x in xs])
+                   (4*z**2 - 8*x*z**2 + 8*x**2*z**2 -
+                    16*x**2*z**3 + 8*x*z**3 + 4*x**2*z**4)**(1/2) -
+                   2*x*z**2)/(2 - 4*z) for x in xs])
 
 def cross(ext):
     pl.plot([-ext,ext],[0,0], "k-")

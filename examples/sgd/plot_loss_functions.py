@@ -20,11 +20,11 @@ xx = np.linspace(xmin, xmax, 100)
 pl.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], 'k-', label="Zero-one loss")
 pl.plot(xx, [hinge.loss(x,1) for x in xx], 'g-', label="Hinge loss")
 pl.plot(xx, [log_loss(x,1) for x in xx], 'r-', label="Log loss")
-pl.plot(xx, [modified_huber.loss(x,1) for x in xx], 'y-', label="Modified huber loss")
+pl.plot(xx, [modified_huber.loss(x,1) for x in xx], 'y-',
+	label="Modified huber loss")
 pl.ylim((0, 5))
 pl.legend(loc="upper right")
 pl.xlabel(r"$y \cdot f(x)$")
 pl.ylabel("$L(y, f(x))$")
-#pl.axis('tight')
 pl.show()
 
