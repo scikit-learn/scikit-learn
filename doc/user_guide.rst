@@ -11,6 +11,7 @@ Supervised learning
 .. toctree::
 
     modules/svm
+    modules/sgd
     modules/glm
     modules/neighbors
     modules/logistic
