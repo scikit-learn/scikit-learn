@@ -1,8 +1,11 @@
+"""Utilities to evaluate the predictive performance of models"""
+
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD Style.
 
 import numpy as np
+
 
 def confusion_matrix(y, y_):
     """Compute confusion matrix to evaluate the accuracy of a classification
@@ -38,10 +41,10 @@ def confusion_matrix(y, y_):
     labels = np.unique(labels)
     n_labels = labels.size
 
-    cm = np.empty((n_labels,n_labels))
+    cm = np.empty((n_labels, n_labels))
     for i, label_i in enumerate(labels):
         for j, label_j in enumerate(labels):
-            cm[i,j] = np.sum(np.logical_and(y==label_i, y_==label_j))
+            cm[i, j] = np.sum(np.logical_and(y == label_i, y_ == label_j))
 
     return cm
 
@@ -77,13 +80,15 @@ def roc_curve(y, probas_):
     probas_ = probas_.ravel()
     thresholds = np.sort(np.unique(probas_))[::-1]
     n_thresholds = thresholds.size
+
     tpr = np.empty(n_thresholds) # True positive rate
     fpr = np.empty(n_thresholds) # False positive rate
-    n_pos = float(np.sum(y==1)) # nb of true positive
-    n_neg = float(np.sum(y==0)) # nb of true negative
+    n_pos = float(np.sum(y == 1)) # nb of true positive
+    n_neg = float(np.sum(y == 0)) # nb of true negative
+
     for i, t in enumerate(thresholds):
-        tpr[i] = np.sum(y[probas_>=t]==1) / n_pos
-        fpr[i] = np.sum(y[probas_>=t]==0) / n_neg
+        tpr[i] = np.sum(y[probas_ >= t] == 1) / n_pos
+        fpr[i] = np.sum(y[probas_ >= t] == 0) / n_neg
 
     return fpr, tpr, thresholds
 
@@ -134,8 +139,8 @@ def precision(y_true, y_pred):
     =======
     precision : float
     """
-    true_pos = np.sum(y_true[y_pred == 1]==1)
-    false_pos = np.sum(y_true[y_pred == 1]==0)
+    true_pos = np.sum(y_true[y_pred == 1] == 1)
+    false_pos = np.sum(y_true[y_pred == 1] == 0)
     return true_pos / float(true_pos + false_pos)
 
 
@@ -160,8 +165,8 @@ def recall(y_true, y_pred):
     =======
     recall : float
     """
-    true_pos = np.sum(y_true[y_pred == 1]==1)
-    false_neg = np.sum(y_true[y_pred == 0]==1)
+    true_pos = np.sum(y_true[y_pred == 1] == 1)
+    false_neg = np.sum(y_true[y_pred == 0] == 1)
     return true_pos / float(true_pos + false_neg)
 
 
@@ -194,9 +199,9 @@ def precision_recall(y_true, y_pred):
     ==========
     http://en.wikipedia.org/wiki/Precision_and_recall
     """
-    true_pos = np.sum(y_true[y_pred == 1]==1)
-    false_pos = np.sum(y_true[y_pred == 1]==0)
-    false_neg = np.sum(y_true[y_pred == 0]==1)
+    true_pos = np.sum(y_true[y_pred == 1] == 1)
+    false_pos = np.sum(y_true[y_pred == 1] == 0)
+    false_neg = np.sum(y_true[y_pred == 0] == 1)
     precision = true_pos / float(true_pos + false_pos)
     recall = true_pos / float(true_pos + false_neg)
     return precision, recall
