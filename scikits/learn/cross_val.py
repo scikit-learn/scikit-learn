@@ -1,6 +1,4 @@
-"""
-Utilities for cross validation.
-"""
+"""Utilities for cross validation and performance evaluation"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
@@ -13,6 +11,7 @@ from .base import is_classifier, clone
 from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
+
 
 class LeaveOneOut(object):
     """Leave-One-Out cross validation iterator
@@ -42,7 +41,8 @@ class LeaveOneOut(object):
         scikits.learn.cross_val.LeaveOneOut(n=2)
         >>> for train_index, test_index in loo:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
+        ...    X_train, X_test, y_train, y_test = cross_val.split(
+        ...        train_index, test_index, X, y)
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False  True] TEST: [ True False]
         [[3 4]] [[1 2]] [2] [1]
@@ -99,7 +99,8 @@ class LeavePOut(object):
         scikits.learn.cross_val.LeavePOut(n=4, p=2)
         >>> for train_index, test_index in lpo:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
+        ...    X_train, X_test, y_train, y_test = cross_val.split(
+        ...        train_index, test_index, X, y)
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         TRAIN: [False  True False  True] TEST: [ True False  True False]
         TRAIN: [False  True  True False] TEST: [ True False False  True]
@@ -328,8 +329,8 @@ class LeaveOneLabelOut(object):
         scikits.learn.cross_val.LeaveOneLabelOut(labels=[1, 1, 2, 2])
         >>> for train_index, test_index in lol:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, \
-            test_index, X, y)
+        ...    X_train, X_test, y_train, y_test = cross_val.split(
+        ...        train_index, test_index, X, y)
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         [[5 6]
@@ -393,8 +394,8 @@ class LeavePLabelOut(object):
         scikits.learn.cross_val.LeavePLabelOut(labels=[1, 2, 3], p=2)
         >>> for train_index, test_index in lpl:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, \
-            test_index, X, y)
+        ...    X_train, X_test, y_train, y_test = cross_val.split(
+        ...       train_index, test_index, X, y)
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False False  True] TEST: [ True  True False]
         [[5 6]] [[1 2]
