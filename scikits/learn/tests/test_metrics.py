@@ -72,6 +72,15 @@ def test_roc_curve():
     assert_array_almost_equal(roc_auc, 0.80, decimal=2)
 
 
+def test_precision_recall_f1_score_binary():
+    """Test Precision Recall and F1 Score for binary classification task"""
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    p, r = precision_recall(y_true, y_pred)
+    assert_array_almost_equal(p, 0.75, 2)
+    assert_array_almost_equal(r, 0.72, 2)
+
+
 def test_precision_recall_curve():
     """Test Precision-Recall and aread under PR curve"""
     y_true, _, probas_pred = make_prediction(binary=True)
