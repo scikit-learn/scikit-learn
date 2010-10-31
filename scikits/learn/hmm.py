@@ -570,8 +570,8 @@ class GaussianHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import GaussianHMM
-    >>> GaussianHMM(n_states=2, n_dim=1)
-    GaussianHMM(n_dim=1, cvtype='diag', n_states=2, means_weight=0,
+    >>> GaussianHMM(n_states=2)
+    GaussianHMM(cvtype='diag', n_states=2, means_weight=0,
           means=array([[ 0.],
            [ 0.]]),
           covars=array([[ 1.],
@@ -587,10 +587,9 @@ class GaussianHMM(_BaseHMM):
     GMM : Gaussian mixture model
     """
 
-    def __init__(self, n_states=1, n_dim=1, cvtype='diag', startprob=None,
-                 transmat=None, labels=None, means=None, covars=None,
-                 startprob_prior=None, transmat_prior=None,
-                 means_prior=None, means_weight=0,
+    def __init__(self, n_states=1, cvtype='diag', startprob=None,
+                 transmat=None, startprob_prior=None, transmat_prior=None,
+                 labels=None, means_prior=None, means_weight=0,
                  covars_prior=1e-2, covars_weight=1):
         """Create a hidden Markov model with Gaussian emissions.
 
@@ -601,8 +600,6 @@ class GaussianHMM(_BaseHMM):
         ----------
         n_states : int
             Number of states.
-        n_dim : int
-            Dimensionality of the emissions.
         cvtype : string
             String describing the type of covariance parameters to
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
@@ -613,22 +610,12 @@ class GaussianHMM(_BaseHMM):
                                           transmat_prior=transmat_prior,
                                           labels=labels)
 
-        self._n_dim = n_dim
         self._cvtype = cvtype
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
 
-        if means is None:
-            means = np.zeros((n_states, n_dim))
-        self.means = means
-
         self.means_prior = means_prior
         self.means_weight = means_weight
-
-        if covars is None:
-            covars = _distribute_covar_matrix_to_match_cvtype(np.eye(n_dim),
-                                                              cvtype, n_states)
-        self.covars = covars
 
         self.covars_prior = covars_prior
         self.covars_weight = covars_weight
@@ -642,30 +629,34 @@ class GaussianHMM(_BaseHMM):
         """
         return self._cvtype
 
-    @property
-    def n_dim(self):
-        """Dimensionality of the emissions."""
-        return self._n_dim
-
     def _get_means(self):
         """Mean parameters for each state."""
         return self._means
 
     def _set_means(self, means):
         means = np.asanyarray(means)
-        if means.shape != (self._n_states, self._n_dim):
+        if hasattr(self, 'n_dim') and \
+               means.shape != (self._n_states, self.n_dim):
             raise ValueError('means must have shape (n_states, n_dim)')
         self._means = means.copy()
+        self.n_dim = self._means.shape[1]
 
     means = property(_get_means, _set_means)
 
     def _get_covars(self):
-        """Covariance parameters for each state."""
-        return self._covars
+        """Return covars as a full matrix."""
+        if self.cvtype == 'full':
+            return self._covars
+        elif self.cvtype == 'diag':
+            return [np.diag(cov) for cov in self._covars]
+        elif self.cvtype == 'tied':
+            return [self._covars] * self._n_states
+        elif self.cvtype == 'spherical':
+            return [np.eye(self.n_dim) * f for f in self._covars]
 
     def _set_covars(self, covars):
         covars = np.asanyarray(covars)
-        _validate_covars(covars, self._cvtype, self._n_states, self._n_dim)
+        _validate_covars(covars, self._cvtype, self._n_states, self.n_dim)
         self._covars = covars.copy()
 
     covars = property(_get_covars, _set_covars)
@@ -683,6 +674,12 @@ class GaussianHMM(_BaseHMM):
     def _init(self, obs, params='stmc'):
         super(GaussianHMM, self)._init(obs, params=params)
 
+        if hasattr(self, 'n_dim') and self.n_dim != obs.shape[2]:
+            raise ValueError('Unexpected number of dimensions, got %s but '
+                             'expected %s' % (obs.shape[2], self.n_dim))
+
+        self.n_dim = obs.shape[2]
+
         if 'm' in params:
             self._means = cluster.KMeans(
                 k=self._n_states).fit(obs[0]).cluster_centers_
@@ -696,10 +693,10 @@ class GaussianHMM(_BaseHMM):
     def _initialize_sufficient_statistics(self):
         stats = super(GaussianHMM, self)._initialize_sufficient_statistics()
         stats['post'] = np.zeros(self._n_states)
-        stats['obs'] = np.zeros((self._n_states, self._n_dim))
-        stats['obs**2'] = np.zeros((self._n_states, self._n_dim))
-        stats['obs*obs.T'] = np.zeros((self._n_states, self._n_dim,
-                                       self._n_dim))
+        stats['obs'] = np.zeros((self._n_states, self.n_dim))
+        stats['obs**2'] = np.zeros((self._n_states, self.n_dim))
+        stats['obs*obs.T'] = np.zeros((self._n_states, self.n_dim,
+                                       self.n_dim))
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
@@ -762,7 +759,7 @@ class GaussianHMM(_BaseHMM):
                 elif self._cvtype == 'diag':
                     self._covars = (covars_prior + cv_num) / cv_den
             elif self._cvtype in ('tied', 'full'):
-                cvnum = np.empty((self._n_states, self._n_dim, self._n_dim))
+                cvnum = np.empty((self._n_states, self.n_dim, self.n_dim))
                 for c in xrange(self._n_states):
                     obsmean = np.outer(stats['obs'][c], self._means[c])
 
@@ -772,7 +769,7 @@ class GaussianHMM(_BaseHMM):
                                 - obsmean - obsmean.T
                                 + np.outer(self._means[c], self._means[c])
                                 * stats['post'][c])
-                cvweight = max(covars_weight - self._n_dim, 0)
+                cvweight = max(covars_weight - self.n_dim, 0)
                 if self._cvtype == 'tied':
                     self._covars = ((covars_prior + cvnum.sum(axis=0))
                                     / (cvweight + stats['post'].sum()))
@@ -962,7 +959,7 @@ class GMMHMM(_BaseHMM):
     GaussianHMM : HMM with Gaussian emissions
     """
 
-    def __init__(self, n_states=1, n_dim=1, n_mix=1, startprob=None,
+    def __init__(self, n_states=1, n_mix=1, startprob=None,
                  transmat=None, startprob_prior=None, transmat_prior=None,
                  labels=None, gmms=None, cvtype=None):
         """Create a hidden Markov model with GMM emissions.
@@ -979,8 +976,6 @@ class GMMHMM(_BaseHMM):
                                      transmat_prior=transmat_prior,
                                      labels=labels)
 
-        self._n_dim = n_dim
-
         # XXX: Hotfit for n_mix that is incompatible with the scikit's
         # BaseEstimator API
         self.n_mix = n_mix
@@ -994,12 +989,6 @@ class GMMHMM(_BaseHMM):
                     g = GMM(n_mix, cvtype=cvtype)
                 gmms.append(g)
         self.gmms = gmms
-
-    # Read-only properties.
-    @property
-    def n_dim(self):
-        """Dimensionality of the emissions from this HMM."""
-        return self._n_dim
 
     def _compute_log_likelihood(self, obs):
         return np.array([g.score(obs) for g in self.gmms]).T

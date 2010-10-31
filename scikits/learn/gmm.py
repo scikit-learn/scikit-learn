@@ -210,7 +210,7 @@ class GMM(BaseEstimator):
     array([ 0.5,  0.5])
     """
 
-    def __init__(self, n_states=1, cvtype='diag'):
+    def __init__(self, n_states=1, cvtype='diag', labels=None):
         """Create a Gaussian mixture model
 
         Initializes parameters such that every mixture component has
@@ -234,8 +234,10 @@ class GMM(BaseEstimator):
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
 
-
-        self.labels = [None] * n_states
+        if labels is None:
+            self.labels = [None] * n_states
+        else:
+            self.labels = labels
 
     # Read-only properties.
     @property
