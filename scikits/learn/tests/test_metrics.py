@@ -95,7 +95,7 @@ def test_confusion_matrix():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[19, 6],[7, 18]])
+    assert_array_equal(cm, [[19, 6], [7, 18]])
 
 
 def test_losses():
