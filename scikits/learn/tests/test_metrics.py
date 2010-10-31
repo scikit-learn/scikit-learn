@@ -79,6 +79,7 @@ def test_precision_recall_f1_score_binary():
     p, r, f = precision_recall_fscore(y_true, y_pred)
     assert_array_almost_equal(p, 0.75, 2)
     assert_array_almost_equal(r, 0.72, 2)
+    assert_array_almost_equal(f, 0.74, 2)
 
 
 def test_precision_recall_curve():
