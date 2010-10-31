@@ -15,7 +15,7 @@ from ..metrics import explained_variance
 from ..metrics import f1_score
 from ..metrics import mean_square_error
 from ..metrics import precision
-from ..metrics import precision_recall
+from ..metrics import precision_recall_fscore
 from ..metrics import precision_recall_curve
 from ..metrics import recall
 from ..metrics import roc_curve
@@ -76,7 +76,7 @@ def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    p, r = precision_recall(y_true, y_pred)
+    p, r, f = precision_recall_fscore(y_true, y_pred)
     assert_array_almost_equal(p, 0.75, 2)
     assert_array_almost_equal(r, 0.72, 2)
 

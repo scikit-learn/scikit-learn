@@ -144,7 +144,7 @@ def precision(y_true, y_pred):
     =======
     precision : float
     """
-    return precision_recall(y_true, y_pred)[0]
+    return precision_recall_fscore(y_true, y_pred)[0]
 
 
 def recall(y_true, y_pred):
@@ -168,20 +168,48 @@ def recall(y_true, y_pred):
     =======
     recall : float
     """
-    return precision_recall(y_true, y_pred)[1]
+    return precision_recall_fscore(y_true, y_pred)[1]
 
 
-def precision_recall(y_true, y_pred):
-    """Compute precision and recall at the same time.
+def fbeta_score(y_true, y_pred, beta):
+    """Compute fbeta score
 
-    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
-    true positives and fp the number of false positives. The precision is
-    intuitively the ability of the classifier not to label as positive a sample
-    that is negative.
+    The F_beta score can be interpreted as a weighted average of the precision
+    and recall, where an F_beta score reaches its best value at 1 and worst
+    score at 0.
 
-    The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
-    true positives and fn the number of false negatives. The recall is
-    intuitively the ability of the classifier to find all the positive samples.
+    F_1 weights recall beta as much as precision.
+
+    See: http://en.wikipedia.org/wiki/F1_score
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    beta: float
+
+    Returns
+    =======
+    fbeta_score: float
+    """
+    return precision_recall_fscore(y_true, y_pred, beta=beta)[2]
+
+
+def f1_score(y_true, y_pred):
+    """Compute f1 score
+
+    The F1 score can be interpreted as a weighted average of the precision
+    and recall, where an F1 score reaches its best value at 1 and worst
+    score at 0. The relative contribution of precision and recall to the f1
+    score are equal.
+
+        :math:`F_1 = 2 \cdot \frac{p \cdot r}{p + r}`
+
+    See: http://en.wikipedia.org/wiki/F1_score
 
     Parameters
     ==========
@@ -193,19 +221,69 @@ def precision_recall(y_true, y_pred):
 
     Returns
     =======
+    f1_score: float
+
+    References
+    ==========
+    http://en.wikipedia.org/wiki/F1_score
+    """
+    return fbeta_score(y_true, y_pred, 1)
+
+
+def precision_recall_fscore(y_true, y_pred, beta=1.0):
+    """Compute precision and recall and f-measure at the same time.
+
+    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
+    true positives and fp the number of false positives. The precision is
+    intuitively the ability of the classifier not to label as positive a sample
+    that is negative.
+
+    The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
+    true positives and fn the number of false negatives. The recall is
+    intuitively the ability of the classifier to find all the positive samples.
+
+    The F_beta score can be interpreted as a weighted average of the precision
+    and recall, where an F_beta score reaches its best value at 1 and worst
+    score at 0.
+
+    The F_1 score weights recall beta as much as precision.
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        predicted targets
+
+    beta : float, 1.0 by default
+        the strength of recall versus precision in the f-score
+
+    Returns
+    =======
     precision: float
     recall : float
+    fscore : float
 
     References
     ==========
     http://en.wikipedia.org/wiki/Precision_and_recall
     """
+    assert(beta > 0)
+
     true_pos = np.sum(y_true[y_pred == 1] == 1)
     false_pos = np.sum(y_true[y_pred == 1] == 0)
     false_neg = np.sum(y_true[y_pred == 0] == 1)
+
+    # precision and recall
     precision = true_pos / float(true_pos + false_pos)
     recall = true_pos / float(true_pos + false_neg)
-    return precision, recall
+
+    # fbeta score
+    beta2 = beta ** 2
+    fscore = (1 + beta2) * (precision * recall) / (
+        beta2 * precision + recall)
+    return precision, recall, fscore
 
 
 def precision_recall_curve(y_true, probas_pred):
@@ -257,72 +335,10 @@ def precision_recall_curve(y_true, probas_pred):
     for i, t in enumerate(thresholds):
         y_pred = np.ones(len(y_true))
         y_pred[probas_pred < t] = 0
-        precision[i], recall[i] = precision_recall(y_true, y_pred)
+        precision[i], recall[i], _ = precision_recall_fscore(y_true, y_pred)
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds
-
-
-def fbeta_score(y_true, y_pred, beta):
-    """Compute fbeta score
-
-    The F_beta score can be interpreted as a weighted average of the precision
-    and recall, where an F_beta score reaches its best value at 1 and worst
-    score at 0.
-
-    F_beta weights recall beta as much as precision.
-
-    See: http://en.wikipedia.org/wiki/F1_score
-
-    Parameters
-    ==========
-    y_true : array, shape = [n_samples]
-        true targets
-
-    y_pred : array, shape = [n_samples]
-        predicted targets
-
-    beta: float
-
-    Returns
-    =======
-    fbeta_score: float
-    """
-    assert(beta > 0)
-    p, r = precision_recall(y_true, y_pred)
-    beta2 = beta ** 2
-    return (1 + beta2) * (p * r) / (beta2 * p + r)
-
-
-def f1_score(y_true, y_pred):
-    """Compute f1 score
-
-    The F1 score can be interpreted as a weighted average of the precision
-    and recall, where an F1 score reaches its best value at 1 and worst
-    score at 0. The relative contribution of precision and recall to the f1
-    score are equal.
-
-        :math:`F_1 = 2 \cdot \frac{p \cdot r}{p + r}`
-
-    See: http://en.wikipedia.org/wiki/F1_score
-
-    Parameters
-    ==========
-    y_true : array, shape = [n_samples]
-        true targets
-
-    y_pred : array, shape = [n_samples]
-        predicted targets
-
-    Returns
-    =======
-    f1_score: float
-
-    References
-    ==========
-    http://en.wikipedia.org/wiki/F1_score
-    """
-    return fbeta_score(y_true, y_pred, 1)
 
 
 ###############################################################################
