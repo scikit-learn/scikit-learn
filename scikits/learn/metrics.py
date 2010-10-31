@@ -144,9 +144,7 @@ def precision(y_true, y_pred):
     =======
     precision : float
     """
-    true_pos = np.sum(y_true[y_pred == 1] == 1)
-    false_pos = np.sum(y_true[y_pred == 1] == 0)
-    return true_pos / float(true_pos + false_pos)
+    return precision_recall(y_true, y_pred)[0]
 
 
 def recall(y_true, y_pred):
@@ -170,9 +168,7 @@ def recall(y_true, y_pred):
     =======
     recall : float
     """
-    true_pos = np.sum(y_true[y_pred == 1] == 1)
-    false_neg = np.sum(y_true[y_pred == 0] == 1)
-    return true_pos / float(true_pos + false_neg)
+    return precision_recall(y_true, y_pred)[1]
 
 
 def precision_recall(y_true, y_pred):
