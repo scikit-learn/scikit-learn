@@ -395,7 +395,7 @@ class MultinomialHMMParams(object):
     """Using example from http://en.wikipedia.org/wiki/Hidden_Markov_model
     and http://en.wikipedia.org/wiki/Viterbi_algorithm"""
     n_states = 2   # ('Rainy', 'Sunny')
-    nsymbols = 3  # ('walk', 'shop', 'clean')
+    n_symbols = 3  # ('walk', 'shop', 'clean')
     emissionprob = [[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]]
     startprob = [0.6, 0.4]
     transmat = [[0.7, 0.3], [0.4, 0.6]]
@@ -411,20 +411,20 @@ class TestMultinomialHMM(MultinomialHMMParams,
         # 'Rainy'], with probability 0.01344."
         observations = [0,1,2]
 
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
+        h = hmm.MultinomialHMM(self.n_states, self.n_symbols,
                                startprob=self.startprob,
-                               transmat=self.transmat,
-                               emissionprob=self.emissionprob)
+                               transmat=self.transmat)
+        h.emissionprob = self.emissionprob
         logprob, state_sequence = h.decode(observations)
 
         self.assertAlmostEqual(np.exp(logprob), 0.01344)
         assert_array_equal(state_sequence, [1, 0, 0])
 
     def test_attributes(self):
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols)
+        h = hmm.MultinomialHMM(self.n_states, self.n_symbols)
 
         self.assertEquals(h.n_states, self.n_states)
-        self.assertEquals(h.nsymbols, self.nsymbols)
+        self.assertEquals(h.n_symbols, self.n_symbols)
 
         h.startprob = self.startprob
         assert_array_almost_equal(h.startprob, self.startprob)
@@ -432,7 +432,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
                           2 * self.startprob)
         self.assertRaises(ValueError, h.__setattr__, 'startprob', [])
         self.assertRaises(ValueError, h.__setattr__, 'startprob',
-                          np.zeros((self.n_states - 2, self.nsymbols)))
+                          np.zeros((self.n_states - 2, self.n_symbols)))
 
         h.transmat = self.transmat
         assert_array_almost_equal(h.transmat, self.transmat)
@@ -446,16 +446,16 @@ class TestMultinomialHMM(MultinomialHMMParams,
         assert_array_almost_equal(h.emissionprob, self.emissionprob)
         self.assertRaises(ValueError, h.__setattr__, 'emissionprob', [])
         self.assertRaises(ValueError, h.__setattr__, 'emissionprob',
-                          np.zeros((self.n_states - 2, self.nsymbols)))
+                          np.zeros((self.n_states - 2, self.n_symbols)))
 
     def test_eval(self):
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
+        h = hmm.MultinomialHMM(self.n_states, self.n_symbols,
                                startprob=self.startprob,
-                               transmat=self.transmat,
-                               emissionprob=self.emissionprob)
+                               transmat=self.transmat)
+        h.emissionprob = self.emissionprob
         idx = np.repeat(range(self.n_states), 10)
         nobs = len(idx)
-        obs = [int(x) for x in np.floor(np.random.rand(nobs) * self.nsymbols)]
+        obs = [int(x) for x in np.floor(np.random.rand(nobs) * self.n_symbols)]
 
         ll, posteriors = h.eval(obs)
 
@@ -463,19 +463,19 @@ class TestMultinomialHMM(MultinomialHMMParams,
         assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
 
     def test_rvs(self, n=1000):
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
+        h = hmm.MultinomialHMM(self.n_states, self.n_symbols,
                                startprob=self.startprob,
-                               transmat=self.transmat,
-                               emissionprob=self.emissionprob)
+                               transmat=self.transmat)
+        h.emissionprob = self.emissionprob
         samples = h.rvs(n)
         self.assertEquals(len(samples), n)
-        self.assertEquals(len(np.unique(samples)), self.nsymbols)
+        self.assertEquals(len(np.unique(samples)), self.n_symbols)
 
     def test_fit(self, params='ste', n_iter=15, verbose=False, **kwargs):
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
+        h = hmm.MultinomialHMM(self.n_states, self.n_symbols,
                                startprob=self.startprob,
-                               transmat=self.transmat,
-                               emissionprob=self.emissionprob)
+                               transmat=self.transmat)
+        h.emissionprob = self.emissionprob
 
         # Create training data by sampling from the HMM.
         train_obs = [h.rvs(n=10) for x in xrange(10)]
@@ -485,7 +485,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
         h.transmat = hmm.normalize(np.random.rand(self.n_states,
                                                   self.n_states), axis=1)
         h.emissionprob = hmm.normalize(
-            np.random.rand(self.n_states, self.nsymbols), axis=1)
+            np.random.rand(self.n_states, self.n_symbols), axis=1)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)

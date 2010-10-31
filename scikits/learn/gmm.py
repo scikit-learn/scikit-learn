@@ -148,8 +148,6 @@ class GMM(BaseEstimator):
             (`n_dim`, `n_dim`)              if 'tied',
             (`n_states`, `n_dim`)           if 'diag',
             (`n_states`, `n_dim`, `n_dim`)  if 'full'
-    labels : list, len `n_states`
-        Optional labels for each mixture component.
 
     Methods
     -------
@@ -210,7 +208,7 @@ class GMM(BaseEstimator):
     array([ 0.5,  0.5])
     """
 
-    def __init__(self, n_states=1, cvtype='diag', labels=None):
+    def __init__(self, n_states=1, cvtype='diag'):
         """Create a Gaussian mixture model
 
         Initializes parameters such that every mixture component has
@@ -220,8 +218,6 @@ class GMM(BaseEstimator):
         ----------
         n_states : int
             Number of mixture components.
-        n_dim : int
-            Dimensionality of the mixture components.
         cvtype : string (read-only)
             String describing the type of covariance parameters to
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
@@ -233,11 +229,6 @@ class GMM(BaseEstimator):
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
-
-        if labels is None:
-            self.labels = [None] * n_states
-        else:
-            self.labels = labels
 
     # Read-only properties.
     @property

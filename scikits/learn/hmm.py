@@ -32,8 +32,6 @@ class _BaseHMM(BaseEstimator):
         Matrix of transition probabilities between states.
     startprob : array, shape ('n_states`,)
         Initial state occupation distribution.
-    labels : list, len `n_states`
-        Optional labels for each state.
 
     Methods
     -------
@@ -68,7 +66,7 @@ class _BaseHMM(BaseEstimator):
     # the emission distribution parameters to expose them publically.
 
     def __init__(self, n_states=1, startprob=None, transmat=None,
-                 startprob_prior=None, transmat_prior=None, labels=None):
+                 startprob_prior=None, transmat_prior=None):
         self._n_states = n_states
 
         if startprob is None:
@@ -86,10 +84,6 @@ class _BaseHMM(BaseEstimator):
         if transmat_prior is None:
             transmat_prior = 1.0
         self.transmat_prior = transmat_prior
-
-        if labels is None:
-            labels = [None] * n_states
-        self.labels = labels
 
     def eval(self, obs, maxrank=None, beamlogprob=-np.Inf):
         """Compute the log probability under the model and compute posteriors
@@ -546,8 +540,6 @@ class GaussianHMM(_BaseHMM):
             (`n_dim`, `n_dim`)              if 'tied',
             (`n_states`, `n_dim`)           if 'diag',
             (`n_states`, `n_dim`, `n_dim`)  if 'full'
-    labels : list, len `n_states`
-        Optional labels for each state.
 
     Methods
     -------
@@ -571,16 +563,12 @@ class GaussianHMM(_BaseHMM):
     --------
     >>> from scikits.learn.hmm import GaussianHMM
     >>> GaussianHMM(n_states=2)
-    GaussianHMM(cvtype='diag', n_states=2, means_weight=0,
-          means=array([[ 0.],
-           [ 0.]]),
-          covars=array([[ 1.],
-           [ 1.]]), labels=[None, None],
+    GaussianHMM(cvtype='diag', n_states=2, means_weight=0, startprob_prior=1.0,
           startprob=array([ 0.5,  0.5]),
           transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
-          startprob_prior=1.0, transmat_prior=1.0, means_prior=None,
-          covars_weight=1, covars_prior=0.01)
+          transmat_prior=1.0, means_prior=None, covars_weight=1,
+          covars_prior=0.01)
 
     See Also
     --------
@@ -589,7 +577,7 @@ class GaussianHMM(_BaseHMM):
 
     def __init__(self, n_states=1, cvtype='diag', startprob=None,
                  transmat=None, startprob_prior=None, transmat_prior=None,
-                 labels=None, means_prior=None, means_weight=0,
+                 means_prior=None, means_weight=0,
                  covars_prior=1e-2, covars_weight=1):
         """Create a hidden Markov model with Gaussian emissions.
 
@@ -607,8 +595,7 @@ class GaussianHMM(_BaseHMM):
         """
         super(GaussianHMM, self).__init__(n_states, startprob, transmat,
                                           startprob_prior=startprob_prior,
-                                          transmat_prior=transmat_prior,
-                                          labels=labels)
+                                          transmat_prior=transmat_prior)
 
         self._cvtype = cvtype
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
@@ -785,17 +772,14 @@ class MultinomialHMM(_BaseHMM):
     ----------
     n_states : int (read-only)
         Number of states in the model.
-    nsymbols : int
-        Number of symbols (TODO: explain the difference with n_states)
+    n_symbols : int
+        Number of possible symbols emitted by the model (in the observations).
     transmat : array, shape (`n_states`, `n_states`)
         Matrix of transition probabilities between states.
     startprob : array, shape ('n_states`,)
         Initial state occupation distribution.
-    emissionprob: array, shape ('n_states`, K)
-        Probability of emitting a given symbol when in each state.  K
-        is the number of possible symbols in the observations.
-    labels : list, len `n_states`
-        Optional labels for each state.
+    emissionprob: array, shape ('n_states`, 'n_symbols`)
+        Probability of emitting a given symbol when in each state.
 
     Methods
     -------
@@ -818,24 +802,20 @@ class MultinomialHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import MultinomialHMM
-    >>> MultinomialHMM(n_states=2, nsymbols=3) #doctest: +ELLIPSIS
-    MultinomialHMM(n_states=2,
-            emissionprob=array([[ ...],
-           [ ...]]),
-            labels=[None, None], startprob_prior=1.0,
-            startprob=array([ 0.5,  0.5]),
+    >>> MultinomialHMM(n_states=2, n_symbols=3)
+    ... #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    MultinomialHMM(n_states=2, startprob_prior=1.0, startprob=array([ 0.5,  0.5]),
             transmat=array([[ 0.5,  0.5],
-           [ 0.5,  0.5]]), nsymbols=3,
-            transmat_prior=1.0)
+           [ 0.5,  0.5]]),
+            transmat_prior=1.0, n_symbols=3)
     
     See Also
     --------
     GaussianHMM : HMM with Gaussian emissions
     """
 
-    def __init__(self, n_states=1, nsymbols=1, startprob=None, transmat=None,
-                 startprob_prior=None, transmat_prior=None,
-                 labels=None, emissionprob=None):
+    def __init__(self, n_states=1, n_symbols=1, startprob=None, transmat=None,
+                 startprob_prior=None, transmat_prior=None):
         """Create a hidden Markov model with multinomial emissions.
 
         Parameters
@@ -845,18 +825,13 @@ class MultinomialHMM(_BaseHMM):
         """
         super(MultinomialHMM, self).__init__(n_states, startprob, transmat,
                                              startprob_prior=startprob_prior,
-                                             transmat_prior=transmat_prior,
-                                             labels=labels)
-        self._nsymbols = nsymbols
-        if not emissionprob:
-            emissionprob = normalize(np.random.rand(self.n_states,
-                                                    self.nsymbols), 1)
-        self.emissionprob = emissionprob
+                                             transmat_prior=transmat_prior)
+        self._n_symbols = n_symbols
 
     # Read-only properties.
     @property
-    def nsymbols(self):
-        return self._nsymbols
+    def n_symbols(self):
+        return self._n_symbols
 
     def _get_emissionprob(self):
         """Emission probability distribution for each state."""
@@ -864,9 +839,9 @@ class MultinomialHMM(_BaseHMM):
 
     def _set_emissionprob(self, emissionprob):
         emissionprob = np.asanyarray(emissionprob)
-        if emissionprob.shape != (self._n_states, self._nsymbols):
+        if emissionprob.shape != (self._n_states, self._n_symbols):
             raise ValueError('emissionprob must have shape '
-                             '(n_states, nsymbols)')
+                             '(n_states, n_symbols)')
 
         self._log_emissionprob = np.log(emissionprob)
         underflow_idx = np.isnan(self._log_emissionprob)
@@ -888,12 +863,12 @@ class MultinomialHMM(_BaseHMM):
 
         if 'e' in params:
             emissionprob = normalize(np.random.rand(self._n_states,
-                                                    self._nsymbols), 1)
+                                                    self._n_symbols), 1)
             self.emissionprob = emissionprob
 
     def _initialize_sufficient_statistics(self):
         stats = super(MultinomialHMM, self)._initialize_sufficient_statistics()
-        stats['obs'] = np.zeros((self._n_states, self._nsymbols))
+        stats['obs'] = np.zeros((self._n_states, self._n_symbols))
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
@@ -926,8 +901,6 @@ class GMMHMM(_BaseHMM):
         Initial state occupation distribution.
     gmms: array of GMM objects, length 'n_states`
         GMM emission distributions for each state
-    labels : list, len `n_states`
-        Optional labels for each state.
 
     Methods
     -------
@@ -950,9 +923,14 @@ class GMMHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import GMMHMM
-    >>> GMMHMM(n_states=2, n_mix=10, n_dim=3)
+    >>> GMMHMM(n_states=2, n_mix=10, cvtype='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(n_dim=3, n_mix=10, n_states=2, cvtype=None, labels=[None, None], ...)
+    GMMHMM(n_mix=10, cvtype='diag', n_states=2, startprob_prior=1.0,
+        startprob=array([ 0.5,  0.5]),
+        transmat=array([[ 0.5,  0.5], 
+           [ 0.5,  0.5]]),            
+        transmat_prior=1.0,           
+        gmms=[GMM(cvtype='diag', n_states=10), GMM(cvtype='diag', n_states=10)])
 
     See Also
     --------
@@ -961,20 +939,17 @@ class GMMHMM(_BaseHMM):
 
     def __init__(self, n_states=1, n_mix=1, startprob=None,
                  transmat=None, startprob_prior=None, transmat_prior=None,
-                 labels=None, gmms=None, cvtype=None):
+                 gmms=None, cvtype=None):
         """Create a hidden Markov model with GMM emissions.
 
         Parameters
         ----------
         n_states : int
             Number of states.
-        n_dim : int (read-only)
-            Dimensionality of the emissions.
         """
         super(GMMHMM, self).__init__(n_states, startprob, transmat,
                                      startprob_prior=startprob_prior,
-                                     transmat_prior=transmat_prior,
-                                     labels=labels)
+                                     transmat_prior=transmat_prior)
 
         # XXX: Hotfit for n_mix that is incompatible with the scikit's
         # BaseEstimator API
