@@ -21,56 +21,78 @@ from ..metrics import recall
 from ..metrics import roc_curve
 from ..metrics import zero_one
 
-# import some data to play with
-iris = datasets.load_iris()
-X = iris.data
-y = iris.target
+def make_prediction(binary=False):
+    """Make some classification predictions on a toy dataset using a SVC
 
-# restrict to a binary classification task
-X, y = X[y != 2], y[y != 2]
+    If binary is True restrict to a binary classification problem instead of a
+    multiclass classification problem
+    """
 
-n_samples, n_features = X.shape
-p = range(n_samples)
+    # import some data to play with
+    iris = datasets.load_iris()
+    X = iris.data
+    y = iris.target
 
-random.seed(0)
-random.shuffle(p)
-X, y = X[p], y[p]
-half = int(n_samples / 2)
+    if binary:
+        # restrict to a binary classification task
+        X, y = X[y != 2], y[y != 2]
 
-# Add noisy features
-np.random.seed(0)
-X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
+    n_samples, n_features = X.shape
+    p = range(n_samples)
 
-# Run classifier
-classifier = svm.SVC(kernel='linear', probability=True)
-probas_ = classifier.fit(X[:half], y[:half]).predict_proba(X[half:])
-y_pred = classifier.predict(X[half:])
-y_true = y[half:]
+    random.seed(0)
+    random.shuffle(p)
+    X, y = X[p], y[p]
+    half = int(n_samples / 2)
+
+    # add noisy features to make the problem harder and avoid perfect results
+    np.random.seed(0)
+    X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
+
+    # run classifier, get class probabilities and label predictions
+    clf = svm.SVC(kernel='linear', probability=True)
+    probas_pred = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
+
+    if binary:
+        # only interested in probabilities of the positive case
+        # XXX: do we really want a special API for the binary case?
+        probas_pred = probas_pred[:, 1]
+
+    y_pred = clf.predict(X[half:])
+    y_true = y[half:]
+    return y_true, y_pred, probas_pred
 
 
 def test_roc_curve():
-    """test Receiver operating characteristic (ROC)"""
-    fpr, tpr, thresholds = roc_curve(y[half:], probas_[:,1])
+    """Test Area under Receiver Operating Characteristic (ROC) curve"""
+    y_true, _, probas_pred = make_prediction(binary=True)
+
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.80, decimal=2)
 
 
 def test_precision_recall_curve():
-    """test Precision-Recall"""
-    precision, recall, thresholds = precision_recall_curve(y[half:],
-                                                           probas_[:,1])
-    precision_recall_auc = auc(precision, recall)
-    assert_array_almost_equal(precision_recall_auc, 0.3197, 3)
+    """Test Precision-Recall and aread under PR curve"""
+    y_true, _, probas_pred = make_prediction(binary=True)
+
+    p, r, thresholds = precision_recall_curve(y_true, probas_pred)
+    precision_recall_auc = auc(p, r)
+    assert_array_almost_equal(precision_recall_auc, 0.32, 2)
 
 
 def test_confusion_matrix():
-    """test confusion matrix"""
+    """Test confusion matrix"""
+    y_true, y_pred, _ = make_prediction(binary=True)
+
     cm = confusion_matrix(y_true, y_pred)
     assert_array_equal(cm, [[19, 6],[7, 18]])
 
 
 def test_losses():
-    """test loss functions"""
+    """Test loss functions"""
+    y_true, y_pred, _ = make_prediction(binary=True)
+
     assert_equal(zero_one(y_true, y_pred), 13)
     assert_almost_equal(mean_square_error(y_true, y_pred), 12.999, 2)
     assert_almost_equal(mean_square_error(y_true, y_true), 0.00, 2)
@@ -80,7 +102,9 @@ def test_losses():
 
 
 def test_symmetry():
-    """test the symmetry of score and loss functions"""
+    """Test the symmetry of score and loss functions"""
+    y_true, y_pred, _ = make_prediction(binary=True)
+
     # symmetric
     assert_equal(zero_one(y_true, y_pred),
                  zero_one(y_pred, y_true))
