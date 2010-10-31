@@ -7,7 +7,7 @@
 import numpy as np
 
 
-def confusion_matrix(y, y_):
+def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix cm is such that:
@@ -18,10 +18,10 @@ def confusion_matrix(y, y_):
     Parameters
     ==========
 
-    y : array, shape = [n_samples]
+    y_true : array, shape = [n_samples]
         true targets
 
-    y_ : array, shape = [n_samples]
+    y_pred : array, shape = [n_samples]
         estimated targets
 
     Returns
@@ -33,18 +33,23 @@ def confusion_matrix(y, y_):
     ==========
     http://en.wikipedia.org/wiki/Confusion_matrix
     """
-    # removing possible NaNs in targets (they are ignored)
-    clean_y = y[np.isfinite(y)].ravel()
-    clean_y_ = y_[np.isfinite(y_)].ravel()
+    if labels is None:
+        # introspect the y signals to find the list of possible labels
+        # ignoring possible NaNs
+        clean_y_true = y_true[np.isfinite(y_true)].ravel()
+        clean_y_pred = y_pred[np.isfinite(y_pred)].ravel()
 
-    labels = np.r_[np.unique(clean_y).ravel(),np.unique(clean_y_).ravel()]
-    labels = np.unique(labels)
+        labels = np.r_[np.unique(clean_y_true).ravel(),
+                       np.unique(clean_y_pred).ravel()]
+        labels = np.unique(labels)
+
     n_labels = labels.size
 
     cm = np.empty((n_labels, n_labels))
     for i, label_i in enumerate(labels):
         for j, label_j in enumerate(labels):
-            cm[i, j] = np.sum(np.logical_and(y == label_i, y_ == label_j))
+            cm[i, j] = np.sum(
+                np.logical_and(y_true == label_i, y_pred == label_j))
 
     return cm
 
