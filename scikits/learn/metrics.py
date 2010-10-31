@@ -7,6 +7,18 @@
 import numpy as np
 
 
+def unique_labels(*list_of_labels):
+    """Extract an ordered integer array of unique labels
+
+    This implementation ignores any occurrence of NaNs.
+    """
+    list_of_labels = [np.unique(labels[np.isfinite(labels)].ravel())
+                      for labels in list_of_labels]
+    list_of_labels = np.concatenate(list_of_labels)
+    return np.unique(list_of_labels)
+
+
+
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
@@ -25,7 +37,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     Returns
     =======
-    cm : array, shape = [n_classes,n_classes]
+    cm : array, shape = [n_classes, n_classes]
         confusion matrix
 
     References
@@ -33,14 +45,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     http://en.wikipedia.org/wiki/Confusion_matrix
     """
     if labels is None:
-        # introspect the y signals to find the list of possible labels
-        # ignoring possible NaNs
-        clean_y_true = y_true[np.isfinite(y_true)].ravel()
-        clean_y_pred = y_pred[np.isfinite(y_pred)].ravel()
-
-        labels = np.r_[np.unique(clean_y_true).ravel(),
-                       np.unique(clean_y_pred).ravel()]
-        labels = np.unique(labels)
+        labels = unique_labels(y_true, y_pred)
 
     n_labels = labels.size
 
