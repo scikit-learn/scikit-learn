@@ -10,10 +10,9 @@ import numpy as np
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
-    By definition a confusion matrix cm is such that:
-
-    cm[i,j] is equal to the number of observations known to be in group i
-    but predicted to be in group j
+    By definition a confusion matrix cm is such that cm[i, j] is equal
+    to the number of observations known to be in group i but predicted
+    to be in group j
 
     Parameters
     ==========
