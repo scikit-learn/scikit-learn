@@ -802,19 +802,19 @@ class MultinomialHMM(_BaseHMM):
     Examples
     --------
     >>> from scikits.learn.hmm import MultinomialHMM
-    >>> MultinomialHMM(n_states=2, n_symbols=3)
+    >>> MultinomialHMM(n_states=2)
     ... #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    MultinomialHMM(n_states=2, startprob_prior=1.0, startprob=array([ 0.5,  0.5]),
-            transmat=array([[ 0.5,  0.5],
+    MultinomialHMM(transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
-            transmat_prior=1.0, n_symbols=3)
+            startprob_prior=1.0, n_states=2, startprob=array([ 0.5,  0.5]),
+           transmat_prior=1.0)
     
     See Also
     --------
     GaussianHMM : HMM with Gaussian emissions
     """
 
-    def __init__(self, n_states=1, n_symbols=1, startprob=None, transmat=None,
+    def __init__(self, n_states=1, startprob=None, transmat=None,
                  startprob_prior=None, transmat_prior=None):
         """Create a hidden Markov model with multinomial emissions.
 
@@ -826,12 +826,6 @@ class MultinomialHMM(_BaseHMM):
         super(MultinomialHMM, self).__init__(n_states, startprob, transmat,
                                              startprob_prior=startprob_prior,
                                              transmat_prior=transmat_prior)
-        self._n_symbols = n_symbols
-
-    # Read-only properties.
-    @property
-    def n_symbols(self):
-        return self._n_symbols
 
     def _get_emissionprob(self):
         """Emission probability distribution for each state."""
@@ -839,13 +833,15 @@ class MultinomialHMM(_BaseHMM):
 
     def _set_emissionprob(self, emissionprob):
         emissionprob = np.asanyarray(emissionprob)
-        if emissionprob.shape != (self._n_states, self._n_symbols):
+        if hasattr(self, 'n_symbols') and \
+               emissionprob.shape != (self._n_states, self.n_symbols):
             raise ValueError('emissionprob must have shape '
                              '(n_states, n_symbols)')
 
         self._log_emissionprob = np.log(emissionprob)
         underflow_idx = np.isnan(self._log_emissionprob)
         self._log_emissionprob[underflow_idx] = -np.Inf
+        self.n_symbols = self._log_emissionprob.shape[1]
 
     emissionprob = property(_get_emissionprob, _set_emissionprob)
 
@@ -863,12 +859,12 @@ class MultinomialHMM(_BaseHMM):
 
         if 'e' in params:
             emissionprob = normalize(np.random.rand(self._n_states,
-                                                    self._n_symbols), 1)
+                                                    self.n_symbols), 1)
             self.emissionprob = emissionprob
 
     def _initialize_sufficient_statistics(self):
         stats = super(MultinomialHMM, self)._initialize_sufficient_statistics()
-        stats['obs'] = np.zeros((self._n_states, self._n_symbols))
+        stats['obs'] = np.zeros((self._n_states, self.n_symbols))
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
