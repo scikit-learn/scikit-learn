@@ -212,8 +212,10 @@ def precision_recall(y_true, y_pred):
     return precision, recall
 
 
-def precision_recall_curve(y, probas_):
+def precision_recall_curve(y_true, probas_pred):
     """Compute precision-recall pairs for different probability thresholds
+
+    Note: this implementation is restricted to the binary classification task.
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
     true positives and fp the number of false positives. The precision is
@@ -226,10 +228,10 @@ def precision_recall_curve(y, probas_):
 
     Parameters
     ==========
-    y : array, shape = [n_samples]
-        true targets
+    y_true : array, shape = [n_samples]
+        true targets of binary classification in range {-1, 1} or {0, 1}
 
-    probas_ : array, shape = [n_samples]
+    probas_pred : array, shape = [n_samples]
         estimated probabilities
 
     Returns
@@ -243,16 +245,23 @@ def precision_recall_curve(y, probas_):
     thresholds : array, shape = [n]
         Thresholds on proba_ used to compute precision and recall
     """
-    y = y.ravel()
-    probas_ = probas_.ravel()
-    thresholds = np.sort(np.unique(probas_))
+    y_true = y_true.ravel()
+    labels = np.unique(y_true)
+    if np.all(labels == np.array([-1, 1])):
+        # convert {-1, 1} to boolean {0, 1} repr
+        y_true[y_true == -1] = 0
+        labels = np.array([0, 1])
+    if not np.all(labels == np.array([0, 1])):
+        raise ValueError("y_true contains non binary labels: %r" % labels)
+    probas_pred = probas_pred.ravel()
+    thresholds = np.sort(np.unique(probas_pred))
     n_thresholds = thresholds.size + 1
     precision = np.empty(n_thresholds)
     recall = np.empty(n_thresholds)
     for i, t in enumerate(thresholds):
-        y_pred = np.ones(len(y))
-        y_pred[probas_ < t] = 0
-        precision[i], recall[i] = precision_recall(y, y_pred)
+        y_pred = np.ones(len(y_true))
+        y_pred[probas_pred < t] = 0
+        precision[i], recall[i] = precision_recall(y_true, y_pred)
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds

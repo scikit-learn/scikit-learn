@@ -1,16 +1,25 @@
 import random
 import numpy as np
+import nose
 
-from numpy.testing import assert_array_equal, \
-                          assert_array_almost_equal, \
-                          assert_equal, assert_almost_equal, \
-                          assert_
+from numpy.testing import assert_
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_equal, assert_almost_equal
 
-from .. import svm, datasets
-from ..metrics import roc_curve, auc, precision_recall_curve, \
-            confusion_matrix, zero_one, explained_variance, \
-            mean_square_error, precision, recall, precision_recall, \
-            f1_score
+from .. import datasets
+from .. import svm
+from ..metrics import auc
+from ..metrics import confusion_matrix
+from ..metrics import explained_variance
+from ..metrics import f1_score
+from ..metrics import mean_square_error
+from ..metrics import precision
+from ..metrics import precision_recall
+from ..metrics import precision_recall_curve
+from ..metrics import recall
+from ..metrics import roc_curve
+from ..metrics import zero_one
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -84,7 +93,11 @@ def test_symmetry():
 
 
 def test_precision_recall_multilabel():
-    # Y[i,j] = 1 means sample i has label j
+    # temporary disabling multilabel support to implement proper multiclass
+    # support first
+    raise nose.SkipTest("XFailed Test")
+
+    # Y[i, j] = 1 means sample i has label j
     Y_true = np.array([[1, 0, 1, 0],
                        [1, 0, 0, 0],
                        [0, 0, 0, 0],
