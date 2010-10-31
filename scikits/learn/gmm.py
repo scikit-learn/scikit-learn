@@ -260,7 +260,7 @@ class GMM(BaseEstimator):
         elif self.cvtype == 'tied':
             return [self._covars] * self._n_states
         elif self.cvtype == 'spherical':
-            return [np.eye(self._n_states) * f for f in self._covars]
+            return [np.eye(self.n_dim) * f for f in self._covars]
 
     def _set_covars(self, covars):
         covars = np.asanyarray(covars)
