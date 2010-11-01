@@ -55,7 +55,7 @@ class BaseLibSVM(BaseEstimator):
             _X = X
         return kernel_type, _X
 
-    def fit(self, X, Y, class_weight={}):
+    def fit(self, X, y, class_weight={}):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -64,7 +64,7 @@ class BaseLibSVM(BaseEstimator):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
-        Y : array, shape = [n_samples]
+        y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
         class_weight : dict , {class_label : weight}
@@ -77,7 +77,7 @@ class BaseLibSVM(BaseEstimator):
             Returns self.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.float64, order='C')
+        y = np.asanyarray(y, dtype=np.float64, order='C')
 
         # container for when we call fit
         self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
@@ -101,17 +101,17 @@ class BaseLibSVM(BaseEstimator):
 
         # check dimensions
         solver_type = self._svm_types.index(self.impl)
-        if solver_type != 2 and _X.shape[0] != Y.shape[0]:
+        if solver_type != 2 and _X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s features, but Y has %s." % \
-                             (_X.shape[0], Y.shape[0]))
+                             "X has %s features, but y has %s." % \
+                             (_X.shape[0], y.shape[0]))
 
         if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
             self.gamma = 1.0/_X.shape[0]
 
         self.support_, self.support_vectors_, self.label_, \
-                 self.probA_, self.probB_ =  libsvm_train (_X, Y,
+                 self.probA_, self.probB_ =  libsvm_train (_X, y,
                  solver_type, kernel_type, self.degree, self.gamma,
                  self.coef0, self.eps, self.C, self.dual_coef_,
                  self.intercept_, self.weight_label, self.weight,
@@ -272,7 +272,7 @@ class BaseLibLinear(BaseEstimator):
                              + solver_type)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, Y, class_weight={},**params):
+    def fit(self, X, y, class_weight={},**params):
         """
         Fit the model according to the given training data and
         parameters.
@@ -282,7 +282,7 @@ class BaseLibLinear(BaseEstimator):
         X : array-like, shape = [nsamples, nfeatures]
             Training vector, where nsamples in the number of samples and
             nfeatures is the number of features.
-        Y : array, shape = [nsamples]
+        y : array, shape = [nsamples]
             Target vector relative to X
         class_weight : dict , {class_label : weight}
             Weights associated with classes. If not given, all classes
@@ -302,9 +302,9 @@ class BaseLibLinear(BaseEstimator):
                                        dtype=np.int32, order='C')
 
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int32, order='C')
+        y = np.asanyarray(y, dtype=np.int32, order='C')
         self.raw_coef_, self.label_ = \
-                       _liblinear.train_wrap(X, Y,
+                       _liblinear.train_wrap(X, y,
                        self._get_solver_type(),
                        self.eps, self._get_bias(), self.C, self._weight_label,
                        self._weight)
