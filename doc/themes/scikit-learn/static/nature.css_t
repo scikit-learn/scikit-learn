@@ -225,7 +225,7 @@ div.sphinxsidebar {
 }
 
 div.sphinxsidebar h3 {
-    text-align: center;
+    text-align: left;
     font-size: 16px;
 }
 
@@ -281,6 +281,12 @@ div.body h3 {
     padding: 10px;
     text-align: center;
     border-radius: 10px;
+    font-weight: bold;
+}
+
+div.body h2,
+div.body h3 {
+    text-align: left;
 }
 
 div.bodywrapper h1 {
