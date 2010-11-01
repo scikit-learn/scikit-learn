@@ -13,6 +13,7 @@ Generalized Linear models.
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin
+from ..metrics import explained_variance_score
 
 ###
 ### TODO: intercept for all models
@@ -43,9 +44,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
 
     def _explained_variance(self, X, y):
         """Compute explained variance a.k.a. r^2"""
-        ## TODO: this should have a tests.
-        return 1 - np.linalg.norm(y - self.predict(X))**2 \
-                         / np.linalg.norm(y)**2
+        return explained_variance_score(y, self.predict(X))
 
     def _center_data (self, X, y):
         """
@@ -64,7 +63,6 @@ class LinearModel(BaseEstimator, RegressorMixin):
             ymean = 0.
         return X, y, Xmean, ymean
 
-
     def _set_intercept(self, Xmean, ymean):
         """Set the intercept_
         """
@@ -72,7 +70,6 @@ class LinearModel(BaseEstimator, RegressorMixin):
             self.intercept_ = ymean - np.dot(Xmean, self.coef_)
         else:
             self.intercept_ = 0
-
 
     def __str__(self):
         if self.coef_ is not None:

@@ -12,7 +12,7 @@ from .. import svm
 from ..metrics import auc
 from ..metrics import classification_report
 from ..metrics import confusion_matrix
-from ..metrics import explained_variance
+from ..metrics import explained_variance_score
 from ..metrics import f1_score
 from ..metrics import mean_square_error
 from ..metrics import precision_recall_curve
@@ -209,8 +209,8 @@ def test_losses():
     assert_almost_equal(mean_square_error(y_true, y_pred), 12.999, 2)
     assert_almost_equal(mean_square_error(y_true, y_true), 0.00, 2)
 
-    assert_almost_equal(explained_variance(y_true, y_pred), -0.04, 2)
-    assert_almost_equal(explained_variance(y_true, y_true), 1.00, 2)
+    assert_almost_equal(explained_variance_score(y_true, y_pred), -0.04, 2)
+    assert_almost_equal(explained_variance_score(y_true, y_true), 1.00, 2)
 
 
 def test_symmetry():
@@ -223,8 +223,8 @@ def test_symmetry():
     assert_almost_equal(mean_square_error(y_true, y_pred),
                         mean_square_error(y_pred, y_true))
     # not symmetric
-    assert_(explained_variance(y_true, y_pred) != \
-            explained_variance(y_pred, y_true))
+    assert_(explained_variance_score(y_true, y_pred) != \
+            explained_variance_score(y_pred, y_true))
     # FIXME: precision and recall aren't symmetric either
 
 

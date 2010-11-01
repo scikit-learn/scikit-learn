@@ -505,7 +505,7 @@ def mean_square_error(y_true, y_pred):
     return np.linalg.norm(y_pred - y_true) ** 2
 
 
-def explained_variance(y_true, y_pred):
+def explained_variance_score(y_true, y_pred):
     """Explained variance regression loss
 
     Best possible score is 1.0, lower values are worst.
