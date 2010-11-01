@@ -155,7 +155,7 @@ def precision(y_true, y_pred):
     =======
     precision : float
     """
-    return precision_recall_fscore(y_true, y_pred)[0]
+    return precision_recall_fscore_support(y_true, y_pred)[0]
 
 
 def recall(y_true, y_pred):
@@ -179,7 +179,7 @@ def recall(y_true, y_pred):
     =======
     recall : array, shape = [n_unique_labels], dtype = np.double
     """
-    return precision_recall_fscore(y_true, y_pred)[1]
+    return precision_recall_fscore_support(y_true, y_pred)[1]
 
 
 def fbeta_score(y_true, y_pred, beta):
@@ -241,8 +241,8 @@ def f1_score(y_true, y_pred):
     return fbeta_score(y_true, y_pred, 1)
 
 
-def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
-    """Compute precision and recall and f-measure at the same time.
+def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
+    """Compute precisions, recalls, f-measures and support for each class
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
     true positives and fp the number of false positives. The precision is
@@ -253,11 +253,14 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     true positives and fn the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
-    The F_beta score can be interpreted as a weighted average of the precision
-    and recall, where an F_beta score reaches its best value at 1 and worst
-    score at 0.
+    The F_beta score can be interpreted as a weighted harmonic mean of
+    the precision and recall, where an F_beta score reaches its best
+    value at 1 and worst score at 0.
 
-    The F_1 score weights recall beta as much as precision.
+    The F_beta score weights recall beta as much as precision. beta = 1.0 means
+    recall and precsion are as important.
+
+    The support is the number of occurrences of each class in y_true.
 
     Parameters
     ==========
@@ -274,7 +277,8 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     =======
     precision: array, shape = [n_unique_labels], dtype = np.double
     recall: array, shape = [n_unique_labels], dtype = np.double
-    precision: array, shape = [n_unique_labels], dtype = np.double
+    f1_score: array, shape = [n_unique_labels], dtype = np.double
+    support: array, shape = [n_unique_labels], dtype = np.long
 
     References
     ==========
@@ -290,11 +294,13 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     true_pos = np.zeros(n_labels, dtype=np.double)
     false_pos = np.zeros(n_labels, dtype=np.double)
     false_neg = np.zeros(n_labels, dtype=np.double)
+    support = np.zeros(n_labels, dtype=np.long)
 
     for i, label_i in enumerate(labels):
         true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
         false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
         false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
+        support[i] = np.sum(y_true == label_i)
 
     # precision and recall
     precision = true_pos / (true_pos + false_pos)
@@ -304,7 +310,7 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     beta2 = beta ** 2
     fscore = (1 + beta2) * (precision * recall) / (
         beta2 * precision + recall)
-    return precision, recall, fscore
+    return precision, recall, fscore, support
 
 
 def classification_report(y_true, y_pred, labels=None, class_names=None):
@@ -336,15 +342,17 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
     else:
         labels = np.asarray(labels, dtype=np.int)
 
+    last_line_heading = 'avg / total'
+
     if class_names is None:
-        width = len('mean')
+        width = len(last_line_heading)
         class_names = ['%d' % l for l in labels]
     else:
         width = max(len(cn) for cn in class_names)
-        width = max(width, len('mean'))
+        width = max(width, len(last_line_heading))
 
 
-    headers = ["precision", "recall", "f1-score"]
+    headers = ["precision", "recall", "f1-score", "support"]
     fmt = '{0:>%d}' % width # first column: class name
     fmt += '  '
     fmt += ' '.join(['{%d:>9}' % (i + 1) for i, _ in enumerate(headers)])
@@ -354,19 +362,23 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
     report = fmt.format(*headers)
     report += '\n'
 
-    p, r, f1 = precision_recall_fscore(y_true, y_pred, labels=labels)
+    p, r, f1, s = precision_recall_fscore_support(y_true, y_pred, labels=labels)
     for i, label in enumerate(labels):
         values = [class_names[i]]
         for v in (p[i], r[i], f1[i]):
             values += ["%0.2f" % float(v)]
+        values += ["%d" % int(s[i])]
         report += fmt.format(*values)
 
     report += '\n'
 
     # compute averages
-    values = ['mean']
-    for v in (np.mean(p), np.mean(r), np.mean(f1)):
+    values = [last_line_heading]
+    for v in (np.average(p, weights=s),
+              np.average(r, weights=s),
+              np.average(f1, weights=s)):
         values += ["%0.2f" % float(v)]
+    values += ['%d' % np.sum(s)]
     report += fmt.format(*values)
     return report
 
@@ -421,7 +433,7 @@ def precision_recall_curve(y_true, probas_pred):
     for i, t in enumerate(thresholds):
         y_pred = np.ones(len(y_true))
         y_pred[probas_pred < t] = 0
-        p, r, _ = precision_recall_fscore(y_true, y_pred)
+        p, r, _, _ = precision_recall_fscore_support(y_true, y_pred)
         precision[i] = p[1]
         recall[i] = r[1]
     precision[-1] = 1.0
