@@ -18,7 +18,6 @@ def unique_labels(*list_of_labels):
     return np.unique(list_of_labels)
 
 
-
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
@@ -46,10 +45,12 @@ def confusion_matrix(y_true, y_pred, labels=None):
     """
     if labels is None:
         labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels, dtype=np.int)
 
     n_labels = labels.size
 
-    cm = np.empty((n_labels, n_labels))
+    cm = np.empty((n_labels, n_labels), dtype=np.long)
     for i, label_i in enumerate(labels):
         for j, label_j in enumerate(labels):
             cm[i, j] = np.sum(
@@ -170,7 +171,7 @@ def recall(y_true, y_pred):
 
     Returns
     =======
-    recall : float
+    recall : array, shape = [n_unique_labels], dtype = np.double
     """
     return precision_recall_fscore(y_true, y_pred)[1]
 
@@ -198,7 +199,7 @@ def fbeta_score(y_true, y_pred, beta):
 
     Returns
     =======
-    fbeta_score: float
+    fbeta_score : array, shape = [n_unique_labels], dtype = np.double
     """
     return precision_recall_fscore(y_true, y_pred, beta=beta)[2]
 
@@ -225,7 +226,7 @@ def f1_score(y_true, y_pred):
 
     Returns
     =======
-    f1_score: float
+    f1_score : array, shape = [n_unique_labels], dtype = np.double
 
     References
     ==========
@@ -234,7 +235,7 @@ def f1_score(y_true, y_pred):
     return fbeta_score(y_true, y_pred, 1)
 
 
-def precision_recall_fscore(y_true, y_pred, beta=1.0):
+def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     """Compute precision and recall and f-measure at the same time.
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
@@ -265,23 +266,33 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0):
 
     Returns
     =======
-    precision: float
-    recall : float
-    fscore : float
+    precision: array, shape = [n_unique_labels], dtype = np.double
+    recall: array, shape = [n_unique_labels], dtype = np.double
+    precision: array, shape = [n_unique_labels], dtype = np.double
 
     References
     ==========
     http://en.wikipedia.org/wiki/Precision_and_recall
     """
     assert(beta > 0)
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels, dtype=np.int)
 
-    true_pos = np.sum(y_true[y_pred == 1] == 1)
-    false_pos = np.sum(y_true[y_pred == 1] == 0)
-    false_neg = np.sum(y_true[y_pred == 0] == 1)
+    n_labels = labels.size
+    true_pos = np.zeros(n_labels, dtype=np.double)
+    false_pos = np.zeros(n_labels, dtype=np.double)
+    false_neg = np.zeros(n_labels, dtype=np.double)
+
+    for i, label_i in enumerate(labels):
+        true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
+        false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
+        false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
 
     # precision and recall
-    precision = true_pos / float(true_pos + false_pos)
-    recall = true_pos / float(true_pos + false_neg)
+    precision = true_pos / (true_pos + false_pos)
+    recall = true_pos / (true_pos + false_neg)
 
     # fbeta score
     beta2 = beta ** 2
@@ -331,6 +342,7 @@ def precision_recall_curve(y_true, probas_pred):
         labels = np.array([0, 1])
     if not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
+
     probas_pred = probas_pred.ravel()
     thresholds = np.sort(np.unique(probas_pred))
     n_thresholds = thresholds.size + 1
@@ -339,7 +351,9 @@ def precision_recall_curve(y_true, probas_pred):
     for i, t in enumerate(thresholds):
         y_pred = np.ones(len(y_true))
         y_pred[probas_pred < t] = 0
-        precision[i], recall[i], _ = precision_recall_fscore(y_true, y_pred)
+        p, r, _ = precision_recall_fscore(y_true, y_pred)
+        precision[i] = p[1]
+        recall[i] = r[1]
     precision[-1] = 1.0
     recall[-1] = 0.0
     return precision, recall, thresholds

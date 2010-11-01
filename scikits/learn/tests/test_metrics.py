@@ -21,6 +21,7 @@ from ..metrics import recall
 from ..metrics import roc_curve
 from ..metrics import zero_one
 
+
 def make_prediction(binary=False):
     """Make some classification predictions on a toy dataset using a SVC
 
@@ -77,9 +78,51 @@ def test_precision_recall_f1_score_binary():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     p, r, f = precision_recall_fscore(y_true, y_pred)
-    assert_array_almost_equal(p, 0.75, 2)
-    assert_array_almost_equal(r, 0.72, 2)
-    assert_array_almost_equal(f, 0.74, 2)
+    assert_array_almost_equal(p, [0.73, 0.75], 2)
+    assert_array_almost_equal(r, [0.76, 0.72], 2)
+    assert_array_almost_equal(f, [0.75, 0.74], 2)
+
+
+def test_confusion_matrix_binary():
+    """Test confusion matrix - binary classification case"""
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    cm = confusion_matrix(y_true, y_pred)
+    assert_array_equal(cm, [[19, 6], [7, 18]])
+
+
+def test_precision_recall_f1_score_multiclass():
+    """Test Precision Recall and F1 Score for multiclass classification task"""
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # compute scores with default labels introspection
+    p, r, f = precision_recall_fscore(y_true, y_pred)
+    assert_array_almost_equal(p, [0.82, 0.55, 0.47], 2)
+    assert_array_almost_equal(r, [0.92, 0.17, 0.90], 2)
+    assert_array_almost_equal(f, [0.87, 0.26, 0.62], 2)
+
+    # same prediction but with and explicit label ordering
+    p, r, f = precision_recall_fscore(y_true, y_pred, labels=[0, 2, 1])
+    assert_array_almost_equal(p, [0.82, 0.47, 0.55], 2)
+    assert_array_almost_equal(r, [0.92, 0.90, 0.17], 2)
+    assert_array_almost_equal(f, [0.87, 0.62, 0.26], 2)
+
+
+def test_confusion_matrix_multiclass():
+    """Test confusion matrix - multi-class case"""
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # compute confusion matrix with default labels introspection
+    cm = confusion_matrix(y_true, y_pred)
+    assert_array_equal(cm, [[23,  2,  0],
+                            [ 5,  5, 20],
+                            [ 0,  2, 18]])
+
+    # compute confusion matrix with explicit label ordering
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
+    assert_array_equal(cm, [[23,  0,  2],
+                            [ 0, 18,  2],
+                            [ 5, 20,  5]])
 
 
 def test_precision_recall_curve():
@@ -89,14 +132,6 @@ def test_precision_recall_curve():
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = auc(p, r)
     assert_array_almost_equal(precision_recall_auc, 0.32, 2)
-
-
-def test_confusion_matrix():
-    """Test confusion matrix"""
-    y_true, y_pred, _ = make_prediction(binary=True)
-
-    cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[19, 6], [7, 18]])
 
 
 def test_losses():
