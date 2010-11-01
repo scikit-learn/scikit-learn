@@ -5,8 +5,6 @@ Contributing
 This project is a community effort, and everyone is welcomed to
 contribute.
 
-.. contents:: This page
-    :local:
 
 Submitting a bug report 
 =========================

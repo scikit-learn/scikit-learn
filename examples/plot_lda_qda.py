@@ -5,17 +5,18 @@ Linear Discriminant Analysis & Quadratic Discriminant Analysis
 
 Plot the confidence ellipsoids of each class and decision boundary
 """
+print __doc__
 
 from scipy import linalg
 import numpy as np
 import pylab as pl
 import matplotlib as mpl
-from matplotlib import collections, colors
+from matplotlib import colors
 
 from scikits.learn.lda import LDA
 from scikits.learn.qda import QDA
 
-################################################################################
+###############################################################################
 # colormap
 cmap = colors.LinearSegmentedColormap('red_blue_classes',
     {'red' : [(0, 1, 1), (1, 0.7, 0.7)],
@@ -25,7 +26,7 @@ cmap = colors.LinearSegmentedColormap('red_blue_classes',
 pl.cm.register_cmap(cmap=cmap)
 
 
-################################################################################
+###############################################################################
 # generate datasets
 def dataset_fixed_cov():
     '''Generate 2 Gaussians samples with the same covariance matrix'''
@@ -47,8 +48,7 @@ def dataset_cov():
     y = np.hstack((np.zeros(n), np.ones(n)))
     return X, y
 
-
-################################################################################
+###############################################################################
 # plot functions
 def plot_data(lda, X, y, y_pred, fig_index):
     splot = pl.subplot(2, 2, fig_index)
@@ -116,7 +116,7 @@ def plot_qda_cov(qda, splot):
     plot_ellipse(splot, qda.means_[0], qda.covariances_[0], 'red')
     plot_ellipse(splot, qda.means_[1], qda.covariances_[1], 'blue')
 
-################################################################################
+###############################################################################
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # LDA
     lda = LDA()

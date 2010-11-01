@@ -57,7 +57,7 @@
   * **Solid**: :ref:`supervised-learning`: classification, regression
 
   * **Work in progress**: :ref:`unsupervised-learning`: :ref:`clustering`, 
-    :ref:`gmm`, manifold learning, ICA
+    :ref:`gmm`, manifold learning, :ref:`ICA <ICA>`
 
   * **Planed**: Gaussian graphical models, matrix factorization
 
@@ -136,8 +136,8 @@ Example gallery
    auto_examples/index
 
 
-Developement
-============
+Development
+===========
 .. toctree::
    :maxdepth: 2
 

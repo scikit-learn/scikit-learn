@@ -29,26 +29,26 @@ except:
 
 
 def iter_grid(param_grid):
-    """ Generators on the combination of the various parameter lists given.
+    """Generators on the combination of the various parameter lists given
 
-        Parameters
-        -----------
-        kwargs: keyword arguments, lists
-            Each keyword argument must be a list of values that should
-            be explored.
+    Parameters
+    -----------
+    kwargs: keyword arguments, lists
+        Each keyword argument must be a list of values that should
+        be explored.
 
-        Returns
-        --------
-        params: dictionary
-            Dictionnary with the input parameters taking the various
-            values succesively.
+    Returns
+    --------
+    params: dictionary
+        Dictionnary with the input parameters taking the various
+        values succesively.
 
-        Examples
-        ---------
-        >>> from scikits.learn.grid_search import iter_grid
-        >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-        >>> list(iter_grid(param_grid))
-        [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+    Examples
+    ---------
+    >>> from scikits.learn.grid_search import iter_grid
+    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
+    >>> list(iter_grid(param_grid))
+    [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
 
     """
     if hasattr(param_grid, 'has_key'):
@@ -106,10 +106,8 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     return score, clf
 
 
-################################################################################
 class GridSearchCV(BaseEstimator):
-    """
-    Grid search on the parameters of a classifier.
+    """Grid search on the parameters of a classifier
 
     Important members are fit, predict.
 
@@ -187,6 +185,7 @@ class GridSearchCV(BaseEstimator):
 
     def fit(self, X, y, refit=True, cv=None, **kw):
         """Run fit with all sets of parameters
+
         Returns the best classifier
 
         Parameters

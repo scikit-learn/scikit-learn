@@ -253,10 +253,6 @@ The model parameters can be accessed through the members coef\_ and intercept\_:
    H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B, 67 (2), 301-320.
 
 
-Frequently Asked Questions
-==========================
-
-
 
 
 Implementation details
