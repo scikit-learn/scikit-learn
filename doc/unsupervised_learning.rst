@@ -9,6 +9,6 @@ Unsupervised learning
 
     modules/gmm
     modules/clustering
-
+    modules/decompositions
 
 

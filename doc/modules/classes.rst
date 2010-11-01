@@ -164,6 +164,30 @@ Covariance estimators
    covariance.ShrunkCovariance
    covariance.LedoitWolf
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   covariance.ledoit_wolf
+
+
+
+Signal decomposition
+=======================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   pca.PCA
+   pca.ProbabilisticPCA
+   fastica.FastICA
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   fastica.fastica
 
 Cross-validation
 ===================
