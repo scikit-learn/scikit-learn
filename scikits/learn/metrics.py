@@ -1,4 +1,11 @@
-"""Utilities to evaluate the predictive performance of models"""
+"""Utilities to evaluate the predictive performance of models
+
+Functions named as *_score return a scalar value to maximize: the higher the
+better
+
+Function named as *_loss return a scalar value to minimize: the lower the
+better
+"""
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
@@ -481,9 +488,20 @@ def precision_recall_curve(y_true, probas_pred):
     return precision, recall, thresholds
 
 
+def explained_variance_score(y_true, y_pred):
+    """Explained variance regression score function
+
+    Best possible score is 1.0, lower values are worst.
+
+    Note: the explained variance is not a symmetric function.
+
+    return the explained variance
+    """
+    return 1 - np.var(y_true - y_pred) / np.var(y_true)
+
+
 ###############################################################################
 # Loss functions
-
 
 def zero_one(y_true, y_pred):
     """Zero-One classification loss
@@ -505,14 +523,4 @@ def mean_square_error(y_true, y_pred):
     return np.linalg.norm(y_pred - y_true) ** 2
 
 
-def explained_variance_score(y_true, y_pred):
-    """Explained variance regression loss
-
-    Best possible score is 1.0, lower values are worst.
-
-    Note: the explained variance is not a symmetric function.
-
-    return the explained variance
-    """
-    return 1 - np.var(y_true - y_pred) / np.var(y_true)
 
