@@ -341,6 +341,7 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
         class_names = ['%d' % l for l in labels]
     else:
         width = max(len(cn) for cn in class_names)
+        width = max(width, len('mean'))
 
 
     headers = ["precision", "recall", "f1-score"]
