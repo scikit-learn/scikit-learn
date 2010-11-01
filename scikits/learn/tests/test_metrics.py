@@ -161,34 +161,4 @@ def test_symmetry():
     # FIXME: precision and recall aren't symmetric either
 
 
-def test_precision_recall_multilabel():
-    # temporary disabling multilabel support to implement proper multiclass
-    # support first
-    raise nose.SkipTest("XFailed Test")
-
-    # Y[i, j] = 1 means sample i has label j
-    Y_true = np.array([[1, 0, 1, 0],
-                       [1, 0, 0, 0],
-                       [0, 0, 0, 0],
-                       [0, 1, 0, 0],
-                       [0, 1, 1, 1]])
-
-    Y_pred = np.array([[1, 1, 1, 0],
-                       [1, 0, 0, 0],
-                       [0, 1, 0, 0],
-                       [0, 1, 0, 0],
-                       [0, 0, 1, 1]])
-
-    n_pred = 8.0
-    n_corr_pred = 6.0
-    n_labeled = 7.0
-    p = n_corr_pred / n_pred
-    r = n_corr_pred / n_labeled
-    f1 = 2 * p * r / (p + r)
-
-    assert_equal(p, precision(Y_true, Y_pred))
-    assert_equal(r, recall(Y_true, Y_pred))
-    assert_equal((p,r), precision_recall(Y_true, Y_pred))
-    assert_equal(f1, f1_score(Y_true, Y_pred))
-
 
