@@ -104,10 +104,11 @@
 
 .. warning:: 
 
-   This documentation is relative to the development version,
+   This documentation is for the development version,
    documentation for the stable version can be found `here
    <http://scikit-learn.sourceforge.net/old_doc/>`__
 
+.. include:: big_toc_css.rst
 
 First steps
 ======================
@@ -124,7 +125,7 @@ User guide
 .. toctree::
    :maxdepth: 2
 
-   user_guide
+   contents
 
 Example gallery
 =================
@@ -142,10 +143,4 @@ Developement
 
    developers/index
    performance
-
-About
-=====
-.. toctree::
-   :maxdepth: 2
-
    about
