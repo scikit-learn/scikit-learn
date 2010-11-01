@@ -66,10 +66,10 @@ class SVC(BaseLibSVM, ClassifierMixin):
     --------
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> Y = np.array([1, 1, 2, 2])
+    >>> y = np.array([1, 1, 2, 2])
     >>> from scikits.learn.svm import SVC
     >>> clf = SVC()
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
       cache_size=100.0, shrinking=True, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
@@ -153,7 +153,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     Methods
     -------
-    fit(X, Y) : self
+    fit(X, y) : self
         Fit the model
 
     predict(X) : array
@@ -169,10 +169,10 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     --------
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> Y = np.array([1, 1, 2, 2])
+    >>> y = np.array([1, 1, 2, 2])
     >>> from scikits.learn.svm import NuSVC
     >>> clf = NuSVC()
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, eps=0.001,
        cache_size=100.0, shrinking=True, nu=0.5, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
@@ -262,7 +262,7 @@ class SVR(BaseLibSVM, RegressorMixin):
                          shrinking, probability)
 
 
-    def fit(self, X, Y):
+    def fit(self, X, y):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -271,7 +271,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
-        Y : array, shape = [n_samples]
+        y : array, shape = [n_samples]
             Target values. Array of floating-point numbers.
 
         Returns
@@ -280,7 +280,7 @@ class SVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, Y)
+        return BaseLibSVM.fit(self, X, y)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
@@ -354,7 +354,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                          cache_size, eps, C, nu, 0.,
                          shrinking, probability)
 
-    def fit(self, X, Y):
+    def fit(self, X, y):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -363,7 +363,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
-        Y : array, shape = [n_samples]
+        y : array, shape = [n_samples]
             Target values. Array of floating-point numbers.
 
         Returns
@@ -372,7 +372,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, Y)
+        return BaseLibSVM.fit(self, X, y)
 
 
 

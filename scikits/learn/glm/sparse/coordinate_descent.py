@@ -54,7 +54,7 @@ class ElasticNet(LinearModel):
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
-    def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
+    def fit(self, X, y, maxit=1000, tol=1e-4, **params):
         """Fit current model with coordinate descent
 
         X is expected to be a sparse matrix. For maximum efficiency, use a
@@ -62,7 +62,7 @@ class ElasticNet(LinearModel):
         """
         self._set_params(**params)
         X = sparse.csc_matrix(X)
-        Y = np.asanyarray(Y, dtype=np.float64)
+        y = np.asanyarray(y, dtype=np.float64)
 
         # NOTE: we are explicitly not centering the data the naive way to
         # avoid breaking the sparsity of X
@@ -78,7 +78,7 @@ class ElasticNet(LinearModel):
         # TODO: add support for non centered data
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
-                    self.coef_, alpha, beta, X_data, X.indices, X.indptr, Y,
+                    self.coef_, alpha, beta, X_data, X.indices, X.indptr, y,
                     maxit, tol)
 
         # update self.coef_ and self.sparse_coef_ consistently

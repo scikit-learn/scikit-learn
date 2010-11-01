@@ -12,7 +12,7 @@ from scikits.learn.feature_extraction.text import SparseHashingVectorizer
 def _load_document_classification(dataset_path, metadata, set_, sparse, **kw):
     """Loader implementation for the DocumentClassification format"""
     target = []
-    target_names = {}
+    target_names = []
     filenames = []
     vectorizer = kw.get('vectorizer')
     if vectorizer is None:
@@ -31,7 +31,7 @@ def _load_document_classification(dataset_path, metadata, set_, sparse, **kw):
     folders = [f for f in sorted(os.listdir(dataset_path))
                if os.path.isdir(os.path.join(dataset_path, f))]
     for label, folder in enumerate(folders):
-        target_names[label] = folder
+        target_names.append(folder)
         folder_path = os.path.join(dataset_path, folder)
         documents = [os.path.join(folder_path, d)
                      for d in sorted(os.listdir(folder_path))]

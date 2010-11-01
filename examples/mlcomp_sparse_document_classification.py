@@ -45,6 +45,7 @@ import pylab as pl
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.metrics import confusion_matrix
+from scikits.learn.metrics import classification_report
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
     print "Please follow those instructions to get started:"
@@ -87,7 +88,11 @@ print "Predicting the labels of the test set..."
 t0 = time()
 pred = clf.predict(news_test.data)
 print "done in %fs" % (time() - t0)
-print "Classification accuracy: %f" % (np.mean(pred == news_test.target) * 100)
+
+print "Classification report on test set:"
+print classification_report(news_test.target, pred,
+                            class_names=news_test.target_names)
+
 
 cm = confusion_matrix(news_test.target, pred)
 print "Confusion matrix:"
