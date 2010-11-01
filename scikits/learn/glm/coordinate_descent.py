@@ -34,20 +34,20 @@ class ElasticNet(LinearModel):
         data is assumed to be already centered.
     """
 
-    def __init__(self, alpha=1.0, rho=0.5, coef_=None, 
+    def __init__(self, alpha=1.0, rho=0.5, coef_=None,
                 fit_intercept=True):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = coef_
         self.fit_intercept = fit_intercept
 
-    def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
+    def fit(self, X, y, maxit=1000, tol=1e-4, **params):
         """Fit Elastic Net model with coordinate descent"""
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float64)
-        Y = np.asanyarray(Y, dtype=np.float64)
+        y = np.asanyarray(y, dtype=np.float64)
 
-        X, Y, Xmean, Ymean = self._center_data (X, Y)
+        X, y, Xmean, ymean = self._center_data (X, y)
 
         if self.coef_ is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
@@ -59,17 +59,17 @@ class ElasticNet(LinearModel):
         X = np.asfortranarray(X) # make data contiguous in memory
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
+                cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, y,
                                         maxit, tol)
 
-        self._set_intercept(Xmean, Ymean)
+        self._set_intercept(Xmean, ymean)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
                                 'to increase the number of interations')
 
         # Store explained variance for __str__
-        self.explained_variance_ = self._explained_variance(X, Y)
+        self.explained_variance_ = self._explained_variance(X, y)
 
         # return self for chaining fit and predict calls
         return self
@@ -123,7 +123,7 @@ class Lasso(ElasticNet):
                                     fit_intercept=fit_intercept, coef_=coef_)
 
 ###############################################################################
-# Classes to store linear models along a regularization path 
+# Classes to store linear models along a regularization path
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                verbose=False, fit_params=dict()):
@@ -135,7 +135,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     X : numpy array of shape [n_samples,n_features]
         Training data
 
-    Y : numpy array of shape [n_samples]
+    y : numpy array of shape [n_samples]
         Target values
 
     eps : float, optional
@@ -174,7 +174,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     for alpha in alphas:
         model = Lasso(coef_=coef_, alpha=alpha)
         model.fit(X, y, **fit_params)
-        if verbose: 
+        if verbose:
             print model
         coef_ = model.coef_.copy()
         models.append(model)
@@ -190,7 +190,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     X : numpy array of shape [n_samples,n_features]
         Training data
 
-    Y : numpy array of shape [n_samples]
+    y : numpy array of shape [n_samples]
         Target values
 
     eps : float
@@ -251,7 +251,7 @@ class LinearModelCV(LinearModel):
         X : numpy array of shape [n_samples,n_features]
             Training data
 
-        Y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples]
             Target values
 
         cv : cross-validation generator, optional

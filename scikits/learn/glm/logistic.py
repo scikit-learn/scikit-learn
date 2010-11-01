@@ -40,7 +40,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
 
     Methods
     -------
-    fit(X, Y) : self
+    fit(X, y) : self
         Fit the model
 
     predict(X) : array
