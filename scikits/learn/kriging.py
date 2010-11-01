@@ -17,7 +17,7 @@ from numpy import random
 from scipy import optimize
 from numpy import linalg
 from .base import BaseEstimator
-
+import pdb
 
 #########################
 # Convenience functions #
@@ -550,10 +550,17 @@ class KrigingModel(BaseEstimator):
 	    n_samples = n_samples_X
 	
 	# Check correlation parameters
-	theta0 = np.asanyarray([theta0], dtype=np.float)
+	theta0 = np.asanyarray(theta0, dtype=np.float)
+	if theta0.ndim == 0:
+	    theta0 = theta0[np.newaxis]
 	lth = theta0.size
 	if thetaL != None and thetaU != None: # Parameters optimization case
-	    thetaL, thetaU = np.asanyarray([thetaL], dtype=np.float), np.asanyarray([thetaU], dtype=np.float)
+	    thetaL = np.asanyarray(thetaL, dtype=np.float)
+	    if thetaL.ndim == 0:
+		thetaL = thetaL[np.newaxis]
+	    thetaU = np.asanyarray(thetaU, dtype=np.float)
+	    if thetaU.ndim == 0:
+		thetaU = thetaU[np.newaxis]
 	    if thetaL.size != lth or thetaU.size != lth:
 		raise ValueError, "theta0, thetaL and thetaU must have the same length"
 	    if np.any(thetaL <= 0) or np.any(thetaU < thetaL):
@@ -923,7 +930,7 @@ class KrigingModel(BaseEstimator):
 	    for i in range(self.theta0.size):
 		constraints.append(lambda log10t: log10t[i] - np.log10(self.thetaL[i]))
 		constraints.append(lambda log10t: np.log10(self.thetaU[i]) - log10t[i])
-	    
+	    pdb.set_trace()
 	    for k in range(self.random_start):
 		
 		if k == 0:
