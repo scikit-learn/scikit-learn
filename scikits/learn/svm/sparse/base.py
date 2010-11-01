@@ -188,11 +188,12 @@ class SparseBaseLibLinear(BaseLibLinear):
                        self._weight)
         return self
 
-    def predict(self, T):
-        T = sparse.csr_matrix(T)
-        T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
-        return _liblinear.csr_predict_wrap(T.shape[1],
-                                      T.data, T.indices, T.indptr,
+    def predict(self, X):
+        X = sparse.csr_matrix(X)
+        self._check_n_features(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        return _liblinear.csr_predict_wrap(X.shape[1],
+                                      X.data, X.indices, X.indptr,
                                       self.raw_coef_,
                                       self._get_solver_type(),
                                       self.eps, self.C,

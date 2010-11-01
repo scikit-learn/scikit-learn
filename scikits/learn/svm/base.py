@@ -310,34 +310,41 @@ class BaseLibLinear(BaseEstimator):
                        self._weight)
         return self
 
-    def predict(self, T):
+    def predict(self, X):
         """
         This function does classification or regression on an array of
-        test vectors T.
+        test vectors X.
 
         For a classification model, the predicted class for each
-        sample in T is returned.  For a regression model, the function
-        value of T calculated is returned.
+        sample in X is returned.  For a regression model, the function
+        value of X calculated is returned.
 
-        For an one-class model, +1 or -1 is returned.
+        For a one-class model, +1 or -1 is returned.
 
         Parameters
         ----------
-        T : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
 
 
         Returns
         -------
         C : array, shape = [nsample]
         """
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        return _liblinear.predict_wrap(T, self.raw_coef_,
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        self._check_n_features(X)
+        return _liblinear.predict_wrap(X, self.raw_coef_,
                                       self._get_solver_type(),
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
                                       self._get_bias())
 
+    def _check_n_features(self, X):
+        n_features = self.raw_coef_.shape[1]
+        if self.fit_intercept > 0: n_features -= 1
+        if X.shape[1] != n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
+                                                                   X.shape[1]))
     @property
     def intercept_(self):
         if self.fit_intercept > 0:

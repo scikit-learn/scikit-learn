@@ -52,6 +52,13 @@ def test_predict_iris():
     pred = clf.predict_proba(iris.data).argmax(axis=1)
     assert np.mean(pred == iris.target) > .95
 
+def test_inconsistent_input():
+    """Test that an exception is raised when input to predict is inconsistent"""
+    X_ = np.random.random((5, 10))
+    y_ = np.ones(X_.shape[0])
+    assert_raises(ValueError,
+                  logistic.LogisticRegression().fit(X_, y_).predict,
+                  np.random.random((3,12)))
 
 if __name__ == '__main__':
     import nose
