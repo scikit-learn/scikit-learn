@@ -79,7 +79,7 @@ def load_files(container_path, description=None, categories=None):
 
     """
     target = []
-    target_names = {}
+    target_names = []
     filenames = []
 
     folders = [f for f in sorted(os.listdir(container_path))
@@ -89,7 +89,7 @@ def load_files(container_path, description=None, categories=None):
         folders = [f for f in folders if f in categories]
 
     for label, folder in enumerate(folders):
-        target_names[label] = folder
+        target_names.append(folder)
         folder_path = os.path.join(container_path, folder)
         documents = [os.path.join(folder_path, d)
                      for d in sorted(os.listdir(folder_path))]

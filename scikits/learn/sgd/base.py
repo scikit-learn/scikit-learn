@@ -55,7 +55,8 @@ class LinearModel(BaseEstimator):
     >>> clf = SGD()
     >>> clf.fit(X, Y)
     SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5, penalty='l2',
-      coef_=array([-9.80373, -9.80373]), rho=1.0, alpha=0.0001, intercept_=0.1)
+      coef_=array([ 9.80373,  9.80373]), rho=1.0, alpha=0.0001,
+      intercept_=-0.1)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 

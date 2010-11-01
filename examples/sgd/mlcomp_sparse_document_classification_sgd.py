@@ -44,6 +44,7 @@ import numpy as np
 
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.metrics import confusion_matrix
+from scikits.learn.metrics import classification_report
 
 # from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.sgd.sparse import SGD
@@ -79,7 +80,6 @@ print "Training a linear SVM (hinge loss and L2 regularizer) using SGD.\n"\
       "SGD(n_iter=50, alpha=0.00001, fit_intercept=True)"
 t0 = time()
 clf = SGD(n_iter=50, alpha=0.00001, fit_intercept=True)
-#clf = LinearSVC(**parameters)
 clf.fit(data, target)
 print "done in %fs" % (time() - t0)
 print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
@@ -95,12 +95,15 @@ neg_idx = np.where(target == neg)[0]
 idx = np.concatenate((pos_idx, neg_idx))
 data = news_test.data[idx]
 target = news_test.target[idx]
+target_names = news_test.target_names[:2]
 
 print "Predicting the labels of the test set..."
 t0 = time()
 pred = clf.predict(data)
 print "done in %fs" % (time() - t0)
-print "Classification accuracy: %f" % (np.mean(pred == target) * 100)
+print "Classification report on test set:"
+print classification_report(target, pred, class_names=target_names)
+
 
 cm = confusion_matrix(target, pred)
 print "Confusion matrix:"

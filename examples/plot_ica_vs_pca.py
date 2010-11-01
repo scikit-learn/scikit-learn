@@ -3,9 +3,29 @@
 FastICA on 2D point clouds
 ==========================
 
-Illustrate visually the results of ICA vs PCA
+Illustrate visually the results of ICA vs PCA in the feature space.
 
+Representing ICA in the feature space gives the view of 'geometric ICA':
+ICA is an algorithm that finds directions in the feature space
+corresponding to projections with high non-Gaussianity. These directions
+need not be orthogonal in the original feature space, but they are
+orthogonal in the whitened feature space, in which all directions
+correspond to the same variance.
+
+PCA, on the other hand, finds orthogonal directions in the raw feature
+space that correspond to directions accoutning for maximum variance.
+
+Here we simulate independent sources using a highly non-Gaussian
+process, 2 student T with a low number of degrees of freedom (top left
+figure). We mix them to create observations (top right figure).
+In this raw observation space, directions identified by PCA are
+represented by green vectors. We represent the signal in the PCA space,
+after whitening by the variance corresponding to the PCA vectors (lower
+left). Running ICA corresponds to finding a rotation in this space to
+identify the directions of largest non-Gaussianity (lower right).
 """
+# Authors: Alexandre Gramfort, Gael Varoquaux
+# License: BSD
 
 import numpy as np
 import pylab as pl
@@ -66,7 +86,7 @@ pl.legend(['PCA', 'ICA'], loc='upper left')
 pl.title('Observations')
 
 pl.subplot(2, 2, 3)
-plot_samples(S_pca_ / np.std(S_pca_))
+plot_samples(S_pca_ / np.std(S_pca_, axis=-1)[:, np.newaxis])
 pl.title('PCA scores')
 
 pl.subplot(2, 2, 4)

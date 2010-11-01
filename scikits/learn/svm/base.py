@@ -55,7 +55,7 @@ class BaseLibSVM(BaseEstimator):
             _X = X
         return kernel_type, _X
 
-    def fit(self, X, Y, class_weight={}):
+    def fit(self, X, y, class_weight={}):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -64,7 +64,7 @@ class BaseLibSVM(BaseEstimator):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
-        Y : array, shape = [n_samples]
+        y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
         class_weight : dict , {class_label : weight}
@@ -77,7 +77,7 @@ class BaseLibSVM(BaseEstimator):
             Returns self.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.float64, order='C')
+        y = np.asanyarray(y, dtype=np.float64, order='C')
 
         # container for when we call fit
         self.dual_coef_ = np.empty((0,0), dtype=np.float64, order='C')
@@ -101,17 +101,17 @@ class BaseLibSVM(BaseEstimator):
 
         # check dimensions
         solver_type = self._svm_types.index(self.impl)
-        if solver_type != 2 and _X.shape[0] != Y.shape[0]:
+        if solver_type != 2 and _X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s features, but Y has %s." % \
-                             (_X.shape[0], Y.shape[0]))
+                             "X has %s features, but y has %s." % \
+                             (_X.shape[0], y.shape[0]))
 
         if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
             self.gamma = 1.0/_X.shape[0]
 
         self.support_, self.support_vectors_, self.label_, \
-                 self.probA_, self.probB_ =  libsvm_train (_X, Y,
+                 self.probA_, self.probB_ =  libsvm_train (_X, y,
                  solver_type, kernel_type, self.degree, self.gamma,
                  self.coef0, self.eps, self.C, self.dual_coef_,
                  self.intercept_, self.weight_label, self.weight,
@@ -272,7 +272,7 @@ class BaseLibLinear(BaseEstimator):
                              + solver_type)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, Y, class_weight={},**params):
+    def fit(self, X, y, class_weight={},**params):
         """
         Fit the model according to the given training data and
         parameters.
@@ -282,7 +282,7 @@ class BaseLibLinear(BaseEstimator):
         X : array-like, shape = [nsamples, nfeatures]
             Training vector, where nsamples in the number of samples and
             nfeatures is the number of features.
-        Y : array, shape = [nsamples]
+        y : array, shape = [nsamples]
             Target vector relative to X
         class_weight : dict , {class_label : weight}
             Weights associated with classes. If not given, all classes
@@ -302,42 +302,49 @@ class BaseLibLinear(BaseEstimator):
                                        dtype=np.int32, order='C')
 
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int32, order='C')
+        y = np.asanyarray(y, dtype=np.int32, order='C')
         self.raw_coef_, self.label_ = \
-                       _liblinear.train_wrap(X, Y,
+                       _liblinear.train_wrap(X, y,
                        self._get_solver_type(),
                        self.eps, self._get_bias(), self.C, self._weight_label,
                        self._weight)
         return self
 
-    def predict(self, T):
+    def predict(self, X):
         """
         This function does classification or regression on an array of
-        test vectors T.
+        test vectors X.
 
         For a classification model, the predicted class for each
-        sample in T is returned.  For a regression model, the function
-        value of T calculated is returned.
+        sample in X is returned.  For a regression model, the function
+        value of X calculated is returned.
 
-        For an one-class model, +1 or -1 is returned.
+        For a one-class model, +1 or -1 is returned.
 
         Parameters
         ----------
-        T : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
 
 
         Returns
         -------
         C : array, shape = [nsample]
         """
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        return _liblinear.predict_wrap(T, self.raw_coef_,
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        self._check_n_features(X)
+        return _liblinear.predict_wrap(X, self.raw_coef_,
                                       self._get_solver_type(),
                                       self.eps, self.C,
                                       self._weight_label,
                                       self._weight, self.label_,
                                       self._get_bias())
 
+    def _check_n_features(self, X):
+        n_features = self.raw_coef_.shape[1]
+        if self.fit_intercept > 0: n_features -= 1
+        if X.shape[1] != n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
+                                                                   X.shape[1]))
     @property
     def intercept_(self):
         if self.fit_intercept > 0:

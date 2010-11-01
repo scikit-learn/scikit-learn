@@ -10,6 +10,10 @@
 #}
 {% extends "basic/layout.html" %}
 
+{%- if pagename == 'index' %}
+    {% set title = 'scikits.learn: machine learning in Python' %}
+{%- endif %}
+
 {% block header %}
     <div class="header-wrapper">
       <div class="header">
@@ -23,11 +27,11 @@
           {%- block navbar -%}
           <div class="navbar">
           <ul>
-            <li><a href="{{pathto('install')}}">download</a></li>
-            <li><a href="{{pathto('support')}}">support</a></li>
-            <li><a href="{{pathto('reference')}}">reference</a></li>
-            <li><a href="{{pathto('auto_examples/index')}}">gallery</a></li>
-            <li><a href="{{pathto('developers/index')}}">development</a></li>
+            <li><a href="{{pathto('install')}}">Download</a></li>
+            <li><a href="{{pathto('support')}}">Support</a></li>
+            <li><a href="{{pathto('user_guide')}}">User Guide</a></li>
+            <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
+            <li><a href="{{pathto('developers/index')}}">Development</a></li>
        </ul>
 
 <div class="search_form">

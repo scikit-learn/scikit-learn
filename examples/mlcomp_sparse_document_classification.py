@@ -46,9 +46,7 @@ from scikits.learn.datasets import load_mlcomp
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.metrics import confusion_matrix
-from scikits.learn.metrics import f1_score
-from scikits.learn.metrics import precision
-from scikits.learn.metrics import recall
+from scikits.learn.metrics import classification_report
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
     print "Please follow those instructions to get started:"
@@ -105,9 +103,11 @@ print "Predicting the outcomes of the testing set"
 t0 = time()
 pred = clf.predict(X_test)
 print "done in %fs" % (time() - t0)
-print "precision: %0.3f" % precision(y_test, pred)
-print "recall: %0.3f" % recall(y_test, pred)
-print "f1_score: %0.3f" % f1_score(y_test, pred)
+
+print "Classification report on test set for classifier:"
+print clf
+print
+print classification_report(y_test, pred, class_names=news_test.target_names)
 
 cm = confusion_matrix(y_test, pred)
 print "Confusion matrix:"

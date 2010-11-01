@@ -56,7 +56,7 @@ span.legend {
 
 div.navbar {
     padding-top: 15px;
-    margin-left: 220px;
+    margin-left: 200px;
 }    
 
 div.navbar ul {
@@ -69,7 +69,7 @@ div.navbar ul {
 
 div.navbar ul, div.navbar li {
     display: inline;
-    padding: 4px 15px 5px 15px;
+    padding: 4px 10px 5px 10px;
 }
 
 div.navbar ul li a, 
@@ -225,7 +225,7 @@ div.sphinxsidebar {
 }
 
 div.sphinxsidebar h3 {
-    text-align: center;
+    text-align: left;
     font-size: 16px;
 }
 
@@ -281,6 +281,12 @@ div.body h3 {
     padding: 10px;
     text-align: center;
     border-radius: 10px;
+    font-weight: bold;
+}
+
+div.body h2,
+div.body h3 {
+    text-align: left;
 }
 
 div.bodywrapper h1 {
