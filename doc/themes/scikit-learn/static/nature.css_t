@@ -56,7 +56,7 @@ span.legend {
 
 div.navbar {
     padding-top: 15px;
-    margin-left: 220px;
+    margin-left: 200px;
 }    
 
 div.navbar ul {
@@ -69,7 +69,7 @@ div.navbar ul {
 
 div.navbar ul, div.navbar li {
     display: inline;
-    padding: 4px 15px 5px 15px;
+    padding: 4px 10px 5px 10px;
 }
 
 div.navbar ul li a, 
