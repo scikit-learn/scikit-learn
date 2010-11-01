@@ -307,6 +307,69 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     return precision, recall, fscore
 
 
+def classification_report(y_true, y_pred, labels=None, class_names=None):
+    """Build a text report showing the main classification metrics
+
+    Parameters
+    ==========
+    y_true : array, shape = [n_samples]
+        true targets
+
+    y_pred : array, shape = [n_samples]
+        estimated targets
+
+    labels : array, shape = [n_labels]
+        optional list of label indices to include in the report
+
+    class_names : list of strings
+        optional display names matching the labels (same order)
+
+    Returns
+    =======
+    report : string
+        Text summary of the precision, recall, f1-score for each class
+
+    """
+
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels, dtype=np.int)
+
+    if class_names is None:
+        width = len('mean')
+        class_names = ['%d' % l for l in labels]
+    else:
+        width = max(len(cn) for cn in class_names)
+
+
+    headers = ["precision", "recall", "f1-score"]
+    fmt = '{0:>%d}' % width # first column: class name
+    fmt += '  '
+    fmt += ' '.join(['{%d:>9}' % (i + 1) for i, _ in enumerate(headers)])
+    fmt += '\n'
+
+    headers = [""] + headers
+    report = fmt.format(*headers)
+    report += '\n'
+
+    p, r, f1 = precision_recall_fscore(y_true, y_pred, labels=labels)
+    for i, label in enumerate(labels):
+        values = [class_names[i]]
+        for v in (p[i], r[i], f1[i]):
+            values += ["%0.2f" % float(v)]
+        report += fmt.format(*values)
+
+    report += '\n'
+
+    # compute averages
+    values = ['mean']
+    for v in (np.mean(p), np.mean(r), np.mean(f1)):
+        values += ["%0.2f" % float(v)]
+    report += fmt.format(*values)
+    return report
+
+
 def precision_recall_curve(y_true, probas_pred):
     """Compute precision-recall pairs for different probability thresholds
 

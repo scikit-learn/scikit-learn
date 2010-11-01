@@ -10,33 +10,36 @@ from numpy.testing import assert_equal, assert_almost_equal
 from .. import datasets
 from .. import svm
 from ..metrics import auc
+from ..metrics import classification_report
 from ..metrics import confusion_matrix
 from ..metrics import explained_variance
 from ..metrics import f1_score
 from ..metrics import mean_square_error
 from ..metrics import precision
-from ..metrics import precision_recall_fscore
 from ..metrics import precision_recall_curve
+from ..metrics import precision_recall_fscore
 from ..metrics import recall
 from ..metrics import roc_curve
 from ..metrics import zero_one
 
 
-def make_prediction(binary=False):
+def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
 
     If binary is True restrict to a binary classification problem instead of a
     multiclass classification problem
     """
 
-    # import some data to play with
-    iris = datasets.load_iris()
-    X = iris.data
-    y = iris.target
+    if dataset is None:
+        # import some data to play with
+        dataset = datasets.load_iris()
+
+    X = dataset.data
+    y = dataset.target
 
     if binary:
         # restrict to a binary classification task
-        X, y = X[y != 2], y[y != 2]
+        X, y = X[y < 2], y[y < 2]
 
     n_samples, n_features = X.shape
     p = range(n_samples)
@@ -123,6 +126,41 @@ def test_confusion_matrix_multiclass():
     assert_array_equal(cm, [[23,  0,  2],
                             [ 0, 18,  2],
                             [ 5, 20,  5]])
+
+
+def test_classification_report():
+    """Test performance report"""
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = """\
+            precision    recall  f1-score
+
+    setosa       0.82      0.92      0.87
+versicolor       0.56      0.17      0.26
+ virginica       0.47      0.90      0.62
+
+      mean       0.62      0.66      0.58
+"""
+    report = classification_report(
+        y_true, y_pred, labels=range(len(iris.target_names)),
+        class_names=iris.target_names)
+    assert_equal(report, expected_report)
+
+    # print classification report with label detection
+    expected_report = """\
+      precision    recall  f1-score
+
+   0       0.82      0.92      0.87
+   1       0.56      0.17      0.26
+   2       0.47      0.90      0.62
+
+mean       0.62      0.66      0.58
+"""
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
 
 
 def test_precision_recall_curve():
