@@ -13,3 +13,4 @@ doc/modules/generated/
 pip-log.txt
 scikits.learn.egg-info/
 .coverage
+tags
