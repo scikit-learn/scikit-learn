@@ -130,8 +130,8 @@ def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
 
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
-    precision_recall_auc = auc(p, r)
-    assert_array_almost_equal(precision_recall_auc, 0.32, 2)
+    precision_recall_auc = auc(r, p)
+    assert_array_almost_equal(precision_recall_auc, 0.82, 2)
 
 
 def test_losses():

@@ -122,6 +122,12 @@ def auc(x, y):
     """
     x = np.asanyarray(x)
     y = np.asanyarray(y)
+
+    # reorder the data points according to the x axis
+    order = np.argsort(x)
+    x = x[order]
+    y = y[order]
+
     h = np.diff(x)
     area = np.sum(h * (y[1:] + y[:-1])) / 2.0
     return area
