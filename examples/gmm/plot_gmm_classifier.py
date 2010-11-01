@@ -52,9 +52,9 @@ skf = StratifiedKFold(iris.target, k=4)
 train_index, test_index = skf.__iter__().next()
 
 
-X_train = iris.data[train_index,:]
+X_train = iris.data[train_index]
 y_train = iris.target[train_index]
-X_test = iris.data[test_index,:]
+X_test = iris.data[test_index]
 y_test = iris.target[test_index]
 
 n_classes = len(np.unique(y_train))
@@ -65,16 +65,16 @@ classifiers = dict((x, GMM(n_states=n_classes, cvtype=x))
 
 n_classifiers = len(classifiers)
 
-pl.figure(figsize=(n_classifiers + 1, 3))
+pl.figure(figsize=(6, 2*n_classifiers + 2))
 pl.subplots_adjust(bottom=0.075, top=0.925, hspace=0.35)
 
-h = pl.subplot(n_classifiers + 1, 3, 1)
-pl.imshow(X_train.T)
+h = pl.subplot(n_classifiers + 1, 2, 1)
+pl.imshow(X_train.T, interpolation='nearest', aspect='auto')
 h.set_xticks([])
 pl.title('Training data')
 
-h = pl.subplot(n_classifiers + 1, 3, 2)
-pl.imshow(X_test.T)
+h = pl.subplot(n_classifiers + 1, 2, 2)
+pl.imshow(X_test.T, interpolation='nearest', aspect='auto')
 h.set_xticks([])
 pl.title('Test data')
 
