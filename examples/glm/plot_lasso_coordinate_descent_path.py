@@ -11,7 +11,6 @@ print __doc__
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-from itertools import cycle
 import numpy as np
 import pylab as pl
 

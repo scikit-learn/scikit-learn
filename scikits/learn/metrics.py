@@ -1,4 +1,11 @@
-"""Utilities to evaluate the predictive performance of models"""
+"""Utilities to evaluate the predictive performance of models
+
+Functions named as *_score return a scalar value to maximize: the higher the
+better
+
+Function named as *_loss return a scalar value to minimize: the lower the
+better
+"""
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
@@ -133,7 +140,7 @@ def auc(x, y):
     return area
 
 
-def precision(y_true, y_pred):
+def precision_score(y_true, y_pred, pos_label=1):
     """Compute the precision
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
@@ -151,14 +158,24 @@ def precision(y_true, y_pred):
     y_pred : array, shape = [n_samples]
         predicted targets
 
+    pos_label : int
+        in the binary classification case, give the label of the positive
+        class (default is 1)
+
     Returns
     =======
     precision : float
-    """
-    return precision_recall_fscore(y_true, y_pred)[0]
+        precision of the positive class in binary classification or weighted
+        avergage of the precision of each class for the multiclass task
+     """
+    p, _, _, s = precision_recall_fscore_support(y_true, y_pred)
+    if p.shape[0] == 2:
+        return p[pos_label]
+    else:
+        return np.average(p, weights=s)
 
 
-def recall(y_true, y_pred):
+def recall_score(y_true, y_pred, pos_label=1):
     """Compute the recall
 
     The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
@@ -175,14 +192,24 @@ def recall(y_true, y_pred):
     y_pred : array, shape = [n_samples]
         predicted targets
 
+    pos_label : int
+        in the binary classification case, give the label of the positive
+        class (default is 1)
+
     Returns
     =======
-    recall : array, shape = [n_unique_labels], dtype = np.double
+    recall : float
+        recall of the positive class in binary classification or weighted
+        avergage of the recall of each class for the multiclass task
     """
-    return precision_recall_fscore(y_true, y_pred)[1]
+    _, r, _, s = precision_recall_fscore_support(y_true, y_pred)
+    if r.shape[0] == 2:
+        return r[pos_label]
+    else:
+        return np.average(r, weights=s)
 
 
-def fbeta_score(y_true, y_pred, beta):
+def fbeta_score(y_true, y_pred, beta, pos_label=1):
     """Compute fbeta score
 
     The F_beta score can be interpreted as a weighted average of the precision
@@ -203,14 +230,25 @@ def fbeta_score(y_true, y_pred, beta):
 
     beta: float
 
+    pos_label : int
+        in the binary classification case, give the label of the positive
+        class (default is 1)
+
     Returns
     =======
-    fbeta_score : array, shape = [n_unique_labels], dtype = np.double
+    fbeta_score : float
+        fbeta_score of the positive class in binary classification or weighted
+        avergage of the fbeta_score of each class for the multiclass task
+
     """
-    return precision_recall_fscore(y_true, y_pred, beta=beta)[2]
+    _, _, f, s = precision_recall_fscore_support(y_true, y_pred, beta=beta)
+    if f.shape[0] == 2:
+        return f[pos_label]
+    else:
+        return np.average(f, weights=s)
 
 
-def f1_score(y_true, y_pred):
+def f1_score(y_true, y_pred, pos_label=1):
     """Compute f1 score
 
     The F1 score can be interpreted as a weighted average of the precision
@@ -222,6 +260,9 @@ def f1_score(y_true, y_pred):
 
     See: http://en.wikipedia.org/wiki/F1_score
 
+    In the multi-class case, this is the weighted average of the f1-score of
+    each class.
+
     Parameters
     ==========
     y_true : array, shape = [n_samples]
@@ -230,19 +271,25 @@ def f1_score(y_true, y_pred):
     y_pred : array, shape = [n_samples]
         predicted targets
 
+    pos_label : int
+        in the binary classification case, give the label of the positive class
+        (default is 1)
+
     Returns
     =======
-    f1_score : array, shape = [n_unique_labels], dtype = np.double
+    f1_score : float
+        f1_score of the positive class in binary classification or weighted
+        avergage of the f1_scores of each class for the multiclass task
 
     References
     ==========
     http://en.wikipedia.org/wiki/F1_score
     """
-    return fbeta_score(y_true, y_pred, 1)
+    return fbeta_score(y_true, y_pred, 1, pos_label=pos_label)
 
 
-def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
-    """Compute precision and recall and f-measure at the same time.
+def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
+    """Compute precisions, recalls, f-measures and support for each class
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
     true positives and fp the number of false positives. The precision is
@@ -253,11 +300,14 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     true positives and fn the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
-    The F_beta score can be interpreted as a weighted average of the precision
-    and recall, where an F_beta score reaches its best value at 1 and worst
-    score at 0.
+    The F_beta score can be interpreted as a weighted harmonic mean of
+    the precision and recall, where an F_beta score reaches its best
+    value at 1 and worst score at 0.
 
-    The F_1 score weights recall beta as much as precision.
+    The F_beta score weights recall beta as much as precision. beta = 1.0 means
+    recall and precsion are as important.
+
+    The support is the number of occurrences of each class in y_true.
 
     Parameters
     ==========
@@ -274,7 +324,8 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     =======
     precision: array, shape = [n_unique_labels], dtype = np.double
     recall: array, shape = [n_unique_labels], dtype = np.double
-    precision: array, shape = [n_unique_labels], dtype = np.double
+    f1_score: array, shape = [n_unique_labels], dtype = np.double
+    support: array, shape = [n_unique_labels], dtype = np.long
 
     References
     ==========
@@ -290,11 +341,13 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     true_pos = np.zeros(n_labels, dtype=np.double)
     false_pos = np.zeros(n_labels, dtype=np.double)
     false_neg = np.zeros(n_labels, dtype=np.double)
+    support = np.zeros(n_labels, dtype=np.long)
 
     for i, label_i in enumerate(labels):
         true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
         false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
         false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
+        support[i] = np.sum(y_true == label_i)
 
     # precision and recall
     precision = true_pos / (true_pos + false_pos)
@@ -304,7 +357,7 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0, labels=None):
     beta2 = beta ** 2
     fscore = (1 + beta2) * (precision * recall) / (
         beta2 * precision + recall)
-    return precision, recall, fscore
+    return precision, recall, fscore, support
 
 
 def classification_report(y_true, y_pred, labels=None, class_names=None):
@@ -336,15 +389,17 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
     else:
         labels = np.asarray(labels, dtype=np.int)
 
+    last_line_heading = 'avg / total'
+
     if class_names is None:
-        width = len('mean')
+        width = len(last_line_heading)
         class_names = ['%d' % l for l in labels]
     else:
         width = max(len(cn) for cn in class_names)
-        width = max(width, len('mean'))
+        width = max(width, len(last_line_heading))
 
 
-    headers = ["precision", "recall", "f1-score"]
+    headers = ["precision", "recall", "f1-score", "support"]
     fmt = '{0:>%d}' % width # first column: class name
     fmt += '  '
     fmt += ' '.join(['{%d:>9}' % (i + 1) for i, _ in enumerate(headers)])
@@ -354,19 +409,23 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
     report = fmt.format(*headers)
     report += '\n'
 
-    p, r, f1 = precision_recall_fscore(y_true, y_pred, labels=labels)
+    p, r, f1, s = precision_recall_fscore_support(y_true, y_pred, labels=labels)
     for i, label in enumerate(labels):
         values = [class_names[i]]
         for v in (p[i], r[i], f1[i]):
             values += ["%0.2f" % float(v)]
+        values += ["%d" % int(s[i])]
         report += fmt.format(*values)
 
     report += '\n'
 
     # compute averages
-    values = ['mean']
-    for v in (np.mean(p), np.mean(r), np.mean(f1)):
+    values = [last_line_heading]
+    for v in (np.average(p, weights=s),
+              np.average(r, weights=s),
+              np.average(f1, weights=s)):
         values += ["%0.2f" % float(v)]
+    values += ['%d' % np.sum(s)]
     report += fmt.format(*values)
     return report
 
@@ -421,7 +480,7 @@ def precision_recall_curve(y_true, probas_pred):
     for i, t in enumerate(thresholds):
         y_pred = np.ones(len(y_true))
         y_pred[probas_pred < t] = 0
-        p, r, _ = precision_recall_fscore(y_true, y_pred)
+        p, r, _, _ = precision_recall_fscore_support(y_true, y_pred)
         precision[i] = p[1]
         recall[i] = r[1]
     precision[-1] = 1.0
@@ -429,9 +488,20 @@ def precision_recall_curve(y_true, probas_pred):
     return precision, recall, thresholds
 
 
+def explained_variance_score(y_true, y_pred):
+    """Explained variance regression score function
+
+    Best possible score is 1.0, lower values are worst.
+
+    Note: the explained variance is not a symmetric function.
+
+    return the explained variance
+    """
+    return 1 - np.var(y_true - y_pred) / np.var(y_true)
+
+
 ###############################################################################
 # Loss functions
-
 
 def zero_one(y_true, y_pred):
     """Zero-One classification loss
@@ -453,14 +523,4 @@ def mean_square_error(y_true, y_pred):
     return np.linalg.norm(y_pred - y_true) ** 2
 
 
-def explained_variance(y_true, y_pred):
-    """Explained variance regression loss
-
-    Best possible score is 1.0, lower values are worst.
-
-    Note: the explained variance is not a symmetric function.
-
-    return the explained variance
-    """
-    return 1 - np.var(y_true - y_pred) / np.var(y_true)
 
