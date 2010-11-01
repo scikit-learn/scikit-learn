@@ -136,8 +136,8 @@ Example gallery
    auto_examples/index
 
 
-Developement
-============
+Development
+===========
 .. toctree::
    :maxdepth: 2
 
