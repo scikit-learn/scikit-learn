@@ -2,15 +2,11 @@
 Grid Search
 ===================================================
 
-.. contents:: Tables of contents
-
 `scikits.learn.grid_search` is a package to optimize
 the parameters of a model (e.g. Support Vector Classifier)
 using cross-validation
 
-It is implemented in python, and uses the numpy and scipy
-packages. The computation can be run in parallel using
-the multiprocessing package.
+The computation can be run in parallel using the multiprocessing package.
 
 GridSearchCV
 ====================

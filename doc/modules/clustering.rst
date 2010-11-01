@@ -7,8 +7,6 @@ Clustering
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`_ of
 unlabeled data can be performed with the module `scikits.learn.cluster`.
 
-.. contents:: This page contents:
-
 Affinity propagation
 ====================
 
