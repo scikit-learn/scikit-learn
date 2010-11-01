@@ -17,7 +17,6 @@ from numpy import random
 from scipy import optimize
 from numpy import linalg
 from .base import BaseEstimator
-import pdb
 
 #########################
 # Convenience functions #
@@ -930,7 +929,7 @@ class KrigingModel(BaseEstimator):
 	    for i in range(self.theta0.size):
 		constraints.append(lambda log10t: log10t[i] - np.log10(self.thetaL[i]))
 		constraints.append(lambda log10t: np.log10(self.thetaU[i]) - log10t[i])
-	    pdb.set_trace()
+	    
 	    for k in range(self.random_start):
 		
 		if k == 0:
