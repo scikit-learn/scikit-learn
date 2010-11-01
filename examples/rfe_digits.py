@@ -1,16 +1,15 @@
 """
+=============================
 Recursive feature elimination
-=======================================================================
+=============================
 
 A recursive feature elimination is performed prior to SVM classification.
 """
+print __doc__
 
 from scikits.learn.svm import SVC
-from scikits.learn.cross_val import StratifiedKFold
 from scikits.learn import datasets
-from scikits.learn.feature_selection import RFE, RFECV
-from scikits.learn.metrics import zero_one
-
+from scikits.learn.feature_selection import RFE
 
 ################################################################################
 # Loading the Digits dataset
