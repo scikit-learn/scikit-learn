@@ -41,7 +41,9 @@ Classification
 ==============
 
 Suppose some given data points each belonging to one of N classes, and
-the goal is to decide which class a new data point will be in. The
+the goal is to decide which class a new data point will be in. This
+problem is called classification, and can be solved with SVMs using
+*Support Vector Classifiers*, SVC. The
 classes that perform this task are :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC`.
 
