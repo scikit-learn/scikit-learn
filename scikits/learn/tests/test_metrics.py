@@ -15,10 +15,10 @@ from ..metrics import confusion_matrix
 from ..metrics import explained_variance
 from ..metrics import f1_score
 from ..metrics import mean_square_error
-from ..metrics import precision
 from ..metrics import precision_recall_curve
 from ..metrics import precision_recall_fscore_support
-from ..metrics import recall
+from ..metrics import precision_score
+from ..metrics import recall_score
 from ..metrics import roc_curve
 from ..metrics import zero_one
 
@@ -80,11 +80,24 @@ def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
+    # detailed measures for each class
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred)
     assert_array_almost_equal(p, [0.73, 0.75], 2)
     assert_array_almost_equal(r, [0.76, 0.72], 2)
     assert_array_almost_equal(f, [0.75, 0.74], 2)
     assert_array_equal(s, [25, 25])
+
+    # individual scoring function that can be used for grid search: in the
+    # binary class case the score is the value of the measure for the positive
+    # class (e.g. label == 1)
+    ps = precision_score(y_true, y_pred)
+    assert_array_almost_equal(ps, 0.75, 2)
+
+    rs = recall_score(y_true, y_pred)
+    assert_array_almost_equal(rs, 0.72, 2)
+
+    fs = f1_score(y_true, y_pred)
+    assert_array_almost_equal(fs, 0.74, 2)
 
 
 def test_confusion_matrix_binary():
@@ -105,6 +118,19 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_almost_equal(r, [0.92, 0.17, 0.90], 2)
     assert_array_almost_equal(f, [0.87, 0.26, 0.62], 2)
     assert_array_equal(s, [25, 30, 20])
+
+    # individual scoring function that can be used for grid search: in the
+    # multiclass case the score is the wieghthed average of the individual
+    # class values hence f1_score is not necessary between precision_score and
+    # recall_score
+    ps = precision_score(y_true, y_pred)
+    assert_array_almost_equal(ps, 0.62, 2)
+
+    rs = recall_score(y_true, y_pred)
+    assert_array_almost_equal(rs, 0.61, 2)
+
+    fs = f1_score(y_true, y_pred)
+    assert_array_almost_equal(fs, 0.56, 2)
 
     # same prediction but with and explicit label ordering
     p, r, f, s = precision_recall_fscore_support(
@@ -164,7 +190,6 @@ avg / total       0.62      0.61      0.56        75
 """
     report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
-
 
 
 def test_precision_recall_curve():

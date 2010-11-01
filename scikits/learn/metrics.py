@@ -133,7 +133,7 @@ def auc(x, y):
     return area
 
 
-def precision(y_true, y_pred):
+def precision_score(y_true, y_pred, pos_label=1):
     """Compute the precision
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
@@ -151,14 +151,24 @@ def precision(y_true, y_pred):
     y_pred : array, shape = [n_samples]
         predicted targets
 
+    pos_label : int
+        in the binary classification case, give the label of the positive
+        class (default is 1)
+
     Returns
     =======
     precision : float
-    """
-    return precision_recall_fscore_support(y_true, y_pred)[0]
+        precision of the positive class in binary classification or weighted
+        avergage of the precision of each class for the multiclass task
+     """
+    p, _, _, s = precision_recall_fscore_support(y_true, y_pred)
+    if p.shape[0] == 2:
+        return p[pos_label]
+    else:
+        return np.average(p, weights=s)
 
 
-def recall(y_true, y_pred):
+def recall_score(y_true, y_pred, pos_label=1):
     """Compute the recall
 
     The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
@@ -175,14 +185,24 @@ def recall(y_true, y_pred):
     y_pred : array, shape = [n_samples]
         predicted targets
 
+    pos_label : int
+        in the binary classification case, give the label of the positive
+        class (default is 1)
+
     Returns
     =======
-    recall : array, shape = [n_unique_labels], dtype = np.double
+    recall : float
+        recall of the positive class in binary classification or weighted
+        avergage of the recall of each class for the multiclass task
     """
-    return precision_recall_fscore_support(y_true, y_pred)[1]
+    _, r, _, s = precision_recall_fscore_support(y_true, y_pred)
+    if r.shape[0] == 2:
+        return r[pos_label]
+    else:
+        return np.average(r, weights=s)
 
 
-def fbeta_score(y_true, y_pred, beta):
+def fbeta_score(y_true, y_pred, beta, pos_label=1):
     """Compute fbeta score
 
     The F_beta score can be interpreted as a weighted average of the precision
@@ -203,14 +223,25 @@ def fbeta_score(y_true, y_pred, beta):
 
     beta: float
 
+    pos_label : int
+        in the binary classification case, give the label of the positive
+        class (default is 1)
+
     Returns
     =======
-    fbeta_score : array, shape = [n_unique_labels], dtype = np.double
+    fbeta_score : float
+        fbeta_score of the positive class in binary classification or weighted
+        avergage of the fbeta_score of each class for the multiclass task
+
     """
-    return precision_recall_fscore(y_true, y_pred, beta=beta)[2]
+    _, _, f, s = precision_recall_fscore_support(y_true, y_pred, beta=beta)
+    if f.shape[0] == 2:
+        return f[pos_label]
+    else:
+        return np.average(f, weights=s)
 
 
-def f1_score(y_true, y_pred):
+def f1_score(y_true, y_pred, pos_label=1):
     """Compute f1 score
 
     The F1 score can be interpreted as a weighted average of the precision
@@ -222,6 +253,9 @@ def f1_score(y_true, y_pred):
 
     See: http://en.wikipedia.org/wiki/F1_score
 
+    In the multi-class case, this is the weighted average of the f1-score of
+    each class.
+
     Parameters
     ==========
     y_true : array, shape = [n_samples]
@@ -230,15 +264,21 @@ def f1_score(y_true, y_pred):
     y_pred : array, shape = [n_samples]
         predicted targets
 
+    pos_label : int
+        in the binary classification case, give the label of the positive class
+        (default is 1)
+
     Returns
     =======
-    f1_score : array, shape = [n_unique_labels], dtype = np.double
+    f1_score : float
+        f1_score of the positive class in binary classification or weighted
+        avergage of the f1_scores of each class for the multiclass task
 
     References
     ==========
     http://en.wikipedia.org/wiki/F1_score
     """
-    return fbeta_score(y_true, y_pred, 1)
+    return fbeta_score(y_true, y_pred, 1, pos_label=pos_label)
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
