@@ -1,7 +1,11 @@
 
-===========================================
-scikits.learn: machine learning in python
-===========================================
+..  
+    We are putting the title as a raw HTML so that it doesn't appear in
+    the contents
+
+.. raw:: html
+
+    <h1>scikits.learn: machine learning in Python</h1>
 
 .. only:: html
 
@@ -122,8 +126,8 @@ User guide
 
    user_guide
 
-Gallery
-=======
+Example gallery
+=================
 
 .. toctree::
    :maxdepth: 2
