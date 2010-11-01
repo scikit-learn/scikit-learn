@@ -12,6 +12,9 @@ from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
 from .base import BaseEstimator, is_classifier, clone
 
+import numpy as np
+import scipy.sparse as sp
+
 try:
     from itertools import product
 except:
@@ -70,6 +73,12 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     score = 0.
     n_test_samples = 0.
     for train, test in cv:
+        if sp.issparse(X):
+            # slicing only works with indices in sparse matrices
+            ind = np.arange(X.shape[0])
+            train = ind[train]
+            test = ind[test]
+
         clf.fit(X[train], y[train], **fit_params)
         y_test = y[test]
         if loss_func is not None:
@@ -78,7 +87,7 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
         else:
             this_score = clf.score(X[test], y_test)
         if iid:
-            this_n_test_samples = y.shape[0] 
+            this_n_test_samples = y.shape[0]
             this_score *= this_n_test_samples
             n_test_samples += this_n_test_samples
         score += this_score
@@ -150,7 +159,7 @@ class GridSearchCV(BaseEstimator):
                         fit_params={}, n_jobs=1, iid=True):
         assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
             "estimator should a be an estimator implementing 'fit' and "
-            "'predict' methods, %s (type %s) was passed" % 
+            "'predict' methods, %s (type %s) was passed" %
                     (estimator, type(estimator))
             )
         if loss_func is None:
