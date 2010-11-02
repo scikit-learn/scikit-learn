@@ -69,12 +69,12 @@ pl.figure(figsize=(6, 2*n_classifiers + 2))
 pl.subplots_adjust(bottom=0.075, top=0.925, hspace=0.35)
 
 h = pl.subplot(n_classifiers + 1, 2, 1)
-pl.imshow(X_train.T, interpolation='nearest', aspect='auto')
+pl.imshow(X_train.T, interpolation='nearest', aspect='auto', origin='lower')
 h.set_xticks([])
 pl.title('Training data')
 
 h = pl.subplot(n_classifiers + 1, 2, 2)
-pl.imshow(X_test.T, interpolation='nearest', aspect='auto')
+pl.imshow(X_test.T, interpolation='nearest', aspect='auto', origin='lower')
 h.set_xticks([])
 pl.title('Test data')
 
@@ -97,7 +97,7 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
     pl.ylabel(name)
     if index != n_classifiers - 1:
         h.set_xticks([])
-    pl.title('acc = %.1f' % train_accuracy)
+    pl.title('train acc = %.1f' % train_accuracy)
 
     y_test_pred = classifier.predict(X_test)
     test_accuracy  = np.mean(y_test_pred.ravel() == y_test.ravel()) * 100
@@ -107,7 +107,7 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
     h.set_ylim(ylim)
     if index != n_classifiers - 1:
         h.set_xticks([])
-    pl.title('acc = %.1f' % test_accuracy)
+    pl.title('test acc = %.1f' % test_accuracy)
     
     h = pl.subplot(n_classifiers + 1, 3, 3 + 3 * index + 3)
     make_scatter_plot(iris.data, iris.target, classifier, h)
