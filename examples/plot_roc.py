@@ -6,6 +6,7 @@ Receiver operating characteristic (ROC)
 Example of Receiver operating characteristic (ROC) metric to
 evaluate the quality of the output of a classifier.
 """
+print __doc__
 
 import random
 import numpy as np

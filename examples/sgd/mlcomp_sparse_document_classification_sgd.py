@@ -19,8 +19,8 @@ Once downloaded unzip the arhive somewhere on your filesystem. For instance in::
   % unzip /path/to/dataset-379-20news-18828_XXXXX.zip
 
 You should get a folder ``~/data/mlcomp/379`` with a file named ``metadata`` and
-subfolders ``raw``, ``train`` and ``test`` holding the text documents organized by
-newsgroups.
+subfolders ``raw``, ``train`` and ``test`` holding the text documents organized
+by newsgroups.
 
 Then set the ``MLCOMP_DATASETS_HOME`` environment variable pointing to
 the root folder holding the uncompressed archive::
@@ -32,23 +32,22 @@ Then you are ready to run this example using your favorite python shell::
   % ipython examples/mlcomp_sparse_document_classification.py
 
 """
+print __doc__
+
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
+#         Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
 from time import time
 import sys
 import os
 import numpy as np
-# import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
 
-# from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.sgd.sparse import SGD
-
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
     print "Please follow those instructions to get started:"

@@ -18,8 +18,8 @@ Once downloaded unzip the arhive somewhere on your filesystem. For instance in::
   % unzip /path/to/dataset-379-20news-18828_XXXXX.zip
 
 You should get a folder ``~/data/mlcomp/379`` with a file named ``metadata`` and
-subfolders ``raw``, ``train`` and ``test`` holding the text documents organized by
-newsgroups.
+subfolders ``raw``, ``train`` and ``test`` holding the text documents organized
+by newsgroups.
 
 Then set the ``MLCOMP_DATASETS_HOME`` environment variable pointing to
 the root folder holding the uncompressed archive::
@@ -31,6 +31,8 @@ Then you are ready to run this example using your favorite python shell::
   % ipython examples/mlcomp_document_classification.py
 
 """
+print __doc__
+
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 

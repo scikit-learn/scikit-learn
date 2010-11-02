@@ -7,6 +7,7 @@ Comparison of different linear SVM classifiers on the iris dataset. It
 will plot the decision surface for four different SVM classifiers.
 
 """
+print __doc__
 
 import numpy as np
 import pylab as pl

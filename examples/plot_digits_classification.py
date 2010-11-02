@@ -7,6 +7,8 @@ An example showing how the scikit-learn can be used to recognize images of
 hand-written digits.
 
 """
+print __doc__
+
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # License: Simplified BSD
 

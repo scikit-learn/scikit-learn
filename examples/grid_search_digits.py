@@ -1,6 +1,7 @@
 """
+=====================================================================
 Parameter estimation using grid search with a nested cross-validation
-=======================================================================
+=====================================================================
 
 The classifier is optimized by "nested" cross-validation using the
 GridSearchCV object.
@@ -10,6 +11,7 @@ cross-validation (different than the nested cross-validation that is used
 to select the best classifier).
 
 """
+print __doc__
 
 from pprint import pprint
 import numpy as np

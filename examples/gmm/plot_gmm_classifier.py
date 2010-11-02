@@ -19,6 +19,8 @@ crosses. The iris dataset is four-dimensional. Only the first two
 dimensions are shown here, and thus some points are separated in other
 dimensions.
 """
+print __doc__
+
 # Author: Ron Weiss <ronweiss@gmail.com>, Gael Varoquaux
 # License: BSD Style.
 

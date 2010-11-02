@@ -6,6 +6,7 @@ Precision-Recall
 Example of Precision-Recall metric to evaluate the quality
 of the output of a classifier.
 """
+print __doc__
 
 import random
 import pylab as pl

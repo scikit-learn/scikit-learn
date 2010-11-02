@@ -1,7 +1,7 @@
 """
-===========================================
+=========================================
 Segmenting the picture of Lena in regions
-===========================================
+=========================================
 
 This example uses spectral clustering on a graph created from
 voxel-to-voxel difference on an image to break this image into multiple
@@ -10,6 +10,7 @@ partly-homogenous regions.
 This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
 """
+print __doc__
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD
