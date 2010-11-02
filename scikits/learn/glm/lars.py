@@ -124,7 +124,8 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
                 # To get the most correlated variable not already in the active set
                 arrayfuncs.dot_over(Xt, res, active_mask, np.False_, Cov)
             else:
-                arrayfuncs.dot_over(Gram, coefs[n_iter], active_mask, np.False_, a)
+                arrayfuncs.dot_over(Gram, coefs[n_iter], active_mask,
+                                    np.False_, a)
                 Cov = Xty[inactive_mask] - a[:n_inactive]
 
             imax = np.argmax(np.abs(Cov[:n_inactive])) # rename
@@ -249,8 +250,9 @@ def lars_path(X, y, Gram=None, max_features=None, alpha_min=0,
 
     if C < alpha_min: # interpolate
         # interpolation factor 0 <= ss < 1
-        ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] - alphas[n_iter])
-        coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] - coefs[n_iter-1]);
+        ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] \
+                               - alphas[n_iter])
+        coefs[n_iter] = coefs[n_iter-1] + ss * (coefs[n_iter] - coefs[n_iter-1])
         alphas[n_iter] = alpha_min
 
     alphas = alphas[:n_iter+1]
@@ -285,7 +287,7 @@ class LARS(LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.LARS(n_features=1)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LARS(normalize=True, n_features=1)
+    LARS(normalize=True, n_features=1, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.81649658]
 
@@ -298,15 +300,16 @@ class LARS(LinearModel):
 
     See examples/glm/plot_lar.py for an example.
     """
-    def __init__(self, n_features, normalize=True):
+    def __init__(self, n_features, normalize=True, fit_intercept=True):
         self.n_features = n_features
         self.normalize = normalize
         self.coef_ = None
-        self.fit_intercept = True
+        self.fit_intercept = fit_intercept
+        if not normalize:
+            raise ValueError('LARS can only be fit with normalized regressors. Please set normalize to True')
 
     def fit (self, X, y, Gram=None, **params):
         self._set_params(**params)
-                # will only normalize non-zero columns
 
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
@@ -322,6 +325,9 @@ class LARS(LinearModel):
         alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
                                 max_features=self.n_features, method=method)
         self.coef_ = coef_path_[:,-1]
+
+        self._set_intercept(Xmean, ymean)
+
         return self
 
 
