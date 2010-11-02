@@ -62,7 +62,7 @@ def iter_grid(param_grid):
             yield params
 
 
-def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
+def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
                    **fit_params):
     """Run fit on one set of parameters
 
@@ -87,14 +87,18 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
                 test = ind[test]
             X_train = X[train]
             X_test = X[test]
+        y_test = y[test]
 
         clf.fit(X_train, y[train], **fit_params)
 
         if loss_func is not None:
             y_pred = clf.predict(X_test)
-            this_score = -loss_func(y[test], y_pred)
+            this_score = -loss_func(y_test, y_pred)
+        elif score_func is not None:
+            y_pred = clf.predict(X_text)
+            this_score = score_func(y_test, y_pred)
         else:
-            this_score = clf.score(X_test, y[test])
+            this_score = clf.score(X_test, y_test)
         if iid:
             this_n_test_samples = y.shape[0]
             this_score *= this_n_test_samples
@@ -126,6 +130,11 @@ class GridSearchCV(BaseEstimator):
     loss_func: callable, optional
         function that takes 2 arguments and compares them in
         order to evaluate the performance of prediciton (small is good)
+        if None is passed, the score of the estimator is maximized
+
+    score_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediciton (big is good)
         if None is passed, the score of the estimator is maximized
 
     fit_params : dict, optional
@@ -162,14 +171,14 @@ class GridSearchCV(BaseEstimator):
     array([ 1.14])
     """
 
-    def __init__(self, estimator, param_grid, loss_func=None,
-                        fit_params={}, n_jobs=1, iid=True):
+    def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
+                 fit_params={}, n_jobs=1, iid=True):
         assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
             "estimator should a be an estimator implementing 'fit' and "
             "'predict' methods, %s (type %s) was passed" %
                     (estimator, type(estimator))
             )
-        if loss_func is None:
+        if loss_func is None and score_func is None:
             assert hasattr(estimator, 'score'), ValueError(
                     "If no loss_func is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
@@ -179,6 +188,7 @@ class GridSearchCV(BaseEstimator):
         self.estimator = estimator
         self.param_grid = param_grid
         self.loss_func = loss_func
+        self.score_func = score_func
         self.n_jobs = n_jobs
         self.fit_params = fit_params
         self.iid = iid
@@ -220,8 +230,9 @@ class GridSearchCV(BaseEstimator):
         grid = iter_grid(self.param_grid)
         base_clf = clone(self.estimator)
         out = Parallel(n_jobs=self.n_jobs)(
-            delayed(fit_grid_point)(X, y, base_clf, clf_params,
-                    cv, self.loss_func, self.iid, **self.fit_params)
+            delayed(fit_grid_point)(
+                X, y, base_clf, clf_params, cv, self.loss_func,
+                self.score_func, self.iid, **self.fit_params)
                     for clf_params in grid)
 
         # Out is a list of pairs: score, estimator
@@ -260,4 +271,4 @@ class GridSearchCV(BaseEstimator):
         # This method is overridden during the fit if the best estimator
         # found has a score function.
         y_predicted = self.predict(X)
-        return -self.loss_func(y, y_predicted)
+        return self.score_func(y, y_predicted)

@@ -7,15 +7,20 @@ GridSearchCV object.
 
 The performance of the selected parameters is evaluated using
 cross-validation (different than the nested cross-validation that is used
-to select the best classifier). 
+to select the best classifier).
 
 """
 
+from pprint import pprint
 import numpy as np
-from scikits.learn.svm import SVC
+
+from scikits.learn import datasets
 from scikits.learn.cross_val import StratifiedKFold
 from scikits.learn.grid_search import GridSearchCV
-from scikits.learn import datasets
+from scikits.learn.metrics import classification_report
+from scikits.learn.metrics import precision_score
+from scikits.learn.metrics import recall_score
+from scikits.learn.svm import SVC
 
 ################################################################################
 # Loading the Digits dataset
@@ -27,19 +32,34 @@ n_samples = len(digits.images)
 X = digits.images.reshape((n_samples, -1))
 y = digits.target
 
+# split the dataset in two equal part respecting label proportions
+train, test = iter(StratifiedKFold(y, 2)).next()
+
 ################################################################################
 # Set the parameters by cross-validation
-tuned_parameters = [{'kernel':('rbf', ), 'gamma':[1e-3, 1e-4]},
-                    {'kernel':('linear', )}]
+tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+                     'C': [1, 10, 100, 1000]},
+                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
 
-clf = GridSearchCV(SVC(C=1), tuned_parameters, n_jobs=2)
+scores = [
+    ('precision', precision_score),
+    ('recall', recall_score),
+]
 
-y_pred = []
-y_true = []
-for train, test in StratifiedKFold(y, 2):
+for score_name, score_func in scores:
+    clf = GridSearchCV(SVC(C=1), tuned_parameters, n_jobs=2,
+                       score_func=score_func)
     clf.fit(X[train], y[train], cv=StratifiedKFold(y[train], 5))
-    y_pred = np.append(y_pred, clf.predict(X[test]))
-    y_true = np.append(y_true, y[test])
+    y_true, y_pred = y[test], clf.predict(X[test])
 
-classif_rate = np.mean(y_pred == y_true) * 100
-print "Classification rate : %f" % classif_rate
+    print "Classification report for the best estimator: "
+    print clf.best_estimator
+    print "Tuned for '%s' with optimal value: %0.3f" % (
+        score_name, score_func(y_true, y_pred))
+    print classification_report(y_true, y_pred)
+    print "Grid scores:"
+    pprint(clf.grid_points_scores_)
+    print
+
+# Note the problem is too easy: the hyperparameter plateau is too flat and the
+# output model is the same for precision and recall with ties in quality

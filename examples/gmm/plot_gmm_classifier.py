@@ -3,7 +3,7 @@
 GMM classification
 ==================
 
-Demonstration of Gaussian Mixture Models for classification.
+Demonstration of :ref:`gmm` for classification.
 
 Plots predicted labels on both training and held out test data using a
 variety of GMM classifiers on the iris dataset.
@@ -13,8 +13,13 @@ matrices in increasing order of performance.  Although one would
 expect full covariance to perform best in general, it is prone to
 overfitting on small datasets and does not generalize well to held out
 test data.
+
+On the plots, train data is shown as dots, while test data is shown as
+crosses. The iris dataset is four-dimensional. Only the first two 
+dimensions are shown here, and thus some points are separated in other
+dimensions.
 """
-# Author: Ron Weiss <ronweiss@gmail.com>
+# Author: Ron Weiss <ronweiss@gmail.com>, Gael Varoquaux
 # License: BSD Style.
 
 # $Id$
@@ -27,21 +32,18 @@ from scikits.learn import datasets
 from scikits.learn.cross_val import StratifiedKFold
 from scikits.learn.gmm import GMM
 
-def make_scatter_plot(X, y, gmm, h):
-    for n,color in enumerate('rgb'):
-        data = X[y == n]
-        pl.scatter(data[:,0], data[:,1], 0.8, color=color)
-
-        v, w = np.linalg.eigh(gmm.covars[n][:2,:2])
+def make_ellipses(gmm, ax):
+    for n, color in enumerate('rgb'):
+        v, w = np.linalg.eigh(gmm.covars[n][:2, :2])
         u = w[0] / np.linalg.norm(w[0])
         angle = np.arctan(u[1]/u[0])
         angle = 180 * angle / np.pi # convert to degrees
         v *= 9
-        ell = mpl.patches.Ellipse(gmm.means[n,:2], v[0], v[1], 180 + angle,
+        ell = mpl.patches.Ellipse(gmm.means[n, :2], v[0], v[1], 180 + angle,
                                   color=color)
-        ell.set_clip_box(h.bbox)
+        ell.set_clip_box(ax.bbox)
         ell.set_alpha(0.5)
-        h.add_artist(ell)
+        ax.add_artist(ell)
 
 iris = datasets.load_iris()
 
@@ -65,52 +67,47 @@ classifiers = dict((x, GMM(n_states=n_classes, cvtype=x))
 
 n_classifiers = len(classifiers)
 
-pl.figure(figsize=(6, 2*n_classifiers + 2))
-pl.subplots_adjust(bottom=0.075, top=0.925, hspace=0.35)
+pl.figure(figsize=(3*n_classifiers/2, 6))
+pl.subplots_adjust(bottom=.01, top=0.95, hspace=.15, wspace=.05,
+                   left=.01, right=.99)
 
-h = pl.subplot(n_classifiers + 1, 2, 1)
-pl.imshow(X_train.T, interpolation='nearest', aspect='auto')
-h.set_xticks([])
-pl.title('Training data')
 
-h = pl.subplot(n_classifiers + 1, 2, 2)
-pl.imshow(X_test.T, interpolation='nearest', aspect='auto')
-h.set_xticks([])
-pl.title('Test data')
-
-ylim = (-0.1, n_classes + 0.1)
 for index, (name, classifier) in enumerate(classifiers.iteritems()):
     # Since we have class labels for the training data, we can
     # initialize the GMM parameters in a supervised manner.
-    classifier.means = [X_train[y_train == i,:].mean(0)
+    classifier.means = [X_train[y_train == i, :].mean(axis=0)
                         for i in xrange(n_classes)]
 
     # Train the other parameters using the EM algorithm.
     classifier.fit(X_train, init_params='wc', n_iter=20)
 
+    h = pl.subplot(2, n_classifiers/2, index + 1)
+    make_ellipses(classifier, h)
+
+    for n, color in enumerate('rgb'):
+        data = iris.data[iris.target == n]
+        pl.scatter(data[:,0], data[:, 1], 0.8, color=color, 
+                    label=iris.target_names[n])
+    # Plot the test data with crosses
+    for n, color in enumerate('rgb'):
+        data = X_test[y_test == n]
+        pl.plot(data[:, 0], data[:, 1], 'x', color=color)
+
     y_train_pred = classifier.predict(X_train)
     train_accuracy  = np.mean(y_train_pred.ravel() == y_train.ravel()) * 100
-
-    h = pl.subplot(n_classifiers + 1, 3, 3 + 3 * index + 1)
-    pl.plot(y_train_pred)
-    h.set_ylim(ylim)
-    pl.ylabel(name)
-    if index != n_classifiers - 1:
-        h.set_xticks([])
-    pl.title('acc = %.1f' % train_accuracy)
+    pl.text(0.05, 0.9, 'Train accuracy: %.1f' % train_accuracy,
+                    transform=h.transAxes)
 
     y_test_pred = classifier.predict(X_test)
     test_accuracy  = np.mean(y_test_pred.ravel() == y_test.ravel()) * 100
+    pl.text(0.05, 0.8, 'Test accuracy: %.1f' % test_accuracy,
+                    transform=h.transAxes)
 
-    h = pl.subplot(n_classifiers + 1, 3, 3 + 3 * index + 2)
-    pl.plot(y_test_pred)
-    h.set_ylim(ylim)
-    if index != n_classifiers - 1:
-        h.set_xticks([])
-    pl.title('acc = %.1f' % test_accuracy)
-    
-    h = pl.subplot(n_classifiers + 1, 3, 3 + 3 * index + 3)
-    make_scatter_plot(iris.data, iris.target, classifier, h)
-    
+    pl.xticks(())
+    pl.yticks(())
+    pl.title(name)
+
+pl.legend(loc='lower right', prop=dict(size=12))
+  
 
 pl.show()

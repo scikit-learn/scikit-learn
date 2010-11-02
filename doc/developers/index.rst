@@ -17,8 +17,8 @@ You are also welcomed to post there feature requests and patches.
 
 .. _git_repo:
 
-Retriving the latest code
-===========================
+Retrieving the latest code
+==========================
 
 You can check the latest sources with the command::
 
