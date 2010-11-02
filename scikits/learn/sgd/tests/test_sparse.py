@@ -113,16 +113,23 @@ def test_sgd_multiclass():
         assert False
 
 def test_sgd_proba():
-    """Test that SGD raises NotImplementedError when clf.proba is called."""
-    clf = sgd.sparse.SGD(penalty='l2', alpha=0.01,
-                         fit_intercept=True,
-                         n_iter=10, shuffle=True)
-    clf.fit(X, Y)
+    """Test that SGD raises NotImplementedError when clf.predict_proba
+    is called and loss!='log'. Test if predict_proba works for log loss."""
+    clf = sgd.sparse.SGD(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
     try:
         p = clf.predict_proba([3, 2])
     except NotImplementedError:
         pass
     else:
+        assert False
+
+    clf = sgd.sparse.SGD(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
+    try:
+        p = clf.predict_proba([3, 2])
+        assert p > 0.5
+        p = clf.predict_proba([-1, -1])
+        assert p < 0.5
+    except NotImplementedError:
         assert False
 
 def test_sgd_l1():

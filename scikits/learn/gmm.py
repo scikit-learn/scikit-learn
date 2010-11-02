@@ -148,8 +148,6 @@ class GMM(BaseEstimator):
             (`n_dim`, `n_dim`)              if 'tied',
             (`n_states`, `n_dim`)           if 'diag',
             (`n_states`, `n_dim`, `n_dim`)  if 'full'
-    labels : list, len `n_states`
-        Optional labels for each mixture component.
 
     Methods
     -------
@@ -220,8 +218,6 @@ class GMM(BaseEstimator):
         ----------
         n_states : int
             Number of mixture components.
-        n_dim : int
-            Dimensionality of the mixture components.
         cvtype : string (read-only)
             String describing the type of covariance parameters to
             use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
@@ -233,9 +229,6 @@ class GMM(BaseEstimator):
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
-
-
-        self.labels = [None] * n_states
 
     # Read-only properties.
     @property
@@ -260,7 +253,7 @@ class GMM(BaseEstimator):
         elif self.cvtype == 'tied':
             return [self._covars] * self._n_states
         elif self.cvtype == 'spherical':
-            return [np.eye(self._n_states) * f for f in self._covars]
+            return [np.eye(self.n_dim) * f for f in self._covars]
 
     def _set_covars(self, covars):
         covars = np.asanyarray(covars)

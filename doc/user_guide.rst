@@ -1,43 +1,18 @@
+======================
+User guide: contents
+======================
 
-.. _supervised-learning:
+..  
+    We are using this page to give access to the full table of contents of 
+    the user guide. It should not contain any content outside of the
+    header, as all the content goes in contens.rst, to enable using the
+    toctree directive on it.
 
-This is the html version of user guide. A PDF version for pinting can
+.. include:: bigger_toc_css.rst
+
+This is the html version of user guide. A PDF version for printing can
 be found `here
 <http://sourceforge.net/projects/scikit-learn/files/user_guide.pdf/download>`_.
 
-Supervised learning
------------------------
+.. include:: contents.rst
 
-.. toctree::
-
-    modules/svm
-    modules/glm
-    modules/neighbors
-    modules/logistic
-    modules/feature_selection
-
-
-.. _unsupervised-learning:
-
-Unsupervised learning
------------------------
-
-.. toctree::
-
-    modules/gmm
-    modules/clustering
-
-
-Model Selection
------------------------
-
-.. toctree::
-
-    modules/grid_search
-
-Cross Validation
------------------
-
-.. toctree::
-
-   modules/cross_validation

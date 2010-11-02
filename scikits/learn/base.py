@@ -10,7 +10,7 @@ import copy
 
 import numpy as np
 
-from .metrics import explained_variance
+from .metrics import explained_variance_score
 
 ################################################################################
 def clone(estimator, safe=True):
@@ -242,7 +242,7 @@ class RegressorMixin(object):
             -------
             z : float
         """
-        return explained_variance(y, self.predict(X))
+        return explained_variance_score(y, self.predict(X))
 
 
 ################################################################################

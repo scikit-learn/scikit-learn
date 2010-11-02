@@ -57,7 +57,8 @@ class SGD(LinearModel, ClassifierMixin):
     >>> clf = SGD()
     >>> clf.fit(X, Y)
     SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5, penalty='l2',
-      coef_=array([-9.80373, -9.80373]), rho=1.0, alpha=0.0001, intercept_=0.1)
+      coef_=array([ 9.80373,  9.80373]), rho=1.0, alpha=0.0001,
+      intercept_=-0.1)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -94,14 +95,15 @@ class SGD(LinearModel, ClassifierMixin):
         self._set_params(**params)
         X = sparse.csr_matrix(X)
         Y = np.asanyarray(Y, dtype=np.float64)
+        # largest class id is positive class
         classes = np.unique(Y)
         if len(classes) != 2:
             raise ValueError("SGD supports binary classification only.")
         self.classes = classes
 
-        # encode original class labels as 1 (classes[0]) or -1 (classes[1]).
-        Y_new = np.ones(Y.shape, dtype=np.float64)
-        Y_new[Y == classes[1]] = - 1.0
+        # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
+        Y_new = np.ones(Y.shape, dtype=np.float64) * -1.0
+        Y_new[Y == classes[1]] = 1.0
         Y = Y_new
 
         n_samples, n_features = X.shape[0], X.shape[1]
@@ -143,7 +145,7 @@ class SGD(LinearModel, ClassifierMixin):
         array, shape = [n_samples]
            Array containing the predicted class labels (either -1 or 1).
         """
-        indices = np.array(self.predict_margin(X) < 0, dtype=np.int)
+        indices = np.array(self.predict_margin(X) > 0, dtype=np.int)
         return self.classes[indices]
 
     def predict_margin(self, X):
@@ -175,7 +177,10 @@ class SGD(LinearModel, ClassifierMixin):
         array, shape = [n_samples]
             Contains the membership probabilities of the positive class.
         """
-        # how can this be, logisitic *does* implement this
-        raise NotImplementedError(
-                'sgd does not provide this functionality')
+        # TODO change if multi class
+        if isinstance(self.loss_function, sgd_fast_sparse.Log):
+            return 1.0 / (1.0 + np.exp(-self.predict_margin(X)))
+        else:
+            raise NotImplementedError('%s loss does not provide "\
+            "this functionality' % self.loss)
 

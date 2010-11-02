@@ -1,7 +1,11 @@
 
-===========================================
-scikits.learn: machine learning in python
-===========================================
+..  
+    We are putting the title as a raw HTML so that it doesn't appear in
+    the contents
+
+.. raw:: html
+
+    <h1>scikits.learn: machine learning in Python</h1>
 
 .. only:: html
 
@@ -53,7 +57,7 @@ scikits.learn: machine learning in python
   * **Solid**: :ref:`supervised-learning`: classification, regression
 
   * **Work in progress**: :ref:`unsupervised-learning`: :ref:`clustering`, 
-    :ref:`gmm`, manifold learning, ICA
+    :ref:`gmm`, manifold learning, :ref:`ICA <ICA>`
 
   * **Planed**: Gaussian graphical models, matrix factorization
 
@@ -100,10 +104,11 @@ scikits.learn: machine learning in python
 
 .. warning:: 
 
-   This documentation is relative to the development version,
+   This documentation is for the development version,
    documentation for the stable version can be found `here
    <http://scikit-learn.sourceforge.net/old_doc/>`__
 
+.. include:: big_toc_css.rst
 
 First steps
 ======================
@@ -120,10 +125,10 @@ User guide
 .. toctree::
    :maxdepth: 2
 
-   user_guide
+   contents
 
-Gallery
-=======
+Example gallery
+=================
 
 .. toctree::
    :maxdepth: 2
@@ -131,17 +136,11 @@ Gallery
    auto_examples/index
 
 
-Developement
-============
+Development
+===========
 .. toctree::
    :maxdepth: 2
 
    developers/index
    performance
-
-About
-=====
-.. toctree::
-   :maxdepth: 2
-
    about

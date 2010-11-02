@@ -13,6 +13,9 @@ from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
 from .base import BaseEstimator, is_classifier, clone
 
+import numpy as np
+import scipy.sparse as sp
+
 try:
     from itertools import product
 except:
@@ -26,26 +29,26 @@ except:
 
 
 def iter_grid(param_grid):
-    """ Generators on the combination of the various parameter lists given.
+    """Generators on the combination of the various parameter lists given
 
-        Parameters
-        -----------
-        kwargs: keyword arguments, lists
-            Each keyword argument must be a list of values that should
-            be explored.
+    Parameters
+    -----------
+    kwargs: keyword arguments, lists
+        Each keyword argument must be a list of values that should
+        be explored.
 
-        Returns
-        --------
-        params: dictionary
-            Dictionnary with the input parameters taking the various
-            values succesively.
+    Returns
+    --------
+    params: dictionary
+        Dictionnary with the input parameters taking the various
+        values succesively.
 
-        Examples
-        ---------
-        >>> from scikits.learn.grid_search import iter_grid
-        >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-        >>> list(iter_grid(param_grid))
-        [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+    Examples
+    ---------
+    >>> from scikits.learn.grid_search import iter_grid
+    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
+    >>> list(iter_grid(param_grid))
+    [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
 
     """
     if hasattr(param_grid, 'has_key'):
@@ -76,19 +79,26 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
             X_train = [X[i] for i, cond in enumerate(train) if cond]
             X_test = [X[i] for i, cond in enumerate(test) if cond]
         else:
+            if sp.issparse(X):
+                # slicing only works with indices, no masked array with sparse
+                # matrices
+                ind = np.arange(X.shape[0])
+                train = ind[train]
+                test = ind[test]
             X_train = X[train]
             X_test = X[test]
 
         clf.fit(X_train, y[train], **fit_params)
-        y_test = y[test]
+
         if loss_func is not None:
             y_pred = clf.predict(X_test)
-            this_score = -loss_func(y_test, y_pred)
+            this_score = -loss_func(y[test], y_pred)
         else:
-            this_score = clf.score(X_test, y_test)
+            this_score = clf.score(X_test, y[test])
         if iid:
-            this_score *= len(y_test)
-            n_test_samples += len(y_test)
+            this_n_test_samples = y.shape[0]
+            this_score *= this_n_test_samples
+            n_test_samples += this_n_test_samples
         score += this_score
     if iid:
         score /= n_test_samples
@@ -96,10 +106,8 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, iid,
     return score, clf
 
 
-################################################################################
 class GridSearchCV(BaseEstimator):
-    """
-    Grid search on the parameters of a classifier.
+    """Grid search on the parameters of a classifier
 
     Important members are fit, predict.
 
@@ -158,7 +166,8 @@ class GridSearchCV(BaseEstimator):
                         fit_params={}, n_jobs=1, iid=True):
         assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
             "estimator should a be an estimator implementing 'fit' and "
-            "'predict' methods, %s (type %s) was passed" % (clf, type(clf))
+            "'predict' methods, %s (type %s) was passed" %
+                    (estimator, type(estimator))
             )
         if loss_func is None:
             assert hasattr(estimator, 'score'), ValueError(
@@ -176,6 +185,7 @@ class GridSearchCV(BaseEstimator):
 
     def fit(self, X, y, refit=True, cv=None, **kw):
         """Run fit with all sets of parameters
+
         Returns the best classifier
 
         Parameters
@@ -196,7 +206,12 @@ class GridSearchCV(BaseEstimator):
         """
         estimator = self.estimator
         if cv is None:
-            n_samples = len(X)
+            if hasattr(X, 'shape'):
+                n_samples = X.shape[0]
+            else:
+                # support list of unstructured objects on which feature
+                # extraction will be applied later in the tranformer chain
+                n_samples = len(X)
             if y is not None and is_classifier(estimator):
                 cv = StratifiedKFold(y, k=3)
             else:

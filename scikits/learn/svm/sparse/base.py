@@ -67,7 +67,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.n_support = np.empty(0, dtype=np.int32, order='C')
 
 
-    def fit(self, X, Y, class_weight={}):
+    def fit(self, X, y, class_weight={}):
         """
         X is expected to be a sparse matrix. For maximum effiency, use a
         sparse matrix in csr format (scipy.sparse.csr_matrix)
@@ -75,7 +75,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         X = sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
-        Y      = np.asanyarray(Y,      dtype=np.float64, order='C')
+        y      = np.asanyarray(y,      dtype=np.float64, order='C')
 
         solver_type = self._svm_types.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
@@ -90,7 +90,7 @@ class SparseBaseLibSVM(BaseLibSVM):
             self.gamma = 1.0/X.shape[0]
 
         self.label_, self.probA_, self.probB_ = libsvm_sparse_train (
-                 X.shape[1], X.data, X.indices, X.indptr, Y,
+                 X.shape[1], X.data, X.indices, X.indptr, y,
                  solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
                  self._support_data, self._support_indices,
@@ -160,20 +160,20 @@ class SparseBaseLibSVM(BaseLibSVM):
 
 class SparseBaseLibLinear(BaseLibLinear):
 
-    def fit(self, X, Y, class_weight={}, **params):
+    def fit(self, X, y, class_weight={}, **params):
         """
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
-        Y : array, shape = [n_samples]
+        y : array, shape = [n_samples]
             Target vector relative to X
         """
         self._set_params(**params)
         X = sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
-        Y = np.asanyarray(Y, dtype=np.int32, order='C')
+        y = np.asanyarray(y, dtype=np.int32, order='C')
 
         self._weight       = np.asarray(class_weight.values(),
                                       dtype=np.float64, order='C')
@@ -182,17 +182,18 @@ class SparseBaseLibLinear(BaseLibLinear):
 
         self.raw_coef_, self.label_ = \
                        _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
-                       X.indptr, Y,
+                       X.indptr, y,
                        self._get_solver_type(),
                        self.eps, self._get_bias(), self.C, self._weight_label,
                        self._weight)
         return self
 
-    def predict(self, T):
-        T = sparse.csr_matrix(T)
-        T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
-        return _liblinear.csr_predict_wrap(T.shape[1],
-                                      T.data, T.indices, T.indptr,
+    def predict(self, X):
+        X = sparse.csr_matrix(X)
+        self._check_n_features(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        return _liblinear.csr_predict_wrap(X.shape[1],
+                                      X.data, X.indices, X.indptr,
                                       self.raw_coef_,
                                       self._get_solver_type(),
                                       self.eps, self.C,
