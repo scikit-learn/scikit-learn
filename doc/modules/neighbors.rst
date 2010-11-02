@@ -17,7 +17,14 @@ Classification
 ==============
 
 The :class:`Neighbors` estimators implements the nearest-neighbors
-method.
+classification method using a vote heuristic: the class most present in
+the k nearest neighbors of a point is assigned to this point.
+
+.. figure:: ../auto_examples/images/plot_neighbors.png
+   :target: ../auto_examples/plot_neighbors.html
+   :align: center
+   :scale: 75
+
 
 .. topic:: Examples:
 
