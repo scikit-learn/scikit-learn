@@ -40,8 +40,8 @@ class LinearModel(BaseEstimator):
     verbose: integer, optional
         The verbosity level
     n_jobs: integer, optional
-        The number of CPUs to use to do the OVA computation. -1 means
-        'all CPUs'.
+        The number of CPUs to use to do the OVA (One Versus All, for
+        multi-class problems) computation. -1 means 'all CPUs'.
 
     Attributes
     ----------

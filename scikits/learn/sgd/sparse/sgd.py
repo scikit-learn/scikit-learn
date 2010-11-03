@@ -158,7 +158,7 @@ class SGD(LinearModel, ClassifierMixin):
     def _fit_multiclass(self, X, Y):
         """Fit a multi-class classifier with a combination
         of binary classifiers, each predicts one class versus
-        all others (OVA).
+        all others (OVA: One Versus All).
         """
         n_classes = self.classes.shape[0]
         n_samples, n_features = X.shape[0], X.shape[1]
@@ -265,6 +265,7 @@ class SGD(LinearModel, ClassifierMixin):
         return SGD,(self.loss, self.penalty, self.alpha, self.rho, self.coef_,
                     self.intercept_, self.fit_intercept, self.n_iter,
                     self.shuffle, self.verbose, self.n_jobs)
+
 
 def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, Y, clf):
     """Inner loop for One-vs.-All scheme"""
