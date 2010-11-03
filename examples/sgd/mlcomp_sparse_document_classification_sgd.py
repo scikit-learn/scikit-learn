@@ -59,8 +59,8 @@ if 'MLCOMP_DATASETS_HOME' not in os.environ:
 
 # Load two categories from the training set (binary classification)
 print "Loading 20 newsgroups training set... "
-news_train = load_mlcomp('20news-18828', 'train',
-                         categories=['alt.atheism', 'comp.graphics'])
+categories = ['alt.atheism', 'comp.graphics', 'sci.space']
+news_train = load_mlcomp('20news-18828', 'train', categories=categories)
 
 print news_train.DESCR
 print "%d documents" % len(news_train.filenames)
@@ -85,8 +85,7 @@ print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
 
 
 print "Loading 20 newsgroups test set... "
-news_test = load_mlcomp('20news-18828', 'test',
-                         categories=['alt.atheism', 'comp.graphics'])
+news_test = load_mlcomp('20news-18828', 'test', categories=categories)
 t0 = time()
 print "done in %fs" % (time() - t0)
 
