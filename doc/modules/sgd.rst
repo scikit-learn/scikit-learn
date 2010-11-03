@@ -46,9 +46,9 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> Y = [0, 1]
     >>> clf = sgd.sparse.SGD(loss="hinge", penalty="l2")
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', shuffle=False, verbose=0, fit_intercept=True, n_iter=5, 
-      penalty='l2', coef_=array([ 9.9009,  9.9009]), rho=1.0, alpha=0.0001,
-      intercept_=-0.398111820662)
+    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
+      n_iter=5, penalty='l2', coef_=array([ 9.9009,  9.9009]), rho=1.0,
+      alpha=0.0001, intercept_=-0.398111820662)
 
 After being fitted, the model can then be used to predict new values::
 
