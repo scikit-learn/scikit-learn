@@ -6,15 +6,15 @@ Tune the parameters of an estimator by cross-validation.
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
-import numpy as np
 import copy
+
+import numpy as np
+import scipy.sparse as sp
 
 from .externals.joblib import Parallel, delayed
 from .cross_val import KFold, StratifiedKFold
 from .base import BaseEstimator, is_classifier, clone
 
-import numpy as np
-import scipy.sparse as sp
 
 try:
     from itertools import product
