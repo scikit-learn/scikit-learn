@@ -6,6 +6,7 @@ Tune the parameters of an estimator by cross-validation.
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
+import numpy as np
 import copy
 
 from .externals.joblib import Parallel, delayed
@@ -74,22 +75,30 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
     score = 0.
     n_test_samples = 0.
     for train, test in cv:
-        if sp.issparse(X):
-            # slicing only works with indices in sparse matrices
-            ind = np.arange(X.shape[0])
-            train = ind[train]
-            test = ind[test]
-
-        clf.fit(X[train], y[train], **fit_params)
+        if isinstance(X, list) or isinstance(X, tuple):
+            X_train = [X[i] for i, cond in enumerate(train) if cond]
+            X_test = [X[i] for i, cond in enumerate(test) if cond]
+        else:
+            if sp.issparse(X):
+                # slicing only works with indices, no masked array with sparse
+                # matrices
+                ind = np.arange(X.shape[0])
+                train = ind[train]
+                test = ind[test]
+            X_train = X[train]
+            X_test = X[test]
         y_test = y[test]
+
+        clf.fit(X_train, y[train], **fit_params)
+
         if loss_func is not None:
-            y_pred = clf.predict(X[test])
+            y_pred = clf.predict(X_test)
             this_score = -loss_func(y_test, y_pred)
         elif score_func is not None:
-            y_pred = clf.predict(X[test])
+            y_pred = clf.predict(X_text)
             this_score = score_func(y_test, y_pred)
         else:
-            this_score = clf.score(X[test], y_test)
+            this_score = clf.score(X_test, y_test)
         if iid:
             this_n_test_samples = y.shape[0]
             this_score *= this_n_test_samples
@@ -207,7 +216,12 @@ class GridSearchCV(BaseEstimator):
         """
         estimator = self.estimator
         if cv is None:
-            n_samples = X.shape[0]
+            if hasattr(X, 'shape'):
+                n_samples = X.shape[0]
+            else:
+                # support list of unstructured objects on which feature
+                # extraction will be applied later in the tranformer chain
+                n_samples = len(X)
             if y is not None and is_classifier(estimator):
                 cv = StratifiedKFold(y, k=3)
             else:
@@ -222,7 +236,20 @@ class GridSearchCV(BaseEstimator):
                     for clf_params in grid)
 
         # Out is a list of pairs: score, estimator
-        best_estimator = max(out)[1] # get maximum score
+
+        # Note: we do not use max(out) to make ties deterministic even if
+        # comparison on estimator instances is not deterministic
+        best_score = None
+        for score, estimator in out:
+            if best_score is None:
+                best_score = score
+                best_estimator = estimator
+            else:
+                if score >= best_score:
+                    best_score = score
+                    best_estimator = estimator
+
+        self.best_score = best_score
 
         if refit:
             # fit the best estimator using the entire dataset
