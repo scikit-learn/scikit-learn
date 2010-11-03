@@ -9,10 +9,11 @@ T = np.array([[-1, -1], [2, 2], [3, 2]])
 true_result = [1, 2, 2]
 
 # test sample 2
-X2 = np.array([[0, 0, 0], [1, 1, 1], [2, 0, 0, ],
-               [0, 0, 2], [3, 3, 3]])
-Y2 = [1, 2, 2, 2, 3]
-T2 = np.array([[-1, -1, -1], [1, 1, 1], [2, 2, 2]])
+X2 = np.array([[-1, 1], [-0.75, 0.5], [-1.5, 1.5],
+               [1, 1], [0.75, 0.5], [1.5, 1.5],
+               [-1, -1], [0, -0.5], [1, -1]])
+Y2 = [1, 1, 1, 2, 2, 2, 3, 3, 3]
+T2 = np.array([[-1.5, 0.5], [1, 2], [0, -2]])
 true_result2 = [1, 2, 3]
 
 # test sample 3
@@ -23,9 +24,9 @@ X3 = np.array([[1,1,0,0,0,0], [1,1,0,0,0,0],
 Y3 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
 X4 = np.array([[1,0.9,0.8,0,0,0], [1,.84,.98,0,0,0],
-           [1,.96,.88,0,0,0], [1,.91,.99,0,0,0],
-           [0,0,0,.89,.91,1], [0,0,0,.79,.84,1],
-           [0,0,0,.91,.95,1], [0,0,0,.93,1,1]])
+               [1,.96,.88,0,0,0], [1,.91,.99,0,0,0],
+               [0,0,0,.89,.91,1], [0,0,0,.79,.84,1],
+               [0,0,0,.91,.95,1], [0,0,0,.93,1,1]])
 Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
 X5 = np.array([[1,1,1,0,0,0], [1,1,1,0,0,0],
@@ -104,16 +105,14 @@ def test_set_coef():
 def test_sgd_multiclass():
     """Multiclass test case.
     """
-    from scikits.learn import datasets
-    iris = datasets.load_iris()
-    X = iris.data[:, :2]
-    Y = iris.target
+    
 
-    clf = sgd.sparse.SGD(alpha=0.01, n_iter=20).fit(X, Y)
+    clf = sgd.sparse.SGD(alpha=0.01, n_iter=20).fit(X2, Y2)
     assert clf.coef_.shape == (3,2)
     assert clf.intercept_.shape == (3,)
-    assert clf.predict_margin([4, 4]).shape == (1, 3)
-    assert clf.predict([4, 4]) == np.array([ 0])
+    assert clf.predict_margin([0, 0]).shape == (1, 3)
+    pred = clf.predict(T2)
+    assert_array_equal(pred, true_result2)
 
 def test_sgd_proba():
     """Test that SGD raises NotImplementedError when clf.predict_proba
@@ -136,6 +135,8 @@ def test_sgd_proba():
         assert False
 
 def test_sgd_l1():
+    """Test L1 regularization.
+    """
     n = len(X4)
     np.random.seed(13)
     idx = np.arange(n)

@@ -62,8 +62,8 @@ class SGD(LinearModel, ClassifierMixin):
     >>> from scikits.learn.sgd.sparse import SGD
     >>> clf = SGD()
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5, penalty='l2',
-      coef_=array([ 9.80373,  9.80373]), rho=1.0, alpha=0.0001,
+    SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5,
+      penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0, alpha=0.0001,
       intercept_=-0.1)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -152,7 +152,6 @@ class SGD(LinearModel, ClassifierMixin):
         of binary classifiers, each predicts one class versus
         all others (OVA).
         """
-        print("Trace: fit multi")
         n_classes = self.classes.shape[0]
         n_samples, n_features = X.shape[0], X.shape[1]
         if self.coef_ is None:
@@ -175,7 +174,8 @@ class SGD(LinearModel, ClassifierMixin):
         X_data = np.array(X.data, dtype=np.float64, order="C")
         X_indices = X.indices
         X_indptr = X.indptr
-        
+
+        # TODO: parallel training using joblib. 
         for i, c in enumerate(self.classes):
             Y_i = np.ones(Y.shape, dtype=np.float64) * -1.0
             Y_i[Y == c] = 1.0
@@ -208,14 +208,11 @@ class SGD(LinearModel, ClassifierMixin):
         array, shape = [n_samples]
            Array containing the predicted class labels (either -1 or 1).
         """
-        # Binary classification
         scores = self.predict_margin(X)
-        print "Score", scores
         if self.classes.shape[0] == 2:
             indices = np.array(scores > 0, dtype=np.int)
         else:
             indices = scores.argmax(axis=1)
-        print "indices", indices
         return self.classes[np.ravel(indices)]
 
     def predict_margin(self, X):
@@ -232,10 +229,6 @@ class SGD(LinearModel, ClassifierMixin):
         # np.dot only works correctly if both arguments are sparse matrices
         if not sparse.issparse(X):
             X = sparse.csr_matrix(X)
-        print "sparse_coef_", self.sparse_coef_.shape
-        print "X", X.shape
-        print "np.dot(X, self.sparse_coef_.T).todense()",
-        print np.dot(X, self.sparse_coef_.T).todense().shape
         scores = np.dot(X, self.sparse_coef_.T).todense() + self.intercept_
         if self.classes.shape[0] == 2:
             return np.ravel(scores)
@@ -254,7 +247,6 @@ class SGD(LinearModel, ClassifierMixin):
         array, shape = [n_samples]
             Contains the membership probabilities of the positive class.
         """
-        # TODO change if multi class
         if isinstance(self.loss_function, Log) and \
                self.classes.shape[0] == 2:
             return 1.0 / (1.0 + np.exp(-self.predict_margin(X)))
