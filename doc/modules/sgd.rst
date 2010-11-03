@@ -12,7 +12,8 @@ it has received a considerable amount of attention just recently in the
 context of large-scale learning. 
 
 SGD has been successfully applied to large-scale and sparse machine learning 
-problems often encountered in text classification and natural language processing. 
+problems often encountered in text classification and natural language 
+processing. 
 Given that the data is sparse, the classifiers in this module easily scale 
 to problems with more than 10^5 training examples and more than 10^4 features. 
 
@@ -32,9 +33,8 @@ The disadvantages of Stochastic Gradient Descent include:
 Classification
 ==============
 
-Currently, this module provides functionality for binary classification only. The
-class :class:`SGD` implements a plain stochastic gradient descent learning routine 
-which supports different convex loss functions and penalties.
+The class :class:`SGD` implements a plain stochastic gradient descent learning 
+routine which supports different convex loss functions and penalties.
 
 As other classifiers, SGD has to be fitted with two arrays:
 an array X of size [m_samples, n_features] holding the training
@@ -46,8 +46,8 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> Y = [0, 1]
     >>> clf = sgd.sparse.SGD(loss="hinge", penalty="l2")
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5, penalty='l2',
-      coef_=array([ 9.9009,  9.9009]), rho=1.0, alpha=0.0001,
+    SGD(loss='hinge', shuffle=False, verbose=0, fit_intercept=True, n_iter=5, 
+      penalty='l2', coef_=array([ 9.9009,  9.9009]), rho=1.0, alpha=0.0001,
       intercept_=-0.398111820662)
 
 After being fitted, the model can then be used to predict new values::
@@ -74,7 +74,8 @@ To get the signed distance to the hyperplane use `predict_margin`:
     >>> clf.predict_margin([[2., 2.]])
     array([ 39.20549567])
 
-If `loss="log"` you get a probability estimate P(y=C|x) using `predict_proba`, where `C` is the largest class label: 
+If `loss="log"` you get a probability estimate P(y=C|x) using `predict_proba`, 
+where `C` is the largest class label: 
    
     >>> clf = sgd.sparse.SGD(loss="log").fit(X, Y)
     >>> clf.predict_proba([[1., 1.]])
@@ -102,6 +103,9 @@ The default setting is `penalty="l2"`. The L1 penalty leads to sparse solutions,
 that is most coefficients are zero. The Elastic Net solves some deficiencies of 
 the L1 penalty in the presence of highly correlated attributes. The parameter `rho`
 has to be specified by the user. 
+
+:class:`SGD` supports multi-class classification by combining multiple 
+binary classifiers in a one-against-all (OVA) scheme.
 
 .. topic:: Examples:
 
@@ -261,12 +265,15 @@ Implementation details
 The implementation of SGD is influenced by the `Stochastic Gradient SVM 
 <http://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD, 
 the weight vector is represented as the product of a scalar and a vector 
-which allows an efficient weight update in the case of L2 regularization
-and the intercept is updated with a smaller learning rate (multiplied by 0.01) 
-to account for the fact that it is updated more frequently. 
+which allows an efficient weight update in the case of L2 regularization. 
+In the case of sparse feature vectors, the intercept is updated with a 
+smaller learning rate (multiplied by 0.01) to account for the fact that 
+it is updated more frequently. 
 
 For L1 regularization (and the Elastic Net) we use the truncated gradient
 algorithm proposed by Tsuruoka et al. 2009. 
+
+For multi-class classification, a one-against-all scheme is used. 
 
 The code is written in Cython.
 
