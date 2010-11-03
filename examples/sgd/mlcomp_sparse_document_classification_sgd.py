@@ -19,8 +19,8 @@ Once downloaded unzip the arhive somewhere on your filesystem. For instance in::
   % unzip /path/to/dataset-379-20news-18828_XXXXX.zip
 
 You should get a folder ``~/data/mlcomp/379`` with a file named ``metadata`` and
-subfolders ``raw``, ``train`` and ``test`` holding the text documents organized by
-newsgroups.
+subfolders ``raw``, ``train`` and ``test`` holding the text documents organized
+by newsgroups.
 
 Then set the ``MLCOMP_DATASETS_HOME`` environment variable pointing to
 the root folder holding the uncompressed archive::
@@ -32,77 +32,86 @@ Then you are ready to run this example using your favorite python shell::
   % ipython examples/mlcomp_sparse_document_classification.py
 
 """
+print __doc__
+
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
+#         Olivier Grisel <olivier.grisel@ensta.org>
+#         Mathieu Blondel <mathieu@mblondel.org>
 # License: Simplified BSD
 
 from time import time
 import sys
 import os
 import numpy as np
-# import pylab as pl
+import scipy.sparse as sp
+import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
-from scikits.learn.metrics import confusion_matrix
-
-# from scikits.learn.svm.sparse import LinearSVC
+from scikits.learn.feature_extraction.text.sparse import Vectorizer
 from scikits.learn.sgd.sparse import SGD
-
+from scikits.learn.metrics import confusion_matrix
+from scikits.learn.metrics import classification_report
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
     print "Please follow those instructions to get started:"
     print __doc__
     sys.exit(0)
 
-# Load the training set
+# Load two categories from the training set (binary classification)
 print "Loading 20 newsgroups training set... "
+news_train = load_mlcomp('20news-18828', 'train',
+                         categories=['alt.atheism', 'comp.graphics'])
+
+print news_train.DESCR
+print "%d documents" % len(news_train.filenames)
+print "%d categories" % len(news_train.target_names)
+
+print "Extracting features from the dataset using a sparse vectorizer"
 t0 = time()
-news_train = load_mlcomp('20news-18828', 'train', sparse=True)
+vectorizer = Vectorizer()
+X_train = vectorizer.fit_transform((open(f).read() for f in news_train.filenames))
 print "done in %fs" % (time() - t0)
+print "n_samples: %d, n_features: %d" % X_train.shape
+assert sp.issparse(X_train)
+y_train = news_train.target
 
-print "Creating binary classification task\n"\
-      "alt.atheism vs. comp.graphics"
-target = news_train.target
-pos = 0 # alt.atheism
-neg = 1 # comp.graphics
-pos_idx = np.where(target == pos)[0]
-neg_idx = np.where(target == neg)[0]
-idx = np.concatenate((pos_idx, neg_idx))
-np.random.seed(13)
-np.random.shuffle(idx)
-data = news_train.data[idx]
-target = news_train.target[idx]
-
-print "num train docs: ", data.shape[0]
-print ""
 print "Training a linear SVM (hinge loss and L2 regularizer) using SGD.\n"\
       "SGD(n_iter=50, alpha=0.00001, fit_intercept=True)"
 t0 = time()
 clf = SGD(n_iter=50, alpha=0.00001, fit_intercept=True)
-#clf = LinearSVC(**parameters)
-clf.fit(data, target)
+clf.fit(X_train, y_train)
 print "done in %fs" % (time() - t0)
 print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
 
-print "Loading 20 newsgroups test set... "
-t0 = time()
-news_test = load_mlcomp('20news-18828', 'test', sparse=True)
-print "done in %fs" % (time() - t0)
 
-target = news_test.target
-pos_idx = np.where(target == pos)[0]
-neg_idx = np.where(target == neg)[0]
-idx = np.concatenate((pos_idx, neg_idx))
-data = news_test.data[idx]
-target = news_test.target[idx]
+print "Loading 20 newsgroups test set... "
+news_test = load_mlcomp('20news-18828', 'test',
+                         categories=['alt.atheism', 'comp.graphics'])
+t0 = time()
+print "done in %fs" % (time() - t0)
 
 print "Predicting the labels of the test set..."
-t0 = time()
-pred = clf.predict(data)
-print "done in %fs" % (time() - t0)
-print "Classification accuracy: %f" % (np.mean(pred == target) * 100)
+print "%d documents" % len(news_test.filenames)
+print "%d categories" % len(news_test.target_names)
 
-cm = confusion_matrix(target, pred)
+print "Extracting features from the dataset using the same vectorizer"
+t0 = time()
+X_test = vectorizer.transform((open(f).read() for f in news_test.filenames))
+y_test = news_test.target
+print "done in %fs" % (time() - t0)
+print "n_samples: %d, n_features: %d" % X_test.shape
+
+print "Predicting the outcomes of the testing set"
+t0 = time()
+pred = clf.predict(X_test)
+print "done in %fs" % (time() - t0)
+
+print "Classification report on test set for classifier:"
+print clf
+print
+print classification_report(y_test, pred, class_names=news_test.target_names)
+
+cm = confusion_matrix(y_test, pred)
 print "Confusion matrix:"
 print cm
 

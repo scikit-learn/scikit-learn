@@ -77,10 +77,16 @@ def test_precomputed():
     assert_array_equal(pred, true_result)
 
     # test a precomputed kernel with the iris dataset
+    # and check parameters against a linear SVC
     clf = svm.SVC(kernel='precomputed')
+    clf2 = svm.SVC(kernel='linear')
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
+    clf2.fit(iris.data, iris.target)
     pred = clf.predict(K)
+    assert_array_almost_equal(clf.support_, clf2.support_)
+    assert_array_almost_equal(clf.dual_coef_, clf2.dual_coef_)
+    assert_array_almost_equal(clf.intercept_, clf2.intercept_)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
     clf = svm.SVC(kernel=kfunc)

@@ -8,6 +8,7 @@ provide the same results and that in the case of
 sparse data glm.sparse.Lasso improves the speed.
 
 """
+print __doc__
 
 from time import time
 import numpy as np

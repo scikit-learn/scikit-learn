@@ -1,12 +1,13 @@
 """
-===============================================================
+=============================================================
 Receiver operating characteristic (ROC) with cross validation
-===============================================================
+=============================================================
 
 Example of Receiver operating characteristic (ROC) metric to
 evaluate the quality of the output of a classifier using
 cross-validation.
 """
+print __doc__
 
 import numpy as np
 from scipy import interp

@@ -41,7 +41,9 @@ Classification
 ==============
 
 Suppose some given data points each belonging to one of N classes, and
-the goal is to decide which class a new data point will be in. The
+the goal is to decide which class a new data point will be in. This
+problem is called classification, and can be solved with SVMs using
+*Support Vector Classifiers*, SVC. The
 classes that perform this task are :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC`.
 
@@ -69,13 +71,13 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> X = [[0., 0.], [1., 1.]]
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
-    >>> clf.fit (X, Y)
+    >>> clf.fit(X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
       cache_size=100.0, shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> clf.predict ([[2., 2.]])
+    >>> clf.predict([[2., 2.]])
     array([ 1.])
 
 SVMs perform classification as a function of some subset of the
@@ -236,7 +238,7 @@ Different kernels are specified by keyword kernel at initialization::
     >>> linear_svc = svm.SVC(kernel='linear')
     >>> linear_svc.kernel
     'linear'
-    >>> rbf_svc = svm.SVC (kernel='rbf')
+    >>> rbf_svc = svm.SVC(kernel='rbf')
     >>> rbf_svc.kernel
     'rbf'
 

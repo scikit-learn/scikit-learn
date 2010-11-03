@@ -1,12 +1,13 @@
 """
-===========================================
+=========================================
 SVM: Maximum margin separating hyperplane
-===========================================
+=========================================
 
 Plot the maximum margin separating hyperplane within a two-class
 separable dataset using a Support Vector Machines classifier with
 linear kernel.
 """
+print __doc__
 
 import numpy as np
 import pylab as pl

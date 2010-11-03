@@ -7,6 +7,8 @@ Simple usage of Support Vector Machines to classify a sample. It will
 plot the decision surface and the support vectors.
 
 """
+print __doc__
+
 import numpy as np
 import pylab as pl
 from scikits.learn import svm, datasets

@@ -11,6 +11,7 @@ NOTE: Due to the decreased learning rate of the intercept
 the hyperplane is forced to run through the origin, thus,
 the plotted HP is not the max margin HP. 
 """
+print __doc__
 
 import numpy as np
 import pylab as pl
