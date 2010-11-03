@@ -185,13 +185,13 @@ multiple interfaces):
 
     The base object, implements::
 
-	obj.fit(data)
+	estimator = obj.fit(data)
 
 :Predictor:
 
     For suppervised learning, or some unsupervised problems, implements::
 
-	target = obj.predict(data)
+	prediction = obj.predict(data)
 
 :Transformer:
 
@@ -199,6 +199,11 @@ multiple interfaces):
     way, implements::
 
 	new_data = obj.transform(data)
+
+    When fitting and transforming can be performed much more efficiently 
+    together than separately, implements::
+
+    new_data = obj.fit_transform(data)
 
 :Model:
 
