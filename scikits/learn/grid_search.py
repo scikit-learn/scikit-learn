@@ -80,8 +80,10 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
             X_test = [X[i] for i, cond in enumerate(test) if cond]
         else:
             if sp.issparse(X):
-                # slicing only works with indices, no masked array with sparse
-                # matrices
+                # For sparse matrices, slicing only works with indices
+                # (no masked array). Convert to CSR format for efficiency and
+                # because some sparse formats don't support row slicing.
+                X = sp.csr_matrix(X)
                 ind = np.arange(X.shape[0])
                 train = ind[train]
                 test = ind[test]
