@@ -7,6 +7,12 @@ Clustering
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
 unlabeled data can be performed with the module `scikits.learn.cluster`.
 
+Each clustering algorithm comes in two variants: a class, that implements
+the `fit` method to learn the clusters on train data, and a function,
+that, given train data, returns an array of integer labels corresponding
+to the different clusters. For the class, the labels over the training
+data can be found in the `labels_` attribute.
+
 Here, we only explain the different algorithms. For usage examples, click
 on the class name to read the reference documentation.
 

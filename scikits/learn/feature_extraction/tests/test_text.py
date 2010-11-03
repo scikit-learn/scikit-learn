@@ -5,14 +5,12 @@ from scikits.learn.feature_extraction.text import strip_accents
 from scikits.learn.feature_extraction.text import CountVectorizer
 from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.feature_extraction.text import Vectorizer
-from scikits.learn.feature_extraction.text import HashingVectorizer
 
 import scikits.learn.feature_extraction.text.sparse as st
 
 SparseCountVectorizer = st.CountVectorizer
 SparseTfidfTransformer = st.TfidfTransformer
 SparseVectorizer = st.Vectorizer
-SparseHashingVectorizer = st.HashingVectorizer
 
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
@@ -108,71 +106,11 @@ def test_char_ngram_analyzer():
     assert_equal(cnga.analyze(text)[-5:], expected)
 
 
-def test_dense_hashed_tf_idf():
-    hv = HashingVectorizer(dim=1000, probes=3)
-    hv.vectorize(JUNK_FOOD_DOCS)
-    hv.vectorize(NOTJUNK_FOOD_DOCS)
-
-    # extract the TF-IDF data
-    X = hv.get_tfidf()
-    assert_equal(X.shape, (11, 1000))
-
-    # label junk food as -1, the others as +1
-    y = np.ones(X.shape[0])
-    y[:6] = -1
-
-    # train and test a classifier
-    clf = DenseLinearSVC(C=10).fit(X[1:-1], y[1:-1])
-    assert_equal(clf.predict([X[0]]), [-1])
-    assert_equal(clf.predict([X[-1]]), [1])
-
-
-def test_sparse_hashed_tf_idf():
-    hv = SparseHashingVectorizer(dim=1000000, probes=3)
-    hv.vectorize(JUNK_FOOD_DOCS)
-    hv.vectorize(NOTJUNK_FOOD_DOCS)
-
-    # extract the TF-IDF data
-    X = hv.get_tfidf()
-    assert_equal(X.shape, (11, 1000000))
-
-    # label junk food as -1, the others as +1
-    y = np.ones(X.shape[0])
-    y[:6] = -1
-
-    # train and test a classifier
-    clf = SparseLinearSVC(C=10).fit(X[1:-1], y[1:-1])
-    assert_equal(clf.predict(X[0, :]), [-1])
-    assert_equal(clf.predict(X[-1, :]), [1])
-
-
-def test_dense_sparse_hashed_tf_idf_sanity():
-
-    hv = HashingVectorizer(dim=100, probes=3)
-    shv = SparseHashingVectorizer(dim=100, probes=3)
-
-    hv.vectorize(JUNK_FOOD_DOCS)
-    shv.vectorize(JUNK_FOOD_DOCS)
-
-    # check that running TF IDF estimates are the same
-    dense_tf_idf = hv.get_tfidf()
-    sparse_tfidf = shv.get_tfidf().todense()
-
-    assert_array_almost_equal(dense_tf_idf, sparse_tfidf)
-
-    # check that incremental behaviour stays the same
-    hv.vectorize(NOTJUNK_FOOD_DOCS)
-    shv.vectorize(NOTJUNK_FOOD_DOCS)
-
-    dense_tf_idf = hv.get_tfidf()
-    sparse_tfidf = shv.get_tfidf().todense()
-
-    assert_array_almost_equal(dense_tf_idf, sparse_tfidf)
-
 def toarray(a):
     if hasattr(a, "toarray"):
         a = a.toarray()
     return a
+
 
 def _test_vectorizer(cv_class, tf_class, v_class):
     # results to be compared

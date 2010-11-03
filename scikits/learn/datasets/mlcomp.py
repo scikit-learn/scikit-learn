@@ -5,9 +5,6 @@
 import os
 import numpy as np
 from scikits.learn.datasets.base import load_files
-from scikits.learn.feature_extraction.text import HashingVectorizer
-from scikits.learn.feature_extraction.text.sparse import HashingVectorizer as \
-                                                         SparseCountVectorizer
 
 
 def _load_document_classification(dataset_path, metadata, set_=None):
