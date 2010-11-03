@@ -3,8 +3,9 @@
 # License: BSD Style.
 """Stochastic Gradient Descent (SGD) with sparse data. """
 
-from ..base import BaseEstimator
+import numpy as np
 
+from ..base import BaseEstimator
 
 class LinearModel(BaseEstimator):
     """Linear Model trained by minimizing a regularized training
@@ -36,9 +37,11 @@ class LinearModel(BaseEstimator):
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
-    verbose: int
-        Verbose output. If > 0, learning statistics are printed to stdout.
-        Defaults to 0.
+    verbose: integer, optional
+        The verbosity level
+    n_jobs: integer, optional
+        The number of CPUs to use to do the OVA computation. -1 means
+        'all CPUs'.
 
     Attributes
     ----------
@@ -57,9 +60,9 @@ class LinearModel(BaseEstimator):
     >>> from scikits.learn.sgd.sparse import SGD
     >>> clf = SGD()
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5,
-      penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0, alpha=0.0001,
-      intercept_=-0.1)
+    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
+      n_iter=5, penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0,
+      alpha=0.0001, intercept_=-0.1)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -72,13 +75,15 @@ class LinearModel(BaseEstimator):
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, coef_=None, intercept_=None,
                  fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0):
+                 verbose=0, n_jobs=1):
         self.loss = loss
         self.penalty = penalty
         self.alpha = alpha
         self.rho = rho
-        self.coef_ = coef_
+        self.coef_ = np.asarray(coef_) if coef_ is not None else None
         self.intercept_ = intercept_
+	if self.intercept_ is not None:
+	    self.intercept_ = np.asarray(intercept_)
         self.fit_intercept = fit_intercept
         self.n_iter = int(n_iter)
         if self.n_iter <= 0:
@@ -87,6 +92,7 @@ class LinearModel(BaseEstimator):
             raise ValueError("shuffle must be either True or False")
         self.shuffle = shuffle
         self.verbose = verbose
+        self.n_jobs = n_jobs
         self._get_loss_function()
         self._get_penalty_type()
 

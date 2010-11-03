@@ -98,16 +98,46 @@ def test_sgd_params():
         assert False
 
 def test_set_coef():
+    """Test the n_feature and n_classes checks for
+    the warm starts. 
+    """
+    try:
+        clf = sgd.sparse.SGD(coef_=np.zeros((3,))).fit(X, Y)
+    except ValueError:
+        pass
+    else:
+        assert False
+    
     clf = sgd.sparse.SGD()
     clf._set_coef(None)
     assert clf.sparse_coef_ == None
 
 def test_sgd_multiclass():
-    """Multiclass test case.
+    """Multi-class test case.
     """
-    
-
     clf = sgd.sparse.SGD(alpha=0.01, n_iter=20).fit(X2, Y2)
+    assert clf.predict_margin([0, 0]).shape == (1, 3)
+    pred = clf.predict(T2)
+    assert_array_equal(pred, true_result2)
+
+    try:
+        sgd.sparse.SGD(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
+    except ValueError:
+        pass
+    else:
+        assert False
+
+    clf = sgd.sparse.SGD(alpha=0.01, n_iter=20, coef_=np.zeros((3, 2)),
+                         intercept_=np.zeros(3)).fit(X2, Y2)
+    assert clf.coef_.shape == (3,2)
+    assert clf.intercept_.shape == (3,)
+    pred = clf.predict(T2)
+    assert_array_equal(pred, true_result2)
+
+def test_sgd_multiclass_njobs():
+    """Multi-class test case with multi-core support.
+    """
+    clf = sgd.sparse.SGD(alpha=0.01, n_iter=20, n_jobs=-1).fit(X2, Y2)
     assert clf.coef_.shape == (3,2)
     assert clf.intercept_.shape == (3,)
     assert clf.predict_margin([0, 0]).shape == (1, 3)

@@ -6,6 +6,7 @@
 import numpy as np
 from scipy import sparse
 
+from ...externals.joblib import Parallel, delayed
 from ...base import ClassifierMixin
 from ..base import LinearModel
 from .sgd_fast_sparse import plain_sgd, Hinge, Log, ModifiedHuber
@@ -28,9 +29,9 @@ class SGD(LinearModel, ClassifierMixin):
     rho : float
         The Elastic Net mixing parameter, with 0 < rho <= 1.
         Defaults to 0.85.
-    coef_ : ndarray of shape n_features
+    coef_ : array, shape = [n_classes, n_features]
         The initial coeffients to warm-start the optimization.
-    intercept_ : float
+    intercept_ : array, shape = [n_features]
         The initial intercept to warm-start the optimization.
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -41,17 +42,18 @@ class SGD(LinearModel, ClassifierMixin):
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
-    verbose: int
-        Verbose output. If > 0, learning statistics are printed to stdout.
-        Defaults to 0.
+    verbose: integer, optional
+        The verbosity level
+    n_jobs: integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
 
     Attributes
     ----------
-    FIXME adhere to SVM signature [n_classes, n_features].
-    `coef_` : array, shape = [n_features]
+    `coef_` : array, shape = [n_classes, n_features]
         Weights asigned to the features.
 
-    `intercept_` : float
+    `intercept_` : array, shape = [n_features]
         Constants in decision function.
 
     Examples
@@ -62,9 +64,9 @@ class SGD(LinearModel, ClassifierMixin):
     >>> from scikits.learn.sgd.sparse import SGD
     >>> clf = SGD()
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', shuffle=False, fit_intercept=True, n_iter=5,
-      penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0, alpha=0.0001,
-      intercept_=-0.1)
+    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
+      n_iter=5, penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0,
+      alpha=0.0001, intercept_=-0.1)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -125,8 +127,14 @@ class SGD(LinearModel, ClassifierMixin):
         n_samples, n_features = X.shape[0], X.shape[1]
         if self.coef_ is None:
             self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
+        else:
+            if self.coef_.shape != (n_features,):
+                raise ValueError("Provided coef_ does not match dataset. ")
         if self.intercept_ is None:
-            self.intercept_ = 0.0
+            self.intercept_ = np.zeros(1, dtype=np.float64)
+        else:
+            if self.intercept_.shape != (1,):
+                raise ValueError("Provided intercept_ does not match dataset. ")
 
         X_data = np.array(X.data, dtype=np.float64, order="C")
         X_indices = X.indices
@@ -171,25 +179,18 @@ class SGD(LinearModel, ClassifierMixin):
                 raise ValueError("Provided intercept_ does not match dataset. ")
             intercept_ = self.intercept_
 
+        self.coef_ = coef_
+        self.intercept_ = intercept_
         X_data = np.array(X.data, dtype=np.float64, order="C")
         X_indices = X.indices
         X_indptr = X.indptr
 
-        # TODO: parallel training using joblib. 
-        for i, c in enumerate(self.classes):
-            Y_i = np.ones(Y.shape, dtype=np.float64) * -1.0
-            Y_i[Y == c] = 1.0
-            coef, intercept = plain_sgd(coef_[i],
-                                        intercept_[i],
-                                        self.loss_function,
-                                        self.penalty_type,
-                                        self.alpha, self.rho,
-                                        X_data,
-                                        X_indices, X_indptr, Y_i,
-                                        self.n_iter,
-                                        int(self.fit_intercept),
-                                        int(self.verbose),
-                                        int(self.shuffle))
+        res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                delayed(_train_ova_classifier)(i, c, X_data, X_indices,
+                                               X_indptr, Y, self)                     
+            for i, c in enumerate(self.classes))
+
+        for i, coef, intercept in res:
             coef_[i] = coef
             intercept_[i] = intercept
             
@@ -253,4 +254,27 @@ class SGD(LinearModel, ClassifierMixin):
         else:
             raise NotImplementedError('%s loss does not provide "\
             "this functionality' % self.loss)
+
+    def __reduce__(self):
+        """Handler which is called at pickeling time.
+
+        This is important
+        for joblib because otherwise it will crash trying to pickle
+        the external loss function object. 
+        """
+        return SGD,(self.loss, self.penalty, self.alpha, self.rho, self.coef_,
+                    self.intercept_, self.fit_intercept, self.n_iter,
+                    self.shuffle, self.verbose, self.n_jobs)
+
+def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, Y, clf):
+    """Inner loop for One-vs.-All scheme"""
+    Y_i = np.ones(Y.shape, dtype=np.float64) * -1.0
+    Y_i[Y == c] = 1.0
+    coef, intercept = plain_sgd(clf.coef_[i], clf.intercept_[i],
+                                clf.loss_function, clf.penalty_type,
+                                clf.alpha, clf.rho, X_data, X_indices,
+                                X_indptr, Y_i, clf.n_iter,
+                                clf.fit_intercept, clf.verbose,
+                                clf.shuffle)
+    return (i, coef, intercept)
 
