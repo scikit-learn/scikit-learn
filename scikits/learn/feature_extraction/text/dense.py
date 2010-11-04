@@ -467,6 +467,11 @@ class BaseVectorizer(BaseEstimator):
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X, copy)
 
+    def _get_vocab(self):
+        return self.tc.vocabulary
+
+    vocabulary = property(_get_vocab)
+
 
 class Vectorizer(BaseVectorizer):
     """Convert a collection of raw documents to a matrix
