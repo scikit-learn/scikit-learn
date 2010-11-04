@@ -147,7 +147,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             seeds = np.argsort(np.random.rand(n_samples))[:k]
             centers = X[seeds]
         elif hasattr(init, '__array__'):
-            centers = _m_step(X, init, k)
+            centers = np.asanyarray(init).copy()
         else:
             raise ValueError("the init parameter for the k-means should "
                 "be 'k-mean++' or 'random' or an ndarray, "
