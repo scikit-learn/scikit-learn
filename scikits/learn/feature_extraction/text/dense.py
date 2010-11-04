@@ -89,7 +89,8 @@ class WordNGramAnalyzer(BaseEstimator):
     token_pattern = re.compile(r"\b\w\w+\b", re.UNICODE)
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
-                 preprocessor=DEFAULT_PREPROCESSOR, stop_words=None):
+                 preprocessor=DEFAULT_PREPROCESSOR,
+                 stop_words=ENGLISH_STOP_WORDS):
         self.charset = charset
         self.stop_words = stop_words
         self.min_n = min_n
@@ -466,6 +467,11 @@ class BaseVectorizer(BaseEstimator):
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X, copy)
 
+    def _get_vocab(self):
+        return self.tc.vocabulary
+
+    vocabulary = property(_get_vocab)
+
 
 class Vectorizer(BaseVectorizer):
     """Convert a collection of raw documents to a matrix
@@ -479,5 +485,4 @@ class Vectorizer(BaseVectorizer):
                  use_idf=True):
         self.tc = CountVectorizer(analyzer, dtype=np.float64)
         self.tfidf = TfidfTransformer(use_tf, use_idf)
-
 
