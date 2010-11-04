@@ -66,7 +66,7 @@ def test_strip_accents():
 
 
 def test_word_analyzer_unigrams():
-    wa = WordNGramAnalyzer(min_n=1, max_n=1)
+    wa = WordNGramAnalyzer(min_n=1, max_n=1, stop_words=None)
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
@@ -80,7 +80,7 @@ def test_word_analyzer_unigrams():
 
 
 def test_word_analyzer_unigrams_and_bigrams():
-    wa = WordNGramAnalyzer(min_n=1, max_n=2)
+    wa = WordNGramAnalyzer(min_n=1, max_n=2, stop_words=None)
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi', u'etait',
