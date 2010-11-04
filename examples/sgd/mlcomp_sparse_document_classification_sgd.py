@@ -54,7 +54,6 @@ from scikits.learn.metrics import classification_report
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
     print "Please follow those instructions to get started:"
-    print __doc__
     sys.exit(0)
 
 # Load two categories from the training set (binary classification)

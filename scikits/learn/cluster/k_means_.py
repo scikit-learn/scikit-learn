@@ -312,9 +312,9 @@ class KMeans(BaseEstimator):
     n = n_samples, p = n_features. (D. Arthur and S. Vassilvitskii,
     'How slow is the k-means method?' SoCG2006)
 
-    In practice, the K-means algorithm is very fast (on of the fastest
-    clustering algorithms available), but it falls in local minimas, and
-    it can be useful to restarts it several times.
+    In practice, the K-means algorithm is very fast (one of the fastest
+    clustering algorithms available), but it falls in local minima. That's why
+    it can be useful to restart it several times.
     """
 
 
