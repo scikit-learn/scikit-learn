@@ -6,3 +6,4 @@ documentation.
 """
 
 from . import sparse
+from sgd import SGD, Log, ModifiedHuber, Hinge

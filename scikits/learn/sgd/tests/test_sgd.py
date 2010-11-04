@@ -37,9 +37,9 @@ Y5 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
 
 def test_sgd():
-    """Check that sparse SGD gives any results :-)"""
+    """Check that SGD gives any results :-)"""
 
-    clf = sgd.sparse.SGD(penalty='l2', alpha=0.01,
+    clf = sgd.SGD(penalty='l2', alpha=0.01,
                          fit_intercept=True,
                          n_iter=10, shuffle=True)
     clf.fit(X, Y)
@@ -49,14 +49,14 @@ def test_sgd():
 
 def test_sgd_penalties():
     """Check whether penalties and hyperparameters are set properly"""
-    clf = sgd.sparse.SGD(penalty='l2')
+    clf = sgd.SGD(penalty='l2')
     assert clf.rho == 1.0
-    clf = sgd.sparse.SGD(penalty='l1')
+    clf = sgd.SGD(penalty='l1')
     assert clf.rho == 0.0
-    clf = sgd.sparse.SGD(penalty='elasticnet', rho=0.85)
+    clf = sgd.SGD(penalty='elasticnet', rho=0.85)
     assert clf.rho == 0.85
     try:
-        clf = sgd.sparse.SGD(penalty='foobar', rho=0.85)
+        clf = sgd.SGD(penalty='foobar', rho=0.85)
     except ValueError:
         pass
     else:
@@ -64,17 +64,17 @@ def test_sgd_penalties():
 
 def test_sgd_losses():
     """Check whether losses and hyperparameters are set properly"""
-    clf = sgd.sparse.SGD(loss='hinge')
+    clf = sgd.SGD(loss='hinge')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.Hinge)
-    clf = sgd.sparse.SGD(loss='log')
+                      sgd.Hinge)
+    clf = sgd.SGD(loss='log')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.Log)
-    clf = sgd.sparse.SGD(loss='modifiedhuber')
+                      sgd.Log)
+    clf = sgd.SGD(loss='modifiedhuber')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.ModifiedHuber)
+                      sgd.ModifiedHuber)
     try:
-        clf = sgd.sparse.SGD(loss="foobar")
+        clf = sgd.SGD(loss="foobar")
     except ValueError:
         pass
     else:
@@ -83,15 +83,15 @@ def test_sgd_losses():
 def test_sgd_params():
     """Test parameter validity check"""
     try:
-        clf = sgd.sparse.SGD(n_iter=0)
-        clf = sgd.sparse.SGD(n_iter=-10000)
+        clf = sgd.SGD(n_iter=0)
+        clf = sgd.SGD(n_iter=-10000)
     except ValueError:
         pass
     else:
         assert False
 
     try:
-        clf = sgd.sparse.SGD(shuffle="false")
+        clf = sgd.SGD(shuffle="false")
     except ValueError:
         pass
     else:
@@ -102,7 +102,7 @@ def test_set_coef():
     the warm starts. """
     # Provided coef_ does not match dataset.
     try:
-        clf = sgd.sparse.SGD(coef_=np.zeros((3,))).fit(X, Y)
+        clf = sgd.SGD(coef_=np.zeros((3,))).fit(X, Y)
     except ValueError:
         pass
     else:
@@ -110,42 +110,38 @@ def test_set_coef():
 
     # Provided intercept_ does not match dataset.
     try:
-        clf = sgd.sparse.SGD(intercept_=np.zeros((3,))).fit(X, Y)
+        clf = sgd.SGD(intercept_=np.zeros((3,))).fit(X, Y)
     except ValueError:
         pass
     else:
         assert False
-    
-    clf = sgd.sparse.SGD()
-    clf._set_coef(None)
-    assert clf.sparse_coef_ == None
 
 def test_sgd_multiclass():
     """Multi-class test case.
     """
-    clf = sgd.sparse.SGD(alpha=0.01, n_iter=20).fit(X2, Y2)
+    clf = sgd.SGD(alpha=0.01, n_iter=20).fit(X2, Y2)
     assert clf.predict_margin([0, 0]).shape == (1, 3)
     pred = clf.predict(T2)
     assert_array_equal(pred, true_result2)
 
     try:
-        sgd.sparse.SGD(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
+        sgd.SGD(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
     except ValueError:
         pass
     else:
         assert False
 
-    clf = sgd.sparse.SGD(alpha=0.01, n_iter=20, coef_=np.zeros((3, 2)),
+    clf = sgd.SGD(alpha=0.01, n_iter=20, coef_=np.zeros((3, 2)),
                          intercept_=np.zeros(3)).fit(X2, Y2)
     assert clf.coef_.shape == (3,2)
-    assert clf.intercept_.shape == (3,)
+    assert clf.intercept_.shape == (3, )
     pred = clf.predict(T2)
     assert_array_equal(pred, true_result2)
 
 def test_sgd_multiclass_njobs():
     """Multi-class test case with multi-core support.
     """
-    clf = sgd.sparse.SGD(alpha=0.01, n_iter=20, n_jobs=-1).fit(X2, Y2)
+    clf = sgd.SGD(alpha=0.01, n_iter=20, n_jobs=-1).fit(X2, Y2)
     assert clf.coef_.shape == (3,2)
     assert clf.intercept_.shape == (3,)
     assert clf.predict_margin([0, 0]).shape == (1, 3)
@@ -158,7 +154,7 @@ def test_set_coef_multiclass():
     """
     # Provided coef_ does not match dataset.
     try:
-        clf = sgd.sparse.SGD(coef_=np.zeros((2,2))).fit(X2, Y2)
+        clf = sgd.SGD(coef_=np.zeros((2,2))).fit(X2, Y2)
     except ValueError:
         pass
     else:
@@ -166,13 +162,13 @@ def test_set_coef_multiclass():
 
     # Provided coef_ does match dataset.
     try:
-        clf = sgd.sparse.SGD(coef_=np.zeros((3,2))).fit(X2, Y2)
+        clf = sgd.SGD(coef_=np.zeros((3,2))).fit(X2, Y2)
     except ValueError:
         assert False
 
     # Provided intercept_ does not match dataset.
     try:
-        clf = sgd.sparse.SGD(intercept_=np.zeros((1,))).fit(X2, Y2)
+        clf = sgd.SGD(intercept_=np.zeros((1,))).fit(X2, Y2)
     except ValueError:
         pass
     else:
@@ -180,14 +176,14 @@ def test_set_coef_multiclass():
 
     # Provided intercept_ does match dataset.
     try:
-        clf = sgd.sparse.SGD(intercept_=np.zeros((3,))).fit(X2, Y2)
+        clf = sgd.SGD(intercept_=np.zeros((3,))).fit(X2, Y2)
     except ValueError:
         assert False
 
 def test_sgd_proba():
     """Test that SGD raises NotImplementedError when clf.predict_proba
     is called and loss!='log'. Test if predict_proba works for log loss."""
-    clf = sgd.sparse.SGD(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
+    clf = sgd.SGD(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
     try:
         p = clf.predict_proba([3, 2])
     except NotImplementedError:
@@ -195,7 +191,7 @@ def test_sgd_proba():
     else:
         assert False
 
-    clf = sgd.sparse.SGD(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
+    clf = sgd.SGD(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
     try:
         p = clf.predict_proba([3, 2])
         assert p > 0.5
@@ -213,7 +209,7 @@ def test_sgd_l1():
     np.random.shuffle(idx)
     X = X4[idx, :]
     Y = Y4[idx, :]
-    clf = sgd.sparse.SGD(penalty='l1', alpha=.2, fit_intercept=False,
+    clf = sgd.SGD(penalty='l1', alpha=.2, fit_intercept=False,
                          n_iter=1000)
     clf.fit(X, Y)
     assert_array_equal(clf.coef_[1:-1], np.zeros((4,)))

@@ -12,7 +12,8 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('sgd_fast_sparse',
                          sources=[join('src', 'sgd_fast_sparse.c')],
-                         include_dirs=[numpy.get_include()]
+                         include_dirs=[numpy.get_include()],
+                         
                          )
 
     # add other directories

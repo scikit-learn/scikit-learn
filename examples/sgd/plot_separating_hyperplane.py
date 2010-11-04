@@ -7,15 +7,12 @@ Plot the maximum margin separating hyperplane within a two-class
 separable dataset using a linear Support Vector Machines classifier
 trained using SGD.
 
-NOTE: Due to the decreased learning rate of the intercept
-the hyperplane is forced to run through the origin, thus,
-the plotted HP is not the max margin HP. 
 """
 print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn.sgd.sparse import SGD
+from scikits.learn.sgd import SGD
 
 # we create 40 separable points
 np.random.seed(0)
