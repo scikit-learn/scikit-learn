@@ -98,11 +98,19 @@ def test_sgd_params():
         assert False
 
 def test_set_coef():
-    """Test the n_feature and n_classes checks for
-    the warm starts. 
-    """
+    """Checks coef_ and intercept_ shape for
+    the warm starts. """
+    # Provided coef_ does not match dataset.
     try:
         clf = sgd.sparse.SGD(coef_=np.zeros((3,))).fit(X, Y)
+    except ValueError:
+        pass
+    else:
+        assert False
+
+    # Provided intercept_ does not match dataset.
+    try:
+        clf = sgd.sparse.SGD(intercept_=np.zeros((3,))).fit(X, Y)
     except ValueError:
         pass
     else:
@@ -143,6 +151,38 @@ def test_sgd_multiclass_njobs():
     assert clf.predict_margin([0, 0]).shape == (1, 3)
     pred = clf.predict(T2)
     assert_array_equal(pred, true_result2)
+
+def test_set_coef_multiclass():
+    """Checks coef_ and intercept_ shape for
+    the warm starts for multi-class problems. 
+    """
+    # Provided coef_ does not match dataset.
+    try:
+        clf = sgd.sparse.SGD(coef_=np.zeros((2,2))).fit(X2, Y2)
+    except ValueError:
+        pass
+    else:
+        assert False
+
+    # Provided coef_ does match dataset.
+    try:
+        clf = sgd.sparse.SGD(coef_=np.zeros((3,2))).fit(X2, Y2)
+    except ValueError:
+        assert False
+
+    # Provided intercept_ does not match dataset.
+    try:
+        clf = sgd.sparse.SGD(intercept_=np.zeros((1,))).fit(X2, Y2)
+    except ValueError:
+        pass
+    else:
+        assert False
+
+    # Provided intercept_ does match dataset.
+    try:
+        clf = sgd.sparse.SGD(intercept_=np.zeros((3,))).fit(X2, Y2)
+    except ValueError:
+        assert False
 
 def test_sgd_proba():
     """Test that SGD raises NotImplementedError when clf.predict_proba

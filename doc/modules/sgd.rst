@@ -7,7 +7,7 @@ Stochastic Gradient Descent
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient approach 
 to discriminative learning of linear classifiers under convex loss functions 
 such as Support Vector Machines and Logistic Regression. 
-Even though SGD has been around in the ML community for a long time, 
+Even though SGD has been around in the machine learning community for a long time, 
 it has received a considerable amount of attention just recently in the 
 context of large-scale learning. 
 
@@ -34,7 +34,7 @@ Classification
 ==============
 
 The class :class:`SGD` implements a plain stochastic gradient descent learning 
-routine which supports different convex loss functions and penalties.
+routine which supports different loss functions and penalties.
 
 As other classifiers, SGD has to be fitted with two arrays:
 an array X of size [m_samples, n_features] holding the training
@@ -48,7 +48,7 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> clf.fit(X, Y)
     SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
       n_iter=5, penalty='l2', coef_=array([ 9.9009,  9.9009]), rho=1.0,
-      alpha=0.0001, intercept_=-0.398111820662)
+      alpha=0.0001, intercept_=array(-0.39811182066217121))
 
 After being fitted, the model can then be used to predict new values::
 
@@ -64,7 +64,7 @@ model parameters:
 Member `intercept_` holds the intercept (aka offset or bias):
 
     >>> clf.intercept_
-    -0.39811182066217121
+    array(-0.39811182066217121)
 
 Whether or not the model should use an intercept, i.e. a biased hyperplane, is 
 controlled by the parameter `fit_intercept`.
@@ -81,7 +81,7 @@ where `C` is the largest class label:
     >>> clf.predict_proba([[1., 1.]])
     array([ 0.9999528])
 
-The concrete loss function can be set via the `loss` parameter. `SGD` supports the
+The concrete loss function can be set via the `loss` parameter. :class:`SGD` supports the
 following loss functions: 
 
   - `loss="hinge"`: (soft-margin) linear Support Vector Machine.
@@ -97,10 +97,10 @@ following penalties:
 
   - `penalty="l2"`: L2 norm penalty on `coef_`.
   - `penalty="l1"`: L1 norm penalty on `coef_`.
-  - `penalty="elasticnet"`: `rho * L2 + (1 - rho) * L1`. 
+  - `penalty="elasticnet"`: Convex combination of L2 and L1; `rho * L2 + (1 - rho) * L1`. 
 
 The default setting is `penalty="l2"`. The L1 penalty leads to sparse solutions, 
-that is most coefficients are zero. The Elastic Net solves some deficiencies of 
+driving most coefficients to zero. The Elastic Net solves some deficiencies of 
 the L1 penalty in the presence of highly correlated attributes. The parameter `rho`
 has to be specified by the user. 
 
@@ -133,11 +133,13 @@ Complexity
 ==========
 
 The major advantage of SGD is its efficiency, which is basically 
-linear in the number of training examples. Recent theoretical 
-results, however, show that the runtime to get some desired optimization 
-accuracy does not increase as the training set size increases. 
-For PEGASOS, training time indeed decreases as the size of the training set 
-increases.
+linear in the number of training examples. If X is a matrix of size (n, p) 
+training has a cost of :math:`O(k n \hat p)`, where k is the number 
+of iterations (epochs) and :math:`\hat p` is the average number of 
+non-zero attributes per sample. 
+
+Recent theoretical results, however, show that the runtime to get some 
+desired optimization accuracy does not increase as the training set size increases. 
 
 Tips on Practical Use
 =====================
@@ -150,14 +152,14 @@ Tips on Practical Use
     results. See `The CookBook
     <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_
     for some examples on scaling. If your attributes have an intrinsic
-    scale (e.g. word frequencies, indicator features) scaling is 
+    scale (e.g. word frequencies or indicator features) scaling is 
     not needed. 
 
   * Finding a reasonable regularization term :math:`\alpha` is 
     best done using grid search `for alpha in 10.0**-np.arange(1,7)`.
 
   * Empirically, we found that SGD converges after observing 
-    approx. 10^6 training examples. Thus, a reasonable first guess 
+    approx. 10^6 training samples. Thus, a reasonable first guess 
     for the number of iterations is `n_iter = np.ceil(10**6 / n)`, 
     where `n` is the size of the training set.
 
@@ -194,13 +196,13 @@ Different choices for :math:`L` entail different classifiers such as
    - Least-Squares: Ridge Regression. 
 
 All of the above loss functions can be regarded as an upper bound on the 
-misclassification error (0-1 loss) as shown on the Figure below. 
+misclassification error (Zero-one loss) as shown in the Figure below. 
 
 .. figure:: ../auto_examples/sgd/images/plot_loss_functions.png
    :align: center
    :scale: 50
 
-Popular choices for :math:`R` include:
+Popular choices for the regularization term :math:`R` include:
 
    - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{i=1}^{n} w_i^2`, 
    - L1 norm: :math:`R(w) := \sum_{i=1}^{n} |w_i|`, which leadsin sparse solutions.
@@ -247,16 +249,10 @@ The model parameters can be accessed through the members coef\_ and intercept\_:
  * `"Solving large scale linear prediction problems using stochastic gradient descent algorithms"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_ 
    T. Zhang - In Proceedings of ICML '04.
-
- * `"Pegasos: Primal estimated sub-gradient solver for svm" 
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
-   S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
    
  * `"Regularization and variable selection via the elastic net"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_ 
    H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B, 67 (2), 301-320.
-
-
 
 
 Implementation details
@@ -268,12 +264,13 @@ the weight vector is represented as the product of a scalar and a vector
 which allows an efficient weight update in the case of L2 regularization. 
 In the case of sparse feature vectors, the intercept is updated with a 
 smaller learning rate (multiplied by 0.01) to account for the fact that 
-it is updated more frequently. 
+it is updated more frequently. We adopted the learning rate schedule from 
+Shalev-Shwartz et al. 2007. 
 
 For L1 regularization (and the Elastic Net) we use the truncated gradient
 algorithm proposed by Tsuruoka et al. 2009. 
 
-For multi-class classification, a one-against-all scheme is used. 
+For multi-class classification, a One-against-All scheme is used. 
 
 The code is written in Cython.
 
@@ -281,6 +278,10 @@ The code is written in Cython.
 
  * `"Stochastic Gradient Descent" <leon.bottou.org/projects/sgd>`_
     L. Bottou - Website, 2010
+
+ * `"Pegasos: Primal estimated sub-gradient solver for svm" 
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+   S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
  * `"Stochastic gradient descent training for l1-regularized log-linear models with cumulative penalty"
    <www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_

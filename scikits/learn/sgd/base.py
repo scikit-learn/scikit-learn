@@ -24,9 +24,9 @@ class LinearModel(BaseEstimator):
     rho : float
         The Elastic Net mixing parameter, with 0 < rho <= 1.
         Defaults to 0.85.
-    coef_ : ndarray of shape n_features
+    coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
         The initial coeffients to warm-start the optimization.
-    intercept_ : float
+    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         The initial intercept to warm-start the optimization.
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -45,11 +45,10 @@ class LinearModel(BaseEstimator):
 
     Attributes
     ----------
-    FIXME adhere to SVM signature [n_classes, n_features].
-    `coef_` : array, shape = [n_features]
+    `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
         Weights asigned to the features.
 
-    `intercept_` : float
+    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     Examples
@@ -62,7 +61,7 @@ class LinearModel(BaseEstimator):
     >>> clf.fit(X, Y)
     SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
       n_iter=5, penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0,
-      alpha=0.0001, intercept_=-0.1)
+      alpha=0.0001, intercept_=array(-0.10000000000000001))
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -82,8 +81,8 @@ class LinearModel(BaseEstimator):
         self.rho = rho
         self.coef_ = np.asarray(coef_) if coef_ is not None else None
         self.intercept_ = intercept_
-	if self.intercept_ is not None:
-	    self.intercept_ = np.asarray(intercept_)
+        if self.intercept_ is not None:
+            self.intercept_ = np.asarray(intercept_)
         self.fit_intercept = fit_intercept
         self.n_iter = int(n_iter)
         if self.n_iter <= 0:
