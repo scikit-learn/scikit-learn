@@ -26,6 +26,7 @@ def scale(X, axis=0, with_std=True, copy=True):
     Xr = np.rollaxis(X, axis)
     Xr -= mean_
     if with_std:
+        std_[std_==0.0] = 1
         Xr /= std_
     return X
 
