@@ -35,19 +35,11 @@ class LinearSVC(SparseBaseLibLinear, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
-
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
-        Coefficient of the support vector in the decision function,
-        where n_classes is the number of classes and nSV is the number
-        of support vectors.
-
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
         Wiehgiths asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         constants in decision function
 
     References
