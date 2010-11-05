@@ -6,6 +6,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
+from .sgd_fast import Hinge, Log, ModifiedHuber
 
 class BaseSGD(BaseEstimator, ClassifierMixin):
 
@@ -32,6 +33,18 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
         self.n_jobs = n_jobs
         self._get_loss_function()
         self._get_penalty_type()
+
+    def _get_loss_function(self):
+        """Get concete LossFunction.
+        """
+        loss_functions = {"hinge" : Hinge(),
+                          "log" : Log(),
+                          "modifiedhuber" : ModifiedHuber(),
+                          }
+        try:
+            self.loss_function = loss_functions[self.loss]
+        except KeyError:
+            raise ValueError("The loss %s is not supported. " % self.loss)
 
 
     def _get_penalty_type(self):
@@ -67,3 +80,23 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
     def predict_margin(self, X):
         raise NotImplementedError("Abstract class.")
 
+    def predict_proba(self, X):
+        """Predict class membership probability.
+
+        Parameters
+        ----------
+        X : scipy.sparse matrix of shape [n_samples, n_features]
+
+        Returns
+        -------
+        array, shape = [n_samples] if n_classes == 2 else [n_samples, n_classes]
+            Contains the membership probabilities of the positive class.
+
+        FIXME move to base.py and fix cython sharing declarations problem.
+        """
+        if isinstance(self.loss_function, Log) and \
+               self.classes.shape[0] == 2:
+            return 1.0 / (1.0 + np.exp(-self.predict_margin(X)))
+        else:
+            raise NotImplementedError('%s loss does not provide "\
+            "this functionality' % self.loss)

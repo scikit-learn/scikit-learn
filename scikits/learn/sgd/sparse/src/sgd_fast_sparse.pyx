@@ -13,6 +13,9 @@ from time import time
 
 cimport numpy as np
 cimport cython
+cimport sgd_fast
+
+from sgd_fast cimport LossFunction
 
 cdef extern from "math.h":
     cdef extern double exp(double x)
@@ -22,118 +25,6 @@ cdef extern from "math.h":
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
-
-# ----------------------------------------
-# Extension Types for Loss Functions
-# ----------------------------------------
-
-cdef class LossFunction:
-    """Base class for convex loss functions"""
-
-    cpdef double loss(self, double p, double y):
-        """Evaluate the loss function.
-
-        :arg p: The prediction.
-        :type p: double
-        :arg y: The true value.
-        :type y: double
-        :returns: double"""
-        raise NotImplementedError()
-
-    cpdef double dloss(self, double p, double y):
-        """Evaluate the derivative of the loss function.
-
-        :arg p: The prediction.
-        :type p: double
-        :arg y: The true value.
-        :type y: double
-        :returns: double"""
-        raise NotImplementedError()
-
-cdef class Classification(LossFunction):
-    """Base class for loss functions for classification"""
-
-    cpdef double loss(self, double p, double y):
-        raise NotImplementedError()
-
-    cpdef double dloss(self, double p, double y):
-        raise NotImplementedError()
-
-
-cdef class ModifiedHuber(Classification):
-    """Modified Huber loss for binary classification with y in {-1, 1}
-
-    This is equivalent to quadratically smoothed SVM with gamma = 2.
-
-    See T. Zhang 'Solving Large Scale Linear Prediction Problems Using
-    Stochastic Gradient Descent', ICML'04.
-    """
-    cpdef double loss(self, double p, double y):
-        cdef double z = p * y
-        if z >= 1.0:
-            return 0.0
-        elif z >= -1.0:
-            return (1.0 - z) * (1.0 - z)
-        else:
-            return -4.0 * z
-
-    cpdef double dloss(self, double p, double y):
-        cdef double z = p * y
-        if z >= 1.0:
-            return 0.0
-        elif z >= -1.0:
-            return 2.0 * (1.0 - z) * y
-        else:
-            return 4.0 * y
-
-    def __reduce__(self):
-        return ModifiedHuber, ()
-
-
-cdef class Hinge(Classification):
-    """SVM classification loss for binary
-    classification tasks with y in {-1,1}.
-    """
-    cpdef double loss(self, double p, double y):
-        cdef double z = p * y
-        if z < 1.0:
-            return (1 - z)
-        return 0.0
-
-    cpdef double dloss(self, double p, double y):
-        cdef double z = p * y
-        if z < 1.0:
-            return y
-        return 0.0
-
-    def __reduce__(self):
-        return Hinge, ()
-
-
-cdef class Log(Classification):
-    """Logistic regression loss for binary classification with y in {-1, 1}"""
-
-    cpdef double loss(self, double p, double y):
-        cdef double z = p * y
-        # approximately equal and saves the computation of the log
-        if z > 18:
-            return exp(-z)
-        if z < -18:
-            return -z * y 
-        return log(1.0+exp(-z))
-
-    cpdef double dloss(self, double p, double y):
-        cdef double z = p * y
-        # approximately equal and saves the computation of the log
-        if z > 18.0:
-            return exp(-z) * y
-        if z < -18.0:
-            return y
-        return y / (exp(z) + 1.0)
-
-    def __reduce__(self):
-        return Log, ()
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

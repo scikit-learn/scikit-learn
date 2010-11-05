@@ -66,13 +66,13 @@ def test_sgd_losses():
     """Check whether losses and hyperparameters are set properly"""
     clf = sgd.sparse.SGD(loss='hinge')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.Hinge)
+                      sgd.Hinge)
     clf = sgd.sparse.SGD(loss='log')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.Log)
+                      sgd.Log)
     clf = sgd.sparse.SGD(loss='modifiedhuber')
     assert isinstance(clf.loss_function,
-                      sgd.sparse.ModifiedHuber)
+                      sgd.ModifiedHuber)
     try:
         clf = sgd.sparse.SGD(loss="foobar")
     except ValueError:

@@ -8,7 +8,7 @@ from scipy import sparse
 
 from ...externals.joblib import Parallel, delayed
 from ..base import BaseSGD
-from .sgd_fast_sparse import plain_sgd, Hinge, ModifiedHuber, Log
+from .sgd_fast_sparse import plain_sgd
 
 
 class SGD(BaseSGD):
@@ -83,18 +83,6 @@ class SGD(BaseSGD):
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
-    def _get_loss_function(self):
-        """Get concete LossFunction.
-        FIXME move to base.py and fix cython sharing declarations problem.
-        """
-        loss_functions = {"hinge" : Hinge(),
-                          "log" : Log(),
-                          "modifiedhuber" : ModifiedHuber(),
-                          }
-        try:
-            self.loss_function = loss_functions[self.loss]
-        except KeyError:
-            raise ValueError("The loss %s is not supported. " % self.loss)
 
 
     def fit(self, X, Y, **params):
@@ -223,29 +211,7 @@ class SGD(BaseSGD):
             return np.ravel(scores)
         else:
             return scores
-
-
-    def predict_proba(self, X):
-        """Predict class membership probability.
-
-        Parameters
-        ----------
-        X : scipy.sparse matrix of shape [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples, n_classes]
-            Contains the membership probabilities of the positive class.
-
-        FIXME move to base.py and fix cython sharing declarations problem.
-        """
-        if isinstance(self.loss_function, Log) and \
-               self.classes.shape[0] == 2:
-            return 1.0 / (1.0 + np.exp(-self.predict_margin(X)))
-        else:
-            raise NotImplementedError('%s loss does not provide "\
-            "this functionality' % self.loss)
-        
+    
 
     def __reduce__(self):
         """Handler which is called at pickeling time.

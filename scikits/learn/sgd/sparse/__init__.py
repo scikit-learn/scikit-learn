@@ -7,5 +7,5 @@ of scikits.learn.sgd
 
 """
 
-from .sgd import SGD, Log, Hinge, ModifiedHuber
+from .sgd import SGD
 
