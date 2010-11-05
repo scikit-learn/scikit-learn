@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 """
-=================================
-Lasso with Least Angle Regression
-=================================
+=====================
+Lasso path using LARS
+=====================
 
-Computes Lasso Path with the LARS algorithm
+Computes Lasso Path along the regularization parameter using the LARS
+algorithm on the diabetest dataset.
 
 """
 print __doc__
@@ -13,7 +14,6 @@ print __doc__
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-from datetime import datetime
 import numpy as np
 import pylab as pl
 
@@ -25,13 +25,8 @@ X = diabetes.data
 y = diabetes.target
 X[:,6] *= -1 # To reproduce wikipedia LASSO page
 
-################################################################################
-# Demo path functions
-
 print "Computing regularization path using the LARS ..."
-start = datetime.now()
-alphas_, _, coefs_ = glm.lars_path(X, y, method='lasso')
-print "This took ", datetime.now() - start
+_, _, coefs_ = glm.lars_path(X, y, method='lasso', verbose=True)
 
 xx = np.sum(np.abs(coefs_.T), axis=1)
 xx /= xx[-1]

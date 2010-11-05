@@ -52,9 +52,9 @@ def compute_bench(alpha, n_samples, n_features):
     for ns in n_samples:
         for nf in n_features:
             it += 1
-            print '============'
-            print 'Iteration %s' % it
-            print '============'
+            print '=================='
+            print 'Iteration %s of %s' % (it, max(len(n_samples), len(n_features)))
+            print '=================='
             k = nf // 10
             X, Y, X_test, Y_test, coef_ = make_data(
                 n_samples=ns, n_tests=n_tests, n_features=nf,
@@ -75,6 +75,7 @@ def compute_bench(alpha, n_samples, n_features):
 
     return lasso_results, larslasso_results, larslasso_gram_results
 
+
 if __name__ == '__main__':
     from scikits.learn.glm import Lasso, LassoLARS
     import pylab as pl
@@ -82,11 +83,11 @@ if __name__ == '__main__':
     alpha = 0.01 # regularization parameter
 
     n_features = 500
-    list_n_samples = range(500, 10001, 500);
+    list_n_samples = range(500, 20501, 1000);
     lasso_results, larslasso_results, larslasso_gram_results = \
                     compute_bench(alpha, list_n_samples, [n_features])
 
-    pl.close('all')
+    pl.subplot(211)
     pl.title('Lasso benchmark (%d features - alpha=%s)' % (n_features, alpha))
     pl.plot(list_n_samples, lasso_results, 'b-', label='Lasso')
     pl.plot(list_n_samples, larslasso_results,'r-', label='LassoLARS')
@@ -94,14 +95,14 @@ if __name__ == '__main__':
     pl.legend(loc='upper left')
     pl.xlabel('number of samples')
     pl.ylabel('time (in seconds)')
-    pl.show()
+    pl.axis('tight')
 
-    n_samples = 500
+    n_samples = 2000
     list_n_features = range(500, 3001, 500);
     lasso_results, larslasso_results, larslasso_gram_results = \
                         compute_bench(alpha, [n_samples], list_n_features)
 
-    pl.figure()
+    pl.subplot(212)
     pl.title('Lasso benchmark (%d samples - alpha=%s)' % (n_samples, alpha))
     pl.plot(list_n_features, lasso_results, 'b-', label='Lasso')
     pl.plot(list_n_features, larslasso_results,'r-', label='LassoLARS')
@@ -109,5 +110,6 @@ if __name__ == '__main__':
     pl.legend(loc='upper left')
     pl.xlabel('number of features')
     pl.ylabel('time (in seconds)')
+    pl.axis('tight')
     pl.show()
 

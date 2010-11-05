@@ -104,7 +104,7 @@ class BaseLibSVM(BaseEstimator):
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = \
-        libsvm_train( _X, Y, solver_type, kernel_type, self.degree,
+        libsvm_train( _X, y, solver_type, kernel_type, self.degree,
                           self.gamma, self.coef0, self.eps, self.C,
                           self.weight_label, self.weight,
                           self.nu, self.cache_size,

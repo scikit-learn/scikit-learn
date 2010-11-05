@@ -28,8 +28,7 @@ class ElasticNet(LinearModel):
 
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
-
-    coef: ndarray of shape n_features
+    coef_: ndarray of shape n_features
         The initial coeffients to warm-start the optimization
 
     fit_intercept: bool
