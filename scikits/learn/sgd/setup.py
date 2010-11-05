@@ -11,11 +11,11 @@ def configuration(parent_package='', top_path=None):
     site_cfg.read(get_standard_file('site.cfg'))
 
     config.add_extension('sgd_fast',
-                         sources=[join('src', 'sgd_fast.c')],
+                         sources=['sgd_fast.c'],
                          include_dirs=[numpy.get_include()]
                          )
     config.add_extension('sgd_fast_sparse',
-                         sources=[join('src', 'sgd_fast_sparse.c')],
+                         sources=['sgd_fast_sparse.c'],
                          include_dirs=[numpy.get_include()]
                          )
     
