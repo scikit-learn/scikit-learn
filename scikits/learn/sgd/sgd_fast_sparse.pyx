@@ -47,11 +47,12 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double *X_data_ptr = <double *>X_data.data
     cdef int *X_indptr_ptr = <int *>X_indptr.data
     cdef int *X_indices_ptr = <int *>X_indices.data
+    cdef double *Y_data_ptr = <double *>Y.data
 
     # FIXME unsined int?
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
                                                              dtype = np.int32)
-    cdef int *index_ptr = <int *>index.data
+    cdef int *index_data_ptr = <int *>index.data
     cdef int offset = 0
     cdef int xnnz = 0
     cdef double wscale = 1.0
@@ -65,7 +66,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
-    cdef unsigned int sample_idx = 0
+    cdef int sample_idx = 0
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr
     if penalty_type != L2:
@@ -83,10 +84,10 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         if shuffle:
             np.random.shuffle(index)
         for i from 0 <= i < n_samples:
-            sample_idx = index[i]
+            sample_idx = index_data_ptr[i]
             offset = X_indptr_ptr[sample_idx]
             xnnz = X_indptr_ptr[sample_idx + 1] - offset
-            y = Y[sample_idx]
+            y = Y_data_ptr[sample_idx]
             eta = 1.0 / (alpha * t)
             p = (dot(w_data_ptr, X_data_ptr, X_indices_ptr,
                      offset, xnnz) * wscale) + intercept
@@ -108,9 +109,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                           X_indices_ptr, offset, xnnz, u)
             t += 1
             count += 1
-        if penalty_type == L1 or penalty_type == ELASTICNET:
-            u += ((1.0 - rho) * eta * alpha)
-            finall1penalty(w_data_ptr, wscale, n_features, q_data_ptr, u)
+##         if penalty_type == L1 or penalty_type == ELASTICNET:
+##             u += ((1.0 - rho) * eta * alpha)
+##             finall1penalty(w_data_ptr, wscale, n_features, q_data_ptr, u)
 
         # report epoche information
         if verbose > 0:

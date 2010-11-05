@@ -1,14 +1,20 @@
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
 # License: BSD Style.
-"""Stochastic Gradient Descent (SGD) base class. """
+"""Stochastic Gradient Descent (SGD) abstract base class. """
 
 import numpy as np
+
+from abc import ABCMeta, abstractmethod
 
 from ..base import BaseEstimator, ClassifierMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber
 
 class BaseSGD(BaseEstimator, ClassifierMixin):
+    """Base class for dense and sparse SGD. 
+    """
+
+    __metaclass__ = ABCMeta
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, coef_=None, intercept_=None,
@@ -77,8 +83,9 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
             indices = scores.argmax(axis=1)
         return self.classes[np.ravel(indices)]
 
+    @abstractmethod
     def predict_margin(self, X):
-        raise NotImplementedError("Abstract class.")
+        pass
 
     def predict_proba(self, X):
         """Predict class membership probability.
@@ -92,7 +99,6 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
         array, shape = [n_samples] if n_classes == 2 else [n_samples, n_classes]
             Contains the membership probabilities of the positive class.
 
-        FIXME move to base.py and fix cython sharing declarations problem.
         """
         if isinstance(self.loss_function, Log) and \
                self.classes.shape[0] == 2:

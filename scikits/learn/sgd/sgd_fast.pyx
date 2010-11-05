@@ -220,7 +220,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     # FIXME unsined int?
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
                                                              dtype = np.int32)
-    cdef int *index_ptr = <int *>index.data
+    cdef int *index_data_ptr = <int *>index.data
     cdef int offset = 0
     cdef double wscale = 1.0
     cdef double eta = 0.0
@@ -233,7 +233,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
-    cdef unsigned int sample_idx = 0
+    cdef int sample_idx = 0
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr
     if penalty_type != L2:
@@ -251,7 +251,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         if shuffle:
             np.random.shuffle(index)
         for i from 0 <= i < n_samples:
-            sample_idx = index[i]
+            sample_idx = index_data_ptr[i]
             offset = row_stride * sample_idx / elem_stride # row offset in elem
             y = Y_data_ptr[sample_idx]
             eta = 1.0 / (alpha * t)
@@ -336,6 +336,9 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
     """Applys the L1 penalty to each updated feature.
     This implements the truncated gradient approach by
     [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
+
+    FIXME: apply penalty over all features or only non-zero?
+    Empirical results look better this way...
     """
     cdef double z = 0.0
     cdef int j = 0

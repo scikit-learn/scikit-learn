@@ -23,18 +23,12 @@ X3 = np.array([[1,1,0,0,0,0], [1,1,0,0,0,0],
                [0,0,0,1,0,0], [0,0,0,1,0,0]])
 Y3 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
+# test sample 4 - two more or less redundent feature groups
 X4 = np.array([[1,0.9,0.8,0,0,0], [1,.84,.98,0,0,0],
                [1,.96,.88,0,0,0], [1,.91,.99,0,0,0],
                [0,0,0,.89,.91,1], [0,0,0,.79,.84,1],
                [0,0,0,.91,.95,1], [0,0,0,.93,1,1]])
 Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
-
-X5 = np.array([[1,1,1,0,0,0], [1,1,1,0,0,0],
-               [1,1,1,0,0,0], [1,1,1,0,0,0],
-               [0,0,0,1,1,1], [0,0,0,1,1,1],
-               [0,0,0,1,1,1], [0,0,0,1,1,1]])
-Y5 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
-
 
 def test_sgd():
     """Check that SGD gives any results :-)"""
@@ -210,7 +204,8 @@ def test_sgd_l1():
     X = X4[idx, :]
     Y = Y4[idx, :]
     clf = sgd.SGD(penalty='l1', alpha=.2, fit_intercept=False,
-                         n_iter=1000)
+                  n_iter=2000)
     clf.fit(X, Y)
     assert_array_equal(clf.coef_[1:-1], np.zeros((4,)))
-
+    pred = clf.predict(X)
+    assert_array_equal(pred, Y)
