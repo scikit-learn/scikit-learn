@@ -9,7 +9,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn.sgd.sparse.sgd_fast_sparse import Hinge, ModifiedHuber
+from scikits.learn.sgd.sgd_fast import Hinge, ModifiedHuber
 
 ###############################################################################
 # Define loss funcitons
@@ -21,11 +21,14 @@ modified_huber = ModifiedHuber()
 ###############################################################################
 # Plot loss funcitons
 xx = np.linspace(xmin, xmax, 100)
-pl.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], 'k-', label="Zero-one loss")
-pl.plot(xx, [hinge.loss(x,1) for x in xx], 'g-', label="Hinge loss")
-pl.plot(xx, [log_loss(x,1) for x in xx], 'r-', label="Log loss")
+pl.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], 'k-',
+        label="Zero-one loss")
+pl.plot(xx, [hinge.loss(x,1) for x in xx], 'g-',
+        label="Hinge loss")
+pl.plot(xx, [log_loss(x,1) for x in xx], 'r-',
+        label="Log loss")
 pl.plot(xx, [modified_huber.loss(x,1) for x in xx], 'y-',
-	label="Modified huber loss")
+        label="Modified huber loss")
 pl.ylim((0, 5))
 pl.legend(loc="upper right")
 pl.xlabel(r"$y \cdot f(x)$")
