@@ -1,3 +1,5 @@
+from os.path import join
+import numpy
 from ConfigParser import ConfigParser
 
 def configuration(parent_package='', top_path=None):
@@ -7,6 +9,11 @@ def configuration(parent_package='', top_path=None):
 
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
+
+    config.add_extension('sgd_fast',
+                         sources=[join('src', 'sgd_fast.c')],
+                         include_dirs=[numpy.get_include()]
+                         )
     
     # add other directories
     config.add_subpackage('tests')

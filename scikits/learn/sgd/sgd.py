@@ -1,27 +1,24 @@
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
 # License: BSD Style.
-"""Implementation of Stochastic Gradient Descent (SGD) with sparse data."""
+"""Implementation of Stochastic Gradient Descent (SGD) with dense data."""
 
 import numpy as np
-from scipy import sparse
 
-from ...externals.joblib import Parallel, delayed
-from ..base import BaseSGD
-from .sgd_fast_sparse import plain_sgd, Hinge, ModifiedHuber, Log
+from ..externals.joblib import Parallel, delayed
+from .base import BaseSGD
+from .sgd_fast import plain_sgd, Hinge, ModifiedHuber, Log
 
 
 class SGD(BaseSGD):
     """Linear Model trained by minimizing a regularized training
     error using SGD.
-
-    This implementation works on scipy.sparse X and dense coef_.
-
+    
     Parameters
     ----------
-    loss : str, ('hinge'|'log'|'modifiedhuber')
+    loss : str, 'hinge' or 'log' or 'modifiedhuber'
         The loss function to be used. Defaults to 'hinge'. 
-    penalty : str, ('l2'|'l1'|'elasticnet')
+    penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'.
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
@@ -60,12 +57,12 @@ class SGD(BaseSGD):
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
-    >>> from scikits.learn.sgd.sparse import SGD
+    >>> from scikits.learn.sgd import SGD
     >>> clf = SGD()
     >>> clf.fit(X, Y)
     SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
       n_iter=5, penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0,
-      alpha=0.0001, intercept_=array(-0.10000000000000001))
+      alpha=0.0001, intercept_=array(-10.0))
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -74,14 +71,6 @@ class SGD(BaseSGD):
     LinearSVC
 
     """
-
-    def _set_coef(self, coef_):
-        self.coef_ = coef_
-        if coef_ is None:
-            self.sparse_coef_ = None
-        else:
-            # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sparse.csr_matrix(coef_)
 
     def _get_loss_function(self):
         """Get concete LossFunction.
@@ -97,35 +86,31 @@ class SGD(BaseSGD):
             raise ValueError("The loss %s is not supported. " % self.loss)
 
 
-    def fit(self, X, Y, **params):
-        """Fit current model with SGD
-
-        X is expected to be a sparse matrix. For maximum efficiency, use a
-        sparse matrix in CSR format (scipy.sparse.csr_matrix)
-        """
+    def fit(self, X, y, **params):
+        """Fit current model with SGD. """
         self._set_params(**params)
-        X = sparse.csr_matrix(X)
-        Y = np.asanyarray(Y, dtype=np.float64)
+        X = np.asanyarray(X, dtype=np.float64)
+        y = np.asanyarray(y, dtype=np.float64)
         # largest class id is positive class
-        classes = np.unique(Y)
+        classes = np.unique(y)
         self.classes = classes
         if classes.shape[0] > 2:
-            self._fit_multiclass(X, Y)
+            self._fit_multiclass(X, y)
         elif classes.shape[0] == 2:
-            self._fit_binary(X, Y)
+            self._fit_binary(X, y)
         else:
             raise ValueError("The number of class labels must be " \
                              "greater than one. ")
         # return self for chaining fit and predict calls
         return self
 
-    def _fit_binary(self, X, Y):
+    def _fit_binary(self, X, y):
         """Fit a binary classifier.
         """
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
-        Y_new = np.ones(Y.shape, dtype=np.float64) * -1.0
-        Y_new[Y == self.classes[1]] = 1.0
-        Y = Y_new
+        y_new = np.ones(y.shape, dtype=np.float64) * -1.0
+        y_new[y == self.classes[1]] = 1.0
+        y = y_new
 
         n_samples, n_features = X.shape[0], X.shape[1]
         if self.coef_ is None:
@@ -139,26 +124,21 @@ class SGD(BaseSGD):
             if self.intercept_.shape != (1,):
                 raise ValueError("Provided intercept_ does not match dataset. ")
 
-        X_data = np.array(X.data, dtype=np.float64, order="C")
-        X_indices = X.indices
-        X_indptr = X.indptr
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
                                       self.loss_function,
                                       self.penalty_type,
                                       self.alpha, self.rho,
-                                      X_data,
-                                      X_indices, X_indptr, Y,
+                                      X, y,
                                       self.n_iter,
                                       int(self.fit_intercept),
                                       int(self.verbose),
                                       int(self.shuffle))
 
-        # update self.coef_ and self.sparse_coef_ consistently
-        self._set_coef(coef_)
+        self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
 
-    def _fit_multiclass(self, X, Y):
+    def _fit_multiclass(self, X, y):
         """Fit a multi-class classifier with a combination
         of binary classifiers, each predicts one class versus
         all others (OVA: One Versus All).
@@ -184,22 +164,17 @@ class SGD(BaseSGD):
 
         self.coef_ = coef_
         self.intercept_ = intercept_
-        X_data = np.array(X.data, dtype=np.float64, order="C")
-        X_indices = X.indices
-        X_indptr = X.indptr
-
+        
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                delayed(_train_ova_classifier)(i, c, X_data, X_indices,
-                                               X_indptr, Y, self)                     
+                delayed(_train_ova_classifier)(i, c, X, y, self)                     
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
             coef_[i] = coef
             intercept_[i] = intercept
             
-        self._set_coef(coef_)
+        self.coef_ = coef_
         self.intercept_ = intercept_
-
 
 
     def predict_margin(self, X):
@@ -207,23 +182,19 @@ class SGD(BaseSGD):
 
         Parameters
         ----------
-        X : scipy.sparse matrix of shape [n_samples, n_features]
+        X : array, shape [n_samples, n_features]
 
         Returns
         -------
         array, shape = [n_samples] if n_classes == 2 else [n_samples, n_classes]
           The signed 'distances' to the hyperplane(s).
         """
-        # np.dot only works correctly if both arguments are sparse matrices
-        if not sparse.issparse(X):
-            X = sparse.csr_matrix(X)
-        scores = np.asarray(np.dot(X, self.sparse_coef_.T).todense()
-                            + self.intercept_)
+        X = np.atleast_2d(np.asanyarray(X))
+        scores = np.dot(X, self.coef_.T) + self.intercept_
         if self.classes.shape[0] == 2:
             return np.ravel(scores)
         else:
             return scores
-
 
     def predict_proba(self, X):
         """Predict class membership probability.
@@ -245,7 +216,8 @@ class SGD(BaseSGD):
         else:
             raise NotImplementedError('%s loss does not provide "\
             "this functionality' % self.loss)
-        
+
+
 
     def __reduce__(self):
         """Handler which is called at pickeling time.
@@ -259,14 +231,13 @@ class SGD(BaseSGD):
                     self.shuffle, self.verbose, self.n_jobs)
 
 
-def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, Y, clf):
+def _train_ova_classifier(i, c, X, y, clf):
     """Inner loop for One-vs.-All scheme"""
-    Y_i = np.ones(Y.shape, dtype=np.float64) * -1.0
-    Y_i[Y == c] = 1.0
+    y_i = np.ones(y.shape, dtype=np.float64) * -1.0
+    y_i[y == c] = 1.0
     coef, intercept = plain_sgd(clf.coef_[i], clf.intercept_[i],
                                 clf.loss_function, clf.penalty_type,
-                                clf.alpha, clf.rho, X_data, X_indices,
-                                X_indptr, Y_i, clf.n_iter,
+                                clf.alpha, clf.rho, X, y_i, clf.n_iter,
                                 clf.fit_intercept, clf.verbose,
                                 clf.shuffle)
     return (i, coef, intercept)
