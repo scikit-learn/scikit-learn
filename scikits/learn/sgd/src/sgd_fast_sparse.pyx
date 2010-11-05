@@ -15,12 +15,7 @@ cimport numpy as np
 cimport cython
 cimport sgd_fast
 
-from sgd_fast cimport LossFunction
-
-cdef extern from "math.h":
-    cdef extern double exp(double x)
-    cdef extern double log(double x)
-    cdef extern double sqrt(double x)
+from sgd_fast cimport LossFunction, exp, log, sqrt
 
 DEF L1 = 1
 DEF L2 = 2

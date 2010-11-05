@@ -8,7 +8,7 @@ from scipy import sparse
 
 from ...externals.joblib import Parallel, delayed
 from ..base import BaseSGD
-from .sgd_fast_sparse import plain_sgd
+from ..sgd_fast_sparse import plain_sgd
 
 
 class SGD(BaseSGD):
