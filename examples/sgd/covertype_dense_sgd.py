@@ -25,22 +25,7 @@ The same task has been used in a number of papers including:
 
 [1] http://archive.ics.uci.edu/ml/datasets/Covertype
 
-Download the dataset from the UCI repository::
-
-  % wget http://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
-
-Once downloaded place it somewhere on your filesystem. For instance in::
-
-  % mkdir -p ~/data/covertype
-  % mv covtype.data.gz ~/data/covertype/
-
-
-Then set the ``COVERTYPE_HOME`` environment variable pointing to
-the folder holding the `covtype.data.gz`::
-
-  % export COVERTYPE_HOME="~/data/covertype"
-
-Then you are ready to run this example using your favorite python shell::
+To run this example use your favorite python shell::
 
   % ipython examples/sgd/covertype_dense_sgd.py
 
@@ -64,20 +49,19 @@ from scikits.learn.svm import LinearSVC
 from scikits.learn.sgd import SGD
 from scikits.learn import metrics
 
-if 'COVERTYPE_HOME' not in os.environ:
-    print "Please follow those instructions to get started:"
-    sys.exit(0)
-
-# Get path to dataset file
-covertype_root = os.environ['COVERTYPE_HOME']
-f_name = os.path.join(covertype_root, "covtype.data.gz")
-f_name = os.path.expanduser(f_name)
-f_name = os.path.abspath(f_name)
-f_name = os.path.normpath(f_name)
+# Download the data, if not already on disk 
+if not os.path.exists('covtype.data.gz'):
+    # Download the data
+    import urllib
+    print "Downloading data, Please Wait (11MB)"
+    opener = urllib.urlopen(
+        'http://archive.ics.uci.edu/ml/' \
+        'machine-learning-databases/covtype/covtype.data.gz')
+    open('covtype.data.gz', 'wb').write(opener.read())
 
 # Load dataset
 print("loading dataset...")
-data = np.loadtxt(f_name, delimiter=",")
+data = np.loadtxt('covtype.data.gz', delimiter=",")
 X = data[:, :-1]
 
 # class 1 vs. all others. 
