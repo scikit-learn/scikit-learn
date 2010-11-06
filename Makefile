@@ -36,6 +36,9 @@ test-coverage:
 	$(NOSETESTS) --with-coverage
 
 
+trailing-spaces:
+	find -name "*.py" |xargs sed -i 's/[ \t]*$$//'
+
 ctags:
 	# make tags for symbol based navigation in emacs and vim
 	# Install with: sudo apt-get install exuberant-ctags
