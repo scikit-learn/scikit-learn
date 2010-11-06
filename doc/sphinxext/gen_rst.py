@@ -16,7 +16,7 @@ fileList = []
 import matplotlib
 matplotlib.use('Agg')
 
-import token, tokenize      
+import token, tokenize
 
 rst_template = """
 
@@ -59,14 +59,14 @@ def extract_docstring(filename):
     first_par = ''
     tokens = tokenize.generate_tokens(lines.__iter__().next)
     for tok_type, tok_content, _, (erow, _), _ in tokens:
-        tok_type = token.tok_name[tok_type]    
+        tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
             continue
         elif tok_type == 'STRING':
             docstring = eval(tok_content)
             # If the docstring is formatted with several paragraphs, extract
             # the first one:
-            paragraphs = '\n'.join(line.rstrip() 
+            paragraphs = '\n'.join(line.rstrip()
                                 for line in docstring.split('\n')).split('\n\n')
             if len(paragraphs) > 0:
                 first_par = paragraphs[0]
@@ -77,7 +77,7 @@ def extract_docstring(filename):
 def generate_example_rst(app):
     """ Generate the list of examples, as well as the contents of
         examples.
-    """ 
+    """
     root_dir = os.path.join(app.builder.srcdir, 'auto_examples')
     example_dir = os.path.abspath(app.builder.srcdir +  '/../' + 'examples')
     if not os.path.exists(example_dir):
@@ -114,7 +114,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir):
     target_dir = os.path.join(root_dir, dir)
     src_dir = os.path.join(example_dir, dir)
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
-        raise IOError('Example directory %s does not have a README.txt file' 
+        raise IOError('Example directory %s does not have a README.txt file'
                         % src_dir)
     fhindex.write("""
 
@@ -126,7 +126,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
     for fname in sorted(os.listdir(src_dir)):
-        if fname.endswith('py'): 
+        if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir)
             fhindex.write('    %s\n' % (os.path.join(dir, fname[:-3])))
 
@@ -154,7 +154,7 @@ def generate_file_rst(fname, target_dir, src_dir):
             os.makedirs(os.path.join(target_dir, 'images'))
         image_file = os.path.join(target_dir, 'images', image_name)
         if (not os.path.exists(image_file) or
-                os.stat(image_file).st_mtime <= 
+                os.stat(image_file).st_mtime <=
                     os.stat(src_file).st_mtime):
             print 'plotting %s' % fname
             import matplotlib.pyplot as plt

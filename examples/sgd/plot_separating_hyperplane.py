@@ -6,7 +6,6 @@ SVM: Maximum margin separating hyperplane
 Plot the maximum margin separating hyperplane within a two-class
 separable dataset using a linear Support Vector Machines classifier
 trained using SGD.
-
 """
 print __doc__
 

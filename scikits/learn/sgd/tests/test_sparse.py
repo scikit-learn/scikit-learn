@@ -109,7 +109,7 @@ def test_set_coef():
         pass
     else:
         assert False
-    
+
     clf = sgd.sparse.SGD()
     clf._set_coef(None)
     assert clf.sparse_coef_ == None
@@ -148,7 +148,7 @@ def test_sgd_multiclass_njobs():
 
 def test_set_coef_multiclass():
     """Checks coef_ and intercept_ shape for
-    the warm starts for multi-class problems. 
+    the warm starts for multi-class problems.
     """
     # Provided coef_ does not match dataset.
     try:

@@ -89,12 +89,12 @@ class OneClassSVM (SparseBaseLibSVM):
     """
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, 
+                 cache_size=100.0, eps=1e-3, C=1.0,
                  nu=0.5, p=0.1, shrinking=True, probability=False):
 
         SparseBaseLibSVM.__init__(self, 'one_class', kernel, degree,
                          gamma, coef0, cache_size, eps, C, nu, p,
                          shrinking, probability)
-    
+
     def fit(self, X):
         super(OneClassSVM, self).fit(X, [])

@@ -13,7 +13,7 @@ def center_and_norm(x, axis=-1):
         Parameters
         -----------
         x: ndarray
-            Array with an axis of observations (statistical units) measured on 
+            Array with an axis of observations (statistical units) measured on
             random variables.
         axis: int, optionnal
             Axis along which the mean and variance are calculated.
@@ -53,13 +53,13 @@ def test_fastica(add_noise=False):
 
     # Mixing angle
     phi = 0.6
-    mixing = np.array([[np.cos(phi),  np.sin(phi)], 
+    mixing = np.array([[np.cos(phi),  np.sin(phi)],
                        [np.sin(phi), -np.cos(phi)]])
     m  = np.dot(mixing, s)
 
     if add_noise:
-        m += 0.1*np.random.randn(2, 1000) 
-    
+        m += 0.1*np.random.randn(2, 1000)
+
     center_and_norm(m)
 
     algorithm = ['parallel', 'deflation']
@@ -118,14 +118,14 @@ def test_non_square_fastica(add_noise=False):
 
     if add_noise:
         m += 0.1*np.random.randn(6, n_samples)
-    
+
     center_and_norm(m)
 
     k_, mixing_, s_ = fastica.fastica(m, n_comp=2)
 
     # Check that the mixing model described in the docstring holds:
     np.testing.assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
-    
+
     center_and_norm(s_)
     s1_, s2_ = s_
     # Check to see if the sources have been estimated

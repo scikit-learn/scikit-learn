@@ -27,7 +27,7 @@ from .my_exceptions import JoblibException, _mk_exception
 class SafeFunction(object):
     """ Wraps a function to make it exception with full traceback in
         their representation.
-        Useful for parallel computing with multiprocessing, for which 
+        Useful for parallel computing with multiprocessing, for which
         exceptions cannot be captured.
     """
 
@@ -57,8 +57,8 @@ def print_progress(msg, index, total, start_time, n_jobs=1):
                 (total - index - 1.))
     sys.stderr.write('[%s]: Done %3i out of %3i |elapsed: %s remaining: %s\n'
             % (msg,
-                index+1, 
-                total, 
+                index+1,
+                total,
                 short_format_time(elapsed_time),
                 short_format_time(remaining_time),
                 ))
@@ -103,16 +103,16 @@ class Parallel(Logger):
         verbose: int, optional
             The verbosity level. If 1 is given, the elapsed time as well
             as the estimated remaining time are displayed.
-        
+
         Notes
         -----
 
         This object uses the multiprocessing module to compute in
         parallel the application of a function to many different
-        arguments. The main functionnality it brings in addition to 
+        arguments. The main functionnality it brings in addition to
         using the raw multiprocessing API are (see examples for details):
 
-            * More readable code, in particular since it avoids 
+            * More readable code, in particular since it avoids
               constructing list of arguments.
 
             * Easier debuging:
@@ -136,7 +136,7 @@ class Parallel(Logger):
 
         Reshaping the output when the function has several return
         values:
-        
+
         >>> from math import modf
         >>> from joblib import Parallel, delayed
         >>> r = Parallel(n_jobs=1)(delayed(modf)(i/2.) for i in range(10))
@@ -145,7 +145,7 @@ class Parallel(Logger):
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
         >>> i
         (0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0)
-       
+
         The progress meter::
 
             >>> from time import sleep
@@ -157,9 +157,9 @@ class Parallel(Logger):
             [Parallel(n_jobs=2)]: Done   7 out of  10 |elapsed:    0.4s remaining:    0.2s
             [Parallel(n_jobs=2)]: Done   9 out of  10 |elapsed:    0.5s remaining:    0.1s
 
-        Traceback example, note how the ligne of the error is indicated 
+        Traceback example, note how the ligne of the error is indicated
         as well as the values of the parameter passed to the function that
-        triggered the exception, eventhough the traceback happens in the 
+        triggered the exception, eventhough the traceback happens in the
         child process::
 
          >>> from string import atoi
@@ -167,7 +167,7 @@ class Parallel(Logger):
          >>> Parallel(n_jobs=2)(delayed(atoi)(n) for n in ('1', '300', 30)) #doctest: +SKIP
          #...
          ---------------------------------------------------------------------------
-         Sub-process traceback: 
+         Sub-process traceback:
          ---------------------------------------------------------------------------
          TypeError                                          Fri Jul  2 20:32:05 2010
          PID: 4151                                     Python 2.6.5: /usr/bin/python
@@ -176,14 +176,14 @@ class Parallel(Logger):
              398     is chosen from the leading characters of s, 0 for octal, 0x or
              399     0X for hexadecimal.  If base is 16, a preceding 0x or 0X is
              400     accepted.
-             401 
+             401
              402     """
          --> 403     return _int(s, base)
-             404 
-             405 
+             404
+             405
              406 # Convert string to long integer
              407 def atol(s, base=10):
-         
+
          TypeError: int() can't convert non-string with explicit base
          ___________________________________________________________________________
 
@@ -206,7 +206,7 @@ class Parallel(Logger):
 
         if n_jobs is None or multiprocessing is None or n_jobs == 1:
             n_jobs = 1
-            apply = LazyApply 
+            apply = LazyApply
         else:
             pool = multiprocessing.Pool(n_jobs)
             apply = pool.apply_async
@@ -219,7 +219,7 @@ class Parallel(Logger):
                 output.append(apply(function, args, kwargs))
                 if self.verbose and n_jobs == 1:
                     print '[%s]: Done job %3i | elapsed: %s' % (
-                            self, index, 
+                            self, index,
                             short_format_time(time.time() - start_time)
                         )
 
@@ -233,7 +233,7 @@ class Parallel(Logger):
                         print_progress(self, index, len(jobs), start_time,
                                        n_jobs=n_jobs)
                 except JoblibException, exception:
-                    # Capture exception to add information on 
+                    # Capture exception to add information on
                     # the local stack in addition to the distant
                     # stack
                     this_report = format_outer_frames(
@@ -243,7 +243,7 @@ class Parallel(Logger):
                     report = """Multiprocessing exception:
 %s
 ---------------------------------------------------------------------------
-Sub-process traceback: 
+Sub-process traceback:
 ---------------------------------------------------------------------------
 %s""" % (
                                 this_report,

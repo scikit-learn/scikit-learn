@@ -1,4 +1,4 @@
-""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral 
+""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral
 clustering.
 
 Author: Alexandre Gramfort alexandre.gramfort@inria.fr
@@ -223,7 +223,7 @@ class MeanShift(BaseEstimator):
 
     def fit(self, X, **params):
         """ Compute MeanShift
-        
+
             Parameters
             -----------
             X : array [n_samples, n_features]

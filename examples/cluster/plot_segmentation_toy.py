@@ -4,12 +4,12 @@ Spectral clustering for image segmentation
 ===========================================
 
 In this example, an image with connected circles is generated and
-spectral clustering is used to separate the circles. 
+spectral clustering is used to separate the circles.
 
 In these settings, the spectral clustering approach solves the problem
 know as 'normalized graph cuts': the image is seen as a graph of
 connected voxels, and the spectral clustering algorithm amounts to
-choosing graph cuts defining regions while minimizing the ratio of the 
+choosing graph cuts defining regions while minimizing the ratio of the
 gradient along the cut, and the volume of the region.
 
 As the algorithm tries to balance the volume (ie balance the region

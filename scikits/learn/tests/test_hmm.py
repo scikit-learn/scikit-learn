@@ -204,7 +204,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
                           np.zeros((n_states - 2, n_states)))
 
 
-def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs): 
+def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs):
     hmm.fit(obs, n_iter=1, **kwargs)
     loglikelihoods = []
     for n in xrange(n_iter):

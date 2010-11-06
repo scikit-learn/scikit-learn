@@ -17,7 +17,7 @@ from scikits.learn.pipeline import Pipeline
 X, y = samples_generator.test_dataset_classif(k=5)
 
 # ANOVA SVM-C
-# 1) anova filter, take 5 best ranked features 
+# 1) anova filter, take 5 best ranked features
 anova_filter = SelectKBest(f_regression, k=5)
 # 2) svm
 clf = svm.SVC(kernel='linear')

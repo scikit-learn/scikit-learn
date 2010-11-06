@@ -18,7 +18,6 @@ def configuration(parent_package='', top_path=None):
                          sources=['sgd_fast_sparse.c'],
                          include_dirs=[numpy.get_include()]
                          )
-    
     # add other directories
     config.add_subpackage('tests')
     config.add_subpackage('sparse')

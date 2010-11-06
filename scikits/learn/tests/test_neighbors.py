@@ -48,4 +48,4 @@ def test_neighbors_2D():
 
     prediction =  knn.predict([[0, .1], [0, -.1], [.1, 0], [-.1, 0]])
     assert_array_equal(prediction, [0, 1, 0, 1])
-        
+

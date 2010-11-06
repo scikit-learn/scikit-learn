@@ -26,12 +26,12 @@ def test_pipeline_init():
     assert_raises(TypeError, Pipeline)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    pipe = assert_raises(AssertionError, Pipeline, 
+    pipe = assert_raises(AssertionError, Pipeline,
                         [('svc', IncorrectT)])
     # Smoke test with only an estimator
     clf = T()
     pipe = Pipeline([('svc', clf)])
-    assert_equal(pipe._get_params(deep=True), 
+    assert_equal(pipe._get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf))
 
     # Check that params are set
@@ -39,7 +39,7 @@ def test_pipeline_init():
     assert_equal(clf.a, 0.1)
     # Smoke test the repr:
     repr(pipe)
-    
+
     # Test with two objects
     clf = SVC()
     filter1 = SelectKBest(f_classif)

@@ -15,7 +15,7 @@ from ..utils.fixes import in1d
 
 def _make_edges_3d(n_x, n_y, n_z=1):
     """ Returns a list of edges for a 3D image.
-    
+
         Parameters
         ===========
         n_x: integer
@@ -48,7 +48,7 @@ def _compute_gradient_3d(edges, img):
 # XXX: Why mask the image after computing the weights?
 
 def _mask_edges_weights(mask, edges, weights):
-    """ Given a image mask and the 
+    """ Given a image mask and the
     """
     inds = np.arange(mask.size)
     inds = inds[mask.ravel()]
@@ -71,7 +71,7 @@ def img_to_graph(img, mask=None,
         img: ndarray, 2D or 3D
             2D or 3D image
         mask : ndarray of booleans, optional
-            An optional mask of the image, to consider only part of the 
+            An optional mask of the image, to consider only part of the
             pixels.
         return_as: np.ndarray or a sparse matrix class, optional
             The class to use to build the returned adjacency matrix.
