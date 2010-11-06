@@ -13,11 +13,11 @@ from .sgd_fast import plain_sgd
 class SGD(BaseSGD):
     """Linear Model trained by minimizing a regularized training
     error using SGD.
-    
+
     Parameters
     ----------
     loss : str, 'hinge' or 'log' or 'modifiedhuber'
-        The loss function to be used. Defaults to 'hinge'. 
+        The loss function to be used. Defaults to 'hinge'.
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'.
     alpha : float
@@ -34,7 +34,7 @@ class SGD(BaseSGD):
         data is assumed to be already centered. Defaults to True.
     n_iter: int
         The number of passes over the training data (aka epochs).
-        Defaults to 5. 
+        Defaults to 5.
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
@@ -138,7 +138,7 @@ class SGD(BaseSGD):
             if self.coef_.shape != (n_classes, n_features):
                 raise ValueError("Provided coef_ does not match dataset. ")
             coef_ = self.coef_
-        
+
         if self.intercept_ is None \
                or isinstance(self.intercept_, float):
             intercept_ = np.zeros(n_classes, dtype=np.float64,
@@ -150,15 +150,15 @@ class SGD(BaseSGD):
 
         self.coef_ = coef_
         self.intercept_ = intercept_
-        
+
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                delayed(_train_ova_classifier)(i, c, X, y, self)                     
+                delayed(_train_ova_classifier)(i, c, X, y, self)
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
             coef_[i] = coef
             intercept_[i] = intercept
-            
+
         self.coef_ = coef_
         self.intercept_ = intercept_
 
@@ -188,7 +188,7 @@ class SGD(BaseSGD):
 
         This is important
         for joblib because otherwise it will crash trying to pickle
-        the external loss function object. 
+        the external loss function object.
         """
         return SGD,(self.loss, self.penalty, self.alpha, self.rho, self.coef_,
                     self.intercept_, self.fit_intercept, self.n_iter,

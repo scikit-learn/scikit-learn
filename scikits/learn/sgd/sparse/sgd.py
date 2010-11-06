@@ -211,7 +211,7 @@ class SGD(BaseSGD):
             return np.ravel(scores)
         else:
             return scores
-    
+
 
     def __reduce__(self):
         """Handler which is called at pickeling time.

@@ -4,7 +4,7 @@ Covertype dataset with dense SGD
 ================================
 
 This is an example showing how stochastic gradient descent (SGD)
-can be used for large and dense datasets. 
+can be used for large and dense datasets.
 
 The dataset used in this example is the covertype dataset of Blackard, Jock, and Dean, which is low-dimensional with 54 features and a sparsity of 23%. The dataset
 comprises 581,012 samples. The task is to predicting forest cover
@@ -15,11 +15,11 @@ and all others.
 
 The same task has been used in a number of papers including:
 
- * `"Pegasos: Primal estimated sub-gradient solver for svm" 
+ * `"Pegasos: Primal estimated sub-gradient solver for svm"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
- * "Training Linear SVMs in Linear Time"  
+ * "Training Linear SVMs in Linear Time"
    T. Joachims - In SIGKDD '06
 
 
@@ -49,7 +49,7 @@ from scikits.learn.svm import LinearSVC
 from scikits.learn.sgd import SGD
 from scikits.learn import metrics
 
-# Download the data, if not already on disk 
+# Download the data, if not already on disk
 if not os.path.exists('covtype.data.gz'):
     # Download the data
     import urllib
@@ -64,7 +64,7 @@ print("loading dataset...")
 data = np.loadtxt('covtype.data.gz', delimiter=",")
 X = data[:, :-1]
 
-# class 1 vs. all others. 
+# class 1 vs. all others.
 y = np.ones(data.shape[0]) * -1.0
 y[np.where(data[:, -1] == 1)] = 1.0
 

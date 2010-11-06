@@ -11,7 +11,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber
 
 class BaseSGD(BaseEstimator, ClassifierMixin):
-    """Base class for dense and sparse SGD. 
+    """Base class for dense and sparse SGD.
     """
 
     __metaclass__ = ABCMeta
