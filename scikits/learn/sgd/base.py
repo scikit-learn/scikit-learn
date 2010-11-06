@@ -16,7 +16,7 @@ class LinearModel(BaseEstimator):
     Parameters
     ----------
     loss : str, ('hinge'|'log'|'modifiedhuber')
-        The loss function to be used. Defaults to 'hinge'. 
+        The loss function to be used. Defaults to 'hinge'.
     penalty : str, ('l2'|'l1'|'elasticnet')
         The penalty (aka regularization term) to be used. Defaults to 'l2'.
     alpha : float
@@ -33,7 +33,7 @@ class LinearModel(BaseEstimator):
         data is assumed to be already centered. Defaults to True.
     n_iter: int
         The number of passes over the training data (aka epochs).
-        Defaults to 5. 
+        Defaults to 5.
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.

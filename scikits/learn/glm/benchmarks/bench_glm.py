@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
         n, m = 10*i + 3, 10*i + 3
 
-        X = np.random.randn (n, m) 
+        X = np.random.randn (n, m)
         Y = np.random.randn (n)
 
         start = datetime.now()
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         lasso.fit (X, Y)
         time_lasso[i] = total_seconds(datetime.now() - start)
 
-        
+
 
     pl.xlabel ('Dimesions')
     pl.ylabel ('Time (in seconds)')

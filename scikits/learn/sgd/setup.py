@@ -7,7 +7,7 @@ def configuration(parent_package='', top_path=None):
 
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
-    
+
     # add other directories
     config.add_subpackage('tests')
     config.add_subpackage('sparse')

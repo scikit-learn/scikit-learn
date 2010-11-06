@@ -54,7 +54,7 @@ def test_sample_gaussian():
     Test sample generation from gmm.sample_gaussian where covariance
     is diagonal, spherical and full
     """
-    
+
     n_dim, n_samples = 2, 300
     axis = 1
     mu = np.random.randint(10) * np.random.rand(n_dim)

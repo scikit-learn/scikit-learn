@@ -68,7 +68,7 @@ def plot_data(lda, X, y, y_pred, fig_index):
     xmin, xmax = X[:, 0].min(), X[:, 0].max()
     ymin, ymax = X[:, 1].min(), X[:, 1].max()
 
-    # class 0: dots 
+    # class 0: dots
     pl.plot(X0_tp[:, 0], X0_tp[:, 1], 'o', color='red')
     pl.plot(X0_fp[:, 0], X0_fp[:, 1], '.', color='#990000') # dark red
 

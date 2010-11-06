@@ -15,7 +15,7 @@ overfitting on small datasets and does not generalize well to held out
 test data.
 
 On the plots, train data is shown as dots, while test data is shown as
-crosses. The iris dataset is four-dimensional. Only the first two 
+crosses. The iris dataset is four-dimensional. Only the first two
 dimensions are shown here, and thus some points are separated in other
 dimensions.
 """
@@ -88,7 +88,7 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
 
     for n, color in enumerate('rgb'):
         data = iris.data[iris.target == n]
-        pl.scatter(data[:,0], data[:, 1], 0.8, color=color, 
+        pl.scatter(data[:,0], data[:, 1], 0.8, color=color,
                     label=iris.target_names[n])
     # Plot the test data with crosses
     for n, color in enumerate('rgb'):
@@ -110,6 +110,6 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
     pl.title(name)
 
 pl.legend(loc='lower right', prop=dict(size=12))
-  
+
 
 pl.show()

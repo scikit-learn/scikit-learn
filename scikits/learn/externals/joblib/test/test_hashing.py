@@ -2,7 +2,7 @@
 Test the hashing module.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -17,7 +17,7 @@ from ..hashing import hash
 from .common import np, with_numpy
 
 ################################################################################
-# Helper functions for the tests 
+# Helper functions for the tests
 def time_func(func, *args):
     """ Time function func on *args.
     """
@@ -47,7 +47,7 @@ def test_trival_hash():
     """ Smoke test hash on various types.
     """
     obj_list = [1, 1., 1+1j,
-                'a', 
+                'a',
                 (1, ), [1, ], {1:1},
                 None,
                ]
@@ -93,14 +93,14 @@ def test_hash_memmap():
         a = np.asarray(m)
         for coerce_mmap in (False, True):
             yield (nose.tools.assert_equal,
-                            hash(a, coerce_mmap=coerce_mmap) 
+                            hash(a, coerce_mmap=coerce_mmap)
                                 == hash(m, coerce_mmap=coerce_mmap),
                             coerce_mmap)
     finally:
         if 'm' in locals():
             del m
             # Force a garbage-collection cycle, to be certain that the
-            # object is delete, and we don't run in a problem under 
+            # object is delete, and we don't run in a problem under
             # Windows with a file handle still open.
             gc.collect()
             try:

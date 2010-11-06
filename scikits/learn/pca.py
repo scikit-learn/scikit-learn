@@ -16,16 +16,16 @@ def _assess_dimension_(spect, rk, n_samples, dim):
     ----------
     spect: array of shape (n)
         data spectrum
-    rk: int,  
+    rk: int,
         tested rank value
-    n_samples: int, 
+    n_samples: int,
         number of samples
-    dim: int, 
+    dim: int,
         embedding/emprical dimension
 
     Returns
     -------
-    ll: float, 
+    ll: float,
         The log-likelihood
 
     Notes
@@ -174,7 +174,7 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim) 
+        X: array of shape(n_samples, n_dim)
             The data to fit
         homoscedastic: bool, optional,
             If True, average variance across remaining dimensions

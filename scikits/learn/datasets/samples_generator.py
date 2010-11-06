@@ -138,7 +138,7 @@ def sparse_uncorrelated(nb_samples=100, nb_features=10):
 
 def friedman(nb_samples=100, nb_features=10,noise_std=1):
     """
-    Function creating simulated data with non linearities 
+    Function creating simulated data with non linearities
     (cf.Friedman 1993)
     X = NR.normal(0,1)
     Y = 10*sin(X[:,0]*X[:,1]) + 20*(X[:,2]-0.5)**2 + 10*X[:,3] + 5*X[:,4]

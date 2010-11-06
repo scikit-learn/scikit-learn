@@ -808,7 +808,7 @@ class MultinomialHMM(_BaseHMM):
            [ 0.5,  0.5]]),
             startprob_prior=1.0, n_states=2, startprob=array([ 0.5,  0.5]),
            transmat_prior=1.0)
-    
+
     See Also
     --------
     GaussianHMM : HMM with Gaussian emissions
@@ -923,9 +923,9 @@ class GMMHMM(_BaseHMM):
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     GMMHMM(n_mix=10, cvtype='diag', n_states=2, startprob_prior=1.0,
         startprob=array([ 0.5,  0.5]),
-        transmat=array([[ 0.5,  0.5], 
-           [ 0.5,  0.5]]),            
-        transmat_prior=1.0,           
+        transmat=array([[ 0.5,  0.5],
+           [ 0.5,  0.5]]),
+        transmat_prior=1.0,
         gmms=[GMM(cvtype='diag', n_states=10), GMM(cvtype='diag', n_states=10)])
 
     See Also

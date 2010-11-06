@@ -23,8 +23,8 @@ X_train = np.r_[np.dot(np.random.randn(n_samples, 2), C),
 clf = gmm.GMM(n_states=2, cvtype='full')
 clf.fit(X_train)
 
-x = np.linspace(-20.0, 30.0) 
-y = np.linspace(-20.0, 40.0) 
+x = np.linspace(-20.0, 30.0)
+y = np.linspace(-20.0, 40.0)
 X, Y = np.meshgrid(x, y)
 XX = np.c_[X.ravel(), Y.ravel()]
 Z =  np.log(-clf.eval(XX)[0])

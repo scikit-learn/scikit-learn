@@ -3,7 +3,7 @@
 SGD: Convex Loss Functions
 ==========================
 
-Plot the convex loss functions supported by `scikits.learn.sgd`. 
+Plot the convex loss functions supported by `scikits.learn.sgd`.
 """
 print __doc__
 

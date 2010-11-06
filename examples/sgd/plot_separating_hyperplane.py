@@ -9,7 +9,7 @@ trained using SGD.
 
 NOTE: Due to the decreased learning rate of the intercept
 the hyperplane is forced to run through the origin, thus,
-the plotted HP is not the max margin HP. 
+the plotted HP is not the max margin HP.
 """
 print __doc__
 

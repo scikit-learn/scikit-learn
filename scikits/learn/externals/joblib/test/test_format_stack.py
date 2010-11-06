@@ -2,7 +2,7 @@
 Test the format_stack module.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2010 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -18,7 +18,7 @@ class Nasty(object):
     __str__ = __repr__
 
 ################################################################################
-# Test safe_repr 
+# Test safe_repr
 
 def test_safe_repr():
     """ Smoke test safe_repr on a nasty class.

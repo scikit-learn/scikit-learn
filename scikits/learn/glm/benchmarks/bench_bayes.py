@@ -13,7 +13,7 @@ from scikits.learn.utils.bench import total_seconds
 if __name__ == '__main__':
 
     import pylab as pl
-    
+
     n_iter = 20
 
     time_ridge = np.empty(n_iter)
@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     n_samples, n_features = 100, 100
 
-    X = np.random.randn(n_samples, n_features) 
+    X = np.random.randn(n_samples, n_features)
     y = np.random.randn(n_samples)
 
     start = datetime.now()
