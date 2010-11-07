@@ -93,8 +93,8 @@ class _BaseHMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_dim)
-            Sequence of n_dim-dimensional data points.  Each row
+        obs : array_like, shape (n, n_features)
+            Sequence of n_features-dimensional data points.  Each row
             corresponds to a single point in the sequence.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
@@ -138,8 +138,8 @@ class _BaseHMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_dim)
-            Sequence of n_dim-dimensional data points.  Each row
+        obs : array_like, shape (n, n_features)
+            Sequence of n_features-dimensional data points.  Each row
             corresponds to a single data point.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
@@ -174,9 +174,9 @@ class _BaseHMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_dim)
-            List of n_dim-dimensional data points.  Each row corresponds to a
-            single data point.
+        obs : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
             only consider the top `maxrank` states in the inner
@@ -210,9 +210,9 @@ class _BaseHMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_dim)
-            List of n_dim-dimensional data points.  Each row corresponds to a
-            single data point.
+        obs : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
         maxrank : int
             Maximum rank to evaluate for rank pruning.  If not None,
             only consider the top `maxrank` states in the inner
@@ -236,9 +236,9 @@ class _BaseHMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_dim)
-            List of n_dim-dimensional data points.  Each row corresponds to a
-            single data point.
+        obs : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
 
         See eval() for a list of accepted keyword arguments.
 
@@ -295,7 +295,7 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : list
-            List of array-like observation sequences (shape (n_i, n_dim)).
+            List of array-like observation sequences (shape (n_i, n_features)).
         n_iter : int, optional
             Number of iterations to perform.
         thresh : float, optional
@@ -542,7 +542,7 @@ class GaussianHMM(_BaseHMM):
     cvtype : string (read-only)
         String describing the type of covariance parameters used by
         the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    n_dim : int (read-only)
+    n_features : int (read-only)
         Dimensionality of the Gaussian emissions.
     n_states : int (read-only)
         Number of states in the model.
@@ -550,15 +550,15 @@ class GaussianHMM(_BaseHMM):
         Matrix of transition probabilities between states.
     startprob : array, shape ('n_states`,)
         Initial state occupation distribution.
-    means : array, shape (`n_states`, `n_dim`)
+    means : array, shape (`n_states`, `n_features`)
         Mean parameters for each state.
     covars : array
         Covariance parameters for each state.  The shape depends on
         `cvtype`:
             (`n_states`,)                   if 'spherical',
-            (`n_dim`, `n_dim`)              if 'tied',
-            (`n_states`, `n_dim`)           if 'diag',
-            (`n_states`, `n_dim`, `n_dim`)  if 'full'
+            (`n_features`, `n_features`)              if 'tied',
+            (`n_states`, `n_features`)           if 'diag',
+            (`n_states`, `n_features`, `n_features`)  if 'full'
 
     Methods
     -------
@@ -641,11 +641,11 @@ class GaussianHMM(_BaseHMM):
 
     def _set_means(self, means):
         means = np.asanyarray(means)
-        if hasattr(self, 'n_dim') and \
-               means.shape != (self._n_states, self.n_dim):
-            raise ValueError('means must have shape (n_states, n_dim)')
+        if hasattr(self, 'n_features') and \
+               means.shape != (self._n_states, self.n_features):
+            raise ValueError('means must have shape (n_states, n_features)')
         self._means = means.copy()
-        self.n_dim = self._means.shape[1]
+        self.n_features = self._means.shape[1]
 
     means = property(_get_means, _set_means)
 
@@ -658,11 +658,11 @@ class GaussianHMM(_BaseHMM):
         elif self.cvtype == 'tied':
             return [self._covars] * self._n_states
         elif self.cvtype == 'spherical':
-            return [np.eye(self.n_dim) * f for f in self._covars]
+            return [np.eye(self.n_features) * f for f in self._covars]
 
     def _set_covars(self, covars):
         covars = np.asanyarray(covars)
-        _validate_covars(covars, self._cvtype, self._n_states, self.n_dim)
+        _validate_covars(covars, self._cvtype, self._n_states, self.n_features)
         self._covars = covars.copy()
 
     covars = property(_get_covars, _set_covars)
@@ -680,11 +680,11 @@ class GaussianHMM(_BaseHMM):
     def _init(self, obs, params='stmc'):
         super(GaussianHMM, self)._init(obs, params=params)
 
-        if hasattr(self, 'n_dim') and self.n_dim != obs.shape[2]:
+        if hasattr(self, 'n_features') and self.n_features != obs.shape[2]:
             raise ValueError('Unexpected number of dimensions, got %s but '
-                             'expected %s' % (obs.shape[2], self.n_dim))
+                             'expected %s' % (obs.shape[2], self.n_features))
 
-        self.n_dim = obs.shape[2]
+        self.n_features = obs.shape[2]
 
         if 'm' in params:
             self._means = cluster.KMeans(
@@ -699,10 +699,10 @@ class GaussianHMM(_BaseHMM):
     def _initialize_sufficient_statistics(self):
         stats = super(GaussianHMM, self)._initialize_sufficient_statistics()
         stats['post'] = np.zeros(self._n_states)
-        stats['obs'] = np.zeros((self._n_states, self.n_dim))
-        stats['obs**2'] = np.zeros((self._n_states, self.n_dim))
-        stats['obs*obs.T'] = np.zeros((self._n_states, self.n_dim,
-                                       self.n_dim))
+        stats['obs'] = np.zeros((self._n_states, self.n_features))
+        stats['obs**2'] = np.zeros((self._n_states, self.n_features))
+        stats['obs*obs.T'] = np.zeros((self._n_states, self.n_features,
+                                       self.n_features))
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
@@ -765,7 +765,8 @@ class GaussianHMM(_BaseHMM):
                 elif self._cvtype == 'diag':
                     self._covars = (covars_prior + cv_num) / cv_den
             elif self._cvtype in ('tied', 'full'):
-                cvnum = np.empty((self._n_states, self.n_dim, self.n_dim))
+                cvnum = np.empty((self._n_states, self.n_features,
+                                  self.n_features))
                 for c in xrange(self._n_states):
                     obsmean = np.outer(stats['obs'][c], self._means[c])
 
@@ -775,7 +776,7 @@ class GaussianHMM(_BaseHMM):
                                 - obsmean - obsmean.T
                                 + np.outer(self._means[c], self._means[c])
                                 * stats['post'][c])
-                cvweight = max(covars_weight - self.n_dim, 0)
+                cvweight = max(covars_weight - self.n_features, 0)
                 if self._cvtype == 'tied':
                     self._covars = ((covars_prior + cvnum.sum(axis=0))
                                     / (cvweight + stats['post'].sum()))
@@ -945,7 +946,8 @@ class GMMHMM(_BaseHMM):
         transmat=array([[ 0.5,  0.5],
            [ 0.5,  0.5]]),
         transmat_prior=1.0,
-        gmms=[GMM(cvtype='diag', n_states=10), GMM(cvtype='diag', n_states=10)])
+        gmms=[GMM(cvtype='diag', n_states=10), GMM(cvtype='diag',
+              n_states=10)])
 
     See Also
     --------
