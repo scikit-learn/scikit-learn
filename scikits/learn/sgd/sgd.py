@@ -18,7 +18,11 @@ class SGD(BaseSGD):
     decreasing strength schedule (aka learning rate).
 
     The regularizer is a penalty added to the loss function that shrinks model
-    parameters towards the zero vector using either the squared euclidean
+    parameters towards the zero vector using either the squared euclidean norm
+    L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
+    parameter update cross the 0.0 value because of the regularizer, the update
+    is truncated to 0.0 to allow for learning sparse models and achieve online
+    feature selection.
 
     This implementation works with data represented as dense numpy arrays of
     floating point values for the features.
