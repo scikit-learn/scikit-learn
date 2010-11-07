@@ -63,7 +63,9 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : scipy.sparse matrix of shape [n_samples, n_features]
+        X : array or scipy.sparse matrix of shape [n_samples, n_features]
+           Whether the numpy.array or scipy.sparse matrix is accepted dependes
+           on the actual implementation
 
         Returns
         -------
