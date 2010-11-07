@@ -63,7 +63,7 @@ class SGD(BaseSGD):
     >>> from scikits.learn.sgd.sparse import SGD
     >>> clf = SGD()
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
+    SGD(loss='hinge', n_jobs=-1, shuffle=False, verbose=0, fit_intercept=True,
       n_iter=5, penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0,
       alpha=0.0001, intercept_=array(-0.10000000000000001))
     >>> print clf.predict([[-0.8, -1]])
