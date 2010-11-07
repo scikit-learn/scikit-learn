@@ -206,10 +206,12 @@ cdef void finall1penalty(double *w_data_ptr, double wscale,
     for j from 0 <= j < n_features:
         z = w_data_ptr[j]
         if (wscale * w_data_ptr[j]) > 0.0:
-            w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
-                                                    / wscale) )
+            w_data_ptr[j] = max(
+                0.0, w_data_ptr[j] - ((u + q_data_ptr[j]) / wscale) )
+
         elif (wscale * w_data_ptr[j]) < 0.0:
-            w_data_ptr[j] = min(0.0, w_data_ptr[j] + ((u - q_data_ptr[j])
-                                                    / wscale) )
+            w_data_ptr[j] = min(
+                0.0, w_data_ptr[j] + ((u - q_data_ptr[j]) / wscale) )
+
         q_data_ptr[j] += (wscale * (w_data_ptr[j] - z))
 
