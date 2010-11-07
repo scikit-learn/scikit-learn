@@ -2,6 +2,8 @@ import numpy as np
 from scikits.learn import sgd
 from numpy.testing import assert_array_equal
 
+from nose.tools import raises
+
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 Y = [1, 1, 1, 2, 2, 2]
@@ -49,30 +51,31 @@ def test_sgd_penalties():
     assert clf.rho == 0.0
     clf = sgd.SGD(penalty='elasticnet', rho=0.85)
     assert clf.rho == 0.85
-    try:
-        clf = sgd.SGD(penalty='foobar', rho=0.85)
-    except ValueError:
-        pass
-    else:
-        assert False
+
+
+@raises(ValueError)
+def test_sgd_bad_penalty():
+    """Check whether expected ValueError on bad penalty"""
+    clf = sgd.SGD(penalty='foobar', rho=0.85)
+
 
 def test_sgd_losses():
     """Check whether losses and hyperparameters are set properly"""
     clf = sgd.SGD(loss='hinge')
-    assert isinstance(clf.loss_function,
-                      sgd.Hinge)
+    assert isinstance(clf.loss_function, sgd.Hinge)
+
     clf = sgd.SGD(loss='log')
-    assert isinstance(clf.loss_function,
-                      sgd.Log)
+    assert isinstance(clf.loss_function, sgd.Log)
+
     clf = sgd.SGD(loss='modifiedhuber')
-    assert isinstance(clf.loss_function,
-                      sgd.ModifiedHuber)
-    try:
-        clf = sgd.SGD(loss="foobar")
-    except ValueError:
-        pass
-    else:
-        assert False
+    assert isinstance(clf.loss_function, sgd.ModifiedHuber)
+
+
+@raises(ValueError)
+def test_sgd_bad_loss():
+    """Check whether expected ValueError on bad loss"""
+    clf = sgd.SGD(loss="foobar")
+
 
 def test_sgd_params():
     """Test parameter validity check"""
