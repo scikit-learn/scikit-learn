@@ -230,6 +230,8 @@ class GMM(BaseEstimator):
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
 
+        self.weights = np.ones(self._n_states) / self._n_states
+
     # Read-only properties.
     @property
     def cvtype(self):
