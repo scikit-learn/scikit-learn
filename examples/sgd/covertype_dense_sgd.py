@@ -6,12 +6,13 @@ Covertype dataset with dense SGD
 This is an example showing how stochastic gradient descent (SGD)
 can be used for large and dense datasets.
 
-The dataset used in this example is the covertype dataset of Blackard, Jock, and Dean, which is low-dimensional with 54 features and a sparsity of 23%. The dataset
-comprises 581,012 samples. The task is to predicting forest cover
-type from cartographic variables only. Each sample represents a 30x30 meter cell
-and there are 7 types of forest cover. See [1] for further details.
-In this example, however, we consider the task of discriminating between class 1
-and all others.
+The dataset used in this example is the covertype dataset of Blackard,
+Jock, and Dean, which is low-dimensional with 54 features and a sparsity
+of 23%. The dataset comprises 581,012 samples. The task is to predicting
+forest cover type from cartographic variables only. Each sample represents
+a 30x30 meter cell and there are 7 types of forest cover. See [1] for
+further details.  In this example, however, we consider the task of
+discriminating between class 1 and all others.
 
 The same task has been used in a number of papers including:
 
@@ -60,15 +61,15 @@ if not os.path.exists('covtype.data.gz'):
     open('covtype.data.gz', 'wb').write(opener.read())
 
 # Load dataset
-print("loading dataset...")
+print("Loading dataset...")
 data = np.loadtxt('covtype.data.gz', delimiter=",")
 X = data[:, :-1]
 
 # class 1 vs. all others.
-y = np.ones(data.shape[0]) * -1.0
-y[np.where(data[:, -1] == 1)] = 1.0
+y = np.ones(data.shape[0]) * -1
+y[np.where(data[:, -1] == 1)] = 1
 
-print("creating train-test split...")
+print("Creating train-test split...")
 idx = np.arange(data.shape[0])
 np.random.seed(13)
 np.random.shuffle(idx)
@@ -119,16 +120,18 @@ print "done in %fs" % (time() - t0)
 
 print "Classification performance:"
 print
+print metrics.classification_report(
+    y_test, pred, labels=[-1, 1],
+    class_names=['any other types', 'cover type 1']
+)
+print ""
+
 err = metrics.zero_one(y_test, pred) / float(pred.shape[0])
-print "Errorrate: %.4f" % err
+print "Error rate: %.4f" % err
+print ""
+
 cm = metrics.confusion_matrix(y_test, pred)
 print "Confusion matrix:"
 print cm
-
-# Show confusion matrix
-pl.matshow(cm)
-pl.title('Confusion matrix')
-pl.colorbar()
-pl.show()
 
 
