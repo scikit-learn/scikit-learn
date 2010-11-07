@@ -69,7 +69,7 @@ if not os.path.exists('covtype.data.gz'):
     import urllib
     print "Downloading data, Please Wait (11MB)..."
     opener = urllib.urlopen(
-        'http://archive.ics.uci.edu/ml/' \
+        'http://archive.ics.uci.edu/ml/'
         'machine-learning-databases/covtype/covtype.data.gz')
     open('covtype.data.gz', 'wb').write(opener.read())
 
