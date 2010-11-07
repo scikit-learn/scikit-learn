@@ -108,9 +108,15 @@ has to be specified by the user.
 :class:`SGD` supports multi-class classification by combining multiple 
 binary classifiers in a one-against-all (OVA) scheme.
 
+.. figure:: ../auto_examples/sgd/images/plot_iris.png
+   :target: ../auto_examples/sgd/plot_iris.html
+   :align: center
+
 .. topic:: Examples:
 
  * :ref:`example_sgd_plot_separating_hyperplane.py`,
+ * :ref:`example_sgd_plot_iris.py`,
+ * :ref:`example_sgd_covertype_dense_sgd.py`
 
 .. currentmodule:: scikits.learn.svm.sparse
 
@@ -129,6 +135,10 @@ For maximum efficiency, use the CSR matrix format as defined in
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
 Implemented classes are :class:`SGD`.
+
+.. topic:: Examples:
+
+ * :ref:`example_sgd_mlcomp_sparse_document_classification_sgd.py`,
 
 Complexity
 ==========
@@ -177,7 +187,7 @@ Mathematical formulation
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where 
 :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{-1,1\}`, our goal is to 
 learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
-:math:`w \in \mathbf{R}^n` and intercept :math:`b \in \mathbf{R}`. In order
+:math:`w \in \mathbf{R}^m` and intercept :math:`b \in \mathbf{R}`. In order
 to make predictions, we simply look at the sign of :math:`f(x)`.
 A common choice to find the model parameters is by minimizing the regularized 
 training error given by
