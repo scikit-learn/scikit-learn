@@ -1,20 +1,15 @@
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
 # License: BSD Style.
-"""Stochastic Gradient Descent (SGD) abstract base class. """
+"""Stochastic Gradient Descent (SGD) abstract base class"""
 
 import numpy as np
-
-from abc import ABCMeta, abstractmethod
 
 from ..base import BaseEstimator, ClassifierMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber
 
 class BaseSGD(BaseEstimator, ClassifierMixin):
-    """Base class for dense and sparse SGD.
-    """
-
-    __metaclass__ = ABCMeta
+    """Base class for dense and sparse SGD"""
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, coef_=None, intercept_=None,
@@ -41,17 +36,16 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
         self._get_penalty_type()
 
     def _get_loss_function(self):
-        """Get concete LossFunction.
-        """
-        loss_functions = {"hinge" : Hinge(),
-                          "log" : Log(),
-                          "modifiedhuber" : ModifiedHuber(),
-                          }
+        """Get concrete LossFunction"""
+        loss_functions = {
+            "hinge" : Hinge(),
+            "log" : Log(),
+            "modifiedhuber" : ModifiedHuber(),
+        }
         try:
             self.loss_function = loss_functions[self.loss]
         except KeyError:
             raise ValueError("The loss %s is not supported. " % self.loss)
-
 
     def _get_penalty_type(self):
         penalty_types = {"l2": 2, "l1": 1, "elasticnet": 3}
@@ -83,12 +77,10 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
             indices = scores.argmax(axis=1)
         return self.classes[np.ravel(indices)]
 
-    @abstractmethod
-    def predict_margin(self, X):
         pass
 
     def predict_proba(self, X):
-        """Predict class membership probability.
+        """Predict class membership probability
 
         Parameters
         ----------
@@ -100,9 +92,10 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
             Contains the membership probabilities of the positive class.
 
         """
-        if isinstance(self.loss_function, Log) and \
-               self.classes.shape[0] == 2:
+        if (isinstance(self.loss_function, Log) and
+            self.classes.shape[0] == 2):
             return 1.0 / (1.0 + np.exp(-self.predict_margin(X)))
         else:
-            raise NotImplementedError('%s loss does not provide "\
-            "this functionality' % self.loss)
+            raise NotImplementedError("%s loss does not provide "
+                                      "this functionality" % self.loss)
+
