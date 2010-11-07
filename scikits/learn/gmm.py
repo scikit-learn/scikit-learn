@@ -474,7 +474,7 @@ class GMM(BaseEstimator):
                 cv, self._cvtype, self._n_states)
         elif not hasattr(self, 'covars'):
                 self.covars = _distribute_covar_matrix_to_match_cvtype(
-                    np.eye(self.n_features), cvtype, n_states)
+                    np.eye(self.n_features), self.cvtype, self.n_states)
 
         # EM algorithm
         logprob = []
@@ -562,9 +562,9 @@ def _lmvnpdffull(obs, means, covars):
     log_prob = np.empty((nobs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
         cv_chol = linalg.cholesky(cv, lower=True)
-        cv_det  = np.prod(np.diagonal(cv_chol))**2
-        cv_sol  = solve_triangular(cv_chol, (obs - mu).T, lower=True)
-        log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=0) + \
+        cv_det = np.prod(np.diagonal(cv_chol)) ** 2
+        cv_sol = solve_triangular(cv_chol, (obs - mu).T, lower=True)
+        log_prob[:, c] = -.5 * (np.sum(cv_sol ** 2, axis=0) + \
                            ndim * np.log(2 * np.pi) + np.log(cv_det))
 
     return log_prob

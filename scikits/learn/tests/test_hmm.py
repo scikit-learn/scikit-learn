@@ -7,7 +7,7 @@ from .test_gmm import _generate_random_spd_matrix
 
 from .. import hmm
 
-SKIP_FAILING = True # skip failing tests
+SKIP_FAILING = True  # skip failing tests
 
 
 class SeedRandomNumberGeneratorTestCase(TestCase):
@@ -221,11 +221,13 @@ class GaussianHMMParams(object):
     transmat = np.random.rand(n_states, n_states)
     transmat /= np.tile(transmat.sum(axis=1)[:,np.newaxis], (1, n_states))
     means = np.random.randint(-20, 20, (n_states, n_features))
-    covars = {'spherical': (1.0 + 2 * np.random.rand(n_states))**2,
-              'tied': _generate_random_spd_matrix(n_features) + np.eye(n_features),
-              'diag': (1.0 + 2 * np.random.rand(n_states, n_features))**2,
-              'full': np.array([_generate_random_spd_matrix(n_features)
-                                + np.eye(n_features) for x in xrange(n_states)])}
+    covars = {'spherical': (1.0 + 2 * np.random.rand(n_states)) ** 2,
+              'tied': (_generate_random_spd_matrix(n_features)
+                       + np.eye(n_features)),
+              'diag': (1.0 + 2 * np.random.rand(n_states, n_features)) ** 2,
+              'full': np.array(
+                  [_generate_random_spd_matrix(n_features) + np.eye(n_features)
+                   for x in xrange(n_states)])}
     expanded_covars = {'spherical': [np.eye(n_features) * cov
                                      for cov in covars['spherical']],
                        'diag': [np.diag(cov) for cov in covars['diag']],
@@ -328,11 +330,10 @@ class GaussianHMMTester(GaussianHMMParams):
                    % (self.cvtype, params, trainll, np.diff(trainll)))
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
-
     def test_fit_with_priors(self, params='stmc', n_iter=10,
                              verbose=False):
-        startprob_prior = 10*self.startprob + 2.0
-        transmat_prior = 10*self.transmat + 2.0
+        startprob_prior = 10 * self.startprob + 2.0
+        transmat_prior = 10 * self.transmat + 2.0
         means_prior = self.means
         means_weight = 2.0
         covars_weight = 2.0
@@ -343,8 +344,8 @@ class GaussianHMMTester(GaussianHMMParams):
         h = hmm.GaussianHMM(self.n_states, self.cvtype)
         h.startprob = self.startprob
         h.startprob_prior = startprob_prior
-        h.transmat=hmm.normalize(self.transmat
-                                 + np.diag(np.random.rand(self.n_states)), 1)
+        h.transmat = hmm.normalize(self.transmat
+                                   + np.diag(np.random.rand(self.n_states)), 1)
         h.transmat_prior = transmat_prior
         h.means = 20 * self.means
         h.means_prior = means_prior
@@ -516,10 +517,12 @@ class GMMHMMParams(object):
         g = gmm.GMM(n_mix, cvtype=cvtype)
         g.means = np.random.randint(-20, 20, (n_mix, n_features))
         mincv = 0.1
-        g.covars = {'spherical': (mincv + mincv * np.random.rand(n_mix))**2,
+        g.covars = {'spherical': (mincv
+                                  + mincv * np.random.rand(n_mix)) ** 2,
                     'tied': _generate_random_spd_matrix(n_features)
                            + mincv * np.eye(n_features),
-                    'diag': (mincv + mincv * np.random.rand(n_mix, n_features))**2,
+                    'diag': (mincv
+                             + mincv * np.random.rand(n_mix, n_features)) ** 2,
                     'full': np.array([_generate_random_spd_matrix(n_features)
                                       + mincv * np.eye(n_features)
                                       for x in xrange(n_mix)])}[cvtype]
@@ -534,8 +537,8 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         np.random.seed(self.seed)
         self.gmms = []
         for state in xrange(self.n_states):
-            self.gmms.append(self.create_random_gmm(self.n_mix, self.n_features,
-                                                    self.cvtype))
+            self.gmms.append(self.create_random_gmm(
+                self.n_mix, self.n_features, self.cvtype))
 
     def test_attributes(self):
         h = hmm.GMMHMM(self.n_states, cvtype=self.cvtype)

@@ -274,7 +274,7 @@ class _BaseHMM(BaseEstimator):
         currstate = (startprob_cdf > rand).argmax()
         obs = [self._generate_sample_from_state(currstate)]
 
-        for x in xrange(n-1):
+        for x in xrange(n - 1):
             rand = np.random.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
             obs.append(self._generate_sample_from_state(currstate))
@@ -403,8 +403,8 @@ class _BaseHMM(BaseEstimator):
 
         lattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
-            idx = self._prune_states(lattice[n-1], maxrank, beamlogprob)
-            pr = self._log_transmat[idx].T + lattice[n-1,idx]
+            idx = self._prune_states(lattice[n - 1], maxrank, beamlogprob)
+            pr = self._log_transmat[idx].T + lattice[n - 1,idx]
             lattice[n] = np.max(pr, axis=1) + framelogprob[n]
             traceback[n] = np.argmax(pr, axis=1)
         lattice[lattice <= ZEROLOGPROB] = -np.Inf
@@ -427,9 +427,9 @@ class _BaseHMM(BaseEstimator):
 
         fwdlattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
-            idx = self._prune_states(fwdlattice[n-1], maxrank, beamlogprob)
+            idx = self._prune_states(fwdlattice[n - 1], maxrank, beamlogprob)
             fwdlattice[n] = (logsum(self._log_transmat[idx].T
-                                    + fwdlattice[n-1,idx], axis=1)
+                                    + fwdlattice[n - 1,idx], axis=1)
                              + framelogprob[n])
         fwdlattice[fwdlattice <= ZEROLOGPROB] = -np.Inf
 
@@ -449,7 +449,7 @@ class _BaseHMM(BaseEstimator):
                                      -50)
                                      #beamlogprob)
                                      #-np.Inf)
-            bwdlattice[n-1] = logsum(self._log_transmat[:,idx]
+            bwdlattice[n - 1] = logsum(self._log_transmat[:,idx]
                                      + bwdlattice[n,idx] + framelogprob[n,idx],
                                      axis=1)
         bwdlattice[bwdlattice <= ZEROLOGPROB] = -np.Inf
@@ -514,7 +514,7 @@ class _BaseHMM(BaseEstimator):
             stats['start'] += posteriors[0]
         if 't' in params:
             for t in xrange(len(framelogprob)):
-                zeta = (fwdlattice[t-1][:,np.newaxis] + self._log_transmat
+                zeta = (fwdlattice[t - 1][:,np.newaxis] + self._log_transmat
                         + framelogprob[t] + bwdlattice[t])
                 stats['trans'] += np.exp(zeta - logsum(zeta))
 
@@ -718,7 +718,7 @@ class GaussianHMM(_BaseHMM):
 
         if 'c' in params:
             if self._cvtype in ('spherical', 'diag'):
-                stats['obs**2'] += np.dot(posteriors.T, obs**2)
+                stats['obs**2'] += np.dot(posteriors.T, obs ** 2)
             elif self._cvtype in ('tied', 'full'):
                 for t, o in enumerate(obs):
                     obsobsT = np.outer(o, o)
@@ -754,10 +754,10 @@ class GaussianHMM(_BaseHMM):
             meandiff = self._means - means_prior
 
             if self._cvtype in ('spherical', 'diag'):
-                cv_num = (means_weight * (meandiff)**2
+                cv_num = (means_weight * (meandiff) ** 2
                           + stats['obs**2']
                           - 2 * self._means * stats['obs']
-                          + self._means**2 * denom)
+                          + self._means ** 2 * denom)
                 cv_den = max(covars_weight - 1, 0) + denom
                 if self._cvtype == 'spherical':
                     self._covars = (covars_prior / cv_den.mean(axis=1)
@@ -971,7 +971,7 @@ class GMMHMM(_BaseHMM):
         # XXX: Hotfit for n_mix that is incompatible with the scikit's
         # BaseEstimator API
         self.n_mix = n_mix
-        self.cvtype= cvtype
+        self.cvtype = cvtype
         if gmms is None:
             gmms = []
             for x in xrange(self.n_states):

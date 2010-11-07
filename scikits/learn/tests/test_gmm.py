@@ -19,11 +19,13 @@ def _generate_random_spd_matrix(ndim):
     randspd = np.dot(np.dot(U, 1.0 + np.diag(np.random.rand(ndim))), V)
     return randspd
 
+
 def test_logsum_1D():
     A = np.random.rand(2) + 1.0
     for axis in range(1):
         Asum = gmm.logsum(A, axis)
         assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))
+
 
 def test_logsum_3D():
     """
@@ -85,7 +87,7 @@ def _naive_lmvnpdf_diag(obs, mu, cv):
     ref = np.empty((len(obs), len(mu)))
     stds = np.sqrt(cv)
     for i, (m, std) in enumerate(itertools.izip(mu, stds)):
-       ref[:, i] = np.log(stats.norm.pdf(obs, m, std)).sum(axis=1)
+        ref[:, i] = np.log(stats.norm.pdf(obs, m, std)).sum(axis=1)
     return ref
 
 
@@ -118,7 +120,6 @@ def test_lmvnpdf_spherical():
     assert_array_almost_equal(lpr, reference)
 
 
-
 def test_lmvnpdf_full():
     n_features, n_states, n_obs = 2, 3, 10
 
@@ -131,7 +132,6 @@ def test_lmvnpdf_full():
     reference = _naive_lmvnpdf_diag(obs, mu, cv)
     lpr = gmm.lmvnpdf(obs, mu, fullcv, 'full')
     assert_array_almost_equal(lpr, reference)
-
 
 
 def test_GMM_attributes():
@@ -168,6 +168,7 @@ def test_GMM_attributes():
 
     assert_raises(ValueError, gmm.GMM, n_states=20, cvtype='badcvtype')
 
+
 class GMMTester():
     n_states = 10
     n_features = 4
@@ -180,7 +181,6 @@ class GMMTester():
               'diag': (0.1 + 2 * np.random.rand(n_states, n_features)) ** 2,
               'full': np.array([_generate_random_spd_matrix(n_features) + 5 * I
                                 for x in xrange(n_states)])}
-
 
     def test_eval(self):
         g = gmm.GMM(self.n_states, self.cvtype)
