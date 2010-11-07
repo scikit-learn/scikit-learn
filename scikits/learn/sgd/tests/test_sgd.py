@@ -30,12 +30,12 @@ X4 = np.array([[1,0.9,0.8,0,0,0], [1,.84,.98,0,0,0],
                [0,0,0,.91,.95,1], [0,0,0,.93,1,1]])
 Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
+
 def test_sgd():
     """Check that SGD gives any results :-)"""
 
-    clf = sgd.SGD(penalty='l2', alpha=0.01,
-                         fit_intercept=True,
-                         n_iter=10, shuffle=True)
+    clf = sgd.SGD(penalty='l2', alpha=0.01, fit_intercept=True,
+                  n_iter=10, shuffle=True)
     clf.fit(X, Y)
     #assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
     assert_array_equal(clf.predict(T), true_result)
