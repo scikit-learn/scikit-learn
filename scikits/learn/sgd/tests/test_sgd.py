@@ -3,6 +3,7 @@ from scikits.learn import sgd
 from numpy.testing import assert_array_equal
 
 from nose.tools import raises
+from nose.tools import assert_raises
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -77,138 +78,114 @@ def test_sgd_bad_loss():
     clf = sgd.SGD(loss="foobar")
 
 
-def test_sgd_params():
+@raises(ValueError)
+def test_sgd_n_iter_param():
     """Test parameter validity check"""
-    try:
-        clf = sgd.SGD(n_iter=0)
-        clf = sgd.SGD(n_iter=-10000)
-    except ValueError:
-        pass
-    else:
-        assert False
+    clf = sgd.SGD(n_iter=-10000)
 
-    try:
-        clf = sgd.SGD(shuffle="false")
-    except ValueError:
-        pass
-    else:
-        assert False
 
+@raises(ValueError)
+def test_sgd_shuffle_param():
+    """Test parameter validity check"""
+    clf = sgd.SGD(shuffle="false")
+
+
+@raises(ValueError)
 def test_set_coef():
-    """Checks coef_ and intercept_ shape for
-    the warm starts. """
+    """Checks coef_ shape for the warm starts"""
     # Provided coef_ does not match dataset.
-    try:
-        clf = sgd.SGD(coef_=np.zeros((3,))).fit(X, Y)
-    except ValueError:
-        pass
-    else:
-        assert False
+    clf = sgd.SGD(coef_=np.zeros((3,))).fit(X, Y)
 
+
+@raises(ValueError)
+def test_set_intercept():
+    """Checks intercept_ shape for the warm starts"""
     # Provided intercept_ does not match dataset.
-    try:
-        clf = sgd.SGD(intercept_=np.zeros((3,))).fit(X, Y)
-    except ValueError:
-        pass
-    else:
-        assert False
+    clf = sgd.SGD(intercept_=np.zeros((3,))).fit(X, Y)
+
+
+@raises(ValueError)
+def test_sgd_at_least_two_labels():
+    """Target must have at least two labels"""
+    sgd.SGD(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
+
 
 def test_sgd_multiclass():
-    """Multi-class test case.
-    """
+    """Multi-class test case"""
     clf = sgd.SGD(alpha=0.01, n_iter=20).fit(X2, Y2)
-    assert clf.predict_margin([0, 0]).shape == (1, 3)
-    pred = clf.predict(T2)
-    assert_array_equal(pred, true_result2)
-
-    try:
-        sgd.SGD(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
-    except ValueError:
-        pass
-    else:
-        assert False
-
-    clf = sgd.SGD(alpha=0.01, n_iter=20, coef_=np.zeros((3, 2)),
-                         intercept_=np.zeros(3)).fit(X2, Y2)
-    assert clf.coef_.shape == (3,2)
-    assert clf.intercept_.shape == (3, )
-    pred = clf.predict(T2)
-    assert_array_equal(pred, true_result2)
-
-def test_sgd_multiclass_njobs():
-    """Multi-class test case with multi-core support.
-    """
-    clf = sgd.SGD(alpha=0.01, n_iter=20, n_jobs=-1).fit(X2, Y2)
-    assert clf.coef_.shape == (3,2)
+    assert clf.coef_.shape == (3, 2)
     assert clf.intercept_.shape == (3,)
     assert clf.predict_margin([0, 0]).shape == (1, 3)
     pred = clf.predict(T2)
     assert_array_equal(pred, true_result2)
 
+
+def test_sgd_multiclass_with_init_coef():
+    """Multi-class test case"""
+    clf = sgd.SGD(alpha=0.01, n_iter=20, coef_=np.zeros((3, 2)),
+                  intercept_=np.zeros(3)).fit(X2, Y2)
+    assert clf.coef_.shape == (3, 2)
+    assert clf.intercept_.shape == (3,)
+    pred = clf.predict(T2)
+    assert_array_equal(pred, true_result2)
+
+
+def test_sgd_multiclass_njobs():
+    """Multi-class test case with multi-core support"""
+    clf = sgd.SGD(alpha=0.01, n_iter=20, n_jobs=2).fit(X2, Y2)
+    assert clf.coef_.shape == (3, 2)
+    assert clf.intercept_.shape == (3,)
+    assert clf.predict_margin([0, 0]).shape == (1, 3)
+    pred = clf.predict(T2)
+    assert_array_equal(pred, true_result2)
+
+
 def test_set_coef_multiclass():
-    """Checks coef_ and intercept_ shape for
-    the warm starts for multi-class problems.
-    """
-    # Provided coef_ does not match dataset.
-    try:
-        clf = sgd.SGD(coef_=np.zeros((2,2))).fit(X2, Y2)
-    except ValueError:
-        pass
-    else:
-        assert False
+    """Checks coef_ and intercept_ shape for for multi-class problems"""
+    # Provided coef_ does not match dataset
+    clf = sgd.SGD(coef_=np.zeros((2, 2)))
+    assert_raises(ValueError, clf.fit, X2, Y2)
 
-    # Provided coef_ does match dataset.
-    try:
-        clf = sgd.SGD(coef_=np.zeros((3,2))).fit(X2, Y2)
-    except ValueError:
-        assert False
+    # Provided coef_ does match dataset
+    clf = sgd.SGD(coef_=np.zeros((3,2))).fit(X2, Y2)
 
-    # Provided intercept_ does not match dataset.
-    try:
-        clf = sgd.SGD(intercept_=np.zeros((1,))).fit(X2, Y2)
-    except ValueError:
-        pass
-    else:
-        assert False
+    # Provided intercept_ does not match dataset
+    clf = sgd.SGD(intercept_=np.zeros((1,)))
+    assert_raises(ValueError, clf.fit, X2, Y2)
 
     # Provided intercept_ does match dataset.
-    try:
-        clf = sgd.SGD(intercept_=np.zeros((3,))).fit(X2, Y2)
-    except ValueError:
-        assert False
+    clf = sgd.SGD(intercept_=np.zeros((3,))).fit(X2, Y2)
+
 
 def test_sgd_proba():
-    """Test that SGD raises NotImplementedError when clf.predict_proba
-    is called and loss!='log'. Test if predict_proba works for log loss."""
-    clf = sgd.SGD(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
-    try:
-        p = clf.predict_proba([3, 2])
-    except NotImplementedError:
-        pass
-    else:
-        assert False
+    """Check SGD.predict_proba for log loss only"""
 
+    # hinge loss does not allow for conditional prob estimate
+    clf = sgd.SGD(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
+    assert_raises(NotImplementedError, clf.predict_proba, [3, 2])
+
+    # log loss implements the logistic regression prob estimate
     clf = sgd.SGD(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
-    try:
-        p = clf.predict_proba([3, 2])
-        assert p > 0.5
-        p = clf.predict_proba([-1, -1])
-        assert p < 0.5
-    except NotImplementedError:
-        assert False
+    p = clf.predict_proba([3, 2])
+    assert p > 0.5
+    p = clf.predict_proba([-1, -1])
+    assert p < 0.5
+
 
 def test_sgd_l1():
-    """Test L1 regularization.
-    """
+    """Test L1 regularization"""
     n = len(X4)
     np.random.seed(13)
     idx = np.arange(n)
     np.random.shuffle(idx)
+
     X = X4[idx, :]
     Y = Y4[idx, :]
-    clf = sgd.SGD(penalty='l1', alpha=.2, fit_intercept=False,
-                  n_iter=2000)
+
+    clf = sgd.SGD(penalty='l1', alpha=.2, fit_intercept=False, n_iter=2000)
     clf.fit(X, Y)
     assert_array_equal(clf.coef_[1:-1], np.zeros((4,)))
+
     pred = clf.predict(X)
     assert_array_equal(pred, Y)
+
