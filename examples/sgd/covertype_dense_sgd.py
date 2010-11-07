@@ -40,6 +40,8 @@ To run this example use your favorite python shell::
 
   % ipython examples/sgd/covertype_dense_sgd.py
 
+Warning: running this example will try load a dataset of 1.4 GB in memory
+(on a 64 bit system).
 """
 from __future__ import division
 
@@ -65,7 +67,7 @@ from scikits.learn import metrics
 if not os.path.exists('covtype.data.gz'):
     # Download the data
     import urllib
-    print "Downloading data, Please Wait (11MB)"
+    print "Downloading data, Please Wait (11MB)..."
     opener = urllib.urlopen(
         'http://archive.ics.uci.edu/ml/' \
         'machine-learning-databases/covtype/covtype.data.gz')
@@ -73,8 +75,10 @@ if not os.path.exists('covtype.data.gz'):
 
 ######################################################################
 ## Load dataset
-print("loading dataset...")
+print("Loading dataset...")
 data = np.loadtxt('covtype.data.gz', delimiter=",")
+
+print "Separating features from labels..."
 X = data[:, :-1]
 
 # class 1 vs. all others.
@@ -83,8 +87,8 @@ y[np.where(data[:, -1] == 1)] = 1
 
 ######################################################################
 ## Create train-test split (T. Joachims, 2006)
-print("creating train-test split...")
-idx = np.arange(data.shape[0])
+print("Creating train-test split...")
+idx = np.arange(X.shape[0])
 np.random.seed(13)
 np.random.shuffle(idx)
 train_idx = idx[:522911]
@@ -107,7 +111,6 @@ X_test = (X_test-mean) / std
 ######################################################################
 ## Print dataset statistics
 print("")
-print("")
 print("Dataset statistics:")
 print("===================")
 print("%s %d" % ("number of features:".ljust(25),
@@ -119,7 +122,7 @@ print("%s %d" % ("number of train samples:".ljust(25),
 print("%s %d" % ("number of test samples:".ljust(25),
                  test_idx.shape[0]))
 print("")
-print("training classifiers...")
+print("Training classifiers...")
 print("")
 
 ######################################################################
