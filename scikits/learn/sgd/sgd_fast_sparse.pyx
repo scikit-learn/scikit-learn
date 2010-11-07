@@ -35,9 +35,10 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               np.ndarray[double, ndim=1] Y,
               int n_iter, int fit_intercept,
               int verbose, int shuffle):
-    """Cython implementation of SGD with different loss functions and
-    penalties.
+    """Cython impl. of SGD with different loss functions and penalties
 
+    This representation assumes X represented using the Compressed Sparse Row
+    representation of scipy.sparse.
     """
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
@@ -151,8 +152,7 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr, int *X_indices_ptr,
 
 cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
                 int *X_indices_ptr, int offset, int xnnz, double c):
-    """Scales example x by constant c and adds it to the weight vector w.
-    """
+    """Scales example x by constant c and adds it to the weight vector w"""
     cdef int j
     cdef int idx
     cdef double val
@@ -169,7 +169,8 @@ cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
 
 cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
                     int *X_indices_ptr, int offset, int xnnz, double u):
-    """Applys the L1 penalty to each updated feature.
+    """Apply the L1 penalty to each updated feature
+
     This implements the truncated gradient approach by
     [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
     """
@@ -180,23 +181,25 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
         idx = X_indices_ptr[offset + j]
         z = w_data_ptr[idx]
         if (wscale * w_data_ptr[idx]) > 0.0:
-            w_data_ptr[idx] = max(0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx])
-                                                        / wscale) )
+            w_data_ptr[idx] = max(
+                0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx]) / wscale))
+
         elif (wscale * w_data_ptr[idx]) < 0.0:
-            w_data_ptr[idx] = min(0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx])
-                                                        / wscale) )
+            w_data_ptr[idx] = min(
+                0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx]) / wscale))
+
         q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))
 
 
 cdef void finall1penalty(double *w_data_ptr, double wscale,
                          unsigned int n_features,
                          double *q_data_ptr, double u):
-    """Applys the L1 penalty to all feature.
+    """Applys the L1 penalty to all feature
+
     This implements the truncated gradient approach by
     [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
 
     Experimental: this was proposed by Bob Carpenter (LingPipe).
-
     """
     cdef double z = 0.0
     cdef int j = 0

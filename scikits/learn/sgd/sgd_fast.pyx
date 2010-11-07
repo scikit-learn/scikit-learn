@@ -97,9 +97,7 @@ cdef class ModifiedHuber(Classification):
 
 
 cdef class Hinge(Classification):
-    """SVM classification loss for binary
-    classification tasks with y in {-1,1}.
-    """
+    """SVM loss for binary classification tasks with y in {-1,1}"""
     cpdef double loss(self, double p, double y):
         cdef double z = p * y
         if z < 1.0:
@@ -125,8 +123,8 @@ cdef class Log(Classification):
         if z > 18:
             return exp(-z)
         if z < -18:
-            return -z * y 
-        return log(1.0+exp(-z))
+            return -z * y
+        return log(1.0 + exp(-z))
 
     cpdef double dloss(self, double p, double y):
         cdef double z = p * y
@@ -142,8 +140,7 @@ cdef class Log(Classification):
 
 
 cdef class SquaredError(Regression):
-    """
-    """
+    """Squared error loss traditional used in linear regression"""
     cpdef double loss(self, double p, double y):
         return 0.5 * (p - y) * (p - y)
 
@@ -203,9 +200,11 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               np.ndarray[double, ndim=1] Y,
               int n_iter, int fit_intercept,
               int verbose, int shuffle):
-    """Cython implementation of SGD with different loss functions and
-    penalties.
+    """Cython impl. of SGD for generic loss functions and penalties
+
+    This implementation assumes X represented as a dense array of floats.
     """
+
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
     cdef unsigned int n_features = w.shape[0]
@@ -240,9 +239,12 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         q = np.zeros((n_features,), dtype = np.float64, order = "c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
-    # computing eta0
+
+    # computing eta0, the initial learning rate
     cdef double typw = sqrt(1.0 / sqrt(alpha))
     cdef double eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
+
+    # initialize the 1 / t learning rate schedule from eta0
     t = 1.0 / (eta0 * alpha)
     t_start = time()
     for epoch from 0 <= epoch < n_iter:
@@ -255,7 +257,8 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
             offset = row_stride * sample_idx / elem_stride # row offset in elem
             y = Y_data_ptr[sample_idx]
             eta = 1.0 / (alpha * t)
-            p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale) + intercept
+            p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
+                ) + intercept
             sumloss += loss.loss(p, y)
             update = eta * loss.dloss(p, y)
             if update != 0.0:
@@ -303,7 +306,7 @@ cdef inline double min(double a, double b):
     return a if a <= b else b
 
 
-cdef double dot(double *w_data_ptr, double *X_data_ptr, 
+cdef double dot(double *w_data_ptr, double *X_data_ptr,
                 int offset, unsigned int n_features):
     cdef double sum = 0.0
     cdef int j
@@ -314,8 +317,7 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr,
 
 cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
                 int offset, unsigned int n_features, double c):
-    """Scales example x by constant c and adds it to the weight vector w.
-    """
+    """Scales example x by constant c and adds it to the weight vector w"""
     cdef int j
     cdef int idx
     cdef double val
@@ -333,7 +335,8 @@ cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
 
 cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
                     unsigned int n_features, double u):
-    """Applys the L1 penalty to each updated feature.
+    """Apply the L1 penalty to each updated feature
+
     This implements the truncated gradient approach by
     [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
 
