@@ -368,6 +368,23 @@ class GMM(BaseEstimator):
         logprob, components = self.decode(X)
         return components
 
+    def predict_proba(self, X):
+        """Predict posterior probability of data under each Gaussian
+        in the model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_states]
+            Returns the probability of the sample for each Gaussian
+            (state) in the model.
+        """
+        logprob, posteriors = self.eval(X)
+        return posteriors
+
     def rvs(self, n=1):
         """Generate random samples from the model.
 
