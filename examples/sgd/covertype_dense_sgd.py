@@ -3,27 +3,12 @@
 Covertype dataset with dense SGD
 ================================
 
-<<<<<<< HEAD
-This is an example showing how stochastic gradient descent (SGD)
-can be used for large and dense datasets.
-
-The dataset used in this example is the covertype dataset of Blackard,
-Jock, and Dean, which is low-dimensional with 54 features and a sparsity
-of 23%. The dataset comprises 581,012 samples. The task is to predicting
-forest cover type from cartographic variables only. Each sample represents
-a 30x30 meter cell and there are 7 types of forest cover. See [1] for
-further details.  In this example, however, we consider the task of
-discriminating between class 1 and all others.
-
-The same task has been used in a number of papers including:
-
- * `"Pegasos: Primal estimated sub-gradient solver for svm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
-   S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
-
- * "Training Linear SVMs in Linear Time"
-=======
-Benchmark stochastic gradient descent (SGD), Liblinear, and Naive Bayes on the forest covertype dataset of Blackard, Jock, and Dean [1]. The dataset comprises 581,012 samples. It is low-dimensional with 54 features and a sparsity of approx. 23%. Here, we consider the task of predicting class 1 (spruce/fir). The classification performance of SGD is competitive with Liblinear while being two orders of magnitude faster to train::
+Benchmark stochastic gradient descent (SGD), Liblinear, and Naive Bayes on
+the forest covertype dataset of Blackard, Jock, and Dean [1]. The dataset
+comprises 581,012 samples. It is low-dimensional with 54 features and a
+sparsity of approx. 23%. Here, we consider the task of predicting class 1
+(spruce/fir). The classification performance of SGD is competitive with
+Liblinear while being two orders of magnitude faster to train::
 
     [..]
     Classification performance:
@@ -31,23 +16,22 @@ Benchmark stochastic gradient descent (SGD), Liblinear, and Naive Bayes on the f
 
     Classifier   train-time test-time error-rate
     --------------------------------------------
-    Liblinear     15.5057s   0.0481s     0.2305  
-    GNB           2.8415s    0.1738s     0.3633  
-    SGD           0.2402s    0.0048s     0.2300 
-  
+    Liblinear     15.5057s   0.0481s     0.2305
+    GNB           2.8415s    0.1738s     0.3633
+    SGD           0.2402s    0.0048s     0.2300
+
 The same task has been used in a number of papers including:
 
  * `"SVM Optimization: Inverse Dependence on Training Set Size"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.139.2112>`_
    S. Shalev-Shwartz, N. Srebro - In Proceedings of ICML '08.
 
- * `"Pegasos: Primal estimated sub-gradient solver for svm" 
+ * `"Pegasos: Primal estimated sub-gradient solver for svm"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
  * `"Training Linear SVMs in Linear Time"
    <www.cs.cornell.edu/People/tj/publications/joachims_06a.pdf>`_
->>>>>>> 2ebd6326dc6b2f9a8fbce571b4f17f980814b4e4
    T. Joachims - In SIGKDD '06
 
 [1] http://archive.ics.uci.edu/ml/datasets/Covertype
@@ -77,7 +61,7 @@ from scikits.learn.naive_bayes import GNB
 from scikits.learn import metrics
 
 ######################################################################
-## Download the data, if not already on disk 
+## Download the data, if not already on disk
 if not os.path.exists('covtype.data.gz'):
     # Download the data
     import urllib
@@ -90,7 +74,6 @@ if not os.path.exists('covtype.data.gz'):
 ######################################################################
 ## Load dataset
 print("loading dataset...")
->>>>>>> 2ebd6326dc6b2f9a8fbce571b4f17f980814b4e4
 data = np.loadtxt('covtype.data.gz', delimiter=",")
 X = data[:, :-1]
 
