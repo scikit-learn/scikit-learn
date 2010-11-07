@@ -79,8 +79,6 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
             indices = scores.argmax(axis=1)
         return self.classes[np.ravel(indices)]
 
-        pass
-
     def predict_proba(self, X):
         """Predict class membership probability
 
