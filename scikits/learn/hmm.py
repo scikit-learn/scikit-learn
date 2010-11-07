@@ -992,9 +992,9 @@ class GMMHMM(_BaseHMM):
             gmm_logprob, gmm_posteriors = g.eval(obs)
             gmm_posteriors *= posteriors[:,state][:,np.newaxis]
             tmpgmm = GMM(g.n_states, cvtype=g.cvtype)
-            tmpgmm.n_dim = g.n_dim
+            tmpgmm.n_features = g.n_features
             tmpgmm.covars = _distribute_covar_matrix_to_match_cvtype(
-                np.eye(g.n_dim), g.cvtype, g.n_states)
+                np.eye(g.n_features), g.cvtype, g.n_states)
             norm = tmpgmm._do_mstep(obs, gmm_posteriors, params)
 
             stats['norm'][state] += norm
@@ -1022,8 +1022,9 @@ class GMMHMM(_BaseHMM):
                 g.means = stats['means'][state] / norm[:,np.newaxis]
             if 'c' in params:
                 if g.cvtype == 'tied':
-                    g.covars = (stats['covars'][state]
-                                + covars_prior * np.eye(g.n_dim)) / norm.sum()
+                    g.covars = ((stats['covars'][state]
+                                 + covars_prior * np.eye(g.n_features))
+                                / norm.sum())
                 else:
                     cvnorm = np.copy(norm)
                     shape = np.ones(g._covars.ndim)
@@ -1033,7 +1034,7 @@ class GMMHMM(_BaseHMM):
                         g.covars = (stats['covars'][state]
                                     + covars_prior) / cvnorm
                     elif g.cvtype == 'full':
-                        eye = np.eye(g.n_dim)
+                        eye = np.eye(g.n_features)
                         g.covars = ((stats['covars'][state]
                                      + covars_prior * eye[np.newaxis,:,:])
                                     / cvnorm)
