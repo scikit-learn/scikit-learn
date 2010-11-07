@@ -30,10 +30,17 @@ class SGD(BaseSGD):
     Parameters
     ----------
     loss : str, 'hinge' or 'log' or 'modifiedhuber'
-        The loss function to be used. Defaults to 'hinge'.
+        The loss function to be used. Defaults to 'hinge'. The hinge loss is a
+        margin loss used by standard linear SVM models. The 'log' loss is the
+        loss of logistic regression models and can be used for probability
+        estimation in binary classifiers. 'modifiedhuber' is another smooth loss
+        that brings tolerance to outliers.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
-        The penalty (aka regularization term) to be used. Defaults to 'l2'.
+        The penalty (aka regularization term) to be used. Defaults to 'l2' which
+        is the standard regularizer for linear SVM models. 'l1' and 'elasticnet'
+        migh bring sparsity to the model (feature selection) not achievable with
+        'l2'.
 
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
