@@ -139,15 +139,15 @@ def benchmark(clf):
 
 ######################################################################
 ## Train Liblinear model
-libsvm_parameters = {
+liblinear_parameters = {
     'loss': 'l2',
     'penalty': 'l2',
     'C': 1000,
     'dual': False,
     'eps': 1e-3,
     }
-libsvm_res = benchmark(LinearSVC(**libsvm_parameters))
-libsvm_err, libsvm_train_time, libsvm_test_time = libsvm_res
+liblinear_res = benchmark(LinearSVC(**liblinear_parameters))
+liblinear_err, liblinear_train_time, liblinear_test_time = liblinear_res
 
 ######################################################################
 ## Train SGD model
@@ -176,7 +176,7 @@ def print_row(clf_type, train_time, test_time, err):
 
 print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time", "error-rate"))
 print("-" * 44)
-print_row("Liblinear", libsvm_train_time, libsvm_test_time, libsvm_err)
+print_row("Liblinear", liblinear_train_time, liblinear_test_time, liblinear_err)
 print_row("GNB", gnb_train_time, gnb_test_time, gnb_err)
 print_row("SGD", sgd_train_time, sgd_test_time, sgd_err)
 print("")
