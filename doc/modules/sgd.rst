@@ -44,11 +44,12 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> from scikits.learn import sgd
     >>> X = [[0., 0.], [1., 1.]]
     >>> Y = [0, 1]
-    >>> clf = sgd.sparse.SGD(loss="hinge", penalty="l2")
+    >>> clf = sgd.SGD(loss="hinge", penalty="l2")
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
+    SGD(loss='hinge', n_jobs=-1, shuffle=False, verbose=0, fit_intercept=True,
       n_iter=5, penalty='l2', coef_=array([ 9.9009,  9.9009]), rho=1.0,
-      alpha=0.0001, intercept_=array(-0.39811182066217121))
+      alpha=0.0001, intercept_=array(-9.9900299301496904))
+
 
 After being fitted, the model can then be used to predict new values::
 
@@ -64,7 +65,7 @@ model parameters:
 Member `intercept_` holds the intercept (aka offset or bias):
 
     >>> clf.intercept_
-    array(-0.39811182066217121)
+    array(-9.9900299301496904)
 
 Whether or not the model should use an intercept, i.e. a biased hyperplane, is 
 controlled by the parameter `fit_intercept`.
@@ -72,14 +73,14 @@ controlled by the parameter `fit_intercept`.
 To get the signed distance to the hyperplane use `predict_margin`:
 
     >>> clf.predict_margin([[2., 2.]])
-    array([ 39.20549567])
+    array([ 29.61357756])
 
 If `loss="log"` you get a probability estimate P(y=C|x) using `predict_proba`, 
 where `C` is the largest class label: 
    
-    >>> clf = sgd.sparse.SGD(loss="log").fit(X, Y)
+    >>> clf = sgd.SGD(loss="log").fit(X, Y)
     >>> clf.predict_proba([[1., 1.]])
-    array([ 0.9999528])
+    array([ 0.99999949])
 
 The concrete loss function can be set via the `loss` parameter. :class:`SGD` supports the
 following loss functions: 
@@ -107,9 +108,15 @@ has to be specified by the user.
 :class:`SGD` supports multi-class classification by combining multiple 
 binary classifiers in a one-against-all (OVA) scheme.
 
+.. figure:: ../auto_examples/sgd/images/plot_iris.png
+   :target: ../auto_examples/sgd/plot_iris.html
+   :align: center
+
 .. topic:: Examples:
 
  * :ref:`example_sgd_plot_separating_hyperplane.py`,
+ * :ref:`example_sgd_plot_iris.py`,
+ * :ref:`example_sgd_covertype_dense_sgd.py`
 
 .. currentmodule:: scikits.learn.svm.sparse
 
@@ -129,13 +136,17 @@ For maximum efficiency, use the CSR matrix format as defined in
 
 Implemented classes are :class:`SGD`.
 
+.. topic:: Examples:
+
+ * :ref:`example_sgd_mlcomp_sparse_document_classification_sgd.py`,
+
 Complexity
 ==========
 
 The major advantage of SGD is its efficiency, which is basically 
 linear in the number of training examples. If X is a matrix of size (n, p) 
-training has a cost of :math:`O(k n \hat p)`, where k is the number 
-of iterations (epochs) and :math:`\hat p` is the average number of 
+training has a cost of :math:`O(k n \bar p)`, where k is the number 
+of iterations (epochs) and :math:`\bar p` is the average number of 
 non-zero attributes per sample. 
 
 Recent theoretical results, however, show that the runtime to get some 
@@ -176,7 +187,7 @@ Mathematical formulation
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where 
 :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{-1,1\}`, our goal is to 
 learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
-:math:`w \in \mathbf{R}^n` and intercept :math:`b \in \mathbf{R}`. In order
+:math:`w \in \mathbf{R}^m` and intercept :math:`b \in \mathbf{R}`. In order
 to make predictions, we simply look at the sign of :math:`f(x)`.
 A common choice to find the model parameters is by minimizing the regularized 
 training error given by

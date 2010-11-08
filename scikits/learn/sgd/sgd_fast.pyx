@@ -14,14 +14,6 @@ from time import time
 cimport numpy as np
 cimport cython
 
-cdef extern from "math.h":
-    cdef extern double exp(double x)
-    cdef extern double log(double x)
-    cdef extern double sqrt(double x)
-
-ctypedef np.float64_t DOUBLE
-ctypedef np.int32_t INTEGER
-
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
@@ -105,9 +97,7 @@ cdef class ModifiedHuber(Classification):
 
 
 cdef class Hinge(Classification):
-    """SVM classification loss for binary
-    classification tasks with y in {-1,1}.
-    """
+    """SVM loss for binary classification tasks with y in {-1,1}"""
     cpdef double loss(self, double p, double y):
         cdef double z = p * y
         if z < 1.0:
@@ -133,8 +123,8 @@ cdef class Log(Classification):
         if z > 18:
             return exp(-z)
         if z < -18:
-            return -z * y 
-        return log(1.0+exp(-z))
+            return -z * y
+        return log(1.0 + exp(-z))
 
     cpdef double dloss(self, double p, double y):
         cdef double z = p * y
@@ -150,8 +140,7 @@ cdef class Log(Classification):
 
 
 cdef class SquaredError(Regression):
-    """
-    """
+    """Squared error loss traditional used in linear regression"""
     cpdef double loss(self, double p, double y):
         return 0.5 * (p - y) * (p - y)
 
@@ -173,8 +162,6 @@ cdef class Huber(Regression):
 
     http://en.wikipedia.org/wiki/Huber_Loss_Function
     """
-
-    cdef double c
 
     def __init__(self,c):
         self.c = c
@@ -209,31 +196,31 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               LossFunction loss,
               int penalty_type,
               double alpha, double rho,
-              np.ndarray[double, ndim=1] X_data,
-              np.ndarray[int, ndim=1] X_indices,
-              np.ndarray[int, ndim=1] X_indptr,
+              np.ndarray[double, ndim=2] X,
               np.ndarray[double, ndim=1] Y,
               int n_iter, int fit_intercept,
               int verbose, int shuffle):
-    """Cython implementation of SGD with different loss functions and
-    penalties.
+    """Cython impl. of SGD for generic loss functions and penalties
 
+    This implementation assumes X represented as a dense array of floats.
     """
+
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
     cdef unsigned int n_features = w.shape[0]
 
+    cdef int row_stride = X.strides[0]
+    cdef int elem_stride = X.strides[1]
+
     cdef double *w_data_ptr = <double *>w.data
-    cdef double *X_data_ptr = <double *>X_data.data
-    cdef int *X_indptr_ptr = <int *>X_indptr.data
-    cdef int *X_indices_ptr = <int *>X_indices.data
+    cdef double *X_data_ptr = <double *>X.data
+    cdef double *Y_data_ptr = <double *>Y.data
 
     # FIXME unsined int?
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
                                                              dtype = np.int32)
-    cdef int *index_ptr = <int *>index.data
+    cdef int *index_data_ptr = <int *>index.data
     cdef int offset = 0
-    cdef int xnnz = 0
     cdef double wscale = 1.0
     cdef double eta = 0.0
     cdef double p = 0.0
@@ -245,16 +232,19 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
-    cdef unsigned int sample_idx = 0
+    cdef int sample_idx = 0
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr
     if penalty_type != L2:
         q = np.zeros((n_features,), dtype = np.float64, order = "c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
-    # computing eta0
+
+    # computing eta0, the initial learning rate
     cdef double typw = sqrt(1.0 / sqrt(alpha))
     cdef double eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
+
+    # initialize the 1 / t learning rate schedule from eta0
     t = 1.0 / (eta0 * alpha)
     t_start = time()
     for epoch from 0 <= epoch < n_iter:
@@ -263,20 +253,18 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         if shuffle:
             np.random.shuffle(index)
         for i from 0 <= i < n_samples:
-            sample_idx = index[i]
-            offset = X_indptr_ptr[sample_idx]
-            xnnz = X_indptr_ptr[sample_idx + 1] - offset
-            y = Y[sample_idx]
+            sample_idx = index_data_ptr[i]
+            offset = row_stride * sample_idx / elem_stride # row offset in elem
+            y = Y_data_ptr[sample_idx]
             eta = 1.0 / (alpha * t)
-            p = (dot(w_data_ptr, X_data_ptr, X_indices_ptr,
-                     offset, xnnz) * wscale) + intercept
+            p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
+                ) + intercept
             sumloss += loss.loss(p, y)
             update = eta * loss.dloss(p, y)
             if update != 0.0:
-                add(w_data_ptr, wscale, X_data_ptr, X_indices_ptr,
-                    offset, xnnz, update)
+                add(w_data_ptr, wscale, X_data_ptr, offset, n_features, update)
                 if fit_intercept == 1:
-                    intercept += update * 0.01
+                    intercept += update
             if penalty_type != L1:
                 wscale *= (1.0 - (rho * eta * alpha))
                 if wscale < 1e-9:
@@ -284,13 +272,12 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                     wscale = 1.0
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
-                l1penalty(w_data_ptr, wscale, q_data_ptr,
-                          X_indices_ptr, offset, xnnz, u)
+                l1penalty(w_data_ptr, wscale, q_data_ptr, n_features, u)
             t += 1
             count += 1
-        if penalty_type == L1 or penalty_type == ELASTICNET:
-            u += ((1.0 - rho) * eta * alpha)
-            finall1penalty(w_data_ptr, wscale, n_features, q_data_ptr, u)
+        #if penalty_type == L1 or penalty_type == ELASTICNET:
+        #    u += ((1.0 - rho) * eta * alpha)
+        #    finall1penalty(w_data_ptr, wscale, n_features, q_data_ptr, u)
 
         # report epoche information
         if verbose > 0:
@@ -319,73 +306,54 @@ cdef inline double min(double a, double b):
     return a if a <= b else b
 
 
-cdef double dot(double *w_data_ptr, double *X_data_ptr, int *X_indices_ptr,
-                int offset, int xnnz):
+cdef double dot(double *w_data_ptr, double *X_data_ptr,
+                int offset, unsigned int n_features):
     cdef double sum = 0.0
     cdef int j
-    for j from 0 <= j < xnnz:
-        sum += w_data_ptr[X_indices_ptr[offset + j]] * X_data_ptr[offset + j]
+    for j from 0 <= j < n_features:
+        sum += w_data_ptr[j] * X_data_ptr[offset + j]
     return sum
 
 
 cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
-                int *X_indices_ptr, int offset, int xnnz, double c):
-    """Scales example x by constant c and adds it to the weight vector w.
-    """
+                int offset, unsigned int n_features, double c):
+    """Scales example x by constant c and adds it to the weight vector w"""
     cdef int j
     cdef int idx
     cdef double val
     cdef double innerprod = 0.0
     cdef double xsqnorm = 0.0
-    for j from 0 <= j < xnnz:
-        idx = X_indices_ptr[offset + j]
+    for j from 0 <= j < n_features:
         val = X_data_ptr[offset + j]
-        innerprod += (w_data_ptr[idx] * val)
+        innerprod += (w_data_ptr[j] * val)
         xsqnorm += (val * val)
-        w_data_ptr[idx] += val * (c / wscale)
+        w_data_ptr[j] += val * (c / wscale)
+
+    # TODO this is needed for PEGASOS only
     return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
 
 cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
-                    int *X_indices_ptr, int offset, int xnnz, double u):
-    """Applys the L1 penalty to each updated feature.
+                    unsigned int n_features, double u):
+    """Apply the L1 penalty to each updated feature
+
     This implements the truncated gradient approach by
     [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
+
+    FIXME: apply penalty over all features or only non-zero?
+    Empirical results look better this way...
     """
     cdef double z = 0.0
     cdef int j = 0
     cdef int idx = 0
-    for j from 0 <= j < xnnz:
-        idx = X_indices_ptr[offset + j]
-        z = w_data_ptr[idx]
-        if (wscale * w_data_ptr[idx]) > 0.0:
-            w_data_ptr[idx] = max(0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx])
-                                                        / wscale) )
-        elif (wscale * w_data_ptr[idx]) < 0.0:
-            w_data_ptr[idx] = min(0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx])
-                                                        / wscale) )
-        q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))
-
-
-cdef void finall1penalty(double *w_data_ptr, double wscale,
-                         unsigned int n_features,
-                         double *q_data_ptr, double u):
-    """Applys the L1 penalty to all feature.
-    This implements the truncated gradient approach by
-    [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
-
-    Experimental: this was proposed by Bob Carpenter (LingPipe).
-
-    """
-    cdef double z = 0.0
-    cdef int j = 0
     for j from 0 <= j < n_features:
         z = w_data_ptr[j]
         if (wscale * w_data_ptr[j]) > 0.0:
             w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
-                                                    / wscale) )
+                                                        / wscale) )
         elif (wscale * w_data_ptr[j]) < 0.0:
             w_data_ptr[j] = min(0.0, w_data_ptr[j] + ((u - q_data_ptr[j])
-                                                    / wscale) )
+                                                        / wscale) )
         q_data_ptr[j] += (wscale * (w_data_ptr[j] - z))
+
 
