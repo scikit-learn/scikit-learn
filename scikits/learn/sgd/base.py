@@ -15,7 +15,7 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, coef_=None, intercept_=None,
                  fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, n_jobs=-1):
+                 verbose=0, n_jobs=1):
         self.loss = loss
         self.penalty = penalty
         self.alpha = alpha
