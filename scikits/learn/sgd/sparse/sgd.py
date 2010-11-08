@@ -45,7 +45,8 @@ class SGD(BaseSGD):
         The verbosity level
     n_jobs: integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'.
+        multi-class problems) computation. -1 means 'all CPUs'. Defaults
+        to 1.
 
     Attributes
     ----------
@@ -82,8 +83,6 @@ class SGD(BaseSGD):
         else:
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
-
-
 
     def fit(self, X, Y, **params):
         """Fit current model with SGD
@@ -125,7 +124,7 @@ class SGD(BaseSGD):
             self.intercept_ = np.zeros(1, dtype=np.float64)
         else:
             if self.intercept_.shape != (1,):
-                raise ValueError("Provided intercept_ does not match dataset. ")
+                raise ValueError("Provided intercept_ does not match dataset.")
 
         X_data = np.array(X.data, dtype=np.float64, order="C")
         X_indices = X.indices
@@ -167,7 +166,7 @@ class SGD(BaseSGD):
                                   order="C")
         else:
             if self.intercept_.shape != (n_classes, ):
-                raise ValueError("Provided intercept_ does not match dataset. ")
+                raise ValueError("Provided intercept_ does not match dataset.")
             intercept_ = self.intercept_
 
         self.coef_ = coef_
@@ -187,8 +186,6 @@ class SGD(BaseSGD):
 
         self._set_coef(coef_)
         self.intercept_ = intercept_
-
-
 
     def predict_margin(self, X):
         """Predict signed 'distance' to the hyperplane (aka confidence score).
@@ -212,7 +209,6 @@ class SGD(BaseSGD):
         else:
             return scores
 
-
     def __reduce__(self):
         """Handler which is called at pickeling time.
 
@@ -220,7 +216,7 @@ class SGD(BaseSGD):
         for joblib because otherwise it will crash trying to pickle
         the external loss function object.
         """
-        return SGD,(self.loss, self.penalty, self.alpha, self.rho, self.coef_,
+        return SGD, (self.loss, self.penalty, self.alpha, self.rho, self.coef_,
                     self.intercept_, self.fit_intercept, self.n_iter,
                     self.shuffle, self.verbose, self.n_jobs)
 
@@ -236,4 +232,3 @@ def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, Y, clf):
                                 clf.fit_intercept, clf.verbose,
                                 clf.shuffle)
     return (i, coef, intercept)
-

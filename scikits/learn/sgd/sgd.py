@@ -72,7 +72,8 @@ class SGD(BaseSGD):
 
     n_jobs: integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs' (default).
+        multi-class problems) computation. -1 means 'all CPUs'. Defaults
+        to 1. 
 
     Attributes
     ----------
@@ -138,7 +139,7 @@ class SGD(BaseSGD):
             self.intercept_ = np.zeros(1, dtype=np.float64)
         else:
             if self.intercept_.shape != (1,):
-                raise ValueError("Provided intercept_ does not match dataset. ")
+                raise ValueError("Provided intercept_ does not match dataset.")
 
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
