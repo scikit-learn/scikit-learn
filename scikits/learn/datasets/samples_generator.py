@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Generate samples of synthetic data sets.
 """
@@ -162,3 +163,21 @@ def friedman(nb_samples=100, nb_features=10,noise_std=1):
     Y = 10*np.sin(X[:,0]*X[:,1]) + 20*(X[:,2]-0.5)**2 + 10*X[:,3] + 5*X[:,4]
     Y += noise_std*nr.normal(loc=0,scale=1,size=(nb_samples))
     return X,Y
+
+def swissroll(nb_samples=1000, length=3 * np.pi):
+    """
+    Swissroll sample generator
+
+    Parameters
+    ----------
+    nb_samples : int
+                 number of samples (default is 1000)
+    length : float
+                 length of the swissroll (default is 3pi)
+    """
+    X = nr.uniform(size=(nb_samples, 2)) * length
+    Y = np.empty(shape=(nb_samples, 3))
+    Y[:,0] = X[:,0] * np.cos(X[:,0])
+    Y[:,1] = X[:,0] * np.sin(X[:,0])
+    Y[:,2] = X[:,1]
+    return X, Y
