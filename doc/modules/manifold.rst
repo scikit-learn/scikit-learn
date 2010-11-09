@@ -39,14 +39,26 @@ approximated by distances on a neighbors graph.
 Locally Linear Embedding (LLE)
 ------------------------------
 
+LLE[2] creates an embedded space by computing barycenter weights in the
+original space and by trying to reproduce them in the embedded space.
+
 Laplacian Eigenmaps
 -------------------
+
+Laplacian Eigenmaps[3] are an algorithm that will reproduce diffusion distances
+inside the reduced space. Only the closest distances will be taken into account.
 
 Diffusion Maps
 --------------
 
+Diffusion Maps[4] are based on the same principle than Laplacian Eigenmaps,
+safe that all distances are used and are whittened before being processed.
+
 Hessian Eigenmaps
 -----------------
+
+Hessian Maps[5] (also known as Hessian LLE) solve a quadratic form that averages
+the Froebenius norm of the Hessian of the manifold.
 
 NonLinear Mapping (NLM)
 -----------------------
@@ -102,6 +114,28 @@ Notes
            "A Global Geometric Framework for Nonlinear Dimensionality 
            Reduction,"
            Science, 290(5500), pp. 2319-2323, 2000
+           doi: 10.1126/science.290.5500.2319
+
+    .. [2] Sam T. Roweis, and Lawrence K. Saul,
+           "Nonlinear Dimensionality Reduction by Locally Linear Embedding,"
+           Science, 290(5500), pp. 2323 - 2326
+           doi: 10.1126/science.290.5500.2323
+
+    .. [3] Partha Niyogi, andMikhail Belkin,
+           "Laplacian Eigenmaps for Dimensionality Reduction and Data
+           Representation",
+           Neural Computation, Vol. 15, No. 6, Pages 1373-1396
+           doi: 10.1162/089976603321780317
+
+    .. [4] R.R. Coifman, and S. Lafon, "Diffusion maps",
+           Applied and Computational Harmonic Analysis,
+           Vol 21, July 2006, pp 5-30
+
+    .. [5] David L. Donoho, and Carrie Grimes,
+           "Hessian eigenmaps: Locally linear embedding techniques for
+           high-dimensional data",
+           PNAS, Vol 100, May 2003, n°10, p5591-5596,
+           doi: 10.1073/pnas.1031596100
 
     .. [6] JR. J. Sammon.,
            "Data reduction with NonLinear Mapping algorithm"

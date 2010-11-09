@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # The Swissroll dataset
 from scikits.learn.datasets import samples_generator
-X, Y = samples_generator.swissroll()
+X, Y = samples_generator.swissroll(nb_samples=2000)
 
 colors = np.hstack((X / X.max(axis=0), np.zeros((len(X), 1))))
 
@@ -40,5 +40,19 @@ X_r = embedding.fit(X).embedding_
 pl.figure()
 pl.scatter(X_r[:,0], X_r[:,1], c=colors)
 pl.title("Laplacian Eigenmap reduction")
+
+from scikits.learn.manifold import DiffusionMap
+embedding = DiffusionMap(n_coords=2, n_neighbors=8)
+X_r = embedding.fit(X).embedding_
+pl.figure()
+pl.scatter(X_r[:,0], X_r[:,1], c=colors)
+pl.title("Diffusion map reduction")
+
+from scikits.learn.manifold import HessianMap
+embedding = HessianMap(n_coords=2, n_neighbors=8)
+X_r = embedding.fit(X).embedding_
+pl.figure()
+pl.scatter(X_r[:,0], X_r[:,1], c=colors)
+pl.title("Hessian Eigenmap reduction")
 
 pl.show()
