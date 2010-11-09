@@ -21,12 +21,16 @@ have to select the correct one for your purpose.
 Multidimensional Scaling (MDS)
 ------------------------------
 
+Not yet implemented.
+
 MSD is a technique that tries to find a lower dimension space where input
 distances are equals to the distances in the embedded space. Input distances
 are usually Euclidian distances and in this case, MDS is tantamount to PCA.
 
 Isomap
 ------
+
+Not yet implemented.
 
 Isomap[1] embeds data in a lower dimension space by computing geodesic
 distances on the manifold and then applying MDS on it. Geodesic distances are
@@ -47,12 +51,16 @@ Hessian Eigenmaps
 NonLinear Mapping (NLM)
 -----------------------
 
+Not yet implemented.
+
 NLM[6] is one of the first embedding algorithms. Its goal is to minimize a
 quadratic cost function weighted with the inverse of the original distances.
 This allows stable estimation of an embedding space.
 
 Curvilinear component analysis (CCA)
 ------------------------------------
+
+Not yet implemented.
 
 Originally implemented as a Self Organizing Neural Network, CCA[7] tries to
 find an embedding space where small distances are preserved. It is highly
@@ -61,6 +69,8 @@ greater than in the original space) lead to a null cost.
 
 Robust Embedding
 ----------------
+
+Not yet implemented.
 
 Embedding New Data
 ==================
@@ -74,6 +84,8 @@ Barycenter
 
 Kernel Projection
 -----------------
+
+Not yet implemented.
 
 Linear Mapping
 --------------
