@@ -98,7 +98,8 @@ class WordNGramAnalyzer(BaseEstimator):
         self.preprocessor = preprocessor
 
     def analyze(self, text_document):
-        if isinstance(text_document, file):
+        if hasattr(text_document, 'read'):
+            # ducktype for file-like objects
             text_document = text_document.read()
 
         if isinstance(text_document, str):
@@ -147,8 +148,13 @@ class CharNGramAnalyzer(BaseEstimator):
         self.preprocessor = preprocessor
 
     def analyze(self, text_document):
+        if hasattr(text_document, 'read'):
+            # ducktype for file-like objects
+            text_document = text_document.read()
+
         if isinstance(text_document, str):
             text_document = text_document.decode(self.charset, 'ignore')
+
         text_document = self.preprocessor.preprocess(text_document)
 
         # normalize white spaces
