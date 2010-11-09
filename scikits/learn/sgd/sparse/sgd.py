@@ -12,8 +12,18 @@ from ..sgd_fast_sparse import plain_sgd
 
 
 class SGD(BaseSGD):
-    """Linear Model trained by minimizing a regularized training
-    error using SGD.
+    """Linear model fitted by minimizing a regularized empirical loss with SGD
+
+    SGD stands for Stochastic Gradient Descent: the gradient of the loss is
+    estimated each sample at a time and the model is update along the way with a
+    decreasing strength schedule (aka learning rate).
+
+    The regularizer is a penalty added to the loss function that shrinks model
+    parameters towards the zero vector using either the squared euclidean norm
+    L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
+    parameter update cross the 0.0 value because of the regularizer, the update
+    is truncated to 0.0 to allow for learning sparse models and achieve online
+    feature selection.
 
     This implementation works on scipy.sparse X and dense coef_.
 
@@ -21,28 +31,38 @@ class SGD(BaseSGD):
     ----------
     loss : str, ('hinge'|'log'|'modifiedhuber')
         The loss function to be used. Defaults to 'hinge'.
+
     penalty : str, ('l2'|'l1'|'elasticnet')
         The penalty (aka regularization term) to be used. Defaults to 'l2'.
+
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
+
     rho : float
         The Elastic Net mixing parameter, with 0 < rho <= 1.
         Defaults to 0.85.
+
     coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
         The initial coeffients to warm-start the optimization.
+
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         The initial intercept to warm-start the optimization.
+
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
+
     n_iter: int
         The number of passes over the training data (aka epochs).
         Defaults to 5.
+
     shuffle: bool
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
+
     verbose: integer, optional
         The verbosity level
+
     n_jobs: integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
@@ -85,7 +105,7 @@ class SGD(BaseSGD):
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
     def fit(self, X, Y, **params):
-        """Fit current model with SGD
+        """Fit current model with Stochastic Gradient Descent
 
         X is expected to be a sparse matrix. For maximum efficiency, use a
         sparse matrix in CSR format (scipy.sparse.csr_matrix)

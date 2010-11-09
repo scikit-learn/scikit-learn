@@ -73,7 +73,7 @@ class SGD(BaseSGD):
     n_jobs: integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1. 
+        to 1.
 
     Attributes
     ----------
