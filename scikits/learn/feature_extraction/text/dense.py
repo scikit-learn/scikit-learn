@@ -4,7 +4,7 @@
 # License: BSD Style.
 """Utilities to build feature vectors from text documents"""
 
-from collections import defaultdict
+from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
@@ -186,43 +186,100 @@ class BaseCountVectorizer(BaseEstimator):
     vocabulary: dict, optional
         A dictionary where keys are tokens and values are indices in the
         matrix.
+
         This is useful in order to fix the vocabulary in advance.
+
+    max_df : float in range [0.0, 1.0], optional, 0.5 by default
+        When building the vocabulary ignore terms that have a term frequency
+        high than the given threshold (corpus specific stop words).
+
+        This parameter is ignored if vocabulary is not None.
+
+    max_features : optional, None by default
+        If not None, build a vocabulary that only consider the top
+        max_features ordered by term frequency across the corpus.
+
+        This parameter is ignored if vocabulary is not None.
 
     dtype: type, optional
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, dtype=long):
+    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, max_df=0.5,
+                 max_features=None, dtype=long):
         self.analyzer = analyzer
         self.vocabulary = vocabulary
         self.dtype = dtype
+        self.max_df = max_df
+        self.max_features = max_features
 
     def _init_matrix(self, shape):
         raise NotImplementedError
 
     def _build_vectors_and_vocab(self, raw_documents):
-        vocab = {} # token => idx
-        docs = []
+        # result of document conversion to term_count_dict
+        term_counts_per_doc = []
+        term_counts = {}
+
+        # term counts across entire corpus (count each term maximum once per
+        # document)
+        document_counts = {}
+
+        max_df = self.max_df
+        max_features = self.max_features
 
         for doc in raw_documents:
-            doc_dict = {} # idx => count
+            term_count_dict = {} # term => count in doc
 
-            for token in self.analyzer.analyze(doc):
-                if not token in vocab:
-                    vocab[token] = len(vocab)
-                idx = vocab[token]
-                doc_dict[idx] = doc_dict.get(idx, 0) + 1
+            for term in self.analyzer.analyze(doc):
+                term_count_dict[term] = term_count_dict.get(term, 0) + 1
+                term_counts[term] = term_counts.get(term, 0) + 1
 
-            docs.append(doc_dict)
+            if max_df is not None:
+                for term in term_count_dict.iterkeys():
+                    document_counts[term] = document_counts.get(term, 0) + 1
+
+            term_counts_per_doc.append(term_count_dict)
+
+        n_doc = len(term_counts_per_doc)
+
+        # filter out stop words: terms that occur in almost all documents
+        stop_words = set()
+        if max_df is not None:
+            max_document_count = max_df * n_doc
+            for t, dc in sorted(document_counts.iteritems(),
+                                key=itemgetter(1), reverse=True):
+                if dc < max_document_count:
+                    break
+                stop_words.add(t)
+
+        # list the terms that should be part of the vocabulary
+        if max_features is not None:
+            # extract the most frequent terms for the vocabulary
+            terms = set()
+            for t, tc in sorted(term_counts.iteritems(),
+                                key=itemgetter(1), reverse=True):
+                if t not in stop_words:
+                    terms.add(t)
+                if len(terms) >= max_features:
+                    break
+        else:
+            terms = set(term_counts.iteritems())
+            terms -= stop_words
 
         # convert to a document-token matrix
-        matrix = self._init_matrix((len(docs), len(vocab)))
+        vocabulary = dict(((t, i) for i, t in enumerate(terms))) # token => idx
 
-        for i, doc_dict in enumerate(docs):
-            for idx, count in doc_dict.iteritems():
-                matrix[i, idx] = count
+        # find the indices of the tokens
+        matrix = self._init_matrix((n_doc, len(vocabulary)))
 
-        return matrix, vocab
+        for i, term_count_dict in enumerate(term_counts_per_doc):
+            for term, count in term_count_dict.iteritems():
+                idx = vocabulary.get(term)
+                if idx is not None:
+                    matrix[i, idx] = count
+
+        return matrix, vocabulary
 
     def _build_vectors(self, raw_documents):
         # raw_documents is an iterable so we don't know its size in advance
