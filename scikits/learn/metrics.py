@@ -33,8 +33,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     to be in group j
 
     Parameters
-    ==========
-
+    ----------
     y_true : array, shape = [n_samples]
         true targets
 
@@ -42,12 +41,12 @@ def confusion_matrix(y_true, y_pred, labels=None):
         estimated targets
 
     Returns
-    =======
-    cm : array, shape = [n_classes, n_classes]
+    -------
+    CM : array, shape = [n_classes, n_classes]
         confusion matrix
 
     References
-    ==========
+    ----------
     http://en.wikipedia.org/wiki/Confusion_matrix
     """
     if labels is None:
@@ -57,20 +56,20 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     n_labels = labels.size
 
-    cm = np.empty((n_labels, n_labels), dtype=np.long)
+    CM = np.empty((n_labels, n_labels), dtype=np.long)
     for i, label_i in enumerate(labels):
         for j, label_j in enumerate(labels):
-            cm[i, j] = np.sum(
+            CM[i, j] = np.sum(
                 np.logical_and(y_true == label_i, y_pred == label_j))
 
-    return cm
+    return CM
 
 
 def roc_curve(y, probas_):
     """compute Receiver operating characteristic (ROC)
 
     Parameters
-    ==========
+    ----------
 
     y : array, shape = [n_samples]
         true targets
@@ -79,7 +78,7 @@ def roc_curve(y, probas_):
         estimated probabilities
 
     Returns
-    =======
+    -------
     fpr : array, shape = [n]
         False Positive Rates
 
@@ -90,7 +89,7 @@ def roc_curve(y, probas_):
         Thresholds on proba_ used to compute fpr and tpr
 
     References
-    ==========
+    ----------
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
     """
     y = y.ravel()
@@ -114,8 +113,7 @@ def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     Parameters
-    ==========
-
+    ----------
     x : array, shape = [n]
         x coordinates
 
@@ -123,7 +121,7 @@ def auc(x, y):
         y coordinates
 
     Returns
-    =======
+    -------
     auc : float
 
     """
@@ -143,15 +141,15 @@ def auc(x, y):
 def precision_score(y_true, y_pred, pos_label=1):
     """Compute the precision
 
-    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
-    true positives and fp the number of false positives. The precision is
-    intuitively the ability of the classifier not to label as positive a sample
-    that is negative.
+    The precision is the ratio :math:`tp / (tp + fp)` where tp is the
+    number of true positives and fp the number of false positives. The
+    precision is intuitively the ability of the classifier not to
+    label as positive a sample that is negative.
 
     The best value is 1 and the worst value is 0.
 
     Parameters
-    ==========
+    ----------
     y_true : array, shape = [n_samples]
         true targets
 
@@ -159,14 +157,16 @@ def precision_score(y_true, y_pred, pos_label=1):
         predicted targets
 
     pos_label : int
-        in the binary classification case, give the label of the positive
-        class (default is 1)
+        in the binary classification case, give the label of the
+        positive class (default is 1)
 
     Returns
-    =======
+    -------
     precision : float
-        precision of the positive class in binary classification or weighted
-        avergage of the precision of each class for the multiclass task
+        precision of the positive class in binary classification or
+        weighted avergage of the precision of each class for the
+        multiclass task
+        
      """
     p, _, _, s = precision_recall_fscore_support(y_true, y_pred)
     if p.shape[0] == 2:
@@ -185,7 +185,7 @@ def recall_score(y_true, y_pred, pos_label=1):
     The best value is 1 and the worst value is 0.
 
     Parameters
-    ==========
+    ----------
     y_true : array, shape = [n_samples]
         true targets
 
@@ -197,7 +197,7 @@ def recall_score(y_true, y_pred, pos_label=1):
         class (default is 1)
 
     Returns
-    =======
+    -------
     recall : float
         recall of the positive class in binary classification or weighted
         avergage of the recall of each class for the multiclass task
@@ -221,7 +221,7 @@ def fbeta_score(y_true, y_pred, beta, pos_label=1):
     See: http://en.wikipedia.org/wiki/F1_score
 
     Parameters
-    ==========
+    ----------
     y_true : array, shape = [n_samples]
         true targets
 
@@ -235,7 +235,7 @@ def fbeta_score(y_true, y_pred, beta, pos_label=1):
         class (default is 1)
 
     Returns
-    =======
+    -------
     fbeta_score : float
         fbeta_score of the positive class in binary classification or weighted
         avergage of the fbeta_score of each class for the multiclass task
@@ -264,7 +264,7 @@ def f1_score(y_true, y_pred, pos_label=1):
     each class.
 
     Parameters
-    ==========
+    ----------
     y_true : array, shape = [n_samples]
         true targets
 
@@ -276,13 +276,13 @@ def f1_score(y_true, y_pred, pos_label=1):
         (default is 1)
 
     Returns
-    =======
+    -------
     f1_score : float
         f1_score of the positive class in binary classification or weighted
         avergage of the f1_scores of each class for the multiclass task
 
     References
-    ==========
+    ----------
     http://en.wikipedia.org/wiki/F1_score
     """
     return fbeta_score(y_true, y_pred, 1, pos_label=pos_label)
@@ -310,7 +310,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     The support is the number of occurrences of each class in y_true.
 
     Parameters
-    ==========
+    ----------
     y_true : array, shape = [n_samples]
         true targets
 
@@ -321,14 +321,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
         the strength of recall versus precision in the f-score
 
     Returns
-    =======
+    -------
     precision: array, shape = [n_unique_labels], dtype = np.double
     recall: array, shape = [n_unique_labels], dtype = np.double
     f1_score: array, shape = [n_unique_labels], dtype = np.double
     support: array, shape = [n_unique_labels], dtype = np.long
 
     References
-    ==========
+    ----------
     http://en.wikipedia.org/wiki/Precision_and_recall
     """
     assert(beta > 0)
@@ -364,7 +364,7 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
     """Build a text report showing the main classification metrics
 
     Parameters
-    ==========
+    ----------
     y_true : array, shape = [n_samples]
         true targets
 
@@ -378,7 +378,7 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
         optional display names matching the labels (same order)
 
     Returns
-    =======
+    -------
     report : string
         Text summary of the precision, recall, f1-score for each class
 
@@ -445,7 +445,7 @@ def precision_recall_curve(y_true, probas_pred):
     intuitively the ability of the classifier to find all the positive samples.
 
     Parameters
-    ==========
+    ----------
     y_true : array, shape = [n_samples]
         true targets of binary classification in range {-1, 1} or {0, 1}
 
@@ -453,7 +453,7 @@ def precision_recall_curve(y_true, probas_pred):
         estimated probabilities
 
     Returns
-    =======
+    -------
     precision : array, shape = [n]
         Precision values
 
@@ -496,6 +496,12 @@ def explained_variance_score(y_true, y_pred):
     Note: the explained variance is not a symmetric function.
 
     return the explained variance
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
     """
     return 1 - np.var(y_true - y_pred) / np.var(y_true)
 
@@ -509,6 +515,16 @@ def zero_one(y_true, y_pred):
     Positive integer (number of misclassifications). The best score is 0.
 
     return the number of differences
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+
+    Returns
+    -------
+    loss : integer
     """
     return np.sum(y_pred != y_true)
 
@@ -519,6 +535,16 @@ def mean_square_error(y_true, y_pred):
     Positive floating point value: the best value is 0.0.
 
     return the mean square error
+
+    Parameters
+    ----------
+    y_trye : array-like
+
+    y_pred : array-like
+
+    Returns
+    -------
+    loss : float
     """
     return np.linalg.norm(y_pred - y_true) ** 2
 
