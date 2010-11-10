@@ -15,9 +15,9 @@ data and has specific optimizations for `numpy` arrays. It is
 
     ============================== ==============================================
     **User documentation**:        http://packages.python.org/joblib
-                               
+
     **Download packages**:         http://pypi.python.org/pypi/joblib#downloads
-                               
+
     **Source code**:               http://github.com/joblib/joblib
 
     **Report issues**:             http://github.com/joblib/joblib/issues
@@ -36,7 +36,7 @@ solution.
     over, for instance when prototyping computational-heavy jobs (as in
     scientific development), but hand-crafted solution to aleviate this
     issue is error-prone and often leads to unreproducible results
- 
+
  *  **Persist to disk transparently**: persisting in an efficient way
     arbitrary objects containing large data is hard. In addition,
     hand-written persistence does not link easily the file on disk to the
@@ -46,7 +46,7 @@ solution.
 
 It strives to address these problems while **leaving your code and your
 flow control as unmodified as possible** (no framework, no new
-paradigms). 
+paradigms).
 
 Main features
 ------------------
@@ -75,7 +75,7 @@ Main features
       >>> c = square(a)
       >>> # The above call did not trigger an evaluation
 
-2) **Embarrassingly parallel helper:** to make is easy to write readable 
+2) **Embarrassingly parallel helper:** to make is easy to write readable
    parallel code and debug it quickly:
 
       >>> from joblib import Parallel, delayed
@@ -88,10 +88,10 @@ Main features
    progressively acquire better logging mechanism to help track what
    has been ran, and capture I/O easily. In addition, Joblib will
    provide a few I/O primitives, to easily define define logging and
-   display streams, and provide a way of compiling a report. 
+   display streams, and provide a way of compiling a report.
    We want to be able to quickly inspect what has been run.
 
-.. 
+..
     >>> import shutil ; shutil.rmtree('/tmp/joblib/')
 
 """

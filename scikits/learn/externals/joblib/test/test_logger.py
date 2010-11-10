@@ -2,7 +2,7 @@
 Test the logger module.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -27,7 +27,7 @@ def setup():
     if os.path.exists(cachedir):
         shutil.rmtree(cachedir)
     env['dir'] = cachedir
-    
+
 
 def teardown():
     """ Test teardown.
@@ -49,7 +49,7 @@ def test_print_time():
         # Create a second time, to smoke test log rotation.
         print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
         print_time('Foo')
-        # And a third time 
+        # And a third time
         print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
         print_time('Foo')
         # nose.tools.assert_equal(sys.stderr.getvalue(),

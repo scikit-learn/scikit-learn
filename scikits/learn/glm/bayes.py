@@ -116,7 +116,7 @@ class BayesianRidge(LinearModel):
 
     def fit(self, X, y, **params):
         """Fit the model
-        
+
         Parameters
         ----------
         X : numpy array of shape [n_samples,n_features]

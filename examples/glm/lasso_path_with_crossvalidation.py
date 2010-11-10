@@ -4,6 +4,7 @@ Lasso parameter estimation with path and cross-validation
 =========================================================
 
 """
+print __doc__
 
 import numpy as np
 

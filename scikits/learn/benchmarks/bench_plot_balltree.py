@@ -55,4 +55,4 @@ pl.xlabel('number of dimensions')
 pl.ylabel('time (seconds)')
 pl.legend()
 pl.show()
-    
+

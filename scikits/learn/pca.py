@@ -16,14 +16,18 @@ def _assess_dimension_(spect, rk, n_samples, dim):
     Parameters
     ----------
     spect: array of shape (n)
-           data spectrum
-    rk: int,  tested rank value
-    n_samples: int, number of samples
-    dim: int, embedding/emprical dimension
+        data spectrum
+    rk: int,
+        tested rank value
+    n_samples: int,
+        number of samples
+    dim: int,
+        embedding/emprical dimension
 
     Returns
     -------
-    ll, float, The log-likelihood
+    ll: float,
+        The log-likelihood
 
     Notes
     -----
@@ -77,43 +81,34 @@ def _infer_dimension_(spect, n, p):
 
 
 
-###############################################################################
-
 class PCA(BaseEstimator):
     """Principal component analysis (PCA)
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
+    X: array-like, shape (n_samples, n_features)
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
     Attributes
     ----------
-    n_comp : int, none or string,
-             Number of components
-             if k is not set all components are kept
-             if k=='mle', Minka's mle is used to guess the dimension
-
-    copy : bool
+    n_comp: int, none or string
+        Number of components
+        if n_comp is not set all components are kept
+        if n_comp=='mle', Minka's MLE is used to guess the dimension
+    copy: bool
         If False, data passed to fit are overwritten
-
-    components_ : array, [n_features, n_comp]
+    components_: array, [n_features, n_comp]
         Components with maximum variance
-
-    explained_variance_ : array, [n_comp]
+    explained_variance_: array, [n_comp]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
 
-    Methods
-    -------
-    fit(X) : self
-        Fit the model
-
-    transform(X) : array
-        Apply dimension reduction to k components
-
+    Notes
+    -----
+    For n_comp='mle', this class uses the method of Thomas P. Minka:
+    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 
     Examples
     --------
@@ -128,6 +123,7 @@ class PCA(BaseEstimator):
 
     See also
     --------
+    ProbabilisticPCA
 
     """
     def __init__(self, n_comp=None, copy=True):
@@ -135,6 +131,8 @@ class PCA(BaseEstimator):
         self.copy = copy
 
     def fit(self, X, **params):
+        """ Fit the model to the data X
+        """
         self._set_params(**params)
         X = np.atleast_2d(X)
         n_samples = X.shape[0]
@@ -161,12 +159,13 @@ class PCA(BaseEstimator):
         return self
 
     def transform(self, X):
+        """ Apply the dimension reduction learned on the train data.
+        """
         Xr = X - self.mean_
         Xr = np.dot(Xr, self.components_)
         return Xr
 
 
-##############################################################################
 
 class ProbabilisticPCA(PCA):
     """ Additional layer on top of PCA that add a probabilistic evaluation
@@ -177,9 +176,10 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim), test data
+        X: array of shape(n_samples, n_dim)
+            The data to fit
         homoscedastic: bool, optional,
-                       if True, average variance across remaining dimensions
+            If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
         self.dim = X.shape[1]
@@ -204,7 +204,8 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim), test data
+        X: array of shape(n_samples, n_dim)
+            The data to test
 
         Returns
         -------

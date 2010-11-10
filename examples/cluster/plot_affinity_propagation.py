@@ -1,13 +1,14 @@
 """
-
+=================================================
 Demo of affinity propagation clustering algorithm
-====================================================
+=================================================
 
 Reference:
 Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
 Between Data Points", Science Feb. 2007
 
 """
+print __doc__
 
 import numpy as np
 from scikits.learn.cluster import AffinityPropagation

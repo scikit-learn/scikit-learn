@@ -4,37 +4,46 @@
 Gaussian mixture models
 ===================================================
 
-.. contents:: Tables of contents
-
 `scikits.learn.gmm` is a package which enables to create Gaussian
 Mixture Models (diagonal, spherical, tied and full covariance matrices
 supported), to sample them, and to estimate them from data using
 Expectation Maximization algorithm.  It can also draw confidence
 ellipsoides for multivariate models, and compute the Bayesian
-Information Criterion to assess the number of clusters in the data. In
-a near future, I hope to add so-called online EM (ie recursive EM) and
-variational Bayes implementation.
-
-It is implemented in python, and uses the excellent numpy and scipy
-packages. Numpy is a python packages which gives python a fast 
-multi-dimensional array capabilities (ala matlab and the likes); scipy
-leverages numpy to build common scientific features for signal processing,
-linear algebra, statistics, etc...
-     
+Information Criterion to assess the number of clusters in the data.
+    
+Gaussian Mixture Models (GMM) are a class of probabilistic models
+describing the data as drawn from a mixture of Gaussian probability
+distributions. The challenge that is GMM tackles is to learn the
+parameters of these Gaussians from the data.
 
 GMM classifier
 ==============
 
-.. autoclass:: scikits.learn.gmm.GMM
-    :members:
+.. currentmodule:: scikits.learn.gmm
 
+The :class:`GMM` object implements a :meth:`GMM.fit` method to learn a
+Gaussian Mixture Models from train data. Given test data, it can assign
+to each sample the class of the Gaussian it mostly probably belong to
+using the :meth:`GMM.predict` method. 
 
-Examples
---------
+..  
+    Alternatively, the probability of each
+    sample beloning to the various Gaussians may be retrieved using the
+    :meth:`GMM.predict_proba` method.
 
-See :ref:`example_gmm_plot_gmm.py` for an example on plotting the
-confidence ellipsoids.
+.. figure:: ../auto_examples/gmm/images/plot_gmm_classifier.png
+   :target: ../auto_examples/cluster/plot_gmm_classifier.html
+   :align: center
+   :scale: 75%
 
-See :ref:`example_gmm_plot_gmm_pdf.py` for an example on plotting the density
-estimation.
+.. topic:: Examples:
+
+    * See :ref:`example_gmm_plot_gmm_classifier.py` for an example of
+      using a GMM as a classifier on the iris dataset.
+
+    * See :ref:`example_gmm_plot_gmm.py` for an example on plotting the
+      confidence ellipsoids.
+
+    * See :ref:`example_gmm_plot_gmm_pdf.py` for an example on plotting the 
+      density estimation.
 

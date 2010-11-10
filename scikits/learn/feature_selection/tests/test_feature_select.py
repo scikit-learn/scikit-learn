@@ -2,7 +2,7 @@
 Todo: cross-check the F-value with stats model
 """
 
-from ..univariate_selection import (f_classif, f_regression, 
+from ..univariate_selection import (f_classif, f_regression,
                                     SelectPercentile, SelectKBest,
                                     SelectFpr, SelectFdr, SelectFwe,
                                     GenericUnivariateSelect)
@@ -72,7 +72,7 @@ def test_select_percentile_classif():
                                            seed=seed)
     univariate_filter =  SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_classif, mode='percentile', 
+    X_r2 = GenericUnivariateSelect(f_classif, mode='percentile',
                     param=25).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -94,7 +94,7 @@ def test_select_kbest_classif():
                                            seed=seed)
     univariate_filter =  SelectKBest(f_classif, k=5)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_classif, mode='k_best', 
+    X_r2 = GenericUnivariateSelect(f_classif, mode='k_best',
                     param=5).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -113,7 +113,7 @@ def test_select_fpr_classif():
                                            seed=seed)
     univariate_filter =  SelectFpr(f_classif, alpha=0.0001)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_classif, mode='fpr', 
+    X_r2 = GenericUnivariateSelect(f_classif, mode='fpr',
                     param=0.0001).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -132,7 +132,7 @@ def test_select_fdr_classif():
                                            seed=3)
     univariate_filter =  SelectFdr(f_classif, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_classif, mode='fdr', 
+    X_r2 = GenericUnivariateSelect(f_classif, mode='fdr',
                     param=0.01).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -151,7 +151,7 @@ def test_select_fwe_classif():
                                            seed=seed)
     univariate_filter = SelectFwe(f_classif, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_classif, mode='fwe', 
+    X_r2 = GenericUnivariateSelect(f_classif, mode='fwe',
                     param=0.01).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -173,7 +173,7 @@ def test_select_percentile_regression():
                                            seed=seed)
     univariate_filter =  SelectPercentile(f_regression, percentile=25)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_regression, mode='percentile', 
+    X_r2 = GenericUnivariateSelect(f_regression, mode='percentile',
                     param=25).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -191,7 +191,7 @@ def test_select_percentile_regression_full():
                                            seed=seed)
     univariate_filter = SelectPercentile(f_regression, percentile=100)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_regression, mode='percentile', 
+    X_r2 = GenericUnivariateSelect(f_regression, mode='percentile',
                     param=100).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -209,7 +209,7 @@ def test_select_kbest_regression():
                                            seed=seed)
     univariate_filter = SelectKBest(f_regression, k=5)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_regression, mode='k_best', 
+    X_r2 = GenericUnivariateSelect(f_regression, mode='k_best',
                     param=5).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -228,7 +228,7 @@ def test_select_fpr_regression():
                                            seed=seed)
     univariate_filter = SelectFpr(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_regression, mode='fpr', 
+    X_r2 = GenericUnivariateSelect(f_regression, mode='fpr',
                     param=0.01).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -248,7 +248,7 @@ def test_select_fdr_regression():
                                            seed=2)
     univariate_filter = SelectFdr(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_regression, mode='fdr', 
+    X_r2 = GenericUnivariateSelect(f_regression, mode='fdr',
                     param=0.01).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
@@ -267,7 +267,7 @@ def test_select_fwe_regression():
                                            seed=seed)
     univariate_filter = SelectFwe(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_regression, mode='fwe', 
+    X_r2 = GenericUnivariateSelect(f_regression, mode='fwe',
                     param=0.01).fit(X, Y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()

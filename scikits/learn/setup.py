@@ -10,6 +10,7 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('learn', parent_package, top_path)
 
     config.add_subpackage('svm')
+    config.add_subpackage('sgd')
     config.add_subpackage('datasets')
     config.add_subpackage('feature_extraction')
     config.add_subpackage('feature_extraction/tests')
@@ -19,10 +20,10 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('covariance/tests')
     config.add_subpackage('feature_selection')
     config.add_subpackage('feature_selection/tests')
+    config.add_subpackage('preprocessing')
     config.add_subpackage('utils')
     config.add_subpackage('utils/tests')
     config.add_subpackage('externals')
-
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)

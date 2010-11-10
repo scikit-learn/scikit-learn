@@ -2,7 +2,11 @@
 ==========================================
 One-class SVM with non-linear kernel (RBF)
 ==========================================
+
+One-class SVM is an unsupervised algorithm that
+estimates outliers in a dataset.
 """
+print __doc__
 
 import numpy as np
 import pylab as pl

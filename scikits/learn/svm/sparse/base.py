@@ -20,7 +20,11 @@ from scipy import sparse
 
 from ...base import ClassifierMixin
 from ..base import BaseLibSVM, BaseLibLinear
-from .. import _libsvm
+
+from ._libsvm_sparse import libsvm_sparse_train, \
+     libsvm_sparse_predict, set_verbosity_wrap
+
+from .. import _liblinear
 
 class SparseBaseLibSVM(BaseLibSVM):
 
@@ -63,7 +67,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.n_support = np.empty(0, dtype=np.int32, order='C')
 
 
-    def fit(self, X, Y, class_weight={}):
+    def fit(self, X, y, class_weight={}):
         """
         X is expected to be a sparse matrix. For maximum effiency, use a
         sparse matrix in csr format (scipy.sparse.csr_matrix)
@@ -71,7 +75,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         X = sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
-        Y      = np.asanyarray(Y,      dtype=np.float64, order='C')
+        y      = np.asanyarray(y,      dtype=np.float64, order='C')
 
         solver_type = self._svm_types.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
@@ -85,8 +89,8 @@ class SparseBaseLibSVM(BaseLibSVM):
             # if custom gamma is not provided ...
             self.gamma = 1.0/X.shape[0]
 
-        self.label_, self.probA_, self.probB_ = _libsvm.csr_train_wrap(
-                 X.shape[1], X.data, X.indices, X.indptr, Y,
+        self.label_, self.probA_, self.probB_ = libsvm_sparse_train (
+                 X.shape[1], X.data, X.indices, X.indptr, y,
                  solver_type, kernel_type, self.degree,
                  self.gamma, self.coef0, self.eps, self.C,
                  self._support_data, self._support_indices,
@@ -105,11 +109,10 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         # this will fail if n_SV is zero. This is a limitation
         # in scipy.sparse, which does not permit empty matrices
-        self.support_ = sparse.csr_matrix((self._support_data,
+        self.support_vectors_ = sparse.csr_matrix((self._support_data,
                                            self._support_indices,
                                            self._support_indptr),
-                                          (n_SV, X.shape[1])
-                                          )
+                                           (n_SV, X.shape[1]) )
 
         self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
@@ -141,17 +144,62 @@ class SparseBaseLibSVM(BaseLibSVM):
         T = sparse.csr_matrix(T)
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
-        return _libsvm.csr_predict_from_model_wrap(T.data,
-                      T.indices, T.indptr, self.support_.data,
-                      self.support_.indices, self.support_.indptr,
+
+        return libsvm_sparse_predict (T.data, T.indices, T.indptr,
+                      self.support_vectors_.data,
+                      self.support_vectors_.indices,
+                      self.support_vectors_.indptr,
                       self.dual_coef_.data, self.intercept_,
-                      self._svm_types.index(self.impl),
-                      kernel_type, self.degree,
-                      self.gamma, self.coef0, self.eps, self.C,
-                      self.weight_label, self.weight,
-                      self.nu, self.cache_size, self.p,
-                      self.shrinking, self.probability,
-                      self.n_support, self.label_, self.probA_,
-                      self.probB_)
+                      self._svm_types.index(self.impl), kernel_type,
+                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.C, self.weight_label, self.weight, self.nu,
+                      self.cache_size, self.p, self.shrinking,
+                      self.probability, self.n_support, self.label_,
+                      self.probA_, self.probB_)
 
 
+class SparseBaseLibLinear(BaseLibLinear):
+
+    def fit(self, X, y, class_weight={}, **params):
+        """
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array, shape = [n_samples]
+            Target vector relative to X
+        """
+        self._set_params(**params)
+        X = sparse.csr_matrix(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        y = np.asanyarray(y, dtype=np.int32, order='C')
+
+        self._weight       = np.asarray(class_weight.values(),
+                                      dtype=np.float64, order='C')
+        self._weight_label = np.asarray(class_weight.keys(),
+                                       dtype=np.int32, order='C')
+
+        self.raw_coef_, self.label_ = \
+                       _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
+                       X.indptr, y,
+                       self._get_solver_type(),
+                       self.eps, self._get_bias(), self.C, self._weight_label,
+                       self._weight)
+        return self
+
+    def predict(self, X):
+        X = sparse.csr_matrix(X)
+        self._check_n_features(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        return _liblinear.csr_predict_wrap(X.shape[1],
+                                      X.data, X.indices, X.indptr,
+                                      self.raw_coef_,
+                                      self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self._weight_label,
+                                      self._weight, self.label_,
+                                      self._get_bias())
+
+
+set_verbosity_wrap(0)

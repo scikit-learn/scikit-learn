@@ -12,17 +12,17 @@ def test_ridge():
     of np.random.
     """
     alpha = 1.0
-    
+
     # With more samples than features
     n_samples, n_features = 6, 5
     np.random.seed(0)
     y = np.random.randn(n_samples)
     X = np.random.randn(n_samples, n_features)
-    
+
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
     assert ridge.score (X, y) > 0.5
-    
+
     # With more features than samples
     n_samples, n_features = 5, 10
     np.random.seed(0)
@@ -59,7 +59,7 @@ def test_ridge_vs_lstsq():
 
     ridge = Ridge(alpha=0.)
     ols = LinearRegression()
-    
+
     ridge.fit(X, y)
     ols.fit (X, y)
     assert np.linalg.norm (ridge.coef_ - ols.coef_) < 1e-10

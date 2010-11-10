@@ -19,11 +19,13 @@ def _generate_random_spd_matrix(ndim):
     randspd = np.dot(np.dot(U, 1.0 + np.diag(np.random.rand(ndim))), V)
     return randspd
 
+
 def test_logsum_1D():
     A = np.random.rand(2) + 1.0
     for axis in range(1):
         Asum = gmm.logsum(A, axis)
         assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))
+
 
 def test_logsum_3D():
     """
@@ -54,11 +56,11 @@ def test_sample_gaussian():
     Test sample generation from gmm.sample_gaussian where covariance
     is diagonal, spherical and full
     """
-    
-    n_dim, n_samples = 2, 300
+
+    n_features, n_samples = 2, 300
     axis = 1
-    mu = np.random.randint(10) * np.random.rand(n_dim)
-    cv = (np.random.rand(n_dim) + 1.0) ** 2
+    mu = np.random.randint(10) * np.random.rand(n_features)
+    cv = (np.random.rand(n_features) + 1.0) ** 2
 
     samples = gmm.sample_gaussian(mu, cv, cvtype='diag', n=n_samples)
 
@@ -70,11 +72,11 @@ def test_sample_gaussian():
     samples = gmm.sample_gaussian(mu, cv, cvtype='spherical', n=n_samples)
 
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
-    assert np.allclose(samples.var(axis),  np.repeat(cv, n_dim), atol=0.5)
+    assert np.allclose(samples.var(axis),  np.repeat(cv, n_features), atol=0.5)
 
     # and for full covariances
-    A = np.random.randn(n_dim, n_dim)
-    cv = np.dot(A.T, A) + np.eye(n_dim)
+    A = np.random.randn(n_features, n_features)
+    cv = np.dot(A.T, A) + np.eye(n_features)
     samples = gmm.sample_gaussian(mu, cv, cvtype='full', n=n_samples)
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
     assert np.allclose(np.cov(samples), cv, atol=0.7)
@@ -85,7 +87,7 @@ def _naive_lmvnpdf_diag(obs, mu, cv):
     ref = np.empty((len(obs), len(mu)))
     stds = np.sqrt(cv)
     for i, (m, std) in enumerate(itertools.izip(mu, stds)):
-       ref[:, i] = np.log(stats.norm.pdf(obs, m, std)).sum(axis=1)
+        ref[:, i] = np.log(stats.norm.pdf(obs, m, std)).sum(axis=1)
     return ref
 
 
@@ -95,10 +97,10 @@ def test_lmvnpdf_diag():
     compare it to the vectorized version (gmm.lmvnpdf) to test
     for correctness
     """
-    n_dim, n_states, n_obs = 2, 3, 10
-    mu = np.random.randint(10) * np.random.rand(n_states, n_dim)
-    cv = (np.random.rand(n_states, n_dim) + 1.0) ** 2
-    obs = np.random.randint(10) * np.random.rand(n_obs, n_dim)
+    n_features, n_states, n_obs = 2, 3, 10
+    mu = np.random.randint(10) * np.random.rand(n_states, n_features)
+    cv = (np.random.rand(n_states, n_features) + 1.0) ** 2
+    obs = np.random.randint(10) * np.random.rand(n_obs, n_features)
 
     ref = _naive_lmvnpdf_diag(obs, mu, cv)
     lpr = gmm.lmvnpdf(obs, mu, cv, 'diag')
@@ -106,25 +108,24 @@ def test_lmvnpdf_diag():
 
 
 def test_lmvnpdf_spherical():
-    n_dim, n_states, n_obs = 2, 3, 10
+    n_features, n_states, n_obs = 2, 3, 10
 
-    mu = np.random.randint(10) * np.random.rand(n_states, n_dim)
+    mu = np.random.randint(10) * np.random.rand(n_states, n_features)
     spherecv = np.random.rand(n_states, 1) ** 2 + 1
-    obs = np.random.randint(10) * np.random.rand(n_obs, n_dim)
+    obs = np.random.randint(10) * np.random.rand(n_obs, n_features)
 
-    cv = np.tile(spherecv, (n_dim, 1))
+    cv = np.tile(spherecv, (n_features, 1))
     reference = _naive_lmvnpdf_diag(obs, mu, cv)
     lpr = gmm.lmvnpdf(obs, mu, spherecv, 'spherical')
     assert_array_almost_equal(lpr, reference)
 
 
-
 def test_lmvnpdf_full():
-    n_dim, n_states, n_obs = 2, 3, 10
+    n_features, n_states, n_obs = 2, 3, 10
 
-    mu = np.random.randint(10) * np.random.rand(n_states, n_dim)
-    cv = (np.random.rand(n_states, n_dim) + 1.0) ** 2
-    obs = np.random.randint(10) * np.random.rand(n_obs, n_dim)
+    mu = np.random.randint(10) * np.random.rand(n_states, n_features)
+    cv = (np.random.rand(n_states, n_features) + 1.0) ** 2
+    obs = np.random.randint(10) * np.random.rand(n_obs, n_features)
 
     fullcv = np.array([np.diag(x) for x in cv])
 
@@ -133,14 +134,13 @@ def test_lmvnpdf_full():
     assert_array_almost_equal(lpr, reference)
 
 
-
 def test_GMM_attributes():
-    n_states, n_dim = 10, 4
+    n_states, n_features = 10, 4
     cvtype = 'diag'
-    g = gmm.GMM(n_states, n_dim, cvtype)
+    g = gmm.GMM(n_states, cvtype)
     weights = np.random.rand(n_states)
     weights = weights / weights.sum()
-    means = np.random.randint(-20, 20, (n_states, n_dim))
+    means = np.random.randint(-20, 20, (n_states, n_features))
 
     assert g.n_states == n_states
     assert g.cvtype == cvtype
@@ -151,48 +151,48 @@ def test_GMM_attributes():
                       2 * weights)
     assert_raises(ValueError, g.__setattr__, 'weights', [])
     assert_raises(ValueError, g.__setattr__, 'weights',
-                      np.zeros((n_states - 2, n_dim)))
+                      np.zeros((n_states - 2, n_features)))
 
     g.means = means
     assert_array_almost_equal(g.means, means)
     assert_raises(ValueError, g.__setattr__, 'means', [])
     assert_raises(ValueError, g.__setattr__, 'means',
-                      np.zeros((n_states - 2, n_dim)))
+                      np.zeros((n_states - 2, n_features)))
 
-    covars = (0.1 + 2 * np.random.rand(n_states, n_dim)) ** 2
+    covars = (0.1 + 2 * np.random.rand(n_states, n_features)) ** 2
     g._covars = covars
     assert_array_almost_equal(g._covars, covars)
     assert_raises(ValueError, g.__setattr__, 'covars', [])
     assert_raises(ValueError, g.__setattr__, 'covars',
-                      np.zeros((n_states - 2, n_dim)))
+                      np.zeros((n_states - 2, n_features)))
 
+    assert_raises(ValueError, gmm.GMM, n_states=20, cvtype='badcvtype')
 
-    assert_raises(ValueError, gmm.GMM, 20, 1, 'badcvtype')
 
 class GMMTester():
     n_states = 10
-    n_dim = 4
+    n_features = 4
     weights = np.random.rand(n_states)
     weights = weights / weights.sum()
-    means = np.random.randint(-20, 20, (n_states, n_dim))
-    I = np.eye(n_dim)
+    means = np.random.randint(-20, 20, (n_states, n_features))
+    I = np.eye(n_features)
     covars = {'spherical': (0.1 + 2 * np.random.rand(n_states)) ** 2,
-              'tied': _generate_random_spd_matrix(n_dim) + 5 * I,
-              'diag': (0.1 + 2 * np.random.rand(n_states, n_dim)) ** 2,
-              'full': np.array([_generate_random_spd_matrix(n_dim) + 5 * I
+              'tied': _generate_random_spd_matrix(n_features) + 5 * I,
+              'diag': (0.1 + 2 * np.random.rand(n_states, n_features)) ** 2,
+              'full': np.array([_generate_random_spd_matrix(n_features) + 5 * I
                                 for x in xrange(n_states)])}
 
-
     def test_eval(self):
-        g = gmm.GMM(self.n_states, self.n_dim, self.cvtype)
+        g = gmm.GMM(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
         g._covars = self.covars[self.cvtype]
+        g.weights = self.weights
 
         gaussidx = np.repeat(range(self.n_states), 5)
         nobs = len(gaussidx)
-        obs = np.random.randn(nobs, self.n_dim) + g.means[gaussidx]
+        obs = np.random.randn(nobs, self.n_features) + g.means[gaussidx]
 
         ll, posteriors = g.eval(obs)
 
@@ -202,18 +202,18 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = gmm.GMM(self.n_states, self.n_dim, self.cvtype)
+        g = gmm.GMM(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
         g._covars = np.maximum(self.covars[self.cvtype], 0.1)
-        # g.weights = self.weights
+        g.weights = self.weights
 
         samples = g.rvs(n)
-        self.assertEquals(samples.shape, (n, self.n_dim))
+        self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
-        g = gmm.GMM(self.n_states, self.n_dim, self.cvtype)
+        g = gmm.GMM(self.n_states, self.cvtype)
         g.weights = self.weights
         g.means = self.means
         g._covars = 20 * self.covars[self.cvtype]
@@ -221,8 +221,7 @@ class GMMTester():
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n=100)
 
-        g.fit(train_obs, n_iter=0, init_params=params,
-              minit='points')
+        g.fit(train_obs, n_iter=0, init_params=params)
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each

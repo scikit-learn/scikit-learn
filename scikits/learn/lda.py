@@ -125,7 +125,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         if store_covariance:
             cov /= (n_samples - n_classes)
             self.covariance_ = cov
-            
+
         means = np.asarray(means)
         Xc = np.concatenate(Xc, 0)
 

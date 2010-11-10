@@ -30,6 +30,19 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+/* 
+   Modified October 2010:
+
+   - Support for dense data by Ming-Fang Weng
+
+   - Return indicies for support vectors, Fabian Pedregosa
+     <fabian.pedregosa@inria.fr>
+
+   - Fixes to avoid name collision, Fabian Pedregosa
+
+ */
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +51,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <stdarg.h>
 #include "svm.h"
+
+#ifndef _LIBSVM_CPP
 int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
 typedef signed char schar;
@@ -73,7 +88,7 @@ static void print_string_stdout(const char *s)
 	fputs(s,stdout);
 	fflush(stdout);
 }
-void (*svm_print_string) (const char *) = &print_string_stdout;
+static void (*svm_print_string) (const char *) = &print_string_stdout;
 #if 1
 static void info(const char *fmt,...)
 {
@@ -87,6 +102,35 @@ static void info(const char *fmt,...)
 #else
 static void info(const char *fmt,...) {}
 #endif
+#endif
+#define _LIBSVM_CPP
+
+
+/* yeah, this is ugly.  It helps us to have unique names for both sparse
+and dense versions of this library */
+#ifdef _DENSE_REP
+  #ifdef PREFIX
+    #undef PREFIX  
+  #endif
+  #ifdef NAMESPACE
+    #undef NAMESPACE
+  #endif
+  #define PREFIX(name) svm_##name
+  #define NAMESPACE svm
+  namespace svm {
+#else
+  /* sparse representation */
+  #ifdef PREFIX
+    #undef PREFIX  
+  #endif
+  #ifdef NAMESPACE
+    #undef NAMESPACE
+  #endif
+  #define PREFIX(name) svm_csr_##name
+  #define NAMESPACE svm_csr
+  namespace svm_csr {
+#endif
+
 
 //
 // Kernel Cache
@@ -224,20 +268,24 @@ void Cache::swap_index(int i, int j)
 class QMatrix {
 public:
 	virtual Qfloat *get_Q(int column, int len) const = 0;
-	virtual Qfloat *get_QD() const = 0;
+	virtual double *get_QD() const = 0;
 	virtual void swap_index(int i, int j) const = 0;
 	virtual ~QMatrix() {}
 };
 
 class Kernel: public QMatrix {
 public:
-	Kernel(int l, svm_node * const * x, const svm_parameter& param);
+#ifdef _DENSE_REP
+	Kernel(int l, PREFIX(node) * x, const svm_parameter& param);
+#else
+	Kernel(int l, PREFIX(node) * const * x, const svm_parameter& param);
+#endif
 	virtual ~Kernel();
 
-	static double k_function(const svm_node *x, const svm_node *y,
+	static double k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 				 const svm_parameter& param);
 	virtual Qfloat *get_Q(int column, int len) const = 0;
-	virtual Qfloat *get_QD() const = 0;
+	virtual double *get_QD() const = 0;
 	virtual void swap_index(int i, int j) const	// no so const...
 	{
 		swap(x[i],x[j]);
@@ -248,7 +296,11 @@ protected:
 	double (Kernel::*kernel_function)(int i, int j) const;
 
 private:
-	const svm_node **x;
+#ifdef _DENSE_REP
+	PREFIX(node) *x;
+#else
+	const PREFIX(node) **x;
+#endif
 	double *x_square;
 
 	// svm_parameter
@@ -257,7 +309,11 @@ private:
 	const double gamma;
 	const double coef0;
 
-	static double dot(const svm_node *px, const svm_node *py);
+	static double dot(const PREFIX(node) *px, const PREFIX(node) *py);
+#ifdef _DENSE_REP
+	static double dot(const PREFIX(node) &px, const PREFIX(node) &py);
+#endif
+
 	double kernel_linear(int i, int j) const
 	{
 		return dot(x[i],x[j]);
@@ -276,11 +332,19 @@ private:
 	}
 	double kernel_precomputed(int i, int j) const
 	{
+#ifdef _DENSE_REP
+		return (x+i)->values[x[j].ind];
+#else
 		return x[i][(int)(x[j][0].value)].value;
+#endif
 	}
 };
 
-Kernel::Kernel(int l, svm_node * const * x_, const svm_parameter& param)
+#ifdef _DENSE_REP
+Kernel::Kernel(int l, PREFIX(node) * x_, const svm_parameter& param)
+#else
+Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param)
+#endif
 :kernel_type(param.kernel_type), degree(param.degree),
  gamma(param.gamma), coef0(param.coef0)
 {
@@ -321,7 +385,28 @@ Kernel::~Kernel()
 	delete[] x_square;
 }
 
-double Kernel::dot(const svm_node *px, const svm_node *py)
+#ifdef _DENSE_REP
+double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
+{
+	double sum = 0;
+
+	int dim = min(px->dim, py->dim);
+	for (int i = 0; i < dim; i++)
+		sum += (px->values)[i] * (py->values)[i];
+	return sum;
+}
+
+double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py)
+{
+	double sum = 0;
+
+	int dim = min(px.dim, py.dim);
+	for (int i = 0; i < dim; i++)
+		sum += px.values[i] * py.values[i];
+	return sum;
+}
+#else
+double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 {
 	double sum = 0;
 	while(px->index != -1 && py->index != -1)
@@ -342,8 +427,9 @@ double Kernel::dot(const svm_node *px, const svm_node *py)
 	}
 	return sum;
 }
+#endif
 
-double Kernel::k_function(const svm_node *x, const svm_node *y,
+double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			  const svm_parameter& param)
 {
 	switch(param.kernel_type)
@@ -355,6 +441,18 @@ double Kernel::k_function(const svm_node *x, const svm_node *y,
 		case RBF:
 		{
 			double sum = 0;
+#ifdef _DENSE_REP
+			int dim = min(x->dim, y->dim), i;
+			for (i = 0; i < dim; i++)
+			{
+				double d = x->values[i] - y->values[i];
+				sum += d*d;
+			}
+			for (; i < x->dim; i++)
+				sum += x->values[i] * x->values[i];
+			for (; i < y->dim; i++)
+				sum += y->values[i] * y->values[i];
+#else
 			while(x->index != -1 && y->index !=-1)
 			{
 				if(x->index == y->index)
@@ -390,13 +488,19 @@ double Kernel::k_function(const svm_node *x, const svm_node *y,
 				sum += y->value * y->value;
 				++y;
 			}
-			
+#endif
 			return exp(-param.gamma*sum);
 		}
 		case SIGMOID:
 			return tanh(param.gamma*dot(x,y)+param.coef0);
 		case PRECOMPUTED:  //x: test (validation), y: SV
+                    {
+#ifdef _DENSE_REP
+			return x->values[y->ind];
+#else
 			return x[(int)(y->value)].value;
+#endif
+                    }
 		default:
 			return 0;  // Unreachable 
 	}
@@ -444,7 +548,7 @@ protected:
 	char *alpha_status;	// LOWER_BOUND, UPPER_BOUND, FREE
 	double *alpha;
 	const QMatrix *Q;
-	const Qfloat *QD;
+	const double *QD;
 	double eps;
 	double Cp,Cn;
 	double *p;
@@ -630,7 +734,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 
 		if(y[i]!=y[j])
 		{
-			double quad_coef = Q_i[i]+Q_j[j]+2*Q_i[j];
+			double quad_coef = QD[i]+QD[j]+2*Q_i[j];
 			if (quad_coef <= 0)
 				quad_coef = TAU;
 			double delta = (-G[i]-G[j])/quad_coef;
@@ -673,7 +777,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 		}
 		else
 		{
-			double quad_coef = Q_i[i]+Q_j[j]-2*Q_i[j];
+			double quad_coef = QD[i]+QD[j]-2*Q_i[j];
 			if (quad_coef <= 0)
 				quad_coef = TAU;
 			double delta = (G[i]-G[j])/quad_coef;
@@ -851,7 +955,7 @@ int Solver::select_working_set(int &out_i, int &out_j)
 				if (grad_diff > 0)
 				{
 					double obj_diff; 
-					double quad_coef=Q_i[i]+QD[j]-2.0*y[i]*Q_i[j];
+					double quad_coef = QD[i]+QD[j]-2.0*y[i]*Q_i[j];
 					if (quad_coef > 0)
 						obj_diff = -(grad_diff*grad_diff)/quad_coef;
 					else
@@ -875,7 +979,7 @@ int Solver::select_working_set(int &out_i, int &out_j)
 				if (grad_diff > 0)
 				{
 					double obj_diff; 
-					double quad_coef=Q_i[i]+QD[j]+2.0*y[i]*Q_i[j];
+					double quad_coef = QD[i]+QD[j]+2.0*y[i]*Q_i[j];
 					if (quad_coef > 0)
 						obj_diff = -(grad_diff*grad_diff)/quad_coef;
 					else
@@ -1103,7 +1207,7 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 				if (grad_diff > 0)
 				{
 					double obj_diff; 
-					double quad_coef = Q_ip[ip]+QD[j]-2*Q_ip[j];
+					double quad_coef = QD[ip]+QD[j]-2*Q_ip[j];
 					if (quad_coef > 0)
 						obj_diff = -(grad_diff*grad_diff)/quad_coef;
 					else
@@ -1127,7 +1231,7 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 				if (grad_diff > 0)
 				{
 					double obj_diff; 
-					double quad_coef = Q_in[in]+QD[j]-2*Q_in[j];
+					double quad_coef = QD[in]+QD[j]-2*Q_in[j];
 					if (quad_coef > 0)
 						obj_diff = -(grad_diff*grad_diff)/quad_coef;
 					else
@@ -1283,14 +1387,14 @@ double Solver_NU::calculate_rho()
 class SVC_Q: public Kernel
 { 
 public:
-	SVC_Q(const svm_problem& prob, const svm_parameter& param, const schar *y_)
+	SVC_Q(const PREFIX(problem)& prob, const svm_parameter& param, const schar *y_)
 	:Kernel(prob.l, prob.x, param)
 	{
 		clone(y,y_,prob.l);
 		cache = new Cache(prob.l,(long int)(param.cache_size*(1<<20)));
-		QD = new Qfloat[prob.l];
+		QD = new double[prob.l];
 		for(int i=0;i<prob.l;i++)
-			QD[i]= (Qfloat)(this->*kernel_function)(i,i);
+			QD[i] = (this->*kernel_function)(i,i);
 	}
 	
 	Qfloat *get_Q(int i, int len) const
@@ -1305,7 +1409,7 @@ public:
 		return data;
 	}
 
-	Qfloat *get_QD() const
+	double *get_QD() const
 	{
 		return QD;
 	}
@@ -1327,19 +1431,19 @@ public:
 private:
 	schar *y;
 	Cache *cache;
-	Qfloat *QD;
+	double *QD;
 };
 
 class ONE_CLASS_Q: public Kernel
 {
 public:
-	ONE_CLASS_Q(const svm_problem& prob, const svm_parameter& param)
+	ONE_CLASS_Q(const PREFIX(problem)& prob, const svm_parameter& param)
 	:Kernel(prob.l, prob.x, param)
 	{
 		cache = new Cache(prob.l,(long int)(param.cache_size*(1<<20)));
-		QD = new Qfloat[prob.l];
+		QD = new double[prob.l];
 		for(int i=0;i<prob.l;i++)
-			QD[i]= (Qfloat)(this->*kernel_function)(i,i);
+			QD[i] = (this->*kernel_function)(i,i);
 	}
 	
 	Qfloat *get_Q(int i, int len) const
@@ -1354,7 +1458,7 @@ public:
 		return data;
 	}
 
-	Qfloat *get_QD() const
+	double *get_QD() const
 	{
 		return QD;
 	}
@@ -1373,18 +1477,18 @@ public:
 	}
 private:
 	Cache *cache;
-	Qfloat *QD;
+	double *QD;
 };
 
 class SVR_Q: public Kernel
 { 
 public:
-	SVR_Q(const svm_problem& prob, const svm_parameter& param)
+	SVR_Q(const PREFIX(problem)& prob, const svm_parameter& param)
 	:Kernel(prob.l, prob.x, param)
 	{
 		l = prob.l;
 		cache = new Cache(l,(long int)(param.cache_size*(1<<20)));
-		QD = new Qfloat[2*l];
+		QD = new double[2*l];
 		sign = new schar[2*l];
 		index = new int[2*l];
 		for(int k=0;k<l;k++)
@@ -1393,8 +1497,8 @@ public:
 			sign[k+l] = -1;
 			index[k] = k;
 			index[k+l] = k;
-			QD[k]= (Qfloat)(this->*kernel_function)(k,k);
-			QD[k+l]=QD[k];
+			QD[k] = (this->*kernel_function)(k,k);
+			QD[k+l] = QD[k];
 		}
 		buffer[0] = new Qfloat[2*l];
 		buffer[1] = new Qfloat[2*l];
@@ -1427,7 +1531,7 @@ public:
 		return buf;
 	}
 
-	Qfloat *get_QD() const
+	double *get_QD() const
 	{
 		return QD;
 	}
@@ -1448,14 +1552,14 @@ private:
 	int *index;
 	mutable int next_buffer;
 	Qfloat *buffer[2];
-	Qfloat *QD;
+	double *QD;
 };
 
 //
 // construct and solve various formulations
 //
 static void solve_c_svc(
-	const svm_problem *prob, const svm_parameter* param,
+	const PREFIX(problem) *prob, const svm_parameter* param,
 	double *alpha, Solver::SolutionInfo* si, double Cp, double Cn)
 {
 	int l = prob->l;
@@ -1468,7 +1572,7 @@ static void solve_c_svc(
 	{
 		alpha[i] = 0;
 		minus_ones[i] = -1;
-		if(prob->y[i] > 0) y[i] = +1; else y[i]=-1;
+		if(prob->y[i] > 0) y[i] = +1; else y[i] = -1;
 	}
 
 	Solver s;
@@ -1490,7 +1594,7 @@ static void solve_c_svc(
 }
 
 static void solve_nu_svc(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
 	int i;
@@ -1545,7 +1649,7 @@ static void solve_nu_svc(
 }
 
 static void solve_one_class(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
 	int l = prob->l;
@@ -1577,7 +1681,7 @@ static void solve_one_class(
 }
 
 static void solve_epsilon_svr(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
 	int l = prob->l;
@@ -1615,7 +1719,7 @@ static void solve_epsilon_svr(
 }
 
 static void solve_nu_svr(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
 	int l = prob->l;
@@ -1662,7 +1766,7 @@ struct decision_function
 };
 
 static decision_function svm_train_one(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double Cp, double Cn)
 {
 	double *alpha = Malloc(double,prob->l);
@@ -1717,30 +1821,6 @@ static decision_function svm_train_one(
 	f.rho = si.rho;
 	return f;
 }
-
-//
-// svm_model
-//
-struct svm_model
-{
-	svm_parameter param;	// parameter
-	int nr_class;		// number of classes, = 2 in regression/one class svm
-	int l;			// total #SV
-	svm_node **SV;		// SVs (SV[l])
-	double **sv_coef;	// coefficients for SVs in decision functions (sv_coef[k-1][l])
-	double *rho;		// constants in decision functions (rho[k*(k-1)/2])
-	double *probA;		// pariwise probability information
-	double *probB;
-
-	// for classification only
-
-	int *label;		// label of each class (label[k])
-	int *nSV;		// number of SVs for each class (nSV[k])
-				// nSV[0] + nSV[1] + ... + nSV[k-1] = l
-	// XXX
-	int free_sv;		// 1 if svm_model is created by svm_load_model
-				// 0 if svm_model is created by svm_train
-};
 
 // Platt's binary SVM Probablistic Output: an improvement from Lin et al.
 static void sigmoid_train(
@@ -1931,7 +2011,7 @@ static void multiclass_probability(int k, double **r, double *p)
 
 // Cross-validation decision values for probability estimates
 static void svm_binary_svc_probability(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double Cp, double Cn, double& probA, double& probB)
 {
 	int i;
@@ -1951,10 +2031,14 @@ static void svm_binary_svc_probability(
 		int begin = i*prob->l/nr_fold;
 		int end = (i+1)*prob->l/nr_fold;
 		int j,k;
-		struct svm_problem subprob;
+		struct PREFIX(problem) subprob;
 
 		subprob.l = prob->l-(end-begin);
-		subprob.x = Malloc(struct svm_node*,subprob.l);
+#ifdef _DENSE_REP
+		subprob.x = Malloc(struct PREFIX(node),subprob.l);
+#else
+		subprob.x = Malloc(struct PREFIX(node)*,subprob.l);
+#endif
 		subprob.y = Malloc(double,subprob.l);
 			
 		k=0;
@@ -1998,15 +2082,19 @@ static void svm_binary_svc_probability(
 			subparam.weight_label[1]=-1;
 			subparam.weight[0]=Cp;
 			subparam.weight[1]=Cn;
-			struct svm_model *submodel = svm_train(&subprob,&subparam);
+			struct PREFIX(model) *submodel = PREFIX(train)(&subprob,&subparam);
 			for(j=begin;j<end;j++)
 			{
-				svm_predict_values(submodel,prob->x[perm[j]],&(dec_values[perm[j]])); 
+#ifdef _DENSE_REP
+                                PREFIX(predict_values)(submodel,(prob->x+perm[j]),&(dec_values[perm[j]])); 
+#else
+				PREFIX(predict_values)(submodel,prob->x[perm[j]],&(dec_values[perm[j]])); 
+#endif
 				// ensure +1 -1 order; reason not using CV subroutine
 				dec_values[perm[j]] *= submodel->label[0];
 			}		
-			svm_destroy_model(submodel);
-			svm_destroy_param(&subparam);
+			PREFIX(free_and_destroy_model)(&submodel);
+			PREFIX(destroy_param)(&subparam);
 		}
 		free(subprob.x);
 		free(subprob.y);
@@ -2018,7 +2106,7 @@ static void svm_binary_svc_probability(
 
 // Return parameter of a Laplace distribution 
 static double svm_svr_probability(
-	const svm_problem *prob, const svm_parameter *param)
+	const PREFIX(problem) *prob, const svm_parameter *param)
 {
 	int i;
 	int nr_fold = 5;
@@ -2027,7 +2115,7 @@ static double svm_svr_probability(
 
 	svm_parameter newparam = *param;
 	newparam.probability = 0;
-	svm_cross_validation(prob,&newparam,nr_fold,ymv);
+	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv);
 	for(i=0;i<prob->l;i++)
 	{
 		ymv[i]=prob->y[i]-ymv[i];
@@ -2051,7 +2139,7 @@ static double svm_svr_probability(
 
 // label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
 // perm, length l, must be allocated before calling this subroutine
-static void svm_group_classes(const svm_problem *prob, int *nr_class_ret, int **label_ret, int **start_ret, int **count_ret, int *perm)
+static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, int **label_ret, int **start_ret, int **count_ret, int *perm)
 {
 	int l = prob->l;
 	int max_nr_class = 16;
@@ -2108,12 +2196,14 @@ static void svm_group_classes(const svm_problem *prob, int *nr_class_ret, int **
 	free(data_label);
 }
 
+} /* end namespace */
+
 //
 // Interface functions
 //
-svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
+PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *param)
 {
-	svm_model *model = Malloc(svm_model,1);
+	PREFIX(model) *model = Malloc(PREFIX(model),1);
 	model->param = *param;
 	model->free_sv = 0;	// XXX
 
@@ -2133,10 +2223,10 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		    param->svm_type == NU_SVR))
 		{
 			model->probA = Malloc(double,1);
-			model->probA[0] = svm_svr_probability(prob,param);
+			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param);
 		}
 
-		decision_function f = svm_train_one(prob,param,0,0);
+                NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0);
 		model->rho = Malloc(double,1);
 		model->rho[0] = f.rho;
 
@@ -2145,13 +2235,19 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		for(i=0;i<prob->l;i++)
 			if(fabs(f.alpha[i]) > 0) ++nSV;
 		model->l = nSV;
-		model->SV = Malloc(svm_node *,nSV);
-		model->sv_coef[0] = Malloc(double,nSV);
+#ifdef _DENSE_REP
+		model->SV = Malloc(PREFIX(node),nSV);
+#else
+		model->SV = Malloc(PREFIX(node) *,nSV);
+#endif
+                model->sv_ind = Malloc(int, nSV);
+		model->sv_coef[0] = Malloc(double, nSV);
 		int j = 0;
 		for(i=0;i<prob->l;i++)
 			if(fabs(f.alpha[i]) > 0)
 			{
 				model->SV[j] = prob->x[i];
+                                model->sv_ind[j] = i;
 				model->sv_coef[0][j] = f.alpha[i];
 				++j;
 			}		
@@ -2169,8 +2265,12 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		int *perm = Malloc(int,l);
 
 		// group training data of the same class
-		svm_group_classes(prob,&nr_class,&label,&start,&count,perm);		
-		svm_node **x = Malloc(svm_node *,l);
+                NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);		
+#ifdef _DENSE_REP
+		PREFIX(node) *x = Malloc(PREFIX(node),l);
+#else
+		PREFIX(node) **x = Malloc(PREFIX(node) *,l);
+#endif
 		int i;
 		for(i=0;i<l;i++)
 			x[i] = prob->x[perm[i]];
@@ -2197,7 +2297,7 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		bool *nonzero = Malloc(bool,l);
 		for(i=0;i<l;i++)
 			nonzero[i] = false;
-		decision_function *f = Malloc(decision_function,nr_class*(nr_class-1)/2);
+                NAMESPACE::decision_function *f = Malloc(NAMESPACE::decision_function,nr_class*(nr_class-1)/2);
 
 		double *probA=NULL,*probB=NULL;
 		if (param->probability)
@@ -2210,11 +2310,15 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		for(i=0;i<nr_class;i++)
 			for(int j=i+1;j<nr_class;j++)
 			{
-				svm_problem sub_prob;
+				PREFIX(problem) sub_prob;
 				int si = start[i], sj = start[j];
 				int ci = count[i], cj = count[j];
 				sub_prob.l = ci+cj;
-				sub_prob.x = Malloc(svm_node *,sub_prob.l);
+#ifdef _DENSE_REP
+				sub_prob.x = Malloc(PREFIX(node),sub_prob.l);
+#else
+				sub_prob.x = Malloc(PREFIX(node) *,sub_prob.l);
+#endif
 				sub_prob.y = Malloc(double,sub_prob.l);
 				int k;
 				for(k=0;k<ci;k++)
@@ -2229,9 +2333,9 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 				}
 
 				if(param->probability)
-					svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p]);
+                                    NAMESPACE::svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p]);
 
-				f[p] = svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j]);
+				f[p] = NAMESPACE::svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j]);
 				for(k=0;k<ci;k++)
 					if(!nonzero[si+k] && fabs(f[p].alpha[k]) > 0)
 						nonzero[si+k] = true;
@@ -2286,14 +2390,24 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 			model->nSV[i] = nSV;
 			nz_count[i] = nSV;
 		}
-		
-		info("Total nSV = %d\n",total_sv);
+
+                info("Total nSV = %d\n",total_sv);
 
 		model->l = total_sv;
-		model->SV = Malloc(svm_node *,total_sv);
+                model->sv_ind = Malloc(int, total_sv);
+#ifdef _DENSE_REP
+		model->SV = Malloc(PREFIX(node),total_sv);
+#else
+		model->SV = Malloc(PREFIX(node) *,total_sv);
+#endif
 		p = 0;
-		for(i=0;i<l;i++)
-			if(nonzero[i]) model->SV[p++] = x[i];
+		for(i=0;i<l;i++) {
+			if(nonzero[i]) { 
+                                model->SV[p] = x[i];
+                                model->sv_ind[p] = i;
+                                ++p;
+                        }
+                }
 
 		int *nz_start = Malloc(int,nr_class);
 		nz_start[0] = 0;
@@ -2348,7 +2462,7 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 }
 
 // Stratified cross validation
-void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, int nr_fold, double *target)
+void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *param, int nr_fold, double *target)
 {
 	int i;
 	int *fold_start = Malloc(int,nr_fold+1);
@@ -2364,7 +2478,7 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, i
 		int *start = NULL;
 		int *label = NULL;
 		int *count = NULL;
-		svm_group_classes(prob,&nr_class,&label,&start,&count,perm);
+                NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);
 
 		// random shuffle and then data grouped by fold using the array perm
 		int *fold_count = Malloc(int,nr_fold);
@@ -2424,10 +2538,14 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, i
 		int begin = fold_start[i];
 		int end = fold_start[i+1];
 		int j,k;
-		struct svm_problem subprob;
+		struct PREFIX(problem) subprob;
 
 		subprob.l = l-(end-begin);
-		subprob.x = Malloc(struct svm_node*,subprob.l);
+#ifdef _DENSE_REP
+		subprob.x = Malloc(struct PREFIX(node),subprob.l);
+#else
+		subprob.x = Malloc(struct PREFIX(node)*,subprob.l);
+#endif
 		subprob.y = Malloc(double,subprob.l);
 			
 		k=0;
@@ -2443,19 +2561,27 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, i
 			subprob.y[k] = prob->y[perm[j]];
 			++k;
 		}
-		struct svm_model *submodel = svm_train(&subprob,param);
+		struct PREFIX(model) *submodel = PREFIX(train)(&subprob,param);
 		if(param->probability && 
 		   (param->svm_type == C_SVC || param->svm_type == NU_SVC))
 		{
-			double *prob_estimates=Malloc(double,svm_get_nr_class(submodel));
+			double *prob_estimates=Malloc(double, PREFIX(get_nr_class)(submodel));
 			for(j=begin;j<end;j++)
-				target[perm[j]] = svm_predict_probability(submodel,prob->x[perm[j]],prob_estimates);
+#ifdef _DENSE_REP
+				target[perm[j]] = PREFIX(predict_probability)(submodel,(prob->x + perm[j]),prob_estimates);
+#else
+                                target[perm[j]] = PREFIX(predict_probability)(submodel,prob->x[perm[j]],prob_estimates);
+#endif
 			free(prob_estimates);			
 		}
 		else
 			for(j=begin;j<end;j++)
-				target[perm[j]] = svm_predict(submodel,prob->x[perm[j]]);
-		svm_destroy_model(submodel);
+#ifdef _DENSE_REP
+				target[perm[j]] = PREFIX(predict)(submodel,prob->x+perm[j]);
+#else
+                target[perm[j]] = PREFIX(predict)(submodel,prob->x[perm[j]]);
+#endif
+		PREFIX(free_and_destroy_model)(&submodel);
 		free(subprob.x);
 		free(subprob.y);
 	}		
@@ -2464,24 +2590,24 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param, i
 }
 
 
-int svm_get_svm_type(const svm_model *model)
+int PREFIX(get_svm_type)(const PREFIX(model) *model)
 {
 	return model->param.svm_type;
 }
 
-int svm_get_nr_class(const svm_model *model)
+int PREFIX(get_nr_class)(const PREFIX(model) *model)
 {
 	return model->nr_class;
 }
 
-void svm_get_labels(const svm_model *model, int* label)
+void PREFIX(get_labels)(const PREFIX(model) *model, int* label)
 {
 	if (model->label != NULL)
 		for(int i=0;i<model->nr_class;i++)
 			label[i] = model->label[i];
 }
 
-double svm_get_svr_probability(const svm_model *model)
+double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 {
 	if ((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR) &&
 	    model->probA!=NULL)
@@ -2493,18 +2619,30 @@ double svm_get_svr_probability(const svm_model *model)
 	}
 }
 
-void svm_predict_values(const svm_model *model, const svm_node *x, double* dec_values)
+double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values)
 {
+        int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
 	   model->param.svm_type == NU_SVR)
 	{
 		double *sv_coef = model->sv_coef[0];
 		double sum = 0;
-		for(int i=0;i<model->l;i++)
-			sum += sv_coef[i] * Kernel::k_function(x,model->SV[i],model->param);
+
+		
+		for(i=0;i<model->l;i++)
+#ifdef _DENSE_REP
+                    sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
+#else
+                sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
+#endif
 		sum -= model->rho[0];
 		*dec_values = sum;
+
+		if(model->param.svm_type == ONE_CLASS)
+			return (sum>0)?1:-1;
+		else
+			return sum;
 	}
 	else
 	{
@@ -2514,12 +2652,20 @@ void svm_predict_values(const svm_model *model, const svm_node *x, double* dec_v
 		
 		double *kvalue = Malloc(double,l);
 		for(i=0;i<l;i++)
-			kvalue[i] = Kernel::k_function(x,model->SV[i],model->param);
+#ifdef _DENSE_REP
+                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
+#else
+                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
+#endif
 
 		int *start = Malloc(int,nr_class);
 		start[0] = 0;
 		for(i=1;i<nr_class;i++)
 			start[i] = start[i-1]+model->nSV[i-1];
+
+		int *vote = Malloc(int,nr_class);
+		for(i=0;i<nr_class;i++)
+			vote[i] = 0;
 
 		int p=0;
 		for(i=0;i<nr_class;i++)
@@ -2540,60 +2686,43 @@ void svm_predict_values(const svm_model *model, const svm_node *x, double* dec_v
 					sum += coef2[sj+k] * kvalue[sj+k];
 				sum -= model->rho[p];
 				dec_values[p] = sum;
-				p++;
-			}
 
-		free(kvalue);
-		free(start);
-	}
-}
-
-double svm_predict(const svm_model *model, const svm_node *x)
-{
-	if(model->param.svm_type == ONE_CLASS ||
-	   model->param.svm_type == EPSILON_SVR ||
-	   model->param.svm_type == NU_SVR)
-	{
-		double res;
-		svm_predict_values(model, x, &res);
-		
-		if(model->param.svm_type == ONE_CLASS)
-			return (res>0)?1:-1;
-		else
-			return res;
-	}
-	else
-	{
-		int i;
-		int nr_class = model->nr_class;
-		double *dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-		svm_predict_values(model, x, dec_values);
-
-		int *vote = Malloc(int,nr_class);
-		for(i=0;i<nr_class;i++)
-			vote[i] = 0;
-		int pos=0;
-		for(i=0;i<nr_class;i++)
-			for(int j=i+1;j<nr_class;j++)
-			{
-				if(dec_values[pos++] > 0)
+				if(dec_values[p] > 0)
 					++vote[i];
 				else
 					++vote[j];
+				p++;
 			}
 
 		int vote_max_idx = 0;
 		for(i=1;i<nr_class;i++)
 			if(vote[i] > vote[vote_max_idx])
 				vote_max_idx = i;
+
+		free(kvalue);
+		free(start);
 		free(vote);
-		free(dec_values);
 		return model->label[vote_max_idx];
 	}
 }
 
-double svm_predict_probability(
-	const svm_model *model, const svm_node *x, double *prob_estimates)
+double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x)
+{
+	int nr_class = model->nr_class;
+	double *dec_values;
+	if(model->param.svm_type == ONE_CLASS ||
+	   model->param.svm_type == EPSILON_SVR ||
+	   model->param.svm_type == NU_SVR)
+		dec_values = Malloc(double, 1);
+	else 
+		dec_values = Malloc(double, nr_class*(nr_class-1)/2);
+	double pred_result = PREFIX(predict_values)(model, x, dec_values);
+	free(dec_values);
+	return pred_result;
+}
+
+double PREFIX(predict_probability)(
+	const PREFIX(model) *model, const PREFIX(node) *x, double *prob_estimates)
 {
 	if ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
 	    model->probA!=NULL && model->probB!=NULL)
@@ -2601,7 +2730,7 @@ double svm_predict_probability(
 		int i;
 		int nr_class = model->nr_class;
 		double *dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-		svm_predict_values(model, x, dec_values);
+		PREFIX(predict_values)(model, x, dec_values);
 
 		double min_prob=1e-7;
 		double **pairwise_prob=Malloc(double *,nr_class);
@@ -2611,11 +2740,11 @@ double svm_predict_probability(
 		for(i=0;i<nr_class;i++)
 			for(int j=i+1;j<nr_class;j++)
 			{
-				pairwise_prob[i][j]=min(max(sigmoid_predict(dec_values[k],model->probA[k],model->probB[k]),min_prob),1-min_prob);
+                            pairwise_prob[i][j]=min(max(NAMESPACE::sigmoid_predict(dec_values[k],model->probA[k],model->probB[k]),min_prob),1-min_prob);
 				pairwise_prob[j][i]=1-pairwise_prob[i][j];
 				k++;
 			}
-		multiclass_probability(nr_class,pairwise_prob,prob_estimates);
+                NAMESPACE::multiclass_probability(nr_class,pairwise_prob,prob_estimates);
 
 		int prob_max_idx = 0;
 		for(i=1;i<nr_class;i++)
@@ -2628,350 +2757,54 @@ double svm_predict_probability(
 		return model->label[prob_max_idx];
 	}
 	else 
-		return svm_predict(model, x);
+		return PREFIX(predict)(model, x);
 }
 
-static const char *svm_type_table[] =
+
+void PREFIX(free_model_content)(PREFIX(model)* model_ptr)
 {
-	"c_svc","nu_svc","one_class","epsilon_svr","nu_svr",NULL
-};
-
-static const char *kernel_type_table[]=
-{
-	"linear","polynomial","rbf","sigmoid","precomputed",NULL
-};
-
-int svm_save_model(const char *model_file_name, const svm_model *model)
-{
-	FILE *fp = fopen(model_file_name,"w");
-	if(fp==NULL) return -1;
-
-	const svm_parameter& param = model->param;
-
-	fprintf(fp,"svm_type %s\n", svm_type_table[param.svm_type]);
-	fprintf(fp,"kernel_type %s\n", kernel_type_table[param.kernel_type]);
-
-	if(param.kernel_type == POLY)
-		fprintf(fp,"degree %d\n", param.degree);
-
-	if(param.kernel_type == POLY || param.kernel_type == RBF || param.kernel_type == SIGMOID)
-		fprintf(fp,"gamma %g\n", param.gamma);
-
-	if(param.kernel_type == POLY || param.kernel_type == SIGMOID)
-		fprintf(fp,"coef0 %g\n", param.coef0);
-
-	int nr_class = model->nr_class;
-	int l = model->l;
-	fprintf(fp, "nr_class %d\n", nr_class);
-	fprintf(fp, "total_sv %d\n",l);
-	
-	{
-		fprintf(fp, "rho");
-		for(int i=0;i<nr_class*(nr_class-1)/2;i++)
-			fprintf(fp," %g",model->rho[i]);
-		fprintf(fp, "\n");
-	}
-	
-	if(model->label)
-	{
-		fprintf(fp, "label");
-		for(int i=0;i<nr_class;i++)
-			fprintf(fp," %d",model->label[i]);
-		fprintf(fp, "\n");
-	}
-
-	if(model->probA) // regression has probA only
-	{
-		fprintf(fp, "probA");
-		for(int i=0;i<nr_class*(nr_class-1)/2;i++)
-			fprintf(fp," %g",model->probA[i]);
-		fprintf(fp, "\n");
-	}
-	if(model->probB)
-	{
-		fprintf(fp, "probB");
-		for(int i=0;i<nr_class*(nr_class-1)/2;i++)
-			fprintf(fp," %g",model->probB[i]);
-		fprintf(fp, "\n");
-	}
-
-	if(model->nSV)
-	{
-		fprintf(fp, "nr_sv");
-		for(int i=0;i<nr_class;i++)
-			fprintf(fp," %d",model->nSV[i]);
-		fprintf(fp, "\n");
-	}
-
-	fprintf(fp, "SV\n");
-	const double * const *sv_coef = model->sv_coef;
-	const svm_node * const *SV = model->SV;
-
-	for(int i=0;i<l;i++)
-	{
-		for(int j=0;j<nr_class-1;j++)
-			fprintf(fp, "%.16g ",sv_coef[j][i]);
-
-		const svm_node *p = SV[i];
-
-		if(param.kernel_type == PRECOMPUTED)
-			fprintf(fp,"0:%d ",(int)(p->value));
-		else
-			while(p->index != -1)
-			{
-				fprintf(fp,"%d:%.8g ",p->index,p->value);
-				p++;
-			}
-		fprintf(fp, "\n");
-	}
-	if (ferror(fp) != 0 || fclose(fp) != 0) return -1;
-	else return 0;
+	if(model_ptr->free_sv && model_ptr->l > 0)
+#ifdef _DENSE_REP
+	for (int i = 0; i < model_ptr->l; i++)
+		free (model_ptr->SV[i].values);
+#else
+		free((void *)(model_ptr->SV[0]));
+#endif
+	for(int i=0;i<model_ptr->nr_class-1;i++)
+		free(model_ptr->sv_coef[i]);
+	free(model_ptr->SV);
+	free(model_ptr->sv_coef);
+	free(model_ptr->sv_ind);
+	free(model_ptr->rho);
+	free(model_ptr->label);
+	free(model_ptr->probA);
+	free(model_ptr->probB);
+	free(model_ptr->nSV);
 }
 
-static char *line = NULL;
-static int max_line_len;
-
-static char* readline(FILE *input)
+void PREFIX(free_and_destroy_model)(PREFIX(model)** model_ptr_ptr)
 {
-	int len;
-
-	if(fgets(line,max_line_len,input) == NULL)
-		return NULL;
-
-	while(strrchr(line,'\n') == NULL)
+	PREFIX(model)* model_ptr = *model_ptr_ptr;
+	if(model_ptr != NULL)
 	{
-		max_line_len *= 2;
-		line = (char *) realloc(line,max_line_len);
-		len = (int) strlen(line);
-		if(fgets(line+len,max_line_len-len,input) == NULL)
-			break;
+		PREFIX(free_model_content)(model_ptr);
+		free(model_ptr);
 	}
-	return line;
 }
 
-svm_model *svm_load_model(const char *model_file_name)
+void PREFIX(destroy_model)(PREFIX(model)* model_ptr)
 {
-	FILE *fp = fopen(model_file_name,"rb");
-	if(fp==NULL) return NULL;
-	
-	// read parameters
-
-	svm_model *model = Malloc(svm_model,1);
-	svm_parameter& param = model->param;
-	model->rho = NULL;
-	model->probA = NULL;
-	model->probB = NULL;
-	model->label = NULL;
-	model->nSV = NULL;
-
-	char cmd[81];
-	while(1)
-	{
-		fscanf(fp,"%80s",cmd);
-
-		if(strcmp(cmd,"svm_type")==0)
-		{
-			fscanf(fp,"%80s",cmd);
-			int i;
-			for(i=0;svm_type_table[i];i++)
-			{
-				if(strcmp(svm_type_table[i],cmd)==0)
-				{
-					param.svm_type=i;
-					break;
-				}
-			}
-			if(svm_type_table[i] == NULL)
-			{
-				fprintf(stderr,"unknown svm type.\n");
-				free(model->rho);
-				free(model->label);
-				free(model->nSV);
-				free(model);
-				return NULL;
-			}
-		}
-		else if(strcmp(cmd,"kernel_type")==0)
-		{		
-			fscanf(fp,"%80s",cmd);
-			int i;
-			for(i=0;kernel_type_table[i];i++)
-			{
-				if(strcmp(kernel_type_table[i],cmd)==0)
-				{
-					param.kernel_type=i;
-					break;
-				}
-			}
-			if(kernel_type_table[i] == NULL)
-			{
-				fprintf(stderr,"unknown kernel function.\n");
-				free(model->rho);
-				free(model->label);
-				free(model->nSV);
-				free(model);
-				return NULL;
-			}
-		}
-		else if(strcmp(cmd,"degree")==0)
-			fscanf(fp,"%d",&param.degree);
-		else if(strcmp(cmd,"gamma")==0)
-			fscanf(fp,"%lf",&param.gamma);
-		else if(strcmp(cmd,"coef0")==0)
-			fscanf(fp,"%lf",&param.coef0);
-		else if(strcmp(cmd,"nr_class")==0)
-			fscanf(fp,"%d",&model->nr_class);
-		else if(strcmp(cmd,"total_sv")==0)
-			fscanf(fp,"%d",&model->l);
-		else if(strcmp(cmd,"rho")==0)
-		{
-			int n = model->nr_class * (model->nr_class-1)/2;
-			model->rho = Malloc(double,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->rho[i]);
-		}
-		else if(strcmp(cmd,"label")==0)
-		{
-			int n = model->nr_class;
-			model->label = Malloc(int,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%d",&model->label[i]);
-		}
-		else if(strcmp(cmd,"probA")==0)
-		{
-			int n = model->nr_class * (model->nr_class-1)/2;
-			model->probA = Malloc(double,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->probA[i]);
-		}
-		else if(strcmp(cmd,"probB")==0)
-		{
-			int n = model->nr_class * (model->nr_class-1)/2;
-			model->probB = Malloc(double,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%lf",&model->probB[i]);
-		}
-		else if(strcmp(cmd,"nr_sv")==0)
-		{
-			int n = model->nr_class;
-			model->nSV = Malloc(int,n);
-			for(int i=0;i<n;i++)
-				fscanf(fp,"%d",&model->nSV[i]);
-		}
-		else if(strcmp(cmd,"SV")==0)
-		{
-			while(1)
-			{
-				int c = getc(fp);
-				if(c==EOF || c=='\n') break;	
-			}
-			break;
-		}
-		else
-		{
-			fprintf(stderr,"unknown text in model file: [%s]\n",cmd);
-			free(model->rho);
-			free(model->label);
-			free(model->nSV);
-			free(model);
-			return NULL;
-		}
-	}
-
-	// read sv_coef and SV
-
-	int elements = 0;
-	long pos = ftell(fp);
-
-	max_line_len = 1024;
-	line = Malloc(char,max_line_len);
-	char *p,*endptr,*idx,*val;
-
-	while(readline(fp)!=NULL)
-	{
-		p = strtok(line,":");
-		while(1)
-		{
-			p = strtok(NULL,":");
-			if(p == NULL)
-				break;
-			++elements;
-		}
-	}
-	elements += model->l;
-
-	fseek(fp,pos,SEEK_SET);
-
-	int m = model->nr_class - 1;
-	int l = model->l;
-	model->sv_coef = Malloc(double *,m);
-	int i;
-	for(i=0;i<m;i++)
-		model->sv_coef[i] = Malloc(double,l);
-	model->SV = Malloc(svm_node*,l);
-	svm_node *x_space = NULL;
-	if(l>0) x_space = Malloc(svm_node,elements);
-
-	int j=0;
-	for(i=0;i<l;i++)
-	{
-		readline(fp);
-		model->SV[i] = &x_space[j];
-
-		p = strtok(line, " \t");
-		model->sv_coef[0][i] = strtod(p,&endptr);
-		for(int k=1;k<m;k++)
-		{
-			p = strtok(NULL, " \t");
-			model->sv_coef[k][i] = strtod(p,&endptr);
-		}
-
-		while(1)
-		{
-			idx = strtok(NULL, ":");
-			val = strtok(NULL, " \t");
-
-			if(val == NULL)
-				break;
-			x_space[j].index = (int) strtol(idx,&endptr,10);
-			x_space[j].value = strtod(val,&endptr);
-
-			++j;
-		}
-		x_space[j++].index = -1;
-	}
-	free(line);
-
-	if (ferror(fp) != 0 || fclose(fp) != 0)
-		return NULL;
-
-	model->free_sv = 1;	// XXX
-	return model;
+	fprintf(stderr,"warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(PREFIX(model) **model_ptr_ptr)\n");
+	PREFIX(free_and_destroy_model)(&model_ptr);
 }
 
-void svm_destroy_model(svm_model* model)
-{
-	if(model->free_sv && model->l > 0)
-		free((void *)(model->SV[0]));
-	for(int i=0;i<model->nr_class-1;i++)
-		free(model->sv_coef[i]);
-	free(model->SV);
-	free(model->sv_coef);
-	free(model->rho);
-	free(model->label);
-	free(model->probA);
-	free(model->probB);
-	free(model->nSV);
-	free(model);
-}
-
-void svm_destroy_param(svm_parameter* param)
+void PREFIX(destroy_param)(svm_parameter* param)
 {
 	free(param->weight_label);
 	free(param->weight);
 }
 
-const char *svm_check_parameter(const svm_problem *prob, const svm_parameter *param)
+const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_parameter *param)
 {
 	// svm_type
 
@@ -3092,10 +2925,18 @@ const char *svm_check_parameter(const svm_problem *prob, const svm_parameter *pa
 	return NULL;
 }
 
-int svm_check_probability_model(const svm_model *model)
+int PREFIX(check_probability_model)(const PREFIX(model) *model)
 {
 	return ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
 		model->probA!=NULL && model->probB!=NULL) ||
 		((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR) &&
 		 model->probA!=NULL);
+}
+
+void PREFIX(set_print_string_function)(void (*print_func)(const char *))
+{
+	if(print_func == NULL)
+		svm_print_string = &print_string_stdout;
+	else
+		svm_print_string = print_func;
 }

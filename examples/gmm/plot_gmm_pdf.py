@@ -8,24 +8,23 @@ generated from two gaussians with different centers and covariance
 matrices.
 """
 
-import itertools
 import numpy as np
 import pylab as pl
 from scikits.learn import gmm
 
-n, m = 300, 2
+n_samples = 300
 
 # generate random sample, two components
 np.random.seed(0)
 C = np.array([[0., -0.7], [3.5, .7]])
-X_train = np.r_[np.dot(np.random.randn(n, 2), C),
-          np.random.randn(n, 2) + np.array([20, 20])]
+X_train = np.r_[np.dot(np.random.randn(n_samples, 2), C),
+          np.random.randn(n_samples, 2) + np.array([20, 20])]
 
-clf = gmm.GMM(n_states=2, n_dim=2, cvtype='full')
+clf = gmm.GMM(n_states=2, cvtype='full')
 clf.fit(X_train)
 
-x = np.linspace(-20.0, 30.0) 
-y = np.linspace(-20.0, 40.0) 
+x = np.linspace(-20.0, 30.0)
+y = np.linspace(-20.0, 40.0)
 X, Y = np.meshgrid(x, y)
 XX = np.c_[X.ravel(), Y.ravel()]
 Z =  np.log(-clf.eval(XX)[0])

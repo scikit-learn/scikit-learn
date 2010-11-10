@@ -1,13 +1,14 @@
 """
-
+=============================================
 A demo of the mean-shift clustering algorithm
-===============================================
+=============================================
 
 Reference:
 K. Funkunaga and L.D. Hosteler, "The Estimation of the Gradient of a
 Density Function, with Applications in Pattern Recognition"
 
 """
+print __doc__
 
 import numpy as np
 from scikits.learn.cluster import MeanShift, estimate_bandwidth

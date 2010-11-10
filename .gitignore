@@ -9,6 +9,9 @@ scikits/learn/datasets/__config__.py
 dist/
 doc/_build/
 doc/auto_examples/
+doc/modules/generated/
 pip-log.txt
 scikits.learn.egg-info/
 .coverage
+tags
+covtype.data.gz

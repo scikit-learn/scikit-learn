@@ -4,6 +4,7 @@ Lasso regression example
 ========================
 
 """
+print __doc__
 
 import numpy as np
 

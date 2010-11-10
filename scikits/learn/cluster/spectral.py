@@ -15,7 +15,7 @@ from .k_means_ import k_means
 
 def spectral_embedding(adjacency, k=8, mode=None):
     """ Spectral embedding: project the sample on the k first
-        eigen vectors of the graph laplacian. 
+        eigen vectors of the graph laplacian.
 
         Parameters
         -----------
@@ -46,7 +46,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
         from pyamg import smoothed_aggregation_solver
         amg_loaded = True
     except ImportError:
-        amg_loaded = False 
+        amg_loaded = False
 
     n_nodes = adjacency.shape[0]
     # XXX: Should we check that the matrices given is symmetric
@@ -56,9 +56,9 @@ def spectral_embedding(adjacency, k=8, mode=None):
         mode = ('amg' if amg_loaded else 'arpack')
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=True, return_diag=True)
-    if (mode == 'arpack' 
+    if (mode == 'arpack'
         or not sparse.isspmatrix(laplacian)
-        or n_nodes < 5*k # This is the threshold under which lobpcg has bugs 
+        or n_nodes < 5*k # This is the threshold under which lobpcg has bugs
        ):
         # We need to put the diagonal at zero
         if not sparse.isspmatrix(laplacian):
@@ -88,7 +88,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
         X = np.random.rand(laplacian.shape[0], k)
         X[:, 0] = 1. / dd.ravel()
         M = ml.aspreconditioner()
-        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12, 
+        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
         embedding = diffusion_map.T * dd
         if embedding.shape[0] == 1: raise ValueError
@@ -98,7 +98,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
 
 
 def spectral_clustering(adjacency, k=8, mode=None):
-    """ Spectral clustering: apply k-means to a projection of the 
+    """ Spectral clustering: apply k-means to a projection of the
         graph laplacian, finds normalized graph cuts.
 
         Parameters
@@ -132,7 +132,7 @@ def spectral_clustering(adjacency, k=8, mode=None):
 
 ################################################################################
 class SpectralClustering(BaseEstimator):
-    """ Spectral clustering: apply k-means to a projection of the 
+    """ Spectral clustering: apply k-means to a projection of the
         graph laplacian, finds normalized graph cuts.
 
         Parameters
@@ -148,7 +148,7 @@ class SpectralClustering(BaseEstimator):
         -------
 
         fit(X):
-            Compute spectral clustering 
+            Compute spectral clustering
 
         Attributes
         ----------
@@ -163,11 +163,11 @@ class SpectralClustering(BaseEstimator):
         self.k = k
         self.mode = mode
 
-    
+
     def fit(self, X, **params):
         """ Compute the spectral clustering from the adjacency matrix of
             the graph.
-        
+
             Parameters
             -----------
             X: array-like or sparse matrix, shape: (p, p)
@@ -179,7 +179,7 @@ class SpectralClustering(BaseEstimator):
             greatly speeds up computation.
         """
         self._set_params(**params)
-        self.labels_ = spectral_clustering(X, 
+        self.labels_ = spectral_clustering(X,
                                 k=self.k, mode=self.mode)
         return self
 

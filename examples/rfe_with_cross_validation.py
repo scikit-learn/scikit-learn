@@ -1,10 +1,12 @@
 """
+===================================================
 Recursive feature elimination with cross-validation
 ===================================================
-"""
 
-# Recursive feature elimination with automatic tuning of the
-# number of features selected with cross-validation
+Recursive feature elimination with automatic tuning of the
+number of features selected with cross-validation
+"""
+print __doc__
 
 from scikits.learn.svm import SVC
 from scikits.learn.cross_val import StratifiedKFold

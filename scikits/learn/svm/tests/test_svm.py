@@ -9,7 +9,8 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
 from nose.tools import assert_raises
 
-from scikits.learn import svm, datasets
+from scikits.learn import svm, glm, datasets
+from scikits.learn.datasets.samples_generator import test_dataset_classif
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -20,7 +21,6 @@ true_result = [1, 2, 2]
 # also load the iris dataset
 iris = datasets.load_iris()
 
-
 def test_libsvm_parameters():
     """
     Test parameters on classes that make use of libsvm.
@@ -28,7 +28,8 @@ def test_libsvm_parameters():
 
     clf = svm.SVC(kernel='linear').fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[ 0.25, -.25]])
-    assert_array_equal(clf.support_, [[-1, -1], [1, 1]])
+    assert_array_equal(clf.support_, [1, 3])
+    assert_array_equal(clf.support_vectors_, (X[1], X[3]))
     assert_array_equal(clf.intercept_, [0.])
     assert_array_equal(clf.predict(X), Y)
 
@@ -40,7 +41,7 @@ def test_libsvm_iris():
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
-    
+
 
 def test_precomputed():
     """
@@ -49,16 +50,28 @@ def test_precomputed():
     We test it with a toy dataset and with iris.
     """
     clf = svm.SVC(kernel='precomputed')
-    # we use just a linear kernel
+    # Gram matrix for train data (square matrix)
+    # (we use just a linear kernel)
     K = np.dot(X, np.array(X).T)
     clf.fit(K, Y)
-    # KT is the Gram matrix
+    # Gram matrix for test data (rectangular matrix)
     KT = np.dot(T, np.array(X).T)
     pred = clf.predict(KT)
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.support_, [[2], [4]])
+    assert_array_almost_equal(clf.support_, [1, 3])
+    assert_array_equal(pred, true_result)
+
+    # Gram matrix for test data but compute KT[i,j]
+    # for support vectors j only.
+    KT = np.zeros_like(KT)
+    for i in range(len(T)):
+        for j in clf.support_:
+            KT[i,j] = np.dot(T[i], X[j])
+
+    pred = clf.predict(KT)
     assert_array_equal(pred, true_result)
 
     # same as before, but using a callable function instead of the kernel
@@ -71,13 +84,29 @@ def test_precomputed():
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
     assert_array_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.support_, [[2], [4]])
+    assert_array_almost_equal(clf.support_, [1, 3])
     assert_array_equal(pred, true_result)
 
     # test a precomputed kernel with the iris dataset
+    # and check parameters against a linear SVC
     clf = svm.SVC(kernel='precomputed')
+    clf2 = svm.SVC(kernel='linear')
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
+    clf2.fit(iris.data, iris.target)
+    pred = clf.predict(K)
+    assert_array_almost_equal(clf.support_, clf2.support_)
+    assert_array_almost_equal(clf.dual_coef_, clf2.dual_coef_)
+    assert_array_almost_equal(clf.intercept_, clf2.intercept_)
+    assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
+
+    # Gram matrix for test data but compute KT[i,j]
+    # for support vectors j only.
+    K = np.zeros_like(K)
+    for i in range(len(iris.data)):
+        for j in clf.support_:
+            K[i,j] = np.dot(iris.data[i], iris.data[j])
+
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
@@ -97,7 +126,8 @@ def test_SVR():
 
     assert_array_almost_equal(clf.dual_coef_, [[-0.1, 0.1]])
     assert_array_almost_equal(clf.coef_, [[0.2, 0.2]])
-    assert_array_almost_equal(clf.support_, [[-1, -1], [1, 1]])
+    assert_array_almost_equal(clf.support_vectors_, [[-1, -1], [1, 1]])
+    assert_array_equal(clf.support_, [1, 3])
     assert_array_almost_equal(clf.intercept_, [1.5])
     assert_array_almost_equal(pred, [1.1, 2.3, 2.5])
 
@@ -110,7 +140,7 @@ def test_SVR():
                               [[-0.014, -0.515, -0.013, 0.515, 0.013, 0.013]],
                               decimal=3)
     assert_raises(NotImplementedError, lambda: clf.coef_)
-    assert_array_almost_equal(clf.support_, X)
+    assert_array_almost_equal(clf.support_vectors_, X)
     assert_array_almost_equal(clf.intercept_, [ 1.49997261])
     assert_array_almost_equal(pred, [ 1.10001274, 1.86682485, 1.73300377])
 
@@ -173,31 +203,31 @@ def test_probability():
                                np.ones(len(X)))
 
 
-def test_margin():
-    """
-    Test predict_margin
+# def test_margin():
+#     """
+#     Test predict_margin
 
-    We create a set of points lying in two lines, so that margin is easily
-    calculated in a linear kernel.
+#     We create a set of points lying in two lines, so that margin is easily
+#     calculated in a linear kernel.
 
-    TODO: distance should be sqrt(2)/2, but libsvm returns 1.
-    """
-    X = [(i, i) for i in range(-4, 6)]
-    X += [(i, i+2) for i in range(-4, 6)]
-    Y = [0]*10 + [1]*10
-    T = [[1]]*10 + [[-1]]*10
-    clf = svm.SVC(kernel='linear').fit(X, Y)
-    assert_array_almost_equal(clf.predict_margin(X), T)
+#     TODO: distance should be sqrt(2)/2, but libsvm returns 1.
+#     """
+#     X = [(i, i) for i in range(-4, 6)]
+#     X += [(i, i+2) for i in range(-4, 6)]
+#     Y = [0]*10 + [1]*10
+#     T = [[1]]*10 + [[-1]]*10
+#     clf = svm.SVC(kernel='linear').fit(X, Y)
+#     assert_array_almost_equal(clf.predict_margin(X), T)
 
-    # the same using a callable kernel
-    kfunc = lambda x, y: np.dot(x, y.T)
-    clf = svm.SVC(kernel=kfunc).fit(X, Y)
-    assert_array_almost_equal(clf.predict_margin(X), T)
+#     # the same using a callable kernel
+#     kfunc = lambda x, y: np.dot(x, y.T)
+#     clf = svm.SVC(kernel=kfunc).fit(X, Y)
+#     assert_array_almost_equal(clf.predict_margin(X), T)
 
-    # failing test
-    # assert_array_almost_equal (clf.predict_margin(iris.data),
-    #                            np.dot(clf.coef_.T, iris.data) + \
-    #                            clf.intercept_)
+#     # failing test
+#     # assert_array_almost_equal (clf.predict_margin(iris.data),
+#     #                            np.dot(clf.coef_.T, iris.data) + \
+#     #                            clf.intercept_)
 
 
 def test_weight():
@@ -209,6 +239,13 @@ def test_weight():
     clf.fit(X, Y, {1: 0.1})
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2] * 6)
+
+    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5,1],
+                                  seed=0)
+    for clf in (glm.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
+        clf.fit(X_[:180], y_[:180], class_weight={0:5})
+        y_pred = clf.predict(X_[180:])
+        assert np.sum(y_pred == y_[180:]) >= 11
 
 
 def test_error():
@@ -265,3 +302,7 @@ def test_LinearSVC_iris():
     clf = svm.LinearSVC().fit(iris.data, iris.target)
     assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

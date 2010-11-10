@@ -8,7 +8,7 @@ descr   = """A set of python modules for machine learning and data mining"""
 
 import os
 
-DISTNAME            = 'scikits.learn' 
+DISTNAME            = 'scikits.learn'
 DESCRIPTION         = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION    = descr
 MAINTAINER          = 'Fabian Pedregosa'
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         download_url = DOWNLOAD_URL,
         long_description = LONG_DESCRIPTION,
         zip_safe=False, # the package can run out of an .egg file
-        classifiers = 
+        classifiers =
             ['Intended Audience :: Science/Research',
              'Intended Audience :: Developers',
              'License :: OSI Approved',

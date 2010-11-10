@@ -18,15 +18,15 @@ def _unique(ar, return_index=False, return_inverse=False):
             return np.asarray(items)
         else:
             ar = np.asanyarray(ar).flatten()
-    
+
     if ar.size == 0:
         if return_inverse and return_index:
             return ar, np.empty(0, np.bool), np.empty(0, np.bool)
         elif return_inverse or return_index:
             return ar, np.empty(0, np.bool)
-        else: 
+        else:
             return ar
-        
+
     if return_inverse or return_index:
         perm = ar.argsort()
         aux = ar[perm]

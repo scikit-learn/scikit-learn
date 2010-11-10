@@ -11,37 +11,24 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('svm', parent_package, top_path)
 
     config.add_subpackage('tests')
-    config.add_subpackage('sparse')
-
-    # we parse site.cfg file for section libsvm
-    site_cfg  = ConfigParser()
-    site_cfg.read(get_standard_file('site.cfg'))
 
     # Section LibSVM
-    libsvm_includes = [numpy.get_include()]
-    libsvm_libraries = []
-    libsvm_library_dirs = []
+
+    # we compile both libsvm and lisvm_sparse
+    config.add_library('libsvm-skl',
+                       sources=[join('src', 'libsvm', 'libsvm_template.cpp')],
+                       depends=[join('src', 'libsvm', 'svm.cpp'),
+                                join('src', 'libsvm', 'svm.h')]
+                       )
     libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
     libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c')]
 
-    # we try to link against system-wide libsvm
-    if site_cfg.has_section('libsvm'):
-        libsvm_includes.append(site_cfg.get('libsvm', 'include_dirs'))
-        libsvm_libraries.append(site_cfg.get('libsvm', 'libraries'))
-        libsvm_library_dirs.append(site_cfg.get('libsvm', 'library_dirs'))
-    else:
-        # if not specified, we build our own libsvm
-        libsvm_sources.append(join('src', 'libsvm', 'svm.cpp'))
-        libsvm_depends.append(join('src', 'libsvm', 'svm.h'))
-
     config.add_extension('_libsvm',
                          sources=libsvm_sources,
-                         include_dirs=libsvm_includes,
-                         libraries=libsvm_libraries,
-                         library_dirs=libsvm_library_dirs,
-                         depends=libsvm_depends,
+                         include_dirs=[numpy.get_include()],
+                         libraries=['libsvm-skl'],
+                         depends=libsvm_depends
                          )
-
 
     ### liblinear module
     blas_sources = [join('src', 'blas', 'daxpy.c'),
@@ -69,9 +56,14 @@ def configuration(parent_package='', top_path=None):
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
                          depends=liblinear_depends,
+                         # extra_compile_args=['-O0 -fno-inline'],
                          **blas_info)
 
     ## end liblinear module
+
+    # this should go *after* libsvm-skl
+    config.add_subpackage('sparse')
+
 
     return config
 

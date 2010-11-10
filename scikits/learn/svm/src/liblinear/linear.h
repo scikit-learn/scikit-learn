@@ -19,7 +19,7 @@ struct problem
 	double bias;            /* < 0 if no bias term */  
 };
 
-enum { L2R_LR, L2R_L2LOSS_SVC_DUAL, L2R_L2LOSS_SVC, L2R_L1LOSS_SVC_DUAL, MCSVM_CS, L1R_L2LOSS_SVC, L1R_LR }; /* solver_type */
+enum { L2R_LR, L2R_L2LOSS_SVC_DUAL, L2R_L2LOSS_SVC, L2R_L1LOSS_SVC_DUAL, MCSVM_CS, L1R_L2LOSS_SVC, L1R_LR, L2R_LR_DUAL }; /* solver_type */
 
 struct parameter
 {
@@ -57,10 +57,13 @@ int get_nr_feature(const struct model *model_);
 int get_nr_class(const struct model *model_);
 void get_labels(const struct model *model_, int* label);
 
-void destroy_model(struct model *model_);
+void free_model_content(struct model *model_ptr);
+void free_and_destroy_model(struct model **model_ptr_ptr);
 void destroy_param(struct parameter *param);
+
 const char *check_parameter(const struct problem *prob, const struct parameter *param);
-extern void (*liblinear_print_string) (const char *);
+int check_probability_model(const struct model *model);
+void set_print_string_function(void (*print_func) (const char*));
 
 #ifdef __cplusplus
 }
