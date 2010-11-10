@@ -279,9 +279,9 @@ class BaseCountVectorizer(BaseEstimator):
                 if idx is not None:
                     matrix[i, idx] = count
 
-        # the term counts and document counts migh be useful statistics, are we
-        # really sure want we want to drop them? The take some memory but can be
-        # useful for corpus introspection
+        # the term counts and document counts might be useful statistics, are
+        # we really sure want we want to drop them? They take some memory but
+        # can be useful for corpus introspection
 
         return matrix, vocabulary
 
