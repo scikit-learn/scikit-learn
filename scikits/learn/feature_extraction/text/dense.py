@@ -247,8 +247,8 @@ class BaseCountVectorizer(BaseEstimator):
         stop_words = set()
         if max_df is not None:
             max_document_count = max_df * n_doc
-            for t, dc in sorted(document_counts.iteritems(),
-                                key=itemgetter(1), reverse=True):
+            for t, dc in sorted(document_counts.iteritems(), key=itemgetter(1),
+                                reverse=True):
                 if dc < max_document_count:
                     break
                 stop_words.add(t)
@@ -257,14 +257,14 @@ class BaseCountVectorizer(BaseEstimator):
         if max_features is not None:
             # extract the most frequent terms for the vocabulary
             terms = set()
-            for t, tc in sorted(term_counts.iteritems(),
-                                key=itemgetter(1), reverse=True):
+            for t, tc in sorted(term_counts.iteritems(), key=itemgetter(1),
+                                reverse=True):
                 if t not in stop_words:
                     terms.add(t)
                 if len(terms) >= max_features:
                     break
         else:
-            terms = set(term_counts.iteritems())
+            terms = set(term_counts.keys())
             terms -= stop_words
 
         # convert to a document-token matrix
@@ -278,6 +278,10 @@ class BaseCountVectorizer(BaseEstimator):
                 idx = vocabulary.get(term)
                 if idx is not None:
                     matrix[i, idx] = count
+
+        # the term counts and document counts migh be useful statistics, are we
+        # really sure want we want to drop them? The take some memory but can be
+        # useful for corpus introspection
 
         return matrix, vocabulary
 

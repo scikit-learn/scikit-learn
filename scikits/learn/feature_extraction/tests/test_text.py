@@ -26,22 +26,23 @@ from numpy.testing import assert_array_equal
 import pickle
 
 JUNK_FOOD_DOCS = (
-    "the pizza pizza beer",
-    "the pizza pizza beer",
-    "the the pizza beer beer",
-    "the pizza beer beer",
-    "the coke beer coke",
-    "the coke pizza pizza",
+    "the pizza pizza beer copyright",
+    "the pizza burger beer copyright",
+    "the the pizza beer beer copyright",
+    "the burger beer beer copyright",
+    "the coke burger coke copyright",
+    "the coke burger burger",
 )
-
 
 NOTJUNK_FOOD_DOCS = (
-    "the salad celeri",
-    "the salad salad sparkling water",
-    "the the celeri celeri",
+    "the salad celeri copyright",
+    "the salad salad sparkling water copyright",
+    "the the celeri celeri copyright",
     "the tomato tomato salad water",
-    "the tomato salad water",
+    "the tomato salad water copyright",
 )
+
+ALL_FOOD_DOCS = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
 
 def test_strip_accents():
@@ -116,48 +117,65 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     # results to be compared
     res = []
 
-    # raw documents
-    train_data = iter(JUNK_FOOD_DOCS[:-1])
-    n_train = len(JUNK_FOOD_DOCS[:-1])
-    test_data = [JUNK_FOOD_DOCS[-1]]
+    # raw documents as an iterator
+    train_data = iter(ALL_FOOD_DOCS[:-1])
+    test_data = [ALL_FOOD_DOCS[-1]]
+    n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
     v1 = cv_class()
     counts_train = v1.fit_transform(train_data)
-    assert_equal(counts_train[0, v1.vocabulary["pizza"]], 2)
+    assert_equal(counts_train[0, v1.vocabulary[u"pizza"]], 2)
 
+    # build a vectorizer v1 with the same vocabulary as the one fitted by v1
     v2 = cv_class(vocabulary=v1.vocabulary)
 
-    # test with a pre-existing vocabulary
+    # compare that the two vectorizer give the same output on the test sample
     for v in (v1, v2):
         counts_test = v.transform(test_data)
-        assert_equal(counts_test[0, v.vocabulary["coke"]], 1)
+        assert_equal(counts_test[0, v.vocabulary[u"salad"]], 1)
+        assert_equal(counts_test[0, v.vocabulary[u"tomato"]], 1)
+        assert_equal(counts_test[0, v.vocabulary[u"water"]], 1)
+
+        # stop word from the fixed list
+        assert_false(u"the" in v.vocabulary)
+
+        # stop word found automatically by the vectorizer DF thresholding
+        # words that are high frequent across the complete corpus are likely
+        # to be not informative (either real stop words of extraction
+        # artifacts)
+        assert_false(u"copyright" in v.vocabulary)
+
+        # not present in the sample
+        assert_equal(counts_test[0, v.vocabulary[u"coke"]], 0)
+        assert_equal(counts_test[0, v.vocabulary[u"burger"]], 0)
+        assert_equal(counts_test[0, v.vocabulary[u"beer"]], 0)
+        assert_equal(counts_test[0, v.vocabulary[u"pizza"]], 0)
 
     # test tf-idf
     t1 = tf_class()
     tfidf = toarray(t1.fit(counts_train).transform(counts_train))
     assert_equal(len(t1.idf), len(v1.vocabulary))
-    assert_equal(tfidf.shape,
-                 (n_train, len(v1.vocabulary)))
+    assert_equal(tfidf.shape, (n_train, len(v1.vocabulary)))
 
     res.append(tfidf)
     res.append(t1.idf)
 
     # test tf-idf with new data
     tfidf_test = toarray(t1.transform(counts_test))
-    assert_equal(tfidf_test.shape,
-                 (len(test_data), len(v1.vocabulary)))
+    assert_equal(tfidf_test.shape, (len(test_data), len(v1.vocabulary)))
 
     # test tf alone
     t2 = tf_class(use_idf=False)
     tf = toarray(t2.fit(counts_train).transform(counts_train))
     assert_equal(t2.idf, None)
-    assert_array_almost_equal(np.sum(tf, axis=1),
-                              [1.0] * n_train)
+
+    # term frequencies sum to one
+    assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)
 
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
-    train_data = iter(JUNK_FOOD_DOCS[:-1])
+    train_data = iter(ALL_FOOD_DOCS[:-1])
     tv = v_class()
     tfidf2 = toarray(tv.fit_transform(train_data))
     assert_array_almost_equal(tfidf, tfidf2)
@@ -170,9 +188,9 @@ def _test_vectorizer(cv_class, tf_class, v_class):
 
 
 def test_vectorizer():
-    res_dense =_test_vectorizer(CountVectorizer,
-                                TfidfTransformer,
-                                Vectorizer)
+    res_dense = _test_vectorizer(CountVectorizer,
+                                 TfidfTransformer,
+                                 Vectorizer)
     res_sparse = _test_vectorizer(SparseCountVectorizer,
                                   SparseTfidfTransformer,
                                   SparseVectorizer)
