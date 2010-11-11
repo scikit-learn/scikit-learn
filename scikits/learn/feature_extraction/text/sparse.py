@@ -4,12 +4,13 @@
 #
 # License: BSD Style.
 
-from collections import defaultdict
 import numpy as np
 import scipy.sparse as sp
 
-from .dense import BaseCountVectorizer, BaseTfidfTransformer, BaseVectorizer, \
-                   DEFAULT_ANALYZER
+from .dense import BaseCountVectorizer
+from .dense import BaseTfidfTransformer
+from .dense import BaseVectorizer
+from .dense import DEFAULT_ANALYZER
 
 from ...preprocessing.sparse import Normalizer
 
@@ -33,8 +34,25 @@ class CountVectorizer(BaseCountVectorizer):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def _init_matrix(self, shape):
-        return sp.dok_matrix(shape, dtype=self.dtype)
+    def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
+
+        i_indices = []
+        j_indices = []
+        values = []
+
+        for i, term_count_dict in enumerate(term_count_dicts):
+            for term, count in term_count_dict.iteritems():
+                j = vocabulary.get(term)
+                if j is not None:
+                    i_indices.append(i)
+                    j_indices.append(j)
+                    values.append(count)
+            # free memory as we go
+            term_count_dict.clear()
+
+        shape = (len(term_count_dicts), max(vocabulary.itervalues()) + 1)
+        return sp.coo_matrix((values, (i_indices, j_indices)),
+                             shape=shape, dtype=self.dtype)
 
 
 class TfidfTransformer(BaseTfidfTransformer):
@@ -91,10 +109,7 @@ class Vectorizer(BaseVectorizer):
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
 
-    def __init__(self,
-                 analyzer=DEFAULT_ANALYZER,
-                 use_tf=True,
-                 use_idf=True):
+    def __init__(self, analyzer=DEFAULT_ANALYZER, use_tf=True, use_idf=True):
         self.tc = CountVectorizer(analyzer, dtype=np.float64)
         self.tfidf = TfidfTransformer(use_tf, use_idf)
 

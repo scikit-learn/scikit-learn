@@ -147,6 +147,8 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     # test without vocabulary
     v1 = cv_class()
     counts_train = v1.fit_transform(train_data)
+    if hasattr(counts_train, 'tocsr'):
+        counts_train = counts_train.tocsr()
     assert_equal(counts_train[0, v1.vocabulary[u"pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
@@ -155,6 +157,9 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     # compare that the two vectorizer give the same output on the test sample
     for v in (v1, v2):
         counts_test = v.transform(test_data)
+        if hasattr(counts_test, 'tocsr'):
+            counts_test = counts_test.tocsr()
+
         assert_equal(counts_test[0, v.vocabulary[u"salad"]], 1)
         assert_equal(counts_test[0, v.vocabulary[u"tomato"]], 1)
         assert_equal(counts_test[0, v.vocabulary[u"water"]], 1)

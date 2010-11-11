@@ -236,10 +236,12 @@ class BaseCountVectorizer(BaseEstimator):
         self.max_df = max_df
         self.max_features = max_features
 
-    def _init_matrix(self, shape):
+    def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
         raise NotImplementedError
 
     def _build_vectors_and_vocab(self, raw_documents):
+        """Analyze documents, build vocabulary and vectorize"""
+
         # result of document conversion to term_count_dict
         term_counts_per_doc = []
         term_counts = {}
@@ -294,22 +296,15 @@ class BaseCountVectorizer(BaseEstimator):
         # convert to a document-token matrix
         vocabulary = dict(((t, i) for i, t in enumerate(terms))) # token => idx
 
-        # find the indices of the tokens
-        matrix = self._init_matrix((n_doc, len(vocabulary)))
-
-        for i, term_count_dict in enumerate(term_counts_per_doc):
-            for term, count in term_count_dict.iteritems():
-                idx = vocabulary.get(term)
-                if idx is not None:
-                    matrix[i, idx] = count
-
-        # the term counts and document counts might be useful statistics, are
+        # the term_counts and document_counts might be useful statistics, are
         # we really sure want we want to drop them? They take some memory but
         # can be useful for corpus introspection
 
+        matrix = self._term_count_dicts_to_matrix(term_counts_per_doc, vocabulary)
         return matrix, vocabulary
 
     def _build_vectors(self, raw_documents):
+        """Analyze documents and vectorize using existing vocabulary"""
         # raw_documents is an iterable so we don't know its size in advance
 
         # result of document conversion to term_count_dict
@@ -327,18 +322,8 @@ class BaseCountVectorizer(BaseEstimator):
         # now that we know the document we can allocate the vectors matrix at
         # once and fill it with the term counts collected as a temporary list
         # of dict
-        n_doc = len(term_counts_per_doc)
-        vectors = self._init_matrix((n_doc, len(self.vocabulary)))
-
-        for i, term_count_dict in enumerate(term_counts_per_doc):
-            for term, count in term_count_dict.iteritems():
-                try:
-                    vectors[i, self.vocabulary[term]] = count
-                except KeyError:
-                    # ignore out-of-vocabulary tokens
-                    pass
-
-        return vectors
+        return self._term_count_dicts_to_matrix(
+            term_counts_per_doc, self.vocabulary)
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents
@@ -421,9 +406,19 @@ class CountVectorizer(BaseCountVectorizer):
         Type of the matrix returned by fit_transform() or transform().
     """
 
+    def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
+        vectors = np.zeros((len(term_count_dicts), len(vocabulary)),
+                           dtype=self.dtype)
 
-    def _init_matrix(self, shape):
-        return np.zeros(shape, dtype=self.dtype)
+        for i, term_count_dict in enumerate(term_count_dicts):
+            for term, count in term_count_dict.iteritems():
+                j = vocabulary.get(term)
+                if j is not None:
+                    vectors[i, j] = count
+            # free memory as we go
+            term_count_dict.clear()
+
+        return vectors
 
 
 class BaseTfidfTransformer(BaseEstimator):
