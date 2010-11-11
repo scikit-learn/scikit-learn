@@ -1,6 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jul 21 09:00 PM 2007 J
-
+#
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 
