@@ -228,6 +228,7 @@ class BaseCountVectorizer(BaseEstimator):
         max_df = self.max_df
         max_features = self.max_features
 
+        # TODO: parallelize the following loop with joblib
         for doc in raw_documents:
             term_count_dict = {} # term => count in doc
 
@@ -287,22 +288,32 @@ class BaseCountVectorizer(BaseEstimator):
 
     def _build_vectors(self, raw_documents):
         # raw_documents is an iterable so we don't know its size in advance
-        vectors = None
 
-        for i, doc in enumerate(raw_documents):
-            vector = self._init_matrix((1, len(self.vocabulary)))
-            for token in self.analyzer.analyze(doc):
+        # result of document conversion to term_count_dict
+        term_counts_per_doc = []
+
+        # TODO: parallelize the following loop with joblib
+        for doc in raw_documents:
+            term_count_dict = {} # term => count in doc
+
+            for term in self.analyzer.analyze(doc):
+                term_count_dict[term] = term_count_dict.get(term, 0) + 1
+
+            term_counts_per_doc.append(term_count_dict)
+
+        # now that we know the document we can allocate the vectors matrix at
+        # once and fill it with the term counts collected as a temporary list
+        # of dict
+        n_doc = len(term_counts_per_doc)
+        vectors = self._init_matrix((n_doc, len(self.vocabulary)))
+
+        for i, term_count_dict in enumerate(term_counts_per_doc):
+            for term, count in term_count_dict.iteritems():
                 try:
-                    vector[0, self.vocabulary[token]] += 1
+                    vectors[i, self.vocabulary[term]] = count
                 except KeyError:
                     # ignore out-of-vocabulary tokens
                     pass
-
-            if vectors is None:
-                vectors = vector
-            else:
-                vstack = sp.vstack if sp.issparse(vector) else np.vstack
-                vectors = vstack((vectors, vector))
 
         return vectors
 
