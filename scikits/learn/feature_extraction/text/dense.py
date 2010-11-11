@@ -2,7 +2,7 @@
 #          Mathieu Blondel
 #
 # License: BSD Style.
-"""Utilities to build feature vectors from text documents"""
+"""Utilities to build dense feature vectors from text documents"""
 
 from operator import itemgetter
 import re
@@ -55,24 +55,47 @@ ENGLISH_STOP_WORDS = set([
 
 
 def strip_accents(s):
-    """Transform accentuated unicode symbols into their simple counterpart"""
-    return ''.join((c for c in unicodedata.normalize('NFD', s)
-                    if unicodedata.category(c) != 'Mn'))
+    """Transform accentuated unicode symbols into their simple counterpart
+
+    Warning: the python-level loop and join operations make this implementation
+    20 times slower than the to_ascii basic normalization.
+    """
+    return u''.join([c for c in unicodedata.normalize('NFKD', s)
+                     if not unicodedata.combining(c)])
+
+
+def to_ascii(s):
+    """Transform accentuated unicode symbols into ascii or nothing
+
+    Warning: this solution is only suited for roman languages that have a direct
+    transliteration to ASCII symbols.
+
+    A better solution would be to use transliteration based on a precomputed
+    unidecode map to be used by translate as explained here:
+
+        http://stackoverflow.com/questions/2854230/
+
+    """
+    nkfd_form = unicodedata.normalize('NFKD', s)
+    only_ascii = nkfd_form.encode('ASCII', 'ignore')
+    return only_ascii
+
 
 def strip_tags(s):
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
 
 
-class DefaultPreprocessor(object):
+class RomanPreprocessor(object):
+    """Fast preprocessor suitable for roman languages"""
 
-    def preprocess(self, text):
-        return strip_accents(strip_tags(text.lower()))
+    def preprocess(self, unicode_text):
+        return to_ascii(strip_tags(unicode_text.lower()))
 
     def __repr__(self):
-        return "DefaultPreprocessor()"
+        return "RomanPreprocessor()"
 
 
-DEFAULT_PREPROCESSOR = DefaultPreprocessor()
+DEFAULT_PREPROCESSOR = RomanPreprocessor()
 
 
 class WordNGramAnalyzer(BaseEstimator):
@@ -119,7 +142,7 @@ class WordNGramAnalyzer(BaseEstimator):
                 if n_original_tokens < n:
                     continue
                 for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(" ".join(original_tokens[i: i + n]))
+                    tokens.append(u" ".join(original_tokens[i: i + n]))
 
         # handle stop words
         if self.stop_words is not None:

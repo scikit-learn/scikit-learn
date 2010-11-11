@@ -1,6 +1,7 @@
 from scikits.learn.feature_extraction.text import CharNGramAnalyzer
 from scikits.learn.feature_extraction.text import WordNGramAnalyzer
 from scikits.learn.feature_extraction.text import strip_accents
+from scikits.learn.feature_extraction.text import to_ascii
 
 from scikits.learn.feature_extraction.text import CountVectorizer
 from scikits.learn.feature_extraction.text import TfidfTransformer
@@ -64,6 +65,27 @@ def test_strip_accents():
     a = u"this is \xe0 test"
     expected = u'this is a test'
     assert_equal(strip_accents(a), expected)
+
+
+def test_to_ascii():
+    # check some classical latin accentuated symbols
+    a = u'\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
+    expected = u'aaaaaaceeee'
+    assert_equal(to_ascii(a), expected)
+
+    a = u'\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
+    expected = u'iiiinooooouuuuy'
+    assert_equal(to_ascii(a), expected)
+
+    # check some arabic
+    a = u'\u0625' # halef with a hamza below
+    expected = u'' # halef has no direct ascii match
+    assert_equal(to_ascii(a), expected)
+
+    # mix letters accentuated and not
+    a = u"this is \xe0 test"
+    expected = u'this is a test'
+    assert_equal(to_ascii(a), expected)
 
 
 def test_word_analyzer_unigrams():
