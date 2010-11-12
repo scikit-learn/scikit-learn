@@ -145,7 +145,7 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
-    v1 = cv_class()
+    v1 = cv_class(max_df=0.5)
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
@@ -204,6 +204,7 @@ def _test_vectorizer(cv_class, tf_class, v_class):
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
     tv = v_class()
+    tv.tc.max_df = v1.max_df
     tfidf2 = toarray(tv.fit_transform(train_data))
     assert_array_almost_equal(tfidf, tfidf2)
 
