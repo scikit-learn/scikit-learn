@@ -80,7 +80,7 @@ def _infer_dimension_(spect, n, p):
     return ll.argmax()
 
 
-
+################################################################################
 class PCA(BaseEstimator):
     """Principal component analysis (PCA)
 
@@ -166,7 +166,7 @@ class PCA(BaseEstimator):
         return Xr
 
 
-
+################################################################################
 class ProbabilisticPCA(PCA):
     """ Additional layer on top of PCA that add a probabilistic evaluation
     """
