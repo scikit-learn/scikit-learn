@@ -74,8 +74,8 @@ print "n_samples: %d, n_features: %d" % X_train.shape
 assert sp.issparse(X_train)
 y_train = news_train.target
 
-print "Training a linear SVM (hinge loss and L2 regularizer) using SGD.\n"\
-      "SGD(n_iter=50, alpha=0.00001, fit_intercept=True)"
+print "Training a linear SVM (hinge loss and L2 regularizer) using SGD."
+print "SGD(n_iter=50, alpha=0.00001, fit_intercept=True)"
 t0 = time()
 clf = SGD(n_iter=50, alpha=0.00001, fit_intercept=True)
 clf.fit(X_train, y_train)
