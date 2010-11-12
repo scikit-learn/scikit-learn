@@ -96,7 +96,7 @@ def load_files(container_path, description=None, categories=None):
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
-    return Bunch(filenames=filenames,
+    return Bunch(filenames=np.array(filenames),
                  target_names=target_names,
                  target=np.array(target),
                  DESCR=description)
