@@ -25,13 +25,21 @@ class ElasticNet(LinearModel):
     ----------
     alpha : float
         Constant that multiplies the L1 term. Defaults to 1.0
+
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
+
     coef: ndarray of shape n_features
         The initial coeffients to warm-start the optimization
+
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
+
+    Notes
+    -----
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
 
     def __init__(self, alpha=1.0, rho=0.5, coef_=None,
@@ -42,7 +50,15 @@ class ElasticNet(LinearModel):
         self.fit_intercept = fit_intercept
 
     def fit(self, X, y, maxit=1000, tol=1e-4, **params):
-        """Fit Elastic Net model with coordinate descent"""
+        """Fit Elastic Net model with coordinate descent
+
+        Coordinate descent is an algorithm that considers each column of
+        data at a time hence it will automatically convert the X input
+        as a fortran contiguous numpy array if necessary.
+
+        To avoid memory re-allocation it is advised to allocate the
+        initial data in memory directly using that format.
+        """
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
@@ -116,6 +132,9 @@ class Lasso(ElasticNet):
     Notes
     -----
     The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, coef_=None):
@@ -127,13 +146,13 @@ class Lasso(ElasticNet):
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                verbose=False, fit_params=dict()):
-    """
-    Compute Lasso path with coordinate descent
+    """Compute Lasso path with coordinate descent
 
     Parameters
     ----------
     X : numpy array of shape [n_samples,n_features]
-        Training data
+        Training data. Pass directly as fortran contiguous data to avoid
+        unnecessary memory duplication
 
     y : numpy array of shape [n_samples]
         Target values
@@ -159,6 +178,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     Notes
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
     n_samples = X.shape[0]
     if alphas is None:
@@ -187,8 +209,9 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : numpy array of shape [n_samples,n_features]
-        Training data
+    X : numpy array of shape [n_samples, n_features]
+        Training data. Pass directly as fortran contiguous data to avoid
+        unnecessary memory duplication
 
     y : numpy array of shape [n_samples]
         Target values
@@ -249,7 +272,8 @@ class LinearModelCV(LinearModel):
         ----------
 
         X : numpy array of shape [n_samples,n_features]
-            Training data
+            Training data. Pass directly as fortran contiguous data to avoid
+            unnecessary memory duplication
 
         y : numpy array of shape [n_samples]
             Target values
@@ -321,6 +345,9 @@ class LassoCV(LinearModelCV):
     Notes
     -----
     See examples/glm/lasso_path_with_crossvalidation.py for an example.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
 
     path = staticmethod(lasso_path)
@@ -351,6 +378,9 @@ class ElasticNetCV(LinearModelCV):
     Notes
     -----
     See examples/glm/lasso_path_with_crossvalidation.py for an example.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
 
     path = staticmethod(enet_path)

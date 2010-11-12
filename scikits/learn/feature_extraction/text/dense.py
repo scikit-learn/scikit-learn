@@ -2,9 +2,9 @@
 #          Mathieu Blondel
 #
 # License: BSD Style.
-"""Utilities to build feature vectors from text documents"""
+"""Utilities to build dense feature vectors from text documents"""
 
-from collections import defaultdict
+from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
@@ -55,24 +55,47 @@ ENGLISH_STOP_WORDS = set([
 
 
 def strip_accents(s):
-    """Transform accentuated unicode symbols into their simple counterpart"""
-    return ''.join((c for c in unicodedata.normalize('NFD', s)
-                    if unicodedata.category(c) != 'Mn'))
+    """Transform accentuated unicode symbols into their simple counterpart
+
+    Warning: the python-level loop and join operations make this implementation
+    20 times slower than the to_ascii basic normalization.
+    """
+    return u''.join([c for c in unicodedata.normalize('NFKD', s)
+                     if not unicodedata.combining(c)])
+
+
+def to_ascii(s):
+    """Transform accentuated unicode symbols into ascii or nothing
+
+    Warning: this solution is only suited for roman languages that have a direct
+    transliteration to ASCII symbols.
+
+    A better solution would be to use transliteration based on a precomputed
+    unidecode map to be used by translate as explained here:
+
+        http://stackoverflow.com/questions/2854230/
+
+    """
+    nkfd_form = unicodedata.normalize('NFKD', s)
+    only_ascii = nkfd_form.encode('ASCII', 'ignore')
+    return only_ascii
+
 
 def strip_tags(s):
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub("", s)
 
 
-class DefaultPreprocessor(object):
+class RomanPreprocessor(object):
+    """Fast preprocessor suitable for roman languages"""
 
-    def preprocess(self, text):
-        return strip_accents(strip_tags(text.lower()))
+    def preprocess(self, unicode_text):
+        return to_ascii(strip_tags(unicode_text.lower()))
 
     def __repr__(self):
-        return "DefaultPreprocessor()"
+        return "RomanPreprocessor()"
 
 
-DEFAULT_PREPROCESSOR = DefaultPreprocessor()
+DEFAULT_PREPROCESSOR = RomanPreprocessor()
 
 
 class WordNGramAnalyzer(BaseEstimator):
@@ -119,7 +142,7 @@ class WordNGramAnalyzer(BaseEstimator):
                 if n_original_tokens < n:
                     continue
                 for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(" ".join(original_tokens[i: i + n]))
+                    tokens.append(u" ".join(original_tokens[i: i + n]))
 
         # handle stop words
         if self.stop_words is not None:
@@ -186,64 +209,121 @@ class BaseCountVectorizer(BaseEstimator):
     vocabulary: dict, optional
         A dictionary where keys are tokens and values are indices in the
         matrix.
+
         This is useful in order to fix the vocabulary in advance.
+
+    max_df : float in range [0.0, 1.0], optional, 0.5 by default
+        When building the vocabulary ignore terms that have a term frequency
+        high than the given threshold (corpus specific stop words).
+
+        This parameter is ignored if vocabulary is not None.
+
+    max_features : optional, None by default
+        If not None, build a vocabulary that only consider the top
+        max_features ordered by term frequency across the corpus.
+
+        This parameter is ignored if vocabulary is not None.
 
     dtype: type, optional
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, dtype=long):
+    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, max_df=0.5,
+                 max_features=None, dtype=long):
         self.analyzer = analyzer
         self.vocabulary = vocabulary
         self.dtype = dtype
+        self.max_df = max_df
+        self.max_features = max_features
 
-    def _init_matrix(self, shape):
+    def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
         raise NotImplementedError
 
     def _build_vectors_and_vocab(self, raw_documents):
-        vocab = {} # token => idx
-        docs = []
+        """Analyze documents, build vocabulary and vectorize"""
 
+        # result of document conversion to term_count_dict
+        term_counts_per_doc = []
+        term_counts = {}
+
+        # term counts across entire corpus (count each term maximum once per
+        # document)
+        document_counts = {}
+
+        max_df = self.max_df
+        max_features = self.max_features
+
+        # TODO: parallelize the following loop with joblib
         for doc in raw_documents:
-            doc_dict = {} # idx => count
+            term_count_dict = {} # term => count in doc
 
-            for token in self.analyzer.analyze(doc):
-                if not token in vocab:
-                    vocab[token] = len(vocab)
-                idx = vocab[token]
-                doc_dict[idx] = doc_dict.get(idx, 0) + 1
+            for term in self.analyzer.analyze(doc):
+                term_count_dict[term] = term_count_dict.get(term, 0) + 1
+                term_counts[term] = term_counts.get(term, 0) + 1
 
-            docs.append(doc_dict)
+            if max_df is not None:
+                for term in term_count_dict.iterkeys():
+                    document_counts[term] = document_counts.get(term, 0) + 1
+
+            term_counts_per_doc.append(term_count_dict)
+
+        n_doc = len(term_counts_per_doc)
+
+        # filter out stop words: terms that occur in almost all documents
+        stop_words = set()
+        if max_df is not None:
+            max_document_count = max_df * n_doc
+            for t, dc in sorted(document_counts.iteritems(), key=itemgetter(1),
+                                reverse=True):
+                if dc < max_document_count:
+                    break
+                stop_words.add(t)
+
+        # list the terms that should be part of the vocabulary
+        if max_features is not None:
+            # extract the most frequent terms for the vocabulary
+            terms = set()
+            for t, tc in sorted(term_counts.iteritems(), key=itemgetter(1),
+                                reverse=True):
+                if t not in stop_words:
+                    terms.add(t)
+                if len(terms) >= max_features:
+                    break
+        else:
+            terms = set(term_counts.keys())
+            terms -= stop_words
 
         # convert to a document-token matrix
-        matrix = self._init_matrix((len(docs), len(vocab)))
+        vocabulary = dict(((t, i) for i, t in enumerate(terms))) # token => idx
 
-        for i, doc_dict in enumerate(docs):
-            for idx, count in doc_dict.iteritems():
-                matrix[i, idx] = count
+        # the term_counts and document_counts might be useful statistics, are
+        # we really sure want we want to drop them? They take some memory but
+        # can be useful for corpus introspection
 
-        return matrix, vocab
+        matrix = self._term_count_dicts_to_matrix(term_counts_per_doc, vocabulary)
+        return matrix, vocabulary
 
     def _build_vectors(self, raw_documents):
+        """Analyze documents and vectorize using existing vocabulary"""
         # raw_documents is an iterable so we don't know its size in advance
-        vectors = None
 
-        for i, doc in enumerate(raw_documents):
-            vector = self._init_matrix((1, len(self.vocabulary)))
-            for token in self.analyzer.analyze(doc):
-                try:
-                    vector[0, self.vocabulary[token]] += 1
-                except KeyError:
-                    # ignore out-of-vocabulary tokens
-                    pass
+        # result of document conversion to term_count_dict
+        term_counts_per_doc = []
 
-            if vectors is None:
-                vectors = vector
-            else:
-                vstack = sp.vstack if sp.issparse(vector) else np.vstack
-                vectors = vstack((vectors, vector))
+        # TODO: parallelize the following loop with joblib
+        for doc in raw_documents:
+            term_count_dict = {} # term => count in doc
 
-        return vectors
+            for term in self.analyzer.analyze(doc):
+                term_count_dict[term] = term_count_dict.get(term, 0) + 1
+
+            term_counts_per_doc.append(term_count_dict)
+
+        # now that we know the document we can allocate the vectors matrix at
+        # once and fill it with the term counts collected as a temporary list
+        # of dict
+        return self._term_count_dicts_to_matrix(
+            term_counts_per_doc, self.vocabulary)
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents
@@ -326,9 +406,19 @@ class CountVectorizer(BaseCountVectorizer):
         Type of the matrix returned by fit_transform() or transform().
     """
 
+    def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
+        vectors = np.zeros((len(term_count_dicts), len(vocabulary)),
+                           dtype=self.dtype)
 
-    def _init_matrix(self, shape):
-        return np.zeros(shape, dtype=self.dtype)
+        for i, term_count_dict in enumerate(term_count_dicts):
+            for term, count in term_count_dict.iteritems():
+                j = vocabulary.get(term)
+                if j is not None:
+                    vectors[i, j] = count
+            # free memory as we go
+            term_count_dict.clear()
+
+        return vectors
 
 
 class BaseTfidfTransformer(BaseEstimator):

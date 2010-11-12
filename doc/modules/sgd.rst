@@ -138,7 +138,7 @@ Implemented classes are :class:`SGD`.
 
 .. topic:: Examples:
 
- * :ref:`example_sgd_mlcomp_sparse_document_classification_sgd.py`,
+ * :ref:`example_document_classification_20newsgroups.py`
 
 Complexity
 ==========
