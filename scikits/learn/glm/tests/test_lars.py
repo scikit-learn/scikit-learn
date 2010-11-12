@@ -78,6 +78,16 @@ def test_lasso_gives_lstsq_solution():
     assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
 
 
+def test_singular_matrix():
+    """
+    Test when input is a singular matrix
+    """
+    X1 = np.array([[1, 1.], [1., 1.]])
+    y1 = np.array([1, 1])
+    alphas, active, coef_path = lars_path(X1, y1)
+    assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0], [1, 0]])
+
+
 def test_lasso_lars_vs_lasso_cd(verbose=False):
     """
     Test that LassoLars and Lasso using coordinate descent give the
