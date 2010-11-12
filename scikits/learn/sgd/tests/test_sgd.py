@@ -93,13 +93,13 @@ class DenseSGDTestCase(unittest.TestCase):
     def test_set_coef(self):
         """Checks coef_ shape for the warm starts"""
         # Provided coef_ does not match dataset.
-        clf = self.factory(coef_=np.zeros((3,))).fit(X, Y)
+        clf = self.factory(init_coef_=np.zeros((3,))).fit(X, Y)
 
     @raises(ValueError)
     def test_set_intercept(self):
         """Checks intercept_ shape for the warm starts"""
         # Provided intercept_ does not match dataset.
-        clf = self.factory(intercept_=np.zeros((3,))).fit(X, Y)
+        clf = self.factory(init_intercept_=np.zeros((3,))).fit(X, Y)
 
     @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
@@ -117,8 +117,8 @@ class DenseSGDTestCase(unittest.TestCase):
 
     def test_sgd_multiclass_with_init_coef(self):
         """Multi-class test case"""
-        clf = self.factory(alpha=0.01, n_iter=20, coef_=np.zeros((3, 2)),
-                      intercept_=np.zeros(3)).fit(X2, Y2)
+        clf = self.factory(alpha=0.01, n_iter=20, init_coef_=np.zeros((3, 2)),
+                      init_intercept_=np.zeros(3)).fit(X2, Y2)
         assert clf.coef_.shape == (3, 2)
         assert clf.intercept_.shape == (3,)
         pred = clf.predict(T2)
@@ -136,18 +136,18 @@ class DenseSGDTestCase(unittest.TestCase):
     def test_set_coef_multiclass(self):
         """Checks coef_ and intercept_ shape for for multi-class problems"""
         # Provided coef_ does not match dataset
-        clf = self.factory(coef_=np.zeros((2, 2)))
+        clf = self.factory(init_coef_=np.zeros((2, 2)))
         assert_raises(ValueError, clf.fit, X2, Y2)
 
         # Provided coef_ does match dataset
-        clf = self.factory(coef_=np.zeros((3,2))).fit(X2, Y2)
+        clf = self.factory(init_coef_=np.zeros((3,2))).fit(X2, Y2)
 
         # Provided intercept_ does not match dataset
-        clf = self.factory(intercept_=np.zeros((1,)))
+        clf = self.factory(init_intercept_=np.zeros((1,)))
         assert_raises(ValueError, clf.fit, X2, Y2)
 
         # Provided intercept_ does match dataset.
-        clf = self.factory(intercept_=np.zeros((3,))).fit(X2, Y2)
+        clf = self.factory(init_intercept_=np.zeros((3,))).fit(X2, Y2)
 
     def test_sgd_proba(self):
         """Check SGD.predict_proba for log loss only"""

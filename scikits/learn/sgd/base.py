@@ -13,17 +13,15 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
     """Base class for dense and sparse SGD"""
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 rho=0.85, coef_=None, intercept_=None,
+                 rho=0.85, init_coef_=None, init_intercept_=None,
                  fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, n_jobs=1):
         self.loss = loss
         self.penalty = penalty
         self.alpha = alpha
         self.rho = rho
-        self.coef_ = np.asarray(coef_) if coef_ is not None else None
-        self.intercept_ = intercept_
-        if self.intercept_ is not None:
-            self.intercept_ = np.asarray(intercept_)
+        self.init_coef_ = init_coef_
+        self.init_intercept_ = init_intercept_
         self.fit_intercept = fit_intercept
         self.n_iter = int(n_iter)
         if self.n_iter <= 0:

@@ -43,13 +43,12 @@ samples, and an array Y of size [n_samples] holding the target values
 
     >>> from scikits.learn import sgd
     >>> X = [[0., 0.], [1., 1.]]
-    >>> Y = [0, 1]
+    >>> y = [0, 1]
     >>> clf = sgd.SGD(loss="hinge", penalty="l2")
-    >>> clf.fit(X, Y)
-    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
-      n_iter=5, penalty='l2', coef_=array([ 9.9009,  9.9009]), rho=1.0,
-      alpha=0.0001, intercept_=array(-9.9900299301496904))
-
+    >>> clf.fit(X, y)
+    SGD(loss='hinge', init_coef_=None, shuffle=False, verbose=0,
+      fit_intercept=True, n_iter=5, penalty='l2', n_jobs=1, rho=1.0,
+      init_intercept_=None, alpha=0.0001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -78,7 +77,7 @@ To get the signed distance to the hyperplane use `predict_margin`:
 If `loss="log"` you get a probability estimate P(y=C|x) using `predict_proba`, 
 where `C` is the largest class label: 
    
-    >>> clf = sgd.SGD(loss="log").fit(X, Y)
+    >>> clf = sgd.SGD(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
     array([ 0.99999949])
 

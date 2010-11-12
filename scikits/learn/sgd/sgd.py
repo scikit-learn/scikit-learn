@@ -49,10 +49,11 @@ class SGD(BaseSGD):
         The Elastic Net mixing parameter, with 0 < rho <= 1.
         Defaults to 0.85.
 
-    coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+    init_coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes,
+    n_features]
         The initial coeffients to warm-start the optimization.
 
-    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
+    init_intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         The initial intercept to warm-start the optimization.
 
     fit_intercept: bool
@@ -77,7 +78,8 @@ class SGD(BaseSGD):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+    `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes,
+    n_features]
         Weights asigned to the features.
 
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -91,9 +93,9 @@ class SGD(BaseSGD):
     >>> from scikits.learn.sgd import SGD
     >>> clf = SGD()
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, fit_intercept=True,
-      n_iter=5, penalty='l2', coef_=array([ 9.80373,  9.80373]), rho=1.0,
-      alpha=0.0001, intercept_=array(-10.0))
+    SGD(loss='hinge', init_coef_=None, shuffle=False, verbose=0,
+      fit_intercept=True, n_iter=5, penalty='l2', n_jobs=1, rho=1.0,
+      init_intercept_=None, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -130,16 +132,20 @@ class SGD(BaseSGD):
         y = y_new
 
         n_samples, n_features = X.shape[0], X.shape[1]
-        if self.coef_ is None:
-            self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
-        else:
-            if self.coef_.shape != (n_features,):
-                raise ValueError("Provided coef_ does not match dataset. ")
-        if self.intercept_ is None:
-            self.intercept_ = np.zeros(1, dtype=np.float64)
-        else:
-            if self.intercept_.shape != (1,):
-                raise ValueError("Provided intercept_ does not match dataset.")
+        self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
+        self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
+        if self.init_coef_ is not None:
+            init_coef_ = np.asanyarray(self.init_coef_)
+            if init_coef_.shape != (n_features,):
+                raise ValueError("Provided init_coef_ does not match dataset.")
+            self.coef_ = init_coef_
+        if self.init_intercept_ is not None:
+            init_intercept_ = np.asanyarray(self.init_intercept_)
+            if init_intercept_.shape != (1,):
+                raise ValueError("Provided init_intercept_ " \
+                                 "does not match dataset.")
+            else:
+                self.intercept_ = init_intercept_
 
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
@@ -163,34 +169,37 @@ class SGD(BaseSGD):
         """
         n_classes = self.classes.shape[0]
         n_samples, n_features = X.shape[0], X.shape[1]
-        if self.coef_ is None:
-            coef_ = np.zeros((n_classes, n_features),
-                             dtype=np.float64, order="C")
-        else:
-            if self.coef_.shape != (n_classes, n_features):
+        self.coef_ = np.zeros((n_classes, n_features),
+                         dtype=np.float64, order="C")
+        self.intercept_ = np.zeros(n_classes, dtype=np.float64, order="C")
+
+        if self.init_coef_ is not None:
+            init_coef_ = np.asanyarray(self.init_coef_)
+            if init_coef_.shape != (n_classes, n_features):
                 raise ValueError("Provided coef_ does not match dataset. ")
-            coef_ = self.coef_
-
-        if self.intercept_ is None or isinstance(self.intercept_, float):
-            intercept_ = np.zeros(n_classes, dtype=np.float64, order="C")
-        else:
-            if self.intercept_.shape != (n_classes, ):
-                raise ValueError("Provided intercept_ does not match dataset. ")
-            intercept_ = self.intercept_
-
-        self.coef_ = coef_
-        self.intercept_ = intercept_
+            else:
+                self.coef_ = init_coef_
+        if self.init_intercept_ is not None:
+            init_intercept_ = np.asanyarray(self.init_intercept_)
+            if init_intercept_.shape != (n_classes, ):
+                raise ValueError("Provided init_intercept_ " \
+                                 "does not match dataset.")
+            else:
+                self.intercept_ = init_intercept_
 
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                delayed(_train_ova_classifier)(i, c, X, y, self)
+                delayed(_train_ova_classifier)(i, c, X, y, self.coef_[i],
+                                               self.intercept_[i],
+                                               self.loss_function,
+                                               self.penalty_type, self.alpha,
+                                               self.rho, self.n_iter,
+                                               self.fit_intercept,
+                                               self.verbose, self.shuffle)
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
-            coef_[i] = coef
-            intercept_[i] = intercept
-
-        self.coef_ = coef_
-        self.intercept_ = intercept_
+            self.coef_[i] = coef
+            self.intercept_[i] = intercept
 
     def predict_margin(self, X):
         """Predict signed 'distance' to the hyperplane (aka confidence score)
@@ -211,25 +220,15 @@ class SGD(BaseSGD):
         else:
             return scores
 
-    def __reduce__(self):
-        """Handler which is called at pickeling time
 
-        This is important for joblib because otherwise it will crash trying to
-        pickle the external loss function object.
-        """
-        return SGD, (self.loss, self.penalty, self.alpha, self.rho, self.coef_,
-                     self.intercept_, self.fit_intercept, self.n_iter,
-                     self.shuffle, self.verbose, self.n_jobs)
-
-
-def _train_ova_classifier(i, c, X, y, clf):
+def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,
+                          penalty_type, alpha, rho, n_iter, fit_intercept,
+                          verbose, shuffle):
     """Inner loop for One-vs.-All scheme"""
     y_i = np.ones(y.shape, dtype=np.float64) * -1.0
     y_i[y == c] = 1.0
-    coef, intercept = plain_sgd(clf.coef_[i], clf.intercept_[i],
-                                clf.loss_function, clf.penalty_type,
-                                clf.alpha, clf.rho, X, y_i, clf.n_iter,
-                                clf.fit_intercept, clf.verbose,
-                                clf.shuffle)
+    coef, intercept = plain_sgd(coef_, intercept_, loss_function,
+                                penalty_type, alpha, rho,
+                                X, y_i, n_iter, fit_intercept,
+                                verbose, shuffle)
     return (i, coef, intercept)
-
