@@ -81,7 +81,7 @@ class ElasticNet(LinearModel):
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
-                                'to increase the number of interations')
+                          ' to increase the number of interations')
 
         # Store explained variance for __str__
         self.explained_variance_ = self._explained_variance(X, y)
