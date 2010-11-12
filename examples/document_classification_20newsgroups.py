@@ -13,7 +13,7 @@ automatically downloaded and then cached.
 You can adjust the number of categories by giving there name to the dataset
 loader or setting them to None to get the 20 of them.
 
-This examples demo various linear classifiers with different training
+This example demos various linear classifiers with different training
 strategies.
 """
 print __doc__
@@ -24,10 +24,9 @@ print __doc__
 # License: Simplified BSD
 
 from time import time
-import sys
 import os
+
 import numpy as np
-import scipy.sparse as sp
 
 from scikits.learn.datasets import load_files
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
@@ -36,6 +35,7 @@ from scikits.learn.sgd.sparse import SGD
 from scikits.learn import metrics
 
 
+################################################################################
 # Download the data, if not already on disk
 url = "http://people.csail.mit.edu/jrennie/20Newsgroups/20news-18828.tar.gz"
 archive_name = "20news-18828.tar.gz"
@@ -55,6 +55,7 @@ if not os.path.exists(archive_name[:-7]):
     print
 
 
+################################################################################
 # Load some categories from the training set
 categories = [
     'alt.atheism',
@@ -101,8 +102,10 @@ X_test = vectorizer.transform((open(f).read() for f in filenames_test))
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 
+################################################################################
 # Benchmark classifiers
 def benchmark(clf):
+    print 80*'_'
     print "Training: "
     print clf
     t0 = time()
@@ -128,20 +131,10 @@ def benchmark(clf):
     return score, train_time, test_time
 
 # Train Liblinear model
-liblinear_parameters = {
-    'loss': 'l2',
-    'penalty': 'l2',
-    'C': 1000,
-    'dual': False,
-    'eps': 1e-3,
-}
-liblinear_results = benchmark(LinearSVC(**liblinear_parameters))
+liblinear_results = benchmark(LinearSVC(loss='l2', penalty='l2', C=1000,
+                                        dual=False, eps=1e-3))
 
 # Train SGD model
-sgd_parameters = {
-    'alpha': 0.0001,
-    'n_iter': 50,
-}
-sgd_results = benchmark(SGD(**sgd_parameters))
+sgd_results = benchmark(SGD(alpha=.0001, n_iter=50))
 
 
