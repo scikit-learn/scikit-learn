@@ -228,7 +228,7 @@ class BaseCountVectorizer(BaseEstimator):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, max_df=0.5,
+    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary={}, max_df=1.0,
                  max_features=None, dtype=long):
         self.analyzer = analyzer
         self.vocabulary = vocabulary
