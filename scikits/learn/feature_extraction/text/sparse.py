@@ -19,7 +19,7 @@ class CountVectorizer(BaseCountVectorizer):
     """Convert a collection of raw documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
-    a scipy.sparse.dok_matrix (dictionary of keys).
+    scipy.sparse.coo_matrix.
 
     Parameters
     ----------
