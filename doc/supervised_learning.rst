@@ -32,6 +32,7 @@ Supervised learning
     modules/logistic
     modules/ann
     modules/feature_selection
+    modules/gpml
 
 
 

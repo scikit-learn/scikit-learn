@@ -45,5 +45,6 @@ def test_regression_diabetes():
     gpm.thetaL, gpm.thetaU = None, None
     score_func = lambda self, X_test, y_test: self.predict(X_test)[0]
     y_pred = cross_val.cross_val_score(gpm, X, y=y, score_func=score_func, cv=cross_val.LeaveOneOut(y.size), n_jobs=1, verbose=0)
+    Q2 = metrics.explained_variance(y_pred, y)
     
     assert Q2 > 0.
