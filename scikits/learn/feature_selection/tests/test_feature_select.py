@@ -2,19 +2,30 @@
 Todo: cross-check the F-value with stats model
 """
 
-from ..univariate_selection import (f_classif, f_regression,
+from ..univariate_selection import (f_classif, f_regression, f_oneway,
                                     SelectPercentile, SelectKBest,
                                     SelectFpr, SelectFdr, SelectFwe,
                                     GenericUnivariateSelect)
 import numpy as np
 from numpy.testing import assert_array_equal
+from scipy import stats
 from scikits.learn.datasets.samples_generator import test_dataset_classif, \
-            test_dataset_reg
+                                                     test_dataset_reg
 
 seed = np.random.RandomState(0)
 
-################################################################################
+##############################################################################
 # Test the score functions
+
+def test_f_oneway_vs_scipy_stats():
+    """Test that our f_oneway gives the same result as scipy.stats"""
+    X1 = np.random.randn(10, 3)
+    X2 = 1 + np.random.randn(10, 3)
+    f, pv = stats.f_oneway(X1, X2)
+    f2, pv2 = f_oneway(X1, X2)
+    assert np.allclose(f, f2)
+    assert np.allclose(pv, pv2)
+
 
 def test_f_classif():
     """
@@ -52,7 +63,7 @@ def test_f_classif_multi_class():
     on a simple simulated classification problem
     """
     X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
-                                           seed=seed,param=[1,1,1])
+                                           seed=seed, param=[1, 1, 1])
     F, pv = f_classif(X, Y)
     assert(F>0).all()
     assert(pv>0).all()
@@ -70,7 +81,7 @@ def test_select_percentile_classif():
 
     X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter =  SelectPercentile(f_classif, percentile=25)
+    univariate_filter = SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='percentile',
                     param=25).fit(X, Y).transform(X)
@@ -80,9 +91,8 @@ def test_select_percentile_classif():
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
 
-################################################################################
+##############################################################################
 # Test univariate selection in classification settings
-
 
 def test_select_kbest_classif():
     """
@@ -92,7 +102,7 @@ def test_select_kbest_classif():
     """
     X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter =  SelectKBest(f_classif, k=5)
+    univariate_filter = SelectKBest(f_classif, k=5)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='k_best',
                     param=5).fit(X, Y).transform(X)
@@ -111,7 +121,7 @@ def test_select_fpr_classif():
     """
     X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter =  SelectFpr(f_classif, alpha=0.0001)
+    univariate_filter = SelectFpr(f_classif, alpha=0.0001)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='fpr',
                     param=0.0001).fit(X, Y).transform(X)
@@ -130,7 +140,7 @@ def test_select_fdr_classif():
     """
     X, Y = test_dataset_classif(n_samples=50, n_features=20, k=5,
                                            seed=3)
-    univariate_filter =  SelectFdr(f_classif, alpha=0.01)
+    univariate_filter = SelectFdr(f_classif, alpha=0.01)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_classif, mode='fdr',
                     param=0.01).fit(X, Y).transform(X)
@@ -160,7 +170,7 @@ def test_select_fwe_classif():
     assert(np.sum(np.abs(support-gtruth))<2)
 
 
-################################################################################
+##############################################################################
 # Test univariate selection in regression settings
 
 def test_select_percentile_regression():
@@ -171,7 +181,7 @@ def test_select_percentile_regression():
     """
     X, Y = test_dataset_reg(n_samples=50, n_features=20, k=5,
                                            seed=seed)
-    univariate_filter =  SelectPercentile(f_regression, percentile=25)
+    univariate_filter = SelectPercentile(f_regression, percentile=25)
     X_r = univariate_filter.fit(X, Y).transform(X)
     X_r2 = GenericUnivariateSelect(f_regression, mode='percentile',
                     param=25).fit(X, Y).transform(X)

@@ -206,7 +206,8 @@ coefficients.
    >>> from scikits.learn import glm
    >>> clf = glm.LassoLARS(alpha=.1)
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-   LassoLARS(max_features=None, alpha=0.1, normalize=True, fit_intercept=True)
+   LassoLARS(max_features=None, alpha=0.1, normalize=True, verbose=False,
+        fit_intercept=True)
    >>> clf.coef_
    array([ 0.50710678,  0.        ])
 

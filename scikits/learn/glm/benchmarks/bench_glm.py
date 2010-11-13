@@ -14,13 +14,13 @@ if __name__ == '__main__':
 
     import pylab as pl
 
-    n_iter = 20
+    n_iter = 40
 
     time_ridge   = np.empty (n_iter)
     time_ols     = np.empty (n_iter)
     time_lasso   = np.empty (n_iter)
 
-    dimensions = 10 * np.arange(n_iter)
+    dimensions = 500 * np.arange(1, n_iter+1)
 
     for i in range(n_iter):
 

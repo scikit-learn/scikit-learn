@@ -5,6 +5,7 @@ Small collection of auxiliary functions that operate on arrays
 cimport numpy as np
 import  numpy as np
 
+cimport cython
 
 cdef extern from "cblas.h":
    enum CBLAS_ORDER:
@@ -22,47 +23,52 @@ cdef extern from "cblas.h":
        CblasNonUnit=131
        CblasUnit=132
 
-   double cblas_ddot(int N, double *X, int incX, double *Y, int incY)
-
    void cblas_dtrsv(CBLAS_ORDER Order,  CBLAS_UPLO Uplo,
                  CBLAS_TRANSPOSE TransA,  CBLAS_DIAG Diag,
                  int N, double *A, int lda, double *X,
                  int incX)
 
 
+cdef extern from "float.h":
+   cdef double DBL_MAX
+   cdef float FLT_MAX
+
 cdef extern from "src/cholesky_delete.c":
     int c_cholesky_delete "cholesky_delete" (int m, int n, double *L, int go_out)
     
-
-
 ctypedef np.float64_t DOUBLE
-ctypedef np.uint8_t   BOOL
-# cython has no support for np.bool type. See
-# http://www.mail-archive.com/cython-dev@codespeak.net/msg05913.html
 
 
-def dot_over (
-    np.ndarray[DOUBLE, ndim=2] X,
-    np.ndarray[DOUBLE, ndim=1] y,
-    np.ndarray[BOOL, ndim=1] mask,
-    BOOL val,
-    np.ndarray[DOUBLE, ndim=1] out):
-    """
-    Computes the dot product over a mask
-    """
+def min_pos(np.ndarray X):
+   """
+   Find the minimum value of an array over positivie values
 
-    cdef int i, j=0, N, incX, incY, incXY
-    cdef double *X_ptr = <double *> X.data
-    N     = X.shape[1]
-    incX  = X.strides[1] / sizeof (double)
-    incY  = y.strides[0] / sizeof (double)
-    incXY = X.strides[0] / sizeof (double)
+   Returns a huge value if none of the values are positive
+   """
+   if X.dtype.name == 'float32':
+      return _float_min_pos(<float *> X.data, X.size)
+   elif X.dtype.name == 'float64':
+      return _double_min_pos(<double *> X.data, X.size)
+   else:
+      raise ValueError('Unsupported dtype for array X')
 
-    for i in range(X.shape[0]):
-        if mask[i] == val:
-            out[j] = cblas_ddot (N, X_ptr + i*incXY, incX, <double *> y.data, incY)
-            j += 1
 
+cdef float _float_min_pos (float *X, Py_ssize_t size):
+   cdef Py_ssize_t i
+   cdef float min_val = DBL_MAX
+   for i in range(size):
+      if X[i] > 0. and X[i] < min_val:
+         min_val = X[i]
+   return min_val
+
+
+cdef double _double_min_pos (double *X, Py_ssize_t size):
+   cdef Py_ssize_t i
+   cdef np.float64_t min_val = FLT_MAX
+   for i in range(size):
+      if X[i] > 0. and X[i] < min_val:
+         min_val = X[i]
+   return min_val
 
 def solve_triangular (
     np.ndarray[DOUBLE, ndim=2] X,

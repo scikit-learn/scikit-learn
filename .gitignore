@@ -15,3 +15,5 @@ scikits.learn.egg-info/
 .coverage
 tags
 covtype.data.gz
+20news-18828/
+20news-18828.tar.gz

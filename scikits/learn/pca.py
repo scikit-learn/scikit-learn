@@ -7,6 +7,7 @@ from scipy import linalg
 from .base import BaseEstimator
 from .utils.extmath import fast_logdet
 
+
 def _assess_dimension_(spect, rk, n_samples, dim):
     """
     Compute the likelihood of a rank rk dataset
@@ -66,6 +67,7 @@ def _assess_dimension_(spect, rk, n_samples, dim):
 
     return ll
 
+
 def _infer_dimension_(spect, n, p):
     """
     This method infers the dimension of a dataset of shape (n,p)
@@ -78,7 +80,7 @@ def _infer_dimension_(spect, n, p):
     return ll.argmax()
 
 
-##############################################################################
+################################################################################
 class PCA(BaseEstimator):
     """Principal component analysis (PCA)
 
@@ -164,7 +166,7 @@ class PCA(BaseEstimator):
         return Xr
 
 
-##############################################################################
+################################################################################
 class ProbabilisticPCA(PCA):
     """ Additional layer on top of PCA that add a probabilistic evaluation
     """
@@ -187,9 +189,7 @@ class ProbabilisticPCA(PCA):
         if self.dim <= self.n_comp:
             delta = np.zeros(self.dim)
         elif homoscedastic:
-            #delta = (Xr**2).sum()/(n_samples*(self.dim-self.n_comp)) *\
-            #        np.ones(self.dim)
-            delta = (Xr**2).sum() / (n_samples * self.dim) * np.ones(self.dim)
+            delta = (Xr**2).sum()/(n_samples*(self.dim)) * np.ones(self.dim)
         else:
             delta = (Xr**2).mean(0) / (self.dim-self.n_comp)
         self.covariance_ = np.diag(delta)

@@ -106,7 +106,7 @@
 
    This documentation is for the development version,
    documentation for the stable version can be found `here
-   <http://scikit-learn.sourceforge.net/old_doc/>`__
+   <http://scikit-learn.sourceforge.net/0.5/>`__
 
 .. include:: big_toc_css.rst
 

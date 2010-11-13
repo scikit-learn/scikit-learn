@@ -50,6 +50,14 @@ You can download a windows installer from `downloads
 <https://sourceforge.net/projects/scikit-learn/files/>`_
 in the project's web page.
 
+.. warning::
+
+   As of python(x,y) 2.6.5.3, python(x,y) users should use `this
+   package <http://sourceforge.net/projects/scikit-learn/files/scikits.learn-0.5-numpy-1.3.win32-py2.6.exe/download>`_
+   instead, the reason being that python(x, y) ships an old version of
+   numpy. This problem will dissapear when they upgrade to numpy 1.4
+   or newer.
+
 
 From Source
 -----------
@@ -87,6 +95,21 @@ using the following commands with root privileges::
       apt-get install python-scikits-learn
 
 
+Enthought python distribution
+-----------------------------
+
+The `Enthought Python Distribution
+<http://www.enthought.com/products/epd.php>`_ already ships the latest
+version.
+
+
+Macports
+--------
+
+The macport's package is named py26-scikits-learn and can be installed
+by typing the following command::
+
+    sudo port install py26-scikits-learn
 
 .. _install_bleeding_edge:
 

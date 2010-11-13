@@ -6,7 +6,7 @@ Stochastic Gradient Descent
 
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient approach 
 to discriminative learning of linear classifiers under convex loss functions 
-such as Support Vector Machines and Logistic Regression. 
+such as `Support Vector Machines <http://en.wikipedia.org/wiki/Support_vector_machine>`_ and `Logistic Regression <http://en.wikipedia.org/wiki/Logistic_regression>`_. 
 Even though SGD has been around in the machine learning community for a long time, 
 it has received a considerable amount of attention just recently in the 
 context of large-scale learning. 
@@ -43,13 +43,11 @@ samples, and an array Y of size [n_samples] holding the target values
 
     >>> from scikits.learn import sgd
     >>> X = [[0., 0.], [1., 1.]]
-    >>> Y = [0, 1]
+    >>> y = [0, 1]
     >>> clf = sgd.SGD(loss="hinge", penalty="l2")
-    >>> clf.fit(X, Y)
-    SGD(loss='hinge', n_jobs=-1, shuffle=False, verbose=0, fit_intercept=True,
-      n_iter=5, penalty='l2', coef_=array([ 9.9009,  9.9009]), rho=1.0,
-      alpha=0.0001, intercept_=array(-9.9900299301496904))
-
+    >>> clf.fit(X, y)
+    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
+      fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -78,7 +76,7 @@ To get the signed distance to the hyperplane use `predict_margin`:
 If `loss="log"` you get a probability estimate P(y=C|x) using `predict_proba`, 
 where `C` is the largest class label: 
    
-    >>> clf = sgd.SGD(loss="log").fit(X, Y)
+    >>> clf = sgd.SGD(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
     array([ 0.99999949])
 
@@ -106,11 +104,22 @@ the L1 penalty in the presence of highly correlated attributes. The parameter `r
 has to be specified by the user. 
 
 :class:`SGD` supports multi-class classification by combining multiple 
-binary classifiers in a one-against-all (OVA) scheme.
+binary classifiers in a "one versus all" (OVA) scheme. For each of the `K` classes, 
+a binary classifier is learned that discriminates between that and all other `K-1`
+classes. At testing time, we compute the confidence score (i.e. the signed distances 
+to the hyperplane) for each classifier and choose the class with the highest 
+confidence. The Figure below illustrates the OVA approach on the iris dataset. 
+The dashed lines represent the three OVA classifiers; 
+the background color shows the decision surface induced by the three classifiers. 
 
 .. figure:: ../auto_examples/sgd/images/plot_iris.png
    :target: ../auto_examples/sgd/plot_iris.html
    :align: center
+   :scale: 75
+
+In the case of multi-class classification `coef_` is a two-dimensionaly array of shape
+[n_classes, n_features] and `intercept_` is a one dimensional array of shape [n_classes]. The i-th row of `coef_` holds the weight vector of the OVA classifier for the i-th 
+class; classes are indexed in ascending order (see member `classes`). 
 
 .. topic:: Examples:
 
@@ -138,7 +147,7 @@ Implemented classes are :class:`SGD`.
 
 .. topic:: Examples:
 
- * :ref:`example_sgd_mlcomp_sparse_document_classification_sgd.py`,
+ * :ref:`example_document_classification_20newsgroups.py`
 
 Complexity
 ==========
@@ -247,8 +256,6 @@ where :math:`\eta` is the learning rate which controls the step-size
 in the parameter space. 
 The intercept :math:`b` is updated similarly but without regularization.
 
-.. TODO multiclass case ?/
-
 The model parameters can be accessed through the members coef\_ and intercept\_:
 
      - Member coef\_ holds the weights :math:`w`
@@ -277,18 +284,14 @@ In the case of sparse feature vectors, the intercept is updated with a
 smaller learning rate (multiplied by 0.01) to account for the fact that 
 it is updated more frequently. We adopted the learning rate schedule from 
 Shalev-Shwartz et al. 2007. 
-
-For L1 regularization (and the Elastic Net) we use the truncated gradient
-algorithm proposed by Tsuruoka et al. 2009. 
-
-For multi-class classification, a One-against-All scheme is used. 
-
+For multi-class classification, a "one versus all" approach is used. 
+We use the truncated gradient algorithm proposed by Tsuruoka et al. 2009 
+for L1 regularization (and the Elastic Net). 
 The code is written in Cython.
 
 .. topic:: References:
 
- * `"Stochastic Gradient Descent" <leon.bottou.org/projects/sgd>`_
-    L. Bottou - Website, 2010
+ * `"Stochastic Gradient Descent" <http://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
  * `"Pegasos: Primal estimated sub-gradient solver for svm" 
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_

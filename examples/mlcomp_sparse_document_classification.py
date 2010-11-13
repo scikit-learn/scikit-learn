@@ -46,7 +46,7 @@ import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
-from scikits.learn.svm.sparse import LinearSVC
+from scikits.learn.sgd.sparse import SGD
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
 
@@ -70,17 +70,17 @@ print "n_samples: %d, n_features: %d" % X_train.shape
 assert sp.issparse(X_train)
 y_train = news_train.target
 
-print "Training a linear SVM (hinge loss and L2 regularizer)..."
+print "Training a linear classifier..."
 parameters = {
-    'loss': 'l2',
+    'loss': 'hinge',
     'penalty': 'l2',
-    'C': 10,
-    'dual': False,
-    'eps': 1e-4,
+    'n_iter': 50,
+    'alpha': 0.00001,
+    'fit_intercept': True,
 }
 print "parameters:", parameters
 t0 = time()
-clf = LinearSVC(**parameters).fit(X_train, y_train)
+clf = SGD(**parameters).fit(X_train, y_train)
 print "done in %fs" % (time() - t0)
 print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
 

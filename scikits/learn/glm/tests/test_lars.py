@@ -8,10 +8,10 @@ from ..coordinate_descent import Lasso
 
 from scikits.learn import datasets
 
-n, m = 10, 10
-np.random.seed (0)
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
+
+# TODO: use another dataset that has multiple drops
 
 
 def test_simple():
@@ -78,23 +78,28 @@ def test_lasso_gives_lstsq_solution():
     assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
 
 
+def test_singular_matrix():
+    """
+    Test when input is a singular matrix
+    """
+    X1 = np.array([[1, 1.], [1., 1.]])
+    y1 = np.array([1, 1])
+    alphas, active, coef_path = lars_path(X1, y1)
+    assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0], [1, 0]])
+
+
 def test_lasso_lars_vs_lasso_cd(verbose=False):
     """
     Test that LassoLars and Lasso using coordinate descent give the
     same results
     """
-    lasso_lars = LassoLARS(alpha=0.1, normalize=False)
-    lasso = Lasso(alpha=0.1, fit_intercept=False)
-    for alpha in [0.1, 0.01, 0.004]:
-        lasso_lars.alpha = alpha
-        lasso_lars.fit(X, y)
-        lasso.alpha = alpha
-        lasso.fit(X, y, maxit=5000, tol=1e-13)
-
-        # make sure results are the same than with Lasso Coordinate descent
-        error = np.linalg.norm(lasso_lars.coef_ - lasso.coef_)
-        if verbose:
-            print 'Error : ', error
-        assert error < 1e-5
+    alphas, _, lasso_path = lars_path(X, y, method='lasso')
+    alphas /= X.shape[0]
+    lasso_cd = Lasso(fit_intercept=False)
+    for (c, a) in zip(lasso_path.T, alphas):
+        lasso_cd.alpha = a
+        lasso_cd.fit(X, y, tol=1e-8)
+        error = np.linalg.norm(c - lasso_cd.coef_)
+        assert error < 0.01
 
 

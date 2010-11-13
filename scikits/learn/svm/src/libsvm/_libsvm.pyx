@@ -1,18 +1,18 @@
 """
-Binding for libsvm[1]
----------------------
-We do not use the binding that ships with libsvm because we need to
-access svm_model.sv_coeff (and other fields), but libsvm does not
-provide an accessor. Our solution is to export svm_model and access it
-manually, this is done un function see svm_train_wrap.
+Binding for libsvm_skl
+----------------------
+
+These are the bindings for libsvm_skl, which is a fork o libsvm[1]
+that adds to libsvm some capabilities, like index of support vectors
+and efficient representation of dense matrices.
+
+These are low-level routines, but can be used for flexibility or
+performance reasons. See scikits.learn.svm for a higher-level API.
 
 Low-level memory management is done in libsvm_helper.c. If we happen
 to run out of memory a MemoryError will be raised. In practice this is
 not very helpful since hight changes are malloc fails inside svm.cpp,
 where no sort of memory checks are done.
-
-These are low-level routines, not meant to be used directly. See
-scikits.learn.svm for a higher-level API.
 
 [1] http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 
@@ -43,6 +43,7 @@ cdef extern from "svm.h":
     cdef struct svm_problem
     char *svm_check_parameter(svm_problem *, svm_parameter *)
     svm_model *svm_train(svm_problem *, svm_parameter *)
+    void svm_free_and_destroy_model(svm_model** model_ptr_ptr)    
 
 
 cdef extern from "libsvm_helper.c":
@@ -64,7 +65,6 @@ cdef extern from "libsvm_helper.c":
     int copy_predict (char *, svm_model *, np.npy_intp *, char *)
     int copy_predict_proba (char *, svm_model *, np.npy_intp *, char *)
     int copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int)
-    np.npy_intp get_nonzero_SV ( svm_model *)
     void copy_nSV     (char *, svm_model *)
     void copy_label   (char *, svm_model *)
     void copy_probA   (char *, svm_model *, np.npy_intp *)
@@ -74,7 +74,6 @@ cdef extern from "libsvm_helper.c":
     int  free_problem   (svm_problem *)
     int  free_model     (svm_model *)
     int  free_param     (svm_parameter *)
-    void svm_free_and_destroy_model(svm_model** model_ptr_ptr)    
     void set_verbosity(int)
 
 ################################################################################
@@ -84,11 +83,8 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                   np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
                   int svm_type, int kernel_type, int degree, double gamma,
                   double coef0, double eps, double C, 
-                  np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-                  np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
                   np.ndarray[np.int32_t,   ndim=1, mode='c'] weight_label,
                   np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
-                  np.ndarray[np.int32_t,   ndim=1, mode='c'] nclass_SV,
                   double nu, double cache_size, double p,
                   int shrinking, int probability):
     """
@@ -122,30 +118,45 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     eps : float
         Stopping criteria.
 
+    C : float
+        C parameter in C-Support Vector Classification
+
     Return
     ------
-    support : index of support vectors
-    support_vectors : support vectors
+    support : array
+        index of support vectors
+
+    support_vectors : array
+        support vectors (equivalent to X[support]). Will return an
+        empty array in the case of precomputed kernel.
+
+    n_class_SV : array
+        number of support vectors in each class.
+
+    sv_coef : array
+        coefficients of support vectors in decision function.
+
+    intercept : array
+        intercept in decision function
+
     label : labels for different classes (only relevant in classification).
     probA : probability estimates
     probB : probability estimates
-
-    TODO: put default values when possible
     """
 
     cdef svm_parameter *param
     cdef svm_problem *problem
     cdef svm_model *model
     cdef char *error_msg
+    cdef np.npy_intp SV_len    
+    cdef np.npy_intp nr
 
     # set libsvm problem
     problem = set_problem(X.data, Y.data, X.shape, kernel_type)
-
-    # set parameters
-    param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu, cache_size,
-                          C, eps, p, shrinking, probability,
-                          <int> weight.shape[0], weight_label.data, weight.data)
+    param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
+                          nu, cache_size, C, eps, p, shrinking,
+                          probability, <int> weight.shape[0],
+                          weight_label.data, weight.data)
 
     # check parameters
     if (param == NULL or problem == NULL):
@@ -156,23 +167,23 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         free_param(param)
         raise ValueError(error_msg)
 
-    # call svm_train, this does the real work
+    # this does the real work
     model = svm_train(problem, param)
 
     # from here until the end, we just copy the data returned by
     # svm_train
-    cdef np.npy_intp SV_len = get_l(model)
-    cdef np.npy_intp nr     = get_nr(model)
+    SV_len  = get_l(model)
+    n_class = get_nr(model)
 
     # copy model.sv_coef
-    # we create a new array instead of resizing, otherwise
-    # it would not erase previous information
-    sv_coef.resize ((nr-1, SV_len), refcheck=False)
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
+    sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
     copy_sv_coef (sv_coef.data, model)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
-    intercept.resize (nr*(nr-1)/2, refcheck=False)
+    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] intercept
+    intercept = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
     copy_intercept (intercept.data, model, intercept.shape)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] support
@@ -189,12 +200,13 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     # copy model.nSV
     # TODO: do only in classification
-    nclass_SV.resize(nr, refcheck=False)
-    copy_nSV(nclass_SV.data, model)
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_class_SV
+    n_class_SV = np.empty(n_class, dtype=np.int32)
+    copy_nSV(n_class_SV.data, model)
 
     # copy label
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
-    label = np.empty((nr), dtype=np.int32)
+    label = np.empty((n_class), dtype=np.int32)
     copy_label(label.data, model)
 
     # copy probabilities
@@ -202,16 +214,18 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
     if probability != 0:
         # this is only valid for SVC
-        probA = np.empty(nr*(nr-1)/2, dtype=np.float64)
-        probB = np.empty(nr*(nr-1)/2, dtype=np.float64)
+        probA = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+        probB = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
         copy_probA(probA.data, model, probA.shape)
         copy_probB(probB.data, model, probB.shape)
 
+    # memory deallocation
     svm_free_and_destroy_model(&model)
     free_problem(problem)
     free_param(param)
 
-    return support, support_vectors, label, probA, probB
+    return support, support_vectors, n_class_SV, sv_coef, intercept, label, \
+           probA, probB
 
 
 def libsvm_predict (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
@@ -332,8 +346,8 @@ def libsvm_predict_proba (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                       sv_coef.data, intercept.data, nSV.data,
                       label.data, probA.data, probB.data)
 
-    cdef np.npy_intp nr = get_nr(model)    
-    dec_values = np.empty((T.shape[0], nr), dtype=np.float64)
+    cdef np.npy_intp n_class = get_nr(model)    
+    dec_values = np.empty((T.shape[0], n_class), dtype=np.float64)
     if copy_predict_proba(T.data, model, T.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
     # free model and param
@@ -367,7 +381,7 @@ def libsvm_decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter *param
     cdef svm_model *model
-    cdef np.npy_intp nr
+    cdef np.npy_intp n_class
 
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu, cache_size, C, eps, p, shrinking,
@@ -380,13 +394,13 @@ def libsvm_decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                       label.data, probA.data, probB.data)
 
     if svm_type > 1:
-        nr = 1
+        n_class = 1
     else:
-        nr = get_nr(model)
-        nr = nr * (nr - 1) / 2
+        n_class = get_nr(model)
+        n_class = n_class * (n_class - 1) / 2
     
-    dec_values = np.empty((T.shape[0], nr), dtype=np.float64)
-    if copy_predict_values(T.data, model, T.shape, dec_values.data, nr) < 0:
+    dec_values = np.empty((T.shape[0], n_class), dtype=np.float64)
+    if copy_predict_values(T.data, model, T.shape, dec_values.data, n_class) < 0:
         raise MemoryError("We've run out of of memory")
     # free model and param
     free_model(model)

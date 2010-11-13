@@ -84,7 +84,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n=1):
 
     Parameters
     ----------
-    mean : array_like, shape (n_dim,)
+    mean : array_like, shape (n_features,)
         Mean of the distribution.
     covars : array_like
         Covariance of the distribution.  The shape depends on `cvtype`:
@@ -99,7 +99,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n=1):
 
     Returns
     -------
-    obs : array, shape (n, n_dim)
+    obs : array, shape (n, n_features)
         Randomly generated sample
     """
     ndim = len(mean)
@@ -133,21 +133,21 @@ class GMM(BaseEstimator):
     cvtype : string (read-only)
         String describing the type of covariance parameters used by
         the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-    n_dim : int
+    n_features : int
         Dimensionality of the Gaussians.
     n_states : int (read-only)
         Number of mixture components.
     weights : array, shape (`n_states`,)
         Mixing weights for each mixture component.
-    means : array, shape (`n_states`, `n_dim`)
+    means : array, shape (`n_states`, `n_features`)
         Mean parameters for each mixture component.
     covars : array
         Covariance parameters for each mixture component.  The shape
         depends on `cvtype`:
-            (`n_states`,)                   if 'spherical',
-            (`n_dim`, `n_dim`)              if 'tied',
-            (`n_states`, `n_dim`)           if 'diag',
-            (`n_states`, `n_dim`, `n_dim`)  if 'full'
+            (`n_states`,)                             if 'spherical',
+            (`n_features`, `n_features`)              if 'tied',
+            (`n_states`, `n_features`)                if 'diag',
+            (`n_states`, `n_features`, `n_features`)  if 'full'
 
     Methods
     -------
@@ -230,6 +230,8 @@ class GMM(BaseEstimator):
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
 
+        self.weights = np.ones(self._n_states) / self._n_states
+
     # Read-only properties.
     @property
     def cvtype(self):
@@ -253,11 +255,11 @@ class GMM(BaseEstimator):
         elif self.cvtype == 'tied':
             return [self._covars] * self._n_states
         elif self.cvtype == 'spherical':
-            return [np.eye(self.n_dim) * f for f in self._covars]
+            return [np.eye(self.n_features) * f for f in self._covars]
 
     def _set_covars(self, covars):
         covars = np.asanyarray(covars)
-        _validate_covars(covars, self._cvtype, self._n_states, self.n_dim)
+        _validate_covars(covars, self._cvtype, self._n_states, self.n_features)
         self._covars = covars
 
     covars = property(_get_covars, _set_covars)
@@ -268,11 +270,11 @@ class GMM(BaseEstimator):
 
     def _set_means(self, means):
         means = np.asarray(means)
-        if hasattr(self, 'n_dim') and \
-               means.shape != (self._n_states, self.n_dim):
-            raise ValueError('means must have shape (n_states, n_dim)')
+        if hasattr(self, 'n_features') and \
+               means.shape != (self._n_states, self.n_features):
+            raise ValueError('means must have shape (n_states, n_features)')
         self._means = means.copy()
-        self.n_dim = self._means.shape[1]
+        self.n_features = self._means.shape[1]
 
     means = property(_get_means, _set_means)
 
@@ -299,9 +301,9 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_dim)
-            List of n_dim-dimensional data points.  Each row corresponds to a
-            single data point.
+        obs : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
 
         Returns
         -------
@@ -323,9 +325,9 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_dim)
-            List of n_dim-dimensional data points.  Each row corresponds to a
-            single data point.
+        obs : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
 
         Returns
         -------
@@ -340,9 +342,9 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_dim)
-            List of n_dim-dimensional data points.  Each row corresponds to a
-            single data point.
+        obs : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
 
         Returns
         -------
@@ -368,6 +370,23 @@ class GMM(BaseEstimator):
         logprob, components = self.decode(X)
         return components
 
+    def predict_proba(self, X):
+        """Predict posterior probability of data under each Gaussian
+        in the model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_states]
+            Returns the probability of the sample for each Gaussian
+            (state) in the model.
+        """
+        logprob, posteriors = self.eval(X)
+        return posteriors
+
     def rvs(self, n=1):
         """Generate random samples from the model.
 
@@ -378,13 +397,13 @@ class GMM(BaseEstimator):
 
         Returns
         -------
-        obs : array_like, shape (n, n_dim)
+        obs : array_like, shape (n, n_features)
             List of samples
         """
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
-        obs = np.empty((n, self.n_dim))
+        obs = np.empty((n, self.n_features))
         for x in xrange(n):
             rand = np.random.rand()
             c = (weight_cdf > rand).argmax()
@@ -408,9 +427,9 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        X : array_like, shape (n, n_dim)
-            List of n_dim-dimensional data points.  Each row corresponds to a
-            single data point.
+        X : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
         n_iter : int, optional
             Number of EM iterations to perform.
         min_covar : float, optional
@@ -432,17 +451,17 @@ class GMM(BaseEstimator):
 
         X = np.asanyarray(X)
 
-        if hasattr(self, 'n_dim') and self.n_dim != X.shape[1]:
+        if hasattr(self, 'n_features') and self.n_features != X.shape[1]:
             raise ValueError('Unexpected number of dimensions, got %s but '
-                             'expected %s' % (X.shape[1], self.n_dim))
+                             'expected %s' % (X.shape[1], self.n_features))
 
-        self.n_dim = X.shape[1]
+        self.n_features = X.shape[1]
 
         if 'm' in init_params:
             self._means = cluster.KMeans(
                 k=self._n_states).fit(X).cluster_centers_
         elif not hasattr(self, 'means'):
-                self._means = np.zeros((self.n_states, self.n_dim))
+                self._means = np.zeros((self.n_states, self.n_features))
 
         if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self._n_states, self._n_states)
@@ -455,7 +474,7 @@ class GMM(BaseEstimator):
                 cv, self._cvtype, self._n_states)
         elif not hasattr(self, 'covars'):
                 self.covars = _distribute_covar_matrix_to_match_cvtype(
-                    np.eye(self.n_dim), cvtype, n_states)
+                    np.eye(self.n_features), self.cvtype, self.n_states)
 
         # EM algorithm
         logprob = []
@@ -544,8 +563,8 @@ def _lmvnpdffull(obs, means, covars):
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
         cv_chol = linalg.cholesky(cv, lower=True)
         cv_det  = np.prod(np.diagonal(cv_chol))**2
-        cv_sol  = solve_triangular(cv_chol, (obs - mu).T, lower=True)
-        log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=0) + \
+        cv_sol  = solve_triangular(cv_chol, (obs - mu).T, lower=True).T
+        log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=1) + \
                            ndim * np.log(2 * np.pi) + np.log(cv_det))
 
     return log_prob
@@ -618,13 +637,13 @@ def _covar_mstep_spherical(*args):
 def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     # Eq. 12 from K. Murphy, "Fitting a Conditional Linear Gaussian
     # Distribution"
-    cv = np.empty((gmm._n_states, gmm.n_dim, gmm.n_dim))
+    cv = np.empty((gmm._n_states, gmm.n_features, gmm.n_features))
     for c in xrange(gmm._n_states):
         post = posteriors[:,c]
         avg_cv = np.dot(post * obs.T, obs) / post.sum()
         mu = gmm._means[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu)
-                 + min_covar * np.eye(gmm.n_dim))
+                 + min_covar * np.eye(gmm.n_features))
     return cv
 
 
@@ -637,7 +656,7 @@ def _covar_mstep_tied(gmm, obs, posteriors, avg_obs, norm, min_covar):
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
     avg_obs2 = np.dot(obs.T, obs)
     avg_means2 = np.dot(gmm._means.T, gmm._means)
-    return (avg_obs2 - avg_means2 + min_covar * np.eye(gmm.n_dim))
+    return (avg_obs2 - avg_means2 + min_covar * np.eye(gmm.n_features))
 
 
 def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
@@ -646,13 +665,13 @@ def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
     for c in xrange(gmm._n_states):
         mu = gmm._means[c]
         #cv = np.dot(mu.T, mu)
-        avg_obs2 = np.zeros((gmm.n_dim, gmm.n_dim))
+        avg_obs2 = np.zeros((gmm.n_features, gmm.n_features))
         for t,o in enumerate(obs):
             avg_obs2 += posteriors[t,c] * np.outer(o, o)
         cv = (avg_obs2 / w[c]
               - 2 * np.outer(avg_obs[c] / w[c], mu)
               + np.outer(mu, mu)
-              + min_covar * np.eye(gmm.n_dim))
+              + min_covar * np.eye(gmm.n_features))
         if gmm.cvtype == 'spherical':
             covars[c] = np.diag(cv).mean()
         elif gmm.cvtype == 'diag':
