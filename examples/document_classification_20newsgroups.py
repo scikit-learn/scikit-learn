@@ -124,11 +124,12 @@ t0 = time()
 X_test = vectorizer.transform((open(f).read() for f in filenames_test))
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
+print
 
 ################################################################################
 # Benchmark classifiers
 def benchmark(clf):
-    print 80*'_'
+    print 80 * '_'
     print "Training: "
     print clf
     t0 = time()
