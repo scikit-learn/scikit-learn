@@ -22,7 +22,8 @@ class Bunch(dict):
         self.__dict__ = self
 
 
-def load_files(container_path, description=None, categories=None):
+def load_files(container_path, description=None, categories=None, shuffle=True,
+               rng=42):
     """Load files with categories as subfolder names
 
     Individual samples are assumed to be files stored a two levels folder
@@ -67,6 +68,12 @@ def load_files(container_path, description=None, categories=None):
       if None (default), load all the categories.
       if not Non, list of category names to load (other categories ignored)
 
+    shuffle : True by default
+      whether or not to shuffle the data: might be important for
+
+    rng : a numpy random number generator or a seed integer, 42 by default
+      used to shuffle the dataset
+
     Returns
     -------
 
@@ -96,9 +103,21 @@ def load_files(container_path, description=None, categories=None):
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
-    return Bunch(filenames=np.array(filenames),
+    # convert as array for fancy indexing
+    filenames = np.array(filenames)
+    target = np.array(target)
+
+    if shuffle:
+        if isinstance(rng, int):
+            rng = np.random.RandomState(rng)
+        indices = np.arange(filenames.shape[0])
+        rng.shuffle(indices)
+        filenames = filenames[indices]
+        target = target[indices]
+
+    return Bunch(filenames=filenames,
                  target_names=target_names,
-                 target=np.array(target),
+                 target=target,
                  DESCR=description)
 
 

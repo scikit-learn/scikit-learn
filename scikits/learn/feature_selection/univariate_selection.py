@@ -14,6 +14,9 @@ from ..base import BaseEstimator
 # Scoring functions
 ######################################################################
 
+# The following function is a rewriting of scipy.stats.f_oneway
+# Contrary to the scipy.stats.f_oneway implementation is does not
+# copy the data while keeping the inputs unchanged.
 def f_oneway(*args):
     """
     Performs a 1-way ANOVA.

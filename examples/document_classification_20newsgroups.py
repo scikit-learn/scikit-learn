@@ -92,22 +92,16 @@ categories = [
 print "Loading 20 newsgroups dataset for categories:"
 print categories
 
-data = load_files('20news-18828', categories=categories)
+data = load_files('20news-18828', categories=categories, shuffle=True, rng=42)
 print "%d documents" % len(data.filenames)
 print "%d categories" % len(data.target_names)
 print
 
-# shuffle the ordering and split a training set and a test set
+# split a training set and a test set
 filenames = data.filenames
 y = data.target
-n = y.shape[0]
-indices = np.arange(n)
-np.random.seed(42)
-np.random.shuffle(indices)
 
-filenames = filenames[indices]
-y = y[indices]
-
+n = filenames.shape[0]
 filenames_train, filenames_test = filenames[:-n/2], filenames[-n/2:]
 y_train, y_test = y[:-n/2], y[-n/2:]
 
