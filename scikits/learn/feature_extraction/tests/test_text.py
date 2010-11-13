@@ -246,11 +246,9 @@ def test_dense_vectorizer_pipeline_grid_selection():
                          ('svc', DenseLinearSVC())])
 
     parameters = {
-        'vect__analyzer': (WordNGramAnalyzer(min_n=1, max_n=1),
-                           WordNGramAnalyzer(min_n=1, max_n=2)),
+        'vect__analyzer__max_n': (1, 2),
         'svc__loss'  : ('l1', 'l2')
     }
-
 
     # find the best parameters for both the feature extraction and the
     # classifier
