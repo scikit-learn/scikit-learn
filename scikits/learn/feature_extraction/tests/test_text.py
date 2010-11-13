@@ -228,6 +228,28 @@ def test_vectorizer():
         # return the same results
         assert_array_equal(res_dense[i], res_sparse[i])
 
+def test_vectorizer_max_features():
+    vec_factories = (
+        CountVectorizer,
+        Vectorizer,
+        SparseCountVectorizer,
+        SparseVectorizer,
+    )
+
+    expected_vocabulary = {
+        'celeri': 0,
+        'burger': 1,
+        'beer': 2,
+        'salad': 3,
+        'pizza': 4,
+    }
+
+    for vec_factory in vec_factories:
+        # test bounded number of extracted features
+        vectorizer = vec_factory(max_df=0.6, max_features=5)
+        vectorizer.fit(ALL_FOOD_DOCS)
+        assert_equals(vectorizer.vocabulary, expected_vocabulary)
+
 
 def test_dense_vectorizer_pipeline_grid_selection():
     # raw documents

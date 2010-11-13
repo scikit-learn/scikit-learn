@@ -577,8 +577,12 @@ class Vectorizer(BaseVectorizer):
 
     def __init__(self,
                  analyzer=DEFAULT_ANALYZER,
+                 max_df=1.0,
+                 max_features=None,
                  use_tf=True,
                  use_idf=True):
-        self.tc = CountVectorizer(analyzer, dtype=np.float64)
+        self.tc = CountVectorizer(analyzer, max_df=max_df,
+                                  max_features=max_features,
+                                  dtype=np.float64)
         self.tfidf = TfidfTransformer(use_tf, use_idf)
 
