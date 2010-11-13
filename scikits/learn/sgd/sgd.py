@@ -49,13 +49,6 @@ class SGD(BaseSGD):
         The Elastic Net mixing parameter, with 0 < rho <= 1.
         Defaults to 0.85.
 
-    init_coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes,
-    n_features]
-        The initial coeffients to warm-start the optimization.
-
-    init_intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
-        The initial intercept to warm-start the optimization.
-
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
@@ -93,9 +86,8 @@ class SGD(BaseSGD):
     >>> from scikits.learn.sgd import SGD
     >>> clf = SGD()
     >>> clf.fit(X, Y)
-    SGD(loss='hinge', init_coef_=None, shuffle=False, verbose=0,
-      fit_intercept=True, n_iter=5, penalty='l2', n_jobs=1, rho=1.0,
-      init_intercept_=None, alpha=0.0001)
+    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
+      fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -105,8 +97,25 @@ class SGD(BaseSGD):
 
     """
 
-    def fit(self, X, y, **params):
-        """Fit current model with regularized Stochastic Gradient Descent"""
+    def fit(self, X, y, coef_init=None, intercept_init=None, **params):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples,n_features]
+            Training data
+        y : numpy array of shape [n_samples]
+            Target values
+        coef_init : array, shape = [n_features] if n_classes == 2 else [n_classes,
+        n_features]
+            The initial coeffients to warm-start the optimization.
+        intercept_init : array, shape = [1] if n_classes == 2 else [n_classes]
+            The initial intercept to warm-start the optimization.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
@@ -115,16 +124,16 @@ class SGD(BaseSGD):
         classes = np.unique(y)
         self.classes = classes
         if classes.shape[0] > 2:
-            self._fit_multiclass(X, y)
+            self._fit_multiclass(X, y, coef_init, intercept_init)
         elif classes.shape[0] == 2:
-            self._fit_binary(X, y)
+            self._fit_binary(X, y, coef_init, intercept_init)
         else:
             raise ValueError("The number of class labels must be "
                              "greater than one.")
         # return self for chaining fit and predict calls
         return self
 
-    def _fit_binary(self, X, y):
+    def _fit_binary(self, X, y, coef_init, intercept_init):
         """Fit a single binary classifier"""
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
         y_new = np.ones(y.shape, dtype=np.float64) * -1.0
@@ -134,18 +143,18 @@ class SGD(BaseSGD):
         n_samples, n_features = X.shape[0], X.shape[1]
         self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
         self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
-        if self.init_coef_ is not None:
-            init_coef_ = np.asanyarray(self.init_coef_)
-            if init_coef_.shape != (n_features,):
-                raise ValueError("Provided init_coef_ does not match dataset.")
-            self.coef_ = init_coef_
-        if self.init_intercept_ is not None:
-            init_intercept_ = np.asanyarray(self.init_intercept_)
-            if init_intercept_.shape != (1,):
-                raise ValueError("Provided init_intercept_ " \
+        if coef_init is not None:
+            coef_init = np.asanyarray(coef_init)
+            if coef_init.shape != (n_features,):
+                raise ValueError("Provided coef_init does not match dataset.")
+            self.coef_ = coef_init
+        if intercept_init is not None:
+            intercept_init = np.asanyarray(intercept_init)
+            if intercept_init.shape != (1,):
+                raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
             else:
-                self.intercept_ = init_intercept_
+                self.intercept_ = intercept_init
 
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
@@ -161,7 +170,7 @@ class SGD(BaseSGD):
         self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
 
-    def _fit_multiclass(self, X, y):
+    def _fit_multiclass(self, X, y, coef_init, intercept_init):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -173,19 +182,19 @@ class SGD(BaseSGD):
                          dtype=np.float64, order="C")
         self.intercept_ = np.zeros(n_classes, dtype=np.float64, order="C")
 
-        if self.init_coef_ is not None:
-            init_coef_ = np.asanyarray(self.init_coef_)
-            if init_coef_.shape != (n_classes, n_features):
+        if coef_init is not None:
+            coef_init = np.asanyarray(coef_init)
+            if coef_init.shape != (n_classes, n_features):
                 raise ValueError("Provided coef_ does not match dataset. ")
             else:
-                self.coef_ = init_coef_
-        if self.init_intercept_ is not None:
-            init_intercept_ = np.asanyarray(self.init_intercept_)
-            if init_intercept_.shape != (n_classes, ):
-                raise ValueError("Provided init_intercept_ " \
+                self.coef_ = coef_init
+        if intercept_init is not None:
+            intercept_init = np.asanyarray(intercept_init)
+            if intercept_init.shape != (n_classes, ):
+                raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
             else:
-                self.intercept_ = init_intercept_
+                self.intercept_ = intercept_init
 
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_train_ova_classifier)(i, c, X, y, self.coef_[i],

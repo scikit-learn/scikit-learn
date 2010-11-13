@@ -89,17 +89,23 @@ class DenseSGDTestCase(unittest.TestCase):
         """Test parameter validity check"""
         clf = self.factory(shuffle="false")
 
-    @raises(ValueError)
-    def test_set_coef(self):
-        """Checks coef_ shape for the warm starts"""
+    @raises(TypeError)
+    def test_arument_coef(self):
+        """Checks coef_init not allowed as model argument (only fit)"""
         # Provided coef_ does not match dataset.
-        clf = self.factory(init_coef_=np.zeros((3,))).fit(X, Y)
+        clf = self.factory(coef_init=np.zeros((3,))).fit(X, Y)
+
+    @raises(ValueError)
+    def test_provide_coef(self):
+        """Checks coef_init shape for the warm starts"""
+        # Provided coef_ does not match dataset.
+        clf = self.factory().fit(X, Y, coef_init=np.zeros((3,)))
 
     @raises(ValueError)
     def test_set_intercept(self):
         """Checks intercept_ shape for the warm starts"""
         # Provided intercept_ does not match dataset.
-        clf = self.factory(init_intercept_=np.zeros((3,))).fit(X, Y)
+        clf = self.factory().fit(X, Y, intercept_init=np.zeros((3,)))
 
     @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
@@ -117,8 +123,9 @@ class DenseSGDTestCase(unittest.TestCase):
 
     def test_sgd_multiclass_with_init_coef(self):
         """Multi-class test case"""
-        clf = self.factory(alpha=0.01, n_iter=20, init_coef_=np.zeros((3, 2)),
-                      init_intercept_=np.zeros(3)).fit(X2, Y2)
+        clf = self.factory(alpha=0.01, n_iter=20)
+        clf.fit(X2, Y2, coef_init=np.zeros((3, 2)),
+                intercept_init=np.zeros(3))
         assert clf.coef_.shape == (3, 2)
         assert clf.intercept_.shape == (3,)
         pred = clf.predict(T2)
@@ -134,20 +141,21 @@ class DenseSGDTestCase(unittest.TestCase):
         assert_array_equal(pred, true_result2)
 
     def test_set_coef_multiclass(self):
-        """Checks coef_ and intercept_ shape for for multi-class problems"""
+        """Checks coef_init and intercept_init shape for for multi-class
+        problems"""
         # Provided coef_ does not match dataset
-        clf = self.factory(init_coef_=np.zeros((2, 2)))
-        assert_raises(ValueError, clf.fit, X2, Y2)
+        clf = self.factory()
+        assert_raises(ValueError, clf.fit, X2, Y2, coef_init=np.zeros((2, 2)))
 
         # Provided coef_ does match dataset
-        clf = self.factory(init_coef_=np.zeros((3,2))).fit(X2, Y2)
+        clf = self.factory().fit(X2, Y2, coef_init=np.zeros((3,2)))
 
         # Provided intercept_ does not match dataset
-        clf = self.factory(init_intercept_=np.zeros((1,)))
-        assert_raises(ValueError, clf.fit, X2, Y2)
+        clf = self.factory()
+        assert_raises(ValueError, clf.fit, X2, Y2, intercept_init=np.zeros((1,)))
 
         # Provided intercept_ does match dataset.
-        clf = self.factory(init_intercept_=np.zeros((3,))).fit(X2, Y2)
+        clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
     def test_sgd_proba(self):
         """Check SGD.predict_proba for log loss only"""

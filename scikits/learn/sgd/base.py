@@ -13,15 +13,12 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
     """Base class for dense and sparse SGD"""
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 rho=0.85, init_coef_=None, init_intercept_=None,
-                 fit_intercept=True, n_iter=5, shuffle=False,
+                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, n_jobs=1):
         self.loss = loss
         self.penalty = penalty
         self.alpha = alpha
         self.rho = rho
-        self.init_coef_ = init_coef_
-        self.init_intercept_ = init_intercept_
         self.fit_intercept = fit_intercept
         self.n_iter = int(n_iter)
         if self.n_iter <= 0:
@@ -37,9 +34,9 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
     def _get_loss_function(self):
         """Get concrete LossFunction"""
         loss_functions = {
-            "hinge" : Hinge(),
-            "log" : Log(),
-            "modifiedhuber" : ModifiedHuber(),
+            "hinge": Hinge(),
+            "log": Log(),
+            "modifiedhuber": ModifiedHuber(),
         }
         try:
             self.loss_function = loss_functions[self.loss]
@@ -83,11 +80,12 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : scipy.sparse matrix of shape [n_samples, n_features]
+        X : array or scipy.sparse matrix of shape [n_samples, n_features]
 
         Returns
         -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples, n_classes]
+        array, shape = [n_samples] if n_classes == 2 else [n_samples,
+        n_classes]
             Contains the membership probabilities of the positive class.
 
         """
@@ -97,4 +95,3 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
         else:
             raise NotImplementedError("%s loss does not provide "
                                       "this functionality" % self.loss)
-
