@@ -49,7 +49,7 @@ for k in range(len(corrs)):
     sigma = np.sqrt(MSE)
     
     # Compute the score function on a grid of the autocorrelation parameter space
-    theta_values = np.logspace(np.log10(aGaussianProcessModel.thetaL), np.log10(aGaussianProcessModel.thetaU), 100)
+    theta_values = np.logspace(np.log10(aGaussianProcessModel.thetaL[0,0]), np.log10(aGaussianProcessModel.thetaU[0,0]), 100)
     score_values = []
     for t in theta_values:
         score_values.append(aGaussianProcessModel.score(theta=t)[0])
@@ -73,6 +73,6 @@ for k in range(len(corrs)):
     pl.xlabel(u'$\\theta$')
     pl.ylabel(u'Score')
     pl.xscale('log')
-    pl.xlim(aGaussianProcessModel.thetaL[0], aGaussianProcessModel.thetaU[0])
+    pl.xlim(aGaussianProcessModel.thetaL[0,0], aGaussianProcessModel.thetaU[0,0])
 
 pl.show()
