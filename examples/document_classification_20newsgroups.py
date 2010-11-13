@@ -15,6 +15,18 @@ loader or setting them to None to get the 20 of them.
 
 This example demos various linear classifiers with different training
 strategies.
+
+To run this example use::
+
+  % python examples/document_classification_20newsgroups.py [options]
+
+Options are:
+
+  --report
+      Print a detailed classification report.
+  --confusion-matrix
+      Print the confusion matrix.
+
 """
 print __doc__
 
@@ -25,6 +37,7 @@ print __doc__
 
 from time import time
 import os
+import sys
 
 import numpy as np
 
@@ -34,6 +47,16 @@ from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.sgd.sparse import SGD
 from scikits.learn import metrics
 
+# parse commandline arguments
+argv = sys.argv[1:]
+if "--report" in argv:
+    print_report = True
+else:
+    print_report = False
+if "--confusion-matrix" in argv:
+    print_cm = True
+else:
+    print_cm = False
 
 ################################################################################
 # Download the data, if not already on disk
@@ -121,20 +144,33 @@ def benchmark(clf):
     score = metrics.f1_score(y_test, pred)
     print "f1-score:   %0.3f" % score
 
-    print "classification report:"
-    print metrics.classification_report(y_test, pred, class_names=categories)
+    nnz = clf.coef_.nonzero()[0].shape[0]
+    print "non-zero coef: %d" % nnz
+    print
 
-    print "confusion matrix:"
-    print metrics.confusion_matrix(y_test, pred)
+    if print_report:
+        print "classification report:"
+        print metrics.classification_report(y_test, pred,
+                                            class_names=categories)
+
+    if print_cm:
+        print "confusion matrix:"
+        print metrics.confusion_matrix(y_test, pred)
 
     print
     return score, train_time, test_time
 
-# Train Liblinear model
-liblinear_results = benchmark(LinearSVC(loss='l2', penalty='l2', C=1000,
+for penalty in ["l2", "l1"]:
+    print 80*'='
+    print "%s penalty" % penalty.upper()
+    # Train Liblinear model
+    liblinear_results = benchmark(LinearSVC(loss='l2', penalty=penalty, C=1000,
                                         dual=False, eps=1e-3))
 
-# Train SGD model
-sgd_results = benchmark(SGD(alpha=.0001, n_iter=50))
+    # Train SGD model
+    sgd_results = benchmark(SGD(alpha=.0001, n_iter=50, penalty=penalty))
 
-
+# Train SGD with Elastic Net penalty
+print 80*'='
+print "Elastic-Net penalty"
+sgd_results = benchmark(SGD(alpha=.0001, n_iter=50, penalty="elasticnet"))
