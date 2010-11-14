@@ -48,11 +48,11 @@ for k in range(len(corrs)):
     y, MSE = aGaussianProcessModel.predict(x, eval_MSE=True)
     sigma = np.sqrt(MSE)
     
-    # Compute the score function on a grid of the autocorrelation parameter space
+    # Compute the reduced likelihood function on a grid of the autocorrelation parameter space
     theta_values = np.logspace(np.log10(aGaussianProcessModel.thetaL[0,0]), np.log10(aGaussianProcessModel.thetaU[0,0]), 100)
-    score_values = []
+    reduced_likelihood_function_values = []
     for t in theta_values:
-        score_values.append(aGaussianProcessModel.score(theta=t)[0])
+        reduced_likelihood_function_values.append(aGaussianProcessModel.reduced_likelihood_function(theta=t)[0])
     
     fig = pl.figure()
     
@@ -67,9 +67,9 @@ for k in range(len(corrs)):
     pl.ylim(-10, 20)
     pl.legend(loc='upper left')
     
-    # Plot the score function
+    # Plot the reduced likelihood function
     ax = fig.add_subplot(212)
-    pl.plot(theta_values, score_values, colors[k]+'-')
+    pl.plot(theta_values, reduced_likelihood_function_values, colors[k]+'-')
     pl.xlabel(u'$\\theta$')
     pl.ylabel(u'Score')
     pl.xscale('log')

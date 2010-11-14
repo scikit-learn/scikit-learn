@@ -26,7 +26,7 @@ def test_regression_1d_x_sinx():
     
     assert (np.all(np.abs((y_pred - y) / y)  < 1e-6) and np.all(MSE  < 1e-6))
 
-def test_regression_diabetes():
+def test_regression_diabetes(n_jobs = 1, verbose = 0):
     """
     MLE estimation of a Gaussian Process model with an anisotropic squared exponential
     correlation model.
@@ -43,8 +43,7 @@ def test_regression_diabetes():
     gpm = gpml.GaussianProcessModel(corr=gpml.correxp2, theta0=1e-4, nugget=1e-2, verbose=False).fit(X, y)
 
     gpm.thetaL, gpm.thetaU = None, None
-    score_func = lambda self, X_test, y_test: self.predict(X_test)[0]
-    y_pred = cross_val.cross_val_score(gpm, X, y=y, score_func=score_func, cv=cross_val.LeaveOneOut(y.size), n_jobs=1, verbose=0)
+    y_pred = cross_val.cross_val_score(gpm, X, y=y, cv=cross_val.LeaveOneOut(y.size), n_jobs=n_jobs, verbose=verbose) + y
     Q2 = metrics.explained_variance(y_pred, y)
     
-    assert Q2 > 0.
+    assert Q2 > 0.45
