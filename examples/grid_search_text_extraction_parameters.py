@@ -10,7 +10,7 @@ classification example.
 You can adjust the number of categories by giving there name to the dataset
 loader or setting them to None to get the 20 of them.
 
-Here is the sample result on a quad-core machine:
+Here is the sample result on a quad-core machine::
 
   Loading 20 newsgroups dataset for categories:
   ['alt.atheism', 'talk.religion.misc']
