@@ -9,6 +9,36 @@ classification example.
 
 You can adjust the number of categories by giving there name to the dataset
 loader or setting them to None to get the 20 of them.
+
+Here is the sample result on a quad-core machine:
+
+  Loading 20 newsgroups dataset for categories:
+  ['alt.atheism', 'talk.religion.misc']
+  1427 documents
+  2 categories
+
+  Performing grid search...
+  pipeline: ['vect', 'tfidf', 'clf']
+  parameters:
+  {'clf__alpha': (1.0000000000000001e-05, 9.9999999999999995e-07),
+   'clf__n_iter': (10, 50, 80),
+   'clf__penalty': ('l2', 'elasticnet'),
+   'tfidf__use_idf': (True, False),
+   'vect__analyzer__max_n': (1, 2),
+   'vect__max_df': (0.5, 0.75, 1.0),
+   'vect__max_features': (None, 5000, 10000, 50000)}
+  done in 1737.030s
+
+  Best score: 0.940
+  Best parameters set:
+      clf__alpha: 9.9999999999999995e-07
+      clf__n_iter: 50
+      clf__penalty: 'elasticnet'
+      tfidf__use_idf: True
+      vect__analyzer__max_n: 2
+      vect__max_df: 0.75
+      vect__max_features: 50000
+
 """
 print __doc__
 
@@ -17,6 +47,7 @@ print __doc__
 #         Mathieu Blondel <mathieu@mblondel.org>
 # License: Simplified BSD
 
+from pprint import pprint
 from time import time
 import os
 
@@ -74,11 +105,15 @@ pipeline = Pipeline([
 ])
 
 parameters = {
-#    'vect__max_df': (1.0, 0.7),
-#    'vect__max_features': (10000, None),
+# uncommenting more parameters will give better exploring power but will
+# increase processing time in a combinatorial way
+    'vect__max_df': (0.5, 0.75, 1.0),
+#    'vect__max_features': (None, 5000, 10000, 50000),
     'vect__analyzer__max_n': (1, 2),
-    'clf__alpha': (0.0001, 0.00001),
+#    'tfidf__use_idf': (True, False),
+    'clf__alpha': (0.00001, 0.000001),
     'clf__penalty': ('l2', 'elasticnet'),
+#    'clf__n_iter': (10, 50, 80),
 }
 
 # find the best parameters for both the feature extraction and the
@@ -92,7 +127,7 @@ text_docs = [file(f).read() for f in data.filenames]
 print "Performing grid search..."
 print "pipeline:", [name for name, _ in pipeline.steps]
 print "parameters:"
-print parameters
+pprint(parameters)
 t0 = time()
 grid_search.fit(text_docs, data.target)
 print "done in %0.3fs" % (time() - t0)
@@ -102,5 +137,5 @@ print "Best score: %0.3f" % grid_search.best_score
 print "Best parameters set:"
 best_parameters = grid_search.best_estimator._get_params()
 for param_name in sorted(parameters.keys()):
-    print "%s: %r" % (param_name, best_parameters[param_name])
+    print "\t%s: %r" % (param_name, best_parameters[param_name])
 
