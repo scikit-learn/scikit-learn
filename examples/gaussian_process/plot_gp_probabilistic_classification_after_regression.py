@@ -99,15 +99,15 @@ pl.plot(X[Y > 0, 0], X[Y > 0, 1], 'b.', markersize=12)
 cs = pl.contour(x1, x2, YY, [0.], colors='k', \
                 linestyles='dashdot')
 
-cs = pl.contour(x1, x2, PHI(-yy/sigma), [0.025], colors='b', \
+cs = pl.contour(x1, x2, PHI(- yy / sigma), [0.025], colors='b', \
                 linestyles='solid')
 pl.clabel(cs, fontsize=11)
 
-cs = pl.contour(x1, x2, PHI(-yy/sigma), [0.5], colors='k', \
+cs = pl.contour(x1, x2, PHI(- yy / sigma), [0.5], colors='k', \
                 linestyles='dashed')
 pl.clabel(cs, fontsize=11)
 
-cs = pl.contour(x1, x2, PHI(-yy/sigma), [0.975], colors='r', \
+cs = pl.contour(x1, x2, PHI(- yy / sigma), [0.975], colors='r', \
                 linestyles='solid')
 pl.clabel(cs, fontsize=11)
 
