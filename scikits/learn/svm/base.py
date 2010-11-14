@@ -66,9 +66,12 @@ class BaseLibSVM(BaseEstimator):
         y : array, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-        class_weight : dict , {class_label : weight}
+        class_weight : dict, {class_label : weight} or "auto"
             Weights associated with classes. If not given, all classes
             are supposed to have weight one.
+
+            The "auto" mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies.
 
         Returns
         -------
@@ -85,10 +88,17 @@ class BaseLibSVM(BaseEstimator):
             self.__Xfit = X
         kernel_type, _X = self._get_kernel(X)
 
-        self.weight = np.asarray(class_weight.values(),
-                                 dtype=np.float64, order='C')
-        self.weight_label = np.asarray(class_weight.keys(),
-                                       dtype=np.int32, order='C')
+        if class_weight == "auto":
+            uy = np.unique(y)
+            self.weight_label = np.asarray(uy, dtype=np.int32, order='C')
+            self.weight = np.array([1.0 / np.sum(y==i) for i in uy],
+                                   dtype=np.float64, order='C')
+            self.weight *= y.shape[0] / np.sum(self.weight)
+        else:
+            self.weight = np.asarray(class_weight.values(),
+                                     dtype=np.float64, order='C')
+            self.weight_label = np.asarray(class_weight.keys(),
+                                           dtype=np.int32, order='C')
 
         # check dimensions
         solver_type = self._svm_types.index(self.impl)

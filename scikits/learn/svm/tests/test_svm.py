@@ -9,7 +9,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
 from nose.tools import assert_raises
 
-from scikits.learn import svm, glm, datasets
+from scikits.learn import svm, glm, datasets, metrics
 from scikits.learn.datasets.samples_generator import test_dataset_classif
 
 # toy sample
@@ -246,6 +246,35 @@ def test_weight():
         clf.fit(X_[:180], y_[:180], class_weight={0:5})
         y_pred = clf.predict(X_[180:])
         assert np.sum(y_pred == y_[180:]) >= 11
+
+
+def test_auto_weight():
+    """Test class weights for imbalanced data"""
+    # compute reference metrics on iris dataset that is quite balanced by
+    # default
+    X, y = iris.data, iris.target
+    clf = svm.SVC().fit(X, y)
+    assert_almost_equal(metrics.f1_score(y, clf.predict(X)), 0.94, 2)
+
+    # make the same prediction using automated class_weight
+    clf = svm.SVC().fit(X, y, class_weight="auto")
+    assert_almost_equal(metrics.f1_score(y, clf.predict(X)), 0.99, 2)
+
+    # build an very very imbalanced dataset out of iris data
+    X_0 = X[y == 0,:]
+    y_0 = y[y == 0]
+
+    X_imbalanced = np.vstack([X] + [X_0] * 10)
+    y_imbalanced = np.concatenate([y] + [y_0] * 10)
+
+    # fit a model on the imbalanced data without class weight info
+    y_pred = svm.SVC().fit(X_imbalanced, y_imbalanced).predict(X)
+    assert_almost_equal(metrics.f1_score(y, y_pred), 0.88, 2)
+
+    # fit a model with auto class_weight enabled
+    clf = svm.SVC().fit(X_imbalanced, y_imbalanced, class_weight="auto")
+    y_pred = clf.predict(X)
+    assert_almost_equal(metrics.f1_score(y, y_pred), 0.99, 2)
 
 
 def test_error():
