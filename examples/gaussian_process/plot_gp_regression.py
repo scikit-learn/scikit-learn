@@ -32,7 +32,7 @@ Y = f(X)
 x = np.linspace(0,10,1000)
 
 # Instanciate a Gaussian Process model
-gp = GaussianProcess(corr=corrs[k], theta0=1e-2, thetaL=1e-4, thetaU=1e-1, random_start=100)
+gp = GaussianProcess(corr=corrcubic, theta0=1e-2, thetaL=1e-4, thetaU=1e-1, random_start=100)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
 gp.fit(X, Y)
