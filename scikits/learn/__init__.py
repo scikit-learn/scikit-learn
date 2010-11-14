@@ -24,7 +24,7 @@ from . import logistic
 from . import lda
 from . import metrics
 from . import svm
-from . import gpml
+from . import gaussian_process
 from . import features
 
 try:
@@ -44,8 +44,8 @@ except:
     pass
 
 __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'gmm', 'glm',
-           'logistic', 'lda', 'metrics', 'svm', 'gpml', 'features', 'clone', 
-           'test']
+           'logistic', 'lda', 'metrics', 'svm', 'gaussian_process', 'features',
+           'clone', 'test']
 
 __version__ = '0.5-git'
 

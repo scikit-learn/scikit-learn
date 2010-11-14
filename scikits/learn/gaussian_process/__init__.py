@@ -9,6 +9,6 @@
     Matlab toolbox <http://www2.imm.dtu.dk/~hbn/dace/>.
 """
 
-from .gaussian_process_model import GaussianProcessModel
-from .correlation_models import *
-from .regression_models import *
+from .gaussian_process import GaussianProcess
+from .correlation import *
+from .regression import *

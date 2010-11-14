@@ -8,8 +8,8 @@
 import numpy as np
 from scipy import linalg, optimize, random
 from ..base import BaseEstimator
-from .regression_models import regpoly0
-from .correlation_models import correxp2
+from .regression import regpoly0
+from .correlation import correxp2
 machine_epsilon = np.finfo(np.double).eps
 
 def col_sum(x):
@@ -36,29 +36,29 @@ def col_sum(x):
     
     return s
 
-####################################
-# The Gaussian Process Model class #
-####################################
+##############################
+# The Gaussian Process class #
+##############################
 
-class GaussianProcessModel(BaseEstimator):
+class GaussianProcess(BaseEstimator):
     """
     A class that implements scalar Gaussian Process based prediction (also known as Kriging).
 
     Example
     -------
     import numpy as np
-    from scikits.learn.gpml import GaussianProcessModel
+    from scikits.learn.gaussian_process import GaussianProcess
     import pylab as pl
 
     f = lambda x: x*np.sin(x)
     X = np.array([1., 3., 5., 6., 7., 8.])
     Y = f(X)
-    aGaussianProcessModel = GaussianProcessModel(regr=regpoly0, corr=correxp2, theta0=1e-1, thetaL=1e-3, thetaU=1e0, random_start=100)
-    aGaussianProcessModel.fit(X, Y)
+    gp = GaussianProcess(regr=regpoly0, corr=correxp2, theta0=1e-1, thetaL=1e-3, thetaU=1e0, random_start=100)
+    gp.fit(X, Y)
 
     pl.figure(1)
     x = np.linspace(0,10,1000)
-    y, MSE = aGaussianProcessModel.predict(x, eval_MSE=True)
+    y, MSE = gp.predict(x, eval_MSE=True)
     sigma = np.sqrt(MSE)
     pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
     pl.plot(X, Y, 'r.', markersize=10, label=u'Observations')
@@ -69,10 +69,10 @@ class GaussianProcessModel(BaseEstimator):
     pl.legend(loc='upper left')
 
     pl.figure(2)
-    theta_values = np.logspace(np.log10(aGaussianProcessModel.thetaL),np.log10(aGaussianProcessModel.thetaU),100)
+    theta_values = np.logspace(np.log10(gp.thetaL),np.log10(gp.thetaU),100)
     reduced_likelihood_function_values = []
     for t in theta_values:
-            reduced_likelihood_function_values.append(aGaussianProcessModel.reduced_likelihood_function(theta=t)[0])
+            reduced_likelihood_function_values.append(gp.reduced_likelihood_function(theta=t)[0])
     pl.plot(theta_values, reduced_likelihood_function_values)
     pl.xlabel(u'$\\theta$')
     pl.ylabel(u'Score')
@@ -103,7 +103,7 @@ class GaussianProcessModel(BaseEstimator):
     
     def __init__(self, regr = regpoly0, corr = correxp2, beta0 = None, storage_mode = 'full', verbose = True, theta0 = 1e-1, thetaL = None, thetaU = None, optimizer = 'fmin_cobyla', random_start = 1, normalize = True, nugget = 10.*machine_epsilon):
         """
-        The Gaussian Process Model constructor.
+        The Gaussian Process model constructor.
 
         Parameters
         ----------
@@ -169,8 +169,8 @@ class GaussianProcessModel(BaseEstimator):
 
         Returns
         -------
-        aGaussianProcessModel : self
-            A Gaussian Process Model object awaiting data to be fitted to.
+        gp : self
+            A Gaussian Process model object awaiting data to be fitted to.
         """
         
         self.regr = regr
@@ -220,7 +220,7 @@ class GaussianProcessModel(BaseEstimator):
         
     def fit(self, X, y):
         """
-        The Gaussian Process Model fitting method.
+        The Gaussian Process model fitting method.
 
         Parameters
         ----------
@@ -232,8 +232,8 @@ class GaussianProcessModel(BaseEstimator):
             
         Returns
         -------
-        aGaussianProcessModel : self
-            A fitted Gaussian Process Model object awaiting data to perform predictions.
+        gp : self
+            A fitted Gaussian Process model object awaiting data to perform predictions.
         """
         
         # Force data to numpy.array type (from coding guidelines)
@@ -312,7 +312,7 @@ class GaussianProcessModel(BaseEstimator):
         self.X_sc = np.concatenate([[mean_X],[std_X]])
         self.y_sc = np.concatenate([[mean_y],[std_y]])
         
-        # Determine Gaussian Process Model parameters
+        # Determine Gaussian Process model parameters
         if self.thetaL is not None and self.thetaU is not None:
             # Maximum Likelihood Estimation of the parameters
             if self.verbose:
@@ -323,7 +323,7 @@ class GaussianProcessModel(BaseEstimator):
         else:
             # Given parameters
             if self.verbose:
-                print "Given autocorrelation parameters. Computing Gaussian Process Model parameters..."
+                print "Given autocorrelation parameters. Computing Gaussian Process model parameters..."
             self.theta = self.theta0
             self.reduced_likelihood_function_value, self.par = self.reduced_likelihood_function()
             if np.isinf(self.reduced_likelihood_function_value):
@@ -345,7 +345,7 @@ class GaussianProcessModel(BaseEstimator):
         
     def predict(self, X, eval_MSE=False, batch_size=None):
         """
-        This function evaluates the Gaussian Process Model at x.
+        This function evaluates the Gaussian Process model at x.
         
         Parameters
         ----------
@@ -371,7 +371,7 @@ class GaussianProcessModel(BaseEstimator):
         
         # Check
         if np.any(np.isnan(self.par['beta'])):
-            raise Exception, "Not a valid GaussianProcessModel. Try fitting it again with different parameters theta"
+            raise Exception, "Not a valid GaussianProcess. Try fitting it again with different parameters theta"
         
         # Check design & trial sites
         X = np.asanyarray(X, dtype=np.float)
@@ -423,7 +423,7 @@ class GaussianProcessModel(BaseEstimator):
                 if par['C'] is None:
                     # Light storage mode (need to recompute C, F, Ft and G)
                     if self.verbose:
-                        print "This GaussianProcessModel used light storage mode at instanciation. Need to recompute autocorrelation matrix..."
+                        print "This GaussianProcess used light storage mode at instanciation. Need to recompute autocorrelation matrix..."
                     reduced_likelihood_function_value, par = self.reduced_likelihood_function()
                 
                 rt = linalg.solve(np.matrix(par['C']), np.matrix(r))
@@ -480,13 +480,13 @@ class GaussianProcessModel(BaseEstimator):
         Parameters
         ----------
         theta : array_like, optional
-            An array containing the autocorrelation parameters at which the Gaussian Process Model parameters should be determined.
+            An array containing the autocorrelation parameters at which the Gaussian Process model parameters should be determined.
             Default uses the built-in autocorrelation parameters (ie theta = self.theta).
         
         Returns
         -------
         par : dict
-            A dictionary containing the requested Gaussian Process Model parameters:
+            A dictionary containing the requested Gaussian Process model parameters:
             par['sigma2'] : Gaussian Process variance.
             par['beta'] : Generalized least-squares regression weights for Universal Kriging or given beta0 for Ordinary Kriging.
             par['gamma'] : Gaussian Process weights.
@@ -589,7 +589,7 @@ class GaussianProcessModel(BaseEstimator):
         
         Parameters
         ----------
-        self : All parameters are stored in the Gaussian Process Model object.
+        self : All parameters are stored in the Gaussian Process model object.
         
         Returns
         -------
@@ -654,7 +654,7 @@ class GaussianProcessModel(BaseEstimator):
     
     def score(self, X_test, y_test):
         """
-        This score function returns the deviations of the Gaussian Process Model evaluated onto a test dataset.
+        This score function returns the deviations of the Gaussian Process model evaluated onto a test dataset.
         
         Parameters
         ----------
