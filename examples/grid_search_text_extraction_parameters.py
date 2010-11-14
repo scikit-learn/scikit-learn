@@ -10,7 +10,7 @@ classification example.
 You can adjust the number of categories by giving there name to the dataset
 loader or setting them to None to get the 20 of them.
 
-Here is the sample result on a quad-core machine::
+Here is a sample output of a run on a quad-core machine::
 
   Loading 20 newsgroups dataset for categories:
   ['alt.atheism', 'talk.religion.misc']
@@ -109,7 +109,7 @@ parameters = {
 # increase processing time in a combinatorial way
     'vect__max_df': (0.5, 0.75, 1.0),
 #    'vect__max_features': (None, 5000, 10000, 50000),
-    'vect__analyzer__max_n': (1, 2),
+    'vect__analyzer__max_n': (1, 2), # words or bigrams
 #    'tfidf__use_idf': (True, False),
     'clf__alpha': (0.00001, 0.000001),
     'clf__penalty': ('l2', 'elasticnet'),
