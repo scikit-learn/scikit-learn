@@ -1,6 +1,4 @@
-"""
-Tune the parameters of an estimator by cross-validation.
-"""
+"""Tune the parameters of an estimator by cross-validation"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
