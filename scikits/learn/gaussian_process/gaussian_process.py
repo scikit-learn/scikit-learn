@@ -660,10 +660,12 @@ class GaussianProcess(BaseEstimator):
             Q, G = linalg.qr(Ft, mode='economic')
             pass
 
-        rcondG = 1. / (linalg.norm(G) * linalg.norm(linalg.inv(G)))
+        sv = linalg.svd(G, compute_uv=False)
+        rcondG = sv[-1] / sv[0]
         if rcondG < 1e-10:
             # Check F
-            condF = linalg.norm(F) * linalg.norm(linalg.inv(F))
+            sv = linalg.svd(F, compute_uv=False)
+            condF = sv[0] / sv[-1]
             if condF > 1e15:
                 raise Exception("F is too ill conditioned. Poor combination " \
                               + "of regression model and observations.")
