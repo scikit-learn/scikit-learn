@@ -197,6 +197,9 @@ def test_probability():
                  [ 0.740, 0.223  , 0.035]],
                  decimal=2)
 
+    assert_almost_equal(clf.predict_proba(T),
+                        np.exp(clf.predict_log_proba(T)), 8)
+
     # make sure probabilities sum to one
     pprob = clf.predict_proba(X)
     assert_array_almost_equal(pprob.sum(axis=1),

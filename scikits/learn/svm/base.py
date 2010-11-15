@@ -200,6 +200,31 @@ class BaseLibSVM(BaseLib):
                       self.probA_, self.probB_)
         return pprob[:, np.argsort(self.label_)]
 
+    def predict_log_proba(self, T):
+        """
+        This function does classification or regression on a test vector T
+        given a model with probability information.
+
+        Parameters
+        ----------
+        T : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the log-probabilities of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+
+        Notes
+        -----
+        The probability model is created using cross validation, so
+        the results can be slightly different than those obtained by
+        predict. Also, it will meaningless results on very small
+        datasets.
+        """
+        return np.log(self.predict_proba(T))
+
     def predict_margin(self, T):
         """
         Calculate the distance of the samples in T to the separating hyperplane.
