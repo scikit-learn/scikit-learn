@@ -51,6 +51,10 @@ References:
 """
 from __future__ import division
 
+# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#
+# License: Simplified BSD
+
 print __doc__
 
 import pylab as pl
@@ -219,7 +223,8 @@ for i, species, cover, observations in zip(count(), species,
         #m.drawrivers()
     else:
         print "plot coastlines from cover"
-        CS = pl.contour(X, Y, coverage[2,:,:], levels=[-9999], colors="k", linestyles="solid")
+        CS = pl.contour(X, Y, coverage[2,:,:], levels=[-9999], colors="k",
+                        linestyles="solid")
         pl.xticks([])
         pl.yticks([])
 
