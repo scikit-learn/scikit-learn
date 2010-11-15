@@ -80,10 +80,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         solver_type = self._svm_types.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
 
-        self.weight       = np.asarray(class_weight.values(),
-                                      dtype=np.float64, order='C')
-        self.weight_label = np.asarray(class_weight.keys(),
-                                       dtype=np.int32, order='C')
+        self._set_class_weight(class_weight, y)
 
         if (kernel_type == 2) and (self.gamma == 0):
             # if custom gamma is not provided ...
@@ -175,17 +172,14 @@ class SparseBaseLibLinear(BaseLibLinear):
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.int32, order='C')
 
-        self._weight       = np.asarray(class_weight.values(),
-                                      dtype=np.float64, order='C')
-        self._weight_label = np.asarray(class_weight.keys(),
-                                       dtype=np.int32, order='C')
+        self._set_class_weight(class_weight, y)
 
         self.raw_coef_, self.label_ = \
                        _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, y,
                        self._get_solver_type(),
-                       self.eps, self._get_bias(), self.C, self._weight_label,
-                       self._weight)
+                       self.eps, self._get_bias(), self.C, self.weight_label,
+                       self.weight)
         return self
 
     def predict(self, X):
@@ -197,8 +191,8 @@ class SparseBaseLibLinear(BaseLibLinear):
                                       self.raw_coef_,
                                       self._get_solver_type(),
                                       self.eps, self.C,
-                                      self._weight_label,
-                                      self._weight, self.label_,
+                                      self.weight_label,
+                                      self.weight, self.label_,
                                       self._get_bias())
 
 

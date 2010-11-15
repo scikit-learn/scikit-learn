@@ -1,7 +1,7 @@
 """
-======================================================
-Classification of text documents using sparse features
-======================================================
+========================================================
+Classification of text documents: using a MLComp dataset
+========================================================
 
 This is an example showing how the scikit-learn can be used to classify
 documents by topics using a bag-of-words approach. This example uses

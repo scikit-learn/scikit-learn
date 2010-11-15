@@ -84,7 +84,7 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
                                   T.indptr, self.raw_coef_,
                                   self._get_solver_type(),
                                   self.eps, self.C,
-                                  self._weight_label,
-                                  self._weight, self.label_,
+                                  self.weight_label,
+                                  self.weight, self.label_,
                                   self._get_bias())
         return probas[:,np.argsort(self.label_)]

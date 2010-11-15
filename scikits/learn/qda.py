@@ -15,8 +15,9 @@ import scipy.ndimage as ndimage
 from .base import BaseEstimator, ClassifierMixin
 
 # FIXME :
-# - in fit(X, y) method, many checks are common with other models (in particular
-#   LDA model) and should be factorized : may be in BaseEstimator ?
+# - in fit(X, y) method, many checks are common with other models
+#   (in particular LDA model) and should be factorized:
+#   maybe in BaseEstimator ?
 
 class QDA(BaseEstimator, ClassifierMixin):
     """
@@ -67,10 +68,9 @@ class QDA(BaseEstimator, ClassifierMixin):
     LDA
 
     """
+
     def __init__(self, priors=None):
-        if priors is not None:
-            self.priors = np.asarray(priors)
-        else: self.priors = None
+        self.priors = np.asarray(priors) if priors is not None else None
 
     def fit(self, X, y, store_covariances=False, tol=1.0e-4, **params):
         """
@@ -94,8 +94,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             raise exceptions.ValueError('X must be a 2D array')
         if X.shape[0] != y.shape[0]:
             raise ValueError("Incompatible shapes")
-        n_samples = X.shape[0]
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         classes = np.unique(y).astype(np.int32)
         n_classes = classes.size
         if n_classes < 2:

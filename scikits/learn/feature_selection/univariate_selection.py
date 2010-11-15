@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 ######################################################################
 
 # The following function is a rewriting of scipy.stats.f_oneway
-# Contrary to the scipy.stats.f_oneway implementation is does not
+# Contrary to the scipy.stats.f_oneway implementation it does not
 # copy the data while keeping the inputs unchanged.
 def f_oneway(*args):
     """
