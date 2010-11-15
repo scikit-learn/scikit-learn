@@ -189,7 +189,7 @@ def predict(clf, mean, std):
     return Z
 
 X, Y = np.meshgrid(xx, yy[::-1])
-basemap = False
+#basemap = False
 for i, species, cover, observations in zip(count(), species,
                                            [train_bv_cover, train_mm_cover],
                                            [train_bv, train_mm]):
