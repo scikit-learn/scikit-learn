@@ -16,9 +16,10 @@ Liblinear while being two orders of magnitude faster to train::
 
     Classifier   train-time test-time error-rate
     --------------------------------------------
-    Liblinear     15.5057s   0.0481s     0.2305
-    GNB           2.8415s    0.1738s     0.3633
-    SGD           0.2402s    0.0048s     0.2300
+    Liblinear     9.4471s    0.0184s     0.2305
+    GNB           2.5426s    0.1725s     0.3633
+    SGD           0.2137s    0.0047s     0.2300
+
 
 The same task has been used in a number of papers including:
 
@@ -40,8 +41,6 @@ To run this example use your favorite python shell::
 
   % ipython examples/sgd/covertype_dense_sgd.py
 
-Warning: running this example will try load a dataset of 1.4 GB in memory
-(on a 64 bit system).
 """
 from __future__ import division
 
@@ -53,7 +52,6 @@ print __doc__
 # $Id$
 
 from time import time
-import sys
 import os
 import numpy as np
 
@@ -76,14 +74,19 @@ if not os.path.exists('covtype.data.gz'):
 ######################################################################
 ## Load dataset
 print("Loading dataset...")
-data = np.loadtxt('covtype.data.gz', delimiter=",")
+import gzip
+X = np.empty((581012, 55), dtype=np.float64, order="C")
+gen = (np.fromstring(line, sep=",") for
+       line in gzip.open('covtype.data.gz'))
+for row, row_vector in enumerate(gen):
+    X[row] = row_vector
+## X = np.loadtxt("covtype.data.gz", delimiter=",", dtype=np.float64)
 
 print "Separating features from labels..."
-X = data[:, :-1]
-
 # class 1 vs. all others.
-y = np.ones(data.shape[0]) * -1
-y[np.where(data[:, -1] == 1)] = 1
+y = np.ones(X.shape[0]) * -1
+y[np.where(X[:, -1] == 1)] = 1
+X = X[:, :-1]
 
 ######################################################################
 ## Create train-test split (T. Joachims, 2006)
@@ -98,6 +101,10 @@ X_train = X[train_idx]
 y_train = y[train_idx]
 X_test = X[test_idx]
 y_test = y[test_idx]
+
+# free memory
+del X
+del y
 
 ######################################################################
 ## Standardize first 10 features (=numerical)
@@ -118,12 +125,13 @@ print("%s %d" % ("number of features:".ljust(25),
 print("%s %d" % ("number of classes:".ljust(25),
                  np.unique(y_train).shape[0]))
 print("%s %d" % ("number of train samples:".ljust(25),
-                 train_idx.shape[0]))
+                 X_train.shape[0]))
 print("%s %d" % ("number of test samples:".ljust(25),
-                 test_idx.shape[0]))
+                 X_test.shape[0]))
 print("")
 print("Training classifiers...")
 print("")
+
 
 ######################################################################
 ## Benchmark classifiers
@@ -161,22 +169,25 @@ sgd_err, sgd_train_time, sgd_test_time = benchmark(SGD(**sgd_parameters))
 ## Train GNB model
 gnb_err, gnb_train_time, gnb_test_time = benchmark(GNB())
 
-
 ######################################################################
 ## Print classification performance
 print("")
 print("Classification performance:")
 print("===========================")
 print("")
+
+
 def print_row(clf_type, train_time, test_time, err):
     print("%s %s %s %s" % (clf_type.ljust(12),
                            ("%.4fs" % train_time).center(10),
                            ("%.4fs" % test_time).center(10),
                            ("%.4f" % err).center(10)))
 
-print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time", "error-rate"))
+print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time",
+                       "error-rate"))
 print("-" * 44)
-print_row("Liblinear", liblinear_train_time, liblinear_test_time, liblinear_err)
+print_row("Liblinear", liblinear_train_time, liblinear_test_time,
+          liblinear_err)
 print_row("GNB", gnb_train_time, gnb_test_time, gnb_err)
 print_row("SGD", sgd_train_time, sgd_test_time, sgd_err)
 print("")
