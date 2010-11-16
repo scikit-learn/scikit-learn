@@ -61,7 +61,7 @@ class ElasticNet(LinearModel):
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 
-        X, y, Xmean, ymean = self._center_data(X, y)
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
         if coef_init is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
@@ -144,7 +144,7 @@ class Lasso(ElasticNet):
 ###############################################################################
 # Classes to store linear models along a regularization path
 
-def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
+def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                verbose=False, fit_params=dict()):
     """Compute Lasso path with coordinate descent
 
@@ -182,6 +182,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
     """
+    X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
+
     n_samples = X.shape[0]
     if alphas is None:
         alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
@@ -193,9 +195,13 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
     models = []
+
     for alpha in alphas:
-        model = Lasso(alpha=alpha)
+        model = Lasso(alpha=alpha, fit_intercept=False)
         model.fit(X, y, coef_init=coef_, **fit_params)
+        if fit_intercept:
+            model.fit_intercept = True
+            model._set_intercept(Xmean, ymean)
         if verbose:
             print model
         coef_ = model.coef_.copy()
@@ -204,7 +210,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
 
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              verbose=False, fit_params=dict()):
+              fit_intercept=True, verbose=False, fit_params=dict()):
     """Compute Elastic-Net path with coordinate descent
 
     Parameters
@@ -238,6 +244,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
+    X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
+
     n_samples = X.shape[0]
     if alphas is None:
         alpha_max = np.abs(np.dot(X.T, y)).max() / (n_samples * rho)
@@ -247,9 +255,13 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
     models = []
+
     for alpha in alphas:
-        model = ElasticNet(alpha=alpha, rho=rho)
+        model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False)
         model.fit(X, y, coef_init=coef_, **fit_params)
+        if fit_intercept:
+            model.fit_intercept = True
+            model._set_intercept(Xmean, ymean)
         if verbose:
             print model
         coef_ = model.coef_.copy()
@@ -260,10 +272,12 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None):
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
+        self.fit_intercept = fit_intercept
 
     def fit(self, X, y, cv=None, **fit_params):
         """Fit linear model with coordinate descent along decreasing alphas
@@ -386,8 +400,10 @@ class ElasticNetCV(LinearModelCV):
 
     path = staticmethod(enet_path)
 
-    def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None):
+    def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
+        self.fit_intercept = fit_intercept

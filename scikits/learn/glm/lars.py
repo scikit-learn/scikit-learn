@@ -326,7 +326,7 @@ class LARS(LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X, y, Xmean, ymean = self._center_data(X, y)
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
         if self.normalize:
             norms = np.sqrt(np.sum(X**2, axis=0))
@@ -407,7 +407,7 @@ class LassoLARS (LinearModel):
         X = np.atleast_2d(X)
         y = np.atleast_1d(y)
 
-        X, y, Xmean, ymean = self._center_data(X, y)
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
         n_samples = X.shape[0]
         alpha = self.alpha * n_samples # scale alpha with number of samples

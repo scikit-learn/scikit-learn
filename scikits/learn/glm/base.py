@@ -45,13 +45,14 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """Compute explained variance a.k.a. r^2"""
         return explained_variance_score(y, self.predict(X))
 
-    def _center_data(self, X, y):
+    @staticmethod
+    def _center_data(X, y, fit_intercept):
         """
         Centers data to have mean zero along axis 0. This is here
         because nearly all Linear Models will want it's data to be
         centered.
         """
-        if self.fit_intercept:
+        if fit_intercept:
             Xmean = X.mean(axis=0)
             ymean = y.mean()
             X = X - Xmean
@@ -123,7 +124,7 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X, y, Xmean, ymean = self._center_data(X, y)
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)

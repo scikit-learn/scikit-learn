@@ -131,7 +131,7 @@ class BayesianRidge(LinearModel):
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
-        X, y, Xmean, ymean = self._center_data(X, y)
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
         n_samples, n_features = X.shape
 
         ### Initialization of the values of the parameters
@@ -352,7 +352,7 @@ class ARDRegression(LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, Xmean, ymean = self._center_data(X, y)
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
         ### Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)

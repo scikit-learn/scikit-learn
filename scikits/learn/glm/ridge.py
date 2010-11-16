@@ -61,7 +61,7 @@ class Ridge(LinearModel):
 
         n_samples, n_features = X.shape
 
-        X, y, Xmean, ymean = self._center_data (X, y)
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
         if n_samples > n_features:
             # w = inv(X^t X + alpha*Id) * X.T y
