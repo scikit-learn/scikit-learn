@@ -38,33 +38,11 @@ class GaussianProcess(BaseEstimator):
     f = lambda x: x*np.sin(x)
     X = np.array([1., 3., 5., 6., 7., 8.])
     Y = f(X)
-    gp = GaussianProcess(regr=regpoly0, corr=correxp2, theta0=1e-1, \
-                         thetaL=1e-3, thetaU=1e0, random_start=100)
+    gp = GaussianProcess(theta0=1e-1, thetaL=1e-3, thetaU=1e0, \
+                         random_start=100)
     gp.fit(X, Y)
-
-    pl.figure(1)
     x = np.linspace(0,10,1000)
-    y, MSE = gp.predict(x, eval_MSE=True)
-    sigma = np.sqrt(MSE)
-    pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
-    pl.plot(X, Y, 'r.', markersize=10, label=u'Observations')
-    pl.plot(x, y, 'k-', label=u'$\widehat{f}(x) = {\\rm BLUP}(x)$')
-    pl.fill(np.concatenate([x, x[::-1]]), \
-            np.concatenate([y - 1.9600 * sigma, (y + 1.9600 * sigma)[::-1]]), \
-            alpha=.5, fc='b', ec='None', label=u'95\% confidence interval')
-    pl.xlabel('$x$')
-    pl.ylabel('$f(x)$')
-    pl.legend(loc='upper left')
-
-    pl.figure(2)
-    theta_values = np.logspace(np.log10(gp.thetaL), np.log10(gp.thetaU),100)
-    psi_values = []
-    for t in theta_values:
-            psi_values.append(gp.reduced_likelihood_function(theta=t)[0])
-    pl.plot(theta_values, psi_values)
-    pl.xlabel(u'$\\theta$')
-    pl.ylabel(u'Score')
-    pl.xscale('log')
+    y_pred, MSE = gp.predict(x, eval_MSE=True)
 
     pl.show()
 
@@ -75,12 +53,6 @@ class GaussianProcess(BaseEstimator):
 
     predict(X) : array
         Predict using the model.
-
-    Todo
-    ----
-    o Add the 'sparse' storage mode for which the correlation matrix is stored
-      in its sparse eigen decomposition format instead of its full Cholesky
-      decomposition.
 
     Implementation details
     ----------------------
@@ -103,13 +75,13 @@ class GaussianProcess(BaseEstimator):
 
         Parameters
         ----------
-        regr : lambda function, optional
+        regr : function, optional
             A regression function returning an array of outputs of the linear
             regression functional basis. The number of observations n_samples
             should be greater than the size p of this basis.
             Default assumes a simple constant regression trend (see regpoly0).
 
-        corr : lambda function, optional
+        corr : function, optional
             A stationary autocorrelation function returning the autocorrelation
             between two points x and x'.
             Default assumes a squared-exponential autocorrelation model (see
