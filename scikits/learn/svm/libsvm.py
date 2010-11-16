@@ -7,9 +7,9 @@ class SVC(BaseLibSVM, ClassifierMixin):
     """
     C-Support Vector Classification.
 
+
     Parameters
     ----------
-
     C : float, optional (default=1.0)
         penalty parameter C of the error term.
 
@@ -43,16 +43,19 @@ class SVC(BaseLibSVM, ClassifierMixin):
     cache_size: float, optional
          specify the size of the cache (in MB)
 
+
     Attributes
     ----------
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
 
-    `support_` : array-like, shape = [n_SV, n_features]
-        Support vectors, where n_SV is the number of support vectors.
+    `support_vectors_` : array-like, shape = [n_SV, n_features]
+        Support vectors.
 
     `n_support_` : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_class-1, nSV]
+    `dual_coef_` : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_class-1, n_features]
@@ -94,9 +97,9 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     """
     Nu-Support Vector Classification.
 
+
     Parameters
     ----------
-
     nu : float, optional
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
@@ -135,13 +138,16 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
+
+    `support_vectors_` : array-like, shape = [n_SV, n_features]
         Support vectors.
 
     `n_support_` : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -197,9 +203,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     """
     Support Vector Regression.
 
+
     Parameters
     ----------
-
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
         the fraction of support vectors. Should be in the interval (0, 1].  By
@@ -243,10 +249,13 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `support_vectors_` : array-like, shape = [nSV, n_features]
+        Support vectors.
+
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -298,7 +307,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
         the fraction of support vectors. Should be in the interval (0, 1].  By
@@ -339,10 +347,13 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `support_vectors_` : array-like, shape = [nSV, n_features]
+        Support vectors.
+
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -393,7 +404,6 @@ class OneClassSVM(BaseLibSVM):
 
     Parameters
     ----------
-
     kernel : string, optional
         Specifies the kernel type to be used in
         the algorithm. Can be one of 'linear', 'poly', 'rbf', 'sigmoid',
@@ -427,10 +437,13 @@ class OneClassSVM(BaseLibSVM):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
+
+    `support_vectors_` : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
         Coefficient of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
