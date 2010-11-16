@@ -12,7 +12,7 @@ class BaseLib(BaseEstimator):
             self.weight_label = np.asarray(uy, dtype=np.int32, order='C')
             self.weight = np.array([1.0 / np.sum(y==i) for i in uy],
                                    dtype=np.float64, order='C')
-            self.weight *= y.shape[0] / np.sum(self.weight)
+            self.weight *= uy.shape[0] / np.sum(self.weight)
         else:
             self.weight = np.asarray(class_weight.values(),
                                      dtype=np.float64, order='C')
