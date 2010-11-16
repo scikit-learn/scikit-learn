@@ -12,7 +12,7 @@ class BaseLib(BaseEstimator):
             self.weight_label = np.asarray(uy, dtype=np.int32, order='C')
             self.weight = np.array([1.0 / np.sum(y==i) for i in uy],
                                    dtype=np.float64, order='C')
-            self.weight *= y.shape[0] / np.sum(self.weight)
+            self.weight *= uy.shape[0] / np.sum(self.weight)
         else:
             self.weight = np.asarray(class_weight.values(),
                                      dtype=np.float64, order='C')
@@ -77,7 +77,7 @@ class BaseLibSVM(BaseLib):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
-        y : array, shape = [n_samples]
+        y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
         class_weight : dict, {class_label : weight} or "auto"
@@ -311,10 +311,10 @@ class BaseLibLinear(BaseLib):
 
         Parameters
         ----------
-        X : array-like, shape = [nsamples, nfeatures]
-            Training vector, where nsamples in the number of samples and
-            nfeatures is the number of features.
-        y : array, shape = [nsamples]
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array-like, shape = [n_samples]
             Target vector relative to X
         class_weight : dict , {class_label : weight}
             Weights associated with classes. If not given, all classes

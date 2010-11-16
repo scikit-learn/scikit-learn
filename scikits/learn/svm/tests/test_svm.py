@@ -256,12 +256,16 @@ def test_auto_weight():
     # compute reference metrics on iris dataset that is quite balanced by
     # default
     X, y = iris.data, iris.target
-    clf = svm.SVC().fit(X, y)
-    assert_almost_equal(metrics.f1_score(y, clf.predict(X)), 0.94, 2)
+    clf = svm.SVC(kernel="linear").fit(X, y)
+    assert_almost_equal(metrics.f1_score(y, clf.predict(X)), 0.99, 2)
 
     # make the same prediction using automated class_weight
-    clf = svm.SVC().fit(X, y, class_weight="auto")
-    assert_almost_equal(metrics.f1_score(y, clf.predict(X)), 0.99, 2)
+    clf_auto = svm.SVC(kernel="linear").fit(X, y, class_weight="auto")
+    assert_almost_equal(metrics.f1_score(y, clf_auto.predict(X)), 0.99, 2)
+
+    # Make sure that in the balanced case it does not change anything
+    # to use "auto"
+    assert_array_almost_equal(clf.coef_, clf_auto.coef_, 6)
 
     # build an very very imbalanced dataset out of iris data
     X_0 = X[y == 0,:]
@@ -277,7 +281,7 @@ def test_auto_weight():
     # fit a model with auto class_weight enabled
     clf = svm.SVC().fit(X_imbalanced, y_imbalanced, class_weight="auto")
     y_pred = clf.predict(X)
-    assert_almost_equal(metrics.f1_score(y, y_pred), 0.99, 2)
+    assert_almost_equal(metrics.f1_score(y, y_pred), 0.92, 2)
 
 
 def test_error():
