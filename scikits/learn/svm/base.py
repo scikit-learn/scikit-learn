@@ -5,21 +5,27 @@ from ._libsvm import libsvm_train, libsvm_predict, libsvm_predict_proba, \
 from . import _liblinear
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 
-class BaseLib(BaseEstimator):
-    def _set_class_weight(self, class_weight, y):
-        if class_weight == "auto":
-            uy = np.unique(y)
-            self.weight_label = np.asarray(uy, dtype=np.int32, order='C')
-            self.weight = np.array([1.0 / np.sum(y==i) for i in uy],
-                                   dtype=np.float64, order='C')
-            self.weight *= uy.shape[0] / np.sum(self.weight)
-        else:
-            self.weight = np.asarray(class_weight.values(),
-                                     dtype=np.float64, order='C')
-            self.weight_label = np.asarray(class_weight.keys(),
-                                           dtype=np.int32, order='C')
 
-class BaseLibSVM(BaseLib):
+def _get_class_weight(class_weight, y):
+    """
+    Estimate class weights for unbalanced datasets.
+    """
+    if class_weight == 'auto':
+        uy = np.unique(y)
+        weight_label = np.asarray(uy, dtype=np.int32, order='C')
+        weight = np.array([1.0 / np.sum(y==i) for i in uy],
+                          dtype=np.float64, order='C')
+        weight *= y.shape[0] / np.sum(weight)
+    else:
+        weight = np.asarray(class_weight.values(),
+                            dtype=np.float64, order='C')
+        weight_label = np.asarray(class_weight.keys(),
+                                  dtype=np.int32, order='C')
+
+    return weight, weight_label
+
+
+class BaseLibSVM(BaseEstimator):
     """
     Base class for classifiers that use libsvm as library for
     support vector machine classification and regression.
@@ -102,7 +108,8 @@ class BaseLibSVM(BaseLib):
             self.__Xfit = X
         kernel_type, _X = self._get_kernel(X)
 
-        self._set_class_weight(class_weight, y)
+        self.weight, self.weight_label = \
+                     _get_class_weight(class_weight, y)
 
         # check dimensions
         solver_type = self._svm_types.index(self.impl)
@@ -236,7 +243,7 @@ class BaseLibSVM(BaseLib):
         return np.dot(self.dual_coef_, self.support_vectors_)
 
 
-class BaseLibLinear(BaseLib):
+class BaseLibLinear(BaseEstimator):
     """
     Base for classes binding liblinear (dense and sparse versions)
     """
@@ -302,11 +309,8 @@ class BaseLibLinear(BaseLib):
         """
         self._set_params(**params)
 
-
-        self.weight = np.asarray(class_weight.values(),
-                                 dtype=np.float64, order='C')
-        self.weight_label = np.asarray(class_weight.keys(),
-                                       dtype=np.int32, order='C')
+        self.weight, self.weight_label = \
+                     _get_class_weight(class_weight, y)
 
         X = np.asanyarray(X, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.int32, order='C')
