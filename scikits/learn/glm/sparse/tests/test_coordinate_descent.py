@@ -16,9 +16,10 @@ def test_sparse_predict():
     X[0, 0] = 1
     X[0, 1] = 0.5
     X[1, 0] = -1
-    coef_ = np.array([1, -1])
 
-    predicted = SparseENet(coef_=coef_).predict(X)
+    clf = SparseENet()
+    clf._set_coef(np.array([1, -1]))
+    predicted = clf.predict(X)
     np.testing.assert_array_equal([0.5, -1.0, 0.0], predicted)
 
 

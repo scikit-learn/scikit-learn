@@ -2,7 +2,8 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #
 # License: BSD Style.
-"""Implementation of coordinate descent for the Elastic Net with sparse data."""
+"""Implementation of coordinate descent for the Elastic Net with sparse data.
+"""
 
 import warnings
 import numpy as np
@@ -35,22 +36,20 @@ class ElasticNet(LinearModel):
         TODO: fit_intercept=True is not yet implemented
     """
 
-    def __init__(self, alpha=1.0, rho=0.5, coef_=None,
-                fit_intercept=False):
+    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False):
         if fit_intercept:
             raise NotImplementedError("fit_intercept=True is not implemented")
         self.alpha = alpha
         self.rho = rho
         self.fit_intercept = fit_intercept
         self.intercept_ = 0.0
-        self._set_coef(coef_)
+        self._set_coef(None)
 
     def _set_coef(self, coef_):
         self.coef_ = coef_
         if coef_ is None:
             self.sparse_coef_ = None
         else:
-            n_features = len(coef_)
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
@@ -115,7 +114,6 @@ class ElasticNet(LinearModel):
                         + self.intercept_)
 
 
-
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer
 
@@ -134,7 +132,6 @@ class Lasso(ElasticNet):
 
     """
 
-    def __init__(self, alpha=1.0, coef_=None, fit_intercept=False):
-        super(Lasso, self).__init__(alpha=alpha, rho=1.0, coef_=coef_,
+    def __init__(self, alpha=1.0, fit_intercept=False):
+        super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                                     fit_intercept=fit_intercept)
-

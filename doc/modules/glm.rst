@@ -125,7 +125,7 @@ the coefficients. See :ref:`lars_algorithm` for another implementation.
 
     >>> clf = glm.Lasso(alpha = 0.1)
     >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-    Lasso(alpha=0.1, coef_=array([ 0.6,  0. ]), fit_intercept=True)
+    Lasso(alpha=0.1), fit_intercept=True)
     >>> clf.predict ([[1, 1]])
     array([ 0.8])
 

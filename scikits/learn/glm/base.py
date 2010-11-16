@@ -1,14 +1,13 @@
+"""
+Generalized Linear models.
+"""
+
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Vincent Michel <vincent.michel@inria.fr>
 #
 # License: BSD Style.
-
-
-"""
-Generalized Linear models.
-"""
 
 import numpy as np
 
@@ -46,13 +45,12 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """Compute explained variance a.k.a. r^2"""
         return explained_variance_score(y, self.predict(X))
 
-    def _center_data (self, X, y):
+    def _center_data(self, X, y):
         """
         Centers data to have mean zero along axis 0. This is here
         because nearly all Linear Models will want it's data to be
         centered.
         """
-
         if self.fit_intercept:
             Xmean = X.mean(axis=0)
             ymean = y.mean()
@@ -102,7 +100,6 @@ class LinearRegression(LinearModel):
     def __init__(self, fit_intercept=True):
         self.fit_intercept = fit_intercept
 
-
     def fit(self, X, y, **params):
         """
         Fit linear model.
@@ -126,11 +123,10 @@ class LinearRegression(LinearModel):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
-        X, y, Xmean, ymean = self._center_data (X, y)
+        X, y, Xmean, ymean = self._center_data(X, y)
 
         self.coef_, self.residues_, self.rank_, self.singular_ = \
                 np.linalg.lstsq(X, y)
 
         self._set_intercept(Xmean, ymean)
         return self
-
