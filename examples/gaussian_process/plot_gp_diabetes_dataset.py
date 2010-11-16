@@ -20,7 +20,7 @@ of the Gaussian Process model. Based on these predictions, we compute an
 explained variance error (Q2).
 """
 
-# Author: Vincent Dubourg <vincent.dubourg@gmail.com
+# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
 
 from scikits.learn import datasets, cross_val, metrics
@@ -39,6 +39,7 @@ gp = GaussianProcess(theta0=1e-4, nugget=1e-2, verbose=False)
 
 # Fit the GP model to the data
 gp.fit(X, y)
+gp.par['beta']
 
 # Estimate the leave-one-out predictions using the cross_val module
 n_jobs = 2 # the distributing capacity available on the machine

@@ -11,32 +11,12 @@ from ..base import BaseEstimator
 from .regression import regpoly0
 from .correlation import correxp2, corriid
 machine_epsilon = np.finfo(np.double).eps
-
-
-def col_sum(x):
-    """
-    Performs columnwise sums of elements in x depending on its shape.
-
-    Parameters
-    ----------
-    x : array_like
-        An array with shape size (p, q).
-
-    Returns
-    -------
-    s : array_like
-        An array whit shape (q, ) which contains the columnwise sums of the
-        elements in x.
-    """
-
-    x = np.asanyarray(x, dtype=np.float)
-
-    if x.ndim > 1:
-        s = x.sum(axis=0)
-    else:
-        s = x
-
-    return s
+if hasattr(linalg, 'solve_triangular'):
+    # only in scipy since 0.9
+    solve_triangular = linalg.solve_triangular
+else:
+    # slower, but works
+    solve_triangular = linalg.solve
 
 
 ##############################
@@ -318,8 +298,8 @@ class GaussianProcess(BaseEstimator):
             mean_y = np.array([0.])
             std_y = np.array([1.])
 
-        X_ = (X - mean_X) / std_X
-        y_ = (y - mean_y) / std_y
+        X = (X - mean_X) / std_X
+        y = (y - mean_y) / std_y
 
         # Calculate matrix of distances D between samples
         mzmax = n_samples * (n_samples - 1) / 2
@@ -330,7 +310,7 @@ class GaussianProcess(BaseEstimator):
             ll = ll[-1] + 1 + range(n_samples - k - 1)
             ij[ll] = np.concatenate([[np.repeat(k, n_samples - k - 1, 0)], \
                                      [np.arange(k + 1, n_samples).T]]).T
-            D[ll] = X_[k] - X_[(k + 1):n_samples]
+            D[ll] = X[k] - X[(k + 1):n_samples]
         if np.min(np.sum(np.abs(D), 1)) == 0. and self.corr != corriid:
             raise Exception("Multiple X are not allowed")
 
@@ -356,8 +336,6 @@ class GaussianProcess(BaseEstimator):
         # Set attributes
         self.X = X
         self.y = y
-        self.X_ = X_
-        self.y_ = y_
         self.D = D
         self.ij = ij
         self.F = F
@@ -446,9 +424,9 @@ class GaussianProcess(BaseEstimator):
 
         # Check design & trial sites
         X = np.asanyarray(X, dtype=np.float)
-        n_samples = self.X_.shape[0]
-        if self.X_.ndim > 1:
-            n_features = self.X_.shape[1]
+        n_samples = self.X.shape[0]
+        if self.X.ndim > 1:
+            n_features = self.X.shape[1]
         else:
             n_features = 1
         n_eval = X.shape[0]
@@ -468,7 +446,7 @@ class GaussianProcess(BaseEstimator):
             # (evaluates all given points in a single batch run)
 
             # Normalize trial sites
-            X_ = (X - self.X_sc[0][:]) / self.X_sc[1][:]
+            X = (X - self.X_sc[0][:]) / self.X_sc[1][:]
 
             # Initialize output
             y = np.zeros(n_eval)
@@ -479,19 +457,19 @@ class GaussianProcess(BaseEstimator):
             dx = np.zeros([n_eval * n_samples, n_features])
             kk = np.arange(n_samples).astype(int)
             for k in range(n_eval):
-                dx[kk] = X_[k] - self.X_
+                dx[kk] = X[k] - self.X
                 kk = kk + n_samples
 
             # Get regression function and correlation
-            f = self.regr(X_)
-            r = self.corr(self.theta, dx).reshape(n_eval, n_samples).T
+            f = self.regr(X)
+            r = self.corr(self.theta, dx).reshape(n_eval, n_samples)
 
             # Scaled predictor
-            y_ = np.matrix(f) * np.matrix(self.par['beta']) \
-               + (np.matrix(self.par['gamma']) * np.matrix(r)).T
+            y_ = np.dot(f, self.par['beta']) \
+               + np.dot(r, self.par['gamma'])
 
             # Predictor
-            y = (self.y_sc[0] + self.y_sc[1] * np.array(y_)).ravel()
+            y = (self.y_sc[0] + self.y_sc[1] * y_).ravel()
 
             # Mean Squared Error
             if eval_MSE:
@@ -505,18 +483,17 @@ class GaussianProcess(BaseEstimator):
                     reduced_likelihood_function_value, par = \
                         self.reduced_likelihood_function()
 
-                rt = linalg.solve(np.matrix(par['C']), np.matrix(r))
+                rt = solve_triangular(par['C'], r.T)
                 if self.beta0 is None:
                     # Universal Kriging
-                    u = - linalg.solve(np.matrix(self.par['G'].T), \
-                                       np.matrix(self.par['Ft']).T * \
-                                       np.matrix(rt) - np.matrix(f).T)
+                    u = solve_triangular(self.par['G'].T, \
+                                         np.dot(self.par['Ft'].T, rt) - f.T)
                 else:
                     # Ordinary Kriging
                     u = np.zeros(y.shape)
 
-                MSE = self.par['sigma2'] * (1. - col_sum(np.array(rt) ** 2.) \
-                                               + col_sum(np.array(u) ** 2.)).T
+                MSE = self.par['sigma2'] * (1. - (rt ** 2.).sum(axis=0) \
+                                               + (u ** 2.).sum(axis=0))
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
@@ -611,15 +588,15 @@ class GaussianProcess(BaseEstimator):
         par = {}
 
         # Retrieve data
-        n_samples = self.X_.shape[0]
+        n_samples = self.X.shape[0]
         D = self.D
         ij = self.ij
         F = self.F
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            if self.X_.ndim > 1:
-                n_features = self.X_.shape[1]
+            if self.X.ndim > 1:
+                n_features = self.X.shape[1]
             else:
                 n_features = 1
             mzmax = n_samples * (n_samples - 1) / 2
@@ -631,10 +608,10 @@ class GaussianProcess(BaseEstimator):
                 ij[ll] = \
                     np.concatenate([[np.repeat(k, n_samples - k - 1, 0)], \
                                     [np.arange(k + 1, n_samples).T]]).T
-                D[ll] = self.X_[k] - self.X_[(k + 1):n_samples]
+                D[ll] = self.X[k] - self.X[(k + 1):n_samples]
             if min(sum(abs(D), 1)) == 0. and self.corr != corriid:
                 raise Exception("Multiple X are not allowed")
-            F = self.regr(self.X_)
+            F = self.regr(self.X)
 
         # Set up R
         r = self.corr(theta, D)
@@ -649,7 +626,7 @@ class GaussianProcess(BaseEstimator):
             return reduced_likelihood_function_value, par
 
         # Get generalized least squares solution
-        Ft = linalg.solve(C, F)
+        Ft = solve_triangular(C, F)
         try:
             Q, G = linalg.qr(Ft, econ=True)
         except:
@@ -673,25 +650,25 @@ class GaussianProcess(BaseEstimator):
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
 
-        Yt = linalg.solve(C, self.y_)
+        Yt = solve_triangular(C, self.y)
         if self.beta0 is None:
             # Universal Kriging
-            beta = linalg.solve(G, np.matrix(Q).T * np.matrix(Yt))
+            beta = solve_triangular(G, np.dot(Q.T, Yt))
         else:
             # Ordinary Kriging
             beta = np.array(self.beta0)
 
-        rho = np.matrix(Yt) - np.matrix(Ft) * np.matrix(beta)
-        normalized_sigma2 = (np.array(rho) ** 2.).sum(axis=0) / n_samples
+        rho = Yt - np.dot(Ft, beta)
+        sigma2 = (rho ** 2.).sum(axis=0) / n_samples
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
-        detR = (np.array(np.diag(C)) ** (2. / n_samples)).prod()
+        detR = (np.diag(C) ** (2. / n_samples)).prod()
 
         # Compute/Organize output
-        reduced_likelihood_function_value = - normalized_sigma2.sum() * detR
-        par['sigma2'] = normalized_sigma2 * self.y_sc[1] ** 2
+        reduced_likelihood_function_value = - sigma2.sum() * detR
+        par['sigma2'] = sigma2 * self.y_sc[1] ** 2.
         par['beta'] = beta
-        par['gamma'] = linalg.solve(C.T, rho).T
+        par['gamma'] = solve_triangular(C.T, rho)
         par['C'] = C
         par['Ft'] = Ft
         par['G'] = G

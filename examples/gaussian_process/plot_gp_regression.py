@@ -14,7 +14,7 @@ model as well as its probabilistic nature in the form of a pointwise 95%
 confidence interval.
 """
 
-# Author: Vincent Dubourg <vincent.dubourg@gmail.com
+# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
 
 import numpy as np

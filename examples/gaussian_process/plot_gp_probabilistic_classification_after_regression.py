@@ -15,7 +15,7 @@ corresponds to the 95% confidence interval on the prediction of the zero level
 set.
 """
 
-# Author: Vincent Dubourg <vincent.dubourg@gmail.com
+# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
 
 import numpy as np
