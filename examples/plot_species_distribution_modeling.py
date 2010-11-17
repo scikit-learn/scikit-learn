@@ -3,7 +3,7 @@
 Species distribution modeling
 =============================
 
-Modeling species geographic distributions is an important
+Modeling species' geographic distributions is an important
 problem in conservation biology. In this example we
 model the geographic distribution of two south american
 mammals given past observations and 14 environmental
@@ -11,7 +11,7 @@ variables. Since we have only positive examples (there are
 no unsuccessful observations), we cast this problem as a
 density estimation problem and use the `OneClassSVM` provided
 by the package `scikits.learn.svm` as our modeling tool.
-The data that we use in this example comes from Phillips et. al. (2006).
+The data that we use in this example is provided by Phillips et. al. (2006).
 If available, the example uses `basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
 to plot the coast lines and national boundaries of south america.
 
@@ -23,23 +23,6 @@ The two species are:
  - `Microryzomys minutus <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
-   
-
-Some of the environmental variables (=coverages) are
-listed below. Note that we do not use any spacial variables.
-
-Environmental variables:
-
-Annual means from 1961 to 1990.
- - dtr6190_ann Diurnal temperature range
- - frs6190_ann Ground frost frequency
- - pre6190_ann Precipitation
- - tmn6190_ann Minimum temperature
- - tmp6190_ann Mean temperature
- - tmx6190_ann Maximum temperature
- - vap6190_ann Vapor pressure
- - frs6190_ann Ground frost frequency
- - pre6190_ann Precipitation
 
 References:
 
@@ -66,11 +49,12 @@ try:
 except ImportError:
     basemap = False
 
+from time import time
 from os.path import normpath, split, exists
 from glob import glob
-from itertools import count
 from scikits.learn import svm
-from time import time
+from scikits.learn.metrics import roc_curve, auc
+from scikits.learn.datasets.base import Bunch
 
 
 def load_dir(directory):
@@ -81,9 +65,9 @@ def load_dir(directory):
     for fpath in glob("%s/*.asc" % normpath(directory)):
         fname = split(fpath)[-1]
         fname = fname[:fname.index(".")]
-        X = np.loadtxt(fpath, skiprows=6)
+        X = np.loadtxt(fpath, skiprows=6, dtype=np.float32)
         data.append(X)
-    return np.array(data)
+    return np.array(data, dtype=np.float32)
 
 
 def get_coverages(points, coverages, xx, yy):
@@ -126,25 +110,33 @@ def download(url, archive_name):
         zipfile.ZipFile(archive_name).extractall()
         print
 
-t0 = time()
 
 download(samples_url, samples_archive_name)
 download(coverage_url, coverage_archive_name)
 
-species = ["bradypus variegatus", "microryzomys minutus"]
+t0 = time()
+
+################################################################################
+# Load data from disk
+species = ["bradypus_variegatus_0", "microryzomys_minutus_0"]
 species_map = dict([(s, i) for i, s in enumerate(species)])
-species2id = lambda s: species_map[" ".join(s.split("_")[:2])]
+species2id = lambda s: species_map.get(s, -1)
 train = np.loadtxt('samples/alltrain.csv', converters={0: species2id},
                    skiprows=1, delimiter=",")
 test = np.loadtxt('samples/alltest.csv', converters={0: species2id},
                   skiprows=1, delimiter=",")
+# Load env variable grids
+coverage = load_dir("coverages")
+
+################################################################################
+# Preprocess data
 
 # Data resolution
 n_cols = 1212
 n_rows = 1592
 x_left_lower_corner = -94.8
 y_left_lower_corner = -56.05
-grid_size = 0.05
+grid_size = 0.05  # ~5.5 km
 
 # x,y coordinates for each cell
 xmin = x_left_lower_corner + grid_size
@@ -161,20 +153,19 @@ print "ymin, ymax:", ymin, ymax
 print "grid size:", grid_size
 
 # Per species data
-train_bv = train[train[:,0] == 0, 1:]
-test_bv = test[test[:,0] == 0, 1:]
-train_mm = train[train[:,0] == 1, 1:]
-test_mm = test[test[:,0] == 1, 1:]
-
-# Load env variable grids
-coverage = load_dir("coverages")
+bv = Bunch(name=" ".join(species[0].split("_")[:2]),
+           train=train[train[:,0] == 0, 1:],
+           test=test[test[:,0] == 0, 1:])
+mm = Bunch(name=" ".join(species[1].split("_")[:2]),
+           train=train[train[:,0] == 1, 1:],
+           test=test[test[:,0] == 1, 1:])
 
 # Get features (=coverages)
 print "compute features (=coverages)...",
-train_bv_cover = get_coverages(train_bv, coverage, xx, yy)
-test_bv_cover = get_coverages(test_bv, coverage, xx, yy)
-train_mm_cover = get_coverages(train_mm, coverage, xx, yy)
-test_mm_cover = get_coverages(test_mm, coverage, xx, yy)
+bv.train_cover = get_coverages(bv.train, coverage, xx, yy)
+bv.test_cover = get_coverages(bv.test, coverage, xx, yy)
+mm.train_cover = get_coverages(mm.train, coverage, xx, yy)
+mm.test_cover = get_coverages(mm.test, coverage, xx, yy)
 print "done."
 
 
@@ -186,29 +177,35 @@ def predict(clf, mean, std):
     -------
     array : shape [n_rows, n_cols]
     """
-    Z = np.zeros((n_rows, n_cols))
-    for row, col in np.ndindex(n_rows, n_cols):
-        if coverage[2, row, col] > -9999:
-            Z[row, col]= clf.predict_margin((coverage[:,row,col]-mean)/std)
+    Z = np.ones((n_rows, n_cols), dtype=np.float64)
+    # the land points
+    idx = np.where(coverage[2] > -9999)
+    X = coverage[:, idx[0], idx[1]].T
+    pred = clf.predict_margin((X-mean)/std)[:,0]
+    Z *= pred.min()
+    Z[idx[0], idx[1]] = pred
     return Z
 
+# background points for evaluation
+np.random.seed(13)
+background_points = np.c_[np.random.randint(low=0, high=n_rows, size=10000),
+                          np.random.randint(low=0, high=n_cols, size=10000)].T
+
 X, Y = np.meshgrid(xx, yy[::-1])
-#basemap = False
-for i, species, cover, observations in zip(count(), species,
-                                           [train_bv_cover, train_mm_cover],
-                                           [train_bv, train_mm]):
+basemap = False
+for i, species in enumerate([bv, mm]):
     print "_" * 80
-    print "Modeling distribution of species '%s'" % species
+    print "Modeling distribution of species '%s'" % species.name
     print
     # Standardize features
-    mean = cover.mean(axis=0)
-    std = cover.std(axis=0)
-    cover_std = (cover - mean) / std
+    mean = species.train_cover.mean(axis=0)
+    std = species.train_cover.std(axis=0)
+    train_cover_std = (species.train_cover - mean) / std
 
     # Fit OneClassSVM
     print "fit OneClassSVM ... ",
     clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.5)
-    clf.fit(cover_std)
+    clf.fit(train_cover_std)
     print "done. "
 
     # Plot map of South America
@@ -222,7 +219,7 @@ for i, species, cover, observations in zip(count(), species,
         m.drawcountries()
         #m.drawrivers()
     else:
-        print "plot coastlines from cover"
+        print "plot coastlines from coverage"
         CS = pl.contour(X, Y, coverage[2,:,:], levels=[-9999], colors="k",
                         linestyles="solid")
         pl.xticks([])
@@ -230,14 +227,26 @@ for i, species, cover, observations in zip(count(), species,
 
     Z = predict(clf, mean, std)
     levels = np.linspace(Z.min(), Z.max(), 25)
-    Z[coverage[2,:,:] == -9999] = Z.min()
+    Z[coverage[2,:,:] == -9999] = -9999
     CS = pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
     pl.colorbar(format='%.2f')
-    pl.scatter(observations[:, 0], observations[:, 1], s=8, c='black',
-               marker='^', label='observations')
+    pl.scatter(species.train[:, 0], species.train[:, 1], s=20, c='black',
+               marker='^', label='train')
+    pl.scatter(species.test[:, 0], species.test[:, 1], s=20, c='black',
+               marker='x', label='test')
     pl.legend()
-    pl.title(species)
+    pl.title(species.name)
     pl.axis('equal')
+
+    # Compute AUC w.r.t. background points
+    pred_background = Z[background_points[0], background_points[1]]
+    pred_test = clf.predict_margin((species.test_cover-mean)/std)[:,0]
+    scores = np.r_[pred_test, pred_background]
+    y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
+    fpr, tpr, thresholds = roc_curve(y, scores)
+    roc_auc = auc(fpr, tpr)
+    pl.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
+    print "Area under the ROC curve : %f" % roc_auc
 
 print "time elapsed: %.3fs" % (time() - t0)
 
