@@ -97,7 +97,8 @@ class SGD(BaseSGD):
 
     """
 
-    def fit(self, X, y, coef_init=None, intercept_init=None, **params):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            class_weight={}, **params):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -111,6 +112,12 @@ class SGD(BaseSGD):
             The initial coeffients to warm-start the optimization.
         intercept_init : array, shape = [1] if n_classes == 2 else [n_classes]
             The initial intercept to warm-start the optimization.
+        class_weight : dict, {class_label : weight} or "auto"
+            Weights associated with classes. If not given, all classes
+            are supposed to have weight one.
+
+            The "auto" mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies.
 
         Returns
         -------
@@ -121,11 +128,14 @@ class SGD(BaseSGD):
         y = np.asanyarray(y, dtype=np.float64)
 
         # largest class id is positive class
-        classes = np.unique(y)
-        self.classes = classes
-        if classes.shape[0] > 2:
+        self.classes = np.unique(y)
+        
+        self.weight = self._get_class_weight(class_weight, self.classes, y)
+        print "weights:", self.weight
+
+        if self.classes.shape[0] > 2:
             self._fit_multiclass(X, y, coef_init, intercept_init)
-        elif classes.shape[0] == 2:
+        elif self.classes.shape[0] == 2:
             self._fit_binary(X, y, coef_init, intercept_init)
         else:
             raise ValueError("The number of class labels must be "
@@ -165,7 +175,8 @@ class SGD(BaseSGD):
                                       self.n_iter,
                                       int(self.fit_intercept),
                                       int(self.verbose),
-                                      int(self.shuffle))
+                                      int(self.shuffle),
+                                      self.weight[1], self.weight[0])
 
         self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
@@ -203,7 +214,8 @@ class SGD(BaseSGD):
                                                self.penalty_type, self.alpha,
                                                self.rho, self.n_iter,
                                                self.fit_intercept,
-                                               self.verbose, self.shuffle)
+                                               self.verbose, self.shuffle,
+                                               self.weight[i])
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
@@ -232,12 +244,12 @@ class SGD(BaseSGD):
 
 def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,
                           penalty_type, alpha, rho, n_iter, fit_intercept,
-                          verbose, shuffle):
+                          verbose, shuffle, weight_pos):
     """Inner loop for One-vs.-All scheme"""
     y_i = np.ones(y.shape, dtype=np.float64) * -1.0
     y_i[y == c] = 1.0
     coef, intercept = plain_sgd(coef_, intercept_, loss_function,
                                 penalty_type, alpha, rho,
                                 X, y_i, n_iter, fit_intercept,
-                                verbose, shuffle)
+                                verbose, shuffle, weight_pos, 1.0)
     return (i, coef, intercept)

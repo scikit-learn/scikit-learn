@@ -199,10 +199,47 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               np.ndarray[double, ndim=2] X,
               np.ndarray[double, ndim=1] Y,
               int n_iter, int fit_intercept,
-              int verbose, int shuffle):
+              int verbose, int shuffle,
+              double weight_pos, double weight_neg):
     """Cython impl. of SGD for generic loss functions and penalties
 
     This implementation assumes X represented as a dense array of floats.
+
+    Parameters
+    ----------
+    w : ndarray[double, ndim=1]
+        The allocated coef_ vector.
+    intercept : double
+        The initial intercept
+    loss : LossFunction
+        A concrete LossFunction object.
+    penalty_type : int
+        The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
+    alpha : float
+        The regularization parameter.
+    rho : float
+        The elastic net hyperparameter.
+    X : ndarray[double, ndim=2]
+        The dataset as a dense numpy array.
+    Y : ndarray[double, ndim=1]
+        The labels.
+    n_iter : int
+        The number of iterations (epochs).
+    fit_intercept : int
+        Whether or not to fit the intercept (1 or 0).
+    verbose : int
+        Print verbose output; 0 for quite.
+    shuffle : int
+        Whether to shuffle the training data before each epoch.
+    weight_pos : float
+        The weight of the positive class.
+    weight_neg : float
+        The weight of the negative class. 
+    Returns
+    -------
+    (w, intercept) : tuple (array[n_features], float)
+
+    
     """
 
     # get the data information into easy vars
@@ -229,6 +266,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double wnorm = 0.0
     cdef double t = 0.0
     cdef double y = 0.0
+    cdef double importance = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
@@ -260,7 +298,11 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
             p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
                 ) + intercept
             sumloss += loss.loss(p, y)
-            update = eta * loss.dloss(p, y)
+            if y > 0:
+                importance = weight_pos
+            else:
+                importance = weight_neg
+            update = eta * loss.dloss(p, y) * importance
             if update != 0.0:
                 add(w_data_ptr, wscale, X_data_ptr, offset, n_features, update)
                 if fit_intercept == 1:
@@ -275,9 +317,6 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                 l1penalty(w_data_ptr, wscale, q_data_ptr, n_features, u)
             t += 1
             count += 1
-        #if penalty_type == L1 or penalty_type == ELASTICNET:
-        #    u += ((1.0 - rho) * eta * alpha)
-        #    finall1penalty(w_data_ptr, wscale, n_features, q_data_ptr, u)
 
         # report epoche information
         if verbose > 0:
