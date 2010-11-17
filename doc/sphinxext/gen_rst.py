@@ -80,6 +80,10 @@ def generate_example_rst(app):
     """
     root_dir = os.path.join(app.builder.srcdir, 'auto_examples')
     example_dir = os.path.abspath(app.builder.srcdir +  '/../' + 'examples')
+    try:
+        plot_gallery = eval(app.builder.config.plot_gallery)
+    except TypeError:
+        plot_gallery = bool(app.builder.config.plot_gallery)
     if not os.path.exists(example_dir):
         os.makedirs(example_dir)
     if not os.path.exists(root_dir):
@@ -99,16 +103,16 @@ Examples
 """)
     # Here we don't use an os.walk, but we recurse only twice: flat is
     # better than nested.
-    generate_dir_rst('.', fhindex, example_dir, root_dir)
+    generate_dir_rst('.', fhindex, example_dir, root_dir, plot_gallery)
     for dir in sorted(os.listdir(example_dir)):
         if dir == '.svn':
             continue
         if os.path.isdir(os.path.join(example_dir, dir)):
-            generate_dir_rst(dir, fhindex, example_dir, root_dir)
+            generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery)
     fhindex.flush()
 
 
-def generate_dir_rst(dir, fhindex, example_dir, root_dir):
+def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     """ Generate the rst file for an example directory.
     """
     target_dir = os.path.join(root_dir, dir)
@@ -127,11 +131,11 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir):
         os.makedirs(target_dir)
     for fname in sorted(os.listdir(src_dir)):
         if fname.endswith('py'):
-            generate_file_rst(fname, target_dir, src_dir)
+            generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             fhindex.write('    %s\n' % (os.path.join(dir, fname[:-3])))
 
 
-def generate_file_rst(fname, target_dir, src_dir):
+def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     """ Generate the rst file for a given example.
     """
     image_name = fname[:-2] + 'png'
@@ -145,7 +149,7 @@ def generate_file_rst(fname, target_dir, src_dir):
     src_file = os.path.join(src_dir, fname)
     example_file = os.path.join(target_dir, fname)
     shutil.copyfile(src_file, example_file)
-    if fname.startswith('plot'):
+    if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
         # existing image.
@@ -178,4 +182,4 @@ def generate_file_rst(fname, target_dir, src_dir):
 
 def setup(app):
     app.connect('builder-inited', generate_example_rst)
-
+    app.add_config_value('plot_gallery', True, 'html')

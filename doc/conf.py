@@ -45,6 +45,9 @@ source_suffix = '.rst'
 # The encoding of source files.
 #source_encoding = 'utf-8'
 
+# Generate the plots for the gallery
+plot_gallery = True
+
 # The master toctree document.
 master_doc = 'index'
 
@@ -57,7 +60,7 @@ copyright = u'2010, scikits.learn developers'
 # built documents.
 #
 # The short X.Y version.
-version = '0.5'
+version = '0.6'
 # The full version, including alpha/beta/rc tags.
 release = '0.6-git'
 
