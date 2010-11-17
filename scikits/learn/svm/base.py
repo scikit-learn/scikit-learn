@@ -15,7 +15,7 @@ def _get_class_weight(class_weight, y):
         weight_label = np.asarray(uy, dtype=np.int32, order='C')
         weight = np.array([1.0 / np.sum(y==i) for i in uy],
                           dtype=np.float64, order='C')
-        weight *= y.shape[0] / np.sum(weight)
+        weight *= uy.shape[0] / np.sum(weight)
     else:
         weight = np.asarray(class_weight.values(),
                             dtype=np.float64, order='C')
