@@ -6,7 +6,7 @@ Stochastic Gradient Descent
 
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient approach 
 to discriminative learning of linear classifiers under convex loss functions 
-such as `Support Vector Machines <http://en.wikipedia.org/wiki/Support_vector_machine>`_ and `Logistic Regression <http://en.wikipedia.org/wiki/Logistic_regression>`_. 
+such as (linear) `Support Vector Machines <http://en.wikipedia.org/wiki/Support_vector_machine>`_ and `Logistic Regression <http://en.wikipedia.org/wiki/Logistic_regression>`_. 
 Even though SGD has been around in the machine learning community for a long time, 
 it has received a considerable amount of attention just recently in the 
 context of large-scale learning. 
@@ -37,7 +37,7 @@ The class :class:`SGD` implements a plain stochastic gradient descent learning
 routine which supports different loss functions and penalties.
 
 As other classifiers, SGD has to be fitted with two arrays:
-an array X of size [m_samples, n_features] holding the training
+an array X of size [n_samples, n_features] holding the training
 samples, and an array Y of size [n_samples] holding the target values
 (class labels) for the training samples::
 
@@ -73,12 +73,7 @@ To get the signed distance to the hyperplane use `predict_margin`:
     >>> clf.predict_margin([[2., 2.]])
     array([ 29.61357756])
 
-If `loss="log"` you get a probability estimate P(y=C|x) using `predict_proba`, 
-where `C` is the largest class label: 
-   
-    >>> clf = sgd.SGD(loss="log").fit(X, y)
-    >>> clf.predict_proba([[1., 1.]])
-    array([ 0.99999949])
+.. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations. 
 
 The concrete loss function can be set via the `loss` parameter. :class:`SGD` supports the
 following loss functions: 
@@ -90,6 +85,13 @@ following loss functions:
 The first two loss functions are lazy, they only update the model parameters if 
 an example violates the margin constraint, which makes training very efficient. 
 Log loss, on the other hand, provides probability estimates.
+
+In the case of binary classification and `loss="log"` you get a probability 
+estimate P(y=C|x) using `predict_proba`, where `C` is the largest class label: 
+   
+    >>> clf = sgd.SGD(loss="log").fit(X, y)
+    >>> clf.predict_proba([[1., 1.]])
+    array([ 0.99999949])
 
 The concrete penalty can be set via the `penalty` parameter. `SGD` supports the
 following penalties: 
@@ -110,7 +112,7 @@ classes. At testing time, we compute the confidence score (i.e. the signed dista
 to the hyperplane) for each classifier and choose the class with the highest 
 confidence. The Figure below illustrates the OVA approach on the iris dataset. 
 The dashed lines represent the three OVA classifiers; 
-the background color shows the decision surface induced by the three classifiers. 
+the background colors show the decision surface induced by the three classifiers. 
 
 .. figure:: ../auto_examples/sgd/images/plot_iris.png
    :target: ../auto_examples/sgd/plot_iris.html
@@ -282,8 +284,9 @@ the weight vector is represented as the product of a scalar and a vector
 which allows an efficient weight update in the case of L2 regularization. 
 In the case of sparse feature vectors, the intercept is updated with a 
 smaller learning rate (multiplied by 0.01) to account for the fact that 
-it is updated more frequently. We adopted the learning rate schedule from 
-Shalev-Shwartz et al. 2007. 
+it is updated more frequently. Training examples are picked up sequentially
+and the learning rate is lowered after each observed example. We adopted the 
+learning rate schedule from Shalev-Shwartz et al. 2007. 
 For multi-class classification, a "one versus all" approach is used. 
 We use the truncated gradient algorithm proposed by Tsuruoka et al. 2009 
 for L1 regularization (and the Elastic Net). 
