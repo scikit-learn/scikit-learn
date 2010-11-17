@@ -192,7 +192,7 @@ background_points = np.c_[np.random.randint(low=0, high=n_rows, size=10000),
                           np.random.randint(low=0, high=n_cols, size=10000)].T
 
 X, Y = np.meshgrid(xx, yy[::-1])
-basemap = False
+#basemap = False
 for i, species in enumerate([bv, mm]):
     print "_" * 80
     print "Modeling distribution of species '%s'" % species.name
