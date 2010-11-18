@@ -2,6 +2,7 @@
 from ..base import ClassifierMixin, RegressorMixin
 from .base import BaseLibSVM
 
+
 class SVC(BaseLibSVM, ClassifierMixin):
     """
     C-Support Vector Classification.
@@ -234,6 +235,12 @@ class SVR(BaseLibSVM, RegressorMixin):
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
+    cache_size: float, optional
+         specify the size of the cache (in MB)
+
+    shrinking: boolean, optional
+         wether to use the shrinking heuristic.
+
     Attributes
     ----------
     `support_` : array-like, shape = [nSV, n_features]
@@ -260,7 +267,6 @@ class SVR(BaseLibSVM, RegressorMixin):
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
-
 
     def fit(self, X, y):
         """
@@ -298,7 +304,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         the fraction of support vectors. Should be in the interval (0, 1].  By
         default 0.5 will be taken.  Only available if impl='nu_svc'
 
-
     C : float, optional (default=1.0)
         penalty parameter C of the error term.
 
@@ -325,6 +330,12 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     coef0 : float, optional
         independent term in kernel function. It is only significant
         in poly/sigmoid.
+
+    shrinking: boolean, optional
+         wether to use the shrinking heuristic.
+
+    cache_size: float, optional
+         specify the size of the cache (in MB)
 
     Attributes
     ----------
@@ -375,7 +386,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         return BaseLibSVM.fit(self, X, y)
 
 
-
 class OneClassSVM(BaseLibSVM):
     """Unsupervised outliers detection
 
@@ -402,19 +412,18 @@ class OneClassSVM(BaseLibSVM):
         kernel coefficient for rbf and poly, by default 1/n_features
         will be taken.
 
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
-
-    probability: boolean, optional (False by default)
-        Enable probability estimates. Must be enabled prior to calling
-        prob_predict.
-
     coef0 : float, optional
         Independent term in kernel function. It is only significant in
         poly/sigmoid.
 
     eps: float, optional
          precision for stopping criteria
+
+    shrinking: boolean, optional
+         wether to use the shrinking heuristic.
+
+    cache_size: float, optional
+         specify the size of the cache (in MB)
 
     Attributes
     ----------
@@ -433,10 +442,9 @@ class OneClassSVM(BaseLibSVM):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0,
-                 nu=0.5, p=0.1, shrinking=True, probability=False):
+                 cache_size=100.0, eps=1e-3, nu=0.5, shrinking=True):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                             cache_size, eps, C, nu, p, shrinking, probability)
+                             cache_size, eps, 0.0, nu, 0.0, shrinking, False)
 
     def fit(self, X):
         """
