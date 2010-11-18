@@ -117,7 +117,7 @@ class DenseSGDTestCase(unittest.TestCase):
         clf = self.factory(alpha=0.01, n_iter=20).fit(X2, Y2)
         assert clf.coef_.shape == (3, 2)
         assert clf.intercept_.shape == (3,)
-        assert clf.predict_margin([0, 0]).shape == (1, 3)
+        assert clf.decision_function([0, 0]).shape == (1, 3)
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 
@@ -136,7 +136,7 @@ class DenseSGDTestCase(unittest.TestCase):
         clf = self.factory(alpha=0.01, n_iter=20, n_jobs=2).fit(X2, Y2)
         assert clf.coef_.shape == (3, 2)
         assert clf.intercept_.shape == (3,)
-        assert clf.predict_margin([0, 0]).shape == (1, 3)
+        assert clf.decision_function([0, 0]).shape == (1, 3)
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 

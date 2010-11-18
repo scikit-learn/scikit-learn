@@ -68,7 +68,7 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
         array, shape = [n_samples]
            Array containing the predicted class labels.
         """
-        scores = self.predict_margin(X)
+        scores = self.decision_function(X)
         if self.classes.shape[0] == 2:
             indices = np.array(scores > 0, dtype=np.int)
         else:
@@ -91,7 +91,7 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
         """
         if (isinstance(self.loss_function, Log) and
             self.classes.shape[0] == 2):
-            return 1.0 / (1.0 + np.exp(-self.predict_margin(X)))
+            return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
         else:
             raise NotImplementedError("%s loss does not provide "
                                       "this functionality" % self.loss)

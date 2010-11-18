@@ -234,7 +234,7 @@ class SGD(BaseSGD):
         self._set_coef(self.coef_)
         self.intercept_ = self.intercept_
 
-    def predict_margin(self, X):
+    def decision_function(self, X):
         """Predict signed 'distance' to the hyperplane (aka confidence score).
 
         Parameters
