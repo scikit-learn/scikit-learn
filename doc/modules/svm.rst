@@ -183,11 +183,11 @@ storage requirements increase rapidly with the number of training
 vectors. The core of an SVM is a quadratic programming problem (QP),
 separating support vectors from the rest of the training data. The QP
 solver used by this `libsvm`_-based implementation scales between
-:math:O(n_{features} \times n_{samples}^2) and
-:math:O(n_{features} \times n_{samples}^3) depending on how efficiently
+:math:`O(n_{features} \times n_{samples}^2)` and
+:math:`O(n_{features} \times n_{samples}^3)` depending on how efficiently
 the `libsvm`_ cache is used in practice (dataset dependent). If the data
-is very sparse :math:n_{features} should be replaced by the average number
-of non-zero features in a sample vector
+is very sparse :math:`n_{features}` should be replaced by the average number
+of non-zero features in a sample vector.
 
 Also note that for the linear case, the algorithm used in
 :class:`LinearSVC` by the `liblinear`_ implementation is much more
