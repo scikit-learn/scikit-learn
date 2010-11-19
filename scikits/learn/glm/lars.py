@@ -200,9 +200,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         n_iter += 1
 
-        if n_iter > max_features: # resize
-            coefs = np.r_[coefs, np.zeros((max_features + 1, n_features))]
-            alphas = np.r_[alphas, 0.]
+        if n_iter >= coefs.shape[0]: # resize
+            coefs.resize(n_iter + 10, n_features)
+            alphas.resize(n_iter + 10)
 
         coefs[n_iter, active] = coefs[n_iter-1, active] + \
                                 gamma_ * least_squares
