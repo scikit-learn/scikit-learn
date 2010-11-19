@@ -197,7 +197,7 @@ def predict(clf, mean, std):
     # the land points
     idx = np.where(coverage[2] > -9999)
     X = coverage[:, idx[0], idx[1]].T
-    pred = clf.predict_margin((X-mean)/std)[:,0]
+    pred = clf.decision_function((X-mean)/std)[:,0]
     Z *= pred.min()
     Z[idx[0], idx[1]] = pred
     return Z
@@ -258,7 +258,7 @@ for i, species in enumerate([bv, mm]):
 
     # Compute AUC w.r.t. background points
     pred_background = Z[background_points[0], background_points[1]]
-    pred_test = clf.predict_margin((species.test_cover-mean)/std)[:,0]
+    pred_test = clf.decision_function((species.test_cover-mean)/std)[:,0]
     scores = np.r_[pred_test, pred_background]
     y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
     fpr, tpr, thresholds = roc_curve(y, scores)
