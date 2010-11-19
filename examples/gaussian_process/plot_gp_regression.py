@@ -28,14 +28,14 @@ print __doc__
 f = lambda x: x * np.sin(x)
 
 # The design of experiments
-X = np.array([1., 3., 5., 6., 7., 8.])
+X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 
 # Observations
 Y = f(X)
 
 # Mesh the input space for evaluations of the real function, the prediction and
 # its MSE
-x = np.linspace(0, 10, 1000)
+x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # Instanciate a Gaussian Process model
 gp = GaussianProcess(corr=corrcubic, theta0=1e-2, thetaL=1e-4, thetaU=1e-1, \

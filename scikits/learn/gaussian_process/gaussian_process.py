@@ -35,13 +35,13 @@ class GaussianProcess(BaseEstimator):
     from scikits.learn.gaussian_process import GaussianProcess
     import pylab as pl
 
-    f = lambda x: x*np.sin(x)
+    f = lambda x: x * np.sin(x)
     X = np.array([1., 3., 5., 6., 7., 8.])
     Y = f(X)
     gp = GaussianProcess(theta0=1e-1, thetaL=1e-3, thetaU=1e0, \
                          random_start=100)
     gp.fit(X, Y)
-    x = np.linspace(0,10,1000)
+    x = np.linspace(0, 10, 1000)
     y_pred, MSE = gp.predict(x, eval_MSE=True)
 
     pl.show()
@@ -179,14 +179,14 @@ class GaussianProcess(BaseEstimator):
         self.verbose = verbose
 
         # Check correlation parameters
-        self.theta0 = np.atleast_2d(np.asanyarray(theta0, dtype=np.float))
+        self.theta0 = np.atleast_2d(theta0)
         self.thetaL, self.thetaU = thetaL, thetaU
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
             # Parameters optimization case
-            self.thetaL = np.atleast_2d(np.asanyarray(thetaL, dtype=np.float))
-            self.thetaU = np.atleast_2d(np.asanyarray(thetaU, dtype=np.float))
+            self.thetaL = np.atleast_2d(thetaL)
+            self.thetaU = np.atleast_2d(thetaU)
 
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the " \
@@ -232,24 +232,17 @@ class GaussianProcess(BaseEstimator):
             predictions.
         """
 
-        # Force data to numpy.array type (from coding guidelines)
-        X = np.asanyarray(X, dtype=np.float)
-        y = np.asanyarray(y, dtype=np.float)
+        # Force data to 2D numpy.array
+        X = np.atleast_2d(X)
+        y = np.atleast_2d(y)
 
         # Check design sites & observations
-        n_samples_X = X.shape[0]
-        if X.ndim > 1:
-            n_features = X.shape[1]
-        else:
-            n_features = 1
-        X = X.reshape(n_samples_X, n_features)
-
-        n_samples_y = y.shape[0]
-        if y.ndim > 1:
-            raise NotImplementedError("y has more than one dimension. This " \
+        n_samples_X, n_features = X.shape
+        n_samples_y, n_targets = y.shape
+        if n_targets > 1:
+            raise NotImplementedError("The target is multivariate. This " \
                   + "is not supported yet (scalar output prediction only). " \
                   + "Please contribute!")
-        y = y.reshape(n_samples_y, 1)
 
         if n_samples_X != n_samples_y:
             raise Exception("X and y must have the same number of rows!")
@@ -388,30 +381,21 @@ class GaussianProcess(BaseEstimator):
             An array with shape (n_eval, ) with the Mean Squared Error at x.
         """
 
-        # Check
+        # Check itself
         if np.any(np.isnan(self.par['beta'])):
             raise Exception("Not a valid GaussianProcess. " \
                           + "Try fitting it again with different parameters " \
                           + "theta.")
 
         # Check design & trial sites
-        X = np.asanyarray(X, dtype=np.float)
-        n_samples = self.X.shape[0]
-        if self.X.ndim > 1:
-            n_features = self.X.shape[1]
-        else:
-            n_features = 1
-        n_eval = X.shape[0]
-        if X.ndim > 1:
-            n_features_X = X.shape[1]
-        else:
-            n_features_X = 1
-        X = X.reshape(n_eval, n_features_X)
+        X = np.atleast_2d(X)
+        n_eval, n_features_X = X.shape
+        n_samples, n_features = self.X.shape
 
         if n_features_X != n_features:
             raise ValueError("The number of features in X (X.shape[1] = %d) " \
-                           + "should match the sample size used for fit() " \
-                           + "which is %d." % (n_features_X, n_features))
+                           % n_features_X + "should match the sample size " \
+                           + "used for fit() which is %d." % n_features)
 
         if batch_size is None:
             # No memory management
