@@ -95,7 +95,7 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
             y_pred = clf.predict(X_test)
             this_score = -loss_func(y_test, y_pred)
         elif score_func is not None:
-            y_pred = clf.predict(X_text)
+            y_pred = clf.predict(X_test)
             this_score = score_func(y_test, y_pred)
         else:
             this_score = clf.score(X_test, y_test)

@@ -13,6 +13,7 @@ from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.datasets.samples_generator import test_dataset_classif
 from scikits.learn.svm import LinearSVC
 from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
+from scikits.learn.metrics import f1_score
 
 class MockClassifier(BaseEstimator):
     """Dummy classifier to test the cross-validation
@@ -65,4 +66,25 @@ def test_grid_search_sparse():
 
     assert_array_equal(y_pred, y_pred2)
     assert_equal(C, C2)
+
+
+def test_grid_search_sparse_score_func():
+    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, seed=0)
+
+    clf = LinearSVC()
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
+    cv.fit(X_[:180], y_[:180])
+    y_pred = cv.predict(X_[180:])
+    C = cv.best_estimator.C
+
+    X_ = sp.csr_matrix(X_)
+    clf = SparseLinearSVC()
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
+    cv.fit(X_[:180], y_[:180])
+    y_pred2 = cv.predict(X_[180:])
+    C2 = cv.best_estimator.C
+
+    assert_array_equal(y_pred, y_pred2)
+    assert_equal(C, C2)
+
 
