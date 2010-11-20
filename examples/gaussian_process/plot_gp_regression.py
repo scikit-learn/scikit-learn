@@ -31,7 +31,7 @@ f = lambda x: x * np.sin(x)
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 
 # Observations
-Y = f(X)
+Y = f(X).ravel()
 
 # Mesh the input space for evaluations of the real function, the prediction and
 # its MSE

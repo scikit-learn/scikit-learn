@@ -234,15 +234,11 @@ class GaussianProcess(BaseEstimator):
 
         # Force data to 2D numpy.array
         X = np.atleast_2d(X)
-        y = np.atleast_2d(y)
+        y = y[:, np.newaxis]
 
-        # Check design sites & observations
+        # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape
-        n_samples_y, n_targets = y.shape
-        if n_targets > 1:
-            raise NotImplementedError("The target is multivariate. This " \
-                  + "is not supported yet (scalar output prediction only). " \
-                  + "Please contribute!")
+        n_samples_y = y.shape[0]
 
         if n_samples_X != n_samples_y:
             raise Exception("X and y must have the same number of rows!")
