@@ -234,7 +234,7 @@ class GaussianProcess(BaseEstimator):
 
         # Force data to 2D numpy.array
         X = np.atleast_2d(X)
-        y = y[:, np.newaxis]
+        y = np.asanyarray(y)[:, np.newaxis]
 
         # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape
