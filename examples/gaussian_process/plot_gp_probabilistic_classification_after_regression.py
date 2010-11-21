@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-===============================================
-Gaussian Processes for Machine Learning example
-===============================================
+==============================================================================
+Gaussian Processes classification example: exploiting the probabilistic output
+==============================================================================
 
 A two-dimensional regression exercise with a post-processing allowing for
 probabilistic classification thanks to the Gaussian property of the prediction.
@@ -34,7 +34,7 @@ PHI = lambda x: Grv.cdf(x)
 PHIinv = lambda x: Grv.ppf(x)
 
 # A few constants
-beta0 = 8
+lim = 8
 b, kappa, e = 5, .5, .1
 
 # The function to predict (classification will then consist in predicting
@@ -62,8 +62,8 @@ gp.fit(X, Y)
 
 # Evaluate real function, the prediction and its MSE on a grid
 res = 50
-x1, x2 = np.meshgrid(np.linspace(- beta0, beta0, res), \
-                     np.linspace(- beta0, beta0, res))
+x1, x2 = np.meshgrid(np.linspace(- lim, lim, res), \
+                     np.linspace(- lim, lim, res))
 xx = np.vstack([x1.reshape(x1.size), x2.reshape(x2.size)]).T
 
 YY = g(xx)
@@ -87,7 +87,7 @@ pl.xlabel('$x_1$')
 pl.ylabel('$x_2$')
 
 cax = pl.imshow(np.flipud(PHI(- yy / sigma)), cmap=cm.gray_r, alpha=0.8, \
-                extent=(- beta0, beta0, - beta0, beta0))
+                extent=(- lim, lim, - lim, lim))
 norm = pl.matplotlib.colors.Normalize(vmin=0., vmax=0.9)
 cb = pl.colorbar(cax, ticks=[0., 0.2, 0.4, 0.6, 0.8, 1.], norm=norm)
 cb.set_label('${\\rm \mathbb{P}}\left[\widehat{G}(\mathbf{x}) \leq 0\\right]$')

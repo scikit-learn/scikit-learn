@@ -1,6 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
+#         (mostly translation, see implementation details)
+# License: BSD style
+
+"""
+The built-in regression models submodule for the gaussian_process module.
+"""
+
 ################
 # Dependencies #
 ################
@@ -13,11 +21,11 @@ import numpy as np
 ############################
 
 
-def regpoly0(x):
+def constant(x):
     """
     Zero order polynomial (constant, p = 1) regression model.
 
-    regpoly0 : x --> f(x) = 1
+    x --> f(x) = 1
 
     Parameters
     ----------
@@ -39,11 +47,11 @@ def regpoly0(x):
     return f
 
 
-def regpoly1(x):
+def linear(x):
     """
-    First order polynomial (hyperplane, p = n) regression model.
+    First order polynomial (linear, p = n+1) regression model.
 
-    regpoly1 : x --> f(x) = [ x_1, ..., x_n ].T
+    x --> f(x) = [ 1, x_1, ..., x_n ].T
 
     Parameters
     ----------
@@ -65,12 +73,12 @@ def regpoly1(x):
     return f
 
 
-def regpoly2(x):
+def quadratic(x):
     """
-    Second order polynomial (hyperparaboloid, p = n*(n-1)/2) regression model.
+    Second order polynomial (quadratic, p = n*(n-1)/2+n+1) regression model.
 
-    regpoly2 : x --> f(x) = [ x_i*x_j,  (i,j) = 1,...,n ].T
-                                            i > j
+    x --> f(x) = [ 1, { x_i, i = 1,...,n }, { x_i * x_j,  (i,j) = 1,...,n } ].T
+                                                          i > j
 
     Parameters
     ----------

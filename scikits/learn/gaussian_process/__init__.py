@@ -1,15 +1,32 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-    This module contains a contribution to the scikit-learn project that
-    implements Gaussian Process based prediction (also known as Kriging).
+# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
+#         (mostly translation, see implementation details)
+# License: BSD style
 
-    The present implementation is based on a transliteration of the DACE
-    Matlab toolbox <http://www2.imm.dtu.dk/~hbn/dace/>.
+"""
+A module that implements scalar Gaussian Process based prediction (also
+known as Kriging).
+
+Contains
+--------
+GaussianProcess: The main class of the module that implements the Gaussian
+                 Process prediction theory.
+regression_models: A submodule that contains the built-in regression models.
+correlation_models: A submodule that contains the built-in correlation models.
+
+Implementation details
+----------------------
+The presentation implementation is based on a translation of the DACE
+Matlab toolbox.
+
+See references:
+[1] H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
+    DACE - A MATLAB Kriging Toolbox.
+    http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
 """
 
 from .gaussian_process import GaussianProcess
-from .correlation import corrlin, corrcubic, correxp1, \
-                         correxp2, correxpg, corriid
-from .regression import regpoly0, regpoly1, regpoly2
+from . import correlation_models
+from . import regression_models

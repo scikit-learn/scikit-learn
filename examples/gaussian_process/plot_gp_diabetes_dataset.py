@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-===============================================
-Gaussian Processes for Machine Learning example
-===============================================
+=============================================================
+Gaussian Processes regression example: the 'diabetes' dataset
+=============================================================
 
 This example consists in fitting a Gaussian Process model onto the diabetes
 dataset.
@@ -39,7 +39,6 @@ gp = GaussianProcess(theta0=1e-4, nugget=1e-2, verbose=False)
 
 # Fit the GP model to the data
 gp.fit(X, y)
-gp.par['beta']
 
 # Estimate the leave-one-out predictions using the cross_val module
 n_jobs = 2 # the distributing capacity available on the machine

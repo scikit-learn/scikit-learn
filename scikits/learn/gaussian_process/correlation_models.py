@@ -1,6 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
+#         (mostly translation, see implementation details)
+# License: BSD style
+
+"""
+The built-in regression models submodule for the gaussian_process module.
+"""
+
 ################
 # Dependencies #
 ################
@@ -13,14 +21,14 @@ import numpy as np
 #############################
 
 
-def correxp1(theta, d):
+def absolute_exponential(theta, d):
     """
-    Exponential autocorrelation model.
+    Absolute exponential autocorrelation model.
     (Ornstein-Uhlenbeck stochastic process)
 
-                                                   n
-    correxp1 : theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i| )
-                                                 i = 1
+                                        n
+    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i| )
+                                      i = 1
 
     Parameters
     ----------
@@ -58,14 +66,14 @@ def correxp1(theta, d):
     return r
 
 
-def correxp2(theta, d):
+def squared_exponential(theta, d):
     """
     Squared exponential correlation model (Radial Basis Function).
     (Infinitely differentiable stochastic process, very smooth)
 
-                                                   n
-    correxp2 : theta, dx --> r(theta, dx) = exp(  sum  - theta_i * (dx_i)^2 )
-                                                 i = 1
+                                        n
+    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * (dx_i)^2 )
+                                      i = 1
 
     Parameters
     ----------
@@ -103,15 +111,15 @@ def correxp2(theta, d):
     return r
 
 
-def correxpg(theta, d):
+def generalized_exponential(theta, d):
     """
     Generalized exponential correlation model.
     (Useful when one does not know the smoothness of the function to be
     predicted.)
 
-                                                   n
-    correxpg : theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i|^p )
-                                                 i = 1
+                                        n
+    theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i|^p )
+                                      i = 1
 
     Parameters
     ----------
@@ -152,15 +160,15 @@ def correxpg(theta, d):
     return r
 
 
-def corriid(theta, d):
+def pure_nugget(theta, d):
     """
     Spatial independence correlation model (pure nugget).
     (Useful when one wants to solve an ordinary least squares problem!)
 
-                                                    n
-    corriid : theta, dx --> r(theta, dx) = 1 if   sum |dx_i| == 0
-                                                  i = 1
-                                           0 otherwise
+                                         n
+    theta, dx --> r(theta, dx) = 1 if   sum |dx_i| == 0
+                                       i = 1
+                                 0 otherwise
 
     Parameters
     ----------
@@ -191,11 +199,11 @@ def corriid(theta, d):
     return r
 
 
-def corrcubic(theta, d):
+def cubic(theta, d):
     """
     Cubic correlation model.
 
-    corrcubic : theta, dx --> r(theta, dx) =
+    theta, dx --> r(theta, dx) =
           n
         prod max(0, 1 - 3(theta_j*d_ij)^2 + 2(theta_j*d_ij)^3) ,  i = 1,...,m
         j = 1
@@ -241,11 +249,11 @@ def corrcubic(theta, d):
     return r
 
 
-def corrlin(theta, d):
+def linear(theta, d):
     """
     Linear correlation model.
 
-    corrlin : theta, dx --> r(theta, dx) =
+    theta, dx --> r(theta, dx) =
           n
         prod max(0, 1 - theta_j*d_ij) ,  i = 1,...,m
         j = 1

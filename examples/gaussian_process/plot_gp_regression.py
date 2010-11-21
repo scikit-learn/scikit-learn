@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-===============================================
-Gaussian Processes for Machine Learning example
-===============================================
+=================================================================
+Gaussian Processes regression example: basic introductory example
+=================================================================
 
 A simple one-dimensional regression exercise with a cubic correlation
 model whose parameters are estimated using the maximum likelihood principle.
@@ -18,7 +18,7 @@ confidence interval.
 # License: BSD style
 
 import numpy as np
-from scikits.learn.gaussian_process import GaussianProcess, corrcubic
+from scikits.learn.gaussian_process import GaussianProcess
 from matplotlib import pyplot as pl
 
 # Print the docstring
@@ -38,7 +38,7 @@ Y = f(X).ravel()
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # Instanciate a Gaussian Process model
-gp = GaussianProcess(corr=corrcubic, theta0=1e-2, thetaL=1e-4, thetaU=1e-1, \
+gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1, \
                      random_start=100)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
