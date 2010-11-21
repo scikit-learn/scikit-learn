@@ -6,7 +6,7 @@
 # License: BSD style
 
 """
-The built-in regression models submodule for the gaussian_process module.
+The built-in correlation models submodule for the gaussian_process module.
 """
 
 ################
