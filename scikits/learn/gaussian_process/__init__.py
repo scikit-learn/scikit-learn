@@ -19,12 +19,17 @@ correlation_models: A submodule that contains the built-in correlation models.
 Implementation details
 ----------------------
 The presentation implementation is based on a translation of the DACE
-Matlab toolbox.
+Matlab toolbox, see reference [1].
 
-See references:
+References
+----------
 [1] H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
     DACE - A MATLAB Kriging Toolbox.
     http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
+
+[2] W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
+    Morris (1992). Screening, predicting, and computer experiments.
+    Technometrics, 34(1) 15--25.
 """
 
 from .gaussian_process import GaussianProcess

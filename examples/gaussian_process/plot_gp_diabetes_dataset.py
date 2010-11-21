@@ -11,9 +11,9 @@ dataset.
 WARNING: This is quite time consuming (about 2 minutes overall runtime).
 
 The corelation parameters are given in order to maximize the generalization
-capacity of the model. We assumed an isotropic squared exponential correlation
-model (correxp2) with a constant regression model (regpoly0). We also used a
-nugget=1e-2 in order to account for the (strong) noise in the targets.
+capacity of the model. We assumed an anisotropic squared exponential
+correlation model with a constant regression model. We also used a
+nugget = 1e-2 in order to account for the (strong) noise in the targets.
 
 The figure is a goodness-of-fit plot obtained using leave-one-out predictions
 of the Gaussian Process model. Based on these predictions, we compute an
@@ -35,10 +35,17 @@ diabetes = datasets.load_diabetes()
 X, y = diabetes['data'], diabetes['target']
 
 # Instanciate a GP model
-gp = GaussianProcess(theta0=1e-4, nugget=1e-2, verbose=False)
+gp = GaussianProcess(regr='constant', corr='absolute_exponential',
+                     theta0=[1e-4] * 10, thetaL=[1e-12] * 10,
+                     thetaU=[1e-2] * 10, nugget=1e-2, optimizer='Welch',
+                     verbose=True)
 
 # Fit the GP model to the data
 gp.fit(X, y)
+gp.theta0 = gp.theta
+gp.thetaL = None
+gp.thetaU = None
+gp.verbose = False
 
 # Estimate the leave-one-out predictions using the cross_val module
 n_jobs = 2 # the distributing capacity available on the machine

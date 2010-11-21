@@ -106,9 +106,13 @@ class GaussianProcess(BaseEstimator):
         robustness (nugget = 10. * MACHINE_EPSILON).
 
     optimizer : string, optional
-        A string specifying the optimization algorithm to be used
-        ('fmin_cobyla' is the sole algorithm implemented yet).
+        A string specifying the optimization algorithm to be used.
         Default uses 'fmin_cobyla' algorithm from scipy.optimize.
+        Here is the list of available optimizers:
+            'fmin_cobyla', 'Welch'
+        'Welch' optimizer is dued to Welch et al., see reference [2]. It
+        consists in iterating over several one-dimensional optimizations
+        instead of running one single multi-dimensional optimization.
 
     random_start : int, optional
         The number of times the Maximum Likelihood Estimation should be
@@ -132,12 +136,17 @@ class GaussianProcess(BaseEstimator):
     Implementation details
     ----------------------
     The presentation implementation is based on a translation of the DACE
-    Matlab toolbox.
+    Matlab toolbox, see reference [1].
 
-    See references:
+    References
+    ----------
     [1] H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
         DACE - A MATLAB Kriging Toolbox.
         http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
+
+    [2] W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
+        Morris (1992). Screening, predicting, and computer experiments.
+        Technometrics, 34(1) 15--25.
     """
 
     _regression_types = {
@@ -153,7 +162,8 @@ class GaussianProcess(BaseEstimator):
         'linear': correlation.linear}
 
     _optimizer_types = [
-        'fmin_cobyla']
+        'fmin_cobyla',
+        'Welch']
 
     def __init__(self, regr='constant', corr='squared_exponential', beta0=None,
                  storage_mode='full', verbose=False, theta0=1e-1,
@@ -633,6 +643,10 @@ class GaussianProcess(BaseEstimator):
 
         percent_completed = 0.
 
+        # Force optimizer to fmin_cobyla if the model is meant to be isotropic
+        if self.optimizer == 'Welch' and self.theta0.size == 1:
+            self.optimizer = 'fmin_cobyla'
+
         if self.optimizer == 'fmin_cobyla':
 
             minus_reduced_likelihood_function = lambda log10t: \
@@ -683,13 +697,61 @@ class GaussianProcess(BaseEstimator):
                         percent_completed = (20 * k) / self.random_start
                         print str(5 * percent_completed) + "% completed"
 
+            optimal_rlf_value = best_optimal_rlf_value
+            optimal_par = best_optimal_par
+            optimal_theta = best_optimal_theta
+
+        elif self.optimizer == 'Welch':
+
+            # Backup of the given atrributes
+            theta0, thetaL, thetaU = self.theta0, self.thetaL, self.thetaU
+            corr = self.corr
+            verbose = self.verbose
+
+            # This will iterate over fmin_cobyla optimizer
+            self.optimizer = 'fmin_cobyla'
+            self.verbose = False
+
+            # Initialize under isotropy assumption
+            if verbose:
+                print("Initialize under isotropy assumption...")
+            self.theta0 = np.atleast_2d(self.theta0.min())
+            self.thetaL = np.atleast_2d(self.thetaL.min())
+            self.thetaU = np.atleast_2d(self.thetaU.max())
+            theta_iso, optimal_rlf_value_iso, par_iso = \
+                self.arg_max_reduced_likelihood_function()
+            optimal_theta = theta_iso + np.zeros(theta0.shape)
+
+            # Iterate over all dimensions of theta allowing for anisotropy
+            if verbose:
+                print("Now improving allowing for anisotropy...")
+            for i in np.random.permutation(range(theta0.size)):
+                if verbose:
+                    print "Proceeding along dimension %d..." % (i + 1)
+                self.theta0 = np.atleast_2d(theta_iso)
+                self.thetaL = np.atleast_2d(thetaL[0, i])
+                self.thetaU = np.atleast_2d(thetaU[0, i])
+                self.corr = lambda t, d: \
+                    corr(np.atleast_2d(np.hstack([
+                         optimal_theta[0][0:i],
+                         t[0],
+                         optimal_theta[0][(i + 1)::]])), d)
+                optimal_theta[0, i], optimal_rlf_value, optimal_par = \
+                    self.arg_max_reduced_likelihood_function()
+
+            # Restore the given atrributes
+            self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU
+            self.corr = corr
+            self.optimizer = 'Welch'
+            self.verbose = verbose
+
         else:
 
-            raise NotImplementedError("This optimizer ('%s') is not "
-                                    + "implemented yet. Please contribute!"
+            raise NotImplementedError(("This optimizer ('%s') is not "
+                                    + "implemented yet. Please contribute!")
                                     % self.optimizer)
 
-        return best_optimal_theta, best_optimal_rlf_value, best_optimal_par
+        return optimal_theta, optimal_rlf_value, optimal_par
 
     def score(self, X_test, y_test):
         """
