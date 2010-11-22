@@ -179,6 +179,7 @@ class BaseEstimator(object):
                                               'for estimator %s' %
                                              (key, self.__class__.__name__))
                 setattr(self, key, value)
+        return self
 
     def __repr__(self):
         class_name = self.__class__.__name__
