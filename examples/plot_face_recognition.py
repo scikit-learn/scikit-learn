@@ -173,7 +173,8 @@ n_col = 4
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
     pl.imshow(X_test[i].reshape((64, 64)), cmap=pl.cm.gray_r)
-    pl.title('%s' % category_names[y_test[i]])
+    pl.title('pred: %s\ntrue: %s' % (category_names[y_pred[i]],
+                                     category_names[y_test[i]]))
 
 pl.show()
 
