@@ -3,8 +3,8 @@
 Faces recognition example using eigenfaces and SVMs
 ===================================================
 
-The dataset used in this example is a preprocessed excerpt of the "Labeled Faces
-in the Wild", aka LFW_:
+The dataset used in this example is a preprocessed excerpt of the
+"Labeled Faces in the Wild", aka LFW_:
 
   http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz (233MB)
 
@@ -27,7 +27,6 @@ print __doc__
 
 import os
 from gzip import GzipFile
-from collections import defaultdict
 
 import numpy as np
 import pylab as pl
@@ -72,51 +71,28 @@ faces -= faces.mean(axis=1)[:, np.newaxis]
 
 
 ################################################################################
-# Count occurrences of each category
-
-categories = [f.rsplit('_', 1)[0] for f in face_filenames]
-
-counts = defaultdict(lambda: 0)
-
-for cat in categories:
-    counts[cat] += 1
-
-################################################################################
 # Index category names into integers suitable for scikit-learn
 
-# TODO: factorize this out as a utility function in scikit-learn
+# Here we do a little dance to convert file names in integer indices
+# (class indices in machine learning talk) that are suitable to be used
+# as a target for training a classifier. Note the use of an array with
+# unique entries to store the relation between class index and name,
+# often called a 'Look Up Table' (LUT).
+# Also, note the use of 'searchsorted' to convert an array in a set of
+# integers given a second array to use as a LUT.
+categories = np.array([f.rsplit('_', 1)[0] for f in face_filenames])
 
-class Vocabulary(dict):
+# A unique integer per category
+category_names = np.unique(categories)
 
-    def __getitem__(self, k):
-        if k not in self:
-            self[k] = len(self)
-        return super(Vocabulary, self).__getitem__(k)
+# Turn the categories in their corresponding integer label
+target = np.searchsorted(category_names, categories)
 
-    def add(self, k):
-        self[k]
+# Subsample the dataset to restrict to the most frequent categories
+selected_target = np.argsort(np.bincount(target))[-5:]
 
-vocabulary = Vocabulary()
-
-for cat in counts.iterkeys():
-    vocabulary.add(cat)
-
-category_names = dict((v, k) for k, v in vocabulary.iteritems())
-
-
-################################################################################
-# Sub sample the dataset to restrict to the most frequent categories
-
-target = np.asarray([vocabulary[cat] for cat in categories])
-
-top_categories = [(count, vocabulary[cat])
-                  for cat, count in counts.iteritems()]
-top_categories.sort(reverse=True)
-
-labels = [i for c, i in top_categories[:5]]
-kept = set(labels)
-
-mask = np.asarray([i for i, t in enumerate(target) if t in kept])
+# If you are using a numpy version >= 1.4, this can be done with 'np.in1d'
+mask = np.array([item in selected_target for item in target])
 
 X = faces[mask]
 y = target[mask]
@@ -131,7 +107,6 @@ split = n_samples * 3 / 4
 
 X_train, X_test = X[:split], X[split:]
 y_train, y_test = y[:split], y[split:]
-
 
 ################################################################################
 # Compute a PCA (eigenfaces) on the training set
@@ -158,10 +133,10 @@ clf = SVC(C=100).fit(X_train_pca, y_train, class_weight="auto")
 # Quantitative evaluation of the model quality on the test set
 
 y_pred = clf.predict(X_test_pca)
-print classification_report(y_test, y_pred, labels=labels,
-                            class_names=[category_names[l] for l in labels])
+print classification_report(y_test, y_pred, labels=selected_target,
+                            class_names=category_names[selected_target])
 
-print confusion_matrix(y_test, y_pred, labels=labels)
+print confusion_matrix(y_test, y_pred, labels=selected_target)
 
 
 ################################################################################
@@ -170,14 +145,17 @@ print confusion_matrix(y_test, y_pred, labels=labels)
 n_row = 3
 n_col = 4
 
+pl.figure(figsize=(2*n_col, 2.3*n_row))
+pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.95, hspace=.15)
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
-    pl.imshow(X_test[i].reshape((64, 64)), cmap=pl.cm.gray_r)
+    pl.imshow(X_test[i].reshape((64, 64)), cmap=pl.cm.gray)
     pl.title('pred: %s\ntrue: %s' % (category_names[y_pred[i]],
-                                     category_names[y_test[i]]))
+                                     category_names[y_test[i]]), size=12)
+    pl.xticks(())
+    pl.yticks(())
 
 pl.show()
 
-# TODO: find a way to hide the x and y axis
 # TODO: plot the top eigenfaces and the singular values absolute values
 
