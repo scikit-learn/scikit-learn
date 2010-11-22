@@ -91,19 +91,20 @@ def fast_svd(M, k):
 
     Parameters
     ===========
-    M: ndarray of sparse matrix
+    M: ndarray or sparse matrix
         Matrix to decompose
+
     k: int
         Number of singular values and vectors to extract.
 
     Notes
     =====
 
-    This algorithm finds the exact truncated eigenvalue decomposition 
+    This algorithm finds the exact truncated eigenvalue decomposition
     using randomization to speed up the computations. I is particularly
     fast on large matrices on which you whish to extract only a small
     number of components.
-  
+
     References: Finding structure with randomness: Stochastic
     algorithms for constructing approximate matrix decompositions,
     Halko, et al., 2009 (arXiv:909)
@@ -111,16 +112,16 @@ def fast_svd(M, k):
     """
     # Lazy import of scipy sparse, because it is very slow.
     from scipy import sparse
-    p = k+5
+    p = k + 5
     r = np.random.normal(size=(M.shape[1], p))
     if sparse.issparse(M):
-        Y = M*r
+        Y = M * r
     else:
         Y = np.dot(M, r)
     del r
-    Q,r = linalg.qr(Y)
+    Q, r = linalg.qr(Y)
     if sparse.issparse(M):
-        B = Q.T*M
+        B = Q.T * M
     else:
         B = np.dot(Q.T, M)
     a = linalg.svd(B, full_matrices=False)
