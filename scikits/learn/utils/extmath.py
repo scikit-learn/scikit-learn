@@ -1,6 +1,9 @@
 import sys
 import math
 import numpy as np
+import scipy.sparse
+
+import numpy.linalg as linalg
 
 #XXX: We should have a function with numpy's slogdet API
 def _fast_logdet(A):
@@ -76,3 +79,39 @@ def density(w, **kwargs):
     """
     d = 0 if w is None else float((w != 0).sum()) / w.size
     return d
+
+
+def fast_svd(M, k):
+    """Computes the k-truncated SVD of the matrix M using the random
+    projections algorithm from
+
+@article{halko2009finding,
+  title={{Finding structure with randomness: Stochastic 
+             algorithms for constructing approximate matrix decompositions}},
+  author={Halko, N. and Martinsson, P.G. and Tropp, J.A.},
+  journal={arXiv},
+  volume={909},
+  year={2009}
+}
+
+This finds the exact truncated eigenvalue decomposition using
+randomization to speed up the computations."""
+    p = k+5
+    r = np.random.normal(size=(M.shape[1],p))
+    if scipy.sparse.issparse(M):
+        Y = M*r
+    else:
+        Y = np.dot(M,r)
+    del r
+    Q,r = linalg.qr(Y)
+    if scipy.sparse.issparse(M):
+        B = Q.T*M
+    else:
+        B = np.dot(Q.T, M)
+    a = linalg.svd(B, full_matrices=False)
+    Uhat = a[0]
+    del B
+    s = a[1]
+    v = a[2]
+    U = np.dot(Q, Uhat)
+    return np.asfortranarray(U.T[:k]).T, s[:k], np.asfortranarray(v[:k])

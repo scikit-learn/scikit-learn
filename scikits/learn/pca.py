@@ -5,7 +5,7 @@ import numpy as np
 from scipy import linalg
 
 from .base import BaseEstimator
-from .utils.extmath import fast_logdet
+from .utils.extmath import fast_logdet, fast_svd
 
 
 def _assess_dimension_(spect, rk, n_samples, dim):
@@ -117,7 +117,7 @@ class PCA(BaseEstimator):
     >>> from scikits.learn.pca import PCA
     >>> pca = PCA(n_comp=2)
     >>> pca.fit(X)
-    PCA(n_comp=2, copy=True)
+    PCA(do_fast_svd=False, n_comp=2, copy=True)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
@@ -126,9 +126,10 @@ class PCA(BaseEstimator):
     ProbabilisticPCA
 
     """
-    def __init__(self, n_comp=None, copy=True):
+    def __init__(self, n_comp=None, copy=True, do_fast_svd=False):
         self.n_comp = n_comp
         self.copy = copy
+        self.do_fast_svd = do_fast_svd
 
     def fit(self, X, **params):
         """ Fit the model to the data X
@@ -141,7 +142,12 @@ class PCA(BaseEstimator):
         # Center data
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
-        U, S, V = linalg.svd(X, full_matrices=False)
+        if self.do_fast_svd:
+            if  self.n_comp == "mle":
+                raise NotImplemented
+            U, S, V = fast_svd(X, self.n_comp)
+        else:
+            U, S, V = linalg.svd(X, full_matrices=False)
         self.explained_variance_ = (S**2)/n_samples
         self.explained_variance_ratio_ = self.explained_variance_ / \
                                         self.explained_variance_.sum()
@@ -164,7 +170,6 @@ class PCA(BaseEstimator):
         Xr = X - self.mean_
         Xr = np.dot(Xr, self.components_)
         return Xr
-
 
 ################################################################################
 class ProbabilisticPCA(PCA):
