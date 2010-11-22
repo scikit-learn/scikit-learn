@@ -1,5 +1,9 @@
+""" Principal Component Analysis
+"""
+
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
+import warnings
 
 import numpy as np
 from scipy import linalg
@@ -100,6 +104,11 @@ class PCA(BaseEstimator):
         If False, data passed to fit are overwritten
     components_: array, [n_features, n_comp]
         Components with maximum variance
+    do_fast_svd: bool, optional
+        If True, the k-truncated SVD is computed using random projections 
+        which speeds up the computation on large arrays. If all the
+        components are to be computed (as in n_comp=None or
+        n_comp='mle'), this option has no effects. 
     explained_variance_: array, [n_comp]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
@@ -143,8 +152,9 @@ class PCA(BaseEstimator):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
         if self.do_fast_svd:
-            if  self.n_comp == "mle":
-                raise NotImplemented
+            if  self.n_comp == "mle" or self.n_comp is None:
+                warnings.warn('All components are to be computed'
+                    'Not using fast truncated SVD')
             U, S, V = fast_svd(X, self.n_comp)
         else:
             U, S, V = linalg.svd(X, full_matrices=False)
@@ -170,6 +180,7 @@ class PCA(BaseEstimator):
         Xr = X - self.mean_
         Xr = np.dot(Xr, self.components_)
         return Xr
+
 
 ################################################################################
 class ProbabilisticPCA(PCA):

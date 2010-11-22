@@ -1,9 +1,14 @@
+"""
+Extended math utilities.
+"""
+# Authors: G. Varoquaux, A. Gramfort, A. Passos
+# License: BSD
+
 import sys
 import math
-import numpy as np
-import scipy.sparse
 
-import numpy.linalg as linalg
+import numpy as np
+from scipy import linalg
 
 #XXX: We should have a function with numpy's slogdet API
 def _fast_logdet(A):
@@ -82,29 +87,39 @@ def density(w, **kwargs):
 
 
 def fast_svd(M, k):
-    """Computes the k-truncated SVD of the matrix M using the random
-    projections algorithm from
+    """Computes the k-truncated SVD using random projections
 
-@article{halko2009finding,
-  title={{Finding structure with randomness: Stochastic 
-             algorithms for constructing approximate matrix decompositions}},
-  author={Halko, N. and Martinsson, P.G. and Tropp, J.A.},
-  journal={arXiv},
-  volume={909},
-  year={2009}
-}
+    Parameters
+    ===========
+    M: ndarray of sparse matrix
+        Matrix to decompose
+    k: int
+        Number of singular values and vectors to extract.
 
-This finds the exact truncated eigenvalue decomposition using
-randomization to speed up the computations."""
+    Notes
+    =====
+
+    This algorithm finds the exact truncated eigenvalue decomposition 
+    using randomization to speed up the computations. I is particularly
+    fast on large matrices on which you whish to extract only a small
+    number of components.
+  
+    References: Finding structure with randomness: Stochastic
+    algorithms for constructing approximate matrix decompositions,
+    Halko, et al., 2009 (arXiv:909)
+
+    """
+    # Lazy import of scipy sparse, because it is very slow.
+    from scipy import sparse
     p = k+5
-    r = np.random.normal(size=(M.shape[1],p))
-    if scipy.sparse.issparse(M):
+    r = np.random.normal(size=(M.shape[1], p))
+    if sparse.issparse(M):
         Y = M*r
     else:
-        Y = np.dot(M,r)
+        Y = np.dot(M, r)
     del r
     Q,r = linalg.qr(Y)
-    if scipy.sparse.issparse(M):
+    if sparse.issparse(M):
         B = Q.T*M
     else:
         B = np.dot(Q.T, M)
@@ -114,4 +129,5 @@ randomization to speed up the computations."""
     s = a[1]
     v = a[2]
     U = np.dot(Q, Uhat)
-    return np.asfortranarray(U.T[:k]).T, s[:k], np.asfortranarray(v[:k])
+    return U.T[:k].T, s[:k], v[:k]
+
