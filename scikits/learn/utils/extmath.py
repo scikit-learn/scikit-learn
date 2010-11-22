@@ -1,6 +1,14 @@
+"""
+Extended math utilities.
+"""
+# Authors: G. Varoquaux, A. Gramfort, A. Passos
+# License: BSD
+
 import sys
 import math
+
 import numpy as np
+from scipy import linalg
 
 #XXX: We should have a function with numpy's slogdet API
 def _fast_logdet(A):
@@ -76,3 +84,51 @@ def density(w, **kwargs):
     """
     d = 0 if w is None else float((w != 0).sum()) / w.size
     return d
+
+
+def fast_svd(M, k):
+    """Computes the k-truncated SVD using random projections
+
+    Parameters
+    ===========
+    M: ndarray or sparse matrix
+        Matrix to decompose
+
+    k: int
+        Number of singular values and vectors to extract.
+
+    Notes
+    =====
+
+    This algorithm finds the exact truncated eigenvalue decomposition
+    using randomization to speed up the computations. I is particularly
+    fast on large matrices on which you whish to extract only a small
+    number of components.
+
+    References: Finding structure with randomness: Stochastic
+    algorithms for constructing approximate matrix decompositions,
+    Halko, et al., 2009 (arXiv:909)
+
+    """
+    # Lazy import of scipy sparse, because it is very slow.
+    from scipy import sparse
+    p = k + 5
+    r = np.random.normal(size=(M.shape[1], p))
+    if sparse.issparse(M):
+        Y = M * r
+    else:
+        Y = np.dot(M, r)
+    del r
+    Q, r = linalg.qr(Y)
+    if sparse.issparse(M):
+        B = Q.T * M
+    else:
+        B = np.dot(Q.T, M)
+    a = linalg.svd(B, full_matrices=False)
+    Uhat = a[0]
+    del B
+    s = a[1]
+    v = a[2]
+    U = np.dot(Q, Uhat)
+    return U.T[:k].T, s[:k], v[:k]
+

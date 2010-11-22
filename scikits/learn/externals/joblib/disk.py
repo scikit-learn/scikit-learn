@@ -2,7 +2,7 @@
 Disk management utilities.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
 # Copyright (c) 2010 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -12,7 +12,7 @@ import os
 import shutil
 
 def disk_used(path):
-    """ Return the disk usage in a directory.
+    """ Return the disk usage in a directory. 
     """
     size = 0
     for file in os.listdir(path) + ['.']:
@@ -60,7 +60,7 @@ def rm_subdirs(path, onerror=None):
         names = os.listdir(path)
     except os.error, err:
         onerror(os.listdir, path, sys.exc_info())
-
+        
     for name in names:
         fullname = os.path.join(path, name)
         if os.path.isdir(fullname):

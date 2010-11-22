@@ -2,7 +2,7 @@
 Test the func_inspect module.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -13,7 +13,7 @@ from ..func_inspect import filter_args, get_func_name
 from ..memory import Memory
 
 ################################################################################
-# Module-level functions, for tests
+# Module-level functions, for tests 
 def f(x, y=0):
     pass
 
@@ -60,7 +60,7 @@ def test_filter_args():
 
 def test_filter_args_method():
     obj = Klass()
-    nose.tools.assert_equal(filter_args(obj.f, [], 1),
+    nose.tools.assert_equal(filter_args(obj.f, [], 1), 
         {'x': 1, 'self': obj})
 
 
@@ -75,7 +75,7 @@ def test_filter_varargs():
                             {'x': 1, 'y': 2, '**':{'ee':2}}
 
 def test_tmp():
-    nose.tools.assert_equal(filter_args(j, [], 1, 2, ee=2),
+    nose.tools.assert_equal(filter_args(j, [], 1, 2, ee=2), 
                             {'x': 1, 'y': 2, '**':{'ee':2}})
 
 def test_func_name():
@@ -90,7 +90,7 @@ def test_bound_methods():
     """
     a = Klass()
     b = Klass()
-    nose.tools.assert_not_equal(filter_args(a.f, [], 1),
+    nose.tools.assert_not_equal(filter_args(a.f, [], 1), 
                                 filter_args(b.f, [], 1))
 
 

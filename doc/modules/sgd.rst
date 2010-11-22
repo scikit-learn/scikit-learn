@@ -68,9 +68,9 @@ Member `intercept_` holds the intercept (aka offset or bias):
 Whether or not the model should use an intercept, i.e. a biased hyperplane, is 
 controlled by the parameter `fit_intercept`.
 
-To get the signed distance to the hyperplane use `predict_margin`:
+To get the signed distance to the hyperplane use `decision_function`:
 
-    >>> clf.predict_margin([[2., 2.]])
+    >>> clf.decision_function([[2., 2.]])
     array([ 29.61357756])
 
 .. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations. 

@@ -207,7 +207,7 @@ class BaseLibSVM(BaseEstimator):
                       self.probA_, self.probB_)
         return pprob[:, np.argsort(self.label_)]
 
-    def predict_margin(self, T):
+    def decision_function(self, T):
         """
         Calculate the distance of the samples in T to the separating hyperplane.
 

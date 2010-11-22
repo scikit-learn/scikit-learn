@@ -2,10 +2,11 @@
 Test the parallel module.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
 # Copyright (c) 2010 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
+import time
 try:
     import cPickle as pickle
     PickleError = TypeError
@@ -13,7 +14,7 @@ except:
     import pickle
     PickleError = pickle.PicklingError
 
-from ..parallel import Parallel, delayed, SafeFunction
+from ..parallel import Parallel, delayed, SafeFunction, WorkerInterrupt
 from ..my_exceptions import JoblibException
 
 import nose
@@ -25,6 +26,10 @@ def division(x, y):
 
 def square(x):
     return x**2
+
+def interrupt_raiser(x):
+    time.sleep(.05)
+    raise KeyboardInterrupt
 
 def f(x, y=0, z=0):
     """ A module-level function so that it can be spawn with
@@ -46,12 +51,12 @@ def test_parallel_kwargs():
     """
     lst = range(10)
     for n_jobs in (1, 4):
-        yield (nose.tools.assert_equal,
-               [f(x, y=1) for x in lst],
+        yield (nose.tools.assert_equal, 
+               [f(x, y=1) for x in lst], 
                Parallel(n_jobs=n_jobs)(delayed(f)(x, y=1) for x in lst)
               )
 
-
+        
 def test_parallel_pickling():
     """ Check that pmap captures the errors when it is passed an object
         that cannot be pickled.
@@ -59,7 +64,7 @@ def test_parallel_pickling():
     def g(x):
         return x**2
     nose.tools.assert_raises(PickleError,
-                             Parallel(),
+                             Parallel(), 
                              (delayed(g)(x) for x in range(10))
                             )
 
@@ -68,15 +73,36 @@ def test_error_capture():
     """ Check that error are captured, and that correct exceptions
         are raised.
     """
-    nose.tools.assert_raises(JoblibException,
+    try:
+        import multiprocessing
+    except ImportError:
+        multiprocessing = None
+    if multiprocessing is not None:
+        # A JoblibException will be raised only if there is indeed
+        # multiprocessing
+        nose.tools.assert_raises(JoblibException,
                                 Parallel(n_jobs=2),
                     [delayed(division)(x, y) for x, y in zip((0, 1), (1, 0))],
                         )
+        nose.tools.assert_raises(WorkerInterrupt,
+                                    Parallel(n_jobs=2),
+                        [delayed(interrupt_raiser)(x) for x in (1, 0)],
+                            )
+    else:
+        nose.tools.assert_raises(KeyboardInterrupt,
+                                    Parallel(n_jobs=2),
+                        [delayed(interrupt_raiser)(x) for x in (1, 0)],
+                            )
     nose.tools.assert_raises(ZeroDivisionError,
                                 Parallel(n_jobs=2),
                     [delayed(division)(x, y) for x, y in zip((0, 1), (1, 0))],
                         )
-
+    try:
+        Parallel(n_jobs=1)(
+                    delayed(division)(x, y) for x, y in zip((0, 1), (1, 0)))
+    except Exception, e:
+        pass
+    nose.tools.assert_false(isinstance(e, JoblibException))
 
 ################################################################################
 # Test helpers

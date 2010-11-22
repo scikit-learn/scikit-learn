@@ -205,7 +205,7 @@ def test_probability():
 
 # def test_margin():
 #     """
-#     Test predict_margin
+#     Test decision_function
 
 #     We create a set of points lying in two lines, so that margin is easily
 #     calculated in a linear kernel.
@@ -217,15 +217,15 @@ def test_probability():
 #     Y = [0]*10 + [1]*10
 #     T = [[1]]*10 + [[-1]]*10
 #     clf = svm.SVC(kernel='linear').fit(X, Y)
-#     assert_array_almost_equal(clf.predict_margin(X), T)
+#     assert_array_almost_equal(clf.decision_function(X), T)
 
 #     # the same using a callable kernel
 #     kfunc = lambda x, y: np.dot(x, y.T)
 #     clf = svm.SVC(kernel=kfunc).fit(X, Y)
-#     assert_array_almost_equal(clf.predict_margin(X), T)
+#     assert_array_almost_equal(clf.decision_function(X), T)
 
 #     # failing test
-#     # assert_array_almost_equal (clf.predict_margin(iris.data),
+#     # assert_array_almost_equal (clf.decision_function(iris.data),
 #     #                            np.dot(clf.coef_.T, iris.data) + \
 #     #                            clf.intercept_)
 

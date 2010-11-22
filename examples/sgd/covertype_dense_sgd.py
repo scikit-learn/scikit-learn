@@ -75,21 +75,19 @@ if not os.path.exists('covtype.data.gz'):
 ## Load dataset
 print("Loading dataset...")
 import gzip
-X = np.empty((581012, 55), dtype=np.float64, order="C")
-gen = (np.fromstring(line, sep=",") for
-       line in gzip.open('covtype.data.gz'))
-for row, row_vector in enumerate(gen):
-    X[row] = row_vector
-## X = np.loadtxt("covtype.data.gz", delimiter=",", dtype=np.float64)
+f = gzip.open('covtype.data.gz')
+X = np.fromstring(f.read().replace(",", " "), dtype=np.float64, sep=" ",
+                  count=-1)
+X = X.reshape((581012, 55))
+f.close()
 
-print "Separating features from labels..."
 # class 1 vs. all others.
 y = np.ones(X.shape[0]) * -1
 y[np.where(X[:, -1] == 1)] = 1
 X = X[:, :-1]
 
 ######################################################################
-## Create train-test split (T. Joachims, 2006)
+## Create train-test split (as [Joachims, 2006])
 print("Creating train-test split...")
 idx = np.arange(X.shape[0])
 np.random.seed(13)
@@ -107,7 +105,7 @@ del X
 del y
 
 ######################################################################
-## Standardize first 10 features (=numerical)
+## Standardize first 10 features (the numerical ones)
 mean = X_train.mean(axis=0)
 std = X_train.std(axis=0)
 mean[10:] = 0.0
@@ -124,10 +122,12 @@ print("%s %d" % ("number of features:".ljust(25),
                  X_train.shape[1]))
 print("%s %d" % ("number of classes:".ljust(25),
                  np.unique(y_train).shape[0]))
-print("%s %d" % ("number of train samples:".ljust(25),
-                 X_train.shape[0]))
-print("%s %d" % ("number of test samples:".ljust(25),
-                 X_test.shape[0]))
+print("%s %d (%d, %d)" % ("number of train samples:".ljust(25),
+                          X_train.shape[0], np.sum(y_train==1),
+                          np.sum(y_train==-1)))
+print("%s %d (%d, %d)" % ("number of test samples:".ljust(25),
+                          X_test.shape[0], np.sum(y_test==1),
+                          np.sum(y_test==-1)))
 print("")
 print("Training classifiers...")
 print("")
@@ -158,6 +158,10 @@ liblinear_res = benchmark(LinearSVC(**liblinear_parameters))
 liblinear_err, liblinear_train_time, liblinear_test_time = liblinear_res
 
 ######################################################################
+## Train GNB model
+gnb_err, gnb_train_time, gnb_test_time = benchmark(GNB())
+
+######################################################################
 ## Train SGD model
 sgd_parameters = {
     'alpha': 0.001,
@@ -165,10 +169,6 @@ sgd_parameters = {
     }
 sgd_err, sgd_train_time, sgd_test_time = benchmark(ClassifierSGD(
     **sgd_parameters))
-
-######################################################################
-## Train GNB model
-gnb_err, gnb_train_time, gnb_test_time = benchmark(GNB())
 
 ######################################################################
 ## Print classification performance

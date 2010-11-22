@@ -353,10 +353,18 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     precision = true_pos / (true_pos + false_pos)
     recall = true_pos / (true_pos + false_neg)
 
+    # handle division by 0.0 in precision and recall
+    precision[(true_pos + false_pos) == 0.0] = 0.0
+    recall[(true_pos + false_neg) == 0.0] = 0.0
+
     # fbeta score
     beta2 = beta ** 2
     fscore = (1 + beta2) * (precision * recall) / (
         beta2 * precision + recall)
+
+    # handle division by 0.0 in fscore
+    fscore[(precision + recall) == 0.0] = 0.0
+
     return precision, recall, fscore, support
 
 
@@ -400,13 +408,13 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
 
 
     headers = ["precision", "recall", "f1-score", "support"]
-    fmt = '{0:>%d}' % width # first column: class name
+    fmt = '%% %ds' % width # first column: class name
     fmt += '  '
-    fmt += ' '.join(['{%d:>9}' % (i + 1) for i, _ in enumerate(headers)])
+    fmt += ' '.join(['% 9s' for _ in headers])
     fmt += '\n'
 
     headers = [""] + headers
-    report = fmt.format(*headers)
+    report = fmt % tuple(headers)
     report += '\n'
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred, labels=labels)
@@ -415,7 +423,7 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
         for v in (p[i], r[i], f1[i]):
             values += ["%0.2f" % float(v)]
         values += ["%d" % int(s[i])]
-        report += fmt.format(*values)
+        report += fmt % tuple(values)
 
     report += '\n'
 
@@ -426,7 +434,7 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
               np.average(f1, weights=s)):
         values += ["%0.2f" % float(v)]
     values += ['%d' % np.sum(s)]
-    report += fmt.format(*values)
+    report += fmt % tuple(values)
     return report
 
 

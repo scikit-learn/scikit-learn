@@ -229,21 +229,20 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
 
 def libsvm_predict (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-                            np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-                            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-                            np.ndarray[np.float64_t, ndim=1, mode='c']
-                            intercept, int svm_type, int kernel_type, int
-                            degree, double gamma, double coef0, double
-                            eps, double C, 
-                            np.ndarray[np.int32_t, ndim=1] weight_label,
-                            np.ndarray[np.float64_t, ndim=1] weight,
-                            double nu, double cache_size, double p, int
-                            shrinking, int probability,
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] support,                    
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] label,
-                            np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
-                            np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
+                    np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+                    np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+                    np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
+                    int svm_type, int kernel_type, int degree,
+                    double gamma, double coef0, double eps, double C, 
+                    np.ndarray[np.int32_t, ndim=1] weight_label,
+                    np.ndarray[np.float64_t, ndim=1] weight,
+                    double nu, double cache_size, double p, int
+                    shrinking, int probability,
+                    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
+                    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
+                    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+                    np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
+                    np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
     """
     Predict values T given a model.
 
@@ -271,10 +270,11 @@ def libsvm_predict (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter *param
     cdef svm_model *model
-    param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu, cache_size, C, eps, p, shrinking,
-                          probability, <int> weight.shape[0], weight_label.data,
-                          weight.data)
+
+    param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
+                          nu, cache_size, C, eps, p, shrinking,
+                          probability, <int> weight.shape[0],
+                          weight_label.data, weight.data)
 
     model = set_model(param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
