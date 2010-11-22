@@ -353,10 +353,18 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     precision = true_pos / (true_pos + false_pos)
     recall = true_pos / (true_pos + false_neg)
 
+    # handle division by 0.0 in precision and recall
+    precision[(true_pos + false_pos) == 0.0] = 0.0
+    recall[(true_pos + false_neg) == 0.0] = 0.0
+
     # fbeta score
     beta2 = beta ** 2
     fscore = (1 + beta2) * (precision * recall) / (
         beta2 * precision + recall)
+
+    # handle division by 0.0 in fscore
+    fscore[(precision + recall) == 0.0] = 0.0
+
     return precision, recall, fscore, support
 
 
