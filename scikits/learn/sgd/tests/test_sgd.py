@@ -35,10 +35,10 @@ X4 = np.array([[1,0.9,0.8,0,0,0], [1,.84,.98,0,0,0],
 Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
 
-class DenseSGDTestCase(unittest.TestCase):
+class DenseClassifierSGDTestCase(unittest.TestCase):
     """Test suite for the dense representation variant of SGD"""
 
-    factory = sgd.SGD
+    factory = sgd.ClassifierSGD
 
     def test_sgd(self):
         """Check that SGD gives any results :-)"""
@@ -152,7 +152,8 @@ class DenseSGDTestCase(unittest.TestCase):
 
         # Provided intercept_ does not match dataset
         clf = self.factory()
-        assert_raises(ValueError, clf.fit, X2, Y2, intercept_init=np.zeros((1,)))
+        assert_raises(ValueError, clf.fit, X2, Y2,
+                      intercept_init=np.zeros((1,)))
 
         # Provided intercept_ does match dataset.
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
@@ -190,9 +191,54 @@ class DenseSGDTestCase(unittest.TestCase):
         assert_array_equal(pred, Y)
 
 
-class SparseSGDTestCase(DenseSGDTestCase):
+class SparseClassifierSGDTestCase(DenseClassifierSGDTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
-    factory = sgd.sparse.SGD
+    factory = sgd.sparse.ClassifierSGD
 
 
+class DenseRegressorSGDTestCase(unittest.TestCase):
+    """Test suite for the dense representation variant of SGD"""
+
+    factory = sgd.RegressorSGD
+
+    def test_sgd(self):
+        """Check that SGD gives any results."""
+        clf = self.factory(alpha=0.1, n_iter=2,
+                           fit_intercept=False)
+        clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+        assert clf.coef_[0] == clf.coef_[1]
+
+    def test_sgd_penalties(self):
+        """Check whether penalties and hyperparameters are set properly"""
+        clf = self.factory(penalty='l2')
+        assert clf.rho == 1.0
+        clf = self.factory(penalty='l1')
+        assert clf.rho == 0.0
+        clf = self.factory(penalty='elasticnet', rho=0.85)
+        assert clf.rho == 0.85
+
+    @raises(ValueError)
+    def test_sgd_bad_penalty(self):
+        """Check whether expected ValueError on bad penalty"""
+        clf = self.factory(penalty='foobar', rho=0.85)
+
+    def test_sgd_losses(self):
+        """Check whether losses and hyperparameters are set properly"""
+        clf = self.factory(loss='squarederror')
+        assert isinstance(clf.loss_function, sgd.SquaredError)
+
+        clf = self.factory(loss='huber', epsilon=0.5)
+        assert isinstance(clf.loss_function, sgd.Huber)
+        assert clf.epsilon == 0.5
+
+    @raises(ValueError)
+    def test_sgd_bad_loss(self):
+        """Check whether expected ValueError on bad loss"""
+        clf = self.factory(loss="foobar")
+
+
+class SparseClassifierSGDTestCase(DenseRegressorSGDTestCase):
+    """Run exactly the same tests using the sparse representation variant"""
+
+    factory = sgd.sparse.RegressorSGD

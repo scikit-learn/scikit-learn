@@ -5,16 +5,16 @@
 
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin
-from .sgd_fast import Hinge, Log, ModifiedHuber
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredError, Huber
 
 
-class BaseSGD(BaseEstimator, ClassifierMixin):
+class BaseSGD(BaseEstimator):
     """Base class for dense and sparse SGD"""
 
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
+    def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, n_jobs=1):
+                 verbose=0):
         self.loss = str(loss)
         self.penalty = str(penalty)
         self.alpha = float(alpha)
@@ -27,9 +27,38 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
             raise ValueError("shuffle must be either True or False")
         self.shuffle = bool(shuffle)
         self.verbose = int(verbose)
-        self.n_jobs = int(n_jobs)
         self._get_loss_function()
         self._get_penalty_type()
+
+    def _get_loss_function(self):
+        """Get concrete LossFunction"""
+        raise NotImplementedError("BaseSGD is an abstract class.")
+
+    def _get_penalty_type(self):
+        penalty_types = {"l2": 2, "l1": 1, "elasticnet": 3}
+        try:
+            self.penalty_type = penalty_types[self.penalty]
+            if self.penalty_type == 2:
+                self.rho = 1.0
+            elif self.penalty_type == 1:
+                self.rho = 0.0
+        except KeyError:
+            raise ValueError("Penalty %s is not supported. " % self.penalty)
+
+
+class ClassifierBaseSGD(BaseSGD, ClassifierMixin):
+    """Base class for dense and sparse classification using SGD.
+    """
+
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
+                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, n_jobs=1):
+        super(ClassifierBaseSGD, self).__init__(loss=loss, penalty=penalty,
+                                                alpha=alpha, rho=rho,
+                                                fit_intercept=fit_intercept,
+                                                n_iter=n_iter, shuffle=shuffle,
+                                                verbose=verbose)
+        self.n_jobs = int(n_jobs)
 
     def _get_loss_function(self):
         """Get concrete LossFunction"""
@@ -42,17 +71,6 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
             self.loss_function = loss_functions[self.loss]
         except KeyError:
             raise ValueError("The loss %s is not supported. " % self.loss)
-
-    def _get_penalty_type(self):
-        penalty_types = {"l2": 2, "l1": 1, "elasticnet": 3}
-        try:
-            self.penalty_type = penalty_types[self.penalty]
-            if self.penalty_type == 2:
-                self.rho = 1.0
-            elif self.penalty_type == 1:
-                self.rho = 0.0
-        except KeyError:
-            raise ValueError("Penalty %s is not supported. " % self.penalty)
 
     def _get_class_weight(self, class_weight, classes, y):
         """
@@ -112,3 +130,45 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
         else:
             raise NotImplementedError("%s loss does not provide "
                                       "this functionality" % self.loss)
+
+
+class RegressorBaseSGD(BaseSGD, RegressorMixin):
+    """Base class for dense and sparse regression using SGD.
+    """
+    def __init__(self, loss="squarederror", penalty="l2", alpha=0.0001,
+                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, epsilon=0.1):
+        self.epsilon=float(epsilon)
+        super(RegressorBaseSGD, self).__init__(loss=loss, penalty=penalty,
+                                               alpha=alpha, rho=rho,
+                                               fit_intercept=fit_intercept,
+                                               n_iter=n_iter, shuffle=shuffle,
+                                               verbose=verbose)
+
+    def _get_loss_function(self):
+        """Get concrete LossFunction"""
+        loss_functions = {
+            "squarederror": SquaredError(),
+            "huber": Huber(self.epsilon),
+        }
+        try:
+            self.loss_function = loss_functions[self.loss]
+        except KeyError:
+            raise ValueError("The loss %s is not supported. " % self.loss)
+
+    def predict(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : array or scipy.sparse matrix of shape [n_samples, n_features]
+           Whether the numpy.array or scipy.sparse matrix is accepted dependes
+           on the actual implementation
+
+        Returns
+        -------
+        array, shape = [n_samples]
+           Array containing the predicted class labels.
+        """
+        X = np.asanyarray(X)
+        return np.dot(X, self.coef_) + self.intercept_

@@ -232,12 +232,15 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     shuffle : int
         Whether to shuffle the training data before each epoch.
     weight_pos : float
-        The weight of the positive class.
+        The weight (importance) of the positive class.
     weight_neg : float
-        The weight of the negative class. 
+        The weight (importance) of the negative class. 
     Returns
     -------
-    (w, intercept) : tuple (array[n_features], float)
+    w : array, shape [n_features]
+        The fitted weight vector. 
+    intercept : float
+        The fitted intercept term. 
 
     
     """
@@ -246,6 +249,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef unsigned int n_samples = Y.shape[0]
     cdef unsigned int n_features = w.shape[0]
 
+    # Array strides to get to next feature or example
     cdef int row_stride = X.strides[0]
     cdef int elem_stride = X.strides[1]
 
@@ -253,10 +257,13 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double *X_data_ptr = <double *>X.data
     cdef double *Y_data_ptr = <double *>Y.data
 
+    # Use index array for fast shuffling
     # FIXME unsined int?
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
                                                              dtype = np.int32)
     cdef int *index_data_ptr = <int *>index.data
+
+    # helper variable
     cdef int offset = 0
     cdef double wscale = 1.0
     cdef double eta = 0.0
@@ -271,6 +278,8 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int sample_idx = 0
+
+    # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr
     if penalty_type != L2:

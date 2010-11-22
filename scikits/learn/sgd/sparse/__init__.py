@@ -7,5 +7,5 @@ of scikits.learn.sgd
 
 """
 
-from .sgd import SGD
+from .sgd import ClassifierSGD, RegressorSGD
 

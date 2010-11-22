@@ -6,5 +6,5 @@ documentation.
 """
 
 from . import sparse
-from .sgd import SGD
-from .base import Log, ModifiedHuber, Hinge
+from .sgd import ClassifierSGD, RegressorSGD
+from .base import Log, ModifiedHuber, Hinge, SquaredError, Huber

@@ -11,7 +11,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn.sgd import SGD
+from scikits.learn.sgd import ClassifierSGD
 
 # we create 40 separable points
 np.random.seed(0)
@@ -19,7 +19,8 @@ X = np.r_[np.random.randn(20, 2) - [2,2], np.random.randn(20, 2) + [2, 2]]
 Y = [0]*20 + [1]*20
 
 # fit the model
-clf = SGD(loss="hinge", alpha = 0.01, n_iter=50, fit_intercept=True)
+clf = ClassifierSGD(loss="hinge", alpha = 0.01, n_iter=50,
+                    fit_intercept=True)
 clf.fit(X, Y)
 
 # plot the line, the points, and the nearest vectors to the plane

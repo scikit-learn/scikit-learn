@@ -56,7 +56,7 @@ import os
 import numpy as np
 
 from scikits.learn.svm import LinearSVC
-from scikits.learn.sgd import SGD
+from scikits.learn.sgd import ClassifierSGD
 from scikits.learn.naive_bayes import GNB
 from scikits.learn import metrics
 
@@ -163,7 +163,8 @@ sgd_parameters = {
     'alpha': 0.001,
     'n_iter': 2,
     }
-sgd_err, sgd_train_time, sgd_test_time = benchmark(SGD(**sgd_parameters))
+sgd_err, sgd_train_time, sgd_test_time = benchmark(ClassifierSGD(
+    **sgd_parameters))
 
 ######################################################################
 ## Train GNB model

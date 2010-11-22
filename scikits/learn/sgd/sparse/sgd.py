@@ -7,11 +7,11 @@ import numpy as np
 from scipy import sparse
 
 from ...externals.joblib import Parallel, delayed
-from ..base import BaseSGD
+from ..base import ClassifierBaseSGD, RegressorBaseSGD
 from ..sgd_fast_sparse import plain_sgd
 
 
-class SGD(BaseSGD):
+class ClassifierSGD(ClassifierBaseSGD):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -83,11 +83,10 @@ class SGD(BaseSGD):
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
-    >>> from scikits.learn.sgd.sparse import SGD
-    >>> clf = SGD()
+    >>> clf = ClassifierSGD()
     >>> clf.fit(X, y)
-    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-      fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
+    ClassifierSGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
+           fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -137,11 +136,11 @@ class SGD(BaseSGD):
         self._set_params(**params)
         X = sparse.csr_matrix(X)
         y = np.asanyarray(y, dtype=np.float64)
+        
         # largest class id is positive class
         self.classes = np.unique(y)
 
         self.weight = self._get_class_weight(class_weight, self.classes, y)
-        print "weights:", self.weight
 
         if self.classes.shape[0] > 2:
             self._fit_multiclass(X, y, coef_init, intercept_init)
@@ -283,3 +282,153 @@ def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, y, coef_,
                                 fit_intercept, verbose,
                                 shuffle, weight_pos, 1.0)
     return (i, coef, intercept)
+
+
+class RegressorSGD(RegressorBaseSGD):
+    """Linear model fitted by minimizing a regularized empirical loss with SGD
+
+    SGD stands for Stochastic Gradient Descent: the gradient of the loss is
+    estimated each sample at a time and the model is updated along the way with
+    a decreasing strength schedule (aka learning rate).
+
+    The regularizer is a penalty added to the loss function that shrinks model
+    parameters towards the zero vector using either the squared euclidean norm
+    L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
+    parameter update crosses the 0.0 value because of the regularizer, the
+    update is truncated to 0.0 to allow for learning sparse models and achieve
+    online feature selection.
+
+    This implementation works with data represented as dense numpy arrays of
+    floating point values for the features.
+
+    Parameters
+    ----------
+    loss : str, 'squarederror' or 'huber'
+        The loss function to be used. Defaults to 'squarederror' which refers
+        to the ordinary least squares fit. 'huber' is an epsilon insensitive loss
+        function for robust regression.
+
+    penalty : str, 'l2' or 'l1' or 'elasticnet'
+        The penalty (aka regularization term) to be used. Defaults to 'l2' which
+        is the standard regularizer for linear SVM models. 'l1' and 'elasticnet'
+        migh bring sparsity to the model (feature selection) not achievable with
+        'l2'.
+
+    alpha : float
+        Constant that multiplies the regularization term. Defaults to 0.0001
+
+    rho : float
+        The Elastic Net mixing parameter, with 0 < rho <= 1.
+        Defaults to 0.85.
+
+    fit_intercept: bool
+        Whether the intercept should be estimated or not. If False, the
+        data is assumed to be already centered. Defaults to True.
+
+    n_iter: int
+        The number of passes over the training data (aka epochs).
+        Defaults to 5.
+
+    shuffle: bool
+        Whether or not the training data should be shuffled after each epoch.
+        Defaults to False.
+
+    verbose: integer, optional
+        The verbosity level
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        Weights asigned to the features.
+
+    `intercept_` : array, shape = [1]
+        The intercept term.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> clf = RegressorSGD()
+    >>> clf.fit(X, y)
+    RegressorSGD(loss='squarederror', shuffle=False, verbose=0, n_iter=5,
+           epsilon=0.1, fit_intercept=True, penalty='l2', rho=1.0,
+           alpha=0.0001)
+    
+    See also
+    --------
+    LinearRegression, RidgeRegression, SVR
+
+    """
+
+    def _set_coef(self, coef_):
+        self.coef_ = coef_
+        if coef_ is None:
+            self.sparse_coef_ = None
+        else:
+            # sparse representation of the fitted coef for the predict method
+            self.sparse_coef_ = sparse.csr_matrix(coef_)
+
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            **params):
+        """Fit linear model with Stochastic Gradient Descent
+
+        X is expected to be a sparse matrix. For maximum efficiency, use a
+        sparse matrix in CSR format (scipy.sparse.csr_matrix)
+
+        Parameters
+        ----------
+        X : scipy sparse matrix of shape [n_samples,n_features]
+            Training data
+        y : numpy array of shape [n_samples]
+            Target values
+        coef_init : array, shape = [n_features]
+            The initial coeffients to warm-start the optimization.
+        intercept_init : array, shape = [1]
+        
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_params(**params)
+        X = sparse.csr_matrix(X)
+        y = np.asanyarray(y, dtype=np.float64)
+
+        n_samples, n_features = X.shape[0], X.shape[1]
+        self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
+        self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
+        if coef_init is not None:
+            coef_init = np.asanyarray(coef_init)
+            if coef_init.shape != (n_features,):
+                raise ValueError("Provided coef_init does not match dataset.")
+            self.coef_ = coef_init
+        if intercept_init is not None:
+            intercept_init = np.asanyarray(intercept_init)
+            if intercept_init.shape != (1,):
+                raise ValueError("Provided intercept_init " \
+                                 "does not match dataset.")
+            else:
+                self.intercept_ = intercept_init
+
+        X_data = np.array(X.data, dtype=np.float64, order="C")
+        X_indices = X.indices
+        X_indptr = X.indptr
+        coef_, intercept_ = plain_sgd(self.coef_,
+                                      self.intercept_,
+                                      self.loss_function,
+                                      self.penalty_type,
+                                      self.alpha, self.rho,
+                                      X_data,
+                                      X_indices, X_indptr, y,
+                                      self.n_iter,
+                                      int(self.fit_intercept),
+                                      int(self.verbose),
+                                      int(self.shuffle),
+                                      1.0, 1.0)
+
+        # update self.coef_ and self.sparse_coef_ consistently
+        self._set_coef(self.coef_)
+        self.intercept_ = np.asarray(intercept_)
+        return self
