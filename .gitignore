@@ -25,3 +25,6 @@ coverages
 samples
 doc/coverages
 doc/samples
+
+lfw_preprocessed/
+lfw_preprocessed.tar.gz
