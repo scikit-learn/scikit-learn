@@ -92,7 +92,7 @@ class Controller(object):
         kernel_map = {0: "linear", 1: "rbf", 2: "poly"}
         if len(np.unique(y)) == 1:
             clf = svm.OneClassSVM(kernel=kernel_map[self.kernel.get()],
-                      C=C, gamma=gamma, coef0=coef0, degree=degree)
+                      gamma=gamma, coef0=coef0, degree=degree)
             clf.fit(X)
         else:
             clf = svm.SVC(kernel=kernel_map[self.kernel.get()], C=C,
