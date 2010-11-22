@@ -201,8 +201,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
         n_iter += 1
 
         if n_iter >= coefs.shape[0]: # resize
-            coefs.resize(n_iter + 10, n_features)
-            alphas.resize(n_iter + 10)
+            add_features = 2 * (max_features - n_active) # heuristic
+            coefs.resize(n_iter + add_features, n_features)
+            alphas.resize(n_iter + add_features)
 
         coefs[n_iter, active] = coefs[n_iter-1, active] + \
                                 gamma_ * least_squares
