@@ -82,10 +82,10 @@ class SGD(BaseSGD):
     --------
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> Y = np.array([1, 1, 2, 2])
+    >>> y = np.array([1, 1, 2, 2])
     >>> from scikits.learn.sgd.sparse import SGD
     >>> clf = SGD()
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
       fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
@@ -105,7 +105,8 @@ class SGD(BaseSGD):
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
-    def fit(self, X, Y, coef_init=None, intercept_init=None, **params):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            class_weight={}, **params):
         """Fit linear model with Stochastic Gradient Descent
 
         X is expected to be a sparse matrix. For maximum efficiency, use a
@@ -122,6 +123,12 @@ class SGD(BaseSGD):
             The initial coeffients to warm-start the optimization.
         intercept_init : array, shape = [1] if n_classes == 2 else [n_classes]
             The initial intercept to warm-start the optimization.
+        class_weight : dict, {class_label : weight} or "auto"
+            Weights associated with classes. If not given, all classes
+            are supposed to have weight one.
+
+            The "auto" mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies.
 
         Returns
         -------
@@ -129,27 +136,30 @@ class SGD(BaseSGD):
         """
         self._set_params(**params)
         X = sparse.csr_matrix(X)
-        Y = np.asanyarray(Y, dtype=np.float64)
+        y = np.asanyarray(y, dtype=np.float64)
         # largest class id is positive class
-        classes = np.unique(Y)
-        self.classes = classes
-        if classes.shape[0] > 2:
-            self._fit_multiclass(X, Y, coef_init, intercept_init)
-        elif classes.shape[0] == 2:
-            self._fit_binary(X, Y, coef_init, intercept_init)
+        self.classes = np.unique(y)
+
+        self.weight = self._get_class_weight(class_weight, self.classes, y)
+        print "weights:", self.weight
+
+        if self.classes.shape[0] > 2:
+            self._fit_multiclass(X, y, coef_init, intercept_init)
+        elif self.classes.shape[0] == 2:
+            self._fit_binary(X, y, coef_init, intercept_init)
         else:
             raise ValueError("The number of class labels must be " \
                              "greater than one. ")
         # return self for chaining fit and predict calls
         return self
 
-    def _fit_binary(self, X, Y, coef_init, intercept_init):
+    def _fit_binary(self, X, y, coef_init, intercept_init):
         """Fit a binary classifier.
         """
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
-        Y_new = np.ones(Y.shape, dtype=np.float64) * -1.0
-        Y_new[Y == self.classes[1]] = 1.0
-        Y = Y_new
+        y_new = np.ones(y.shape, dtype=np.float64) * -1.0
+        y_new[y == self.classes[1]] = 1.0
+        y = y_new
 
         n_samples, n_features = X.shape[0], X.shape[1]
         self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
@@ -176,17 +186,18 @@ class SGD(BaseSGD):
                                       self.penalty_type,
                                       self.alpha, self.rho,
                                       X_data,
-                                      X_indices, X_indptr, Y,
+                                      X_indices, X_indptr, y,
                                       self.n_iter,
                                       int(self.fit_intercept),
                                       int(self.verbose),
-                                      int(self.shuffle))
+                                      int(self.shuffle),
+                                      self.weight[1], self.weight[0])
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(self.coef_)
         self.intercept_ = np.asarray(intercept_)
 
-    def _fit_multiclass(self, X, Y, coef_init, intercept_init):
+    def _fit_multiclass(self, X, y, coef_init, intercept_init):
         """Fit a multi-class classifier with a combination
         of binary classifiers, each predicts one class versus
         all others (OVA: One Versus All).
@@ -218,13 +229,14 @@ class SGD(BaseSGD):
 
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_train_ova_classifier)(i, c, X_data, X_indices,
-                                               X_indptr, Y, self.coef_[i],
+                                               X_indptr, y, self.coef_[i],
                                                self.intercept_[i],
                                                self.loss_function,
                                                self.penalty_type, self.alpha,
                                                self.rho, self.n_iter,
                                                self.fit_intercept,
-                                               self.verbose, self.shuffle)
+                                               self.verbose, self.shuffle,
+                                               self.weight[i])
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
@@ -257,16 +269,17 @@ class SGD(BaseSGD):
             return scores
 
 
-def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, Y, coef_,
+def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, y, coef_,
                           intercept_, loss_function, penalty_type, alpha,
-                          rho, n_iter, fit_intercept, verbose, shuffle):
+                          rho, n_iter, fit_intercept, verbose, shuffle,
+                          weight_pos):
     """Inner loop for One-vs.-All scheme"""
-    Y_i = np.ones(Y.shape, dtype=np.float64) * -1.0
-    Y_i[Y == c] = 1.0
+    y_i = np.ones(y.shape, dtype=np.float64) * -1.0
+    y_i[y == c] = 1.0
     coef, intercept = plain_sgd(coef_, intercept_,
                                 loss_function, penalty_type,
                                 alpha, rho, X_data, X_indices,
-                                X_indptr, Y_i, n_iter,
+                                X_indptr, y_i, n_iter,
                                 fit_intercept, verbose,
-                                shuffle)
+                                shuffle, weight_pos, 1.0)
     return (i, coef, intercept)

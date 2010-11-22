@@ -15,19 +15,19 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, n_jobs=1):
-        self.loss = loss
-        self.penalty = penalty
-        self.alpha = alpha
-        self.rho = rho
-        self.fit_intercept = fit_intercept
+        self.loss = str(loss)
+        self.penalty = str(penalty)
+        self.alpha = float(alpha)
+        self.rho = float(rho)
+        self.fit_intercept = bool(fit_intercept)
         self.n_iter = int(n_iter)
         if self.n_iter <= 0:
             raise ValueError("n_iter must be greater than zero.")
         if not isinstance(shuffle, bool):
             raise ValueError("shuffle must be either True or False")
-        self.shuffle = shuffle
-        self.verbose = verbose
-        self.n_jobs = n_jobs
+        self.shuffle = bool(shuffle)
+        self.verbose = int(verbose)
+        self.n_jobs = int(n_jobs)
         self._get_loss_function()
         self._get_penalty_type()
 
@@ -53,6 +53,23 @@ class BaseSGD(BaseEstimator, ClassifierMixin):
                 self.rho = 0.0
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % self.penalty)
+
+    def _get_class_weight(self, class_weight, classes, y):
+        """
+        Estimate class weights for unbalanced datasets.
+        """
+        if class_weight == {}:
+            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+        elif class_weight == 'auto':
+            weight = np.array([1.0 / np.sum(y==i) for i in classes],
+                              dtype=np.float64, order='C')
+            weight *= classes.shape[0] / np.sum(weight)
+        else:
+            weight = np.zeros(classes.shape[0], dtype=np.float64, order='C')
+            for i, c in enumerate(classes):
+                weight[i] = class_weight.get(i, 1.0)
+
+        return weight
 
     def predict(self, X):
         """Predict using the linear model
