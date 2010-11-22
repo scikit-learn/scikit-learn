@@ -165,10 +165,8 @@ class PCA(BaseEstimator):
         if self.n_comp=='mle':
             self.n_comp = _infer_dimension_(self.explained_variance_,
                                             n_samples, X.shape[1])
-            self.components_ = self.components_[:, :self.n_comp]
-            self.explained_variance_ = self.explained_variance_[:self.n_comp]
 
-        elif self.n_comp is not None:
+        if self.n_comp is not None:
             self.components_ = self.components_[:, :self.n_comp]
             self.explained_variance_ = self.explained_variance_[:self.n_comp]
 

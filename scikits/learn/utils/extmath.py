@@ -118,7 +118,7 @@ def fast_svd(M, k):
     else:
         Y = np.dot(M, r)
     del r
-    Q,r = linalg.qr(Y)
+    Q, r = linalg.qr(Y)
     if sparse.issparse(M):
         B = Q.T*M
     else:
