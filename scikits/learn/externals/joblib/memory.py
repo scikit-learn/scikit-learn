@@ -4,7 +4,7 @@ is called with the same input arguments.
 
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -45,10 +45,10 @@ FIRST_LINE_TEXT = "# first line:"
 # object, and the interface to persist and query should be separated in
 # the data store.
 #
-# This would enable creating 'Memory' objects with a different logic for
+# This would enable creating 'Memory' objects with a different logic for 
 # pickling that would simply span a MemorizedFunc with the same
 # store (or do we want to copy it to avoid cross-talks?), for instance to
-# implement HDF5 pickling.
+# implement HDF5 pickling. 
 
 # TODO: Same remark for the logger, and probably use the Python logging
 # mechanism.
@@ -79,9 +79,9 @@ class JobLibCollisionWarning(UserWarning):
 # class `Memory`
 ################################################################################
 class MemorizedFunc(Logger):
-    """ Callable object decorating a function for caching its return value
+    """ Callable object decorating a function for caching its return value 
         each time it is called.
-
+    
         All values are cached on the filesystem, in a deep directory
         structure. Methods are provided to inspect the cache or clean it.
 
@@ -100,14 +100,14 @@ class MemorizedFunc(Logger):
             arguments. Only used if save_npy was true when the
             cache was created.
         verbose: int, optional
-            The verbosity flag, controls messages that are issued as
+            The verbosity flag, controls messages that are issued as 
             the function is revaluated.
     """
     #-------------------------------------------------------------------------
     # Public interface
     #-------------------------------------------------------------------------
-
-    def __init__(self, func, cachedir, ignore=None, save_npy=True,
+   
+    def __init__(self, func, cachedir, ignore=None, save_npy=True, 
                              mmap_mode=None, verbose=1):
         """
             Parameters
@@ -127,7 +127,7 @@ class MemorizedFunc(Logger):
                 arguments. Only used if save_npy was true when the
                 cache was created.
             verbose: int, optional
-                Verbosity flag, controls the debug messages that are issued
+                Verbosity flag, controls the debug messages that are issued 
                 as functions are revaluated.
         """
         Logger.__init__(self)
@@ -159,7 +159,7 @@ class MemorizedFunc(Logger):
         # function code has changed
         output_dir, _ = self.get_output_dir(*args, **kwargs)
         # FIXME: The statements below should be try/excepted
-        if not (self._check_previous_func_code(stacklevel=3) and
+        if not (self._check_previous_func_code(stacklevel=3) and 
                                  os.path.exists(output_dir)):
             return self.call(*args, **kwargs)
         else:
@@ -179,7 +179,7 @@ class MemorizedFunc(Logger):
     #-------------------------------------------------------------------------
     # Private interface
     #-------------------------------------------------------------------------
-
+   
     def _get_func_dir(self, mkdir=True):
         """ Get the directory corresponding to the cache for the
             function.
@@ -191,7 +191,7 @@ class MemorizedFunc(Logger):
             try:
                 os.makedirs(func_dir)
             except OSError:
-                """ Dir exists: we have a race condition here, when using
+                """ Dir exists: we have a race condition here, when using 
                     multiprocessing.
                 """
                 # XXX: Ugly
@@ -206,12 +206,12 @@ class MemorizedFunc(Logger):
         """
         coerce_mmap = (self.mmap_mode is not None)
         argument_hash = hash(filter_args(self.func, self.ignore,
-                             *args, **kwargs),
+                             *args, **kwargs), 
                              coerce_mmap=coerce_mmap)
         output_dir = os.path.join(self._get_func_dir(self.func),
                                     argument_hash)
         return output_dir, argument_hash
-
+        
 
     def _write_func_code(self, filename, func_code, first_line):
         """ Write the function code and the filename to a file.
@@ -221,7 +221,7 @@ class MemorizedFunc(Logger):
 
 
     def _check_previous_func_code(self, stacklevel=2):
-        """
+        """ 
             stacklevel is the depth a which this function is called, to
             issue useful warnings to the user.
         """
@@ -232,7 +232,7 @@ class MemorizedFunc(Logger):
         func_dir = self._get_func_dir()
         func_code_file = os.path.join(func_dir, 'func_code.py')
 
-        if not os.path.exists(func_code_file):
+        if not os.path.exists(func_code_file): 
             self._write_func_code(func_code_file, func_code, first_line)
             return False
         old_func_code, old_first_line = \
@@ -241,14 +241,14 @@ class MemorizedFunc(Logger):
             return True
 
         # We have differing code, is this because we are refering to
-        # differing functions, or because the function we are refering as
+        # differing functions, or because the function we are refering as 
         # changed?
 
         if old_first_line == first_line == -1:
             _, func_name = get_func_name(self.func, resolv_alias=False,
                                          win_characters=False)
             if not first_line == -1:
-                func_description = '%s (%s:%i)' % (func_name,
+                func_description = '%s (%s:%i)' % (func_name, 
                                                 source_file, first_line)
             else:
                 func_description = func_name
@@ -260,7 +260,7 @@ class MemorizedFunc(Logger):
         # same than the code store, we have a collision: the code in the
         # file has not changed, but the name we have is pointing to a new
         # code block.
-        if (not old_first_line == first_line
+        if (not old_first_line == first_line 
                                     and source_file is not None
                                     and os.path.exists(source_file)):
             _, func_name = get_func_name(self.func, resolv_alias=False)
@@ -272,7 +272,7 @@ class MemorizedFunc(Logger):
                 warnings.warn(JobLibCollisionWarning(
                 'Possible name collisions between functions '
                 "'%s' (%s:%i) and '%s' (%s:%i)" %
-                (func_name, source_file, old_first_line,
+                (func_name, source_file, old_first_line, 
                  func_name, source_file, first_line)),
                  stacklevel=stacklevel)
 
@@ -283,7 +283,7 @@ class MemorizedFunc(Logger):
 
 
     def clear(self, warn=True):
-        """ Empty the function's cache.
+        """ Empty the function's cache. 
         """
         func_dir = self._get_func_dir(mkdir=False)
         if self._verbose and warn:
@@ -297,7 +297,7 @@ class MemorizedFunc(Logger):
 
 
     def call(self, *args, **kwargs):
-        """ Force the execution of the function with the given arguments and
+        """ Force the execution of the function with the given arguments and 
             persist the output values.
         """
         start_time = time.time()
@@ -316,7 +316,7 @@ class MemorizedFunc(Logger):
 
 
     def format_call(self, *args, **kwds):
-        """ Returns a nicely formatted statement displaying the function
+        """ Returns a nicely formatted statement displaying the function 
             call with the given arguments.
         """
         path, signature = self.format_signature(self.func, *args,
@@ -363,7 +363,7 @@ class MemorizedFunc(Logger):
         filename = os.path.join(dir, 'output.pkl')
 
         if 'numpy' in sys.modules and self.save_npy:
-            numpy_pickle.dump(output, filename)
+            numpy_pickle.dump(output, filename) 
         else:
             output_file = file(filename, 'w')
             pickle.dump(output, output_file, protocol=2)
@@ -391,7 +391,7 @@ class MemorizedFunc(Logger):
         """
         filename = os.path.join(output_dir, 'output.pkl')
         if self.save_npy:
-            return numpy_pickle.load(filename,
+            return numpy_pickle.load(filename, 
                                      mmap_mode=self.mmap_mode)
         else:
             output_file = file(filename, 'r')
@@ -402,7 +402,7 @@ class MemorizedFunc(Logger):
     #-------------------------------------------------------------------------
     # Private `object` interface
     #-------------------------------------------------------------------------
-
+   
     def __repr__(self):
         return '%s(func=%s, cachedir=%s)' % (
                     self.__class__.__name__,
@@ -418,7 +418,7 @@ class MemorizedFunc(Logger):
 class Memory(Logger):
     """ A context object for caching a function's return value each time it
         is called with the same input arguments.
-
+    
         All values are cached on the filesystem, in a deep directory
         structure.
 
@@ -427,7 +427,7 @@ class Memory(Logger):
     #-------------------------------------------------------------------------
     # Public interface
     #-------------------------------------------------------------------------
-
+   
     def __init__(self, cachedir, save_npy=True, mmap_mode=None,
                        verbose=1):
         """
@@ -446,7 +446,7 @@ class Memory(Logger):
                 arguments. Only used if save_npy was true when the
                 cache was created.
             verbose: int, optional
-                Verbosity flag, controls the debug messages that are issued
+                Verbosity flag, controls the debug messages that are issued 
                 as functions are revaluated.
         """
         # XXX: Bad explaination of the None value of cachedir
@@ -469,13 +469,13 @@ class Memory(Logger):
             Returns
             -------
             decorated_func: MemorizedFunc object
-                The returned object is a MemorizedFunc object, that is
+                The returned object is a MemorizedFunc object, that is 
                 callable (behaves like a function), but offers extra
                 methods for cache lookup and management. See the
                 documentation for :class:`joblib.memory.MemorizedFunc`.
         """
         if func is None:
-            # Partial application, to be able to specify extra keyword
+            # Partial application, to be able to specify extra keyword 
             # arguments in decorators
             return functools.partial(self.cache, ignore=ignore)
         if self.cachedir is None:
@@ -511,7 +511,7 @@ class Memory(Logger):
     #-------------------------------------------------------------------------
     # Private `object` interface
     #-------------------------------------------------------------------------
-
+   
     def __repr__(self):
         return '%s(cachedir=%s)' % (
                     self.__class__.__name__,
