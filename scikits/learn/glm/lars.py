@@ -295,9 +295,9 @@ class LARS(LinearModel):
     Examples
     --------
     >>> from scikits.learn import glm
-    >>> clf = glm.LARS(n_features=1)
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LARS(normalize=True, n_features=1, verbose=False, fit_intercept=True)
+    >>> clf = glm.LARS()
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
+    LARS(verbose=False, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.81649658]
 
@@ -309,18 +309,13 @@ class LARS(LinearModel):
     --------
     lars_path, LassoLARS
     """
-    def __init__(self, n_features, normalize=True, fit_intercept=True, verbose=False):
-        self.n_features = n_features
-        self.coef_ = None
+    def __init__(self, fit_intercept=True, verbose=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.method = 'lar'
-        if not normalize:
-            warnings.warn('LARS can only be fit with normalized regressors. Please set normalize to True')
 
-
-    def fit (self, X, y, normalize=True, precompute='auto',
-             overwrite_X=False, **params):
+    def fit (self, X, y, normalize=True, max_features=None,
+             precompute='auto', overwrite_X=False, **params):
 
         """
         Fit the model using X, y as training data.
@@ -351,7 +346,11 @@ class LARS(LinearModel):
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
         n_samples = X.shape[0]
-        alpha = self.alpha * n_samples # scale alpha with number of samples
+
+        if self.method == 'lasso':
+            alpha = self.alpha * n_samples # scale alpha with number of samples
+        else:
+            alpha = 0.
 
         if normalize:
             norms = np.sqrt(np.sum(X**2, axis=0))
@@ -368,20 +367,20 @@ class LARS(LinearModel):
         else:
             Gram = None
 
-        alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
-                  overwrite_X=overwrite_X, overwrite_Gram=True,
-                  alpha_min=alpha, method=self.method,
-                  verbose=self.verbose,
-                  max_features=self.max_features)
+        self.alphas_, self.active_, self.coef_path_ = lars_path(X, y,
+                  Gram=Gram, overwrite_X=overwrite_X,
+                  overwrite_Gram=True, alpha_min=alpha,
+                  method=self.method, verbose=self.verbose,
+                  max_features=max_features)
 
-        self.coef_ = coef_path_[:,-1]
+        self.coef_ = self.coef_path_[:,-1]
 
         self._set_intercept(Xmean, ymean)
 
         return self
 
 
-class LassoLARS (LinearModel):
+class LassoLARS (LARS):
     """ Lasso model fit with Least Angle Regression a.k.a. LARS
 
     It is a Linear Model trained with an L1 prior as regularizer.
@@ -410,8 +409,7 @@ class LassoLARS (LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.LassoLARS(alpha=0.1)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(max_features=None, alpha=0.1, normalize=True, verbose=False,
-         fit_intercept=True)
+    LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.51649658]
 
@@ -424,11 +422,8 @@ class LassoLARS (LinearModel):
     lars_path, LassoLARS
     """
 
-    def __init__(self, alpha=1.0, max_features=None,
-                 fit_intercept=True, verbose=False):
+    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False):
         self.alpha = alpha
-        self.coef_ = None
-        self.max_features = max_features
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.method = 'lasso'
