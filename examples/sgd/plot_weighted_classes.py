@@ -29,7 +29,7 @@ std = X.std(axis=0)
 X = (X - mean) / std
 
 # fit the model and get the separating hyperplane
-clf = sgd.SGD(n_iter=100, alpha=0.01)
+clf = sgd.ClassifierSGD(n_iter=100, alpha=0.01)
 clf.fit(X, y)
 
 w = clf.coef_
@@ -39,7 +39,7 @@ yy = a * xx - clf.intercept_ / w[1]
 
 
 # get the separating hyperplane using weighted classes
-wclf = sgd.SGD(n_iter=100, alpha=0.01)
+wclf = sgd.ClassifierSGD(n_iter=100, alpha=0.01)
 wclf.fit(X, y, class_weight={1: 10})
 
 ww = wclf.coef_

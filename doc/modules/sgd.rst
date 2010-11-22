@@ -33,8 +33,8 @@ The disadvantages of Stochastic Gradient Descent include:
 Classification
 ==============
 
-The class :class:`SGD` implements a plain stochastic gradient descent learning 
-routine which supports different loss functions and penalties.
+The class :class:`ClassifierSGD` implements a plain stochastic gradient descent learning 
+routine which supports different loss functions and penalties for classification.
 
 As other classifiers, SGD has to be fitted with two arrays:
 an array X of size [n_samples, n_features] holding the training
@@ -44,10 +44,10 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> from scikits.learn import sgd
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = sgd.SGD(loss="hinge", penalty="l2")
+    >>> clf = sgd.ClassifierSGD(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
-    SGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-      fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
+    ClassifierSGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
+           fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -75,7 +75,7 @@ To get the signed distance to the hyperplane use `decision_function`:
 
 .. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations. 
 
-The concrete loss function can be set via the `loss` parameter. :class:`SGD` supports the
+The concrete loss function can be set via the `loss` parameter. :class:`ClassifierSGD` supports the
 following loss functions: 
 
   - `loss="hinge"`: (soft-margin) linear Support Vector Machine.
@@ -89,7 +89,7 @@ Log loss, on the other hand, provides probability estimates.
 In the case of binary classification and `loss="log"` you get a probability 
 estimate P(y=C|x) using `predict_proba`, where `C` is the largest class label: 
    
-    >>> clf = sgd.SGD(loss="log").fit(X, y)
+    >>> clf = sgd.ClassifierSGD(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
     array([ 0.99999949])
 
@@ -105,7 +105,7 @@ driving most coefficients to zero. The Elastic Net solves some deficiencies of
 the L1 penalty in the presence of highly correlated attributes. The parameter `rho`
 has to be specified by the user. 
 
-:class:`SGD` supports multi-class classification by combining multiple 
+:class:`ClassifierSGD` supports multi-class classification by combining multiple 
 binary classifiers in a "one versus all" (OVA) scheme. For each of the `K` classes, 
 a binary classifier is learned that discriminates between that and all other `K-1`
 classes. At testing time, we compute the confidence score (i.e. the signed distances 
@@ -129,6 +129,27 @@ class; classes are indexed in ascending order (see member `classes`).
  * :ref:`example_sgd_plot_iris.py`,
  * :ref:`example_sgd_covertype_dense_sgd.py`
 
+Regression
+==========
+
+The class :class:`RegressorSGD` implements a plain stochastic gradient descent learning 
+routine which supports different loss functions and penalties to fit linear regression
+models. 
+
+.. figure:: ../auto_examples/sgd/images/plot_ols_sgd.png
+   :align: center
+   :scale: 50
+
+The concrete loss function can be set via the `loss` parameter. :class:`RegressionSGD` supports the
+following loss functions: 
+
+  - `loss="squaredloss"`: Ordinary least squares.
+  - `loss="huber"`: Huber loss for robust regression.
+
+.. topic:: Examples:
+
+ * :ref:`example_sgd_plot_ols_sgd.py`,
+
 .. currentmodule:: scikits.learn.svm.sparse
 
 
@@ -145,7 +166,7 @@ For maximum efficiency, use the CSR matrix format as defined in
 `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
-Implemented classes are :class:`SGD`.
+Implemented classes are :class:`ClassifierSGD` and :class:`RegressorSGD`.
 
 .. topic:: Examples:
 
@@ -245,7 +266,7 @@ optimization problems. In contrast to (batch) gradient descent, SGD
 approximates the true gradient of :math:`E(w,b)` by considering a 
 single training example at a time. 
 
-The class :class:`SGD` implements a first-order SGD learning routine. 
+The class :class:`ClassifierSGD` implements a first-order SGD learning routine. 
 The algorithm iterates over the training examples and for each example 
 updates the model parameters according to the update rule given by
 

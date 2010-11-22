@@ -139,8 +139,8 @@ cdef class Log(Classification):
         return Log, ()
 
 
-cdef class SquaredError(Regression):
-    """Squared error loss traditional used in linear regression"""
+cdef class SquaredLoss(Regression):
+    """Squared loss traditional used in linear regression."""
     cpdef double loss(self, double p, double y):
         return 0.5 * (p - y) * (p - y)
 
@@ -148,13 +148,13 @@ cdef class SquaredError(Regression):
         return y - p
 
     def __reduce__(self):
-        return SquaredError, ()
+        return SquaredLoss, ()
 
 
 cdef class Huber(Regression):
     """Huber regression loss
 
-    Variant of the SquaredError that is robust to outliers (quadratic near zero,
+    Variant of the SquaredLoss that is robust to outliers (quadratic near zero,
     linear in for large errors).
 
     References

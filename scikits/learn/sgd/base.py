@@ -6,7 +6,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredError, Huber
+from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 
 class BaseSGD(BaseEstimator):
@@ -135,7 +135,7 @@ class ClassifierBaseSGD(BaseSGD, ClassifierMixin):
 class RegressorBaseSGD(BaseSGD, RegressorMixin):
     """Base class for dense and sparse regression using SGD.
     """
-    def __init__(self, loss="squarederror", penalty="l2", alpha=0.0001,
+    def __init__(self, loss="squaredloss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1):
         self.epsilon=float(epsilon)
@@ -148,7 +148,7 @@ class RegressorBaseSGD(BaseSGD, RegressorMixin):
     def _get_loss_function(self):
         """Get concrete LossFunction"""
         loss_functions = {
-            "squarederror": SquaredError(),
+            "squaredloss": SquaredLoss(),
             "huber": Huber(self.epsilon),
         }
         try:

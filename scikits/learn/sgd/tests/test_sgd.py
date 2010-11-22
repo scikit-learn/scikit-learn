@@ -225,8 +225,8 @@ class DenseRegressorSGDTestCase(unittest.TestCase):
 
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
-        clf = self.factory(loss='squarederror')
-        assert isinstance(clf.loss_function, sgd.SquaredError)
+        clf = self.factory(loss='squaredloss')
+        assert isinstance(clf.loss_function, sgd.SquaredLoss)
 
         clf = self.factory(loss='huber', epsilon=0.5)
         assert isinstance(clf.loss_function, sgd.Huber)

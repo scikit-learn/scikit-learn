@@ -303,8 +303,8 @@ class RegressorSGD(RegressorBaseSGD):
 
     Parameters
     ----------
-    loss : str, 'squarederror' or 'huber'
-        The loss function to be used. Defaults to 'squarederror' which refers
+    loss : str, 'squaredloss' or 'huber'
+        The loss function to be used. Defaults to 'squaredloss' which refers
         to the ordinary least squares fit. 'huber' is an epsilon insensitive loss
         function for robust regression.
 
@@ -353,7 +353,7 @@ class RegressorSGD(RegressorBaseSGD):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = RegressorSGD()
     >>> clf.fit(X, y)
-    RegressorSGD(loss='squarederror', shuffle=False, verbose=0, n_iter=5,
+    RegressorSGD(loss='squaredloss', shuffle=False, verbose=0, n_iter=5,
            epsilon=0.1, fit_intercept=True, penalty='l2', rho=1.0,
            alpha=0.0001)
     
@@ -432,3 +432,23 @@ class RegressorSGD(RegressorBaseSGD):
         self._set_coef(self.coef_)
         self.intercept_ = np.asarray(intercept_)
         return self
+
+    def predict(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : array or scipy.sparse matrix of shape [n_samples, n_features]
+           Whether the numpy.array or scipy.sparse matrix is accepted dependes
+           on the actual implementation
+
+        Returns
+        -------
+        array, shape = [n_samples]
+           Array containing the predicted class labels.
+        """
+        # np.dot only works correctly if both arguments are sparse matrices
+        if not sparse.issparse(X):
+            X = sparse.csr_matrix(X)
+        scores = np.asarray(np.dot(X, self.sparse_coef_.T).todense()
+                            + self.intercept_)

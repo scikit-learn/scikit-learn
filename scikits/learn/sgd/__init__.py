@@ -7,4 +7,4 @@ documentation.
 
 from . import sparse
 from .sgd import ClassifierSGD, RegressorSGD
-from .base import Log, ModifiedHuber, Hinge, SquaredError, Huber
+from .base import Log, ModifiedHuber, Hinge, SquaredLoss, Huber

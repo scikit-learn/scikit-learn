@@ -40,7 +40,7 @@ cdef class Log(Classification):
     cpdef double loss(self, double p, double y)
     cpdef double dloss(self, double p, double y)
 
-cdef class SquaredError(Regression):
+cdef class SquaredLoss(Regression):
     cpdef double loss(self, double p, double y)
     cpdef double dloss(self, double p, double y)
 
