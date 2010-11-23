@@ -173,9 +173,10 @@ class GridSearchCV(BaseEstimator):
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
                  fit_params={}, n_jobs=1, iid=True):
-        assert hasattr(estimator, 'fit') and hasattr(estimator, 'predict'), (
+        assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
+                        or hasattr(estimator, 'score')), (
             "estimator should a be an estimator implementing 'fit' and "
-            "'predict' methods, %s (type %s) was passed" %
+            "'predict' or 'score' methods, %s (type %s) was passed" %
                     (estimator, type(estimator))
             )
         if loss_func is None and score_func is None:
@@ -193,7 +194,7 @@ class GridSearchCV(BaseEstimator):
         self.fit_params = fit_params
         self.iid = iid
 
-    def fit(self, X, y, refit=True, cv=None, **kw):
+    def fit(self, X, y=None, refit=True, cv=None, **kw):
         """Run fit with all sets of parameters
 
         Returns the best classifier
@@ -205,8 +206,8 @@ class GridSearchCV(BaseEstimator):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y: array, [n_samples]
-            Target vector relative to X
+        y: array, [n_samples] or None
+            Target vector relative to X, None for unsupervised problems
 
         cv : crossvalidation generator
             see scikits.learn.cross_val module
@@ -256,7 +257,8 @@ class GridSearchCV(BaseEstimator):
             best_estimator.fit(X, y)
 
         self.best_estimator = best_estimator
-        self.predict = best_estimator.predict
+        if hasattr(best_estimator, 'predict'):
+            self.predict = best_estimator.predict
         if hasattr(best_estimator, 'score'):
             self.score = best_estimator.score
 
