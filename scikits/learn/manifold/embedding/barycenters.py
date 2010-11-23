@@ -46,10 +46,11 @@ def barycenters(samples, neigh=None, n_neighbors=None,
     indptr=[0]
     for i in range(len(samples)):
         neighs, ind = graph[i]
+        ind = ind[1:]
         wi = barycenter_weights(samples[i], samples[ind])
         W.extend(wi)
-        indices.extend(neighs)
-        indptr.append(indptr[-1] + len(neighs))
+        indices.extend(ind)
+        indptr.append(indptr[-1] + len(ind))
 
     W = np.asarray(W)
     indices = np.asarray(indices, dtype=np.intc)
