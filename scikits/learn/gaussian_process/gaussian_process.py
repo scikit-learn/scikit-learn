@@ -273,8 +273,6 @@ class GaussianProcess(BaseEstimator):
                            + "regression model size p=%d.") % (n_samples, p))
         if self.beta0 is not None:
             if self.beta0.shape[0] != p:
-                import pdb
-                pdb.set_trace()
                 raise Exception("Shapes of beta0 and F do not match.")
 
         # Set attributes
