@@ -16,7 +16,8 @@ if hasattr(linalg, 'solve_triangular'):
     solve_triangular = linalg.solve_triangular
 else:
     # slower, but works
-    solve_triangular = linalg.solve
+    def solve_triangular(x, y, lower=True):
+        return linalg.solve(x, y)
 
 
 class GaussianProcess(BaseEstimator):
@@ -410,7 +411,8 @@ class GaussianProcess(BaseEstimator):
                     self.Ft = par['Ft']
                     self.G = par['G']
 
-                rt = solve_triangular(C, r.T)
+                rt = solve_triangular(C, r.T, lower=True)
+                
                 if self.beta0 is None:
                     # Universal Kriging
                     u = solve_triangular(self.G.T,
@@ -548,7 +550,7 @@ class GaussianProcess(BaseEstimator):
             return reduced_likelihood_function_value, par
 
         # Get generalized least squares solution
-        Ft = solve_triangular(C, F)
+        Ft = solve_triangular(C, F, lower=True)
         try:
             Q, G = linalg.qr(Ft, econ=True)
         except:
@@ -572,7 +574,7 @@ class GaussianProcess(BaseEstimator):
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
 
-        Yt = solve_triangular(C, self.y)
+        Yt = solve_triangular(C, self.y, lower=True)
         if self.beta0 is None:
             # Universal Kriging
             beta = solve_triangular(G, np.dot(Q.T, Yt))
