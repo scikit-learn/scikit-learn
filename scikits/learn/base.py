@@ -46,6 +46,10 @@ def clone(estimator, safe=True):
     for name, param in new_object_params.iteritems():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
+    assert new_object._get_params(deep=False) == new_object_params, (
+            'Cannot clone object %s, as the constructor does not '
+            'seem to set parameters' % estimator
+        )
 
     return new_object
 
