@@ -290,18 +290,17 @@ parameters or alternatively it uses the given parameters.
     >>> from scikits.learn.gaussian_process import GaussianProcess
     >>> f = lambda x: x * np.sin(x)
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
-    >>> Y = f(X).ravel()
+    >>> y = f(X).ravel()
     >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
     >>> gp = GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
-    >>> gp.fit(X, Y)
+    >>> gp.fit(X, y)
     GaussianProcess(normalize=True, theta0=array([[ 0.01]]),
             optimizer='fmin_cobyla', verbose=False, storage_mode='full',
             nugget=2.2204460492503131e-15, thetaU=array([[ 0.1]]),
             regr=<function constant at 0x51f2668>, random_start=100,
             corr=<function cubic at 0x51f2e60>, beta0=None,
             thetaL=array([[ 0.0001]]))
-    >>> y, MSE = gp.predict(x, eval_MSE=True)
-    >>> sigma = np.sqrt(MSE)
+    >>> y_pred, sigma2_pred = gp.predict(x, eval_MSE=True)
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression.png
    :target: ../auto_examples/gaussian_process/plot_gp_regression.html
