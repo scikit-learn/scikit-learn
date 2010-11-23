@@ -128,8 +128,8 @@ class GaussianProcess(BaseEstimator):
     >>> from scikits.learn.gaussian_process import GaussianProcess
     >>> f = lambda x: x * np.sin(x)
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
-    >>> Y = f(X).ravel()
-    >>> gp = GaussianProcess(theta0=1e-1, thetaL=1e-3, thetaU=1e0).fit(X, Y)
+    >>> y = f(X).ravel()
+    >>> gp = GaussianProcess(theta0=1e-1, thetaL=1e-3, thetaU=1e0).fit(X, y)
     >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
     >>> y_pred, MSE = gp.predict(x, eval_MSE=True)
 

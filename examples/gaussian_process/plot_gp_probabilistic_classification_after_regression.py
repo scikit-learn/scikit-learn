@@ -52,13 +52,13 @@ X = np.array([[-4.61611719, -6.00099547],
               [5.21301203, 4.26386883]])
 
 # Observations
-Y = g(X)
+y = g(X)
 
 # Instanciate and fit Gaussian Process Model
 gp = GaussianProcess(theta0=5e-1)
 
 # Don't perform MLE or you'll get a perfect prediction for this simple example!
-gp.fit(X, Y)
+gp.fit(X, y)
 
 # Evaluate real function, the prediction and its MSE on a grid
 res = 50
@@ -66,11 +66,11 @@ x1, x2 = np.meshgrid(np.linspace(- lim, lim, res), \
                      np.linspace(- lim, lim, res))
 xx = np.vstack([x1.reshape(x1.size), x2.reshape(x2.size)]).T
 
-YY = g(xx)
-yy, MSE = gp.predict(xx, eval_MSE=True)
+y_true = g(xx)
+y_pred, MSE = gp.predict(xx, eval_MSE=True)
 sigma = np.sqrt(MSE)
-yy = yy.reshape((res, res))
-YY = YY.reshape((res, res))
+y_true = y_true.reshape((res, res))
+y_pred = y_pred.reshape((res, res))
 sigma = sigma.reshape((res, res))
 k = PHIinv(.975)
 
@@ -86,28 +86,28 @@ ax.set_yticklabels([])
 pl.xlabel('$x_1$')
 pl.ylabel('$x_2$')
 
-cax = pl.imshow(np.flipud(PHI(- yy / sigma)), cmap=cm.gray_r, alpha=0.8, \
+cax = pl.imshow(np.flipud(PHI(- y_pred / sigma)), cmap=cm.gray_r, alpha=0.8, \
                 extent=(- lim, lim, - lim, lim))
 norm = pl.matplotlib.colors.Normalize(vmin=0., vmax=0.9)
 cb = pl.colorbar(cax, ticks=[0., 0.2, 0.4, 0.6, 0.8, 1.], norm=norm)
 cb.set_label('${\\rm \mathbb{P}}\left[\widehat{G}(\mathbf{x}) \leq 0\\right]$')
 
-pl.plot(X[Y <= 0, 0], X[Y <= 0, 1], 'r.', markersize=12)
+pl.plot(X[y <= 0, 0], X[y <= 0, 1], 'r.', markersize=12)
 
-pl.plot(X[Y > 0, 0], X[Y > 0, 1], 'b.', markersize=12)
+pl.plot(X[y > 0, 0], X[y > 0, 1], 'b.', markersize=12)
 
-cs = pl.contour(x1, x2, YY, [0.], colors='k', \
+cs = pl.contour(x1, x2, y_true, [0.], colors='k', \
                 linestyles='dashdot')
 
-cs = pl.contour(x1, x2, PHI(- yy / sigma), [0.025], colors='b', \
+cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.025], colors='b', \
                 linestyles='solid')
 pl.clabel(cs, fontsize=11)
 
-cs = pl.contour(x1, x2, PHI(- yy / sigma), [0.5], colors='k', \
+cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.5], colors='k', \
                 linestyles='dashed')
 pl.clabel(cs, fontsize=11)
 
-cs = pl.contour(x1, x2, PHI(- yy / sigma), [0.975], colors='r', \
+cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.975], colors='r', \
                 linestyles='solid')
 pl.clabel(cs, fontsize=11)
 
