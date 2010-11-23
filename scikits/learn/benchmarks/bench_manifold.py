@@ -66,7 +66,7 @@ if __name__ == '__main__':
     alpha = 0.01 # regularization parameter
 
     n_features = 500
-    list_n_samples = range(500, 10001, 500);
+    list_n_samples = range(500, 3001, 500);
     lle_results, laplacianeigenmap_results, diffusionmap_results, \
         hessianmap_results = compute_bench(list_n_samples)
 
