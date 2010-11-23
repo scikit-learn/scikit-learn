@@ -6,12 +6,40 @@ Dimensionality reduction with similarities
 
 import numpy as np
 
+from ...preprocessing import Scaler
+
 from .base_embedding import BaseEmbedding
 from ..mapping import builder as mapping_builder
 
 from .similarities import laplacian_maps, sparse_heat_kernel, \
     normalized_heat_kernel
-from .tools import centered_normalized
+
+def centered_normalized(samples):
+    """
+    Returns a set of samples that are centered and of variance 1
+
+    >>> import numpy
+    >>> from  scikits.learn.manifold.embedding.similarities_mds import centered_normalized
+    >>> samples = numpy.array((0., 0., 0., \
+      1., 0., 0., \
+      0., 1., 0., \
+      1., 1., 0., \
+      0., .5, 0., \
+      .5, 0., 0., \
+      1., 1., 0.5, \
+      )).reshape((-1,3))
+    >>> centered_normalized(samples)
+    array([[-1.08012345, -1.08012345, -0.40824829],
+           [ 1.08012345, -1.08012345, -0.40824829],
+           [-1.08012345,  1.08012345, -0.40824829],
+           [ 1.08012345,  1.08012345, -0.40824829],
+           [-1.08012345,  0.        , -0.40824829],
+           [ 0.        , -1.08012345, -0.40824829],
+           [ 1.08012345,  1.08012345,  2.44948974]])
+    """
+    scaler = Scaler(with_std=True)
+    scaler.fit(samples)
+    return scaler.transform(samples)
 
 class LaplacianEigenmap(BaseEmbedding):
     """

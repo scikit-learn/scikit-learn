@@ -5,13 +5,11 @@ Tools for computation
 """
 
 __all__ = \
-    ['create_graph', 'create_sym_graph', 'centered_normalized', ]
+    ['create_graph', 'create_sym_graph', ]
 
 import numpy as np
 
 from ...neighbors import Neighbors
-
-from ...preprocessing import Scaler
 
 def create_neighborer(samples, neigh=None, n_neighbors=None,
     neigh_alternate_arguments=None):
@@ -153,29 +151,3 @@ def create_sym_graph(samples, neigh=None, n_neighbors=None,
     return [list(el) for el in graph]
 
 
-def centered_normalized(samples):
-    """
-    Returns a set of samples that are centered and of variance 1
-
-    >>> import numpy
-    >>> from  scikits.learn.manifold.embedding.tools import centered_normalized
-    >>> samples = numpy.array((0., 0., 0., \
-      1., 0., 0., \
-      0., 1., 0., \
-      1., 1., 0., \
-      0., .5, 0., \
-      .5, 0., 0., \
-      1., 1., 0.5, \
-      )).reshape((-1,3))
-    >>> centered_normalized(samples)
-    array([[-1.08012345, -1.08012345, -0.40824829],
-           [ 1.08012345, -1.08012345, -0.40824829],
-           [-1.08012345,  1.08012345, -0.40824829],
-           [ 1.08012345,  1.08012345, -0.40824829],
-           [-1.08012345,  0.        , -0.40824829],
-           [ 0.        , -1.08012345, -0.40824829],
-           [ 1.08012345,  1.08012345,  2.44948974]])
-    """
-    scaler = Scaler(with_std=True)
-    scaler.fit(samples)
-    return scaler.transform(samples)
