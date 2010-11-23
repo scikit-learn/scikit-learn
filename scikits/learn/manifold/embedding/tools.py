@@ -5,7 +5,7 @@ Tools for computation
 """
 
 __all__ = \
-    ['create_graph', 'create_sym_graph', 'centered_normalized', 'dist2hd']
+    ['create_graph', 'create_sym_graph', 'centered_normalized', ]
 
 import numpy as np
 
@@ -179,16 +179,3 @@ def centered_normalized(samples):
     scaler = Scaler(with_std=True)
     scaler.fit(samples)
     return scaler.transform(samples)
-
-
-def dist2hd(x,y):
-    """
-    Generates a distance matrix
-    """
-    d = np.zeros((x.shape[0],y.shape[0]),dtype=x.dtype)
-    for i in xrange(x.shape[1]):
-        diff2 = x[:,i,None] - y[:,i]
-        diff2 **= 2
-        d += diff2
-    np.sqrt(d,d)
-    return d
