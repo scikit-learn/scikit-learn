@@ -23,6 +23,14 @@ def toarray(a):
 def test_scaler():
     """Test scaling of dataset along all axis
     """
+    # First test with 1D data
+    X = np.random.randn(5)
+
+    scaler = Scaler()
+    X_scaled = scaler.fit(X).transform(X, copy=False)
+    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
+    assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+
     X = np.random.randn(4, 5)
 
     scaler = Scaler()

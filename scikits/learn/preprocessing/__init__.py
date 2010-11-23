@@ -20,7 +20,10 @@ def _mean_and_std(X, axis=0, with_std=True):
 
     if with_std:
         std_ = Xr.std(axis=0)
-        std_[std_ == 0.0] = 1.0
+        if isinstance(std_, np.ndarray):
+            std_[std_ == 0.0] = 1.0
+        elif std_ == 0.:
+            std_ = 1.
     else:
         std_ = None
 
