@@ -174,10 +174,14 @@ def swissroll(nb_samples=1000, length=3 * np.pi):
                  number of samples (default is 1000)
     length : float
                  length of the swissroll (default is 3pi)
+    Returns
+    -------
+    X : numpy array of shape (nb_samples, 3) for input samples
+    Y : numpy array of shape (nb_samples) for colors
     """
-    X = nr.uniform(size=(nb_samples, 2)) * length
-    Y = np.empty(shape=(nb_samples, 3))
-    Y[:,0] = X[:,0] * np.cos(X[:,0])
-    Y[:,1] = X[:,0] * np.sin(X[:,0])
-    Y[:,2] = X[:,1]
+    Y = nr.uniform(size=(nb_samples, 2)) * length
+    X = np.empty(shape=(nb_samples, 3))
+    X[:,0] = Y[:,0] * np.cos(Y[:,0])
+    X[:,1] = Y[:,0] * np.sin(Y[:,0])
+    X[:,2] = Y[:,1]
     return X, Y
