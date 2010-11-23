@@ -27,6 +27,7 @@ ax = Axes3D(fig)#fig.gca(projection='3d')
 ax.scatter(Y[:,0], Y[:,1], Y[:,2], c = colors)
 ax.set_title("Original data")
 
+print "Computing LLE embedding"
 from scikits.learn.manifold import LLE
 embedding = LLE(n_coords=2, n_neighbors=8)
 X_r = embedding.fit(X).embedding_
@@ -34,6 +35,7 @@ pl.figure()
 pl.scatter(X_r[:,0], X_r[:,1], c=colors)
 pl.title("LLE reduction")
 
+print "Computing Laplacian Eigenmap embedding"
 from scikits.learn.manifold import LaplacianEigenmap
 embedding = LaplacianEigenmap(n_coords=2, n_neighbors=8)
 X_r = embedding.fit(X).embedding_
@@ -41,6 +43,7 @@ pl.figure()
 pl.scatter(X_r[:,0], X_r[:,1], c=colors)
 pl.title("Laplacian Eigenmap reduction")
 
+print "Computing Diffusion map embedding"
 from scikits.learn.manifold import DiffusionMap
 embedding = DiffusionMap(n_coords=2, n_neighbors=8)
 X_r = embedding.fit(X).embedding_
@@ -48,6 +51,7 @@ pl.figure()
 pl.scatter(X_r[:,0], X_r[:,1], c=colors)
 pl.title("Diffusion map reduction")
 
+print "Computing Hessian Eigenmap embedding"
 from scikits.learn.manifold import HessianMap
 embedding = HessianMap(n_coords=2, n_neighbors=8)
 X_r = embedding.fit(X).embedding_
