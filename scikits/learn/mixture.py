@@ -128,6 +128,20 @@ class GMM(BaseEstimator):
     This class allows for easy evaluation of, sampling from, and
     maximum-likelihood estimation of the parameters of a GMM distribution.
 
+    Initializes parameters such that every mixture component has zero
+    mean and identity covariance.
+
+
+    Parameters
+    ----------
+    n_states : int
+        Number of mixture components.
+    cvtype : string (read-only)
+        String describing the type of covariance parameters to
+        use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+        Defaults to 'diag'.
+
+
     Attributes
     ----------
     cvtype : string (read-only)
@@ -169,8 +183,8 @@ class GMM(BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from scikits.learn.gmm import GMM
-    >>> g = GMM(n_states=2)
+    >>> from scikits.learn import mixture
+    >>> g = mixture.GMM(n_states=2)
 
     >>> # Generate random observations with two modes centered on 0
     >>> # and 10 to use for training.
@@ -209,21 +223,6 @@ class GMM(BaseEstimator):
     """
 
     def __init__(self, n_states=1, cvtype='diag'):
-        """Create a Gaussian mixture model
-
-        Initializes parameters such that every mixture component has
-        zero mean and identity covariance.
-
-        Parameters
-        ----------
-        n_states : int
-            Number of mixture components.
-        cvtype : string (read-only)
-            String describing the type of covariance parameters to
-            use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-            Defaults to 'diag'.
-        """
-
         self._n_states = n_states
         self._cvtype = cvtype
 

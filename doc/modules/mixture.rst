@@ -4,15 +4,16 @@
 Gaussian mixture models
 ===================================================
 
-`scikits.learn.gmm` is a package which enables to create Gaussian
-Mixture Models (diagonal, spherical, tied and full covariance matrices
+`scikits.learn.mixture` is a package which enables to create Mixture
+Models (diagonal, spherical, tied and full covariance matrices
 supported), to sample them, and to estimate them from data using
 Expectation Maximization algorithm.  It can also draw confidence
 ellipsoides for multivariate models, and compute the Bayesian
 Information Criterion to assess the number of clusters in the data.
     
-Gaussian Mixture Models (GMM) are a class of probabilistic models
-describing the data as drawn from a mixture of Gaussian probability
+For the moment, only Gaussian Mixture Models (GMM) are
+implemented. These are a class of probabilistic models describing the
+data as drawn from a mixture of Gaussian probability
 distributions. The challenge that is GMM tackles is to learn the
 parameters of these Gaussians from the data.
 

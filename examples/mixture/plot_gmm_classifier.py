@@ -32,7 +32,7 @@ import numpy as np
 
 from scikits.learn import datasets
 from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.gmm import GMM
+from scikits.learn.mixture import GMM
 
 def make_ellipses(gmm, ax):
     for n, color in enumerate('rgb'):
