@@ -23,7 +23,7 @@ samples = np.array((0., 0., 0.,
 
 def close(neighbor_graph_orig, neighbor_graph_estimated, value):
     for (orig, estimated) in zip(neighbor_graph_orig, neighbor_graph_estimated):
-        assert(len(set(orig).intersection(estimated)) > value)
+        assert(len(set(orig).intersection(estimated)) >= value)
 
 class TestLaplacianEigenmap(TestCase):
     def test_fit(self):
@@ -55,7 +55,7 @@ class TestLaplacianEigenmap(TestCase):
 
 class TestDiffusionMap(TestCase):
     def test_fit(self):
-        diffusion = DiffusionMap(n_coords=2, mapping_kind=None, kernel_width=5)
+        diffusion = DiffusionMap(n_coords=2, mapping_kind=None, kernel_width=1)
         assert(diffusion.fit(samples) == diffusion)
         assert(hasattr(diffusion, 'embedding_'))
         assert(diffusion.embedding_.shape == (7, 2))
