@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # The Swissroll dataset
 from scikits.learn.datasets import samples_generator
-X, Y = samples_generator.swissroll(nb_samples=2000)
+X, Y = samples_generator.swissroll(n_samples=2000)
 
 colors = np.hstack((Y / Y.max(axis=0), np.zeros((len(Y), 1))))
 

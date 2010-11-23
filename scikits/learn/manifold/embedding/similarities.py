@@ -17,6 +17,7 @@ import scipy.sparse
 from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
 import math
 from .tools import create_graph, create_sym_graph
+from ...cluster.spectral import spectral_embedding
 
 class LLE(BaseEmbedding):
     """
@@ -117,7 +118,7 @@ class LLE(BaseEmbedding):
             neigh_alternate_arguments=self.neigh_alternate_arguments)
         return self
 
-def laplacian_maps(samples, n_coords, method, **kwargs):
+def laplacian_maps(samples, n_coords, method, mode=None, **kwargs):
     """
     Computes a Laplacian eigenmap for a manifold
     Parameters:
@@ -148,7 +149,8 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
 
     index = np.argsort(w)[-2:-2-n_coords:-1]
 
-    return np.sqrt(len(samples)) * Di[:,np.newaxis] * vectors[:,index] * math.sqrt(np.sum(D))
+    return np.sqrt(len(samples)) * Di[:,np.newaxis] * vectors[:,index] * \
+        math.sqrt(np.sum(D))
 
 
 def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):

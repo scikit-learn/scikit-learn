@@ -164,23 +164,23 @@ def friedman(nb_samples=100, nb_features=10,noise_std=1):
     Y += noise_std*nr.normal(loc=0,scale=1,size=(nb_samples))
     return X,Y
 
-def swissroll(nb_samples=1000, length=3 * np.pi):
+def swissroll(n_samples=1000, length=3 * np.pi):
     """
     Swissroll sample generator
 
     Parameters
     ----------
-    nb_samples : int
+    n_samples : int
                  number of samples (default is 1000)
     length : float
                  length of the swissroll (default is 3pi)
     Returns
     -------
-    X : numpy array of shape (nb_samples, 3) for input samples
-    Y : numpy array of shape (nb_samples) for colors
+    X : numpy array of shape (n_samples, 3) for input samples
+    Y : numpy array of shape (n_samples) for colors
     """
-    Y = nr.uniform(size=(nb_samples, 2)) * length
-    X = np.empty(shape=(nb_samples, 3))
+    Y = nr.uniform(size=(n_samples, 2)) * length
+    X = np.empty(shape=(n_samples, 3))
     X[:,0] = Y[:,0] * np.cos(Y[:,0])
     X[:,1] = Y[:,0] * np.sin(Y[:,0])
     X[:,2] = Y[:,1]
