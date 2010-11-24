@@ -12,6 +12,8 @@ negative examples click the right button.
 
 If all examples are from the same class, it uses a one-class SVM.
 
+TODO add labels to the panel.
+
 Requirements
 ------------
 
@@ -24,8 +26,6 @@ from __future__ import division
 
 print __doc__
 
-#!/usr/bin/env python
-#
 # Author: Peter Prettenhoer <peter.prettenhofer@gmail.com>
 #
 # License: BSD Style.
@@ -34,7 +34,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
+#from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from matplotlib.contour import ContourSet
 
@@ -53,6 +53,7 @@ class Model(object):
     observable in the observer pattern and notifies the
     registered observers on change event.
     """
+
     def __init__(self):
         self.observers = []
         self.surface = None
@@ -78,9 +79,11 @@ class Controller(object):
         self.model = model
         self.kernel = Tk.IntVar()
         self.surface_type = Tk.IntVar()
+        # Whether or not a model has been fitted
+        self.fitted = False
 
-    def classify(self):
-        print "classifying data"
+    def fit(self):
+        print "fit the model"
         train = np.array(self.model.data)
         X = train[:, :2]
         y = train[:, 2]
@@ -104,6 +107,7 @@ class Controller(object):
         self.model.clf = clf
         self.model.set_surface((X1, X2, Z))
         self.model.surface_type = self.surface_type.get()
+        self.fitted = True
         self.model.changed("surface")
 
     def decision_surface(self, cls):
@@ -117,19 +121,24 @@ class Controller(object):
 
     def clear_data(self):
         self.model.data = []
+        self.fitted = False
         self.model.changed("clear")
 
     def add_example(self, x, y, label):
         self.model.data.append((x, y, label))
         self.model.changed("example_added")
 
+        # update decision surface if already fitted.
+        self.refit()
+
+    def refit(self):
+        """Refit the model if already fitted. """
+        if self.fitted:
+            self.fit()
+
 
 class View(object):
-    """The view of the Model. This class implements the
-    Observer in the observer pattern. It is registered to
-    the Model and will be updated if the change event in
-    the model is triggered.
-    """
+    """Test docstring. """
     def __init__(self, root, controller):
         f = Figure()
         ax = f.add_subplot(111)
@@ -142,8 +151,8 @@ class View(object):
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas.mpl_connect('button_press_event', self.onclick)
-        toolbar = NavigationToolbar2TkAgg(canvas, root)
-        toolbar.update()
+#        toolbar = NavigationToolbar2TkAgg(canvas, root)
+#        toolbar.update()
         self.controllbar = ControllBar(root, controller)
         self.f = f
         self.ax = ax
@@ -166,7 +175,6 @@ class View(object):
                 self.controller.add_example(event.xdata, event.ydata, -1)
 
     def update(self, event, model):
-        #print "update. msg:%s" % event
         if event == "example_added":
             x, y, l = model.data[-1]
             if l == 1:
@@ -230,16 +238,16 @@ class View(object):
             raise ValueError("surface type unknown")
 
 
-class ControllBar:
+class ControllBar(object):
     def __init__(self, root, controller):
         fm = Tk.Frame(root)
         kernel_group = Tk.Frame(fm)
         Tk.Radiobutton(kernel_group, text="Linear", variable=controller.kernel,
-                       value=0).pack(anchor=Tk.W)
+                       value=0, command=controller.refit).pack(anchor=Tk.W)
         Tk.Radiobutton(kernel_group, text="RBF", variable=controller.kernel,
-                       value=1).pack(anchor=Tk.W)
+                       value=1, command=controller.refit).pack(anchor=Tk.W)
         Tk.Radiobutton(kernel_group, text="Poly", variable=controller.kernel,
-                       value=2).pack(anchor=Tk.W)
+                       value=2, command=controller.refit).pack(anchor=Tk.W)
         kernel_group.pack(side=Tk.LEFT)
 
         valbox = Tk.Frame(fm)
@@ -269,25 +277,25 @@ class ControllBar:
         controller.coef0.set("0")
         r = Tk.Frame(valbox)
         Tk.Label(r, text="coef0:", anchor="e", width=7).pack(side=Tk.LEFT)
-        Tk.Entry(r, width=6, textvariable=controller.coef0).pack(
-            side=Tk.LEFT)
+        Tk.Entry(r, width=6, textvariable=controller.coef0).pack(side=Tk.LEFT)
         r.pack()
         valbox.pack(side=Tk.LEFT)
 
         cmap_group = Tk.Frame(fm)
         Tk.Radiobutton(cmap_group, text="Hyperplanes",
-                       variable=controller.surface_type, value=0).pack(
-            anchor=Tk.W)
+                       variable=controller.surface_type, value=0,
+                       command=controller.refit).pack(anchor=Tk.W)
         Tk.Radiobutton(cmap_group, text="Surface",
-                       variable=controller.surface_type, value=1).pack(
-            anchor=Tk.W)
+                       variable=controller.surface_type, value=1,
+                       command=controller.refit).pack(anchor=Tk.W)
 
         cmap_group.pack(side=Tk.LEFT)
 
-        train_button = Tk.Button(fm, text='Train', command=controller.classify)
+        train_button = Tk.Button(fm, text='Fit', width=5,
+                                 command=controller.fit)
         train_button.pack()
         fm.pack(side=Tk.LEFT)
-        Tk.Button(fm, text='Clear',
+        Tk.Button(fm, text='Clear', width=5,
                   command=controller.clear_data).pack(side=Tk.LEFT)
 
 
@@ -295,7 +303,7 @@ def main(argv):
     root = Tk.Tk()
     model = Model()
     controller = Controller(model)
-    root.wm_title("SVM")
+    root.wm_title("Scikit-learn Libsvm GUI")
     view = View(root, controller)
     model.add_observer(view)
     Tk.mainloop()
