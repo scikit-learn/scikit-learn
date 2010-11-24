@@ -38,7 +38,7 @@ X, y = diabetes['data'], diabetes['target']
 gp = GaussianProcess(regr='constant', corr='absolute_exponential',
                      theta0=[1e-4] * 10, thetaL=[1e-12] * 10,
                      thetaU=[1e-2] * 10, nugget=1e-2, optimizer='Welch',
-                     verbose=True)
+                     verbose=False)
 
 # Fit the GP model to the data
 gp.fit(X, y)
@@ -49,11 +49,10 @@ gp.verbose = False
 
 # Estimate the leave-one-out predictions using the cross_val module
 n_jobs = 2 # the distributing capacity available on the machine
-verbose = 1 # the verbosity level of the cross_val_score function
-y_pred = cross_val.cross_val_score(gp, X, y=y, \
-                                   cv=cross_val.LeaveOneOut(y.size), \
-                                   n_jobs=n_jobs, verbose=verbose).ravel() \
-       + y
+y_pred = y + cross_val.cross_val_score(gp, X, y=y,
+                                   cv=cross_val.LeaveOneOut(y.size),
+                                   n_jobs=n_jobs,
+                                ).ravel()
 
 # Compute the empirical explained variance
 Q2 = metrics.explained_variance_score(y, y_pred)
