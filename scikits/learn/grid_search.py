@@ -87,9 +87,14 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
                 test = ind[test]
             X_train = X[train]
             X_test = X[test]
-        y_test = y[test]
+        if y is not None:
+            y_test  = y[test]
+            y_train = y[train]
+        else:
+            y_test  = None
+            y_train = None
 
-        clf.fit(X_train, y[train], **fit_params)
+        clf.fit(X_train, y_train, **fit_params)
 
         if loss_func is not None:
             y_pred = clf.predict(X_test)
@@ -100,7 +105,10 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
         else:
             this_score = clf.score(X_test, y_test)
         if iid:
-            this_n_test_samples = y.shape[0]
+            if y is not None:
+                this_n_test_samples = y.shape[0]
+            else:
+                this_n_test_samples = X.shape[0]
             this_score *= this_n_test_samples
             n_test_samples += this_n_test_samples
         score += this_score
@@ -264,6 +272,8 @@ class GridSearchCV(BaseEstimator):
 
         # Store the computed scores
         grid = iter_grid(self.param_grid)
+        # XXX: the name is too specific, it shouldn't have
+        # 'grid' in it. Also, we should be retrieving/storing variance
         self.grid_points_scores_ = dict((tuple(clf_params.items()), score)
                     for clf_params, (score, _) in zip(grid, out))
 
