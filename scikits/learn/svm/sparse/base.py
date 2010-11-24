@@ -67,7 +67,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.n_support = np.empty(0, dtype=np.int32, order='C')
 
 
-    def fit(self, X, y, class_weight={}):
+    def fit(self, X, y, class_weight={}, sample_weight=[]):
         """
         X is expected to be a sparse matrix. For maximum effiency, use a
         sparse matrix in csr format (scipy.sparse.csr_matrix)
@@ -76,11 +76,13 @@ class SparseBaseLibSVM(BaseLibSVM):
         X = sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         y      = np.asanyarray(y,      dtype=np.float64, order='C')
+        sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
+                                      order='C')
 
         solver_type = self._svm_types.index(self.impl)
         kernel_type = self._kernel_types.index(self.kernel)
 
-        self.weight, self.weight_label = \
+        self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
         if (kernel_type == 2) and (self.gamma == 0):
@@ -89,14 +91,13 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         self.label_, self.probA_, self.probB_ = libsvm_sparse_train (
                  X.shape[1], X.data, X.indices, X.indptr, y,
-                 solver_type, kernel_type, self.degree,
-                 self.gamma, self.coef0, self.eps, self.C,
-                 self._support_data, self._support_indices,
-                 self._support_indptr, self._dual_coef_data,
-                 self.intercept_, self.weight_label, self.weight,
+                 solver_type, kernel_type, self.degree, self.gamma,
+                 self.coef0, self.eps, self.C, self._support_data,
+                 self._support_indices, self._support_indptr,
+                 self._dual_coef_data, self.intercept_,
+                 self.class_weight_label, self.class_weight, sample_weight,
                  self.n_support, self.nu, self.cache_size, self.p,
-                 int(self.shrinking),
-                 int(self.probability))
+                 int(self.shrinking), int(self.probability))
 
         n_class = len(self.label_) - 1
         n_SV = self._support_indptr.size - 1
@@ -150,7 +151,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.dual_coef_.data, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.eps,
-                      self.C, self.weight_label, self.weight, self.nu,
+                      self.C, self.class_weight_label, self.class_weight, self.nu,
                       self.cache_size, self.p, self.shrinking,
                       self.probability, self.n_support, self.label_,
                       self.probA_, self.probB_)
@@ -173,28 +174,29 @@ class SparseBaseLibLinear(BaseLibLinear):
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.int32, order='C')
 
-        self.weight, self.weight_label = \
+        self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
         self.raw_coef_, self.label_ = \
                        _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, y,
                        self._get_solver_type(),
-                       self.eps, self._get_bias(), self.C, self.weight_label,
-                       self.weight)
+                       self.eps, self._get_bias(), self.C, self.class_weight_label,
+                       self.class_weight)
         return self
 
     def predict(self, X):
         X = sparse.csr_matrix(X)
         self._check_n_features(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
-        return _liblinear.csr_predict_wrap(X.shape[1],
-                                      X.data, X.indices, X.indptr,
+
+        return _liblinear.csr_predict_wrap(X.shape[1], X.data,
+                                      X.indices, X.indptr,
                                       self.raw_coef_,
                                       self._get_solver_type(),
                                       self.eps, self.C,
-                                      self.weight_label,
-                                      self.weight, self.label_,
+                                      self.class_weight_label,
+                                      self.class_weight, self.label_,
                                       self._get_bias())
 
 

@@ -86,14 +86,18 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
  * Create and return a svm_problem struct. It is up to the user to free resulting
  * structure.
  */
-struct svm_problem * set_problem(char *X, char *Y, npy_intp *dims, int kernel_type)
+struct svm_problem * set_problem(char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type)
 {
     struct svm_problem *problem;
+    int i;
+
     problem = (struct svm_problem *) malloc(sizeof(struct svm_problem));
     if (problem == NULL) return NULL;
     problem->l = (int) dims[0]; /* number of samples */
     problem->y = (double *) Y;
     problem->x = dense_to_libsvm((double *) X, dims);
+    problem->W = (double *) sample_weight;
+
     if (problem->x == NULL) { 
         free(problem);
         return NULL;

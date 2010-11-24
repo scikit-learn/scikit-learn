@@ -17,7 +17,7 @@ cdef extern from "svm.h":
 cdef extern from "libsvm_sparse_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
     svm_csr_problem * csr_set_problem (char *, np.npy_intp *,
-         char *, np.npy_intp *, char *, char *, int )
+         char *, np.npy_intp *, char *, char *, char *, int )
     svm_csr_model *csr_set_model(svm_parameter *param, int nr_class,
                             char *SV_data, np.npy_intp *SV_indices_dims,
                             char *SV_indices, np.npy_intp *SV_intptr_dims,
@@ -66,6 +66,7 @@ def libsvm_sparse_train ( int n_features,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
                      np.ndarray[np.int32_t,   ndim=1, mode='c'] weight_label,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+                     np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
                      np.ndarray[np.int32_t,   ndim=1, mode='c'] nclass_SV,
                      double nu, double cache_size, double p, int
                      shrinking, int probability):
@@ -97,15 +98,24 @@ def libsvm_sparse_train ( int n_features,
     cdef svm_csr_model *model
     cdef char *error_msg
 
+    if len(sample_weight) == 0:
+        sample_weight = np.ones(values.shape[0], dtype=np.float64)
+    else:
+        assert sample_weight.shape[0] == indptr.shape[0] - 1, \
+               "sample_weight and X have incompatible shapes: " + \
+               "sample_weight has %s samples while X has %s" % \
+               (sample_weight.shape[0], indptr.shape[0] - 1)
+
     # set libsvm problem
     problem = csr_set_problem(values.data, indices.shape, indices.data, 
-                              indptr.shape, indptr.data, Y.data, kernel_type)
+                              indptr.shape, indptr.data, Y.data,
+                              sample_weight.data, kernel_type)
 
     # set parameters
-    param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu, cache_size,
-                          C, eps, p, shrinking, probability,
-                          <int> weight.shape[0], weight_label.data, weight.data)
+    param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
+                          nu, cache_size, C, eps, p, shrinking,
+                          probability, <int> weight.shape[0],
+                          weight_label.data, weight.data)
 
     # check parameters
     if (param == NULL or problem == NULL):

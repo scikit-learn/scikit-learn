@@ -22,6 +22,7 @@ struct svm_problem
 	int l;
 	double *y;
 	struct svm_node *x;
+        double *W; /* instance weights */
 };
 
 
@@ -36,6 +37,7 @@ struct svm_csr_problem
 	int l;
 	double *y;
 	struct svm_csr_node **x;
+        double *W; /* instance weights */
 };
 
 

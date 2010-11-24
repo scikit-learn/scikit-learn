@@ -56,8 +56,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_class-1, n_SV]
-        Coefficients of support vectors in decision function
-        multiplied by the class indicator {-1, +1}.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -149,8 +148,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of support vectors in decision function
-        multiplied by the class indicator {-1, +1}.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -258,7 +256,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Support vectors.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of support vectors in decision function.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -279,7 +277,7 @@ class SVR(BaseLibSVM, RegressorMixin):
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=[]):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -297,7 +295,7 @@ class SVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, y)
+        return BaseLibSVM.fit(self, X, y, sample_weight=sample_weight)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
@@ -356,7 +354,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Support vectors.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of support vectors in decision function.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -446,7 +444,7 @@ class OneClassSVM(BaseLibSVM):
         Support vectors.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficient of support vectors in decision function.
+        Coefficient of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal

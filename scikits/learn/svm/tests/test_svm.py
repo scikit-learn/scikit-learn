@@ -248,6 +248,18 @@ def test_weight():
         assert np.sum(y_pred == y_[180:]) >= 11
 
 
+def test_sample_weights():
+    """
+    Test weights on individual samples
+    """
+    clf = svm.SVC()
+    clf.fit(X, Y)
+    assert_array_equal(clf.predict(X[2]), [1.])
+
+    sample_weight=[.1]*3 + [10]*3
+    clf.fit(X, Y, sample_weight=sample_weight)
+    assert_array_equal(clf.predict(X[2]), [2.])
+
 def test_auto_weight():
     """Test class weights for imbalanced data"""
     # compute reference metrics on iris dataset that is quite balanced by
