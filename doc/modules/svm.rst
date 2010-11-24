@@ -350,11 +350,10 @@ The decision function is:
 
 .. TODO multiclass case ?/
 
-This parameters can be accessed through the members support\_ and intercept\_:
-
-     - Member support\_ holds the product :math:`y^T \alpha`
-
-     - Member intercept\_ of the classifier holds :math:`-\rho`
+This parameters can be accessed through the members `dual_coef\_`
+which holds the product :math:`y_i \alpha_i`, `support_vectors\_` which
+holds the support vectors, and `intercept\_` which holds the independent
+term :math:`-\rho` :
 
 .. topic:: References:
 
