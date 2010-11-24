@@ -2,7 +2,8 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #
 # License: BSD Style.
-"""Implementation of coordinate descent for the Elastic Net with sparse data."""
+"""Implementation of coordinate descent for the Elastic Net with sparse data.
+"""
 
 import warnings
 import numpy as np
@@ -35,34 +36,32 @@ class ElasticNet(LinearModel):
         TODO: fit_intercept=True is not yet implemented
     """
 
-    def __init__(self, alpha=1.0, rho=0.5, coef_=None,
-                fit_intercept=False):
+    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False):
         if fit_intercept:
             raise NotImplementedError("fit_intercept=True is not implemented")
         self.alpha = alpha
         self.rho = rho
         self.fit_intercept = fit_intercept
         self.intercept_ = 0.0
-        self._set_coef(coef_)
+        self._set_coef(None)
 
     def _set_coef(self, coef_):
         self.coef_ = coef_
         if coef_ is None:
             self.sparse_coef_ = None
         else:
-            n_features = len(coef_)
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
-    def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
-        """Fit Elastic Net model with coordinate descent
+    def fit(self, X, y, maxit=1000, tol=1e-4, **params):
+        """Fit current model with coordinate descent
 
         X is expected to be a sparse matrix. For maximum efficiency, use a
-        sparse matrix in csr format (scipy.sparse.csc_matrix)
+        sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
         self._set_params(**params)
         X = sparse.csc_matrix(X)
-        Y = np.asanyarray(Y, dtype=np.float64)
+        y = np.asanyarray(y, dtype=np.float64)
 
         # NOTE: we are explicitly not centering the data the naive way to
         # avoid breaking the sparsity of X
@@ -78,7 +77,7 @@ class ElasticNet(LinearModel):
         # TODO: add support for non centered data
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
-                    self.coef_, alpha, beta, X_data, X.indices, X.indptr, Y,
+                    self.coef_, alpha, beta, X_data, X.indices, X.indptr, y,
                     maxit, tol)
 
         # update self.coef_ and self.sparse_coef_ consistently
@@ -115,7 +114,6 @@ class ElasticNet(LinearModel):
                         + self.intercept_)
 
 
-
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer
 
@@ -134,7 +132,6 @@ class Lasso(ElasticNet):
 
     """
 
-    def __init__(self, alpha=1.0, coef_=None, fit_intercept=False):
-        super(Lasso, self).__init__(alpha=alpha, rho=1.0, coef_=coef_,
+    def __init__(self, alpha=1.0, fit_intercept=False):
+        super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                                     fit_intercept=fit_intercept)
-

@@ -1,6 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Sat Jul 21 09:00 PM 2007 J
-
+#
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 
@@ -8,7 +7,7 @@ descr   = """A set of python modules for machine learning and data mining"""
 
 import os
 
-DISTNAME            = 'scikits.learn' 
+DISTNAME            = 'scikits.learn'
 DESCRIPTION         = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION    = descr
 MAINTAINER          = 'Fabian Pedregosa'
@@ -16,7 +15,7 @@ MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr'
 URL                 = 'http://scikit-learn.sourceforge.net'
 LICENSE             = 'new BSD'
 DOWNLOAD_URL        = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION             = '0.5-git'
+VERSION             = '0.6-git'
 
 import setuptools # we are using a setuptools namespace
 from numpy.distutils.core import setup
@@ -46,7 +45,7 @@ if __name__ == "__main__":
         download_url = DOWNLOAD_URL,
         long_description = LONG_DESCRIPTION,
         zip_safe=False, # the package can run out of an .egg file
-        classifiers = 
+        classifiers =
             ['Intended Audience :: Science/Research',
              'Intended Audience :: Developers',
              'License :: OSI Approved',

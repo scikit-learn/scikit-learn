@@ -1,5 +1,5 @@
 """
-This script compares the performance of the Ball Tree code with 
+This script compares the performance of the Ball Tree code with
 scipy.spatial.cKDTree.
 
 Then run the simple timings script:
@@ -28,7 +28,7 @@ def compare_nbrs(nbrs1,nbrs2):
     elif(nbrs1.ndim == 1):
         N = len(nbrs1)
         return numpy.all(nbrs1 == nbrs2)
-    
+
 
 def test_time(N=1000, D=100, ls=1, k=20):
     M = numpy.random.random([N,D])
@@ -37,7 +37,7 @@ def test_time(N=1000, D=100, ls=1, k=20):
     print "%i neighbors of %i points in %i dimensions:" % (k,N,D)
     print "   (leaf size = %i)" % ls
     print "  -------------"
-    
+
     t0 = time()
     BT = BallTree(M,ls)
     print "  Ball Tree construction     : %.3g sec" % ( time()-t0 )
@@ -45,14 +45,14 @@ def test_time(N=1000, D=100, ls=1, k=20):
     print "  total (construction+query) : %.3g sec" % ( time()-t0 )
     print "  -------------"
 
-    
+
     t0 = time()
     KDT = cKDTree(M,ls)
     print "  KD tree construction       : %.3g sec" % ( time()-t0 )
     d,nbrs2 = KDT.query(M,k)
     print "  total (construction+query) : %.3g sec" % ( time()-t0 )
     print "  -------------"
-   
+
     print "  neighbors match: ",
     print ( compare_nbrs(nbrs1,nbrs2) )
     print "  -------------"
@@ -62,20 +62,20 @@ if __name__ == '__main__':
         N,D = map(int,sys.argv[1:])
         ls = 20
         k = min(20,N)
-        
+
     elif len(sys.argv)==4:
         N,D,ls = map(int,sys.argv[1:])
         k = min(20,N)
 
     elif len(sys.argv)==5:
         N,D,ls,k = map(int,sys.argv[1:])
-        
+
     else:
         print "usage: bench_balltree.py N D [leafsize=20], [k=20]"
         exit()
-    
-    
+
+
     test_time(N,D,ls,k)
-    
-    
-    
+
+
+

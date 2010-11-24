@@ -1,4 +1,4 @@
-""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral 
+""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral
 clustering.
 
 """
@@ -198,7 +198,7 @@ class AffinityPropagation(BaseEstimator):
     Between Data Points", Science Feb. 2007
 
     The algorithmic complexity of affinity propagation is quadratic
-    in the number of points. 
+    in the number of points.
     """
 
     def __init__(self, damping=.5, maxit=200, convit=30, copy=True):

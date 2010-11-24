@@ -3,7 +3,6 @@ from scipy import sparse
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
-from numpy.testing import assert_
 
 from scikits.learn.glm.sparse.coordinate_descent import Lasso as SparseLasso
 from scikits.learn.glm.sparse.coordinate_descent import ElasticNet as SparseENet
@@ -17,9 +16,10 @@ def test_sparse_predict():
     X[0, 0] = 1
     X[0, 1] = 0.5
     X[1, 0] = -1
-    coef_ = np.array([1, -1])
 
-    predicted = SparseENet(coef_=coef_).predict(X)
+    clf = SparseENet()
+    clf._set_coef(np.array([1, -1]))
+    predicted = clf.predict(X)
     np.testing.assert_array_equal([0.5, -1.0, 0.0], predicted)
 
 
@@ -27,8 +27,9 @@ def test_lasso_zero():
     """Check that the sparse lasso can handle zero data without crashing"""
     X = sparse.csc_matrix((3, 1))
     y = [0, 0, 0]
+    T = np.array([[1], [2], [3]])
     clf = SparseLasso().fit(X, y)
-    pred = clf.predict([[1], [2], [3]])
+    pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
     assert_almost_equal(clf.dual_gap_,  0)
@@ -37,9 +38,9 @@ def test_lasso_zero():
 def test_enet_toy_list_input():
     """Test ElasticNet for various parameters of alpha and rho with list X"""
 
-    X = [[-1], [0], [1]]
+    X = np.array([[-1], [0], [1]])
     Y = [-1, 0, 1]       # just a straight line
-    T = [[2], [3], [4]]  # test sample
+    T = np.array([[2], [3], [4]])  # test sample
 
     # this should be the same as unregularized least squares
     clf = SparseENet(alpha=0, rho=1.0)
@@ -134,18 +135,18 @@ def test_sparse_enet_not_as_toy_dataset():
     s_clf = SparseENet(alpha=0.1, rho=0.8, fit_intercept=False)
     s_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert_(s_clf.score(X_test, y_test) > 0.85)
+    assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
     d_clf = DenseENet(alpha=0.1, rho=0.8, fit_intercept=False)
     d_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert_(d_clf.score(X_test, y_test) > 0.85)
+    assert d_clf.score(X_test, y_test) > 0.85
 
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
 
     # check that the coefs are sparse
-    assert_(np.sum(s_clf.coef_ != 0.0) < 2 * n_informative)
+    assert np.sum(s_clf.coef_ != 0.0) < 2 * n_informative
 
 
 def test_sparse_lasso_not_as_toy_dataset():
@@ -160,13 +161,13 @@ def test_sparse_lasso_not_as_toy_dataset():
     s_clf = SparseLasso(alpha=0.1, fit_intercept=False)
     s_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert_(s_clf.score(X_test, y_test) > 0.85)
+    assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
     d_clf = DenseLasso(alpha=0.1, fit_intercept=False)
     d_clf.fit(X_train, y_train, maxit=maxit, tol=1e-7)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert_(d_clf.score(X_test, y_test) > 0.85)
+    assert d_clf.score(X_test, y_test) > 0.85
 
     # check that the coefs are sparse
     assert_equal(np.sum(s_clf.coef_ != 0.0), n_informative)

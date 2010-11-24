@@ -1,19 +1,20 @@
 """
-===============================================================
+=============================================================
 Receiver operating characteristic (ROC) with cross validation
-===============================================================
+=============================================================
 
 Example of Receiver operating characteristic (ROC) metric to
 evaluate the quality of the output of a classifier using
 cross-validation.
 """
+print __doc__
 
 import numpy as np
 from scipy import interp
 import pylab as pl
 
 from scikits.learn import svm, datasets
-from scikits.learn.metrics import roc, auc
+from scikits.learn.metrics import roc_curve, auc
 from scikits.learn.cross_val import StratifiedKFold
 
 ################################################################################
@@ -43,7 +44,7 @@ all_tpr = []
 for i, (train, test) in enumerate(cv):
     probas_ = classifier.fit(X[train], y[train]).predict_proba(X[test])
     # Compute ROC curve and area the curve
-    fpr, tpr, thresholds = roc(y[test], probas_[:,1])
+    fpr, tpr, thresholds = roc_curve(y[test], probas_[:,1])
     mean_tpr += interp(mean_fpr, fpr, tpr)
     mean_tpr[0] = 0.0
     roc_auc = auc(fpr, tpr)
@@ -54,7 +55,7 @@ pl.plot([0, 1], [0, 1], '--', color=(0.6,0.6,0.6), label='Luck')
 mean_tpr /= len(cv)
 mean_tpr[-1] = 1.0
 mean_auc = auc(mean_fpr, mean_tpr)
-pl.plot(mean_fpr, mean_tpr, 'k--', 
+pl.plot(mean_fpr, mean_tpr, 'k--',
         label='Mean ROC (area = %0.2f)' % mean_auc, lw=2)
 
 pl.xlim([-0.05,1.05])

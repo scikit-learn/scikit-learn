@@ -18,7 +18,7 @@ class Nasty(object):
     __str__ = __repr__
 
 ################################################################################
-# Test parallel
+# Test safe_repr 
 
 def test_safe_repr():
     """ Smoke test safe_repr on a nasty class.

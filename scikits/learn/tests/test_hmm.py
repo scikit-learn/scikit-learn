@@ -1,12 +1,13 @@
-from numpy.testing import (assert_array_equal, assert_array_almost_equal,
-                           TestCase)
+
 import numpy as np
+
+from numpy.testing import assert_array_equal, assert_array_almost_equal
+from unittest import TestCase
+from .test_mixture import _generate_random_spd_matrix
 
 from .. import hmm
 
-from .test_gmm import _generate_random_spd_matrix
-
-SKIP_FAILING = True # skip failing tests
+SKIP_FAILING = True  # skip failing tests
 
 
 class SeedRandomNumberGeneratorTestCase(TestCase):
@@ -203,7 +204,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
                           np.zeros((n_states - 2, n_states)))
 
 
-def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs): 
+def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs):
     hmm.fit(obs, n_iter=1, **kwargs)
     loglikelihoods = []
     for n in xrange(n_iter):
@@ -214,30 +215,36 @@ def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs):
 
 class GaussianHMMParams(object):
     n_states = 3
-    n_dim = 3
+    n_features = 3
     startprob = np.random.rand(n_states)
     startprob = startprob / startprob.sum()
     transmat = np.random.rand(n_states, n_states)
     transmat /= np.tile(transmat.sum(axis=1)[:,np.newaxis], (1, n_states))
-    means = np.random.randint(-20, 20, (n_states, n_dim))
-    covars = {'spherical': (1.0 + 2 * np.random.rand(n_states))**2,
-              'tied': _generate_random_spd_matrix(n_dim) + np.eye(n_dim),
-              'diag': (1.0 + 2 * np.random.rand(n_states, n_dim))**2,
-              'full': np.array([_generate_random_spd_matrix(n_dim)
-                                + np.eye(n_dim) for x in xrange(n_states)])}
+    means = np.random.randint(-20, 20, (n_states, n_features))
+    covars = {'spherical': (1.0 + 2 * np.random.rand(n_states)) ** 2,
+              'tied': (_generate_random_spd_matrix(n_features)
+                       + np.eye(n_features)),
+              'diag': (1.0 + 2 * np.random.rand(n_states, n_features)) ** 2,
+              'full': np.array(
+                  [_generate_random_spd_matrix(n_features) + np.eye(n_features)
+                   for x in xrange(n_states)])}
+    expanded_covars = {'spherical': [np.eye(n_features) * cov
+                                     for cov in covars['spherical']],
+                       'diag': [np.diag(cov) for cov in covars['diag']],
+                       'tied': [covars['tied']] * n_states,
+                       'full': covars['full']}
 
 
 class GaussianHMMTester(GaussianHMMParams):
 
     def test_bad_cvtype(self):
-        hmm.GaussianHMM(20, 1, self.cvtype)
-        self.assertRaises(ValueError, hmm.GaussianHMM, 20, 1, 'badcvtype')
+        hmm.GaussianHMM(20, self.cvtype)
+        self.assertRaises(ValueError, hmm.GaussianHMM, 20, 'badcvtype')
 
     def test_attributes(self):
-        h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype)
+        h = hmm.GaussianHMM(self.n_states, self.cvtype)
 
         self.assertEquals(h.n_states, self.n_states)
-        self.assertEquals(h.n_dim, self.n_dim)
         self.assertEquals(h.cvtype, self.cvtype)
 
         h.startprob = self.startprob
@@ -246,7 +253,7 @@ class GaussianHMMTester(GaussianHMMParams):
                           2 * self.startprob)
         self.assertRaises(ValueError, h.__setattr__, 'startprob', [])
         self.assertRaises(ValueError, h.__setattr__, 'startprob',
-                          np.zeros((self.n_states - 2, self.n_dim)))
+                          np.zeros((self.n_states - 2, self.n_features)))
 
         h.transmat = self.transmat
         assert_array_almost_equal(h.transmat, self.transmat)
@@ -258,26 +265,29 @@ class GaussianHMMTester(GaussianHMMParams):
 
         h.means = self.means
         assert_array_almost_equal(h.means, self.means)
+        self.assertEquals(h.n_features, self.n_features)
         self.assertRaises(ValueError, h.__setattr__, 'means', [])
         self.assertRaises(ValueError, h.__setattr__, 'means',
-                          np.zeros((self.n_states - 2, self.n_dim)))
+                          np.zeros((self.n_states - 2, self.n_features)))
 
         h.covars = self.covars[self.cvtype]
-        assert_array_almost_equal(h.covars, self.covars[self.cvtype])
+        assert_array_almost_equal(h.covars, self.expanded_covars[self.cvtype])
         #self.assertRaises(ValueError, h.__setattr__, 'covars', [])
         #self.assertRaises(ValueError, h.__setattr__, 'covars',
-        #                  np.zeros((self.n_states - 2, self.n_dim)))
+        #                  np.zeros((self.n_states - 2, self.n_features)))
 
     def test_eval_and_decode(self):
-        h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype,
-                            means=self.means, covars=self.covars[self.cvtype])
+        h = hmm.GaussianHMM(self.n_states, self.cvtype)
+        h.means = self.means
+        h.covars = self.covars[self.cvtype]
+
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         h.means = 20 * h.means
 
         gaussidx = np.repeat(range(self.n_states), 5)
         nobs = len(gaussidx)
-        obs = np.random.randn(nobs, self.n_dim) + h.means[gaussidx]
+        obs = np.random.randn(nobs, self.n_features) + h.means[gaussidx]
 
         ll, posteriors = h.eval(obs)
 
@@ -288,7 +298,7 @@ class GaussianHMMTester(GaussianHMMParams):
         assert_array_equal(stateseq, gaussidx)
 
     def test_rvs(self, n=1000):
-        h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype)
+        h = hmm.GaussianHMM(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         h.means = 20 * self.means
@@ -296,10 +306,10 @@ class GaussianHMMTester(GaussianHMMParams):
         h.startprob = self.startprob
 
         samples = h.rvs(n)
-        self.assertEquals(samples.shape, (n, self.n_dim))
+        self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_fit(self, params='stmc', n_iter=15, verbose=False, **kwargs):
-        h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype)
+        h = hmm.GaussianHMM(self.n_states, self.cvtype)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
                                    + np.diag(np.random.rand(self.n_states)), 1)
@@ -310,7 +320,7 @@ class GaussianHMMTester(GaussianHMMParams):
         train_obs = [h.rvs(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs, n_iter=0, minit='points')
+        h.fit(train_obs, n_iter=0)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)
@@ -320,37 +330,35 @@ class GaussianHMMTester(GaussianHMMParams):
                    % (self.cvtype, params, trainll, np.diff(trainll)))
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
-
     def test_fit_with_priors(self, params='stmc', n_iter=10,
-                                        verbose=False):
-        startprob_prior=10*self.startprob + 2.0
-        transmat_prior=10*self.transmat + 2.0
-        means_prior=self.means
-        means_weight=2.0
+                             verbose=False):
+        startprob_prior = 10 * self.startprob + 2.0
+        transmat_prior = 10 * self.transmat + 2.0
+        means_prior = self.means
+        means_weight = 2.0
         covars_weight = 2.0
         if self.cvtype in ('full', 'tied'):
-            covars_weight += self.n_dim
-        covars_prior=self.covars[self.cvtype]
+            covars_weight += self.n_features
+        covars_prior = self.covars[self.cvtype]
 
-        h = hmm.GaussianHMM(self.n_states, self.n_dim, self.cvtype,
-                            startprob=self.startprob,
-                            startprob_prior=startprob_prior,
-                            transmat=hmm.normalize(
-                                self.transmat
-                                + np.diag(np.random.rand(self.n_states)), 1),
-                            transmat_prior=transmat_prior,
-                            means=20 * self.means,
-                            means_prior=means_prior,
-                            means_weight=means_weight,
-                            covars=self.covars[self.cvtype],
-                            covars_prior=covars_prior,
-                            covars_weight=covars_weight)
+        h = hmm.GaussianHMM(self.n_states, self.cvtype)
+        h.startprob = self.startprob
+        h.startprob_prior = startprob_prior
+        h.transmat = hmm.normalize(self.transmat
+                                   + np.diag(np.random.rand(self.n_states)), 1)
+        h.transmat_prior = transmat_prior
+        h.means = 20 * self.means
+        h.means_prior = means_prior
+        h.means_weight = means_weight
+        h.covars = self.covars[self.cvtype]
+        h.covars_prior = covars_prior
+        h.covars_weight = covars_weight
 
         # Create training data by sampling from the HMM.
         train_obs = [h.rvs(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs[:1], n_iter=0, minit='points')
+        h.fit(train_obs[:1], n_iter=0)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params)
@@ -388,7 +396,7 @@ class MultinomialHMMParams(object):
     """Using example from http://en.wikipedia.org/wiki/Hidden_Markov_model
     and http://en.wikipedia.org/wiki/Viterbi_algorithm"""
     n_states = 2   # ('Rainy', 'Sunny')
-    nsymbols = 3  # ('walk', 'shop', 'clean')
+    n_symbols = 3  # ('walk', 'shop', 'clean')
     emissionprob = [[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]]
     startprob = [0.6, 0.4]
     transmat = [[0.7, 0.3], [0.4, 0.6]]
@@ -404,20 +412,19 @@ class TestMultinomialHMM(MultinomialHMMParams,
         # 'Rainy'], with probability 0.01344."
         observations = [0,1,2]
 
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
+        h = hmm.MultinomialHMM(self.n_states,
                                startprob=self.startprob,
-                               transmat=self.transmat,
-                               emissionprob=self.emissionprob)
+                               transmat=self.transmat)
+        h.emissionprob = self.emissionprob
         logprob, state_sequence = h.decode(observations)
 
         self.assertAlmostEqual(np.exp(logprob), 0.01344)
         assert_array_equal(state_sequence, [1, 0, 0])
 
     def test_attributes(self):
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols)
+        h = hmm.MultinomialHMM(self.n_states)
 
         self.assertEquals(h.n_states, self.n_states)
-        self.assertEquals(h.nsymbols, self.nsymbols)
 
         h.startprob = self.startprob
         assert_array_almost_equal(h.startprob, self.startprob)
@@ -425,7 +432,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
                           2 * self.startprob)
         self.assertRaises(ValueError, h.__setattr__, 'startprob', [])
         self.assertRaises(ValueError, h.__setattr__, 'startprob',
-                          np.zeros((self.n_states - 2, self.nsymbols)))
+                          np.zeros((self.n_states - 2, self.n_symbols)))
 
         h.transmat = self.transmat
         assert_array_almost_equal(h.transmat, self.transmat)
@@ -439,16 +446,17 @@ class TestMultinomialHMM(MultinomialHMMParams,
         assert_array_almost_equal(h.emissionprob, self.emissionprob)
         self.assertRaises(ValueError, h.__setattr__, 'emissionprob', [])
         self.assertRaises(ValueError, h.__setattr__, 'emissionprob',
-                          np.zeros((self.n_states - 2, self.nsymbols)))
+                          np.zeros((self.n_states - 2, self.n_symbols)))
+        self.assertEquals(h.n_symbols, self.n_symbols)
 
     def test_eval(self):
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
+        h = hmm.MultinomialHMM(self.n_states,
                                startprob=self.startprob,
-                               transmat=self.transmat,
-                               emissionprob=self.emissionprob)
+                               transmat=self.transmat)
+        h.emissionprob = self.emissionprob
         idx = np.repeat(range(self.n_states), 10)
         nobs = len(idx)
-        obs = [int(x) for x in np.floor(np.random.rand(nobs) * self.nsymbols)]
+        obs = [int(x) for x in np.floor(np.random.rand(nobs) * self.n_symbols)]
 
         ll, posteriors = h.eval(obs)
 
@@ -456,19 +464,19 @@ class TestMultinomialHMM(MultinomialHMMParams,
         assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
 
     def test_rvs(self, n=1000):
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
+        h = hmm.MultinomialHMM(self.n_states,
                                startprob=self.startprob,
-                               transmat=self.transmat,
-                               emissionprob=self.emissionprob)
+                               transmat=self.transmat)
+        h.emissionprob = self.emissionprob
         samples = h.rvs(n)
         self.assertEquals(len(samples), n)
-        self.assertEquals(len(np.unique(samples)), self.nsymbols)
+        self.assertEquals(len(np.unique(samples)), self.n_symbols)
 
     def test_fit(self, params='ste', n_iter=15, verbose=False, **kwargs):
-        h = hmm.MultinomialHMM(self.n_states, self.nsymbols,
+        h = hmm.MultinomialHMM(self.n_states,
                                startprob=self.startprob,
-                               transmat=self.transmat,
-                               emissionprob=self.emissionprob)
+                               transmat=self.transmat)
+        h.emissionprob = self.emissionprob
 
         # Create training data by sampling from the HMM.
         train_obs = [h.rvs(n=10) for x in xrange(10)]
@@ -478,7 +486,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
         h.transmat = hmm.normalize(np.random.rand(self.n_states,
                                                   self.n_states), axis=1)
         h.emissionprob = hmm.normalize(
-            np.random.rand(self.n_states, self.nsymbols), axis=1)
+            np.random.rand(self.n_states, self.n_symbols), axis=1)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)
@@ -495,7 +503,7 @@ class TestMultinomialHMM(MultinomialHMMParams,
 class GMMHMMParams(object):
     n_states = 3
     n_mix = 2
-    n_dim = 2
+    n_features = 2
     cvtype = 'diag'
     startprob = np.random.rand(n_states)
     startprob = startprob / startprob.sum()
@@ -503,21 +511,24 @@ class GMMHMMParams(object):
     transmat /= np.tile(transmat.sum(axis=1)[:,np.newaxis], (1, n_states))
 
     @staticmethod
-    def create_random_gmm(n_mix, n_dim, cvtype):
-        from scikits.learn import gmm
+    def create_random_gmm(n_mix, n_features, cvtype):
+        from scikits.learn import mixture
 
-        means = np.random.randint(-20, 20, (n_mix, n_dim))
+        g = mixture.GMM(n_mix, cvtype=cvtype)
+        g.means = np.random.randint(-20, 20, (n_mix, n_features))
         mincv = 0.1
-        covars = {'spherical': (mincv + mincv * np.random.rand(n_mix))**2,
-                  'tied': _generate_random_spd_matrix(n_dim)
-                          + mincv * np.eye(n_dim),
-                  'diag': (mincv + mincv * np.random.rand(n_mix, n_dim))**2,
-                  'full': np.array([_generate_random_spd_matrix(n_dim)
-                                    + mincv * np.eye(n_dim)
-                                    for x in xrange(n_mix)])}[cvtype]
-        weights = hmm.normalize(np.random.rand(n_mix))
-        return gmm.GMM(n_mix, n_dim, cvtype=cvtype, weights=weights,
-                       means=means, covars=covars)
+        g.covars = {'spherical': (mincv
+                                  + mincv * np.random.rand(n_mix)) ** 2,
+                    'tied': _generate_random_spd_matrix(n_features)
+                           + mincv * np.eye(n_features),
+                    'diag': (mincv
+                             + mincv * np.random.rand(n_mix, n_features)) ** 2,
+                    'full': np.array([_generate_random_spd_matrix(n_features)
+                                      + mincv * np.eye(n_features)
+                                      for x in xrange(n_mix)])}[cvtype]
+        g.weights = hmm.normalize(np.random.rand(n_mix))
+
+        return g
 
 
 class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
@@ -526,14 +537,13 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         np.random.seed(self.seed)
         self.gmms = []
         for state in xrange(self.n_states):
-            self.gmms.append(self.create_random_gmm(self.n_mix, self.n_dim,
-                                                    self.cvtype))
+            self.gmms.append(self.create_random_gmm(
+                self.n_mix, self.n_features, self.cvtype))
 
     def test_attributes(self):
-        h = hmm.GMMHMM(self.n_states, self.n_dim, cvtype=self.cvtype)
+        h = hmm.GMMHMM(self.n_states, cvtype=self.cvtype)
 
         self.assertEquals(h.n_states, self.n_states)
-        self.assertEquals(h.n_dim, self.n_dim)
 
         h.startprob = self.startprob
         assert_array_almost_equal(h.startprob, self.startprob)
@@ -541,7 +551,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
                           2 * self.startprob)
         self.assertRaises(ValueError, h.__setattr__, 'startprob', [])
         self.assertRaises(ValueError, h.__setattr__, 'startprob',
-                          np.zeros((self.n_states - 2, self.n_dim)))
+                          np.zeros((self.n_states - 2, self.n_features)))
 
         h.transmat = self.transmat
         assert_array_almost_equal(h.transmat, self.transmat)
@@ -552,7 +562,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
                           np.zeros((self.n_states - 2, self.n_states)))
 
     def test_eval_and_decode(self):
-        h = hmm.GMMHMM(self.n_states, self.n_dim, gmms=self.gmms)
+        h = hmm.GMMHMM(self.n_states, gmms=self.gmms)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         for g in h.gmms:
@@ -571,14 +581,14 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         assert_array_equal(stateseq, refstateseq)
 
     def test_rvs(self, n=1000):
-        h = hmm.GMMHMM(self.n_states, self.n_dim, self.cvtype,
+        h = hmm.GMMHMM(self.n_states, self.cvtype,
                        startprob=self.startprob, transmat=self.transmat,
                        gmms=self.gmms)
         samples = h.rvs(n)
-        self.assertEquals(samples.shape, (n, self.n_dim))
+        self.assertEquals(samples.shape, (n, self.n_features))
 
-    def test_fit(self, params='stmwc', n_iter=5, verbose=False, **kwargs):
-        h = hmm.GMMHMM(self.n_states, self.n_dim)
+    def test_fit(self, params='stmwc', n_iter=5, verbose=True, **kwargs):
+        h = hmm.GMMHMM(self.n_states)
         h.startprob = self.startprob
         h.transmat = hmm.normalize(self.transmat
                                    + np.diag(np.random.rand(self.n_states)), 1)
@@ -588,13 +598,14 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         train_obs = [h.rvs(n=10) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs, n_iter=0, minit='points')
+        h.fit(train_obs, n_iter=0)
         h.transmat = hmm.normalize(np.random.rand(self.n_states,
                                                   self.n_states), axis=1)
         h.startprob = hmm.normalize(np.random.rand(self.n_states))
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
-            h, train_obs, n_iter=n_iter, params=params, **kwargs)
+            h, train_obs, n_iter=n_iter, params=params,
+            covars_prior=1.0, **kwargs)
         if not np.all(np.diff(trainll) > 0) and verbose:
             print
             print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,

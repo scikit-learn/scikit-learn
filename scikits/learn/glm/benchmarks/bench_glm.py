@@ -14,13 +14,13 @@ if __name__ == '__main__':
 
     import pylab as pl
 
-    n_iter = 20
+    n_iter = 40
 
     time_ridge   = np.empty (n_iter)
     time_ols     = np.empty (n_iter)
     time_lasso   = np.empty (n_iter)
 
-    dimensions = 10 * np.arange(n_iter)
+    dimensions = 500 * np.arange(1, n_iter+1)
 
     for i in range(n_iter):
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
         n, m = 10*i + 3, 10*i + 3
 
-        X = np.random.randn (n, m) 
+        X = np.random.randn (n, m)
         Y = np.random.randn (n)
 
         start = datetime.now()
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         lasso.fit (X, Y)
         time_lasso[i] = total_seconds(datetime.now() - start)
 
-        
+
 
     pl.xlabel ('Dimesions')
     pl.ylabel ('Time (in seconds)')

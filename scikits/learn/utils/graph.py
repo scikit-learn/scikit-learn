@@ -1,11 +1,11 @@
 """
 Graph utilities and algorithms
 
-Graphs are represented with their adjacency matrices, preferably using 
+Graphs are represented with their adjacency matrices, preferably using
 sparse matrices.
 """
 
-# Authors: Aric Hagberg <hagberg@lanl.gov> 
+# Authors: Aric Hagberg <hagberg@lanl.gov>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD
 
@@ -55,12 +55,12 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
         this_level = next_level  # advance to next level
         next_level = set()       # and start a new list (fringe)
         for v in this_level:
-            if v not in seen: 
+            if v not in seen:
                 seen[v] = level # set the level of vertex v
                 neighbors = np.array(graph.rows[v])
                 # Restrict to the upper triangle
                 neighbors = neighbors[neighbors > v]
-                next_level.update(neighbors) 
+                next_level.update(neighbors)
         if cutoff is not None and cutoff <= level:
             break
         level += 1
@@ -78,7 +78,7 @@ else:
 def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
     n_nodes = graph.shape[0]
     if not graph.format == 'coo':
-        lap = -graph.tocoo()
+        lap = (-graph).tocoo()
     else:
         lap = -graph.copy()
     diag_mask = (lap.row == lap.col)
@@ -86,7 +86,13 @@ def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
         # The sparsity pattern of the matrix has holes on the diagonal,
         # we need to fix that
         diag_idx = lap.row[diag_mask]
-        lap = lap.tolil()
+
+        try:
+            lap = lap.tolil()
+        except AttributeError:
+            # versions of scipy prior to 0.7 do not implement .tolil()
+            lap = sparse.lil_matrix(lap.tocsr())
+
         diagonal_holes = list(set(range(n_nodes)).difference(
                                 diag_idx))
         lap[diagonal_holes, diagonal_holes] = 1
@@ -125,7 +131,7 @@ def _graph_laplacian_dense(graph, normed=False, return_diag=False):
     if return_diag:
         return lap, w
     return lap
-    
+
 
 def graph_laplacian(graph, normed=False, return_diag=False):
     """ Return the Laplacian of the given graph.
@@ -140,4 +146,4 @@ def graph_laplacian(graph, normed=False, return_diag=False):
         # We have a numpy array
         return _graph_laplacian_dense(graph, normed=normed,
                                        return_diag=return_diag)
- 
+

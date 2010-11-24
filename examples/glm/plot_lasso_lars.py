@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 """
-=================================
-Lasso with Least Angle Regression
-=================================
+=====================
+Lasso path using LARS
+=====================
+
+Computes Lasso Path along the regularization parameter using the LARS
+algorithm on the diabetest dataset.
 
 """
+print __doc__
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-from datetime import datetime
-import itertools
 import numpy as np
 import pylab as pl
 
@@ -21,46 +23,18 @@ from scikits.learn import datasets
 diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
-# someting's wrong with our dataset
-X[:, 6] = -X[:, 6]
 
+X[:,6] *= -1 # To reproduce wikipedia LASSO page
 
-m, n = 200, 200
-np.random.seed(0)
-X = np.random.randn(m, n)
-y = np.random.randn(m)
-
-
-_xmean = X.mean(0)
-_ymean = y.mean(0)
-X = X - _xmean
-y = y - _ymean
-_norms = np.apply_along_axis (np.linalg.norm, 0, X)
-nonzeros = np.flatnonzero(_norms)
-X[:, nonzeros] /= _norms[nonzeros]
-
-################################################################################
-# Demo path functions
-################################################################################
-
-G = np.dot(X.T, X)
 print "Computing regularization path using the LARS ..."
-start = datetime.now()
-alphas, active, path = glm.lars_path(X, y, Gram=G, method='lasso')
-print "This took ", datetime.now() - start
+_, _, coefs_ = glm.lars_path(X, y, method='lasso', verbose=True)
 
-alphas = np.sum(np.abs(path.T), axis=1)
-alphas /= alphas[-1]
-
-# # Display results
-color_iter = itertools.cycle(['r', 'g', 'b', 'c'])
-
-for coef_, color in zip(path, color_iter):
-    pl.plot(alphas, coef_.T, color)
-
+xx = np.sum(np.abs(coefs_.T), axis=1)
+xx /= xx[-1]
+pl.plot(xx, coefs_.T)
 ymin, ymax = pl.ylim()
-pl.vlines(alphas, ymin, ymax, linestyle='dashed')
-pl.xlabel('-Log(lambda)') # XXX : wrong label
+pl.vlines(xx, ymin, ymax, linestyle='dashed')
+pl.xlabel('|coef| / max|coef|')
 pl.ylabel('Coefficients')
 pl.title('LASSO Path')
 pl.axis('tight')

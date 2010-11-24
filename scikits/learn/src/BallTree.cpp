@@ -530,16 +530,11 @@ static PyMethodDef BallTree_methods[] = {
      "                                                     \n"
      " Returns                                             \n"
      " -------                                             \n"
-     " i : if count_only is False:                         \n"
-     "       array of integer-arrays - shape: x.shape[:-1] \n"
-     "        each entry gives the list of neighbors of    \n"
-     "        the corresponding point                      \n"
-     "          (note that neighbors are not sorted)       \n"
-     "                                                     \n"
-     "     if count_only is True:                          \n"
-     "       array of integers - shape: x.shape[:-1]       \n"
-     "        each entry gives the number of neighbors     \n"
-     "        of the corresponding point                   \n"
+     " i : array of integers, shape: x.shape[:-1]          \n"
+     "     if count_only is False each entry gives the     \n"
+     "     list of neighbors of the corresponding point    \n"
+     "     (note that neighbors are not sorted). Otherwise \n"
+     "     return only the number of neighbors.            \n"
     },
     {NULL}  /* Sentinel */
 };

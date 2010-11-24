@@ -4,7 +4,7 @@
 
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_almost_equal, assert_
+from numpy.testing import assert_array_almost_equal, assert_almost_equal
 
 from ..coordinate_descent import Lasso, LassoCV, ElasticNet, ElasticNetCV
 
@@ -113,7 +113,7 @@ def test_lasso_path():
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
-    assert_(clf.score(X_test, y_test) > 0.85)
+    assert clf.score(X_test, y_test) > 0.85
 
 def test_enet_path():
 
@@ -133,5 +133,5 @@ def test_enet_path():
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
-    assert_(clf.score(X_test, y_test) > 0.85)
+    assert clf.score(X_test, y_test) > 0.85
 

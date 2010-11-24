@@ -18,7 +18,7 @@ a result it can identify only the first class.
 import pylab as pl
 import numpy as np
 
-from scikits.learn.logistic import LogisticRegression
+from scikits.learn.glm import LogisticRegression
 from scikits.learn.svm import SVC
 from scikits.learn import datasets
 
@@ -62,12 +62,12 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
         pl.title("Class %d" % k)
         if k == 0:
             pl.ylabel(name)
-        imshow_handle = pl.imshow(probas[:, k].reshape((100, 100)), 
+        imshow_handle = pl.imshow(probas[:, k].reshape((100, 100)),
                                   extent=(3, 9, 1, 5), origin='lower')
         pl.xticks(())
         pl.yticks(())
         idx = (y_pred == k)
-        if idx.any(): 
+        if idx.any():
             pl.scatter(X[idx, 0], X[idx, 1], marker='o', c='k')
 
 ax = pl.axes([0.15, 0.04, 0.7, 0.05])

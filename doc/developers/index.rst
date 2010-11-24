@@ -5,8 +5,6 @@ Contributing
 This project is a community effort, and everyone is welcomed to
 contribute.
 
-.. contents:: This page
-    :local:
 
 Submitting a bug report 
 =========================
@@ -19,8 +17,8 @@ You are also welcomed to post there feature requests and patches.
 
 .. _git_repo:
 
-Retriving the latest code
-===========================
+Retrieving the latest code
+==========================
 
 You can check the latest sources with the command::
 
@@ -32,11 +30,6 @@ or if you have write privileges::
 
 You can also check out the sources online in the web page
 http://github.com/scikit-learn/scikit-learn 
-
-If you have contributed some code and would like to have write
-privileges in subversion repository, please contact me (Fabian
-Pedregosa <fabian.pedregosa@inria.fr>) and We'll give you write
-privileges.
 
 If you run the development version, it is cumbersome to re-install the
 package each time you update the sources. It is thus preferred that
@@ -192,13 +185,13 @@ multiple interfaces):
 
     The base object, implements::
 
-	obj.fit(data)
+	estimator = obj.fit(data)
 
 :Predictor:
 
     For suppervised learning, or some unsupervised problems, implements::
 
-	target = obj.predict(data)
+	prediction = obj.predict(data)
 
 :Transformer:
 
@@ -206,6 +199,11 @@ multiple interfaces):
     way, implements::
 
 	new_data = obj.transform(data)
+
+    When fitting and transforming can be performed much more efficiently 
+    together than separately, implements::
+
+    new_data = obj.fit_transform(data)
 
 :Model:
 

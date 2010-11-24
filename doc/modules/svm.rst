@@ -5,8 +5,9 @@ Support Vector Machines
 .. currentmodule:: scikits.learn.svm
 
 **Support vector machines (SVMs)** are a set of supervised learning
-methods used for classification_, regression_
-and :ref:`outliers detection <svm_outlier_detection>`.
+methods used for :ref:`classification <svm_classification>`,
+:ref:`regression <svm_regression>` and :ref:`outliers detection
+<svm_outlier_detection>`.
 
 The advantages of Support Vector Machines are:
 
@@ -19,10 +20,10 @@ The advantages of Support Vector Machines are:
       support vectors), so it is also memory efficient.
 
     - Versatile: different :ref:`svm_kernels` can be
-      specified for the decission function. Common kernels are
+      specified for the decision function. Common kernels are
       provided, but it is also possible to specify custom kernels.
 
-The dissadvantages of Support Vector Machines include:
+The disadvantages of Support Vector Machines include:
 
     - If the number of features is much greater than the number of
       samples, the method is likely to give poor performances.
@@ -34,11 +35,15 @@ The dissadvantages of Support Vector Machines include:
       information.
 
 
+.. _svm_classification:
+
 Classification
 ==============
 
 Suppose some given data points each belonging to one of N classes, and
-the goal is to decide which class a new data point will be in. The
+the goal is to decide which class a new data point will be in. This
+problem is called classification, and can be solved with SVMs using
+*Support Vector Classifiers*, SVC. The
 classes that perform this task are :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC`.
 
@@ -66,15 +71,13 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> X = [[0., 0.], [1., 1.]]
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
-    >>> clf.fit (X, Y)
+    >>> clf.fit(X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
-      cache_size=100.0,
-      shrinking=True,
-      gamma=0.5)
+      cache_size=100.0, shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> clf.predict ([[2., 2.]])
+    >>> clf.predict([[2., 2.]])
     array([ 1.])
 
 SVMs perform classification as a function of some subset of the
@@ -82,8 +85,7 @@ training data, called the support vectors. These vectors can be
 accessed in member `support_`:
 
     >>> clf.support_
-    array([[ 0.,  0.],
-           [ 1.,  1.]])
+    array([0, 1], dtype=int32)
 
 Member `n_support_` holds the number of support vectors for each class:
 
@@ -97,6 +99,8 @@ Member `n_support_` holds the number of support vectors for each class:
  * :ref:`example_svm_plot_separating_hyperplane.py`,
  * :ref:`example_svm_plot_svm_anova.py`,
  * :ref:`example_svm_plot_svm_nonlinear.py`
+
+.. _svm_regression:
 
 Regression
 ==========
@@ -112,7 +116,7 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are two flavours of Support Vector Regression: :class:`SVR` and
+There are two flavors of Support Vector Regression: :class:`SVR` and
 :class:`NuSVR`.
 
 As with classification classes, the fit method will take as
@@ -150,7 +154,8 @@ will only take as input an array X, as there are no class labels.
  * :ref:`example_svm_plot_oneclass.py`
 
 
-.. currentmodule:: scikits.learn.sparse.svm
+.. currentmodule:: scikits.learn.svm.sparse
+
 
 Support Vector machines for sparse data
 =======================================
@@ -165,8 +170,29 @@ For maximum efficiency, use the CSR matrix format as defined in
 `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
-See the complete listing of classes in
-:ref:`sparse_svm_class_reference`.
+Implemented classes are :class:`SVC`, :class:`NuSVC`,
+:class:`SVR`, :class:`NuSVR`, :class:`OneClassSVM`,
+:class:`LinearSVC`.
+
+
+Complexity
+==========
+
+Support Vector Machines are powerful tools, but their compute and
+storage requirements increase rapidly with the number of training
+vectors. The core of an SVM is a quadratic programming problem (QP),
+separating support vectors from the rest of the training data. The QP
+solver used by this `libsvm`_-based implementation scales between
+:math:`O(n_{features} \times n_{samples}^2)` and
+:math:`O(n_{features} \times n_{samples}^3)` depending on how efficiently
+the `libsvm`_ cache is used in practice (dataset dependent). If the data
+is very sparse :math:`n_{features}` should be replaced by the average number
+of non-zero features in a sample vector.
+
+Also note that for the linear case, the algorithm used in
+:class:`LinearSVC` by the `liblinear`_ implementation is much more
+efficient than its `libsvm`_-based :class:`SVC` counterpart and can
+scale almost linearly to millions of samples and/or features.
 
 
 Tips on Practical Use
@@ -174,7 +200,7 @@ Tips on Practical Use
 
   * Support Vector Machine algorithms are not scale invariant, so it
     is highly recommended to scale your data. For example, scale each
-    attribute on the input vector X to [0,1] or [-1,+1], or standarize
+    attribute on the input vector X to [0,1] or [-1,+1], or standardize
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
     results. See `The CookBook
@@ -187,7 +213,7 @@ Tips on Practical Use
   * If data for classification are unbalanced (e.g. many positive and
     few negative), try different penalty parameters C.
 
-  * Specify larger cache size (keyworkd cache) for huge problems.
+  * Specify larger cache size (keyword cache) for huge problems.
 
 
 .. _svm_kernels:
@@ -195,7 +221,7 @@ Tips on Practical Use
 Kernel functions
 ================
 
-The *kernel function* can be any of the following: 
+The *kernel function* can be any of the following:
 
   * linear: :math:`<x_i, x_j'>`.
 
@@ -207,12 +233,12 @@ The *kernel function* can be any of the following:
 
   * sigmoid (:math:`tanh(<x_i,x_j> + r)`).
 
-Different kernels are specified by keword kernel at initialization::
+Different kernels are specified by keyword kernel at initialization::
 
     >>> linear_svc = svm.SVC(kernel='linear')
     >>> linear_svc.kernel
     'linear'
-    >>> rbf_svc = svm.SVC (kernel='rbf')
+    >>> rbf_svc = svm.SVC(kernel='rbf')
     >>> rbf_svc.kernel
     'rbf'
 
@@ -250,7 +276,7 @@ instance that will use that kernel::
     >>> from scikits.learn import svm
     >>> def my_kernel(x, y):
     ...     return np.dot(x, y.T)
-    ... 
+    ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
 Passing the gram matrix
@@ -262,20 +288,19 @@ fit method.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_custom_kernel.py`. 
+ * :ref:`example_svm_plot_custom_kernel.py`.
 
 
 .. _svm_mathematical_formulation:
 
-
 Mathematical formulation
 ========================
 
-A support vector machine constructs a hyperplane or set of hyperplanes
+A support vector machine constructs a hyper-plane or set of hyper-planes
 in a high or infinite dimensional space, which can be used for
 classification, regression or other tasks. Intuitively, a good
-separation is achieved by the hyperplane that has the largest distance
-to the nearest training datapoints of any class (so-called functional
+separation is achieved by the hyper-plane that has the largest distance
+to the nearest training data points of any class (so-called functional
 margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
@@ -296,7 +321,7 @@ classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
 
     \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
 
-    
+
 
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
     & \zeta_i \geq 0, i=1, ..., l
@@ -313,7 +338,7 @@ Its dual is
 
 where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
 is an l by l positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
-x_j)` and :math:`\phi (x_i)^T \ phi (x)` is the kernel. Here training
+x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
 vectors are mapped into a higher (maybe infinite) dimensional space by
 the function :math:`\phi`
 
@@ -333,20 +358,22 @@ This parameters can be accessed through the members support\_ and intercept\_:
 
 .. topic:: References:
 
- * *"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"*
-   I Guyon, B Boser, V Vapnik - Advances in neural information processing
-   1993,
-   http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215
-   
- * *"Support-vector networks"* C. Cortes, V. Vapnik, 
-   Machine Leaming, 20, 273-297 (1995)
-   http://www.springerlink.com/content/k238jx04hm87j80g/
+ * `"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
+   I Guyon, B Boser, V Vapnik - Advances in neural information
+   processing 1993,
+
+
+ * `"Support-vector networks"
+   <http://www.springerlink.com/content/k238jx04hm87j80g/>`_
+   C. Cortes, V. Vapnik, Machine Leaming, 20, 273-297 (1995)
+
 
 
 NuSVC
 -----
 
-We introduce a new parameter :math:`\nu` wich controls the number of
+We introduce a new parameter :math:`\nu` which controls the number of
 support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
@@ -361,12 +388,15 @@ Frequently Asked Questions
        A: The underlying C implementation does not provide this
        information.
 
+
 Implementation details
 ======================
 
-Internally, we use `libsvm
-<http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`_ to handle all
-computations. Libsvm is wrapped using C and Cython.
+Internally, we use `libsvm`_ and `liblinear`_ to handle all
+computations. These libraries are wrapped using C and Cython.
+
+.. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 

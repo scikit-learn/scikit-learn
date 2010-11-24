@@ -5,14 +5,14 @@ Logistic Regression
 
 with l1 and l2 penalty
 """
+print __doc__
+
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-# $Id$
-
 import numpy as np
 
-from scikits.learn.logistic import LogisticRegression
+from scikits.learn.glm import LogisticRegression
 from scikits.learn import datasets
 
 iris = datasets.load_iris()

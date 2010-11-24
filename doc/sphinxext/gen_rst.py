@@ -16,7 +16,7 @@ fileList = []
 import matplotlib
 matplotlib.use('Agg')
 
-import token, tokenize      
+import token, tokenize
 
 rst_template = """
 
@@ -59,14 +59,14 @@ def extract_docstring(filename):
     first_par = ''
     tokens = tokenize.generate_tokens(lines.__iter__().next)
     for tok_type, tok_content, _, (erow, _), _ in tokens:
-        tok_type = token.tok_name[tok_type]    
+        tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
             continue
         elif tok_type == 'STRING':
             docstring = eval(tok_content)
             # If the docstring is formatted with several paragraphs, extract
             # the first one:
-            paragraphs = '\n'.join(line.rstrip() 
+            paragraphs = '\n'.join(line.rstrip()
                                 for line in docstring.split('\n')).split('\n\n')
             if len(paragraphs) > 0:
                 first_par = paragraphs[0]
@@ -77,9 +77,13 @@ def extract_docstring(filename):
 def generate_example_rst(app):
     """ Generate the list of examples, as well as the contents of
         examples.
-    """ 
+    """
     root_dir = os.path.join(app.builder.srcdir, 'auto_examples')
     example_dir = os.path.abspath(app.builder.srcdir +  '/../' + 'examples')
+    try:
+        plot_gallery = eval(app.builder.config.plot_gallery)
+    except TypeError:
+        plot_gallery = bool(app.builder.config.plot_gallery)
     if not os.path.exists(example_dir):
         os.makedirs(example_dir)
     if not os.path.exists(root_dir):
@@ -99,22 +103,22 @@ Examples
 """)
     # Here we don't use an os.walk, but we recurse only twice: flat is
     # better than nested.
-    generate_dir_rst('.', fhindex, example_dir, root_dir)
+    generate_dir_rst('.', fhindex, example_dir, root_dir, plot_gallery)
     for dir in sorted(os.listdir(example_dir)):
         if dir == '.svn':
             continue
         if os.path.isdir(os.path.join(example_dir, dir)):
-            generate_dir_rst(dir, fhindex, example_dir, root_dir)
+            generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery)
     fhindex.flush()
 
 
-def generate_dir_rst(dir, fhindex, example_dir, root_dir):
+def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     """ Generate the rst file for an example directory.
     """
     target_dir = os.path.join(root_dir, dir)
     src_dir = os.path.join(example_dir, dir)
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
-        raise IOError('Example directory %s does not have a README.txt file' 
+        raise IOError('Example directory %s does not have a README.txt file'
                         % src_dir)
     fhindex.write("""
 
@@ -126,12 +130,12 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
     for fname in sorted(os.listdir(src_dir)):
-        if fname.endswith('py'): 
-            generate_file_rst(fname, target_dir, src_dir)
+        if fname.endswith('py'):
+            generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             fhindex.write('    %s\n' % (os.path.join(dir, fname[:-3])))
 
 
-def generate_file_rst(fname, target_dir, src_dir):
+def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     """ Generate the rst file for a given example.
     """
     image_name = fname[:-2] + 'png'
@@ -145,7 +149,7 @@ def generate_file_rst(fname, target_dir, src_dir):
     src_file = os.path.join(src_dir, fname)
     example_file = os.path.join(target_dir, fname)
     shutil.copyfile(src_file, example_file)
-    if fname.startswith('plot'):
+    if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
         # existing image.
@@ -154,7 +158,7 @@ def generate_file_rst(fname, target_dir, src_dir):
             os.makedirs(os.path.join(target_dir, 'images'))
         image_file = os.path.join(target_dir, 'images', image_name)
         if (not os.path.exists(image_file) or
-                os.stat(image_file).st_mtime <= 
+                os.stat(image_file).st_mtime <=
                     os.stat(src_file).st_mtime):
             print 'plotting %s' % fname
             import matplotlib.pyplot as plt
@@ -178,4 +182,4 @@ def generate_file_rst(fname, target_dir, src_dir):
 
 def setup(app):
     app.connect('builder-inited', generate_example_rst)
-
+    app.add_config_value('plot_gallery', True, 'html')

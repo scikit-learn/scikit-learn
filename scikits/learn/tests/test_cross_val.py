@@ -10,7 +10,7 @@ from .. import cross_val
 
 class MockClassifier(BaseEstimator):
     """Dummy classifier to test the cross-validation
-    
+
     """
     def __init__(self, a=0):
         self.a = a

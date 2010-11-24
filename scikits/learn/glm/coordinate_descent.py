@@ -25,32 +25,48 @@ class ElasticNet(LinearModel):
     ----------
     alpha : float
         Constant that multiplies the L1 term. Defaults to 1.0
+
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
-    coef: ndarray of shape n_features
+    coef_: ndarray of shape n_features
         The initial coeffients to warm-start the optimization
+
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
+
+    Notes
+    -----
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
 
-    def __init__(self, alpha=1.0, rho=0.5, coef_=None, 
-                fit_intercept=True):
+    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True):
         self.alpha = alpha
         self.rho = rho
-        self.coef_ = coef_
+        self.coef_ = None
         self.fit_intercept = fit_intercept
 
-    def fit(self, X, Y, maxit=1000, tol=1e-4, **params):
-        """Fit Elastic Net model with coordinate descent"""
+    def fit(self, X, y, maxit=1000, tol=1e-4, coef_init=None, **params):
+        """Fit Elastic Net model with coordinate descent
+
+        Coordinate descent is an algorithm that considers each column of
+        data at a time hence it will automatically convert the X input
+        as a fortran contiguous numpy array if necessary.
+
+        To avoid memory re-allocation it is advised to allocate the
+        initial data in memory directly using that format.
+        """
         self._set_params(**params)
         X = np.asanyarray(X, dtype=np.float64)
-        Y = np.asanyarray(Y, dtype=np.float64)
+        y = np.asanyarray(y, dtype=np.float64)
 
-        X, Y, Xmean, Ymean = self._center_data (X, Y)
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
-        if self.coef_ is None:
+        if coef_init is None:
             self.coef_ = np.zeros(X.shape[1], dtype=np.float64)
+        else:
+            self.coef_ = coef_init
 
         n_samples = X.shape[0]
         alpha = self.alpha * self.rho * n_samples
@@ -59,17 +75,17 @@ class ElasticNet(LinearModel):
         X = np.asfortranarray(X) # make data contiguous in memory
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, Y,
+                cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, y,
                                         maxit, tol)
 
-        self._set_intercept(Xmean, Ymean)
+        self._set_intercept(Xmean, ymean)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
-                                'to increase the number of interations')
+                          ' to increase the number of interations')
 
         # Store explained variance for __str__
-        self.explained_variance_ = self._explained_variance(X, Y)
+        self.explained_variance_ = self._explained_variance(X, y)
 
         # return self for chaining fit and predict calls
         return self
@@ -81,8 +97,8 @@ class ElasticNet(LinearModel):
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer (aka the Lasso)
 
-    Technically the Lasso model is optimizing the same objective function as the
-    Elastic Net with rho=1.0 (no L2 penalty).
+    Technically the Lasso model is optimizing the same objective function as
+    the Elastic Net with rho=1.0 (no L2 penalty).
 
     Parameters
     ----------
@@ -107,7 +123,7 @@ class Lasso(ElasticNet):
     >>> from scikits.learn import glm
     >>> clf = glm.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(alpha=0.1, coef_=array([ 0.85,  0.  ]), fit_intercept=True)
+    Lasso(alpha=0.1, fit_intercept=True)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
@@ -116,26 +132,29 @@ class Lasso(ElasticNet):
     Notes
     -----
     The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, coef_=None):
+    def __init__(self, alpha=1.0, fit_intercept=True):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
-                                    fit_intercept=fit_intercept, coef_=coef_)
+                                    fit_intercept=fit_intercept)
 
 ###############################################################################
-# Classes to store linear models along a regularization path 
+# Classes to store linear models along a regularization path
 
-def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
+def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                verbose=False, fit_params=dict()):
-    """
-    Compute Lasso path with coordinate descent
+    """Compute Lasso path with coordinate descent
 
     Parameters
     ----------
     X : numpy array of shape [n_samples,n_features]
-        Training data
+        Training data. Pass directly as fortran contiguous data to avoid
+        unnecessary memory duplication
 
-    Y : numpy array of shape [n_samples]
+    y : numpy array of shape [n_samples]
         Target values
 
     eps : float, optional
@@ -159,7 +178,12 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     Notes
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
+    X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
+
     n_samples = X.shape[0]
     if alphas is None:
         alpha_max = np.abs(np.dot(X.T, y)).max() / n_samples
@@ -171,10 +195,14 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
     models = []
+
     for alpha in alphas:
-        model = Lasso(coef_=coef_, alpha=alpha)
-        model.fit(X, y, **fit_params)
-        if verbose: 
+        model = Lasso(alpha=alpha, fit_intercept=False)
+        model.fit(X, y, coef_init=coef_, **fit_params)
+        if fit_intercept:
+            model.fit_intercept = True
+            model._set_intercept(Xmean, ymean)
+        if verbose:
             print model
         coef_ = model.coef_.copy()
         models.append(model)
@@ -182,15 +210,16 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
 
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              verbose=False, fit_params=dict()):
+              fit_intercept=True, verbose=False, fit_params=dict()):
     """Compute Elastic-Net path with coordinate descent
 
     Parameters
     ----------
-    X : numpy array of shape [n_samples,n_features]
-        Training data
+    X : numpy array of shape [n_samples, n_features]
+        Training data. Pass directly as fortran contiguous data to avoid
+        unnecessary memory duplication
 
-    Y : numpy array of shape [n_samples]
+    y : numpy array of shape [n_samples]
         Target values
 
     eps : float
@@ -215,19 +244,26 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
+    X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
+
     n_samples = X.shape[0]
     if alphas is None:
-        alpha_max = np.abs(np.dot(X.T, y)).max() / (n_samples*rho)
+        alpha_max = np.abs(np.dot(X.T, y)).max() / (n_samples * rho)
         alphas = np.logspace(np.log10(alpha_max*eps), np.log10(alpha_max),
                              num=n_alphas)[::-1]
     else:
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
     models = []
+
     for alpha in alphas:
-        model = ElasticNet(coef_=coef_, alpha=alpha, rho=rho)
-        model.fit(X, y, **fit_params)
-        if verbose: print model
+        model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False)
+        model.fit(X, y, coef_init=coef_, **fit_params)
+        if fit_intercept:
+            model.fit_intercept = True
+            model._set_intercept(Xmean, ymean)
+        if verbose:
+            print model
         coef_ = model.coef_.copy()
         models.append(model)
     return models
@@ -236,10 +272,12 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None):
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
+        self.fit_intercept = fit_intercept
 
     def fit(self, X, y, cv=None, **fit_params):
         """Fit linear model with coordinate descent along decreasing alphas
@@ -249,9 +287,10 @@ class LinearModelCV(LinearModel):
         ----------
 
         X : numpy array of shape [n_samples,n_features]
-            Training data
+            Training data. Pass directly as fortran contiguous data to avoid
+            unnecessary memory duplication
 
-        Y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples]
             Target values
 
         cv : cross-validation generator, optional
@@ -321,6 +360,9 @@ class LassoCV(LinearModelCV):
     Notes
     -----
     See examples/glm/lasso_path_with_crossvalidation.py for an example.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
 
     path = staticmethod(lasso_path)
@@ -351,13 +393,17 @@ class ElasticNetCV(LinearModelCV):
     Notes
     -----
     See examples/glm/lasso_path_with_crossvalidation.py for an example.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
     """
 
     path = staticmethod(enet_path)
 
-    def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None):
+    def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
-
+        self.fit_intercept = fit_intercept

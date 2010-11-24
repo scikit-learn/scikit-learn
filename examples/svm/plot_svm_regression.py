@@ -1,8 +1,14 @@
 """
-================================================
-Support Vector Regression (SVR) using RBF kernel
-================================================
+===================================================================
+Support Vector Regression (SVR) using linear and non-linear kernels
+===================================================================
+
+Toy example of 1D regression using linear, polynominial and RBF
+kernels.
+
 """
+print __doc__
+
 ###############################################################################
 # Generate sample data
 import numpy as np

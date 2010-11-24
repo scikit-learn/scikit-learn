@@ -279,18 +279,29 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
 
 
 class FastICA(BaseEstimator):
-    """FastICA
+    """FastICA; a fast algorithm for Independent Component Analysis
 
     Parameters
     ----------
-    n_comp : int
-        Number of components
-
-    maxit : int
+    n_comp : int, optional
+        Number of components to use. If none is passed, all are used.
+    algorithm: {'parallel', 'deflation'}
+        Apply parallel or deflational algorithm for FastICA
+    whiten: boolean, optional
+        If whiten is false, the data is already considered to be
+        whitened, and no whitening is performed.
+    fun: {'logcosh', 'exp', or 'cube'}, or a callable
+        The non-linear function used in the FastICA loop to approximate
+        negentropy. If a function is passed, it derivative should be
+        passed as the 'fun_prime' argument.
+    fun_prime: None or a callable
+        The derivative of the non-linearity used.
+    maxit : int, optional
         Maximum number of iterations during fit
-
-    tol : float
+    tol : float, optional
         Tolerance on update at each iteration
+    w_init: None of an (n_comp, n_comp) ndarray
+        The mixing matrix to be used to initialize the algorithm.
 
     Attributes
     ----------

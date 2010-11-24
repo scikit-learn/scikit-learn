@@ -1,10 +1,13 @@
 """
+======================
 Ordinary Least Squares
 ======================
 
 Simple Ordinary Least Squares example, we draw the linear least
 squares solution for a random set of points in the plane.
 """
+print __doc__
+
 import numpy as np
 import pylab as pl
 

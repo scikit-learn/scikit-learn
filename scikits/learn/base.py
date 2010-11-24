@@ -6,26 +6,51 @@ Base class for all estimators.
 
 # License: BSD Style
 import inspect
+import copy
 
 import numpy as np
 
-from .metrics import explained_variance
+from .metrics import explained_variance_score
 
 ################################################################################
-def clone(estimator):
+def clone(estimator, safe=True):
     """ Constructs a new estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
     without actually copying attached data. It yields a new estimator
     with the same parameters that has not been fit on any data.
+
+    Parameters
+    ============
+    estimator: estimator object, or list, tuple or set of objects
+        The estimator or group of estimators to be cloned
+    safe: boolean, optional
+        If safe is false, clone will fall back to a deepcopy on objects
+        that are not estimators.
+
     """
+    estimator_type = type(estimator)
+    # XXX: not handling dictionnaries
+    if estimator_type in (list, tuple, set, frozenset):
+         return estimator_type([clone(e, safe=safe) for e in estimator])
+    elif not hasattr(estimator, '_get_params'):
+        if not safe:
+            return copy.deepcopy(estimator)
+        else:
+            raise ValueError("Cannot clone object '%s' (type %s): "
+                    "it does not seem to be a scikit-learn estimator as "
+                    "it does not implement a '_get_params' methods."
+                    % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator._get_params(deep=False)
     for name, param in new_object_params.iteritems():
-        if hasattr(param, '_get_params'):
-            new_object_params[name] = clone(param)
+        new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
-    
+    assert new_object._get_params(deep=False) == new_object_params, (
+            'Cannot clone object %s, as the constructor does not '
+            'seem to set parameters' % estimator
+        )
+
     return new_object
 
 
@@ -48,7 +73,7 @@ def _pprint(params, offset=0, printer=repr):
     np.set_printoptions(precision=5, threshold=64, edgeitems=2)
     params_list = list()
     this_line_length = offset
-    line_sep = ',\n' + (1+offset/2)*' '
+    line_sep = ',\n' + (1 + offset / 2) * ' '
     for i, (k, v) in enumerate(params.iteritems()):
         if type(v) is float:
             # use str for representing floating point numbers
@@ -58,7 +83,7 @@ def _pprint(params, offset=0, printer=repr):
         else:
             # use repr of the rest
             this_repr  = '%s=%s' % (k, printer(v))
-        if i > 0: 
+        if i > 0:
             if (this_line_length + len(this_repr) >= 75
                                         or '\n' in this_repr):
                 params_list.append(line_sep)
@@ -73,23 +98,22 @@ def _pprint(params, offset=0, printer=repr):
     lines = ''.join(params_list)
     # Strip trailing space to avoid nightmare in doctests
     lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
-    return lines 
+    return lines
 
 
 ################################################################################
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
 
-        Note
-        =====
-
+        Notes
+        -----
         All estimators should specify all the parameters that can be set
         at the class level in their __init__ as explicit keyword
         arguments (no *args, **kwargs).
 
     """
 
-    @classmethod 
+    @classmethod
     def _get_param_names(cls):
         """ Get parameter names for the estimator
         """
@@ -108,7 +132,7 @@ class BaseEstimator(object):
             args = []
         return args
 
-    def _get_params(self, deep=False):
+    def _get_params(self, deep=True):
         """ Get parameters for the estimator
 
             Parameters
@@ -134,6 +158,9 @@ class BaseEstimator(object):
         form <component>__<parameter> so that the its possible to
         update each component of the nested object.
         """
+        if not params:
+            # Simple optimisation to gain speed (inspect is slow)
+            return
         valid_params = self._get_params(deep=True)
         for key, value in params.iteritems():
             split = key.split('__', 1)
@@ -156,6 +183,7 @@ class BaseEstimator(object):
                                               'for estimator %s' %
                                              (key, self.__class__.__name__))
                 setattr(self, key, value)
+        return self
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -219,4 +247,27 @@ class RegressorMixin(object):
             -------
             z : float
         """
-        return explained_variance(self.predict(X), y)
+        return explained_variance_score(y, self.predict(X))
+
+
+################################################################################
+# XXX: Temporary solution to figure out if an estimator is a classifier
+
+def _get_sub_estimator(estimator):
+    """ Returns the final estimator if there is any.
+    """
+    if hasattr(estimator, 'estimator'):
+        # GridSearchCV and other CV-tuned estimators
+        return _get_sub_estimator(estimator.estimator)
+    if hasattr(estimator, 'steps'):
+        # Pipeline
+        return _get_sub_estimator(estimator.steps[-1][1])
+    return estimator
+
+
+def is_classifier(estimator):
+    """ Returns True if the given estimator is (probably) a classifier.
+    """
+    estimator = _get_sub_estimator(estimator)
+    return isinstance(estimator, ClassifierMixin)
+
