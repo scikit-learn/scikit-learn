@@ -14,6 +14,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('datasets')
     config.add_subpackage('feature_extraction')
     config.add_subpackage('feature_extraction/tests')
+    config.add_subpackage('feature_extraction/text')
     config.add_subpackage('cluster')
     config.add_subpackage('cluster/tests')
     config.add_subpackage('covariance')
