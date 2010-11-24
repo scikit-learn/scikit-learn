@@ -152,7 +152,7 @@ Clustering
    cluster.AffinityPropagation
 
 
-Covariance estimators
+Covariance Estimators
 =====================
 
 
@@ -172,7 +172,7 @@ Covariance estimators
 
 
 
-Signal decomposition
+Signal Decomposition
 =======================
 
 .. autosummary::
@@ -189,7 +189,7 @@ Signal decomposition
 
    fastica.fastica
 
-Cross-validation
+Cross Validation
 ===================
 
 .. autosummary::
@@ -203,6 +203,18 @@ Cross-validation
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
 
+
+Grid Search
+===========
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   grid_search.GridSearch
+   grid_search.GridSearchCV
+
+
 .. _feature_selection_ref:
 
 Feature Selection
@@ -214,6 +226,7 @@ Feature Selection
 
    feature_selection.rfe.RFE
    feature_selection.rfe.RFECV
+
 
 .. _feature_extraction_ref:
 
