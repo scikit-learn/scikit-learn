@@ -3,7 +3,7 @@ import numpy as np
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from unittest import TestCase
-from .test_gmm import _generate_random_spd_matrix
+from .test_mixture import _generate_random_spd_matrix
 
 from .. import hmm
 
@@ -512,9 +512,9 @@ class GMMHMMParams(object):
 
     @staticmethod
     def create_random_gmm(n_mix, n_features, cvtype):
-        from scikits.learn import gmm
+        from scikits.learn import mixture
 
-        g = gmm.GMM(n_mix, cvtype=cvtype)
+        g = mixture.GMM(n_mix, cvtype=cvtype)
         g.means = np.random.randint(-20, 20, (n_mix, n_features))
         mincv = 0.1
         g.covars = {'spherical': (mincv

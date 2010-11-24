@@ -450,7 +450,10 @@ def _cross_val_score(estimator, X, y, score_func, train, test, iid):
     else:
         score = score_func(estimator.fit(X[train], y[train]), X[test], y[test])
     if iid:
-        score *= len(y[test])
+        if y is not None:
+            score *= len(y[test])
+        else:
+            score *= len(X[test])
     return score
 
 

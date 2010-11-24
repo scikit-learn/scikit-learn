@@ -23,6 +23,7 @@ from scikits.learn import datasets
 diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
+
 X[:,6] *= -1 # To reproduce wikipedia LASSO page
 
 print "Computing regularization path using the LARS ..."

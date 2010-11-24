@@ -18,7 +18,7 @@ from ..utils import arrayfuncs
 
 def lars_path(X, y, Xy=None, Gram=None, max_features=None,
               alpha_min=0, method="lar", overwrite_X=False,
-              overwrite_Gram=False, overwrite_y=False, verbose=False):
+              overwrite_Gram=False, verbose=False):
 
     """ Compute Least Angle Regression and LASSO path
 
@@ -98,9 +98,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
     else:
         Cov = Xy.copy()
 
-    if (Gram is None) and (not overwrite_y):
-        y = y.copy()
-
     if verbose:
         print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
 
@@ -119,7 +116,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         alphas[n_iter] = C
 
-        if (C < alpha_min) or (n_active == max_features): break
+        if (C < alpha_min) or (n_active == max_features):
+            break
 
         if not drop:
 
@@ -202,7 +200,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         if n_iter >= coefs.shape[0]: # resize
             add_features = 2 * (max_features - n_active) # heuristic
-            coefs.resize(n_iter + add_features, n_features)
+            coefs.resize((n_iter + add_features, n_features))
             alphas.resize(n_iter + add_features)
 
         coefs[n_iter, active] = coefs[n_iter-1, active] + \
@@ -215,7 +213,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             break
 
         if drop:
-            # got to add corresponding covariance 
+
             arrayfuncs.cholesky_delete(L[:n_active, :n_active], idx)
 
             n_active -= 1
@@ -297,31 +295,49 @@ class LARS(LinearModel):
     Examples
     --------
     >>> from scikits.learn import glm
-    >>> clf = glm.LARS(n_features=1)
-    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LARS(normalize=True, n_features=1, verbose=False, fit_intercept=True)
+    >>> clf = glm.LARS()
+    >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
+    LARS(verbose=False, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.81649658]
 
-    Notes
-    -----
-    See also scikits.learn.glm.LassoLARS that fits a LASSO model
-    using a variant of Least Angle Regression
-
+    References
+    ----------
     http://en.wikipedia.org/wiki/Least_angle_regression
 
-    See examples/glm/plot_lar.py for an example.
+    See also
+    --------
+    lars_path, LassoLARS
     """
-    def __init__(self, n_features, normalize=True, fit_intercept=True, verbose=False):
-        self.n_features = n_features
-        self.normalize = normalize
-        self.coef_ = None
+    def __init__(self, fit_intercept=True, verbose=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
-        if not normalize:
-            warnings.warn('LARS can only be fit with normalized regressors. Please set normalize to True')
+        self.method = 'lar'
 
-    def fit (self, X, y, Gram=None, overwrite_X=False, **params):
+    def fit (self, X, y, normalize=True, max_features=None,
+             precompute='auto', overwrite_X=False, **params):
+
+        """
+        Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        precompute : True | False | 'auto' | array-like
+            Wether to use a precomputed Gram matrix to speed up
+            calculations. If set to 'auto' let us decide. The Gram
+            matrix can also be passed as argument.
+
+        Returns
+        -------
+        self : object
+            returns an instance of self.
+        """
         self._set_params(**params)
 
         X = np.atleast_2d(X)
@@ -329,23 +345,42 @@ class LARS(LinearModel):
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
-        if self.normalize:
+        n_samples = X.shape[0]
+
+        if self.method == 'lasso':
+            alpha = self.alpha * n_samples # scale alpha with number of samples
+        else:
+            alpha = 0.
+
+        if normalize:
             norms = np.sqrt(np.sum(X**2, axis=0))
             nonzeros = np.flatnonzero(norms)
             X[:, nonzeros] /= norms[nonzeros]
 
-        alphas_, active, coef_path_ = lars_path(X, y, method='lar',
-                                Gram=Gram, overwrite_X=overwrite_X,
-                                max_features=self.n_features)
+        # precompute if n_samples > n_features
+        if precompute == True or \
+               (precompute == 'auto' and X.shape[0] > X.shape[1]):
+            Gram = np.dot(X.T, X)
+        elif hasattr(precompute, '__array__'):
+            # copy as it's going to be modified
+            Gram = precompute.copy()
+        else:
+            Gram = None
 
-        self.coef_ = coef_path_[:,-1]
+        self.alphas_, self.active_, self.coef_path_ = lars_path(X, y,
+                  Gram=Gram, overwrite_X=overwrite_X,
+                  overwrite_Gram=True, alpha_min=alpha,
+                  method=self.method, verbose=self.verbose,
+                  max_features=max_features)
+
+        self.coef_ = self.coef_path_[:,-1]
 
         self._set_intercept(Xmean, ymean)
 
         return self
 
 
-class LassoLARS (LinearModel):
+class LassoLARS (LARS):
     """ Lasso model fit with Least Angle Regression a.k.a. LARS
 
     It is a Linear Model trained with an L1 prior as regularizer.
@@ -374,60 +409,23 @@ class LassoLARS (LinearModel):
     >>> from scikits.learn import glm
     >>> clf = glm.LassoLARS(alpha=0.1)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(max_features=None, alpha=0.1, normalize=True, verbose=False,
-         fit_intercept=True)
+    LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.51649658]
 
-    Notes
-    -----
-    See examples/glm/plot_lasso_lars.py for an example.
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Least_angle_regression
 
-    See also scikits.learn.glm.Lasso that fits the same model using
-    an alternative optimization strategy called 'coordinate descent.'
+    See also
+    --------
+    lars_path, LassoLARS
     """
 
-    def __init__(self, alpha=1.0, max_features=None, normalize=True,
-                        fit_intercept=True, verbose=False):
-        """ XXX : add doc
-                # will only normalize non-zero columns
-        """
+    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False):
         self.alpha = alpha
-        self.normalize = normalize
-        self.coef_ = None
-        self.max_features = max_features
         self.fit_intercept = fit_intercept
         self.verbose = verbose
+        self.method = 'lasso'
 
-    def fit (self, X, y, Gram=None, overwrite_X=False,
-             overwrite_Gram=False, **params):
-        """ XXX : add doc
-        """
-        self._set_params(**params)
-
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
-
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
-
-        n_samples = X.shape[0]
-        alpha = self.alpha * n_samples # scale alpha with number of samples
-
-        # XXX : should handle also unnormalized datasets
-        if self.normalize:
-            norms = np.sqrt(np.sum(X**2, axis=0))
-            nonzeros = np.flatnonzero(norms)
-            X[:, nonzeros] /= norms[nonzeros]
-
-        alphas_, active, coef_path_ = lars_path(X, y, Gram=Gram,
-                  overwrite_X=overwrite_X,
-                  overwrite_Gram=overwrite_Gram, alpha_min=alpha,
-                  method='lasso', verbose=self.verbose,
-                  max_features=self.max_features)
-
-        self.coef_ = coef_path_[:,-1]
-
-        self._set_intercept(Xmean, ymean)
-
-        return self
 

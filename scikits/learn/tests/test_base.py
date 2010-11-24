@@ -23,6 +23,11 @@ class T(BaseEstimator):
         self.a = a
         self.b = b
 
+class Buggy(BaseEstimator):
+    " A buggy estimator that does not set its parameters right. "
+
+    def __init__(self, a=None):
+        self.a = 1
 
 ################################################################################
 # The tests
@@ -58,6 +63,11 @@ def test_clone_2():
     new_selector = clone(selector)
     assert_false(hasattr(new_selector, "own_attribute"))
 
+def test_clone_buggy():
+    """ Check that clone raises an error on buggy estimators """
+    buggy = Buggy()
+    buggy.a = 2
+    assert_raises(AssertionError, clone, buggy)
 
 def test_repr():
     """ Smoke test the repr of the

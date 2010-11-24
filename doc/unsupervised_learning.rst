@@ -7,7 +7,7 @@ Unsupervised learning
 
 .. toctree::
 
-    modules/gmm
+    modules/mixture
     modules/clustering
     modules/decompositions
 

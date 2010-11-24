@@ -19,7 +19,6 @@ from . import ball_tree
 from . import cluster
 from . import covariance
 from . import datasets
-from . import gmm
 from . import glm
 from . import lda
 from . import metrics

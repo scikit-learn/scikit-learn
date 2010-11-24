@@ -10,7 +10,7 @@ matrices.
 
 import numpy as np
 import pylab as pl
-from scikits.learn import gmm
+from scikits.learn import mixture
 
 n_samples = 300
 
@@ -20,7 +20,7 @@ C = np.array([[0., -0.7], [3.5, .7]])
 X_train = np.r_[np.dot(np.random.randn(n_samples, 2), C),
           np.random.randn(n_samples, 2) + np.array([20, 20])]
 
-clf = gmm.GMM(n_states=2, cvtype='full')
+clf = mixture.GMM(n_states=2, cvtype='full')
 clf.fit(X_train)
 
 x = np.linspace(-20.0, 30.0)

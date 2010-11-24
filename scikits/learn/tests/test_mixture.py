@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
 import numpy as np
 from scipy import stats
 
-from scikits.learn import gmm
+from scikits.learn import mixture
 
 np.random.seed(0)
 
@@ -23,7 +23,7 @@ def _generate_random_spd_matrix(ndim):
 def test_logsum_1D():
     A = np.random.rand(2) + 1.0
     for axis in range(1):
-        Asum = gmm.logsum(A, axis)
+        Asum = mixture.logsum(A, axis)
         assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))
 
 
@@ -33,27 +33,27 @@ def test_logsum_3D():
     """
     A = np.random.rand(2, 2, 2) + 1.0
     for axis in range(3):
-        Asum = gmm.logsum(A, axis)
+        Asum = mixture.logsum(A, axis)
         assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))
 
 
 def test_normalize_1D():
     A = np.random.rand(2) + 1.0
     for axis in range(1):
-        Anorm = gmm.normalize(A, axis)
+        Anorm = mixture.normalize(A, axis)
         assert np.all(np.allclose(Anorm.sum(axis), 1.0))
 
 
 def test_normalize_3D():
     A = np.random.rand(2, 2, 2) + 1.0
     for axis in range(3):
-        Anorm = gmm.normalize(A, axis)
+        Anorm = mixture.normalize(A, axis)
         assert np.all(np.allclose(Anorm.sum(axis), 1.0))
 
 
 def test_sample_gaussian():
     """
-    Test sample generation from gmm.sample_gaussian where covariance
+    Test sample generation from mixture.sample_gaussian where covariance
     is diagonal, spherical and full
     """
 
@@ -62,14 +62,14 @@ def test_sample_gaussian():
     mu = np.random.randint(10) * np.random.rand(n_features)
     cv = (np.random.rand(n_features) + 1.0) ** 2
 
-    samples = gmm.sample_gaussian(mu, cv, cvtype='diag', n=n_samples)
+    samples = mixture.sample_gaussian(mu, cv, cvtype='diag', n=n_samples)
 
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
     assert np.allclose(samples.var(axis),  cv, atol=0.5)
 
     # the same for spherical covariances
     cv = (np.random.rand() + 1.0) ** 2
-    samples = gmm.sample_gaussian(mu, cv, cvtype='spherical', n=n_samples)
+    samples = mixture.sample_gaussian(mu, cv, cvtype='spherical', n=n_samples)
 
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
     assert np.allclose(samples.var(axis),  np.repeat(cv, n_features), atol=0.5)
@@ -77,7 +77,7 @@ def test_sample_gaussian():
     # and for full covariances
     A = np.random.randn(n_features, n_features)
     cv = np.dot(A.T, A) + np.eye(n_features)
-    samples = gmm.sample_gaussian(mu, cv, cvtype='full', n=n_samples)
+    samples = mixture.sample_gaussian(mu, cv, cvtype='full', n=n_samples)
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
     assert np.allclose(np.cov(samples), cv, atol=0.7)
 
@@ -94,7 +94,7 @@ def _naive_lmvnpdf_diag(obs, mu, cv):
 def test_lmvnpdf_diag():
     """
     test a slow and naive implementation of lmvnpdf and
-    compare it to the vectorized version (gmm.lmvnpdf) to test
+    compare it to the vectorized version (mixture.lmvnpdf) to test
     for correctness
     """
     n_features, n_states, n_obs = 2, 3, 10
@@ -103,7 +103,7 @@ def test_lmvnpdf_diag():
     obs = np.random.randint(10) * np.random.rand(n_obs, n_features)
 
     ref = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = gmm.lmvnpdf(obs, mu, cv, 'diag')
+    lpr = mixture.lmvnpdf(obs, mu, cv, 'diag')
     assert_array_almost_equal(lpr, ref)
 
 
@@ -116,7 +116,7 @@ def test_lmvnpdf_spherical():
 
     cv = np.tile(spherecv, (n_features, 1))
     reference = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = gmm.lmvnpdf(obs, mu, spherecv, 'spherical')
+    lpr = mixture.lmvnpdf(obs, mu, spherecv, 'spherical')
     assert_array_almost_equal(lpr, reference)
 
 
@@ -130,14 +130,14 @@ def test_lmvnpdf_full():
     fullcv = np.array([np.diag(x) for x in cv])
 
     reference = _naive_lmvnpdf_diag(obs, mu, cv)
-    lpr = gmm.lmvnpdf(obs, mu, fullcv, 'full')
+    lpr = mixture.lmvnpdf(obs, mu, fullcv, 'full')
     assert_array_almost_equal(lpr, reference)
 
 
 def test_GMM_attributes():
     n_states, n_features = 10, 4
     cvtype = 'diag'
-    g = gmm.GMM(n_states, cvtype)
+    g = mixture.GMM(n_states, cvtype)
     weights = np.random.rand(n_states)
     weights = weights / weights.sum()
     means = np.random.randint(-20, 20, (n_states, n_features))
@@ -166,7 +166,7 @@ def test_GMM_attributes():
     assert_raises(ValueError, g.__setattr__, 'covars',
                       np.zeros((n_states - 2, n_features)))
 
-    assert_raises(ValueError, gmm.GMM, n_states=20, cvtype='badcvtype')
+    assert_raises(ValueError, mixture.GMM, n_states=20, cvtype='badcvtype')
 
 
 class GMMTester():
@@ -183,7 +183,7 @@ class GMMTester():
                                 for x in xrange(n_states)])}
 
     def test_eval(self):
-        g = gmm.GMM(self.n_states, self.cvtype)
+        g = mixture.GMM(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -202,7 +202,7 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = gmm.GMM(self.n_states, self.cvtype)
+        g = mixture.GMM(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -213,7 +213,7 @@ class GMMTester():
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
-        g = gmm.GMM(self.n_states, self.cvtype)
+        g = mixture.GMM(self.n_states, self.cvtype)
         g.weights = self.weights
         g.means = self.means
         g._covars = 20 * self.covars[self.cvtype]
