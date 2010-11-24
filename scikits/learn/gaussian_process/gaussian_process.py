@@ -5,10 +5,6 @@
 #         (mostly translation, see implementation details)
 # License: BSD style
 
-################
-# Dependencies #
-################
-
 import numpy as np
 from scipy import linalg, optimize, rand
 from ..base import BaseEstimator
@@ -21,11 +17,6 @@ if hasattr(linalg, 'solve_triangular'):
 else:
     # slower, but works
     solve_triangular = linalg.solve
-
-
-##############################
-# The Gaussian Process class #
-##############################
 
 
 class GaussianProcess(BaseEstimator):

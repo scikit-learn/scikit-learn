@@ -9,16 +9,8 @@
 The built-in correlation models submodule for the gaussian_process module.
 """
 
-################
-# Dependencies #
-################
 
 import numpy as np
-
-
-#############################
-# Defaut correlation models #
-#############################
 
 
 def absolute_exponential(theta, d):

@@ -9,16 +9,8 @@
 The built-in regression models submodule for the gaussian_process module.
 """
 
-################
-# Dependencies #
-################
 
 import numpy as np
-
-
-############################
-# Defaut regression models #
-############################
 
 
 def constant(x):

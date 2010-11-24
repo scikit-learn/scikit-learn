@@ -14,9 +14,9 @@ The advantages of Gaussian Processes for Machine Learning are:
     - The prediction interpolates the observations (at least for regular
       correlation models).
 
-    - The prediction is probabilistic (Gaussian) so that one can compute 
-      empirical confidence intervals and exceedence probabilities that might be 
-      used to refit (online fitting, adaptive fitting) the prediction in some 
+    - The prediction is probabilistic (Gaussian) so that one can compute
+      empirical confidence intervals and exceedence probabilities that might be
+      used to refit (online fitting, adaptive fitting) the prediction in some
       region of interest.
 
     - Versatile: different :ref:`linear regression models
@@ -27,7 +27,7 @@ The advantages of Gaussian Processes for Machine Learning are:
 
 The disadvantages of Gaussian Processes for Machine Learning include:
 
-    - It is not sparse. It uses the whole samples/features information to 
+    - It is not sparse. It uses the whole samples/features information to
       perform the prediction.
 
     - It loses efficiency in high dimensional spaces -- namely when the number
@@ -38,7 +38,7 @@ The disadvantages of Gaussian Processes for Machine Learning include:
       to solve a regression problem by providing the complete scalar float
       precision output :math:`y` of the experiment one attempt to model.
 
-Thanks to the Gaussian property of the prediction, it has been given varied 
+Thanks to the Gaussian property of the prediction, it has been given varied
 applications: e.g. for global optimization, probabilistic classification.
 
 
@@ -65,8 +65,8 @@ follows:
 
         G(X) = f(X)^T \beta + Z(X)
 
-where :math:`f(X)^T \beta` is a linear regression model and :math:`Z(X)` is a zero-mean Gaussian
-process with a fully stationary covariance function:
+where :math:`f(X)^T \beta` is a linear regression model and :math:`Z(X)` is a
+zero-mean Gaussian process with a fully stationary covariance function:
 
 .. math::
 
@@ -83,7 +83,7 @@ basic least squares linear regression problem:
 
         g(X) \approx f(X)^T \beta
 
-Except we additionaly assume some spatial coherence (correlation) between the 
+Except we additionaly assume some spatial coherence (correlation) between the
 samples dictated by the correlation function. Indeed, ordinary least squares
 assumes the correlation model :math:`R(|X - X'|)` is one when :math:`X = X'`
 and zero otherwise : a *dirac* correlation model -- sometimes referred to as a
@@ -202,7 +202,7 @@ Until now, both the autocorrelation and regression models were assumed given.
 In practice however they are never known in advance so that one has to make
 (motivated) empirical choices for these models :ref:`correlation_models`.
 
-Provided these choices are made, one should estimate the remaining unknown 
+Provided these choices are made, one should estimate the remaining unknown
 parameters involved in the BLUP. To do so, one uses the set of provided
 observations in conjunction with some inference technique. The present
 implementation, which is based on the DACE's Matlab toolbox uses the *maximum
