@@ -24,6 +24,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('utils')
     config.add_subpackage('utils/tests')
     config.add_subpackage('externals')
+    config.add_subpackage('gaussian_process')
+    config.add_subpackage('gaussian_process/tests')
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
