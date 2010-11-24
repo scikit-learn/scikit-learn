@@ -56,7 +56,7 @@ y_pred = cross_val.cross_val_score(gp, X, y=y, \
        + y
 
 # Compute the empirical explained variance
-Q2 = metrics.explained_variance(y_pred, y)
+Q2 = metrics.explained_variance_score(y, y_pred)
 
 # Goodness-of-fit plot
 pl.figure()
