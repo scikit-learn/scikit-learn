@@ -35,7 +35,7 @@ X = (X - mean) / std
 
 h = .02  # step size in the mesh
 
-clf = sgd.SGD(alpha=0.001, n_iter=100).fit(X, y)
+clf = sgd.ClassifierSGD(alpha=0.001, n_iter=100).fit(X, y)
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
