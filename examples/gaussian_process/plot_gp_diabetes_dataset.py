@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-=============================================================
-Gaussian Processes regression example: the 'diabetes' dataset
-=============================================================
+=========================================================================
+Gaussian Processes regression: goodness-of-fit on the 'diabetes' dataset
+=========================================================================
 
 This example consists in fitting a Gaussian Process model onto the diabetes
 dataset.

@@ -42,7 +42,47 @@ Thanks to the Gaussian property of the prediction, it has been given varied
 applications: e.g. for global optimization, probabilistic classification.
 
 
-Mathematical formulation
+An introductory regression example
+==================================
+
+Say we want to surrogate the function :math:`g(x) = x \sin(x)`. To do so,
+the function is evaluated onto a design of experiments. Then, we define a
+GaussianProcess model whose regression and correlation models might be
+specified using additional kwargs, and ask for the model to be fitted to the
+data. Depending on the number of parameters provided at instanciation, the
+fitting procedure may recourse to maximum likelihood estimation for the
+parameters or alternatively it uses the given parameters.
+
+.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression.png
+   :target: ../auto_examples/gaussian_process/plot_gp_regression.html
+   :align: center
+
+::
+
+    >>> import numpy as np
+    >>> from scikits.learn.gaussian_process import GaussianProcess
+    >>> def f(x): 
+    ...	    x * np.sin(x)
+    >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
+    >>> y = f(X).ravel()
+    >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
+    >>> gp = GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
+    >>> gp.fit(X, y)
+    GaussianProcess(normalize=True, theta0=array([[ 0.01]]),
+            optimizer='fmin_cobyla', verbose=False, storage_mode='full',
+            nugget=2.2204460492503131e-15, thetaU=array([[ 0.1]]),
+            regr=<function constant at 0x51f2668>, random_start=100,
+            corr=<function cubic at 0x51f2e60>, beta0=None,
+            thetaL=array([[ 0.0001]]))
+    >>> y_pred, sigma2_pred = gp.predict(x, eval_MSE=True)
+
+.. topic:: Other examples
+
+  * :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
+
+  * :ref:`example_gaussian_process_plot_gp_diabetes_dataset.py`
+
+Mathematica formulation
 ========================
 
 
@@ -274,37 +314,6 @@ containing the values of the functional set. The only constraint is that the
 number of functions must not exceed the number of available observations so
 that the underlying regression problem is not *underdetermined*.
 
-
-An introductory regression example
-==================================
-
-Say we want to surrogate the function :math:`g(x) = x \sin(x)`. To do so,
-the function is evaluated onto a design of experiments. Then, we define a
-GaussianProcess model whose regression and correlation models might be
-specified using additional kwargs, and ask for the model to be fitted to the
-data. Depending on the number of parameters provided at instanciation, the
-fitting procedure may recourse to maximum likelihood estimation for the
-parameters or alternatively it uses the given parameters.
-
-    >>> import numpy as np
-    >>> from scikits.learn.gaussian_process import GaussianProcess
-    >>> f = lambda x: x * np.sin(x)
-    >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
-    >>> y = f(X).ravel()
-    >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
-    >>> gp = GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
-    >>> gp.fit(X, y)
-    GaussianProcess(normalize=True, theta0=array([[ 0.01]]),
-            optimizer='fmin_cobyla', verbose=False, storage_mode='full',
-            nugget=2.2204460492503131e-15, thetaU=array([[ 0.1]]),
-            regr=<function constant at 0x51f2668>, random_start=100,
-            corr=<function cubic at 0x51f2e60>, beta0=None,
-            thetaL=array([[ 0.0001]]))
-    >>> y_pred, sigma2_pred = gp.predict(x, eval_MSE=True)
-
-.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression.png
-   :target: ../auto_examples/gaussian_process/plot_gp_regression.html
-   :align: center
 
 Implementation details
 ======================

@@ -3,7 +3,7 @@
 
 """
 =================================================================
-Gaussian Processes regression example: basic introductory example
+Gaussian Processes regression: basic introductory example
 =================================================================
 
 A simple one-dimensional regression exercise with a cubic correlation
