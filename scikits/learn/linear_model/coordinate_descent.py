@@ -50,6 +50,23 @@ class ElasticNet(LinearModel):
     def fit(self, X, y, maxit=1000, tol=1e-4, coef_init=None, **params):
         """Fit Elastic Net model with coordinate descent
 
+        Parameters
+        -----------
+        X: ndarray, (n_samples, n_features)
+            Data
+        y: ndarray, (n_samples)
+            Target
+        maxit: int, optional
+            The maximum number of iterations
+        tol: float, optional
+            The tolerance for the optimization: if the updates are
+            smaller than 'tol', the optimization code checks the
+            dual gap for optimality and continues until it is smaller
+            than tol.
+
+        Notes
+        -----
+
         Coordinate descent is an algorithm that considers each column of
         data at a time hence it will automatically convert the X input
         as a fortran contiguous numpy array if necessary.
