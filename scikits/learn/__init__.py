@@ -23,7 +23,6 @@ from . import glm
 from . import lda
 from . import metrics
 from . import svm
-from . import gaussian_process
 from . import feature_selection
 from . import sgd
 
