@@ -211,7 +211,6 @@ Grid Search
    :toctree: generated/
    :template: class.rst
 
-   grid_search.GridSearch
    grid_search.GridSearchCV
 
 
