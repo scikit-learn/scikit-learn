@@ -12,7 +12,7 @@ print __doc__
 
 import numpy as np
 
-from scikits.learn.glm import LogisticRegression
+from scikits.learn.linear_model import LogisticRegression
 from scikits.learn import datasets
 
 iris = datasets.load_iris()

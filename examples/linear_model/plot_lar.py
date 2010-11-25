@@ -19,7 +19,7 @@ from datetime import datetime
 import numpy as np
 import pylab as pl
 
-from scikits.learn import glm
+from scikits.learn import linear_model
 from scikits.learn import datasets
 
 diabetes = datasets.load_diabetes()
@@ -33,7 +33,7 @@ X[:,6] *= -1 # To reproduce wikipedia LAR page
 
 print "Computing regularization path using the LARS ..."
 start = datetime.now()
-_, _, coefs_ = glm.lars_path(X, y, max_features=10, method="lasso")
+_, _, coefs_ = linear_model.lars_path(X, y, max_features=10, method="lasso")
 print "This took ", datetime.now() - start
 
 ###############################################################################

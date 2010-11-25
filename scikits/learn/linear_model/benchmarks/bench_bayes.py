@@ -1,12 +1,12 @@
 """
-A comparison of different methods in GLM
+A comparison of different methods in linear_model methods.
 
 Data comes from a random square matrix.
 
 """
 from datetime import datetime
 import numpy as np
-from scikits.learn import glm
+from scikits.learn import linear_model
 from scikits.learn.utils.bench import total_seconds
 
 
@@ -28,5 +28,5 @@ if __name__ == '__main__':
     y = np.random.randn(n_samples)
 
     start = datetime.now()
-    ridge = glm.BayesianRidge()
+    ridge = linear_model.BayesianRidge()
     ridge.fit(X, y)

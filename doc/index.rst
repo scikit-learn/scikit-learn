@@ -14,9 +14,9 @@
        :target: auto_examples/cluster/plot_affinity_propagation.html
 
 
-    .. |banner2| image:: auto_examples/glm/images/plot_lasso_lars.png
+    .. |banner2| image:: auto_examples/linear_model/images/plot_lasso_lars.png
        :height: 150
-       :target: auto_examples/glm/plot_lasso_lars.html
+       :target: auto_examples/linear_model/plot_lasso_lars.html
 
     .. |banner3| image:: auto_examples/svm/images/plot_oneclass.png
        :height: 150

@@ -53,21 +53,21 @@ Generalized Linear Models
    :toctree: generated/
    :template: class.rst
 
-   glm.LinearRegression
-   glm.Ridge
-   glm.Lasso
-   glm.LassoCV
-   glm.ElasticNet
-   glm.ElasticNetCV
-   glm.LARS
-   glm.LassoLARS
+   linear_model.LinearRegression
+   linear_model.Ridge
+   linear_model.Lasso
+   linear_model.LassoCV
+   linear_model.ElasticNet
+   linear_model.ElasticNetCV
+   linear_model.LARS
+   linear_model.LassoLARS
 
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   glm.lars_path
+   linear_model.lars_path
 
 
 For sparse data
@@ -77,8 +77,8 @@ For sparse data
    :toctree: generated/
    :template: class.rst
 
-   glm.sparse.Lasso
-   glm.sparse.ElasticNet
+   linear_model.sparse.Lasso
+   linear_model.sparse.ElasticNet
         
 
 Bayesian Regression
@@ -88,8 +88,8 @@ Bayesian Regression
    :toctree: generated/
    :template: class.rst
 
-   glm.BayesianRidge
-   glm.ARDRegression   
+   linear_model.BayesianRidge
+   linear_model.ARDRegression   
 
 Naive Bayes
 ===========

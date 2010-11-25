@@ -27,7 +27,7 @@ X_test, y_test = X[n_samples/2:], y[n_samples/2:]
 
 ################################################################################
 # Lasso
-from scikits.learn.glm import Lasso
+from scikits.learn.linear_model import Lasso
 
 alpha = 0.1
 lasso = Lasso(alpha=alpha)
@@ -39,7 +39,7 @@ print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_pred_lasso)**2
 
 ################################################################################
 # ElasticNet
-from scikits.learn.glm import ElasticNet
+from scikits.learn.linear_model import ElasticNet
 
 enet = ElasticNet(alpha=alpha, rho=0.7)
 

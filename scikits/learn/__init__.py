@@ -19,7 +19,6 @@ from . import ball_tree
 from . import cluster
 from . import covariance
 from . import datasets
-from . import glm
 from . import lda
 from . import metrics
 from . import svm
@@ -44,8 +43,8 @@ except:
     pass
 
 
-__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets', 'gmm', 'glm',
-           'logistic', 'lda', 'metrics', 'svm', 'features', 'clone',
+__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets', 'gmm', 
+           'linear_model', 'logistic', 'lda', 'metrics', 'svm', 'features', 'clone',
            'test', 'sgd', 'gaussian_process']
 
 __version__ = '0.6.git'

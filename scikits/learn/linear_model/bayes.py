@@ -87,8 +87,8 @@ class BayesianRidge(LinearModel):
 
     Examples
     --------
-    >>> from scikits.learn import glm
-    >>> clf = glm.BayesianRidge()
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.BayesianRidge()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
            fit_intercept=True, eps=0.001, alpha_2=1e-06, alpha_1=1e-06,
@@ -98,7 +98,7 @@ class BayesianRidge(LinearModel):
 
     Notes
     -----
-    See examples/glm/plot_bayesian_ridge.py for an example.
+    See examples/linear_model/plot_bayesian_ridge.py for an example.
     """
 
     def __init__(self, n_iter=300, eps=1.e-3, alpha_1 = 1.e-6, alpha_2 = 1.e-6,
@@ -298,8 +298,8 @@ class ARDRegression(LinearModel):
 
     Examples
     --------
-    >>> from scikits.learn import glm
-    >>> clf = glm.ARDRegression()
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.ARDRegression()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     ARDRegression(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
            fit_intercept=True, eps=0.001, threshold_lambda=10000.0,
@@ -309,7 +309,7 @@ class ARDRegression(LinearModel):
 
     Notes
     --------
-    See examples/glm/plot_ard.py for an example.
+    See examples/linear_model/plot_ard.py for an example.
     """
 
     def __init__(self, n_iter=300, eps=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,

@@ -29,7 +29,7 @@ X_test, y_test = X[n_samples/2:], y[n_samples/2:]
 
 ################################################################################
 # Lasso with path and cross-validation using LassoCV path
-from scikits.learn.glm import LassoCV
+from scikits.learn.linear_model import LassoCV
 from scikits.learn.cross_val import KFold
 
 cv = KFold(n_samples/2, 5)

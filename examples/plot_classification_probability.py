@@ -18,7 +18,7 @@ a result it can identify only the first class.
 import pylab as pl
 import numpy as np
 
-from scikits.learn.glm import LogisticRegression
+from scikits.learn.linear_model import LogisticRegression
 from scikits.learn.svm import SVC
 from scikits.learn import datasets
 

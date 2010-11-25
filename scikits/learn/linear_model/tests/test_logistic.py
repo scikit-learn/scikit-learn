@@ -5,19 +5,17 @@ from numpy.testing import assert_array_equal, \
 import nose
 from nose.tools import assert_raises
 
-from scikits.learn.glm.sparse import logistic
+from scikits.learn.linear_model import logistic
 from scikits.learn import datasets
 
-import scipy.sparse as sp
-
-X = sp.csr_matrix([[-1, 0], [0, 1], [1, 1]])
+X = [[-1, 0], [0, 1], [1, 1]]
 Y1 = [0, 1, 1]
 Y2 = [2, 1, 0]
 iris = datasets.load_iris()
 
 def test_predict_2_classes():
-    """
-    Simple sanity check on a 2 classes dataset.
+    """Simple sanity check on a 2 classes dataset
+
     Make sure it predicts the correct result on simple datasets.
     """
     clf = logistic.LogisticRegression().fit(X, Y1)
@@ -34,9 +32,7 @@ def test_predict_2_classes():
 
 
 def test_error():
-    """
-    test for appropriate exception on errors
-    """
+    """Test for appropriate exception on errors"""
     assert_raises (ValueError, logistic.LogisticRegression(C=-1).fit, X, Y1)
 
 
@@ -64,8 +60,7 @@ def test_inconsistent_input():
                   logistic.LogisticRegression().fit(X_, y_).predict,
                   np.random.random((3,12)))
 
-
-
 if __name__ == '__main__':
     import nose
     nose.runmodule()
+

@@ -294,8 +294,8 @@ class LARS(LinearModel):
 
     Examples
     --------
-    >>> from scikits.learn import glm
-    >>> clf = glm.LARS()
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.LARS()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
     LARS(verbose=False, fit_intercept=True)
     >>> print clf.coef_
@@ -406,8 +406,8 @@ class LassoLARS (LARS):
 
     Examples
     --------
-    >>> from scikits.learn import glm
-    >>> clf = glm.LassoLARS(alpha=0.1)
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.LassoLARS(alpha=0.1)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
     LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
     >>> print clf.coef_

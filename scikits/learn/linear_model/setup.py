@@ -7,7 +7,7 @@ from ConfigParser import ConfigParser
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, get_standard_file, BlasNotFoundError
-    config = Configuration('glm', parent_package, top_path)
+    config = Configuration('linear_model', parent_package, top_path)
 
     site_cfg  = ConfigParser()
     site_cfg.read(get_standard_file('site.cfg'))
@@ -23,7 +23,7 @@ def configuration(parent_package='', top_path=None):
         cblas_libs = blas_info.pop('libraries', [])
 
     config.add_extension('cd_fast',
-                         sources=[join('src', 'cd_fast.c')],
+                         sources=['cd_fast.c'],
                          libraries=cblas_libs,
                          include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),

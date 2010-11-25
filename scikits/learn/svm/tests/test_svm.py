@@ -9,7 +9,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
 from nose.tools import assert_raises
 
-from scikits.learn import svm, glm, datasets, metrics
+from scikits.learn import svm, linear_model, datasets, metrics
 from scikits.learn.datasets.samples_generator import test_dataset_classif
 
 # toy sample
@@ -242,7 +242,7 @@ def test_weight():
 
     X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5,1],
                                   seed=0)
-    for clf in (glm.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
+    for clf in (linear_model.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
         clf.fit(X_[:180], y_[:180], class_weight={0:5})
         y_pred = clf.predict(X_[180:])
         assert np.sum(y_pred == y_[180:]) >= 11

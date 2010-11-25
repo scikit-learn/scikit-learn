@@ -3,9 +3,9 @@
 Lasso on dense and sparse data
 ==============================
 
-We show that glm.Lasso and glm.sparse.Lasso
+We show that linear_model.Lasso and linear_model.sparse.Lasso
 provide the same results and that in the case of
-sparse data glm.sparse.Lasso improves the speed.
+sparse data linear_model.sparse.Lasso improves the speed.
 
 """
 print __doc__
@@ -15,8 +15,8 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 
-from scikits.learn.glm.sparse import Lasso as SparseLasso
-from scikits.learn.glm import Lasso as DenseLasso
+from scikits.learn.linear_model.sparse import Lasso as SparseLasso
+from scikits.learn.linear_model import Lasso as DenseLasso
 
 
 ###############################################################################

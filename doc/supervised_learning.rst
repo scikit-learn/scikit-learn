@@ -7,7 +7,7 @@ Supervised learning
 
 .. toctree::
 
-    modules/glm
+    modules/linear_model
     modules/svm
     modules/sgd
     modules/neighbors

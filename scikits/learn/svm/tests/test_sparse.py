@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.sparse
-from scikits.learn import datasets, svm, glm
+from scikits.learn import datasets, svm, linear_model
 from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
@@ -124,7 +124,7 @@ def test_weight():
     X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5,1],
                                   seed=0)
     X_ = scipy.sparse.csr_matrix(X_)
-    for clf in (glm.sparse.LogisticRegression(),
+    for clf in (linear_model.sparse.LogisticRegression(),
                 svm.sparse.LinearSVC(),
                 svm.sparse.SVC()):
         clf.fit(X_[:180], y_[:180], class_weight={0:5})

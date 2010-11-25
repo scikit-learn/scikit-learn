@@ -17,7 +17,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn import glm
+from scikits.learn import linear_model
 from scikits.learn import datasets
 
 diabetes = datasets.load_diabetes()
@@ -27,7 +27,7 @@ y = diabetes.target
 X[:,6] *= -1 # To reproduce wikipedia LASSO page
 
 print "Computing regularization path using the LARS ..."
-_, _, coefs_ = glm.lars_path(X, y, method='lasso', verbose=True)
+_, _, coefs_ = linear_model.lars_path(X, y, method='lasso', verbose=True)
 
 xx = np.sum(np.abs(coefs_.T), axis=1)
 xx /= xx[-1]

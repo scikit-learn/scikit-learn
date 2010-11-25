@@ -1,10 +1,12 @@
 
 .. currentmodule:: scikits.learn
 
-0.5
-===
 
 .. _changes_0_5:
+
+
+0.5
+===
 
 Changelog
 ---------
@@ -13,9 +15,9 @@ New classes
 ~~~~~~~~~~~~
 
     - Support for sparse matrices in some classifiers of modules
-      ``svm`` and ``glm`` (see :class:`svm.sparse.SVC`,
+      ``svm`` and ``linear_model`` (see :class:`svm.sparse.SVC`,
       :class:`svm.sparse.SVR`, :class:`svm.sparse.LinearSVC`,
-      :class:`glm.sparse.Lasso`, :class:`glm.sparse.ElasticNet`)
+      :class:`linear_model.sparse.Lasso`, :class:`linear_model.sparse.ElasticNet`)
 
     - New :class:`pipeline.Pipeline` object to compose different estimators.
 
@@ -23,13 +25,13 @@ New classes
       :ref:`feature_selection_doc`.
 
     - Addition of various classes capable of cross validation in the
-      glm module (:class:`glm.LassoCV`, :class:`glm.ElasticNetCV`,
+      linear_model module (:class:`linear_model.LassoCV`, :class:`linear_model.ElasticNetCV`,
       etc.).
 
     - New, more efficient LARS algorithm implementation. The Lasso
       variant of the algorithm is also implemented. See
-      :class:`glm.lars_path`, :class:`glm.LARS` and
-      :class:`glm.LassoLARS`.
+      :class:`linear_model.lars_path`, :class:`linear_model.LARS` and
+      :class:`linear_model.LassoLARS`.
 
     - New Hidden Markov Models module (see classes
       :class:`hmm.GaussianHMM`, :class:`hmm.MultinomialHMM`,

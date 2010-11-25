@@ -4,10 +4,10 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 
-from scikits.learn.glm.sparse.coordinate_descent import Lasso as SparseLasso
-from scikits.learn.glm.sparse.coordinate_descent import ElasticNet as SparseENet
-from scikits.learn.glm.coordinate_descent import Lasso as DenseLasso
-from scikits.learn.glm.coordinate_descent import ElasticNet as DenseENet
+from scikits.learn.linear_model.sparse.coordinate_descent import Lasso as SparseLasso
+from scikits.learn.linear_model.sparse.coordinate_descent import ElasticNet as SparseENet
+from scikits.learn.linear_model.coordinate_descent import Lasso as DenseLasso
+from scikits.learn.linear_model.coordinate_descent import ElasticNet as DenseENet
 
 
 def test_sparse_predict():

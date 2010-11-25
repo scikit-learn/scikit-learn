@@ -11,7 +11,7 @@ import numpy as np
 import pylab as pl
 from scipy import stats
 
-from scikits.learn.glm import ARDRegression
+from scikits.learn.linear_model import ARDRegression
 
 ################################################################################
 # Generating simulated data with Gaussian weigthts

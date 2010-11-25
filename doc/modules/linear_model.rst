@@ -2,7 +2,7 @@
 Generalized Linear Models
 =========================
 
-.. currentmodule:: scikits.learn.glm
+.. currentmodule:: scikits.learn.linear_model
 
 The following are a set of methods intended for regression in which
 the target value is expected to be a linear combination of the input
@@ -26,8 +26,8 @@ of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation.
 
 
-.. figure:: ../auto_examples/glm/images/plot_ols.png
-   :target: ../auto_examples/glm/plot_ols.html
+.. figure:: ../auto_examples/linear_model/images/plot_ols.png
+   :target: ../auto_examples/linear_model/plot_ols.html
    :scale: 50%
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
@@ -35,8 +35,8 @@ and will store the coefficients :math:`w` of the linear model in its
 `coef\_` member.
 
 
-    >>> from scikits.learn import glm
-    >>> clf = glm.LinearRegression()
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.LinearRegression()
     >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression(fit_intercept=True)
     >>> clf.coef_
@@ -54,7 +54,7 @@ example, when data are collected without an experimental design.
 
 .. topic:: Examples:
 
-   * :ref:`example_glm_plot_ols.py`
+   * :ref:`example_linear_model_plot_ols.py`
 
 
 OLS Complexity
@@ -85,8 +85,8 @@ the amount of shrinkage: the larger the value of :math:`\alpha`, the
 greater the amount of shrinkage.
 
 
-    >>> from scikits.learn import glm
-    >>> clf = glm.Ridge (alpha = .5)
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.Ridge (alpha = .5)
     >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     Ridge(alpha=0.5, fit_intercept=True)
     >>> clf.coef_
@@ -123,7 +123,7 @@ of compressed sensing.
 This implementation uses coordinate descent as the algorithm to fit
 the coefficients. See :ref:`lars_algorithm` for another implementation.
 
-    >>> clf = glm.Lasso(alpha = 0.1)
+    >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, fit_intercept=True)
     >>> clf.predict ([[1, 1]])
@@ -134,8 +134,8 @@ of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_glm_lasso_and_elasticnet.py`,
-  * :ref:`example_glm_lasso_path_with_crossvalidation.py`
+  * :ref:`example_linear_model_lasso_and_elasticnet.py`,
+  * :ref:`example_linear_model_lasso_path_with_crossvalidation.py`
 
 
 Elastic Net
@@ -151,8 +151,8 @@ The objective function to minimize is in this case
 
 .. topic:: Examples:
 
-  * :ref:`example_glm_lasso_and_elasticnet.py`
-  * :ref:`example_glm_plot_lasso_coordinate_descent_path.py`
+  * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
 .. _lars_algorithm:
@@ -191,7 +191,7 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-It is implemented using the LARS algorithm in class :class:`glm.LARS`.
+It is implemented using the LARS algorithm in class :class:`linear_model.LARS`.
 
 
 LARS Lasso
@@ -203,8 +203,8 @@ solution, which is piecewise linear as a function of the norm of its
 coefficients.
 
 
-   >>> from scikits.learn import glm
-   >>> clf = glm.LassoLARS(alpha=.1)
+   >>> from scikits.learn import linear_model
+   >>> clf = linear_model.LassoLARS(alpha=.1)
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
    LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
    >>> clf.coef_
@@ -213,13 +213,13 @@ coefficients.
 
 .. topic:: Examples:
 
- * :ref:`example_glm_plot_lar.py`
- * :ref:`example_glm_plot_lasso_lars.py`
+ * :ref:`example_linear_model_plot_lar.py`
+ * :ref:`example_linear_model_plot_lasso_lars.py`
 
 
 Getting the full path
 ---------------------
-See function scikits.learn.glm.lars_path:
+See function scikits.learn.linear_model.lars_path:
 
 .. autofunction:: lars_path
  
@@ -301,17 +301,17 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
 
 
 
-.. figure:: ../auto_examples/glm/images/plot_bayesian_ridge.png
-   :target: ../auto_examples/glm/plot_bayesian_ridge.html
+.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge.png
+   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
    :align: center
 
 
 *Bayesian Ridge Regression* is used for regression:
 
-    >>> from scikits.learn import glm
+    >>> from scikits.learn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
-    >>> clf = glm.BayesianRidge()
+    >>> clf = linear_model.BayesianRidge()
     >>> clf.fit (X, Y)
     BayesianRidge(n_iter=300, verbose=False, lambda_1=1e-06, lambda_2=1e-06,
            fit_intercept=True, eps=0.001, alpha_2=1e-06, alpha_1=1e-06,
@@ -334,7 +334,7 @@ Regression* is more robust to ill-posed problem.
 
 .. topic:: Examples:
 
- * :ref:`example_glm_plot_bayesian_ridge.py`
+ * :ref:`example_linear_model_plot_bayesian_ridge.py`
 
 .. topic:: References
 
@@ -367,14 +367,14 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
  very slightly informative priors.
 
 
-.. figure:: ../auto_examples/glm/images/plot_ard.png
-   :target: ../auto_examples/glm/plot_ard.html
+.. figure:: ../auto_examples/linear_model/images/plot_ard.png
+   :target: ../auto_examples/linear_model/plot_ard.html
    :align: center
 
 
 .. topic:: Examples:
 
-  * :ref:`example_glm_plot_ard.py`
+  * :ref:`example_linear_model_plot_ard.py`
 
 Mathematical formulation
 ------------------------

@@ -120,8 +120,8 @@ class Lasso(ElasticNet):
 
     Examples
     --------
-    >>> from scikits.learn import glm
-    >>> clf = glm.Lasso(alpha=0.1)
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, fit_intercept=True)
     >>> print clf.coef_
@@ -359,7 +359,7 @@ class LassoCV(LinearModelCV):
 
     Notes
     -----
-    See examples/glm/lasso_path_with_crossvalidation.py for an example.
+    See examples/linear_model/lasso_path_with_crossvalidation.py for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
@@ -392,7 +392,7 @@ class ElasticNetCV(LinearModelCV):
 
     Notes
     -----
-    See examples/glm/lasso_path_with_crossvalidation.py for an example.
+    See examples/linear_model/lasso_path_with_crossvalidation.py for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.

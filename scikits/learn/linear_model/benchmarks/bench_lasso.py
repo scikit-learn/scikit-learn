@@ -77,7 +77,7 @@ def compute_bench(alpha, n_samples, n_features):
 
 
 if __name__ == '__main__':
-    from scikits.learn.glm import Lasso, LassoLARS
+    from scikits.learn.linear_model import Lasso, LassoLARS
     import pylab as pl
 
     alpha = 0.01 # regularization parameter
