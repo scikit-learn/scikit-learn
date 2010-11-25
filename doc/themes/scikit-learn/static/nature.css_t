@@ -69,6 +69,7 @@ div.navbar ul {
 
 div.navbar ul, div.navbar li {
     display: inline;
+    list-style: none;
     padding: 4px 10px 5px 10px;
 }
 
