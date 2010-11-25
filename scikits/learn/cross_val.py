@@ -509,19 +509,3 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     return np.array(scores)
 
 
-################################################################################
-# Deprecated
-def split(train_indices, test_indices, *args):
-    """For each arg return a train and test subsets indices"""
-    import warnings
-    warnings.warn('split is deprecated and will be removed, '
-                    'please use indexing instead')
-    ret = []
-    for arg in args:
-        arg = np.asanyarray(arg)
-        arg_train = arg[train_indices]
-        arg_test  = arg[test_indices]
-        ret.append(arg_train)
-        ret.append(arg_test)
-    return ret
-
