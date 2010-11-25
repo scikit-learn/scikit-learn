@@ -33,6 +33,8 @@ chronological order:
   * Virgile Fritsch <virgile.fritsch@gmail.com>. Bug fixes.
   * Mathieu Blondel <mathieu@mblondel.org>
   * Peter Prettenhofer <peter.prettenhofer@gmail.com>
+  * Vincent Dubourg <vincent.dubourg@gmail.com> joined the project in
+    December 2010 and contributed the gaussian_process module.
 
 If I forgot anyone, do not hesitate to send me an email to
 fabian.pedregosa@inria.fr and I'll include you in the list.
