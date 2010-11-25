@@ -32,8 +32,8 @@ class LeaveOneOut(object):
         Examples
         ========
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4]]
-        >>> y = [1, 2]
+        >>> X = np.array([[1, 2], [3, 4]])
+        >>> y = np.array([1, 2])
         >>> loo = cross_val.LeaveOneOut(2)
         >>> len(loo)
         2
@@ -41,8 +41,8 @@ class LeaveOneOut(object):
         scikits.learn.cross_val.LeaveOneOut(n=2)
         >>> for train_index, test_index in loo:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(
-        ...        train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False  True] TEST: [ True False]
         [[3 4]] [[1 2]] [2] [1]
@@ -90,8 +90,8 @@ class LeavePOut(object):
         Examples
         ========
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
-        >>> y = [1, 2, 3, 4]
+        >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+        >>> y = np.array([1, 2, 3, 4])
         >>> lpo = cross_val.LeavePOut(4, 2)
         >>> len(lpo)
         6
@@ -99,8 +99,8 @@ class LeavePOut(object):
         scikits.learn.cross_val.LeavePOut(n=4, p=2)
         >>> for train_index, test_index in lpo:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(
-        ...        train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         TRAIN: [False  True False  True] TEST: [ True False  True False]
         TRAIN: [False  True  True False] TEST: [ True False False  True]
@@ -155,8 +155,8 @@ class KFold(object):
         Examples
         --------
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
-        >>> y = [1, 2, 3, 4]
+        >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+        >>> y = np.array([1, 2, 3, 4])
         >>> kf = cross_val.KFold(4, k=2)
         >>> len(kf)
         2
@@ -164,8 +164,8 @@ class KFold(object):
         scikits.learn.cross_val.KFold(n=4, k=2)
         >>> for train_index, test_index in kf:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(
-        ...        train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         TRAIN: [ True  True False False] TEST: [False False  True  True]
 
@@ -232,8 +232,8 @@ class StratifiedKFold(object):
         Examples
         --------
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
-        >>> y = [0, 0, 1, 1]
+        >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+        >>> y = np.array([0, 0, 1, 1])
         >>> skf = cross_val.StratifiedKFold(y, k=2)
         >>> len(skf)
         2
@@ -241,8 +241,8 @@ class StratifiedKFold(object):
         scikits.learn.cross_val.StratifiedKFold(labels=[0 0 1 1], k=2)
         >>> for train_index, test_index in skf:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(
-        ...        train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         TRAIN: [False  True False  True] TEST: [ True False  True False]
         TRAIN: [ True False  True False] TEST: [False  True False  True]
 
@@ -319,18 +319,18 @@ class LeaveOneLabelOut(object):
         Examples
         ----------
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
-        >>> y = [1, 2, 1, 2]
-        >>> labels = [1, 1, 2, 2]
+        >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+        >>> y = np.array([1, 2, 1, 2])
+        >>> labels = np.array([1, 1, 2, 2])
         >>> lol = cross_val.LeaveOneLabelOut(labels)
         >>> len(lol)
         2
         >>> print lol
-        scikits.learn.cross_val.LeaveOneLabelOut(labels=[1, 1, 2, 2])
+        scikits.learn.cross_val.LeaveOneLabelOut(labels=[1 1 2 2])
         >>> for train_index, test_index in lol:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(
-        ...        train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         [[5 6]
@@ -384,18 +384,18 @@ class LeavePLabelOut(object):
         Examples
         ----------
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [5, 6]]
-        >>> y = [1, 2, 1]
-        >>> labels = [1, 2, 3]
+        >>> X = np.array([[1, 2], [3, 4], [5, 6]])
+        >>> y = np.array([1, 2, 1])
+        >>> labels = np.array([1, 2, 3])
         >>> lpl = cross_val.LeavePLabelOut(labels, p=2)
         >>> len(lpl)
         3
         >>> print lpl
-        scikits.learn.cross_val.LeavePLabelOut(labels=[1, 2, 3], p=2)
+        scikits.learn.cross_val.LeavePLabelOut(labels=[1 2 3], p=2)
         >>> for train_index, test_index in lpl:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(
-        ...       train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False False  True] TEST: [ True  True False]
         [[5 6]] [[1 2]
