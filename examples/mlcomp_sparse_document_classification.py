@@ -46,7 +46,7 @@ import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
-from scikits.learn.sgd.sparse import SGD
+from scikits.learn.sgd.sparse import ClassifierSGD
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
 
@@ -64,7 +64,8 @@ print "%d categories" % len(news_train.target_names)
 print "Extracting features from the dataset using a sparse vectorizer"
 t0 = time()
 vectorizer = Vectorizer()
-X_train = vectorizer.fit_transform((open(f).read() for f in news_train.filenames))
+X_train = vectorizer.fit_transform((open(f).read()
+                                    for f in news_train.filenames))
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape
 assert sp.issparse(X_train)
@@ -80,7 +81,7 @@ parameters = {
 }
 print "parameters:", parameters
 t0 = time()
-clf = SGD(**parameters).fit(X_train, y_train)
+clf = ClassifierSGD(**parameters).fit(X_train, y_train)
 print "done in %fs" % (time() - t0)
 print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
 

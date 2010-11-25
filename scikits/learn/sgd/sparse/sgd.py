@@ -29,12 +29,12 @@ class ClassifierSGD(ClassifierBaseSGD):
 
     Parameters
     ----------
-    loss : str, 'hinge' or 'log' or 'modifiedhuber'
+    loss : str, 'hinge' or 'log' or 'modified_huber'
         The loss function to be used. Defaults to 'hinge'. The hinge loss is a
         margin loss used by standard linear SVM models. The 'log' loss is the
         loss of logistic regression models and can be used for probability
-        estimation in binary classifiers. 'modifiedhuber' is another smooth loss
-        that brings tolerance to outliers.
+        estimation in binary classifiers. 'modified_huber' is another smooth
+        loss that brings tolerance to outliers.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2' which
@@ -303,8 +303,8 @@ class RegressorSGD(RegressorBaseSGD):
 
     Parameters
     ----------
-    loss : str, 'squaredloss' or 'huber'
-        The loss function to be used. Defaults to 'squaredloss' which refers
+    loss : str, 'squared_loss' or 'huber'
+        The loss function to be used. Defaults to 'squared_loss' which refers
         to the ordinary least squares fit. 'huber' is an epsilon insensitive loss
         function for robust regression.
 
@@ -353,7 +353,7 @@ class RegressorSGD(RegressorBaseSGD):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = RegressorSGD()
     >>> clf.fit(X, y)
-    RegressorSGD(loss='squaredloss', shuffle=False, verbose=0, n_iter=5,
+    RegressorSGD(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
            epsilon=0.1, fit_intercept=True, penalty='l2', rho=1.0,
            alpha=0.0001)
     

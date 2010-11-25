@@ -39,12 +39,10 @@ from time import time
 import os
 import sys
 
-import numpy as np
-
 from scikits.learn.datasets import load_files
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
 from scikits.learn.svm.sparse import LinearSVC
-from scikits.learn.sgd.sparse import SGD
+from scikits.learn.sgd.sparse import ClassifierSGD
 from scikits.learn import metrics
 
 # parse commandline arguments
@@ -120,6 +118,7 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
 
+
 ################################################################################
 # Benchmark classifiers
 def benchmark(clf):
@@ -163,9 +162,11 @@ for penalty in ["l2", "l1"]:
                                         dual=False, eps=1e-3))
 
     # Train SGD model
-    sgd_results = benchmark(SGD(alpha=.0001, n_iter=50, penalty=penalty))
+    sgd_results = benchmark(ClassifierSGD(alpha=.0001, n_iter=50,
+                                          penalty=penalty))
 
 # Train SGD with Elastic Net penalty
 print 80*'='
 print "Elastic-Net penalty"
-sgd_results = benchmark(SGD(alpha=.0001, n_iter=50, penalty="elasticnet"))
+sgd_results = benchmark(ClassifierSGD(alpha=.0001, n_iter=50,
+                                      penalty="elasticnet"))

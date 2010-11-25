@@ -54,7 +54,7 @@ import os
 from scikits.learn.datasets import load_files
 from scikits.learn.feature_extraction.text.sparse import CountVectorizer
 from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
-from scikits.learn.sgd.sparse import SGD
+from scikits.learn.sgd.sparse import ClassifierSGD
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
 
@@ -101,7 +101,7 @@ print
 pipeline = Pipeline([
     ('vect', CountVectorizer()),
     ('tfidf', TfidfTransformer()),
-    ('clf', SGD()),
+    ('clf', ClassifierSGD()),
 ])
 
 parameters = {
@@ -138,4 +138,3 @@ print "Best parameters set:"
 best_parameters = grid_search.best_estimator._get_params()
 for param_name in sorted(parameters.keys()):
     print "\t%s: %r" % (param_name, best_parameters[param_name])
-

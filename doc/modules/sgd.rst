@@ -33,8 +33,14 @@ The disadvantages of Stochastic Gradient Descent include:
 Classification
 ==============
 
-The class :class:`ClassifierSGD` implements a plain stochastic gradient descent learning 
-routine which supports different loss functions and penalties for classification.
+The class :class:`ClassifierSGD` implements a plain stochastic gradient descent 
+learning routine which supports different loss functions and penalties for 
+classification.
+
+.. figure:: ../auto_examples/sgd/images/plot_separating_hyperplane.png
+   :target: ../auto_examples/sgd/plot_separating_hyperplane.html
+   :align: center
+   :scale: 50
 
 As other classifiers, SGD has to be fitted with two arrays:
 an array X of size [n_samples, n_features] holding the training
@@ -79,7 +85,7 @@ The concrete loss function can be set via the `loss` parameter. :class:`Classifi
 following loss functions: 
 
   - `loss="hinge"`: (soft-margin) linear Support Vector Machine.
-  - `loss="modifiedhuber"`: smoothed hinge loss. 
+  - `loss="modified_huber"`: smoothed hinge loss. 
   - `loss="log"`: Logistic Regression
 
 The first two loss functions are lazy, they only update the model parameters if 
@@ -137,13 +143,14 @@ routine which supports different loss functions and penalties to fit linear regr
 models. 
 
 .. figure:: ../auto_examples/sgd/images/plot_ols_sgd.png
+   :target: ../auto_examples/sgd/plot_ols_sgd.html
    :align: center
    :scale: 50
 
 The concrete loss function can be set via the `loss` parameter. :class:`RegressionSGD` supports the
 following loss functions: 
 
-  - `loss="squaredloss"`: Ordinary least squares.
+  - `loss="squared_loss"`: Ordinary least squares.
   - `loss="huber"`: Huber loss for robust regression.
 
 .. topic:: Examples:

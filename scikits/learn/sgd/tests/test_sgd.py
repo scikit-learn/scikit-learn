@@ -71,7 +71,7 @@ class DenseClassifierSGDTestCase(unittest.TestCase):
         clf = self.factory(loss='log')
         assert isinstance(clf.loss_function, sgd.Log)
 
-        clf = self.factory(loss='modifiedhuber')
+        clf = self.factory(loss='modified_huber')
         assert isinstance(clf.loss_function, sgd.ModifiedHuber)
 
     @raises(ValueError)
@@ -225,7 +225,7 @@ class DenseRegressorSGDTestCase(unittest.TestCase):
 
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
-        clf = self.factory(loss='squaredloss')
+        clf = self.factory(loss='squared_loss')
         assert isinstance(clf.loss_function, sgd.SquaredLoss)
 
         clf = self.factory(loss='huber', epsilon=0.5)
