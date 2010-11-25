@@ -149,7 +149,8 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of support vectors in decision function.
+        Coefficients of support vectors in decision function
+        multiplied by the class indicator {-1, +1}.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
