@@ -60,19 +60,19 @@ parameters or alternatively it uses the given parameters.
 ::
 
     >>> import numpy as np
-    >>> from scikits.learn.gaussian_process import GaussianProcess
+    >>> from scikits.learn import gaussian_process
     >>> def f(x): 
-    ...	    x * np.sin(x)
+    ...	    return x * np.sin(x)
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
     >>> y = f(X).ravel()
     >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
-    >>> gp = GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
-    >>> gp.fit(X, y)
+    >>> gp = gaussian_process.GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
+    >>> gp.fit(X, y) # doctest: +ELLIPSIS
     GaussianProcess(normalize=True, theta0=array([[ 0.01]]),
             optimizer='fmin_cobyla', verbose=False, storage_mode='full',
             nugget=2.2204460492503131e-15, thetaU=array([[ 0.1]]),
-            regr=<function constant at 0x51f2668>, random_start=100,
-            corr=<function cubic at 0x51f2e60>, beta0=None,
+            regr=<function constant at 0x...>, random_start=1,
+            corr=<function squared_exponential at 0x...>, beta0=None,
             thetaL=array([[ 0.0001]]))
     >>> y_pred, sigma2_pred = gp.predict(x, eval_MSE=True)
 
