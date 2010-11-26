@@ -8,7 +8,7 @@ the number of samples.
 In the second benchmark, we increase the number of dimensions of the
 training set. Then we plot the computation time as function of
 the number of dimensions.
-
+ 
 In both cases, only 10% of the features are informative.
 """
 import gc
@@ -17,30 +17,9 @@ import numpy as np
 
 from bench_glmnet import make_data
 
-def bench(clf, X_train, Y_train, X_test, Y_test, Gram=None):
-    gc.collect()
 
-    # start time
-    tstart = time()
-    if Gram is not None:
-        clf = clf.fit(X_train, Y_train, Gram=Gram)
-    else:
-        clf = clf.fit(X_train, Y_train)
-    delta = (time() - tstart)
-    # stop time
-
-    as_size = np.sum(np.abs(clf.coef_) > 0)
-    print "active set size: %s (%s %%)" % (as_size, float(as_size) /
-                                                            X_train.shape[1])
-    return delta
 
 def compute_bench(alpha, n_samples, n_features):
-
-    def LassoFactory(alpha):
-        return Lasso(alpha=alpha, fit_intercept=False)
-
-    def LassoLARSFactory(alpha):
-        return LassoLARS(alpha=alpha, fit_intercept=False, normalize=False)
 
     lasso_results = []
     larslasso_results = []
@@ -62,16 +41,26 @@ def compute_bench(alpha, n_samples, n_features):
 
             X /= np.sqrt(np.sum(X**2, axis=0)) # Normalize data
 
+            gc.collect()
             print "benching Lasso: "
-            lasso_results.append(bench(LassoFactory(alpha),
-                                                X, Y, X_test, Y_test))
+            clf = Lasso(alpha=alpha, fit_intercept=False)
+            tstart = time()
+            clf.fit(X, Y)
+            lasso_results.append(time() - tstart)
+
+            gc.collect()
             print "benching LassoLARS: "
-            larslasso_results.append(bench(LassoLARSFactory(alpha),
-                                                X, Y, X_test, Y_test))
+            clf = LassoLARS(alpha=alpha, fit_intercept=False)
+            tstart = time()
+            clf.fit(X, Y, normalize=False, precompute=False)
+            larslasso_results.append(time() - tstart)
+
+            gc.collect()
             print "benching LassoLARS (precomp. Gram): "
-            Gram = np.dot(X.T, X)
-            larslasso_gram_results.append(bench(LassoLARSFactory(alpha),
-                                        X, Y, X_test, Y_test, Gram=Gram))
+            clf = LassoLARS(alpha=alpha, fit_intercept=False)
+            tstart = time()
+            clf.fit(X, Y, normalize=False, precompute=True)
+            larslasso_gram_results.append(time() - tstart)
 
     return lasso_results, larslasso_results, larslasso_gram_results
 
