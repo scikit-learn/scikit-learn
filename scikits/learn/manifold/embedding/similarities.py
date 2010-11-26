@@ -6,18 +6,26 @@ Computes coordinates based on the similarities given as parameters
 
 __all__ = ['LLE', 'HessianMap']
 
+import numpy as np
+from scipy import linalg
+import scipy.sparse
+import math
+
 from .base_embedding import BaseEmbedding
 from ..mapping import builder as mapping_builder
 
 from barycenters import barycenters
 
-import numpy as np
-from scipy import linalg
-import scipy.sparse
-from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
-import math
 from .tools import create_graph, create_sym_graph
-from ...cluster.spectral import spectral_embedding
+from ...utils.euclidian_distances import euclidian_distances
+
+try:
+    from pyamg import smoothed_aggregation_solver
+    from scipy.sparse.linalg import lobpcg
+    pyamg_loaded = True
+except:
+    from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
+    pyamg_loaded = False
 
 class LLE(BaseEmbedding):
     """
@@ -118,15 +126,26 @@ class LLE(BaseEmbedding):
             neigh_alternate_arguments=self.neigh_alternate_arguments)
         return self
 
-def laplacian_maps(samples, n_coords, method, mode=None, **kwargs):
+def laplacian_maps(samples, n_coords, method, **kwargs):
     """
     Computes a Laplacian eigenmap for a manifold
-    Parameters:
-      - samples are the samples that will be reduced
-      - n_coords is the number of coordinates in the manifold
-      - method is the method to create the similarity matrix
-      - neigh is the neighborer used (optional, default Kneighbor)
-      - neighbor is the number of neighbors (optional, default 9)
+
+    Parameters
+    ----------
+      samples : array_like
+           the samples that will be embedded
+      n_coords : int
+           the number of coordinates in the manifold
+      method : function
+           the method to create the similarity matrix
+      neigh : function
+           the neighborer used (optional, default Kneighbor)
+      n_neighbors : int
+           the number of neighbors (optional, default 9)
+
+    Returns
+    -------
+    The embedding
     """
     W = method(samples, **kwargs)
 
@@ -135,11 +154,19 @@ def laplacian_maps(samples, n_coords, method, mode=None, **kwargs):
         Di = 1./D
         dia = scipy.sparse.dia_matrix((Di, (0,)), shape=W.shape)
         L = dia * W * dia
+        if pyamg_loaded:
+            ml = smoothed_aggregation_solver(L)
 
-        w, vectors = eigen_symmetric(L, k=n_coords+1)
+            X = scipy.rand(L.shape[0], n_coords+1)
+
+            # preconditioner based on ml
+            M = ml.aspreconditioner()
+
+            # compute eigenvalues and eigenvectors with LOBPCG
+            w, vectors = lobpcg(L, X, M=M, tol=1e-12, largest=True)
+        else:
+            w, vectors = eigen_symmetric(L, k=n_coords+1)
         vectors = np.asarray(vectors)
-        D = np.asarray(D)
-        Di = np.asarray(Di).squeeze()
 
     else:
         D = np.sqrt(np.sum(W, axis=0))
@@ -147,6 +174,7 @@ def laplacian_maps(samples, n_coords, method, mode=None, **kwargs):
         L = Di * W * Di[:,np.newaxis]
         w, vectors = scipy.linalg.eigh(L)
 
+    Di = np.asarray(Di).squeeze()
     index = np.argsort(w)[-2:-2-n_coords:-1]
 
     return np.sqrt(len(samples)) * Di[:,np.newaxis] * vectors[:,index] * \
@@ -156,6 +184,21 @@ def laplacian_maps(samples, n_coords, method, mode=None, **kwargs):
 def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
     """
     Uses a heat kernel for computing similarities in a neighborhood
+
+    Parameters
+    ----------
+      samples : array_like
+           the samples that will be embedded
+      method : function
+           the method to create the similarity matrix
+      neigh : function
+           the neighborer used (optional, default Kneighbor)
+      n_neighbors : int
+           the number of neighbors (optional, default 9)
+
+    Returns
+    -------
+    The sparse distance matrix
     """
     graph = create_sym_graph(samples, **kwargs)
 
@@ -179,9 +222,19 @@ def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
 def heat_kernel(samples, kernel_width=.5, **kwargs):
     """
     Uses a heat kernel for computing similarities in the whole array
+
+    Parameters
+    ----------
+      samples : array_like
+           the samples that will be embedded
+      kernel_width : array_like
+           the size of the heat kernel
+
+    Returns
+    -------
+    The new distance
     """
-    from tools import dist2hd
-    distances = dist2hd(samples, samples)**2
+    distances = euclidian_distances(samples, samples)**2
 
     return np.exp(-distances/kernel_width)
 
@@ -189,6 +242,15 @@ def heat_kernel(samples, kernel_width=.5, **kwargs):
 def normalized_heat_kernel(samples, **kwargs):
     """
     Uses a heat kernel for computing similarities in the whole array
+
+    Parameters
+    ----------
+      samples : array_like
+           the samples that will be embedded
+
+    Returns
+    -------
+    The embedding
     """
     similarities = heat_kernel(samples, **kwargs)
     p1 = 1./np.sqrt(np.sum(similarities, axis=0))
@@ -198,11 +260,22 @@ def normalized_heat_kernel(samples, **kwargs):
 def hessian_map(samples, n_coords, **kwargs):
     """
     Computes a Hessian eigenmap for a manifold
-    Parameters:
-    - samples are the samples that will be reduced
-    - n_coords is the number of coordinates in the manifold
-    - neigh is the neighborer used (optional, default Kneighbor)
-    - neighbor is the number of neighbors (optional, default 9)
+
+
+    Parameters
+    ----------
+      samples : array_like
+           the samples that will be embedded
+      n_coords : int
+           the number of coordinates in the manifold
+      neigh : function
+           the neighborer used (optional, default Kneighbor)
+      n_neighbors : int
+           the number of neighbors (optional, default 9)
+
+    Returns
+    -------
+    The embedding
     """
     graph = create_graph(samples, **kwargs)
     dp = n_coords * (n_coords + 1) / 2
@@ -334,8 +407,16 @@ class HessianMap(BaseEmbedding):
 def mgs(A):
     """
     Computes a Gram-Schmidt orthogonalization
+
+    Parameters
+    ----------
+    A : array_like
+
+    Returns
+    -------
+    The orthogonalization of A
     """
-    V = np.array(A)
+    V = np.asanyarray(A)
     m, n = V.shape
     R = np.zeros((n, n))
 

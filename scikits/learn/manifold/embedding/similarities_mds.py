@@ -18,9 +18,9 @@ def centered_normalized(samples):
     """
     Returns a set of samples that are centered and of variance 1
 
-    >>> import numpy
+    >>> import numpy as np
     >>> from  scikits.learn.manifold.embedding.similarities_mds import centered_normalized
-    >>> samples = numpy.array((0., 0., 0., \
+    >>> samples = np.array((0., 0., 0., \
       1., 0., 0., \
       0., 1., 0., \
       1., 1., 0., \
