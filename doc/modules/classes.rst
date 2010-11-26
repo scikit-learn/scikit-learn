@@ -36,15 +36,6 @@ For sparse data
    svm.sparse.OneClassSVM
    svm.sparse.LinearSVC
 
-Logistic Regression
-===================
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   logistic.LogisticRegression
-
 
 Generalized Linear Models
 =========================
@@ -61,6 +52,7 @@ Generalized Linear Models
    linear_model.ElasticNetCV
    linear_model.LARS
    linear_model.LassoLARS
+   linear_model.LogisticRegression
 
 
 .. autosummary::
@@ -124,7 +116,7 @@ Gaussian Mixture Models
    :toctree: generated/
    :template: class.rst
 
-   gmm.GMM
+   mixture.GMM
 
 
 Hidden Markov Models
@@ -242,12 +234,24 @@ Feature Extraction
    :toctree: generated/
    :template: class.rst
 
+   feature_extraction.text.RomanPreprocessor
    feature_extraction.text.WordNGramAnalyzer
    feature_extraction.text.CharNGramAnalyzer
-   feature_extraction.text.TermCountVectorizer
+   feature_extraction.text.CountVectorizer
    feature_extraction.text.TfidfTransformer
-   feature_extraction.text.TfidfVectorizer
-   feature_extraction.text.SparseHashingVectorizer 
+   feature_extraction.text.Vectorizer
+
+For sparse data
+---------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_extraction.text.sparse.TfidfTransformer
+   feature_extraction.text.sparse.CountVectorizer 
+   feature_extraction.text.sparse.Vectorizer 
+
 
 Pipeline
 ========
