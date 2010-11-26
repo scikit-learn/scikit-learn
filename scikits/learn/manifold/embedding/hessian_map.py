@@ -111,12 +111,10 @@ class HessianMap(BaseEmbedding):
     X_ : array_like
         Original data that is embedded
 
-    See Also
-    --------
-
-
     Notes
     -----
+    See also examples/plot_swissroll.py
+
 
     .. [1] David L. Donoho and Carrie Grimes,
            "Hessian Eigenmaps: new locally linear embedding techniques for
