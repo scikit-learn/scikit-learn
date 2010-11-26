@@ -1,11 +1,16 @@
+""" Principal Component Analysis
+"""
+
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
+import warnings
 
 import numpy as np
 from scipy import linalg
 
 from .base import BaseEstimator
-from .utils.extmath import fast_logdet
+from .utils.extmath import fast_logdet, fast_svd
+
 
 def _assess_dimension_(spect, rk, n_samples, dim):
     """
@@ -15,17 +20,21 @@ def _assess_dimension_(spect, rk, n_samples, dim):
     Parameters
     ----------
     spect: array of shape (n)
-           data spectrum
-    rk: int,  tested rank value
-    n_samples: int, number of samples
-    dim: int, embedding/emprical dimension
+        data spectrum
+    rk: int,
+        tested rank value
+    n_samples: int,
+        number of samples
+    dim: int,
+        embedding/emprical dimension
 
     Returns
     -------
-    ll, float, The log-likelihood
+    ll: float,
+        The log-likelihood
 
-    Note
-    ----
+    Notes
+    -----
     This implements the method of Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
     """
@@ -62,6 +71,7 @@ def _assess_dimension_(spect, rk, n_samples, dim):
 
     return ll
 
+
 def _infer_dimension_(spect, n, p):
     """
     This method infers the dimension of a dataset of shape (n,p)
@@ -80,36 +90,34 @@ class PCA(BaseEstimator):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
+    X: array-like, shape (n_samples, n_features)
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
     Attributes
     ----------
-    n_comp : int, none or string,
-             Number of components
-             if k is not set all components are kept
-             if k=='mle', Minka's mle is used to guess the dimension
-
-    copy : bool
+    n_comp: int, none or string
+        Number of components
+        if n_comp is not set all components are kept
+        if n_comp=='mle', Minka's MLE is used to guess the dimension
+    copy: bool
         If False, data passed to fit are overwritten
-
-    components_ : array, [n_features, n_comp]
+    components_: array, [n_features, n_comp]
         Components with maximum variance
-
-    explained_variance_ : array, [n_comp]
+    do_fast_svd: bool, optional
+        If True, the k-truncated SVD is computed using random projections 
+        which speeds up the computation on large arrays. If all the
+        components are to be computed (as in n_comp=None or
+        n_comp='mle'), this option has no effects. 
+    explained_variance_: array, [n_comp]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
 
-    Methods
-    -------
-    fit(X) : self
-        Fit the model
-
-    transform(X) : array
-        Apply dimension reduction to k components
-
+    Notes
+    -----
+    For n_comp='mle', this class uses the method of Thomas P. Minka:
+    Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 
     Examples
     --------
@@ -118,19 +126,23 @@ class PCA(BaseEstimator):
     >>> from scikits.learn.pca import PCA
     >>> pca = PCA(n_comp=2)
     >>> pca.fit(X)
-    PCA(n_comp=2, copy=True)
+    PCA(do_fast_svd=False, n_comp=2, copy=True)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
     See also
     --------
+    ProbabilisticPCA
 
     """
-    def __init__(self, n_comp=None, copy=True):
+    def __init__(self, n_comp=None, copy=True, do_fast_svd=False):
         self.n_comp = n_comp
         self.copy = copy
+        self.do_fast_svd = do_fast_svd
 
     def fit(self, X, **params):
+        """ Fit the model to the data X
+        """
         self._set_params(**params)
         X = np.atleast_2d(X)
         n_samples = X.shape[0]
@@ -139,7 +151,13 @@ class PCA(BaseEstimator):
         # Center data
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
-        U, S, V = linalg.svd(X, full_matrices=False)
+        if self.do_fast_svd:
+            if  self.n_comp == "mle" or self.n_comp is None:
+                warnings.warn('All components are to be computed'
+                    'Not using fast truncated SVD')
+            U, S, V = fast_svd(X, self.n_comp)
+        else:
+            U, S, V = linalg.svd(X, full_matrices=False)
         self.explained_variance_ = (S**2)/n_samples
         self.explained_variance_ratio_ = self.explained_variance_ / \
                                         self.explained_variance_.sum()
@@ -147,16 +165,16 @@ class PCA(BaseEstimator):
         if self.n_comp=='mle':
             self.n_comp = _infer_dimension_(self.explained_variance_,
                                             n_samples, X.shape[1])
-            self.components_ = self.components_[:, :self.n_comp]
-            self.explained_variance_ = self.explained_variance_[:self.n_comp]
 
-        elif self.n_comp is not None:
+        if self.n_comp is not None:
             self.components_ = self.components_[:, :self.n_comp]
             self.explained_variance_ = self.explained_variance_[:self.n_comp]
 
         return self
 
     def transform(self, X):
+        """ Apply the dimension reduction learned on the train data.
+        """
         Xr = X - self.mean_
         Xr = np.dot(Xr, self.components_)
         return Xr
@@ -172,9 +190,10 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim), test data
+        X: array of shape(n_samples, n_dim)
+            The data to fit
         homoscedastic: bool, optional,
-                       if True, average variance across remaining dimensions
+            If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
         self.dim = X.shape[1]
@@ -184,9 +203,7 @@ class ProbabilisticPCA(PCA):
         if self.dim <= self.n_comp:
             delta = np.zeros(self.dim)
         elif homoscedastic:
-            #delta = (Xr**2).sum()/(n_samples*(self.dim-self.n_comp)) *\
-            #        np.ones(self.dim)
-            delta = (Xr**2).sum() / (n_samples * self.dim) * np.ones(self.dim)
+            delta = (Xr**2).sum()/(n_samples*(self.dim)) * np.ones(self.dim)
         else:
             delta = (Xr**2).mean(0) / (self.dim-self.n_comp)
         self.covariance_ = np.diag(delta)
@@ -201,7 +218,8 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim), test data
+        X: array of shape(n_samples, n_dim)
+            The data to test
 
         Returns
         -------

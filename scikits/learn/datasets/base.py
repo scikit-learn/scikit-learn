@@ -22,6 +22,105 @@ class Bunch(dict):
         self.__dict__ = self
 
 
+def load_files(container_path, description=None, categories=None, shuffle=True,
+               rng=42):
+    """Load files with categories as subfolder names
+
+    Individual samples are assumed to be files stored a two levels folder
+    structure such as the following:
+
+        container_folder/
+            category_1_folder/
+                file_1.txt
+                file_2.txt
+                ...
+                file_42.txt
+            category_2_folder/
+                file_43.txt
+                file_44.txt
+                ...
+
+    The folder names are used has supervised signal label names. The indivial
+    file names are not important.
+
+    This function does not try to extract features into a numpy array or
+    scipy sparse matrix, nor does it try to load the files in memory.
+
+    To use utf-8 text files in a scikit-learn classification or clustering
+    algorithm you will first need to use the `scikits.learn.features.text`
+    module to build a feature extraction transformer that suits your
+    problem.
+
+    Similar feature extractors should be build for other kind of unstructured
+    data input such as images, audio, video, ...
+
+    Parameters
+    ----------
+
+    container_path : string or unicode
+      the path to the main folder holding one subfolder per category
+
+    description: string or unicode
+      a paragraph describing the characteristic of the dataset, its source,
+      reference, ...
+
+    categories : None or collection of string or unicode
+      if None (default), load all the categories.
+      if not Non, list of category names to load (other categories ignored)
+
+    shuffle : True by default
+      whether or not to shuffle the data: might be important for
+
+    rng : a numpy random number generator or a seed integer, 42 by default
+      used to shuffle the dataset
+
+    Returns
+    -------
+
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'filenames', the files holding the raw to learn, 'target', the
+        classification labels (integer index), 'target_names',
+        the meaning of the labels, and 'DESCR', the full description of the
+        dataset.
+
+    """
+    target = []
+    target_names = []
+    filenames = []
+
+    folders = [f for f in sorted(os.listdir(container_path))
+               if os.path.isdir(os.path.join(container_path, f))]
+
+    if categories is not None:
+        folders = [f for f in folders if f in categories]
+
+    for label, folder in enumerate(folders):
+        target_names.append(folder)
+        folder_path = os.path.join(container_path, folder)
+        documents = [os.path.join(folder_path, d)
+                     for d in sorted(os.listdir(folder_path))]
+        target.extend(len(documents) * [label])
+        filenames.extend(documents)
+
+    # convert as array for fancy indexing
+    filenames = np.array(filenames)
+    target = np.array(target)
+
+    if shuffle:
+        if isinstance(rng, int):
+            rng = np.random.RandomState(rng)
+        indices = np.arange(filenames.shape[0])
+        rng.shuffle(indices)
+        filenames = filenames[indices]
+        target = target[indices]
+
+    return Bunch(filenames=filenames,
+                 target_names=target_names,
+                 target=target,
+                 DESCR=description)
+
+
 ################################################################################
 
 def load_iris():
@@ -44,9 +143,8 @@ def load_iris():
     >>> data = load_iris()
     >>> data.target[[10, 25, 50]]
     array([0, 0, 1])
-    >>> data.target_names
-    array(['setosa', 'versicolor', 'virginica'], 
-          dtype='|S10')
+    >>> list(data.target_names)
+    ['setosa', 'versicolor', 'virginica']
 
     """
 

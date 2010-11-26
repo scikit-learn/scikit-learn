@@ -20,29 +20,17 @@ except ImportError:
 
 from .format_stack import format_exc, format_outer_frames
 from .logger import Logger, short_format_time
+from .my_exceptions import TransportableException, _mk_exception
 
 ################################################################################
-
-class JoblibException(Exception):
-    """ A simple exception with an error message that you can get to.
+class WorkerInterrupt(Exception):
+    """ An exception that is not KeyboardInterrupt to allow subprocesses
+        to be interrupted.
     """
+    pass
 
-    def __init__(self, message):
-        self.message = message
 
-    def __reduce__(self):
-        # For pickling
-        return self.__class__, (self.message,), {}
-
-    def __repr__(self):
-        return '%s\n%s\n%s\n%s' % (
-                    self.__class__.__name__,
-                    75*'_',
-                    self.message,
-                    75*'_')
-
-    __str__ = __repr__
-
+################################################################################
 
 class SafeFunction(object):
     """ Wraps a function to make it exception with full traceback in
@@ -58,11 +46,16 @@ class SafeFunction(object):
     def __call__(self, *args, **kwargs):
         try:
             return self.func(*args, **kwargs)
+        except KeyboardInterrupt:
+            # We capture the KeyboardInterrupt and reraise it as
+            # something different, as multiprocessing does not
+            # interrupt processing for a KeyboardInterrupt
+            raise WorkerInterrupt()
         except:
             e_type, e_value, e_tb = sys.exc_info()
             text = format_exc(e_type, e_value, e_tb, context=10,
                              tb_offset=1)
-            raise JoblibException(text)
+            raise TransportableException(text, e_type)
 
 def print_progress(msg, index, total, start_time, n_jobs=1):
     # XXX: Not using the logger framework: need to
@@ -97,7 +90,21 @@ def delayed(function):
     return delayed_function
 
 
+################################################################################
+class LazyApply(object):
+    """ Lazy version of the apply builtin function.
+    """
+    def __init__ (self, func, args, kwargs):
+        self.func   = func
+        self.args   = args
+        self.kwargs = kwargs
 
+    def get (self):
+        return self.func(*self.args, **self.kwargs)
+
+
+
+################################################################################
 class Parallel(Logger):
     ''' Helper class for readable parallel mapping.
 
@@ -130,6 +137,8 @@ class Parallel(Logger):
                 - early capture of pickling errors
 
             * An optional progress meter.
+
+            * Interruption of multiprocesses jobs with 'Ctrl-C'
 
         Examples
         --------
@@ -211,36 +220,47 @@ class Parallel(Logger):
             else:
                 n_jobs = multiprocessing.cpu_count()
 
+        # The list of exceptions that we will capture
+        exceptions = [TransportableException]
         if n_jobs is None or multiprocessing is None or n_jobs == 1:
             n_jobs = 1
-            from __builtin__ import apply
+            apply = LazyApply 
         else:
             pool = multiprocessing.Pool(n_jobs)
-            apply = pool.apply_async
+            def apply(func, args, kwargs):
+                return pool.apply_async(SafeFunction(function), args, kwargs)
+            # We are using multiprocessing, we also want to capture
+            # KeyboardInterrupts
+            exceptions.extend([KeyboardInterrupt, WorkerInterrupt])
 
         output = list()
         start_time = time.time()
         try:
             for index, (function, args, kwargs) in enumerate(iterable):
-                if n_jobs > 1:
-                    function = SafeFunction(function)
                 output.append(apply(function, args, kwargs))
                 if self.verbose and n_jobs == 1:
                     print '[%s]: Done job %3i | elapsed: %s' % (
                             self, index, 
                             short_format_time(time.time() - start_time)
                         )
-            if n_jobs > 1:
-                start_time = time.time()
-                jobs = output
-                output = list()
-                for index, job in enumerate(jobs):
-                    try:
-                        output.append(job.get())
-                        if self.verbose:
-                            print_progress(self, index, len(jobs), start_time,
-                                           n_jobs=n_jobs)
-                    except JoblibException, exception:
+
+            start_time = time.time()
+            jobs = output
+            output = list()
+            for index, job in enumerate(jobs):
+                try:
+                    output.append(job.get())
+                    if self.verbose:
+                        print_progress(self, index, len(jobs), start_time,
+                                       n_jobs=n_jobs)
+                except tuple(exceptions), exception:
+                    if isinstance(exception, 
+                            (KeyboardInterrupt, WorkerInterrupt)):
+                        # We have captured a user interruption, clean up
+                        # everything
+                        pool.terminate()
+                        raise exception
+                    elif isinstance(exception, TransportableException):
                         # Capture exception to add information on 
                         # the local stack in addition to the distant
                         # stack
@@ -254,10 +274,13 @@ class Parallel(Logger):
 Sub-process traceback: 
 ---------------------------------------------------------------------------
 %s""" % (
-                                    this_report,
-                                    exception.message,
-                                )
-                        raise JoblibException(report)
+                                this_report,
+                                exception.message,
+                            )
+                        # Convert this to a JoblibException
+                        exception_type = _mk_exception(exception.etype)[0]
+                        raise exception_type(report)
+                    raise exception
         finally:
             if n_jobs > 1:
                 pool.close()

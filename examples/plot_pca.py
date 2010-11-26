@@ -1,7 +1,7 @@
 """
-=========================================
+====================================
 PCA 2d projection of of Iris dataset
-=========================================
+====================================
 
 The Iris dataset represents 3 kind of Iris flowers (Setosa, Versicolour
 and Virginica) with 4 attributes: sepal length, sepal width, petal length
@@ -12,6 +12,7 @@ combination of attributes (principal components, or directions in the
 feature space) that account for the most variance in the data. Here we
 plot the different samples on the 2 first principal components.
 """
+print __doc__
 
 import pylab as pl
 

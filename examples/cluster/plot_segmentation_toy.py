@@ -1,16 +1,15 @@
 """
-
 ===========================================
 Spectral clustering for image segmentation
 ===========================================
 
 In this example, an image with connected circles is generated and
-spectral clustering is used to separate the circles. 
+spectral clustering is used to separate the circles.
 
 In these settings, the spectral clustering approach solves the problem
 know as 'normalized graph cuts': the image is seen as a graph of
 connected voxels, and the spectral clustering algorithm amounts to
-choosing graph cuts defining regions while minimizing the ratio of the 
+choosing graph cuts defining regions while minimizing the ratio of the
 gradient along the cut, and the volume of the region.
 
 As the algorithm tries to balance the volume (ie balance the region
@@ -25,6 +24,8 @@ In addition, we use the mask of the objects to restrict the graph to the
 outline of the objects. In this example, we are interested in
 separating the objects one from the other, and not from the background.
 """
+print __doc__
+
 # Authors:  Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #           Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD
@@ -32,7 +33,7 @@ separating the objects one from the other, and not from the background.
 import numpy as np
 import pylab as pl
 
-from scikits.learn.features import image
+from scikits.learn.feature_extraction import image
 from scikits.learn.cluster import spectral_clustering
 
 ################################################################################

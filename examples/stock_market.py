@@ -1,14 +1,13 @@
 """
-
 ===========================================
 Finding structure in the stock market
 ===========================================
 
-
-
 An example of playing with stock market data to try and find some
 structure in it.
 """
+print __doc__
+
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD
 

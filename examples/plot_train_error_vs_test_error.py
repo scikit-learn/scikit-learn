@@ -17,7 +17,7 @@ print __doc__
 # License: BSD Style.
 
 import numpy as np
-from scikits.learn import glm
+from scikits.learn import linear_model
 
 ###############################################################################
 # Generate sample data
@@ -35,7 +35,7 @@ y_train, y_test = y[:n_samples_train], y[n_samples_train:]
 ###############################################################################
 # Compute train and test errors
 alphas = np.logspace(-5, 1, 60)
-enet = glm.ElasticNet(rho=0.7)
+enet = linear_model.ElasticNet(rho=0.7)
 train_errors = list()
 test_errors = list()
 for alpha in alphas:

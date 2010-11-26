@@ -3,7 +3,7 @@
 Blind source separation using FastICA
 =====================================
 
-ICA is used to estimate sources given noisy measurements.
+:ref:`ICA` is used to estimate sources given noisy measurements.
 Imagine 2 instruments playing simultaneously and 2 microphones
 recording the mixed signals. ICA is used to recover the sources
 ie. what is played by each instrument.

@@ -7,6 +7,8 @@ Simple usage of Support Vector Machines to classify a sample. It will
 plot the decision surface and the support vectors.
 
 """
+print __doc__
+
 import numpy as np
 import pylab as pl
 from scikits.learn import svm, datasets
@@ -28,11 +30,11 @@ def my_kernel(x, y):
     """
     M = np.array([[2, 0], [0, 1.0]])
     return np.dot(np.dot(x, M), y.T)
-    
+
 
 h=.02 # step size in the mesh
 
-# we create an instance of SVM and fit out data. 
+# we create an instance of SVM and fit out data.
 clf = svm.SVC(kernel=my_kernel)
 clf.fit(X, Y)
 

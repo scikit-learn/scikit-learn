@@ -9,9 +9,9 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 from .base import BaseEstimator
 
 class Pipeline(BaseEstimator):
-    """ Pipeline of transforms with a final estimator 
+    """ Pipeline of transforms with a final estimator
 
-        Sequentialy apply a list of transforms and a final estimator 
+        Sequentialy apply a list of transforms and a final estimator
         Intermediate steps of the pipeline must be 'transforms', that
         is that they must implements fit & transform methods
         The final estimator need only implements fit.
@@ -33,12 +33,21 @@ class Pipeline(BaseEstimator):
         fit:
             Fit all the transforms one after the other and transform the
             data, then fit the transformed data using the final estimator
+        fit_transform:
+            Fit all the transforms one after the other and transform the
+            data, then use fit_transform on transformed data using the final
+            estimator. Valid only if the final estimator implements
+            fit_transform.
         predict:
-            Applied transforms to the data, and the predict method of the 
+            Applies transforms to the data, and the predict method of the
             final estimator. Valid only if the final estimator implements
             predict.
+        transform:
+            Applies transforms to the data, and the transform method of the
+            final estimator. Valid only if the final estimator implements
+            transform.
         score:
-            Applied transforms to the data, and the score method of the 
+            Applies transforms to the data, and the score method of the
             final estimator. Valid only if the final estimator implements
             score.
 
@@ -64,7 +73,7 @@ class Pipeline(BaseEstimator):
         >>> # and a parameter 'C' of the svn
         >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
         Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, eps=0.001,
-          cache_size=100.0, shrinking=True, gamma=0.01))])
+          cache_size=100.0, shrinking=True, gamma=0.0))])
 
         >>> prediction = anova_svm.predict(X)
         >>> score = anova_svm.score(X)
@@ -83,15 +92,16 @@ class Pipeline(BaseEstimator):
             fit/transform) that are chained, in the order in which
             they are chained, with the last object an estimator.
         """
-        self._named_steps = dict(steps)
+        self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         self.steps = steps
-        assert len(self._named_steps) == len(steps), ("Names provided are "
+        assert len(self.named_steps) == len(steps), ("Names provided are "
             "not unique: %s" % names)
         transforms = estimators[:-1]
         estimator = estimators[-1]
         for t in  transforms:
-            assert hasattr(t, "fit") and hasattr(t, "transform"), ValueError(
+            assert (hasattr(t, "fit") or hasattr(t, "fit_transform")) and \
+                    hasattr(t, "transform"), ValueError(
                 "All intermediate steps a the chain should be transforms "
                 "and implement fit and transform",
                 "'%s' (type %s) doesn't)" % (t, type(t))
@@ -101,33 +111,51 @@ class Pipeline(BaseEstimator):
                 "'%s' (type %s) doesn't)" % (estimator, type(estimator))
             )
 
-    def _get_params(self, deep=False):
+    def _get_params(self, deep=True):
         if not deep:
             return super(Pipeline, self)._get_params(deep=False)
         else:
-            out = self._named_steps.copy()
-            for name, step in self._named_steps.iteritems():
+            out = self.named_steps.copy()
+            for name, step in self.named_steps.iteritems():
                 for key, value in step._get_params(deep=True).iteritems():
                     out['%s__%s' % (name, key)] = value
-        return out
-    
+            return out
+
     #---------------------------------------------------------------------------
     # Estimator interface
     #---------------------------------------------------------------------------
 
-    def fit(self, X, y=None, **params):
+
+    def _pre_transform(self, X, y=None, **params):
         self._set_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.fit(Xt, y).transform(Xt)
+            if hasattr(transform, "fit_transform"):
+                Xt = transform.fit_transform(Xt, y)
+            else:
+                Xt = transform.fit(Xt, y).transform(Xt)
+        return Xt
+
+    def fit(self, X, y=None, **params):
+        Xt = self._pre_transform(X, y, **params)
         self.steps[-1][-1].fit(Xt, y)
         return self
+
+    def fit_transform(self, X, y=None, **params):
+        Xt = self._pre_transform(X, y, **params)
+        return self.steps[-1][-1].fit_transform(Xt, y)
 
     def predict(self, X):
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt)
+
+    def transform(self, X):
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].transform(Xt)
 
     def score(self, X, y=None):
         Xt = X

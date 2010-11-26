@@ -2,11 +2,8 @@ import numpy as np
 from numpy.random import randn
 from nose.tools import assert_true
 
-
-from scikits.learn import datasets
-from scikits.learn.pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
-#from .. import datasets
-#from ..pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
+from .. import datasets
+from ..pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
 
 iris = datasets.load_iris()
 
@@ -33,6 +30,20 @@ def test_pca_check_projection():
     X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5])
     pca = PCA(n_comp=2)
+    pca.fit(X)
+    Xt = 0.1* randn(1, p) + np.array([3, 4, 5])
+    Yt = pca.transform(Xt)
+    Yt /= np.sqrt((Yt**2).sum())
+    np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
+
+
+def test_fast_pca_check_projection():
+    """test that the projection of data is correct
+    """
+    n, p = 100, 3
+    X = randn(n, p) * .1
+    X[:10] += np.array([3, 4, 5])
+    pca = PCA(n_comp=2, do_fast_svd=True)
     pca.fit(X)
     Xt = 0.1* randn(1, p) + np.array([3, 4, 5])
     Yt = pca.transform(Xt)
@@ -91,7 +102,6 @@ def test_infer_dim_3():
     pca = PCA(n_comp=p)
     pca.fit(X)
     spect = pca.explained_variance_
-    print _infer_dimension_(spect, n, p)
     assert_true(_infer_dimension_(spect, n, p) > 2)
 
 

@@ -1,10 +1,14 @@
 """
-=================
+==============
 Non-linear SVM
-=================
+==============
 
+Perform binary classification using non-linear SVC
+with RBF kernel. The target to predict is a XOR of the
+inputs.
 
 """
+print __doc__
 
 import numpy as np
 import pylab as pl

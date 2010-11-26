@@ -8,58 +8,56 @@ Python**. In particular, joblib offers:
 
   3. logging and tracing of the execution
 
-Joblib is optimized to be fast and robust in particular on large,
-long-running functions and has specific optimizations for `numpy` arrays.
+Joblib is optimized to be **fast** and **robust** in particular on large
+data and has specific optimizations for `numpy` arrays. It is
+**BSD-licensed**.
 
-____
 
-* The latest user documentation for `joblib` can be found on
-  http://packages.python.org/joblib/
+    ============================== ==============================================
+    **User documentation**:        http://packages.python.org/joblib
+                               
+    **Download packages**:         http://pypi.python.org/pypi/joblib#downloads
+                               
+    **Source code**:               http://github.com/joblib/joblib
 
-* The latest packages can be downloaded from
-  http://pypi.python.org/pypi/joblib
+    **Report issues**:             http://github.com/joblib/joblib/issues
+    ============================== ==============================================
 
-* Instructions for developpers can be found at:
-  http://github.com/joblib/joblib
-
-joblib is **BSD-licensed**.
 
 Vision
 --------
 
-Joblib came out of long-running data-analysis Python scripts. The long
-term vision is to provide tools for scientists to achieve better
-reproducibility when running jobs, without changing the way numerical
-code looks like. However, Joblib can also be used to provide a
-light-weight make replacement.
+The vision is to provide tools to easily achieve better performance and
+reproducibility when working with long running jobs. In addition, Joblib
+can also be used to provide a light-weight make replacement or caching
+solution.
 
-The main problems identified are:
+ *  **Avoid computing twice the same thing**: code is rerun over an
+    over, for instance when prototyping computational-heavy jobs (as in
+    scientific development), but hand-crafted solution to aleviate this
+    issue is error-prone and often leads to unreproducible results
+ 
+ *  **Persist to disk transparently**: persisting in an efficient way
+    arbitrary objects containing large data is hard. In addition,
+    hand-written persistence does not link easily the file on disk to the
+    execution context of the original Python object. As a result, it is
+    challenging to resume a application status or computational job, eg
+    after a crash.
 
- 1) **Lazy evaluation:** People need to rerun over and over the same
-    script as it is tuned, but end up commenting out steps, or
-    uncommenting steps, as they are needed, as they take long to run.
+It strives to address these problems while **leaving your code and your
+flow control as unmodified as possible** (no framework, no new
+paradigms). 
 
- 2) **Persistence:** It is difficult to persist in an efficient way
-    arbitrary objects containing large numpy arrays. In addition,
-    hand-written persistence to disk does not link easily the file on
-    disk to the corresponding Python object it was persists from in the
-    script. This leads to people not a having a hard time resuming the
-    job, eg after a crash and persistence getting in the way of work.
-
-The approach taken by Joblib to address these problems is not to build a
-heavy framework and coerce user into using it (e.g. with an explicit
-pipeline). It strives to leave your code and your flow control as
-unmodified as possible.
-
-Current features
+Main features
 ------------------
 
-1) **Transparent and fast disk-caching of output value:** a make-like
-   functionality for Python functions that works well for arbitrary
-   Python objects, including very large numpy arrays. The goal is 
-   to separate operations in a set of steps with well-defined inputs and 
-   outputs, that are saved and reran only if necessary, by using standard 
-   Python functions::
+1) **Transparent and fast disk-caching of output value:** a memoize or
+   make-like functionality for Python functions that works well for
+   arbitrary Python objects, including very large numpy arrays. Separate
+   persistence and flow-execution logic from domain logic or algorithmic
+   code by writing the operations as a set of steps with well-defined
+   inputs and  outputs: Python functions. Joblib can save their
+   computation to disk and rerun it only if necessary::
 
       >>> from joblib import Memory
       >>> mem = Memory(cachedir='/tmp/joblib')
@@ -93,20 +91,12 @@ Current features
    display streams, and provide a way of compiling a report. 
    We want to be able to quickly inspect what has been run.
 
-Contributing
--------------
-
-The code is `hosted <http://github.com/GaelVaroquaux/joblib>`_ on github.
-It is easy to clone the project and experiment with making your own
-modifications. If you need extra features, don't hesitate to contribute
-them.
-
 .. 
     >>> import shutil ; shutil.rmtree('/tmp/joblib/')
 
 """
 
-__version__ = '0.4.4'
+__version__ = '0.4.6'
 
 
 from .memory import Memory

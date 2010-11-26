@@ -132,7 +132,7 @@ class Neighbors(BaseEstimator, ClassifierMixin):
     [0 1]
     """
     T = np.asanyarray(T)
-    if k is None: 
+    if k is None:
         k=self.k
     return _predict_from_BallTree(self.ball_tree, self.Y, T, k=k)
 

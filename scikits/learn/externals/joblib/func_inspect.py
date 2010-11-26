@@ -54,7 +54,7 @@ def get_func_code(func):
             return repr(func), source_file, -1
 
 
-def get_func_name(func, resolv_alias=True):  
+def get_func_name(func, resolv_alias=True, win_characters=True):  
     """ Return the function import path (as a list of module names), and
         a name for the function.
 
@@ -64,6 +64,9 @@ def get_func_name(func, resolv_alias=True):
             The func to inspect
         resolv_alias: boolean, optional
             If true, possible local alias are indicated.
+        win_characters: boolean, optional
+            If true, substitute special characters using urllib.quote
+            This is useful in Windows, as it cannot encode some filenames
     """
     if hasattr(func, '__module__'):
         module = func.__module__
@@ -94,7 +97,7 @@ def get_func_name(func, resolv_alias=True):
     elif hasattr(func, '__name__'): 
         name = func.__name__
     else:
-        name = 'unkown'
+        name = 'unknown'
     # Hack to detect functions not defined at the module-level
     if resolv_alias:
         # TODO: Maybe add a warning here?
@@ -106,7 +109,7 @@ def get_func_name(func, resolv_alias=True):
         if hasattr(func, 'im_class'):
             klass = func.im_class
             module.append(klass.__name__)
-    if os.name == 'nt':
+    if os.name == 'nt' and win_characters:
         # Stupid windows can't encode certain characters in filenames
         import urllib
         for char in ('<', '>', '!', ':'):
@@ -133,7 +136,7 @@ def filter_args(func, ignore_lst, *args, **kwargs):
         Returns
         -------
         filtered_args: list
-            List of filtered positionnal arguments.
+            List of filtered positional arguments.
         filtered_kwdargs: dict
             List of filtered Keyword arguments.
     """
@@ -179,7 +182,7 @@ def filter_args(func, ignore_lst, *args, **kwargs):
             else:
                 try:
                     arg_dict[arg_name] = arg_defaults[position]
-                except IndexError:
+                except (IndexError, KeyError):
                     # Missing argument
                     raise ValueError('Wrong number of arguments for %s%s:\n'
                                      '     %s(%s, %s) was called.'
