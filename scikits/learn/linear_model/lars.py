@@ -358,12 +358,12 @@ class LARS(LinearModel):
             X[:, nonzeros] /= norms[nonzeros]
 
         # precompute if n_samples > n_features
-        if precompute == True or \
-               (precompute == 'auto' and X.shape[0] > X.shape[1]):
-            Gram = np.dot(X.T, X)
-        elif hasattr(precompute, '__array__'):
+        if hasattr(precompute, '__array__'):
             # copy as it's going to be modified
             Gram = precompute.copy()
+        elif precompute == True or \
+               (precompute == 'auto' and X.shape[0] > X.shape[1]):
+            Gram = np.dot(X.T, X)
         else:
             Gram = None
 
