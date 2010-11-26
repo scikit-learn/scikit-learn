@@ -22,6 +22,7 @@ from ...utils.euclidian_distances import euclidian_distances
 try:
     from pyamg import smoothed_aggregation_solver
     from scipy.sparse.linalg import lobpcg
+    raise RuntimeError("pyamg is currently not supported")
     pyamg_loaded = True
 except:
     from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
@@ -155,6 +156,10 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
         dia = scipy.sparse.dia_matrix((Di, (0,)), shape=W.shape)
         L = dia * W * dia
         if pyamg_loaded:
+            L = L.tocoo()
+            diag_idx = (L.row == L.col)
+            L.data[diag_idx] = -1
+            L = L.tocsr()
             ml = smoothed_aggregation_solver(L)
 
             X = scipy.rand(L.shape[0], n_coords+1)
@@ -163,7 +168,7 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
             M = ml.aspreconditioner()
 
             # compute eigenvalues and eigenvectors with LOBPCG
-            w, vectors = lobpcg(L, X, M=M, tol=1e-12, largest=True)
+            w, vectors = lobpcg(L, X, M=M, tol=1e-3, largest=False)
         else:
             w, vectors = eigen_symmetric(L, k=n_coords+1)
         vectors = np.asarray(vectors)
@@ -176,6 +181,7 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
 
     Di = np.asarray(Di).squeeze()
     index = np.argsort(w)[-2:-2-n_coords:-1]
+    print index, w[index]
 
     return np.sqrt(len(samples)) * Di[:,np.newaxis] * vectors[:,index] * \
         math.sqrt(np.sum(D))
