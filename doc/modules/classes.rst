@@ -71,6 +71,27 @@ For sparse data
 
    linear_model.sparse.Lasso
    linear_model.sparse.ElasticNet
+
+
+Stochastic Gradient Descent
+===========================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   sgd.ClassifierSGD
+   sgd.RegressorSGD
+
+For sparse data
+---------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   sgd.sparse.ClassifierSGD
+   sgd.sparse.RegressorSGD
         
 
 Bayesian Regression

@@ -147,7 +147,7 @@ models.
    :align: center
    :scale: 75
 
-The concrete loss function can be set via the `loss` parameter. :class:`RegressionSGD` supports the
+The concrete loss function can be set via the `loss` parameter. :class:`RegressorSGD` supports the
 following loss functions: 
 
   - `loss="squared_loss"`: Ordinary least squares.
@@ -157,7 +157,7 @@ following loss functions:
 
  * :ref:`example_sgd_plot_ols_sgd.py`,
 
-.. currentmodule:: scikits.learn.svm.sparse
+.. currentmodule:: scikits.learn.sgd.sparse
 
 
 Stochastic Gradient Descent for sparse data
