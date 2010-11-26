@@ -41,12 +41,12 @@ class TestLLE(TestCase):
     def test_transform_raises(self):
         np.random.seed(0)
         lle = LLE(n_coords=2, mapping_kind=None, n_neighbors=3)
-        lle.fit(samples[:3])
+        lle.fit(samples[:4])
         lle.transform(samples[0])
 
     def test_transform(self):
         np.random.seed(0)
         lle = LLE(n_coords=2, n_neighbors=3)
-        lle.fit(samples[:3])
+        lle.fit(samples[:4])
         mapped = lle.transform(samples)
-        assert_array_almost_equal(mapped[:3], lle.embedding_, decimal=1)
+        assert_array_almost_equal(mapped[:4], lle.embedding_, decimal=1)

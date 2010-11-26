@@ -27,6 +27,44 @@ except:
     from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
     pyamg_loaded = False
 
+def find_largest_eigenvectors(L, n_coords, largest = True):
+    """
+    Finds n_coords+1 coordinates of L and returns the eigenvalues + eigenvectors
+
+    Parameters
+    ----------
+    L : array or sparse
+
+    n_coords : int
+
+    largest : bool
+        False if the lowest eigenvalues must be computed
+
+    Returns
+    -------
+    w : array_like
+
+    vectors : array_like
+    """
+    if pyamg_loaded and sparse.isspmatrix(laplacian):
+        L = L.tocoo()
+        diag_idx = (L.row == L.col)
+        L.data[diag_idx] = -1
+        L = L.tocsr()
+        ml = smoothed_aggregation_solver(L)
+
+        X = scipy.rand(L.shape[0], n_coords+1)
+
+        # preconditioner based on ml
+        M = ml.aspreconditioner()
+
+        # compute eigenvalues and eigenvectors with LOBPCG
+        return lobpcg(L, X, M=M, tol=1e-3, largest=not largest)
+    else:
+        return eigen_symmetric(L, k=n_coords+1,
+            which = 'LM' if largest else 'SM')
+
+
 def laplacian_maps(samples, n_coords, method, **kwargs):
     """
     Computes a Laplacian eigenmap for a manifold
@@ -54,22 +92,8 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
     Di = 1./D
     dia = scipy.sparse.dia_matrix((Di, (0,)), shape=W.shape)
     L = dia * W * dia
-    if pyamg_loaded:
-        L = L.tocoo()
-        diag_idx = (L.row == L.col)
-        L.data[diag_idx] = -1
-        L = L.tocsr()
-        ml = smoothed_aggregation_solver(L)
 
-        X = scipy.rand(L.shape[0], n_coords+1)
-
-        # preconditioner based on ml
-        M = ml.aspreconditioner()
-
-        # compute eigenvalues and eigenvectors with LOBPCG
-        w, vectors = lobpcg(L, X, M=M, tol=1e-3, largest=False)
-    else:
-        w, vectors = eigen_symmetric(L, k=n_coords+1)
+    w, vectors = find_largest_eigenvectors(L, n_coords)
     vectors = np.asarray(vectors)
 
     Di = np.asarray(Di).squeeze()
@@ -114,7 +138,8 @@ def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
     W = np.asarray(W)
     indices = np.asarray(indices, dtype=np.intc)
     indptr = np.asarray(indptr, dtype=np.intc)
-    return scipy.sparse.csr_matrix((W, indices, indptr), shape=(len(samples), len(samples)))
+    return scipy.sparse.csr_matrix((W, indices, indptr),
+         shape=(len(samples), len(samples)))
 
 
 def heat_kernel(samples, kernel_width=.5, **kwargs):
