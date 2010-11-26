@@ -20,7 +20,7 @@ parameters of these Gaussians from the data.
 GMM classifier
 ==============
 
-.. currentmodule:: scikits.learn.gmm
+.. currentmodule:: scikits.learn.mixture
 
 The :class:`GMM` object implements a :meth:`GMM.fit` method to learn a
 Gaussian Mixture Models from train data. Given test data, it can assign
@@ -32,19 +32,19 @@ using the :meth:`GMM.predict` method.
     sample beloning to the various Gaussians may be retrieved using the
     :meth:`GMM.predict_proba` method.
 
-.. figure:: ../auto_examples/gmm/images/plot_gmm_classifier.png
+.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier.png
    :target: ../auto_examples/cluster/plot_gmm_classifier.html
    :align: center
    :scale: 75%
 
 .. topic:: Examples:
 
-    * See :ref:`example_gmm_plot_gmm_classifier.py` for an example of
+    * See :ref:`example_mixture_plot_gmm_classifier.py` for an example of
       using a GMM as a classifier on the iris dataset.
 
-    * See :ref:`example_gmm_plot_gmm.py` for an example on plotting the
+    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
       confidence ellipsoids.
 
-    * See :ref:`example_gmm_plot_gmm_pdf.py` for an example on plotting the 
+    * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
       density estimation.
 
