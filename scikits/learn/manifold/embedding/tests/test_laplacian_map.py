@@ -10,7 +10,7 @@ from unittest import TestCase
 from nose.tools import raises
 
 from ..tools import create_neighborer
-from ..similarities_mds import LaplacianEigenmap, DiffusionMap
+from ..laplacian_map import LaplacianEigenmap, DiffusionMap
 
 samples = np.array((0., 0., 0.,
   1., 0., 0.,
