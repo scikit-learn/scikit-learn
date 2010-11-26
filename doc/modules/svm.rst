@@ -146,7 +146,7 @@ will only take as input an array X, as there are no class labels.
 .. figure:: ../auto_examples/svm/images/plot_oneclass.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
-   :scale: 50
+   :scale: 75
 
 
 .. topic:: Examples:
@@ -307,7 +307,7 @@ generalization error of the classifier.
 
 .. figure:: ../auto_examples/svm/images/plot_separating_hyperplane.png
    :align: center
-   :scale: 50
+   :scale: 75
 
 SVC
 ---

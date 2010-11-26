@@ -82,7 +82,7 @@ parameters or alternatively it uses the given parameters.
 
   * :ref:`example_gaussian_process_plot_gp_diabetes_dataset.py`
 
-Mathematica formulation
+Mathematical formulation
 ========================
 
 
@@ -259,25 +259,26 @@ Processes for Machine Learning, please refer to the references below:
 
 .. topic:: References:
 
-    * *"DACE, A Matlab Kriging Toolbox"*
-      S Lophaven, HB Nielsen, J Sondergaard
-      2002,
-      <http://www2.imm.dtu.dk/~hbn/dace/>
+    * `DACE, A Matlab Kriging Toolbox
+      <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
+      Sondergaard 2002
+      
 
-    * *"Screening, predicting, and computer experiments"*
-      WJ Welch, RJ Buck, J Sacks, HP Wynn, TJ Mitchell, and MD Morris
-      Technometrics 34(1) 15--25, 1992,
-      <http://www.jstor.org/pss/1269548>
+    * `Screening, predicting, and computer experiments
+      <http://www.jstor.org/pss/1269548>`_ WJ Welch, RJ Buck, J Sacks,
+      HP Wynn, TJ Mitchell, and MD Morris Technometrics 34(1) 15--25,
+      1992
+      
 
-    * *"Gaussian Processes for Machine Learning"*
-      CE Rasmussen, CKI Williams
-      MIT Press, 2006 (Ed. T Diettrich)
-      <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>
+    * `Gaussian Processes for Machine Learning
+      <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ CE
+      Rasmussen, CKI Williams MIT Press, 2006 (Ed. T Diettrich)
+      
 
-    * *"The design and analysis of computer experiments"*
-      TJ Santner, BJ Williams, W Notz
-      Springer, 2003
-      <http://www.stat.osu.edu/~comp_exp/book.html>
+    * `The design and analysis of computer experiments
+      <http://www.stat.osu.edu/~comp_exp/book.html>`_ TJ Santner, BJ
+      Williams, W Notz Springer, 2003
+
 
 
 .. correlation_models::
@@ -323,7 +324,7 @@ toolbox.
 
 .. topic:: References:
 
-    * *"DACE, A Matlab Kriging Toolbox"*
-      S Lophaven, HB Nielsen, J Sondergaard
-      2002,
-      <http://www2.imm.dtu.dk/~hbn/dace/>
+    * `DACE, A Matlab Kriging Toolbox
+      <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
+      Sondergaard 2002,
+      

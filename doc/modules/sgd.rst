@@ -40,7 +40,7 @@ classification.
 .. figure:: ../auto_examples/sgd/images/plot_separating_hyperplane.png
    :target: ../auto_examples/sgd/plot_separating_hyperplane.html
    :align: center
-   :scale: 50
+   :scale: 75
 
 As other classifiers, SGD has to be fitted with two arrays:
 an array X of size [n_samples, n_features] holding the training
@@ -145,7 +145,7 @@ models.
 .. figure:: ../auto_examples/sgd/images/plot_ols_sgd.png
    :target: ../auto_examples/sgd/plot_ols_sgd.html
    :align: center
-   :scale: 50
+   :scale: 75
 
 The concrete loss function can be set via the `loss` parameter. :class:`RegressionSGD` supports the
 following loss functions: 
@@ -250,7 +250,7 @@ misclassification error (Zero-one loss) as shown in the Figure below.
 
 .. figure:: ../auto_examples/sgd/images/plot_loss_functions.png
    :align: center
-   :scale: 50
+   :scale: 75
 
 Popular choices for the regularization term :math:`R` include:
 
@@ -263,7 +263,7 @@ in the parameter space when :math:`R(w) = 1`.
 
 .. figure:: ../auto_examples/sgd/images/plot_penalties.png
    :align: center
-   :scale: 50
+   :scale: 75
 
 SGD
 ---
