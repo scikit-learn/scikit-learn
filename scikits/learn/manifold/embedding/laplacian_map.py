@@ -50,38 +50,30 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
     """
     W = method(samples, **kwargs)
 
-    if scipy.sparse.issparse(W):
-        D = np.sqrt(W.sum(axis=0))
-        Di = 1./D
-        dia = scipy.sparse.dia_matrix((Di, (0,)), shape=W.shape)
-        L = dia * W * dia
-        if pyamg_loaded:
-            L = L.tocoo()
-            diag_idx = (L.row == L.col)
-            L.data[diag_idx] = -1
-            L = L.tocsr()
-            ml = smoothed_aggregation_solver(L)
+    D = np.sqrt(W.sum(axis=0))
+    Di = 1./D
+    dia = scipy.sparse.dia_matrix((Di, (0,)), shape=W.shape)
+    L = dia * W * dia
+    if pyamg_loaded:
+        L = L.tocoo()
+        diag_idx = (L.row == L.col)
+        L.data[diag_idx] = -1
+        L = L.tocsr()
+        ml = smoothed_aggregation_solver(L)
 
-            X = scipy.rand(L.shape[0], n_coords+1)
+        X = scipy.rand(L.shape[0], n_coords+1)
 
-            # preconditioner based on ml
-            M = ml.aspreconditioner()
+        # preconditioner based on ml
+        M = ml.aspreconditioner()
 
-            # compute eigenvalues and eigenvectors with LOBPCG
-            w, vectors = lobpcg(L, X, M=M, tol=1e-3, largest=False)
-        else:
-            w, vectors = eigen_symmetric(L, k=n_coords+1)
-        vectors = np.asarray(vectors)
-
+        # compute eigenvalues and eigenvectors with LOBPCG
+        w, vectors = lobpcg(L, X, M=M, tol=1e-3, largest=False)
     else:
-        D = np.sqrt(np.sum(W, axis=0))
-        Di = 1./D
-        L = Di * W * Di[:,np.newaxis]
-        w, vectors = scipy.linalg.eigh(L)
+        w, vectors = eigen_symmetric(L, k=n_coords+1)
+    vectors = np.asarray(vectors)
 
     Di = np.asarray(Di).squeeze()
     index = np.argsort(w)[-2:-2-n_coords:-1]
-    #print index, w[index]
 
     return np.sqrt(len(samples)) * Di[:,np.newaxis] * vectors[:,index] * \
         math.sqrt(np.sum(D))

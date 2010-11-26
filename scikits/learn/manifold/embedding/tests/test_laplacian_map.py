@@ -69,12 +69,12 @@ class TestDiffusionMap(TestCase):
     @raises(RuntimeError)
     def test_transform_raises(self):
         diffusion = DiffusionMap(n_coords=2, mapping_kind=None, n_neighbors=3)
-        diffusion.fit(samples[:3, :2])
+        diffusion.fit(samples[:4, :2])
         diffusion.transform(samples[0, :2])
 
     def test_transform(self):
         diffusion = DiffusionMap(n_coords=2, n_neighbors=3)
-        diffusion.fit(samples[:3, :2])
+        diffusion.fit(samples[:4, :2])
         mapped = diffusion.transform(samples[:, :2])
-        assert_array_almost_equal(mapped[:3, :2],
+        assert_array_almost_equal(mapped[:4, :2],
             diffusion.embedding_, decimal=1)
