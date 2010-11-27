@@ -1,11 +1,12 @@
 """
 Extended math utilities.
 """
-# Authors: G. Varoquaux, A. Gramfort, A. Passos
+# Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
 import sys
 import math
+import warnings
 
 import numpy as np
 from scipy import linalg
@@ -77,16 +78,16 @@ else:
     combinations = itertools.combinations
 
 
-
 def density(w, **kwargs):
     """Compute density of a sparse vector
-        Return a value between 0 and 1
+
+    Return a value between 0 and 1
     """
     d = 0 if w is None else float((w != 0).sum()) / w.size
     return d
 
 
-def fast_svd(M, k):
+def fast_svd(M, k, p=10):
     """Computes the k-truncated SVD using random projections
 
     Parameters
@@ -97,38 +98,58 @@ def fast_svd(M, k):
     k: int
         Number of singular values and vectors to extract.
 
+    p: int (default is 10)
+        Additional number of samples of the range of M to ensure proper
+        conditioning. See the notes below.
+
     Notes
     =====
-
-    This algorithm finds the exact truncated eigenvalue decomposition
-    using randomization to speed up the computations. I is particularly
+    This algorithm finds the exact truncated singular values decomposition
+    using randomization to speed up the computations. It is particularly
     fast on large matrices on which you whish to extract only a small
     number of components.
+
+    (k + p) should be strictly higher than the rank of M. This can be
+    checked by ensuring that the lowest extracted singular value is on
+    the order of the machine precision of floating points.
 
     References: Finding structure with randomness: Stochastic
     algorithms for constructing approximate matrix decompositions,
     Halko, et al., 2009 (arXiv:909)
 
     """
-    # Lazy import of scipy sparse, because it is very slow.
+    # lazy import of scipy sparse, because it is very slow.
     from scipy import sparse
-    p = k + 5
-    r = np.random.normal(size=(M.shape[1], p))
+
+    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
+    r = np.random.normal(size=(M.shape[1], k + p))
+
+    # sampling the range of M using by linear projection of r
     if sparse.issparse(M):
         Y = M * r
     else:
         Y = np.dot(M, r)
     del r
-    Q, r = linalg.qr(Y)
+
+    # extracting an orthonormal basis of the M range samples
+    Q, R = linalg.qr(Y)
+    del R
+
+    # only keep the (k + p) first vectors of the basis
+    Q = Q[:, :(k + p)]
+
+    # project M to the (k + p) dimensional space using the basis vectors
     if sparse.issparse(M):
         B = Q.T * M
     else:
         B = np.dot(Q.T, M)
-    a = linalg.svd(B, full_matrices=False)
-    Uhat = a[0]
+
+    # compute the SVD on the thin matrix: (k + p) wide
+    Uhat, s, V = linalg.svd(B, full_matrices=False)
     del B
-    s = a[1]
-    v = a[2]
+    if s[-1] > 1e-10:
+        warnings.warn("the image of M is under-sampled and the results "
+                      "might be incorrect: try again while increasing k or p")
     U = np.dot(Q, Uhat)
-    return U.T[:k].T, s[:k], v[:k]
+    return U[:, :k], s[:k], V[:k, :]
 
