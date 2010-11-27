@@ -7,6 +7,7 @@ Recursive feature elimination with automatic tuning of the
 number of features selected with cross-validation
 """
 print __doc__
+import numpy as np
 
 from scikits.learn.svm import SVC
 from scikits.learn.cross_val import StratifiedKFold
@@ -30,6 +31,14 @@ print 'Optimal number of features : %d' % rfecv.support_.sum()
 
 import pylab as pl
 pl.figure()
-pl.plot(rfecv.cv_scores_)
+pl.semilogx(rfecv.n_features_, rfecv.cv_scores_)
+pl.xlabel('Number of features selected')
+pl.ylabel('Cross validation score (nb of misclassifications)')
+# 15 ticks regularly-space in log
+x_ticks = np.unique(np.logspace(np.log10(2), 
+                                np.log10(rfecv.n_features_.max()),
+                                15,
+                    ).astype(np.int))
+pl.xticks(x_ticks, x_ticks)
 pl.show()
 
