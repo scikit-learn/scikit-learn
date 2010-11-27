@@ -1,7 +1,8 @@
 
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from .. import neighbors
+
 
 def test_neighbors_1D():
     """
@@ -13,21 +14,22 @@ def test_neighbors_1D():
     n = 6
     n_2 = n/2
     X = [[x] for x in range(0, n)]
-    Y  = [0]*n_2 + [1]*n_2
+    Y = [0]*n_2 + [1]*n_2
 
     # k = 1
     knn = neighbors.Neighbors(k=1)
     knn.fit(X, Y)
-    test = [[i +0.01] for i in range(0,n_2)] + [[i-0.01] for i in range(n_2, n)]
-    assert_array_equal( knn.predict(test), [0, 0, 0, 1, 1, 1])
+    test = [[i + 0.01] for i in range(0, n_2)] + \
+           [[i - 0.01] for i in range(n_2, n)]
+    assert_array_equal(knn.predict(test), [0, 0, 0, 1, 1, 1])
     # same as before, but using predict() instead of Neighbors object
 
     # k = 3
     knn = neighbors.Neighbors(k=3)
     knn.fit(X, Y)
-    assert_array_equal( knn.predict([ [i +0.01] for i in range(0,n_2)]),
+    assert_array_equal(knn.predict([[i +0.01] for i in range(0, n_2)]),
                         [0 for i in range(n_2)])
-    assert_array_equal( knn.predict([ [i-0.01] for i in range(n_2, n)]),
+    assert_array_equal(knn.predict([[i-0.01] for i in range(n_2, n)]),
                         [1 for i in range(n_2)])
 
 
@@ -40,12 +42,28 @@ def test_neighbors_2D():
     """
     X = (
         (0, 1), (1, 1), (1, 0), # label 0
-        (-1,0), (-1,-1),(0,-1)) # label 1
+        (-1, 0), (-1, -1), (0, -1)) # label 1
     n_2 = len(X)/2
     Y = [0]*n_2 + [1]*n_2
     knn = neighbors.Neighbors()
     knn.fit(X, Y)
 
-    prediction =  knn.predict([[0, .1], [0, -.1], [.1, 0], [-.1, 0]])
+    prediction = knn.predict([[0, .1], [0, -.1], [.1, 0], [-.1, 0]])
     assert_array_equal(prediction, [0, 1, 0, 1])
 
+
+def test_kneighbors_graph():
+    """
+    Test kneighbors_graph to build the k-Nearest Neighbor graph.
+    """
+    X = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
+    A = neighbors.kneighbors_graph(X, 2, with_dist=False)
+    assert_array_equal(A.todense(),
+                              [[0, 1, 0], [1, 0, 0], [0, 1, 0]])
+    A = neighbors.kneighbors_graph(X, 2)
+    assert_array_almost_equal(A.todense(),
+                              [[0, 0.5, 0], [0.5, 0, 0], [0, 1.2247, 0]], 4)
+
+    # Also check corner cases
+    A = neighbors.kneighbors_graph(X, 3, with_dist=False)
+    A = neighbors.kneighbors_graph(X, 3)
