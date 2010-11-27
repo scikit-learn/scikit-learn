@@ -37,10 +37,9 @@ def test_fast_svd():
     # rank of the matrix
     assert_almost_equal(s[:rank], sa[:rank])
 
-    # check the singular vectors too
-    # XXX: some vectors are not equal, while others perfectly match?
-    #assert_almost_equal(U[:, :rank], Ua[:, :rank])
-    #assert_almost_equal(V[:rank, :], Va[:rank, :])
+    # check the singular vectors too (while not checking the sign)
+    assert_almost_equal(np.dot(U[:, :rank], V[:rank, :]),
+                        np.dot(Ua[:, :rank], Va[:rank, :]))
 
     # check the sparse matrix representation
     X = sparse.csr_matrix(X)
