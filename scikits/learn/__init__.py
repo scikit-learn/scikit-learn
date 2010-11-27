@@ -14,16 +14,6 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 """
 
 from .base import clone
-from . import cross_val
-from . import ball_tree
-from . import cluster
-from . import covariance
-from . import datasets
-from . import lda
-from . import metrics
-from . import svm
-from . import feature_selection
-from . import sgd
 
 
 try:
