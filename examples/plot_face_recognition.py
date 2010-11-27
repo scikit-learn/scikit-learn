@@ -110,7 +110,7 @@ y_train, y_test = y[:split], y[split:]
 
 ################################################################################
 # Compute a PCA (eigenfaces) on the training set
-n_components = 100
+n_components = 200
 
 print "Extracting the top %d eigenfaces" % n_components
 pca = PCA(n_comp=n_components, do_fast_svd=True).fit(X_train)

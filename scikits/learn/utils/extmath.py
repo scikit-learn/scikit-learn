@@ -86,7 +86,7 @@ def density(w, **kwargs):
     return d
 
 
-def fast_svd(M, k, p=10):
+def fast_svd(M, k, p=10, rng=0):
     """Computes the k-truncated SVD using random projections
 
     Parameters
@@ -100,6 +100,9 @@ def fast_svd(M, k, p=10):
     p: int (default is 10)
         Additional number of samples of the range of M to ensure proper
         conditioning. See the notes below.
+
+    rng: RandomState or an int seed (0 by default)
+        A random number generator instance to make behavior
 
     Notes
     =====
@@ -117,11 +120,16 @@ def fast_svd(M, k, p=10):
     Halko, et al., 2009 (arXiv:909)
 
     """
+    if rng is None:
+        rng = np.random.RandomState()
+    elif isinstance(rng, int):
+        rng = np.random.RandomState(rng)
+
     # lazy import of scipy sparse, because it is very slow.
     from scipy import sparse
 
     # generating random gaussian vectors r with shape: (M.shape[1], k + p)
-    r = np.random.normal(size=(M.shape[1], k + p))
+    r = rng.normal(size=(M.shape[1], k + p))
 
     # sampling the range of M using by linear projection of r
     if sparse.issparse(M):
