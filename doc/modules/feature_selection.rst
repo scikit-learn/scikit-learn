@@ -31,6 +31,11 @@ or using common statistical quantities:
 These objects take as input a scoring function that returns
 univariate p-values.
 
+.. topic:: Examples:
+
+    :ref:`example_plot_feature_selection.py`
+
+
 Feature scoring functions
 --------------------------
 
@@ -47,10 +52,5 @@ For regression
 .................
 
 .. autofunction:: scikits.learn.feature_selection.univariate_selection.f_regression
-
-Examples
-----------
-
-:ref:`example_plot_feature_selection.py`
 
 
