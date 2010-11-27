@@ -87,7 +87,15 @@ def density(w, **kwargs):
     return d
 
 
-def fast_svd(M, k, p=10):
+
+def _sparsedot(a, b):
+    from scipy import sparse
+    if sparse.issparse(a) or sparse.issparse(b):
+        return a*b
+    else:
+        return np.dot(a,b)
+
+def fast_svd(M, k, p=10, q=0):
     """Computes the k-truncated SVD using random projections
 
     Parameters
@@ -120,16 +128,16 @@ def fast_svd(M, k, p=10):
     """
     # lazy import of scipy sparse, because it is very slow.
     from scipy import sparse
-
+    if p == None:
+        p = k
     # generating random gaussian vectors r with shape: (M.shape[1], k + p)
     r = np.random.normal(size=(M.shape[1], k + p))
 
     # sampling the range of M using by linear projection of r
-    if sparse.issparse(M):
-        Y = M * r
-    else:
-        Y = np.dot(M, r)
+    Y = _sparsedot(M, r)
     del r
+    for i in xrange(q):
+        Y = _sparsedot(M, _sparsedot(M.T, Y))
 
     # extracting an orthonormal basis of the M range samples
     Q, R = linalg.qr(Y)
@@ -139,10 +147,7 @@ def fast_svd(M, k, p=10):
     Q = Q[:, :(k + p)]
 
     # project M to the (k + p) dimensional space using the basis vectors
-    if sparse.issparse(M):
-        B = Q.T * M
-    else:
-        B = np.dot(Q.T, M)
+    B = _sparsedot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
