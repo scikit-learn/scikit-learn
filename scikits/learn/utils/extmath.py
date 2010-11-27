@@ -6,7 +6,6 @@ Extended math utilities.
 
 import sys
 import math
-import warnings
 
 import numpy as np
 from scipy import linalg
@@ -147,9 +146,6 @@ def fast_svd(M, k, p=10):
     # compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
     del B
-    if s[-1] > 1e-10:
-        warnings.warn("the image of M is under-sampled and the results "
-                      "might be incorrect: try again while increasing k or p")
     U = np.dot(Q, Uhat)
     return U[:, :k], s[:k], V[:k, :]
 
