@@ -166,10 +166,10 @@ def kneighbors_graph(X, k, with_dist=True):
     --------
     >>> X = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> A = kneighbors_graph(X, k=2, with_dist=False)
-    >>> print A
-      (0, 1)	1.0
-      (1, 0)	1.0
-      (2, 1)	1.0
+    >>> print A.todense()
+    [[ 0.  1.  0.]
+     [ 1.  0.  0.]
+     [ 0.  1.  0.]]
     """
     from scipy import sparse
     X = np.asanyarray(X)
