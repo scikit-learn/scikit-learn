@@ -520,9 +520,10 @@ def explained_variance_score(y_true, y_pred):
 def zero_one(y_true, y_pred):
     """Zero-One classification loss
 
-    Positive integer (number of misclassifications). The best score is 0.
+    Positive integer (number of misclassifications). The best performance 
+    is 0.
 
-    return the number of differences
+    Return the number of errors
 
     Parameters
     ----------
