@@ -38,6 +38,10 @@ class Neighbors(BaseEstimator, ClassifierMixin):
     Neighbors(k=3, window_size=1)
     >>> print neigh.predict([[0,0,0]])
     [ 0.]
+
+    Notes
+    -----
+    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, k=5, window_size=1):
@@ -151,6 +155,10 @@ def _predict_from_BallTree(ball_tree, Y, test, k):
 class NeighborsBarycenter(BaseEstimator, RegressorMixin):
     """Regression based on k-Nearest Neighbor Algorithm.
 
+    The target is predicted by local interpolation of the targets
+    associated of the k-Nearest Neighbors in the training set.
+    The interpolation weights correspond to barycenter weights.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -174,6 +182,10 @@ class NeighborsBarycenter(BaseEstimator, RegressorMixin):
     NeighborsBarycenter(k=2, window_size=1)
     >>> print neigh.predict([[1.5]])
     [ 0.5]
+
+    Notes
+    -----
+    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, k=5, window_size=1):
