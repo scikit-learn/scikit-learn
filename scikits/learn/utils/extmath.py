@@ -94,7 +94,7 @@ def _sparsedot(a, b):
     else:
         return np.dot(a,b)
 
-def fast_svd(M, k, p=10, rng=0, q=0):
+def fast_svd(M, k, p=None, rng=0, q=0):
     """Computes the k-truncated SVD using random projections
 
     Parameters
@@ -105,9 +105,13 @@ def fast_svd(M, k, p=10, rng=0, q=0):
     k: int
         Number of singular values and vectors to extract.
 
-    p: int (default is 10)
+    p: int (default is k)
         Additional number of samples of the range of M to ensure proper
         conditioning. See the notes below.
+
+    q: int (default is 0)
+        Number of power iterations (can be used to deal with very noisy
+        problems).
 
     rng: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
@@ -123,10 +127,14 @@ def fast_svd(M, k, p=10, rng=0, q=0):
     checked by ensuring that the lowest extracted singular value is on
     the order of the machine precision of floating points.
 
-    References: Finding structure with randomness: Stochastic
+    References
+    ==========
+    Finding structure with randomness: Stochastic
     algorithms for constructing approximate matrix decompositions,
     Halko, et al., 2009 (arXiv:909)
 
+    A randomized algorithm for the decomposition of matrices
+    Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
     if rng is None:
         rng = np.random.RandomState()
@@ -143,6 +151,9 @@ def fast_svd(M, k, p=10, rng=0, q=0):
     # sampling the range of M using by linear projection of r
     Y = _sparsedot(M, r)
     del r
+
+    # apply q power iterations on Y to make to further 'imprint' the top
+    # singular values of M in Y
     for i in xrange(q):
         Y = _sparsedot(M, _sparsedot(M.T, Y))
 
