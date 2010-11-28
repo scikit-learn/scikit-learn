@@ -228,9 +228,11 @@ class NeighborsBarycenter(BaseEstimator, RegressorMixin):
 # Utils k-NN based Functions
 
 def barycenter_weights(x, X_neighbors, tol=1e-3):
-    """
-    Computes barycenter weights so that point may be reconstructed from its
-    neighbors
+    """Computes barycenter weights
+
+    x is projected to the span of the samples in X_neighbors.
+    Then we estimate the weights to assign to each point in X_neighbors
+    to recover the projection. The barycenter weights sum to 1.
 
     Parameters
     ----------
@@ -246,13 +248,24 @@ def barycenter_weights(x, X_neighbors, tol=1e-3):
     Returns
     -------
     array of barycenter weights that sum to 1
+
+    Examples
+    --------
+    >>> X_neighbors = [[0], [2]]
+    >>> x = [0.5]
+    >>> from scikits.learn.neighbors import barycenter_weights
+    >>> print barycenter_weights(x, X_neighbors)
+    [ 0.74968789  0.25031211]
     """
+    x = np.asanyarray(x)
+    X_neighbors = np.asanyarray(X_neighbors)
     if x.ndim == 1:
         x = x[None,:]
     if X_neighbors.ndim == 1:
         X_neighbors = X_neighbors[:,None]
     z = x - X_neighbors
     gram = np.dot(z, z.T)
+    # Add constant on diagonal to avoid singular matrices
     diag_stride = gram.shape[0] + 1
     gram.flat[::diag_stride] += tol * np.trace(gram)
     w = linalg.solve(gram, np.ones(len(X_neighbors)))
