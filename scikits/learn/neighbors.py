@@ -26,7 +26,7 @@ class Neighbors(BaseEstimator, ClassifierMixin):
     k : int
         default number of neighbors.
     window_size : int
-        the default window size.
+        Window size passed to BallTree
 
     Examples
     --------
@@ -162,7 +162,7 @@ class NeighborsBarycenter(BaseEstimator, RegressorMixin):
     k : int
         default number of neighbors.
     window_size : int
-        the default window size.
+        Window size passed to BallTree
 
     Examples
     --------
@@ -230,9 +230,10 @@ class NeighborsBarycenter(BaseEstimator, RegressorMixin):
 def barycenter_weights(x, X_neighbors, tol=1e-3):
     """Computes barycenter weights
 
-    x is projected to the span of the samples in X_neighbors.
-    Then we estimate the weights to assign to each point in X_neighbors
-    to recover the projection. The barycenter weights sum to 1.
+    We estimate the weights to assign to each point in X_neighbors
+    to recover the point x. The barycenter weights sum to 1.
+    If x do not belong to the span of X_neighbors, it's the
+    projection of x onto the span that is recovered.
 
     Parameters
     ----------
