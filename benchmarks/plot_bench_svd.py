@@ -58,7 +58,6 @@ def compute_bench(data_gen, samples_range, features_range, q=3):
 
 
 if __name__ == '__main__':
-    from scikits.learn.linear_model import Lasso, LassoLARS
     from mpl_toolkits.mplot3d import axes3d
     import matplotlib.pyplot as plt
 
