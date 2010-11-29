@@ -419,7 +419,7 @@ class LassoLARS (LARS):
 
     See also
     --------
-    lars_path, LassoLARS
+    lars_path, Lasso
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False):
