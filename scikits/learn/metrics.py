@@ -512,6 +512,25 @@ def explained_variance_score(y_true, y_pred):
     y_pred : array-like
     """
     return 1 - np.var(y_true - y_pred) / np.var(y_true)
+    
+
+def r2_score(y_true, y_pred):
+    """R^2 (coefficient of determination) regression score function
+
+    Best possible score is 1.0, lower values are worst.
+
+    Note: not a symmetric function.
+
+    return the R^2 score
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+    """
+    return 1 -((y_true - y_pred)**2).sum() / ((y_true-y_true.mean())**2).sum()
+
 
 
 ###############################################################################
