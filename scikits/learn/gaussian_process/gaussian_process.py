@@ -225,14 +225,14 @@ class GaussianProcess(BaseEstimator):
             std_y = np.std(y, axis=0)
             std_X[std_X == 0.] = 1.
             std_y[std_y == 0.] = 1.
+            # center and scale X if necessary
+            X = (X - mean_X) / std_X
+            y = (y - mean_y) / std_y
         else:
-            mean_X = np.array([0.])
-            std_X = np.array([1.])
-            mean_y = np.array([0.])
-            std_y = np.array([1.])
-
-        X = (X - mean_X) / std_X
-        y = (y - mean_y) / std_y
+            mean_X = np.zeros(1)
+            std_X = np.ones(1)
+            mean_y = np.zeros(1)
+            std_y = np.ones(1)
 
         # Calculate matrix of distances D between samples
         mzmax = n_samples * (n_samples - 1) / 2
@@ -273,6 +273,8 @@ class GaussianProcess(BaseEstimator):
         self.D = D
         self.ij = ij
         self.F = F
+        # XXX : why not storing explicitely X_mean, X_std, y_mean, y_std
+        # rather than these cryptic X_sc and y_sc variables?
         self.X_sc = np.concatenate([[mean_X], [std_X]])
         self.y_sc = np.concatenate([[mean_y], [std_y]])
 
@@ -390,8 +392,7 @@ class GaussianProcess(BaseEstimator):
             r = self.corr(self.theta, dx).reshape(n_eval, n_samples)
 
             # Scaled predictor
-            y_ = np.dot(f, self.beta) \
-               + np.dot(r, self.gamma)
+            y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
             y = (self.y_sc[0] + self.y_sc[1] * y_).ravel()
@@ -412,7 +413,7 @@ class GaussianProcess(BaseEstimator):
                     self.G = par['G']
 
                 rt = solve_triangular(C, r.T, lower=True)
-                
+
                 if self.beta0 is None:
                     # Universal Kriging
                     u = solve_triangular(self.G.T,
@@ -518,6 +519,10 @@ class GaussianProcess(BaseEstimator):
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
+            # XXX : code duplication. You should create a separate
+            # function _compute_distances_between_samples
+            # also why not using the function euclidian_distances
+            # in mean_shift.py ?
             if self.X.ndim > 1:
                 n_features = self.X.shape[1]
             else:
@@ -540,8 +545,8 @@ class GaussianProcess(BaseEstimator):
         # Set up R
         r = self.corr(theta, D)
         R = np.eye(n_samples) * (1. + self.nugget)
-        R[ij.astype(int)[:, 0], ij.astype(int)[:, 1]] = r
-        R[ij.astype(int)[:, 1], ij.astype(int)[:, 0]] = r
+        R[ij.astype(np.int)[:, 0], ij.astype(np.int)[:, 1]] = r
+        R[ij.astype(np.int)[:, 1], ij.astype(np.int)[:, 0]] = r
 
         # Cholesky decomposition of R
         try:
@@ -641,6 +646,8 @@ class GaussianProcess(BaseEstimator):
 
         if self.optimizer == 'fmin_cobyla':
 
+            # XXX : avoid lambda functions. It won't pickle hence not
+            # work in parallel
             minus_reduced_likelihood_function = lambda log10t: \
                 - self.reduced_likelihood_function(theta=10. ** log10t)[0]
 
@@ -687,7 +694,7 @@ class GaussianProcess(BaseEstimator):
                 if self.verbose and self.random_start > 1:
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
-                        print str(5 * percent_completed) + "% completed"
+                        print "%s completed" % (5 * percent_completed)
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
@@ -723,6 +730,7 @@ class GaussianProcess(BaseEstimator):
                 self.theta0 = np.atleast_2d(theta_iso)
                 self.thetaL = np.atleast_2d(thetaL[0, i])
                 self.thetaU = np.atleast_2d(thetaU[0, i])
+                # XXX : same thing about lambda functions
                 self.corr = lambda t, d: \
                     corr(np.atleast_2d(np.hstack([
                          optimal_theta[0][0:i],

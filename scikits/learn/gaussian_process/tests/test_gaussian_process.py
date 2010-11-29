@@ -20,7 +20,6 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
 
     Test the interpolating property.
     """
-
     f = lambda x: x * np.sin(x)
     X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
     y = f(X).ravel()
@@ -40,7 +39,6 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
 
     Test the interpolating property.
     """
-
     b, kappa, e = 5., .5, .1
     g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
     X = np.array([[-4.61611719, -6.00099547],
@@ -80,7 +78,6 @@ def test_ordinary_kriging():
     Repeat test_1d and test_2d with given regression weights (beta0) for
     different regression models (Ordinary Kriging).
     """
-
     test_1d(regr='linear', beta0=[0., 0.5])
     test_1d(regr='quadratic', beta0=[0., 0.5, 0.5])
     test_2d(regr='linear', beta0=[0., 0.5, 0.5])

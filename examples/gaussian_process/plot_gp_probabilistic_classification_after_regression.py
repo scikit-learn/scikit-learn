@@ -14,6 +14,7 @@ respect to the remaining uncertainty in the prediction. The red and blue lines
 corresponds to the 95% confidence interval on the prediction of the zero level
 set.
 """
+print __doc__
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
@@ -24,10 +25,9 @@ from scikits.learn.gaussian_process import GaussianProcess
 from matplotlib import pyplot as pl
 from matplotlib import cm
 
-# Print the docstring
-print __doc__
-
 # Standard normal distribution functions
+# XXX : is it really useful to define those lambda if it's just
+# a renaming of standard functions?
 Grv = stats.distributions.norm()
 phi = lambda x: Grv.pdf(x)
 PHI = lambda x: Grv.cdf(x)

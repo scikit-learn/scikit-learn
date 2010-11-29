@@ -19,6 +19,7 @@ The figure is a goodness-of-fit plot obtained using leave-one-out predictions
 of the Gaussian Process model. Based on these predictions, we compute an
 explained variance error (Q2).
 """
+print __doc__
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
@@ -27,12 +28,9 @@ from scikits.learn import datasets, cross_val, metrics
 from scikits.learn.gaussian_process import GaussianProcess
 from matplotlib import pyplot as pl
 
-# Print the docstring
-print __doc__
-
 # Load the dataset from scikits' data sets
 diabetes = datasets.load_diabetes()
-X, y = diabetes['data'], diabetes['target']
+X, y = diabetes.data, diabetes.target
 
 # Instanciate a GP model
 gp = GaussianProcess(regr='constant', corr='absolute_exponential',
@@ -42,13 +40,15 @@ gp = GaussianProcess(regr='constant', corr='absolute_exponential',
 
 # Fit the GP model to the data
 gp.fit(X, y)
+# XXX : why doing this below?
 gp.theta0 = gp.theta
 gp.thetaL = None
 gp.thetaU = None
 gp.verbose = False
 
 # Estimate the leave-one-out predictions using the cross_val module
-n_jobs = 2 # the distributing capacity available on the machine
+n_jobs = -1 # use all CPUs available on the machine
+# XXX : I'm lost. Why y_pred = y + ... ?
 y_pred = y + cross_val.cross_val_score(gp, X, y=y,
                                    cv=cross_val.LeaveOneOut(y.size),
                                    n_jobs=n_jobs,

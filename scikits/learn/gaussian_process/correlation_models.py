@@ -39,23 +39,20 @@ def absolute_exponential(theta, d):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
-
     theta = np.asanyarray(theta, dtype=np.float)
-    d = np.asanyarray(d, dtype=np.float)
+    d = np.abs(np.asanyarray(d, dtype=np.float))
 
     if d.ndim > 1:
         n_features = d.shape[1]
     else:
         n_features = 1
+
     if theta.size == 1:
-        theta = np.repeat(theta, n_features)
+        return np.exp(- theta[0] * np.sum(d, axis=1))
     elif theta.size != n_features:
-        raise ValueError("Length of theta must be 1 or " + str(n_features))
-
-    td = - theta.reshape(1, n_features) * abs(d)
-    r = np.exp(np.sum(td, 1))
-
-    return r
+        raise ValueError("Length of theta must be 1 or %s" % n_features)
+    else:
+        return np.exp(- np.sum(theta.reshape(1, n_features) * d, axis=1))
 
 
 def squared_exponential(theta, d):
@@ -92,15 +89,13 @@ def squared_exponential(theta, d):
         n_features = d.shape[1]
     else:
         n_features = 1
+
     if theta.size == 1:
-        theta = np.repeat(theta, n_features)
+        return np.exp(- theta[0] * np.sum(d**2, axis=1))
     elif theta.size != n_features:
-        raise Exception("Length of theta must be 1 or " + str(n_features))
-
-    td = - theta.reshape(1, n_features) * d ** 2
-    r = np.exp(np.sum(td, 1))
-
-    return r
+        raise ValueError("Length of theta must be 1 or %s" % n_features)
+    else:
+        return np.exp(- np.sum(theta.reshape(1, n_features) * d**2, axis=1))
 
 
 def generalized_exponential(theta, d):
@@ -138,16 +133,17 @@ def generalized_exponential(theta, d):
         n_features = d.shape[1]
     else:
         n_features = 1
+
     lth = theta.size
     if n_features > 1 and lth == 2:
         theta = np.hstack([np.repeat(theta[0], n_features), theta[1]])
     elif lth != n_features + 1:
-        raise Exception("Length of theta must be 2 or " + str(n_features + 1))
+        raise Exception("Length of theta must be 2 or %s" % (n_features + 1))
     else:
         theta = theta.reshape(1, lth)
 
-    td = - theta[:, 0:-1].reshape(1, n_features) * abs(d) ** theta[:, -1]
-    r = np.exp(np.sum(td, 1))
+    td = theta[:, 0:-1].reshape(1, n_features) * np.abs(d) ** theta[:, -1]
+    r = np.exp(- np.sum(td, 1))
 
     return r
 
@@ -182,10 +178,11 @@ def pure_nugget(theta, d):
     theta = np.asanyarray(theta, dtype=np.float)
     d = np.asanyarray(d, dtype=np.float)
 
+    # XXX : computation do not match docstring
     n_eval = d.shape[0]
     r = np.zeros(n_eval)
     # The ones on the diagonal of the correlation matrix are enforced within
-    # the KrigingModel instanciation to allow multiple design sites in this
+    # the model instanciation to allow multiple design sites in this
     # ordinary least squares context.
 
     return r
@@ -225,15 +222,15 @@ def cubic(theta, d):
         n_features = d.shape[1]
     else:
         n_features = 1
+
     lth = theta.size
     if  lth == 1:
-        theta = np.repeat(theta, n_features)[np.newaxis][:]
+        td = np.abs(d) * theta
     elif lth != n_features:
         raise Exception("Length of theta must be 1 or " + str(n_features))
     else:
-        theta = theta.reshape(1, n_features)
+        td = np.abs(d) * theta.reshape(1, n_features)
 
-    td = abs(d) * theta
     td[td > 1.] = 1.
     ss = 1. - td ** 2. * (3. - 2. * td)
     r = np.prod(ss, 1)
@@ -275,15 +272,15 @@ def linear(theta, d):
         n_features = d.shape[1]
     else:
         n_features = 1
-    lth = theta.size
-    if  lth == 1:
-        theta = np.repeat(theta, n_features)[np.newaxis][:]
-    elif lth != n_features:
-        raise Exception("Length of theta must be 1 or " + str(n_features))
-    else:
-        theta = theta.reshape(1, n_features)
 
-    td = abs(d) * theta
+    lth = theta.size
+    if lth == 1:
+        td = np.abs(d) * theta
+    elif lth != n_features:
+        raise Exception("Length of theta must be 1 or %s" % n_features)
+    else:
+        td = np.abs(d) * theta.reshape(1, n_features)
+
     td[td > 1.] = 1.
     ss = 1. - td
     r = np.prod(ss, 1)

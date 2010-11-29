@@ -13,6 +13,7 @@ The figure illustrates the interpolating property of the Gaussian Process
 model as well as its probabilistic nature in the form of a pointwise 95%
 confidence interval.
 """
+print __doc__
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
@@ -20,9 +21,6 @@ confidence interval.
 import numpy as np
 from scikits.learn.gaussian_process import GaussianProcess
 from matplotlib import pyplot as pl
-
-# Print the docstring
-print __doc__
 
 # The function to predict
 f = lambda x: x * np.sin(x)
