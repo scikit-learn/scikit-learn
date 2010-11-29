@@ -12,7 +12,7 @@ from scikits.learn.utils.extmath import fast_svd
 from scikits.learn.datasets.samples_generator import low_rank_fat_tail
 
 
-def test_fast_svd():
+def test_fast_svd_low_rank():
     """Check that extmath.fast_svd is consistent with linalg.svd"""
     n_samples = 100
     n_features = 500
@@ -50,7 +50,7 @@ def test_fast_svd():
     assert_almost_equal(s[:rank], sa[:rank])
 
 
-def test_fast_svd_with_noise():
+def test_fast_svd_low_rank_with_noise():
     """Check that extmath.fast_svd can handle noisy matrices"""
     n_samples = 100
     n_features = 500
@@ -78,6 +78,38 @@ def test_fast_svd_with_noise():
     _, sap, _ = fast_svd(X, k, q=3)
 
     # the iterated power method is helping getting rid of the noise:
+    assert_almost_equal(s[:rank], sap[:rank], decimal=5)
+
+
+def test_fast_svd_infinite_rank():
+    """Check that extmath.fast_svd can handle noisy matrices"""
+    n_samples = 100
+    n_features = 500
+    rank = 5
+    k = 10
+
+    # let us try again without 'low_rank component': just regularly but slowly
+    # decreasing singular values: the rank of the data matrix is infinite
+    X = low_rank_fat_tail(n_samples, n_features, effective_rank=rank,
+                          tail_strength=1.0, seed=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    # compute the singular values of X using the slow exact method
+    _, s, _ = linalg.svd(X, full_matrices=False)
+
+    # compute the singular values of X using the fast approximate method without
+    # the iterated power method
+    _, sa, _ = fast_svd(X, k, q=0)
+
+    # the approximation does not tolerate the noise:
+    assert np.abs(s[:rank] - sa[:rank]).max() > 0.1
+
+    # compute the singular values of X using the fast approximate method with
+    # iterated power method
+    _, sap, _ = fast_svd(X, k, q=7)
+
+    # the iterated power method is still managing to get most of the structure
+    # at the requested rank
     assert_almost_equal(s[:rank], sap[:rank], decimal=5)
 
 
