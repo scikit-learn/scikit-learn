@@ -100,19 +100,29 @@ class PCA(BaseEstimator):
         Number of components
         if n_comp is not set all components are kept
         if n_comp=='mle', Minka's MLE is used to guess the dimension
+
     copy: bool
         If False, data passed to fit are overwritten
+
     components_: array, [n_features, n_comp]
         Components with maximum variance
+
     do_fast_svd: bool, optional
-        If True, the k-truncated SVD is computed using random projections 
+        If True, the k-truncated SVD is computed using random projections
         which speeds up the computation on large arrays. If all the
         components are to be computed (as in n_comp=None or
-        n_comp='mle'), this option has no effects. 
+        n_comp='mle'), this option has no effects. Note that the solution will
+        be correct only if the requested n_comp is as large as the approximate
+        effective rank of the data.
+
     explained_variance_: array, [n_comp]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
+
+    iterated_power: int, optional
+        Number of iteration for the power method if do_fast_svd is True. 3 by
+        default.
 
     Notes
     -----
@@ -126,7 +136,7 @@ class PCA(BaseEstimator):
     >>> from scikits.learn.pca import PCA
     >>> pca = PCA(n_comp=2)
     >>> pca.fit(X)
-    PCA(do_fast_svd=False, n_comp=2, copy=True)
+    PCA(do_fast_svd=False, n_comp=2, copy=True, iterated_power=3)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
@@ -135,14 +145,15 @@ class PCA(BaseEstimator):
     ProbabilisticPCA
 
     """
-    def __init__(self, n_comp=None, copy=True, do_fast_svd=False):
+    def __init__(self, n_comp=None, copy=True, do_fast_svd=False,
+                 iterated_power=3):
         self.n_comp = n_comp
         self.copy = copy
         self.do_fast_svd = do_fast_svd
+        self.iterated_power = iterated_power
 
     def fit(self, X, **params):
-        """ Fit the model to the data X
-        """
+        """Fit the model to the data X"""
         self._set_params(**params)
         X = np.atleast_2d(X)
         n_samples = X.shape[0]
@@ -154,11 +165,13 @@ class PCA(BaseEstimator):
         if self.do_fast_svd:
             if  self.n_comp == "mle" or self.n_comp is None:
                 warnings.warn('All components are to be computed'
-                    'Not using fast truncated SVD')
-            U, S, V = fast_svd(X, self.n_comp)
+                              'Not using fast truncated SVD')
+                U, S, V = linalg.svd(X, full_matrices=False)
+            else:
+                U, S, V = fast_svd(X, self.n_comp, q=self.iterated_power)
         else:
             U, S, V = linalg.svd(X, full_matrices=False)
-        self.explained_variance_ = (S**2)/n_samples
+        self.explained_variance_ = (S ** 2) / n_samples
         self.explained_variance_ratio_ = self.explained_variance_ / \
                                         self.explained_variance_.sum()
         self.components_ = V.T
