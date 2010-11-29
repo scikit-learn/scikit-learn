@@ -7,6 +7,7 @@ Generate samples of synthetic data sets.
 
 import numpy as np
 import numpy.random as nr
+from scipy import linalg
 
 
 def test_dataset_classif(n_samples=100, n_features=100, param=[1,1],
@@ -178,4 +179,68 @@ def friedman(n_samples=100, n_features=10, noise_std=1):
             + 10 * X[:, 3] + 5 * X[:, 4]
     y += noise_std * nr.normal(loc=0, scale=1, size=n_samples)
     return X, y
+
+
+def low_rank_fat_tail(n_samples=100, n_features=100, effective_rank=10,
+                      tail_strength=0.5, seed=None):
+    """Mostly low rank random matrix with bell-shaped singular values profile
+
+    Most of the variance can be explained by a bell-shaped curve of width
+    effective_rank: the low rank part of the singular values profile is::
+
+      (1 - tail_strength) * exp(-1.0 * (i / effective_rank) ** 2)
+
+    The remaining singular values' tail is fat, decreasing as::
+
+      tail_strength * exp(-0.1 * i / effective_rank).
+
+    The low rank part of the profile can be considered the structured
+    signal part of the data while the tail can be considered the noisy
+    part of the data that cannot be summarized by a low number of linear
+    components (singular vectors).
+
+    This kind of singular profiles is often seen in practice, for instance:
+     - graw level pictures of faces
+     - TF-IDF vectors of text documents crawled from the web
+
+    Parameters
+    ----------
+    n_samples : int
+        number of samples (default is 100)
+
+    n_features : int
+        number of features (default is 100)
+
+    effective_rank : int
+        approximate number of singular vectors required to explain most of the
+        data by linear combinations (default is 10)
+
+    tail_strength: float between 0.0 and 1.0
+        relative importance of the fat noisy tail of the singular values
+        profile.
+
+    """
+    if isinstance(seed, np.random.RandomState):
+        random = seed
+    elif seed is not None:
+        random = np.random.RandomState(seed)
+    else:
+        random = np.random
+
+    n = min(n_samples, n_features)
+
+    # random (ortho normal) vectors
+    u = linalg.qr(random.randn(n_samples, n))[0][:, :n]
+    v = linalg.qr(random.randn(n_features, n))[0][:, :n].T
+
+    # index of the singular values
+    i = np.arange(n, dtype=np.float64)
+
+    # build the singular profile by assembling signal and noise components
+    low_rank = (1 - tail_strength) * np.exp(-1.0 * (i / effective_rank) ** 2)
+    tail = tail_strength * np.exp(-0.1 * i / effective_rank)
+    s = np.identity(n) * (low_rank + tail)
+
+    return np.dot(np.dot(u, s), v)
+
 
