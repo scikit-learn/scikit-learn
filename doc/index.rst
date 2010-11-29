@@ -110,16 +110,7 @@
 
 .. include:: big_toc_css.rst
 
-First steps
-======================
-
-.. toctree::
-   :maxdepth: 2
-
-   install
-   tutorial
-
-User guide
+User Guide
 ==========
 
 .. toctree::
@@ -127,11 +118,11 @@ User guide
 
    contents
 
-Example gallery
-=================
+Example Gallery
+===============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    auto_examples/index
 
