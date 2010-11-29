@@ -146,6 +146,10 @@ class Lasso(ElasticNet):
     >>> print clf.intercept_
     0.15
 
+    See also
+    --------
+    LassoLARS
+
     Notes
     -----
     The algorithm used to fit the model is coordinate descent.
