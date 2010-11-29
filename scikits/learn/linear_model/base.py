@@ -12,7 +12,7 @@ Generalized Linear models.
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin
-from ..metrics import explained_variance_score
+from ..metrics import r2_score
 
 ###
 ### TODO: intercept for all models
@@ -43,7 +43,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
 
     def _explained_variance(self, X, y):
         """Compute explained variance a.k.a. r^2"""
-        return explained_variance_score(y, self.predict(X))
+        return r2_score(y, self.predict(X))
 
     @staticmethod
     def _center_data(X, y, fit_intercept):
