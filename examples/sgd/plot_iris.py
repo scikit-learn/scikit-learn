@@ -12,7 +12,8 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn import sgd, datasets
+from scikits.learn import datasets
+from scikits.learn.linear_model.stochastic_gradient import SGDClassifier
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -35,7 +36,7 @@ X = (X - mean) / std
 
 h = .02  # step size in the mesh
 
-clf = sgd.ClassifierSGD(alpha=0.001, n_iter=100).fit(X, y)
+clf = SGDClassifier(alpha=0.001, n_iter=100).fit(X, y)
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1

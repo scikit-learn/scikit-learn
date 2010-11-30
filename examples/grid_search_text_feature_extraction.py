@@ -54,7 +54,7 @@ import os
 from scikits.learn.datasets import load_files
 from scikits.learn.feature_extraction.text.sparse import CountVectorizer
 from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
-from scikits.learn.sgd.sparse import ClassifierSGD
+from scikits.learn.linear_model.stochastic_gradient.sparse import SGDClassifier
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
 
@@ -101,7 +101,7 @@ print
 pipeline = Pipeline([
     ('vect', CountVectorizer()),
     ('tfidf', TfidfTransformer()),
-    ('clf', ClassifierSGD()),
+    ('clf', SGDClassifier()),
 ])
 
 parameters = {

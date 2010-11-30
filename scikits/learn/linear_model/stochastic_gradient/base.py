@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ...base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 
@@ -46,14 +46,14 @@ class BaseSGD(BaseEstimator):
             raise ValueError("Penalty %s is not supported. " % self.penalty)
 
 
-class ClassifierBaseSGD(BaseSGD, ClassifierMixin):
+class BaseSGDClassifier(BaseSGD, ClassifierMixin):
     """Base class for dense and sparse classification using SGD.
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, n_jobs=1):
-        super(ClassifierBaseSGD, self).__init__(loss=loss, penalty=penalty,
+        super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, rho=rho,
                                                 fit_intercept=fit_intercept,
                                                 n_iter=n_iter, shuffle=shuffle,
@@ -132,14 +132,14 @@ class ClassifierBaseSGD(BaseSGD, ClassifierMixin):
                                       "this functionality" % self.loss)
 
 
-class RegressorBaseSGD(BaseSGD, RegressorMixin):
+class BaseSGDRegressor(BaseSGD, RegressorMixin):
     """Base class for dense and sparse regression using SGD.
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1):
         self.epsilon=float(epsilon)
-        super(RegressorBaseSGD, self).__init__(loss=loss, penalty=penalty,
+        super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, rho=rho,
                                                fit_intercept=fit_intercept,
                                                n_iter=n_iter, shuffle=shuffle,

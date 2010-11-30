@@ -2,10 +2,9 @@
 Stochastic gradient descent with sparse data
 ==========================================
 
-scikits.learn.sgd.sparse is the sparse counterpart
-of scikits.learn.sgd
+scikits.learn.linear_model.stochastic_gradient.sparse is the
+sparse counterpart of scikits.learn.linear_model.stochastic_gradient
 
 """
 
-from .sgd import ClassifierSGD, RegressorSGD
-
+from .sgd import SGDClassifier, SGDRegressor

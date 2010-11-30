@@ -3,13 +3,14 @@
 SGD: Convex Loss Functions
 ==========================
 
-Plot the convex loss functions supported by `scikits.learn.sgd`.
+Plot the convex loss functions supported by `scikits.learn.linear_model.stochastic_gradient`.
 """
 print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn.sgd.sgd_fast import Hinge, ModifiedHuber, SquaredLoss
+from scikits.learn.linear_model.stochastic_gradient.sgd_fast import Hinge, \
+     ModifiedHuber, SquaredLoss
 
 ###############################################################################
 # Define loss funcitons

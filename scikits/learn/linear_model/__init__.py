@@ -19,3 +19,4 @@ from .ridge import Ridge
 from .logistic import LogisticRegression
 
 from . import sparse
+from . import stochastic_gradient

@@ -12,7 +12,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn import sgd
+from scikits.learn.linear_model.stochastic_gradient import SGDRegressor
 
 # this is our test set, it's just a straight line with some
 # gaussian noise
@@ -23,7 +23,7 @@ Y = 2 + 0.5 * np.linspace(xmin, xmax, n_samples) \
       + np.random.randn(n_samples, 1).ravel()
 
 # run the classifier
-clf = sgd.RegressorSGD(alpha=0.1, n_iter=20)
+clf = SGDRegressor(alpha=0.1, n_iter=20)
 clf.fit(X, Y)
 
 # and plot the result

@@ -10,7 +10,6 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('learn', parent_package, top_path)
 
     config.add_subpackage('svm')
-    config.add_subpackage('sgd')
     config.add_subpackage('datasets')
     config.add_subpackage('feature_extraction')
     config.add_subpackage('feature_extraction/tests')
@@ -51,6 +50,7 @@ def configuration(parent_package='', top_path=None):
     # the following packages depend on cblas, so they have to be build
     # after the above.
     config.add_subpackage('linear_model')
+    config.add_subpackage('linear_model/stochastic_gradient')
     config.add_subpackage('utils')
 
     # add the test directory

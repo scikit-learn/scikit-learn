@@ -11,7 +11,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn import sgd
+from scikits.learn.linear_model.stochastic_gradient import SGDClassifier
 
 # we create 40 separable points
 np.random.seed(0)
@@ -29,7 +29,7 @@ std = X.std(axis=0)
 X = (X - mean) / std
 
 # fit the model and get the separating hyperplane
-clf = sgd.ClassifierSGD(n_iter=100, alpha=0.01)
+clf = SGDClassifier(n_iter=100, alpha=0.01)
 clf.fit(X, y)
 
 w = clf.coef_
@@ -39,7 +39,7 @@ yy = a * xx - clf.intercept_ / w[1]
 
 
 # get the separating hyperplane using weighted classes
-wclf = sgd.ClassifierSGD(n_iter=100, alpha=0.01)
+wclf = SGDClassifier(n_iter=100, alpha=0.01)
 wclf.fit(X, y, class_weight={1: 10})
 
 ww = wclf.coef_

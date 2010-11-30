@@ -80,8 +80,8 @@ Stochastic Gradient Descent
    :toctree: generated/
    :template: class.rst
 
-   sgd.ClassifierSGD
-   sgd.RegressorSGD
+   sgd.SGDClassifier
+   sgd.SGDRegressor
 
 For sparse data
 ---------------
@@ -90,8 +90,8 @@ For sparse data
    :toctree: generated/
    :template: class.rst
 
-   sgd.sparse.ClassifierSGD
-   sgd.sparse.RegressorSGD
+   sgd.sparse.SGDClassifier
+   sgd.sparse.SGDRegressor
         
 
 Bayesian Regression
