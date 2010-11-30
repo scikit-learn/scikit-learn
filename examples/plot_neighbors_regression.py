@@ -27,7 +27,7 @@ y[::5] += 1*(0.5 - np.random.rand(8))
 
 from scikits.learn import neighbors
 
-knn_barycenter = neighbors.NeighborsBarycenter(k=5)
+knn_barycenter = neighbors.NeighborsBarycenter(n_neighbors=5)
 y_ = knn_barycenter.fit(X, y).predict(T)
 
 ###############################################################################

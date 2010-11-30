@@ -17,16 +17,16 @@ def test_neighbors_1D():
     X = [[x] for x in range(0, n)]
     Y = [0]*n_2 + [1]*n_2
 
-    # k = 1
-    knn = neighbors.Neighbors(k=1)
+    # n_neighbors = 1
+    knn = neighbors.Neighbors(n_neighbors=1)
     knn.fit(X, Y)
     test = [[i + 0.01] for i in range(0, n_2)] + \
            [[i - 0.01] for i in range(n_2, n)]
     assert_array_equal(knn.predict(test), [0, 0, 0, 1, 1, 1])
     # same as before, but using predict() instead of Neighbors object
 
-    # k = 3
-    knn = neighbors.Neighbors(k=3)
+    # n_neighbors = 3
+    knn = neighbors.Neighbors(n_neighbors=3)
     knn.fit(X, Y)
     assert_array_equal(knn.predict([[i +0.01] for i in range(0, n_2)]),
                         [0 for i in range(n_2)])
@@ -59,7 +59,7 @@ def test_neighbors_barycenter():
     """
     X = [[0], [1], [2], [3]]
     y = [0, 0, 1, 1]
-    neigh = neighbors.NeighborsBarycenter(k=2)
+    neigh = neighbors.NeighborsBarycenter(n_neighbors=2)
     neigh.fit(X, y)
     assert_equal(neigh.predict([[1.5]]), 0.5)
 
