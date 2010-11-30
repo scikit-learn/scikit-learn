@@ -1,6 +1,8 @@
 import numpy as np
 from scikits.learn import sgd
+from scikits.learn import linear_model
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_almost_equal
 
 import unittest
 from nose.tools import raises
@@ -237,8 +239,33 @@ class DenseRegressorSGDTestCase(unittest.TestCase):
         """Check whether expected ValueError on bad loss"""
         clf = self.factory(loss="foobar")
 
+    def test_elasticnet_convergence(self):
+        """Check that the SGD ouput is consistent with coordinate descent"""
 
-class SparseClassifierSGDTestCase(DenseRegressorSGDTestCase):
+        n_samples, n_features = 1000, 5
+        np.random.seed(0)
+        X = np.random.randn(n_samples, n_features)
+        # ground_truth linear model that generate y from X and to which the
+        # models should converge if the regularizer would be set to 0.0
+        ground_truth_coef = np.random.randn(n_features)
+        y = np.dot(X, ground_truth_coef)
+
+        # XXX: alpha = 0.1 seems to cause convergence problems
+        for alpha in [0.01, 0.001]:
+            for rho in [0.5, 0.8, 1.0]:
+                cd = linear_model.ElasticNet(alpha=alpha, rho=rho,
+                                             fit_intercept=False)
+                cd.fit(X, y)
+                sgd = self.factory(penalty='elasticnet', n_iter=50,
+                                   alpha=alpha, rho=rho, fit_intercept=False)
+                sgd.fit(X, y)
+                err_msg = ("cd and sgd did not converge to comparable "
+                           "results for alpha=%f and rho=%f" % (alpha, rho))
+                assert_almost_equal(cd.coef_, sgd.coef_, decimal=2,
+                                    err_msg=err_msg)
+
+
+class SparseRegressorSGDTestCase(DenseRegressorSGDTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
     factory = sgd.sparse.RegressorSGD
