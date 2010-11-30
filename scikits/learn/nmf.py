@@ -190,12 +190,17 @@ class NMF(BaseEstimator):
         
     Examples
     --------
-    A = np.abs(np.random.randn(12,15)
-    m = NMF(10)
-    m.fit(A)
-    m.reconstruction_err_
-    h0,_ = scipy.optimize.nnls(m.components_, A[0,:]
-    # compare h0 with m.data_[0,:]
+    >>> from scikits.learn.nmf import NMF
+    >>> from scipy.optimize import nnls
+    >>> import numpy as np
+    >>> A = np.abs(np.random.randn(12,15)
+    >>> model = NMF(10)
+    >>> model.fit(A)
+    >>> print model.reconstruction_err_
+    >>> h0,_ = nnls(model.components_, A[0,:]
+    # compare h0 with model.data_[0,:]
+    >>> d = h0 - model.data_[0,:]
+    >>> print d*d.T
     
     Notes
     -----
