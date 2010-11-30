@@ -4,9 +4,7 @@ from .base import BaseLibSVM
 
 
 class SVC(BaseLibSVM, ClassifierMixin):
-    """
-    C-Support Vector Classification.
-
+    """C-Support Vector Classification.
 
     Parameters
     ----------
@@ -94,9 +92,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
-    """
-    Nu-Support Vector Classification.
-
+    """Nu-Support Vector Classification.
 
     Parameters
     ----------
@@ -200,9 +196,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
 
 class SVR(BaseLibSVM, RegressorMixin):
-    """
-    Support Vector Regression.
-
+    """Support Vector Regression.
 
     Parameters
     ----------
@@ -299,11 +293,11 @@ class SVR(BaseLibSVM, RegressorMixin):
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
-    """
-    Nu Support Vector Regression. Similar to NuSVC, for regression,
-    uses a paramter nu to control the number of support
-    vectors. However, unlike NuSVC, where nu replaces with C, here nu
-    replaces with the parameter p of SVR.
+    """Nu Support Vector Regression.
+
+    Similar to NuSVC, for regression, uses a paramter nu to control
+    the number of support vectors. However, unlike NuSVC, where nu
+    replaces with C, here nu replaces with the parameter p of SVR.
 
     Parameters
     ----------
@@ -398,7 +392,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
 
 class OneClassSVM(BaseLibSVM):
-    """Unsupervised outliers detection
+    """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
 
