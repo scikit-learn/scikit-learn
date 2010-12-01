@@ -83,6 +83,8 @@ def _pprint(params, offset=0, printer=repr):
         else:
             # use repr of the rest
             this_repr  = '%s=%s' % (k, printer(v))
+        if len(this_repr) > 500:
+            this_repr = this_repr[:300] + '...' + this_repr[-100:]
         if i > 0:
             if (this_line_length + len(this_repr) >= 75
                                         or '\n' in this_repr):
