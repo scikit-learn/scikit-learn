@@ -158,11 +158,8 @@ def fast_svd(M, k, p=None, rng=0, q=0):
         Y = _sparsedot(M, _sparsedot(M.T, Y))
 
     # extracting an orthonormal basis of the M range samples
-    Q, R = linalg.qr(Y)
+    Q, R = np.linalg.qr(Y)
     del R
-
-    # only keep the (k + p) first vectors of the basis
-    Q = Q[:, :(k + p)]
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = _sparsedot(Q.T, M)
