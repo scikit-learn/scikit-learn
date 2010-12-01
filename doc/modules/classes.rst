@@ -58,7 +58,7 @@ Generalized Linear Models
 .. autosummary::
    :toctree: generated/
    :template: function.rst
-
+   linear_model.lasso_path
    linear_model.lars_path
 
 

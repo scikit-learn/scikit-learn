@@ -28,6 +28,7 @@ responses predicted by the linear approximation.
 
 .. figure:: ../auto_examples/linear_model/images/plot_ols.png
    :target: ../auto_examples/linear_model/plot_ols.html
+   :align: center
    :scale: 50%
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
@@ -129,7 +130,7 @@ the coefficients. See :ref:`lars_algorithm` for another implementation.
     >>> clf.predict ([[1, 1]])
     array([ 0.8])
 
-The function lasso_path computes the coefficients along the full path
+The function :func:`lasso_path` computes the coefficients along the full path
 of possible values.
 
 .. topic:: Examples:
@@ -191,16 +192,25 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-It is implemented using the LARS algorithm in class :class:`linear_model.LARS`.
+The LARS model can be used using estimator :class:`LARS`, or its
+low-level implementation :func:`lars_path`.
 
+.. topic:: Examples:
+
+ * :ref:`example_linear_model_plot_lar.py`
 
 LARS Lasso
 ==========
 
-This implementation is based on the LARS algorithm, and unlike the
-implementation based on coordinate_descent, this yields the exact
-solution, which is piecewise linear as a function of the norm of its
-coefficients.
+:class:`LassoLARS` is a lasso model implemented using the LARS
+algorithm, and unlike the implementation based on coordinate_descent,
+this yields the exact solution, which is piecewise linear as a
+function of the norm of its coefficients.
+
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_lars.png
+   :target: ../auto_examples/linear_model/plot_lasso_lars.html
+   :align: center
+   :scale: 50%
 
 
    >>> from scikits.learn import linear_model
@@ -213,15 +223,13 @@ coefficients.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_lar.py`
  * :ref:`example_linear_model_plot_lasso_lars.py`
 
 
-Getting the full path
----------------------
-See function scikits.learn.linear_model.lars_path:
+The LARS algorithm provides the full path of the coefficients along
+the regularization parameter almost for free, thus a common operation
+consist of retrieving the path with function :func:`lars_path`
 
-.. autofunction:: lars_path
  
 
 Mathematical formulation
