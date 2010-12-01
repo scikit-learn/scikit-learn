@@ -62,7 +62,7 @@ def _mask_edges_weights(mask, edges, weights):
 
 
 def img_to_graph(img, mask=None,
-                    return_as=sparse.coo_matrix, dtype=np.float):
+                    return_as=sparse.coo_matrix, dtype=None):
     """ Create a graph of the pixel-to-pixel connections with the
         gradient of the image as a the edge value.
 
@@ -75,10 +75,13 @@ def img_to_graph(img, mask=None,
             pixels.
         return_as: np.ndarray or a sparse matrix class, optional
             The class to use to build the returned adjacency matrix.
-        dtype: dtype, optional
-            The data of the returned sparse matrix
+        dtype: None or dtype, optional
+            The data of the returned sparse matrix. By default it is the
+            dtype of img
     """
     img = np.atleast_3d(img)
+    if dtype is None:
+        dtype = img.dtype
     n_x, n_y, n_z = img.shape
     edges   = _make_edges_3d(n_x, n_y, n_z)
     weights = _compute_gradient_3d(edges, img)
