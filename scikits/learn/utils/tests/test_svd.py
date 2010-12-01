@@ -36,11 +36,10 @@ def test_fast_svd_low_rank():
 
     # ensure that the singular values of both methods are equal up to the real
     # rank of the matrix
-    assert_almost_equal(s[:rank], sa[:rank])
+    assert_almost_equal(s[:k], sa)
 
     # check the singular vectors too (while not checking the sign)
-    assert_almost_equal(np.dot(U[:, :rank], V[:rank, :]),
-                        np.dot(Ua[:, :rank], Va[:rank, :]))
+    assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va))
 
     # check the sparse matrix representation
     X = sparse.csr_matrix(X)
@@ -71,14 +70,14 @@ def test_fast_svd_low_rank_with_noise():
     _, sa, _ = fast_svd(X, k, q=0)
 
     # the approximation does not tolerate the noise:
-    assert np.abs(s[:rank] - sa[:rank]).max() > 0.1
+    assert np.abs(s[:k] - sa).max() > 0.05
 
     # compute the singular values of X using the fast approximate method with
     # iterated power method
-    _, sap, _ = fast_svd(X, k, q=3)
+    _, sap, _ = fast_svd(X, k, q=5)
 
     # the iterated power method is helping getting rid of the noise:
-    assert_almost_equal(s[:rank], sap[:rank], decimal=5)
+    assert_almost_equal(s[:k], sap, decimal=3)
 
 
 def test_fast_svd_infinite_rank():
@@ -102,14 +101,44 @@ def test_fast_svd_infinite_rank():
     _, sa, _ = fast_svd(X, k, q=0)
 
     # the approximation does not tolerate the noise:
-    assert np.abs(s[:rank] - sa[:rank]).max() > 0.1
+    assert np.abs(s[:k] - sa).max() > 0.1
 
     # compute the singular values of X using the fast approximate method with
     # iterated power method
-    _, sap, _ = fast_svd(X, k, q=7)
+    _, sap, _ = fast_svd(X, k, q=5)
 
     # the iterated power method is still managing to get most of the structure
     # at the requested rank
-    assert_almost_equal(s[:rank], sap[:rank], decimal=5)
+    assert_almost_equal(s[:k], sap, decimal=3)
+
+
+def test_fast_svd_transpose_consistency():
+    """Check that transposing the design matrix has limit impact"""
+    n_samples = 100
+    n_features = 500
+    rank = 4
+    k = 10
+
+    X = low_rank_fat_tail(n_samples, n_features, effective_rank=rank,
+                          tail_strength=0.5, seed=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    U1, s1, V1 = fast_svd(X, k, q=3, transpose=False, rng=0)
+    U2, s2, V2 = fast_svd(X, k, q=3, transpose=True, rng=0)
+    U3, s3, V3 = fast_svd(X, k, q=3, transpose='auto', rng=0)
+    U4, s4, V4 = linalg.svd(X, full_matrices=False)
+
+    assert_almost_equal(s1, s4[:k], decimal=3)
+    assert_almost_equal(s2, s4[:k], decimal=3)
+    assert_almost_equal(s3, s4[:k], decimal=3)
+
+    assert_almost_equal(np.dot(U1, V1), np.dot(U4[:, :k], V4[:k, :]),
+                        decimal=2)
+    assert_almost_equal(np.dot(U2, V2), np.dot(U4[:, :k], V4[:k, :]),
+                        decimal=2)
+
+
+    # in this case 'auto' is equivalent to transpose
+    assert_almost_equal(s2, s3)
 
 
