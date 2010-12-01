@@ -174,8 +174,9 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
     for i in xrange(q):
         Y = _sparsedot(M, _sparsedot(M.T, Y))
 
-    # extracting an orthonormal basis of the M range samples
-    Q, R = np.linalg.qr(Y)
+    # extracting an orthonormal basis of the M range samples: econ=True raises a
+    # deprecation warning but as of today there is no way to avoid it...
+    Q, R = linalg.qr(Y, econ=True)
     del R
 
     # project M to the (k + p) dimensional space using the basis vectors
