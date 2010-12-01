@@ -37,8 +37,8 @@ The class :class:`SGDClassifier` implements a plain stochastic gradient descent
 learning routine which supports different loss functions and penalties for 
 classification.
 
-.. figure:: ../auto_examples/sgd/images/plot_separating_hyperplane.png
-   :target: ../auto_examples/sgd/plot_separating_hyperplane.html
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane.png
+   :target: ../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 75
 
@@ -120,8 +120,8 @@ confidence. The Figure below illustrates the OVA approach on the iris dataset.
 The dashed lines represent the three OVA classifiers; 
 the background colors show the decision surface induced by the three classifiers. 
 
-.. figure:: ../auto_examples/sgd/images/plot_iris.png
-   :target: ../auto_examples/sgd/plot_iris.html
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_iris.png
+   :target: ../auto_examples/linear_model/plot_sgd_iris.html
    :align: center
    :scale: 75
 
@@ -131,9 +131,8 @@ class; classes are indexed in ascending order (see member `classes`).
 
 .. topic:: Examples:
 
- * :ref:`example_sgd_plot_separating_hyperplane.py`,
- * :ref:`example_sgd_plot_iris.py`,
- * :ref:`example_sgd_covertype_dense_sgd.py`
+ * :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
+ * :ref:`example_linear_model_plot_sgd_iris.py`
 
 Regression
 ==========
@@ -142,8 +141,8 @@ The class :class:`SGDRegressor` implements a plain stochastic gradient descent l
 routine which supports different loss functions and penalties to fit linear regression
 models. 
 
-.. figure:: ../auto_examples/sgd/images/plot_ols_sgd.png
-   :target: ../auto_examples/sgd/plot_ols_sgd.html
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_ols.png
+   :target: ../auto_examples/linear_model/plot_sgd_ols.html
    :align: center
    :scale: 75
 
@@ -155,7 +154,7 @@ following loss functions:
 
 .. topic:: Examples:
 
- * :ref:`example_sgd_plot_ols_sgd.py`,
+ * :ref:`example_linear_model_plot_sgd_ols.py`,
 
 .. currentmodule:: scikits.learn.linear_model.stochastic_gradient.sparse
 
@@ -248,7 +247,7 @@ Different choices for :math:`L` entail different classifiers such as
 All of the above loss functions can be regarded as an upper bound on the 
 misclassification error (Zero-one loss) as shown in the Figure below. 
 
-.. figure:: ../auto_examples/sgd/images/plot_loss_functions.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions.png
    :align: center
    :scale: 75
 
@@ -261,7 +260,7 @@ Popular choices for the regularization term :math:`R` include:
 The Figure below shows the contours of the different regularization terms 
 in the parameter space when :math:`R(w) = 1`. 
 
-.. figure:: ../auto_examples/sgd/images/plot_penalties.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties.png
    :align: center
    :scale: 75
 
