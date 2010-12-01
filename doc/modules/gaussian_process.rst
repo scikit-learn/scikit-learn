@@ -1,6 +1,10 @@
-=======================================
-Gaussian Processes for Machine Learning
-=======================================
+
+
+.. _gaussian_process:
+
+==================
+Gaussian Processes
+==================
 
 .. currentmodule:: scikits.learn.gaussian_process
 

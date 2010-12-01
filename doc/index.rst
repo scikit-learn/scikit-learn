@@ -54,16 +54,17 @@
 
 
 :Features:
-  * **Solid**: :ref:`supervised-learning`: classification, regression
+  * **Solid**: :ref:`supervised-learning`: :ref:`svm`,
+      :ref:`linear_model`.
 
-  * **Work in progress**: :ref:`unsupervised-learning`: :ref:`clustering`, 
-    :ref:`gmm`, manifold learning, :ref:`ICA <ICA>`
+  * **Work in progress**: :ref:`unsupervised-learning`:
+    :ref:`clustering`, :ref:`mixture`, manifold learning, :ref:`ICA
+    <ICA>`, :ref:`gaussian_process`
 
   * **Planed**: Gaussian graphical models, matrix factorization
 
 :License:
   Open source, commercially usable: **BSD license** (3 clause)
-
 
 .. only:: html
 

@@ -1,3 +1,6 @@
+
+.. _linear_model:
+
 =========================
 Generalized Linear Models
 =========================
@@ -14,6 +17,8 @@ value.
 Across the module, we designate the vector :math:`\beta = (\beta_1,
 ..., \beta_D)` as ``coef_`` and :math:`\beta_0` as ``intercept_``.
 
+
+.. TODO: reference to logistic regression.
 
 .. _ordinary_least_squares:
 
