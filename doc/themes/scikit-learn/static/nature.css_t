@@ -214,6 +214,7 @@ div.sphinxsidebar ul ul {
 
 div.sphinxsidebar {
     width: 200px;
+    overflow: hidden;
     float: left;
     margin-left: 0;
     background-color: inherit;
@@ -299,8 +300,6 @@ div.bodywrapper h1 {
     border-radius: 0 15px 0 15px;
     -moz-border-radius: 0 15px 0 15px;
 }
-
-
  
 div.body h3 { 
     font-size: 120%; 
