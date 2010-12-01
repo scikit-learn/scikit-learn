@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from ...externals.joblib import Parallel, delayed
+from ..externals.joblib import Parallel, delayed
 from .base import BaseSGDClassifier, BaseSGDRegressor
 from .sgd_fast import plain_sgd
 

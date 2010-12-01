@@ -1,5 +1,4 @@
 import numpy as np
-from scikits.learn.linear_model import stochastic_gradient
 from scikits.learn import linear_model
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_almost_equal
@@ -40,7 +39,7 @@ Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 class DenseSGDClassifierTestCase(unittest.TestCase):
     """Test suite for the dense representation variant of SGD"""
 
-    factory = stochastic_gradient.SGDClassifier
+    factory = linear_model.SGDClassifier
 
     def test_sgd(self):
         """Check that SGD gives any results :-)"""
@@ -68,13 +67,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
         clf = self.factory(loss='hinge')
-        assert isinstance(clf.loss_function, stochastic_gradient.Hinge)
+        assert isinstance(clf.loss_function, linear_model.Hinge)
 
         clf = self.factory(loss='log')
-        assert isinstance(clf.loss_function, stochastic_gradient.Log)
+        assert isinstance(clf.loss_function, linear_model.Log)
 
         clf = self.factory(loss='modified_huber')
-        assert isinstance(clf.loss_function, stochastic_gradient.ModifiedHuber)
+        assert isinstance(clf.loss_function, linear_model.ModifiedHuber)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -196,13 +195,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
-    factory = stochastic_gradient.sparse.SGDClassifier
+    factory = linear_model.sparse.SGDClassifier
 
 
 class DenseSGDRegressorTestCase(unittest.TestCase):
     """Test suite for the dense representation variant of SGD"""
 
-    factory = stochastic_gradient.SGDRegressor
+    factory = linear_model.SGDRegressor
 
     def test_sgd(self):
         """Check that SGD gives any results."""
@@ -228,10 +227,10 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
         clf = self.factory(loss='squared_loss')
-        assert isinstance(clf.loss_function, stochastic_gradient.SquaredLoss)
+        assert isinstance(clf.loss_function, linear_model.SquaredLoss)
 
         clf = self.factory(loss='huber', epsilon=0.5)
-        assert isinstance(clf.loss_function, stochastic_gradient.Huber)
+        assert isinstance(clf.loss_function, linear_model.Huber)
         assert clf.epsilon == 0.5
 
     @raises(ValueError)
@@ -268,4 +267,4 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
-    factory = stochastic_gradient.sparse.SGDRegressor
+    factory = linear_model.sparse.SGDRegressor

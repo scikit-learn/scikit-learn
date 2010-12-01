@@ -6,7 +6,7 @@
 import numpy as np
 from scipy import sparse
 
-from ....externals.joblib import Parallel, delayed
+from ...externals.joblib import Parallel, delayed
 from ..base import BaseSGDClassifier, BaseSGDRegressor
 from ..sgd_fast_sparse import plain_sgd
 
