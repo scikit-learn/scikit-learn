@@ -4,10 +4,11 @@
     user manual is defined.
 
 .. toctree::
-    :numbered:
+   :numbered:
 
-    supervised_learning.rst
-    unsupervised_learning.rst
-    model_selection.rst
-    Class Reference <modules/classes.rst>
-
+   install
+   tutorial
+   supervised_learning.rst
+   unsupervised_learning.rst
+   model_selection.rst
+   Class Reference <modules/classes.rst>

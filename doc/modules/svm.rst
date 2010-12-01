@@ -1,3 +1,6 @@
+
+.. _svm:
+
 =======================
 Support Vector Machines
 =======================
@@ -28,12 +31,11 @@ The disadvantages of Support Vector Machines include:
     - If the number of features is much greater than the number of
       samples, the method is likely to give poor performances.
 
-    - SVMs do not directly provide probability estimates, so these
-      must be calculated using indirect techniques. In our case, these
-      techniques imply conducting five-fold cross-validation, so
-      performance can suffer.  See method predict_proba for more
-      information.
+    - SVMs do not directly provide probability estimates, these are
+      calculated using five-fold cross-validation, and thus
+      performance can suffer.
 
+.. TODO: add reference to probability estimates
 
 .. _svm_classification:
 
@@ -211,7 +213,8 @@ Tips on Practical Use
     of training errors and support vectors.
 
   * If data for classification are unbalanced (e.g. many positive and
-    few negative), try different penalty parameters C.
+    few negative), set class_weight='auto' and/or try different
+    penalty parameters C.
 
   * Specify larger cache size (keyword cache) for huge problems.
 
@@ -252,13 +255,13 @@ python function or by precomputing the Gram matrix.
 Classifiers with custom kernels behave the same way as any other
 classifiers, except that:
 
-    * Support vectors do no longer represent the vectors, but rather are
-      indices of the support vectors for the training vectors.
+    * Field `support_vectors\_` is now empty, only indices of support
+      vectors are stored in `support_`
 
     * A reference (and not a copy) of the first argument in the fit()
       method is stored for future reference. If that array changes
-      between the use of fit() and predict() you will have
-      unexpected results.
+      between the use of fit() and predict() you will have unexpected
+      results.
 
 
 Using python functions as kernels
@@ -279,12 +282,13 @@ instance that will use that kernel::
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
-Passing the gram matrix
-~~~~~~~~~~~~~~~~~~~~~~~
+Using the Gram matrix
+~~~~~~~~~~~~~~~~~~~~~
 
-Set kernel='precomputed' and pass the gram matrix instead of X in the
+Set kernel='precomputed' and pass the Gram matrix instead of X in the
 fit method.
 
+.. TODO: inline example
 
 .. topic:: Examples:
 

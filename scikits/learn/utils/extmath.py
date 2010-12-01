@@ -94,8 +94,8 @@ def _sparsedot(a, b):
     else:
         return np.dot(a,b)
 
-def fast_svd(M, k, p=None, rng=0, q=0):
-    """Computes the k-truncated SVD using random projections
+def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
+    """Computes the k-truncated randomized SVD
 
     Parameters
     ===========
@@ -112,6 +112,13 @@ def fast_svd(M, k, p=None, rng=0, q=0):
     q: int (default is 0)
         Number of power iterations (can be used to deal with very noisy
         problems).
+
+    transpose: True, False or 'auto' (default)
+        Whether the algorithm should be applied to M.T instead of M. The
+        result should approximately be the same. The 'auto' mode will
+        trigger the transposition if M.shape[1] > M.shape[0] since this
+        implementation of randomized SVD tend to be a little faster in that
+        case).
 
     rng: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
@@ -136,16 +143,26 @@ def fast_svd(M, k, p=None, rng=0, q=0):
     A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
+    # lazy import of scipy sparse, because it is very slow.
+    from scipy import sparse
+
+    if p == None:
+        p = k
+
     if rng is None:
         rng = np.random.RandomState()
     elif isinstance(rng, int):
         rng = np.random.RandomState(rng)
 
-    # lazy import of scipy sparse, because it is very slow.
-    from scipy import sparse
-    if p == None:
-        p = k
-    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
+    n_samples, n_features = M.shape
+
+    if transpose == 'auto' and n_samples > n_features:
+        transpose = True
+    if transpose:
+        # this implementation is a bit faster with smaller shape[1]
+        M = M.T
+
+   # generating random gaussian vectors r with shape: (M.shape[1], k + p)
     r = rng.normal(size=(M.shape[1], k + p))
 
     # sampling the range of M using by linear projection of r
@@ -157,12 +174,10 @@ def fast_svd(M, k, p=None, rng=0, q=0):
     for i in xrange(q):
         Y = _sparsedot(M, _sparsedot(M.T, Y))
 
-    # extracting an orthonormal basis of the M range samples
-    Q, R = linalg.qr(Y)
+    # extracting an orthonormal basis of the M range samples: econ=True raises a
+    # deprecation warning but as of today there is no way to avoid it...
+    Q, R = linalg.qr(Y, econ=True)
     del R
-
-    # only keep the (k + p) first vectors of the basis
-    Q = Q[:, :(k + p)]
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = _sparsedot(Q.T, M)
@@ -171,5 +186,10 @@ def fast_svd(M, k, p=None, rng=0, q=0):
     Uhat, s, V = linalg.svd(B, full_matrices=False)
     del B
     U = np.dot(Q, Uhat)
-    return U[:, :k], s[:k], V[:k, :]
+
+    if transpose:
+        # transpose back the results according to the input convention
+        return V[:k, :].T, s[:k], U[:, :k].T
+    else:
+        return U[:, :k], s[:k], V[:k, :]
 
