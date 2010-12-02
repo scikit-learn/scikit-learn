@@ -207,7 +207,7 @@ class BayesianRidge(LinearModel):
 
         self._set_intercept(Xmean, ymean)
         # Store explained variance for __str__
-        self.explained_variance_ = self._explained_variance(X, y)
+        self.r2_score_ = self._r2_score(X, y)
         return self
 
 
@@ -420,5 +420,5 @@ class ARDRegression(LinearModel):
 
         self._set_intercept(Xmean, ymean)
         # Store explained variance for __str__
-        self.explained_variance_ = self._explained_variance(X, y)
+        self.r2_score_ = self._r2_score(X, y)
         return self

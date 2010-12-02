@@ -102,7 +102,7 @@ class ElasticNet(LinearModel):
                           ' to increase the number of interations')
 
         # Store explained variance for __str__
-        self.explained_variance_ = self._explained_variance(X, y)
+        self.r2_score_ = self._r2_score(X, y)
 
         # return self for chaining fit and predict calls
         return self
@@ -354,7 +354,7 @@ class LinearModelCV(LinearModel):
 
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
-        self.explained_variance_ = model.explained_variance_
+        self.r2_score_ = model.r2_score_
         self.alpha = model.alpha
         self.alphas = np.asarray(alphas)
         return self
