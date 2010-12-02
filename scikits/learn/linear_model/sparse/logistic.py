@@ -88,3 +88,12 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
                                   self.class_weight, self.label_,
                                   self._get_bias())
         return probas[:,np.argsort(self.label_)]
+
+    def predict_log_proba(self, T):
+        """
+        Log of Probability estimates.
+
+        The returned estimates for all classes are ordered by the
+        label of classes.
+        """
+        return np.log(self.predict_proba(T))

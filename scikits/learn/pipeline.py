@@ -7,6 +7,7 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 # Licence: BSD
 
 from .base import BaseEstimator
+import numpy as np
 
 class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator
@@ -151,6 +152,18 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt)
 
+    def predict_proba(self, X):
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].predict_proba(Xt)
+
+    def predict_log_proba(self, X):
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].predict_log_proba(Xt)
+
     def transform(self, X):
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -162,4 +175,20 @@ class Pipeline(BaseEstimator):
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
+
+    def get_support(self):
+        support_ = None
+        for name, transform in self.steps[:-1]:
+            if hasattr(transform, 'get_support'):
+                support_ = transform.get_support()
+        if support_ is None:
+            support_ = np.ones(self.steps[-1][-1].coef_.shape, dtype=np.bool)
+        return support_
+
+    @property
+    def coef_(self):
+        support_ = self.get_support()
+        coef = np.zeros(support_.shape, dtype=np.float)
+        coef[support_] = self.steps[-1][-1].coef_
+        return coef
 

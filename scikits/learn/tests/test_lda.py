@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_true
 
 from .. import lda
@@ -28,6 +28,12 @@ def test_lda():
     # Assure that it works with 1D data
     y_pred1 = clf.fit(X1, y).predict(X1)
     assert_array_equal(y_pred1, y)
+
+    # Test probas estimates
+    y_proba_pred1 = clf.predict_proba(X1)
+    assert_array_equal((y_proba_pred1[:,1] > 0.5) + 1, y)
+    y_log_proba_pred1 = clf.predict_log_proba(X1)
+    assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1, 8)
 
     # Primarily test for commit 2f34950 -- "reuse" of priors
     y_pred3 = clf.fit(X, y3).predict(X)

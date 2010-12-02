@@ -222,3 +222,19 @@ class LDA(BaseEstimator, ClassifierMixin):
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
+    def predict_log_proba(self, X):
+        """
+        This function return posterior log-probabilities of classification
+        according to each class on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples, n_classes]
+        """
+        # XXX : can do better to avoid precision overflows
+        probas_ = self.predict_proba(X)
+        return np.log(probas_)

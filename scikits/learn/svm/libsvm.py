@@ -165,6 +165,9 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     predict_proba(X) : array
         Return probability estimates.
 
+    predict_log_proba(X) : array
+        Return log-probability estimates.
+
     decision_function(X) : array
         Return distance to predicted margin.
 

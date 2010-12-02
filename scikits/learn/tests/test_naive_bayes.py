@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from .. import naive_bayes
 
@@ -19,3 +19,7 @@ def test_gnb():
     y_pred = clf.fit(X, y).predict(X)
     assert_array_equal(y_pred, y)
 
+    y_pred_proba = clf.predict_proba(X)
+    y_pred_log_proba = clf.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+    
