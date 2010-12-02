@@ -5,7 +5,6 @@ from ._libsvm import libsvm_train, libsvm_predict, libsvm_predict_proba, \
 from . import _liblinear
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 
-
 def _get_class_weight(class_weight, y):
     """
     Estimate class weights for unbalanced datasets.
@@ -73,7 +72,7 @@ class BaseLibSVM(BaseEstimator):
         return kernel_type, _X
 
 
-    def fit(self, X, y, class_weight={}, sample_weight=[]):
+    def fit(self, X, y, class_weight={}, sample_weight=[], **params):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -81,8 +80,8 @@ class BaseLibSVM(BaseEstimator):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
@@ -104,6 +103,8 @@ class BaseLibSVM(BaseEstimator):
         self : object
             Returns self.
         """
+        self._set_params(**params)
+
         X = np.asanyarray(X, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.float64, order='C')
         sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
@@ -160,7 +161,7 @@ class BaseLibSVM(BaseEstimator):
 
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
@@ -338,23 +339,15 @@ class BaseLibLinear(BaseEstimator):
 
     def predict(self, X):
         """
-        This function does classification or regression on an array of
-        test vectors X.
-
-        For a classification model, the predicted class for each
-        sample in X is returned.  For a regression model, the function
-        value of X calculated is returned.
-
-        For a one-class model, +1 or -1 is returned.
+        Predict target values of X according to the fitted model.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
 
-
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
         self._check_n_features(X)

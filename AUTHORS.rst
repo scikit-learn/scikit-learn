@@ -60,7 +60,11 @@ chronological order:
   * Peter Prettenhofer <peter.prettenhofer@gmail.com>
 
   * Vincent Dubourg <vincent.dubourg@gmail.com> joined the project in
-    December 2010 and contributed the gaussian_process module.
+    November 2010 and contributed the gaussian_process module.
+
+  * Alexandre Passos <alexandre.tp@gmail.com> joined the project in
+    November 2010 contributed the fast SVD variant.
+
 
 If I forgot anyone, do not hesitate to send me an email to
 fabian.pedregosa@inria.fr and I'll include you in the list.

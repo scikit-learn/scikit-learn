@@ -4,8 +4,12 @@ from .base import SparseBaseLibSVM
 
 
 class SVC(SparseBaseLibSVM, ClassifierMixin):
-    """SVC for sparse matrices (csr)
+    """SVC for sparse matrices (csr).
 
+    See :class:`scikits.learn.svm.SVC` for a complete list of parameters
+
+    Notes
+    -----
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
@@ -22,8 +26,12 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
 
 
 class NuSVC (SparseBaseLibSVM, ClassifierMixin):
-    """NuSVC for sparse matrices (csr)
+    """NuSVC for sparse matrices (csr).
 
+    See :class:`scikits.learn.svm.NuSVC` for a complete list of parameters
+
+    Notes
+    -----
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
@@ -44,6 +52,10 @@ class NuSVC (SparseBaseLibSVM, ClassifierMixin):
 class SVR (SparseBaseLibSVM, RegressorMixin):
     """SVR for sparse matrices (csr)
 
+    See :class:`scikits.learn.svm.SVR` for a complete list of parameters
+
+    Notes
+    -----
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
@@ -65,6 +77,10 @@ class SVR (SparseBaseLibSVM, RegressorMixin):
 class NuSVR (SparseBaseLibSVM, RegressorMixin):
     """NuSVR for sparse matrices (csr)
 
+    See :class:`scikits.learn.svm.NuSVC` for a complete list of parameters
+
+    Notes
+    -----
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).
@@ -83,6 +99,10 @@ class NuSVR (SparseBaseLibSVM, RegressorMixin):
 class OneClassSVM (SparseBaseLibSVM):
     """NuSVR for sparse matrices (csr)
 
+    See :class:`scikits.learn.svm.NuSVC` for a complete list of parameters
+    
+    Notes
+    -----
     For best results, this accepts a matrix in csr format
     (scipy.sparse.csr), but should be able to convert from any array-like
     object (including other sparse representations).

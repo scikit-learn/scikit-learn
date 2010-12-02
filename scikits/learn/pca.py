@@ -12,21 +12,22 @@ from .base import BaseEstimator
 from .utils.extmath import fast_logdet, fast_svd
 
 
-def _assess_dimension_(spect, rk, n_samples, dim):
-    """
-    Compute the likelihood of a rank rk dataset
-    embedded in gaussian noise of shape(n, dimf) having spectrum spect
+def _assess_dimension_(spectrum, rank, n_samples, dim):
+    """Compute the likelihood of a rank rank dataset
+
+    The dataset is assumed to be embedded in gaussian noise of shape(n,
+    dimf) having spectrum spectrum.
 
     Parameters
     ----------
-    spect: array of shape (n)
+    spectrum: array of shape (n)
         data spectrum
-    rk: int,
+    rank: int,
         tested rank value
     n_samples: int,
         number of samples
     dim: int,
-        embedding/emprical dimension
+        embedding/empirical dimension
 
     Returns
     -------
@@ -38,48 +39,49 @@ def _assess_dimension_(spect, rk, n_samples, dim):
     This implements the method of Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
     """
-    if rk>dim:
-        raise ValueError, "the dimension cannot exceed dim"
+    if rank > dim:
+        raise ValueError("the dimension cannot exceed dim")
     from scipy.special import gammaln
 
-    pu = -rk*np.log(2)
-    for i in range(rk):
-        pu += gammaln((dim - i)/2) - np.log(np.pi) * (dim - i)/2
+    pu = -rank * np.log(2)
+    for i in range(rank):
+        pu += gammaln((dim - i) / 2) - np.log(np.pi) * (dim - i) / 2
 
-    pl = np.sum(np.log(spect[:rk]))
+    pl = np.sum(np.log(spectrum[:rank]))
     pl = -pl * n_samples / 2
 
-    if rk == dim:
+    if rank == dim:
         pv = 0
         v = 1
     else:
-        v = np.sum(spect[rk:dim]) / (dim - rk)
-        pv = -np.log(v) * n_samples * (dim - rk)/2
+        v = np.sum(spectrum[rank:dim]) / (dim - rank)
+        pv = -np.log(v) * n_samples * (dim - rank) / 2
 
-    m = dim * rk - rk * (rk + 1) / 2
-    pp = np.log(2 * np.pi) * (m + rk + 1)/2
+    m = dim * rank - rank * (rank + 1) / 2
+    pp = np.log(2 * np.pi) * (m + rank + 1) / 2
 
     pa = 0
-    spectrum_ = spect.copy()
-    spectrum_[rk:dim] = v
-    for i in range(rk):
+    spectrum_ = spectrum.copy()
+    spectrum_[rank:dim] = v
+    for i in range(rank):
         for j in range (i + 1, dim):
-            pa += np.log((spect[i] - spect[j]) * \
-                     (1./spectrum_[j] - 1./spectrum_[i])) + np.log(n_samples)
+            pa += (np.log((spectrum[i] - spectrum[j])
+                          * (1. / spectrum_[j] - 1. / spectrum_[i]))
+                   + np.log(n_samples))
 
-    ll = pu + pl + pv + pp -pa/2 - rk*np.log(n_samples)/2
+    ll = pu + pl + pv + pp -pa / 2 - rank * np.log(n_samples) / 2
 
     return ll
 
 
-def _infer_dimension_(spect, n, p):
-    """
-    This method infers the dimension of a dataset of shape (n,p)
-    with spectrum spect
+def _infer_dimension_(spectrum, n, p):
+    """This method infers the dimension of a dataset of shape (n, p)
+
+    The dataset is described by its spectrum `spectrum`.
     """
     ll = []
-    for rk in range(min(n, p, len(spect))):
-        ll.append(_assess_dimension_(spect, rk, n, p))
+    for rank in range(min(n, p, len(spectrum))):
+        ll.append(_assess_dimension_(spectrum, rank, n, p))
     ll = np.array(ll)
     return ll.argmax()
 
@@ -182,6 +184,8 @@ class PCA(BaseEstimator):
         if self.n_comp is not None:
             self.components_ = self.components_[:, :self.n_comp]
             self.explained_variance_ = self.explained_variance_[:self.n_comp]
+            self.explained_variance_ratio_ = self.explained_variance_ratio_[
+                :self.n_comp]
 
         return self
 
@@ -195,8 +199,9 @@ class PCA(BaseEstimator):
 
 ################################################################################
 class ProbabilisticPCA(PCA):
-    """ Additional layer on top of PCA that add a probabilistic evaluation
-    """
+    """Additional layer on top of PCA that add a probabilistic evaluation
+
+    """ + PCA.__doc__
 
     def fit(self, X, homoscedastic=True):
         """Additionally to PCA.fit, learns a covariance model
@@ -216,9 +221,9 @@ class ProbabilisticPCA(PCA):
         if self.dim <= self.n_comp:
             delta = np.zeros(self.dim)
         elif homoscedastic:
-            delta = (Xr**2).sum()/(n_samples*(self.dim)) * np.ones(self.dim)
+            delta = (Xr ** 2).sum() / (n_samples*(self.dim)) * np.ones(self.dim)
         else:
-            delta = (Xr**2).mean(0) / (self.dim-self.n_comp)
+            delta = (Xr ** 2).mean(0) / (self.dim - self.n_comp)
         self.covariance_ = np.diag(delta)
         for k in range(self.n_comp):
             add_cov =  np.dot(
@@ -227,7 +232,7 @@ class ProbabilisticPCA(PCA):
         return self
 
     def score(self, X):
-        """Return a scoreassociated to new data
+        """Return a score associated to new data
 
         Parameters
         ----------

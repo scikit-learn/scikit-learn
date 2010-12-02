@@ -4,7 +4,7 @@ from .base import BaseLibLinear
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin):
-    """Linear Support Vector Classification
+    """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but uses internally
     liblinear rather than libsvm, so it has more flexibility in the
