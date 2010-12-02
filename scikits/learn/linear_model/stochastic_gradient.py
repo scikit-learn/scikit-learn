@@ -11,7 +11,7 @@ from .sgd_fast import plain_sgd
 
 
 class SGDClassifier(BaseSGDClassifier):
-    """Linear model fitted by minimizing a regularized empirical loss with SGD
+    """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with

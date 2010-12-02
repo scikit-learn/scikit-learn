@@ -1,8 +1,11 @@
+
+.. _sgd:
+
 ===========================
 Stochastic Gradient Descent
 ===========================
 
-.. currentmodule:: scikits.learn.linear_model.stochastic_gradient
+.. currentmodule:: scikits.learn.linear_model
 
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient approach 
 to discriminative learning of linear classifiers under convex loss functions 
@@ -33,6 +36,8 @@ The disadvantages of Stochastic Gradient Descent include:
 Classification
 ==============
 
+.. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations. 
+
 The class :class:`SGDClassifier` implements a plain stochastic gradient descent 
 learning routine which supports different loss functions and penalties for 
 classification.
@@ -47,10 +52,10 @@ an array X of size [n_samples, n_features] holding the training
 samples, and an array Y of size [n_samples] holding the target values
 (class labels) for the training samples::
 
-    >>> from scikits.learn.linear_model import stochastic_gradient
+    >>> from scikits.learn.linear_model import SGDClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = stochastic_gradient.SGDClassifier(loss="hinge", penalty="l2")
+    >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
            fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
@@ -79,8 +84,6 @@ To get the signed distance to the hyperplane use `decision_function`:
     >>> clf.decision_function([[2., 2.]])
     array([ 29.61357756])
 
-.. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations. 
-
 The concrete loss function can be set via the `loss` parameter. :class:`SGDClassifier` supports the
 following loss functions: 
 
@@ -95,7 +98,7 @@ Log loss, on the other hand, provides probability estimates.
 In the case of binary classification and `loss="log"` you get a probability 
 estimate P(y=C|x) using `predict_proba`, where `C` is the largest class label: 
    
-    >>> clf = stochastic_gradient.SGDClassifier(loss="log").fit(X, y)
+    >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
     array([ 0.99999949])
 
@@ -156,11 +159,13 @@ following loss functions:
 
  * :ref:`example_linear_model_plot_sgd_ols.py`,
 
-.. currentmodule:: scikits.learn.linear_model.stochastic_gradient.sparse
 
+.. currentmodule:: scikits.learn.linear_model.sparse
 
 Stochastic Gradient Descent for sparse data
 ===========================================
+
+.. note:: The sparse implementation produces slightly different results than the dense implementation due to a shrunk learning rate for the intercept.
 
 There is support for sparse data given in any matrix in a format
 supported by scipy.sparse. Classes have the same name, just prefixed
