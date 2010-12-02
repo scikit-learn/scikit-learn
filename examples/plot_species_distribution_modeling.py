@@ -248,9 +248,9 @@ for i, species in enumerate([bv, mm]):
     Z[coverage[2,:,:] == -9999] = -9999
     CS = pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
     pl.colorbar(format='%.2f')
-    pl.scatter(species.train[:, 0], species.train[:, 1], s=20, c='black',
+    pl.scatter(species.train[:, 0], species.train[:, 1], s=2**2, c='black',
                marker='^', label='train')
-    pl.scatter(species.test[:, 0], species.test[:, 1], s=20, c='black',
+    pl.scatter(species.test[:, 0], species.test[:, 1], s=2**2, c='black',
                marker='x', label='test')
     pl.legend()
     pl.title(species.name)
