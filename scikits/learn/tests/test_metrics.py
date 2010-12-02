@@ -2,8 +2,6 @@ import random
 import numpy as np
 import nose
 
-# from numpy.testing import assert_
-# numpy.testing.assert_ only exists in recent versions of numpy
 from nose.tools import assert_true
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
