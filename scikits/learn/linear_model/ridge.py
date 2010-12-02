@@ -7,6 +7,7 @@ from scipy import linalg
 
 from .base import LinearModel
 
+
 class Ridge(LinearModel):
     """
     Ridge regression.
@@ -38,7 +39,6 @@ class Ridge(LinearModel):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
 
-
     def fit(self, X, y, **params):
         """
         Fit Ridge regression model
@@ -65,15 +65,16 @@ class Ridge(LinearModel):
 
         if n_samples > n_features:
             # w = inv(X^t X + alpha*Id) * X.T y
-            self.coef_ = linalg.solve(
-                np.dot(X.T, X) + self.alpha * np.eye(n_features),
-                np.dot(X.T, y))
+            A = np.dot(X.T, X)
+            A.flat[::n_features+1] += self.alpha
+            self.coef_ = linalg.solve(A, np.dot(X.T, y),
+                                      overwrite_a=True, sym_pos=True)
         else:
             # w = X.T * inv(X X^t + alpha*Id) y
-            self.coef_ = np.dot(X.T, linalg.solve(
-                np.dot(X, X.T) + self.alpha * np.eye(n_samples), y))
+            A = np.dot(X, X.T)
+            A.flat[::n_samples+1] += self.alpha
+            self.coef_ = np.dot(X.T, linalg.solve(A, y, overwrite_a=True,
+                                                  sym_pos=True))
 
         self._set_intercept(Xmean, ymean)
         return self
-
-
