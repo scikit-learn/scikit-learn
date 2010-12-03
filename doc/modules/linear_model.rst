@@ -434,8 +434,8 @@ Stochastic Gradient Descent - SGD
 =================================
 
 Stochastic gradient descent is a simple yet very efficient approach 
-to fit linear models and thus is very effective when the number of samples 
-(and the number of features) is large.
+to fit linear models. It is particulary useful when the number of samples 
+(and the number of features) is very large.
 
 
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide 

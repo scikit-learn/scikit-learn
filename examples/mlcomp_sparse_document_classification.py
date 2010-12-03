@@ -46,7 +46,7 @@ import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
-from scikits.learn.linear_model.stochastic_gradient.sparse import SGDClassifier
+from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
 

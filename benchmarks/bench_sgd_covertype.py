@@ -56,7 +56,7 @@ import os
 import numpy as np
 
 from scikits.learn.svm import LinearSVC
-from scikits.learn.linear_model.stochastic_gradient import SGDClassifier
+from scikits.learn.linear_model import SGDClassifier
 from scikits.learn.naive_bayes import GNB
 from scikits.learn import metrics
 

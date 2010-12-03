@@ -12,7 +12,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn.linear_model.stochastic_gradient import SGDRegressor
+from scikits.learn.linear_model import SGDRegressor
 
 # this is our test set, it's just a straight line with some
 # gaussian noise

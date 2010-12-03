@@ -11,7 +11,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from scikits.learn.linear_model.stochastic_gradient import SGDClassifier
+from scikits.learn.linear_model import SGDClassifier
 
 # we create 40 separable points
 np.random.seed(0)
