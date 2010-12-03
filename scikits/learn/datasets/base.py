@@ -203,10 +203,8 @@ def load_digits():
                  DESCR=fdescr.read())
 
 
-
 def load_diabetes():
-    data = np.loadtxt(os.path.join(os.path.dirname(__file__) +
-                                   '/data/diabetes.csv'))
-    target = data[:, -1]
-    data   = data[:, :-1]
+    base_dir = os.path.join(os.path.dirname(__file__), 'data/')
+    data   = np.loadtxt(base_dir + 'diabetes_data.csv.gz')
+    target = np.loadtxt(base_dir + 'diabetes_target.csv.gz')
     return Bunch (data=data, target=target)

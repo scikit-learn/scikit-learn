@@ -24,8 +24,6 @@ diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
-X[:,6] *= -1 # To reproduce wikipedia LASSO page
-
 print "Computing regularization path using the LARS ..."
 _, _, coefs_ = linear_model.lars_path(X, y, method='lasso', verbose=True)
 
