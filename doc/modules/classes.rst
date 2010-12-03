@@ -123,6 +123,7 @@ Nearest Neighbors
    :template: class.rst
 
    neighbors.Neighbors
+   neighbors.NeighborsBarycenter
    ball_tree.BallTree
 
 .. autosummary::
