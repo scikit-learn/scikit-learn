@@ -32,6 +32,14 @@ def configuration(parent_package='', top_path=None):
                          **blas_info
                          )
 
+    config.add_extension('sgd_fast',
+                         sources=['sgd_fast.c'],
+                         include_dirs=[numpy.get_include()]
+                         )
+    config.add_extension('sgd_fast_sparse',
+                         sources=['sgd_fast_sparse.c'],
+                         include_dirs=[numpy.get_include()]
+                         )
 
     # add other directories
     config.add_subpackage('tests')

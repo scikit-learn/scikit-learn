@@ -6,12 +6,12 @@
 import numpy as np
 
 from ..externals.joblib import Parallel, delayed
-from .base import ClassifierBaseSGD, RegressorBaseSGD
+from .base import BaseSGDClassifier, BaseSGDRegressor
 from .sgd_fast import plain_sgd
 
 
-class ClassifierSGD(ClassifierBaseSGD):
-    """Linear model fitted by minimizing a regularized empirical loss with SGD
+class SGDClassifier(BaseSGDClassifier):
+    """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
@@ -83,16 +83,16 @@ class ClassifierSGD(ClassifierBaseSGD):
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
-    >>> clf = ClassifierSGD()
+    >>> clf = SGDClassifier()
     >>> clf.fit(X, Y)
-    ClassifierSGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
+    SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
            fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
     See also
     --------
-    LinearSVC
+    LinearSVC, LogisticRegression
 
     """
 
@@ -253,7 +253,7 @@ def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,
     return (i, coef, intercept)
 
 
-class RegressorSGD(RegressorBaseSGD):
+class SGDRegressor(BaseSGDRegressor):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -303,7 +303,11 @@ class RegressorSGD(RegressorBaseSGD):
         Defaults to False.
 
     verbose: integer, optional
-        The verbosity level
+        The verbosity level.
+
+    p : float
+        Epsilon in the epsilon-insensitive huber loss function;
+        only if `loss=='huber'`.
 
     Attributes
     ----------
@@ -320,15 +324,14 @@ class RegressorSGD(RegressorBaseSGD):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = RegressorSGD()
+    >>> clf = SGDRegressor()
     >>> clf.fit(X, y)
-    RegressorSGD(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
-           epsilon=0.1, fit_intercept=True, penalty='l2', rho=1.0,
-           alpha=0.0001)
+    SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
+           fit_intercept=True, penalty='l2', p=0.1, rho=1.0, alpha=0.0001)
 
     See also
     --------
-    LinearRegression, RidgeRegression, SVR
+    Ridge, ElasticNet, Lasso, SVR
 
     """
 

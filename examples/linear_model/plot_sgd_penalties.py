@@ -3,7 +3,7 @@
 SGD: Penalties
 ==============
 
-Plot the contours of the three penalties supported by `scikits.learn.sgd`.
+Plot the contours of the three penalties supported by `scikits.learn.linear_model.stochastic_gradient`.
 
 """
 from __future__ import division

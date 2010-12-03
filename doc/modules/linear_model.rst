@@ -430,3 +430,18 @@ where :math:`\alpha` is the precision of the noise.
  * Original Algorithm is detailed in the  book *Bayesian learning for neural
    networks* by Radford M. Neal
 
+Stochastic Gradient Descent - SGD
+=================================
+
+Stochastic gradient descent is a simple yet very efficient approach 
+to fit linear models. It is particulary useful when the number of samples 
+(and the number of features) is very large.
+
+
+The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide 
+functionality to fit linear models for classification and regression 
+using different (convex) loss functions and different penalties. 
+
+.. topic:: References
+
+ * :ref:`sgd`

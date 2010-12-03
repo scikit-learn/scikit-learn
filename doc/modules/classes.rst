@@ -53,6 +53,8 @@ Generalized Linear Models
    linear_model.LARS
    linear_model.LassoLARS
    linear_model.LogisticRegression
+   linear_model.SGDClassifier
+   linear_model.SGDRegressor
 
 
 .. autosummary::
@@ -72,27 +74,8 @@ For sparse data
 
    linear_model.sparse.Lasso
    linear_model.sparse.ElasticNet
-
-
-Stochastic Gradient Descent
-===========================
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   sgd.ClassifierSGD
-   sgd.RegressorSGD
-
-For sparse data
----------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   sgd.sparse.ClassifierSGD
-   sgd.sparse.RegressorSGD
+   linear_model.sparse.SGDClassifier
+   linear_model.sparse.SGDRegressor
         
 
 Bayesian Regression

@@ -1,5 +1,4 @@
 import numpy as np
-from scikits.learn import sgd
 from scikits.learn import linear_model
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_almost_equal
@@ -37,10 +36,10 @@ X4 = np.array([[1,0.9,0.8,0,0,0], [1,.84,.98,0,0,0],
 Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
 
-class DenseClassifierSGDTestCase(unittest.TestCase):
+class DenseSGDClassifierTestCase(unittest.TestCase):
     """Test suite for the dense representation variant of SGD"""
 
-    factory = sgd.ClassifierSGD
+    factory = linear_model.SGDClassifier
 
     def test_sgd(self):
         """Check that SGD gives any results :-)"""
@@ -68,13 +67,13 @@ class DenseClassifierSGDTestCase(unittest.TestCase):
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
         clf = self.factory(loss='hinge')
-        assert isinstance(clf.loss_function, sgd.Hinge)
+        assert isinstance(clf.loss_function, linear_model.Hinge)
 
         clf = self.factory(loss='log')
-        assert isinstance(clf.loss_function, sgd.Log)
+        assert isinstance(clf.loss_function, linear_model.Log)
 
         clf = self.factory(loss='modified_huber')
-        assert isinstance(clf.loss_function, sgd.ModifiedHuber)
+        assert isinstance(clf.loss_function, linear_model.ModifiedHuber)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -193,16 +192,16 @@ class DenseClassifierSGDTestCase(unittest.TestCase):
         assert_array_equal(pred, Y)
 
 
-class SparseClassifierSGDTestCase(DenseClassifierSGDTestCase):
+class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
-    factory = sgd.sparse.ClassifierSGD
+    factory = linear_model.sparse.SGDClassifier
 
 
-class DenseRegressorSGDTestCase(unittest.TestCase):
+class DenseSGDRegressorTestCase(unittest.TestCase):
     """Test suite for the dense representation variant of SGD"""
 
-    factory = sgd.RegressorSGD
+    factory = linear_model.SGDRegressor
 
     def test_sgd(self):
         """Check that SGD gives any results."""
@@ -228,16 +227,64 @@ class DenseRegressorSGDTestCase(unittest.TestCase):
     def test_sgd_losses(self):
         """Check whether losses and hyperparameters are set properly"""
         clf = self.factory(loss='squared_loss')
-        assert isinstance(clf.loss_function, sgd.SquaredLoss)
+        assert isinstance(clf.loss_function, linear_model.SquaredLoss)
 
-        clf = self.factory(loss='huber', epsilon=0.5)
-        assert isinstance(clf.loss_function, sgd.Huber)
-        assert clf.epsilon == 0.5
+        clf = self.factory(loss='huber', p=0.5)
+        assert isinstance(clf.loss_function, linear_model.Huber)
+        assert clf.p == 0.5
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
         """Check whether expected ValueError on bad loss"""
         clf = self.factory(loss="foobar")
+
+    def test_sgd_least_squares_fit(self):
+        xmin, xmax = -5, 5
+        n_samples = 100
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+
+        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert  score > 0.99
+
+        # simple linear function with noise
+        y = 0.5 * X.ravel() \
+            + np.random.randn(n_samples, 1).ravel()
+
+        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert  score > 0.5
+
+    def test_sgd_huber_fit(self):
+        xmin, xmax = -5, 5
+        n_samples = 100
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+
+        clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert  score > 0.99
+
+        # simple linear function with noise
+        y = 0.5 * X.ravel() \
+            + np.random.randn(n_samples, 1).ravel()
+
+        clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert  score > 0.5
 
     def test_elasticnet_convergence(self):
         """Check that the SGD ouput is consistent with coordinate descent"""
@@ -265,7 +312,7 @@ class DenseRegressorSGDTestCase(unittest.TestCase):
                                     err_msg=err_msg)
 
 
-class SparseRegressorSGDTestCase(DenseRegressorSGDTestCase):
+class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
-    factory = sgd.sparse.RegressorSGD
+    factory = linear_model.sparse.SGDRegressor

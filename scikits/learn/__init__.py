@@ -35,7 +35,7 @@ except:
 
 __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets', 'gmm', 
            'linear_model', 'logistic', 'lda', 'metrics', 'svm', 'features', 'clone',
-           'test', 'sgd', 'gaussian_process']
+           'test', 'gaussian_process']
 
 __version__ = '0.6.git'
 
