@@ -14,15 +14,16 @@ http://scikit-learn.sourceforge.net/modules/linear_model.html for
 complete documentation.
 """
 
-from .bayes import BayesianRidge, ARDRegression
-from .base import LinearRegression
+from .base import LinearRegression, Log, ModifiedHuber, Hinge, \
+     SquaredLoss, Huber
+
 from .bayes import BayesianRidge, ARDRegression
 from .least_angle import LARS, LassoLARS, lars_path
 from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV, \
                                 lasso_path, enet_path
+from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import Ridge
 from .logistic import LogisticRegression
 
 from . import sparse
-from .stochastic_gradient import SGDClassifier, SGDRegressor
-from .base import Log, ModifiedHuber, Hinge, SquaredLoss, Huber
+
