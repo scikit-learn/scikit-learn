@@ -10,6 +10,8 @@ from ...externals.joblib import Parallel, delayed
 from ..base import BaseSGDClassifier, BaseSGDRegressor
 from ..sgd_fast_sparse import plain_sgd
 
+## TODO add flag for intercept learning rate heuristic
+##
 
 class SGDClassifier(BaseSGDClassifier):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
@@ -92,7 +94,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     See also
     --------
-    LinearSVC, Logistic
+    LinearSVC, LogisticRegression
 
     """
 
@@ -117,8 +119,8 @@ class SGDClassifier(BaseSGDClassifier):
             Training data
         y : numpy array of shape [n_samples]
             Target values
-        coef_init : array, shape = [n_features] if n_classes == 2 else [n_classes,
-        n_features]
+        coef_init : array, shape = [n_features] if n_classes == 2 else
+        [n_classes,n_features]
             The initial coeffients to warm-start the optimization.
         intercept_init : array, shape = [1] if n_classes == 2 else [n_classes]
             The initial intercept to warm-start the optimization.
@@ -136,7 +138,7 @@ class SGDClassifier(BaseSGDClassifier):
         self._set_params(**params)
         X = sparse.csr_matrix(X)
         y = np.asanyarray(y, dtype=np.float64)
-        
+
         # largest class id is positive class
         self.classes = np.unique(y)
 
@@ -295,24 +297,24 @@ class SGDRegressor(BaseSGDRegressor):
     parameters towards the zero vector using either the squared euclidean norm
     L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
     parameter update crosses the 0.0 value because of the regularizer, the
-    update is truncated to 0.0 to allow for learning sparse models and achieve
-    online feature selection.
+    update is truncated to 0.0 to allow for learning sparse models and
+    achieve online feature selection.
 
-    This implementation works with data represented as dense numpy arrays of
-    floating point values for the features.
+    This implementation works with data represented as dense numpy arrays
+    of floating point values for the features.
 
     Parameters
     ----------
     loss : str, 'squared_loss' or 'huber'
-        The loss function to be used. Defaults to 'squared_loss' which refers
-        to the ordinary least squares fit. 'huber' is an epsilon insensitive loss
-        function for robust regression.
+        The loss function to be used. Defaults to 'squared_loss' which
+        refers to the ordinary least squares fit. 'huber' is an epsilon
+        insensitive loss function for robust regression.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
-        The penalty (aka regularization term) to be used. Defaults to 'l2' which
-        is the standard regularizer for linear SVM models. 'l1' and 'elasticnet'
-        migh bring sparsity to the model (feature selection) not achievable with
-        'l2'.
+        The penalty (aka regularization term) to be used. Defaults to 'l2'
+        which is the standard regularizer for linear SVM models. 'l1' and
+        'elasticnet' migh bring sparsity to the model (feature selection)
+        not achievable with 'l2'.
 
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
@@ -336,6 +338,10 @@ class SGDRegressor(BaseSGDRegressor):
     verbose: integer, optional
         The verbosity level
 
+    p : float
+        Epsilon in the epsilon insensitive huber loss function;
+        only if `loss=='huber'`.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -354,9 +360,8 @@ class SGDRegressor(BaseSGDRegressor):
     >>> clf = SGDRegressor()
     >>> clf.fit(X, y)
     SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
-           epsilon=0.1, fit_intercept=True, penalty='l2', rho=1.0,
-           alpha=0.0001)
-    
+           fit_intercept=True, penalty='l2', p=0.1, rho=1.0, alpha=0.0001)
+
     See also
     --------
     RidgeRegression, ElasticNet, Lasso, SVR
@@ -387,7 +392,7 @@ class SGDRegressor(BaseSGDRegressor):
         coef_init : array, shape = [n_features]
             The initial coeffients to warm-start the optimization.
         intercept_init : array, shape = [1]
-        
+
         Returns
         -------
         self : returns an instance of self.
@@ -451,4 +456,5 @@ class SGDRegressor(BaseSGDRegressor):
         if not sparse.issparse(X):
             X = sparse.csr_matrix(X)
         scores = np.asarray(np.dot(X, self.sparse_coef_.T).todense()
-                            + self.intercept_)
+                            + self.intercept_).ravel()
+        return scores

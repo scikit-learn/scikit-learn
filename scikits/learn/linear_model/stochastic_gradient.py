@@ -92,7 +92,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     See also
     --------
-    LinearSVC, Logistic
+    LinearSVC, LogisticRegression
 
     """
 
@@ -303,7 +303,11 @@ class SGDRegressor(BaseSGDRegressor):
         Defaults to False.
 
     verbose: integer, optional
-        The verbosity level
+        The verbosity level.
+
+    p : float
+        Epsilon in the epsilon-insensitive huber loss function;
+        only if `loss=='huber'`.
 
     Attributes
     ----------
@@ -323,12 +327,11 @@ class SGDRegressor(BaseSGDRegressor):
     >>> clf = SGDRegressor()
     >>> clf.fit(X, y)
     SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
-           epsilon=0.1, fit_intercept=True, penalty='l2', rho=1.0,
-           alpha=0.0001)
+           fit_intercept=True, penalty='l2', p=0.1, rho=1.0, alpha=0.0001)
 
     See also
     --------
-    RidgeRegression, ElasticNet, Lasso, SVR
+    Ridge, ElasticNet, Lasso, SVR
 
     """
 

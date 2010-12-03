@@ -229,14 +229,62 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         clf = self.factory(loss='squared_loss')
         assert isinstance(clf.loss_function, linear_model.SquaredLoss)
 
-        clf = self.factory(loss='huber', epsilon=0.5)
+        clf = self.factory(loss='huber', p=0.5)
         assert isinstance(clf.loss_function, linear_model.Huber)
-        assert clf.epsilon == 0.5
+        assert clf.p == 0.5
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
         """Check whether expected ValueError on bad loss"""
         clf = self.factory(loss="foobar")
+
+    def test_sgd_least_squares_fit(self):
+        xmin, xmax = -5, 5
+        n_samples = 100
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+
+        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert  score > 0.99
+
+        # simple linear function with noise
+        y = 0.5 * X.ravel() \
+            + np.random.randn(n_samples, 1).ravel()
+
+        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert  score > 0.5
+
+    def test_sgd_huber_fit(self):
+        xmin, xmax = -5, 5
+        n_samples = 100
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+
+        clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert  score > 0.99
+
+        # simple linear function with noise
+        y = 0.5 * X.ravel() \
+            + np.random.randn(n_samples, 1).ravel()
+
+        clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert  score > 0.5
 
     def test_elasticnet_convergence(self):
         """Check that the SGD ouput is consistent with coordinate descent"""

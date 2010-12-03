@@ -134,12 +134,14 @@ class LinearRegression(LinearModel):
         self._set_intercept(Xmean, ymean)
         return self
 
-## 
+##
 ## Stochastic Gradient Descent (SGD) abstract base classes
-## 
+##
+## TODO add sample_weights to signature (see LibSVM)
+## TODO adher to svm signature (return values of score etc.)
 
 class BaseSGD(BaseEstimator):
-    """Base class for dense and sparse SGD"""
+    """Base class for dense and sparse SGD."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
@@ -266,8 +268,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=0.1):
-        self.epsilon=float(epsilon)
+                 verbose=0, p=0.1):
+        self.p = float(p)
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, rho=rho,
                                                fit_intercept=fit_intercept,
@@ -278,7 +280,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         """Get concrete LossFunction"""
         loss_functions = {
             "squared_loss": SquaredLoss(),
-            "huber": Huber(self.epsilon),
+            "huber": Huber(self.p),
         }
         try:
             self.loss_function = loss_functions[self.loss]
