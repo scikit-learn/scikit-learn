@@ -1,6 +1,6 @@
 import numpy as np
 
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_almost_equal
 
 from ..ridge import Ridge
 from ..base import LinearRegression
@@ -42,8 +42,8 @@ def test_toy_ridge_object():
     Y = np.array([1, 2])
     clf = Ridge(alpha=0.0)
     clf.fit(X, Y)
-    Test = [[1], [2], [3], [4]]
-    assert_array_equal(clf.predict(Test), [1, 2, 3, 4]) # identity
+    X_test = [[1], [2], [3], [4]]
+    assert_almost_equal(clf.predict(X_test), [1., 2, 3, 4])
 
 
 def test_ridge_vs_lstsq():
