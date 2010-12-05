@@ -76,6 +76,7 @@ memory = Memory(cachedir=".")
 
 
 def index(redirects, index_map, k):
+    """Find the index of an article name after redirect resolution"""
     k = redirects.get(k, k)
     return index_map.setdefault(k, len(index_map))
 
@@ -90,6 +91,7 @@ def short_name(nt_uri):
 
 
 def get_redirects(redirects_filename):
+    """Parse the redirections and build a transitively closed map out of it"""
     redirects = {}
     print "Parsing the NT redirect file"
     for l, line in enumerate(BZ2File(redirects_filename)):
@@ -123,6 +125,14 @@ def get_redirects(redirects_filename):
 # disabling joblib as the pickling of large dicts seems much too slow
 #@memory.cache
 def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
+    """Extract the adjacency graph as a scipy sparse matrix
+
+    Redirects are resolved first.
+
+    Returns X, the scipy sparse adjacency matrix, redirects as python
+    dict from article names to article names and index_map a python dict
+    from article names to python int (article indexes).
+    """
 
     print "Computing the redirect map"
     redirects = get_redirects(redirects_filename)
