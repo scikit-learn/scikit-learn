@@ -1,4 +1,7 @@
-"""Benchmarks of Singular Values Decomposition (Exact and Approximate)"""
+"""Benchmarks of Singular Values Decomposition (Exact and Approximate)
+
+The data is mostly low rank but is a fat infinite tail.
+"""
 import gc
 from time import time
 import numpy as np
@@ -6,21 +9,10 @@ from collections import defaultdict
 
 from scipy.linalg import svd
 from scikits.learn.utils.extmath import fast_svd
+from scikits.learn.datasets.samples_generator import low_rank_fat_tail
 
 
-def make_data(n_samples, n_features, rank=None):
-    """Build a fixed rank matrix with logspaced singular values"""
-    np.random.seed(42)
-    if rank is None:
-        rank = min(n_samples, n_samples) / 10 + 1
-
-    s = np.identity(rank) * np.logspace(10, 10e-5, rank)
-    X = np.dot(np.random.randn(n_samples, rank), s)
-    X = np.dot(X, np.random.randn(rank, n_features))
-    return X
-
-
-def compute_bench(data_gen, samples_range, features_range, q=3):
+def compute_bench(samples_range, features_range, q=3, rank=50):
 
     it = 0
 
@@ -33,8 +25,8 @@ def compute_bench(data_gen, samples_range, features_range, q=3):
             print '===================='
             print 'Iteration %03d of %03d' % (it, max_it)
             print '===================='
-            X = make_data(n_samples, n_features)
-            rank = min(n_samples, n_samples) / 10 + 1
+            X = low_rank_fat_tail(n_samples, n_features, effective_rank=rank,
+                                  tail_strength=0.2)
 
             gc.collect()
             print "benching scipy svd: "
@@ -61,9 +53,9 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(2, 1000, 4)
-    features_range = np.linspace(2, 1000, 4)
-    results = compute_bench(make_data, samples_range, features_range)
+    samples_range = np.linspace(2, 1000, 4).astype(np.int)
+    features_range = np.linspace(2, 1000, 4).astype(np.int)
+    results = compute_bench(samples_range, features_range)
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
