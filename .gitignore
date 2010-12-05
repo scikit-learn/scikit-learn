@@ -28,3 +28,6 @@ doc/samples
 
 lfw_preprocessed/
 lfw_preprocessed.tar.gz
+
+*.nt.bz2
+joblib
