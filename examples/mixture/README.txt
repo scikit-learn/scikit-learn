@@ -2,4 +2,4 @@
 Gaussian Mixture Models
 -------------------------
 
-Examples concerning the `scikits.learn.gmm` package.
+Examples concerning the `scikits.learn.mixture` package.
