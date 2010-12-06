@@ -9,10 +9,9 @@ iris = datasets.load_iris()
 
 X = iris.data
 
+
 def test_pca():
-    """
-    PCA
-    """
+    """PCA on dense arrays"""
     pca = PCA(n_comp=2)
     X_r = pca.fit(X).transform(X)
     np.testing.assert_equal(X_r.shape[1], 2)
@@ -24,8 +23,7 @@ def test_pca():
 
 
 def test_pca_check_projection():
-    """test that the projection of data is correct
-    """
+    """Test that the projection of data is correct"""
     n, p = 100, 3
     X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5])
@@ -38,8 +36,7 @@ def test_pca_check_projection():
 
 
 def test_fast_pca_check_projection():
-    """test that the projection of data is correct
-    """
+    """Test that the projection of data is correct"""
     n, p = 100, 3
     X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5])
@@ -47,15 +44,14 @@ def test_fast_pca_check_projection():
     pca.fit(X)
     Xt = 0.1* randn(1, p) + np.array([3, 4, 5])
     Yt = pca.transform(Xt)
-    Yt /= np.sqrt((Yt**2).sum())
+    Yt /= np.sqrt((Yt ** 2).sum())
     np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
 
 
 def test_pca_dim():
-    """
-    """
+    """Check automated dimensionality setting"""
     n, p = 100, 5
-    X = randn(n, p)*.1
+    X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5, 1, 2])
     pca = PCA(n_comp='mle')
     pca.fit(X)
@@ -63,11 +59,13 @@ def test_pca_dim():
 
 
 def test_infer_dim_1():
-    """
+    """TODO: explain what this is testing
+
+    Or at least use explicit variable names...
     """
     n, p = 1000, 5
-    X = randn(n, p)*0.1 + randn(n, 1)*np.array([3, 4, 5, 1, 2]) + np.array(
-        [1, 0, 7, 4, 6])
+    X = randn(n, p) * .1 + randn(n, 1) * np.array([3, 4, 5, 1, 2]) \
+            + np.array([1, 0, 7, 4, 6])
     pca = PCA(n_comp=p)
     pca.fit(X)
     spect = pca.explained_variance_
@@ -79,10 +77,12 @@ def test_infer_dim_1():
 
 
 def test_infer_dim_2():
-    """
+    """TODO: explain what this is testing
+
+    Or at least use explicit variable names...
     """
     n, p = 1000, 5
-    X = randn(n, p)*.1
+    X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5, 1, 2])
     X[10:20] += np.array([6, 0, 7, 2, -1])
     pca = PCA(n_comp=p)
@@ -106,8 +106,7 @@ def test_infer_dim_3():
 
 
 def test_probabilistic_pca_1():
-    """test that probabilistic PCA yields a readonable score
-    """
+    """Test that probabilistic PCA yields a reasonable score"""
     n, p = 1000, 3
     X = randn(n, p)*.1 + np.array([3, 4, 5])
     ppca = ProbabilisticPCA(n_comp=2)
@@ -118,14 +117,13 @@ def test_probabilistic_pca_1():
 
 
 def test_probabilistic_pca_2():
-    """test that probabilistic PCA correctly separated different datasets
-    """
+    """Test that probabilistic PCA correctly separated different datasets"""
     n, p = 100, 3
-    X = randn(n, p)*.1 + np.array([3, 4, 5])
+    X = randn(n, p) * .1 + np.array([3, 4, 5])
     ppca = ProbabilisticPCA(n_comp=2)
     ppca.fit(X)
     ll1 = ppca.score(X)
-    ll2 = ppca.score(randn(n, p)*.2 + np.array([3, 4, 5]))
+    ll2 = ppca.score(randn(n, p) * .2 + np.array([3, 4, 5]))
     assert_true(ll1.mean() > ll2.mean())
 
 
@@ -144,8 +142,7 @@ def test_probabilistic_pca_3():
 
 
 def test_probabilistic_pca_4():
-    """Check that ppca select the right model
-    """
+    """Check that ppca select the right model"""
     n, p = 200, 3
     Xl = randn(n, p) + randn(n, 1)*np.array([3, 4, 5]) + np.array([1, 0, 7])
     Xt = randn(n, p) + randn(n, 1)*np.array([3, 4, 5]) + np.array([1, 0, 7])
@@ -161,3 +158,4 @@ def test_probabilistic_pca_4():
 if __name__ == '__main__':
     import nose
     nose.run(argv=['', __file__])
+

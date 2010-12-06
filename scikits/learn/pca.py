@@ -190,8 +190,7 @@ class PCA(BaseEstimator):
         return self
 
     def transform(self, X):
-        """ Apply the dimension reduction learned on the train data.
-        """
+        """Apply the dimension reduction learned on the train data."""
         Xr = X - self.mean_
         Xr = np.dot(Xr, self.components_)
         return Xr
