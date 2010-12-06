@@ -7,12 +7,11 @@ from ..pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
 
 iris = datasets.load_iris()
 
-X = iris.data
-
 
 def test_pca():
     """PCA on dense arrays"""
     pca = PCA(n_comp=2)
+    X = iris.data
     X_r = pca.fit(X).transform(X)
     np.testing.assert_equal(X_r.shape[1], 2)
 
