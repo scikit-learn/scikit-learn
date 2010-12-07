@@ -1,6 +1,9 @@
 import numpy as np
 from numpy.random import randn
 from nose.tools import assert_true
+from nose.tools import assert_equal
+
+from numpy.testing import assert_almost_equal
 
 from .. import datasets
 from ..pca import PCA, ProbabilisticPCA, _assess_dimension_, _infer_dimension_
@@ -17,8 +20,40 @@ def test_pca():
 
     pca = PCA()
     pca.fit(X)
-    np.testing.assert_almost_equal(pca.explained_variance_ratio_.sum(),
-                                   1.0, 3)
+    assert_almost_equal(pca.explained_variance_ratio_.sum(), 1.0, 3)
+
+
+def test_whitening():
+    """Check that PCA output has unit-variance"""
+    np.random.seed(0)
+
+    # some low rank data with correlated features
+    X = np.dot(randn(100, 50),
+               np.dot(np.diag(np.linspace(10.0, 1.0, 50)),
+                      randn(50, 80)))
+    # the component-wise variance of the first 50 features is 3 times the
+    # mean component-wise variance of the remaingin 30 features
+    X[:, :50] *= 3
+
+    assert_equal(X.shape, (100, 80))
+
+    # the component-wise variance is thus highly varying:
+    assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
+
+    # whiten by default
+    X_whitened = PCA(n_comp=30).fit(X).transform(X)
+    assert_equal(X_whitened.shape, (100, 30))
+
+    # all output component have identical variance
+    assert_almost_equal(X_whitened.std(axis=0).std(), 0.0, 3)
+
+    # is possible to project on the low dim space without scaling by the
+    # singular values
+    X_unwhitened = PCA(n_comp=30, whiten=False).fit(X).transform(X)
+    assert_equal(X_unwhitened.shape, (100, 30))
+
+    # in that case the output components still have varying variances
+    assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
 
 
 def test_pca_check_projection():
@@ -147,7 +182,7 @@ def test_probabilistic_pca_4():
     Xt = randn(n, p) + randn(n, 1)*np.array([3, 4, 5]) + np.array([1, 0, 7])
     ll = np.zeros(p)
     for k in range(p):
-        ppca = ProbabilisticPCA(n_comp=k)
+        ppca = ProbabilisticPCA(n_comp=k, whiten=False)
         ppca.fit(Xl)
         ll[k] = ppca.score(Xt).mean()
 

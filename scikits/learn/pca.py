@@ -90,6 +90,10 @@ def _infer_dimension_(spectrum, n, p):
 class PCA(BaseEstimator):
     """Principal component analysis (PCA)
 
+    Linear dimensionality reduction using Singular Value Decomposition of the
+    data and keeping only the most significant singular vectors to project the
+    data to a lower dimensional space.
+
     Parameters
     ----------
     X: array-like, shape (n_samples, n_features)
@@ -107,7 +111,7 @@ class PCA(BaseEstimator):
         If False, data passed to fit are overwritten
 
     components_: array, [n_features, n_comp]
-        Components with maximum variance
+        Components with maximum variance.
 
     do_fast_svd: bool, optional
         If True, the k-truncated SVD is computed using random projections
@@ -121,6 +125,11 @@ class PCA(BaseEstimator):
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
+
+    whiten: bool, optional
+        If True (default) the components_ vectors are divided by the
+        singular values to ensure uncorrelated outputs with identical
+        component-wise variances.
 
     iterated_power: int, optional
         Number of iteration for the power method if do_fast_svd is True. 3 by
@@ -138,7 +147,7 @@ class PCA(BaseEstimator):
     >>> from scikits.learn.pca import PCA
     >>> pca = PCA(n_comp=2)
     >>> pca.fit(X)
-    PCA(do_fast_svd=False, n_comp=2, copy=True, iterated_power=3)
+    PCA(do_fast_svd=False, n_comp=2, copy=True, whiten=True, iterated_power=3)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
@@ -148,11 +157,12 @@ class PCA(BaseEstimator):
 
     """
     def __init__(self, n_comp=None, copy=True, do_fast_svd=False,
-                 iterated_power=3):
+                 iterated_power=3, whiten=True):
         self.n_comp = n_comp
         self.copy = copy
         self.do_fast_svd = do_fast_svd
         self.iterated_power = iterated_power
+        self.whiten = whiten
 
     def fit(self, X, **params):
         """Fit the model to the data X"""
@@ -176,8 +186,13 @@ class PCA(BaseEstimator):
         self.explained_variance_ = (S ** 2) / n_samples
         self.explained_variance_ratio_ = self.explained_variance_ / \
                                         self.explained_variance_.sum()
-        self.components_ = V.T
-        if self.n_comp=='mle':
+
+        if self.whiten:
+            self.components_ = np.dot(V.T, np.diag(1.0 / S))
+        else:
+            self.components_ = V.T
+
+        if self.n_comp == 'mle':
             self.n_comp = _infer_dimension_(self.explained_variance_,
                                             n_samples, X.shape[1])
 
