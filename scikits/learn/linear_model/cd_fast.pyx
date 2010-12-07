@@ -67,7 +67,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_max
     cdef double w_max
     cdef double d_w_ii
-    cdef double gab = tol + 1.0
+    cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
     cdef unsigned int ii
     cdef unsigned int n_iter
@@ -131,6 +131,118 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 gap = R_norm**2
 
             gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
+                  0.5 * beta * (1 + const**2) * (w_norm**2)
+
+            if gap < tol:
+                # return if we reached desired tolerance
+                break
+
+    return w, gap, tol
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
+                            double alpha, double beta,
+                            np.ndarray[DOUBLE, ndim=2] Q,
+                            np.ndarray[DOUBLE, ndim=1] q,
+                            np.ndarray[DOUBLE, ndim=2] X,
+                            np.ndarray[DOUBLE, ndim=1] y,
+                            int maxit, double tol):
+    """Cython version of the coordinate descent algorithm
+        for Elastic-Net regression
+
+        We minimize
+
+        1 w^T Q w - q^T w + alpha norm(w, 1) + beta norm(w, 2)^2
+        -                                      ----
+        2                                        2
+
+        which amount to the Elastic-Net problem when:
+        Q = X^T X (Gram matrix)
+        q = X^T y
+    """
+
+    # get the data information into easy vars
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = q.size
+
+    # initial value "Q w" which will be kept of up to date in the interations
+    cdef np.ndarray[DOUBLE, ndim=1] H = np.dot(Q, w)
+    # keep also residual up to date for dual gap computation
+    cdef np.ndarray[DOUBLE, ndim=1] R = y - np.dot(X, w)
+
+    cdef double tmp
+    cdef double w_ii
+    cdef double d_w_max
+    cdef double w_max
+    cdef double d_w_ii
+    cdef double gap = tol + 1.0
+    cdef double d_w_tol = tol
+    cdef unsigned int ii
+    cdef unsigned int n_iter
+
+    tol = tol * linalg.norm(y) ** 2
+
+    for n_iter in range(maxit):
+        w_max = 0.0
+        d_w_max = 0.0
+        for ii in xrange(n_features): # Loop over coordinates
+            if Q[ii,ii] == 0.0:
+                continue
+
+            w_ii = w[ii] # Store previous value
+
+            if w_ii != 0.0:
+                # H -= w_ii * Q[ii]
+                daxpy(n_features, -w_ii,
+                      <DOUBLE*>(Q.data + ii * n_features * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>H.data, 1)
+
+            tmp = q[ii] - H[ii]
+
+            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                    / (Q[ii,ii] + beta)
+
+            if w[ii] != 0.0:
+                # H +=  w[ii] * Q[ii] # Update H = X.T X w
+                daxpy(n_features, w[ii],
+                      <DOUBLE*>(Q.data + ii * n_features * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>H.data, 1)
+
+            # update the maximum absolute coefficient update
+            d_w_ii = fabs(w[ii] - w_ii)
+            if d_w_ii > d_w_max:
+                d_w_max = d_w_ii
+
+            if w[ii] > w_max:
+                w_max = w[ii]
+
+            if d_w_ii > 0: # update R
+                daxpy(n_samples, w_ii - w[ii],
+                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>R.data, 1)
+
+        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:
+            # the biggest coordinate update of this iteration was smaller than
+            # the tolerance: check the duality gap as ultimate stopping
+            # criterion
+
+            dual_norm_XtA = linalg.norm(q - H - beta * w, np.inf)
+            # TODO: use squared L2 norm directly
+            R_norm = linalg.norm(R)
+            w_norm = linalg.norm(w, 2)
+            if (dual_norm_XtA > alpha):
+                const =  alpha / dual_norm_XtA
+                A_norm = R_norm * const
+                gap = 0.5 * (R_norm**2 + A_norm**2)
+            else:
+                const = 1.0
+                gap = R_norm**2
+
+            gap += alpha * linalg.norm(w, 1) \
+                   - const * np.sum(y**2) \
+                   + const * np.dot(w, q) + \
                   0.5 * beta * (1 + const**2) * (w_norm**2)
 
             if gap < tol:
