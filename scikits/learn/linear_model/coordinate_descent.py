@@ -28,6 +28,7 @@ class ElasticNet(LinearModel):
 
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
+
     coef_: ndarray of shape n_features
         The initial coeffients to warm-start the optimization
 
@@ -47,7 +48,8 @@ class ElasticNet(LinearModel):
         self.coef_ = None
         self.fit_intercept = fit_intercept
 
-    def fit(self, X, y, maxit=1000, tol=1e-4, coef_init=None, **params):
+    def fit(self, X, y, precompute='auto', maxit=1000, tol=1e-4,
+            coef_init=None, **params):
         """Fit Elastic Net model with coordinate descent
 
         Parameters
@@ -56,6 +58,10 @@ class ElasticNet(LinearModel):
             Data
         y: ndarray, (n_samples)
             Target
+        precompute : True | False | 'auto' | array-like
+            Whether to use a precomputed Gram matrix to speed up
+            calculations. If set to 'auto' let us decide. The Gram
+            matrix can also be passed as argument.
         maxit: int, optional
             The maximum number of iterations
         tol: float, optional
@@ -91,9 +97,23 @@ class ElasticNet(LinearModel):
 
         X = np.asfortranarray(X) # make data contiguous in memory
 
-        self.coef_, self.dual_gap_, self.eps_ = \
-                cd_fast.enet_coordinate_descent(self.coef_, alpha, beta, X, y,
-                                        maxit, tol)
+        # precompute if n_samples > n_features
+        if hasattr(precompute, '__array__'):
+            Gram = precompute
+        elif precompute == True or \
+               (precompute == 'auto' and X.shape[0] > X.shape[1]):
+            Gram = np.dot(X.T, X)
+        else:
+            Gram = None
+
+        if Gram is None:
+            self.coef_, self.dual_gap_, self.eps_ = \
+                    cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
+                                                    X, y, maxit, tol)
+        else:
+            self.coef_, self.dual_gap_, self.eps_ = \
+                    cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
+                                beta, Gram, np.dot(X.T, y), X, y, maxit, tol)
 
         self._set_intercept(Xmean, ymean)
 
@@ -166,7 +186,7 @@ class Lasso(ElasticNet):
 # Classes to store linear models along a regularization path
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-               verbose=False, fit_params=dict()):
+               verbose=False, **fit_params):
     """Compute Lasso path with coordinate descent
 
     Parameters
@@ -189,7 +209,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
         List of alphas where to compute the models.
         If None alphas are set automatically
 
-    fit_params : dict, optional
+    fit_params : kwargs
         keyword arguments passed to the Lasso fit method
 
     Returns
@@ -217,6 +237,11 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
     coef_ = None # init coef_
     models = []
 
+    if not fit_params.has_key('precompute') \
+        or fit_params['precompute'] is True \
+        or (fit_intercept and hasattr(fit_params['precompute'], '__array__')):
+        fit_params['precompute'] = np.dot(X.T, X)
+
     for alpha in alphas:
         model = Lasso(alpha=alpha, fit_intercept=False)
         model.fit(X, y, coef_init=coef_, **fit_params)
@@ -231,7 +256,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
 
 
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              fit_intercept=True, verbose=False, fit_params=dict()):
+              fit_intercept=True, verbose=False, **fit_params):
     """Compute Elastic-Net path with coordinate descent
 
     Parameters
@@ -254,8 +279,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         List of alphas where to compute the models.
         If None alphas are set automatically
 
-    fit_params : dict, optional
-        keyword arguments passed to the ElasticNet fit method
+    fit_params : kwargs
+        keyword arguments passed to the Lasso fit method
 
     Returns
     -------
@@ -276,6 +301,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
     coef_ = None # init coef_
     models = []
+
+    if not fit_params.has_key('precompute') \
+        or fit_params['precompute'] is True \
+        or (fit_intercept and hasattr(fit_params['precompute'], '__array__')):
+        fit_params['precompute'] = np.dot(X.T, X)
 
     for alpha in alphas:
         model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False)
@@ -328,7 +358,9 @@ class LinearModelCV(LinearModel):
         n_samples = X.shape[0]
 
         # Start to compute path on full data
-        models = self.path(X, y, fit_params=fit_params, **self._get_params())
+        path_params = fit_params.copy()
+        path_params.update(self._get_params())
+        models = self.path(X, y, **path_params)
 
         alphas = [model.alpha for model in models]
         n_alphas = len(alphas)
@@ -342,9 +374,9 @@ class LinearModelCV(LinearModel):
 
         # Compute path for all folds and compute MSE to get the best alpha
         mse_alphas = np.zeros(n_alphas)
+        fit_params.update(params)
         for train, test in cv:
-            models_train = self.path(X[train], y[train], fit_params=fit_params,
-                                        **params)
+            models_train = self.path(X[train], y[train], **fit_params)
             for i_alpha, model in enumerate(models_train):
                 y_ = model.predict(X[test])
                 mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
