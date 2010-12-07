@@ -6,6 +6,7 @@ if sys.version_info[0] < 3:
     from ConfigParser import ConfigParser
 else:
     from configparser import ConfigParser
+
 import warnings
 
 def configuration(parent_package='', top_path=None):
