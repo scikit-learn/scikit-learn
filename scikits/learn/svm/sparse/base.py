@@ -15,12 +15,15 @@ class SparseBaseLibSVM(BaseLibSVM):
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nu, p, shrinking, probability):
+
         assert impl in self._svm_types, \
             "impl should be one of %s, %s was given" % (
                 self._svm_types, impl)
-        assert kernel in self._kernel_types or callable(kernel), \
-            "kernel should be one of %s or a callable, %s was given." % (
-                self._kernel_types, kernel)
+
+        assert kernel in self._kernel_types, \ 
+               "kernel should be one of %s, " \
+               "%s was given." % ( self._kernel_types, kernel)
+
         self.kernel = kernel
         self.impl = impl
         self.degree = degree
