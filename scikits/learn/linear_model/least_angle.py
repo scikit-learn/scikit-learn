@@ -231,6 +231,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                 residual = y - np.dot(X[:, :n_active],
                                       coefs[n_iter, active])
                 temp = np.dot(X.T[n_active], residual)
+
                 Cov = np.r_[temp, Cov]
             else:
                 for i in range(idx, n_active):
@@ -255,8 +256,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             sign_active = np.append(sign_active, 0.)
             if verbose:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
-
-                                                            n_active, C)
+                                                      n_active, abs(temp))
     if C < alpha_min: # interpolate
         # interpolation factor 0 <= ss < 1
         ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] - alphas[n_iter])

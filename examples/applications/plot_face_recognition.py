@@ -14,13 +14,13 @@ Expected results for the top 5 most represented people in the dataset::
 
                      precision    recall  f1-score   support
 
-      George_W_Bush       0.84      0.88      0.86       129
-       Colin_Powell       0.80      0.84      0.82        58
-         Tony_Blair       0.66      0.62      0.64        34
-    Donald_Rumsfeld       0.87      0.79      0.83        33
-  Gerhard_Schroeder       0.75      0.64      0.69        28
+  Gerhard_Schroeder       0.87      0.71      0.78        28
+    Donald_Rumsfeld       0.94      0.88      0.91        33
+         Tony_Blair       0.78      0.85      0.82        34
+       Colin_Powell       0.84      0.88      0.86        58
+      George_W_Bush       0.91      0.91      0.91       129
 
-        avg / total       0.81      0.81      0.81       282
+        avg / total       0.88      0.88      0.88       282
 
 """
 print __doc__
@@ -109,8 +109,9 @@ X_train, X_test = X[:split], X[split:]
 y_train, y_test = y[:split], y[split:]
 
 ################################################################################
-# Compute a PCA (eigenfaces) on the training set
-n_components = 200
+# Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
+# dataset): unsupervised feature extraction / dimensionality reduction
+n_components = 150
 
 print "Extracting the top %d eigenfaces" % n_components
 pca = PCA(n_comp=n_components, do_fast_svd=True).fit(X_train)
@@ -126,7 +127,7 @@ X_test_pca = pca.transform(X_test)
 # Train a SVM classification model
 
 print "Fitting the classifier to the training set"
-clf = SVC(C=100).fit(X_train_pca, y_train, class_weight="auto")
+clf = SVC(C=1, gamma=5).fit(X_train_pca, y_train, class_weight="auto")
 
 
 ################################################################################
