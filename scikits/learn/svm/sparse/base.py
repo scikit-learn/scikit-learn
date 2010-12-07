@@ -20,8 +20,8 @@ class SparseBaseLibSVM(BaseLibSVM):
             "impl should be one of %s, %s was given" % (
                 self._svm_types, impl)
 
-        assert kernel in self._kernel_types, \ 
-               "kernel should be one of %s, " \
+        assert kernel in self._kernel_types, \
+               "kernel should be one of %s, "\
                "%s was given." % ( self._kernel_types, kernel)
 
         self.kernel = kernel
