@@ -329,7 +329,7 @@ class LARS(LinearModel):
             Target values.
 
         precompute : True | False | 'auto' | array-like
-            Wether to use a precomputed Gram matrix to speed up
+            Whether to use a precomputed Gram matrix to speed up
             calculations. If set to 'auto' let us decide. The Gram
             matrix can also be passed as argument.
 

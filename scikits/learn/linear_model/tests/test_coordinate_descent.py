@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
 
@@ -17,7 +16,7 @@ def test_lasso_zero():
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
-    assert_almost_equal(clf.dual_gap_,  0)
+    assert_almost_equal(clf.dual_gap_, 0)
 
 
 def test_lasso_toy():
@@ -37,13 +36,13 @@ def test_lasso_toy():
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
-    assert_almost_equal(clf.dual_gap_,  0)
+    assert_almost_equal(clf.dual_gap_, 0)
 
     clf = Lasso(alpha=0.1)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [.85])
-    assert_array_almost_equal(pred, [ 1.7 ,  2.55,  3.4 ])
+    assert_array_almost_equal(pred, [1.7, 2.55, 3.4])
     assert_almost_equal(clf.dual_gap_, 0)
 
     clf = Lasso(alpha=0.5)
@@ -67,11 +66,13 @@ def test_enet_toy():
 
     Actualy, the parameters alpha = 0 should not be alowed. However,
     we test it as a border case.
+
+    ElasticNet is tested with and without precomputed Gram matrix
     """
 
-    X = [[-1], [0], [1]]
+    X = np.array([[-1.], [0.], [1.]])
     Y = [-1, 0, 1]       # just a straight line
-    T = [[2], [3], [4]]  # test sample
+    T = [[2.], [3.], [4.]]  # test sample
 
     # this should be the same as lasso
     clf = ElasticNet(alpha=0, rho=1.0)
@@ -82,17 +83,29 @@ def test_enet_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, rho=0.3)
-    clf.fit(X, Y, maxit=1000)
+    clf.fit(X, Y, maxit=1000, precompute=False)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
-    assert_array_almost_equal(pred, [1.0163,  1.5245,  2.0327], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
+    assert_almost_equal(clf.dual_gap_, 0)
+
+    clf.fit(X, Y, maxit=1000, precompute=True) # with Gram
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
+    assert_almost_equal(clf.dual_gap_, 0)
+
+    clf.fit(X, Y, maxit=1000, precompute=np.dot(X.T, X)) # with Gram
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, rho=0.5)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.45454], 3)
-    assert_array_almost_equal(pred, [0.9090,  1.3636,  1.8181], 3)
+    assert_array_almost_equal(pred, [0.9090, 1.3636, 1.8181], 3)
     assert_almost_equal(clf.dual_gap_, 0)
 
 
@@ -110,10 +123,15 @@ def test_lasso_path():
     clf = LassoCV(n_alphas=100, eps=1e-3).fit(X, y, maxit=maxit)
     assert_almost_equal(clf.alpha, 0.011, 2)
 
+    clf = LassoCV(n_alphas=100, eps=1e-3)
+    clf.fit(X, y, maxit=maxit, precompute=True)
+    assert_almost_equal(clf.alpha, 0.011, 2)
+
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     assert clf.score(X_test, y_test) > 0.85
+
 
 def test_enet_path():
 
@@ -130,8 +148,11 @@ def test_enet_path():
     clf.fit(X, y, maxit=maxit)
     assert_almost_equal(clf.alpha, 0.01315, 2)
 
+    clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95)
+    clf.fit(X, y, maxit=maxit, precompute=True)
+    assert_almost_equal(clf.alpha, 0.01315, 2)
+
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     assert clf.score(X_test, y_test) > 0.85
-
