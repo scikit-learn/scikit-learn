@@ -28,7 +28,10 @@ def configuration(parent_package='', top_path=None):
                        )
 
     libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
-    libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c')]
+    libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c'),
+                      join('src', 'libsvm', 'libsvm_template.cpp'),
+                      join('src', 'libsvm', 'svm.cpp'),
+                      join('src', 'libsvm', 'svm.h')]
 
     config.add_extension('_libsvm',
                          sources=libsvm_sources,
