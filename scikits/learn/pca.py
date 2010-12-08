@@ -127,9 +127,14 @@ class PCA(BaseEstimator):
         explained variances is equal to 1.0
 
     whiten: bool, optional
-        If True (default) the components_ vectors are divided by the
-        singular values to ensure uncorrelated outputs with identical
+        When True (False by default) the components_ vectors are divided
+        by the singular values to ensure uncorrelated outputs with unit
         component-wise variances.
+
+        Whitening will remove some information from the transformed signal
+        (the relative variance scales of the components) but can sometime
+        improve the predictive accuracy of the downstream estimators by
+        making there data respect some hard-wired assumptions.
 
     iterated_power: int, optional
         Number of iteration for the power method if do_fast_svd is True. 3 by
@@ -147,7 +152,7 @@ class PCA(BaseEstimator):
     >>> from scikits.learn.pca import PCA
     >>> pca = PCA(n_comp=2)
     >>> pca.fit(X)
-    PCA(do_fast_svd=False, n_comp=2, copy=True, whiten=True, iterated_power=3)
+    PCA(do_fast_svd=False, n_comp=2, copy=True, whiten=False, iterated_power=3)
     >>> print pca.explained_variance_ratio_
     [ 0.99244289  0.00755711]
 
@@ -157,7 +162,7 @@ class PCA(BaseEstimator):
 
     """
     def __init__(self, n_comp=None, copy=True, do_fast_svd=False,
-                 iterated_power=3, whiten=True):
+                 iterated_power=3, whiten=False):
         self.n_comp = n_comp
         self.copy = copy
         self.do_fast_svd = do_fast_svd
@@ -188,7 +193,8 @@ class PCA(BaseEstimator):
                                         self.explained_variance_.sum()
 
         if self.whiten:
-            self.components_ = np.dot(V.T, np.diag(1.0 / S))
+            n = X.shape[0]
+            self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
         else:
             self.components_ = V.T
 
