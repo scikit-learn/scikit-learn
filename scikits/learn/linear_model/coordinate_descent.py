@@ -232,7 +232,6 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
     return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
                   fit_intercept=fit_intercept, verbose=verbose, **fit_params)
 
-
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
               fit_intercept=True, verbose=False, **fit_params):
     """Compute Elastic-Net path with coordinate descent

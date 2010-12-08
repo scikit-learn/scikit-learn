@@ -26,31 +26,37 @@ def test_pca():
 def test_whitening():
     """Check that PCA output has unit-variance"""
     np.random.seed(0)
+    n_samples = 100
+    n_features = 80
+    n_components = 30
+    rank = 50
 
     # some low rank data with correlated features
-    X = np.dot(randn(100, 50),
-               np.dot(np.diag(np.linspace(10.0, 1.0, 50)),
-                      randn(50, 80)))
+    X = np.dot(randn(n_samples, rank),
+               np.dot(np.diag(np.linspace(10.0, 1.0, rank)),
+                      randn(rank, n_features)))
     # the component-wise variance of the first 50 features is 3 times the
     # mean component-wise variance of the remaingin 30 features
     X[:, :50] *= 3
 
-    assert_equal(X.shape, (100, 80))
+    assert_equal(X.shape, (n_samples, n_features))
 
     # the component-wise variance is thus highly varying:
     assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
 
-    # whiten by default
-    X_whitened = PCA(n_comp=30).fit(X).transform(X)
-    assert_equal(X_whitened.shape, (100, 30))
+    # whiten the data while projecting to the lower dim subspace
+    pca = PCA(n_comp=n_components, whiten=True).fit(X)
+    X_whitened = pca.transform(X)
+    assert_equal(X_whitened.shape, (n_samples, n_components))
 
-    # all output component have identical variance
-    assert_almost_equal(X_whitened.std(axis=0).std(), 0.0, 3)
+    # all output component have unit variances
+    assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
 
     # is possible to project on the low dim space without scaling by the
     # singular values
-    X_unwhitened = PCA(n_comp=30, whiten=False).fit(X).transform(X)
-    assert_equal(X_unwhitened.shape, (100, 30))
+    pca = PCA(n_comp=n_components, whiten=False).fit(X)
+    X_unwhitened = pca.transform(X)
+    assert_equal(X_unwhitened.shape, (n_samples, n_components))
 
     # in that case the output components still have varying variances
     assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
@@ -182,7 +188,7 @@ def test_probabilistic_pca_4():
     Xt = randn(n, p) + randn(n, 1)*np.array([3, 4, 5]) + np.array([1, 0, 7])
     ll = np.zeros(p)
     for k in range(p):
-        ppca = ProbabilisticPCA(n_comp=k, whiten=False)
+        ppca = ProbabilisticPCA(n_comp=k)
         ppca.fit(Xl)
         ll[k] = ppca.score(Xt).mean()
 
