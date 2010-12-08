@@ -304,13 +304,14 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 multi_class=False, fit_intercept=True):
+                 multi_class=False, fit_intercept=True, bias=None):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
         self.eps = eps
         self.C = C
         self.fit_intercept = fit_intercept
+        self.bias = bias
         self.multi_class = multi_class
 
         # Check that the arguments given are valid:
@@ -390,19 +391,19 @@ class BaseLibLinear(BaseEstimator):
 
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]
-        if self.fit_intercept > 0: n_features -= 1
+        if self.fit_intercept: n_features -= 1
         if X.shape[1] != n_features:
             raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
                                                                    X.shape[1]))
     @property
     def intercept_(self):
-        if self.fit_intercept > 0:
-            return self.raw_coef_[:,-1]
+        if self.fit_intercept:
+            return self._get_bias()*self.raw_coef_[:,-1]
         return 0.0
 
     @property
     def coef_(self):
-        if self.fit_intercept > 0:
+        if self.fit_intercept:
             return self.raw_coef_[:,:-1]
         return self.raw_coef_
 
@@ -414,11 +415,24 @@ class BaseLibLinear(BaseEstimator):
 
     def _get_bias(self):
         """
-        Due to some pecularities in libliner, parameter bias must be a
-        double indicating if the intercept should be computed:
-        positive for true, negative for false
+        if self.fit_intercept is True, instance x becomes [x; self.bias],
+        i.e. a "synthetic" feature with constant value equals to bias
+        is appended to the feature vector.
+
+        Note! the synthetic features is subject to l1/l2 regularization
+        as all other features.
         """
-        return int  (self.fit_intercept) - .5
+        if self.fit_intercept:
+            if self.bias is None:
+                # a "sufficiently" high value in order to lessen
+                # the effects of l1/l2 regularization on the bias weight
+                # THERE ARE NO GUARANTEES THAT THIS VALUE IS SUFFICIENTLY HIGH
+                # WHEN THE INPUT DATA IS NOT SCALED/STANDARDIZED
+                return 1000.0
+            else:
+                return float(self.bias)
+        else:
+            return -1.0
 
 
 set_verbosity_wrap(0)

@@ -328,7 +328,7 @@ def test_LinearSVC():
     assert clf.fit_intercept
 
     assert_array_equal(clf.predict(T), true_result)
-    assert_array_almost_equal(clf.intercept_, [0], decimal=5)
+    assert_array_almost_equal(clf.intercept_, [0], decimal=3)
 
     # the same with l1 penalty
     clf = svm.LinearSVC(penalty='l1', dual=False).fit(X, Y)
