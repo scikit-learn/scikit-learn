@@ -214,31 +214,40 @@ def test_probability():
                                np.ones(len(X)))
 
 
-# def test_margin():
-#     """
-#     Test decision_function
+def test_decision_function():
+    """
+    Test decision_function
 
-#     We create a set of points lying in two lines, so that margin is easily
-#     calculated in a linear kernel.
+    Sanity check, test that decision_function implemented in python
+    returns the same as the one in libsvm
 
-#     TODO: distance should be sqrt(2)/2, but libsvm returns 1.
-#     """
-#     X = [(i, i) for i in range(-4, 6)]
-#     X += [(i, i+2) for i in range(-4, 6)]
-#     Y = [0]*10 + [1]*10
-#     T = [[1]]*10 + [[-1]]*10
-#     clf = svm.SVC(kernel='linear').fit(X, Y)
-#     assert_array_almost_equal(clf.decision_function(X), T)
+    TODO: proabably could be simplified
+    """
+    clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
 
-#     # the same using a callable kernel
-#     kfunc = lambda x, y: np.dot(x, y.T)
-#     clf = svm.SVC(kernel=kfunc).fit(X, Y)
-#     assert_array_almost_equal(clf.decision_function(X), T)
+    data = iris.data[0]
 
-#     # failing test
-#     # assert_array_almost_equal (clf.decision_function(iris.data),
-#     #                            np.dot(clf.coef_.T, iris.data) + \
-#     #                            clf.intercept_)
+    sv_start = np.r_[0, np.cumsum(clf.n_support_)]
+    n_features = iris.data.shape[1]
+    n_class = 3
+
+    kvalue = np.dot(data, clf.support_vectors_.T)
+
+    dec = np.empty(n_class * (n_class - 1) / 2)
+    p = 0
+    for i in range(n_class):
+        for j in range(i+1, n_class):
+            coef1 = clf.dual_coef_[j-1]
+            coef2 = clf.dual_coef_[i]
+            idx1 = slice(sv_start[i], sv_start[i+1])
+            idx2 = slice(sv_start[j], sv_start[j+1])
+            s = np.dot(coef1[idx1],  kvalue[idx1]) + \
+                np.dot(coef2[idx2], kvalue[idx2]) + \
+                clf.intercept_[p]
+            dec[p] = s
+            p += 1
+
+    assert_array_almost_equal(dec, np.ravel(clf.decision_function(data)))
 
 
 def test_weight():
