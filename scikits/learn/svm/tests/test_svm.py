@@ -38,9 +38,17 @@ def test_libsvm_iris():
     """
     Check consistency on dataset iris.
     """
+
+    # shuffle the dataset so that labels are not ordered
+    perm = np.random.permutation(iris.target.size)
+    data = iris.data[perm]
+    target = iris.target[perm]
+
     for k in ('linear', 'rbf'):
-        clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
-        assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
+        clf = svm.SVC(kernel=k).fit(data, target)
+        assert np.mean(clf.predict(data) == target) > 0.9
+
+    assert_array_equal(clf.label_, np.sort(clf.label_))
 
 
 def test_precomputed():
@@ -262,6 +270,7 @@ def test_sample_weights():
     sample_weight=[.1]*3 + [10]*3
     clf.fit(X, Y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X[2]), [2.])
+
 
 def test_auto_weight():
     """Test class weights for imbalanced data"""
