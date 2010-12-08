@@ -224,6 +224,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
     should be directly passed as a fortran contiguous numpy array.
     """
     X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
+    X = np.asfortranarray(X) # make data contiguous in memory
 
     n_samples = X.shape[0]
     if alphas is None:
