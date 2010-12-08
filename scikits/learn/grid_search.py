@@ -262,7 +262,7 @@ class GridSearchCV(BaseEstimator):
 
         if refit:
             # fit the best estimator using the entire dataset
-            best_estimator.fit(X, y)
+            best_estimator.fit(X, y, **self.fit_params)
 
         self.best_estimator = best_estimator
         if hasattr(best_estimator, 'predict'):
