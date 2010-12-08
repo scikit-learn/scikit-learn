@@ -258,11 +258,9 @@ class BaseLibSVM(BaseEstimator):
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
             Returns the decision function of the sample for each class
-            in the model, where classes are ordered by arithmetical
-            order.
-
+            in the model.
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
