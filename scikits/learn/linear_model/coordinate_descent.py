@@ -232,6 +232,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
     return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
                   fit_intercept=fit_intercept, verbose=verbose, **fit_params)
 
+
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
               fit_intercept=True, verbose=False, **fit_params):
     """Compute Elastic-Net path with coordinate descent
@@ -284,11 +285,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     coef_ = None # init coef_
     models = []
 
-    if not fit_params.has_key('precompute') \
+    if not 'precompute' in fit_params \
         or fit_params['precompute'] is True \
         or (fit_intercept and hasattr(fit_params['precompute'], '__array__')):
         fit_params['precompute'] = np.dot(X.T, X)
-        if not fit_params.has_key('Xy') or fit_params['Xy'] is None:
+        if not 'Xy' in fit_params or fit_params['Xy'] is None:
             fit_params['Xy'] = np.dot(X.T, y)
 
     for alpha in alphas:
@@ -396,7 +397,8 @@ class LassoCV(LinearModelCV):
 
     Notes
     -----
-    See examples/linear_model/lasso_path_with_crossvalidation.py for an example.
+    See examples/linear_model/lasso_path_with_crossvalidation.py
+    for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
@@ -429,7 +431,8 @@ class ElasticNetCV(LinearModelCV):
 
     Notes
     -----
-    See examples/linear_model/lasso_path_with_crossvalidation.py for an example.
+    See examples/linear_model/lasso_path_with_crossvalidation.py
+    for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
