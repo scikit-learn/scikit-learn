@@ -247,7 +247,7 @@ def test_decision_function():
             dec[p] = s
             p += 1
 
-    assert_array_almost_equal(dec, np.ravel(clf.decision_function(data)))
+    assert_array_almost_equal(-dec, np.ravel(clf.decision_function(data)))
 
 
 def test_weight():

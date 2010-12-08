@@ -276,7 +276,7 @@ class BaseLibSVM(BaseEstimator):
                       self.support_, self.label_, self.probA_,
                       self.probB_)
 
-        return dec_func
+        return -dec_func
 
     @property
     def coef_(self):
