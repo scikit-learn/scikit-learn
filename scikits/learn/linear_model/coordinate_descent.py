@@ -365,7 +365,7 @@ class LinearModelCV(LinearModel):
             models_train = self.path(X[train], y[train], **fit_params)
             for i_alpha, model in enumerate(models_train):
                 y_ = model.predict(X[test])
-                mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
+                mse_alphas[i, i_alpha] = ((y_ - y[test]) ** 2).mean()
 
         i_best_alpha = np.argmin(np.mean(mse_alphas, axis=0))
         model = models[i_best_alpha]
