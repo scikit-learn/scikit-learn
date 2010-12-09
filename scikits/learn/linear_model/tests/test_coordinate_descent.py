@@ -146,13 +146,13 @@ def test_enet_path():
 
     clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95)
     clf.fit(X, y, maxit=maxit)
-    assert_almost_equal(clf.alpha, 0.01315, 2)
+    assert_almost_equal(clf.alpha, 0.00779, 2)
 
     clf = ElasticNetCV(n_alphas=100, eps=1e-3, rho=0.95)
     clf.fit(X, y, maxit=maxit, precompute=True)
-    assert_almost_equal(clf.alpha, 0.01315, 2)
+    assert_almost_equal(clf.alpha, 0.00779, 2)
 
     # test set
     X_test = np.random.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
-    assert clf.score(X_test, y_test) > 0.85
+    assert clf.score(X_test, y_test) > 0.99
