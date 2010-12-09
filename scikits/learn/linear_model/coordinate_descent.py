@@ -367,7 +367,7 @@ class LinearModelCV(LinearModel):
                 y_ = model.predict(X[test])
                 mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
 
-        i_best_alpha = np.argmin(np.median(mse_alphas, axis=0))
+        i_best_alpha = np.argmin(np.mean(mse_alphas, axis=0))
         model = models[i_best_alpha]
 
         self.coef_ = model.coef_
