@@ -51,14 +51,15 @@ pl.title('Lasso paths')
 pl.axis('tight')
 
 pl.subplot(2, 1, 2)
+ymin, ymax = 2600, 3800
 pl.plot(m_log_alphas, model.mse_path_)
-ymin, ymax = pl.ylim()
 pl.vlines([m_log_alpha], ymin, ymax, linestyle='dashed')
 
 pl.xlabel('-log(lambda)')
 pl.ylabel('MSE')
 pl.title('Mean Square Errors on each CV fold')
 pl.axis('tight')
+pl.ylim(ymin, ymax)
 
 pl.show()
 
