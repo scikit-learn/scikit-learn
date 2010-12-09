@@ -10,6 +10,8 @@ from scipy import linalg, optimize, rand
 from ..base import BaseEstimator
 from . import regression_models as regression
 from . import correlation_models as correlation
+from ..cross_val import LeaveOneOut
+from ..externals.joblib import Parallel, delayed
 MACHINE_EPSILON = np.finfo(np.double).eps
 if hasattr(linalg, 'solve_triangular'):
     # only in scipy since 0.9
@@ -18,6 +20,32 @@ else:
     # slower, but works
     def solve_triangular(x, y, lower=True):
         return linalg.solve(x, y)
+
+
+def _score_inner_loop(gp, train, test):
+    """ This function is usually called by the score function of the
+    GaussianProcess object, it implements a leave-one-out prediction."""
+
+    # Copy instance, force verbose to False
+    gp_cv = gp
+    gp_cv.verbose = False
+
+    # Don't perform MLE
+    gp_cv.thetaL = None
+    gp_cv.thetaU = None
+    gp_cv.theta0 = gp.theta
+
+    # Do not re-normalize data
+    gp_cv.normalize = False
+    X_train = gp.X[train]
+    y_train = gp.y[train]
+    X_test  = gp.X[test]
+
+    # Perform leave-one-out test prediction (with back scaling)
+    y_test = gp.y_sc[0] + gp.y_sc[1] * \
+             gp_cv.fit(X_train, y_train.ravel()).predict(X_test)
+
+    return y_test
 
 
 class GaussianProcess(BaseEstimator):
@@ -412,7 +440,7 @@ class GaussianProcess(BaseEstimator):
                     self.G = par['G']
 
                 rt = solve_triangular(C, r.T, lower=True)
-                
+
                 if self.beta0 is None:
                     # Universal Kriging
                     u = solve_triangular(self.G.T,
@@ -745,27 +773,45 @@ class GaussianProcess(BaseEstimator):
 
         return optimal_theta, optimal_rlf_value, optimal_par
 
-    def score(self, X_test, y_test):
+    def score(self, return_predictions=False):
         """
-        This score function returns the mean deviation of the Gaussian Process
-        model evaluated onto a test dataset.
+        This score function returns a leave-one-out estimate of the fitted
+        Gaussian Process' coefficient of determination. The closer to 1, the
+        better.
 
         Parameters
         ----------
-        X_test : array_like
-            The feature test dataset with shape (n_tests, n_features).
-
-        y_test : array_like
-            The target test dataset (n_tests, ).
+        return_predictions : bool
+            A boolean specifying whether the leave-one-out predictions should
+            be returned in addition to the score.
 
         Returns
         -------
-        score_value : array_like
-            The mean of the deviations between the prediction and the targets:
-            mean(y_pred - y_test).
+        Q2 : float
+            The leave-one-out estimate of the determination coefficient.
+
+        y_pred : array, optional
+            The leave-one-out predictions.
         """
 
-        return (self.predict(X_test, eval_MSE=False) - y_test).mean()
+        if not hasattr(self, 'theta'):
+            raise Exception("Call fit first!")
+
+        # Leave-one-out loop
+        cv = LeaveOneOut(self.y.size)
+        y_pred = Parallel(n_jobs=-1, verbose=self.verbose)(
+                 delayed(_score_inner_loop)(self, train, test)
+                 for train, test in cv)
+        y_pred = np.ravel(y_pred)
+        y_true = np.ravel(self.y_sc[0] + self.y_sc[1] * self.y)
+
+        Q2 = 1. - ((y_pred - y_true) ** 2.).sum() \
+                / ((y_true - y_true.mean()) ** 2.).sum()
+
+        if return_predictions:
+            return Q2, y_pred
+        else:
+            return Q2
 
     def _check_params(self):
 

@@ -28,18 +28,18 @@ from matplotlib import cm
 print __doc__
 
 # Standard normal distribution functions
-Grv = stats.distributions.norm()
-phi = lambda x: Grv.pdf(x)
-PHI = lambda x: Grv.cdf(x)
-PHIinv = lambda x: Grv.ppf(x)
+phi = stats.distributions.norm().pdf
+PHI = stats.distributions.norm().cdf
+PHIinv = stats.distributions.norm().ppf
 
 # A few constants
 lim = 8
 b, kappa, e = 5, .5, .1
 
-# The function to predict (classification will then consist in predicting
-# wheter g(x) <= 0 or not)
-g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
+# The function to predict
+# (classification will then consist in predicting wheter g(x) <= 0 or not)
+def g(x):
+    return b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
 
 # Design of experiments
 X = np.array([[-4.61611719, -6.00099547],
