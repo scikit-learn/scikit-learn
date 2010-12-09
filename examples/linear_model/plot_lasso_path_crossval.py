@@ -21,12 +21,13 @@ diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
-X /= X.std(0) # Standardize data (easier to set the rho parameter)
+# normalize data as done by LARS to allow for comparison
+X /= np.sqrt(np.sum(X ** 2, axis=0))
 
 ################################################################################
 # Compute paths
 
-eps = 5e-3 # the smaller it is the longer is the path
+eps = 1e-3 # the smaller it is the longer is the path
 
 print "Computing regularization path using the lasso..."
 model = LassoCV(eps=eps).fit(X, y)
