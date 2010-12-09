@@ -155,7 +155,7 @@ print confusion_matrix(y_test, y_pred, labels=selected_target)
 n_row = 3
 n_col = 4
 
-pl.figure(figsize=(2*n_col, 2.3*n_row))
+pl.figure(figsize=(2 * n_col, 2.3 * n_row))
 pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.95, hspace=.15)
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
