@@ -221,7 +221,7 @@ class BaseLibSVM(BaseEstimator):
                       self.support_, self.label_, self.probA_,
                       self.probB_)
 
-        return pprob[:, np.argsort(self.label_)]
+        return pprob
 
     def predict_log_proba(self, T):
         """
