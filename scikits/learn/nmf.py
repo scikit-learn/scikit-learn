@@ -28,7 +28,7 @@ def _initialize_nmf_(X, n_comp):
 
     X:
         The data matrix to be decomposed.
-  
+
     n_comp:
         The number of components desired in the
         approximation.
@@ -54,12 +54,13 @@ def _initialize_nmf_(X, n_comp):
     U, S, V = fast_svd(X, n_comp)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
 
-    # The leading singular triplet is non-negative
-    # so it can be used as is for initialization.
-    W[:, 0] = np.sqrt(S[0]) * U[:, 0]
-    H[0, :] = np.sqrt(S[0]) * V[0, :]
+    ## The leading singular triplet is non-negative
+    ## so it can be used as is for initialization.
+    # !!!!! apparently not!
+    # W[:, 0] = np.sqrt(S[0]) * U[:, 0]
+    # H[0, :] = np.sqrt(S[0]) * V[0, :]
 
-    for j in xrange(1, n_comp):
+    for j in xrange(0, n_comp):
         x, y = U[:, j], V[j, :]
 
         # extract positive and negative parts of column vectors
@@ -89,8 +90,8 @@ def _initialize_nmf_(X, n_comp):
     # Apparently this sometimes happens. I think this is
     # exactly why and when convergence fails.
     # I probably messed something up.
-    if (W < 0).any() or (H < 0).any():
-        raise SystemError("failure in initialization!")
+    #if (W < 0).any() or (H < 0).any():
+    #    raise SystemError("failure in initialization!")
 
     return W, H
 
@@ -221,15 +222,23 @@ class NMF(BaseEstimator):
 
     Examples
     --------
+
+    >>> import numpy as np
+    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from scikits.learn.nmf import NMF
     >>> from scipy.optimize import nnls
-    >>> import numpy as np
-    >>> A = np.abs(np.random.randn(10, 8)
-    >>> model = NMF(5)
-    >>> model.fit(A)
-    >>> h0,_ = nnls(model.components_.T, A[0, :])
-    >>> np.allclose(h0, model.data_[0, :], 0.15)
-    True
+    >>> model = NMF(n_comp=2, initial=0)
+    >>> model.fit(X)
+    NMF(nls_max_iter=1000, n_comp=2,
+      initial=<mtrand.RandomState object at 0x0140C240>, tolerance=0.001,
+      max_iter=50)
+    >>> model.components_
+    array([[ 0.76551648,  0.11408118],
+           [ 0.4167371 ,  0.36376783]])
+    >>> model.reconstruction_err_
+    0.11760278071752467
+    >>> np.linalg.norm(model.data_[0, :] - model.transform(X[0, :]))
+    0.023723012161826595
 
     Notes
     -----
@@ -247,14 +256,13 @@ class NMF(BaseEstimator):
         self.tolerance = tolerance
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
-        #TODO: self.copy
 
     def fit(self, X):
         """ Fit the model to the data
         """
-
+        X = np.atleast_2d(X)
         n_features, n_samples = X.shape
-        
+
         if not self.n_comp:
             self.n_comp = n_features
 
@@ -296,21 +304,22 @@ class NMF(BaseEstimator):
             # update H
             H, gradH, iterH = _nls_subproblem_(X, W, H, tolH,
                                                self.nls_max_iter)
-            if iterH == 1: 
+            if iterH == 1:
                 tolH = 0.1 * tolH
 
             self.components_ = H
             self.data_ = W
             self.reconstruction_err_ = norm(X - np.dot(W, H))
         if iter == self.max_iter:
-            warnings.warn("Iteration limit reached during fit");
+            warnings.warn("Iteration limit reached during fit")
         return self
 
     def transform(self, X):
         """ Transform the data X according to the model
         """
         from scipy.optimize import nnls
+        X = np.atleast_2d(X)
         H = np.zeros((X.shape[0], self.n_comp))
-        for j in xrange(0, X.shape[0])
-            H[j, :],_ = nnls(self.components_.T, X[j, :])
+        for j in xrange(0, X.shape[0]):
+            H[j, :], _ = nnls(self.components_.T, X[j, :])
         return H
