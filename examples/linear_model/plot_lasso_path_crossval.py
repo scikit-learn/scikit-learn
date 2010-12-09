@@ -34,8 +34,8 @@ model = LassoCV(eps=eps).fit(X, y)
 
 ################################################################################
 # Display results
-m_log_alphas = -np.log(model.alphas)
-m_log_alpha = -np.log(model.alpha)
+m_log_alphas = -np.log10(model.alphas)
+m_log_alpha = -np.log10(model.alpha)
 
 ax = pl.gca()
 ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
