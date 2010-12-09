@@ -276,6 +276,9 @@ class BaseLibSVM(BaseEstimator):
                       self.support_, self.label_, self.probA_,
                       self.probB_)
 
+        # libsvm has the convention of returning negative values for
+        # rightmost labels, so we invert the sign since our label_ is
+        # sorted by increasing order
         return -dec_func
 
     @property
