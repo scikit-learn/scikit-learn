@@ -330,14 +330,14 @@ class LinearModelCV(LinearModel):
             Target values
 
         cv : cross-validation generator, optional
-             If None, KFold will be used.
+            If None, KFold will be used.
 
         fit_params : kwargs
             keyword arguments passed to the Lasso fit method
 
         """
 
-        X = np.asanyarray(X, dtype=np.float64)
+        X = np.asfortranarray(X, dtype=np.float64)
         y = np.asanyarray(y, dtype=np.float64)
 
         n_samples = X.shape[0]
@@ -358,15 +358,16 @@ class LinearModelCV(LinearModel):
         params['n_alphas'] = n_alphas
 
         # Compute path for all folds and compute MSE to get the best alpha
-        mse_alphas = np.zeros(n_alphas)
+        folds = list(cv)
+        mse_alphas = np.zeros((len(folds), n_alphas))
         fit_params.update(params)
-        for train, test in cv:
+        for i, (train, test) in enumerate(folds):
             models_train = self.path(X[train], y[train], **fit_params)
             for i_alpha, model in enumerate(models_train):
                 y_ = model.predict(X[test])
-                mse_alphas[i_alpha] += ((y_ - y[test]) ** 2).mean()
+                mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
 
-        i_best_alpha = np.argmin(mse_alphas)
+        i_best_alpha = np.argmin(np.median(mse_alphas, axis=0))
         model = models[i_best_alpha]
 
         self.coef_ = model.coef_
@@ -374,6 +375,8 @@ class LinearModelCV(LinearModel):
         self.explained_variance_ = model.explained_variance_
         self.alpha = model.alpha
         self.alphas = np.asarray(alphas)
+        self.coef_path_ = np.asarray([model.coef_ for model in models])
+        self.mse_path_ = mse_alphas.T
         return self
 
 
