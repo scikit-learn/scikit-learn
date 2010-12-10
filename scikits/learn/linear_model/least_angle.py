@@ -8,7 +8,6 @@ Generalized Linear Model for a complete discussion.
 #
 # License: BSD Style.
 
-import warnings
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
@@ -64,7 +63,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
     """
     # : make sure it works with non-normalized columns of X
 
-    n_samples, n_features = X.shape
+    n_features = X.shape[1]
+    n_samples = y.size
 
     if max_features is None:
         max_features = min(n_samples, n_features)
@@ -114,7 +114,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             else:
                 C -= gamma_ * np.abs(np.dot(Gram[0], least_squares))
 
-        alphas[n_iter] = C
+        alphas[n_iter] = C / n_samples
 
         if (C < alpha_min) or (n_active == max_features):
             break
@@ -411,7 +411,7 @@ class LassoLARS (LARS):
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
     LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
     >>> print clf.coef_
-    [ 0.         -0.51649658]
+    [ 0.          0.08350342]
 
     References
     ----------

@@ -176,7 +176,7 @@ class GridSearchCV(BaseEstimator):
     >>> svr = SVR()
     >>> clf = GridSearchCV(svr, parameters, n_jobs=1)
     >>> clf.fit(X, y).predict([[-0.8, -1]])
-    array([ 1.14])
+    array([ 1.13101459])
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
