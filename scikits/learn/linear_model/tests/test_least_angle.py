@@ -91,7 +91,6 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     same results
     """
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
-    alphas /= X.shape[0]
     lasso_cd = linear_model.Lasso(fit_intercept=False)
     for (c, a) in zip(lasso_path.T, alphas):
         lasso_cd.alpha = a
@@ -100,3 +99,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
         assert error < 0.01
 
 
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()
+    
