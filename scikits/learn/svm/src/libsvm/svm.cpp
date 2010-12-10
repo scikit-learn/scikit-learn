@@ -2538,7 +2538,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		for(i=0;i<l;i++) {
 			if(nonzero[i]) { 
                                 model->SV[p] = x[i];
-                                model->sv_ind[p] = i;
+                                model->sv_ind[p] = perm[i];
                                 ++p;
                         }
                 }
