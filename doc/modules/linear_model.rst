@@ -223,7 +223,7 @@ function of the norm of its coefficients.
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
    LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
    >>> clf.coef_
-   array([ 0.50710678,  0.        ])
+   array([ 0.30710678,  0.        ])
 
 
 .. topic:: Examples:
