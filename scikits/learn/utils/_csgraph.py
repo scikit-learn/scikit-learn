@@ -32,7 +32,7 @@ def cs_graph_components(x):
 
     Returns
     --------
-    n_comp: int
+    n_components: int
         The number of connected components.
     label: ndarray (ints, 1 dimension):
         The label array of each connected component (-2 is used to
@@ -74,8 +74,8 @@ def cs_graph_components(x):
 
     label = np.empty((shape[0],), dtype=x.indptr.dtype)
 
-    n_comp = _cs_graph_components(shape[0], x.indptr, x.indices, label)
+    n_components = _cs_graph_components(shape[0], x.indptr, x.indices, label)
 
-    return n_comp, label
+    return n_components, label
 
 

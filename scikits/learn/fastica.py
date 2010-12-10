@@ -55,11 +55,11 @@ def _ica_def(X, tol, g, gprime, fun_args, maxit, w_init):
     Used internally by FastICA.
     """
 
-    n_comp = w_init.shape[0]
-    W = np.zeros((n_comp, n_comp), dtype=float)
+    n_components = w_init.shape[0]
+    W = np.zeros((n_components, n_components), dtype=float)
 
     # j is the index of the extracted component
-    for j in range(n_comp):
+    for j in range(n_components):
         w = w_init[j, :].copy()
         w /= np.sqrt((w**2).sum())
 
@@ -114,7 +114,7 @@ def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
     return W
 
 
-def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
+def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_prime='', fun_args={}, maxit=200,
             tol=1e-04, w_init=None):
     """Perform Fast Independent Component Analysis.
@@ -124,7 +124,7 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
     X : (n, p) array of shape = [n_samples, n_features]
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
-    n_comp : int, optional
+    n_components : int, optional
         Number of components to extract. If None no dimension reduction
         is performed.
     algorithm : {'parallel','deflation'}
@@ -151,22 +151,22 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
     tol : float
           A positive scalar giving the tolerance at which the
           un-mixing matrix is considered to have converged
-    w_init : (n_comp,n_comp) array
+    w_init : (n_components,n_components) array
              Initial un-mixing array of dimension (n.comp,n.comp).
              If None (default) then an array of normal r.v.'s is used
     source_only: if True, only the sources matrix is returned
 
     Results
     -------
-    K : (n_comp, p) array
+    K : (n_components, p) array
         pre-whitening matrix that projects data onto th first n.comp
         principal components. Returned only if whiten is True
-    W : (n_comp, n_comp) array
+    W : (n_components, n_components) array
         estimated un-mixing matrix
         The mixing matrix can be obtained by::
             w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
-    S : (n_comp, n) array
+    S : (n_components, n) array
         estimated source matrix
 
 
@@ -227,11 +227,11 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
 
     n, p = X.shape
 
-    if n_comp is None:
-        n_comp = min(n, p)
-    if (n_comp > min(n, p)):
-        n_comp = min(n, p)
-        print("n_comp is too large: it will be set to %s" % n_comp)
+    if n_components is None:
+        n_components = min(n, p)
+    if (n_components > min(n, p)):
+        n_components = min(n, p)
+        print("n_components is too large: it will be set to %s" % n_components)
 
     if whiten:
         # Centering the columns (ie the variables)
@@ -241,7 +241,7 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
         u, d, _ = linalg.svd(X, full_matrices=False)
 
         del _
-        K = (u/d).T[:n_comp]  # see (6.33) p.140
+        K = (u/d).T[:n_components]  # see (6.33) p.140
         del u, d
         X1 = np.dot(K, X)
         # see (13.6) p.267 Here X1 is white and data
@@ -251,12 +251,12 @@ def fastica(X, n_comp=None, algorithm="parallel", whiten=True,
     X1 *= np.sqrt(p)
 
     if w_init is None:
-        w_init = np.random.normal(size=(n_comp, n_comp))
+        w_init = np.random.normal(size=(n_components, n_components))
     else:
         w_init = np.asarray(w_init)
-        if w_init.shape != (n_comp, n_comp):
+        if w_init.shape != (n_components, n_components):
             raise ValueError("w_init has invalid shape -- should be %(shape)s"
-                             % {'shape': (n_comp, n_comp)})
+                             % {'shape': (n_components, n_components)})
 
     kwargs = {'tol': tol,
               'g': g,
@@ -283,7 +283,7 @@ class FastICA(BaseEstimator):
 
     Parameters
     ----------
-    n_comp : int, optional
+    n_components : int, optional
         Number of components to use. If none is passed, all are used.
     algorithm: {'parallel', 'deflation'}
         Apply parallel or deflational algorithm for FastICA
@@ -300,12 +300,12 @@ class FastICA(BaseEstimator):
         Maximum number of iterations during fit
     tol : float, optional
         Tolerance on update at each iteration
-    w_init: None of an (n_comp, n_comp) ndarray
+    w_init: None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
     Attributes
     ----------
-    unmixing_matrix_ : 2D array, [n_comp, n_samples]
+    unmixing_matrix_ : 2D array, [n_components, n_samples]
 
     Methods
     -------
@@ -322,11 +322,11 @@ class FastICA(BaseEstimator):
 
     """
 
-    def __init__(self, n_comp=None, algorithm='parallel', whiten=True,
+    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                 fun='logcosh', fun_prime='', fun_args={}, maxit=200, tol=1e-4,
                 w_init=None):
         super(FastICA, self).__init__()
-        self.n_comp = n_comp
+        self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
         self.fun = fun
@@ -338,7 +338,7 @@ class FastICA(BaseEstimator):
 
     def fit(self, X, **params):
         self._set_params(**params)
-        whitening_, unmixing_, sources_ = fastica(X, self.n_comp,
+        whitening_, unmixing_, sources_ = fastica(X, self.n_components,
                         self.algorithm, self.whiten,
                         self.fun, self.fun_prime, self.fun_args, self.maxit,
                         self.tol, self.w_init)

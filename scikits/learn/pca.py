@@ -129,17 +129,17 @@ class PCA(BaseEstimator):
 
     Attributes
     ----------
-    components_: array, [n_features, n_comp]
+    components_: array, [n_features, n_components]
         Components with maximum variance.
 
-    explained_variance_ratio_: array, [n_comp]
+    explained_variance_ratio_: array, [n_components]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
 
     Notes
     -----
-    For n_comp='mle', this class uses the method of Thomas P. Minka:
+    For n_components='mle', this class uses the method of Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 
     Examples
