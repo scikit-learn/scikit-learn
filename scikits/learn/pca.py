@@ -338,7 +338,7 @@ class RandomizedPCA(BaseEstimator):
         self.copy = copy
         self.iterated_power = iterated_power
         self.whiten = whiten
-        self.mean = None
+        self.mean_ = None
 
     def fit(self, X, **params):
         """Fit the model to the data X"""
@@ -372,7 +372,7 @@ class RandomizedPCA(BaseEstimator):
 
     def transform(self, X):
         """Apply the dimension reduction learned on the training data."""
-        if self.mean is not None:
+        if self.mean_ is not None:
             X = X - self.mean_
 
         X = safe_sparse_dot(X, self.components_)
