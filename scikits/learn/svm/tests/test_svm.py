@@ -20,6 +20,9 @@ true_result = [1, 2, 2]
 
 # also load the iris dataset
 iris = datasets.load_iris()
+perm = np.random.permutation(iris.target.size)
+iris.data = iris.data[perm]
+iris.target = iris.target[perm]
 
 def test_libsvm_parameters():
     """
@@ -40,13 +43,10 @@ def test_libsvm_iris():
     """
 
     # shuffle the dataset so that labels are not ordered
-    perm = np.random.permutation(iris.target.size)
-    data = iris.data[perm]
-    target = iris.target[perm]
 
     for k in ('linear', 'rbf'):
-        clf = svm.SVC(kernel=k).fit(data, target)
-        assert np.mean(clf.predict(data) == target) > 0.9
+        clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
+        assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
 
     assert_array_equal(clf.label_, np.sort(clf.label_))
 
