@@ -33,7 +33,7 @@ def test_whitening():
     np.random.seed(0)
     n_samples = 100
     n_features = 80
-    n_componentsonents = 30
+    n_components = 30
     rank = 50
 
     # some low rank data with correlated features
@@ -50,18 +50,18 @@ def test_whitening():
     assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
 
     # whiten the data while projecting to the lower dim subspace
-    pca = PCA(n_components=n_componentsonents, whiten=True).fit(X)
+    pca = PCA(n_components=n_components, whiten=True).fit(X)
     X_whitened = pca.transform(X)
-    assert_equal(X_whitened.shape, (n_samples, n_componentsonents))
+    assert_equal(X_whitened.shape, (n_samples, n_components))
 
     # all output component have unit variances
-    assert_almost_equal(X_whitened.std(axis=0), np.ones(n_componentsonents))
+    assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
 
     # is possible to project on the low dim space without scaling by the
     # singular values
-    pca = PCA(n_components=n_componentsonents, whiten=False).fit(X)
+    pca = PCA(n_components=n_components, whiten=False).fit(X)
     X_unwhitened = pca.transform(X)
-    assert_equal(X_unwhitened.shape, (n_samples, n_componentsonents))
+    assert_equal(X_unwhitened.shape, (n_samples, n_components))
 
     # in that case the output components still have varying variances
     assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
