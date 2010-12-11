@@ -61,7 +61,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
     """
-    # : make sure it works with non-normalized columns of X
 
     n_features = X.shape[1]
     n_samples = y.size
@@ -163,10 +162,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                                                             n_active, C)
 
         # least squares solution
-
         least_squares, info = potrs(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
 
+        # is this really needed ?
         AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
         least_squares *= AA
 

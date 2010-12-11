@@ -161,10 +161,10 @@ The objective function to minimize is in this case
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
-.. _lars_algorithm:
+.. _least_angle_regression:
 
-LARS algorithm and its variants
-===============================
+Least Angle Regression
+======================
 
 Least-angle regression (LARS) is a regression algorithm for
 high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain
