@@ -52,7 +52,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
         active: array, shape (?)
             Indices of active variables at the end of the path.
 
-        coefs: array, shape (p,k)
+        coefs: array, shape (p, k)
             Coefficients along the path
 
         Notes
