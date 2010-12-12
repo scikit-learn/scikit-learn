@@ -127,9 +127,6 @@ class ElasticNet(LinearModel):
             warnings.warn('Objective did not converge, you might want'
                           ' to increase the number of interations')
 
-        # Store explained variance for __str__
-        self.r2_score_ = self._r2_score(X, y)
-
         # return self for chaining fit and predict calls
         return self
 
@@ -372,7 +369,6 @@ class LinearModelCV(LinearModel):
 
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
-        self.r2_score_ = model.r2_score_
         self.alpha = model.alpha
         self.alphas = np.asarray(alphas)
         self.coef_path_ = np.asarray([model.coef_ for model in models])
