@@ -53,7 +53,7 @@ class ElasticNet(LinearModel):
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sparse.csr_matrix(coef_)
 
-    def fit(self, X, y, maxit=1000, tol=1e-4, **params):
+    def fit(self, X, y, max_iter=1000, tol=1e-4, **params):
         """Fit current model with coordinate descent
 
         X is expected to be a sparse matrix. For maximum efficiency, use a
@@ -78,7 +78,7 @@ class ElasticNet(LinearModel):
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
                     self.coef_, alpha, beta, X_data, X.indices, X.indptr, y,
-                    maxit, tol)
+                    max_iter, tol)
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)
@@ -87,7 +87,7 @@ class ElasticNet(LinearModel):
             warnings.warn('Objective did not converge, you might want'
                                 'to increase the number of interations')
 
-        # TODO: implement intercept_ fitting
+        # XXX TODO: implement intercept_ fitting
 
         # return self for chaining fit and predict calls
         return self

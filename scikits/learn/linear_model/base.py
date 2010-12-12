@@ -13,7 +13,6 @@ Generalized Linear models.
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
-from ..metrics import r2_score
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 ###
@@ -42,10 +41,6 @@ class LinearModel(BaseEstimator, RegressorMixin):
         """
         X = np.asanyarray(X)
         return np.dot(X, self.coef_) + self.intercept_
-
-    def _r2_score(self, X, y):
-        """Compute explained variance a.k.a. r^2"""
-        return r2_score(y, self.predict(X))
 
     @staticmethod
     def _center_data(X, y, fit_intercept):

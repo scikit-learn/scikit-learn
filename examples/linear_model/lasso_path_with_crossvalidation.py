@@ -35,9 +35,9 @@ from scikits.learn.cross_val import KFold
 cv = KFold(n_samples/2, 5)
 lasso_cv = LassoCV()
 
-# fit_params = {'maxit':100}
+# fit_params = {'max_iter':100}
 
-y_ = lasso_cv.fit(X_train, y_train, cv=cv, maxit=100).predict(X_test)
+y_ = lasso_cv.fit(X_train, y_train, cv=cv, max_iter=100).predict(X_test)
 
 print "Optimal regularization parameter  = %s" % lasso_cv.alpha
 

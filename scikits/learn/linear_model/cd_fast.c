@@ -697,7 +697,7 @@ static char __pyx_k__ndim[] = "ndim";
 static char __pyx_k__norm[] = "norm";
 static char __pyx_k__alpha[] = "alpha";
 static char __pyx_k__descr[] = "descr";
-static char __pyx_k__maxit[] = "maxit";
+static char __pyx_k__max_iter[] = "max_iter";
 static char __pyx_k__names[] = "names";
 static char __pyx_k__numpy[] = "numpy";
 static char __pyx_k__range[] = "range";
@@ -749,7 +749,7 @@ static PyObject *__pyx_n_s__format;
 static PyObject *__pyx_n_s__inf;
 static PyObject *__pyx_n_s__itemsize;
 static PyObject *__pyx_n_s__linalg;
-static PyObject *__pyx_n_s__maxit;
+static PyObject *__pyx_n_s__max_iter;
 static PyObject *__pyx_n_s__names;
 static PyObject *__pyx_n_s__ndim;
 static PyObject *__pyx_n_s__norm;
@@ -909,7 +909,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
   double __pyx_v_beta;
   PyArrayObject *__pyx_v_X = 0;
   PyArrayObject *__pyx_v_y = 0;
-  int __pyx_v_maxit;
+  int __pyx_v_max_iter;
   double __pyx_v_tol;
   unsigned int __pyx_v_n_samples;
   unsigned int __pyx_v_n_features;
@@ -974,7 +974,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
   int __pyx_t_25;
   int __pyx_t_26;
   int __pyx_t_27;
-  static PyObject **__pyx_pyargnames[] = {&__pyx_n_s__w,&__pyx_n_s__alpha,&__pyx_n_s__beta,&__pyx_n_s__X,&__pyx_n_s__y,&__pyx_n_s__maxit,&__pyx_n_s__tol,0};
+  static PyObject **__pyx_pyargnames[] = {&__pyx_n_s__w,&__pyx_n_s__alpha,&__pyx_n_s__beta,&__pyx_n_s__X,&__pyx_n_s__y,&__pyx_n_s__max_iter,&__pyx_n_s__tol,0};
   __Pyx_RefNannySetupContext("enet_coordinate_descent");
   __pyx_self = __pyx_self;
   if (unlikely(__pyx_kwds)) {
@@ -1021,7 +1021,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
         __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 1, 7, 7, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 39; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
       case  5:
-      values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s__maxit);
+      values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s__max_iter);
       if (likely(values[5])) kw_args--;
       else {
         __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 1, 7, 7, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 39; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
@@ -1041,7 +1041,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_X = ((PyArrayObject *)values[3]);
     __pyx_v_y = ((PyArrayObject *)values[4]);
-    __pyx_v_maxit = __Pyx_PyInt_AsInt(values[5]); if (unlikely((__pyx_v_maxit == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_AsInt(values[5]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_tol = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   } else if (PyTuple_GET_SIZE(__pyx_args) != 7) {
     goto __pyx_L5_argtuple_error;
@@ -1051,7 +1051,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     __pyx_v_beta = __pyx_PyFloat_AsDouble(PyTuple_GET_ITEM(__pyx_args, 2)); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_X = ((PyArrayObject *)PyTuple_GET_ITEM(__pyx_args, 3));
     __pyx_v_y = ((PyArrayObject *)PyTuple_GET_ITEM(__pyx_args, 4));
-    __pyx_v_maxit = __Pyx_PyInt_AsInt(PyTuple_GET_ITEM(__pyx_args, 5)); if (unlikely((__pyx_v_maxit == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_AsInt(PyTuple_GET_ITEM(__pyx_args, 5)); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_tol = __pyx_PyFloat_AsDouble(PyTuple_GET_ITEM(__pyx_args, 6)); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 43; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
@@ -1221,7 +1221,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
  * 
  *     tol = tol * linalg.norm(y) ** 2             # <<<<<<<<<<<<<<
  * 
- *     for n_iter in range(maxit):
+ *     for n_iter in range(max_iter):
  */
   __pyx_t_3 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
@@ -1253,17 +1253,17 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
   /* "/Users/alex/work/src/scikit-learn/scikits/learn/linear_model/cd_fast.pyx":79
  *     tol = tol * linalg.norm(y) ** 2
  * 
- *     for n_iter in range(maxit):             # <<<<<<<<<<<<<<
+ *     for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
  *         w_max = 0.0
  *         d_w_max = 0.0
  */
-  __pyx_t_6 = __pyx_v_maxit;
+  __pyx_t_6 = __pyx_v_max_iter;
   for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_6; __pyx_t_12+=1) {
     __pyx_v_n_iter = __pyx_t_12;
 
     /* "/Users/alex/work/src/scikit-learn/scikits/learn/linear_model/cd_fast.pyx":80
  * 
- *     for n_iter in range(maxit):
+ *     for n_iter in range(max_iter):
  *         w_max = 0.0             # <<<<<<<<<<<<<<
  *         d_w_max = 0.0
  *         for ii in xrange(n_features): # Loop over coordinates
@@ -1271,7 +1271,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     __pyx_v_w_max = 0.0;
 
     /* "/Users/alex/work/src/scikit-learn/scikits/learn/linear_model/cd_fast.pyx":81
- *     for n_iter in range(maxit):
+ *     for n_iter in range(max_iter):
  *         w_max = 0.0
  *         d_w_max = 0.0             # <<<<<<<<<<<<<<
  *         for ii in xrange(n_features): # Loop over coordinates
@@ -1453,7 +1453,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
  *             if w[ii] > w_max:
  *                 w_max = w[ii]             # <<<<<<<<<<<<<<
  * 
- *         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:
+ *         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
  */
         __pyx_t_24 = __pyx_v_ii;
         __pyx_v_w_max = (*__Pyx_BufPtrStrided1d(__pyx_t_7scikits_5learn_12linear_model_7cd_fast_DOUBLE *, __pyx_bstruct_w.buf, __pyx_t_24, __pyx_bstride_0_w));
@@ -1466,7 +1466,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     /* "/Users/alex/work/src/scikit-learn/scikits/learn/linear_model/cd_fast.pyx":116
  *                 w_max = w[ii]
  * 
- *         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:             # <<<<<<<<<<<<<<
+ *         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:             # <<<<<<<<<<<<<<
  *             # the biggest coordinate update of this iteration was smaller than
  *             # the tolerance: check the duality gap as ultimate stopping
  */
@@ -1474,7 +1474,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     if (!__pyx_t_16) {
       __pyx_t_25 = ((__pyx_v_d_w_max / __pyx_v_w_max) < __pyx_v_d_w_tol);
       if (!__pyx_t_25) {
-        __pyx_t_26 = (__pyx_v_n_iter == (__pyx_v_maxit - 1));
+        __pyx_t_26 = (__pyx_v_n_iter == (__pyx_v_max_iter - 1));
         __pyx_t_27 = __pyx_t_26;
       } else {
         __pyx_t_27 = __pyx_t_25;
@@ -1897,7 +1897,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
   PyArrayObject *__pyx_v_Q = 0;
   PyArrayObject *__pyx_v_q = 0;
   PyArrayObject *__pyx_v_y = 0;
-  int __pyx_v_maxit;
+  int __pyx_v_max_iter;
   double __pyx_v_tol;
   unsigned int __pyx_v_n_samples;
   unsigned int __pyx_v_n_features;
@@ -1963,7 +1963,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
   int __pyx_t_25;
   int __pyx_t_26;
   PyObject *__pyx_t_27 = NULL;
-  static PyObject **__pyx_pyargnames[] = {&__pyx_n_s__w,&__pyx_n_s__alpha,&__pyx_n_s__beta,&__pyx_n_s__Q,&__pyx_n_s__q,&__pyx_n_s__y,&__pyx_n_s__maxit,&__pyx_n_s__tol,0};
+  static PyObject **__pyx_pyargnames[] = {&__pyx_n_s__w,&__pyx_n_s__alpha,&__pyx_n_s__beta,&__pyx_n_s__Q,&__pyx_n_s__q,&__pyx_n_s__y,&__pyx_n_s__max_iter,&__pyx_n_s__tol,0};
   __Pyx_RefNannySetupContext("enet_coordinate_descent_gram");
   __pyx_self = __pyx_self;
   if (unlikely(__pyx_kwds)) {
@@ -2017,7 +2017,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
         __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 1, 8, 8, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 145; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
       case  6:
-      values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s__maxit);
+      values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s__max_iter);
       if (likely(values[6])) kw_args--;
       else {
         __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 1, 8, 8, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 145; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
@@ -2038,7 +2038,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     __pyx_v_Q = ((PyArrayObject *)values[3]);
     __pyx_v_q = ((PyArrayObject *)values[4]);
     __pyx_v_y = ((PyArrayObject *)values[5]);
-    __pyx_v_maxit = __Pyx_PyInt_AsInt(values[6]); if (unlikely((__pyx_v_maxit == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 150; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_AsInt(values[6]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 150; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_tol = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 150; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   } else if (PyTuple_GET_SIZE(__pyx_args) != 8) {
     goto __pyx_L5_argtuple_error;
@@ -2049,7 +2049,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     __pyx_v_Q = ((PyArrayObject *)PyTuple_GET_ITEM(__pyx_args, 3));
     __pyx_v_q = ((PyArrayObject *)PyTuple_GET_ITEM(__pyx_args, 4));
     __pyx_v_y = ((PyArrayObject *)PyTuple_GET_ITEM(__pyx_args, 5));
-    __pyx_v_maxit = __Pyx_PyInt_AsInt(PyTuple_GET_ITEM(__pyx_args, 6)); if (unlikely((__pyx_v_maxit == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 150; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_AsInt(PyTuple_GET_ITEM(__pyx_args, 6)); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 150; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_tol = __pyx_PyFloat_AsDouble(PyTuple_GET_ITEM(__pyx_args, 7)); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 150; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
@@ -2208,24 +2208,24 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
  *     cdef double y_norm2 = linalg.norm(y) ** 2
  *     tol = tol * y_norm2             # <<<<<<<<<<<<<<
  * 
- *     for n_iter in range(maxit):
+ *     for n_iter in range(max_iter):
  */
   __pyx_v_tol = (__pyx_v_tol * __pyx_v_y_norm2);
 
   /* "/Users/alex/work/src/scikit-learn/scikits/learn/linear_model/cd_fast.pyx":185
  *     tol = tol * y_norm2
  * 
- *     for n_iter in range(maxit):             # <<<<<<<<<<<<<<
+ *     for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
  *         w_max = 0.0
  *         d_w_max = 0.0
  */
-  __pyx_t_6 = __pyx_v_maxit;
+  __pyx_t_6 = __pyx_v_max_iter;
   for (__pyx_t_7 = 0; __pyx_t_7 < __pyx_t_6; __pyx_t_7+=1) {
     __pyx_v_n_iter = __pyx_t_7;
 
     /* "/Users/alex/work/src/scikit-learn/scikits/learn/linear_model/cd_fast.pyx":186
  * 
- *     for n_iter in range(maxit):
+ *     for n_iter in range(max_iter):
  *         w_max = 0.0             # <<<<<<<<<<<<<<
  *         d_w_max = 0.0
  *         for ii in xrange(n_features): # Loop over coordinates
@@ -2233,7 +2233,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     __pyx_v_w_max = 0.0;
 
     /* "/Users/alex/work/src/scikit-learn/scikits/learn/linear_model/cd_fast.pyx":187
- *     for n_iter in range(maxit):
+ *     for n_iter in range(max_iter):
  *         w_max = 0.0
  *         d_w_max = 0.0             # <<<<<<<<<<<<<<
  *         for ii in xrange(n_features): # Loop over coordinates
@@ -2419,7 +2419,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
  *             if w[ii] > w_max:
  *                 w_max = w[ii]             # <<<<<<<<<<<<<<
  * 
- *         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:
+ *         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
  */
         __pyx_t_23 = __pyx_v_ii;
         __pyx_v_w_max = (*__Pyx_BufPtrStrided1d(__pyx_t_7scikits_5learn_12linear_model_7cd_fast_DOUBLE *, __pyx_bstruct_w.buf, __pyx_t_23, __pyx_bstride_0_w));
@@ -2432,7 +2432,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     /* "/Users/alex/work/src/scikit-learn/scikits/learn/linear_model/cd_fast.pyx":219
  *                 w_max = w[ii]
  * 
- *         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:             # <<<<<<<<<<<<<<
+ *         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:             # <<<<<<<<<<<<<<
  *             # the biggest coordinate update of this iteration was smaller than
  *             # the tolerance: check the duality gap as ultimate stopping
  */
@@ -2440,7 +2440,7 @@ static PyObject *__pyx_pf_7scikits_5learn_12linear_model_7cd_fast_enet_coordinat
     if (!__pyx_t_12) {
       __pyx_t_24 = ((__pyx_v_d_w_max / __pyx_v_w_max) < __pyx_v_d_w_tol);
       if (!__pyx_t_24) {
-        __pyx_t_25 = (__pyx_v_n_iter == (__pyx_v_maxit - 1));
+        __pyx_t_25 = (__pyx_v_n_iter == (__pyx_v_max_iter - 1));
         __pyx_t_26 = __pyx_t_25;
       } else {
         __pyx_t_26 = __pyx_t_24;
@@ -4837,7 +4837,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s__inf, __pyx_k__inf, sizeof(__pyx_k__inf), 0, 0, 1, 1},
   {&__pyx_n_s__itemsize, __pyx_k__itemsize, sizeof(__pyx_k__itemsize), 0, 0, 1, 1},
   {&__pyx_n_s__linalg, __pyx_k__linalg, sizeof(__pyx_k__linalg), 0, 0, 1, 1},
-  {&__pyx_n_s__maxit, __pyx_k__maxit, sizeof(__pyx_k__maxit), 0, 0, 1, 1},
+  {&__pyx_n_s__max_iter, __pyx_k__max_iter, sizeof(__pyx_k__max_iter), 0, 0, 1, 1},
   {&__pyx_n_s__names, __pyx_k__names, sizeof(__pyx_k__names), 0, 0, 1, 1},
   {&__pyx_n_s__ndim, __pyx_k__ndim, sizeof(__pyx_k__ndim), 0, 0, 1, 1},
   {&__pyx_n_s__norm, __pyx_k__norm, sizeof(__pyx_k__norm), 0, 0, 1, 1},

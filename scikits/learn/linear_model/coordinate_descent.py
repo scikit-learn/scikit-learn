@@ -49,7 +49,7 @@ class ElasticNet(LinearModel):
         self.fit_intercept = fit_intercept
 
     # @profile
-    def fit(self, X, y, precompute='auto', Xy=None, maxit=1000, tol=1e-4,
+    def fit(self, X, y, precompute='auto', Xy=None, max_iter=1000, tol=1e-4,
             coef_init=None, **params):
         """Fit Elastic Net model with coordinate descent
 
@@ -66,7 +66,7 @@ class ElasticNet(LinearModel):
         Xy : array-like, optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomuted.
-        maxit: int, optional
+        max_iter: int, optional
             The maximum number of iterations
         tol: float, optional
             The tolerance for the optimization: if the updates are
@@ -113,13 +113,13 @@ class ElasticNet(LinearModel):
         if Gram is None:
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
-                                                    X, y, maxit, tol)
+                                                    X, y, max_iter, tol)
         else:
             if Xy is None:
                 Xy = np.dot(X.T, y)
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
-                                beta, Gram, Xy, y, maxit, tol)
+                                beta, Gram, Xy, y, max_iter, tol)
 
         self._set_intercept(Xmean, ymean)
 
@@ -362,7 +362,7 @@ class LinearModelCV(LinearModel):
             models_train = self.path(X[train], y[train], **fit_params)
             for i_alpha, model in enumerate(models_train):
                 y_ = model.predict(X[test])
-                mse_alphas[i, i_alpha] = ((y_ - y[test]) ** 2).mean()
+                mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
 
         i_best_alpha = np.argmin(np.mean(mse_alphas, axis=0))
         model = models[i_best_alpha]

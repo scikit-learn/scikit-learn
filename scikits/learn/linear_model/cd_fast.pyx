@@ -40,7 +40,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int maxit, double tol):
+                            int max_iter, double tol):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -76,7 +76,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     tol = tol * linalg.norm(y) ** 2
 
-    for n_iter in range(maxit):
+    for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
         for ii in xrange(n_features): # Loop over coordinates
@@ -113,7 +113,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if w[ii] > w_max:
                 w_max = w[ii]
 
-        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:
+        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
@@ -147,7 +147,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=2] Q,
                             np.ndarray[DOUBLE, ndim=1] q,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int maxit, double tol):
+                            int max_iter, double tol):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -182,7 +182,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
     cdef double y_norm2 = linalg.norm(y) ** 2
     tol = tol * y_norm2
 
-    for n_iter in range(maxit):
+    for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
         for ii in xrange(n_features): # Loop over coordinates
@@ -216,7 +216,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
             if w[ii] > w_max:
                 w_max = w[ii]
 
-        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:
+        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion

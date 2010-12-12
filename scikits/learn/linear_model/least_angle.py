@@ -150,7 +150,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                 L[n_active, :n_active] = Gram[n_active, :n_active]
 
             # Update the cholesky decomposition for the Gram matrix
-            arrayfuncs.solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
+            arrayfuncs.solve_triangular(L[:n_active, :n_active],
+                                        L[n_active, :n_active])
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             L[n_active,  n_active] = np.sqrt(c - v)
 
@@ -259,7 +260,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                                                       n_active, abs(temp))
     if C < alpha_min: # interpolate
         # interpolation factor 0 <= ss < 1
-        ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] - alphas[n_iter])
+        ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
+                                               alphas[n_iter])
         coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] - coefs[n_iter-1])
         alphas[n_iter] = alpha_min
 
