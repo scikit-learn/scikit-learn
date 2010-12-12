@@ -25,11 +25,12 @@ X = diabetes.data
 y = diabetes.target
 
 print "Computing regularization path using the LARS ..."
-_, _, coefs_ = linear_model.lars_path(X, y, method='lasso', verbose=True)
+alphas, _, coefs = linear_model.lars_path(X, y, method='lasso', verbose=True)
 
-xx = np.sum(np.abs(coefs_.T), axis=1)
+xx = np.sum(np.abs(coefs.T), axis=1)
 xx /= xx[-1]
-pl.plot(xx, coefs_.T)
+
+pl.plot(xx, coefs.T)
 ymin, ymax = pl.ylim()
 pl.vlines(xx, ymin, ymax, linestyle='dashed')
 pl.xlabel('|coef| / max|coef|')

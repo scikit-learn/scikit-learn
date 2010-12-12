@@ -34,7 +34,7 @@ import pylab as pl
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.metrics import classification_report
 from scikits.learn.metrics import confusion_matrix
-from scikits.learn.pca import PCA
+from scikits.learn.pca import RandomizedPCA
 from scikits.learn.svm import SVC
 
 ################################################################################
@@ -115,7 +115,7 @@ y_train, y_test = y[:split], y[split:]
 n_components = 150
 
 print "Extracting the top %d eigenfaces" % n_components
-pca = PCA(n_comp=n_components, whiten=True, do_fast_svd=True).fit(X_train)
+pca = RandomizedPCA(n_components=n_components, whiten=True).fit(X_train)
 
 eigenfaces = pca.components_.T.reshape((n_components, 64, 64))
 
@@ -155,7 +155,7 @@ print confusion_matrix(y_test, y_pred, labels=selected_target)
 n_row = 3
 n_col = 4
 
-pl.figure(figsize=(2*n_col, 2.3*n_row))
+pl.figure(figsize=(2 * n_col, 2.3 * n_row))
 pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.95, hspace=.15)
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)

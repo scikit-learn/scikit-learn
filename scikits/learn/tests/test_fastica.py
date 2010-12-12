@@ -121,7 +121,7 @@ def test_non_square_fastica(add_noise=False):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica.fastica(m, n_comp=2)
+    k_, mixing_, s_ = fastica.fastica(m, n_components=2)
 
     # Check that the mixing model described in the docstring holds:
     np.testing.assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))

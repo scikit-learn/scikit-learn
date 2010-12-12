@@ -221,7 +221,7 @@ class BaseLibSVM(BaseEstimator):
                       self.support_, self.label_, self.probA_,
                       self.probB_)
 
-        return pprob[:, np.argsort(self.label_)]
+        return pprob
 
     def predict_log_proba(self, T):
         """
@@ -258,11 +258,9 @@ class BaseLibSVM(BaseEstimator):
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
             Returns the decision function of the sample for each class
-            in the model, where classes are ordered by arithmetical
-            order.
-
+            in the model.
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
@@ -278,7 +276,10 @@ class BaseLibSVM(BaseEstimator):
                       self.support_, self.label_, self.probA_,
                       self.probB_)
 
-        return dec_func
+        # libsvm has the convention of returning negative values for
+        # rightmost labels, so we invert the sign since our label_ is
+        # sorted by increasing order
+        return -dec_func
 
     @property
     def coef_(self):
