@@ -49,7 +49,7 @@ def _sym_decorrelation(W):
     return W
 
 
-def _ica_def(X, tol, g, gprime, fun_args, maxit, w_init):
+def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
     """Deflationary FastICA using fun approx to neg-entropy function
 
     Used internally by FastICA.
@@ -66,7 +66,7 @@ def _ica_def(X, tol, g, gprime, fun_args, maxit, w_init):
         n_iterations = 0
         # we set lim to tol+1 to be sure to enter at least once in next while
         lim = tol + 1
-        while ((lim > tol) & (n_iterations < (maxit-1))):
+        while ((lim > tol) & (n_iterations < (max_iter-1))):
             wtx = np.dot(w.T, X)
             gwtx = g(wtx, fun_args)
             g_wtx = gprime(wtx, fun_args)
@@ -85,7 +85,7 @@ def _ica_def(X, tol, g, gprime, fun_args, maxit, w_init):
     return W
 
 
-def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
+def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
     """Parallel FastICA.
 
     Used internally by FastICA --main loop
@@ -98,7 +98,7 @@ def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
     # we set lim to tol+1 to be sure to enter at least once in next while
     lim = tol + 1
     it = 0
-    while ((lim > tol) and (it < (maxit-1))):
+    while ((lim > tol) and (it < (max_iter-1))):
         wtx = np.dot(W, X)
         gwtx = g(wtx, fun_args)
         g_wtx = gprime(wtx, fun_args)
@@ -115,7 +115,7 @@ def _ica_par(X, tol, g, gprime, fun_args, maxit, w_init):
 
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
-            fun="logcosh", fun_prime='', fun_args={}, maxit=200,
+            fun="logcosh", fun_prime='', fun_args={}, max_iter=200,
             tol=1e-04, w_init=None):
     """Perform Fast Independent Component Analysis.
 
@@ -146,7 +146,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     fun_args : Optional dictionnary
                If empty and if fun='logcosh', fun_args will take value
                {'alpha' : 1.0}
-    maxit : int
+    max_iter : int
             Maximum number of iterations to perform
     tol : float
           A positive scalar giving the tolerance at which the
@@ -262,7 +262,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
               'g': g,
               'gprime': gprime,
               'fun_args': fun_args,
-              'maxit': maxit,
+              'max_iter': max_iter,
               'w_init': w_init}
 
     func = algorithm_funcs.get(algorithm, 'parallel')
@@ -296,7 +296,7 @@ class FastICA(BaseEstimator):
         passed as the 'fun_prime' argument.
     fun_prime: None or a callable
         The derivative of the non-linearity used.
-    maxit : int, optional
+    max_iter : int, optional
         Maximum number of iterations during fit
     tol : float, optional
         Tolerance on update at each iteration
@@ -323,7 +323,7 @@ class FastICA(BaseEstimator):
     """
 
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
-                fun='logcosh', fun_prime='', fun_args={}, maxit=200, tol=1e-4,
+                fun='logcosh', fun_prime='', fun_args={}, max_iter=200, tol=1e-4,
                 w_init=None):
         super(FastICA, self).__init__()
         self.n_components = n_components
@@ -332,7 +332,7 @@ class FastICA(BaseEstimator):
         self.fun = fun
         self.fun_prime = fun_prime
         self.fun_args = fun_args
-        self.maxit = maxit
+        self.max_iter = max_iter
         self.tol = tol
         self.w_init = w_init
 
@@ -340,7 +340,7 @@ class FastICA(BaseEstimator):
         self._set_params(**params)
         whitening_, unmixing_, sources_ = fastica(X, self.n_components,
                         self.algorithm, self.whiten,
-                        self.fun, self.fun_prime, self.fun_args, self.maxit,
+                        self.fun, self.fun_prime, self.fun_args, self.max_iter,
                         self.tol, self.w_init)
         self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
         return self

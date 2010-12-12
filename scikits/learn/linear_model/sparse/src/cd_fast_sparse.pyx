@@ -38,7 +38,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[INTEGER, ndim=1] X_indices,
                             np.ndarray[INTEGER, ndim=1] X_indptr,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int maxit, double tol):
+                            int max_iter, double tol):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -82,7 +82,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     tol = tol * linalg.norm(y) ** 2
 
-    for n_iter in range(maxit):
+    for n_iter in range(max_iter):
 
         w_max = 0.0
         d_w_max = 0.0
@@ -119,7 +119,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if w[ii] > w_max:
                 w_max = w[ii]
 
-        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == maxit - 1:
+        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion

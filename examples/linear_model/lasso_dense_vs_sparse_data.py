@@ -33,11 +33,11 @@ sparse_lasso = SparseLasso(alpha=alpha, fit_intercept=False)
 dense_lasso = DenseLasso(alpha=alpha, fit_intercept=False)
 
 t0 = time()
-sparse_lasso.fit(X, y, maxit=1000)
+sparse_lasso.fit(X, y, max_iter=1000)
 print "Sparse Lasso done in %fs" % (time() - t0)
 
 t0 = time()
-dense_lasso.fit(X, y, maxit=1000)
+dense_lasso.fit(X, y, max_iter=1000)
 print "Dense Lasso done in %fs" % (time() - t0)
 
 print "Distance between coefficients : %s" % linalg.norm(sparse_lasso.coef_
@@ -59,11 +59,11 @@ sparse_lasso = SparseLasso(alpha=alpha, fit_intercept=False)
 dense_lasso = DenseLasso(alpha=alpha, fit_intercept=False)
 
 t0 = time()
-sparse_lasso.fit(Xs, y, maxit=1000)
+sparse_lasso.fit(Xs, y, max_iter=1000)
 print "Sparse Lasso done in %fs" % (time() - t0)
 
 t0 = time()
-dense_lasso.fit(Xs.todense(), y, maxit=1000)
+dense_lasso.fit(Xs.todense(), y, max_iter=1000)
 print "Dense Lasso done in %fs" % (time() - t0)
 
 print "Distance between coefficients : %s" % linalg.norm(sparse_lasso.coef_
