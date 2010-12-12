@@ -24,7 +24,7 @@ y = diabetes.target
 # normalize data as done by LARS to allow for comparison
 X /= np.sqrt(np.sum(X ** 2, axis=0))
 
-################################################################################
+##############################################################################
 # Compute paths
 
 eps = 1e-3 # the smaller it is the longer is the path
@@ -32,7 +32,7 @@ eps = 1e-3 # the smaller it is the longer is the path
 print "Computing regularization path using the lasso..."
 model = LassoCV(eps=eps).fit(X, y)
 
-################################################################################
+##############################################################################
 # Display results
 m_log_alphas = -np.log10(model.alphas)
 m_log_alpha = -np.log10(model.alpha)
@@ -62,4 +62,3 @@ pl.axis('tight')
 pl.ylim(ymin, ymax)
 
 pl.show()
-
