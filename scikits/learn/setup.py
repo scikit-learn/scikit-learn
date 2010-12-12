@@ -3,6 +3,7 @@ import warnings
 import numpy
 import sys
 
+
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, BlasNotFoundError
@@ -26,14 +27,15 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('externals')
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
+    config.add_subpackage('metrics')
+    config.add_subpackage('metrics/tests')
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (
-        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])) :
+        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
         config.add_library('cblas',
-                           sources=[join('src', 'cblas', '*.c')]
-                           )
+                           sources=[join('src', 'cblas', '*.c')])
         cblas_libs = ['cblas']
         blas_info.pop('libraries', None)
         warnings.warn(BlasNotFoundError.__doc__)
@@ -43,8 +45,7 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('ball_tree',
                          sources=[join('src', 'BallTree.cpp')],
-                         include_dirs=[numpy.get_include()]
-                         )
+                         include_dirs=[numpy.get_include()])
 
 
     # the following packages depend on cblas, so they have to be build

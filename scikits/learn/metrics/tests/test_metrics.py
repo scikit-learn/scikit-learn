@@ -7,8 +7,8 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal, assert_almost_equal
 
-from .. import datasets
-from .. import svm
+from ... import datasets
+from ... import svm
 from ..metrics import auc
 from ..metrics import classification_report
 from ..metrics import confusion_matrix
