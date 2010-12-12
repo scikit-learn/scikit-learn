@@ -4,6 +4,7 @@ Testing for grid search module (scikits.learn.grid_search)
 """
 from nose.tools import assert_equal
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_almost_equal
 
 import numpy as np
 import scipy.sparse as sp
@@ -71,20 +72,23 @@ def test_grid_search_sparse():
 def test_grid_search_sparse_score_func():
     X_, y_ = test_dataset_classif(n_samples=200, n_features=100, seed=0)
 
-    clf = LinearSVC()
+    clf = LinearSVC(eps=0.00001)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    cv.fit(X_[:180], y_[:180])
+    cv.fit(X_[:180], y_[:180], refit=True)
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator.C
+    coef = cv.best_estimator.coef_
 
     X_ = sp.csr_matrix(X_)
-    clf = SparseLinearSVC()
+    clf = SparseLinearSVC(eps=0.00001)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    cv.fit(X_[:180], y_[:180])
+    cv.fit(X_[:180], y_[:180], refit=True)
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator.C
+    coef2 = cv.best_estimator.coef_
 
-    assert_array_equal(y_pred, y_pred2)
     assert_equal(C, C2)
+    assert_almost_equal(coef, coef2, decimal=4)
+    assert_array_equal(y_pred, y_pred2)
 
 
