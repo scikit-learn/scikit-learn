@@ -114,4 +114,3 @@ if __name__ == '__main__':
         #ax.legend()
         i += 1
     plt.show()
-
