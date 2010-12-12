@@ -72,14 +72,6 @@ class LinearModel(BaseEstimator, RegressorMixin):
         else:
             self.intercept_ = 0
 
-    def __str__(self):
-        if self.coef_ is not None:
-            return ("%s \n%s #... Fitted: explained variance=%s" %
-                    (repr(self), ' '*len(self.__class__.__name__),
-                     self.explained_variance_))
-        else:
-            return "%s \n#... Not fitted to data" % repr(self)
-
 
 class LinearRegression(LinearModel):
     """
