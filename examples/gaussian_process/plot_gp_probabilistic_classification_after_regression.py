@@ -14,6 +14,7 @@ respect to the remaining uncertainty in the prediction. The red and blue lines
 corresponds to the 95% confidence interval on the prediction of the zero level
 set.
 """
+print __doc__
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
@@ -24,9 +25,6 @@ from scikits.learn.gaussian_process import GaussianProcess
 from matplotlib import pyplot as pl
 from matplotlib import cm
 
-# Print the docstring
-print __doc__
-
 # Standard normal distribution functions
 phi = stats.distributions.norm().pdf
 PHI = stats.distributions.norm().cdf
@@ -34,12 +32,12 @@ PHIinv = stats.distributions.norm().ppf
 
 # A few constants
 lim = 8
-b, kappa, e = 5, .5, .1
 
-# The function to predict
-# (classification will then consist in predicting wheter g(x) <= 0 or not)
+
 def g(x):
-    return b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
+    """The function to predict (classification will then consist in predicting
+    whether g(x) <= 0 or not)"""
+    return 5. - x[:, 1] - .5 * x[:, 0] ** 2.
 
 # Design of experiments
 X = np.array([[-4.61611719, -6.00099547],
