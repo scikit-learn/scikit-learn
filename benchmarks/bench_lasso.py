@@ -23,7 +23,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
     lasso_results = []
     larslasso_results = []
 
-    n_test_samples = 1000
+    n_test_samples = 0
     it = 0
 
     for ns in n_samples:
@@ -34,7 +34,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
                                           len(n_features)))
             print '=================='
             n_informative = nf // 10
-            X, Y, X_test, Y_test, coef = make_regression_dataset(
+            X, Y, _, _, coef = make_regression_dataset(
                 n_train_samples=ns, n_test_samples=n_test_samples,
                 n_features=nf, noise=0.1, n_informative = n_informative)
 

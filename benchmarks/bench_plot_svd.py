@@ -50,7 +50,6 @@ def compute_bench(samples_range, features_range, q=3, rank=50):
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(2, 1000, 4).astype(np.int)
@@ -75,4 +74,3 @@ if __name__ == '__main__':
     ax.set_zlabel('time (s)')
     ax.legend()
     plt.show()
-

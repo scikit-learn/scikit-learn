@@ -30,16 +30,16 @@ def compare_nbrs(nbrs1, nbrs2):
         return numpy.all(nbrs1 == nbrs2)
 
 
-def test_time(n_samples=1000, n_features=100, ls=1, k=20):
+def test_time(n_samples=1000, n_features=100, leaf_size=1, k=20):
     X = numpy.random.random([n_samples, n_features])
 
     print "---------------------------------------------------"
     print "%i neighbors of %i points in %i dimensions:" % (k, n_samples, n_features)
-    print "   (leaf size = %i)" % ls
+    print "   (leaf size = %i)" % leaf_size
     print "  -------------"
 
     t0 = time()
-    BT = BallTree(X, ls)
+    BT = BallTree(X, leaf_size)
     print "  Ball Tree construction     : %.3g sec" % (time() - t0)
     d, nbrs1 = BT.query(X, k)
     print "  total (construction+query) : %.3g sec" % (time() - t0)
@@ -47,7 +47,7 @@ def test_time(n_samples=1000, n_features=100, ls=1, k=20):
 
 
     t0 = time()
-    KDT = cKDTree(X, ls)
+    KDT = cKDTree(X, leaf_size)
     print "  KD tree construction       : %.3g sec" % (time() - t0)
     d, nbrs2 = KDT.query(X, k)
     print "  total (construction+query) : %.3g sec" % (time() - t0)
@@ -60,18 +60,19 @@ def test_time(n_samples=1000, n_features=100, ls=1, k=20):
 if __name__ == '__main__':
     if len(sys.argv) == 3:
         n_samples, n_features = map(int, sys.argv[1:])
-        ls = 20
+        leaf_size = 20
         k = min(20, n_samples)
 
     elif len(sys.argv) == 4:
-        n_samples, n_features, ls = map(int, sys.argv[1:])
+        n_samples, n_features, leaf_size = map(int, sys.argv[1:])
         k = min(20, n_samples)
 
     elif len(sys.argv) == 5:
-        n_samples, n_features, ls, k = map(int, sys.argv[1:])
+        n_samples, n_features, leaf_size, k = map(int, sys.argv[1:])
 
     else:
-        print "usage: bench_balltree.py n_samples n_features [leafsize=20], [k=20]"
+        print "usage: bench_balltree.py n_samples n_features " + \
+              "[leafsize=20], [k=20]"
         exit()
 
-    test_time(n_samples, n_features, ls, k)
+    test_time(n_samples, n_features, leaf_size, k)
