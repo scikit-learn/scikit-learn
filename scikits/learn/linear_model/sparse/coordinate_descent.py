@@ -87,10 +87,6 @@ class ElasticNet(LinearModel):
             warnings.warn('Objective did not converge, you might want'
                                 'to increase the number of interations')
 
-
-        # Store explained variance for __str__
-        # TODO: implement me!
-        #self.explained_variance_ = 0
         # TODO: implement intercept_ fitting
 
         # return self for chaining fit and predict calls
