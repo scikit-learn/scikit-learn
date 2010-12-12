@@ -233,8 +233,8 @@ def low_rank_fat_tail(n_samples=100, n_features=100, effective_rank=10,
     n = min(n_samples, n_features)
 
     # random (ortho normal) vectors
-    u = linalg.qr(random.randn(n_samples, n))[0][:, :n]
-    v = linalg.qr(random.randn(n_features, n))[0][:, :n].T
+    u = linalg.qr(random.randn(n_samples, n), econ=True)[0]
+    v = linalg.qr(random.randn(n_features, n), econ=True)[0].T
 
     # index of the singular values
     i = np.arange(n, dtype=np.float64)
