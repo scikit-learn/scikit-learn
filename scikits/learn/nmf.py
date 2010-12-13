@@ -206,11 +206,11 @@ class NMF(BaseEstimator):
 
     max_iter: int
         Number of iterations to compute.
-        Default: 50
+        Default: 100
 
     nls_max_iter: int
         Number of iterations in NLS subproblem
-        Default: 1000
+        Default: 2000
 
     Attributes
     ----------
@@ -254,7 +254,7 @@ class NMF(BaseEstimator):
     """
 
     def __init__(self, n_comp=None, initial="fast_svd",
-                tolerance=0.001, max_iter=50, nls_max_iter=1000):
+                tolerance=0.001, max_iter=100, nls_max_iter=2000):
         self.n_comp = n_comp
         self.initial = initial
         self.tolerance = tolerance
