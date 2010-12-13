@@ -68,12 +68,12 @@ After being fitted, the model can then be used to predict new values::
     array([ 1.])
 
 SGD fits a linear model to the training data. The member `coef_` holds
-the model parameters:
+the model parameters::
 
     >>> clf.coef_
     array([ 9.90090187,  9.90090187])
 
-Member `intercept_` holds the intercept (aka offset or bias):
+Member `intercept_` holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_
     array(-9.9900299301496904)
@@ -81,7 +81,7 @@ Member `intercept_` holds the intercept (aka offset or bias):
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter `fit_intercept`.
 
-To get the signed distance to the hyperplane use `decision_function`:
+To get the signed distance to the hyperplane use `decision_function`::
 
     >>> clf.decision_function([[2., 2.]])
     array([ 29.61357756])
@@ -100,10 +100,11 @@ probability estimates.
 
 In the case of binary classification and `loss="log"` you get a
 probability estimate P(y=C|x) using `predict_proba`, where `C` is the
-largest class label:
+largest class label::
 
-    >>> clf = SGDClassifier(loss="log").fit(X, y) >>>
-    clf.predict_proba([[1., 1.]])  array([ 0.99999949])
+    >>> clf = SGDClassifier(loss="log").fit(X, y)
+    >>> clf.predict_proba([[1., 1.]])
+    array([ 0.99999949])
 
 The concrete penalty can be set via the `penalty` parameter. `SGD`
 supports the following penalties:
