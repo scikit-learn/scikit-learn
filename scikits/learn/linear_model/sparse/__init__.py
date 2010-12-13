@@ -9,3 +9,4 @@ of scikits.learn.glm
 
 from .coordinate_descent import Lasso, ElasticNet
 from .logistic import LogisticRegression
+from .stochastic_gradient import SGDClassifier, SGDRegressor

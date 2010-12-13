@@ -7,9 +7,11 @@
 
 import numpy as np
 from scipy import linalg, optimize, rand
-from ..base import BaseEstimator
+from ..base import BaseEstimator, RegressorMixin
 from . import regression_models as regression
 from . import correlation_models as correlation
+from ..cross_val import LeaveOneOut
+from ..externals.joblib import Parallel, delayed
 MACHINE_EPSILON = np.finfo(np.double).eps
 if hasattr(linalg, 'solve_triangular'):
     # only in scipy since 0.9
@@ -20,7 +22,79 @@ else:
         return linalg.solve(x, y)
 
 
-class GaussianProcess(BaseEstimator):
+def compute_componentwise_l1_cross_distances(X):
+    """
+    Computes the nonzero componentwise L1 cross-distances between the vectors
+    in X.
+
+    Parameters
+    ----------
+
+    X: array_like
+        An array with shape (n_samples, n_features)
+
+    Returns
+    -------
+
+    D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
+        The array of componentwise L1 cross-distances.
+
+    ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
+        The indices i and j of the vectors in X associated to the cross-
+        distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
+    """
+    X = np.atleast_2d(X)
+    n_samples, n_features = X.shape
+    n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
+    ij = np.zeros([n_nonzero_cross_dist, 2])
+    D = np.zeros([n_nonzero_cross_dist, n_features])
+    ll = np.array([-1])
+    for k in range(n_samples - 1):
+        ll = ll[-1] + 1 + range(n_samples - k - 1)
+        ij[ll] = np.concatenate([[np.repeat(k, n_samples - k - 1, 0)],
+                                 [np.array(range(k + 1, n_samples)).T]]).T
+        D[ll] = np.abs(X[k] - X[(k + 1):n_samples])
+
+    return D, ij.astype(np.int)
+
+
+def compute_componentwise_l1_pairwise_distances(X, Y):
+    """
+    Computes the componentwise L1 pairwise-distances between the vectors
+    in X and Y.
+
+    Parameters
+    ----------
+
+    X: array_like
+        An array with shape (n_samples_X, n_features)
+
+    Y: array_like, optional
+        An array with shape (n_samples_Y, n_features).
+
+    Returns
+    -------
+
+    D: array with shape (n_samples_X * n_samples_Y, n_features)
+        The array of componentwise L1 pairwise-distances.
+    """
+    X, Y = np.atleast_2d(X), np.atleast_2d(Y)
+    n_samples_X, n_features_X = X.shape
+    n_samples_Y, n_features_Y = Y.shape
+    if n_features_X != n_features_Y:
+        raise Exception("X and Y should have the same number of features!")
+    else:
+        n_features = n_features_X
+    D = np.zeros([n_samples_X * n_samples_Y, n_features])
+    kk = np.arange(n_samples_Y).astype(np.int)
+    for k in range(n_samples_X):
+        D[kk] = X[k] - Y
+        kk = kk + n_samples_Y
+
+    return D
+
+
+class GaussianProcess(BaseEstimator, RegressorMixin):
     """
     The Gaussian Process model class.
 
@@ -85,7 +159,7 @@ class GaussianProcess(BaseEstimator):
         it uses theta0.
 
     normalize : boolean, optional
-        Design sites X and observations y are centered and reduced wrt
+        Input X and observations y are centered and reduced wrt
         means and standard deviations estimated from the n_samples
         observations provided.
         Default is normalize = True so that data is normalized to ease
@@ -187,8 +261,8 @@ class GaussianProcess(BaseEstimator):
         Parameters
         ----------
         X : double array_like
-            An array with shape (n_samples, n_features) with the design sites
-            at which observations were made.
+            An array with shape (n_samples, n_features) with the input at which
+            observations were made.
 
         y : double array_like
             An array with shape (n_features, ) with the observations of the
@@ -206,7 +280,7 @@ class GaussianProcess(BaseEstimator):
 
         # Force data to 2D numpy.array
         X = np.atleast_2d(X)
-        y = np.asanyarray(y)[:, np.newaxis]
+        y = np.asanyarray(y).ravel()[:, np.newaxis]
 
         # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape
@@ -219,32 +293,24 @@ class GaussianProcess(BaseEstimator):
 
         # Normalize data or don't
         if self.normalize:
-            mean_X = np.mean(X, axis=0)
-            std_X = np.std(X, axis=0)
-            mean_y = np.mean(y, axis=0)
-            std_y = np.std(y, axis=0)
-            std_X[std_X == 0.] = 1.
-            std_y[std_y == 0.] = 1.
+            X_mean = np.mean(X, axis=0)
+            X_std = np.std(X, axis=0)
+            y_mean = np.mean(y, axis=0)
+            y_std = np.std(y, axis=0)
+            X_std[X_std == 0.] = 1.
+            y_std[y_std == 0.] = 1.
+            # center and scale X if necessary
+            X = (X - X_mean) / X_std
+            y = (y - y_mean) / y_std
         else:
-            mean_X = np.array([0.])
-            std_X = np.array([1.])
-            mean_y = np.array([0.])
-            std_y = np.array([1.])
-
-        X = (X - mean_X) / std_X
-        y = (y - mean_y) / std_y
+            X_mean = np.zeros(1)
+            X_std = np.ones(1)
+            y_mean = np.zeros(1)
+            y_std = np.ones(1)
 
         # Calculate matrix of distances D between samples
-        mzmax = n_samples * (n_samples - 1) / 2
-        ij = np.zeros([mzmax, 2])
-        D = np.zeros([mzmax, n_features])
-        ll = np.array([-1])
-        for k in range(n_samples-1):
-            ll = ll[-1] + 1 + range(n_samples - k - 1)
-            ij[ll] = np.concatenate([[np.repeat(k, n_samples - k - 1, 0)],
-                                     [np.arange(k + 1, n_samples).T]]).T
-            D[ll] = X[k] - X[(k + 1):n_samples]
-        if np.min(np.sum(np.abs(D), 1)) == 0. \
+        D, ij = compute_componentwise_l1_cross_distances(X)
+        if np.min(np.sum(np.abs(D), axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
             raise Exception("Multiple X are not allowed")
 
@@ -273,8 +339,8 @@ class GaussianProcess(BaseEstimator):
         self.D = D
         self.ij = ij
         self.F = F
-        self.X_sc = np.concatenate([[mean_X], [std_X]])
-        self.y_sc = np.concatenate([[mean_y], [std_y]])
+        self.X_mean, self.X_std = X_mean, X_std
+        self.y_mean, self.y_std = y_mean, y_std
 
         # Determine Gaussian Process model parameters
         if self.thetaL is not None and self.thetaU is not None:
@@ -356,7 +422,7 @@ class GaussianProcess(BaseEstimator):
         # Run input checks
         self._check_params()
 
-        # Check design & trial sites
+        # Check input shapes
         X = np.atleast_2d(X)
         n_eval, n_features_X = X.shape
         n_samples, n_features = self.X.shape
@@ -370,31 +436,26 @@ class GaussianProcess(BaseEstimator):
             # No memory management
             # (evaluates all given points in a single batch run)
 
-            # Normalize trial sites
-            X = (X - self.X_sc[0][:]) / self.X_sc[1][:]
+            # Normalize input
+            X = (X - self.X_mean) / self.X_std
 
             # Initialize output
             y = np.zeros(n_eval)
             if eval_MSE:
                 MSE = np.zeros(n_eval)
 
-            # Get distances to design sites
-            dx = np.zeros([n_eval * n_samples, n_features])
-            kk = np.arange(n_samples).astype(int)
-            for k in range(n_eval):
-                dx[kk] = X[k] - self.X
-                kk = kk + n_samples
+            # Get pairwise componentwise L1-distances to the input training set
+            dx = compute_componentwise_l1_pairwise_distances(X, self.X)
 
             # Get regression function and correlation
             f = self.regr(X)
             r = self.corr(self.theta, dx).reshape(n_eval, n_samples)
 
             # Scaled predictor
-            y_ = np.dot(f, self.beta) \
-               + np.dot(r, self.gamma)
+            y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
-            y = (self.y_sc[0] + self.y_sc[1] * y_).ravel()
+            y = (self.y_mean + self.y_std * y_).ravel()
 
             # Mean Squared Error
             if eval_MSE:
@@ -412,7 +473,7 @@ class GaussianProcess(BaseEstimator):
                     self.G = par['G']
 
                 rt = solve_triangular(C, r.T, lower=True)
-                
+
                 if self.beta0 is None:
                     # Universal Kriging
                     u = solve_triangular(self.G.T,
@@ -518,21 +579,8 @@ class GaussianProcess(BaseEstimator):
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            if self.X.ndim > 1:
-                n_features = self.X.shape[1]
-            else:
-                n_features = 1
-            mzmax = n_samples * (n_samples - 1) / 2
-            ij = np.zeros([mzmax, n_features])
-            D = np.zeros([mzmax, n_features])
-            ll = np.array([-1])
-            for k in range(n_samples-1):
-                ll = ll[-1] + 1 + range(n_samples - k - 1)
-                ij[ll] = \
-                    np.concatenate([[np.repeat(k, n_samples - k - 1, 0)],
-                                    [np.arange(k + 1, n_samples).T]]).T
-                D[ll] = self.X[k] - self.X[(k + 1):n_samples]
-            if min(sum(abs(D), 1)) == 0. \
+            D, ij = compute_componentwise_l1_cross_distances(X)
+            if np.min(np.sum(np.abs(D), axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
                 raise Exception("Multiple X are not allowed")
             F = self.regr(self.X)
@@ -540,8 +588,8 @@ class GaussianProcess(BaseEstimator):
         # Set up R
         r = self.corr(theta, D)
         R = np.eye(n_samples) * (1. + self.nugget)
-        R[ij.astype(int)[:, 0], ij.astype(int)[:, 1]] = r
-        R[ij.astype(int)[:, 1], ij.astype(int)[:, 0]] = r
+        R[ij[:, 0], ij[:, 1]] = r
+        R[ij[:, 1], ij[:, 0]] = r
 
         # Cholesky decomposition of R
         try:
@@ -590,7 +638,7 @@ class GaussianProcess(BaseEstimator):
 
         # Compute/Organize output
         reduced_likelihood_function_value = - sigma2.sum() * detR
-        par['sigma2'] = sigma2 * self.y_sc[1] ** 2.
+        par['sigma2'] = sigma2 * self.y_std ** 2.
         par['beta'] = beta
         par['gamma'] = solve_triangular(C.T, rho)
         par['C'] = C
@@ -641,8 +689,9 @@ class GaussianProcess(BaseEstimator):
 
         if self.optimizer == 'fmin_cobyla':
 
-            minus_reduced_likelihood_function = lambda log10t: \
-                - self.reduced_likelihood_function(theta=10. ** log10t)[0]
+            def minus_reduced_likelihood_function(log10t):
+                return - self.reduced_likelihood_function(theta=10.
+                                                                  ** log10t)[0]
 
             constraints = []
             for i in range(self.theta0.size):
@@ -687,7 +736,7 @@ class GaussianProcess(BaseEstimator):
                 if self.verbose and self.random_start > 1:
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
-                        print str(5 * percent_completed) + "% completed"
+                        print "%s completed" % (5 * percent_completed)
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
@@ -723,11 +772,14 @@ class GaussianProcess(BaseEstimator):
                 self.theta0 = np.atleast_2d(theta_iso)
                 self.thetaL = np.atleast_2d(thetaL[0, i])
                 self.thetaU = np.atleast_2d(thetaU[0, i])
-                self.corr = lambda t, d: \
-                    corr(np.atleast_2d(np.hstack([
+
+                def corr_cut(t, d):
+                    return corr(np.atleast_2d(np.hstack([
                          optimal_theta[0][0:i],
                          t[0],
                          optimal_theta[0][(i + 1)::]])), d)
+
+                self.corr = corr_cut
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
                     self.arg_max_reduced_likelihood_function()
 
@@ -744,28 +796,6 @@ class GaussianProcess(BaseEstimator):
                                     % self.optimizer)
 
         return optimal_theta, optimal_rlf_value, optimal_par
-
-    def score(self, X_test, y_test):
-        """
-        This score function returns the mean deviation of the Gaussian Process
-        model evaluated onto a test dataset.
-
-        Parameters
-        ----------
-        X_test : array_like
-            The feature test dataset with shape (n_tests, n_features).
-
-        y_test : array_like
-            The target test dataset (n_tests, ).
-
-        Returns
-        -------
-        score_value : array_like
-            The mean of the deviations between the prediction and the targets:
-            mean(y_pred - y_test).
-        """
-
-        return (self.predict(X_test, eval_MSE=False) - y_test).mean()
 
     def _check_params(self):
 

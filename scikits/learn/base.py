@@ -10,7 +10,7 @@ import copy
 
 import numpy as np
 
-from .metrics import explained_variance_score
+from .metrics import r2_score
 
 ################################################################################
 def clone(estimator, safe=True):
@@ -83,6 +83,8 @@ def _pprint(params, offset=0, printer=repr):
         else:
             # use repr of the rest
             this_repr  = '%s=%s' % (k, printer(v))
+        if len(this_repr) > 500:
+            this_repr = this_repr[:300] + '...' + this_repr[-100:]
         if i > 0:
             if (this_line_length + len(this_repr) >= 75
                                         or '\n' in this_repr):
@@ -234,7 +236,7 @@ class RegressorMixin(object):
     """
 
     def score(self, X, y):
-        """ Returns the explained variance of the prediction
+        """ Returns the coefficient of determination of the prediction
 
             Parameters
             ----------
@@ -247,7 +249,7 @@ class RegressorMixin(object):
             -------
             z : float
         """
-        return explained_variance_score(y, self.predict(X))
+        return r2_score(y, self.predict(X))
 
 
 ################################################################################

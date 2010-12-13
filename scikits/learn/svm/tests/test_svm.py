@@ -20,6 +20,9 @@ true_result = [1, 2, 2]
 
 # also load the iris dataset
 iris = datasets.load_iris()
+perm = np.random.permutation(iris.target.size)
+iris.data = iris.data[perm]
+iris.target = iris.target[perm]
 
 def test_libsvm_parameters():
     """
@@ -38,9 +41,14 @@ def test_libsvm_iris():
     """
     Check consistency on dataset iris.
     """
+
+    # shuffle the dataset so that labels are not ordered
+
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
+
+    assert_array_equal(clf.label_, np.sort(clf.label_))
 
 
 def test_precomputed():
@@ -197,37 +205,49 @@ def test_probability():
                  [ 0.740, 0.223  , 0.035]],
                  decimal=2)
 
+    assert_almost_equal(clf.predict_proba(T),
+                        np.exp(clf.predict_log_proba(T)), 8)
+
     # make sure probabilities sum to one
     pprob = clf.predict_proba(X)
     assert_array_almost_equal(pprob.sum(axis=1),
                                np.ones(len(X)))
 
 
-# def test_margin():
-#     """
-#     Test decision_function
+def test_decision_function():
+    """
+    Test decision_function
 
-#     We create a set of points lying in two lines, so that margin is easily
-#     calculated in a linear kernel.
+    Sanity check, test that decision_function implemented in python
+    returns the same as the one in libsvm
 
-#     TODO: distance should be sqrt(2)/2, but libsvm returns 1.
-#     """
-#     X = [(i, i) for i in range(-4, 6)]
-#     X += [(i, i+2) for i in range(-4, 6)]
-#     Y = [0]*10 + [1]*10
-#     T = [[1]]*10 + [[-1]]*10
-#     clf = svm.SVC(kernel='linear').fit(X, Y)
-#     assert_array_almost_equal(clf.decision_function(X), T)
+    TODO: proabably could be simplified
+    """
+    clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
 
-#     # the same using a callable kernel
-#     kfunc = lambda x, y: np.dot(x, y.T)
-#     clf = svm.SVC(kernel=kfunc).fit(X, Y)
-#     assert_array_almost_equal(clf.decision_function(X), T)
+    data = iris.data[0]
 
-#     # failing test
-#     # assert_array_almost_equal (clf.decision_function(iris.data),
-#     #                            np.dot(clf.coef_.T, iris.data) + \
-#     #                            clf.intercept_)
+    sv_start = np.r_[0, np.cumsum(clf.n_support_)]
+    n_features = iris.data.shape[1]
+    n_class = 3
+
+    kvalue = np.dot(data, clf.support_vectors_.T)
+
+    dec = np.empty(n_class * (n_class - 1) / 2)
+    p = 0
+    for i in range(n_class):
+        for j in range(i+1, n_class):
+            coef1 = clf.dual_coef_[j-1]
+            coef2 = clf.dual_coef_[i]
+            idx1 = slice(sv_start[i], sv_start[i+1])
+            idx2 = slice(sv_start[j], sv_start[j+1])
+            s = np.dot(coef1[idx1],  kvalue[idx1]) + \
+                np.dot(coef2[idx2], kvalue[idx2]) + \
+                clf.intercept_[p]
+            dec[p] = s
+            p += 1
+
+    assert_array_almost_equal(-dec, np.ravel(clf.decision_function(data)))
 
 
 def test_weight():
@@ -246,6 +266,19 @@ def test_weight():
         clf.fit(X_[:180], y_[:180], class_weight={0:5})
         y_pred = clf.predict(X_[180:])
         assert np.sum(y_pred == y_[180:]) >= 11
+
+
+def test_sample_weights():
+    """
+    Test weights on individual samples
+    """
+    clf = svm.SVC()
+    clf.fit(X, Y)
+    assert_array_equal(clf.predict(X[2]), [1.])
+
+    sample_weight=[.1]*3 + [10]*3
+    clf.fit(X, Y, sample_weight=sample_weight)
+    assert_array_equal(clf.predict(X[2]), [2.])
 
 
 def test_auto_weight():

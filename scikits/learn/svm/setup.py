@@ -1,6 +1,12 @@
 from os.path import join
+import sys
 import numpy
-from ConfigParser import ConfigParser
+
+if sys.version_info[0] < 3:
+    from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
+
 import warnings
 
 def configuration(parent_package='', top_path=None):
@@ -18,16 +24,20 @@ def configuration(parent_package='', top_path=None):
     config.add_library('libsvm-skl',
                        sources=[join('src', 'libsvm', 'libsvm_template.cpp')],
                        depends=[join('src', 'libsvm', 'svm.cpp'),
-                                join('src', 'libsvm', 'svm.h')]
+                                join('src', 'libsvm', 'svm.h')],
                        )
+
     libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
-    libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c')]
+    libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c'),
+                      join('src', 'libsvm', 'libsvm_template.cpp'),
+                      join('src', 'libsvm', 'svm.cpp'),
+                      join('src', 'libsvm', 'svm.h')]
 
     config.add_extension('_libsvm',
                          sources=libsvm_sources,
                          include_dirs=[numpy.get_include()],
                          libraries=['libsvm-skl'],
-                         depends=libsvm_depends
+                         depends=libsvm_depends,
                          )
 
     ### liblinear module

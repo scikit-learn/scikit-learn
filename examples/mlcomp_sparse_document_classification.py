@@ -46,7 +46,7 @@ import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
-from scikits.learn.sgd.sparse import ClassifierSGD
+from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
 
@@ -81,7 +81,7 @@ parameters = {
 }
 print "parameters:", parameters
 t0 = time()
-clf = ClassifierSGD(**parameters).fit(X_train, y_train)
+clf = SGDClassifier(**parameters).fit(X_train, y_train)
 print "done in %fs" % (time() - t0)
 print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
 

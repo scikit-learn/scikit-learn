@@ -47,8 +47,9 @@ Windows installer
 -----------------
 
 You can download a windows installer from `downloads
-<https://sourceforge.net/projects/scikit-learn/files/>`_
-in the project's web page.
+<https://sourceforge.net/projects/scikit-learn/files/>`_ in the
+project's web page. Note that must also have installed the packages
+numpy and setuptools.
 
 .. warning::
 

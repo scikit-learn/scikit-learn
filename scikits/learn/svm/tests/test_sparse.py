@@ -131,6 +131,19 @@ def test_weight():
         y_pred = clf.predict(X_[180:])
         assert np.sum(y_pred == y_[180:]) >= 11
 
+def test_sample_weights():
+    """
+    Test weights on individual samples
+    """
+    clf = svm.sparse.SVC()
+    clf.fit(X, Y)
+    assert_array_equal(clf.predict(X[2]), [1.])
+
+    sample_weight=[.1]*3 + [10]*3
+    clf.fit(X, Y, sample_weight=sample_weight)
+    assert_array_equal(clf.predict(X[2]), [2.])
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

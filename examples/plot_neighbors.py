@@ -18,7 +18,7 @@ X = iris.data[:, :2] # we only take the first two features. We could
                      # avoid this ugly slicing by using a two-dim dataset
 Y = iris.target
 
-h=.02 # step size in the mesh
+h = .02 # step size in the mesh
 
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
@@ -27,8 +27,8 @@ clf.fit(X, Y)
 
 # Plot the decision boundary. For that, we will asign a color to each
 # point in the mesh [x_min, m_max]x[y_min, y_max].
-x_min, x_max = X[:,0].min()-1, X[:,0].max()+1
-y_min, y_max = X[:,1].min()-1, X[:,1].max()+1
+x_min, x_max = X[:,0].min()-1, X[:,0].max() + 1
+y_min, y_max = X[:,1].min()-1, X[:,1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 

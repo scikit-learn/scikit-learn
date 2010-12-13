@@ -4,9 +4,7 @@ from .base import BaseLibSVM
 
 
 class SVC(BaseLibSVM, ClassifierMixin):
-    """
-    C-Support Vector Classification.
-
+    """C-Support Vector Classification.
 
     Parameters
     ----------
@@ -56,8 +54,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_class-1, n_SV]
-        Coefficients of support vectors in decision function
-        multiplied by the class indicator {-1, +1}.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -95,9 +92,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
-    """
-    Nu-Support Vector Classification.
-
+    """Nu-Support Vector Classification.
 
     Parameters
     ----------
@@ -149,8 +144,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of support vectors in decision function
-        multiplied by the class indicator {-1, +1}.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -170,6 +164,9 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     predict_proba(X) : array
         Return probability estimates.
+
+    predict_log_proba(X) : array
+        Return log-probability estimates.
 
     decision_function(X) : array
         Return distance to predicted margin.
@@ -202,9 +199,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
 
 class SVR(BaseLibSVM, RegressorMixin):
-    """
-    Support Vector Regression.
-
+    """Support Vector Regression.
 
     Parameters
     ----------
@@ -258,7 +253,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Support vectors.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of support vectors in decision function.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -279,7 +274,7 @@ class SVR(BaseLibSVM, RegressorMixin):
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=[]):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -297,15 +292,15 @@ class SVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, y)
+        return BaseLibSVM.fit(self, X, y, sample_weight=sample_weight)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
-    """
-    Nu Support Vector Regression. Similar to NuSVC, for regression,
-    uses a paramter nu to control the number of support
-    vectors. However, unlike NuSVC, where nu replaces with C, here nu
-    replaces with the parameter p of SVR.
+    """Nu Support Vector Regression.
+
+    Similar to NuSVC, for regression, uses a paramter nu to control
+    the number of support vectors. However, unlike NuSVC, where nu
+    replaces with C, here nu replaces with the parameter p of SVR.
 
     Parameters
     ----------
@@ -356,7 +351,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Support vectors.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of support vectors in decision function.
+        Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -400,7 +395,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
 
 class OneClassSVM(BaseLibSVM):
-    """Unsupervised outliers detection
+    """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
 
@@ -446,7 +441,7 @@ class OneClassSVM(BaseLibSVM):
         Support vectors.
 
     `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficient of support vectors in decision function.
+        Coefficient of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal

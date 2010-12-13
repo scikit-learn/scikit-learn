@@ -1,7 +1,7 @@
 from os.path import join
-import numpy
-from ConfigParser import ConfigParser
+import sys
 import warnings
+import numpy
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration

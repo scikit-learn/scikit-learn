@@ -66,15 +66,20 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
  * TODO: precomputed kernel.
  */
 struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
-		char *indices, npy_intp *n_indptr, char *indptr, char *Y, int kernel_type) {
+		char *indices, npy_intp *n_indptr, char *indptr, char *Y, 
+                char *sample_weight, int kernel_type) {
 
-	struct svm_csr_problem *problem;
-	problem = (struct svm_csr_problem *) malloc (sizeof (struct svm_csr_problem));
+    struct svm_csr_problem *problem;
+    int i;
+    problem = (struct svm_csr_problem *) malloc (sizeof (struct svm_csr_problem));
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] - 1;
     problem->y = (double *) Y;
     problem->x = csr_to_libsvm((double *) values, n_indices, (int *) indices,
 			n_indptr, (int *) indptr);
+    /* should be removed once we implement weighted samples */
+    problem->W = (double *) sample_weight;
+
     if (problem->x == NULL) {
         free(problem);
         return NULL;

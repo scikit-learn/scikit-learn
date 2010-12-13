@@ -1,3 +1,6 @@
+
+.. _linear_model:
+
 =========================
 Generalized Linear Models
 =========================
@@ -15,6 +18,8 @@ Across the module, we designate the vector :math:`\beta = (\beta_1,
 ..., \beta_D)` as ``coef_`` and :math:`\beta_0` as ``intercept_``.
 
 
+.. TODO: reference to logistic regression.
+
 .. _ordinary_least_squares:
 
 Ordinary Least Squares (OLS)
@@ -28,6 +33,7 @@ responses predicted by the linear approximation.
 
 .. figure:: ../auto_examples/linear_model/images/plot_ols.png
    :target: ../auto_examples/linear_model/plot_ols.html
+   :align: center
    :scale: 50%
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
@@ -129,7 +135,7 @@ the coefficients. See :ref:`lars_algorithm` for another implementation.
     >>> clf.predict ([[1, 1]])
     array([ 0.8])
 
-The function lasso_path computes the coefficients along the full path
+The function :func:`lasso_path` computes the coefficients along the full path
 of possible values.
 
 .. topic:: Examples:
@@ -155,10 +161,10 @@ The objective function to minimize is in this case
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
-.. _lars_algorithm:
+.. _least_angle_regression:
 
-LARS algorithm and its variants
-===============================
+Least Angle Regression
+======================
 
 Least-angle regression (LARS) is a regression algorithm for
 high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain
@@ -191,16 +197,25 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-It is implemented using the LARS algorithm in class :class:`linear_model.LARS`.
+The LARS model can be used using estimator :class:`LARS`, or its
+low-level implementation :func:`lars_path`.
 
+.. topic:: Examples:
+
+ * :ref:`example_linear_model_plot_lar.py`
 
 LARS Lasso
 ==========
 
-This implementation is based on the LARS algorithm, and unlike the
-implementation based on coordinate_descent, this yields the exact
-solution, which is piecewise linear as a function of the norm of its
-coefficients.
+:class:`LassoLARS` is a lasso model implemented using the LARS
+algorithm, and unlike the implementation based on coordinate_descent,
+this yields the exact solution, which is piecewise linear as a
+function of the norm of its coefficients.
+
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_lars.png
+   :target: ../auto_examples/linear_model/plot_lasso_lars.html
+   :align: center
+   :scale: 50%
 
 
    >>> from scikits.learn import linear_model
@@ -208,20 +223,18 @@ coefficients.
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
    LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
    >>> clf.coef_
-   array([ 0.50710678,  0.        ])
+   array([ 0.30710678,  0.        ])
 
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_lar.py`
  * :ref:`example_linear_model_plot_lasso_lars.py`
 
 
-Getting the full path
----------------------
-See function scikits.learn.linear_model.lars_path:
+The LARS algorithm provides the full path of the coefficients along
+the regularization parameter almost for free, thus a common operation
+consist of retrieving the path with function :func:`lars_path`
 
-.. autofunction:: lars_path
  
 
 Mathematical formulation
@@ -296,7 +309,7 @@ There is also a Gamma prior for :math:`\lambda` and :math:`\alpha`:
 .. math:: g(\lambda|\lambda_1,\lambda_2) = \frac{\lambda_2^{\lambda_1}}
     {\Gamma(\lambda_1)} \lambda^{\lambda_1-1} e^{-\lambda_2 {\lambda}}
     
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e.*
  very slightly informative priors.
 
 
@@ -417,3 +430,18 @@ where :math:`\alpha` is the precision of the noise.
  * Original Algorithm is detailed in the  book *Bayesian learning for neural
    networks* by Radford M. Neal
 
+Stochastic Gradient Descent - SGD
+=================================
+
+Stochastic gradient descent is a simple yet very efficient approach 
+to fit linear models. It is particulary useful when the number of samples 
+(and the number of features) is very large.
+
+
+The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide 
+functionality to fit linear models for classification and regression 
+using different (convex) loss functions and different penalties. 
+
+.. topic:: References
+
+ * :ref:`sgd`

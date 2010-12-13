@@ -6,7 +6,6 @@ designed to handle efficiently data in sparse matrix format.
 """
 
 import numpy as np
-from scipy import sparse
 
 from ...base import ClassifierMixin
 from ...svm.sparse.base import SparseBaseLibLinear
@@ -71,20 +70,30 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
             dual=dual, loss='lr', eps=eps, C=C,
             fit_intercept=fit_intercept)
 
-    def predict_proba(self, T):
+    def predict_proba(self, X):
         """
         Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
         """
-        T = sparse.csr_matrix(T)
-        T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
-        probas = csr_predict_prob(T.shape[1], T.data, T.indices,
-                                  T.indptr, self.raw_coef_,
+        import scipy.sparse
+        X = scipy.sparse.csr_matrix(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        probas = csr_predict_prob(X.shape[1], X.data, X.indices,
+                                  X.indptr, self.raw_coef_,
                                   self._get_solver_type(),
                                   self.eps, self.C,
-                                  self.weight_label,
-                                  self.weight, self.label_,
+                                  self.class_weight_label,
+                                  self.class_weight, self.label_,
                                   self._get_bias())
         return probas[:,np.argsort(self.label_)]
+
+    def predict_log_proba(self, T):
+        """
+        Log of Probability estimates.
+
+        The returned estimates for all classes are ordered by the
+        label of classes.
+        """
+        return np.log(self.predict_proba(T))

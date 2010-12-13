@@ -6,7 +6,7 @@ PYTHON ?= python
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
 
-all: clean inplace test
+all: clean inplace test test-doc
 
 clean-pyc:
 	find . -name "*.pyc" | xargs rm -f
@@ -28,7 +28,7 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test: in
-	$(NOSETESTS)
+	$(NOSETESTS) scikits/learn
 test-doc:
 	$(NOSETESTS) --with-doctest --doctest-tests --doctest-extension=rst doc/ doc/modules/
 

@@ -1,8 +1,11 @@
+
+.. _sgd:
+
 ===========================
 Stochastic Gradient Descent
 ===========================
 
-.. currentmodule:: scikits.learn.sgd
+.. currentmodule:: scikits.learn.linear_model
 
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient approach 
 to discriminative learning of linear classifiers under convex loss functions 
@@ -33,26 +36,28 @@ The disadvantages of Stochastic Gradient Descent include:
 Classification
 ==============
 
-The class :class:`ClassifierSGD` implements a plain stochastic gradient descent 
+.. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations. 
+
+The class :class:`SGDClassifier` implements a plain stochastic gradient descent 
 learning routine which supports different loss functions and penalties for 
 classification.
 
-.. figure:: ../auto_examples/sgd/images/plot_separating_hyperplane.png
-   :target: ../auto_examples/sgd/plot_separating_hyperplane.html
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane.png
+   :target: ../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
-   :scale: 50
+   :scale: 75
 
 As other classifiers, SGD has to be fitted with two arrays:
 an array X of size [n_samples, n_features] holding the training
 samples, and an array Y of size [n_samples] holding the target values
 (class labels) for the training samples::
 
-    >>> from scikits.learn import sgd
+    >>> from scikits.learn.linear_model import SGDClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = sgd.ClassifierSGD(loss="hinge", penalty="l2")
+    >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
-    ClassifierSGD(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
+    SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
            fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
 
 After being fitted, the model can then be used to predict new values::
@@ -79,9 +84,7 @@ To get the signed distance to the hyperplane use `decision_function`:
     >>> clf.decision_function([[2., 2.]])
     array([ 29.61357756])
 
-.. warning:: Make sure you permute (shuffle) your training data before fitting the model or use `shuffle=True` to shuffle after each iterations. 
-
-The concrete loss function can be set via the `loss` parameter. :class:`ClassifierSGD` supports the
+The concrete loss function can be set via the `loss` parameter. :class:`SGDClassifier` supports the
 following loss functions: 
 
   - `loss="hinge"`: (soft-margin) linear Support Vector Machine.
@@ -95,7 +98,7 @@ Log loss, on the other hand, provides probability estimates.
 In the case of binary classification and `loss="log"` you get a probability 
 estimate P(y=C|x) using `predict_proba`, where `C` is the largest class label: 
    
-    >>> clf = sgd.ClassifierSGD(loss="log").fit(X, y)
+    >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
     array([ 0.99999949])
 
@@ -111,7 +114,7 @@ driving most coefficients to zero. The Elastic Net solves some deficiencies of
 the L1 penalty in the presence of highly correlated attributes. The parameter `rho`
 has to be specified by the user. 
 
-:class:`ClassifierSGD` supports multi-class classification by combining multiple 
+:class:`SGDClassifier` supports multi-class classification by combining multiple 
 binary classifiers in a "one versus all" (OVA) scheme. For each of the `K` classes, 
 a binary classifier is learned that discriminates between that and all other `K-1`
 classes. At testing time, we compute the confidence score (i.e. the signed distances 
@@ -120,8 +123,8 @@ confidence. The Figure below illustrates the OVA approach on the iris dataset.
 The dashed lines represent the three OVA classifiers; 
 the background colors show the decision surface induced by the three classifiers. 
 
-.. figure:: ../auto_examples/sgd/images/plot_iris.png
-   :target: ../auto_examples/sgd/plot_iris.html
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_iris.png
+   :target: ../auto_examples/linear_model/plot_sgd_iris.html
    :align: center
    :scale: 75
 
@@ -131,23 +134,22 @@ class; classes are indexed in ascending order (see member `classes`).
 
 .. topic:: Examples:
 
- * :ref:`example_sgd_plot_separating_hyperplane.py`,
- * :ref:`example_sgd_plot_iris.py`,
- * :ref:`example_sgd_covertype_dense_sgd.py`
+ * :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
+ * :ref:`example_linear_model_plot_sgd_iris.py`
 
 Regression
 ==========
 
-The class :class:`RegressorSGD` implements a plain stochastic gradient descent learning 
+The class :class:`SGDRegressor` implements a plain stochastic gradient descent learning 
 routine which supports different loss functions and penalties to fit linear regression
 models. 
 
-.. figure:: ../auto_examples/sgd/images/plot_ols_sgd.png
-   :target: ../auto_examples/sgd/plot_ols_sgd.html
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_ols.png
+   :target: ../auto_examples/linear_model/plot_sgd_ols.html
    :align: center
-   :scale: 50
+   :scale: 75
 
-The concrete loss function can be set via the `loss` parameter. :class:`RegressionSGD` supports the
+The concrete loss function can be set via the `loss` parameter. :class:`SGDRegressor` supports the
 following loss functions: 
 
   - `loss="squared_loss"`: Ordinary least squares.
@@ -155,13 +157,15 @@ following loss functions:
 
 .. topic:: Examples:
 
- * :ref:`example_sgd_plot_ols_sgd.py`,
+ * :ref:`example_linear_model_plot_sgd_ols.py`,
 
-.. currentmodule:: scikits.learn.svm.sparse
 
+.. currentmodule:: scikits.learn.linear_model.sparse
 
 Stochastic Gradient Descent for sparse data
 ===========================================
+
+.. note:: The sparse implementation produces slightly different results than the dense implementation due to a shrunk learning rate for the intercept.
 
 There is support for sparse data given in any matrix in a format
 supported by scipy.sparse. Classes have the same name, just prefixed
@@ -173,7 +177,7 @@ For maximum efficiency, use the CSR matrix format as defined in
 `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
-Implemented classes are :class:`ClassifierSGD` and :class:`RegressorSGD`.
+Implemented classes are :class:`SGDClassifier` and :class:`SGDRegressor`.
 
 .. topic:: Examples:
 
@@ -248,9 +252,9 @@ Different choices for :math:`L` entail different classifiers such as
 All of the above loss functions can be regarded as an upper bound on the 
 misclassification error (Zero-one loss) as shown in the Figure below. 
 
-.. figure:: ../auto_examples/sgd/images/plot_loss_functions.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions.png
    :align: center
-   :scale: 50
+   :scale: 75
 
 Popular choices for the regularization term :math:`R` include:
 
@@ -261,9 +265,9 @@ Popular choices for the regularization term :math:`R` include:
 The Figure below shows the contours of the different regularization terms 
 in the parameter space when :math:`R(w) = 1`. 
 
-.. figure:: ../auto_examples/sgd/images/plot_penalties.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties.png
    :align: center
-   :scale: 50
+   :scale: 75
 
 SGD
 ---
@@ -273,7 +277,7 @@ optimization problems. In contrast to (batch) gradient descent, SGD
 approximates the true gradient of :math:`E(w,b)` by considering a 
 single training example at a time. 
 
-The class :class:`ClassifierSGD` implements a first-order SGD learning routine. 
+The class :class:`SGDClassifier` implements a first-order SGD learning routine. 
 The algorithm iterates over the training examples and for each example 
 updates the model parameters according to the update rule given by
 
