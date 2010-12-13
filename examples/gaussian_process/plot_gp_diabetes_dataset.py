@@ -23,11 +23,9 @@ print __doc__
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
 
-import numpy as np
 from scikits.learn import datasets
 from scikits.learn.gaussian_process import GaussianProcess
 from scikits.learn.cross_val import cross_val_score, KFold
-from scikits.learn.metrics import r2_score
 
 # Load the dataset from scikits' data sets
 diabetes = datasets.load_diabetes()
