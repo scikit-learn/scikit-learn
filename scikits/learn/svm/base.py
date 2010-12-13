@@ -399,7 +399,7 @@ class BaseLibLinear(BaseEstimator):
     @property
     def intercept_(self):
         if self.fit_intercept:
-            return self._get_bias()*self.raw_coef_[:,-1]
+            return self._get_bias() * self.raw_coef_[:,-1]
         return 0.0
 
     @property
