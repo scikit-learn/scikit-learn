@@ -50,6 +50,8 @@ def _initialize_nmf_(X, n_comp):
 
     http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
     """
+    if (X < 0).any():
+        raise ValueError("Negative values in data passed to initialization")
 
     U, S, V = fast_svd(X, n_comp)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
@@ -129,6 +131,8 @@ def _nls_subproblem_(V, W, Hinit, tolerance, max_iter):
         The number of iterations done by the algorithm.
 
     """
+    if (Hinit < 0).any():
+        raise ValueError("Negative values in Hinit passed to NLS solver.")
 
     H = Hinit
     WtV = np.dot(W.T, V)
@@ -228,9 +232,9 @@ class NMF(BaseEstimator):
     >>> from scikits.learn.nmf import NMF
     >>> from scipy.optimize import nnls
     >>> model = NMF(n_comp=2, initial=0)
-    >>> model.fit(X)
+    >>> model.fit(X) #doctest: +ELLIPSIS
     NMF(nls_max_iter=1000, n_comp=2,
-      initial=<mtrand.RandomState object at 0x0140C240>, tolerance=0.001,
+      initial=<mtrand.RandomState object at 0x...>, tolerance=0.001,
       max_iter=50)
     >>> model.components_
     array([[ 0.76551648,  0.11408118],
@@ -261,6 +265,9 @@ class NMF(BaseEstimator):
         """ Fit the model to the data
         """
         X = np.atleast_2d(X)
+        if (X < 0).any():
+            raise ValueError("Negative data passed to NMF.fit.")
+
         n_features, n_samples = X.shape
 
         if not self.n_comp:
