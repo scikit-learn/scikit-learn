@@ -429,7 +429,7 @@ class BaseLibLinear(BaseEstimator):
                 # the effects of l1/l2 regularization on the bias weight
                 # THERE ARE NO GUARANTEES THAT THIS VALUE IS SUFFICIENTLY HIGH
                 # WHEN THE INPUT DATA IS NOT SCALED/STANDARDIZED
-                return 1000.0
+                return 10.0
             else:
                 return float(self.bias)
         else:
