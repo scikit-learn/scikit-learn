@@ -13,7 +13,6 @@ Generalized Linear models.
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
-from ..metrics import explained_variance_score
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 ###
@@ -43,10 +42,6 @@ class LinearModel(BaseEstimator, RegressorMixin):
         X = np.asanyarray(X)
         return np.dot(X, self.coef_) + self.intercept_
 
-    def _explained_variance(self, X, y):
-        """Compute explained variance a.k.a. r^2"""
-        return explained_variance_score(y, self.predict(X))
-
     @staticmethod
     def _center_data(X, y, fit_intercept):
         """
@@ -71,14 +66,6 @@ class LinearModel(BaseEstimator, RegressorMixin):
             self.intercept_ = ymean - np.dot(Xmean, self.coef_)
         else:
             self.intercept_ = 0
-
-    def __str__(self):
-        if self.coef_ is not None:
-            return ("%s \n%s #... Fitted: explained variance=%s" %
-                    (repr(self), ' '*len(self.__class__.__name__),
-                     self.explained_variance_))
-        else:
-            return "%s \n#... Not fitted to data" % repr(self)
 
 
 class LinearRegression(LinearModel):

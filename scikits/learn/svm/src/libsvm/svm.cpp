@@ -46,6 +46,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
      Hsiang-Fu Yu,
      <http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/#weights_for_data_instances>.
 
+   - Make labels sorted in svm_group_classes, Fabian Pedregosa.
+
  */
 
 #include <math.h>
@@ -2199,8 +2201,6 @@ static double svm_svr_probability(
 
 
 
-
-
 // label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
 // perm, length l, must be allocated before calling this subroutine
 static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, int **label_ret, int **start_ret, int **count_ret, int *perm)
@@ -2211,12 +2211,11 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 	int *label = Malloc(int,max_nr_class);
 	int *count = Malloc(int,max_nr_class);
 	int *data_label = Malloc(int,l);	
-	int i;
+	int i, j, this_label, this_count;
 
 	for(i=0;i<l;i++)
 	{
-		int this_label = (int)prob->y[i];
-		int j;
+		this_label = (int)prob->y[i];
 		for(j=0;j<nr_class;j++)
 		{
 			if(this_label == label[j])
@@ -2225,7 +2224,6 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 				break;
 			}
 		}
-		data_label[i] = j;
 		if(j == nr_class)
 		{
 			if(nr_class == max_nr_class)
@@ -2240,6 +2238,35 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 		}
 	}
 
+        /* 
+         * Sort labels by straight insertion and apply the same
+         * transformation to array count.
+         */
+        for(j=1; j<nr_class; j++)
+        {
+                i = j-1;
+                this_label = label[j];
+                this_count = count[j];
+                while(i>=0 && label[i] > this_label)
+                {
+                        label[i+1] = label[i];
+                        count[i+1] = count[i];
+                        i--;
+                }
+                label[i+1] = this_label;
+                count[i+1] = this_count;
+        }
+
+        for (i=0; i<l; i++)
+        {
+                j = 0;
+                this_label = (int)prob->y[i];
+                while(this_label != label[j]){
+                        j ++;
+                }
+                data_label[i] = j;
+        }                
+
 	int *start = Malloc(int,nr_class);
 	start[0] = 0;
 	for(i=1;i<nr_class;i++)
@@ -2249,6 +2276,7 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 		perm[start[data_label[i]]] = i;
 		++start[data_label[i]];
 	}
+
 	start[0] = 0;
 	for(i=1;i<nr_class;i++)
 		start[i] = start[i-1]+count[i-1];
@@ -2510,7 +2538,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		for(i=0;i<l;i++) {
 			if(nonzero[i]) { 
                                 model->SV[p] = x[i];
-                                model->sv_ind[p] = i;
+                                model->sv_ind[p] = perm[i];
                                 ++p;
                         }
                 }

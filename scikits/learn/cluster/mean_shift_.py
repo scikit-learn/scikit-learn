@@ -9,38 +9,7 @@ from math import floor
 import numpy as np
 
 from ..base import BaseEstimator
-
-def euclidian_distances(X, Y=None):
-    """
-    Considering the rows of X (and Y=X) as vectors, compute the
-    distance matrix between each pair of vector
-
-    Parameters
-    ----------
-    X, array of shape (n_samples_1, n_features)
-
-    Y, array of shape (n_samples_2, n_features), default None
-            if Y is None, then Y=X is used instead
-
-    Returns
-    -------
-    distances, array of shape (n_samples_1, n_samples_2)
-    """
-    if Y is None:
-        Y = X
-    if X.shape[1] != Y.shape[1]:
-        raise ValueError, "incompatible dimension for X and Y matrices"
-
-    XX = np.sum(X * X, axis=1)[:,np.newaxis]
-    if Y is None:
-        YY = XX.T
-    else:
-        YY = np.sum(Y * Y, axis=1)[np.newaxis,:]
-    distances = XX + YY # Using broadcasting
-    distances -= 2 * np.dot(X, Y.T)
-    distances = np.maximum(distances, 0)
-    distances = np.sqrt(distances)
-    return distances
+from ..metrics.pairwise import euclidian_distances
 
 
 def estimate_bandwidth(X, quantile=0.3):
@@ -101,7 +70,7 @@ def mean_shift(X, bandwidth=None):
     n_clusters = 0
     bandwidth_squared = bandwidth**2
     points_idx_init = np.arange(n_points)
-    stop_thresh     = 1e-3*bandwidth # when mean has converged
+    stop_thresh = 1e-3*bandwidth # when mean has converged
     cluster_centers = [] # center of clusters
     # track if a points been seen already
     been_visited_flag = np.zeros(n_points, dtype=np.bool)
@@ -114,12 +83,12 @@ def mean_shift(X, bandwidth=None):
 
     while n_points_init:
         # pick a random seed point
-        tmp_index   = random_state.randint(n_points_init)
+        tmp_index = random_state.randint(n_points_init)
         # use this point as start of mean
-        start_idx   = points_idx_init[tmp_index]
-        my_mean     = X[start_idx, :] # intilize mean to this points location
+        start_idx = points_idx_init[tmp_index]
+        my_mean = X[start_idx, :] # intilize mean to this points location
         # points that will get added to this cluster
-        my_members  = np.zeros(n_points, dtype=np.bool)
+        my_members = np.zeros(n_points, dtype=np.bool)
         # used to resolve conflicts on cluster membership
         this_cluster_votes = np.zeros(n_points, dtype=np.uint16)
 
@@ -133,10 +102,10 @@ def mean_shift(X, bandwidth=None):
             # add a vote for all the in points belonging to this cluster
             this_cluster_votes[in_idx] += 1
 
-            my_old_mean  = my_mean # save the old mean
-            my_mean      = np.mean(X[in_idx,:], axis=0) # compute the new mean
+            my_old_mean = my_mean # save the old mean
+            my_mean = np.mean(X[in_idx, :], axis=0) # compute the new mean
             # add any point within bandwidth to the cluster
-            my_members   = np.logical_or(my_members, in_idx)
+            my_members = np.logical_or(my_members, in_idx)
             # mark that these points have been visited
             been_visited_flag[my_members] = True
 
@@ -169,7 +138,7 @@ def mean_shift(X, bandwidth=None):
 
         # we can initialize with any of the points not yet visited
         points_idx_init = np.where(been_visited_flag == False)[0]
-        n_points_init   = points_idx_init.size # number of active points in set
+        n_points_init = points_idx_init.size # number of active points in set
 
     # a point belongs to the cluster with the most votes
     labels = np.argmax(cluster_votes, axis=0)
@@ -177,7 +146,8 @@ def mean_shift(X, bandwidth=None):
     return cluster_centers, labels
 
 
-################################################################################
+##############################################################################
+
 class MeanShift(BaseEstimator):
     """MeanShift clustering
 
@@ -233,5 +203,3 @@ class MeanShift(BaseEstimator):
         self._set_params(**params)
         self.cluster_centers_, self.labels_ = mean_shift(X, self.bandwidth)
         return self
-
-

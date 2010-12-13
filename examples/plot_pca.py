@@ -25,7 +25,7 @@ X = iris.data
 y = iris.target
 target_names = iris.target_names
 
-pca = PCA(n_comp=2)
+pca = PCA(n_components=2)
 X_r = pca.fit(X).transform(X)
 
 # Percentage of variance explained for each components

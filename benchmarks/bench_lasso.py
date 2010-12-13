@@ -15,7 +15,7 @@ import gc
 from time import time
 import numpy as np
 
-from bench_glmnet import make_data
+from scikits.learn.datasets.samples_generator import make_regression_dataset
 
 
 def compute_bench(alpha, n_samples, n_features, precompute):
@@ -23,7 +23,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
     lasso_results = []
     larslasso_results = []
 
-    n_tests = 1000
+    n_test_samples = 0
     it = 0
 
     for ns in n_samples:
@@ -33,10 +33,10 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             print 'Iteration %s of %s' % (it, max(len(n_samples),
                                           len(n_features)))
             print '=================='
-            k = nf // 10
-            X, Y, X_test, Y_test, coef_ = make_data(
-                n_samples=ns, n_tests=n_tests, n_features=nf,
-                noise=0.1, k=k)
+            n_informative = nf // 10
+            X, Y, _, _, coef = make_regression_dataset(
+                n_train_samples=ns, n_test_samples=n_test_samples,
+                n_features=nf, noise=0.1, n_informative = n_informative)
 
             X /= np.sqrt(np.sum(X**2, axis=0)) # Normalize data
 

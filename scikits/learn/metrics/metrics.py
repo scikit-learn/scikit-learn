@@ -166,7 +166,7 @@ def precision_score(y_true, y_pred, pos_label=1):
         precision of the positive class in binary classification or
         weighted avergage of the precision of each class for the
         multiclass task
-        
+
      """
     p, _, _, s = precision_recall_fscore_support(y_true, y_pred)
     if p.shape[0] == 2:
@@ -417,7 +417,8 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
     report = fmt % tuple(headers)
     report += '\n'
 
-    p, r, f1, s = precision_recall_fscore_support(y_true, y_pred, labels=labels)
+    p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
+                                                  labels=labels)
     for i, label in enumerate(labels):
         values = [class_names[i]]
         for v in (p[i], r[i], f1[i]):
@@ -499,7 +500,7 @@ def precision_recall_curve(y_true, probas_pred):
 def explained_variance_score(y_true, y_pred):
     """Explained variance regression score function
 
-    Best possible score is 1.0, lower values are worst.
+    Best possible score is 1.0, lower values are worse.
 
     Note: the explained variance is not a symmetric function.
 
@@ -514,13 +515,33 @@ def explained_variance_score(y_true, y_pred):
     return 1 - np.var(y_true - y_pred) / np.var(y_true)
 
 
+def r2_score(y_true, y_pred):
+    """R^2 (coefficient of determination) regression score function
+
+    Best possible score is 1.0, lower values are worse.
+
+    Note: not a symmetric function.
+
+    return the R^2 score
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+    """
+    return 1 - (((y_true - y_pred)**2).sum() /
+                ((y_true - y_true.mean())**2).sum())
+
+
+
 ###############################################################################
 # Loss functions
 
 def zero_one(y_true, y_pred):
     """Zero-One classification loss
 
-    Positive integer (number of misclassifications). The best performance 
+    Positive integer (number of misclassifications). The best performance
     is 0.
 
     Return the number of errors
@@ -556,6 +577,3 @@ def mean_square_error(y_true, y_pred):
     loss : float
     """
     return np.linalg.norm(y_pred - y_true) ** 2
-
-
-

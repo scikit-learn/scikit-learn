@@ -7,12 +7,9 @@ Data comes from a random square matrix.
 from datetime import datetime
 import numpy as np
 from scikits.learn import linear_model
-from scikits.learn.utils.bench import total_seconds
 
 
 if __name__ == '__main__':
-
-    import pylab as pl
 
     n_iter = 20
 
