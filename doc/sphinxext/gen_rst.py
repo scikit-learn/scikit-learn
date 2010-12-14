@@ -92,6 +92,9 @@ def generate_example_rst(app):
     # we create an index.rst with all examples
     fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')
     fhindex.write("""\
+Examples
+========
+
 .. _examples-index:
 """)
     # Here we don't use an os.walk, but we recurse only twice: flat is

@@ -93,9 +93,15 @@ class QDA(BaseEstimator, ClassifierMixin):
         if X.ndim!=2:
             raise exceptions.ValueError('X must be a 2D array')
         if X.shape[0] != y.shape[0]:
-            raise ValueError("Incompatible shapes")
+            raise ValueError(
+                'Incompatible shapes: X has %s samples, while y '
+                'has %s' % (X.shape[0], y.shape[0]))
+        if y.dtype.char.lower() not in ('i', 'l'):
+            # We need integer values to be able to use
+            # ndimage.measurements and np.bincount on numpy > 2.0
+            y = y.astype(np.int)
         n_samples, n_features = X.shape
-        classes = np.unique(y).astype(np.int32)
+        classes = np.unique(y)
         n_classes = classes.size
         if n_classes < 2:
             raise exceptions.ValueError('y has less than 2 classes')

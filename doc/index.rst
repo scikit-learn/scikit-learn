@@ -13,7 +13,6 @@
        :height: 150
        :target: auto_examples/cluster/plot_affinity_propagation.html
 
-
     .. |banner2| image:: auto_examples/linear_model/images/plot_lasso_lars.png
        :height: 150
        :target: auto_examples/linear_model/plot_lasso_lars.html
@@ -123,7 +122,7 @@ Example Gallery
 ===============
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    auto_examples/index
 

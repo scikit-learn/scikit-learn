@@ -38,17 +38,16 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     See also
     --------
     LinearSVC
+
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller eps parameter.
 
     References
     ----------
@@ -63,15 +62,26 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
             dual=dual, loss='lr', eps=eps, C=C,
             fit_intercept=fit_intercept)
 
-    def predict_proba(self, T):
+    def predict_proba(self, X):
         """
         Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
         """
-        T = np.asanyarray(T, dtype=np.float64, order='C')
-        probas = _liblinear.predict_prob_wrap(T, self.raw_coef_,
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        probas = _liblinear.predict_prob_wrap(X, self.raw_coef_,
                                       self._get_solver_type(),
                                       self.eps, self.C,
                                       self.class_weight_label,
@@ -79,11 +89,22 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
                                       self._get_bias())
         return probas[:,np.argsort(self.label_)]
 
-    def predict_log_proba(self, T):
+    def predict_log_proba(self, X):
         """
         Log of Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X : array-like, shape = [n_samples, n_classes]
+            Returns the log-probabilities of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
         """
-        return np.log(self.predict_proba(T))
+        return np.log(self.predict_proba(X))

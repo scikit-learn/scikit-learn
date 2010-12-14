@@ -40,7 +40,7 @@ from scikits.learn.svm import SVC
 ################################################################################
 # Download the data, if not already on disk
 
-url = "http://dl.dropbox.com/u/5743203/data/lfw_preprocessed.tar.gz"
+url = "https://downloads.sourceforge.net/project/scikit-learn/data/lfw_preprocessed.tar.gz"
 archive_name = "lfw_preprocessed.tar.gz"
 folder_name = "lfw_preprocessed"
 
