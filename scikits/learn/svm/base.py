@@ -309,14 +309,14 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 multi_class=False, fit_intercept=True, bias=None):
+                 multi_class=False, fit_intercept=True, intercept_scaling=1):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
         self.eps = eps
         self.C = C
         self.fit_intercept = fit_intercept
-        self.bias = bias
+        self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
 
         # Check that the arguments given are valid:
@@ -403,7 +403,7 @@ class BaseLibLinear(BaseEstimator):
     @property
     def intercept_(self):
         if self.fit_intercept:
-            return self._get_bias() * self.raw_coef_[:,-1]
+            return self.intercept_scaling * self.raw_coef_[:,-1]
         return 0.0
 
     @property
@@ -417,25 +417,9 @@ class BaseLibLinear(BaseEstimator):
         raise NotImplementedError(
                 'liblinear does not provide this functionality')
 
-
     def _get_bias(self):
-        """
-        if self.fit_intercept is True, instance x becomes [x; self.bias],
-        i.e. a "synthetic" feature with constant value equals to bias
-        is appended to the feature vector.
-
-        Note! the synthetic features is subject to l1/l2 regularization
-        as all other features.
-        """
         if self.fit_intercept:
-            if self.bias is None:
-                # a "sufficiently" high value in order to lessen
-                # the effects of l1/l2 regularization on the bias weight
-                # THERE ARE NO GUARANTEES THAT THIS VALUE IS SUFFICIENTLY HIGH
-                # WHEN THE INPUT DATA IS NOT SCALED/STANDARDIZED
-                return 10.0
-            else:
-                return float(self.bias)
+            return self.intercept_scaling
         else:
             return -1.0
 

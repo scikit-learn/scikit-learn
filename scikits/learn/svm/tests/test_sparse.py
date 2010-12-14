@@ -6,6 +6,7 @@ from numpy.testing import assert_array_almost_equal, \
 
 from nose.tools import assert_raises
 from scikits.learn.datasets.samples_generator import test_dataset_classif
+from . import test_svm
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -142,6 +143,12 @@ def test_sample_weights():
     sample_weight=[.1]*3 + [10]*3
     clf.fit(X, Y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X[2]), [2.])
+
+def test_sparse_liblinear_intercept_handling():
+    """
+    Test that sparse liblinear honours intercept_scaling param
+    """
+    test_svm.test_dense_liblinear_intercept_handling(svm.sparse.LinearSVC)
 
 
 if __name__ == '__main__':
