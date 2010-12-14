@@ -456,9 +456,9 @@ class OneClassSVM(BaseLibSVM):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
                              cache_size, eps, 0.0, nu, 0.0, shrinking, False)
 
-    def fit(self, X):
+    def fit(self, X, class_weight={}, sample_weight=[], **params):
         """
-        Detects the soft boundary (aka soft boundary) of the set of samples X.
+        Detects the soft boundary of the set of samples X.
 
         Parameters
         ----------
@@ -466,5 +466,11 @@ class OneClassSVM(BaseLibSVM):
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
+        Returns
+        -------
+        self : object
+            Returns self.
         """
-        super(OneClassSVM, self).fit(X, [])
+        super(OneClassSVM, self).fit(
+            X, [], class_weight=class_weight, sample_weight=sample_weight,
+            **params)
