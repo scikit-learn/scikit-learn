@@ -45,17 +45,16 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
 
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     See also
     --------
     LinearSVC
+
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller eps parameter.
 
     References
     ----------

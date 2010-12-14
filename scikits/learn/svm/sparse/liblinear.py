@@ -32,7 +32,6 @@ class LinearSVC(SparseBaseLibLinear, ClassifierMixin):
         Select the algorithm to either solve the dual or primal
         optimization problem.
 
-
     Attributes
     ----------
     `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
@@ -41,6 +40,17 @@ class LinearSVC(SparseBaseLibLinear, ClassifierMixin):
 
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         constants in decision function
+
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller eps parameter.
+
+    See also
+    --------
+    SVC
 
     References
     ----------

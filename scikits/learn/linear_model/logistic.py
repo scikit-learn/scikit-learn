@@ -42,6 +42,13 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
     --------
     LinearSVC
 
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller eps parameter.
+
     References
     ----------
     LIBLINEAR -- A Library for Large Linear Classification

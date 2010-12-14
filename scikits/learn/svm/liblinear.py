@@ -43,6 +43,17 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller eps parameter.
+
+    See also
+    --------
+    SVC
+
     References
     ----------
     LIBLINEAR -- A Library for Large Linear Classification
