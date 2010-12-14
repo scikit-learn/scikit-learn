@@ -38,14 +38,6 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     See also
     --------
     LinearSVC
