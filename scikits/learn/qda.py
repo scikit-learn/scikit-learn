@@ -43,14 +43,6 @@ class QDA(BaseEstimator, ClassifierMixin):
     `covariances_` : list of array-like, shape = [n_features, n_features]
         Covariance matrices of each class
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     Examples
     --------
     >>> from scikits.learn.qda import QDA

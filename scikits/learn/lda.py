@@ -37,14 +37,6 @@ class LDA(BaseEstimator, ClassifierMixin):
     `covariance_` : array-like, shape = [n_features, n_features]
         Covariance matrix (shared by all classes)
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     Examples
     --------
     >>> import numpy as np
