@@ -9,7 +9,7 @@ Fixes for older version of numpy and scipy.
 import numpy as np
 
 def _unique(ar, return_index=False, return_inverse=False):
-    """ A replacement for np.unique that appeared in numpy 1.4.
+    """ A replacement for np.unique that appeared in numpy 1.3
     """
     try:
         ar = ar.flatten()
