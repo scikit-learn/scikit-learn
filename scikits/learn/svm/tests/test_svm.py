@@ -346,7 +346,7 @@ def test_LinearSVC():
     assert clf.fit_intercept
 
     assert_array_equal(clf.predict(T), true_result)
-    assert_array_almost_equal(clf.intercept_, [0], decimal=5)
+    assert_array_almost_equal(clf.intercept_, [0], decimal=3)
 
     # the same with l1 penalty
     clf = svm.LinearSVC(penalty='l1', dual=False).fit(X, Y)
@@ -367,6 +367,40 @@ def test_LinearSVC_iris():
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
     assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
+
+def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
+    """
+    Test that dense liblinear honours intercept_scaling param
+    """
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+    clf = classifier(fit_intercept=True, penalty='l1', loss='l2',
+                     dual=False, C=1, eps=1e-7)
+    assert clf.intercept_scaling == 1, clf.intercept_scaling
+    assert clf.fit_intercept
+
+    # when intercept_scaling is low the intercept value is highly "penalized"
+    # by regularization
+    clf.intercept_scaling = 1
+    clf.fit(X, y)
+    assert_almost_equal(clf.intercept_, 0, decimal=5)
+
+    # when intercept_scaling is sufficiently high, the intercept value
+    # is not affected by regularization
+    clf.intercept_scaling = 100
+    clf.fit(X, y)
+    intercept1 = clf.intercept_
+    assert intercept1 > 1
+
+    # when intercept_scaling is sufficiently high, the intercept value
+    # doesn't depend on intercept_scaling value
+    clf.intercept_scaling = 1000
+    clf.fit(X, y)
+    intercept2 = clf.intercept_
+    assert_array_almost_equal(intercept1, intercept2, decimal=2)
 
 
 if __name__ == '__main__':

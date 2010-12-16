@@ -35,6 +35,17 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added the decision function
 
+    intercept_scaling : float, default: 1
+        when self.fit_intercept is True, instance vector x becomes
+        [x, self.intercept_scaling],
+        i.e. a "synthetic" feature with constant value equals to
+        intercept_scaling is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight
+        Note! the synthetic feature weight is subject to l1/l2 regularization
+        as all other features.
+        To lessen the effect of regularization on synthetic feature weight
+        (and therefore on the intercept) intercept_scaling has to be increased
+
     Attributes
     ----------
 
@@ -63,11 +74,11 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
     """
 
     def __init__(self, penalty='l2', dual=False, eps=1e-4, C=1.0,
-                 fit_intercept=True):
+                 fit_intercept=True, intercept_scaling=1):
 
         super(LogisticRegression, self).__init__ (penalty=penalty,
             dual=dual, loss='lr', eps=eps, C=C,
-            fit_intercept=fit_intercept)
+            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
 
     def predict_proba(self, X):
         """

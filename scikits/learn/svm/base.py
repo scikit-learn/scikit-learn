@@ -309,13 +309,14 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 multi_class=False, fit_intercept=True):
+                 multi_class=False, fit_intercept=True, intercept_scaling=1):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
         self.eps = eps
         self.C = C
         self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
 
         # Check that the arguments given are valid:
@@ -395,19 +396,19 @@ class BaseLibLinear(BaseEstimator):
 
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]
-        if self.fit_intercept > 0: n_features -= 1
+        if self.fit_intercept: n_features -= 1
         if X.shape[1] != n_features:
             raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
                                                                    X.shape[1]))
     @property
     def intercept_(self):
-        if self.fit_intercept > 0:
-            return self.raw_coef_[:,-1]
+        if self.fit_intercept:
+            return self.intercept_scaling * self.raw_coef_[:,-1]
         return 0.0
 
     @property
     def coef_(self):
-        if self.fit_intercept > 0:
+        if self.fit_intercept:
             return self.raw_coef_[:,:-1]
         return self.raw_coef_
 
@@ -416,14 +417,11 @@ class BaseLibLinear(BaseEstimator):
         raise NotImplementedError(
                 'liblinear does not provide this functionality')
 
-
     def _get_bias(self):
-        """
-        Due to some pecularities in libliner, parameter bias must be a
-        double indicating if the intercept should be computed:
-        positive for true, negative for false
-        """
-        return int  (self.fit_intercept) - .5
+        if self.fit_intercept:
+            return self.intercept_scaling
+        else:
+            return -1.0
 
 
 set_verbosity_wrap(0)

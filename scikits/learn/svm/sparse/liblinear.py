@@ -32,6 +32,17 @@ class LinearSVC(SparseBaseLibLinear, ClassifierMixin):
         Select the algorithm to either solve the dual or primal
         optimization problem.
 
+    intercept_scaling : float, default: 1
+        when self.fit_intercept is True, instance vector x becomes
+        [x, self.intercept_scaling],
+        i.e. a "synthetic" feature with constant value equals to
+        intercept_scaling is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight
+        Note! the synthetic feature weight is subject to l1/l2 regularization
+        as all other features.
+        To lessen the effect of regularization on synthetic feature weight
+        (and therefore on the intercept) intercept_scaling has to be increased
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
