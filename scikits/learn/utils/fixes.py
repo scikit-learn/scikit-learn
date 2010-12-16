@@ -9,7 +9,10 @@ Fixes for older version of numpy and scipy.
 import numpy as np
 
 def _unique(ar, return_index=False, return_inverse=False):
-    """ A replacement for np.unique that appeared in numpy 1.3
+    """ A replacement for the np.unique that appeared in numpy 1.4.
+
+    While np.unique existed long before, keyword return_inverse was
+    only added in 1.4.
     """
     try:
         ar = ar.flatten()
@@ -47,7 +50,8 @@ def _unique(ar, return_index=False, return_inverse=False):
         flag = np.concatenate(([True], ar[1:] != ar[:-1]))
         return ar[flag]
 
-if not hasattr(np, 'unique'):
+np_version = np.__version__.split('.')
+if int(np_version[0]) < 2 and int(np_version[1]) < 5:
     unique = _unique
 else:
     unique = np.unique
