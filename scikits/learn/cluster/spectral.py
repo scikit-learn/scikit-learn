@@ -40,7 +40,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
     """
 
     from scipy import sparse
-    from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
+    from ..utils.fixes import arpack_eigsh
     from scipy.sparse.linalg import lobpcg
     try:
         from pyamg import smoothed_aggregation_solver
@@ -78,7 +78,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
                 # csr has the fastest matvec and is thus best suited to
                 # arpack
                 laplacian = laplacian.tocsr()
-        lambdas, diffusion_map = eigen_symmetric(-laplacian, k=k, which='LA')
+        lambdas, diffusion_map = arpack_eigsh(-laplacian, k=k, which='LA')
         embedding = diffusion_map.T[::-1]*dd
     elif mode == 'amg':
         # Use AMG to get a preconditionner and speed up the eigenvalue

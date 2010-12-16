@@ -7,7 +7,6 @@ Generate samples of synthetic data sets.
 
 import numpy as np
 import numpy.random as nr
-from scipy import linalg
 
 
 def test_dataset_classif(n_samples=100, n_features=100, param=[1,1],
@@ -233,18 +232,20 @@ def low_rank_fat_tail(n_samples=100, n_features=100, effective_rank=10,
     n = min(n_samples, n_features)
 
     # random (ortho normal) vectors
-    u = linalg.qr(random.randn(n_samples, n), econ=True)[0]
-    v = linalg.qr(random.randn(n_features, n), econ=True)[0].T
+    from ..utils.fixes import qr_economic
+    u, _ = qr_economic(random.randn(n_samples, n))
+    v, _ = qr_economic(random.randn(n_features, n))
 
     # index of the singular values
-    i = np.arange(n, dtype=np.float64)
+    singular_ind = np.arange(n, dtype=np.float64)
 
     # build the singular profile by assembling signal and noise components
-    low_rank = (1 - tail_strength) * np.exp(-1.0 * (i / effective_rank) ** 2)
-    tail = tail_strength * np.exp(-0.1 * i / effective_rank)
+    low_rank = (1 - tail_strength) * \
+               np.exp(-1.0 * (singular_ind / effective_rank) ** 2)
+    tail = tail_strength * np.exp(-0.1 * singular_ind / effective_rank)
     s = np.identity(n) * (low_rank + tail)
 
-    return np.dot(np.dot(u, s), v)
+    return np.dot(np.dot(u, s), v.T)
 
 
 def make_regression_dataset(n_train_samples=100, n_test_samples=100,
