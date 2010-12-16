@@ -35,7 +35,7 @@ def euclidian_distances(X, Y):
     >>> euclidian_distances(X, [[0, 0]])
     array([[ 1.        ],
            [ 1.41421356]])
-     """
+    """
     # shortcut in the common case euclidean_distances(X, X)
     compute_Y = X is not Y
 
