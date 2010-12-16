@@ -81,7 +81,7 @@ def qr_economic(A, **kwargs):
     """
     import scipy.linalg
     # trick: triangular solve has introduced in 0.9
-    if not hasattr(scipy.linalg, 'triangular_solve'):
+    if hasattr(scipy.linalg, 'triangular_solve'):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
     else:
         return scipy.linalg.qr(A, econ=True, **kwargs)
