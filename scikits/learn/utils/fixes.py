@@ -75,12 +75,38 @@ def _in1d(ar1, ar2, assume_unique=False):
         return flag[indx][rev_idx]
 
 
-if np.__version__ >= '1.4':
-    from numpy import in1d, copysign, unique
-else:
+def qr_economic(A, **kwargs):
+    """
+    Scipy 0.9 changed the keyword econ=True to mode='economic'
+    """
+    import scipy.linalg
+    version = scipy.__version__.split('.')
+    if version[0] < 1 and version[1] < 9:
+        return scipy.linalg.qr(A, econ=True, **kwargs)
+    else:
+        return scipy.linalg.qr(A, mode='economic', **kwargs)
+        
+
+def arpack_eigsh(A, **kwargs):
+    """
+    Scipy 0.9 renamed eigen_symmetric to eigsh in
+    scipy.sparse.linalg.eigen.arpack
+    """
+    from scipy.sparse.linalg.eigen import arpack
+    if hasattr(arpack, 'eigsh'):
+        return arpack.eigsh(A, **kwargs)
+    else:
+        return arpack.eigen_symmetric(A, **kwargs)
+
+# export fixes for np =< 1.4
+np_version = np.__version__.split('.')
+if np_version[0] < 2 and np_version[1] < 5:
     in1d = _in1d
     copysign = _copysign
     unique = _unique
+else:
+    from numpy import in1d, copysign, unique
+
 
 
 
