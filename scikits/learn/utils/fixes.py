@@ -80,12 +80,11 @@ def qr_economic(A, **kwargs):
     Scipy 0.9 changed the keyword econ=True to mode='economic'
     """
     import scipy.linalg
-    version = scipy.__version__.split('.')
-    if version[0] < 1 and version[1] < 9:
-        return scipy.linalg.qr(A, econ=True, **kwargs)
-    else:
+    # trick: triangular solve has introduced in 0.9
+    if not hasattr(scipy.linalg, 'triangular_solve'):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
-        
+    else:
+        return scipy.linalg.qr(A, econ=True, **kwargs)
 
 def arpack_eigsh(A, **kwargs):
     """
@@ -98,9 +97,8 @@ def arpack_eigsh(A, **kwargs):
     else:
         return arpack.eigen_symmetric(A, **kwargs)
 
-# export fixes for np =< 1.4
-np_version = np.__version__.split('.')
-if np_version[0] < 2 and np_version[1] < 5:
+# export fixes for np < 1.4
+if not hasattr(np, 'copysign'):
     in1d = _in1d
     copysign = _copysign
     unique = _unique

@@ -142,3 +142,6 @@ def test_fast_svd_transpose_consistency():
     assert_almost_equal(s2, s3)
 
 
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()
