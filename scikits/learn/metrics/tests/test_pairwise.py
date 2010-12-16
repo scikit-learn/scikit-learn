@@ -9,3 +9,4 @@ def test_euclidian_distances():
     Y = [[1], [2]]
     D = euclidian_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
+   
