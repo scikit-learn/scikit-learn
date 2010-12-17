@@ -1,11 +1,24 @@
 .. -*- mode: rst -*-
 
-Authors
-=======
 
-The project was started in summer 2007 by David Cournapeau. Since
-then, many people have contributed to the project. These are, in
-chronological order:
+This is a community effort, and as such many people have contributed
+to it over the years.
+
+History
+-------
+
+This project was started in 2007 as a Google Summer of Code project by
+David Cournapeau. Later that year, Matthieu Brucher started work on
+this project as part of his thesis.
+
+In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and
+Vincent Michel took leadership of the project and made the first
+public release, February the 1st 2010. Since then, several releases
+have appeard following a ~3 month cycle.
+
+People
+------
+
 
   * David Cournapeau, 2007-2009
 
@@ -24,46 +37,57 @@ chronological order:
 
   * Jarrod Millman
 
-  * Matthieu Brucher (manifold module).
+  * `Matthieu Brucher <http://matt.eifelle.com/>`_ contributed the
+    manifold module. It is not currently part of the scikit, althouth
+    it is planned to be newly included in the upcoming 0.7 release.
 
   * Travis Oliphant
 
   * Pearu Peterson
 
-  * Fabian Pedregosa <fabian.pedregosa@inria.fr> joined the project in
-    January 2010 and is the current maintainer.
+  * `Fabian Pedregosa <http://fseoane.net/blog/>`_ joined the project
+    in January 2010 and is the current maintainer.
 
-  * Gael Varoquaux
+  * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
 
   * Jake VanderPlas contributed the BallTree module in February 2010.
 
-  * Alexandre Gramfort
+  * `Alexandre Gramfort
+    <http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html>`_
 
-  * Olivier Grisel
+  * `Olivier Grisel <http://twitter.com/ogrisel>`_
 
-  * Vincent Michel
+  * Vincent Michel.
 
   * Chris Filo Gorgolewski
 
-  * Angel Soler Gollonet contributed the official logo and web page
-    layout.
+  * `Angel Soler Gollonet <http://webylimonada.com>`_ contributed the
+    official logo and web page layout.
 
-  * Yaroslav Halchenko (maintainer for Debian OS)
+  * `Yaroslav Halchenko <http://www.onerussian.com/>`_ is the
+    maintainer for Debian OS and has contributed several fixes.
 
   * Ron Weiss joined the project in July 2010 and contributed both the
-    mixture and hidden_markov module.
+    mixture and hmm module.
 
-  * Virgile Fritsch <virgile.fritsch@gmail.com>. Bug fixes.
+  * `Virgile Fritsch
+    <http://parietal.saclay.inria.fr/Members/virgile-fritsch>`_. Bug
+    fixes.
 
-  * Mathieu Blondel <mathieu@mblondel.org>
+  * `Mathieu Blondel <http://mblondel.org/journal>`_ joined the
+    projectin September 2010 and worked on the sparse matrix support,
+    text feature extraction and bug fixes.
 
-  * Peter Prettenhofer <peter.prettenhofer@gmail.com>
+  * `Peter Prettenhofer
+    <http://sites.google.com/site/peterprettenhofer/>`_ joined the
+    project in October 2010 and contributed the :ref:`sgd` module as
+    well as several examples and fixes.
 
-  * Vincent Dubourg <vincent.dubourg@gmail.com> joined the project in
-    November 2010 and contributed the gaussian_process module.
+  * Vincent Dubourg joined the project in November 2010 and
+    contributed the :ref:`gaussian_process` module.
 
-  * Alexandre Passos <alexandre.tp@gmail.com> joined the project in
-    November 2010 contributed the fast SVD variant.
+  * `Alexandre Passos <http://atpassos.posterous.com>`_ joined the
+    project in November 2010 contributed the fast SVD variant.
 
 
 If I forgot anyone, do not hesitate to send me an email to
