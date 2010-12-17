@@ -92,6 +92,7 @@ def generate_example_rst(app):
     # we create an index.rst with all examples
     fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')
     fhindex.write("""\
+
 Examples
 ========
 
