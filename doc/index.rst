@@ -13,9 +13,9 @@
        :height: 150
        :target: auto_examples/cluster/plot_affinity_propagation.html
 
-    .. |banner2| image:: auto_examples/linear_model/images/plot_lasso_lars.png
+    .. |banner2| image:: auto_examples/gaussian_process/images/plot_gp_regression.png
        :height: 150
-       :target: auto_examples/linear_model/plot_lasso_lars.html
+       :target: auto_examples/gaussian_process/plot_gp_regression.html
 
     .. |banner3| image:: auto_examples/svm/images/plot_oneclass.png
        :height: 150
@@ -64,50 +64,11 @@
 :License:
   Open source, commercially usable: **BSD license** (3 clause)
 
-.. only:: html
-
-    .. raw:: html
-
-       <div class="example_digits">
-
-    :ref:`A simple Example: recognizing hand-written digits <example_plot_digits_classification.py>` ::
-
-        import pylab as pl
-
-        from scikits.learn import datasets, svm
-        digits = datasets.load_digits()
-        for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
-            pl.subplot(2, 4, index+1)
-            pl.imshow(image, cmap=pl.cm.gray_r)
-            pl.title('Training: %i' % label)
-
-        n_samples = len(digits.images)
-        data = digits.images.reshape((n_samples, -1))
-
-        classifier = svm.SVC()
-        classifier.fit(data[:n_samples/2], digits.target[:n_samples/2])
-
-        for index, image in enumerate(digits.images[n_samples/2:n_samples/2+4]):
-            pl.subplot(2, 4, index+5)
-            pl.imshow(image, cmap=pl.cm.gray_r)
-            pl.title('Prediction: %i' % classifier.predict(image.ravel()))
-
-    .. image:: images/plot_digits_classification.png
-       :height: 140
-       :target: auto_examples/plot_digits_classification.html
-
-    .. raw:: html
-
-        </div>
-
-
-.. warning:: 
-
-   This documentation is for the development version,
-   documentation for the stable version can be found `here
-   <http://scikit-learn.sourceforge.net/0.5/>`__
 
 .. include:: big_toc_css.rst
+
+.. note:: This document describes scikits.learn |release|. For other
+   versions and printable format, see :ref:`documentation_resources`.
 
 User Guide
 ==========
