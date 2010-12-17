@@ -46,7 +46,7 @@ Changelog
   - New `stochastic gradient
     <http://scikit-learn.sourceforge.net/modules/sgd.html>`_ descent
     module by Peter Prettenhofer. The module comes with complete
-    documentation and some examples can
+    documentation and examples.
 
   - Improved svm module: memory consumption has been reduced by 50%,
     heuristic to automatically set class weights, possibility to
@@ -60,13 +60,13 @@ Changelog
     for a taste of what can be done.
 
   - It is now possible to use liblinear’s Multi-class SVC (option
-    multi_class in :class:`linear_model.LinearSVC`)
+    multi_class in :class:`svm.LinearSVC`)
 
   - New features and performance improvements of text feature
     extraction. 
 
   - Improved sparse matrix support, both in main classes
-    (:class:`grid_search.GridSearch`) as in modules
+    (:class:`grid_search.GridSearchCV`) as in modules
     scikits.learn.svm.sparse and scikits.learn.linear_model.sparse.
 
   - Lots of cool new examples and a new section that uses real-world
@@ -77,8 +77,9 @@ Changelog
     :ref:`example_applications_wikipedia_principal_eigenvector.py` and
     others.
 
-  - Faster LARS algorithm. It is now 2x faster than the R version on
-    worst case and up to 10x times faster on some cases.
+  - Faster :ref:`least_angle_regression` algorithm. It is now 2x
+    faster than the R version on worst case and up to 10x times faster
+    on some cases.
 
   - Faster coordinate descent algorithm. In particular, the full path
     version of lasso (:func:`linear_model.lasso_path`) is more than
