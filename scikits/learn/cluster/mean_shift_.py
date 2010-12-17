@@ -23,7 +23,7 @@ def estimate_bandwidth(X, quantile=0.3):
         should be between [0, 1]
         0.5 means that the median is all pairwise distances is used
     """
-    distances = euclidian_distances(X)
+    distances = euclidian_distances(X, X)
     distances = np.triu(distances, 1)
     distances_sorted = np.sort(distances[distances > 0])
     bandwidth = distances_sorted[floor(quantile * len(distances_sorted))]
