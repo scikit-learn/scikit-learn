@@ -127,7 +127,7 @@ this reason, the Lasso and its variants are fundamental to the field
 of compressed sensing.
 
 This implementation uses coordinate descent as the algorithm to fit
-the coefficients. See :ref:`lars_algorithm` for another implementation.
+the coefficients. See :ref:`least_angle_regression` for another implementation.
 
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
@@ -200,9 +200,6 @@ The disadvantages of the LARS method include:
 The LARS model can be used using estimator :class:`LARS`, or its
 low-level implementation :func:`lars_path`.
 
-.. topic:: Examples:
-
- * :ref:`example_linear_model_plot_lar.py`
 
 LARS Lasso
 ==========
@@ -351,7 +348,7 @@ Regression* is more robust to ill-posed problem.
 
 .. topic:: References
 
-  * More details can be found in the article `paper <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_ 
+  * More details can be found in the article `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_ 
     by MacKay, David J. C.
 
 

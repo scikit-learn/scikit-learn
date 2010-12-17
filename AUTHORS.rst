@@ -50,7 +50,8 @@ People
 
   * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
 
-  * Jake VanderPlas contributed the BallTree module in February 2010.
+  * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_ 
+    contributed the BallTree module in February 2010.
 
   * `Alexandre Gramfort
     <http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html>`_
@@ -75,8 +76,8 @@ People
     fixes.
 
   * `Mathieu Blondel <http://mblondel.org/journal>`_ joined the
-    projectin September 2010 and worked on the sparse matrix support,
-    text feature extraction and bug fixes.
+    project in September 2010 and has worked since on the sparse
+    matrix support, text feature extraction and general bug fixes.
 
   * `Peter Prettenhofer
     <http://sites.google.com/site/peterprettenhofer/>`_ joined the
