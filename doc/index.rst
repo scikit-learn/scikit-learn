@@ -53,8 +53,7 @@
 
 
 :Features:
-  * **Solid**: :ref:`supervised-learning`: :ref:`svm`,
-      :ref:`linear_model`.
+  * **Solid**: :ref:`supervised-learning`: :ref:`svm`, :ref:`linear_model`.
 
   * **Work in progress**: :ref:`unsupervised-learning`:
     :ref:`clustering`, :ref:`mixture`, manifold learning, :ref:`ICA
