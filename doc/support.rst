@@ -1,5 +1,7 @@
 There are several ways to get in touch with the developers
 
+.. _mailing_lists:
+
 Mailing List
 ============
 
@@ -8,6 +10,7 @@ Main mailing list is `scikit-learn-general
 is also a commit list, where updates to the main repo get notified: `scikit-learn-commits <https://lists.sourceforge.net/lists/listinfo/scikit-learn-commits>`_
 
 
+.. _bug_tracker:
 
 Bug tracker
 ===========

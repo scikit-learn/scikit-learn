@@ -145,8 +145,8 @@ class PCA(BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> from scikits.learn.pca import PCA
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
     PCA(copy=True, n_components=2, whiten=False)
@@ -318,8 +318,8 @@ class RandomizedPCA(BaseEstimator):
     Examples
     --------
     >>> import numpy as np
+    >>> from scikits.learn.pca import RandomizedPCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> from scikits.learn.pca import PCA
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)
     RandomizedPCA(copy=True, n_components=2, iterated_power=3, whiten=False)

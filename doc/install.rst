@@ -137,10 +137,19 @@ installation, the package can be tested by executing from outside the
 source directory::
 
     python -c "import scikits.learn as skl; skl.test()"
-    
 
-It can also be tested without having the package installed. For this
-you must compile the sources inplace from the source directory::
+This should give you a lot of output (and some warnings) but
+eventually should finish with the a text similar to::
+
+           Ran 601 tests in 27.920s
+           OK (SKIP=2)
+
+otherwise please consider submitting a bug in the :ref:`bug_tracker`
+or to the :ref:`mailing_lists`.
+
+scikits.learn can also be tested without having the package
+installed. For this you must compile the sources inplace from the
+source directory::
 
     python setup.py build_ext --inplace
 

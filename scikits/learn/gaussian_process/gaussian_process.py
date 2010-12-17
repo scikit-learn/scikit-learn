@@ -192,12 +192,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     -------
     >>> import numpy as np
     >>> from scikits.learn.gaussian_process import GaussianProcess
-    >>> f = lambda x: x * np.sin(x)
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
-    >>> y = f(X).ravel()
-    >>> gp = GaussianProcess(theta0=1e-1, thetaL=1e-3, thetaU=1e0).fit(X, y)
-    >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
-    >>> y_pred, MSE = gp.predict(x, eval_MSE=True)
+    >>> y = (X * np.sin(X)).ravel()
+    >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
+    >>> gp.fit(X, y) # doctest: +ELLIPSIS
+    GaussianProcess(normalize=True, ...)
 
     Implementation details
     ----------------------

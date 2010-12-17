@@ -26,6 +26,7 @@ def euclidian_distances(X, Y):
 
     Examples
     --------
+    >>> from scikits.learn.metrics.pairwise import euclidian_distances
     >>> X = [[0, 1], [1, 1]]
     >>> # distrance between rows of X
     >>> euclidian_distances(X, X)
