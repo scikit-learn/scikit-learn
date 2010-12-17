@@ -99,7 +99,7 @@ People
 
 People that made this release possible preceeded by number of commits:
 
-   * 207  Olivier Grisel
+   * 207  `Olivier Grisel <http://twitter.com/ogrisel>`_
 
    * 138 `Fabian Pedregosa <http://fseoane.net/blog/>`_
 
