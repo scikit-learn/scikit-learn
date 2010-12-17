@@ -218,6 +218,11 @@ Tips on Practical Use
 
   * Specify larger cache size (keyword cache) for huge problems.
 
+  * The underlying :class:`LinearSVC` implementation uses a random
+    number generator to select features when fitting the model. It is
+    thus not uncommon, to have slightly different results for the same
+    input data. If that happens, try with a smaller eps parameter.
+
 
 .. _svm_kernels:
 
