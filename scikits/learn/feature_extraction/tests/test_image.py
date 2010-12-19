@@ -74,11 +74,11 @@ def test_convolutional_kmeans_encoder():
     n_features = pools * pools * n_centers
 
     encoder = ConvolutionalKMeansEncoder(n_centers=n_centers, pools=pools)
-    encoded1 = encoder.fit_transform(images)
+    encoder.fit(images)
 
-    #assert_equal(encoded1.shape, (n_samples, n_features))
+    assert_equal(encoder.kernels_.shape, (n_centers, 6 * 6))
 
-    # TODO: consistency check:
-    #encoded2 = encoder.transform(images)
-    #assert_array_equal(encoded1, encoded2)
+    #encoded = encoder.transform(images)
+    #assert_equal(encoded.shape, (n_samples, n_features))
+
 

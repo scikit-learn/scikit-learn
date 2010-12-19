@@ -257,11 +257,6 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
 
     def fit(self, X):
         """Fit the feature extractor on a collection of 2D images"""
-        fit_transform(X)
-        return self
-
-    def fit_transform(self, X):
-        """Fit the model while returning the transformed input"""
         X = self._check_images(X)
 
         # step 1: extract the patches
@@ -289,6 +284,7 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         # step 4: project back the centers in original, non-whitened space
         self.kernels_ = (np.dot(kmeans.cluster_centers_, pca.components_)
                          + pca.mean_)
+        return self
 
     def transform(self, X):
         """Map a collection of 2D images into the feature space"""
