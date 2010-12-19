@@ -4,6 +4,7 @@ Utilities to extract features from images.
 
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
+#          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
 
 import numpy as np
@@ -66,7 +67,7 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     Edges are weighted with the gradient values.
 
     Parameters
-    ===========
+    ==========
     img: ndarray, 2D or 3D
         2D or 3D image
     mask : ndarray of booleans, optional
@@ -103,4 +104,54 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return return_as(graph)
 
 
+################################################################################
+# From an image to a set of small image patches
 
+def extract_patches2d(images, image_size, patch_size, offsets=(0, 0)):
+    """Reshape a collection of 2D images into a collection of patches
+
+    The extracted patches are not overlapping to avoid having to copy any
+    memory.
+
+    TODO: right now images are graylevel only: add channels to the right
+    position according to the natural memory layout from PIL or scikits.image
+
+    TODO: implement real support of offsets
+
+    Parameters
+    ----------
+    images: array with shape (n_images, i_h, i_w) or (n_images, i_h * i_w)
+        the original image data
+
+    image_size: tuple of ints (i_h, i_w)
+        the dimensions of the images
+
+    patch_size: tuple of ints (p_h, p_w)
+        the dimensions of one patch
+
+    offset: tuple of ints (o_h, o_w), optional (0, 0) by default
+        location of the first extracted patch
+
+    Returns
+    -------
+    patches: array with shape (n_patches, *patch_size)
+    """
+    i_h, i_w = image_size
+    p_h, p_w = patch_size
+
+    images = np.atleast_2d(images)
+    n_images = images.shape[0]
+    images = images.reshape((n_images, i_h, i_w))
+
+    # TODO: handle offsets and remainders
+    n_h, n_w = i_h / p_h, i_w / p_w
+    n_patches = n_images * n_h * n_w
+
+    # slice the images into patches
+    patches = images.reshape((n_images, n_h, p_h, n_w, p_w))
+
+    # reorganize the patches into the expected shape
+    patches = patches.transpose((2, 4, 0, 1, 3)).reshape((p_h, p_w, n_patches))
+
+    # one more transpose to put the n_patches as the first dom
+    return patches.transpose((2, 0, 1))
