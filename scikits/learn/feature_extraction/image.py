@@ -272,18 +272,23 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         # step 2: whiten the patch space
         patches = patches_by_offset[0]
         patches = patches.reshape((patches.shape[0], -1))
-        pca = PCA(whiten=self.whiten).fit(patches)
-        patches_pca = pca.transform(patches)
+
+        if self.whiten:
+            pca = PCA(whiten=True).fit(patches)
+            patches = pca.transform(patches)
 
         # step 3: compute the KMeans centers
         kmeans = KMeans(k=self.n_centers, init='k-means++',
                         max_iter=self.max_iter, n_init=self.n_init)
-        kmeans.fit(patches_pca)
+        kmeans.fit(patches)
         self.inertia_ = kmeans.inertia_
 
         # step 4: project back the centers in original, non-whitened space
-        self.kernels_ = (np.dot(kmeans.cluster_centers_, pca.components_.T)
-                         + pca.mean_)
+        if self.whiten:
+            self.kernels_ = (np.dot(kmeans.cluster_centers_, pca.components_.T)
+                             + pca.mean_)
+        else:
+            self.kernels_ = kmeans.cluster_centers_
         return self
 
     def transform(self, X):
