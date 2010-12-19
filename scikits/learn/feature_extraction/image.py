@@ -196,7 +196,7 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
 
     Parameters
     ----------
-    n_centers: int, optional: default 1000
+    n_centers: int, optional: default 400
         number of centers extracted by the kmeans algorithm
 
     patch_size: tuple of int, optional: default 6
@@ -222,7 +222,7 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
     http://robotics.stanford.edu/~ang/papers/nipsdlufl10-AnalysisSingleLayerUnsupervisedFeatureLearning.pdf
     """
 
-    def __init__(self, n_centers=1000, image_size=None, patch_size=6,
+    def __init__(self, n_centers=400, image_size=None, patch_size=6,
                  step_size=1, whiten=True, pools=2, max_iter=1, n_init=1):
         self.n_centers = n_centers
         self.patch_size = patch_size
@@ -282,7 +282,7 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         self.inertia_ = kmeans.inertia_
 
         # step 4: project back the centers in original, non-whitened space
-        self.kernels_ = (np.dot(kmeans.cluster_centers_, pca.components_)
+        self.kernels_ = (np.dot(kmeans.cluster_centers_, pca.components_.T)
                          + pca.mean_)
         return self
 
