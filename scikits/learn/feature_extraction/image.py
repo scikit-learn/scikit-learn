@@ -8,8 +8,12 @@ Utilities to extract features from images.
 # License: BSD
 
 import numpy as np
+import math
 from scipy import sparse
 from ..utils.fixes import in1d
+from ..base import BaseEstimator
+from ..pca import PCA
+from ..cluster import KMeans
 
 ################################################################################
 # From an image to a graph
@@ -160,3 +164,133 @@ def extract_patches2d(images, image_size, patch_size, offsets=(0, 0)):
 
     # one more transpose to put the n_patches as the first dom
     return patches.transpose((2, 0, 1))
+
+
+class ConvolutionalKMeansEncoder(BaseEstimator):
+    """Unsupervised sparse feature extractor for 2D images
+
+    The fit method extracts patches from the images, whiten them using
+    a PCA transform and run a KMeans algorithms to extract centers of
+    the same (small) shape.
+
+    The input is then correlated with each individual "patch-center"
+    treated as a convolution kernel. The activations are them sparse coded
+    the "triangle" variant of a KMeans such that of center for each c[k]
+    we define an transformation function f_k over the input patches:
+
+        f_k(x) = max(0, np.mean(z) - z[k])
+
+    where z[k] = linalg.norm(x - c[k]) and x is an input patch.
+
+    Activations are then sum-pooled over the 4 quadrants of the original
+    image space.
+
+    The transform operation is performed by applying the convolutional,
+    sum-pooling and SVM prediction steps.
+
+    This estimator only implements the unsupervised feature extraction
+    part of the referenced paper. Image classification can then be
+    performed by training a linear SVM model on the output of this
+    estimator.
+
+    Parameters
+    ----------
+    n_centers: int, optional: default 1000
+        number of centers extracted by the kmeans algorithm
+
+    patch_size: tuple of int, optional: default 6
+        the size of the square patches / convolution kernels learned by
+        kmeans
+
+    step_size: int, optional: 1
+        number of pixels to shift between two consecutive patches (a.k.a.
+        stride)
+
+    whiten: boolean, optional: default True
+        perform a whitening PCA on the patches at feature extraction time
+
+    pools: int, optional: default 2
+        number equal size areas to perform the sum-pooling of features
+        over: pools=2 means 4 quadrants, pools=3 means 6 areas and so on
+
+    Reference
+    ---------
+    An Analysis of Single-Layer Networks in Unsupervised Feature Learning
+    Adam Coates, Honglak Lee and Andrew Ng. In NIPS*2010 Workshop on
+    Deep Learning and Unsupervised Feature Learning.
+    http://robotics.stanford.edu/~ang/papers/nipsdlufl10-AnalysisSingleLayerUnsupervisedFeatureLearning.pdf
+    """
+
+    def __init__(self, n_centers=1000, image_size=None, patch_size=6,
+                 step_size=1, whiten=True, pools=2, max_iter=1, n_init=1):
+        self.n_centers = n_centers
+        self.patch_size = patch_size
+        self.step_size = step_size
+        self.whiten = True
+        self.pools = pools
+        self.image_size = image_size
+        self.max_iter = max_iter
+        self.n_init = n_init
+
+    def _check_images(self, X):
+        """Check that X can seen as a consistent collection of images"""
+        X = np.atleast_2d(X)
+        n_samples = X.shape[0]
+
+        if self.image_size is None:
+            if len(X.shape) == 3:
+                self.image_size = X.shape[1:]
+            elif len(X.shape) > 3:
+                raise ValueError("%r is not a valid images shape" % (X.shape,))
+            else:
+                # assume square images
+                _, n_features = X.shape
+                size = math.sqrt(n_features)
+                if size ** 2 != n_features:
+                    raise ValueError("images with shape %r are not squares: "
+                                     "the image size must be made explicit" %
+                                     (X.shape,))
+                self.image_size = (size, size)
+
+        return X.reshape((n_samples, -1))
+
+    def fit(self, X):
+        """Fit the feature extractor on a collection of 2D images"""
+        fit_transform(X)
+        return self
+
+    def fit_transform(self, X):
+        """Fit the model while returning the transformed input"""
+        X = self._check_images(X)
+
+        # step 1: extract the patches
+        offsets = [(o, o) for o in range(0, self.patch_size - 1, self.step_size)]
+        patch_size = (self.patch_size, self.patch_size)
+
+        # this list of patches does not copy the memory allocated for raw image
+        # data
+        patches_by_offset = [extract_patches2d(
+            X, self.image_size, patch_size, offsets=o) for o in offsets]
+
+        # TODO: compute pca and kmeans taking other offsets into account to
+        # step 2: whiten the patch space
+        patches = patches_by_offset[0]
+        patches = patches.reshape((patches.shape[0], -1))
+        pca = PCA(whiten=self.whiten).fit(patches)
+        patches_pca = pca.transform(patches)
+
+        # step 3: compute the KMeans centers
+        kmeans = KMeans(k=self.n_centers, max_iter=self.max_iter,
+                        n_init=self.n_init)
+        kmeans.fit(patches_pca)
+        self.inertia_ = kmeans.inertia_
+
+        # step 4: project back the centers in original, non-whitened space
+        self.kernels_ = (np.dot(kmeans.cluster_centers_, pca.components_)
+                         + pca.mean_)
+
+    def transform(self, X):
+        """Map a collection of 2D images into the feature space"""
+        X = self._check_images(X)
+        raise NotImplementedError("implement me!")
+
