@@ -170,13 +170,14 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
     """Unsupervised sparse feature extractor for 2D images
 
     The fit method extracts patches from the images, whiten them using
-    a PCA transform and run a KMeans algorithms to extract centers of
-    the same (small) shape.
+    a PCA transform and run a KMeans algorithm to extract the patch
+    cluster centers.
 
     The input is then correlated with each individual "patch-center"
-    treated as a convolution kernel. The activations are them sparse coded
-    the "triangle" variant of a KMeans such that of center for each c[k]
-    we define an transformation function f_k over the input patches:
+    treated as a convolution kernel. The activations are then
+    sparse-encoded using the "triangle" variant of a KMeans such that
+    for each center c[k] we define a transformation function f_k over
+    the input patches:
 
         f_k(x) = max(0, np.mean(z) - z[k])
 
@@ -185,8 +186,8 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
     Activations are then sum-pooled over the 4 quadrants of the original
     image space.
 
-    The transform operation is performed by applying the convolutional,
-    sum-pooling and SVM prediction steps.
+    The transform operation is performed by applying the triangle kmeans
+    sparse-encoding and sum-pooling.
 
     This estimator only implements the unsupervised feature extraction
     part of the referenced paper. Image classification can then be
