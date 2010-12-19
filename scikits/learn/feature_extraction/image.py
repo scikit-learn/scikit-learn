@@ -276,8 +276,8 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         patches_pca = pca.transform(patches)
 
         # step 3: compute the KMeans centers
-        kmeans = KMeans(k=self.n_centers, max_iter=self.max_iter,
-                        n_init=self.n_init)
+        kmeans = KMeans(k=self.n_centers, init='k-means++',
+                        max_iter=self.max_iter, n_init=self.n_init)
         kmeans.fit(patches_pca)
         self.inertia_ = kmeans.inertia_
 

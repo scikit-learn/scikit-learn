@@ -9,6 +9,7 @@ from scipy import ndimage
 
 from nose.tools import assert_equal
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_almost_equal
 
 from ..image import img_to_graph
 from ..image import extract_patches2d
@@ -36,8 +37,12 @@ def test_connect_regions():
 
 
 def _make_images():
-    # make a collection of lenas
+    # Downsample the image by a factor of 4
     lena = sp.lena()
+    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
+    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
+
+    # make a collection of lenas
     images = np.zeros((3,) + lena.shape)
     images[0] = lena
     images[1] = lena + 1
@@ -49,14 +54,14 @@ def test_extract_patches2d():
     images = _make_images()
     image_size = images.shape[1:]
 
-    # lena is shaped (512, 512): expect 32 * 32 patches with shape (16, 16)
-    expected_n_patches = images.shape[0] * 32 * 32
+    # lena is shaped (128, 128): expect 8 * 8 patches with shape (16, 16)
+    expected_n_patches = images.shape[0] * 8 * 8
 
     patches = extract_patches2d(images, image_size, (16, 16))
     assert_equal(patches.shape, (expected_n_patches, 16, 16))
 
     # extract patches with a 1 offset in the X axis and 3 in the Y axis
-    expected_n_patches = images.shape[0] * 31 * 31
+    expected_n_patches = images.shape[0] * 7 * 7
 
     patches = extract_patches2d(images, image_size, (16, 16), offsets=(1, 3))
     assert_equal(patches.shape, (expected_n_patches, 16, 16))
@@ -66,16 +71,19 @@ def test_convolutional_kmeans_encoder():
     images = _make_images()
     n_samples = images.shape[0]
 
-    n_centers = 50
+    n_centers = 10
     pools = 2
 
     # expected number of features is driven by number of centers and the number
     # of sum-pooling areas
     n_features = pools * pools * n_centers
 
+    # TODO: make ConvolutionalKMeansEncoder and KMeans rng seedable
+    np.random.seed(0)
     encoder = ConvolutionalKMeansEncoder(n_centers=n_centers, pools=pools)
     encoder.fit(images)
 
+    assert_almost_equal(encoder.inertia_ / 1e6, .04, 2)
     assert_equal(encoder.kernels_.shape, (n_centers, 6 * 6))
 
     #encoded = encoder.transform(images)
