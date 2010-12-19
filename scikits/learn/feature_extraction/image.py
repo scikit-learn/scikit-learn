@@ -116,8 +116,6 @@ def extract_patches2d(images, image_size, patch_size, offsets=(0, 0)):
     TODO: right now images are graylevel only: add channels to the right
     position according to the natural memory layout from PIL or scikits.image
 
-    TODO: implement real support of offsets
-
     Parameters
     ----------
     images: array with shape (n_images, i_h, i_w) or (n_images, i_h * i_w)
@@ -129,7 +127,7 @@ def extract_patches2d(images, image_size, patch_size, offsets=(0, 0)):
     patch_size: tuple of ints (p_h, p_w)
         the dimensions of one patch
 
-    offset: tuple of ints (o_h, o_w), optional (0, 0) by default
+    offsets: tuple of ints (o_h, o_w), optional (0, 0) by default
         location of the first extracted patch
 
     Returns
@@ -143,9 +141,16 @@ def extract_patches2d(images, image_size, patch_size, offsets=(0, 0)):
     n_images = images.shape[0]
     images = images.reshape((n_images, i_h, i_w))
 
-    # TODO: handle offsets and remainders
-    n_h, n_w = i_h / p_h, i_w / p_w
+    # handle offsets and compute remainder to find total number of patches
+    o_h, o_w = offsets
+    n_h, r_h = divmod(i_h - o_h,  p_h)
+    n_w, r_w = divmod(i_w - o_w,  p_w)
     n_patches = n_images * n_h * n_w
+
+    # extract the image areas that can be sliced into whole patches
+    max_h = -r_h or None
+    max_w = -r_w or None
+    images = images[:, o_h:max_h, o_w:max_w]
 
     # slice the images into patches
     patches = images.reshape((n_images, n_h, p_h, n_w, p_w))
