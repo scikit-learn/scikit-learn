@@ -119,8 +119,8 @@ y_train, y_test = y[:split], y[split:]
 
 n_centers = 400
 patch_size = 6
-encoder = ConvolutionalKMeansEncoder(n_centers=n_centers, patch_size=16,
-                                     max_iter=5)
+encoder = ConvolutionalKMeansEncoder(n_centers=n_centers, patch_size=patch_size,
+                                     whiten=True, max_iter=5)
 encoder.fit(X_train)
 print "inertia: %0.3fe6" % (encoder.inertia_ / 1e6)
 
