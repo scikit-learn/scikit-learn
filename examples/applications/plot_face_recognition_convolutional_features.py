@@ -118,7 +118,9 @@ y_train, y_test = y[:split], y[split:]
 # Extract filters
 
 n_centers = 400
-encoder = ConvolutionalKMeansEncoder(n_centers=n_centers, max_iter=5)
+patch_size = 6
+encoder = ConvolutionalKMeansEncoder(n_centers=n_centers, patch_size=16,
+                                     max_iter=5)
 encoder.fit(X_train)
 print "inertia: %0.3fe6" % (encoder.inertia_ / 1e6)
 
@@ -131,8 +133,8 @@ n_col = int(math.sqrt(n_centers))
 pl.figure()
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
-    pl.imshow(encoder.kernels_[i].reshape((6, 6)), cmap=pl.cm.gray,
-              interpolation="nearest")
+    pl.imshow(encoder.kernels_[i].reshape((patch_size, patch_size)),
+              cmap=pl.cm.gray, interpolation="nearest")
     pl.xticks(())
     pl.yticks(())
 
