@@ -137,6 +137,48 @@ def extract_patches2d(images, image_size, patch_size, offsets=(0, 0)):
     Returns
     -------
     patches: array with shape (n_patches, *patch_size)
+
+    Examples
+    --------
+
+    >>> image = np.arange(16).reshape((1, 4, 4))
+    >>> image
+    array([[[ 0,  1,  2,  3],
+            [ 4,  5,  6,  7],
+            [ 8,  9, 10, 11],
+            [12, 13, 14, 15]]])
+
+    >>> patches = extract_patches2d(image, (4, 4), (2, 2))
+    >>> patches.shape
+    (4, 2, 2)
+
+    >>> patches[0]
+    array([[0, 1],
+           [4, 5]])
+
+    >>> patches[1]
+    array([[2, 3],
+           [6, 7]])
+
+    >>> patches[2]
+    array([[ 8,  9],
+           [12, 13]])
+
+    >>> patches[3]
+    array([[10, 11],
+           [14, 15]])
+
+    >>> patches = extract_patches2d(image, (4, 4), (2, 2), (0, 1))
+    >>> patches.shape
+    (2, 2, 2)
+
+    >>> patches[0]
+    array([[1, 2],
+           [5, 6]])
+
+    >>> patches[1]
+    array([[ 9, 10],
+           [13, 14]])
     """
     i_h, i_w = image_size
     p_h, p_w = patch_size
