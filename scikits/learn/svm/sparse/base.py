@@ -10,7 +10,7 @@ from .. import _liblinear
 
 class SparseBaseLibSVM(BaseLibSVM):
 
-    _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
+    _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
