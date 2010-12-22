@@ -17,7 +17,7 @@ applications to real-world datasets.
 
 .. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling.png
    :height: 150
-   :target: auto_examples/linear_model/plot_species_distribution.html
+   :target: auto_examples/applications/plot_species_distribution_modeling.html
 
 .. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression.png
    :height: 150
@@ -25,7 +25,7 @@ applications to real-world datasets.
 
 .. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris.png
    :height: 150
-   :target: auto_examples/linear_model/plot_lasso_lars.html
+   :target: auto_examples/linear_model/plot_sgd_iris.html
 
 
 .. |center-div| raw:: html
