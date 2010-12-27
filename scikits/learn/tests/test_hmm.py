@@ -21,8 +21,8 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
 
     class StubHMM(hmm._BaseHMM):
 
-        def _compute_log_likelihood(self):
-            pass
+        def _compute_log_likelihood(self, X):
+            return self.framelogprob
 
         def _generate_sample_from_state(self):
             pass
@@ -64,7 +64,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
                                [0.9, 0.2],
                                [0.9, 0.2]])
         # Add dummy observations to stub.
-        h._compute_log_likelihood = lambda obs: framelogprob
+        h.framelogprob = framelogprob
         return h, framelogprob
 
     def test_init(self):
@@ -141,7 +141,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
 
         # Add dummy observations to stub.
         framelogprob = np.log(np.random.rand(nobs, n_states))
-        h._compute_log_likelihood = lambda obs: framelogprob
+        h.framelogprob = framelogprob
 
         # If startprob and transmat are uniform across all states (the
         # default), the transitions are uninformative - the model
@@ -162,7 +162,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
 
         # Add dummy observations to stub.
         framelogprob = np.log(np.random.rand(nobs, n_states))
-        h._compute_log_likelihood = lambda obs: framelogprob
+        h.framelogprob = framelogprob
 
         # If startprob and transmat are uniform across all states (the
         # default), the transitions are uninformative - the model
@@ -500,6 +500,25 @@ class TestMultinomialHMM(MultinomialHMMParams,
         self.test_fit('e')
 
 
+def create_random_gmm(n_mix, n_features, cvtype):
+    from scikits.learn import mixture
+
+    g = mixture.GMM(n_mix, cvtype=cvtype)
+    g.means = np.random.randint(-20, 20, (n_mix, n_features))
+    mincv = 0.1
+    g.covars = {'spherical': (mincv
+                              + mincv * np.random.rand(n_mix)) ** 2,
+                'tied': _generate_random_spd_matrix(n_features)
+                       + mincv * np.eye(n_features),
+                'diag': (mincv
+                         + mincv * np.random.rand(n_mix, n_features)) ** 2,
+                'full': np.array([_generate_random_spd_matrix(n_features)
+                                  + mincv * np.eye(n_features)
+                                  for x in xrange(n_mix)])}[cvtype]
+    g.weights = hmm.normalize(np.random.rand(n_mix))
+    return g
+
+
 class GMMHMMParams(object):
     n_states = 3
     n_mix = 2
@@ -510,25 +529,6 @@ class GMMHMMParams(object):
     transmat = np.random.rand(n_states, n_states)
     transmat /= np.tile(transmat.sum(axis=1)[:,np.newaxis], (1, n_states))
 
-    @staticmethod
-    def create_random_gmm(n_mix, n_features, cvtype):
-        from scikits.learn import mixture
-
-        g = mixture.GMM(n_mix, cvtype=cvtype)
-        g.means = np.random.randint(-20, 20, (n_mix, n_features))
-        mincv = 0.1
-        g.covars = {'spherical': (mincv
-                                  + mincv * np.random.rand(n_mix)) ** 2,
-                    'tied': _generate_random_spd_matrix(n_features)
-                           + mincv * np.eye(n_features),
-                    'diag': (mincv
-                             + mincv * np.random.rand(n_mix, n_features)) ** 2,
-                    'full': np.array([_generate_random_spd_matrix(n_features)
-                                      + mincv * np.eye(n_features)
-                                      for x in xrange(n_mix)])}[cvtype]
-        g.weights = hmm.normalize(np.random.rand(n_mix))
-
-        return g
 
 
 class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
@@ -537,7 +537,7 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
         np.random.seed(self.seed)
         self.gmms = []
         for state in xrange(self.n_states):
-            self.gmms.append(self.create_random_gmm(
+            self.gmms.append(create_random_gmm(
                 self.n_mix, self.n_features, self.cvtype))
 
     def test_attributes(self):

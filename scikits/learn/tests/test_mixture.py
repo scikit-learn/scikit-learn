@@ -79,7 +79,7 @@ def test_sample_gaussian():
     cv = np.dot(A.T, A) + np.eye(n_features)
     samples = mixture.sample_gaussian(mu, cv, cvtype='full', n=n_samples)
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
-    assert np.allclose(np.cov(samples), cv, atol=0.7)
+    assert np.allclose(np.cov(samples), cv, atol=1.)
 
 
 def _naive_lmvnpdf_diag(obs, mu, cv):

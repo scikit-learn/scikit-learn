@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-=================================================================
+=========================================================
 Gaussian Processes regression: basic introductory example
-=================================================================
+=========================================================
 
 A simple one-dimensional regression exercise with a cubic correlation
 model whose parameters are estimated using the maximum likelihood principle.
@@ -13,6 +13,7 @@ The figure illustrates the interpolating property of the Gaussian Process
 model as well as its probabilistic nature in the form of a pointwise 95%
 confidence interval.
 """
+print __doc__
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD style
@@ -21,11 +22,10 @@ import numpy as np
 from scikits.learn.gaussian_process import GaussianProcess
 from matplotlib import pyplot as pl
 
-# Print the docstring
-print __doc__
 
-# The function to predict
-f = lambda x: x * np.sin(x)
+def f(x):
+    """The function to predict."""
+    return x * np.sin(x)
 
 # The design of experiments
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T

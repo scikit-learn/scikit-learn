@@ -2,7 +2,7 @@ from os.path import join
 import warnings
 import numpy
 import sys
-from ConfigParser import ConfigParser
+
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -11,9 +11,6 @@ def configuration(parent_package='', top_path=None):
     from numpy.distutils.system_info import BlasNotFoundError
 
     config = Configuration('sparse', parent_package, top_path)
-
-    site_cfg  = ConfigParser()
-    site_cfg.read(get_standard_file('site.cfg'))
 
     config.add_extension('cd_fast_sparse',
                          sources=[join('src', 'cd_fast_sparse.c')],

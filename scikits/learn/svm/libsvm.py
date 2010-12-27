@@ -4,9 +4,7 @@ from .base import BaseLibSVM
 
 
 class SVC(BaseLibSVM, ClassifierMixin):
-    """
-    C-Support Vector Classification.
-
+    """C-Support Vector Classification.
 
     Parameters
     ----------
@@ -94,9 +92,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
-    """
-    Nu-Support Vector Classification.
-
+    """Nu-Support Vector Classification.
 
     Parameters
     ----------
@@ -169,6 +165,9 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     predict_proba(X) : array
         Return probability estimates.
 
+    predict_log_proba(X) : array
+        Return log-probability estimates.
+
     decision_function(X) : array
         Return distance to predicted margin.
 
@@ -200,9 +199,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
 
 class SVR(BaseLibSVM, RegressorMixin):
-    """
-    Support Vector Regression.
-
+    """Support Vector Regression.
 
     Parameters
     ----------
@@ -299,11 +296,11 @@ class SVR(BaseLibSVM, RegressorMixin):
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
-    """
-    Nu Support Vector Regression. Similar to NuSVC, for regression,
-    uses a paramter nu to control the number of support
-    vectors. However, unlike NuSVC, where nu replaces with C, here nu
-    replaces with the parameter p of SVR.
+    """Nu Support Vector Regression.
+
+    Similar to NuSVC, for regression, uses a paramter nu to control
+    the number of support vectors. However, unlike NuSVC, where nu
+    replaces with C, here nu replaces with the parameter p of SVR.
 
     Parameters
     ----------
@@ -398,7 +395,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
 
 class OneClassSVM(BaseLibSVM):
-    """Unsupervised outliers detection
+    """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
 
@@ -459,9 +456,9 @@ class OneClassSVM(BaseLibSVM):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
                              cache_size, eps, 0.0, nu, 0.0, shrinking, False)
 
-    def fit(self, X):
+    def fit(self, X, class_weight={}, sample_weight=[], **params):
         """
-        Detects the soft boundary (aka soft boundary) of the set of samples X.
+        Detects the soft boundary of the set of samples X.
 
         Parameters
         ----------
@@ -469,5 +466,11 @@ class OneClassSVM(BaseLibSVM):
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
+        Returns
+        -------
+        self : object
+            Returns self.
         """
-        super(OneClassSVM, self).fit(X, [])
+        super(OneClassSVM, self).fit(
+            X, [], class_weight=class_weight, sample_weight=sample_weight,
+            **params)

@@ -31,6 +31,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 	-rm -rf auto_examples/
 	-rm -rf doc/generated/*
+	-rm -rf modules/generated/*
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

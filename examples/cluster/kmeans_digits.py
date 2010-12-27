@@ -51,7 +51,7 @@ print "Raw k-means with PCA-based centroid init..."
 # in this case the seeding of the centers is deterministic, hence we run the
 # kmeans algorithm only once with n_init=1
 t0 = time()
-pca = PCA(n_comp=n_digits).fit(data)
+pca = PCA(n_components=n_digits).fit(data)
 km = KMeans(init=pca.components_.T, k=n_digits, n_init=1).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_

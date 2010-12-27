@@ -1,22 +1,4 @@
-"""
-Support Vector Machine algorithms for sparse matrices.
-
-Warning: this module is a work in progress. It is not tested and surely
-contains bugs.
-
-Notes
------
-
-Some fields, like dual_coef_ are not sparse matrices strictly speaking.
-However, they are converted to a sparse matrix for consistency and
-efficiency when multiplying to other sparse matrices.
-
-Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-License: New BSD
-"""
-
 import numpy as np
-from scipy import sparse
 
 from ...base import ClassifierMixin
 from ..base import BaseLibSVM, BaseLibLinear, _get_class_weight
@@ -33,12 +15,15 @@ class SparseBaseLibSVM(BaseLibSVM):
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nu, p, shrinking, probability):
+
         assert impl in self._svm_types, \
             "impl should be one of %s, %s was given" % (
                 self._svm_types, impl)
-        assert kernel in self._kernel_types or callable(kernel), \
-            "kernel should be one of %s or a callable, %s was given." % (
-                self._kernel_types, kernel)
+
+        assert kernel in self._kernel_types, \
+               "kernel should be one of %s, "\
+               "%s was given." % ( self._kernel_types, kernel)
+
         self.kernel = kernel
         self.impl = impl
         self.degree = degree
@@ -67,13 +52,46 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.n_support = np.empty(0, dtype=np.int32, order='C')
 
 
-    def fit(self, X, y, class_weight={}, sample_weight=[]):
+    def fit(self, X, y, class_weight={}, sample_weight=[], **params):
         """
-        X is expected to be a sparse matrix. For maximum effiency, use a
-        sparse matrix in csr format (scipy.sparse.csr_matrix)
-        """
+        Fit the SVM model according to the given training data and
+        parameters.
 
-        X = sparse.csr_matrix(X)
+        Parameters
+        ----------
+        X : sparse matrix, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+
+        class_weight : dict | 'auto', optional
+            Weights associated with classes in the form
+            {class_label : weight}. If not given, all classes are
+            supposed to have weight one.
+
+            The 'auto' mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+
+        Notes
+        -----
+        For maximum effiency, use a sparse matrix in csr format
+        (scipy.sparse.csr_matrix)
+        """
+        self._set_params(**params)
+
+        import scipy.sparse
+        X = scipy.sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         y      = np.asanyarray(y,      dtype=np.float64, order='C')
         sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
@@ -108,12 +126,12 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         # this will fail if n_SV is zero. This is a limitation
         # in scipy.sparse, which does not permit empty matrices
-        self.support_vectors_ = sparse.csr_matrix((self._support_data,
+        self.support_vectors_ = scipy.sparse.csr_matrix((self._support_data,
                                            self._support_indices,
                                            self._support_indptr),
                                            (n_SV, X.shape[1]) )
 
-        self.dual_coef_ = sparse.csr_matrix((self._dual_coef_data,
+        self.dual_coef_ = scipy.sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
                                              dual_coef_indptr),
                                             (n_class, n_SV)
@@ -138,9 +156,10 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         Returns
         -------
-        C : array, shape = [nsample]
+        C : array, shape = [n_samples]
         """
-        T = sparse.csr_matrix(T)
+        import scipy.sparse
+        T = scipy.sparse.csr_matrix(T)
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
 
@@ -161,16 +180,25 @@ class SparseBaseLibLinear(BaseLibLinear):
 
     def fit(self, X, y, class_weight={}, **params):
         """
+        Fit the model using X, y as training data.
+
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : sparse matrix, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]
             Target vector relative to X
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
         """
         self._set_params(**params)
-        X = sparse.csr_matrix(X)
+
+        import scipy.sparse
+        X = scipy.sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.int32, order='C')
 
@@ -186,7 +214,19 @@ class SparseBaseLibLinear(BaseLibLinear):
         return self
 
     def predict(self, X):
-        X = sparse.csr_matrix(X)
+        """
+        Predict target values of X according to the fitted model.
+
+        Parameters
+        ----------
+        X : sparse matrix, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+        """
+        import scipy.sparse
+        X = scipy.sparse.csr_matrix(X)
         self._check_n_features(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
 

@@ -53,12 +53,15 @@ Generalized Linear Models
    linear_model.LARS
    linear_model.LassoLARS
    linear_model.LogisticRegression
+   linear_model.SGDClassifier
+   linear_model.SGDRegressor
 
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
+   linear_model.lasso_path
    linear_model.lars_path
 
 
@@ -71,27 +74,8 @@ For sparse data
 
    linear_model.sparse.Lasso
    linear_model.sparse.ElasticNet
-
-
-Stochastic Gradient Descent
-===========================
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   sgd.ClassifierSGD
-   sgd.RegressorSGD
-
-For sparse data
----------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   sgd.sparse.ClassifierSGD
-   sgd.sparse.RegressorSGD
+   linear_model.sparse.SGDClassifier
+   linear_model.sparse.SGDRegressor
         
 
 Bayesian Regression
@@ -122,6 +106,7 @@ Nearest Neighbors
    :template: class.rst
 
    neighbors.Neighbors
+   neighbors.NeighborsBarycenter
    ball_tree.BallTree
 
 .. autosummary::

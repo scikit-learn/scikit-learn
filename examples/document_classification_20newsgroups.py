@@ -42,7 +42,7 @@ import sys
 from scikits.learn.datasets import load_files
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
 from scikits.learn.svm.sparse import LinearSVC
-from scikits.learn.sgd.sparse import ClassifierSGD
+from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn import metrics
 
 # parse commandline arguments
@@ -162,11 +162,11 @@ for penalty in ["l2", "l1"]:
                                         dual=False, eps=1e-3))
 
     # Train SGD model
-    sgd_results = benchmark(ClassifierSGD(alpha=.0001, n_iter=50,
+    sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                           penalty=penalty))
 
 # Train SGD with Elastic Net penalty
 print 80*'='
 print "Elastic-Net penalty"
-sgd_results = benchmark(ClassifierSGD(alpha=.0001, n_iter=50,
+sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                       penalty="elasticnet"))

@@ -35,7 +35,7 @@ will have difficulties scaling to thousands of samples.
  * :ref:`example_cluster_plot_affinity_propagation.py`: Affinity
    Propagation on a synthetic 2D datasets with 3 classes.
 
- * :ref:`example_stock_market.py` Affinity Propagation on Financial 
+ * :ref:`example_applications_stock_market.py` Affinity Propagation on Financial 
    time series to find groups of companies
 
 Mean Shift

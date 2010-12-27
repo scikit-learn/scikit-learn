@@ -561,10 +561,10 @@ def _lmvnpdffull(obs, means, covars):
     log_prob = np.empty((nobs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
         cv_chol = linalg.cholesky(cv, lower=True)
-        cv_det  = np.prod(np.diagonal(cv_chol))**2
+        cv_log_det  = 2*np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol  = solve_triangular(cv_chol, (obs - mu).T, lower=True).T
         log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=1) + \
-                           ndim * np.log(2 * np.pi) + np.log(cv_det))
+                           ndim * np.log(2 * np.pi) + cv_log_det)
 
     return log_prob
 

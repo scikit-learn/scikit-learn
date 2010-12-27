@@ -27,4 +27,9 @@ doc/coverages
 doc/samples
 
 lfw_preprocessed/
-lfw_preprocessed.tar.gz
+nips2010_pdf/
+
+*.nt.bz2
+*.tar.gz
+*.tgz
+joblib
