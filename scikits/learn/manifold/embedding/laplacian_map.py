@@ -15,7 +15,7 @@ from .base_embedding import BaseEmbedding
 from ..mapping import builder as mapping_builder
 
 from .tools import create_graph, create_sym_graph
-from ...utils.euclidian_distances import euclidian_distances
+from ...metrics.pairwise import euclidian_distances
 from ...preprocessing import Scaler
 
 try:

@@ -35,7 +35,7 @@ def create_neighborer(samples, neigh=None, n_neighbors=None,
     A neighbor instance
     """
     if neigh is None:
-        neigh = Neighbors(k = n_neighbors if n_neighbors is not None else 9)
+        neigh = Neighbors(n_neighbors = n_neighbors if n_neighbors is not None else 9)
         neigh.fit(samples)
         neigh.predict = neigh.kneighbors
     else:
