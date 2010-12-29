@@ -10,9 +10,7 @@ import numpy as np
 from scipy import linalg
 
 from .base_embedding import BaseEmbedding
-from ..mapping import builder as mapping_builder
-
-from .tools import create_graph
+from ...neighbors import kneighbors_graph
 
 
 def hessian_map(samples, n_coords, **kwargs):
@@ -26,8 +24,8 @@ def hessian_map(samples, n_coords, **kwargs):
            the samples that will be embedded
       n_coords : int
            the number of coordinates in the manifold
-      neigh : function
-           the neighborer used (optional, default Kneighbor)
+      ball_tree : function
+           the neighborer used (optional, default BallTree)
       n_neighbors : int
            the number of neighbors (optional, default 9)
 
@@ -35,12 +33,14 @@ def hessian_map(samples, n_coords, **kwargs):
     -------
     The embedding
     """
-    graph = create_graph(samples, **kwargs)
+    graph = kneighbors_graph(samples, **kwargs)
+    graph = graph.tolil()
+
     dp = n_coords * (n_coords + 1) / 2
     W = np.zeros((len(samples) * dp, len(samples)))
 
-    for i in range(len(samples)):
-        neighs = graph[i][1]
+    for i in range(len(graph.rows)):
+        neighs = graph.rows[i]
         neighborhood = samples[neighs] - np.mean(samples[neighs], axis=0)
         u, s, vh = linalg.svd(neighborhood.T, full_matrices=False)
         tangent = vh.T[:,:n_coords]
@@ -86,22 +86,10 @@ class HessianMap(BaseEmbedding):
       The number of K-neighboors to use (optional, default 9) if neigh is not
       given.
 
-    neigh : Neighbors
+    ball_tree : BallTree
       A neighboorer (optional). By default, a K-Neighbor research is done.
       If provided, neigh must be a functor class . `neigh_alternate_arguments`
       will be passed to this class constructor.
-
-    neigh_alternate_arguments : dictionary
-      Dictionary of arguments that will be passed to the `neigh` constructor
-
-    mapping_kind : object
-      The type of mapper to use. Can be:
-          * None : no mapping built
-          * "Barycenter" (default) : Barycenter mapping
-          * a class object : a class that will be instantiated with the
-              arguments of this function
-          * an instance : an instance that will be fit() and then
-              transform()ed
 
     Attributes
     ----------
@@ -132,13 +120,11 @@ class HessianMap(BaseEmbedding):
       .5, 0., 0., \
       1., 1., 0.5, \
       )).reshape((-1,3))
-    >>> hessian = HessianMap(n_coords = 2, mapping_kind = None, n_neighbors = 4)
+    >>> hessian = HessianMap(n_coords = 2,n_neighbors = 4)
     >>> hessian = hessian.fit(samples)
     """
-    def __init__(self, n_coords, n_neighbors=None, neigh=None,
-        neigh_alternate_arguments=None, mapping_kind="Barycenter"):
-        BaseEmbedding.__init__(self, n_coords, n_neighbors,
-            neigh,neigh_alternate_arguments, mapping_kind)
+    def __init__(self, n_coords, n_neighbors=None, ball_tree=None):
+        BaseEmbedding.__init__(self, n_coords, n_neighbors, ball_tree)
 
     def fit(self, X):
         """
@@ -153,11 +139,7 @@ class HessianMap(BaseEmbedding):
         """
         self.X_ = np.asanyarray(X)
         self.embedding_ = hessian_map(self.X_, n_coords=self.n_coords,
-            neigh=self.neigh, n_neighbors=self.n_neighbors,
-            neigh_alternate_arguments=self.neigh_alternate_arguments)
-        self.mapping = mapping_builder(self, self.mapping_kind,
-            neigh=self.neigh, n_neighbors=self.n_neighbors - 1,
-            neigh_alternate_arguments=self.neigh_alternate_arguments)
+            ball_tree=self.ball_tree, n_neighbors=self.n_neighbors)
         return self
 
 def mgs(A):

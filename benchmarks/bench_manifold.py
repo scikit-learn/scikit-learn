@@ -22,16 +22,16 @@ def bench(clf, X_train):
 
 def compute_bench(n_samples):
     def LLEFactory():
-        return LLE(n_coords=2, mapping_kind=None, n_neighbors=8)
+        return LLE(n_coords=2, n_neighbors=8)
 
     def LaplacianEigenmapFactory():
-        return LaplacianEigenmap(n_coords=2, mapping_kind=None, n_neighbors=8)
+        return LaplacianEigenmap(n_coords=2, n_neighbors=8)
 
     def DiffusionMapFactory():
-        return DiffusionMap(n_coords=2, mapping_kind=None)
+        return DiffusionMap(n_coords=2)
 
     def HessianMapFactory():
-        return HessianMap(n_coords=2, mapping_kind=None, n_neighbors=8)
+        return HessianMap(n_coords=2, n_neighbors=8)
 
     lle_results = []
     laplacianeigenmap_results = []

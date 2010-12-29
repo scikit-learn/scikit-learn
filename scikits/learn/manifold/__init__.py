@@ -7,5 +7,3 @@ Manifold Learning Module
 from .embedding.lle import LLE
 from .embedding.hessian_map import HessianMap
 from .embedding.laplacian_map import LaplacianEigenmap, DiffusionMap
-
-from .mapping.barycenter import Barycenter

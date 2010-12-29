@@ -7,9 +7,7 @@ from numpy.testing import assert_array_equal, \
 
 from unittest import TestCase
 
-from nose.tools import raises
-
-from ..tools import create_neighborer
+from ....ball_tree import BallTree
 from ..lle import LLE
 
 samples = np.array((0., 0., 0.,
@@ -26,27 +24,12 @@ from .test_laplacian_map import close
 class TestLLE(TestCase):
     def test_fit(self):
         np.random.seed(0)
-        lle = LLE(n_coords=2, mapping_kind=None, n_neighbors=4)
+        lle = LLE(n_coords=2, n_neighbors=4)
         assert(lle.fit(samples) == lle)
         assert(hasattr(lle, 'embedding_'))
         assert(lle.embedding_.shape == (7, 2))
         neighbors_orig =\
-            create_neighborer(samples, n_neighbors=4).predict(samples)[1]
+            BallTree(samples).query(samples, k=4)[1]
         neighbors_embedding =\
-            create_neighborer(lle.embedding_, n_neighbors=4).predict(
-                lle.embedding_)[1]
+            BallTree(lle.embedding_).query(lle.embedding_, k=4)[1]
         close(neighbors_orig, neighbors_embedding, 2)
-
-    @raises(RuntimeError)
-    def test_transform_raises(self):
-        np.random.seed(0)
-        lle = LLE(n_coords=2, mapping_kind=None, n_neighbors=3)
-        lle.fit(samples[:4])
-        lle.transform(samples[0])
-
-    def test_transform(self):
-        np.random.seed(0)
-        lle = LLE(n_coords=2, n_neighbors=3)
-        lle.fit(samples[:4])
-        mapped = lle.transform(samples)
-        assert_array_almost_equal(mapped[:4], lle.embedding_, decimal=1)
