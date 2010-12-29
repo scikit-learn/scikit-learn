@@ -49,13 +49,13 @@ def compute_bench(n_samples):
         X, Y = swissroll(n_samples=ns)
 
         print "benching LLE: "
-#        lle_results.append(bench(LLEFactory(), X))
+        lle_results.append(bench(LLEFactory(), X))
         print "benching Laplacian Eigenmaps: "
         laplacianeigenmap_results.append(bench(LaplacianEigenmapFactory(), X))
         print "benching Diffusion Maps: "
         diffusionmap_results.append(bench(DiffusionMapFactory(), X))
         print "benching Hessian Eigenmaps: "
-#        hessianmap_results.append(bench(HessianMapFactory(), X))
+        hessianmap_results.append(bench(HessianMapFactory(), X))
 
     return lle_results, laplacianeigenmap_results, diffusionmap_results, \
         hessianmap_results
@@ -72,10 +72,10 @@ if __name__ == '__main__':
 
     pl.close('all')
     pl.title('Manifold benchmark')
-#    pl.plot(list_n_samples, lle_results, 'b-', label='LLE')
+    pl.plot(list_n_samples, lle_results, 'b-', label='LLE')
     pl.plot(list_n_samples, laplacianeigenmap_results,'r-', label='Laplacian Eigenmaps')
     pl.plot(list_n_samples, diffusionmap_results, 'g-', label='Diffusion Maps')
- #   pl.plot(list_n_samples, hessianmap_results,'y-', label='Hessian Eigenmaps')
+    pl.plot(list_n_samples, hessianmap_results,'y-', label='Hessian Eigenmaps')
     pl.legend()
     pl.xlabel('number of samples')
     pl.ylabel('time (in seconds)')
