@@ -287,7 +287,7 @@ def barycenter_weights(x, X_neighbors, tol=1e-3):
 
 
 def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
-                     window_size=1, symetric=False):
+                     window_size=1, symetric=False, drop_first=False):
     """Computes the (weighted) graph of k-Neighbors
 
     Parameters
@@ -312,7 +312,10 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
         Window size pass to the BallTree
 
     symetric : bool
-      True if a symetric graph is wanted
+        True if a symetric graph is wanted
+
+    drop_first : bool
+        Drops the first neighbor (Default: False)
 
     Returns
     -------
@@ -337,6 +340,10 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
         ball_tree = BallTree(X, window_size)
     A = sparse.lil_matrix((n_samples, ball_tree.size))
     dist, ind = ball_tree.query(X, k=n_neighbors)
+
+    if drop_first:
+        ind = [index[1:] for index in ind]
+
     if weight is None:
         for i, li in enumerate(ind):
             if n_neighbors > 1:

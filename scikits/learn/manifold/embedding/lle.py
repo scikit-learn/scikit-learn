@@ -87,8 +87,9 @@ class LLE(BaseEmbedding):
         Self
         """
         self.X_ = np.asanyarray(X)
-        W = kneighbors_graph(self.X_, ball_tree=self.ball_tree,
-            n_neighbors=self.n_neighbors)
+        W = kneighbors_graph(self.X_, ball_tree=self.ball_tree, drop_first=True,
+            n_neighbors=self.n_neighbors, weight="barycenter")
+
         t = np.eye(len(self.X_), len(self.X_)) - W
         M = np.asarray(np.dot(t.T, t))
 

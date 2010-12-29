@@ -80,13 +80,9 @@ def test_kneighbors_graph():
     assert_array_almost_equal(A.todense(),
                               [[0, 1.01, 0], [0, 0, 0.99], [0, 0.99, 0]], 4)
     A = neighbors.kneighbors_graph(X, 2, weight="distance", symetric=True)
-    print A
     assert_array_almost_equal(A.todense(),
                               [[0, 1.01, 0], [1.01, 0, 0.99], [0, 0.99, 0]], 4)
     A = neighbors.kneighbors_graph(X, 2, weight="barycenter")
-    assert_array_almost_equal(A.todense(),
-                              [[0.99, 0, 0], [0, 0.99, 0], [0, 0, 0.99]], 2)
-    A = neighbors.kneighbors_graph(X, 2, weight="barycenter", symetric=True)
     assert_array_almost_equal(A.todense(),
                               [[0.99, 0, 0], [0, 0.99, 0], [0, 0, 0.99]], 2)
 
