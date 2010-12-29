@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_equal
@@ -72,10 +73,20 @@ def test_kneighbors_graph():
     A = neighbors.kneighbors_graph(X, 2, weight=None)
     assert_array_equal(A.todense(),
                               [[1, 1, 0], [0, 1, 1], [0, 1, 1]])
+    A = neighbors.kneighbors_graph(X, 2, weight=None, symetric=True)
+    assert_array_equal(A.todense(),
+                              [[1, 1, 0], [1, 1, 1], [0, 1, 1]])
     A = neighbors.kneighbors_graph(X, 2, weight="distance")
     assert_array_almost_equal(A.todense(),
                               [[0, 1.01, 0], [0, 0, 0.99], [0, 0.99, 0]], 4)
+    A = neighbors.kneighbors_graph(X, 2, weight="distance", symetric=True)
+    print A
+    assert_array_almost_equal(A.todense(),
+                              [[0, 1.01, 0], [1.01, 0, 0.99], [0, 0.99, 0]], 4)
     A = neighbors.kneighbors_graph(X, 2, weight="barycenter")
+    assert_array_almost_equal(A.todense(),
+                              [[0.99, 0, 0], [0, 0.99, 0], [0, 0, 0.99]], 2)
+    A = neighbors.kneighbors_graph(X, 2, weight="barycenter", symetric=True)
     assert_array_almost_equal(A.todense(),
                               [[0.99, 0, 0], [0, 0.99, 0], [0, 0, 0.99]], 2)
 

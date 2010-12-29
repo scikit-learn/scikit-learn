@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 k-Nearest Neighbor Algorithm.
 
@@ -286,7 +287,7 @@ def barycenter_weights(x, X_neighbors, tol=1e-3):
 
 
 def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
-                     window_size=1):
+                     window_size=1, symetric=False):
     """Computes the (weighted) graph of k-Neighbors
 
     Parameters
@@ -309,6 +310,9 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
 
     window_size : int
         Window size pass to the BallTree
+
+    symetric : bool
+      True if a symetric graph is wanted
 
     Returns
     -------
@@ -337,23 +341,39 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
         for i, li in enumerate(ind):
             if n_neighbors > 1:
                 A[i, list(li)] = np.ones(n_neighbors)
+                if symetric:
+                    for j in list(li):
+                        A[j, i] = 1
             else:
                 A[i, li] = 1.0
+                if symetric:
+                    A[li, i] = 1.0
     elif weight is "distance":
         for i, li in enumerate(ind):
             if n_neighbors > 1:
                 A[i, list(li)] = dist[i, :]
+                if symetric:
+                    for (j, d) in zip(list(li), dist[i, :]):
+                        A[j, i] = d
             else:
                 A[i, li] = dist[i, 0]
+                if symetric:
+                    A[li, i] = dist[i, 0]
     elif weight is "barycenter":
         # XXX : the next loop could be done in parallel
         # by parallelizing groups of indices
         for i, li in enumerate(ind):
             if n_neighbors > 1:
                 X_i = ball_tree.data[li]
-                A[i, list(li)] = barycenter_weights(X[i], X_i)
+                weights = barycenter_weights(X[i], X_i)
+                A[i, list(li)] = weights
+                if symetric:
+                    for (j, weight) in zip(list(li), weights):
+                        A[j, i] = weight
             else:
                 A[i, li] = 1.0
+                if symetric:
+                    A[li, i] = 1.0
     else:
         raise ValueError("Unknown weight type")
     return A
