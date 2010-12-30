@@ -154,7 +154,7 @@ will only take as input an array X, as there are no class labels.
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_oneclass.py`
-
+ * :ref:`example_applications_plot_species_distribution_modeling.py`
 
 .. currentmodule:: scikits.learn.svm.sparse
 
