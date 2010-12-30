@@ -187,7 +187,7 @@ htmlhelp_basename = 'scikit-learndoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('user_guide', 'user_guide.tex', u'scikits.learn user guide',
+  ('index', 'user_guide.tex', u'scikits.learn user guide',
    u'scikits.learn developers', 'manual'),
 
 ]
