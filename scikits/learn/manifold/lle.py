@@ -96,8 +96,5 @@ class LLE(BaseEmbedding):
         w, vectors = linalg.eigh(M)
         index = np.argsort(w)[1:1+self.n_coords]
 
-        t = scipy.sparse.eye(len(self.X_), len(self.X_)) - W
-        M = t.T * t
-
         self.embedding_ = np.sqrt(len(self.X_)) * vectors[:,index]
         return self
