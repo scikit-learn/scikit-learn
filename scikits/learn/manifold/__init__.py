@@ -4,6 +4,6 @@
 Manifold Learning Module
 """
 
-from .embedding.lle import LLE
-from .embedding.hessian_map import HessianMap
-from .embedding.laplacian_map import LaplacianEigenmap, DiffusionMap
+from .lle import LLE
+from .hessian_map import HessianMap
+from .laplacian_map import LaplacianEigenmap, DiffusionMap

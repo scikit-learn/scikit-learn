@@ -12,7 +12,7 @@ import scipy.sparse
 import math
 
 from .base_embedding import BaseEmbedding
-from ...neighbors import kneighbors_graph
+from ..neighbors import kneighbors_graph
 
 try:
     from pyamg import smoothed_aggregation_solver

@@ -10,7 +10,7 @@ import numpy as np
 from scipy import linalg
 
 from .base_embedding import BaseEmbedding
-from ...neighbors import kneighbors_graph
+from ..neighbors import kneighbors_graph
 
 
 def hessian_map(samples, n_coords, **kwargs):

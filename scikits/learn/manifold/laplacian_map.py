@@ -13,9 +13,9 @@ import math
 
 from .base_embedding import BaseEmbedding
 
-from ...metrics.pairwise import euclidian_distances
-from ...neighbors import kneighbors_graph
-from ...preprocessing import Scaler
+from ..metrics.pairwise import euclidian_distances
+from ..neighbors import kneighbors_graph
+from ..preprocessing import Scaler
 
 try:
     from pyamg import smoothed_aggregation_solver
@@ -172,7 +172,7 @@ def centered_normalized(samples):
     Returns a set of samples that are centered and of variance 1
 
     >>> import numpy as np
-    >>> from  scikits.learn.manifold.embedding.laplacian_map import centered_normalized
+    >>> from  scikits.learn.manifold.laplacian_map import centered_normalized
     >>> samples = np.array((0., 0., 0., \
       1., 0., 0., \
       0., 1., 0., \

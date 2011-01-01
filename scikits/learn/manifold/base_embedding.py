@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ...base import BaseEstimator
+from ..base import BaseEstimator
 
 class BaseEmbedding(BaseEstimator):
     """

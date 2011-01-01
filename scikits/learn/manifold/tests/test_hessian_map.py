@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal, \
 
 from unittest import TestCase
 
-from ....ball_tree import BallTree
+from ...ball_tree import BallTree
 from ..hessian_map import HessianMap
 
 samples = np.array((0., 0., 0.,
