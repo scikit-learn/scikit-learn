@@ -222,9 +222,10 @@ class LaplacianEigenmap(BaseEmbedding):
     X_ : array_like
         Original data that is embedded
 
-    Notes
-    -----
-    See also examples/plot_swissroll.py
+    See also
+    --------
+    See examples/plot_swissroll.py and examples/plot_manifold_embeddings.py
+    for an example.
 
     .. [1] Partha Niyogi, andMikhail Belkin,
            "Laplacian Eigenmaps for Dimensionality Reduction and Data
@@ -298,9 +299,10 @@ class DiffusionMap(BaseEmbedding):
     X_ : array_like
         Original data that is embedded
 
-    Notes
-    -----
-    See also examples/plot_swissroll.py
+    See also
+    --------
+    See examples/plot_swissroll.py and examples/plot_manifold_embeddings.py
+    for an example.
 
     .. [1] R.R. Coifman, and S. Lafon, "Diffusion maps",
            Applied and Computational Harmonic Analysis,

@@ -48,10 +48,10 @@ class LLE(BaseEmbedding):
     X_ : array_like
         Original data that is embedded
 
-    Notes
-    -----
-    See also examples/plot_swissroll.py
-
+    See also
+    --------
+    See examples/plot_swissroll.py and examples/plot_manifold_embeddings.py
+    for an example.
 
     .. [1] Sam T. Roweis  and Lawrence K. Saul,
            "Nonlinear Dimensionality Reduction by Locally Linear BaseEmbedding",
