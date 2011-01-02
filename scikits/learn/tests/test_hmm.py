@@ -330,6 +330,16 @@ class GaussianHMMTester(GaussianHMMParams):
                    % (self.cvtype, params, trainll, np.diff(trainll)))
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
+    def test_fit_works_on_sequences_of_different_length(self):
+        obs = [np.random.rand(3, self.n_features),
+               np.random.rand(4, self.n_features),
+               np.random.rand(5, self.n_features)]
+
+        h = hmm.GaussianHMM(self.n_states, self.cvtype)
+        # This shouldn't raise
+        # ValueError: setting an array element with a sequence.
+        h.fit(obs)
+
     def test_fit_with_priors(self, params='stmc', n_iter=10,
                              verbose=False):
         startprob_prior = 10 * self.startprob + 2.0
@@ -611,6 +621,16 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
             print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
                                                     np.diff(trainll))
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
+
+    def test_fit_works_on_sequences_of_different_length(self):
+        obs = [np.random.rand(3, self.n_features),
+               np.random.rand(4, self.n_features),
+               np.random.rand(5, self.n_features)]
+
+        h = hmm.GMMHMM(self.n_states, cvtype=self.cvtype)
+        # This shouldn't raise
+        # ValueError: setting an array element with a sequence.
+        h.fit(obs)
 
 
 class TestGMMHMMWithSphericalCovars(TestGMMHMM):
