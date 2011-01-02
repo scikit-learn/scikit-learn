@@ -8,7 +8,6 @@ import sys
 import math
 
 import numpy as np
-from scipy import linalg
 
 #XXX: We should have a function with numpy's slogdet API
 def _fast_logdet(A):
@@ -20,6 +19,7 @@ def _fast_logdet(A):
     """
     # XXX: Should be implemented as in numpy, using ATLAS
     # http://projects.scipy.org/numpy/browser/trunk/numpy/linalg/linalg.py#L1559
+    from scipy import linalg
     ld = np.sum(np.log(np.diag(A)))
     a = np.exp(ld/A.shape[0])
     d = np.linalg.det(A/a)
@@ -35,6 +35,7 @@ def _fast_logdet_numpy(A):
     but more robust
     It returns -Inf if det(A) is non positive or is not defined.
     """
+    from scipy import linalg
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
         return -np.inf
@@ -86,13 +87,14 @@ def density(w, **kwargs):
     return d
 
 
-
-def _sparsedot(a, b):
+def safe_sparse_dot(a, b):
+    """Dot product that handle the sparse matrix case correctly"""
     from scipy import sparse
     if sparse.issparse(a) or sparse.issparse(b):
-        return a*b
+        return a * b
     else:
         return np.dot(a,b)
+
 
 def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
     """Computes the k-truncated randomized SVD
@@ -166,23 +168,24 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
     r = rng.normal(size=(M.shape[1], k + p))
 
     # sampling the range of M using by linear projection of r
-    Y = _sparsedot(M, r)
+    Y = safe_sparse_dot(M, r)
     del r
 
     # apply q power iterations on Y to make to further 'imprint' the top
     # singular values of M in Y
     for i in xrange(q):
-        Y = _sparsedot(M, _sparsedot(M.T, Y))
+        Y = safe_sparse_dot(M, safe_sparse_dot(M.T, Y))
 
-    # extracting an orthonormal basis of the M range samples: econ=True raises a
-    # deprecation warning but as of today there is no way to avoid it...
-    Q, R = linalg.qr(Y, econ=True)
+    # extracting an orthonormal basis of the M range samples
+    from .fixes import qr_economic
+    Q, R = qr_economic(Y)
     del R
 
     # project M to the (k + p) dimensional space using the basis vectors
-    B = _sparsedot(Q.T, M)
+    B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
+    from scipy import linalg
     Uhat, s, V = linalg.svd(B, full_matrices=False)
     del B
     U = np.dot(Q, Uhat)

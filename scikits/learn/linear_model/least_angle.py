@@ -8,7 +8,6 @@ Generalized Linear Model for a complete discussion.
 #
 # License: BSD Style.
 
-import warnings
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
@@ -53,7 +52,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
         active: array, shape (?)
             Indices of active variables at the end of the path.
 
-        coefs: array, shape (p,k)
+        coefs: array, shape (p, k)
             Coefficients along the path
 
         Notes
@@ -62,9 +61,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
     """
-    # : make sure it works with non-normalized columns of X
 
-    n_samples, n_features = X.shape
+    n_features = X.shape[1]
+    n_samples = y.size
 
     if max_features is None:
         max_features = min(n_samples, n_features)
@@ -114,7 +113,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             else:
                 C -= gamma_ * np.abs(np.dot(Gram[0], least_squares))
 
-        alphas[n_iter] = C
+        alphas[n_iter] = C / n_samples
 
         if (C < alpha_min) or (n_active == max_features):
             break
@@ -150,7 +149,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                 L[n_active, :n_active] = Gram[n_active, :n_active]
 
             # Update the cholesky decomposition for the Gram matrix
-            arrayfuncs.solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
+            arrayfuncs.solve_triangular(L[:n_active, :n_active],
+                                        L[n_active, :n_active])
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             L[n_active,  n_active] = np.sqrt(c - v)
 
@@ -162,10 +162,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                                                             n_active, C)
 
         # least squares solution
-
         least_squares, info = potrs(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
 
+        # is this really needed ?
         AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
         least_squares *= AA
 
@@ -231,6 +231,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                 residual = y - np.dot(X[:, :n_active],
                                       coefs[n_iter, active])
                 temp = np.dot(X.T[n_active], residual)
+
                 Cov = np.r_[temp, Cov]
             else:
                 for i in range(idx, n_active):
@@ -255,11 +256,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             sign_active = np.append(sign_active, 0.)
             if verbose:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
-
-                                                            n_active, C)
+                                                      n_active, abs(temp))
     if C < alpha_min: # interpolate
         # interpolation factor 0 <= ss < 1
-        ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] - alphas[n_iter])
+        ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
+                                               alphas[n_iter])
         coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] - coefs[n_iter-1])
         alphas[n_iter] = alpha_min
 
@@ -329,7 +330,7 @@ class LARS(LinearModel):
             Target values.
 
         precompute : True | False | 'auto' | array-like
-            Wether to use a precomputed Gram matrix to speed up
+            Whether to use a precomputed Gram matrix to speed up
             calculations. If set to 'auto' let us decide. The Gram
             matrix can also be passed as argument.
 
@@ -411,7 +412,7 @@ class LassoLARS (LARS):
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
     LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
     >>> print clf.coef_
-    [ 0.         -0.51649658]
+    [ 0.          0.08350342]
 
     References
     ----------

@@ -12,7 +12,8 @@ samples to classify and plot number of classified samples as a
 function of time.
 
 In the second benchmark, we increase the number of dimensions of the
-training set, classify a sample and plot the time taken as a function of the number of dimensions.
+training set, classify a sample and plot the time taken as a function
+of the number of dimensions.
 """
 import numpy as np
 import pylab as pl
@@ -25,6 +26,7 @@ svm_results = []
 mvpa_results = []
 
 mu_second = 0.0 + 10**6 # number of microseconds in a second
+
 
 def bench_scikit(X, Y):
     """
@@ -43,6 +45,7 @@ def bench_scikit(X, Y):
     # stop time
 
     scikit_results.append(delta.seconds + delta.microseconds/mu_second)
+
 
 def bench_svm(X, Y):
     """
@@ -67,6 +70,7 @@ def bench_svm(X, Y):
     delta = (datetime.now() - tstart)
     # stop time
     svm_results.append(delta.seconds + delta.microseconds/mu_second)
+
 
 def bench_pymvpa(X, Y):
     """
@@ -112,7 +116,7 @@ if __name__ == '__main__':
     pl.subplot(211)
     pl.title('SVM with varying number of samples')
     pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
-    pl.plot(xx, svm_results,'r-', label='libsvm (ctypes binding)')
+    pl.plot(xx, svm_results, 'r-', label='libsvm (ctypes binding)')
     pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
     pl.legend()
     pl.xlabel('number of samples to classify')
@@ -121,7 +125,8 @@ if __name__ == '__main__':
 
     # now do a bench where the number of points is fixed
     # and the variable is the number of dimensions
-    from scikits.learn.datasets.samples_generator import friedman, sparse_uncorrelated
+    from scikits.learn.datasets.samples_generator import friedman, \
+                                                         sparse_uncorrelated
 
     scikit_results = []
     svm_results = []
@@ -150,7 +155,7 @@ if __name__ == '__main__':
     pl.subplot(212)
     pl.title('Classification in high dimensional spaces')
     pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
-    pl.plot(xx, svm_results,'r-', label='libsvm (ctypes binding)')
+    pl.plot(xx, svm_results, 'r-', label='libsvm (ctypes binding)')
     pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
     pl.legend()
     pl.xlabel('number of dimensions')

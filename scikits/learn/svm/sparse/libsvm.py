@@ -116,5 +116,6 @@ class OneClassSVM (SparseBaseLibSVM):
                          gamma, coef0, cache_size, eps, 0.0, nu, 0.0,
                          shrinking, probability)
 
-    def fit(self, X, sample_weight=[]):
-        super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight)
+    def fit(self, X, class_weight={}, sample_weight=[]):
+        super(OneClassSVM, self).fit(
+            X, [], class_weight=class_weight, ample_weight=sample_weight)

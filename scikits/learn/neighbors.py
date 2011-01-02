@@ -264,11 +264,10 @@ def barycenter_weights(x, X_neighbors, tol=1e-3):
 
     Examples
     --------
-    >>> X_neighbors = [[0], [2]]
-    >>> x = [0.5]
     >>> from scikits.learn.neighbors import barycenter_weights
-    >>> print barycenter_weights(x, X_neighbors)
-    [ 0.74968789  0.25031211]
+    >>> X_neighbors, x = [[0], [2]], [0.5]
+    >>> barycenter_weights(x, X_neighbors)
+    array([ 0.74968789,  0.25031211])
     """
     x = np.asanyarray(x)
     X_neighbors = np.asanyarray(X_neighbors)
@@ -320,11 +319,12 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
     Examples
     --------
     >>> X = [[0], [2], [1]]
-    >>> A = kneighbors_graph(X, n_neighbors=2, weight=None)
-    >>> print A.todense()
-    [[ 1.  0.  1.]
-     [ 0.  1.  1.]
-     [ 0.  1.  1.]]
+    >>> from scikits.learn.neighbors import kneighbors_graph
+    >>> A = kneighbors_graph(X, 2)
+    >>> A.todense()
+    matrix([[ 1.,  0.,  1.],
+            [ 0.,  1.,  1.],
+            [ 0.,  1.,  1.]])
     """
     from scipy import sparse
     X = np.asanyarray(X)

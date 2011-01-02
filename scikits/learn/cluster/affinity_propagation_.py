@@ -12,7 +12,7 @@ import numpy as np
 from ..base import BaseEstimator
 
 
-def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
+def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
             copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
 
@@ -81,7 +81,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
 
     ind = np.arange(n_points)
 
-    for it in range(maxit):
+    for it in range(max_iter):
         # Compute responsibilities
         Rold = R.copy()
         AS = A + S
@@ -120,7 +120,7 @@ def affinity_propagation(S, p=None, convit=30, maxit=200, damping=0.5,
         if it >= convit:
             se = np.sum(e, axis=1);
             unconverged = np.sum((se == convit) + (se == 0)) != n_points
-            if (not unconverged and (K>0)) or (it==maxit):
+            if (not unconverged and (K>0)) or (it==max_iter):
                 if verbose:
                     print "Converged after %d iterations." % it
                 break
@@ -163,7 +163,7 @@ class AffinityPropagation(BaseEstimator):
     damping : float, optional
         Damping factor
 
-    maxit : int, optional
+    max_iter : int, optional
         Maximum number of iterations
 
     convit : int, optional
@@ -201,9 +201,9 @@ class AffinityPropagation(BaseEstimator):
     in the number of points.
     """
 
-    def __init__(self, damping=.5, maxit=200, convit=30, copy=True):
+    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True):
         self.damping = damping
-        self.maxit = maxit
+        self.max_iter = max_iter
         self.convit = convit
         self.copy = copy
 
@@ -226,7 +226,7 @@ class AffinityPropagation(BaseEstimator):
         """
         self._set_params(**params)
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(S, p,
-                maxit=self.maxit, convit=self.convit, damping=self.damping,
+                max_iter=self.max_iter, convit=self.convit, damping=self.damping,
                 copy=self.copy)
         return self
 

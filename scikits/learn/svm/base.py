@@ -37,12 +37,16 @@ class BaseLibSVM(BaseEstimator):
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nu, p, shrinking, probability):
+
         assert impl in self._svm_types, \
             "impl should be one of %s, %s was given" % (
                 self._svm_types, impl)
-        assert kernel in self._kernel_types or callable(kernel), \
-            "kernel should be one of %s or a callable, %s was given." % (
-                self._kernel_types, kernel)
+
+        assert kernel in self._kernel_types or \
+               hasattr(kernel, '__call__'), \
+               "kernel should be one of %s or a callable, " \
+               "%s was given." % ( self._kernel_types, kernel)
+
         self.kernel = kernel
         self.impl = impl
         self.degree = degree
@@ -60,7 +64,7 @@ class BaseLibSVM(BaseEstimator):
         """ Get the kernel type code as well as the data transformed by
             the kernel (if the kernel is a callable.
         """
-        if callable(self.kernel):
+        if hasattr(self.kernel, '__call__'):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
             _X = np.asanyarray(self.kernel(X, self.__Xfit),
@@ -110,7 +114,7 @@ class BaseLibSVM(BaseEstimator):
         sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
                                       order='C')
 
-        if callable(self.kernel):
+        if hasattr(self.kernel, '__call__'):
             # you must store a reference to X to compute the kernel in predict
             # there's a way around this, but it involves patching libsvm
             # TODO: put keyword copy to copy on demand
@@ -217,7 +221,7 @@ class BaseLibSVM(BaseEstimator):
                       self.support_, self.label_, self.probA_,
                       self.probB_)
 
-        return pprob[:, np.argsort(self.label_)]
+        return pprob
 
     def predict_log_proba(self, T):
         """
@@ -254,11 +258,9 @@ class BaseLibSVM(BaseEstimator):
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
             Returns the decision function of the sample for each class
-            in the model, where classes are ordered by arithmetical
-            order.
-
+            in the model.
         """
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
@@ -274,7 +276,14 @@ class BaseLibSVM(BaseEstimator):
                       self.support_, self.label_, self.probA_,
                       self.probB_)
 
-        return dec_func
+
+        if self.impl != 'one_class':
+            # libsvm has the convention of returning negative values for
+            # rightmost labels, so we invert the sign since our label_ is
+            # sorted by increasing order
+            return -dec_func
+        else:
+            return dec_func
 
     @property
     def coef_(self):
@@ -300,13 +309,14 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
-                 multi_class=False, fit_intercept=True):
+                 multi_class=False, fit_intercept=True, intercept_scaling=1):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
         self.eps = eps
         self.C = C
         self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
 
         # Check that the arguments given are valid:
@@ -386,19 +396,19 @@ class BaseLibLinear(BaseEstimator):
 
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]
-        if self.fit_intercept > 0: n_features -= 1
+        if self.fit_intercept: n_features -= 1
         if X.shape[1] != n_features:
             raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
                                                                    X.shape[1]))
     @property
     def intercept_(self):
-        if self.fit_intercept > 0:
-            return self.raw_coef_[:,-1]
+        if self.fit_intercept:
+            return self.intercept_scaling * self.raw_coef_[:,-1]
         return 0.0
 
     @property
     def coef_(self):
-        if self.fit_intercept > 0:
+        if self.fit_intercept:
             return self.raw_coef_[:,:-1]
         return self.raw_coef_
 
@@ -407,14 +417,11 @@ class BaseLibLinear(BaseEstimator):
         raise NotImplementedError(
                 'liblinear does not provide this functionality')
 
-
     def _get_bias(self):
-        """
-        Due to some pecularities in libliner, parameter bias must be a
-        double indicating if the intercept should be computed:
-        positive for true, negative for false
-        """
-        return int  (self.fit_intercept) - .5
+        if self.fit_intercept:
+            return self.intercept_scaling
+        else:
+            return -1.0
 
 
 set_verbosity_wrap(0)

@@ -86,14 +86,13 @@ https://sourceforge.net/apps/trac/scikit-learn/report
 Testing
 -------
 
-After installation, you can launch the test suite (you will need to
-have nosetest installed)::
+After installation, you can launch the test suite from outside the
+source directory (you will need to have nosetest installed)::
 
     python -c "import scikits.learn as skl; skl.test()"
 
-Note that this must be run from outisde the project's root
-directory. See web page
-http://scikit-learn.sourceforge.net/developers/ for complete
-documentation on developement
+See web page http://scikit-learn.sourceforge.net/install.html#testing
+for more information.
+
 
 

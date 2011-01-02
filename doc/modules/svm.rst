@@ -154,7 +154,7 @@ will only take as input an array X, as there are no class labels.
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_oneclass.py`
-
+ * :ref:`example_applications_plot_species_distribution_modeling.py`
 
 .. currentmodule:: scikits.learn.svm.sparse
 
@@ -217,6 +217,11 @@ Tips on Practical Use
     penalty parameters C.
 
   * Specify larger cache size (keyword cache) for huge problems.
+
+  * The underlying :class:`LinearSVC` implementation uses a random
+    number generator to select features when fitting the model. It is
+    thus not uncommon, to have slightly different results for the same
+    input data. If that happens, try with a smaller eps parameter.
 
 
 .. _svm_kernels:

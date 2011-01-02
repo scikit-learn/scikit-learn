@@ -19,42 +19,14 @@ In both cases, only 10% of the features are informative.
 import numpy as np
 import gc
 from time import time
+from scikits.learn.datasets.samples_generator import make_regression_dataset
 
-# alpha = 1.0
 alpha = 0.1
 # alpha = 0.01
 
 
 def rmse(a, b):
     return np.sqrt(np.mean((a - b) ** 2))
-
-
-def make_data(n_samples=100, n_tests=100, n_features=100, k=10,
-              noise=0.1, seed=0):
-
-    # deterministic test
-    np.random.seed(seed)
-
-    # generate random input set
-    X = np.random.randn(n_samples, n_features)
-    X_test = np.random.randn(n_tests, n_features)
-
-    # generate a ground truth model with only the first 10 features being non
-    # zeros (the other features are not correlated to Y and should be ignored by
-    # the L1 regularizer)
-    coef_ = np.random.randn(n_features)
-    coef_[k:] = 0.0
-
-    # generate the ground truth Y from the reference model and X
-    Y = np.dot(X, coef_)
-    if noise > 0.0:
-        Y += np.random.normal(scale=noise, size=Y.shape)
-
-    Y_test = np.dot(X_test, coef_)
-    if noise > 0.0:
-        Y_test += np.random.normal(scale=noise, size=Y_test.shape)
-
-    return X, Y, X_test, Y_test, coef_
 
 
 def bench(factory, X, Y, X_test, Y_test, ref_coef):
@@ -66,7 +38,7 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
     delta = (time() - tstart)
     # stop time
 
-    print "duration: %fms" % (delta * 1000)
+    print "duration: %0.3fs" % delta
     print "rmse: %f" % rmse(Y_test, clf.predict(X_test))
     print "mean coef abs diff: %f" % abs(ref_coef - clf.coef_.ravel()).mean()
     return delta
@@ -74,7 +46,7 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
 
 if __name__ == '__main__':
     from glmnet.elastic_net import Lasso as GlmnetLasso
-    from scikits.learn.glm import Lasso as ScikitLasso
+    from scikits.learn.linear_model import Lasso as ScikitLasso
     # Delayed import of pylab
     import pylab as pl
 
@@ -83,20 +55,20 @@ if __name__ == '__main__':
     n = 20
     step = 500
     n_features = 1000
-    k = n_features / 10
-    n_tests = 1000
+    n_informative = n_features / 10
+    n_test_samples = 1000
     for i in range(1, n + 1):
         print '=================='
         print 'Iteration %s of %s' % (i, n)
         print '=================='
-        X, Y, X_test, Y_test, coef_ = make_data(
-            n_samples=(i * step), n_tests=n_tests, n_features=n_features,
-            noise=0.1, k=k)
+        X, Y, X_test, Y_test, coef = make_regression_dataset(
+            n_train_samples=(i * step), n_test_samples=n_test_samples,
+            n_features=n_features, noise=0.1, n_informative=n_informative)
 
         print "benching scikit: "
-        scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))
+        scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef))
         print "benching glmnet: "
-        glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
+        glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef))
 
     pl.clf()
     xx = range(0, n*step, step)
@@ -122,10 +94,10 @@ if __name__ == '__main__':
         print 'Iteration %02d of %02d' % (i, n)
         print '=================='
         n_features = i * step
-        k = n_features / 10
-        X, Y, X_test, Y_test, coef_ = make_data(
-            n_samples=n_samples, n_tests=n_tests, n_features=n_features,
-            noise=0.1, k=k)
+        n_informative = n_features / 10
+        X, Y, X_test, Y_test, coef_ = make_regression_dataset(
+            n_train_samples=n_samples, n_test_samples=n_test_samples,
+            n_features=n_features, noise=0.1, n_informative=n_informative)
 
         print "benching scikit: "
         scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))

@@ -31,11 +31,9 @@ def constant(x):
         An array with shape (n_eval, p) with the values of the regression
         model.
     """
-
     x = np.asanyarray(x, dtype=np.float)
     n_eval = x.shape[0]
     f = np.ones([n_eval, 1])
-
     return f
 
 
@@ -57,11 +55,9 @@ def linear(x):
         An array with shape (n_eval, p) with the values of the regression
         model.
     """
-
     x = np.asanyarray(x, dtype=np.float)
     n_eval = x.shape[0]
     f = np.hstack([np.ones([n_eval, 1]), x])
-
     return f
 
 
@@ -88,7 +84,7 @@ def quadratic(x):
     x = np.asanyarray(x, dtype=np.float)
     n_eval, n_features = x.shape
     f = np.hstack([np.ones([n_eval, 1]), x])
-    for  k in range(n_features):
+    for k in range(n_features):
         f = np.hstack([f, x[:, k, np.newaxis] * x[:, k:]])
 
     return f

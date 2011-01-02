@@ -2,17 +2,18 @@ import random
 import numpy as np
 import nose
 
-from numpy.testing import assert_
+from nose.tools import assert_true
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal, assert_almost_equal
 
-from .. import datasets
-from .. import svm
+from ... import datasets
+from ... import svm
 from ..metrics import auc
 from ..metrics import classification_report
 from ..metrics import confusion_matrix
 from ..metrics import explained_variance_score
+from ..metrics import r2_score
 from ..metrics import f1_score
 from ..metrics import mean_square_error
 from ..metrics import precision_recall_curve
@@ -222,6 +223,9 @@ def test_losses():
     assert_almost_equal(explained_variance_score(y_true, y_pred), -0.04, 2)
     assert_almost_equal(explained_variance_score(y_true, y_true), 1.00, 2)
 
+    assert_almost_equal(r2_score(y_true, y_pred), -0.04, 2)
+    assert_almost_equal(r2_score(y_true, y_true), 1.00, 2)
+
 
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
@@ -233,8 +237,10 @@ def test_symmetry():
     assert_almost_equal(mean_square_error(y_true, y_pred),
                         mean_square_error(y_pred, y_true))
     # not symmetric
-    assert_(explained_variance_score(y_true, y_pred) != \
+    assert_true(explained_variance_score(y_true, y_pred) != \
             explained_variance_score(y_pred, y_true))
+    assert_true(r2_score(y_true, y_pred) != \
+            r2_score(y_pred, y_true))
     # FIXME: precision and recall aren't symmetric either
 
 
