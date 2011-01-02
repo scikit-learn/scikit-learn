@@ -38,9 +38,9 @@ print "Compute unstructured hierarchical clustering..."
 st = time.time()
 ward = Ward(n_clusters=10).fit(X)
 label = ward.label_
-print "Elaspsed time: ", time.time() - st
-print "Size of label: ", label.shape[0]
-print "Number of clusters: ", np.unique(label).shape[0]
+print "Elapsed time: ", time.time() - st
+print "Number of points: ", label.size
+print "Number of clusters: ", np.unique(label).size
 
 ###############################################################################
 # Plot result

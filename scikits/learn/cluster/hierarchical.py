@@ -15,8 +15,7 @@ from scikits.learn.utils._csgraph import cs_graph_components
 ###########################################################################
 # Ward's algorithm
 
-
-def ward_tree(X, adjacency_mat=None):
+def ward_tree(X, adjacency_matrix=None):
     """Ward clustering based on a Feature matrix. Heapq-based representation
     of the inertia matrix.
 
@@ -28,7 +27,7 @@ def ward_tree(X, adjacency_mat=None):
     X:  array of shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
-    adjacency_mat : sparse matrix.
+    adjacency_matrix : sparse matrix.
         adjacency matrix. Defines for each sample the neigbhoring samples
         following a given structure of the data.
         Defaut is None, i.e, the ward algorithm is unstructured.
@@ -52,7 +51,7 @@ def ward_tree(X, adjacency_mat=None):
             values of the array are 0, and thus the values are positive (or
             null) and are ranked in an increasing order.
 
-    adjacency_mat : sparse matrix.
+    adjacency_matrix : sparse matrix.
         The update version of adjacency matrix. Defines for each node the
         neigbhoring nodes following a given structure of the data.
 
@@ -63,19 +62,19 @@ def ward_tree(X, adjacency_mat=None):
         X = np.reshape(X, (-1, 1))
 
     # Adjacency matrix
-    if adjacency_mat is None:
-        adjacency_mat = np.ones([X.shape[0], X.shape[0]])
-        adjacency_mat[range(X.shape[0]), range(X.shape[0])] = 0
-        adjacency_mat = sparse.lil_matrix(adjacency_mat)
+    if adjacency_matrix is None:
+        adjacency_matrix = np.ones([X.shape[0], X.shape[0]])
+        adjacency_matrix[range(X.shape[0]), range(X.shape[0])] = 0
+        adjacency_matrix = sparse.lil_matrix(adjacency_matrix)
         n_nodes = 2 * n_samples - 1
     else:
-        adjacency_mat = adjacency_mat.tolil()
+        adjacency_matrix = adjacency_matrix.tolil()
 
     # Remove diagonal from adjacency matrix
-    adjacency_mat.setdiag(np.zeros(adjacency_mat.shape[0]))
+    adjacency_matrix.setdiag(np.zeros(adjacency_matrix.shape[0]))
 
     # Compute the number of nodes
-    n_comp, label = cs_graph_components(adjacency_mat)
+    n_comp, label = cs_graph_components(adjacency_matrix)
     n_nodes = 2 * n_samples - n_comp
     if n_comp > 1:
         print "Warning: the number of connected compoments of the" + \
@@ -92,7 +91,7 @@ def ward_tree(X, adjacency_mat=None):
     cord_row = []
     cord_col = []
     B = []
-    for ind, row in enumerate(adjacency_mat.rows):
+    for ind, row in enumerate(adjacency_matrix.rows):
         cord_row.extend(list(ind * np.ones(len(row), dtype=int)))
         cord_col.extend(row)
         B.append(row)
@@ -152,7 +151,6 @@ def ward_tree(X, adjacency_mat=None):
 
 ###########################################################################
 # Functions for cutting  hierarchical clustering tree
-
 
 def _hc_get_descendent(ind, children):
     """
@@ -214,7 +212,7 @@ def _hc_cut(k, parent, children, height):
         cluster labels for each point
 
     active_nodes : list of int
-                index of the nodes keept for the labeling
+                index of the nodes kept for the labeling
     """
     parent = parent[:-1]
     height = height[:-1]
@@ -236,7 +234,7 @@ def _hc_cut(k, parent, children, height):
 
 
 ###########################################################################
-#Display functions for hierarchical clustering
+# Display functions for hierarchical clustering
 
 def plot_dendrogram(axe, parent, children, height, active_nodes=None,
            weights_nodes=None, cmap_nodes=None, **kwargs):
@@ -245,7 +243,6 @@ def plot_dendrogram(axe, parent, children, height, active_nodes=None,
 
     Parameters
     ----------
-
     axe : a pylab.axes instance
 
     parent : array-like, shape = [n_nodes]
@@ -352,7 +349,6 @@ class HierarchicalClustering(BaseEstimator):
 
     Parameters
     ----------
-
     n_clusters : int or ndarray
                  The number of clusters.
 
@@ -383,43 +379,46 @@ class HierarchicalClustering(BaseEstimator):
     label_ : array [n_points]
         cluster labels for each point
 
-    Return
-    ------
-    self
-
     """
 
     def __init__(self, n_clusters, tree_func=ward_tree):
         self.tree_func = tree_func
         self.n_clusters = n_clusters
 
-    def fit(self, X, adjacency_mat=None, copy=True, **params):
+    def fit(self, X, adjacency_matrix=None, copy=True, **params):
         """
         Fit the hierarchical clustering on the data
 
+        Parameters
+        ----------
         X : array-like, shape = [n_samples, n_features]
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
-        adjacency_mat : sparse matrix.
+        adjacency_matrix : sparse matrix.
             adjacency matrix. Defines for each sample the neigbhoring
             samples following a given structure of the data.
             Defaut is None, i.e, the hiearchical clustering algorithm is
             unstructured.
+
+        Returns
+        -------
+        self
         """
         self._set_params(**params)
 
         # If necessary, copy the adjacency matrix
-        if copy and adjacency_mat is not None:
-            self.adjacency_mat = adjacency_mat.copy()
+        if copy and adjacency_matrix is not None:
+            self.adjacency_matrix = adjacency_matrix.copy()
         else:
-            self.adjacency_mat = adjacency_mat
+            self.adjacency_matrix = adjacency_matrix
 
         # Check if the adjacency matrix is well-connected
-        if self.adjacency_mat is not None:
-            self.adjacency_mat = self.adjacency_mat.tolil()
-            self.adjacency_mat.setdiag(np.zeros(self.adjacency_mat.shape[0]))
-            n_comp, label = cs_graph_components(self.adjacency_mat)
+        if self.adjacency_matrix is not None:
+            self.adjacency_matrix = self.adjacency_matrix.tolil()
+            self.adjacency_matrix.setdiag(
+                                    np.zeros(self.adjacency_matrix.shape[0]))
+            n_comp, label = cs_graph_components(self.adjacency_matrix)
             if n_comp > 1:
                 print "Warning: the number of connected compoments of the" + \
                 " adjacency matrix is > 1. The tree will be stopped early," + \
@@ -427,12 +426,12 @@ class HierarchicalClustering(BaseEstimator):
             self.n_clusters = np.max([self.n_clusters, n_comp])
 
         # Construct the tree
-        self.parent_, self.children_, self.height_, self.adjacency_mat =\
-                                        self.tree_func(X, self.adjacency_mat)
+        self.parent_, self.children_, self.height_, self.adjacency_matrix = \
+                                    self.tree_func(X, self.adjacency_matrix)
 
         # Cut the tree
         self.label_, self.active_nodes_ = _hc_cut(self.n_clusters,
-                                self.parent_,  self.children_, self.height_)
+                                self.parent_, self.children_, self.height_)
         return self
 
 
@@ -442,7 +441,6 @@ class Ward(HierarchicalClustering):
 
     Parameters
     ----------
-
     n_clusters : int or ndarray
                  The number of clusters.
 
@@ -468,10 +466,6 @@ class Ward(HierarchicalClustering):
 
     label_ : array [n_points]
         cluster labels for each point
-
-    Return
-    ------
-    self
 
     """
 
