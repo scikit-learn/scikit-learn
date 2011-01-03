@@ -169,18 +169,6 @@ def test_GMM_attributes():
     assert_raises(ValueError, mixture.GMM, n_states=20, cvtype='badcvtype')
 
 
-def test_GMM_fit_works_on_sequences_of_different_length():
-    ndim = 3
-    obs = [np.random.rand(3, ndim),
-           np.random.rand(4, ndim),
-           np.random.rand(5, ndim)]
-
-    gmm = mixture.GMM(n_states=1)
-    # This shouldn't raise
-    # ValueError: setting an array element with a sequence.
-    gmm.fit(obs)
-
-
 class GMMTester():
     n_states = 10
     n_features = 4
