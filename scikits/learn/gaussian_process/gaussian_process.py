@@ -471,7 +471,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     self.Ft = par['Ft']
                     self.G = par['G']
 
-                rt = solve_triangular(C, r.T, lower=True)
+                rt = solve_triangular(self.C, r.T, lower=True)
 
                 if self.beta0 is None:
                     # Universal Kriging
@@ -578,7 +578,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            D, ij = compute_componentwise_l1_cross_distances(X)
+            D, ij = compute_componentwise_l1_cross_distances(self.X)
             if np.min(np.sum(np.abs(D), axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
                 raise Exception("Multiple X are not allowed")
