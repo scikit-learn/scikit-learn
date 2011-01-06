@@ -28,6 +28,7 @@ print __doc__
 import os
 import math
 from gzip import GzipFile
+from time import time
 
 import numpy as np
 import pylab as pl
@@ -117,12 +118,24 @@ y_train, y_test = y[:split], y[split:]
 ################################################################################
 # Extract filters
 
-n_centers = 400
-patch_size = 6
-encoder = ConvolutionalKMeansEncoder(n_centers=n_centers, patch_size=patch_size,
-                                     whiten=True, max_iter=5)
-encoder.fit(X_train)
-print "inertia: %0.3fe6" % (encoder.inertia_ / 1e6)
+n_centers = 400 # kmeans centers: convolutional filters
+patch_size = 6  # size of the side of one filter
+n_components = 10 # number of singular vectors to keep for whitening
+max_iter = 5 # kmeans EM iteration
+
+extractor = ConvolutionalKMeansEncoder(
+    n_centers=n_centers, patch_size=patch_size, whiten=True,
+    n_components=n_components, max_iter=max_iter)
+
+print "training convolutional whitened kmeans feature extractor..."
+t0 = time()
+extractor.fit(X_train)
+print "done in %0.3fs" % (time() - t0)
+
+vr = extractor.pca.explained_variance_ratio_
+print "explained variance ratios for %d kept PCA components:" % vr.shape[0]
+print vr
+print "inertia: %0.3fe6" % (extractor.inertia_ / 1e6)
 
 ################################################################################
 # Qualitative evaluation of the extracted filters
@@ -133,7 +146,7 @@ n_col = int(math.sqrt(n_centers))
 pl.figure()
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
-    pl.imshow(encoder.kernels_[i].reshape((patch_size, patch_size)),
+    pl.imshow(extractor.kernels_[i].reshape((patch_size, patch_size)),
               cmap=pl.cm.gray, interpolation="nearest")
     pl.xticks(())
     pl.yticks(())

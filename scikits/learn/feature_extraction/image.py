@@ -265,7 +265,8 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
     """
 
     def __init__(self, n_centers=400, image_size=None, patch_size=6,
-                 step_size=1, whiten=True, pools=2, max_iter=1, n_init=1):
+                 step_size=1, whiten=True, n_components=None,
+                 pools=2, max_iter=1, n_init=1):
         self.n_centers = n_centers
         self.patch_size = patch_size
         self.step_size = step_size
@@ -274,6 +275,7 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         self.image_size = image_size
         self.max_iter = max_iter
         self.n_init = n_init
+        self.n_components = n_components
 
     def _check_images(self, X):
         """Check that X can seen as a consistent collection of images"""
@@ -302,11 +304,12 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         X = self._check_images(X)
 
         # step 1: extract the patches
-        offsets = [(o, o) for o in range(0, self.patch_size - 1, self.step_size)]
+        offsets = [(o, o)
+                   for o in range(0, self.patch_size - 1, self.step_size)]
         patch_size = (self.patch_size, self.patch_size)
 
-        # this list of patches does not copy the memory allocated for raw image
-        # data
+        # this list of patches does not copy the memory allocated for raw
+        # image data
         patches_by_offset = [extract_patches2d(
             X, self.image_size, patch_size, offsets=o) for o in offsets]
 
@@ -316,8 +319,11 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         patches = patches.reshape((patches.shape[0], -1))
 
         if self.whiten:
-            pca = PCA(whiten=True).fit(patches)
-            patches = pca.transform(patches)
+            self.pca = PCA(whiten=True, n_components=self.n_components)
+            self.pca.fit(patches)
+            patches = self.pca.transform(patches)
+        else:
+            self.pca = None
 
         # step 3: compute the KMeans centers
         kmeans = KMeans(k=self.n_centers, init='k-means++',
@@ -327,8 +333,8 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
 
         # step 4: project back the centers in original, non-whitened space
         if self.whiten:
-            self.kernels_ = (np.dot(kmeans.cluster_centers_, pca.components_.T)
-                             + pca.mean_)
+            self.kernels_ = (np.dot(kmeans.cluster_centers_,
+                                    self.pca.components_.T) + self.pca.mean_)
         else:
             self.kernels_ = kmeans.cluster_centers_
         return self
