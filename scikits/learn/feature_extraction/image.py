@@ -270,7 +270,7 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         self.n_centers = n_centers
         self.patch_size = patch_size
         self.step_size = step_size
-        self.whiten = True
+        self.whiten = whiten
         self.pools = pools
         self.image_size = image_size
         self.max_iter = max_iter
