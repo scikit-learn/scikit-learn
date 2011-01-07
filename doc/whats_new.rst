@@ -102,7 +102,7 @@ People that made this release possible preceeded by number of commits:
 
    * 207  `Olivier Grisel <http://twitter.com/ogrisel>`_
 
-   * 138 `Fabian Pedregosa <http://fseoane.net/blog/>`_
+   * 167 `Fabian Pedregosa <http://fseoane.net/blog/>`_
 
    * 97 `Peter Prettenhofer <http://sites.google.com/site/peterprettenhofer/>`_
 
@@ -124,6 +124,8 @@ People that made this release possible preceeded by number of commits:
    * 3  Anne-Laure Fouque
 
    * 2  Ronan Amicel
+
+   * 1 `Christian Osendorfer <http://osdf.github.com/>`_
 
 
 
