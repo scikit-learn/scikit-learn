@@ -94,9 +94,9 @@ y_train = y_train[:n_samples]
 X_train = X_train.reshape((X_train.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
 X_test = X_test.reshape((X_test.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
 
-# convert to graylevel images for now
-X_train = X_train.mean(axis=-1)
-X_test = X_test.mean(axis=-1)
+## convert to graylevel images for now
+#X_train = X_train.mean(axis=-1)
+#X_test = X_test.mean(axis=-1)
 #pl.imshow(X_train[0], interpolation='nearest'); pl.show()
 
 # scale dataset
@@ -145,7 +145,7 @@ n_col = int(math.sqrt(n_centers))
 pl.figure()
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
-    pl.imshow(filters[i].reshape((patch_size, patch_size)),
+    pl.imshow(filters[i].reshape((patch_size, patch_size, 3)),
               cmap=pl.cm.gray, interpolation="nearest")
     pl.xticks(())
     pl.yticks(())
