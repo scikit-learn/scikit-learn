@@ -54,7 +54,7 @@ class LeaveOneOut(object):
     def __iter__(self):
         n = self.n
         for i in xrange(n):
-            test_index  = np.zeros(n, dtype=np.bool)
+            test_index = np.zeros(n, dtype=np.bool)
             test_index[i] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
@@ -185,8 +185,8 @@ class KFold(object):
         j = ceil(n / k)
 
         for i in xrange(k):
-            test_index  = np.zeros(n, dtype=np.bool)
-            if i<k-1:
+            test_index = np.zeros(n, dtype=np.bool)
+            if i < k-1:
                 test_index[i*j:(i+1)*j] = True
             else:
                 test_index[i*j:] = True
@@ -215,8 +215,6 @@ class StratifiedKFold(object):
     the percentage of samples for each class.
     """
 
-    # XXX: Should maybe have an argument to raise when
-    # folds are not balanced
     def __init__(self, y, k):
         """K-Folds cross validation iterator
 
@@ -263,27 +261,12 @@ class StratifiedKFold(object):
     def __iter__(self):
         y = self.y.copy()
         k = self.k
-        n = y.shape[0]
-
-        classes = unique(y)
-
-        idx_c = dict()
-        j_c = dict()
-        n_c = dict()
-        for c in classes:
-            idx_c[c] = np.where(y == c)[0]
-            n_c[c] = len(idx_c[c])
-            j_c[c] = int(ceil(n_c[c] / k))
+        n = y.size
+        idx = np.argsort(y)
 
         for i in xrange(k):
-            test_index  = np.zeros(n, dtype=np.bool)
-            for c in classes:
-                if i<k-1:
-                    test_index_c = range(i*j_c[c], (i+1)*j_c[c])
-                else:
-                    test_index_c = range(i*j_c[c], n_c[c])
-                test_index[idx_c[c][test_index_c]] = True
-
+            test_index = np.zeros(n, dtype=np.bool)
+            test_index[idx[i::k]] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
 
@@ -300,6 +283,7 @@ class StratifiedKFold(object):
 
 
 ##############################################################################
+
 class LeaveOneLabelOut(object):
     """Leave-One-Label_Out cross-validation iterator
 
@@ -349,7 +333,7 @@ class LeaveOneLabelOut(object):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
         for i in unique(labels):
-            test_index  = np.zeros(len(labels), dtype=np.bool)
+            test_index = np.zeros(len(labels), dtype=np.bool)
             test_index[labels==i] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
@@ -498,8 +482,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
-                "does not." % estimator
-                )
+                "does not." % estimator)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickable.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
@@ -507,5 +490,3 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
                                                         train, test, iid)
                 for train, test in cv)
     return np.array(scores)
-
-
