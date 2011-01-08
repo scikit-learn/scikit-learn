@@ -10,7 +10,7 @@ import copy
 
 import numpy as np
 
-from .metrics import explained_variance
+from .metrics import r2_score
 
 ################################################################################
 def clone(estimator, safe=True):
@@ -46,7 +46,11 @@ def clone(estimator, safe=True):
     for name, param in new_object_params.iteritems():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
-    
+    assert new_object._get_params(deep=False) == new_object_params, (
+            'Cannot clone object %s, as the constructor does not '
+            'seem to set parameters' % estimator
+        )
+
     return new_object
 
 
@@ -69,7 +73,7 @@ def _pprint(params, offset=0, printer=repr):
     np.set_printoptions(precision=5, threshold=64, edgeitems=2)
     params_list = list()
     this_line_length = offset
-    line_sep = ',\n' + (1+offset/2)*' '
+    line_sep = ',\n' + (1 + offset / 2) * ' '
     for i, (k, v) in enumerate(params.iteritems()):
         if type(v) is float:
             # use str for representing floating point numbers
@@ -79,7 +83,9 @@ def _pprint(params, offset=0, printer=repr):
         else:
             # use repr of the rest
             this_repr  = '%s=%s' % (k, printer(v))
-        if i > 0: 
+        if len(this_repr) > 500:
+            this_repr = this_repr[:300] + '...' + this_repr[-100:]
+        if i > 0:
             if (this_line_length + len(this_repr) >= 75
                                         or '\n' in this_repr):
                 params_list.append(line_sep)
@@ -94,7 +100,7 @@ def _pprint(params, offset=0, printer=repr):
     lines = ''.join(params_list)
     # Strip trailing space to avoid nightmare in doctests
     lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
-    return lines 
+    return lines
 
 
 ################################################################################
@@ -109,7 +115,7 @@ class BaseEstimator(object):
 
     """
 
-    @classmethod 
+    @classmethod
     def _get_param_names(cls):
         """ Get parameter names for the estimator
         """
@@ -154,6 +160,9 @@ class BaseEstimator(object):
         form <component>__<parameter> so that the its possible to
         update each component of the nested object.
         """
+        if not params:
+            # Simple optimisation to gain speed (inspect is slow)
+            return
         valid_params = self._get_params(deep=True)
         for key, value in params.iteritems():
             split = key.split('__', 1)
@@ -176,6 +185,7 @@ class BaseEstimator(object):
                                               'for estimator %s' %
                                              (key, self.__class__.__name__))
                 setattr(self, key, value)
+        return self
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -226,7 +236,7 @@ class RegressorMixin(object):
     """
 
     def score(self, X, y):
-        """ Returns the explained variance of the prediction
+        """ Returns the coefficient of determination of the prediction
 
             Parameters
             ----------
@@ -239,7 +249,7 @@ class RegressorMixin(object):
             -------
             z : float
         """
-        return explained_variance(self.predict(X), y)
+        return r2_score(y, self.predict(X))
 
 
 ################################################################################
@@ -260,6 +270,6 @@ def _get_sub_estimator(estimator):
 def is_classifier(estimator):
     """ Returns True if the given estimator is (probably) a classifier.
     """
-    estimator = _get_sub_estimator(estimator) 
+    estimator = _get_sub_estimator(estimator)
     return isinstance(estimator, ClassifierMixin)
 

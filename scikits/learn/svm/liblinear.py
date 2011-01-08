@@ -4,8 +4,7 @@ from .base import BaseLibLinear
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin):
-    """
-    Linear Support Vector Classification.
+    """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but uses internally
     liblinear rather than libsvm, so it has more flexibility in the
@@ -31,25 +30,34 @@ class LinearSVC(BaseLibLinear, ClassifierMixin):
     eps: float, optional
          precision for stopping criteria
 
+    multi_class: boolean, optional
+         perform multi-class SVM by Cramer and Singer. If active,
+         options loss, penalty and dual will be ignored.
+
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
-        Support vectors.
-
-    `dual_coef_` : array, shape = [n_class-1, nSV]
-        Coefficients of the support vector in the decision function.
-
-    `coef_` : array, shape = [n_class-1, n_features]
+    `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-    `intercept_` : array, shape = [n_class-1]
+    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     Notes
     -----
-    Some features of liblinear are still not wrapped, like the Cramer
-    & Singer algorithm.
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller eps parameter.
+
+    See also
+    --------
+    SVC
+
+    References
+    ----------
+    LIBLINEAR -- A Library for Large Linear Classification
+    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
     """
 

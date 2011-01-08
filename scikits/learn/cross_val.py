@@ -1,6 +1,4 @@
-"""
-Utilities for cross validation.
-"""
+"""Utilities for cross validation and performance evaluation"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux    <gael.varoquaux@normalesup.org>
@@ -14,16 +12,16 @@ from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
-##############################################################################
+
 class LeaveOneOut(object):
-    """
-    Leave-One-Out cross validation iterator:
+    """Leave-One-Out cross validation iterator
+
     Provides train/test indexes to split data in train test sets
     """
 
     def __init__(self, n):
-        """
-        Leave-One-Out cross validation iterator:
+        """Leave-One-Out cross validation iterator
+
         Provides train/test indexes to split data in train test sets
 
         Parameters
@@ -34,8 +32,8 @@ class LeaveOneOut(object):
         Examples
         ========
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4]]
-        >>> y = [1, 2]
+        >>> X = np.array([[1, 2], [3, 4]])
+        >>> y = np.array([1, 2])
         >>> loo = cross_val.LeaveOneOut(2)
         >>> len(loo)
         2
@@ -43,7 +41,8 @@ class LeaveOneOut(object):
         scikits.learn.cross_val.LeaveOneOut(n=2)
         >>> for train_index, test_index in loo:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False  True] TEST: [ True False]
         [[3 4]] [[1 2]] [2] [1]
@@ -70,17 +69,15 @@ class LeaveOneOut(object):
         return self.n
 
 
-##############################################################################
 class LeavePOut(object):
-    """
-    Leave-P-Out cross validation iterator:
-    Provides train/test indexes to split data in train test sets
+    """Leave-P-Out cross validation iterator
 
+    Provides train/test indexes to split data in train test sets
     """
 
     def __init__(self, n, p):
-        """
-        Leave-P-Out cross validation iterator:
+        """Leave-P-Out cross validation iterator
+
         Provides train/test indexes to split data in train test sets
 
         Parameters
@@ -93,8 +90,8 @@ class LeavePOut(object):
         Examples
         ========
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
-        >>> y = [1, 2, 3, 4]
+        >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+        >>> y = np.array([1, 2, 3, 4])
         >>> lpo = cross_val.LeavePOut(4, 2)
         >>> len(lpo)
         6
@@ -102,7 +99,8 @@ class LeavePOut(object):
         scikits.learn.cross_val.LeavePOut(n=4, p=2)
         >>> for train_index, test_index in lpo:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         TRAIN: [False  True False  True] TEST: [ True False  True False]
         TRAIN: [False  True  True False] TEST: [ True False False  True]
@@ -136,16 +134,15 @@ class LeavePOut(object):
                / factorial(self.p)
 
 
-##############################################################################
 class KFold(object):
-    """
-    K-Folds cross validation iterator:
+    """K-Folds cross validation iterator
+
     Provides train/test indexes to split data in train test sets
     """
 
     def __init__(self, n, k):
-        """
-        K-Folds cross validation iterator:
+        """K-Folds cross validation iterator
+
         Provides train/test indexes to split data in train test sets
 
         Parameters
@@ -156,10 +153,10 @@ class KFold(object):
             number of folds
 
         Examples
-        ========
+        --------
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
-        >>> y = [1, 2, 3, 4]
+        >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+        >>> y = np.array([1, 2, 3, 4])
         >>> kf = cross_val.KFold(4, k=2)
         >>> len(kf)
         2
@@ -167,7 +164,8 @@ class KFold(object):
         scikits.learn.cross_val.KFold(n=4, k=2)
         >>> for train_index, test_index in kf:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         TRAIN: [ True  True False False] TEST: [False False  True  True]
 
@@ -207,23 +205,21 @@ class KFold(object):
         return self.k
 
 
-##############################################################################
 class StratifiedKFold(object):
-    """
-    Stratified K-Folds cross validation iterator:
+    """Stratified K-Folds cross validation iterator
+
     Provides train/test indexes to split data in train test sets
 
     This cross-validation object is a variation of KFold, which
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
-
     """
 
     # XXX: Should maybe have an argument to raise when
     # folds are not balanced
     def __init__(self, y, k):
-        """
-        K-Folds cross validation iterator:
+        """K-Folds cross validation iterator
+
         Provides train/test indexes to split data in train test sets
 
         Parameters
@@ -236,8 +232,8 @@ class StratifiedKFold(object):
         Examples
         --------
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [1, 2], [3, 4]]
-        >>> y = [0, 0, 1, 1]
+        >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+        >>> y = np.array([0, 0, 1, 1])
         >>> skf = cross_val.StratifiedKFold(y, k=2)
         >>> len(skf)
         2
@@ -245,7 +241,8 @@ class StratifiedKFold(object):
         scikits.learn.cross_val.StratifiedKFold(labels=[0 0 1 1], k=2)
         >>> for train_index, test_index in skf:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         TRAIN: [False  True False  True] TEST: [ True False  True False]
         TRAIN: [ True False  True False] TEST: [False  True False  True]
 
@@ -254,7 +251,7 @@ class StratifiedKFold(object):
         All the folds have size trunc(n/k), the last one has the complementary
         """
         y = np.asanyarray(y)
-        n = y.size
+        n = y.shape[0]
         assert k>0, ValueError('cannot have k below 1')
         assert k<n, ValueError('cannot have k=%d greater than the number '
                                'of samples %d' % (k, n))
@@ -266,7 +263,7 @@ class StratifiedKFold(object):
     def __iter__(self):
         y = self.y.copy()
         k = self.k
-        n = y.size
+        n = y.shape[0]
 
         classes = unique(y)
 
@@ -304,14 +301,14 @@ class StratifiedKFold(object):
 
 ##############################################################################
 class LeaveOneLabelOut(object):
-    """
-    Leave-One-Label_Out cross-validation iterator:
+    """Leave-One-Label_Out cross-validation iterator
+
     Provides train/test indexes to split data in train test sets
     """
 
     def __init__(self, labels):
-        """
-        Leave-One-Label_Out cross validation:
+        """Leave-One-Label_Out cross validation
+
         Provides train/test indexes to split data in train test sets
 
         Parameters
@@ -322,18 +319,18 @@ class LeaveOneLabelOut(object):
         Examples
         ----------
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [5, 6], [7, 8]]
-        >>> y = [1, 2, 1, 2]
-        >>> labels = [1, 1, 2, 2]
+        >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+        >>> y = np.array([1, 2, 1, 2])
+        >>> labels = np.array([1, 1, 2, 2])
         >>> lol = cross_val.LeaveOneLabelOut(labels)
         >>> len(lol)
         2
         >>> print lol
-        scikits.learn.cross_val.LeaveOneLabelOut(labels=[1, 1, 2, 2])
+        scikits.learn.cross_val.LeaveOneLabelOut(labels=[1 1 2 2])
         >>> for train_index, test_index in lol:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, \
-            test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False False  True  True] TEST: [ True  True False False]
         [[5 6]
@@ -359,25 +356,24 @@ class LeaveOneLabelOut(object):
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
-                                self.__class__.__module__,
-                                self.__class__.__name__,
-                                self.labels,
-                                )
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.labels,
+        )
 
     def __len__(self):
         return self.n_labels
 
 
-##############################################################################
 class LeavePLabelOut(object):
-    """
-    Leave-P-Label_Out cross-validation iterator:
+    """Leave-P-Label_Out cross-validation iterator
+
     Provides train/test indexes to split data in train test sets
     """
 
     def __init__(self, labels, p):
-        """
-        Leave-P-Label_Out cross validation:
+        """Leave-P-Label_Out cross validation
+
         Provides train/test indexes to split data in train test sets
 
         Parameters
@@ -388,18 +384,18 @@ class LeavePLabelOut(object):
         Examples
         ----------
         >>> from scikits.learn import cross_val
-        >>> X = [[1, 2], [3, 4], [5, 6]]
-        >>> y = [1, 2, 1]
-        >>> labels = [1, 2, 3]
+        >>> X = np.array([[1, 2], [3, 4], [5, 6]])
+        >>> y = np.array([1, 2, 1])
+        >>> labels = np.array([1, 2, 3])
         >>> lpl = cross_val.LeavePLabelOut(labels, p=2)
         >>> len(lpl)
         3
         >>> print lpl
-        scikits.learn.cross_val.LeavePLabelOut(labels=[1, 2, 3], p=2)
+        scikits.learn.cross_val.LeavePLabelOut(labels=[1 2 3], p=2)
         >>> for train_index, test_index in lpl:
         ...    print "TRAIN:", train_index, "TEST:", test_index
-        ...    X_train, X_test, y_train, y_test = cross_val.split(train_index, \
-            test_index, X, y)
+        ...    X_train, X_test = X[train_index], X[test_index]
+        ...    y_train, y_test = y[train_index], y[test_index]
         ...    print X_train, X_test, y_train, y_test
         TRAIN: [False False  True] TEST: [ True  True False]
         [[5 6]] [[1 2]
@@ -445,44 +441,52 @@ class LeavePLabelOut(object):
                / factorial(self.p)
 
 
-##############################################################################
-
-def _cross_val_score(estimator, X, y, score_func, train, test):
-    """ Inner loop for cross validation.
-    """
+def _cross_val_score(estimator, X, y, score_func, train, test, iid):
+    """Inner loop for cross validation"""
     if score_func is None:
         score_func = lambda self, *args: self.score(*args)
     if y is None:
-        return score_func(estimator.fit(X[train]), X[test])
-    return score_func(estimator.fit(X[train], y[train]), X[test], y[test])
+        score = score_func(estimator.fit(X[train]), X[test])
+    else:
+        score = score_func(estimator.fit(X[train], y[train]), X[test], y[test])
+    if iid:
+        if y is not None:
+            score *= len(y[test])
+        else:
+            score *= len(X[test])
+    return score
 
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
+def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
                 n_jobs=1, verbose=0):
-    """ Evaluate a score by cross-validation.
+    """Evaluate a score by cross-validation
 
-        Parameters
-        ----------
-        estimator: estimator object implementing 'fit'
-            The object to use to fit the data
-        X: array-like of shape at least 2D
-            The data to fit.
-        y: array-like, optional
-            The target variable to try to predict in the case of
-            supervised learning.
-        score_func: callable, optional
-            callable taking as arguments the fitted estimator, the
-            test data (X_test) and the test target (y_test) if y is
-            not None.
-        cv: cross-validation generator, optional
-            A cross-validation generator. If None, a 3-fold cross
-            validation is used or 3-fold stratified cross-validation
-            when y is supplied.
-        n_jobs: integer, optional
-            The number of CPUs to use to do the computation. -1 means
-            'all CPUs'.
-        verbose: integer, optional
-            The verbosity level
+    Parameters
+    ----------
+    estimator: estimator object implementing 'fit'
+        The object to use to fit the data
+    X: array-like of shape at least 2D
+        The data to fit.
+    y: array-like, optional
+        The target variable to try to predict in the case of
+        supervised learning.
+    score_func: callable, optional
+        callable taking as arguments the fitted estimator, the
+        test data (X_test) and the test target (y_test) if y is
+        not None.
+    cv: cross-validation generator, optional
+        A cross-validation generator. If None, a 3-fold cross
+        validation is used or 3-fold stratified cross-validation
+        when y is supplied.
+    iid: boolean, optional
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
+    n_jobs: integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+    verbose: integer, optional
+        The verbosity level
     """
     n_samples = len(X)
     if cv is None:
@@ -500,27 +504,8 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None,
     # independent, and that it is pickable.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                                        train, test)
+                                                        train, test, iid)
                 for train, test in cv)
     return np.array(scores)
 
-
-################################################################################
-# Depreciated
-def split(train_indices, test_indices, *args):
-    """
-    For each arg return a train and test subsets defined by indexes provided
-    in train_indices and test_indices
-    """
-    import warnings
-    warnings.warn('split is deprecated and will be removed, '
-                    'please use indexing instead')
-    ret = []
-    for arg in args:
-        arg = np.asanyarray(arg)
-        arg_train = arg[train_indices]
-        arg_test  = arg[test_indices]
-        ret.append(arg_train)
-        ret.append(arg_test)
-    return ret
 

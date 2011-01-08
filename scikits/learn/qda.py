@@ -15,8 +15,9 @@ import scipy.ndimage as ndimage
 from .base import BaseEstimator, ClassifierMixin
 
 # FIXME :
-# - in fit(X, y) method, many checks are common with other models (in particular
-#   LDA model) and should be factorized : may be in BaseEstimator ?
+# - in fit(X, y) method, many checks are common with other models
+#   (in particular LDA model) and should be factorized:
+#   maybe in BaseEstimator ?
 
 class QDA(BaseEstimator, ClassifierMixin):
     """
@@ -42,14 +43,6 @@ class QDA(BaseEstimator, ClassifierMixin):
     `covariances_` : list of array-like, shape = [n_features, n_features]
         Covariance matrices of each class
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     Examples
     --------
     >>> from scikits.learn.qda import QDA
@@ -67,10 +60,9 @@ class QDA(BaseEstimator, ClassifierMixin):
     LDA
 
     """
+
     def __init__(self, priors=None):
-        if priors is not None:
-            self.priors = np.asarray(priors)
-        else: self.priors = None
+        self.priors = np.asarray(priors) if priors is not None else None
 
     def fit(self, X, y, store_covariances=False, tol=1.0e-4, **params):
         """
@@ -93,17 +85,26 @@ class QDA(BaseEstimator, ClassifierMixin):
         if X.ndim!=2:
             raise exceptions.ValueError('X must be a 2D array')
         if X.shape[0] != y.shape[0]:
-            raise ValueError("Incompatible shapes")
-        n_samples = X.shape[0]
-        n_features = X.shape[1]
-        classes = np.unique(y).astype(np.int32)
+            raise ValueError(
+                'Incompatible shapes: X has %s samples, while y '
+                'has %s' % (X.shape[0], y.shape[0]))
+        if y.dtype.char.lower() not in ('b', 'h', 'i'):
+            # We need integer values to be able to use
+            # ndimage.measurements and np.bincount on numpy >= 2.0.
+            # We currently support (u)int8, (u)int16 and (u)int32.
+            # Note that versions of scipy >= 0.8 can also accept
+            # (u)int64. We however don't support it for backwards
+            # compatibility.
+            y = y.astype(np.int32)
+        n_samples, n_features = X.shape
+        classes = np.unique(y)
         n_classes = classes.size
         if n_classes < 2:
             raise exceptions.ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array(ndimage.measurements.sum(np.ones(len(y)),
-                                                    y, index=classes))
+            counts = np.array(ndimage.measurements.sum(
+                np.ones(n_samples, dtype=y.dtype), y, index=classes))
             self.priors_ = counts / float(n_samples)
         else:
             self.priors_ = self.priors
@@ -200,3 +201,20 @@ class QDA(BaseEstimator, ClassifierMixin):
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+
+    def predict_log_proba(self, X):
+        """
+        This function return posterior log-probabilities of classification
+        according to each class on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples, n_classes]
+        """
+        # XXX : can do better to avoid precision overflows
+        probas_ = self.predict_proba(X)
+        return np.log(probas_)

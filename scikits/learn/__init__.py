@@ -14,37 +14,29 @@ See http://scikit-learn.sourceforge.net for complete documentation.
 """
 
 from .base import clone
-from . import cross_val
-from . import ball_tree
-from . import cluster
-from . import covariance
-from . import gmm
-from . import glm
-from . import logistic
-from . import lda
-from . import metrics
-from . import svm
-from . import feature_selection
+
 
 try:
     from numpy.testing import nosetester
+
     class NoseTester(nosetester.NoseTester):
         """ Subclass numpy's NoseTester to add doctests by default
         """
-        def test(self, label='fast', verbose=1, extra_argv=['--exe'], 
+
+        def test(self, label='fast', verbose=1, extra_argv=['--exe'],
                         doctests=True, coverage=False):
             return super(NoseTester, self).test(label=label, verbose=verbose,
                                     extra_argv=extra_argv,
                                     doctests=doctests, coverage=coverage)
-        
+
     test = NoseTester().test
     del nosetester
 except:
     pass
 
-__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'gmm', 'glm',
-           'logistic', 'lda', 'metrics', 'svm', 'features', 'clone', 
-           'test']
 
-__version__ = '0.5'
+__all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets',
+           'gmm', 'linear_model', 'logistic', 'lda', 'metrics', 'svm',
+           'features', 'clone', 'metrics', 'test', 'gaussian_process']
 
+__version__ = '0.6.0'

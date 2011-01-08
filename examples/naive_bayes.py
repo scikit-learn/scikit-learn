@@ -7,17 +7,12 @@ A classification example using Gaussian Naive Bayes (GNB).
 
 """
 
-import numpy as np
-import pylab as pl
-
-
 ################################################################################
 # import some data to play with
 
 # The IRIS dataset
-from scikits.learn import datasets, svm
+from scikits.learn import datasets
 iris = datasets.load_iris()
-
 
 X = iris.data
 y = iris.target

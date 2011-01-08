@@ -6,12 +6,14 @@ Precision-Recall
 Example of Precision-Recall metric to evaluate the quality
 of the output of a classifier.
 """
+print __doc__
 
 import random
 import pylab as pl
 import numpy as np
 from scikits.learn import svm, datasets
-from scikits.learn.metrics import precision_recall
+from scikits.learn.metrics import precision_recall_curve
+from scikits.learn.metrics import auc
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -27,14 +29,16 @@ half = int(n_samples/2)
 
 # Add noisy features
 np.random.seed(0)
-X = np.c_[X,np.random.randn(n_samples, 200*n_features)]
+X = np.c_[X,np.random.randn(n_samples, 200 * n_features)]
 
 # Run classifier
 classifier = svm.SVC(kernel='linear', probability=True)
-probas_ = classifier.fit(X[:half],y[:half]).predict_proba(X[half:])
+probas_ = classifier.fit(X[:half], y[:half]).predict_proba(X[half:])
 
 # Compute Precision-Recall and plot curve
-precision, recall, thresholds = precision_recall(y[half:], probas_[:,1])
+precision, recall, thresholds = precision_recall_curve(y[half:], probas_[:,1])
+area = auc(recall, precision)
+print "Area Under Curve: %0.2f" % area
 
 pl.figure(-1)
 pl.clf()
@@ -43,6 +47,6 @@ pl.xlabel('Recall')
 pl.ylabel('Precision')
 pl.ylim([0.0,1.05])
 pl.xlim([0.0,1.0])
-pl.title('Precision-Recall example')
+pl.title('Precision-Recall example: AUC=%0.2f' % area)
 pl.legend(loc="lower left")
 pl.show()

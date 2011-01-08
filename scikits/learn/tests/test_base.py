@@ -23,6 +23,11 @@ class T(BaseEstimator):
         self.a = a
         self.b = b
 
+class Buggy(BaseEstimator):
+    " A buggy estimator that does not set its parameters right. "
+
+    def __init__(self, a=None):
+        self.a = 1
 
 ################################################################################
 # The tests
@@ -41,7 +46,7 @@ def test_clone():
     new_selector = clone(selector)
     assert_true(selector is not new_selector)
     assert_equal(selector._get_params(), new_selector._get_params())
-    
+
 
 def test_clone_2():
     """Tests that clone doesn't copy everything.
@@ -49,7 +54,7 @@ def test_clone_2():
     We first create an estimator, give it an own attribute, and
     make a copy of its original state. Then we check that the copy doesn't have
     the specific attribute we manually added to the initial estimator.
-    
+
     """
     from scikits.learn.feature_selection import SelectFpr, f_classif
 
@@ -57,21 +62,26 @@ def test_clone_2():
     selector.own_attribute = "test"
     new_selector = clone(selector)
     assert_false(hasattr(new_selector, "own_attribute"))
-    
+
+def test_clone_buggy():
+    """ Check that clone raises an error on buggy estimators """
+    buggy = Buggy()
+    buggy.a = 2
+    assert_raises(AssertionError, clone, buggy)
 
 def test_repr():
-    """ Smoke test the repr of the 
+    """ Smoke test the repr of the
     """
     my_estimator = MyEstimator()
     repr(my_estimator)
     test = T(K(), K())
-    assert_equal(repr(test), 
+    assert_equal(repr(test),
                 "T(a=K(c=None, d=None), b=K(c=None, d=None))"
                 )
 
 
 def test_str():
-    """ Smoke test the str of the 
+    """ Smoke test the str of the
     """
     my_estimator = MyEstimator()
     str(my_estimator)
@@ -96,6 +106,6 @@ def test_is_classifier():
     assert_true(is_classifier(svc))
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
     assert_true(is_classifier(Pipeline([('svc', svc)])))
-    assert_true(is_classifier(Pipeline([('svc_cv', 
+    assert_true(is_classifier(Pipeline([('svc_cv',
                               GridSearchCV(svc, {'C': [0.1, 1]}))])))
 

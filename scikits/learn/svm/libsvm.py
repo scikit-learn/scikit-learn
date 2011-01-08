@@ -2,13 +2,12 @@
 from ..base import ClassifierMixin, RegressorMixin
 from .base import BaseLibSVM
 
+
 class SVC(BaseLibSVM, ClassifierMixin):
-    """
-    C-Support Vector Classification.
+    """C-Support Vector Classification.
 
     Parameters
     ----------
-
     C : float, optional (default=1.0)
         penalty parameter C of the error term.
 
@@ -42,16 +41,19 @@ class SVC(BaseLibSVM, ClassifierMixin):
     cache_size: float, optional
          specify the size of the cache (in MB)
 
+
     Attributes
     ----------
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
 
-    `support_` : array-like, shape = [n_SV, n_features]
-        Support vectors, where n_SV is the number of support vectors.
+    `support_vectors_` : array-like, shape = [n_SV, n_features]
+        Support vectors.
 
     `n_support_` : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_class-1, nSV]
+    `dual_coef_` : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_class-1, n_features]
@@ -66,10 +68,10 @@ class SVC(BaseLibSVM, ClassifierMixin):
     --------
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> Y = np.array([1, 1, 2, 2])
+    >>> y = np.array([1, 1, 2, 2])
     >>> from scikits.learn.svm import SVC
     >>> clf = SVC()
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
       cache_size=100.0, shrinking=True, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
@@ -90,12 +92,10 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
-    """
-    Nu-Support Vector Classification.
+    """Nu-Support Vector Classification.
 
     Parameters
     ----------
-
     nu : float, optional
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
@@ -134,13 +134,16 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
+
+    `support_vectors_` : array-like, shape = [n_SV, n_features]
         Support vectors.
 
     `n_support_` : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -153,7 +156,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     Methods
     -------
-    fit(X, Y) : self
+    fit(X, y) : self
         Fit the model
 
     predict(X) : array
@@ -162,17 +165,20 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     predict_proba(X) : array
         Return probability estimates.
 
-    predict_margin(X) : array
+    predict_log_proba(X) : array
+        Return log-probability estimates.
+
+    decision_function(X) : array
         Return distance to predicted margin.
 
     Examples
     --------
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> Y = np.array([1, 1, 2, 2])
+    >>> y = np.array([1, 1, 2, 2])
     >>> from scikits.learn.svm import NuSVC
     >>> clf = NuSVC()
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, eps=0.001,
        cache_size=100.0, shrinking=True, nu=0.5, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
@@ -193,12 +199,10 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
 
 class SVR(BaseLibSVM, RegressorMixin):
-    """
-    Support Vector Regression.
+    """Support Vector Regression.
 
     Parameters
     ----------
-
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
         the fraction of support vectors. Should be in the interval (0, 1].  By
@@ -234,12 +238,21 @@ class SVR(BaseLibSVM, RegressorMixin):
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
+    cache_size: float, optional
+         specify the size of the cache (in MB)
+
+    shrinking: boolean, optional
+         wether to use the shrinking heuristic.
+
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `support_vectors_` : array-like, shape = [nSV, n_features]
+        Support vectors.
+
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -261,8 +274,7 @@ class SVR(BaseLibSVM, RegressorMixin):
                          cache_size, eps, C, nu, p,
                          shrinking, probability)
 
-
-    def fit(self, X, Y):
+    def fit(self, X, y, sample_weight=[]):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -271,7 +283,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
-        Y : array, shape = [n_samples]
+        y : array, shape = [n_samples]
             Target values. Array of floating-point numbers.
 
         Returns
@@ -280,24 +292,22 @@ class SVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, Y)
+        return BaseLibSVM.fit(self, X, y, sample_weight=sample_weight)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
-    """
-    Nu Support Vector Regression. Similar to NuSVC, for regression,
-    uses a paramter nu to control the number of support
-    vectors. However, unlike NuSVC, where nu replaces with C, here nu
-    replaces with the parameter p of SVR.
+    """Nu Support Vector Regression.
+
+    Similar to NuSVC, for regression, uses a paramter nu to control
+    the number of support vectors. However, unlike NuSVC, where nu
+    replaces with C, here nu replaces with the parameter p of SVR.
 
     Parameters
     ----------
-
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
         the fraction of support vectors. Should be in the interval (0, 1].  By
         default 0.5 will be taken.  Only available if impl='nu_svc'
-
 
     C : float, optional (default=1.0)
         penalty parameter C of the error term.
@@ -326,12 +336,21 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
+    shrinking: boolean, optional
+         wether to use the shrinking heuristic.
+
+    cache_size: float, optional
+         specify the size of the cache (in MB)
+
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
-        Support vectors
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `support_vectors_` : array-like, shape = [nSV, n_features]
+        Support vectors.
+
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -354,7 +373,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                          cache_size, eps, C, nu, 0.,
                          shrinking, probability)
 
-    def fit(self, X, Y):
+    def fit(self, X, y):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -363,7 +382,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
-        Y : array, shape = [n_samples]
+        y : array, shape = [n_samples]
             Target values. Array of floating-point numbers.
 
         Returns
@@ -372,18 +391,16 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             Returns self.
         """
         # we copy this method because SVR does not accept class_weight
-        return BaseLibSVM.fit(self, X, Y)
-
+        return BaseLibSVM.fit(self, X, y)
 
 
 class OneClassSVM(BaseLibSVM):
-    """Unsupervised outliers detection
+    """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
 
     Parameters
     ----------
-
     kernel : string, optional
         Specifies the kernel type to be used in
         the algorithm. Can be one of 'linear', 'poly', 'rbf', 'sigmoid',
@@ -402,13 +419,6 @@ class OneClassSVM(BaseLibSVM):
         kernel coefficient for rbf and poly, by default 1/n_features
         will be taken.
 
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
-
-    probability: boolean, optional (False by default)
-        Enable probability estimates. Must be enabled prior to calling
-        prob_predict.
-
     coef0 : float, optional
         Independent term in kernel function. It is only significant in
         poly/sigmoid.
@@ -416,12 +426,21 @@ class OneClassSVM(BaseLibSVM):
     eps: float, optional
          precision for stopping criteria
 
+    shrinking: boolean, optional
+         wether to use the shrinking heuristic.
+
+    cache_size: float, optional
+         specify the size of the cache (in MB)
+
     Attributes
     ----------
-    `support_` : array-like, shape = [nSV, n_features]
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
+
+    `support_vectors_` : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, nSV]
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
         Coefficient of the support vector in the decision function.
 
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -433,14 +452,13 @@ class OneClassSVM(BaseLibSVM):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0,
-                 nu=0.5, p=0.1, shrinking=True, probability=False):
+                 cache_size=100.0, eps=1e-3, nu=0.5, shrinking=True):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                             cache_size, eps, C, nu, p, shrinking, probability)
+                             cache_size, eps, 0.0, nu, 0.0, shrinking, False)
 
-    def fit(self, X):
+    def fit(self, X, class_weight={}, sample_weight=[], **params):
         """
-        Detects the soft boundary (aka soft boundary) of the set of samples X.
+        Detects the soft boundary of the set of samples X.
 
         Parameters
         ----------
@@ -448,5 +466,11 @@ class OneClassSVM(BaseLibSVM):
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
+        Returns
+        -------
+        self : object
+            Returns self.
         """
-        super(OneClassSVM, self).fit(X, [])
+        super(OneClassSVM, self).fit(
+            X, [], class_weight=class_weight, sample_weight=sample_weight,
+            **params)

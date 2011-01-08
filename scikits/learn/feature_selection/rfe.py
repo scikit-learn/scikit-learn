@@ -22,7 +22,7 @@ class RFE(BaseEstimator):
 
          For instance this is the case for most supervised learning
          algorithms such as Support Vector Classifiers and Generalized
-         Linear Models from the svm and glm package.
+         Linear Models from the svm and linear_model package.
 
     n_features : int
         Number of features to select
@@ -117,7 +117,7 @@ class RFECV(RFE):
 
          For instance this is the case for most supervised learning
          algorithms such as Support Vector Classifiers and Generalized
-         Linear Models from the svm and glm package.
+         Linear Models from the svm and linear_model package.
 
     n_features : int
         Number of features to select
@@ -181,6 +181,7 @@ class RFECV(RFE):
         clf = self.estimator
         n_models = np.max(self.ranking_)
         self.cv_scores_ = np.zeros(n_models)
+        self.n_features_ = np.bincount(self.ranking_)[::-1].cumsum()[-2::-1] 
 
         for train, test in cv:
             ranking_ = rfe.fit(X[train], y[train]).ranking_

@@ -31,19 +31,15 @@ static void default_print(const char *buf)
 	fflush(stdout);
 }
 
-#if 0
 void TRON::info(const char *fmt,...)
 {
-	char buf[BUFSIZ];
-	va_list ap;
-	va_start(ap,fmt);
-	vsprintf(buf,fmt,ap);
-	va_end(ap);
-	(*tron_print_string)(buf);
+	// char buf[BUFSIZ];
+	// va_list ap;
+	// va_start(ap,fmt);
+	// vsprintf(buf,fmt,ap);
+	// va_end(ap);
+	// (*tron_print_string)(buf);
 }
-#else
-void TRON::info(const char *fmt, ...) {}
-#endif
 
 TRON::TRON(const function *fun_obj, double eps, int max_iter)
 {
