@@ -1,7 +1,11 @@
 
-===========================================
-scikits.learn: machine learning in python
-===========================================
+..  
+    We are putting the title as a raw HTML so that it doesn't appear in
+    the contents
+
+.. raw:: html
+
+    <h1>scikits.learn: machine learning in Python</h1>
 
 .. only:: html
 
@@ -9,10 +13,9 @@ scikits.learn: machine learning in python
        :height: 150
        :target: auto_examples/cluster/plot_affinity_propagation.html
 
-
-    .. |banner2| image:: auto_examples/glm/images/plot_lasso_lars.png
+    .. |banner2| image:: auto_examples/gaussian_process/images/plot_gp_regression.png
        :height: 150
-       :target: auto_examples/glm/plot_lasso_lars.html
+       :target: auto_examples/gaussian_process/plot_gp_regression.html
 
     .. |banner3| image:: auto_examples/svm/images/plot_oneclass.png
        :height: 150
@@ -50,10 +53,11 @@ scikits.learn: machine learning in python
 
 
 :Features:
-  * **Solid**: :ref:`supervised-learning`: classification, regression
+  * **Solid**: :ref:`supervised-learning`: :ref:`svm`, :ref:`linear_model`.
 
-  * **Work in progress**: :ref:`unsupervised-learning`: :ref:`clustering`, 
-    :ref:`gmm`, manifold learning, ICA
+  * **Work in progress**: :ref:`unsupervised-learning`:
+    :ref:`clustering`, :ref:`mixture`, manifold learning, :ref:`ICA
+    <ICA>`, :ref:`gaussian_process`
 
   * **Planed**: Gaussian graphical models, matrix factorization
 
@@ -61,69 +65,21 @@ scikits.learn: machine learning in python
   Open source, commercially usable: **BSD license** (3 clause)
 
 
-.. only:: html
+.. include:: big_toc_css.rst
 
-    .. raw:: html
+.. note:: This document describes scikits.learn |release|. For other
+   versions and printable format, see :ref:`documentation_resources`.
 
-       <div class="example_digits">
-
-    :ref:`A simple Example: recognizing hand-written digits <example_plot_digits_classification.py>` ::
-
-        import pylab as pl
-
-        from scikits.learn import datasets, svm
-        digits = datasets.load_digits()
-        for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
-            pl.subplot(2, 4, index+1)
-            pl.imshow(image, cmap=pl.cm.gray_r)
-            pl.title('Training: %i' % label)
-
-        n_samples = len(digits.images)
-        data = digits.images.reshape((n_samples, -1))
-
-        classifier = svm.SVC()
-        classifier.fit(data[:n_samples/2], digits.target[:n_samples/2])
-
-        for index, image in enumerate(digits.images[n_samples/2:n_samples/2+4]):
-            pl.subplot(2, 4, index+5)
-            pl.imshow(image, cmap=pl.cm.gray_r)
-            pl.title('Prediction: %i' % classifier.predict(image.ravel()))
-
-    .. image:: images/plot_digits_classification.png
-       :height: 140
-       :target: auto_examples/plot_digits_classification.html
-
-    .. raw:: html
-
-        </div>
-
-
-.. .. warning:: 
-
-..    This documentation is relative to the development version,
-..    documentation for the stable version can be found `here
-..    <http://scikit-learn.sourceforge.net/old_doc/>`__
-
-
-First steps
-======================
-
-.. toctree::
-   :maxdepth: 2
-
-   install
-   tutorial
-
-User guide
+User Guide
 ==========
 
 .. toctree::
    :maxdepth: 2
 
-   user_guide
+   contents
 
-Gallery
-=======
+Example Gallery
+===============
 
 .. toctree::
    :maxdepth: 2
@@ -131,17 +87,11 @@ Gallery
    auto_examples/index
 
 
-Developement
-============
+Development
+===========
 .. toctree::
    :maxdepth: 2
 
    developers/index
    performance
-
-About
-=====
-.. toctree::
-   :maxdepth: 2
-
    about

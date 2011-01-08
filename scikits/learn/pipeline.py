@@ -7,6 +7,7 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 # Licence: BSD
 
 from .base import BaseEstimator
+import numpy as np
 
 class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator
@@ -33,16 +34,21 @@ class Pipeline(BaseEstimator):
         fit:
             Fit all the transforms one after the other and transform the
             data, then fit the transformed data using the final estimator
+        fit_transform:
+            Fit all the transforms one after the other and transform the
+            data, then use fit_transform on transformed data using the final
+            estimator. Valid only if the final estimator implements
+            fit_transform.
         predict:
-            Applied transforms to the data, and the predict method of the
+            Applies transforms to the data, and the predict method of the
             final estimator. Valid only if the final estimator implements
             predict.
         transform:
-            Applied transforms to the data, and the transform method of the
+            Applies transforms to the data, and the transform method of the
             final estimator. Valid only if the final estimator implements
             transform.
         score:
-            Applied transforms to the data, and the score method of the
+            Applies transforms to the data, and the score method of the
             final estimator. Valid only if the final estimator implements
             score.
 
@@ -87,15 +93,16 @@ class Pipeline(BaseEstimator):
             fit/transform) that are chained, in the order in which
             they are chained, with the last object an estimator.
         """
-        self._named_steps = dict(steps)
+        self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         self.steps = steps
-        assert len(self._named_steps) == len(steps), ("Names provided are "
+        assert len(self.named_steps) == len(steps), ("Names provided are "
             "not unique: %s" % names)
         transforms = estimators[:-1]
         estimator = estimators[-1]
         for t in  transforms:
-            assert hasattr(t, "fit") and hasattr(t, "transform"), ValueError(
+            assert (hasattr(t, "fit") or hasattr(t, "fit_transform")) and \
+                    hasattr(t, "transform"), ValueError(
                 "All intermediate steps a the chain should be transforms "
                 "and implement fit and transform",
                 "'%s' (type %s) doesn't)" % (t, type(t))
@@ -109,29 +116,53 @@ class Pipeline(BaseEstimator):
         if not deep:
             return super(Pipeline, self)._get_params(deep=False)
         else:
-            out = self._named_steps.copy()
-            for name, step in self._named_steps.iteritems():
+            out = self.named_steps.copy()
+            for name, step in self.named_steps.iteritems():
                 for key, value in step._get_params(deep=True).iteritems():
                     out['%s__%s' % (name, key)] = value
-        return out
+            return out
 
     #---------------------------------------------------------------------------
     # Estimator interface
     #---------------------------------------------------------------------------
 
-    def fit(self, X, y=None, **params):
+
+    def _pre_transform(self, X, y=None, **params):
         self._set_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.fit(Xt, y).transform(Xt)
+            if hasattr(transform, "fit_transform"):
+                Xt = transform.fit_transform(Xt, y)
+            else:
+                Xt = transform.fit(Xt, y).transform(Xt)
+        return Xt
+
+    def fit(self, X, y=None, **params):
+        Xt = self._pre_transform(X, y, **params)
         self.steps[-1][-1].fit(Xt, y)
         return self
+
+    def fit_transform(self, X, y=None, **params):
+        Xt = self._pre_transform(X, y, **params)
+        return self.steps[-1][-1].fit_transform(Xt, y)
 
     def predict(self, X):
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt)
+
+    def predict_proba(self, X):
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].predict_proba(Xt)
+
+    def predict_log_proba(self, X):
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].predict_log_proba(Xt)
 
     def transform(self, X):
         Xt = X
@@ -144,4 +175,20 @@ class Pipeline(BaseEstimator):
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
+
+    def get_support(self):
+        support_ = None
+        for name, transform in self.steps[:-1]:
+            if hasattr(transform, 'get_support'):
+                support_ = transform.get_support()
+        if support_ is None:
+            support_ = np.ones(self.steps[-1][-1].coef_.shape, dtype=np.bool)
+        return support_
+
+    @property
+    def coef_(self):
+        support_ = self.get_support()
+        coef = np.zeros(support_.shape, dtype=np.float)
+        coef[support_] = self.steps[-1][-1].coef_
+        return coef
 

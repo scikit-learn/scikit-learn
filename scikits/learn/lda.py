@@ -10,6 +10,7 @@ from scipy import linalg, ndimage
 
 from .base import BaseEstimator, ClassifierMixin
 
+
 class LDA(BaseEstimator, ClassifierMixin):
     """
     Linear Discriminant Analysis (LDA)
@@ -25,9 +26,6 @@ class LDA(BaseEstimator, ClassifierMixin):
     priors : array, optional, shape = [n_classes]
         Priors on classes
 
-    use_svd : bool, optional
-         Specify if the SVD from scipy should be used.
-
     Attributes
     ----------
     `means_` : array-like, shape = [n_classes, n_features]
@@ -39,14 +37,6 @@ class LDA(BaseEstimator, ClassifierMixin):
     `covariance_` : array-like, shape = [n_features, n_features]
         Covariance matrix (shared by all classes)
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     Examples
     --------
     >>> import numpy as np
@@ -55,7 +45,7 @@ class LDA(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
     >>> clf.fit(X, y)
-    LDA(priors=None, use_svd=True)
+    LDA(priors=None)
     >>> print clf.predict([[-0.8, -1]])
     [1]
 
@@ -64,13 +54,9 @@ class LDA(BaseEstimator, ClassifierMixin):
     QDA
 
     """
-    def __init__(self, priors=None, use_svd=True):
-        #use_svd : if True, use linalg.svd alse use computational
-        #          trick with covariance matrix
-        if not priors is None:
-            self.priors = np.asarray(priors)
-        else: self.priors = None
-        self.use_svd = use_svd
+
+    def __init__(self, priors=None):
+        self.priors = np.asarray(priors) if priors is not None else None
 
     def fit(self, X, y, store_covariance=False, tol=1.0e-4, **params):
         """
@@ -90,19 +76,30 @@ class LDA(BaseEstimator, ClassifierMixin):
         self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(y)
+        if y.dtype.char.lower() not in ('b', 'h', 'i'):
+            # We need integer values to be able to use
+            # ndimage.measurements and np.bincount on numpy >= 2.0.
+            # We currently support (u)int8, (u)int16 and (u)int32.
+            # Note that versions of scipy >= 0.8 can also accept
+            # (u)int64. We however don't support it for backwards
+            # compatibility.
+            y = y.astype(np.int32)
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
+        if X.shape[0] != y.shape[0]:
+            raise ValueError(
+                'Incompatible shapes: X has %s samples, while y '
+                'has %s' % (X.shape[0], y.shape[0]))
         n_samples = X.shape[0]
         n_features = X.shape[1]
-        # We need int32 to be able to use ndimage.measurements
-        classes = np.unique(y).astype(np.int32)
+        classes = np.unique(y)
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array(ndimage.measurements.sum(np.ones(len(y)),
-                                                    y, index=classes))
+            counts = np.array(ndimage.measurements.sum(
+                np.ones(n_samples, dtype=y.dtype), y, index=classes))
             self.priors_ = counts / float(n_samples)
         else:
             self.priors_ = self.priors
@@ -125,7 +122,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         if store_covariance:
             cov /= (n_samples - n_classes)
             self.covariance_ = cov
-            
+
         means = np.asarray(means)
         Xc = np.concatenate(Xc, 0)
 
@@ -137,10 +134,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc * scaling)
         # SVD of centered (within)scaled data
-        if self.use_svd == True:
-            U, S, V = linalg.svd(X, full_matrices=0)
-        else:
-            S, V = self.svd(X)
+        U, S, V = linalg.svd(X, full_matrices=0)
 
         rank = np.sum(S > tol)
         if rank < n_features:
@@ -155,12 +149,9 @@ class LDA(BaseEstimator, ClassifierMixin):
         X = np.dot(((np.sqrt((n_samples * self.priors_)*fac)) *
                           (means - xbar).T).T, scaling)
         # Centers are living in a space with n_classes-1 dim (maximum)
-        # Use svd to find projection in the space spamed by the
+        # Use svd to find projection in the space spanned by the
         # (n_classes) centers
-        if self.use_svd:
-            _, S, V = linalg.svd(X, full_matrices=0)
-        else:
-            S, V = self._svd(X)
+        _, S, V = linalg.svd(X, full_matrices=0)
 
         rank = np.sum(S > tol*S[0])
         # compose the scalings
@@ -170,17 +161,6 @@ class LDA(BaseEstimator, ClassifierMixin):
         self.xbar_ = xbar
         self.classes = classes
         return self
-
-    def _svd(self, X):
-        #computational trick to compute svd. U, S, V=linalg.svd(X)
-        K = np.dot(X.T, X)
-        S, V = linalg.eigh(K)
-        S = np.sqrt(np.maximum(S, 1e-30))
-        S_sort = -np.sort(-S)[:X.shape[0]]
-        S_argsort = np.argsort(-S).tolist()
-        V = V.T[S_argsort, :]
-        V = V[:X.shape[0], :]
-        return S_sort, V
 
     def decision_function(self, X):
         """
@@ -202,8 +182,8 @@ class LDA(BaseEstimator, ClassifierMixin):
         X = np.dot(X - self.xbar_, scaling)
         # b) centers
         dm = np.dot(self.means_ - self.xbar_, scaling)
-        # for each class k, compute the linear discrinant function(p. 87 Hastie)
-        # of sphered (scaled data)
+        # for each class k, compute the linear discrinant function
+        # (p. 87 Hastie) of sphered (scaled data)
         return -0.5 * np.sum(dm ** 2, 1) + \
                 np.log(self.priors_) + np.dot(X, dm.T)
 
@@ -244,3 +224,20 @@ class LDA(BaseEstimator, ClassifierMixin):
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+
+    def predict_log_proba(self, X):
+        """
+        This function return posterior log-probabilities of classification
+        according to each class on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples, n_classes]
+        """
+        # XXX : can do better to avoid precision overflows
+        probas_ = self.predict_proba(X)
+        return np.log(probas_)

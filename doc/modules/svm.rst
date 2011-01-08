@@ -1,3 +1,6 @@
+
+.. _svm:
+
 =======================
 Support Vector Machines
 =======================
@@ -28,12 +31,11 @@ The disadvantages of Support Vector Machines include:
     - If the number of features is much greater than the number of
       samples, the method is likely to give poor performances.
 
-    - SVMs do not directly provide probability estimates, so these
-      must be calculated using indirect techniques. In our case, these
-      techniques imply conducting five-fold cross-validation, so
-      performance can suffer.  See method predict_proba for more
-      information.
+    - SVMs do not directly provide probability estimates, these are
+      calculated using five-fold cross-validation, and thus
+      performance can suffer.
 
+.. TODO: add reference to probability estimates
 
 .. _svm_classification:
 
@@ -41,7 +43,9 @@ Classification
 ==============
 
 Suppose some given data points each belonging to one of N classes, and
-the goal is to decide which class a new data point will be in. The
+the goal is to decide which class a new data point will be in. This
+problem is called classification, and can be solved with SVMs using
+*Support Vector Classifiers*, SVC. The
 classes that perform this task are :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC`.
 
@@ -69,13 +73,13 @@ samples, and an array Y of size [n_samples] holding the target values
     >>> X = [[0., 0.], [1., 1.]]
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
-    >>> clf.fit (X, Y)
+    >>> clf.fit(X, Y)
     SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
       cache_size=100.0, shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> clf.predict ([[2., 2.]])
+    >>> clf.predict([[2., 2.]])
     array([ 1.])
 
 SVMs perform classification as a function of some subset of the
@@ -83,8 +87,7 @@ training data, called the support vectors. These vectors can be
 accessed in member `support_`:
 
     >>> clf.support_
-    array([[ 0.,  0.],
-           [ 1.,  1.]])
+    array([0, 1], dtype=int32)
 
 Member `n_support_` holds the number of support vectors for each class:
 
@@ -145,7 +148,7 @@ will only take as input an array X, as there are no class labels.
 .. figure:: ../auto_examples/svm/images/plot_oneclass.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
-   :scale: 50
+   :scale: 75
 
 
 .. topic:: Examples:
@@ -154,6 +157,7 @@ will only take as input an array X, as there are no class labels.
 
 
 .. currentmodule:: scikits.learn.svm.sparse
+
 
 Support Vector machines for sparse data
 =======================================
@@ -173,6 +177,26 @@ Implemented classes are :class:`SVC`, :class:`NuSVC`,
 :class:`LinearSVC`.
 
 
+Complexity
+==========
+
+Support Vector Machines are powerful tools, but their compute and
+storage requirements increase rapidly with the number of training
+vectors. The core of an SVM is a quadratic programming problem (QP),
+separating support vectors from the rest of the training data. The QP
+solver used by this `libsvm`_-based implementation scales between
+:math:`O(n_{features} \times n_{samples}^2)` and
+:math:`O(n_{features} \times n_{samples}^3)` depending on how efficiently
+the `libsvm`_ cache is used in practice (dataset dependent). If the data
+is very sparse :math:`n_{features}` should be replaced by the average number
+of non-zero features in a sample vector.
+
+Also note that for the linear case, the algorithm used in
+:class:`LinearSVC` by the `liblinear`_ implementation is much more
+efficient than its `libsvm`_-based :class:`SVC` counterpart and can
+scale almost linearly to millions of samples and/or features.
+
+
 Tips on Practical Use
 =====================
 
@@ -189,9 +213,15 @@ Tips on Practical Use
     of training errors and support vectors.
 
   * If data for classification are unbalanced (e.g. many positive and
-    few negative), try different penalty parameters C.
+    few negative), set class_weight='auto' and/or try different
+    penalty parameters C.
 
   * Specify larger cache size (keyword cache) for huge problems.
+
+  * The underlying :class:`LinearSVC` implementation uses a random
+    number generator to select features when fitting the model. It is
+    thus not uncommon, to have slightly different results for the same
+    input data. If that happens, try with a smaller eps parameter.
 
 
 .. _svm_kernels:
@@ -199,7 +229,7 @@ Tips on Practical Use
 Kernel functions
 ================
 
-The *kernel function* can be any of the following: 
+The *kernel function* can be any of the following:
 
   * linear: :math:`<x_i, x_j'>`.
 
@@ -216,7 +246,7 @@ Different kernels are specified by keyword kernel at initialization::
     >>> linear_svc = svm.SVC(kernel='linear')
     >>> linear_svc.kernel
     'linear'
-    >>> rbf_svc = svm.SVC (kernel='rbf')
+    >>> rbf_svc = svm.SVC(kernel='rbf')
     >>> rbf_svc.kernel
     'rbf'
 
@@ -230,13 +260,13 @@ python function or by precomputing the Gram matrix.
 Classifiers with custom kernels behave the same way as any other
 classifiers, except that:
 
-    * Support vectors do no longer represent the vectors, but rather are
-      indices of the support vectors for the training vectors.
+    * Field `support_vectors\_` is now empty, only indices of support
+      vectors are stored in `support_`
 
     * A reference (and not a copy) of the first argument in the fit()
       method is stored for future reference. If that array changes
-      between the use of fit() and predict() you will have
-      unexpected results.
+      between the use of fit() and predict() you will have unexpected
+      results.
 
 
 Using python functions as kernels
@@ -254,23 +284,23 @@ instance that will use that kernel::
     >>> from scikits.learn import svm
     >>> def my_kernel(x, y):
     ...     return np.dot(x, y.T)
-    ... 
+    ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
-Passing the gram matrix
-~~~~~~~~~~~~~~~~~~~~~~~
+Using the Gram matrix
+~~~~~~~~~~~~~~~~~~~~~
 
-Set kernel='precomputed' and pass the gram matrix instead of X in the
+Set kernel='precomputed' and pass the Gram matrix instead of X in the
 fit method.
 
+.. TODO: inline example
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_custom_kernel.py`. 
+ * :ref:`example_svm_plot_custom_kernel.py`.
 
 
 .. _svm_mathematical_formulation:
-
 
 Mathematical formulation
 ========================
@@ -286,7 +316,7 @@ generalization error of the classifier.
 
 .. figure:: ../auto_examples/svm/images/plot_separating_hyperplane.png
    :align: center
-   :scale: 50
+   :scale: 75
 
 SVC
 ---
@@ -300,7 +330,7 @@ classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
 
     \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
 
-    
+
 
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
     & \zeta_i \geq 0, i=1, ..., l
@@ -329,11 +359,10 @@ The decision function is:
 
 .. TODO multiclass case ?/
 
-This parameters can be accessed through the members support\_ and intercept\_:
-
-     - Member support\_ holds the product :math:`y^T \alpha`
-
-     - Member intercept\_ of the classifier holds :math:`-\rho`
+This parameters can be accessed through the members `dual_coef\_`
+which holds the product :math:`y_i \alpha_i`, `support_vectors\_` which
+holds the support vectors, and `intercept\_` which holds the independent
+term :math:`-\rho` :
 
 .. topic:: References:
 
@@ -341,12 +370,12 @@ This parameters can be accessed through the members support\_ and intercept\_:
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
    I Guyon, B Boser, V Vapnik - Advances in neural information
    processing 1993,
-   
-   
+
+
  * `"Support-vector networks"
    <http://www.springerlink.com/content/k238jx04hm87j80g/>`_
    C. Cortes, V. Vapnik, Machine Leaming, 20, 273-297 (1995)
-   
+
 
 
 NuSVC
@@ -367,12 +396,15 @@ Frequently Asked Questions
        A: The underlying C implementation does not provide this
        information.
 
+
 Implementation details
 ======================
 
-Internally, we use `libsvm
-<http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`_ to handle all
-computations. Libsvm is wrapped using C and Cython.
+Internally, we use `libsvm`_ and `liblinear`_ to handle all
+computations. These libraries are wrapped using C and Cython.
+
+.. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 

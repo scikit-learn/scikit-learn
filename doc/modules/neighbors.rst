@@ -17,7 +17,14 @@ Classification
 ==============
 
 The :class:`Neighbors` estimators implements the nearest-neighbors
-method.
+classification method using a vote heuristic: the class most present in
+the k nearest neighbors of a point is assigned to this point.
+
+.. figure:: ../auto_examples/images/plot_neighbors.png
+   :target: ../auto_examples/plot_neighbors.html
+   :align: center
+   :scale: 75
+
 
 .. topic:: Examples:
 
@@ -27,11 +34,20 @@ method.
 Regression
 ==========
 
-Nearest neighbor regression is not (yet) implemented, yet it should be
-straightforward using the BallTree class.
+The :class:`NeighborsBarycenter` estimator implements a nearest-neighbors
+regression method using barycenter weighting of the targets of the
+k-neighbors.
+
+.. figure:: ../auto_examples/images/plot_neighbors_regression.png
+   :target: ../auto_examples/plot_neighbors_regression.html
+   :align: center
+   :scale: 75
 
 
-.. currentmodule:: scikits.learn.ball_tree
+.. topic:: Examples:
+
+  * :ref:`example_plot_neighbors_regression.py`: an example of regression
+    using nearest neighbor.
 
 Efficient implementation: the ball tree
 ==========================================

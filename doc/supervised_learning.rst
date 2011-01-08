@@ -1,3 +1,4 @@
+.. include:: big_toc_css.rst
 
 .. _supervised-learning:
 
@@ -6,11 +7,13 @@ Supervised learning
 
 .. toctree::
 
+    modules/linear_model
     modules/svm
-    modules/glm
+    modules/sgd
     modules/neighbors
     modules/logistic
     modules/feature_selection
+    modules/gaussian_process
 
 
 

@@ -4,9 +4,10 @@ Plot different SVM classifiers in the iris dataset
 ==================================================
 
 Comparison of different linear SVM classifiers on the iris dataset. It
-will plot the decision surface and the support vectors.
+will plot the decision surface for four different SVM classifiers.
 
 """
+print __doc__
 
 import numpy as np
 import pylab as pl
@@ -58,6 +59,6 @@ for i, clf in enumerate((svc, rbf_svc, nu_svc, lin_svc)):
     pl.scatter(X[:,0], X[:,1], c=Y)
 
     pl.title(titles[i])
-    
+
 pl.axis('tight')
 pl.show()

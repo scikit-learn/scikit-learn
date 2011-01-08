@@ -2,7 +2,11 @@
 ==========================================
 One-class SVM with non-linear kernel (RBF)
 ==========================================
+
+One-class SVM is an unsupervised algorithm that
+estimates outliers in a dataset.
 """
+print __doc__
 
 import numpy as np
 import pylab as pl
@@ -20,7 +24,7 @@ clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1)
 clf.fit(X)
 
 # plot the line, the points, and the nearest vectors to the plane
-Z = clf.predict_margin(np.c_[xx.ravel(), yy.ravel()])
+Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 y_pred = clf.predict(X)
 

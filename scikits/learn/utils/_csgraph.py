@@ -32,7 +32,7 @@ def cs_graph_components(x):
 
     Returns
     --------
-    n_comp: int
+    n_components: int
         The number of connected components.
     label: ndarray (ints, 1 dimension):
         The label array of each connected component (-2 is used to
@@ -54,7 +54,7 @@ def cs_graph_components(x):
     >>> D[0,1] = D[1,0] = 1
     >>> cs_graph_components(D)
     (3, array([0, 0, 1, 2]))
-    >>> from scipy.sparse import dok_matrix 
+    >>> from scipy.sparse import dok_matrix
     >>> cs_graph_components(dok_matrix(D))
     (3, array([0, 0, 1, 2]))
 
@@ -63,7 +63,7 @@ def cs_graph_components(x):
         shape = x.shape
     except AttributeError:
         raise ValueError(_msg0)
-    
+
     if not ((len(x.shape) == 2) and (x.shape[0] == x.shape[1])):
         raise ValueError(_msg1 % x.shape)
 
@@ -71,11 +71,11 @@ def cs_graph_components(x):
         x = x.tocsr()
     else:
         x = csr_matrix(x)
-    
+
     label = np.empty((shape[0],), dtype=x.indptr.dtype)
 
-    n_comp = _cs_graph_components(shape[0], x.indptr, x.indices, label)
+    n_components = _cs_graph_components(shape[0], x.indptr, x.indices, label)
 
-    return n_comp, label
+    return n_components, label
 
 

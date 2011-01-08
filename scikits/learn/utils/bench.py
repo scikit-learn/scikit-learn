@@ -14,4 +14,4 @@ def total_seconds(delta):
 
     return delta.seconds + delta.microseconds * mu_sec
 
-    
+

@@ -5,8 +5,6 @@ Contributing
 This project is a community effort, and everyone is welcomed to
 contribute.
 
-.. contents:: This page
-    :local:
 
 Submitting a bug report 
 =========================
@@ -19,8 +17,8 @@ You are also welcomed to post there feature requests and patches.
 
 .. _git_repo:
 
-Retriving the latest code
-===========================
+Retrieving the latest code
+==========================
 
 You can check the latest sources with the command::
 
@@ -52,7 +50,7 @@ repository on
 `github <http://github.com/scikit-learn/scikit-learn/>`__:
 
  1. `Create an account <https://github.com/signup/free>`_ on 
-    github
+    github if you don't have one already.
  
  2. Fork the `scikit-learn repo
     <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
@@ -102,13 +100,6 @@ Roadmap
 will find a detailed roadmap, with a description on what's planned to
 be implemented in the following releases.
 
-.. _packaging:
-
-Packaging
-----------
-
-You can also help making binary distributions for windows, OsX or packages for some
-distribution.
 
 Documentation
 ----------------------
@@ -118,7 +109,8 @@ rst docs (like this one), tutorials, etc. Rst docs live in the source
 code repository, under directory doc/.
 
 You can edit them using any text editor and generate the html docs by
-typing ``make html`` from the doc/ directory. That should create a
+typing from the doc/ directory ``make html`` (or ``make html-noplot``,
+see README in that directory for more info). That should create a
 directory _build/html/ with html files that are viewable in a web
 browser.
 
@@ -126,9 +118,8 @@ browser.
 Developers web site
 ----------------------
 
-More information can be found at the developer's web site:
-http://sourceforge.net/apps/trac/scikit-learn/wiki , which contains a
-wiki, an issue tracker, and a Roadmap
+More information can be found at the `developer's wiki
+<https://github.com/scikit-learn/scikit-learn/wiki>`_.
 
 .. _coding-guidelines:
 
@@ -187,13 +178,13 @@ multiple interfaces):
 
     The base object, implements::
 
-	obj.fit(data)
+	estimator = obj.fit(data)
 
 :Predictor:
 
     For suppervised learning, or some unsupervised problems, implements::
 
-	target = obj.predict(data)
+	prediction = obj.predict(data)
 
 :Transformer:
 
@@ -201,6 +192,11 @@ multiple interfaces):
     way, implements::
 
 	new_data = obj.transform(data)
+
+    When fitting and transforming can be performed much more efficiently 
+    together than separately, implements::
+
+    new_data = obj.fit_transform(data)
 
 :Model:
 

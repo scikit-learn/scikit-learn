@@ -10,6 +10,10 @@
 #}
 {% extends "basic/layout.html" %}
 
+{%- if pagename == 'index' %}
+    {% set title = 'scikits.learn: machine learning in Python' %}
+{%- endif %}
+
 {% block header %}
     <div class="header-wrapper">
       <div class="header">
@@ -23,16 +27,16 @@
           {%- block navbar -%}
           <div class="navbar">
           <ul>
-            <li><a href="{{pathto('install')}}">download</a></li>
-            <li><a href="{{pathto('support')}}">support</a></li>
-            <li><a href="{{pathto('reference')}}">reference</a></li>
-            <li><a href="{{pathto('auto_examples/index')}}">gallery</a></li>
-            <li><a href="{{pathto('developers/index')}}">development</a></li>
+            <li><a href="{{pathto('install')}}">Download</a></li>
+            <li><a href="{{pathto('support')}}">Support</a></li>
+            <li><a href="{{pathto('user_guide')}}">User Guide</a></li>
+            <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
+            <li><a href="{{pathto('developers/index')}}">Development</a></li>
        </ul>
 
 <div class="search_form">
 
-<div id="cse" style="width: 100%;">.</div>
+<div id="cse" style="width: 100%;"></div>
 <script src="http://www.google.com/jsapi" type="text/javascript"></script>
 <script type="text/javascript">
   google.load('search', '1', {language : 'en'});
@@ -73,7 +77,7 @@
         {% else %}
         <h3>News</h3>
 
-       <p>scikits.learn 0.5 release candidate is available
+       <p>scikits.learn 0.6 is available
          for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
          See <a href="{{pathto('whats_new')}}">what's new</a> and tips
          on <a href="{{pathto('install')}}">installing</a>.</p>
@@ -91,7 +95,7 @@
         code</a>, join the
         <a href="{{pathto('support')}}#mailing-list">mailing
         lists</a>, report bugs to
-        the <a href="http://sourceforge.net/apps/trac/scikit-learn/report/1">issue
+        the <a href="https://github.com/scikit-learn/scikit-learn/issues">issue
         tracker</a> or participate in the next
         <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>. <a href="{{pathto('developers/index')}}">Read More...</a>
         </p>
@@ -126,29 +130,28 @@
     </div>
 {% endblock %}
 
-{% block footer %}
-    <div class="footer-wrapper">
-      <div class="footer">
-        <div class="left">
-          {%- for rellink in rellinks|reverse %}
-          <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
-             {{ accesskey(rellink[2]) }}>{{ rellink[3] }}</a>
-          {%- if not loop.last %}{{ reldelim2 }}{% endif %}
-          {%- endfor %}
-          {%- if show_source and has_source and sourcename %}
-            <br/>
-            <a href="{{ pathto('_sources/' + sourcename, true)|e }}"
-               rel="nofollow">{{ _('Show Source') }}</a>
-          {%- endif %}
-        </div>
-
-        <div class="right">
-          {{ super() }}
-        </div>
-        <div class="clearer"></div>
-      </div>
-    </div>
-{% endblock %}
 
 {% block relbar1 %}{% endblock %}
 {% block relbar2 %}{% endblock %}
+
+
+{%- block footer %}
+    <div class="footer">
+        <p style="text-align: center">This documentation is relative
+        to {{project}} version {{ release|e }}<p>
+
+    {%- if show_copyright %}
+      {%- if hasdoc('copyright') %}
+        {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
+      {%- else %}
+        {% trans copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
+      {%- endif %}
+    {%- endif %}
+    {%- if last_updated %}
+      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+    {%- endif %}
+    {%- if show_sphinx %}
+      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://webylimonada.com">Web y Limonada</a>.
+    {%- endif %}
+    </div>
+{%- endblock %}
