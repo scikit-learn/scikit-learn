@@ -335,6 +335,11 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         # step 3: compute the KMeans centers
         kmeans = KMeans(k=self.n_centers, init='k-means++',
                         max_iter=self.max_iter, n_init=self.n_init)
+        # TODO: when whitening is enabled, implement curriculum learnin by
+        # starting the kmeans on a the projection to the first singular
+        # components and increase the number component with warm restarts by
+        # padding previous centroids with zeros to keep up with the increasing
+        # dim
         kmeans.fit(patches)
         self.inertia_ = kmeans.inertia_
 
