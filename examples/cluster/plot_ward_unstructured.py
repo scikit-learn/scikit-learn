@@ -36,8 +36,8 @@ t = np.squeeze(t)
 # Compute clustering
 print "Compute unstructured hierarchical clustering..."
 st = time.time()
-ward = Ward(n_clusters=10).fit(X)
-label = ward.label_
+ward = Ward(k=10).fit(X)
+label = ward.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size
 print "Number of clusters: ", np.unique(label).size

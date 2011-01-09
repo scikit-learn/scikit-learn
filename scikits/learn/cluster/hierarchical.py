@@ -9,8 +9,8 @@ import numpy as np
 import heapq as heapq
 from scipy import sparse
 import _inertia
-from scikits.learn.base import BaseEstimator
 from scikits.learn.utils._csgraph import cs_graph_components
+from scikits.learn.cluster import AgglomerationTransformMixin
 
 ###########################################################################
 # Ward's algorithm
@@ -42,11 +42,11 @@ def ward_tree(X, adjacency_matrix=None):
             The n_nodes is equal at  (2*n_samples - 1), and takes into
             account the nb_samples leaves, and the unique root.
 
-    children : list of two-elements lists. Lenght of n_nodes
+    children : list of pairs. Lenght of n_nodes
                list of the children of each nodes.
                Leaves of the tree have empty list of children.
 
-    height : array-like, shape = [n_nodes]
+    heights : array-like, shape = [n_nodes]
             Float. Gives the inertia of the created nodes. The n_samples first
             values of the array are 0, and thus the values are positive (or
             null) and are ranked in an increasing order.
@@ -106,7 +106,7 @@ def ward_tree(X, adjacency_matrix=None):
 
     # prepare the main fields
     parent = np.arange(n_nodes).astype(np.int)
-    height = np.zeros(n_nodes)
+    heights = np.zeros(n_nodes)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
     for k in range(n_samples):
@@ -121,7 +121,7 @@ def ward_tree(X, adjacency_matrix=None):
             i, j = node[1], node[2]
             if used_node[i] and used_node[j]:
                 break
-        parent[i], parent[j], height[k] = k, k, node[0]
+        parent[i], parent[j], heights[k] = k, k, node[0]
         children.append([i, j])
         used_node[i], used_node[j] = False, False
 
@@ -146,7 +146,7 @@ def ward_tree(X, adjacency_matrix=None):
         for tupl in ini:
             heapq.heappush(inertia, tupl)
 
-    return parent, children, height, A
+    return parent, children, heights, A
 
 
 ###########################################################################
@@ -161,13 +161,9 @@ def _hc_get_descendent(ind, children):
     ind : list of int
           A list that indicates the nodes for which we want the descendents.
 
-    parent : array-like, shape = [n_nodes]
-            Int. Gives the parent node for each node, i.e. parent[i] is the
-            parent node of the node i. The last value of parent is the
-            root node, that is its self parent, so the last value is taken
-            3 times in the array.
-            The n_nodes is equal at  (2*n_samples - 1), and takes into
-            account the nb_samples leaves, and the unique root.
+    children : list of pairs. Lenght of n_nodes
+               list of the children of each nodes.
+               Leaves of the tree have empty list of children.
 
     Return
     ------
@@ -184,7 +180,7 @@ def _hc_get_descendent(ind, children):
     return descendent
 
 
-def _hc_cut(k, parent, children, height):
+def _hc_cut(k, parent, children, heights):
     """
     Function cutting the ward tree for a given number of clusters.
 
@@ -200,22 +196,26 @@ def _hc_cut(k, parent, children, height):
             3 times in the array.
             The n_nodes is equal at  (2*n_samples - 1), and takes into
             account the nb_samples leaves, and the unique root.
+           
+    children : list of pairs. Lenght of n_nodes
+               list of the children of each nodes.
+               Leaves of the tree have empty list of children.
 
-    height : array-like, shape = [n_nodes]
+    heights : array-like, shape = [n_nodes]
             Float. Gives the inertia of the created nodes. The n_samples first
             values of the array are 0, and thus the values are positive (or
             null) and are ranked in an increasing order.
 
     Return
     ------
-    label_ : array [n_points]
+    labels_ : array [n_points]
         cluster labels for each point
 
     active_nodes : list of int
                 index of the nodes kept for the labeling
     """
     parent = parent[:-1]
-    height = height[:-1]
+    heights = heights[:-1]
     active_nodes = [len(parent)]
     node_to_cut = active_nodes[0]
     for i in range(k - 1):
@@ -225,7 +225,7 @@ def _hc_cut(k, parent, children, height):
             active_nodes.remove(node_to_cut)
         else:
             active_nodes.append(node_to_cut)
-        node_to_cut = active_nodes[np.argmax(height[active_nodes])]
+        node_to_cut = active_nodes[np.argmax(heights[active_nodes])]
     label = np.zeros(children.count([]))
     for j in active_nodes[:k - 1]:
         ind = [j]
@@ -236,14 +236,17 @@ def _hc_cut(k, parent, children, height):
 ###########################################################################
 # Display functions for hierarchical clustering
 
-def plot_dendrogram(axe, parent, children, height, active_nodes=None,
-           weights_nodes=None, cmap_nodes=None, **kwargs):
+def plot_dendrogram(children, parent, heights, ax=None, active_nodes=None,
+           cmap_nodes=None, weights_nodes=None, **kwargs):
     """
     Plot the dendrogram
 
     Parameters
     ----------
-    axe : a pylab.axes instance
+    children : list of pairs. Lenght of n_nodes
+               list of the children of each nodes.
+               Leaves of the tree have empty list of children.
+
 
     parent : array-like, shape = [n_nodes]
             Int. Gives the parent node for each node, i.e. parent[i] is the
@@ -253,11 +256,56 @@ def plot_dendrogram(axe, parent, children, height, active_nodes=None,
             The n_nodes is equal at  (2*n_samples - 1), and takes into
             account the nb_samples leaves, and the unique root.
 
-    children : list of two-elements lists. Lenght of n_nodes
+    heights : array-like, shape = [n_nodes]
+            Float. Gives the inertia of the created nodes. The n_samples first
+            values of the array are 0, and thus the values are positive (or
+            null) and are ranked in an increasing order.
+
+    ax : a pylab.axes instance (defaut is None).
+        If None, create a new instance.
+    
+    active_nodes : list of int (defaut is None).
+                   If active_nodes is not None, use it to add color to the
+                   tree. List of nodes use for labeling.
+
+    nodes_cmap : pylab color map (defaut is None and thus setted to pl.cm.jet)
+                 Color maps used for plotting the active nodes.
+                 
+    weights_nodes : list of float (defaut is None)
+                   If active_nodes and weights_nodes are not None, use
+                    weights_nodes to plot the branches corresponding to the
+                    actives_nodes.
+
+    Return
+    ------
+    a pylab.scatter instance
+    """
+    lx_, ly_, colors_ = mk_dendogram(children, parent, heights, cmap_node,
+                        active_nodes, weights_nodes)
+    return _plot_graph(lx_, ly_, colors_, ax=ax, **kwargs)
+   
+
+
+def _mk_dendogram(children, parent, heights, cmap_node,
+                       active_nodes=None, weights_nodes=None):
+    """
+    Function for computing the dendrogram
+
+    Parameters
+    ----------
+    children : list of pairs. Lenght of n_nodes
                list of the children of each nodes.
                Leaves of the tree have empty list of children.
 
-    height : array-like, shape = [n_nodes]
+    parent : array-like, shape = [n_nodes]
+            Int. Gives the parent node for each node, i.e. parent[i] is the
+            parent node of the node i. The last value of parent is the
+            root node, that is its self parent, so the last value is taken
+            3 times in the array.
+            The n_nodes is equal at  (2*n_samples - 1), and takes into
+            account the nb_samples leaves, and the unique root.
+
+    heights : array-like, shape = [n_nodes]
             Float. Gives the inertia of the created nodes. The n_samples first
             values of the array are 0, and thus the values are positive (or
             null) and are ranked in an increasing order.
@@ -266,29 +314,29 @@ def plot_dendrogram(axe, parent, children, height, active_nodes=None,
                    If active_nodes is not None, use it to add color to the
                    tree. List of nodes use for labeling.
 
+    nodes_cmap : pylab color map (defaut is None and thus setted to pl.cm.jet)
+                 Color maps used for plotting the active nodes.
+                 
     weights_nodes : list of float (defaut is None)
                    If active_nodes and weights_nodes are not None, use
                     weights_nodes to plot the branches corresponding to the
                     actives_nodes.
 
-    cmap_nodes : pylab color map (defaut is None and thus setted to pl.cm.jet)
-                 Color maps used for plotting the active nodes.
-
     Return
     ------
-    axe : a pylab axe instance
+    A tuple (lx_, ly_, color_) that gives the x coordinates (lx_), y
+    coordinates (ly_) and color (color_) for the different nodes of the
+    dendrogram. 
     """
-    import pylab as pl
-    n_leaves = np.min(parent)
-
+   
     # Compute the coordinates of the tree
     dax = np.zeros(len(children))
     dax[-1] = 0.5 * n_leaves
     x_, y_, lx_, ly_, nodes_ = [], [], [], [], []
     x_.append(dax[-1])
-    y_.append(height[-1])
-    nodes_.append(len(height))
-    for i in range(len(height), n_leaves, -1):
+    y_.append(heights[-1])
+    nodes_.append(len(heights))
+    for i in range(len(heights), n_leaves, -1):
         ci = children[i - 1]
         dx = 0.5 * dax[-1]
         if (i - 1) != parent[i - 1]:
@@ -297,14 +345,14 @@ def plot_dendrogram(axe, parent, children, height, active_nodes=None,
         dax[ci[1]] = dax[i - 1] - dx
         for j in [0, 1]:
             x_.append(dax[ci[j]])
-            y_.append(height[ci[j]])
+            y_.append(heights[ci[j]])
             nodes_.append(ci[j])
-            lx_.append([dax[i - 1], height[i - 1]])
-            ly_.append([dax[ci[j]], height[ci[j]]])
+            lx_.append([dax[i - 1], heights[i - 1]])
+            ly_.append([dax[ci[j]], heights[ci[j]]])
 
     # Compute the colors of the tree
-    if cmap_nodes is None:
-            cmap_nodes = pl.cm.jet
+    if nodes_cmap is None:
+            nodes_cmap = pl.cm.jet
     if active_nodes is not None:
         used_scores_nodes = np.zeros(len(active_nodes), dtype=float)
         if weights_nodes is None:
@@ -318,7 +366,7 @@ def plot_dendrogram(axe, parent, children, height, active_nodes=None,
     colorx = np.zeros(len(children), dtype=float)
     color_ = []
     color_.append(cmap_nodes(0))
-    for i in range(len(height), n_leaves, -1):
+    for i in range(len(heights), n_leaves, -1):
         ci = children[i - 1]
         if active_nodes is not None:
             for j in [0, 1]:
@@ -331,30 +379,53 @@ def plot_dendrogram(axe, parent, children, height, active_nodes=None,
             color_.append(cmap_nodes(0.5))
             color_.append(cmap_nodes(0.5))
 
-    # Plot the tree in axe
-    color_ = np.array(color_)
-    line_segments = pl.matplotlib.collections.LineCollection(zip(lx_, ly_),
-                                            color=color_[1:], **kwargs)
-    axe.add_collection(line_segments)
-    axe.scatter(x_, y_, c=color_[1:], **kwargs)
-    return axe
+    return (lx_, ly_, color_)
+    
+
+def _plot_graph(lx_, ly_, colors_, ax=None, **kwargs):
+  """
+  Function that plot a dendrogram.
+  
+  Parameters
+  ----------
+  lx_ : lists
+        Defines the x coordinates for the different nodes of the dendrogram.
+        
+  ly_ : lists
+        Defines the y coordinates for the different nodes of the dendrogram.
+        
+  color_ : lists
+        Defines the color for the different nodes of the dendrogram.
+
+  ax : a pylab.axes instance (defaut is None).
+      If None, create a new instance.
+
+  Return
+  ------
+  a pylab.scatter instance
+  """
+  
+  import pylab as pl
+  if ax is None:
+    ax = pl.gca()
+  line_segments = pl.matplotlib.collections.LineCollection(zip(lx_, ly_),
+                                          color=color_[1:], **kwargs)
+  ax.add_collection(line_segments)
+  scatter = ax.scatter(x_, y_, c=color_[1:], **kwargs)
+  return scatter
 
 
 ##############################################################################
-# Classes for hiearchical clustering
+# Class for Ward hierarchical clustering
 
-class HierarchicalClustering(BaseEstimator):
+class Ward(AgglomerationTransformMixin):
     """
-    General class for hierarchical clustering: constructs a tree and cuts it.
+    Class for Ward hierarchical clustering: constructs a tree and cuts it.
 
     Parameters
     ----------
-    n_clusters : int or ndarray
+    k : int or ndarray
                  The number of clusters.
-
-    tree_func: function that takes a matrix X of data, and possibly an
-        adjacency matrix.
-        Defaut is ward_tree (construction of the tree by ward algorithm).
 
     Methods
     -------
@@ -371,19 +442,25 @@ class HierarchicalClustering(BaseEstimator):
             The n_nodes is equal at  (2*n_samples - 1), and takes into
             account the nb_samples leaves, and the unique root.
 
-    height_ : array-like, shape = [n_nodes]
+    children_ : list of pairs. Lenght of n_nodes
+               list of the children of each nodes.
+               Leaves of the tree have empty list of children.
+
+    heights_ : array-like, shape = [n_nodes]
             Float. Gives the inertia of the created nodes. The n_samples first
             values of the array are 0, and thus the values are positive (or
             null) and are ranked in an increasing order.
 
-    label_ : array [n_points]
+    labels_ : array [n_points]
         cluster labels for each point
 
+    Return
+    ------
+    self
     """
 
-    def __init__(self, n_clusters, tree_func=ward_tree):
-        self.tree_func = tree_func
-        self.n_clusters = n_clusters
+    def __init__(self, k):
+        self.k = k
 
     def fit(self, X, adjacency_matrix=None, copy=True, **params):
         """
@@ -423,52 +500,15 @@ class HierarchicalClustering(BaseEstimator):
                 print "Warning: the number of connected compoments of the" + \
                 " adjacency matrix is > 1. The tree will be stopped early," + \
                 " and the maximal number of clusters will be ", n_comp
-            self.n_clusters = np.max([self.n_clusters, n_comp])
+            self.k = np.max([self.k, n_comp])
 
         # Construct the tree
-        self.parent_, self.children_, self.height_, self.adjacency_matrix = \
-                                    self.tree_func(X, self.adjacency_matrix)
+        self.parent_, self.children_, self.heights_, self.adjacency_matrix = \
+                                    ward_tree(X, self.adjacency_matrix)
 
         # Cut the tree
-        self.label_, self.active_nodes_ = _hc_cut(self.n_clusters,
-                                self.parent_, self.children_, self.height_)
+        self.labels_, self.active_nodes_ = _hc_cut(self.k,
+                                self.parent_, self.children_, self.heights_)
         return self
 
 
-class Ward(HierarchicalClustering):
-    """
-    Class for ward clustering: constructs a tree and cuts it.
-
-    Parameters
-    ----------
-    n_clusters : int or ndarray
-                 The number of clusters.
-
-    Methods
-    -------
-    fit:
-        Compute the clustering
-
-    Attributes
-    ----------
-    parent_ : array-like, shape = [n_nodes]
-            Int. Gives the parent node for each node, i.e. parent[i] is the
-            parent node of the node i. The last value of parent is the
-            root node, that is its self parent, so the last value is taken
-            3 times in the array.
-            The n_nodes is equal at  (2*n_samples - 1), and takes into
-            account the nb_samples leaves, and the unique root.
-
-    height_ : array-like, shape = [n_nodes]
-            Float. Gives the inertia of the created nodes. The n_samples first
-            values of the array are 0, and thus the values are positive (or
-            null) and are ranked in an increasing order.
-
-    label_ : array [n_points]
-        cluster labels for each point
-
-    """
-
-    def __init__(self, n_clusters):
-        self.tree_func = ward_tree
-        self.n_clusters = n_clusters

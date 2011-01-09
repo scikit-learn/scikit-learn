@@ -41,8 +41,8 @@ adjacency_matrix = kneighbors_graph(X, n_neighbors=10)
 # Compute clustering
 print "Compute structured hierarchical clustering..."
 st = time.time()
-ward = Ward(n_clusters=10).fit(X, adjacency_matrix=adjacency_matrix)
-label = ward.label_
+ward = Ward(k=10).fit(X, adjacency_matrix=adjacency_matrix)
+label = ward.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size
 print "Number of clusters: ", np.unique(label).size

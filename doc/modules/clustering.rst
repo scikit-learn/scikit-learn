@@ -124,6 +124,8 @@ constraints are added between samples (it considers at each step all the
 possible merges).
 
 
+See the `Wikipedia page <http://en.wikipedia.org/wiki/Hierarchical_clustering
+for more details>`_.
 
 .. topic:: Examples:
 
@@ -131,8 +133,9 @@ possible merges).
    to split the image of lena in regions.
 
  * :ref:`example_cluster_plot_ward_structured.py`: Example of Ward algorithm on
-a swiss-roll, with structure that constraints to merge only adjacent sample.
+    a swiss-roll, with structure that constraints to merge only adjacent sample.
 
  * :ref:`example_cluster_plot_ward_unstructured.py`: Example of Ward algorithm
-on a swiss-roll, without structure.
+    on a swiss-roll, without structure.
+
 

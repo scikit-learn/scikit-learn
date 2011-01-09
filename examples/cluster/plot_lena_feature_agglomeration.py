@@ -1,6 +1,6 @@
 """
 ===========================================================
-A demo of structure ward on Lena
+A demo of feature_agglomeration on Lena
 ===========================================================
 
 Author : Vincent Michel, 2010
@@ -13,7 +13,7 @@ import numpy as np
 import scipy as sp
 import pylab as pl
 from scikits.learn.feature_extraction.image import img_to_graph
-from scikits.learn.cluster import Ward
+from scikits.learn.cluster import Ward, KMeans
 
 ###############################################################################
 # Generate data
@@ -29,23 +29,30 @@ X = np.atleast_2d(lena[mask])
 adjacency_matrix = img_to_graph(mask, mask)
 
 ###############################################################################
-# Compute clustering
-print "Compute structured hierarchical clustering..."
-st = time.time()
-k = 15
+# Compute feature agglomeration
+k = 50
+print "Compute feature agglomeration using Ward algorithm..."
 ward = Ward(k=k).fit(X.T, adjacency_matrix=adjacency_matrix)
-label = np.reshape(ward.labels_, mask.shape)
-print "Elaspsed time: ", time.time() - st
-print "Number of pixels: ", label.size
-print "Number of clusters: ", np.unique(label).size
+ward_label = np.reshape(ward.labels_, mask.shape)
+ward_agglo = ward.inverse_transform(ward.transform(X.T))
+print "Compute feature agglomeration using KMeans algorithm..."
+kmeans = KMeans(k=k).fit(X.T)
+kmeans_label = np.reshape(kmeans.labels_, mask.shape)
+kmeans_agglo = kmeans.inverse_transform(kmeans.transform(X.T))
+
+
 
 ###############################################################################
 # Plot the results on an image
 pl.figure(figsize=(5, 5))
-pl.imshow(lena,   cmap=pl.cm.gray)
+pl.imshow(np.reshape(ward_agglo, mask.shape),   cmap=pl.cm.gray)
 for l in range(k):
-    pl.contour(label == l, contours=1,
+    pl.contour(ward_label == l, contours=1,
             colors=[pl.cm.spectral(l/float(k)), ])
+pl.xticks(())
+pl.yticks(())
+pl.figure(figsize=(5, 5))
+pl.imshow(np.reshape(kmeans_agglo, mask.shape),   cmap=pl.cm.gray)
 pl.xticks(())
 pl.yticks(())
 pl.show()
