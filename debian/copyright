@@ -1,9 +1,10 @@
-Format-Specification: http://wiki.debian.org/Proposals/CopyrightFormat
-Upstream-Name: scikit-learn
-Upstream-Source-Location: http://sourceforge.net/apps/trac/scikit-learn/wiki/SubversionRepo
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=153
+Name: scikits.learn
+Maintainer: Fabian Pedregosa <fabian.pedregosa@inria.fr>
+Source-Location: http://github.com/scikit-learn/scikit-learn
 
 Files: *
-Copyright: Copyright (C)  2007 - 2010 Scikit-Learn Developers.
+Copyright: 2007-2010, Scikit-Learn Developers
 License: BSD-3
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -31,7 +32,7 @@ License: BSD-3
   DAMAGE.
 
 Files: doc/sphinxext/*
-Copyright: Copyright (C) 2008 Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
+Copyright: 2008, Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
 License: BSD
   1. Redistributions of source code must retain the above copyright
      notice, this list of conditions and the following disclaimer.
@@ -40,17 +41,24 @@ License: BSD
      the documentation and/or other materials provided with the
      distribution.
 
-Files: debian/*
-Copyright: Copyright 2010,
-    Yaroslav Halchenko <debian@onerussian.com>
+Files: scikits/learn/src/cblas/*
+Copyright: 1996-2006 R. Clint Whaley
+           1998 Jeff Horner
+           2001 Peter Soendergaard
+           1999 Antoine P. Petitet
+           2001 Julian Ruhe
+           2003 Tim Mattox
+           2003 Hank Dietz
+           2003 Camm Maguire
+           1999 The Australian National University
 License: BSD-3
+Comment: Extract from 3.9.25 atlas
 
-Files: ./scikits/learn/src/
-Copyright: Copyright (c) 2000-2009 Chih-Chung Chang and Chih-Jen Lin
+Files: scikits/learn/svm/src/lib{svm,linear}
+Copyright: 2000-2010, Chih-Chung Chang and Chih-Jen Lin
 License: BSD-3
-  The source tarball contains a partial copy of the LIBSVM package.  However,
-  the corresponding library is available from the libsvm source package (or
-  rather the binary packages it builds). Therefore this code is not used and
-  the respective packages are used as dependencies. This copy of the libsvm
-  code is, however, left in place, as it does not hurt and does not justify
-  repackaging of the upstream sources.
+Comment: Partial fork of the LIBSVM package.
+
+Files: debian/*
+Copyright: 2010-2011, Yaroslav Halchenko <debian@onerussian.com>
+License: BSD-3
