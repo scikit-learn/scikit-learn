@@ -1,2 +1,3 @@
 version=3
-http://github.com/yarikoptic/scikit-learn/downloads .*tarball/([\d\.a-z]+)
+opts="dversionmangle=s/.dfsg$//" \
+ http://github.com/scikit-learn/scikit-learn/downloads .*tarball/([\d\.a-z]+)
