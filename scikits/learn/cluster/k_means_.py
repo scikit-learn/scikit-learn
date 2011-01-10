@@ -238,12 +238,26 @@ def _e_step(x, centers):
     inertia: float
         The value of the inertia criterion with the assignment
     """
+
     n_samples = x.shape[0]
+    k = centers.shape[0]
+
+    there_is_memory_to_compute_distances_matrix = True
+
+    if there_is_memory_to_compute_distances_matrix:
+        distances = (
+                (x**2).sum(axis=1)
+                + (centers**2).sum(axis=1).reshape((k,1))
+                - 2*np.dot(centers, x.T))
+    # distances is a matrix of shape (k, n_samples) 
+
     z = -np.ones(n_samples).astype(np.int)
     mindist = np.infty * np.ones(n_samples)
-    k = centers.shape[0]
     for q in range(k):
-        dist = np.sum((x - centers[q]) ** 2, 1)
+        if there_is_memory_to_compute_distances_matrix:
+            dist = distances[q]
+        else:
+            dist = np.sum((x - centers[q]) ** 2, 1)
         z[dist<mindist] = q
         mindist = np.minimum(dist, mindist)
     inertia = mindist.sum()
