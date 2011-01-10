@@ -163,6 +163,8 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                 "be 'k-mean++' or 'random' or an ndarray, "
                 "'%s' (type '%s') was passed.")
 
+        if verbose:
+            print 'Initialization complete' 
         # iterations
         for i in range(max_iter):
             centers_old = centers.copy()
