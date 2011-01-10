@@ -16,7 +16,7 @@ from ..base import BaseEstimator
 
 # kinit originaly from pybrain:
 # http://github.com/pybrain/pybrain/raw/master/pybrain/auxiliary/kmeans.py
-def k_init(X, k, n_samples_max=500):
+def k_init(X, k, n_samples_max=500, rng=None):
     """Init k seeds according to kmeans++
 
     Parameters
@@ -44,12 +44,14 @@ def k_init(X, k, n_samples_max=500):
     http://blogs.sun.com/yongsun/entry/k_means_and_k_means
     """
     n_samples = X.shape[0]
+    if rng is None:
+        rng = np.random
     if n_samples >= n_samples_max:
-        X = X[np.random.randint(n_samples, size=n_samples_max)]
+        X = X[rng.randint(n_samples, size=n_samples_max)]
         n_samples = n_samples_max
 
     'choose the 1st seed randomly, and store D(x)^2 in D[]'
-    centers = [X[np.random.randint(n_samples)]]
+    centers = [X[rng.randint(n_samples)]]
     D = ((X - centers[0]) ** 2).sum(axis=-1)
 
     for _ in range(k - 1):
@@ -73,7 +75,7 @@ def k_init(X, k, n_samples_max=500):
 # K-means estimation by EM (expectation maximisation)
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
-                    delta=1e-4):
+                    delta=1e-4, rng=None):
     """ K-means clustering algorithm.
 
     Parameters
@@ -115,6 +117,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     verbose: boolean, optional
         Terbosity mode
 
+    rng: numpy.RandomState, optional
+        The generator used to initialize the centers
+
     Returns
     -------
     centroid: ndarray
@@ -129,6 +134,8 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         The final value of the inertia criterion
 
     """
+    if rng is None:
+        rng = np.random
     n_samples = X.shape[0]
 
     vdata = np.mean(np.var(X, 0))
@@ -142,9 +149,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     for it in range(n_init):
         # init
         if init == 'k-means++':
-            centers = k_init(X, k)
+            centers = k_init(X, k, rng=rng)
         elif init == 'random':
-            seeds = np.argsort(np.random.rand(n_samples))[:k]
+            seeds = np.argsort(rng.rand(n_samples))[:k]
             centers = X[seeds]
         elif hasattr(init, '__array__'):
             centers = np.asanyarray(init).copy()
