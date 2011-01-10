@@ -1,3 +1,16 @@
+scikit-learn (0.6.dfsg-1) experimental; urgency=low
+
+  * [05f0870] Disabled use of system libsvm - scikits.learn has its own
+    fork
+  * [6b4e757] Updated copyright: DEP5 rev153, entries for cblas/ and
+    lib{linear/svm}
+  * [489f3a2] Extended TODO (in emacs-org mode): consider system's
+    liblinear (need 1.7 with a fix)
+  * Introduced .dfsg suffix to signal for difference from the pristine
+    distribution of scikits.learn
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 09 Jan 2011 21:01:33 -0500
+
 scikit-learn (0.5-1) experimental; urgency=low
 
   * New upstream release.  Absorbed patches:
