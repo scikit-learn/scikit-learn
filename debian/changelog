@@ -1,4 +1,4 @@
-scikit-learn (0.6.dfsg-1) experimental; urgency=low
+scikit-learn (0.6.0.dfsg-1) experimental; urgency=low
 
   * [05f0870] Disabled use of system libsvm - scikits.learn has its own
     fork
