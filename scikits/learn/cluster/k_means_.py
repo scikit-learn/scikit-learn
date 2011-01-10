@@ -146,6 +146,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             warnings.warn('Explicit initial center position passed: '
                           'performing only one init in the k-means')
             n_init = 1
+    'subtract of mean of x for more accurate distance computations'
+    Xmean = X.mean(axis=0)
+    X = X-Xmean # TODO: offer an argument to allow doing this inplace
     for it in range(n_init):
         # init
         if init == 'k-means++':
@@ -180,7 +183,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         best_centers = centers
         best_labels  = labels
         best_inertia = inertia
-    return best_centers, best_labels, best_inertia
+    return best_centers+Xmean, best_labels, best_inertia
 
 
 def _m_step(x, z ,k):
