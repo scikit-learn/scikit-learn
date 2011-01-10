@@ -1,0 +1,9 @@
+scikits.learn for Debian
+------------------------
+
+For flexibility and easier interaction with upstream, sources are
+obtained directly from upstream git repository, releases "merged" into
+dfsg branch while stripping materials already present on Debian system
+(e.g. joblib), and packaged into .orig.tar.gz using git-buildpackage.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>, Sat,  8 Jan 2011 00:30:06 -0500
