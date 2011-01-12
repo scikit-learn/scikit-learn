@@ -38,7 +38,7 @@ from scikits.learn.feature_extraction.image import ConvolutionalKMeansEncoder
 from scikits.learn.svm import SVC
 from scikits.learn.svm import LinearSVC
 from scikits.learn.preprocessing import Scaler
-from scikits.learn.cluster import k_init
+from scikits.learn.cluster.k_means_ import k_init
 from scikits.learn.linear_model import SGDClassifier
 
 
@@ -147,6 +147,20 @@ def train_convolutional_kmeans(cifar10, n_centers=400, n_components=30, n_drop_c
 
 ################################################################################
 # DRIVERS MEANT TO BE CALLED FROM COMMAND LINE (SEE __name__=='__main__' BELOW)
+def debug_end_to_end():
+    cifar10 = load_cifar10()
+    extractor = train_convolutional_kmeans(cifar10, n_centers=20, 
+            n_components=10,
+            n_drop_components=2, 
+            save_images=False,
+            n_EM_steps=14,
+            n_images_to_train_from=100)
+
+    n_examples_to_use=10
+    X_train, y_train, X_test, y_test = cifar10
+    X_train_features = extractor.transform(X_train[:n_examples_to_use])
+    X_test_features = extractor.transform(X_test[:n_examples_to_use])
+
 #
 def train_kmeans(save_extractor='extractor.pkl', n_centers=400, n_components=30,
         n_drop_components=4, n_EM_steps=30):

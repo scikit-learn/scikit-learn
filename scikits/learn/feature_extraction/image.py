@@ -322,7 +322,10 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
     def __init__(self, n_centers=400, image_size=None, patch_size=6,
                  step_size=1, whiten=True, n_components=None,
                  pools=2, max_iter=1, n_init=1, kmeans_init_algo='k-means++',
-                 verbose=1, n_drop_components=0):
+                 verbose=1, n_drop_components=0,
+                 center_mode='all',
+                 lcn_cap_divisor=True,
+                 ):
         self.n_centers = n_centers
         self.patch_size = patch_size
         self.step_size = step_size
@@ -335,6 +338,10 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         self.n_drop_components = n_drop_components
         self.kmeans_init_algo=kmeans_init_algo
         self.verbose = verbose
+        self.center_mode = center_mode
+        self.lcn_cap_divisor=lcn_cap_divisor
+        if center_mode not in ('all', 'none', 'channel'):
+            raise ValueError('invalid center mode', center_mode)
 
     def _check_images(self, X):
         """Check that X can seen as a consistent collection of images"""
@@ -356,6 +363,26 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
 
         return X.reshape((n_samples, -1))
 
+    def local_contrast_normalization(self, patches):
+        if self.center_mode == 'all': # center all colour channels together
+            patches = patches.reshape((patches.shape[0], -1))
+            patches -= patches.mean(axis=1)[:,None]
+        elif self.center_mode == 'channel': #center each colour channel individually
+            patches -= patches.mean(axis=2).mean(axis=1).reshape((n_patches, 1, 1, 3))
+            patches = patches.reshape((n_patches, -1))
+        elif self.center_mode == 'none':
+            patches = patches.reshape((n_patches, -1))
+        else:
+            assert False
+
+        patches_var = np.sqrt((patches**2).mean(axis=1))
+        if self.lcn_cap_divisor:
+            min_divisor = (patches_var.min() + patches_var.mean()) / 2
+        else:
+            min_divisor = 0
+        patches /= np.maximum(min_divisor, patches_var).reshape((patches.shape[0],1))
+        return patches
+
     def fit(self, X):
         """Fit the feature extractor on a collection of 2D images"""
         X = self._check_images(X)
@@ -374,21 +401,8 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         # step 2: whiten the patch space
         patches = patches_by_offset[0]
         n_patches = patches.shape[0]
+        patches = self.local_contrast_normalization(patches)
 
-        if 0: # center all colour channels together
-            patches = patches.reshape((patches.shape[0], -1))
-            patches -= patches.mean(axis=1).reshape((n_patches,1))
-        elif 1: #center each colour channel individually
-            patches -= patches.mean(axis=2).mean(axis=1).reshape((n_patches, 1, 1, 3))
-            patches = patches.reshape((n_patches, -1))
-        else: # no centering
-            patches = patches.reshape((n_patches, -1))
-
-        if 1: # local contrast normalization
-            patches_norm = np.sqrt((patches**2).sum(axis=1))
-            #min_divisor = (2*patches_norm.min()+patches_norm.mean())/3 #heuristic(!?)
-            min_divisor = patches_norm.min()*1.5
-            patches /= np.maximum(min_divisor, patches_norm).reshape((patches.shape[0],1))
         self.patches_= patches
 
         # step 3: compute the KMeans centers
@@ -442,38 +456,22 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
             for c in xrange(nXcols-self.patch_size+1):
                 patches = X[:,r:r+self.patch_size,c:c+self.patch_size,:]
                 n_patches = patches.shape[0]
-
-                if 0: # center all colour channels together
-                    patches = patches.reshape((patches.shape[0], -1))
-                    patches -= patches.mean(axis=1).reshape((n_patches,1))
-                elif 1: #center each colour channel individually
-                    patches -= patches.mean(axis=2).mean(axis=1).reshape((n_patches, 1, 1,
-                        nXchannels))
-                    patches = patches.reshape((n_patches, -1))
-                else: # no centering
-                    patches = patches.reshape((n_patches, -1))
-
-                if 1: # local contrast normalization
-                    patches_norm = np.sqrt((patches**2).sum(axis=1))
-                    min_divisor = patches_norm.min()*1.5
-                    patches /= np.maximum(min_divisor, patches_norm).reshape((patches.shape[0],1))
-                self.patches_= patches
+                patches = self.local_contrast_normalization(patches)
 
                 if self.whiten:
                     patches = self.pca.transform(patches)
 
-                #print patches.shape
-                #print self.kmeans_.cluster_centers_.shape
-                distances = all_pairs_l2_distance_squared(
+                distances = np.sqrt(all_pairs_l2_distance_squared(
                         patches.reshape(patches.shape[0],-1),
-                        self.kmeans_.cluster_centers_)
+                        self.kmeans_.cluster_centers_))
 
                 if 1: #triangle features
-                    features = np.maximum(0, distances.mean(axis=1).reshape(patches.shape[0],1) - distances)
+                    features = np.maximum(0, distances.mean(axis=1)[:,None] - distances)
                 elif 0: # hard assignment features
                     raise NotImplementedError()
                 else: #posterior features
-                    features = np.exp(-0.5*distances) # TODO: check correctness
+                    #TODO: include the cluster size as a component prior
+                    features = np.exp(-0.5*distances)
 
                 out_features[:,r//16,c//16,:] += features
         return out_features
