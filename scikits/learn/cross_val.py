@@ -6,6 +6,7 @@
 
 from math import ceil
 import numpy as np
+from random import shuffle
 
 from .base import is_classifier, clone
 from .utils.extmath import factorial, combinations
@@ -461,7 +462,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     cv: cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
         validation is used or 3-fold stratified cross-validation
-        when y is supplied.
+        when y is supplied and estimator is a classifier.
     iid: boolean, optional
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
@@ -490,3 +491,75 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
                                                         train, test, iid)
                 for train, test in cv)
     return np.array(scores)
+
+
+def _permutation_score(estimator, X, y, cv, score_func):
+    """Auxilary function for permutation_score
+    """
+    y_test = list()
+    y_pred = list()
+    for train, test in cv:
+        y_test.append(y[test])
+        y_pred.append(estimator.fit(X[train], y[train]).predict(X[test]))
+    return score_func(np.ravel(y_test), np.ravel(y_pred))
+
+
+def _shuffle(y):
+    """Return a shuffled copy of y
+    """
+    y_perm = y.copy()
+    shuffle(y_perm)
+    return y_perm
+
+
+def permutation_score(estimator, X, y, score_func, cv=None,
+                      n_permutations=100, n_jobs=1, verbose=0):
+    """Evaluate the significance of a cross-validated score with permutations
+
+    Parameters
+    ----------
+    estimator: estimator object implementing 'fit'
+        The object to use to fit the data
+    X: array-like of shape at least 2D
+        The data to fit.
+    y: array-like, optional
+        The target variable to try to predict in the case of
+        supervised learning.
+    score_func: callable, optional
+        callable taking as arguments the test targets (y_test) and
+        the predicted targets (y_pred). Returns a float.
+    cv: cross-validation generator, optional
+        A cross-validation generator. If None, a 3-fold cross
+        validation is used or 3-fold stratified cross-validation
+        when the estimator is a classifier.
+    n_jobs: integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+    verbose: integer, optional
+        The verbosity level
+
+    Returns
+    -------
+    score: float
+        The true score without permuting targets.
+    permutation_scores : array, shape = [n_permutations]
+        The scores obtained for each permutations.
+    pvalue: float
+        The p-value.
+    """
+    n_samples = len(X)
+    if cv is None:
+        if is_classifier(estimator):
+            cv = StratifiedKFold(y, k=3)
+        else:
+            cv = KFold(n_samples, k=3)
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickable.
+    score = _permutation_score(clone(estimator), X, y, cv, score_func)
+    permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
+                delayed(_permutation_score)(clone(estimator), X, _shuffle(y),
+                                            cv, score_func)
+                for _ in range(n_permutations))
+    permutation_scores = np.array(permutation_scores)
+    pvalue = np.mean(permutation_scores > score)
+    return score, permutation_scores, pvalue
