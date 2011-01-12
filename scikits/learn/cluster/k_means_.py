@@ -251,7 +251,7 @@ def _m_step(x, z ,k):
     return centers
 
 
-def _e_step(x, centers):
+def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
     """E step of the K-means EM algorithm
 
     Computation of the input-to-cluster assignment
@@ -276,22 +276,15 @@ def _e_step(x, centers):
     n_samples = x.shape[0]
     k = centers.shape[0]
 
-    there_is_memory_to_compute_distances_matrix = True
-
-    if there_is_memory_to_compute_distances_matrix:
-        distances = (
-                (x**2).sum(axis=1)
-                + (centers**2).sum(axis=1).reshape((k,1))
-                - 2*np.dot(centers, x.T))
-    # distances is a matrix of shape (k, n_samples) 
-
+    if precompute_distances:
+        distances = all_pairs_l2_distance_squared(centers, x, x_squared_norms)
     z = -np.ones(n_samples).astype(np.int)
     mindist = np.infty * np.ones(n_samples)
     for q in range(k):
-        if there_is_memory_to_compute_distances_matrix:
+        if precompute_distances:
             dist = distances[q]
         else:
-            dist = np.sum((x - centers[q]) ** 2, 1)
+            dist = np.sum((x - centers[q]) ** 2, axis=1)
         z[dist<mindist] = q
         mindist = np.minimum(dist, mindist)
     inertia = mindist.sum()
