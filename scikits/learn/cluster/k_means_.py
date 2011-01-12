@@ -12,6 +12,34 @@ import numpy as np
 
 from ..base import BaseEstimator
 
+def all_pairs_l2_distance_squared(A, B, B_norm_squared=None):
+    """
+    Returns the squared l2 norms of the differences between rows of A and B.
+
+    Parameters
+    ----------
+    A: array, [n_rows_A, n_cols]
+
+    B: array, [n_rows_B, n_cols]
+
+    B_norm_squared: array [n_rows_B], or None
+        pre-computed (B**2).sum(axis=1)
+
+    Returns
+    -------
+
+    array [n_rows_A, n_rows_B]
+        entry [i,j] is ((A[i] - B[i])**2).sum(axis=1)
+
+    """
+    if B_norm_squared is None:
+        B_norm_squared = (B**2).sum(axis=1)
+    if A is B:
+        A_norm_squared = B_norm_squared
+    else:
+        A_norm_squared = (A**2).sum(axis=1)
+    return (B_norm_squared + A_norm_squared.reshape((A.shape[0],1)) - 2*np.dot(A, B.T))
+
 ################################################################################
 # Initialisation heuristic
 
