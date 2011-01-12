@@ -106,8 +106,8 @@ def k_init(X, k, n_samples_max=500, rng=None):
 ################################################################################
 # K-means estimation by EM (expectation maximisation)
 
-def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
-                    delta=1e-4, rng=None):
+def k_means(X, k,init='k-means++', n_init=10, max_iter=300, verbose=0, 
+                    delta=1e-4, rng=None, copy_x=True):
     """ K-means clustering algorithm.
 
     Parameters
@@ -150,7 +150,13 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         Terbosity mode
 
     rng: numpy.RandomState, optional
-        The generator used to initialize the centers
+        The generator used to initialize the centers. Defaults to numpy.random.
+
+    copy_x: boolean, optional
+        When pre-computing distances it is more numerically accurate to center the data first.
+        If copy_x is True, then the original data is not modified.  If False, the original data
+        is modified, and put back before the function returns, but small numerical differences
+        may be introduced by subtracting and then adding the data mean.
 
     Returns
     -------
@@ -180,7 +186,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             n_init = 1
     'subtract of mean of x for more accurate distance computations'
     Xmean = X.mean(axis=0)
-    X = X-Xmean # TODO: offer an argument to allow doing this inplace
+    if copy_x:
+        X = X.copy()
+    X -= Xmean
     for it in range(n_init):
         # init
         if init == 'k-means++':
@@ -219,6 +227,8 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         best_centers = centers
         best_labels  = labels
         best_inertia = inertia
+    if not copy_x: 
+        X += Xmean
     return best_centers+Xmean, best_labels, best_inertia
 
 
@@ -372,12 +382,14 @@ class KMeans(BaseEstimator):
 
 
     def __init__(self, k=8, init='random', n_init=10, max_iter=300,
-            verbose=0):
+            verbose=0, rng=None, copy_x=True):
         self.k = k
         self.init = init
         self.max_iter = max_iter
         self.n_init = n_init
         self.verbose = verbose
+        self.rng = rng
+        self.copy_x = copy_x
 
     def fit(self, X, **params):
         """ Compute k-means"""
@@ -385,6 +397,7 @@ class KMeans(BaseEstimator):
         self._set_params(**params)
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(X,
                     k=self.k, init=self.init, n_init=self.n_init,
-                    max_iter=self.max_iter, verbose=self.verbose)
+                    max_iter=self.max_iter, verbose=self.verbose, 
+                    rng=self.rng, copy_x=self.copy_x)
         return self
 
