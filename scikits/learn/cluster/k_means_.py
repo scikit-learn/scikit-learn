@@ -75,27 +75,30 @@ def k_init(X, k, n_samples_max=500, rng=None):
     n_samples = X.shape[0]
     if rng is None:
         rng = np.random
+
     if n_samples >= n_samples_max:
         X = X[rng.randint(n_samples, size=n_samples_max)]
         n_samples = n_samples_max
 
+    distances = all_pairs_l2_distance_squared(X, X)
+
     'choose the 1st seed randomly, and store D(x)^2 in D[]'
-    centers = [X[rng.randint(n_samples)]]
-    D = ((X - centers[0]) ** 2).sum(axis=-1)
+    first_idx =rng.randint(n_samples)
+    centers = [X[first_idx]]
+    D = distances[first_idx]
 
     for _ in range(k - 1):
         bestDsum = bestIdx = -1
 
         for i in range(n_samples):
             'Dsum = sum_{x in X} min(D(x)^2,||x-xi||^2)'
-            Dsum = np.minimum(D, ((X - X[i]) ** 2).sum(axis=-1)
-                              ).sum()
+            Dsum = np.minimum(D, distances[i]).sum()
 
             if bestDsum < 0 or Dsum < bestDsum:
                 bestDsum, bestIdx = Dsum, i
 
         centers.append(X[bestIdx])
-        D = np.minimum(D, ((X - X[bestIdx]) ** 2).sum(axis=-1))
+        D = np.minimum(D, distances[bestIdx])
 
     return np.array(centers)
 
