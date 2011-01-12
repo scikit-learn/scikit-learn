@@ -66,6 +66,12 @@ def test_permutation_score():
     assert_true(score > 0.9)
     np.testing.assert_equal(pvalue,  0.0)
 
+    score_label, _, pvalue_label = permutation_score(svm, X, y, zero_one_score,
+                                                    cv, labels=np.ones(y.size),
+                                                    rng=0)
+    assert_true(score_label == score)
+    assert_true(pvalue_label == pvalue)
+
     # set random y
     y = np.mod(np.arange(len(y)), 3)
 

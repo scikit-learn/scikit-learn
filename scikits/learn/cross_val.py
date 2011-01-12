@@ -6,7 +6,6 @@
 
 from math import ceil
 import numpy as np
-from random import shuffle
 
 from .base import is_classifier, clone
 from .utils.extmath import factorial, combinations
@@ -485,7 +484,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator)
     # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickable.
+    # independent, and that it is pickle-able.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
                                                         train, test, iid)
@@ -504,16 +503,22 @@ def _permutation_score(estimator, X, y, cv, score_func):
     return score_func(np.ravel(y_test), np.ravel(y_pred))
 
 
-def _shuffle(y):
-    """Return a shuffled copy of y
+def _shuffle(y, labels, rng):
+    """Return a shuffled copy of y eventually shuffle among same labels.
     """
-    y_perm = y.copy()
-    shuffle(y_perm)
-    return y_perm
+    if labels is None:
+        ind = rng.permutation(y.size)
+    else:
+        ind = np.arange(labels.size)
+        for label in np.unique(labels):
+           this_mask = (labels == label)
+           ind[this_mask] = rng.permutation(ind[this_mask])
+    return y[ind]
 
 
 def permutation_score(estimator, X, y, score_func, cv=None,
-                      n_permutations=100, n_jobs=1, verbose=0):
+                      n_permutations=100, n_jobs=1, labels=None,
+                      rng=0, verbose=0):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
@@ -535,6 +540,12 @@ def permutation_score(estimator, X, y, score_func, cv=None,
     n_jobs: integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
+    labels: array-like of shape [n_samples] (optional)
+        Labels constrain the permutation among groups of samples with
+        a same label.
+    rng: RandomState or an int seed (0 by default)
+        A random number generator instance to define the state of the
+        random permutations generator.
     verbose: integer, optional
         The verbosity level
 
@@ -546,6 +557,12 @@ def permutation_score(estimator, X, y, score_func, cv=None,
         The scores obtained for each permutations.
     pvalue: float
         The p-value.
+
+    Notes
+    -----
+    A reference:
+    Ojala and Garriga. Permutation Tests for Studying Classifier Performance.
+    The Journal of Machine Learning Research (2010) vol. 11
     """
     n_samples = len(X)
     if cv is None:
@@ -553,11 +570,18 @@ def permutation_score(estimator, X, y, score_func, cv=None,
             cv = StratifiedKFold(y, k=3)
         else:
             cv = KFold(n_samples, k=3)
+
+    if rng is None:
+        rng = np.random.RandomState()
+    elif isinstance(rng, int):
+        rng = np.random.RandomState(rng)
+
     # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickable.
+    # independent, and that it is pickle-able.
     score = _permutation_score(clone(estimator), X, y, cv, score_func)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-                delayed(_permutation_score)(clone(estimator), X, _shuffle(y),
+                delayed(_permutation_score)(clone(estimator), X,
+                                            _shuffle(y, labels, rng),
                                             cv, score_func)
                 for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
