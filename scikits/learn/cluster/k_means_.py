@@ -3,6 +3,7 @@
 
 # Authors: Gael Varoquaux <gael.xaroquaux@normalesup.org>
 #          Thomas Rueckstiess <ruecksti@in.tum.de>
+#          James Bergstra <james.bergstra@umontreal.ca>
 # License: BSD
 
 import warnings
@@ -10,6 +11,34 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator
+
+def all_pairs_l2_distance_squared(A, B, B_norm_squared=None):
+    """
+    Returns the squared l2 norms of the differences between rows of A and B.
+
+    Parameters
+    ----------
+    A: array, [n_rows_A, n_cols]
+
+    B: array, [n_rows_B, n_cols]
+
+    B_norm_squared: array [n_rows_B], or None
+        pre-computed (B**2).sum(axis=1)
+
+    Returns
+    -------
+
+    array [n_rows_A, n_rows_B]
+        entry [i,j] is ((A[i] - B[i])**2).sum(axis=1)
+
+    """
+    if B_norm_squared is None:
+        B_norm_squared = (B**2).sum(axis=1)
+    if A is B:
+        A_norm_squared = B_norm_squared
+    else:
+        A_norm_squared = (A**2).sum(axis=1)
+    return (B_norm_squared + A_norm_squared.reshape((A.shape[0],1)) - 2*np.dot(A, B.T))
 
 ################################################################################
 # Initialisation heuristic
@@ -46,27 +75,30 @@ def k_init(X, k, n_samples_max=500, rng=None):
     n_samples = X.shape[0]
     if rng is None:
         rng = np.random
+
     if n_samples >= n_samples_max:
         X = X[rng.randint(n_samples, size=n_samples_max)]
         n_samples = n_samples_max
 
+    distances = all_pairs_l2_distance_squared(X, X)
+
     'choose the 1st seed randomly, and store D(x)^2 in D[]'
-    centers = [X[rng.randint(n_samples)]]
-    D = ((X - centers[0]) ** 2).sum(axis=-1)
+    first_idx =rng.randint(n_samples)
+    centers = [X[first_idx]]
+    D = distances[first_idx]
 
     for _ in range(k - 1):
         bestDsum = bestIdx = -1
 
         for i in range(n_samples):
             'Dsum = sum_{x in X} min(D(x)^2,||x-xi||^2)'
-            Dsum = np.minimum(D, ((X - X[i]) ** 2).sum(axis=-1)
-                              ).sum()
+            Dsum = np.minimum(D, distances[i]).sum()
 
             if bestDsum < 0 or Dsum < bestDsum:
                 bestDsum, bestIdx = Dsum, i
 
         centers.append(X[bestIdx])
-        D = np.minimum(D, ((X - X[bestIdx]) ** 2).sum(axis=-1))
+        D = np.minimum(D, distances[bestIdx])
 
     return np.array(centers)
 
@@ -74,8 +106,8 @@ def k_init(X, k, n_samples_max=500, rng=None):
 ################################################################################
 # K-means estimation by EM (expectation maximisation)
 
-def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
-                    delta=1e-4, rng=None):
+def k_means(X, k,init='k-means++', n_init=10, max_iter=300, verbose=0, 
+                    delta=1e-4, rng=None, copy_x=True):
     """ K-means clustering algorithm.
 
     Parameters
@@ -98,7 +130,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         seeds. The final results will be the best output of n_init consecutive
         runs in terms of inertia.
 
-    init: {'k-means++', 'random', or an ndarray}, optional
+    init: {'k-means++', 'random', or ndarray, or a callable}, optional
         Method for initialization, default to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -118,7 +150,13 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         Terbosity mode
 
     rng: numpy.RandomState, optional
-        The generator used to initialize the centers
+        The generator used to initialize the centers. Defaults to numpy.random.
+
+    copy_x: boolean, optional
+        When pre-computing distances it is more numerically accurate to center the data first.
+        If copy_x is True, then the original data is not modified.  If False, the original data
+        is modified, and put back before the function returns, but small numerical differences
+        may be introduced by subtracting and then adding the data mean.
 
     Returns
     -------
@@ -148,7 +186,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             n_init = 1
     'subtract of mean of x for more accurate distance computations'
     Xmean = X.mean(axis=0)
-    X = X-Xmean # TODO: offer an argument to allow doing this inplace
+    if copy_x:
+        X = X.copy()
+    X -= Xmean
     for it in range(n_init):
         # init
         if init == 'k-means++':
@@ -158,9 +198,11 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             centers = X[seeds]
         elif hasattr(init, '__array__'):
             centers = np.asanyarray(init).copy()
+        elif callable(init):
+            centers = init(X, k, rng=rng)
         else:
             raise ValueError("the init parameter for the k-means should "
-                "be 'k-mean++' or 'random' or an ndarray, "
+                "be 'k-means++' or 'random' or an ndarray, "
                 "'%s' (type '%s') was passed.")
 
         if verbose:
@@ -185,6 +227,8 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         best_centers = centers
         best_labels  = labels
         best_inertia = inertia
+    if not copy_x: 
+        X += Xmean
     return best_centers+Xmean, best_labels, best_inertia
 
 
@@ -217,7 +261,7 @@ def _m_step(x, z ,k):
     return centers
 
 
-def _e_step(x, centers):
+def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
     """E step of the K-means EM algorithm
 
     Computation of the input-to-cluster assignment
@@ -242,22 +286,15 @@ def _e_step(x, centers):
     n_samples = x.shape[0]
     k = centers.shape[0]
 
-    there_is_memory_to_compute_distances_matrix = True
-
-    if there_is_memory_to_compute_distances_matrix:
-        distances = (
-                (x**2).sum(axis=1)
-                + (centers**2).sum(axis=1).reshape((k,1))
-                - 2*np.dot(centers, x.T))
-    # distances is a matrix of shape (k, n_samples) 
-
+    if precompute_distances:
+        distances = all_pairs_l2_distance_squared(centers, x, x_squared_norms)
     z = -np.ones(n_samples).astype(np.int)
     mindist = np.infty * np.ones(n_samples)
     for q in range(k):
-        if there_is_memory_to_compute_distances_matrix:
+        if precompute_distances:
             dist = distances[q]
         else:
-            dist = np.sum((x - centers[q]) ** 2, 1)
+            dist = np.sum((x - centers[q]) ** 2, axis=1)
         z[dist<mindist] = q
         mindist = np.minimum(dist, mindist)
     inertia = mindist.sum()
@@ -344,11 +381,15 @@ class KMeans(BaseEstimator):
     """
 
 
-    def __init__(self, k=8, init='random', n_init=10, max_iter=300):
+    def __init__(self, k=8, init='random', n_init=10, max_iter=300,
+            verbose=0, rng=None, copy_x=True):
         self.k = k
         self.init = init
         self.max_iter = max_iter
         self.n_init = n_init
+        self.verbose = verbose
+        self.rng = rng
+        self.copy_x = copy_x
 
     def fit(self, X, **params):
         """ Compute k-means"""
@@ -356,6 +397,7 @@ class KMeans(BaseEstimator):
         self._set_params(**params)
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(X,
                     k=self.k, init=self.init, n_init=self.n_init,
-                    max_iter=self.max_iter)
+                    max_iter=self.max_iter, verbose=self.verbose, 
+                    rng=self.rng, copy_x=self.copy_x)
         return self
 
