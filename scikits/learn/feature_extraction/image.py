@@ -14,6 +14,7 @@ from ..utils.fixes import in1d
 from ..base import BaseEstimator
 from ..pca import PCA
 from ..cluster import KMeans
+from ..cluster.k_means_ import all_pairs_l2_distance_squared
 
 ################################################################################
 # From an image to a graph
@@ -216,6 +217,51 @@ def extract_patches2d(images, image_size, patch_size, offsets=(0, 0)):
     else:
         return patches
 
+def most_square_shape(N):
+    """return integers (height, width) with area N that is closest to square, 
+    given that width >= height.
+
+    This returns nice tiling dimensions for plotting filters.
+    """
+    for i in xrange(int(np.sqrt(N)),0, -1):
+        if 0 == N % i:
+            return (i, N/i)
+def tile_images(imgs, flip=False, return_img=True, scale_each=False, eps=1e-8):
+    """Return an image or RGB ndarray in which the `imgs` are arranged (tiled) for viewing.
+    """
+    # returns an ndarray that is 
+    w = imgs.transpose(0,3,1,2) # old code compatibility...
+    if w.shape[1] != 3:
+        raise NotImplementedError('not rgb', w.shape)
+    if w.shape[2] != w.shape[3]:
+        # i haven't debugged this well enough to know that i've got it working for nonsquare
+        raise NotImplementedError('not square', w.shape)
+    def move_to_01(X):
+        return (X - X.min()) / (np.max(X.max() - X.min(), eps))
+
+    if not scale_each:
+        w = np.asarray(255 * move_to_01(w), dtype='uint8')
+    trows, tcols= most_square_shape(w.shape[0])
+    outrows = trows * w.shape[2] + trows-1
+    outcols = tcols * w.shape[3] + tcols-1
+    out = np.zeros((outrows, outcols,3), dtype='uint8')
+
+    tr_stride= 1+w.shape[1]
+    for tr in range(trows):
+        for tc in range(tcols):
+            # this is supposed to flip the filters back into the image coordinates
+            # as well as put the channels in the right place, but I don't know if it
+            # really does that
+            w_rc = w[tr*tcols+tc].transpose(1,2,0)[::-1 if flip else 1,::-1 if flip else 1]
+            if scale_each:
+                w_rc = np.asarray(255 * move_to_01(w_rc), dtype='uint8')
+            out[tr*(1+w.shape[2]):tr*(1+w.shape[2])+w.shape[2],
+                    tc*(1+w.shape[3]):tc*(1+w.shape[3])+w.shape[3]] = w_rc
+    if return_img:
+        from PIL import Image
+        return Image.fromarray(out, 'RGB')
+    else:
+        return out
 
 class ConvolutionalKMeansEncoder(BaseEstimator):
     """Unsupervised sparse feature extractor for 2D images
@@ -275,7 +321,8 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
 
     def __init__(self, n_centers=400, image_size=None, patch_size=6,
                  step_size=1, whiten=True, n_components=None,
-                 pools=2, max_iter=1, n_init=1):
+                 pools=2, max_iter=1, n_init=1, kmeans_init_algo='k-means++',
+                 verbose=1, n_drop_components=0):
         self.n_centers = n_centers
         self.patch_size = patch_size
         self.step_size = step_size
@@ -285,6 +332,9 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         self.max_iter = max_iter
         self.n_init = n_init
         self.n_components = n_components
+        self.n_drop_components = n_drop_components
+        self.kmeans_init_algo=kmeans_init_algo
+        self.verbose = verbose
 
     def _check_images(self, X):
         """Check that X can seen as a consistent collection of images"""
@@ -323,36 +373,118 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         # TODO: compute pca and kmeans taking other offsets into account to
         # step 2: whiten the patch space
         patches = patches_by_offset[0]
-        patches = patches.reshape((patches.shape[0], -1))
+        n_patches = patches.shape[0]
 
-        if self.whiten:
-            self.pca = PCA(whiten=True, n_components=self.n_components)
-            self.pca.fit(patches)
-            patches = self.pca.transform(patches)
-        else:
-            self.pca = None
+        if 0: # center all colour channels together
+            patches = patches.reshape((patches.shape[0], -1))
+            patches -= patches.mean(axis=1).reshape((n_patches,1))
+        elif 1: #center each colour channel individually
+            patches -= patches.mean(axis=2).mean(axis=1).reshape((n_patches, 1, 1, 3))
+            patches = patches.reshape((n_patches, -1))
+        else: # no centering
+            patches = patches.reshape((n_patches, -1))
+
+        if 1: # local contrast normalization
+            patches_norm = np.sqrt((patches**2).sum(axis=1))
+            #min_divisor = (2*patches_norm.min()+patches_norm.mean())/3 #heuristic(!?)
+            min_divisor = patches_norm.min()*1.5
+            patches /= np.maximum(min_divisor, patches_norm).reshape((patches.shape[0],1))
+        self.patches_= patches
 
         # step 3: compute the KMeans centers
-        kmeans = KMeans(k=self.n_centers, init='k-means++',
-                        max_iter=self.max_iter, n_init=self.n_init)
+        kmeans = KMeans(k=self.n_centers, init=self.kmeans_init_algo,
+                        max_iter=self.max_iter, n_init=self.n_init, verbose=self.verbose)
+        self.kmeans_ = kmeans
         # TODO: when whitening is enabled, implement curriculum learnin by
         # starting the kmeans on a the projection to the first singular
         # components and increase the number component with warm restarts by
         # padding previous centroids with zeros to keep up with the increasing
         # dim
-        kmeans.fit(patches)
-        self.inertia_ = kmeans.inertia_
 
-        # step 4: project back the centers in original, non-whitened space
         if self.whiten:
-            self.kernels_ = (np.dot(kmeans.cluster_centers_,
-                                    self.pca.components_.T) + self.pca.mean_)
+            self.pca = PCA(whiten=True, n_components=self.n_components)
+            self.pca.fit(patches)
+            patches_pca = self.pca.transform(patches)
+            if self.n_drop_components:
+                assert patches.shape[1] == self.pca.components_.shape[0]
+                self.pca.components_[:,:self.n_drop_components] = 0
+                patches_pca[:,:self.n_drop_components] = 0
+            kmeans.fit(patches_pca)
+            self.inertia_ = kmeans.inertia_
+
+            # step 4: project back the centers in original, non-whitened space
+            def unpca(X):
+                return (np.dot(X* self.pca.components_coefs_**2,
+                self.pca.components_.T) + self.pca.mean_)
+            self.kernels_ = unpca(kmeans.cluster_centers_)
+
+            self.patches_unpca_= unpca(patches_pca)
         else:
+            self.pca = None
+            kmeans.fit(patches)
+            self.inertia_ = kmeans.inertia_
             self.kernels_ = kmeans.cluster_centers_
+            self.patches_unpca_= patches
+
         return self
 
-    def transform(self, X):
+    def transform(self, X, rtype='float32'):
         """Map a collection of 2D images into the feature space"""
-        X = self._check_images(X)
-        raise NotImplementedError("implement me!")
+        #X = self._check_images(X)
+        nX, nXrows, nXcols, nXchannels = X.shape
+        if nXchannels != 3:
+            raise NotImplementedError('should be checking channels throughout')
+        out_features = np.zeros((X.shape[0], 2, 2, self.kernels_.shape[0]), dtype=rtype)
+        for r in xrange(nXrows-self.patch_size+1):
+            if self.verbose:
+                print '%s::transform() row %i/%i'%(
+                        self.__class__.__name__, r+1, nXrows-self.patch_size+1)
+            for c in xrange(nXcols-self.patch_size+1):
+                patches = X[:,r:r+self.patch_size,c:c+self.patch_size,:]
+                n_patches = patches.shape[0]
+
+                if 0: # center all colour channels together
+                    patches = patches.reshape((patches.shape[0], -1))
+                    patches -= patches.mean(axis=1).reshape((n_patches,1))
+                elif 1: #center each colour channel individually
+                    patches -= patches.mean(axis=2).mean(axis=1).reshape((n_patches, 1, 1,
+                        nXchannels))
+                    patches = patches.reshape((n_patches, -1))
+                else: # no centering
+                    patches = patches.reshape((n_patches, -1))
+
+                if 1: # local contrast normalization
+                    patches_norm = np.sqrt((patches**2).sum(axis=1))
+                    min_divisor = patches_norm.min()*1.5
+                    patches /= np.maximum(min_divisor, patches_norm).reshape((patches.shape[0],1))
+                self.patches_= patches
+
+                if self.whiten:
+                    patches = self.pca.transform(patches)
+
+                #print patches.shape
+                #print self.kmeans_.cluster_centers_.shape
+                distances = all_pairs_l2_distance_squared(
+                        patches.reshape(patches.shape[0],-1),
+                        self.kmeans_.cluster_centers_)
+
+                if 1: #triangle features
+                    features = np.maximum(0, distances.mean(axis=1).reshape(patches.shape[0],1) - distances)
+                elif 0: # hard assignment features
+                    raise NotImplementedError()
+                else: #posterior features
+                    features = np.exp(-0.5*distances) # TODO: check correctness
+
+                out_features[:,r//16,c//16,:] += features
+        return out_features
+
+    def tile_kernels(self, scale_each=False):
+        shp = self.kernels_.shape[0], self.patch_size, self.patch_size, 3
+        return tile_images(self.kernels_.reshape(shp),scale_each=scale_each)
+    def tile_patches(self, N=256, scale_each=False):
+        shp = self.patches_[:N].shape[0], self.patch_size, self.patch_size, 3
+        return tile_images(self.patches_[:N].reshape(shp),scale_each=scale_each)
+    def tile_patches_unpca(self, N=256, scale_each=False):
+        shp = self.patches_unpca_[:N].shape[0], self.patch_size, self.patch_size, 3
+        return tile_images(self.patches_unpca_[:N].reshape(shp),scale_each=scale_each)
 
