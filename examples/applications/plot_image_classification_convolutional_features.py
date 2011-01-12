@@ -39,13 +39,11 @@ from scikits.learn.svm import SVC
 from scikits.learn.svm import LinearSVC
 from scikits.learn.preprocessing import Scaler
 from scikits.learn.cluster import k_init
+from scikits.learn.linear_model import SGDClassifier
 
 
 def load_cifar10():
-
-    ################################################################################
     # Download the data, if not already on disk
-
     url = "http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
     archive_name = url.rsplit('/', 1)[1]
     folder_name = 'cifar-10-batches-py'
@@ -106,26 +104,27 @@ def load_cifar10():
 
     return X_train, y_train, X_test, y_test
 
-def train_convolutional_kmeans(cifar10, save_images=True):
+def train_convolutional_kmeans(cifar10, n_centers=400, n_components=30, n_drop_components=4,
+        save_images=True, n_images_to_train_from=10000, n_EM_steps=30):
     X_train, y_train, X_test, y_test = cifar10
 
     extractor = ConvolutionalKMeansEncoder(
-        n_centers=400, # kmeans centers: convolutional filters
+        n_centers=n_centers, # kmeans centers: convolutional filters
         patch_size=8,# size of the side of one filter
         whiten=True, # perform whitening or not before kmeans
-        n_drop_components=2,  #n  of leading eigenvecs to ignore
-        n_components=30, # number of singular vectors to keep when whitening
-        max_iter=30, # max number of EM iterations
+        n_drop_components=n_drop_components,  #n  of leading eigenvecs to ignore
+        n_components=n_components, # number of singular vectors to keep when whitening
+        max_iter=n_EM_steps, 
         n_init=1,   # take best fit of this many trials
         #kmeans_init_algo=lambda X,k,rng:k_init(X,k,rng=rng, n_samples_max=2000),
-        kmeans_init_algo='random',
+        kmeans_init_algo='random', #I'm guessing smart init in high dimensions irrelevant
         verbose=1)
 
 
     print "training convolutional whitened kmeans feature extractor..."
     t0 = time()
     # restrict training size for faster runtime as a demo
-    extractor.fit(X_train[:10000])
+    extractor.fit(X_train[:n_images_to_train_from])
     print "done in %0.3fs" % (time() - t0)
 
     if extractor.whiten:
@@ -147,10 +146,16 @@ def train_convolutional_kmeans(cifar10, save_images=True):
 
 
 ################################################################################
-# Qualitative evaluation of the extracted filters
-def driver_train_kmeans(save_extractor='extractor.pkl'):
+# DRIVERS MEANT TO BE CALLED FROM COMMAND LINE (SEE __name__=='__main__' BELOW)
+#
+def train_kmeans(save_extractor='extractor.pkl', n_centers=400, n_components=30,
+        n_drop_components=4, n_EM_steps=30):
+    print 'Training convolutional k-means'
+    # Qualitative evaluation of the extracted filters
     cifar10 = load_cifar10()
-    extractor = do_kmeans_training(cifar10, save_images=True)
+    extractor = train_convolutional_kmeans(cifar10, n_centers=n_centers, 
+            n_components=n_components, n_drop_components=n_drop_components, 
+            save_images=True, n_EM_steps=n_EM_steps)
 
     # delete some big useless objects
     del extractor.patches_
@@ -158,24 +163,26 @@ def driver_train_kmeans(save_extractor='extractor.pkl'):
     if save_extractor:
         cPickle.dump(extractor, open(save_extractor, 'wb'))
 
-def features_from_saved_extractor(save_extractor='extractor.pkl', n_examples_to_use=50000):
+def features_from_saved_extractor(save_extractor='extractor.pkl', n_examples_to_use=50000,
+        save_prefix="kmeans"):
+    print 'Extracting convolutional k-means features from CIFAR-10'
     # This is in a function on its own because it can take a while (20 minutes).
     extractor = cPickle.load(open(save_extractor))
+
+    X_train, y_train, X_test, y_test = load_cifar10()
 
     # for each image position, extract features from the entire dataset
 
     X_train_features = extractor.transform(X_train[:n_examples_to_use])
     X_test_features = extractor.transform(X_test[:n_examples_to_use])
 
-    np.save('X_train_features.npy', X_train_features)
-    np.save('X_test_features.npy', X_test_features)
-    np.save('y_train_labels.npy', y_train[:n_examples_to_use])
-    np.save('y_test_labels.npy', y_test[:n_examples_to_use])
+    np.save('%s_X_train_features.npy'%save_prefix, X_train_features)
+    np.save('%s_X_test_features.npy'%save_prefix, X_test_features)
+    np.save('%s_y_train_labels.npy'%save_prefix, y_train[:n_examples_to_use])
+    np.save('%s_y_test_labels.npy'%save_prefix, y_test[:n_examples_to_use])
 
-from scikits.learn.preprocessing import Scaler
-from scikits.learn import svm
-from scikits.learn.linear_model import SGDClassifier
-def classify_features(n_examples_to_use=50000, alpha=.0001,n_iter=20):
+def classify_features(n_examples_to_use=50000, alpha=.0001,n_iter=20,
+        save_prefix="kmeans"):
     classif = SGDClassifier(
             loss='hinge',
             penalty='l2',
@@ -186,10 +193,10 @@ def classify_features(n_examples_to_use=50000, alpha=.0001,n_iter=20):
 
     print classif
 
-    X_train = np.load('X_train_features.npy')[:n_examples_to_use]
-    X_test = np.load('X_test_features.npy')[:n_examples_to_use]
-    y_train = np.load('y_train_labels.npy')[:n_examples_to_use]
-    y_test = np.load('y_test_labels.npy')[:n_examples_to_use]
+    X_train = np.load('%s_X_train_features.npy'%save_prefix)[:n_examples_to_use]
+    X_test = np.load('%s_X_test_features.npy'%save_prefix)[:n_examples_to_use]
+    y_train = np.load('%s_y_train_labels.npy'%save_prefix)[:n_examples_to_use]
+    y_test = np.load('%s_y_test_labels.npy'%save_prefix)[:n_examples_to_use]
 
     print 'loaded data of shape', X_train.shape, y_train.shape
     print 'loaded data of shape', X_test.shape, y_test.shape
