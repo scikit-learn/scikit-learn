@@ -371,11 +371,13 @@ class KMeans(BaseEstimator):
     """
 
 
-    def __init__(self, k=8, init='random', n_init=10, max_iter=300):
+    def __init__(self, k=8, init='random', n_init=10, max_iter=300,
+            verbose=0):
         self.k = k
         self.init = init
         self.max_iter = max_iter
         self.n_init = n_init
+        self.verbose = verbose
 
     def fit(self, X, **params):
         """ Compute k-means"""
@@ -383,6 +385,6 @@ class KMeans(BaseEstimator):
         self._set_params(**params)
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(X,
                     k=self.k, init=self.init, n_init=self.n_init,
-                    max_iter=self.max_iter)
+                    max_iter=self.max_iter, verbose=self.verbose)
         return self
 
