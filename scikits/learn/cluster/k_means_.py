@@ -194,7 +194,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             centers = init(X, k, rng=rng)
         else:
             raise ValueError("the init parameter for the k-means should "
-                "be 'k-mean++' or 'random' or an ndarray, "
+                "be 'k-means++' or 'random' or an ndarray, "
                 "'%s' (type '%s') was passed.")
 
         if verbose:
