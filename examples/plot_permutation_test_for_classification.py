@@ -19,7 +19,7 @@ print __doc__
 import numpy as np
 
 from scikits.learn.svm import SVC
-from scikits.learn.cross_val import StratifiedKFold, permutation_score
+from scikits.learn.cross_val import StratifiedKFold, permutation_test_score
 from scikits.learn import datasets
 from scikits.learn.metrics import zero_one_score
 
@@ -41,7 +41,7 @@ X = np.c_[X, E]
 svm = SVC(kernel='linear')
 cv = StratifiedKFold(y, 2)
 
-score, permutation_scores, pvalue = permutation_score(svm, X, y,
+score, permutation_scores, pvalue = permutation_test_score(svm, X, y,
                                             zero_one_score, cv=cv,
                                             n_permutations=100, n_jobs=1)
 
