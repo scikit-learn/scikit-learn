@@ -130,7 +130,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         seeds. The final results will be the best output of n_init consecutive
         runs in terms of inertia.
 
-    init: {'k-means++', 'random', or an ndarray}, optional
+    init: {'k-means++', 'random', or ndarray, or a callable}, optional
         Method for initialization, default to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -190,6 +190,8 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             centers = X[seeds]
         elif hasattr(init, '__array__'):
             centers = np.asanyarray(init).copy()
+        elif callable(init):
+            centers = init(X, k, rng=rng)
         else:
             raise ValueError("the init parameter for the k-means should "
                 "be 'k-mean++' or 'random' or an ndarray, "
