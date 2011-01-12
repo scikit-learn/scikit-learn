@@ -3,6 +3,7 @@
 
 # Authors: Gael Varoquaux <gael.xaroquaux@normalesup.org>
 #          Thomas Rueckstiess <ruecksti@in.tum.de>
+#          James Bergstra <james.bergstra@umontreal.ca>
 # License: BSD
 
 import warnings
