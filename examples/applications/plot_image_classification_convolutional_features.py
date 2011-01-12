@@ -23,6 +23,7 @@ Expected results:
 print __doc__
 
 import os
+import sys
 import math
 import cPickle
 from gzip import GzipFile
@@ -40,105 +41,180 @@ from scikits.learn.preprocessing import Scaler
 from scikits.learn.cluster import k_init
 
 
+def load_cifar10():
 
-################################################################################
-# Download the data, if not already on disk
+    ################################################################################
+    # Download the data, if not already on disk
 
-url = "http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
-archive_name = url.rsplit('/', 1)[1]
-folder_name = 'cifar-10-batches-py'
+    url = "http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
+    archive_name = url.rsplit('/', 1)[1]
+    folder_name = 'cifar-10-batches-py'
 
-if not os.path.exists(folder_name):
-    if not os.path.exists(archive_name):
-        import urllib
-        print "Downloading data, please Wait (163MB)..."
-        print url
-        opener = urllib.urlopen(url)
-        open(archive_name, 'wb').write(opener.read())
+    if not os.path.exists(folder_name):
+        if not os.path.exists(archive_name):
+            import urllib
+            print "Downloading data, please Wait (163MB)..."
+            print url
+            opener = urllib.urlopen(url)
+            open(archive_name, 'wb').write(opener.read())
+            print
+
+        import tarfile
+        print "Decompressiong the archive: " + archive_name
+        tarfile.open(archive_name, "r:gz").extractall()
         print
 
-    import tarfile
-    print "Decompressiong the archive: " + archive_name
-    tarfile.open(archive_name, "r:gz").extractall()
-    print
+    ################################################################################
+    # Load dataset in memory
 
-################################################################################
-# Load dataset in memory
+    X_train = []
+    y_train = []
 
-X_train = []
-y_train = []
+    for filename in sorted(os.listdir(folder_name)):
+        filepath = os.path.join(folder_name, filename)
+        if filename.startswith('data_batch_'):
+            dataset = cPickle.load(file(filepath, 'rb'))
+            X_train.append(dataset['data'])
+            y_train.append(dataset['labels'])
+        elif filename == 'test_batch':
+            dataset = cPickle.load(file(filepath, 'rb'))
+            X_test = np.asarray(dataset['data'], dtype=np.float32)
+            y_test = dataset['labels']
+        elif filename == 'batch.meta':
+            dataset = cPickle.load(file(filepath, 'rb'))
+            label_neams = dataset['label_names']
 
-for filename in sorted(os.listdir(folder_name)):
-    filepath = os.path.join(folder_name, filename)
-    if filename.startswith('data_batch_'):
-        dataset = cPickle.load(file(filepath, 'rb'))
-        X_train.append(dataset['data'])
-        y_train.append(dataset['labels'])
-    elif filename == 'test_batch':
-        dataset = cPickle.load(file(filepath, 'rb'))
-        X_test = np.asarray(dataset['data'], dtype=np.float32)
-        y_test = dataset['labels']
-    elif filename == 'batch.meta':
-        dataset = cPickle.load(file(filepath, 'rb'))
-        label_neams = dataset['label_names']
+    X_train = np.asarray(np.concatenate(X_train), dtype=np.float32)
+    y_train = np.concatenate(y_train)
 
-X_train = np.asarray(np.concatenate(X_train), dtype=np.float32)
-y_train = np.concatenate(y_train)
+    #n_samples = X_train.shape[0]
 
-#n_samples = X_train.shape[0]
+    # reshape pictures to there natural dimension
+    X_train = X_train.reshape((X_train.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
+    X_test = X_test.reshape((X_test.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
 
-# reshape pictures to there natural dimension
-X_train = X_train.reshape((X_train.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
-X_test = X_test.reshape((X_test.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
+    ## convert to graylevel images for now
+    #X_train = X_train.mean(axis=-1)
+    #X_test = X_test.mean(axis=-1)
+    #pl.imshow(X_train[0], interpolation='nearest'); pl.show()
 
-## convert to graylevel images for now
-#X_train = X_train.mean(axis=-1)
-#X_test = X_test.mean(axis=-1)
-#pl.imshow(X_train[0], interpolation='nearest'); pl.show()
+    # scale dataset
+    print "scaling images to centered, unit variance vectors"
+    scaler = Scaler().fit(X_train)
+    X_train = scaler.transform(X_train,copy=False)
+    X_test = scaler.transform(X_test,copy=False)
 
-# scale dataset
-print "scaling images to centered, unit variance vectors"
-scaler = Scaler().fit(X_train)
-X_train = scaler.transform(X_train,copy=False)
-X_test = scaler.transform(X_test,copy=False)
+    return X_train, y_train, X_test, y_test
 
+def train_convolutional_kmeans(cifar10, save_images=True):
+    X_train, y_train, X_test, y_test = cifar10
 
-################################################################################
-# Extract filters
-extractor = ConvolutionalKMeansEncoder(
-    n_centers=400, # kmeans centers: convolutional filters
-    patch_size=8,# size of the side of one filter
-    whiten=True, # perform whitening or not before kmeans
-    n_drop_components=8,  #n  of leading eigenvecs to ignore
-    n_components=30, # number of singular vectors to keep when whitening
-    max_iter=30, # max number of EM iterations
-    n_init=1,   # take best fit of this many trials
-    #kmeans_init_algo=lambda X,k,rng:k_init(X,k,rng=rng, n_samples_max=2000),
-    kmeans_init_algo='random',
-    verbose=1)
+    extractor = ConvolutionalKMeansEncoder(
+        n_centers=400, # kmeans centers: convolutional filters
+        patch_size=8,# size of the side of one filter
+        whiten=True, # perform whitening or not before kmeans
+        n_drop_components=2,  #n  of leading eigenvecs to ignore
+        n_components=30, # number of singular vectors to keep when whitening
+        max_iter=30, # max number of EM iterations
+        n_init=1,   # take best fit of this many trials
+        #kmeans_init_algo=lambda X,k,rng:k_init(X,k,rng=rng, n_samples_max=2000),
+        kmeans_init_algo='random',
+        verbose=1)
 
 
-print "training convolutional whitened kmeans feature extractor..."
-t0 = time()
-# restrict training size for faster runtime as a demo
-extractor.fit(X_train[:10000])
-print "done in %0.3fs" % (time() - t0)
+    print "training convolutional whitened kmeans feature extractor..."
+    t0 = time()
+    # restrict training size for faster runtime as a demo
+    extractor.fit(X_train[:10000])
+    print "done in %0.3fs" % (time() - t0)
 
-if extractor.whiten:
-    vr = extractor.pca.explained_variance_ratio_
-    print "explained variance ratios for %d kept PCA components:" % vr.shape[0]
-    print vr
-print "kmeans remaining inertia: %0.3fe6" % (extractor.inertia_ / 1e6)
+    if extractor.whiten:
+        vr = extractor.pca.explained_variance_ratio_
+        print "explained variance ratios for %d kept PCA components:" % vr.shape[0]
+        print vr
+        if extractor.n_drop_components:
+            print ".. but DROPPING variance in the leading %i components" % (
+                    extractor.n_drop_components,)
+    print "kmeans remaining inertia: %0.3fe6" % (extractor.inertia_ / 1e6)
+
+
+    if save_images:
+        extractor.tile_kernels(scale_each=True).save('kernels.png')
+        extractor.tile_patches(scale_each=True).save('patches.png')
+        extractor.tile_patches_unpca(scale_each=True).save('patches_unpca.png')
+
+    return extractor
+
 
 ################################################################################
 # Qualitative evaluation of the extracted filters
+def driver_train_kmeans(save_extractor='extractor.pkl'):
+    cifar10 = load_cifar10()
+    extractor = do_kmeans_training(cifar10, save_images=True)
 
-extractor.tile_kernels(scale_each=True).save('kernels.png')
-extractor.tile_patches(scale_each=True).save('patches.png')
-extractor.tile_patches_unpca(scale_each=True).save('patches_unpca.png')
+    # delete some big useless objects
+    del extractor.patches_
+    del extractor.patches_unpca_
+    if save_extractor:
+        cPickle.dump(extractor, open(save_extractor, 'wb'))
 
-del extractor.patches_
-del extractor.patches_unpca_
-cPickle.dump(extractor, open('extractor.pkl', 'wb'))
+def features_from_saved_extractor(save_extractor='extractor.pkl', n_examples_to_use=50000):
+    # This is in a function on its own because it can take a while (20 minutes).
+    extractor = cPickle.load(open(save_extractor))
 
+    # for each image position, extract features from the entire dataset
+
+    X_train_features = extractor.transform(X_train[:n_examples_to_use])
+    X_test_features = extractor.transform(X_test[:n_examples_to_use])
+
+    np.save('X_train_features.npy', X_train_features)
+    np.save('X_test_features.npy', X_test_features)
+    np.save('y_train_labels.npy', y_train[:n_examples_to_use])
+    np.save('y_test_labels.npy', y_test[:n_examples_to_use])
+
+from scikits.learn.preprocessing import Scaler
+from scikits.learn import svm
+from scikits.learn.linear_model import SGDClassifier
+def classify_features(n_examples_to_use=50000, alpha=.0001,n_iter=20):
+    classif = SGDClassifier(
+            loss='hinge',
+            penalty='l2',
+            alpha=alpha,
+            shuffle=True,
+            n_iter=n_iter,
+            n_jobs=1)
+
+    print classif
+
+    X_train = np.load('X_train_features.npy')[:n_examples_to_use]
+    X_test = np.load('X_test_features.npy')[:n_examples_to_use]
+    y_train = np.load('y_train_labels.npy')[:n_examples_to_use]
+    y_test = np.load('y_test_labels.npy')[:n_examples_to_use]
+
+    print 'loaded data of shape', X_train.shape, y_train.shape
+    print 'loaded data of shape', X_test.shape, y_test.shape
+    print "scaling features to centered, unit variance vectors"
+
+    scaler = Scaler().fit(X_train)
+    X_train = scaler.transform(X_train, copy=False)
+    X_test = scaler.transform(X_test,copy=False)
+
+    print 'training svm'
+    classif.fit(X_train.reshape((X_train.shape[0], -1)),y_train)
+
+
+    pred_train = classif.predict(X_train.reshape((X_train.shape[0],-1)))
+    pred_test = classif.predict(X_test.reshape((X_test.shape[0],-1)))
+
+    print 'train accuracy', (pred_train == y_train).mean()
+    print 'test accuracy', (pred_test == y_test).mean()
+
+
+if __name__ == '__main__':
+    # simle command-line base calling syntax:
+    # example test_features using little data: 
+    #   $ python <this file> classify_features  5000 .01 10
+    cmd = sys.argv[1]
+    args = [eval(arg) for arg in sys.argv[2:]]
+    sys.exit(globals()[cmd](*args))
 
