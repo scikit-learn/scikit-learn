@@ -511,8 +511,8 @@ def _shuffle(y, labels, rng):
     else:
         ind = np.arange(labels.size)
         for label in np.unique(labels):
-           this_mask = (labels == label)
-           ind[this_mask] = rng.permutation(ind[this_mask])
+            this_mask = (labels == label)
+            ind[this_mask] = rng.permutation(ind[this_mask])
     return y[ind]
 
 
@@ -587,3 +587,6 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     permutation_scores = np.array(permutation_scores)
     pvalue = np.mean(permutation_scores > score)
     return score, permutation_scores, pvalue
+
+
+permutation_test_score.__test__ = False # to avoid a pb with nosetests
