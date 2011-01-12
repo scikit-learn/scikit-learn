@@ -534,6 +534,26 @@ def r2_score(y_true, y_pred):
                 ((y_true - y_true.mean())**2).sum())
 
 
+def zero_one_score(y_true, y_pred):
+    """Zero-One classification score
+
+    Positive integer (number of good classifications).
+    The best performance is 1.
+
+    Return the percentage of good predictions.
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+
+    Returns
+    -------
+    score : integer
+    """
+    return np.mean(y_pred == y_true)
+
 
 ###############################################################################
 # Loss functions
