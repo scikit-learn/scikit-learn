@@ -12,7 +12,7 @@ from ..metrics import zero_one_score
 from ..cross_val import StratifiedKFold
 from ..svm import SVC
 from .. import cross_val
-from ..cross_val import permutation_score
+from ..cross_val import permutation_test_score
 
 
 class MockClassifier(BaseEstimator):
@@ -55,18 +55,18 @@ def test_cross_val_score():
         np.testing.assert_array_equal(score,  clf.score(X, y))
 
 
-def test_permutation_score():
+def test_permutation_test_score():
     iris = load_iris()
     X = iris.data
     y = iris.target
     svm = SVC(kernel='linear')
     cv = StratifiedKFold(y, 2)
 
-    score, scores, pvalue = permutation_score(svm, X, y, zero_one_score, cv)
+    score, scores, pvalue = permutation_test_score(svm, X, y, zero_one_score, cv)
     assert_true(score > 0.9)
     np.testing.assert_equal(pvalue,  0.0)
 
-    score_label, _, pvalue_label = permutation_score(svm, X, y, zero_one_score,
+    score_label, _, pvalue_label = permutation_test_score(svm, X, y, zero_one_score,
                                                     cv, labels=np.ones(y.size),
                                                     rng=0)
     assert_true(score_label == score)
@@ -75,6 +75,6 @@ def test_permutation_score():
     # set random y
     y = np.mod(np.arange(len(y)), 3)
 
-    score, scores, pvalue = permutation_score(svm, X, y, zero_one_score, cv)
+    score, scores, pvalue = permutation_test_score(svm, X, y, zero_one_score, cv)
     assert_true(score < 0.5)
     assert_true(pvalue > 0.4)
