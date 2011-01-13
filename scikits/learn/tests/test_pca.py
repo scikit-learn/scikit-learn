@@ -84,14 +84,14 @@ def test_pca_inverse():
 
     n, p = 50, 3
     X = randn(n,p) # spherical data
-    X[:,1] *= .0001 # make middle component relatively small
+    X[:,1] *= .00001 # make middle component relatively small
     X += [5,4,3] # make a large mean
 
     pca = PCA(n_components=2)
     pca.fit(X)
     Y = pca.transform(X)
     Xlike = pca.inverse_transform(Y)
-    assert np.max(abs(X-Xlike)) < .001
+    assert_almost_equal(X, Xlike, decimal=3)
 
 
 def test_randomized_pca_check_projection():
