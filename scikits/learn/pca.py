@@ -188,7 +188,7 @@ class PCA(BaseEstimator):
             self.components_coefs_ = coefs = S / np.sqrt(n) 
         else:
             self.components_ = V.T
-            self.components_coefs = np.ones_like(S, dtype=V.dtype)
+            self.components_coefs_ = np.ones_like(S)
 
         if self.n_components == 'mle':
             self.n_components = _infer_dimension_(self.explained_variance_,
