@@ -185,7 +185,7 @@ class PCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
-            self.components_coefs_ = coefs = S / np.sqrt(n) 
+            self.components_coefs_ = S / np.sqrt(n) 
         else:
             self.components_ = V.T
             self.components_coefs_ = np.ones_like(S)
@@ -376,8 +376,10 @@ class RandomizedPCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
+            self.components_coefs_ = S / np.sqrt(n) 
         else:
             self.components_ = V.T
+            self.components_coefs_ = np.ones_like(S)
 
         return self
 
