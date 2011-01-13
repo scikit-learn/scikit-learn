@@ -11,34 +11,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator
-
-def all_pairs_l2_distance_squared(A, B, B_norm_squared=None):
-    """
-    Returns the squared l2 norms of the differences between rows of A and B.
-
-    Parameters
-    ----------
-    A: array, [n_rows_A, n_cols]
-
-    B: array, [n_rows_B, n_cols]
-
-    B_norm_squared: array [n_rows_B], or None
-        pre-computed (B**2).sum(axis=1)
-
-    Returns
-    -------
-
-    array [n_rows_A, n_rows_B]
-        entry [i,j] is ((A[i] - B[i])**2).sum(axis=1)
-
-    """
-    if B_norm_squared is None:
-        B_norm_squared = (B**2).sum(axis=1)
-    if A is B:
-        A_norm_squared = B_norm_squared
-    else:
-        A_norm_squared = (A**2).sum(axis=1)
-    return (B_norm_squared + A_norm_squared.reshape((A.shape[0],1)) - 2*np.dot(A, B.T))
+from ..metrics.pairwise import euclidian_distances
 
 ################################################################################
 # Initialisation heuristic
@@ -80,7 +53,7 @@ def k_init(X, k, n_samples_max=500, rng=None):
         X = X[rng.randint(n_samples, size=n_samples_max)]
         n_samples = n_samples_max
 
-    distances = all_pairs_l2_distance_squared(X, X)
+    distances = euclidian_distances(X, X, squared=True)
 
     'choose the 1st seed randomly, and store D(x)^2 in D[]'
     first_idx =rng.randint(n_samples)
@@ -106,7 +79,7 @@ def k_init(X, k, n_samples_max=500, rng=None):
 ################################################################################
 # K-means estimation by EM (expectation maximisation)
 
-def k_means(X, k,init='k-means++', n_init=10, max_iter=300, verbose=0, 
+def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0, 
                     delta=1e-4, rng=None, copy_x=True):
     """ K-means clustering algorithm.
 
@@ -153,10 +126,11 @@ def k_means(X, k,init='k-means++', n_init=10, max_iter=300, verbose=0,
         The generator used to initialize the centers. Defaults to numpy.random.
 
     copy_x: boolean, optional
-        When pre-computing distances it is more numerically accurate to center the data first.
-        If copy_x is True, then the original data is not modified.  If False, the original data
-        is modified, and put back before the function returns, but small numerical differences
-        may be introduced by subtracting and then adding the data mean.
+        When pre-computing distances it is more numerically accurate to center
+        the data first.  If copy_x is True, then the original data is not
+        modified.  If False, the original data is modified, and put back before
+        the function returns, but small numerical differences may be introduced
+        by subtracting and then adding the data mean.
 
     Returns
     -------
@@ -287,7 +261,7 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
     k = centers.shape[0]
 
     if precompute_distances:
-        distances = all_pairs_l2_distance_squared(centers, x, x_squared_norms)
+        distances = euclidian_distances(centers, x, x_squared_norms, squared=True)
     z = -np.ones(n_samples).astype(np.int)
     mindist = np.infty * np.ones(n_samples)
     for q in range(k):

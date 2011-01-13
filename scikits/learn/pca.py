@@ -185,10 +185,10 @@ class PCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
-            self.components_coefs_ = coefs = S / np.sqrt(n) 
+            self.components_coefs_ = S / np.sqrt(n) 
         else:
             self.components_ = V.T
-            self.components_coefs = np.ones_like(S, dtype=V.dtype)
+            self.components_coefs_ = np.ones_like(S)
 
         if self.n_components == 'mle':
             self.n_components = _infer_dimension_(self.explained_variance_,
@@ -210,6 +210,11 @@ class PCA(BaseEstimator):
         Xr = np.dot(Xr, self.components_)
         return Xr
 
+    def inverse_transform(self, Y):
+        """Return an input X whose transform would be Y"""
+        r = np.dot(Y * self.components_coefs_, self.components_.T)
+        r += self.mean_
+        return r
 
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that add a probabilistic evaluation
@@ -371,8 +376,10 @@ class RandomizedPCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
+            self.components_coefs_ = S / np.sqrt(n) 
         else:
             self.components_ = V.T
+            self.components_coefs_ = np.ones_like(S)
 
         return self
 

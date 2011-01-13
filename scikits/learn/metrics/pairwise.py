@@ -9,7 +9,9 @@ sets of points.
 import numpy as np
 
 
-def euclidian_distances(X, Y):
+def euclidian_distances(X, Y, 
+        Y_norm_squared=None, 
+        squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -19,6 +21,12 @@ def euclidian_distances(X, Y):
     X: array of shape (n_samples_1, n_features)
 
     Y: array of shape (n_samples_2, n_features)
+
+    Y_norm_squared: array [n_samples_2], optional
+        pre-computed (Y**2).sum(axis=1)
+
+    squared: boolean, optional
+        This routine will return squared Euclidean distances instead.
 
     Returns
     -------
@@ -37,8 +45,9 @@ def euclidian_distances(X, Y):
     array([[ 1.        ],
            [ 1.41421356]])
     """
-    # shortcut in the common case euclidean_distances(X, X)
-    compute_Y = X is not Y
+    # should not need X_norm_squared because if you could precompute that as
+    # well as Y, then you should just pre-compute the output and not even
+    # call this function.
 
     X = np.asanyarray(X)
     Y = np.asanyarray(Y)
@@ -47,12 +56,24 @@ def euclidian_distances(X, Y):
         raise ValueError("Incompatible dimension for X and Y matrices")
 
     XX = np.sum(X * X, axis=1)[:, np.newaxis]
-    if compute_Y:
+    if X is Y: # shortcut in the common case euclidean_distances(X, X)
+        YY = XX.T
+    elif Y_norm_squared is None:
         YY = np.sum(Y * Y, axis=1)[np.newaxis, :]
     else:
-        YY = XX.T
+        YY = np.asanyarray(Y_norm_squared)
+        if YY.shape != (Y.shape[0],):
+            raise ValueError("Incompatible dimension for Y and Y_norm_squared")
+        YY = YY[np.newaxis,:]
 
+    # TODO:
+    # a faster cython implementation would do the dot product first,
+    # and then add XX, add YY, and do the clipping of negative values in
+    # a single pass over the output matrix.
     distances = XX + YY # Using broadcasting
     distances -= 2 * np.dot(X, Y.T)
     distances = np.maximum(distances, 0)
-    return np.sqrt(distances)
+    if squared:
+        return distances
+    else:
+        return np.sqrt(distances)
