@@ -364,23 +364,27 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         return X.reshape((n_samples, -1))
 
     def local_contrast_normalization(self, patches):
-        if self.center_mode == 'all': # center all colour channels together
+        if self.center_mode == 'all':
+            # center all colour channels together
             patches = patches.reshape((patches.shape[0], -1))
             patches -= patches.mean(axis=1)[:,None]
-        elif self.center_mode == 'channel': #center each colour channel individually
+        elif self.center_mode == 'channel': 
+            #center each colour channel individually
             patches -= patches.mean(axis=2).mean(axis=1).reshape((n_patches, 1, 1, 3))
             patches = patches.reshape((n_patches, -1))
         elif self.center_mode == 'none':
+            # do not center the pixels
             patches = patches.reshape((n_patches, -1))
         else:
             assert False
 
-        patches_var = np.sqrt((patches**2).mean(axis=1))
+        patches_std = np.sqrt((patches**2).mean(axis=1))
         if self.lcn_cap_divisor:
-            min_divisor = (patches_var.min() + patches_var.mean()) / 2
+            min_divisor = (2*patches_std.min() + patches_std.mean()) / 3
         else:
             min_divisor = 0
-        patches /= np.maximum(min_divisor, patches_var).reshape((patches.shape[0],1))
+        patches /= np.maximum(min_divisor, patches_std).reshape((patches.shape[0],1))
+        #print 'lcn returning as type', patches.dtype
         return patches
 
     def fit(self, X):
@@ -398,6 +402,7 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
             X, self.image_size, patch_size, offsets=o) for o in offsets]
 
         # TODO: compute pca and kmeans taking other offsets into account to
+        #       -- @Olivier, What is this supposed to mean?
         # step 2: whiten the patch space
         patches = patches_by_offset[0]
         n_patches = patches.shape[0]
@@ -419,11 +424,32 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
             self.pca = PCA(whiten=True, n_components=self.n_components)
             self.pca.fit(patches)
             patches_pca = self.pca.transform(patches)
+            #print 'patches_pca dtype', patches_pca.dtype
             if self.n_drop_components:
                 assert patches.shape[1] == self.pca.components_.shape[0]
                 self.pca.components_[:,:self.n_drop_components] = 0
                 patches_pca[:,:self.n_drop_components] = 0
-            kmeans.fit(patches_pca)
+
+            # fit leading dimensions first,
+            # as a heuristic for better kmeans filtering
+            # (thanks Andrej!)
+            # sure we're in a whitened space, but these are still the
+            # most visibly important dimensions
+            n_prefit=15
+            nD = self.n_drop_components
+            nC = self.n_components
+            print 'kmeans pre-fitting...'
+            kmeans.fit(patches_pca[:, nD:nD+n_prefit])
+            print 'finished pre-fit, fitting full...'
+            #print kmeans.cluster_centers_.dtype
+
+            # fit all dimensions
+            kmeans.init = np.zeros(
+                    (self.n_centers, nC),
+                    dtype=kmeans.cluster_centers_.dtype)
+            kmeans.init[:, nD:nD+n_prefit] = kmeans.cluster_centers_
+            kmeans.fit(patches_pca, n_init=1)
+
             self.inertia_ = kmeans.inertia_
 
             # step 4: project back the centers in original, non-whitened space
@@ -449,11 +475,13 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
         if nXchannels != 3:
             raise NotImplementedError('should be checking channels throughout')
         out_features = np.zeros((X.shape[0], 2, 2, self.kernels_.shape[0]), dtype=rtype)
-        for r in xrange(nXrows-self.patch_size+1):
+        R = nXrows-self.patch_size+1
+        C = nXcols-self.patch_size+1
+        for r in xrange(R):
             if self.verbose:
                 print '%s::transform() row %i/%i'%(
                         self.__class__.__name__, r+1, nXrows-self.patch_size+1)
-            for c in xrange(nXcols-self.patch_size+1):
+            for c in xrange(C):
                 patches = X[:,r:r+self.patch_size,c:c+self.patch_size,:]
                 n_patches = patches.shape[0]
                 patches = self.local_contrast_normalization(patches)
@@ -461,9 +489,19 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
                 if self.whiten:
                     patches = self.pca.transform(patches)
 
-                distances = np.sqrt(all_pairs_l2_distance_squared(
-                        patches.reshape(patches.shape[0],-1),
-                        self.kmeans_.cluster_centers_))
+                #print 'starting dot', patches.dtype,
+                #print self.kmeans_.cluster_centers_.dtype
+                #
+                # the dot() here only takes about half the 
+                # time of the loop body.
+                #
+
+                distances = np.sqrt(
+                        all_pairs_l2_distance_squared(
+                            patches.reshape(patches.shape[0],-1),
+                            self.kmeans_.cluster_centers_,
+                            ))
+                #print 'done'
 
                 if 1: #triangle features
                     features = np.maximum(0, distances.mean(axis=1)[:,None] - distances)
@@ -473,7 +511,10 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
                     #TODO: include the cluster size as a component prior
                     features = np.exp(-0.5*distances)
 
-                out_features[:,r//16,c//16,:] += features
+                # features are pooled over image quadrants
+                out_r = 1 if r>(R/2) else 0
+                out_c = 1 if c>(C/2) else 0
+                out_features[:,out_r,out_c,:] += features
         return out_features
 
     def tile_kernels(self, scale_each=False):

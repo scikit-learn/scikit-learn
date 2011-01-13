@@ -42,7 +42,7 @@ from scikits.learn.cluster.k_means_ import k_init
 from scikits.learn.linear_model import SGDClassifier
 
 
-def load_cifar10():
+def load_cifar10(keep_color_shift=True):
     # Download the data, if not already on disk
     url = "http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
     archive_name = url.rsplit('/', 1)[1]
@@ -91,23 +91,30 @@ def load_cifar10():
     X_train = X_train.reshape((X_train.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
     X_test = X_test.reshape((X_test.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
 
-    ## convert to graylevel images for now
-    #X_train = X_train.mean(axis=-1)
-    #X_test = X_test.mean(axis=-1)
-    #pl.imshow(X_train[0], interpolation='nearest'); pl.show()
+    if not keep_color_shift:
+        # remove average rgb value from each image
+        X_train -= X_train.mean(axis=2).mean(axis=1).reshape((X_train.shape[0], 1, 1, 3))
+        X_test -= X_test.mean(axis=2).mean(axis=1).reshape((X_test.shape[0], 1, 1, 3))
+    print 'loaded images as type', X_train.dtype
 
-    # scale dataset
-    print "scaling images to centered, unit variance vectors"
-    scaler = Scaler().fit(X_train)
-    X_train = scaler.transform(X_train,copy=False)
-    X_test = scaler.transform(X_test,copy=False)
+    if 0:
+        # not scaling dataset because I'm afraid it might mess up
+        # the local contrast normalization
+        print "scaling images to centered, unit variance vectors"
+        scaler = Scaler().fit(X_train)
+        X_train = scaler.transform(X_train,copy=False)
+        X_test = scaler.transform(X_test,copy=False)
 
     return X_train, y_train, X_test, y_test
 
-def train_convolutional_kmeans(cifar10, n_centers=400, 
-        n_components=30, n_drop_components=4,
-        save_images=True, n_images_to_train_from=10000, n_EM_steps=30,
-        center_mode='channel'):
+def train_convolutional_kmeans(cifar10, 
+        n_centers, 
+        n_components, 
+        n_drop_components=0,
+        save_images=True,
+        n_images_to_train_from=10000,
+        n_EM_steps=30,
+        center_mode='all'):
     X_train, y_train, X_test, y_test = cifar10
 
     extractor = ConvolutionalKMeansEncoder(
@@ -167,11 +174,16 @@ def debug_end_to_end():
     X_test_features = extractor.transform(X_test[:n_examples_to_use])
 
 #
-def train_kmeans(save_extractor='extractor.pkl', n_centers=400, n_components=30,
-        n_drop_components=4, n_EM_steps=30, center_mode='channel'):
+def train_kmeans(save_extractor='extractor.pkl', 
+        n_centers=400,
+        n_components=80,
+        n_drop_components=2,
+        n_EM_steps=80,
+        center_mode='all',
+        keep_color_shift=False):
     print 'Training convolutional k-means'
     # Qualitative evaluation of the extracted filters
-    cifar10 = load_cifar10()
+    cifar10 = load_cifar10(keep_color_shift)
     extractor = train_convolutional_kmeans(cifar10, n_centers=n_centers, 
             n_components=n_components, n_drop_components=n_drop_components, 
             save_images=True, n_EM_steps=n_EM_steps, center_mode=center_mode)
@@ -201,7 +213,7 @@ def features_from_saved_extractor(save_extractor='extractor.pkl', n_examples_to_
     np.save('%s_y_test_labels.npy'%save_prefix, y_test[:n_examples_to_use])
 
 def classify_features(n_examples_to_use=50000, alpha=.0001,n_iter=20,
-        save_prefix="kmeans"):
+        save_prefix="kmeans", scale_input=True):
     classif = SGDClassifier(
             loss='hinge',
             penalty='l2',
@@ -221,9 +233,10 @@ def classify_features(n_examples_to_use=50000, alpha=.0001,n_iter=20,
     print 'loaded data of shape', X_test.shape, y_test.shape
     print "scaling features to centered, unit variance vectors"
 
-    scaler = Scaler().fit(X_train)
-    X_train = scaler.transform(X_train, copy=False)
-    X_test = scaler.transform(X_test,copy=False)
+    if scale_input:
+        scaler = Scaler().fit(X_train)
+        X_train = scaler.transform(X_train, copy=False)
+        X_test = scaler.transform(X_test,copy=False)
 
     print 'training svm'
     classif.fit(X_train.reshape((X_train.shape[0], -1)),y_train)
