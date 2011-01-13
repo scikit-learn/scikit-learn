@@ -485,4 +485,7 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
     def tile_patches_unpca(self, N=256, scale_each=False):
         shp = self.patches_unpca_[:N].shape[0], self.patch_size, self.patch_size, 3
         return tile_images(self.patches_unpca_[:N].reshape(shp),scale_each=scale_each)
-
+    def tile_pca_components(self, scale_each=False):
+        patches = self.pca.components_.T
+        shp = patches.shape[0], self.patch_size, self.patch_size, 3
+        return tile_images(patches.reshape(shp),scale_each=scale_each)

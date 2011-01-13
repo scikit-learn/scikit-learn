@@ -104,8 +104,10 @@ def load_cifar10():
 
     return X_train, y_train, X_test, y_test
 
-def train_convolutional_kmeans(cifar10, n_centers=400, n_components=30, n_drop_components=4,
-        save_images=True, n_images_to_train_from=10000, n_EM_steps=30):
+def train_convolutional_kmeans(cifar10, n_centers=400, 
+        n_components=30, n_drop_components=4,
+        save_images=True, n_images_to_train_from=10000, n_EM_steps=30,
+        center_mode='channel'):
     X_train, y_train, X_test, y_test = cifar10
 
     extractor = ConvolutionalKMeansEncoder(
@@ -118,7 +120,9 @@ def train_convolutional_kmeans(cifar10, n_centers=400, n_components=30, n_drop_c
         n_init=1,   # take best fit of this many trials
         #kmeans_init_algo=lambda X,k,rng:k_init(X,k,rng=rng, n_samples_max=2000),
         kmeans_init_algo='random', #I'm guessing smart init in high dimensions irrelevant
-        verbose=1)
+        verbose=1,
+        center_mode=center_mode,
+        )
 
 
     print "training convolutional whitened kmeans feature extractor..."
@@ -141,6 +145,7 @@ def train_convolutional_kmeans(cifar10, n_centers=400, n_components=30, n_drop_c
         extractor.tile_kernels(scale_each=True).save('kernels.png')
         extractor.tile_patches(scale_each=True).save('patches.png')
         extractor.tile_patches_unpca(scale_each=True).save('patches_unpca.png')
+        extractor.tile_pca_components(scale_each=True).save('pca.png')
 
     return extractor
 
@@ -163,13 +168,13 @@ def debug_end_to_end():
 
 #
 def train_kmeans(save_extractor='extractor.pkl', n_centers=400, n_components=30,
-        n_drop_components=4, n_EM_steps=30):
+        n_drop_components=4, n_EM_steps=30, center_mode='channel'):
     print 'Training convolutional k-means'
     # Qualitative evaluation of the extracted filters
     cifar10 = load_cifar10()
     extractor = train_convolutional_kmeans(cifar10, n_centers=n_centers, 
             n_components=n_components, n_drop_components=n_drop_components, 
-            save_images=True, n_EM_steps=n_EM_steps)
+            save_images=True, n_EM_steps=n_EM_steps, center_mode=center_mode)
 
     # delete some big useless objects
     del extractor.patches_
