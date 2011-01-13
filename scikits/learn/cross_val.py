@@ -560,7 +560,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
 
     Notes
     -----
-    A reference:
+    In corresponds to Test 1 in :
     Ojala and Garriga. Permutation Tests for Studying Classifier Performance.
     The Journal of Machine Learning Research (2010) vol. 11
     """
@@ -585,7 +585,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
                                             cv, score_func)
                 for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
-    pvalue = np.mean(permutation_scores > score)
+    pvalue = (np.sum(permutation_scores > score) + 1.0) / (n_permutations + 1)
     return score, permutation_scores, pvalue
 
 
