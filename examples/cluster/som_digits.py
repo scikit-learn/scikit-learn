@@ -1,8 +1,7 @@
 """
-===========================================================
-A demo of Self-Organising Map and KMeans on the handwritten 
-digits data
-===========================================================
+=======================================================================
+A demo of Self-Organising Map and KMeans on the handwritten digits data
+=======================================================================
 """
 from __future__ import division
 print __doc__
@@ -11,11 +10,10 @@ from time import time
 import numpy as np
 
 from scikits.learn.cluster import KMeans
-from scikits.learn.cluster import SOM
+from scikits.learn.cluster import SelfOrganizingMap
 from scikits.learn.cluster import calinski_index
 
 from scikits.learn.datasets import load_digits
-from scikits.learn.pca import PCA
 from scikits.learn.preprocessing import scale
 
 def display(labels,digits,nbclusters):
@@ -43,7 +41,8 @@ print
 print "Self-Organizing Map "
 t0 = time()
 grid_width = 4
-som = SOM(w=grid_width,n_init=n_samples*5,learning_rate=1)
+som = SelfOrganizingMap(size=grid_width,n_iterations=n_samples*5,
+                        learning_rate=1)
 som.fit(data)
 print "done in %0.3fs" % (time() - t0)
 print
@@ -52,8 +51,6 @@ display(som.labels_,digits,grid_width**2)
 C = calinski_index(data,som.labels_,som.neurons_)
 print 'calinski index %0.2f | %0.2f%%' % (C,100*(C/(1+C)))
 print
-
-print '*'*80
 
 print "KMeans "
 t0 = time()
@@ -66,11 +63,6 @@ print
 display(km.labels_,digits,n_digits)
 C = calinski_index(data,km.labels_,km.cluster_centers_)
 print 'calinski index %0.2f | %0.2f%%' % (C,100*(C/(1+C)))
-
-
-
-
-
 
 
 
