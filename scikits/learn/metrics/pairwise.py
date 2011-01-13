@@ -48,9 +48,11 @@ def euclidian_distances(X, Y,
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
-
-    X = np.asanyarray(X)
-    Y = np.asanyarray(Y)
+    if X is Y:
+        X = Y = np.asanyarray(X)
+    else:
+        X = np.asanyarray(X)
+        Y = np.asanyarray(Y)
 
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices")
