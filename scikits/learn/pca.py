@@ -210,6 +210,11 @@ class PCA(BaseEstimator):
         Xr = np.dot(Xr, self.components_)
         return Xr
 
+    def inverse_transform(self, Y):
+        """Return an input X whose transform would be Y"""
+        r = np.dot(Y * self.components_coefs_, self.components_.T)
+        r += self.mean_
+        return r
 
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that add a probabilistic evaluation

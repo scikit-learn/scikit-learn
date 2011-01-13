@@ -79,6 +79,20 @@ def test_pca_check_projection():
 
     np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
 
+def test_pca_inverse():
+    """Test that the projection of data can be inverted"""
+
+    n, p = 50, 3
+    X = randn(n,p) # spherical data
+    X[:,1] *= .0001 # make middle component relatively small
+    X += [5,4,3] # make a large mean
+
+    pca = PCA(n_components=2)
+    pca.fit(X)
+    Y = pca.transform(X)
+    Xlike = pca.inverse_transform(Y)
+    assert np.max(abs(X-Xlike)) < .001
+
 
 def test_randomized_pca_check_projection():
     """Test that the projection by RandomizedPCA on dense data is correct"""
