@@ -54,7 +54,7 @@ class LeaveOneOut(object):
     def __iter__(self):
         n = self.n
         for i in xrange(n):
-            test_index  = np.zeros(n, dtype=np.bool)
+            test_index = np.zeros(n, dtype=np.bool)
             test_index[i] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
@@ -185,8 +185,8 @@ class KFold(object):
         j = ceil(n / k)
 
         for i in xrange(k):
-            test_index  = np.zeros(n, dtype=np.bool)
-            if i<k-1:
+            test_index = np.zeros(n, dtype=np.bool)
+            if i < k-1:
                 test_index[i*j:(i+1)*j] = True
             else:
                 test_index[i*j:] = True
@@ -215,8 +215,6 @@ class StratifiedKFold(object):
     the percentage of samples for each class.
     """
 
-    # XXX: Should maybe have an argument to raise when
-    # folds are not balanced
     def __init__(self, y, k):
         """K-Folds cross validation iterator
 
@@ -263,27 +261,12 @@ class StratifiedKFold(object):
     def __iter__(self):
         y = self.y.copy()
         k = self.k
-        n = y.shape[0]
-
-        classes = unique(y)
-
-        idx_c = dict()
-        j_c = dict()
-        n_c = dict()
-        for c in classes:
-            idx_c[c] = np.where(y == c)[0]
-            n_c[c] = len(idx_c[c])
-            j_c[c] = int(ceil(n_c[c] / k))
+        n = y.size
+        idx = np.argsort(y)
 
         for i in xrange(k):
-            test_index  = np.zeros(n, dtype=np.bool)
-            for c in classes:
-                if i<k-1:
-                    test_index_c = range(i*j_c[c], (i+1)*j_c[c])
-                else:
-                    test_index_c = range(i*j_c[c], n_c[c])
-                test_index[idx_c[c][test_index_c]] = True
-
+            test_index = np.zeros(n, dtype=np.bool)
+            test_index[idx[i::k]] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
 
@@ -300,6 +283,7 @@ class StratifiedKFold(object):
 
 
 ##############################################################################
+
 class LeaveOneLabelOut(object):
     """Leave-One-Label_Out cross-validation iterator
 
@@ -349,7 +333,7 @@ class LeaveOneLabelOut(object):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
         for i in unique(labels):
-            test_index  = np.zeros(len(labels), dtype=np.bool)
+            test_index = np.zeros(len(labels), dtype=np.bool)
             test_index[labels==i] = True
             train_index = np.logical_not(test_index)
             yield train_index, test_index
@@ -477,7 +461,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     cv: cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
         validation is used or 3-fold stratified cross-validation
-        when y is supplied.
+        when y is supplied and estimator is a classifier.
     iid: boolean, optional
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
@@ -498,10 +482,9 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
-                "does not." % estimator
-                )
+                "does not." % estimator)
     # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickable.
+    # independent, and that it is pickle-able.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
                                                         train, test, iid)
@@ -509,3 +492,101 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     return np.array(scores)
 
 
+def _permutation_test_score(estimator, X, y, cv, score_func):
+    """Auxilary function for permutation_test_score
+    """
+    y_test = list()
+    y_pred = list()
+    for train, test in cv:
+        y_test.append(y[test])
+        y_pred.append(estimator.fit(X[train], y[train]).predict(X[test]))
+    return score_func(np.ravel(y_test), np.ravel(y_pred))
+
+
+def _shuffle(y, labels, rng):
+    """Return a shuffled copy of y eventually shuffle among same labels.
+    """
+    if labels is None:
+        ind = rng.permutation(y.size)
+    else:
+        ind = np.arange(labels.size)
+        for label in np.unique(labels):
+            this_mask = (labels == label)
+            ind[this_mask] = rng.permutation(ind[this_mask])
+    return y[ind]
+
+
+def permutation_test_score(estimator, X, y, score_func, cv=None,
+                      n_permutations=100, n_jobs=1, labels=None,
+                      rng=0, verbose=0):
+    """Evaluate the significance of a cross-validated score with permutations
+
+    Parameters
+    ----------
+    estimator: estimator object implementing 'fit'
+        The object to use to fit the data
+    X: array-like of shape at least 2D
+        The data to fit.
+    y: array-like, optional
+        The target variable to try to predict in the case of
+        supervised learning.
+    score_func: callable, optional
+        callable taking as arguments the test targets (y_test) and
+        the predicted targets (y_pred). Returns a float.
+    cv: cross-validation generator, optional
+        A cross-validation generator. If None, a 3-fold cross
+        validation is used or 3-fold stratified cross-validation
+        when the estimator is a classifier.
+    n_jobs: integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+    labels: array-like of shape [n_samples] (optional)
+        Labels constrain the permutation among groups of samples with
+        a same label.
+    rng: RandomState or an int seed (0 by default)
+        A random number generator instance to define the state of the
+        random permutations generator.
+    verbose: integer, optional
+        The verbosity level
+
+    Returns
+    -------
+    score: float
+        The true score without permuting targets.
+    permutation_scores : array, shape = [n_permutations]
+        The scores obtained for each permutations.
+    pvalue: float
+        The p-value.
+
+    Notes
+    -----
+    A reference:
+    Ojala and Garriga. Permutation Tests for Studying Classifier Performance.
+    The Journal of Machine Learning Research (2010) vol. 11
+    """
+    n_samples = len(X)
+    if cv is None:
+        if is_classifier(estimator):
+            cv = StratifiedKFold(y, k=3)
+        else:
+            cv = KFold(n_samples, k=3)
+
+    if rng is None:
+        rng = np.random.RandomState()
+    elif isinstance(rng, int):
+        rng = np.random.RandomState(rng)
+
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickle-able.
+    score = _permutation_test_score(clone(estimator), X, y, cv, score_func)
+    permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
+                delayed(_permutation_test_score)(clone(estimator), X,
+                                            _shuffle(y, labels, rng),
+                                            cv, score_func)
+                for _ in range(n_permutations))
+    permutation_scores = np.array(permutation_scores)
+    pvalue = np.mean(permutation_scores > score)
+    return score, permutation_scores, pvalue
+
+
+permutation_test_score.__test__ = False # to avoid a pb with nosetests

@@ -10,9 +10,5 @@ User guide: contents
 
 .. include:: bigger_toc_css.rst
 
-This is the html version of user guide. A PDF version for printing can
-be found `here
-<http://sourceforge.net/projects/scikit-learn/files/user_guide.pdf/download>`_.
-
 .. include:: contents.rst
 

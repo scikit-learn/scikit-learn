@@ -5,8 +5,6 @@ from ...base import ClassifierMixin
 from .base import SparseBaseLibLinear
 from .. import _liblinear
 
-from scipy import sparse
-
 class LinearSVC(SparseBaseLibLinear, ClassifierMixin):
     """
     Linear Support Vector Classification, Sparse Version

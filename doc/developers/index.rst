@@ -121,6 +121,25 @@ Developers web site
 More information can be found at the `developer's wiki
 <https://github.com/scikit-learn/scikit-learn/wiki>`_.
 
+
+Other ways to contribute
+========================
+
+Code is not the only way to contribute to this project. For instance,
+documentation is also a very important part of the project and ofter
+doesn't get as much attention as it deserves. If you find a typo in
+the documentation, or have made improvements, don't hesitate to send
+an email to the mailing list or a github pull request. Full
+documentation can be found under directory doc/.
+
+It also helps us if you spread the word: reference it from your blog,
+articles, link to us from your website, or simply by saying "I use
+it":
+
+.. raw:: html
+   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+
+
 .. _coding-guidelines:
 
 Coding guidelines

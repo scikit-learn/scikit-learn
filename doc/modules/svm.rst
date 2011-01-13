@@ -86,13 +86,13 @@ SVMs perform classification as a function of some subset of the
 training data, called the support vectors. These vectors can be
 accessed in member `support_`:
 
-    >>> clf.support_
-    array([0, 1], dtype=int32)
+    >>> clf.support_ #doctest: +ELLIPSIS
+    array([0, 1]...)
 
 Member `n_support_` holds the number of support vectors for each class:
 
-    >>> clf.n_support_
-    array([1, 1], dtype=int32)
+    >>> clf.n_support_ #doctest: +ELLIPSIS
+    array([1, 1]...)
 
 
 .. topic:: Examples:
@@ -154,7 +154,7 @@ will only take as input an array X, as there are no class labels.
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_oneclass.py`
-
+ * :ref:`example_applications_plot_species_distribution_modeling.py`
 
 .. currentmodule:: scikits.learn.svm.sparse
 
