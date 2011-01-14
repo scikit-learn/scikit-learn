@@ -6,6 +6,7 @@ Computes coordinates based on the similarities given as parameters
 
 __all__ = ['HessianMap']
 
+import math
 import numpy as np
 from scipy import linalg
 
@@ -42,8 +43,8 @@ def hessian_map(samples, n_coords, **kwargs):
     for i in range(len(graph.rows)):
         neighs = graph.rows[i]
         neighborhood = samples[neighs] - np.mean(samples[neighs], axis=0)
-        u, s, vh = linalg.svd(neighborhood.T, full_matrices=False)
-        tangent = vh.T[:, :n_coords]
+        U, s, Vh = linalg.svd(neighborhood.T, full_matrices=False)
+        tangent = Vh.T[:, :n_coords]
 
         Yi = np.zeros((len(tangent), dp))
         ct = 0
@@ -51,7 +52,7 @@ def hessian_map(samples, n_coords, **kwargs):
             startp = tangent[:, j]
             for k in range(j, n_coords):
                 Yi[:, ct + k - j] = startp * tangent[:, k]
-            ct = ct + n_coords - j
+            ct += n_coords - j
 
         Yi = np.hstack((np.ones((len(neighs), 1)), tangent, Yi))
 
@@ -70,7 +71,7 @@ def hessian_map(samples, n_coords, **kwargs):
 
     index = index[too_small:too_small + n_coords]
 
-    return np.sqrt(len(samples)) * v[:, index]
+    return math.sqrt(len(samples)) * v[:, index]
 
 
 class HessianMap(BaseEmbedding):
