@@ -17,11 +17,14 @@ samples = np.array((0., 0., 0.,
   0., .5, 0.,
   .5, 0., 0.,
   1., 1., 0.5,
-  )).reshape((-1,3))
+  )).reshape((-1, 3))
+
 
 def close(neighbor_graph_orig, neighbor_graph_estimated, value):
-    for (orig, estimated) in zip(neighbor_graph_orig, neighbor_graph_estimated):
+    for (orig, estimated) in zip(neighbor_graph_orig,
+        neighbor_graph_estimated):
         assert(len(set(orig).intersection(estimated)) >= value)
+
 
 class TestLaplacianEigenmap(TestCase):
     def test_fit(self):
@@ -35,6 +38,7 @@ class TestLaplacianEigenmap(TestCase):
         neighbors_embedding =\
             BallTree(laplacian.embedding_).query(laplacian.embedding_, k=4)[1]
         close(neighbors_orig, neighbors_embedding, 2)
+
 
 class TestDiffusionMap(TestCase):
     def test_fit(self):

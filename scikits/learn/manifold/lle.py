@@ -23,6 +23,7 @@ except:
     from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
     pyamg_loaded = False
 
+
 class LLE(BaseEmbedding):
     """
     LLE embedding object
@@ -54,7 +55,7 @@ class LLE(BaseEmbedding):
     for an example.
 
     .. [1] Sam T. Roweis  and Lawrence K. Saul,
-           "Nonlinear Dimensionality Reduction by Locally Linear BaseEmbedding",
+           "Nonlinear Dimensionality Reduction by Locally Linear Embedding",
            Science, Vol. 290. no. 5500, pp. 2323 -- 2326, 22 December 2000
 
     Examples
@@ -72,9 +73,6 @@ class LLE(BaseEmbedding):
     >>> lle = LLE(n_coords=2, n_neighbors=3)
     >>> lle = lle.fit(samples)
     """
-    def __init__(self, n_coords, n_neighbors=None, ball_tree=None):
-        BaseEmbedding.__init__(self, n_coords, n_neighbors, ball_tree)
-
     def fit(self, X):
         """
         Parameters
@@ -87,14 +85,14 @@ class LLE(BaseEmbedding):
         Self
         """
         self.X_ = np.asanyarray(X)
-        W = kneighbors_graph(self.X_, ball_tree=self.ball_tree, drop_first=True,
-            n_neighbors=self.n_neighbors, weight="barycenter")
+        W = kneighbors_graph(self.X_, ball_tree=self.ball_tree,
+            drop_first=True, n_neighbors=self.n_neighbors, weight="barycenter")
 
         t = np.eye(len(self.X_), len(self.X_)) - W
         M = np.asarray(np.dot(t.T, t))
 
         w, vectors = linalg.eigh(M)
-        index = np.argsort(w)[1:1+self.n_coords]
+        index = np.argsort(w)[1:1 + self.n_coords]
 
-        self.embedding_ = np.sqrt(len(self.X_)) * vectors[:,index]
+        self.embedding_ = np.sqrt(len(self.X_)) * vectors[:, index]
         return self

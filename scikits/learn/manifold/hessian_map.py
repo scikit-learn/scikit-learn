@@ -43,23 +43,23 @@ def hessian_map(samples, n_coords, **kwargs):
         neighs = graph.rows[i]
         neighborhood = samples[neighs] - np.mean(samples[neighs], axis=0)
         u, s, vh = linalg.svd(neighborhood.T, full_matrices=False)
-        tangent = vh.T[:,:n_coords]
+        tangent = vh.T[:, :n_coords]
 
         Yi = np.zeros((len(tangent), dp))
         ct = 0
         for j in range(n_coords):
-            startp = tangent[:,j]
+            startp = tangent[:, j]
             for k in range(j, n_coords):
-                Yi[:, ct + k - j] = startp * tangent[:,k]
+                Yi[:, ct + k - j] = startp * tangent[:, k]
             ct = ct + n_coords - j
 
         Yi = np.hstack((np.ones((len(neighs), 1)), tangent, Yi))
 
         Yt = mgs(Yi)
         Pii = Yt[:, n_coords + 1:]
-        means = np.mean(Pii, axis=0)[:,None]
+        means = np.mean(Pii, axis=0)[:, None]
         means[np.where(means < 0.0001)[0]] = 1
-        W[i * dp:(i+1) * dp, neighs] = Pii.T / means
+        W[i * dp:(i + 1) * dp, neighs] = Pii.T / means
 
     G = np.dot(W.T, W)
     w, v = linalg.eigh(G)
@@ -68,9 +68,9 @@ def hessian_map(samples, n_coords, **kwargs):
     ws = w[index]
     too_small = np.sum(ws < 10 * np.finfo(np.float).eps)
 
-    index = index[too_small:too_small+n_coords]
+    index = index[too_small:too_small + n_coords]
 
-    return np.sqrt(len(samples)) * v[:,index]
+    return np.sqrt(len(samples)) * v[:, index]
 
 
 class HessianMap(BaseEmbedding):
@@ -142,6 +142,7 @@ class HessianMap(BaseEmbedding):
             ball_tree=self.ball_tree, n_neighbors=self.n_neighbors)
         return self
 
+
 def mgs(A):
     """
     Computes a Gram-Schmidt orthogonalization
@@ -161,7 +162,7 @@ def mgs(A):
     for i in range(0, n):
         R[i, i] = linalg.norm(V[:, i])
         V[:, i] /= R[i, i]
-        for j in range(i+1, n):
+        for j in range(i + 1, n):
             R[i, j] = np.dot(V[:, i].T, V[:, j])
             V[:, j] -= R[i, j] * V[:, i]
     return V

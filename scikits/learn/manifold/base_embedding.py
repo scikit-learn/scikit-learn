@@ -2,6 +2,7 @@
 
 from ..base import BaseEstimator
 
+
 class BaseEmbedding(BaseEstimator):
     """
     Basic embedding object

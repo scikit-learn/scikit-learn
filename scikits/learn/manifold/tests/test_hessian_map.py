@@ -17,9 +17,10 @@ samples = np.array((0., 0., 0.,
   0., .5, 0.,
   .5, 0., 0.,
   1., 1., 0.5,
-  )).reshape((-1,3))
+  )).reshape((-1, 3))
 
 from .test_laplacian_map import close
+
 
 class TestHessianMap(TestCase):
     def test_fit(self):

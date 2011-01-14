@@ -26,9 +26,11 @@ except:
     from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
     pyamg_loaded = False
 
-def find_largest_eigenvectors(L, n_coords, largest = True):
+
+def find_largest_eigenvectors(L, n_coords, largest=True):
     """
-    Finds n_coords+1 coordinates of L and returns the eigenvalues + eigenvectors
+    Finds n_coords+1 coordinates of L and returns the eigenvalues
+    and eigenvectors
 
     Parameters
     ----------
@@ -52,7 +54,7 @@ def find_largest_eigenvectors(L, n_coords, largest = True):
         L = L.tocsr()
         ml = smoothed_aggregation_solver(L)
 
-        X = scipy.rand(L.shape[0], n_coords+1)
+        X = scipy.rand(L.shape[0], n_coords + 1)
 
         # preconditioner based on ml
         M = ml.aspreconditioner()
@@ -60,8 +62,8 @@ def find_largest_eigenvectors(L, n_coords, largest = True):
         # compute eigenvalues and eigenvectors with LOBPCG
         return lobpcg(L, X, M=M, tol=1e-3, largest=not largest)
     else:
-        return eigen_symmetric(L, k=n_coords+1,
-            which = 'LM' if largest else 'SM')
+        return eigen_symmetric(L, k=n_coords + 1,
+            which='LM' if largest else 'SM')
 
 
 def laplacian_maps(samples, n_coords, method, **kwargs):
@@ -88,17 +90,17 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
     W = method(samples, **kwargs)
 
     D = np.sqrt(W.sum(axis=0))
-    Di = 1./D
-    dia = scipy.sparse.dia_matrix((Di, (0,)), shape=W.shape)
+    Di = 1. / D
+    dia = scipy.sparse.dia_matrix((Di, (0, )), shape=W.shape)
     L = dia * W * dia
 
     w, vectors = find_largest_eigenvectors(L, n_coords)
     vectors = np.asarray(vectors)
 
     Di = np.asarray(Di).squeeze()
-    index = np.argsort(w)[-2:-2-n_coords:-1]
+    index = np.argsort(w)[-2:-2 - n_coords:-1]
 
-    return np.sqrt(len(samples)) * Di[:,np.newaxis] * vectors[:,index] * \
+    return np.sqrt(len(samples)) * Di[:, np.newaxis] * vectors[:, index] * \
         math.sqrt(np.sum(D))
 
 
@@ -125,9 +127,10 @@ def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
         **kwargs)
 
     W = graph.tocoo()
-    W.data = np.exp(-W.data/kernel_width)
+    W.data = np.exp(-W.data / kernel_width)
 
     return W
+
 
 def heat_kernel(samples, kernel_width=.5, **kwargs):
     """
@@ -144,9 +147,9 @@ def heat_kernel(samples, kernel_width=.5, **kwargs):
     -------
     The new distance
     """
-    distances = euclidian_distances(samples, samples)**2
+    distances = euclidian_distances(samples, samples) ** 2
 
-    return np.exp(-distances/kernel_width)
+    return np.exp(-distances / kernel_width)
 
 
 def normalized_heat_kernel(samples, **kwargs):
@@ -163,7 +166,7 @@ def normalized_heat_kernel(samples, **kwargs):
     The embedding
     """
     similarities = heat_kernel(samples, **kwargs)
-    p1 = 1./np.sqrt(np.sum(similarities, axis=0))
+    p1 = 1. / np.sqrt(np.sum(similarities, axis=0))
     return p1[:, np.newaxis] * similarities * p1
 
 
@@ -193,6 +196,7 @@ def centered_normalized(samples):
     scaler = Scaler(with_std=True)
     scaler.fit(samples)
     return scaler.transform(samples)
+
 
 class LaplacianEigenmap(BaseEmbedding):
     """
@@ -250,7 +254,7 @@ class LaplacianEigenmap(BaseEmbedding):
     >>> laplacian = laplacian.fit(samples)
     """
     def __init__(self, n_coords, n_neighbors=None, ball_tree=None,
-        kernel_width = .5):
+        kernel_width=.5):
         BaseEmbedding.__init__(self, n_coords, n_neighbors, ball_tree)
         self.kernel_width = kernel_width
 
@@ -270,6 +274,7 @@ class LaplacianEigenmap(BaseEmbedding):
             ball_tree=self.ball_tree, n_neighbors=self.n_neighbors,
             method=sparse_heat_kernel, kernel_width=self.kernel_width)
         return self
+
 
 class DiffusionMap(BaseEmbedding):
     """
@@ -342,6 +347,6 @@ class DiffusionMap(BaseEmbedding):
         self.X_ = np.asanyarray(X)
         self.embedding_ = laplacian_maps(centered_normalized(self.X_),
             n_coords=self.n_coords,
-            ball_tree=self.ball_tree, n_neighbors = self.n_neighbors,
+            ball_tree=self.ball_tree, n_neighbors=self.n_neighbors,
             method=normalized_heat_kernel, kernel_width=self.kernel_width)
         return self
