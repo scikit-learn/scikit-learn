@@ -65,6 +65,7 @@ class LLE(BaseEmbedding):
     def __init__(self, n_coords, n_neighbors=None, ball_tree=None):
         BaseEmbedding.__init__(self, n_coords, n_neighbors, ball_tree)
 
+
     def fit(self, X):
         """
         Parameters
