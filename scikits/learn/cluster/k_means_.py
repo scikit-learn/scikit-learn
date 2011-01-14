@@ -304,7 +304,7 @@ class KMeans(BaseEstimator):
         n_init consecutive runs in terms of inertia.
 
     init : {'k-means++', 'random', 'points', 'matrix'}
-        Method for initialization, defaults to 'k-means++':
+        Method for initialization, defaults to 'random':
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
