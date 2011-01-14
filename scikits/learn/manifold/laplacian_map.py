@@ -23,7 +23,7 @@ try:
     raise RuntimeError("pyamg is currently not supported")
     pyamg_loaded = True
 except:
-    from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
+    from ..utils.fixes import arpack_eigsh
     pyamg_loaded = False
 
 def find_largest_eigenvectors(L, n_coords, largest = True):
@@ -60,7 +60,7 @@ def find_largest_eigenvectors(L, n_coords, largest = True):
         # compute eigenvalues and eigenvectors with LOBPCG
         return lobpcg(L, X, M=M, tol=1e-3, largest=not largest)
     else:
-        return eigen_symmetric(L, k=n_coords+1,
+        return arpack_eigsh(L, k=n_coords+1,
             which = 'LM' if largest else 'SM')
 
 
