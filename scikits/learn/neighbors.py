@@ -342,54 +342,56 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
 
     dist, ind = ball_tree.query(X, k=n_neighbors)
     if drop_first:
-        ind = ind[:, 1:]
+        ind = [indices[1:] for indices in ind] # not always square!
+        dist = [distances[1:] for distances in dist]
+
+    global_size = sum([len(indices) for indices in ind])
 
     # allocate space for sparse csr matrix
     if weight is None:
-        data = np.empty(ind.shape, dtype=np.int)
+        data = np.empty(global_size, dtype=np.int)
     else:
-        data = np.empty(ind.shape, dtype=np.float)
-    data_indices = np.empty(ind.shape, dtype=np.int)        
-    data_indptr  = np.empty(1+n_samples, dtype=np.int)
+        data = np.empty(global_size, dtype=np.float)
+    data_indices = np.empty(global_size, dtype=np.int)        
+    data_indptr  = np.empty(1 + n_samples, dtype=np.int)
     data_indptr[0] = 0
 
     if weight is None:
-        
         for i, li in enumerate(ind):
+            data_indptr[i+1] = data_indptr[i] + len(ind[i])
             if n_neighbors > 1:
-                data[i] = np.ones(n_neighbors)
+                data[data_indptr[i]:data_indptr[i+1]] = np.ones(len(ind[i]))
             else:
-                data[i] = 1.0
+                data[data_indptr[i]:data_indptr[i+1]] = 1
 
-            data_indices[i] = li
-            data_indptr[i+1] = data_indptr[i] + data.shape[1]
+            data_indices[data_indptr[i]:data_indptr[i+1]] = li
 
     elif weight is 'distance':
         for i, li in enumerate(ind):
+            data_indptr[i+1] = data_indptr[i] + len(ind[i])
             if n_neighbors > 1:
-                data[i] = dist[i, :]
+                data[data_indptr[i]:data_indptr[i+1]] = dist[i]
             else:
-                data[i] = dist[i, 0]
+                data[data_indptr[i]:data_indptr[i+1]] = dist[i][0]
 
-            data_indices[i] = li
-            data_indptr[i+1] = data_indptr[i] + data.shape[1]
+            data_indices[data_indptr[i]:data_indptr[i+1]] = li
             
     elif weight is 'barycenter':
         for i, li in enumerate(ind):
+            data_indptr[i+1] = data_indptr[i] + len(ind[i])
             if n_neighbors > 1:
                 X_i = ball_tree.data[li]
-                data[i] = barycenter_weights(X[i], X_i)
+                data[data_indptr[i]:data_indptr[i+1]] = barycenter_weights(X[i], X_i)
             else:
-                data[i] = 1.0
+                data[data_indptr[i]:data_indptr[i+1]] = 1.0
 
-            data_indices[i] = li
-            data_indptr[i+1] = data_indptr[i] + data.shape[1]
+            data_indices[data_indptr[i]:data_indptr[i+1]] = li
 
     else:
         raise ValueError("Unknown weight type")
 
     A = sparse.csr_matrix(
-        (data.reshape(-1), data_indices.reshape(-1), data_indptr),
+        (data, data_indices, data_indptr),
         shape=(n_samples, ball_tree.data.shape[0]))
 
     return A

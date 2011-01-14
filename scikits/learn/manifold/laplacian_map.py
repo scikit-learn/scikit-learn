@@ -123,12 +123,12 @@ def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
     The sparse distance matrix
     """
 
-    graph = kneighbors_graph(samples, weight="distance", **kwargs)
+    graph = kneighbors_graph(samples, weight="distance", drop_first = True, **kwargs)
     tri = graph.T.tocsr()
     for i, ind in enumerate(zip(*tri.nonzero())):
         graph[ind] = tri.data[i]
 
-    graph.data = np.exp(-graph.data/kernel_width)
+    graph.data = np.exp(-graph.data / kernel_width)
 
     return graph
 

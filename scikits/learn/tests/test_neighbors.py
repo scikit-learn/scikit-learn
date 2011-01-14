@@ -98,6 +98,39 @@ def test_kneighbors_graph():
     A = neighbors.kneighbors_graph(X, 3, weight="barycenter")
 
 
+def test_kneighbors_graph_2D():
+    """
+    Test kneighbors_graph to build the k-Nearest Neighbor graph.
+    """
+    X = [[0, 0], [1.01, 0], [0, 2]]
+
+    A = neighbors.kneighbors_graph(X, 2, weight=None)
+    assert_array_equal(A.todense(),
+                       [[1, 1, 0], [1, 1, 0], [1, 0, 1]])
+
+    A = neighbors.kneighbors_graph(X, 2, weight="distance")
+    assert_array_almost_equal(A.todense(),
+                              [[0, 1.01, 0], [1.01, 0, 0], [2, 0, 0]], 4)
+
+    A = neighbors.kneighbors_graph(X, 2, weight='barycenter')
+    assert_array_almost_equal(A.todense(),
+                              [[0.99, 0, 0], [0, 0.99, 0], [0, 0, 0.99]], 2)
+
+    # Also check corner cases
+    # TODO: result should be compared
+    A = neighbors.kneighbors_graph(X, 3, weight=None)
+    assert_array_almost_equal(A.todense(),
+                              [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+
+    A = neighbors.kneighbors_graph(X, 3, weight="distance")
+    assert_array_almost_equal(A.todense(),
+                              [[ 0.  ,  1.01,  2.  ],
+                               [ 1.01,  0.  ,  2.240557966221806991614070487849],
+                               [ 2.  ,  2.240557966221806991614070487849,  0.  ]])                              
+
+    A = neighbors.kneighbors_graph(X, 3, weight="barycenter")
+
+    
 if __name__ == '__main__':
     import nose
     nose.runmodule()
