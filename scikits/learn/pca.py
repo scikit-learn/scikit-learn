@@ -132,6 +132,9 @@ class PCA(BaseEstimator):
     components_: array, [n_features, n_components]
         Components with maximum variance.
 
+    components_coefs: array, [n_components]
+        Eigenvalues associated with principal components_.
+
     explained_variance_ratio_: array, [n_components]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
@@ -182,8 +185,10 @@ class PCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
+            self.components_coefs_ = S / np.sqrt(n) 
         else:
             self.components_ = V.T
+            self.components_coefs_ = np.ones_like(S)
 
         if self.n_components == 'mle':
             self.n_components = _infer_dimension_(self.explained_variance_,
@@ -191,6 +196,7 @@ class PCA(BaseEstimator):
 
         if self.n_components is not None:
             self.components_ = self.components_[:, :self.n_components]
+            self.components_coefs_ = self.components_coefs_[:self.n_components]
             self.explained_variance_ = \
                     self.explained_variance_[:self.n_components]
             self.explained_variance_ratio_ = \
@@ -204,6 +210,11 @@ class PCA(BaseEstimator):
         Xr = np.dot(Xr, self.components_)
         return Xr
 
+    def inverse_transform(self, Y):
+        """Return an input X whose transform would be Y"""
+        r = np.dot(Y * self.components_coefs_, self.components_.T)
+        r += self.mean_
+        return r
 
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that add a probabilistic evaluation
@@ -365,8 +376,10 @@ class RandomizedPCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
+            self.components_coefs_ = S / np.sqrt(n) 
         else:
             self.components_ = V.T
+            self.components_coefs_ = np.ones_like(S)
 
         return self
 
