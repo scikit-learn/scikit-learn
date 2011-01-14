@@ -8,20 +8,10 @@ __all__ = ['LLE']
 
 import numpy as np
 from scipy import linalg
-import scipy.sparse
-import math
 
 from .base_embedding import BaseEmbedding
 from ..neighbors import kneighbors_graph
 
-try:
-    from pyamg import smoothed_aggregation_solver
-    from scipy.sparse.linalg import lobpcg
-    raise RuntimeError("pyamg is currently not supported")
-    pyamg_loaded = True
-except:
-    from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
-    pyamg_loaded = False
 
 
 class LLE(BaseEmbedding):
@@ -73,6 +63,7 @@ class LLE(BaseEmbedding):
     >>> lle = LLE(n_coords=2, n_neighbors=3)
     >>> lle = lle.fit(samples)
     """
+
     def fit(self, X):
         """
         Parameters

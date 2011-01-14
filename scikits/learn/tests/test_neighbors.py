@@ -3,7 +3,7 @@
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_equal
 
-from .. import neighbors
+from scikits.learn import neighbors
 
 
 def test_neighbors_1D():
@@ -70,23 +70,34 @@ def test_kneighbors_graph():
     Test kneighbors_graph to build the k-Nearest Neighbor graph.
     """
     X = [[0], [1.01], [2]]
+
     A = neighbors.kneighbors_graph(X, 2, weight=None)
     assert_array_equal(A.todense(),
-                              [[1, 1, 0], [0, 1, 1], [0, 1, 1]])
-    A = neighbors.kneighbors_graph(X, 2, weight=None, symetric=True)
-    assert_array_equal(A.todense(),
-                              [[1, 1, 0], [1, 1, 1], [0, 1, 1]])
+                       [[1, 1, 0], [0, 1, 1], [0, 1, 1]])
+
     A = neighbors.kneighbors_graph(X, 2, weight="distance")
     assert_array_almost_equal(A.todense(),
                               [[0, 1.01, 0], [0, 0, 0.99], [0, 0.99, 0]], 4)
-    A = neighbors.kneighbors_graph(X, 2, weight="distance", symetric=True)
-    assert_array_almost_equal(A.todense(),
-                              [[0, 1.01, 0], [1.01, 0, 0.99], [0, 0.99, 0]], 4)
-    A = neighbors.kneighbors_graph(X, 2, weight="barycenter")
+
+    A = neighbors.kneighbors_graph(X, 2, weight='barycenter')
     assert_array_almost_equal(A.todense(),
                               [[0.99, 0, 0], [0, 0.99, 0], [0, 0, 0.99]], 2)
 
     # Also check corner cases
+    # TODO: result should be compared
     A = neighbors.kneighbors_graph(X, 3, weight=None)
+    assert_array_almost_equal(A.todense(),
+                              [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+
     A = neighbors.kneighbors_graph(X, 3, weight="distance")
+    assert_array_almost_equal(A.todense(),
+                              [[ 0.  ,  1.01,  2.  ],
+                               [ 1.01,  0.  ,  0.99],
+                               [ 2.  ,  0.99,  0.  ]])                              
+
     A = neighbors.kneighbors_graph(X, 3, weight="barycenter")
+
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

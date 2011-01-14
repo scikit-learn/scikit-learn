@@ -7,8 +7,7 @@ Computes coordinates based on the similarities given as parameters
 __all__ = ['LLE', 'HessianMap']
 
 import numpy as np
-from scipy import linalg
-import scipy.sparse
+from scipy import sparse, linalg
 import math
 
 from .base_embedding import BaseEmbedding
@@ -23,7 +22,7 @@ try:
     raise RuntimeError("pyamg is currently not supported")
     pyamg_loaded = True
 except:
-    from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
+    from ..utils.fixes import arpack_eigsh
     pyamg_loaded = False
 
 
@@ -62,7 +61,7 @@ def find_largest_eigenvectors(L, n_coords, largest=True):
         # compute eigenvalues and eigenvectors with LOBPCG
         return lobpcg(L, X, M=M, tol=1e-3, largest=not largest)
     else:
-        return eigen_symmetric(L, k=n_coords + 1,
+        return arpack_eigsh(L, k=n_coords+1,
             which='LM' if largest else 'SM')
 
 
@@ -90,8 +89,8 @@ def laplacian_maps(samples, n_coords, method, **kwargs):
     W = method(samples, **kwargs)
 
     D = np.sqrt(W.sum(axis=0))
-    Di = 1. / D
-    dia = scipy.sparse.dia_matrix((Di, (0, )), shape=W.shape)
+    Di = 1./D
+    dia = sparse.dia_matrix((Di, (0,)), shape=W.shape)
     L = dia * W * dia
 
     w, vectors = find_largest_eigenvectors(L, n_coords)
@@ -123,14 +122,15 @@ def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
     -------
     The sparse distance matrix
     """
-    graph = kneighbors_graph(samples, symetric=True, weight="distance",
-        **kwargs)
 
-    W = graph.tocoo()
-    W.data = np.exp(-W.data / kernel_width)
+    graph = kneighbors_graph(samples, weight="distance", **kwargs)
+    tri = sparse.triu(graph.T)
+    for i, ind in enumerate(zip(*tri.nonzero())):
+        graph[ind] = tri.data[i]
 
-    return W
+    graph.data = np.exp(-graph.data/kernel_width)
 
+    return graph
 
 def heat_kernel(samples, kernel_width=.5, **kwargs):
     """
