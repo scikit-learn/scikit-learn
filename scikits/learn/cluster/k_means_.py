@@ -13,11 +13,10 @@ import numpy as np
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidian_distances
 
-################################################################################
+
+###############################################################################
 # Initialisation heuristic
 
-# kinit originaly from pybrain:
-# http://github.com/pybrain/pybrain/raw/master/pybrain/auxiliary/kmeans.py
 def k_init(X, k, n_samples_max=500, rng=None):
     """Init k seeds according to kmeans++
 
@@ -44,6 +43,9 @@ def k_init(X, k, n_samples_max=500, rng=None):
 
     Implementation from Yong Sun's website
     http://blogs.sun.com/yongsun/entry/k_means_and_k_means
+
+    kinit originaly from pybrain:
+    http://github.com/pybrain/pybrain/raw/master/pybrain/auxiliary/kmeans.py
     """
     n_samples = X.shape[0]
     if rng is None:
@@ -55,8 +57,8 @@ def k_init(X, k, n_samples_max=500, rng=None):
 
     distances = euclidian_distances(X, X, squared=True)
 
-    'choose the 1st seed randomly, and store D(x)^2 in D[]'
-    first_idx =rng.randint(n_samples)
+    # choose the 1st seed randomly, and store D(x)^2 in D[]
+    first_idx = rng.randint(n_samples)
     centers = [X[first_idx]]
     D = distances[first_idx]
 
@@ -76,10 +78,10 @@ def k_init(X, k, n_samples_max=500, rng=None):
     return np.array(centers)
 
 
-################################################################################
+###############################################################################
 # K-means estimation by EM (expectation maximisation)
 
-def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0, 
+def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                     delta=1e-4, rng=None, copy_x=True):
     """ K-means clustering algorithm.
 
@@ -99,9 +101,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         Maximum number of iterations of the k-means algorithm to run.
 
     n_init: int, optional, default: 10
-        Number of time the k-means algorithm will be run with different centroid
-        seeds. The final results will be the best output of n_init consecutive
-        runs in terms of inertia.
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
 
     init: {'k-means++', 'random', or ndarray, or a callable}, optional
         Method for initialization, default to 'k-means++':
@@ -180,7 +182,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                 "'%s' (type '%s') was passed.")
 
         if verbose:
-            print 'Initialization complete' 
+            print 'Initialization complete'
         # iterations
         for i in range(max_iter):
             centers_old = centers.copy()
@@ -194,19 +196,19 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                 break
 
             if inertia < best_inertia:
+                best_labels = labels.copy()
                 best_centers = centers.copy()
-                best_labels  = labels.copy()
                 best_inertia = inertia
     else:
+        best_labels = labels
         best_centers = centers
-        best_labels  = labels
         best_inertia = inertia
-    if not copy_x: 
+    if not copy_x:
         X += Xmean
-    return best_centers+Xmean, best_labels, best_inertia
+    return best_centers + Xmean, best_labels, best_inertia
 
 
-def _m_step(x, z ,k):
+def _m_step(x, z, k):
     """ M step of the K-means EM algorithm
 
     Computation of cluster centers/means
@@ -228,10 +230,10 @@ def _m_step(x, z ,k):
     dim = x.shape[1]
     centers = np.repeat(np.reshape(x.mean(0), (1, dim)), k, 0)
     for q in range(k):
-        if np.sum(z==q)==0:
+        if np.sum(z == q) == 0:
             pass
         else:
-            centers[q] = np.mean(x[z==q], axis=0)
+            centers[q] = np.mean(x[z == q], axis=0)
     return centers
 
 
@@ -261,7 +263,8 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
     k = centers.shape[0]
 
     if precompute_distances:
-        distances = euclidian_distances(centers, x, x_squared_norms, squared=True)
+        distances = euclidian_distances(centers, x, x_squared_norms,
+                                        squared=True)
     z = -np.ones(n_samples).astype(np.int)
     mindist = np.infty * np.ones(n_samples)
     for q in range(k):
@@ -269,14 +272,11 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
             dist = distances[q]
         else:
             dist = np.sum((x - centers[q]) ** 2, axis=1)
-        z[dist<mindist] = q
+        z[dist < mindist] = q
         mindist = np.minimum(dist, mindist)
     inertia = mindist.sum()
     return z, inertia
 
-
-
-################################################################################
 
 class KMeans(BaseEstimator):
     """ K-Means clustering
@@ -295,12 +295,13 @@ class KMeans(BaseEstimator):
         interpreted as initial cluster to use instead.
 
     max_iter : int
-        Maximum number of iterations of the k-means algorithm for a single run.
+        Maximum number of iterations of the k-means algorithm for a
+        single run.
 
     n_init: int, optional, default: 10
-        Number of time the k-means algorithm will be run with different centroid
-        seeds. The final results will be the best output of n_init consecutive
-        runs in terms of inertia.
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
 
     init : {'k-means++', 'random', 'points', 'matrix'}
         Method for initialization, defaults to 'k-means++':
@@ -354,7 +355,6 @@ class KMeans(BaseEstimator):
     it can be useful to restart it several times.
     """
 
-
     def __init__(self, k=8, init='random', n_init=10, max_iter=300,
             verbose=0, rng=None, copy_x=True):
         self.k = k
@@ -371,7 +371,7 @@ class KMeans(BaseEstimator):
         self._set_params(**params)
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(X,
                     k=self.k, init=self.init, n_init=self.n_init,
-                    max_iter=self.max_iter, verbose=self.verbose, 
+                    max_iter=self.max_iter, verbose=self.verbose,
                     rng=self.rng, copy_x=self.copy_x)
         return self
 
