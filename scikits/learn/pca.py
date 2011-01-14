@@ -66,12 +66,12 @@ def _assess_dimension_(spectrum, rank, n_samples, dim):
     spectrum_ = spectrum.copy()
     spectrum_[rank:dim] = v
     for i in range(rank):
-        for j in range (i + 1, dim):
+        for j in range(i + 1, dim):
             pa += (np.log((spectrum[i] - spectrum[j])
                           * (1. / spectrum_[j] - 1. / spectrum_[i]))
                    + np.log(n_samples))
 
-    ll = pu + pl + pv + pp -pa / 2 - rank * np.log(n_samples) / 2
+    ll = pu + pl + pv + pp - pa / 2 - rank * np.log(n_samples) / 2
 
     return ll
 
@@ -185,7 +185,7 @@ class PCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
-            self.components_coefs_ = S / np.sqrt(n) 
+            self.components_coefs_ = S / np.sqrt(n)
         else:
             self.components_ = V.T
             self.components_coefs_ = np.ones_like(S)
@@ -216,6 +216,7 @@ class PCA(BaseEstimator):
         r += self.mean_
         return r
 
+
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that add a probabilistic evaluation
 
@@ -239,13 +240,14 @@ class ProbabilisticPCA(PCA):
         if self.dim <= self.n_components:
             delta = np.zeros(self.dim)
         elif homoscedastic:
-            delta = (Xr ** 2).sum() / (n_samples*(self.dim)) * np.ones(self.dim)
+            delta = (Xr ** 2).sum() * np.ones(self.dim) \
+                    / (n_samples * self.dim)
         else:
             delta = (Xr ** 2).mean(0) / (self.dim - self.n_components)
         self.covariance_ = np.diag(delta)
         for k in range(self.n_components):
-            add_cov =  np.dot(
-                self.components_[:, k:k+1], self.components_[:, k:k+1].T)
+            add_cov = np.dot(
+                self.components_[:, k:k + 1], self.components_[:, k:k + 1].T)
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
@@ -376,7 +378,7 @@ class RandomizedPCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
-            self.components_coefs_ = S / np.sqrt(n) 
+            self.components_coefs_ = S / np.sqrt(n)
         else:
             self.components_ = V.T
             self.components_coefs_ = np.ones_like(S)
@@ -390,5 +392,4 @@ class RandomizedPCA(BaseEstimator):
 
         X = safe_sparse_dot(X, self.components_)
         return X
-
 
