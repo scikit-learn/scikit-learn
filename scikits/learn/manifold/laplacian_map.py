@@ -124,7 +124,7 @@ def sparse_heat_kernel(samples, kernel_width=.5, **kwargs):
     """
 
     graph = kneighbors_graph(samples, weight="distance", **kwargs)
-    tri = sparse.triu(graph.T)
+    tri = graph.T.tocsr()
     for i, ind in enumerate(zip(*tri.nonzero())):
         graph[ind] = tri.data[i]
 
