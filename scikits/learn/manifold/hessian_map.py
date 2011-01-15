@@ -6,7 +6,8 @@ Computes coordinates based on the similarities given as parameters
 
 __all__ = ['HessianMap']
 
-import math
+from math import sqrt
+
 import numpy as np
 from scipy import linalg
 
@@ -14,35 +15,35 @@ from .base_embedding import BaseEmbedding
 from ..neighbors import kneighbors_graph
 
 
-def hessian_map(samples, n_coords, **kwargs):
-    """
-    Computes a Hessian eigenmap for a manifold
-
+def hessian_map(X, n_coords, ball_tree, n_neighbors=9):
+    """Computes a Hessian eigenmap for a manifold
 
     Parameters
     ----------
-      samples : array_like
-           the samples that will be embedded
-      n_coords : int
-           the number of coordinates in the manifold
-      ball_tree : function
-           the neighborer used (optional, default BallTree)
-      n_neighbors : int
-           the number of neighbors (optional, default 9)
+    X : array_like
+        the samples that will be embedded
+    n_coords : int
+        the number of coordinates in the manifold
+    ball_tree : callable
+        the neighborer used (optional, default BallTree)
+    n_neighbors : int
+        the number of neighbors (optional, default 9)
 
     Returns
     -------
-    The embedding
+    E : array of shape [n_samples, n_coords]
+        The coordinates of all samples in the lower dimensional space
     """
-    graph = kneighbors_graph(samples, **kwargs)
+    graph = kneighbors_graph(X, ball_tree=ball_tree,
+                                      n_neighbors=n_neighbors)
     graph = graph.tolil()
-
+    n_samples = X.shape[0]
     dp = n_coords * (n_coords + 1) / 2
-    W = np.zeros((len(samples) * dp, len(samples)))
+    W = np.zeros((n_samples * dp, n_samples))
 
     for i in range(len(graph.rows)):
         neighs = graph.rows[i]
-        neighborhood = samples[neighs] - np.mean(samples[neighs], axis=0)
+        neighborhood = X[neighs] - np.mean(X[neighs], axis=0)
         U, s, Vh = linalg.svd(neighborhood.T, full_matrices=False)
         tangent = Vh.T[:, :n_coords]
 
@@ -63,7 +64,7 @@ def hessian_map(samples, n_coords, **kwargs):
         W[i * dp:(i + 1) * dp, neighs] = Pii.T / means
 
     G = np.dot(W.T, W)
-    w, v = linalg.eigh(G)
+    w, V = linalg.eigh(G)
 
     index = np.argsort(w)
     ws = w[index]
@@ -71,12 +72,11 @@ def hessian_map(samples, n_coords, **kwargs):
 
     index = index[too_small:too_small + n_coords]
 
-    return math.sqrt(len(samples)) * v[:, index]
+    return sqrt(n_samples) * V[:, index]
 
 
 class HessianMap(BaseEmbedding):
-    """
-    Hessian Map embedding object
+    """Hessian Map embedding object
 
     Parameters
     ----------
@@ -121,22 +121,21 @@ class HessianMap(BaseEmbedding):
       .5, 0., 0., \
       1., 1., 0.5, \
       )).reshape((-1,3))
-    >>> hessian = HessianMap(n_coords = 2,n_neighbors = 4)
+    >>> hessian = HessianMap(n_coords=2, n_neighbors=4)
     >>> hessian = hessian.fit(samples)
     """
-    def __init__(self, n_coords, n_neighbors=None, ball_tree=None):
-        BaseEmbedding.__init__(self, n_coords, n_neighbors, ball_tree)
 
     def fit(self, X):
-        """
+        """Compute the embedding
+
         Parameters
         ----------
         X : array_like
-        The learning dataset
+            The learning dataset
 
         Returns
         -------
-        Self
+        self
         """
         self.X_ = np.asanyarray(X)
         self.embedding_ = hessian_map(self.X_, n_coords=self.n_coords,
@@ -145,8 +144,9 @@ class HessianMap(BaseEmbedding):
 
 
 def mgs(A):
-    """
-    Computes a Gram-Schmidt orthogonalization
+    """Computes a Gram-Schmidt orthogonalization
+
+    The matrix A is modified inplace
 
     Parameters
     ----------
@@ -154,16 +154,17 @@ def mgs(A):
 
     Returns
     -------
-    The orthogonalization of A
+    A : array_like
+        The orthogonalization of A
     """
-    V = np.asanyarray(A)
-    m, n = V.shape
+    A = np.asanyarray(A)
+    m, n = A.shape
     R = np.zeros((n, n))
 
     for i in range(0, n):
-        R[i, i] = linalg.norm(V[:, i])
-        V[:, i] /= R[i, i]
+        R[i, i] = linalg.norm(A[:, i])
+        A[:, i] /= R[i, i]
         for j in range(i + 1, n):
-            R[i, j] = np.dot(V[:, i].T, V[:, j])
-            V[:, j] -= R[i, j] * V[:, i]
-    return V
+            R[i, j] = np.dot(A[:, i].T, A[:, j])
+            A[:, j] -= R[i, j] * A[:, i]
+    return A

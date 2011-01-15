@@ -38,10 +38,6 @@ class BaseEmbedding(BaseEstimator):
     X_ : array_like
         Original data that is embedded
 
-    See Also
-    --------
-
-
     Notes
     -----
 
@@ -54,7 +50,8 @@ class BaseEmbedding(BaseEstimator):
         self.mapping_kind = mapping_kind
 
     def transform(self, X):
-        if self.mapping:
-            return self.mapping.transform(X)
-        else:
-            raise RuntimeError("No mapping was built for this embedding")
+        raise ValueError, 'Transform not implemented'
+        # if self.mapping:
+        #     return self.mapping.transform(X)
+        # else:
+        #     raise RuntimeError("No mapping was built for this embedding")

@@ -13,7 +13,7 @@ import numpy as np
 import pylab as pl
 from mpl_toolkits.mplot3d import Axes3D
 
-################################################################################
+###############################################################################
 # import some data to play with
 
 # The Swissroll dataset
@@ -27,7 +27,7 @@ from scikits.learn.manifold import LLE
 embedding = LLE(n_coords=2, n_neighbors=8)
 X_r = embedding.fit(Y).embedding_
 pl.figure()
-pl.scatter(X_r[:,0], X_r[:,1], c=colors)
+pl.scatter(X_r[:, 0], X_r[:, 1], c=colors)
 pl.title("LLE reduction")
 
 pl.show()

@@ -9,11 +9,10 @@ with the manifold module
 
 """
 
-import numpy as np
 import pylab as pl
 from mpl_toolkits.mplot3d import Axes3D
 
-################################################################################
+##############################################################################
 # import some data to play with
 
 # The IRIS dataset
@@ -24,17 +23,18 @@ X = iris.data
 y = iris.target
 target_names = iris.target_names
 
+
 def display_embedding(embedding, title):
     fig = pl.figure()
-    ax = Axes3D(fig)#fig.gca(projection='3d')
+    ax = Axes3D(fig)
     for c, i, m, target_name in zip("rgb", [0, 1, 2], ['o', '^', 's'],
         target_names):
-        ax.scatter(embedding[y==i,0], embedding[y==i,1], embedding[y==i,2], c=c,
-           label=target_name, marker=m)
+        ax.plot3D(embedding[y==i, 0], embedding[y==i, 1], embedding[y==i, 2],
+                  m, c=c, label=target_name)
     ax.legend()
     ax.set_title(title)
 
-################################################################################
+##############################################################################
 # LLE
 print "Computing LLE embedding"
 from scikits.learn.manifold import LLE
@@ -43,7 +43,7 @@ X_r = embedding.fit(X).embedding_
 
 display_embedding(X_r, 'LLE embedding of IRIS dataset')
 
-################################################################################
+##############################################################################
 # Laplacian Eigenmap
 print "Computing Laplacian Eigenmap embedding"
 from scikits.learn.manifold import LaplacianEigenmap
@@ -52,7 +52,7 @@ X_r = embedding.fit(X).embedding_
 
 display_embedding(X_r, 'Laplacian Eigenmap embedding of IRIS dataset')
 
-################################################################################
+##############################################################################
 # Diffusion Map
 print "Computing Diffusion Map embedding"
 from scikits.learn.manifold import DiffusionMap
@@ -61,7 +61,7 @@ X_r = embedding.fit(X).embedding_
 
 display_embedding(X_r, 'Diffusion Map embedding of IRIS dataset')
 
-################################################################################
+##############################################################################
 # Hessian Map
 print "Computing Hessian Map embedding"
 from scikits.learn.manifold import HessianMap

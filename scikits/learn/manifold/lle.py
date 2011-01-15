@@ -8,28 +8,27 @@ __all__ = ['LLE']
 
 import numpy as np
 from scipy import linalg
+from scipy import sparse
 
 from .base_embedding import BaseEmbedding
 from ..neighbors import kneighbors_graph
 
 
-
 class LLE(BaseEmbedding):
-    """
-    LLE embedding object
+    """LLE embedding object
 
     Parameters
     ----------
     n_coords : int
-      The dimension of the embedding space
+        The dimension of the embedding space
 
     n_neighbors : int
-      The number of K-neighboors to use (optional, default 9) if neigh is not
-      given.
+        The number of K-neighboors to use (optional, default 9)
+        if neigh is not given.
 
     ball_tree : BallTree
-      A neighboorer (optional). By default, a K-Neighbor research is done.
-      If provided, neigh must provide a query method.
+        A neighboorer (optional). By default, a K-Neighbor research is done.
+        If provided, neigh must provide a query method.
 
     Attributes
     ----------
@@ -39,8 +38,8 @@ class LLE(BaseEmbedding):
     X_ : array_like
         Original data that is embedded
 
-    See also
-    --------
+    Notes
+    -----
     See examples/plot_swissroll.py and examples/plot_manifold_embeddings.py
     for an example.
 
@@ -65,7 +64,7 @@ class LLE(BaseEmbedding):
     """
 
     def fit(self, X):
-        """
+        """Compute the embedding
         Parameters
         ----------
         X : array_like
@@ -73,14 +72,19 @@ class LLE(BaseEmbedding):
 
         Returns
         -------
-        Self
+        self
         """
         self.X_ = np.asanyarray(X)
+        n_samples = len(self.X_)
         W = kneighbors_graph(self.X_, ball_tree=self.ball_tree,
-            drop_first=True, n_neighbors=self.n_neighbors, weight="barycenter")
+                             drop_first=True, n_neighbors=self.n_neighbors,
+                             weight="barycenter")
 
-        t = np.eye(len(self.X_), len(self.X_)) - W
-        M = np.asarray(np.dot(t.T, t))
+        W = sparse.eye(n_samples, n_samples) - W
+
+        W = W.todense() # XXX : should be avoided !!!!
+
+        M = np.asarray(np.dot(W.T, W))
 
         w, vectors = linalg.eigh(M)
         index = np.argsort(w)[1:1 + self.n_coords]
