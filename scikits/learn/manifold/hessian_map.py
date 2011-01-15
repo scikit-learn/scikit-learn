@@ -137,8 +137,8 @@ class HessianMap(BaseEmbedding):
         -------
         self
         """
-        self.X_ = np.asanyarray(X)
-        self.embedding_ = hessian_map(self.X_, n_coords=self.n_coords,
+        X_ = np.asanyarray(X)
+        self.embedding_ = hessian_map(X_, n_coords=self.n_coords,
             ball_tree=self.ball_tree, n_neighbors=self.n_neighbors)
         return self
 

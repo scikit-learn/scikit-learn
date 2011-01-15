@@ -153,7 +153,8 @@ def normalized_heat_kernel(samples, **kwargs):
 
     Returns
     -------
-    XXX ?
+    D : ndarray
+        The similarity matrix.
     """
     similarities = heat_kernel(samples, **kwargs)
     p1 = 1. / np.sqrt(np.sum(similarities, axis=0))
@@ -235,8 +236,8 @@ class LaplacianEigenmap(BaseEmbedding):
         -------
         Self
         """
-        self.X_ = np.asanyarray(X)
-        W = sparse_heat_kernel(self.X_, ball_tree=self.ball_tree,
+        X_ = np.asanyarray(X)
+        W = sparse_heat_kernel(X_, ball_tree=self.ball_tree,
                                n_neighbors=self.n_neighbors,
                                kernel_width=self.kernel_width)
         self.embedding_ = _laplacian_maps(W, self.n_coords)
@@ -315,7 +316,6 @@ class DiffusionMap(BaseEmbedding):
         X_ = np.asanyarray(X)
         X_ = X_ - np.mean(X_, axis=0) # center
         X_ /= np.std(X_, axis=0) # normalize
-        self.X_ = X_
         W = normalized_heat_kernel(X_, ball_tree=self.ball_tree,
                                    n_neighbors=self.n_neighbors,
                                    kernel_width=self.kernel_width)

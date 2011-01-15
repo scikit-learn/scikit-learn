@@ -74,9 +74,9 @@ class LLE(BaseEmbedding):
         -------
         self
         """
-        self.X_ = np.asanyarray(X)
-        n_samples = len(self.X_)
-        W = kneighbors_graph(self.X_, ball_tree=self.ball_tree,
+        X_ = np.asanyarray(X)
+        n_samples = len(X_)
+        W = kneighbors_graph(X_, ball_tree=self.ball_tree,
                              drop_first=True, n_neighbors=self.n_neighbors,
                              weight="barycenter")
 
@@ -89,5 +89,5 @@ class LLE(BaseEmbedding):
         w, vectors = linalg.eigh(M)
         index = np.argsort(w)[1:1 + self.n_coords]
 
-        self.embedding_ = np.sqrt(len(self.X_)) * vectors[:, index]
+        self.embedding_ = np.sqrt(len(X_)) * vectors[:, index]
         return self
