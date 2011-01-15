@@ -14,7 +14,7 @@ from ..utils.fixes import in1d
 from ..base import BaseEstimator
 from ..pca import PCA
 from ..cluster import KMeans
-from ..cluster.k_means_ import all_pairs_l2_distance_squared
+from ..metrics.pairwise import euclidian_distances
 
 ################################################################################
 # From an image to a graph
@@ -496,11 +496,9 @@ class ConvolutionalKMeansEncoder(BaseEstimator):
                 # time of the loop body.
                 #
 
-                distances = np.sqrt(
-                        all_pairs_l2_distance_squared(
-                            patches.reshape(patches.shape[0],-1),
-                            self.kmeans_.cluster_centers_,
-                            ))
+                distances = euclidian_distances(
+                        patches.reshape(patches.shape[0],-1),
+                        self.kmeans_.cluster_centers_)
                 #print 'done'
 
                 if 1: #triangle features
