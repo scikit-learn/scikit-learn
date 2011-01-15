@@ -63,17 +63,17 @@ def k_init(X, k, n_samples_max=500, rng=None):
     D = distances[first_idx]
 
     for _ in range(k - 1):
-        bestDsum = bestIdx = -1
+        best_d_sum = best_idx = -1
 
         for i in range(n_samples):
-            'Dsum = sum_{x in X} min(D(x)^2,||x-xi||^2)'
-            Dsum = np.minimum(D, distances[i]).sum()
+            # d_sum = sum_{x in X} min(D(x)^2, ||x - xi||^2)
+            d_sum = np.minimum(D, distances[i]).sum()
 
-            if bestDsum < 0 or Dsum < bestDsum:
-                bestDsum, bestIdx = Dsum, i
+            if best_d_sum < 0 or d_sum < best_d_sum:
+                best_d_sum, best_idx = d_sum, i
 
-        centers.append(X[bestIdx])
-        D = np.minimum(D, distances[bestIdx])
+        centers.append(X[best_idx])
+        D = np.minimum(D, distances[best_idx])
 
     return np.array(centers)
 
