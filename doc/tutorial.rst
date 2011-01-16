@@ -143,7 +143,7 @@ box and not worry about these:
 We call our estimator instance `clf` as it is a classifier. It now must
 be fitted to the model, that is, it must `learn` from the model. This is
 done by passing our training set to the ``fit`` method. As a training
-set, let us use the all the images of our dataset appart from the last
+set, let us use all the images of our dataset apart from the last
 one:
 
 >>> clf.fit(digits.data[:-1], digits.target[:-1])
