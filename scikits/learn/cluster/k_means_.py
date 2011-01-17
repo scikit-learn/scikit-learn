@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator
-from ..metrics.pairwise import euclidian_distances
+from ..metrics.pairwise import euclidean_distances
 
 
 ###############################################################################
@@ -55,7 +55,7 @@ def k_init(X, k, n_samples_max=500, rng=None):
         X = X[rng.randint(n_samples, size=n_samples_max)]
         n_samples = n_samples_max
 
-    distances = euclidian_distances(X, X, squared=True)
+    distances = euclidean_distances(X, X, squared=True)
 
     # choose the 1st seed randomly, and store D(x)^2 in D[]
     first_idx = rng.randint(n_samples)
@@ -263,7 +263,7 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
     k = centers.shape[0]
 
     if precompute_distances:
-        distances = euclidian_distances(centers, x, x_squared_norms,
+        distances = euclidean_distances(centers, x, x_squared_norms,
                                         squared=True)
     z = -np.ones(n_samples).astype(np.int)
     mindist = np.infty * np.ones(n_samples)

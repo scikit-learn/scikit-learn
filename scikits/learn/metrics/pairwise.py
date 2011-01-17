@@ -9,8 +9,8 @@ sets of points.
 import numpy as np
 
 
-def euclidian_distances(X, Y, 
-        Y_norm_squared=None, 
+def euclidean_distances(X, Y,
+        Y_norm_squared=None,
         squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
@@ -34,14 +34,14 @@ def euclidian_distances(X, Y,
 
     Examples
     --------
-    >>> from scikits.learn.metrics.pairwise import euclidian_distances
+    >>> from scikits.learn.metrics.pairwise import euclidean_distances
     >>> X = [[0, 1], [1, 1]]
     >>> # distrance between rows of X
-    >>> euclidian_distances(X, X)
+    >>> euclidean_distances(X, X)
     array([[ 0.,  1.],
            [ 1.,  0.]])
     >>> # get distance to origin
-    >>> euclidian_distances(X, [[0, 0]])
+    >>> euclidean_distances(X, [[0, 0]])
     array([[ 1.        ],
            [ 1.41421356]])
     """
@@ -66,7 +66,7 @@ def euclidian_distances(X, Y,
         YY = np.asanyarray(Y_norm_squared)
         if YY.shape != (Y.shape[0],):
             raise ValueError("Incompatible dimension for Y and Y_norm_squared")
-        YY = YY[np.newaxis,:]
+        YY = YY[np.newaxis, :]
 
     # TODO:
     # a faster cython implementation would do the dot product first,
@@ -79,3 +79,5 @@ def euclidian_distances(X, Y,
         return distances
     else:
         return np.sqrt(distances)
+
+euclidian_distances = euclidean_distances # both spelling for backward compat
