@@ -127,3 +127,35 @@ class Binarizer(BaseEstimator):
 
         return X
 
+class LabelBinarizer(BaseEstimator):
+    """Binarize labels in a one-vs-all fashion"""
+
+    def fit(self, y):
+        self.classes = np.unique(y)
+        return self
+
+    def transform(self, y):
+        if len(self.classes) == 2:
+            Y = np.zeros((len(y), 1))
+            Y[y == self.classes[1],0] = 1
+            return Y
+
+        elif len(self.classes) >= 2:
+            Y = np.zeros((len(y), len(self.classes)))
+            for i, k in enumerate(self.classes):
+                Y[y == k, i] = 1
+            return Y
+
+        else:
+            raise ValueError
+
+    def fit_transform(self, y):
+        return self.fit(y).transform(y)
+
+    def inverse_transform(self, Y):
+        if len(Y.shape) == 1 or Y.shape[1] == 1:
+            y = np.array(Y.ravel() > 0, dtype=int)
+        else:
+            y = Y.argmax(axis=1)
+        return self.classes[y]
+
