@@ -69,6 +69,12 @@ Thus, one can create the training/test sets using:
 
     >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
 
+That doesn't work for `scipy.sparse` matrices, so instead you can use:
+
+    >>> trainidx = [idx for idx in range(len(train)) if train[idx]]
+    >>> testidx = [idx for idx in range(len(test)) if test[idx]]
+    >>> X_train, X_test, y_train, y_test = X[trainidx], X[testidx], Y[trainidx], Y[testidx]
+
 
 
 
