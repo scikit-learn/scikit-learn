@@ -175,9 +175,9 @@ class SpectralClustering(BaseEstimator):
             -----------
             X: array-like or sparse matrix, shape: (p, p)
                 The adjacency matrix of the graph to embed.
-                X is an adjacency matrix of a simimlarity graph: its
+                X is an adjacency matrix of a similarity graph: its
                 entries must be positive or zero. Zero means that
-                elements have nothing in comon, wereas high values mean
+                elements have nothing in conmon, whereas high values mean
                 that elements are strongly similar.
 
             Notes
