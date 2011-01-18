@@ -5,6 +5,7 @@ from scipy import linalg
 from scipy.sparse import linalg as sp_linalg
 
 from ..base import LinearModel
+from ...preprocessing import LabelBinarizer
 
 class Ridge(LinearModel):
 
@@ -46,4 +47,19 @@ class Ridge(LinearModel):
     def predict(self, X):
         X = sp.csr_matrix(X)
         return X * self.coef_ + self.intercept_
+
+class RidgeClassifier(Ridge):
+
+    def fit(self, X, y):
+        self.lb = LabelBinarizer()
+        Y = self.lb.fit_transform(y)
+        Ridge.fit(self, X, Y)
+        return self
+
+    def decision_function(self, X):
+        return Ridge.predict(self, X)
+
+    def predict(self, X):
+        Y = self.decision_function(X)
+        return self.lb.inverse_transform(Y)
 

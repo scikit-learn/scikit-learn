@@ -6,8 +6,10 @@ from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from scikits.learn import datasets
 from scikits.learn.linear_model.ridge import Ridge
 from scikits.learn.linear_model.sparse.ridge import Ridge as SpRidge
+from scikits.learn.linear_model.sparse.ridge import RidgeClassifier
 
 diabetes = datasets.load_diabetes()
+iris = datasets.load_iris()
 
 def test_ridge_diabetes():
     X, y = diabetes.data, diabetes.target
@@ -35,3 +37,8 @@ def test_multi_ridge_diabetes():
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
                               Y_pred)
 
+def test_ridge_classifiers():
+    clf = RidgeClassifier()
+    clf.fit(iris.data, iris.target)
+    y_pred = clf.predict(iris.data)
+    assert np.mean(iris.target == y_pred) >= 0.8
