@@ -1,4 +1,7 @@
 
+# Author: Mathieu Blondel <mathieu@mblondel.org>
+# License: Simplified BSD
+
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
@@ -12,6 +15,7 @@ class Ridge(LinearModel):
     def __init__(self, alpha=1.0, fit_intercept=False, solver="default"):
         self.alpha = alpha
         self.intercept_ = 0
+        self.fit_intercept = fit_intercept
         self.solver = solver
 
     def _solve(self, A, b):
