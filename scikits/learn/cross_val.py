@@ -30,6 +30,8 @@ class LeaveOneOut(object):
             Total number of elements
         indices: boolean, optional (default False)
             Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         ========
@@ -95,6 +97,8 @@ class LeavePOut(object):
             Size test sets
         indices: boolean, optional (default False)
             Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         ========
@@ -167,6 +171,8 @@ class KFold(object):
             number of folds
         indices: boolean, optional (default False)
             Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         --------
@@ -249,6 +255,8 @@ class StratifiedKFold(object):
             number of folds
         indices: boolean, optional (default False)
             Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         --------
@@ -329,6 +337,8 @@ class LeaveOneLabelOut(object):
                 List of labels
         indices: boolean, optional (default False)
             Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         ----------
@@ -401,6 +411,8 @@ class LeavePLabelOut(object):
             List of labels
         indices: boolean, optional (default False)
             Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         ----------
