@@ -16,18 +16,22 @@ from .externals.joblib import Parallel, delayed
 class LeaveOneOut(object):
     """Leave-One-Out cross validation iterator
 
-    Provides train/test indexes to split data in train test sets
+    Provides train/test indices to split data in train test sets
     """
 
-    def __init__(self, n):
+    def __init__(self, n, indices=False):
         """Leave-One-Out cross validation iterator
 
-        Provides train/test indexes to split data in train test sets
+        Provides train/test indices to split data in train test sets
 
         Parameters
         ===========
         n: int
             Total number of elements
+        indices: boolean, optional (default False)
+            Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         ========
@@ -50,6 +54,7 @@ class LeaveOneOut(object):
         [[1 2]] [[3 4]] [1] [2]
         """
         self.n = n
+        self.indices = indices
 
     def __iter__(self):
         n = self.n
@@ -57,6 +62,10 @@ class LeaveOneOut(object):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[i] = True
             train_index = np.logical_not(test_index)
+            if self.indices:
+                ind = np.arange(n)
+                train_index = ind[train_index]
+                test_index = ind[test_index]
             yield train_index, test_index
 
     def __repr__(self):
@@ -72,13 +81,13 @@ class LeaveOneOut(object):
 class LeavePOut(object):
     """Leave-P-Out cross validation iterator
 
-    Provides train/test indexes to split data in train test sets
+    Provides train/test indices to split data in train test sets
     """
 
-    def __init__(self, n, p):
+    def __init__(self, n, p, indices=False):
         """Leave-P-Out cross validation iterator
 
-        Provides train/test indexes to split data in train test sets
+        Provides train/test indices to split data in train test sets
 
         Parameters
         ===========
@@ -86,6 +95,10 @@ class LeavePOut(object):
             Total number of elements
         p: int
             Size test sets
+        indices: boolean, optional (default False)
+            Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         ========
@@ -110,6 +123,7 @@ class LeavePOut(object):
         """
         self.n = n
         self.p = p
+        self.indices = indices
 
     def __iter__(self):
         n = self.n
@@ -119,6 +133,10 @@ class LeavePOut(object):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[np.array(idx)] = True
             train_index = np.logical_not(test_index)
+            if self.indices:
+                ind = np.arange(n)
+                train_index = ind[train_index]
+                test_index = ind[test_index]
             yield train_index, test_index
 
     def __repr__(self):
@@ -137,13 +155,13 @@ class LeavePOut(object):
 class KFold(object):
     """K-Folds cross validation iterator
 
-    Provides train/test indexes to split data in train test sets
+    Provides train/test indices to split data in train test sets
     """
 
-    def __init__(self, n, k):
+    def __init__(self, n, k, indices=False):
         """K-Folds cross validation iterator
 
-        Provides train/test indexes to split data in train test sets
+        Provides train/test indices to split data in train test sets
 
         Parameters
         ----------
@@ -151,6 +169,10 @@ class KFold(object):
             Total number of elements
         k: int
             number of folds
+        indices: boolean, optional (default False)
+            Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         --------
@@ -178,6 +200,7 @@ class KFold(object):
                             'of samples: %d'% (k, n))
         self.n = n
         self.k = k
+        self.indices = indices
 
     def __iter__(self):
         n = self.n
@@ -191,6 +214,10 @@ class KFold(object):
             else:
                 test_index[i*j:] = True
             train_index = np.logical_not(test_index)
+            if self.indices:
+                ind = np.arange(n)
+                train_index = ind[train_index]
+                test_index = ind[test_index]
             yield train_index, test_index
 
     def __repr__(self):
@@ -208,17 +235,17 @@ class KFold(object):
 class StratifiedKFold(object):
     """Stratified K-Folds cross validation iterator
 
-    Provides train/test indexes to split data in train test sets
+    Provides train/test indices to split data in train test sets
 
     This cross-validation object is a variation of KFold, which
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
     """
 
-    def __init__(self, y, k):
+    def __init__(self, y, k, indices=False):
         """K-Folds cross validation iterator
 
-        Provides train/test indexes to split data in train test sets
+        Provides train/test indices to split data in train test sets
 
         Parameters
         ----------
@@ -226,6 +253,10 @@ class StratifiedKFold(object):
             Samples to split in K folds
         k: int
             number of folds
+        indices: boolean, optional (default False)
+            Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         --------
@@ -257,6 +288,7 @@ class StratifiedKFold(object):
         assert k <= np.min(np.bincount(y_sorted))
         self.y = y
         self.k = k
+        self.indices = indices
 
     def __iter__(self):
         y = self.y.copy()
@@ -268,6 +300,10 @@ class StratifiedKFold(object):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[idx[i::k]] = True
             train_index = np.logical_not(test_index)
+            if self.indices:
+                ind = np.arange(n)
+                train_index = ind[train_index]
+                test_index = ind[test_index]
             yield train_index, test_index
 
     def __repr__(self):
@@ -287,18 +323,22 @@ class StratifiedKFold(object):
 class LeaveOneLabelOut(object):
     """Leave-One-Label_Out cross-validation iterator
 
-    Provides train/test indexes to split data in train test sets
+    Provides train/test indices to split data in train test sets
     """
 
-    def __init__(self, labels):
+    def __init__(self, labels, indices=False):
         """Leave-One-Label_Out cross validation
 
-        Provides train/test indexes to split data in train test sets
+        Provides train/test indices to split data in train test sets
 
         Parameters
         ----------
         labels : list
                 List of labels
+        indices: boolean, optional (default False)
+            Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         ----------
@@ -328,6 +368,7 @@ class LeaveOneLabelOut(object):
         """
         self.labels = labels
         self.n_labels = unique(labels).size
+        self.indices = indices
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
@@ -336,6 +377,10 @@ class LeaveOneLabelOut(object):
             test_index = np.zeros(len(labels), dtype=np.bool)
             test_index[labels==i] = True
             train_index = np.logical_not(test_index)
+            if self.indices:
+                ind = np.arange(len(labels))
+                train_index = ind[train_index]
+                test_index = ind[test_index]
             yield train_index, test_index
 
     def __repr__(self):
@@ -352,18 +397,22 @@ class LeaveOneLabelOut(object):
 class LeavePLabelOut(object):
     """Leave-P-Label_Out cross-validation iterator
 
-    Provides train/test indexes to split data in train test sets
+    Provides train/test indices to split data in train test sets
     """
 
-    def __init__(self, labels, p):
+    def __init__(self, labels, p, indices=False):
         """Leave-P-Label_Out cross validation
 
-        Provides train/test indexes to split data in train test sets
+        Provides train/test indices to split data in train test sets
 
         Parameters
         ----------
         labels : list
-                List of labels
+            List of labels
+        indices: boolean, optional (default False)
+            Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
 
         Examples
         ----------
@@ -396,6 +445,7 @@ class LeavePLabelOut(object):
         self.unique_labels = unique(self.labels)
         self.n_labels = self.unique_labels.size
         self.p = p
+        self.indices = indices
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
@@ -410,6 +460,10 @@ class LeavePLabelOut(object):
             for l in unique_labels[idx]:
                 test_index[labels == l] = True
             train_index = np.logical_not(test_index)
+            if self.indices:
+                ind = np.arange(labels.size)
+                train_index = ind[train_index]
+                test_index = ind[test_index]
             yield train_index, test_index
 
     def __repr__(self):

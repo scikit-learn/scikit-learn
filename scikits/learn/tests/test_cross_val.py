@@ -82,3 +82,19 @@ def test_permutation_score():
                                                    zero_one_score, cv)
     assert_true(score < 0.5)
     assert_true(pvalue > 0.4)
+
+
+def test_cross_val_generator_with_indices():
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    y = np.array([1, 1, 2, 2])
+    labels = np.array([1, 2, 3, 4])
+    loo = cross_val.LeaveOneOut(4, indices=True)
+    lpo = cross_val.LeavePOut(4, 2, indices=True)
+    kf = cross_val.KFold(4, 2, indices=True)
+    skf = cross_val.StratifiedKFold(y, 2, indices=True)
+    lolo = cross_val.LeaveOneLabelOut(labels, indices=True)
+    lopo = cross_val.LeavePLabelOut(labels, 2, indices=True)
+    for cv in [loo, lpo, kf, skf, lolo, lopo]:
+        for train, test in cv:
+            X_train, X_test = X[train], X[test]
+            y_train, y_test = y[train], y[test]
