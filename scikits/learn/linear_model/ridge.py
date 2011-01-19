@@ -83,6 +83,9 @@ class RidgeLOO(LinearModel):
     """Ridge regression with built-in efficient
        Leave-One-Out cross-validation
 
+    Explanations
+    ------------
+
     We want to solve (K + alpha*Id)c = y,
     where K = X X^T is the kernel matrix.
 
@@ -105,6 +108,11 @@ class RidgeLOO(LinearModel):
     when the model was fitted with all examples but this example.
 
     looe = c / diag(G)
+
+    Reference
+    ---------
+
+    http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=False):
