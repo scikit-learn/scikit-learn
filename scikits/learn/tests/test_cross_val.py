@@ -96,6 +96,5 @@ def test_cross_val_generator_with_indices():
     lopo = cross_val.LeavePLabelOut(labels, 2, indices=True)
     for cv in [loo, lpo, kf, skf, lolo, lopo]:
         for train, test in cv:
-            print train, test
             X_train, X_test = X[train], X[test]
             y_train, y_test = y[train], y[test]
