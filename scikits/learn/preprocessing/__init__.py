@@ -128,13 +128,35 @@ class Binarizer(BaseEstimator):
         return X
 
 class LabelBinarizer(BaseEstimator):
-    """Binarize labels in a one-vs-all fashion"""
+    """Binarize labels in a one-vs-all fashion, a.k.a 1-of-K coding scheme"""
 
     def fit(self, y):
+        """Fit label binarizer
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         self.classes = np.unique(y)
         return self
 
     def transform(self, y):
+        """Transform multi-class labels to binary labels
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values
+
+        Returns
+        -------
+        Y : numpy array of shape [n_samples, n_classes]
+        """
         if len(self.classes) == 2:
             Y = np.zeros((len(y), 1))
             Y[y == self.classes[1],0] = 1
@@ -153,6 +175,17 @@ class LabelBinarizer(BaseEstimator):
         return self.fit(y).transform(y)
 
     def inverse_transform(self, Y):
+        """Transform binary labels back to multi-class labels
+
+        Parameters
+        ----------
+        Y : numpy array of shape [n_samples, n_classes]
+            Target values
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+        """
         if len(Y.shape) == 1 or Y.shape[1] == 1:
             y = np.array(Y.ravel() > 0, dtype=int)
         else:
