@@ -144,7 +144,22 @@ class RidgeLOO(LinearModel):
 
         return num / denom, c
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=1.0):
+        """Fit Ridge regression model
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+            Training data
+        y : numpy array of shape [n_samples] or [n_samples, n_responses]
+            Target values
+        sample_weight : float or numpy array of shape [n_samples]
+            Sample weight
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         n_samples = X.shape[0]
         K, v, Q = self._pre_compute(X, y)
         M = np.zeros((n_samples*len(y.shape), len(self.alphas)))

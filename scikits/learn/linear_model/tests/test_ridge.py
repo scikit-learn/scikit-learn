@@ -12,6 +12,8 @@ from scikits.learn.metrics import mean_square_error
 
 diabetes = datasets.load_diabetes()
 
+np.random.seed(0)
+
 def test_ridge():
     """Ridge regression convergence test using score
 
@@ -22,7 +24,6 @@ def test_ridge():
 
     # With more samples than features
     n_samples, n_features = 6, 5
-    np.random.seed(0)
     y = np.random.randn(n_samples)
     X = np.random.randn(n_samples, n_features)
 
@@ -32,7 +33,6 @@ def test_ridge():
 
     # With more features than samples
     n_samples, n_features = 5, 10
-    np.random.seed(0)
     y = np.random.randn(n_samples)
     X = np.random.randn(n_samples, n_features)
     ridge = Ridge(alpha=alpha)
@@ -76,6 +76,12 @@ def test_ridge_vs_lstsq():
 def test_ridge_loo():
     X, y = diabetes.data, diabetes.target
     n_samples = X.shape[0]
+    ind = np.arange(n_samples)
+    np.random.shuffle(ind)
+    ind = ind[:200]
+    X, y = X[ind], y[ind]
+    n_samples = X.shape[0]
+
     ridge_loo = RidgeLOO(fit_intercept=False)
     ridge = Ridge(fit_intercept=False)
 
@@ -97,11 +103,17 @@ def test_ridge_loo():
         errors2.append(error)
         values2.append(value)
 
+    # check that efficient and brute-force LOO give same results
     assert_almost_equal(errors, errors2)
     assert_almost_equal(values, values2)
 
+    # check best alpha
     ridge_loo.fit(X, y)
-    assert_equal(ridge_loo.best_alpha, 10.0)
+    assert_equal(ridge_loo.best_alpha, 0.1)
+
+    # check that we get same best alpha with sample weights
+    ridge_loo.fit(X, y, sample_weight=np.ones(n_samples))
+    assert_equal(ridge_loo.best_alpha, 0.1)
 
     # simulate several responses
     Y = np.vstack((y,y)).T
@@ -110,6 +122,7 @@ def test_ridge_loo():
     Y_pred = ridge_loo.predict(X)
     ridge_loo.fit(X, y)
     y_pred = ridge_loo.predict(X)
+
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
                               Y_pred)
 
