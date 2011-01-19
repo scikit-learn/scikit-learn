@@ -174,7 +174,7 @@ class KFold(object):
         All the folds have size trunc(n/k), the last one has the complementary
         """
         assert k>0, ('cannot have k below 1')
-        assert k<n, ('cannot have k=%d greater than the number '
+        assert k<=n, ('cannot have k=%d greater than the number '
                             'of samples: %d'% (k, n))
         self.n = n
         self.k = k
@@ -251,7 +251,7 @@ class StratifiedKFold(object):
         y = np.asanyarray(y)
         n = y.shape[0]
         assert k>0, ValueError('cannot have k below 1')
-        assert k<n, ValueError('cannot have k=%d greater than the number '
+        assert k<=n, ValueError('cannot have k=%d greater than the number '
                                'of samples %d' % (k, n))
         _, y_sorted = unique(y, return_inverse=True)
         assert k <= np.min(np.bincount(y_sorted))
