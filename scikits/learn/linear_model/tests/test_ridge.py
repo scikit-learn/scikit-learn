@@ -90,7 +90,7 @@ def test_ridge_loo():
     errors, c = ridge_loo._errors(v, Q, y, 1.0)
     values, c = ridge_loo._values(K, v, Q, y, 1.0)
 
-    # brute-force LOO
+    # brute-force LOO: remove one example at a time
     errors2 = []
     values2 = []
     for i in range(n_samples):
@@ -99,7 +99,7 @@ def test_ridge_loo():
         y_new = y[sel]
         ridge.fit(X_new, y_new)
         value = ridge.predict([X[i]])[0]
-        error = y[i] - value
+        error = (y[i] - value) ** 2
         errors2.append(error)
         values2.append(value)
 
@@ -110,6 +110,12 @@ def test_ridge_loo():
     # check best alpha
     ridge_loo.fit(X, y)
     assert_equal(ridge_loo.best_alpha, 0.1)
+
+    # check that we get same best alpha with custom loss_func
+    ridge_loo2 = RidgeLOO(fit_intercept=False, loss_func=mean_square_error)
+    ridge_loo2.fit(X, y)
+    assert_equal(ridge_loo2.best_alpha, 0.1)
+
 
     # check that we get same best alpha with sample weights
     ridge_loo.fit(X, y, sample_weight=np.ones(n_samples))

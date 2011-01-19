@@ -115,10 +115,13 @@ class RidgeLOO(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=False):
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=False,
+                       score_func=None, loss_func=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.intercept_ = 0
+        self.score_func = score_func
+        self.loss_func = loss_func
 
     def _pre_compute(self, X, y):
         K = np.dot(X, X.T)
@@ -131,7 +134,7 @@ class RidgeLOO(LinearModel):
         G_diag = np.diag(G)
         # handle case when y is 2-d
         G_diag = G_diag if len(y.shape) == 1 else G_diag[:,np.newaxis]
-        return c / G_diag, c
+        return (c / G_diag) ** 2, c
 
     def _values(self, K, v, Q, y, alpha):
         n_samples = y.shape[0]
@@ -173,12 +176,23 @@ class RidgeLOO(LinearModel):
         M = np.zeros((n_samples*len(y.shape), len(self.alphas)))
         C = []
 
+        error = self.score_func is None and self.loss_func is None
+
         for i, alpha in enumerate(self.alphas):
-            out, c = self._errors(v, Q, y, alpha)
+            if error:
+                out, c = self._errors(v, Q, y, alpha)
+            else:
+                out, c = self._values(K, v, Q, y, alpha)
             M[:,i] = out.ravel()
             C.append(c)
 
-        best = M.mean(axis=0).argmin()
+        if error:
+            best = M.mean(axis=0).argmin()
+        else:
+            func = self.score_func if self.score_func else self.loss_func
+            out = [func(y.ravel(), M[:,i]) for i in range(len(self.alphas))]
+            best = np.argmax(out) if self.score_func else np.argmin(out)
+
         self.best_alpha = self.alphas[best]
         self.dual_coef_ = C[best]
         self.coef_ = np.dot(X.T, self.dual_coef_)
