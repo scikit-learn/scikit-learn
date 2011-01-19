@@ -42,7 +42,7 @@ y = np.arange(10)/2
 
 def test_kfold():
     # Check that errors are raise if there is not enough samples
-    nose.tools.assert_raises(AssertionError, cross_val.KFold, 3, 3)
+    nose.tools.assert_raises(AssertionError, cross_val.KFold, 3, 4)
     y = [0, 0, 1, 1, 2]
     nose.tools.assert_raises(AssertionError, cross_val.StratifiedKFold, y, 3)
 
@@ -74,10 +74,10 @@ def test_permutation_score():
                                                     rng=0)
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
-    
+
     # set random y
     y = np.mod(np.arange(len(y)), 3)
-    
+
     score, scores, pvalue = permutation_test_score(svm, X, y,
                                                    zero_one_score, cv)
     assert_true(score < 0.5)
