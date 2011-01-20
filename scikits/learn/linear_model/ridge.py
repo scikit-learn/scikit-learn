@@ -136,12 +136,14 @@ class RidgeClassifier(Ridge):
         return self.lb.inverse_transform(Y)
 
 
-class RidgeLOO(LinearModel):
-    """Ridge regression with built-in efficient
-       Leave-One-Out cross-validation
+class _RidgeLOO(LinearModel):
+    """
+    Ridge regression with built-in efficient Leave-One-Out cross-validation.
 
-    Explanations
-    ------------
+    This class is not intended to be used directly. Use RidgeCV instead.
+
+    Notes
+    -----
 
     We want to solve (K + alpha*Id)c = y,
     where K = X X^T is the kernel matrix.
@@ -268,6 +270,11 @@ class RidgeLOO(LinearModel):
         return safe_sparse_dot(X, self.coef_) + self.intercept_
 
 class RidgeCV(LinearModel):
+    """
+    Ridge regression with built-in cross-validation.
+
+    Defaults to Leave-One-Out, which is handled efficiently.
+    """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
                        score_func=None, loss_func=None):
@@ -277,9 +284,29 @@ class RidgeCV(LinearModel):
         self.loss_func = loss_func
 
     def fit(self, X, y, sample_weight=1.0, cv=None):
+        """Fit Ridge regression model
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+            Training data
+
+        y : numpy array of shape [n_samples] or [n_samples, n_responses]
+            Target values
+
+        sample_weight : float or numpy array of shape [n_samples]
+            Sample weight
+
+        cv : cross-validation generator, optional
+            If None, Leave-One-Out will be used.
+
+        Returns
+        -------
+        self : Returns self.
+        """
         if cv is None:
-            cv_gen = RidgeLOO(self.alphas, self.fit_intercept,
-                                    self.score_func, self.loss_func)
+            cv_gen = _RidgeLOO(self.alphas, self.fit_intercept,
+                               self.score_func, self.loss_func)
             cv_gen.fit(X, y, sample_weight)
             self.coef_ = cv_gen.coef_
             self.intercept_ = cv_gen.intercept_
@@ -325,8 +352,8 @@ class RidgeClassifierCV(RidgeCV):
         self.lb = LabelBinarizer()
         Y = self.lb.fit_transform(y)
         RidgeCV.fit(self, X, Y,
-                     sample_weight=sample_weight * sample_weight2,
-                     cv=cv)
+                    sample_weight=sample_weight * sample_weight2,
+                    cv=cv)
         return self
 
     def decision_function(self, X):

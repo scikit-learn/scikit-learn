@@ -10,7 +10,7 @@ from scikits.learn.metrics import mean_square_error
 from scikits.learn.linear_model.base import LinearRegression
 
 from scikits.learn.linear_model.ridge import Ridge
-from scikits.learn.linear_model.ridge import RidgeLOO
+from scikits.learn.linear_model.ridge import _RidgeLOO
 from scikits.learn.linear_model.ridge import RidgeCV
 from scikits.learn.linear_model.ridge import RidgeClassifier
 from scikits.learn.linear_model.ridge import RidgeClassifierCV
@@ -111,7 +111,7 @@ def _test_ridge_loo(filter_):
 
     ret = []
 
-    ridge_loo = RidgeLOO(fit_intercept=False)
+    ridge_loo = _RidgeLOO(fit_intercept=False)
     ridge = Ridge(fit_intercept=False)
 
     # efficient LOO
@@ -142,7 +142,7 @@ def _test_ridge_loo(filter_):
     ret.append(best_alpha)
 
     # check that we get same best alpha with custom loss_func
-    ridge_loo2 = RidgeLOO(fit_intercept=False, loss_func=mean_square_error)
+    ridge_loo2 = _RidgeLOO(fit_intercept=False, loss_func=mean_square_error)
     ridge_loo2.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_loo2.best_alpha, best_alpha)
 
