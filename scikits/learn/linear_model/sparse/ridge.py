@@ -8,6 +8,7 @@ from scipy import linalg
 from scipy.sparse import linalg as sp_linalg
 
 from ..base import LinearModel
+from ..ridge import RidgeLOO as DenseRidgeLOO
 from ...preprocessing import LabelBinarizer
 
 class Ridge(LinearModel):
@@ -26,6 +27,7 @@ class Ridge(LinearModel):
                 raise ValueError, "Failed with error code %d" % error
             return sol
         else:
+            # we are working with dense symmetric positive A
             return linalg.solve(A.todense(), b, sym_pos=True)
 
     def fit(self, X, y):
@@ -47,6 +49,26 @@ class Ridge(LinearModel):
         # FIXME: handle fit_intercept
 
         return self
+
+    def predict(self, X):
+        X = sp.csr_matrix(X)
+        return X * self.coef_ + self.intercept_
+
+class RidgeLOO(DenseRidgeLOO):
+
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=False,
+                       score_func=None, loss_func=None):
+        self.alphas = alphas
+        self.fit_intercept = False # True not supported yet
+        self.score_func = score_func
+        self.loss_func = loss_func
+
+    def _pre_compute(self, X, y):
+        X = sp.csr_matrix(X)
+        # the kernel matrix is dense
+        K = (X * X.T).toarray()
+        v, Q = linalg.eigh(K)
+        return K, v, Q
 
     def predict(self, X):
         X = sp.csr_matrix(X)

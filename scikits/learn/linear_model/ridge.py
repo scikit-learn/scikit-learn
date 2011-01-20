@@ -79,6 +79,9 @@ class Ridge(LinearModel):
         self._set_intercept(Xmean, ymean)
         return self
 
+# Author: Mathieu Blondel <mathieu@mblondel.org>
+# License: Simplified BSD
+
 class RidgeLOO(LinearModel):
     """Ridge regression with built-in efficient
        Leave-One-Out cross-validation
