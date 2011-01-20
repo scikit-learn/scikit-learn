@@ -118,6 +118,13 @@ by typing the following command::
 
     sudo port install py26-scikits-learn
 
+NetBSD
+------
+
+scikits.learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
+
+    http://pkgsrc.se/wip/py-scikits_learn
+
 .. _install_bleeding_edge:
 
 Bleeding Edge
