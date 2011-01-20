@@ -11,9 +11,13 @@ Generalized Linear models.
 # License: BSD Style.
 
 import numpy as np
+import scipy.sparse as sp
 
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
+from ..utils.extmath import safe_sparse_dot
+from ..utils import safe_asanyarray
+
 
 ###
 ### TODO: intercept for all models
@@ -39,8 +43,8 @@ class LinearModel(BaseEstimator, RegressorMixin):
         C : array, shape = [n_samples]
             Returns predicted values.
         """
-        X = np.asanyarray(X)
-        return np.dot(X, self.coef_) + self.intercept_
+        X = safe_asanyarray(X)
+        return safe_sparse_dot(X, self.coef_) + self.intercept_
 
     @staticmethod
     def _center_data(X, y, fit_intercept):
@@ -50,9 +54,12 @@ class LinearModel(BaseEstimator, RegressorMixin):
         centered.
         """
         if fit_intercept:
-            Xmean = X.mean(axis=0)
+            if sp.issparse(X):
+                Xmean = np.zeros(X.shape[1])
+            else:
+                Xmean = X.mean(axis=0)
+                X = X - Xmean
             ymean = y.mean()
-            X = X - Xmean
             y = y - ymean
         else:
             Xmean = np.zeros(X.shape[1])
