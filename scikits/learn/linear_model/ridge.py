@@ -182,9 +182,9 @@ class RidgeLOO(LinearModel):
 
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = self._errors(v, Q, y, alpha)
+                out, c = self._errors(v, Q, y, sample_weight * alpha)
             else:
-                out, c = self._values(K, v, Q, y, alpha)
+                out, c = self._values(K, v, Q, y, sample_weight * alpha)
             M[:,i] = out.ravel()
             C.append(c)
 
