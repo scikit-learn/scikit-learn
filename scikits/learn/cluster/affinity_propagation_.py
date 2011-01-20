@@ -138,7 +138,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         # Refine the final set of exemplars and clusters and return results
         for k in range(K):
             ii = np.where(c==k)[0]
-            j = np.argmax(np.sum(S[ii, ii], axis=0))
+            j = np.argmax(np.sum(S[ii[:,np.newaxis], ii], axis=0))
             I[k] = ii[j]
 
         c = np.argmax(S[:, I], axis=1)
