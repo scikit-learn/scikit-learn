@@ -5,7 +5,7 @@ Author : Vincent Michel, 2010
 """
 
 import numpy as np
-from scikits.learn.cluster import HierarchicalClustering, Ward, ward_tree
+from scikits.learn.cluster import Ward, ward_tree
 from scikits.learn.feature_extraction.image import img_to_graph
 
 
@@ -52,32 +52,23 @@ def test_height_ward_tree():
     assert(np.sum(np.argsort(height)[100:] - np.arange(n_nodes)[100:]) == 0)
 
 
-def test_hierarchical_clustering():
-    """
-    Check that we obtain the correct number of clusters with hierarchical
-    clustering.
-    """
-    np.random.seed(0)
-    mask = np.ones([10, 10], dtype=np.bool)
-    X = np.random.randn(50, 100)
-    adjacency_matrix = img_to_graph(mask, mask)
-    clustering = HierarchicalClustering(n_clusters=10, tree_func=ward_tree)
-    clustering.fit(X.T, adjacency_matrix)
-    assert(np.size(np.unique(clustering.label_)) == 10)
-
-
 def test_ward_clustering():
     """
-    Check that we obtain the correct number of clusters with ward clustering.
+    Check that we obtain the correct number of clusters with Ward clustering.
     """
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
     adjacency_matrix = img_to_graph(mask, mask)
-    clustering = Ward(n_clusters=10)
+    clustering = Ward(10)
     clustering.fit(X.T, adjacency_matrix)
-    assert(np.size(np.unique(clustering.label_)) == 10)
+    assert(np.size(np.unique(clustering.labels_)) == 10)
 
+    Xred = clustering.transform(X.T)
+    Xfull = clustering.inverse_transform(Xred)
+    assert(np.unique(Xfull[0]).size == 10)
+    Xfull = clustering.inverse_transform(Xred[:,0])
+    assert(np.unique(Xfull).size == 10)
 
 if __name__ == '__main__':
     import nose

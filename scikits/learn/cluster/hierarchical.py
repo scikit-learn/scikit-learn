@@ -5,14 +5,17 @@ data. Currently, only Ward's algorithm is implemented.
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort
 License: BSD 3 clause
 """
-import numpy as np
 import heapq as heapq
+import numpy as np
 from scipy import sparse
-import _inertia
+
+from scikits.learn.base import BaseEstimator
 from scikits.learn.utils._csgraph import cs_graph_components
 from scikits.learn.cluster import AgglomerationTransformMixin
 
-###########################################################################
+import _inertia
+
+###############################################################################
 # Ward's algorithm
 
 def ward_tree(X, adjacency_matrix=None):
@@ -63,8 +66,8 @@ def ward_tree(X, adjacency_matrix=None):
 
     # Adjacency matrix
     if adjacency_matrix is None:
-        adjacency_matrix = np.ones([X.shape[0], X.shape[0]])
-        adjacency_matrix[range(X.shape[0]), range(X.shape[0])] = 0
+        adjacency_matrix = np.ones([n_samples, n_samples])
+        adjacency_matrix.flat[::n_samples+1] = 0 # set diagonal to 0
         adjacency_matrix = sparse.lil_matrix(adjacency_matrix)
         n_nodes = 2 * n_samples - 1
     else:
@@ -149,7 +152,7 @@ def ward_tree(X, adjacency_matrix=None):
     return parent, children, heights, A
 
 
-###########################################################################
+###############################################################################
 # Functions for cutting  hierarchical clustering tree
 
 def _hc_get_descendent(ind, children):
@@ -196,7 +199,7 @@ def _hc_cut(k, parent, children, heights):
             3 times in the array.
             The n_nodes is equal at  (2*n_samples - 1), and takes into
             account the nb_samples leaves, and the unique root.
-           
+
     children : list of pairs. Lenght of n_nodes
                list of the children of each nodes.
                Leaves of the tree have empty list of children.
@@ -233,7 +236,7 @@ def _hc_cut(k, parent, children, heights):
     return label, active_nodes
 
 
-###########################################################################
+###############################################################################
 # Display functions for hierarchical clustering
 
 def plot_dendrogram(children, parent, heights, ax=None, active_nodes=None,
@@ -263,14 +266,14 @@ def plot_dendrogram(children, parent, heights, ax=None, active_nodes=None,
 
     ax : a pylab.axes instance (defaut is None).
         If None, create a new instance.
-    
+
     active_nodes : list of int (defaut is None).
                    If active_nodes is not None, use it to add color to the
                    tree. List of nodes use for labeling.
 
     nodes_cmap : pylab color map (defaut is None and thus setted to pl.cm.jet)
                  Color maps used for plotting the active nodes.
-                 
+
     weights_nodes : list of float (defaut is None)
                    If active_nodes and weights_nodes are not None, use
                     weights_nodes to plot the branches corresponding to the
@@ -283,7 +286,6 @@ def plot_dendrogram(children, parent, heights, ax=None, active_nodes=None,
     lx_, ly_, colors_ = mk_dendogram(children, parent, heights, cmap_node,
                         active_nodes, weights_nodes)
     return _plot_graph(lx_, ly_, colors_, ax=ax, **kwargs)
-   
 
 
 def _mk_dendogram(children, parent, heights, cmap_node,
@@ -316,7 +318,7 @@ def _mk_dendogram(children, parent, heights, cmap_node,
 
     nodes_cmap : pylab color map (defaut is None and thus setted to pl.cm.jet)
                  Color maps used for plotting the active nodes.
-                 
+
     weights_nodes : list of float (defaut is None)
                    If active_nodes and weights_nodes are not None, use
                     weights_nodes to plot the branches corresponding to the
@@ -326,9 +328,9 @@ def _mk_dendogram(children, parent, heights, cmap_node,
     ------
     A tuple (lx_, ly_, color_) that gives the x coordinates (lx_), y
     coordinates (ly_) and color (color_) for the different nodes of the
-    dendrogram. 
+    dendrogram.
     """
-   
+
     # Compute the coordinates of the tree
     dax = np.zeros(len(children))
     dax[-1] = 0.5 * n_leaves
@@ -380,45 +382,45 @@ def _mk_dendogram(children, parent, heights, cmap_node,
             color_.append(cmap_nodes(0.5))
 
     return (lx_, ly_, color_)
-    
+
 
 def _plot_graph(lx_, ly_, colors_, ax=None, **kwargs):
-  """
-  Function that plot a dendrogram.
-  
-  Parameters
-  ----------
-  lx_ : lists
-        Defines the x coordinates for the different nodes of the dendrogram.
-        
-  ly_ : lists
-        Defines the y coordinates for the different nodes of the dendrogram.
-        
-  color_ : lists
-        Defines the color for the different nodes of the dendrogram.
+    """
+    Function that plots a dendrogram.
 
-  ax : a pylab.axes instance (defaut is None).
-      If None, create a new instance.
+    Parameters
+    ----------
+    lx_ : lists
+    Defines the x coordinates for the different nodes of the dendrogram.
 
-  Return
-  ------
-  a pylab.scatter instance
-  """
-  
-  import pylab as pl
-  if ax is None:
-    ax = pl.gca()
-  line_segments = pl.matplotlib.collections.LineCollection(zip(lx_, ly_),
+    ly_ : lists
+    Defines the y coordinates for the different nodes of the dendrogram.
+
+    color_ : lists
+    Defines the color for the different nodes of the dendrogram.
+
+    ax : a pylab.axes instance (defaut is None).
+    If None, create a new instance.
+
+    Return
+    ------
+    a pylab.scatter instance
+    """
+
+    import pylab as pl
+    if ax is None:
+        ax = pl.gca()
+    line_segments = pl.matplotlib.collections.LineCollection(zip(lx_, ly_),
                                           color=color_[1:], **kwargs)
-  ax.add_collection(line_segments)
-  scatter = ax.scatter(x_, y_, c=color_[1:], **kwargs)
-  return scatter
+    ax.add_collection(line_segments)
+    scatter = ax.scatter(x_, y_, c=color_[1:], **kwargs)
+    return scatter
 
 
-##############################################################################
+###############################################################################
 # Class for Ward hierarchical clustering
 
-class Ward(AgglomerationTransformMixin):
+class Ward(BaseEstimator, AgglomerationTransformMixin):
     """
     Class for Ward hierarchical clustering: constructs a tree and cuts it.
 
@@ -510,5 +512,3 @@ class Ward(AgglomerationTransformMixin):
         self.labels_, self.active_nodes_ = _hc_cut(self.k,
                                 self.parent_, self.children_, self.heights_)
         return self
-
-

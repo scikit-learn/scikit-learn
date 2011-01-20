@@ -2,19 +2,17 @@
 Feature agglomeration. Classes and functions for performing feature
 agglomeration.
 """
-# Author: V. Michel
+# Author: V. Michel, A. Gramfort
 # License: BSD 3 clause
 
 import numpy as np
-from scikits.learn.base import BaseEstimator
 
+###############################################################################
+# Mixin class for feature agglomeration.
 
-######################################################################
-# General class for feature agglomeration.
-
-class AgglomerationTransformMixin(BaseEstimator):
+class AgglomerationTransformMixin(object):
     """
-    Class for feature agglomeration
+    A Mixin class for feature agglomeration
     """
 
     def transform(self, X, pooling_func=np.mean):
@@ -45,13 +43,13 @@ class AgglomerationTransformMixin(BaseEstimator):
         Parameters
         ----------
         Xred : array of size k
-        The values to be assigned to each cluster of samples
+            The values to be assigned to each cluster of samples
 
         Return
         ------
         X : array of size nb_samples
-        A vector of size nb_samples with the values of Xred assigned to each
-        of the cluster of samples.
+            A vector of size nb_samples with the values of Xred assigned to
+            each of the cluster of samples.
         """
         if np.size((Xred.shape)) == 1:
             X = np.zeros([self.labels_.shape[0]])
