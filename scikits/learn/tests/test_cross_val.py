@@ -42,7 +42,7 @@ y = np.arange(10)/2
 
 def test_kfold():
     # Check that errors are raise if there is not enough samples
-    nose.tools.assert_raises(AssertionError, cross_val.KFold, 3, 3)
+    nose.tools.assert_raises(AssertionError, cross_val.KFold, 3, 4)
     y = [0, 0, 1, 1, 2]
     nose.tools.assert_raises(AssertionError, cross_val.StratifiedKFold, y, 3)
 
@@ -74,11 +74,27 @@ def test_permutation_score():
                                                     rng=0)
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
-    
+
     # set random y
     y = np.mod(np.arange(len(y)), 3)
-    
+
     score, scores, pvalue = permutation_test_score(svm, X, y,
                                                    zero_one_score, cv)
     assert_true(score < 0.5)
     assert_true(pvalue > 0.4)
+
+
+def test_cross_val_generator_with_indices():
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    y = np.array([1, 1, 2, 2])
+    labels = np.array([1, 2, 3, 4])
+    loo = cross_val.LeaveOneOut(4, indices=True)
+    lpo = cross_val.LeavePOut(4, 2, indices=True)
+    kf = cross_val.KFold(4, 2, indices=True)
+    skf = cross_val.StratifiedKFold(y, 2, indices=True)
+    lolo = cross_val.LeaveOneLabelOut(labels, indices=True)
+    lopo = cross_val.LeavePLabelOut(labels, 2, indices=True)
+    for cv in [loo, lpo, kf, skf, lolo, lopo]:
+        for train, test in cv:
+            X_train, X_test = X[train], X[test]
+            y_train, y_test = y[train], y[test]
