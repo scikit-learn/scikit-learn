@@ -74,12 +74,12 @@ class SelfOrganizingMap(BaseEstimator):
         A good ratio, nb X = 2 or 3 x nbiter"""
         X = np.asanyarray(X)
         self._set_params(**params)
-        self.dim = X.shape[-1] # XXX : could we avoid storing dim in self?
         self.neurons_ = None
+        dim = X.shape[-1]
 
         # init neurons_
         if self.init == 'random':
-            self.neurons_ = np.random.rand(self.size, self.size, self.dim)
+            self.neurons_ = np.random.rand(self.size, self.size, dim)
         elif self.init == 'matrix':
             # XXX : untested
             assert len(self.size.shape) == 3
@@ -87,23 +87,23 @@ class SelfOrganizingMap(BaseEstimator):
             self.size = self.neurons_.shape[0]
 
         # iteration loop
-        self.iteration = 0 # XXX : could we avoid storing iteration in self?
+        iteration = 0 
         indices = np.random.random_integers(0, len(X)-1, self.n_iterations)
         for i in indices:
             l = self.n_iterations / self.size
-            lr = self.learning_rate * math.exp(-self.iteration / l)
-            self._learn_vector(X[i], lr)
-            self.iteration += 1
+            lr = self.learning_rate * math.exp(-iteration / l)
+            self._learn_vector(X[i], lr, iteration)
+            iteration += 1
             if self.callback != None:
-                self.callback(self, self.iteration)
+                self.callback(self, iteration)
 
         # assign labels
         self.labels_ = [self.bmu(x) for x in X]
         return self
 
-    def _learn_vector(self, vector, lr):
+    def _learn_vector(self, vector, lr, iteration):
         winner = self.bmu(vector)
-        radius = self.radius_of_the_neighbordhood()
+        radius = self.radius_of_the_neighbordhood(iteration)
         for n in self.neurons_in_radius(winner, radius):
             nx, ny = n
             wt = self.neurons_[nx][ny]
@@ -129,14 +129,17 @@ class SelfOrganizingMap(BaseEstimator):
 
     def neurons_in_radius(self, winner, radius):
         wi, wj = winner
-        r = []
-        # XXX : should be vertorized with numpy
+        x = y = np.arange(self.size)
+        xx, yy = np.meshgrid(x, y)
+        v = np.sqrt((xx - wi)**2 + (yy - wj)**2) < radius
+        return np.c_[np.nonzero(v)]
+
         for i in range(self.neurons_.shape[0]):
             for j in range(self.neurons_.shape[1]):
                 if math.sqrt((i - wi)**2 + (j - wj)**2) < radius:
                     r.append((i, j))
         return r
 
-    def radius_of_the_neighbordhood(self):
+    def radius_of_the_neighbordhood(self, iteration):
         l = self.n_iterations / self.size
-        return self.size * math.exp(-self.iteration / l)
+        return self.size * math.exp(-iteration / l)
