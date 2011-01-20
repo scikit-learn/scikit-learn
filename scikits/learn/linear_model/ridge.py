@@ -115,7 +115,7 @@ class RidgeLOO(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=False,
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
                        score_func=None, loss_func=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
