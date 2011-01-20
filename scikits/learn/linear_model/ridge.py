@@ -8,6 +8,8 @@ from scipy import linalg
 from .base import LinearModel
 from ..utils.extmath import safe_sparse_dot
 from ..preprocessing import LabelBinarizer
+from ..grid_search import GridSearchCV
+from ..metrics import mean_square_error
 
 class Ridge(LinearModel):
     """
@@ -215,6 +217,32 @@ class RidgeLOO(LinearModel):
 
     def predict(self, X):
         return safe_sparse_dot(X, self.coef_) + self.intercept_
+
+class RidgeCV(LinearModel):
+
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
+                       score_func=None, loss_func=None):
+        self.alphas = alphas
+        self.fit_intercept = fit_intercept
+        self.score_func = score_func
+        self.loss_func = loss_func
+
+    def fit(self, X, y, sample_weight=1.0, cv=None):
+        if cv is None:
+            cv_gen = RidgeLOO(self.alphas, self.fit_intercept,
+                                    self.score_func, self.loss_func)
+            cv_gen.fit(X, y, sample_weight)
+            self.coef_ = cv_gen.coef_
+            self.intercept_ = cv_gen.intercept_
+        else:
+            parameters = {'alpha': self.alphas}
+            self.cv_gen = GridSearchCV(svr, parameters)
+            self.cv_gen.fit(X, y, cv)
+            # FIXME: need to implement sample_weight in Ridge
+            self.coef_ = cv_gen.best_estimator.coef_
+            self.intercept_ = cv_gen.best_estimator.intercept_
+
+        return self
 
 class RidgeClassifierLOO(RidgeLOO):
 

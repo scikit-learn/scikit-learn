@@ -11,10 +11,16 @@ from scikits.learn.linear_model.base import LinearRegression
 
 from scikits.learn.linear_model.ridge import Ridge
 from scikits.learn.linear_model.ridge import RidgeLOO
+from scikits.learn.linear_model.ridge import RidgeCV
+
+from scikits.learn.cross_val import KFold
 
 diabetes = datasets.load_diabetes()
 
 np.random.seed(0)
+
+DENSE_FILTER = lambda X: X
+SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
 def test_ridge():
     """Ridge regression convergence test using score
@@ -149,9 +155,32 @@ def _test_ridge_loo(filter_):
 
 def test_ridge_loo():
     # test dense matrix
-    ret_dense = _test_ridge_loo(lambda X: X)
+    ret_dense = _test_ridge_loo(DENSE_FILTER)
     # test sparse matrix
-    ret_sp = _test_ridge_loo(lambda X: sp.csr_matrix(X))
+    ret_sp = _test_ridge_loo(SPARSE_FILTER)
     # test that the outputs are the same
     assert_array_equal(ret_dense, ret_sp)
+
+def _test_ridge_cv(filter_):
+    X, y = diabetes.data, diabetes.target
+    n_samples = X.shape[0]
+    ind = np.arange(n_samples)
+    np.random.shuffle(ind)
+    ind = ind[:200]
+    X, y = X[ind], y[ind]
+    n_samples = X.shape[0]
+
+    ridge_cv = RidgeCV()
+    ridge_cv.fit(filter_(X), y)
+    ridge_cv.predict(filter_(X))
+
+    cv = KFold(n_samples, 5)
+    ridge_cv.fit(filter_(X), y)
+    ridge_cv.predict(filter_(X))
+
+def test_ridge_cv():
+    # test dense matrix
+    ret_dense = _test_ridge_cv(DENSE_FILTER)
+    # test sparse matrix
+    ret_sp = _test_ridge_cv(SPARSE_FILTER)
 
