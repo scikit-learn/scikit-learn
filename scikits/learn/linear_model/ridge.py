@@ -107,7 +107,7 @@ class RidgeLOO(LinearModel):
     Let looe be the vector of prediction errors for each example
     when the model was fitted with all examples but this example.
 
-    looe = c / diag(G)
+    looe = y - loov = c / diag(G)
 
     Reference
     ---------
@@ -119,7 +119,6 @@ class RidgeLOO(LinearModel):
                        score_func=None, loss_func=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.intercept_ = 0
         self.score_func = score_func
         self.loss_func = loss_func
 
@@ -172,6 +171,9 @@ class RidgeLOO(LinearModel):
         self : returns an instance of self.
         """
         n_samples = X.shape[0]
+
+        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+
         K, v, Q = self._pre_compute(X, y)
         M = np.zeros((n_samples*len(y.shape), len(self.alphas)))
         C = []
@@ -196,6 +198,8 @@ class RidgeLOO(LinearModel):
         self.best_alpha = self.alphas[best]
         self.dual_coef_ = C[best]
         self.coef_ = np.dot(X.T, self.dual_coef_)
+
+        self._set_intercept(Xmean, ymean)
 
         return self
 
