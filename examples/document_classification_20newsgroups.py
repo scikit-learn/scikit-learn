@@ -41,7 +41,7 @@ import sys
 
 from scikits.learn.datasets import load_files
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
-from scikits.learn.linear_model.sparse import RidgeClassifier
+from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn import metrics
