@@ -39,7 +39,6 @@ def test_ridge():
     ridge.fit(X, y)
     assert ridge.score(X, y) > .9
 
-
 def test_toy_ridge_object():
     """Test BayesianRegression ridge classifier
 
@@ -51,6 +50,17 @@ def test_toy_ridge_object():
     clf.fit(X, Y)
     X_test = [[1], [2], [3], [4]]
     assert_almost_equal(clf.predict(X_test), [1., 2, 3, 4])
+
+    assert_equal(len(clf.coef_.shape), 1)
+    assert_equal(type(clf.intercept_), np.float64)
+
+    Y = np.vstack((Y,Y)).T
+
+    clf.fit(X, Y)
+    X_test = [[1], [2], [3], [4]]
+
+    assert_equal(len(clf.coef_.shape), 2)
+    assert_equal(type(clf.intercept_), np.ndarray)
 
 
 def test_ridge_vs_lstsq():
