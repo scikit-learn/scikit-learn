@@ -12,10 +12,24 @@ from scikits.learn.linear_model.base import LinearRegression
 from scikits.learn.linear_model.ridge import Ridge
 from scikits.learn.linear_model.ridge import RidgeLOO
 from scikits.learn.linear_model.ridge import RidgeCV
+from scikits.learn.linear_model.ridge import RidgeClassifier
+from scikits.learn.linear_model.ridge import RidgeClassifierLOO
+
 
 from scikits.learn.cross_val import KFold
 
 diabetes = datasets.load_diabetes()
+
+X_diabetes, y_diabetes = diabetes.data, diabetes.target
+ind = np.arange(X_diabetes.shape[0])
+np.random.shuffle(ind)
+ind = ind[:200]
+X_diabetes, y_diabetes = X_diabetes[ind], y_diabetes[ind]
+
+iris = datasets.load_iris()
+
+X_iris = sp.csr_matrix(iris.data)
+y_iris = iris.target
 
 np.random.seed(0)
 
@@ -93,13 +107,7 @@ def test_ridge_vs_lstsq():
 
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
-    X, y = diabetes.data, diabetes.target
-    n_samples = X.shape[0]
-    ind = np.arange(n_samples)
-    np.random.shuffle(ind)
-    ind = ind[:200]
-    X, y = X[ind], y[ind]
-    n_samples = X.shape[0]
+    n_samples = X_diabetes.shape[0]
 
     ret = []
 
@@ -107,20 +115,20 @@ def _test_ridge_loo(filter_):
     ridge = Ridge(fit_intercept=False)
 
     # efficient LOO
-    K, v, Q = ridge_loo._pre_compute(X, y)
-    errors, c = ridge_loo._errors(v, Q, y, 1.0)
-    values, c = ridge_loo._values(K, v, Q, y, 1.0)
+    K, v, Q = ridge_loo._pre_compute(X_diabetes, y_diabetes)
+    errors, c = ridge_loo._errors(v, Q, y_diabetes, 1.0)
+    values, c = ridge_loo._values(K, v, Q, y_diabetes, 1.0)
 
     # brute-force LOO: remove one example at a time
     errors2 = []
     values2 = []
     for i in range(n_samples):
         sel = np.arange(n_samples) != i
-        X_new = X[sel]
-        y_new = y[sel]
+        X_new = X_diabetes[sel]
+        y_new = y_diabetes[sel]
         ridge.fit(X_new, y_new)
-        value = ridge.predict([X[i]])[0]
-        error = (y[i] - value) ** 2
+        value = ridge.predict([X_diabetes[i]])[0]
+        error = (y_diabetes[i] - value) ** 2
         errors2.append(error)
         values2.append(value)
 
@@ -129,58 +137,79 @@ def _test_ridge_loo(filter_):
     assert_almost_equal(values, values2)
 
     # check best alpha
-    ridge_loo.fit(filter_(X), y)
+    ridge_loo.fit(filter_(X_diabetes), y_diabetes)
     best_alpha = ridge_loo.best_alpha
     ret.append(best_alpha)
 
     # check that we get same best alpha with custom loss_func
     ridge_loo2 = RidgeLOO(fit_intercept=False, loss_func=mean_square_error)
-    ridge_loo2.fit(filter_(X), y)
+    ridge_loo2.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_loo2.best_alpha, best_alpha)
 
     # check that we get same best alpha with sample weights
-    ridge_loo.fit(filter_(X), y, sample_weight=np.ones(n_samples))
+    ridge_loo.fit(filter_(X_diabetes), y_diabetes,
+                  sample_weight=np.ones(n_samples))
     assert_equal(ridge_loo.best_alpha, best_alpha)
 
     # simulate several responses
-    Y = np.vstack((y,y)).T
+    Y = np.vstack((y_diabetes,y_diabetes)).T
 
-    ridge_loo.fit(filter_(X), Y)
-    Y_pred = ridge_loo.predict(filter_(X))
-    ridge_loo.fit(filter_(X), y)
-    y_pred = ridge_loo.predict(filter_(X))
+    ridge_loo.fit(filter_(X_diabetes), Y)
+    Y_pred = ridge_loo.predict(filter_(X_diabetes))
+    ridge_loo.fit(filter_(X_diabetes), y_diabetes)
+    y_pred = ridge_loo.predict(filter_(X_diabetes))
 
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
                               Y_pred)
 
-def test_ridge_loo():
-    # test dense matrix
-    ret_dense = _test_ridge_loo(DENSE_FILTER)
-    # test sparse matrix
-    ret_sp = _test_ridge_loo(SPARSE_FILTER)
-    # test that the outputs are the same
-    assert_array_equal(ret_dense, ret_sp)
+    return ret
 
 def _test_ridge_cv(filter_):
-    X, y = diabetes.data, diabetes.target
-    n_samples = X.shape[0]
-    ind = np.arange(n_samples)
-    np.random.shuffle(ind)
-    ind = ind[:200]
-    X, y = X[ind], y[ind]
-    n_samples = X.shape[0]
+    n_samples = X_diabetes.shape[0]
 
     ridge_cv = RidgeCV()
-    ridge_cv.fit(filter_(X), y)
-    ridge_cv.predict(filter_(X))
+    ridge_cv.fit(filter_(X_diabetes), y_diabetes)
+    ridge_cv.predict(filter_(X_diabetes))
 
     cv = KFold(n_samples, 5)
-    ridge_cv.fit(filter_(X), y)
-    ridge_cv.predict(filter_(X))
+    ridge_cv.fit(filter_(X_diabetes), y_diabetes)
+    ridge_cv.predict(filter_(X_diabetes))
 
-def test_ridge_cv():
-    # test dense matrix
-    ret_dense = _test_ridge_cv(DENSE_FILTER)
-    # test sparse matrix
-    ret_sp = _test_ridge_cv(SPARSE_FILTER)
+def _test_ridge_diabetes(filter_):
+    ridge = Ridge(fit_intercept=False)
+    ridge.fit(filter_(X_diabetes), y_diabetes)
+    return ridge.score(filter_(X_diabetes), y_diabetes)
+
+def _test_multi_ridge_diabetes(filter_):
+    # simulate several responses
+    Y = np.vstack((y_diabetes,y_diabetes)).T
+
+    ridge = Ridge(fit_intercept=False)
+    ridge.fit(filter_(X_diabetes), Y)
+    Y_pred = ridge.predict(filter_(X_diabetes))
+    ridge.fit(filter_(X_diabetes), y_diabetes)
+    y_pred = ridge.predict(filter_(X_diabetes))
+    assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
+                              Y_pred)
+
+def _test_ridge_classifiers(filter_):
+    for clf in (RidgeClassifier(), RidgeClassifierLOO()):
+        clf.fit(filter_(X_iris), y_iris)
+        y_pred = clf.predict(filter_(X_iris))
+        assert np.mean(y_iris == y_pred) >= 0.8
+
+def test_dense_sparse():
+    for test_func in (_test_ridge_loo,
+                      _test_ridge_cv,
+                      _test_ridge_diabetes,
+                     _test_multi_ridge_diabetes,
+                     _test_ridge_classifiers):
+        # test dense matrix
+        ret_dense = test_func(DENSE_FILTER)
+        # test sparse matrix
+        ret_sp = test_func(SPARSE_FILTER)
+        # test that the outputs are the same
+        assert_array_equal(ret_dense, ret_sp)
+
+
 

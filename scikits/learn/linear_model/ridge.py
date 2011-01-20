@@ -2,14 +2,19 @@
 Ridge regression
 """
 
+# Author: Mathieu Blondel <mathieu@mblondel.org>
+# License: Simplified BSD
+
 import numpy as np
+import scipy.sparse as sp
 from scipy import linalg
+from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearModel
 from ..utils.extmath import safe_sparse_dot
+from ..utils import safe_asanyarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
-from ..metrics import mean_square_error
 
 class Ridge(LinearModel):
     """
@@ -39,11 +44,12 @@ class Ridge(LinearModel):
     Ridge(alpha=1.0, fit_intercept=True)
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True):
+    def __init__(self, alpha=1.0, fit_intercept=True, solver="default"):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
+        self.solver = solver
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y, solver="default", **params):
         """
         Fit Ridge regression model
 
@@ -61,31 +67,74 @@ class Ridge(LinearModel):
         """
         self._set_params(**params)
 
-        X = np.asanyarray(X, dtype=np.float)
+        X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
 
-        n_samples, n_features = X.shape
-
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+
+        if sp.issparse(X):
+            self._solve_sparse(X, y)
+        else:
+            self._solve_dense(X, y)
+
+        self._set_intercept(Xmean, ymean)
+
+        return self
+
+    def _solve_dense(self, X, y):
+        n_samples, n_features = X.shape
 
         if n_samples > n_features:
             # w = inv(X^t X + alpha*Id) * X.T y
             A = np.dot(X.T, X)
             A.flat[::n_features+1] += self.alpha
-            self.coef_ = linalg.solve(A, np.dot(X.T, y),
-                                      overwrite_a=True, sym_pos=True)
+            self.coef_ = self._solve(A, np.dot(X.T, y))
         else:
             # w = X.T * inv(X X^t + alpha*Id) y
             A = np.dot(X, X.T)
             A.flat[::n_samples+1] += self.alpha
-            self.coef_ = np.dot(X.T, linalg.solve(A, y, overwrite_a=True,
-                                                  sym_pos=True))
+            self.coef_ = np.dot(X.T, self._solve(A, y))
 
-        self._set_intercept(Xmean, ymean)
+    def _solve_sparse(self, X, y):
+        n_samples, n_features = X.shape
+
+        if n_samples > n_features:
+            I = sp.lil_matrix((n_features, n_features))
+            I.setdiag(np.ones(n_features) * self.alpha)
+            self.coef_ = self._solve(X.T * X + I, X.T * y)
+        else:
+            I = sp.lil_matrix((n_samples, n_samples))
+            I.setdiag(np.ones(n_samples) * self.alpha)
+            c = self._solve(X * X.T + I, y)
+            self.coef_ = X.T * c
+
+    def _solve(self, A, b):
+        if self.solver == "cg":
+            # this solver cannot handle a 2-d b.
+            sol, error = sp_linalg.cg(A, b)
+            if error:
+                raise ValueError, "Failed with error code %d" % error
+            return sol
+        else:
+            # we are working with dense symmetric positive A
+            if sp.issparse(A): A = A.todense()
+            return linalg.solve(A, b, sym_pos=True, overwrite_a=True)
+
+class RidgeClassifier(Ridge):
+
+    def fit(self, X, y):
+        self.lb = LabelBinarizer()
+        Y = self.lb.fit_transform(y)
+        Ridge.fit(self, X, Y)
         return self
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-# License: Simplified BSD
+    def decision_function(self, X):
+        return Ridge.predict(self, X)
+
+    def predict(self, X):
+        Y = self.decision_function(X)
+        return self.lb.inverse_transform(Y)
+
 
 class RidgeLOO(LinearModel):
     """Ridge regression with built-in efficient
