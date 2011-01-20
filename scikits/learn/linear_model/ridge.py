@@ -44,10 +44,9 @@ class Ridge(LinearModel):
     Ridge(alpha=1.0, fit_intercept=True)
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, solver="default"):
+    def __init__(self, alpha=1.0, fit_intercept=True):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.solver = solver
 
     def fit(self, X, y, solver="default", **params):
         """
@@ -66,6 +65,7 @@ class Ridge(LinearModel):
         self : returns an instance of self.
         """
         self._set_params(**params)
+        self.solver = solver
 
         X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)

@@ -178,7 +178,7 @@ def _test_ridge_cv(filter_):
 def _test_ridge_diabetes(filter_):
     ridge = Ridge(fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
-    return ridge.score(filter_(X_diabetes), y_diabetes)
+    return np.round(ridge.score(filter_(X_diabetes), y_diabetes), 5)
 
 def _test_multi_ridge_diabetes(filter_):
     # simulate several responses
