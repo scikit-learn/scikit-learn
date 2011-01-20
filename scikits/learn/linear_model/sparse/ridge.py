@@ -76,9 +76,11 @@ class RidgeLOO(DenseRidgeLOO):
         Parameters
         ----------
         X : numpy array of shape [n_samples, n_features]
+
             Training data
         y : numpy array of shape [n_samples] or [n_samples, n_responses]
             Target values
+
         sample_weight : float or numpy array of shape [n_samples]
             Sample weight
 
@@ -114,7 +116,7 @@ class RidgeClassifier(Ridge):
 
 class RidgeClassifierLOO(RidgeLOO):
 
-    def fit(self, X, y, class_weight={}):
+    def fit(self, X, y, sample_weight=1.0, class_weight={}):
         """
         Fit the ridge classifier.
 
@@ -132,15 +134,18 @@ class RidgeClassifierLOO(RidgeLOO):
             {class_label : weight}. If not given, all classes are
             supposed to have weight one.
 
+        sample_weight : float or numpy array of shape [n_samples]
+            Sample weight
+
         Returns
         -------
         self : object
             Returns self.
         """
-        sample_weight = np.array([class_weight.get(k, 1.0) for k in y])
+        sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
         self.lb = LabelBinarizer()
         Y = self.lb.fit_transform(y)
-        RidgeLOO.fit(self, X, Y, sample_weight)
+        RidgeLOO.fit(self, X, Y, sample_weight * sample_weight2)
         return self
 
     def decision_function(self, X):

@@ -17,6 +17,7 @@ class Ridge(LinearModel):
     alpha : float
         Small positive values of alpha improve the coditioning of the
         problem and reduce the variance of the estimates.
+
     fit_intercept : boolean
         wether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -47,6 +48,7 @@ class Ridge(LinearModel):
         ----------
         X : numpy array of shape [n_samples,n_features]
             Training data
+
         y : numpy array of shape [n_samples]
             Target values
 
@@ -164,8 +166,10 @@ class RidgeLOO(LinearModel):
         ----------
         X : numpy array of shape [n_samples, n_features]
             Training data
+
         y : numpy array of shape [n_samples] or [n_samples, n_responses]
             Target values
+
         sample_weight : float or numpy array of shape [n_samples]
             Sample weight
 
