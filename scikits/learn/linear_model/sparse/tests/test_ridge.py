@@ -7,6 +7,7 @@ from scikits.learn import datasets
 from scikits.learn.linear_model.ridge import Ridge
 from scikits.learn.linear_model.sparse.ridge import Ridge as SpRidge
 from scikits.learn.linear_model.sparse.ridge import RidgeClassifier
+from scikits.learn.linear_model.sparse.ridge import RidgeClassifierLOO
 
 diabetes = datasets.load_diabetes()
 iris = datasets.load_iris()
@@ -38,7 +39,8 @@ def test_multi_ridge_diabetes():
                               Y_pred)
 
 def test_ridge_classifiers():
-    clf = RidgeClassifier()
-    clf.fit(iris.data, iris.target)
-    y_pred = clf.predict(iris.data)
-    assert np.mean(iris.target == y_pred) >= 0.8
+    for clf in (RidgeClassifier(), RidgeClassifierLOO()):
+        clf.fit(iris.data, iris.target)
+        y_pred = clf.predict(iris.data)
+        assert np.mean(iris.target == y_pred) >= 0.8
+

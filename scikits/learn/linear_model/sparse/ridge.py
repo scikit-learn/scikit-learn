@@ -99,10 +99,11 @@ class RidgeClassifier(Ridge):
 
 class RidgeClassifierLOO(RidgeLOO):
 
-    def fit(self, X, y):
+    def fit(self, X, y, class_weight={}):
+        sample_weight = np.array([class_weight.get(k, 1.0) for k in y])
         self.lb = LabelBinarizer()
         Y = self.lb.fit_transform(y)
-        RidgeLOO.fit(self, X, Y)
+        RidgeLOO.fit(self, X, Y, sample_weight)
         return self
 
     def decision_function(self, X):
