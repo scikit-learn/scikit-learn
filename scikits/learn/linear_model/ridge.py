@@ -293,9 +293,9 @@ class RidgeCV(LinearModel):
 
         return self
 
-class RidgeClassifierLOO(RidgeLOO):
+class RidgeClassifierCV(RidgeCV):
 
-    def fit(self, X, y, sample_weight=1.0, class_weight={}):
+    def fit(self, X, y, sample_weight=1.0, class_weight={}, cv=None):
         """
         Fit the ridge classifier.
 
@@ -324,11 +324,13 @@ class RidgeClassifierLOO(RidgeLOO):
         sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
         self.lb = LabelBinarizer()
         Y = self.lb.fit_transform(y)
-        RidgeLOO.fit(self, X, Y, sample_weight * sample_weight2)
+        RidgeCV.fit(self, X, Y,
+                     sample_weight=sample_weight * sample_weight2,
+                     cv=cv)
         return self
 
     def decision_function(self, X):
-        return RidgeLOO.predict(self, X)
+        return RidgeCV.predict(self, X)
 
     def predict(self, X):
         Y = self.decision_function(X)

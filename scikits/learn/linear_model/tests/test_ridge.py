@@ -13,7 +13,7 @@ from scikits.learn.linear_model.ridge import Ridge
 from scikits.learn.linear_model.ridge import RidgeLOO
 from scikits.learn.linear_model.ridge import RidgeCV
 from scikits.learn.linear_model.ridge import RidgeClassifier
-from scikits.learn.linear_model.ridge import RidgeClassifierLOO
+from scikits.learn.linear_model.ridge import RidgeClassifierCV
 
 
 from scikits.learn.cross_val import KFold
@@ -193,7 +193,7 @@ def _test_multi_ridge_diabetes(filter_):
                               Y_pred)
 
 def _test_ridge_classifiers(filter_):
-    for clf in (RidgeClassifier(), RidgeClassifierLOO()):
+    for clf in (RidgeClassifier(), RidgeClassifierCV()):
         clf.fit(filter_(X_iris), y_iris)
         y_pred = clf.predict(filter_(X_iris))
         assert np.mean(y_iris == y_pred) >= 0.8
