@@ -71,6 +71,21 @@ class RidgeLOO(DenseRidgeLOO):
         return K, v, Q
 
     def fit(self, X, y, sample_weight=1.0):
+        """Fit Ridge regression model
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+            Training data
+        y : numpy array of shape [n_samples] or [n_samples, n_responses]
+            Target values
+        sample_weight : float or numpy array of shape [n_samples]
+            Sample weight
+
+        Returns
+        -------
+        self : Returns self.
+        """
         X = sp.csr_matrix(X)
         DenseRidgeLOO.fit(self, X, y, sample_weight)
         return self
@@ -100,6 +115,28 @@ class RidgeClassifier(Ridge):
 class RidgeClassifierLOO(RidgeLOO):
 
     def fit(self, X, y, class_weight={}):
+        """
+        Fit the ridge classifier.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        class_weight : dict, optional
+            Weights associated with classes in the form
+            {class_label : weight}. If not given, all classes are
+            supposed to have weight one.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
         sample_weight = np.array([class_weight.get(k, 1.0) for k in y])
         self.lb = LabelBinarizer()
         Y = self.lb.fit_transform(y)

@@ -171,7 +171,7 @@ class RidgeLOO(LinearModel):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : Returns self.
         """
         n_samples = X.shape[0]
 
