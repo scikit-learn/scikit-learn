@@ -6,7 +6,8 @@ import numpy as np
 from scipy import linalg
 
 from .base import LinearModel
-
+from ..utils.extmath import safe_sparse_dot
+from ..preprocessing import LabelBinarizer
 
 class Ridge(LinearModel):
     """
@@ -128,7 +129,8 @@ class RidgeLOO(LinearModel):
         self.loss_func = loss_func
 
     def _pre_compute(self, X, y):
-        K = np.dot(X, X.T)
+        # even if X is very sparse, K is usually very dense
+        K = safe_sparse_dot(X, X.T, dense_output=True)
         v, Q = linalg.eigh(K)
         return K, v, Q
 
@@ -205,12 +207,53 @@ class RidgeLOO(LinearModel):
 
         self.best_alpha = self.alphas[best]
         self.dual_coef_ = C[best]
-        self._set_coef_(X)
+        self.coef_ = safe_sparse_dot(X.T, self.dual_coef_)
 
         self._set_intercept(Xmean, ymean)
 
         return self
 
-    def _set_coef_(self, X):
-        self.coef_ = np.dot(X.T, self.dual_coef_)
+    def predict(self, X):
+        return safe_sparse_dot(X, self.coef_) + self.intercept_
+
+class RidgeClassifierLOO(RidgeLOO):
+
+    def fit(self, X, y, sample_weight=1.0, class_weight={}):
+        """
+        Fit the ridge classifier.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        class_weight : dict, optional
+            Weights associated with classes in the form
+            {class_label : weight}. If not given, all classes are
+            supposed to have weight one.
+
+        sample_weight : float or numpy array of shape [n_samples]
+            Sample weight
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
+        self.lb = LabelBinarizer()
+        Y = self.lb.fit_transform(y)
+        RidgeLOO.fit(self, X, Y, sample_weight * sample_weight2)
+        return self
+
+    def decision_function(self, X):
+        return RidgeLOO.predict(self, X)
+
+    def predict(self, X):
+        Y = self.decision_function(X)
+        return self.lb.inverse_transform(Y)
 

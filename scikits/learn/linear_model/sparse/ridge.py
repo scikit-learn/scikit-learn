@@ -8,7 +8,8 @@ from scipy import linalg
 from scipy.sparse import linalg as sp_linalg
 
 from ..base import LinearModel
-from ..ridge import RidgeLOO as DenseRidgeLOO
+from ..ridge import RidgeLOO
+from ..ridge import RidgeClassifierLOO
 from ...preprocessing import LabelBinarizer
 
 class Ridge(LinearModel):
@@ -54,51 +55,6 @@ class Ridge(LinearModel):
         X = sp.csr_matrix(X)
         return X * self.coef_ + self.intercept_
 
-class RidgeLOO(DenseRidgeLOO):
-
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=False,
-                       score_func=None, loss_func=None):
-        self.alphas = alphas
-        self.fit_intercept = False # True not supported yet
-        self.score_func = score_func
-        self.loss_func = loss_func
-
-    def _pre_compute(self, X, y):
-        X = sp.csr_matrix(X)
-        # the kernel matrix is dense
-        K = (X * X.T).toarray()
-        v, Q = linalg.eigh(K)
-        return K, v, Q
-
-    def fit(self, X, y, sample_weight=1.0):
-        """Fit Ridge regression model
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples, n_features]
-
-            Training data
-        y : numpy array of shape [n_samples] or [n_samples, n_responses]
-            Target values
-
-        sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
-
-        Returns
-        -------
-        self : Returns self.
-        """
-        X = sp.csr_matrix(X)
-        DenseRidgeLOO.fit(self, X, y, sample_weight)
-        return self
-
-    def _set_coef_(self, X):
-        self.coef_ = X.T * self.dual_coef_
-
-    def predict(self, X):
-        X = sp.csr_matrix(X)
-        return X * self.coef_ + self.intercept_
-
 class RidgeClassifier(Ridge):
 
     def fit(self, X, y):
@@ -109,47 +65,6 @@ class RidgeClassifier(Ridge):
 
     def decision_function(self, X):
         return Ridge.predict(self, X)
-
-    def predict(self, X):
-        Y = self.decision_function(X)
-        return self.lb.inverse_transform(Y)
-
-class RidgeClassifierLOO(RidgeLOO):
-
-    def fit(self, X, y, sample_weight=1.0, class_weight={}):
-        """
-        Fit the ridge classifier.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values.
-
-        class_weight : dict, optional
-            Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
-            supposed to have weight one.
-
-        sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
-        self.lb = LabelBinarizer()
-        Y = self.lb.fit_transform(y)
-        RidgeLOO.fit(self, X, Y, sample_weight * sample_weight2)
-        return self
-
-    def decision_function(self, X):
-        return RidgeLOO.predict(self, X)
 
     def predict(self, X):
         Y = self.decision_function(X)

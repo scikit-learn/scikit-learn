@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sp
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
                           assert_equal, assert_array_equal
@@ -9,10 +10,7 @@ from scikits.learn.metrics import mean_square_error
 from scikits.learn.linear_model.base import LinearRegression
 
 from scikits.learn.linear_model.ridge import Ridge
-from scikits.learn.linear_model.sparse.ridge import Ridge as SpRidge
-
 from scikits.learn.linear_model.ridge import RidgeLOO
-from scikits.learn.linear_model.sparse.ridge import RidgeLOO as SpRidgeLOO
 
 diabetes = datasets.load_diabetes()
 
@@ -87,7 +85,8 @@ def test_ridge_vs_lstsq():
     ols.fit (X, y, fit_intercept=False)
     assert_almost_equal(ridge.coef_, ols.coef_)
 
-def _test_ridge_loo(ridge_class, ridge_loo_class):
+def _test_ridge_loo(filter_):
+    # test that can work with both dense or sparse matrices
     X, y = diabetes.data, diabetes.target
     n_samples = X.shape[0]
     ind = np.arange(n_samples)
@@ -98,8 +97,8 @@ def _test_ridge_loo(ridge_class, ridge_loo_class):
 
     ret = []
 
-    ridge_loo = ridge_loo_class(fit_intercept=False)
-    ridge = ridge_class(fit_intercept=False)
+    ridge_loo = RidgeLOO(fit_intercept=False)
+    ridge = Ridge(fit_intercept=False)
 
     # efficient LOO
     K, v, Q = ridge_loo._pre_compute(X, y)
@@ -124,32 +123,35 @@ def _test_ridge_loo(ridge_class, ridge_loo_class):
     assert_almost_equal(values, values2)
 
     # check best alpha
-    ridge_loo.fit(X, y)
+    ridge_loo.fit(filter_(X), y)
     best_alpha = ridge_loo.best_alpha
     ret.append(best_alpha)
 
     # check that we get same best alpha with custom loss_func
     ridge_loo2 = RidgeLOO(fit_intercept=False, loss_func=mean_square_error)
-    ridge_loo2.fit(X, y)
+    ridge_loo2.fit(filter_(X), y)
     assert_equal(ridge_loo2.best_alpha, best_alpha)
 
     # check that we get same best alpha with sample weights
-    ridge_loo.fit(X, y, sample_weight=np.ones(n_samples))
+    ridge_loo.fit(filter_(X), y, sample_weight=np.ones(n_samples))
     assert_equal(ridge_loo.best_alpha, best_alpha)
 
     # simulate several responses
     Y = np.vstack((y,y)).T
 
-    ridge_loo.fit(X, Y)
-    Y_pred = ridge_loo.predict(X)
-    ridge_loo.fit(X, y)
-    y_pred = ridge_loo.predict(X)
+    ridge_loo.fit(filter_(X), Y)
+    Y_pred = ridge_loo.predict(filter_(X))
+    ridge_loo.fit(filter_(X), y)
+    y_pred = ridge_loo.predict(filter_(X))
 
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
                               Y_pred)
 
 def test_ridge_loo():
-    ret_dense = _test_ridge_loo(Ridge, RidgeLOO)
-    ret_sp = _test_ridge_loo(SpRidge, SpRidgeLOO)
+    # test dense matrix
+    ret_dense = _test_ridge_loo(lambda X: X)
+    # test sparse matrix
+    ret_sp = _test_ridge_loo(lambda X: sp.csr_matrix(X))
+    # test that the outputs are the same
     assert_array_equal(ret_dense, ret_sp)
 
