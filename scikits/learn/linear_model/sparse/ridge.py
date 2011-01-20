@@ -70,6 +70,14 @@ class RidgeLOO(DenseRidgeLOO):
         v, Q = linalg.eigh(K)
         return K, v, Q
 
+    def fit(self, X, y, sample_weight=1.0):
+        X = sp.csr_matrix(X)
+        DenseRidgeLOO.fit(self, X, y, sample_weight)
+        return self
+
+    def _set_coef_(self, X):
+        self.coef_ = X.T * self.dual_coef_
+
     def predict(self, X):
         X = sp.csr_matrix(X)
         return X * self.coef_ + self.intercept_
@@ -84,6 +92,21 @@ class RidgeClassifier(Ridge):
 
     def decision_function(self, X):
         return Ridge.predict(self, X)
+
+    def predict(self, X):
+        Y = self.decision_function(X)
+        return self.lb.inverse_transform(Y)
+
+class RidgeClassifierLOO(RidgeLOO):
+
+    def fit(self, X, y):
+        self.lb = LabelBinarizer()
+        Y = self.lb.fit_transform(y)
+        RidgeLOO.fit(self, X, Y)
+        return self
+
+    def decision_function(self, X):
+        return RidgeLOO.predict(self, X)
 
     def predict(self, X):
         Y = self.decision_function(X)

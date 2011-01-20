@@ -178,7 +178,8 @@ class RidgeLOO(LinearModel):
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
 
         K, v, Q = self._pre_compute(X, y)
-        M = np.zeros((n_samples*len(y.shape), len(self.alphas)))
+        n_y = 1 if len(y.shape) == 1 else y.shape[1]
+        M = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
 
         error = self.score_func is None and self.loss_func is None
@@ -200,10 +201,12 @@ class RidgeLOO(LinearModel):
 
         self.best_alpha = self.alphas[best]
         self.dual_coef_ = C[best]
-        self.coef_ = np.dot(X.T, self.dual_coef_)
+        self._set_coef_(X)
 
         self._set_intercept(Xmean, ymean)
 
         return self
 
+    def _set_coef_(self, X):
+        self.coef_ = np.dot(X.T, self.dual_coef_)
 
