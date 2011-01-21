@@ -59,7 +59,6 @@ print
 
 print "KMeans "
 t0 = time()
-#km = KMeans(init='k-means++', k=n_digits, n_init=10).fit(data)
 km = KMeans(init='k-means++', k=grid_width**2, n_init=10)
 km.fit(data)
 print "done in %0.3fs" % (time() - t0)

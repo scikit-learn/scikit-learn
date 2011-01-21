@@ -134,12 +134,6 @@ class SelfOrganizingMap(BaseEstimator):
         v = np.sqrt((xx - wi)**2 + (yy - wj)**2) < radius
         return np.c_[np.nonzero(v)]
 
-        for i in range(self.neurons_.shape[0]):
-            for j in range(self.neurons_.shape[1]):
-                if math.sqrt((i - wi)**2 + (j - wj)**2) < radius:
-                    r.append((i, j))
-        return r
-
     def radius_of_the_neighbordhood(self, iteration):
         l = self.n_iterations / self.size
         return self.size * math.exp(-iteration / l)
