@@ -4,6 +4,11 @@ k-Nearest Neighbor Algorithm.
 Uses BallTree algorithm, which is an efficient way to perform fast
 neighbor searches in high dimensionality.
 """
+# Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+
+# License: BSD
+
 import numpy as np
 from scipy import stats
 from scipy import linalg
@@ -229,11 +234,11 @@ class NeighborsBarycenter(BaseEstimator, RegressorMixin):
         """
         T = np.asanyarray(T)
         if T.ndim == 1:
-            T = T[:,None]
+            T = T[:, None]
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
         A = kneighbors_graph(T, n_neighbors=n_neighbors, weight="barycenter",
-                                  ball_tree=self.ball_tree).tocsr()
+                                  ball_tree=self.ball_tree)
         return A * self._y
 
 ###############################################################################
@@ -272,9 +277,9 @@ def barycenter_weights(x, X_neighbors, tol=1e-3):
     x = np.asanyarray(x)
     X_neighbors = np.asanyarray(X_neighbors)
     if x.ndim == 1:
-        x = x[None,:]
+        x = x[None, :]
     if X_neighbors.ndim == 1:
-        X_neighbors = X_neighbors[:,None]
+        X_neighbors = X_neighbors[:, None]
     z = x - X_neighbors
     gram = np.dot(z, z.T)
     # Add constant on diagonal to avoid singular matrices
@@ -286,7 +291,7 @@ def barycenter_weights(x, X_neighbors, tol=1e-3):
 
 
 def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
-                     window_size=1):
+                     window_size=1, drop_first=False):
     """Computes the (weighted) graph of k-Neighbors
 
     Parameters
@@ -300,8 +305,8 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
     weight : None (default)
         Weights to apply on graph edges. If weight is None
         then no weighting is applied (1 for each edge).
-        If weight equals "distance" the edge weight is the
-        euclidian distance. If weight equals "barycenter"
+        If weight equals 'distance' the edge weight is the
+        euclidian distance. If weight equals 'barycenter'
         the weights are barycenter weights estimated by
         solving a linear system for each point.
 
@@ -310,10 +315,13 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
     window_size : int
         Window size pass to the BallTree
 
+    drop_first : bool
+        Drops the first neighbor (Default: False)
+
     Returns
     -------
     A : sparse matrix, shape = [n_samples, n_samples]
-        A is returned as LInked List Sparse matrix
+        A is returned as CSR sparse matrix
         A[i,j] = weight of edge that connects i to j
 
     Examples
@@ -322,38 +330,68 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
     >>> from scikits.learn.neighbors import kneighbors_graph
     >>> A = kneighbors_graph(X, 2)
     >>> A.todense()
-    matrix([[ 1.,  0.,  1.],
-            [ 0.,  1.,  1.],
-            [ 0.,  1.,  1.]])
+    matrix([[1, 0, 1],
+            [0, 1, 1],
+            [0, 1, 1]])
     """
     from scipy import sparse
     X = np.asanyarray(X)
     n_samples = X.shape[0]
+
     if ball_tree is None:
         ball_tree = BallTree(X, window_size)
-    A = sparse.lil_matrix((n_samples, ball_tree.size))
+
     dist, ind = ball_tree.query(X, k=n_neighbors)
+    if drop_first:
+        ind = ind[:, 1:]
+        dist = dist[:, 1:]
+        n_neighbors -= 1
+
+    # allocate space for sparse csr matrix
+    if weight is None:
+        data = np.empty(ind.shape, dtype=np.int)
+    else:
+        data = np.empty(ind.shape, dtype=np.float)
+    data_indices = np.empty(ind.shape, dtype=np.int)
+    data_indptr = np.empty(1 + n_samples, dtype=np.int)
+    data_indptr[0] = 0
+
     if weight is None:
         for i, li in enumerate(ind):
             if n_neighbors > 1:
-                A[i, list(li)] = np.ones(n_neighbors)
+                data[i] = np.ones(n_neighbors)
             else:
-                A[i, li] = 1.0
-    elif weight is "distance":
+                data[i] = 1.0
+
+            data_indices[i] = li
+            data_indptr[i + 1] = data_indptr[i] + data.shape[1]
+
+    elif weight is 'distance':
         for i, li in enumerate(ind):
             if n_neighbors > 1:
-                A[i, list(li)] = dist[i, :]
+                data[i] = dist[i, :]
             else:
-                A[i, li] = dist[i, 0]
-    elif weight is "barycenter":
-        # XXX : the next loop could be done in parallel
-        # by parallelizing groups of indices
+                data[i] = dist[i, 0]
+
+            data_indices[i] = li
+            data_indptr[i + 1] = data_indptr[i] + data.shape[1]
+
+    elif weight is 'barycenter':
         for i, li in enumerate(ind):
             if n_neighbors > 1:
                 X_i = ball_tree.data[li]
-                A[i, list(li)] = barycenter_weights(X[i], X_i)
+                data[i] = barycenter_weights(X[i], X_i)
             else:
-                A[i, li] = 1.0
+                data[i] = 1.0
+
+            data_indices[i] = li
+            data_indptr[i + 1] = data_indptr[i] + data.shape[1]
+
     else:
         raise ValueError("Unknown weight type")
+
+    A = sparse.csr_matrix(
+        (data.reshape(-1), data_indices.reshape(-1), data_indptr),
+        shape=(n_samples, ball_tree.data.shape[0]))
+
     return A
