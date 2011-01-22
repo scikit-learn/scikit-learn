@@ -11,7 +11,6 @@ from scipy import sparse
 
 from scikits.learn.base import BaseEstimator
 from scikits.learn.utils._csgraph import cs_graph_components
-from scikits.learn.cluster import AgglomerationTransformMixin
 
 import _inertia
 
@@ -420,7 +419,7 @@ def _plot_graph(lx_, ly_, colors_, ax=None, **kwargs):
 ###############################################################################
 # Class for Ward hierarchical clustering
 
-class Ward(BaseEstimator, AgglomerationTransformMixin):
+class Ward(BaseEstimator):
     """
     Class for Ward hierarchical clustering: constructs a tree and cuts it.
 

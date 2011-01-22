@@ -10,7 +10,6 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator
-from scikits.learn.cluster import AgglomerationTransformMixin
 
 ################################################################################
 # Initialisation heuristic
@@ -242,7 +241,7 @@ def _e_step(x, centers):
 
 ################################################################################
 
-class KMeans(AgglomerationTransformMixin):
+class KMeans(BaseEstimator):
     """ K-Means clustering
 
     Parameters

@@ -1,7 +1,7 @@
 """
 Clustering algorithms
 """
-from .feature_agglomeration import AgglomerationTransformMixin
+from .feature_agglomeration import AgglomerationTransform
 from .spectral import spectral_clustering, SpectralClustering
 from .mean_shift_ import mean_shift, MeanShift, estimate_bandwidth
 from .affinity_propagation_ import affinity_propagation, AffinityPropagation

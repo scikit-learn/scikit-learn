@@ -6,13 +6,15 @@ agglomeration.
 # License: BSD 3 clause
 
 import numpy as np
+from ..base import BaseEstimator
+from .hierarchical import Ward
 
 ###############################################################################
 # Mixin class for feature agglomeration.
 
-class AgglomerationTransformMixin(object):
+class AgglomerationTransform(BaseEstimator):
     """
-    A Mixin class for feature agglomeration
+    A class for feature agglomeration via the transform interface
     """
 
     def transform(self, X, pooling_func=np.mean):
@@ -31,7 +33,7 @@ class AgglomerationTransformMixin(object):
         """
         nX = []
         for l in np.unique(self.labels_):
-            nX.append(pooling_func(X[self.labels_ == l, :], 0))
+            nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
         return np.array(nX).T
 
     def inverse_transform(self, Xred):
@@ -64,3 +66,25 @@ class AgglomerationTransformMixin(object):
                 X[:, self.labels_ == unil[i]] = np.tile(np.atleast_2d(Xred
                                                         [:, i]).T, ncol)
         return X
+
+###############################################################################
+# Cluster based features agglomeration objects
+
+class WardAgglomeration(AgglomerationTransform):
+    """Feature agglomeration base on Ward hierarchical clustering
+
+    XXX
+    """
+
+    def __init__(self, k=2, adjacency_matrix=None, copy=True):
+        self.k = k
+        self.adjacency_matrix = adjacency_matrix
+        self.copy = copy
+        self._ward = Ward(k)
+
+    def fit(self, X, y=None, **params):
+        self._set_params(**params)
+        self._ward.fit(X.T, k=self.k, adjacency_matrix=self.adjacency_matrix,
+                        copy=self.copy, **params)
+        self.labels_ = self._ward.labels_
+        return self
