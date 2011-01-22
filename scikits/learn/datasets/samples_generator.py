@@ -345,4 +345,64 @@ def make_regression_dataset(n_train_samples=100, n_test_samples=100,
 
     return X_train, Y_train, X_test, Y_test, ground_truth
 
+def multivariate_normal_from_latent_variables(latent_coefs, n_samples=100, latent_params=None):
+    """
+    Draw random samples from a multivariate normal distribution using latent
+    variables model. It is an alternative to numpy.random.multivariate_normal
+    that do not require to provide the full covariance matrix. Usefull in very
+    high dimension.
+
+    Parameters
+    ----------
+    latent_coefs : (nb_latent x p) array of coefficients
+
+    n_samples : number of samples (defaults 100)
+    
+    latent_params : (nb_latent x 3) array of [mean, sd, noize_sd] parameters
+        of the  latent variables default [0, 1, 1]. A random noize of
+        noize_sd is added to the LV to obtain the each manifest variable.
+
+    Returns
+    -------
+    x : array of shape(n_samples, latent_coefs[1]),
+        the samples matrix
+    
+    Examples
+    --------
+    >>> # 3 latent vars (LV) acting on 10 features without overlap
+    >>> latent_coefs = np.array([[1]*2 + [0]*8,
+                                 [0]*2 + [1]*5 + [0]*3,
+                                 [0]*7 + [1]*3])
+    >>> X, latent = multivariate_normal_from_latent_variables(latent_coefs)
+
+    >>> # 4 LV (4 blocks of 5 features) + 1 LV acting on 10 central features 
+    >>> latent_coefs = np.array([[1]*5  + [0]*15,
+                                 [0]*5  + [1]*5 + [0]*10,
+                                 [0]*10 + [1]*5 + [0]*5,
+                                 [0]*15 + [1]*5,
+                                 [0]*5  + [1]*10 + [0]*5])
+    >>> X, latent = multivariate_normal_from_latent_variables(latent_coefs)
+    """
+    n_latents   = latent_coefs.shape[0]
+    n_features  = latent_coefs.shape[1]
+
+    if latent_params is None:
+        latent_params = np.array([0,1,1]*n_latents).reshape(n_latents,3)
+   
+    # init data
+    X = np.zeros(n_samples*n_features,\
+                dtype=np.double).reshape(n_samples,n_features)
+    latents = np.zeros(n_samples*n_latents,\
+                dtype=np.double).reshape(n_samples,n_latents)
+    # add latent variables
+    for i in xrange(n_latents):
+        lv = nr.normal(loc=latent_params[i,0], scale=latent_params[i,1], \
+                       size=n_samples)
+        latents[:,i] = lv
+        for j in np.where(latent_coefs[i,:]!=0)[0]:
+            noize = nr.normal(scale=latent_params[i,2], size=n_samples)
+            X[:,j] += lv + noize
+
+    return X, latents
+
 

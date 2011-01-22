@@ -208,3 +208,25 @@ def load_diabetes():
     data   = np.loadtxt(base_dir + 'diabetes_data.csv.gz')
     target = np.loadtxt(base_dir + 'diabetes_target.csv.gz')
     return Bunch (data=data, target=target)
+    
+    
+def load_linnerud():
+    base_dir = os.path.join(os.path.dirname(__file__), 'data/')
+    # Read data
+    data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
+    data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv', skiprows=1)
+    # Read header
+    f=open(base_dir + 'linnerud_exercise.csv')
+    header_exercise = f.readline().split()
+    f.close()
+    f=open(base_dir + 'linnerud_physiological.csv')
+    header_physiological = f.readline().split()
+    f.close()
+    
+    fdescr = open(os.path.dirname(__file__)
+                        + '/descr/linnerud.rst')
+    return Bunch(data_exercise=data_exercise, header_exercise=header_exercise,
+        data_physiological=data_physiological, 
+        header_physiological=header_physiological,
+        DESCR=fdescr.read())
+
