@@ -42,6 +42,7 @@ cdef extern from "liblinear_helper.c":
                            char *dec_values)
 
     int copy_prob_predict(char *, model *, np.npy_intp *, char *)
+    int copy_predict_values(char *, model *, np.npy_intp *, char *, int)
     int copy_label(char *, model *, int)
     double get_bias(model *)
     void free_problem (problem *)
@@ -180,6 +181,39 @@ def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     free_parameter(param)
     free_and_destroy_model(&model)
     return dec_values
+
+def decision_function_wrap(
+    np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+    np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+    int solver_type, double eps, double C,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+    double bias):
+
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef parameter *param
+    cdef model *model
+
+    param = set_parameter(
+        solver_type, eps, C, weight.shape[0], weight_label.data, weight.data)
+
+    model = set_model(param, coef_.data, coef_.shape, label.data, bias)
+
+    n_class = label.shape[0]
+    if n_class > 2:
+        dec_values = np.empty((T.shape[0], n_class), dtype=np.float64)
+    else:
+        dec_values = np.empty((T.shape[0], 1), dtype=np.float64)
+
+    if copy_predict_values(T.data, model, T.shape, dec_values.data, n_class) < 0:
+        raise MemoryError("We've run out of of memory")
+
+    ### FREE
+    free_parameter(param)
+    free_and_destroy_model(&model)
+    return dec_values
+
                           
 
 def csr_predict_wrap(

@@ -361,6 +361,8 @@ def test_LinearSVC():
     clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
+    dec = clf.decision_function(X)
+    assert_array_equal(np.argmax(dec, 1), true_result)
 
 def test_LinearSVC_iris():
     """

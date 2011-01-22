@@ -255,6 +255,23 @@ int csr_copy_predict(npy_intp n_features, npy_intp *data_size, char *data,
     return 0;
 }
 
+int copy_predict_values (char *predict, struct model *model_, 
+                         npy_intp *predict_dims, char *dec_values, int nr_class)
+{
+    npy_intp i;
+    struct feature_node **predict_nodes;
+    predict_nodes = dense_to_sparse((double *) predict, predict_dims, model_->bias);
+    if (predict_nodes == NULL)
+        return -1;
+    for(i=0; i<predict_dims[0]; ++i) {
+        predict_values(model_, predict_nodes[i], 
+                       ((double *) dec_values) + i*nr_class);
+        free(predict_nodes[i]);
+    }
+
+    free(predict_nodes);
+    return 0;
+}
 
 int copy_prob_predict(char *predict, struct model *model_, npy_intp *predict_dims,
                  char *dec_values)

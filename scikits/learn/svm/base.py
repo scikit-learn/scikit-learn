@@ -394,6 +394,33 @@ class BaseLibLinear(BaseEstimator):
                                       self.class_weight, self.label_,
                                       self._get_bias())
 
+    def decision_function(self, X):
+        """
+        Calculate the distance of the samples in T to the separating hyperplane.
+
+        Parameters
+        ----------
+        T : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        self._check_n_features(X)
+
+        dec_func = _liblinear.decision_function_wrap(X, self.raw_coef_,
+                                      self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self.class_weight_label,
+                                      self.class_weight, self.label_,
+                                      self._get_bias())
+
+        return -dec_func
+
+
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]
         if self.fit_intercept: n_features -= 1
