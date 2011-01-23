@@ -428,6 +428,10 @@ class Ward(BaseEstimator):
     k : int or ndarray
                  The number of clusters.
 
+    memory : None (default) or instance of joblib.Memory
+        Used to cache the output of the computation of the tree.
+        If None there is no caching.
+
     Methods
     -------
     fit:
@@ -460,8 +464,10 @@ class Ward(BaseEstimator):
     self
     """
 
-    def __init__(self, k):
+    def __init__(self, k, memory=None, check_adjacency_matrix=True):
         self.k = k
+        self.memory = memory
+        self.check_adjacency_matrix = check_adjacency_matrix
 
     def fit(self, X, adjacency_matrix=None, copy=True, **params):
         """
@@ -492,7 +498,7 @@ class Ward(BaseEstimator):
             self.adjacency_matrix = adjacency_matrix
 
         # Check if the adjacency matrix is well-connected
-        if self.adjacency_matrix is not None:
+        if self.check_adjacency_matrix and self.adjacency_matrix is not None:
             self.adjacency_matrix = self.adjacency_matrix.tolil()
             self.adjacency_matrix.setdiag(
                                     np.zeros(self.adjacency_matrix.shape[0]))
@@ -503,11 +509,19 @@ class Ward(BaseEstimator):
                 " and the maximal number of clusters will be ", n_comp
             self.k = np.max([self.k, n_comp])
 
+        if self.memory is not None:
+            this_ward_tree = self.memory.cache(ward_tree)
+            # this_hc_cut = self.memory.cache(_hc_cut)
+            this_hc_cut = _hc_cut
+        else:
+            this_ward_tree = ward_tree
+            this_hc_cut = _hc_cut
+
         # Construct the tree
         self.parent_, self.children_, self.heights_, self.adjacency_matrix = \
-                                    ward_tree(X, self.adjacency_matrix)
+                                    this_ward_tree(X, self.adjacency_matrix)
 
         # Cut the tree
-        self.labels_, self.active_nodes_ = _hc_cut(self.k,
+        self.labels_, self.active_nodes_ = this_hc_cut(self.k,
                                 self.parent_, self.children_, self.heights_)
         return self

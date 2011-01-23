@@ -76,15 +76,21 @@ class WardAgglomeration(AgglomerationTransform):
     XXX
     """
 
-    def __init__(self, k=2, adjacency_matrix=None, copy=True):
+    def __init__(self, k=2, adjacency_matrix=None, copy=True,
+                 check_adjacency_matrix=True, memory=None):
         self.k = k
         self.adjacency_matrix = adjacency_matrix
         self.copy = copy
-        self._ward = Ward(k)
+        self.memory = memory
+        self.check_adjacency_matrix = check_adjacency_matrix
+        self._ward = Ward(k=k, memory=memory,
+                            check_adjacency_matrix=check_adjacency_matrix)
 
     def fit(self, X, y=None, **params):
         self._set_params(**params)
-        self._ward.fit(X.T, k=self.k, adjacency_matrix=self.adjacency_matrix,
-                        copy=self.copy, **params)
+        self._ward.fit(X.T, k=self.k,
+                       adjacency_matrix=self.adjacency_matrix,
+                       check_adjacency_matrix=self.check_adjacency_matrix,
+                       copy=self.copy, **params)
         self.labels_ = self._ward.labels_
         return self

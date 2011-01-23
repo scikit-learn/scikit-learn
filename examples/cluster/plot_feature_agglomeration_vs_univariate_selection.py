@@ -16,6 +16,7 @@ a BayesianRidge as supervised estimator.
 
 print __doc__
 
+import tempfile
 import numpy as np
 import pylab as pl
 from scipy import linalg
@@ -27,6 +28,7 @@ from scikits.learn.cluster.feature_agglomeration import WardAgglomeration
 from scikits.learn.linear_model import BayesianRidge
 from scikits.learn.pipeline import Pipeline
 from scikits.learn.grid_search import GridSearchCV
+from scikits.learn.externals.joblib import Memory
 
 ###############################################################################
 # Generate data
@@ -55,38 +57,48 @@ y += noise_coef * noise # add noise
 ###############################################################################
 # Compute the coefs of a Bayesian Ridge with GridSearch
 ridge = BayesianRidge()
+cachedir = tempfile.mkdtemp()
+mem = Memory(cachedir=cachedir, verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
 A = img_to_graph(mask, mask)
-ward = WardAgglomeration(adjacency_matrix=A)
+ward = WardAgglomeration(adjacency_matrix=A, memory=mem)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
-parameters = {'ward__k': [10, 20, 30]}
+# parameters = {'ward__k': [10, 20, 30]}
+parameters = {'ward__k': [10, 20]}
 # Select the optimal number of parcels with grid search
-clf = GridSearchCV(clf, parameters)
-clf.fit(X, y) # set the best parameters
+clf = GridSearchCV(clf, parameters, n_jobs=1)
+
+from scikits.learn.cross_val import KFold
+cv = KFold(len(y), 2)
+from time import time
+t0 = time()
+clf.fit(X, y, cv=cv) # set the best parameters
+print "Time : %s" % (time() - t0)
 coef_agglomeration_ = clf.coef_.reshape(size, size)
 
-# Anova univariate feature selection followed by BayesianRidge
-anova = feature_selection.SelectPercentile(feature_selection.f_regression)
-clf = Pipeline([('anova', anova), ('ridge', ridge)])
-parameters = {'anova__percentile': [5, 10, 20]}
-# Select the optimal percentage of features with grid search
-clf = GridSearchCV(clf, parameters)
-clf.fit(X, y) # set the best parameters
-coef_selection_ = clf.coef_.reshape(size, size)
-
-###############################################################################
-# Inverse the transformation to plot the results on an image
-pl.close('all')
-pl.figure(figsize=(10, 4))
-pl.subplot(1, 3, 1)
-pl.imshow(coef, interpolation="nearest", cmap=pl.cm.RdBu_r)
-pl.title("True weights")
-pl.subplot(1, 3, 2)
-pl.imshow(coef_selection_, interpolation="nearest", cmap=pl.cm.RdBu_r)
-pl.title("Feature Selection")
-pl.subplot(1, 3, 3)
-pl.imshow(coef_agglomeration_, interpolation="nearest", cmap=pl.cm.RdBu_r)
-pl.title("Feature Agglomeration")
-pl.subplots_adjust(0.04, 0.0, 0.98, 0.94, 0.16, 0.26)
-pl.show()
+# # Anova univariate feature selection followed by BayesianRidge
+# f_regression = mem.cache(feature_selection.f_regression) # caching function
+# anova = feature_selection.SelectPercentile(f_regression)
+# clf = Pipeline([('anova', anova), ('ridge', ridge)])
+# parameters = {'anova__percentile': [5, 10, 20]}
+# # Select the optimal percentage of features with grid search
+# clf = GridSearchCV(clf, parameters)
+# clf.fit(X, y) # set the best parameters
+# coef_selection_ = clf.coef_.reshape(size, size)
+# 
+# ###############################################################################
+# # Inverse the transformation to plot the results on an image
+# pl.close('all')
+# pl.figure(figsize=(10, 4))
+# pl.subplot(1, 3, 1)
+# pl.imshow(coef, interpolation="nearest", cmap=pl.cm.RdBu_r)
+# pl.title("True weights")
+# pl.subplot(1, 3, 2)
+# pl.imshow(coef_selection_, interpolation="nearest", cmap=pl.cm.RdBu_r)
+# pl.title("Feature Selection")
+# pl.subplot(1, 3, 3)
+# pl.imshow(coef_agglomeration_, interpolation="nearest", cmap=pl.cm.RdBu_r)
+# pl.title("Feature Agglomeration")
+# pl.subplots_adjust(0.04, 0.0, 0.98, 0.94, 0.16, 0.26)
+# pl.show()
