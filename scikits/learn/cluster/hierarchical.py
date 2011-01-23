@@ -2,17 +2,21 @@
 These routines perform some hierachical agglomerative clustering of some input
 data. Currently, only Ward's algorithm is implemented.
 
-Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort
+Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort, 
+          Gael Varoquaux
 License: BSD 3 clause
 """
 import heapq as heapq
+
 import numpy as np
 from scipy import sparse
 
-from scikits.learn.base import BaseEstimator
-from scikits.learn.utils._csgraph import cs_graph_components
+from ..base import BaseEstimator
+from ..utils._csgraph import cs_graph_components
+from ..externals.joblib import Memory
 
-import _inertia
+from . import _inertia
+from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
 # Ward's algorithm
@@ -282,7 +286,7 @@ def plot_dendrogram(children, parent, heights, ax=None, active_nodes=None,
     ------
     a pylab.scatter instance
     """
-    lx_, ly_, colors_ = mk_dendogram(children, parent, heights, cmap_node,
+    lx_, ly_, colors_ = _mk_dendogram(children, parent, heights, cmap_nodes,
                         active_nodes, weights_nodes)
     return _plot_graph(lx_, ly_, colors_, ax=ax, **kwargs)
 
@@ -353,7 +357,8 @@ def _mk_dendogram(children, parent, heights, cmap_node,
 
     # Compute the colors of the tree
     if nodes_cmap is None:
-            nodes_cmap = pl.cm.jet
+        import pylab as pl
+        nodes_cmap = pl.cm.jet
     if active_nodes is not None:
         used_scores_nodes = np.zeros(len(active_nodes), dtype=float)
         if weights_nodes is None:
@@ -428,9 +433,9 @@ class Ward(BaseEstimator):
     k : int or ndarray
                  The number of clusters.
 
-    memory : None (default) or instance of joblib.Memory
+    memory : Instance of joblib.Memory
         Used to cache the output of the computation of the tree.
-        If None there is no caching.
+        By default, no caching is done.
 
     Methods
     -------
@@ -464,12 +469,28 @@ class Ward(BaseEstimator):
     self
     """
 
-    def __init__(self, k, memory=None, check_adjacency_matrix=True):
+    def __init__(self, k, memory=Memory(cachedir=None, verbose=0), 
+                 adjacency_matrix=None, copy=True, 
+                 check_adjacency_matrix=True):
+        """
+        adjacency_matrix : sparse matrix.
+            adjacency matrix. Defines for each sample the neigbhoring
+            samples following a given structure of the data.
+            Defaut is None, i.e, the hiearchical clustering algorithm is
+            unstructured.
+        """
         self.k = k
         self.memory = memory
+        self.adjacency_matrix = adjacency_matrix
         self.check_adjacency_matrix = check_adjacency_matrix
+        self.copy = copy
+        # If necessary, copy the adjacency matrix
+        if copy and adjacency_matrix is not None:
+            self.adjacency_matrix = adjacency_matrix.copy()
+        else:
+            self.adjacency_matrix = adjacency_matrix
 
-    def fit(self, X, adjacency_matrix=None, copy=True, **params):
+    def fit(self, X, **params):
         """
         Fit the hierarchical clustering on the data
 
@@ -479,23 +500,11 @@ class Ward(BaseEstimator):
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
-        adjacency_matrix : sparse matrix.
-            adjacency matrix. Defines for each sample the neigbhoring
-            samples following a given structure of the data.
-            Defaut is None, i.e, the hiearchical clustering algorithm is
-            unstructured.
-
         Returns
         -------
         self
         """
         self._set_params(**params)
-
-        # If necessary, copy the adjacency matrix
-        if copy and adjacency_matrix is not None:
-            self.adjacency_matrix = adjacency_matrix.copy()
-        else:
-            self.adjacency_matrix = adjacency_matrix
 
         # Check if the adjacency matrix is well-connected
         if self.check_adjacency_matrix and self.adjacency_matrix is not None:
@@ -509,19 +518,24 @@ class Ward(BaseEstimator):
                 " and the maximal number of clusters will be ", n_comp
             self.k = np.max([self.k, n_comp])
 
-        if self.memory is not None:
-            this_ward_tree = self.memory.cache(ward_tree)
-            # this_hc_cut = self.memory.cache(_hc_cut)
-            this_hc_cut = _hc_cut
-        else:
-            this_ward_tree = ward_tree
-            this_hc_cut = _hc_cut
-
         # Construct the tree
         self.parent_, self.children_, self.heights_, self.adjacency_matrix = \
-                                    this_ward_tree(X, self.adjacency_matrix)
+                    self.memory.cache(ward_tree)(X, self.adjacency_matrix)
 
         # Cut the tree
-        self.labels_, self.active_nodes_ = this_hc_cut(self.k,
+        self.labels_, self.active_nodes_ = _hc_cut(self.k,
                                 self.parent_, self.children_, self.heights_)
         return self
+
+###############################################################################
+# Ward-based feature agglomeration
+
+class WardAgglomeration(AgglomerationTransform, Ward):
+    """Feature agglomeration base on Ward hierarchical clustering
+
+    XXX
+    """
+
+    def fit(self, X, y=None, **params):
+        return Ward.fit(self, X.T, k=self.k, **params)
+

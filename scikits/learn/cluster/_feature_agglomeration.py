@@ -1,5 +1,5 @@
 """
-Feature agglomeration. Classes and functions for performing feature
+Feature agglomeration. Base classes and functions for performing feature
 agglomeration.
 """
 # Author: V. Michel, A. Gramfort
@@ -7,7 +7,7 @@ agglomeration.
 
 import numpy as np
 from ..base import BaseEstimator
-from .hierarchical import Ward
+from ..externals.joblib import Memory
 
 ###############################################################################
 # Mixin class for feature agglomeration.
@@ -67,30 +67,4 @@ class AgglomerationTransform(BaseEstimator):
                                                         [:, i]).T, ncol)
         return X
 
-###############################################################################
-# Cluster based features agglomeration objects
 
-class WardAgglomeration(AgglomerationTransform):
-    """Feature agglomeration base on Ward hierarchical clustering
-
-    XXX
-    """
-
-    def __init__(self, k=2, adjacency_matrix=None, copy=True,
-                 check_adjacency_matrix=True, memory=None):
-        self.k = k
-        self.adjacency_matrix = adjacency_matrix
-        self.copy = copy
-        self.memory = memory
-        self.check_adjacency_matrix = check_adjacency_matrix
-        self._ward = Ward(k=k, memory=memory,
-                            check_adjacency_matrix=check_adjacency_matrix)
-
-    def fit(self, X, y=None, **params):
-        self._set_params(**params)
-        self._ward.fit(X.T, k=self.k,
-                       adjacency_matrix=self.adjacency_matrix,
-                       check_adjacency_matrix=self.check_adjacency_matrix,
-                       copy=self.copy, **params)
-        self.labels_ = self._ward.labels_
-        return self
