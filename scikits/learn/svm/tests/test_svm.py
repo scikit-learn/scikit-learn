@@ -328,7 +328,7 @@ def test_error():
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
-    assert_raises(AssertionError, svm.SVC, X, Y2)
+    assert_raises(ValueError, svm.SVC, X, Y2)
 
     # Test with arrays that are non-contiguous.
     Xf = np.asfortranarray(X)
@@ -361,6 +361,7 @@ def test_LinearSVC():
     clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
+    # test also decision function
     dec = clf.decision_function(X)
     assert_array_equal(np.argmax(dec, 1), true_result)
 

@@ -38,14 +38,13 @@ class BaseLibSVM(BaseEstimator):
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nu, p, shrinking, probability):
 
-        assert impl in self._svm_types, \
-            "impl should be one of %s, %s was given" % (
-                self._svm_types, impl)
+        if not impl in self._svm_types:
+            raise ValueError("impl should be one of %s, %s was given" % (
+                self._svm_types, impl))
 
-        assert kernel in self._kernel_types or \
-               hasattr(kernel, '__call__'), \
-               "kernel should be one of %s or a callable, " \
-               "%s was given." % ( self._kernel_types, kernel)
+        if not kernel in self._kernel_types or hasattr(kernel, '__call__'):
+            raise ValueError("kernel should be one of %s or a callable, " \
+                             "%s was given." % ( self._kernel_types, kernel))
 
         self.kernel = kernel
         self.impl = impl
