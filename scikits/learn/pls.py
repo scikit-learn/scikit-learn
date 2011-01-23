@@ -4,8 +4,8 @@
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD Style.
 
-#from .base import BaseEstimator
-from scikits.learn.base import BaseEstimator
+from .base import BaseEstimator
+#from scikits.learn.base import BaseEstimator
 import warnings
 import numpy as np
 from scipy import linalg
@@ -24,7 +24,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter = 500, tol = 1e-06):
     ite = 1
     # Inner loop of the Wold algo.
     while True:
-        print " ite",ite
+        #print " ite",ite
         # Update y_score: the Y latent scores
         y_score = np.dot(Y, v)/np.dot(v.T, v)
         
@@ -46,7 +46,6 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter = 500, tol = 1e-06):
             warnings.warn('Maximum number of iterations reached')
             break
         u_old = u
-        #v_old = v
         ite += 1
     return u, v
 
@@ -60,42 +59,42 @@ def _svd_cross_product(X, Y):
 class PLS(BaseEstimator):
     """Partial Least Square (PLS)
 
-    We use the therminology defined by [Wegelin et al. 2000]
-    This implementation uses the PLS-W2A (PLS Wold 2 blocks) algorithm as
-    referenced by Wegelin et al. 2000 which is based on two nested loop:
-    The outer loop iterate over compements. 
-    The inner loop is a two block generalization of the of power method 
-    usually use to compute eigenvectors on singlese block.
+    We use the therminology defined by [Wegelin et al. 2000].
+    This implementation uses the PLS Wold 2 blocks algorithm or NIPALS which is
+    based on two nested loops: 
+    (i) The outer loop iterate over compements. 
+        (ii) The inner loop estimates the loading vectors. This can be done
+        with two algo. (a) the inner loop of the original NIPALS algo or (b) a
+        SVD on residuals cross-covariance matrices.
+    
+    This implementation can provide: 
+    - PLS regression (PLS2) (PLS 2 blocks, mode A, with asymetric deflation)
+    - PLS canonical (PLS 2 blocks, mode A, with symetric deflation)
+    - CCA (PLS 2 blocks, mode B, with symetric deflation)
 
-    Parameters; ,k 
+    Parameters
     ----------
     X: array-like of predictors, shape (n_samples, p)
-        Training vector, where n_samples in the number of samples and
+        Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
     Y: array-like of response, shape (n_samples, q)
-        Training vector, where n_samples in the number of samples and
+        Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
     n_components: int, number of components to keep. (default 2).
 
-    deflation_mode: str, "canonical" or "regression". "canonical" performs
-        a symetric deflation (each block is deflated on its own latent
-        variable: X on x_score and Y on y_score). "regression" performs an asymetric
-        deflation: both X and Y are deflated on x_score. The two modes yield to same
-        results on the first component, differences start with the second
-        components. The canonical mode is mostly used for modeling, while
-        regression is prediction oriented.
+    deflation_mode: str, "canonical" or "regression". See notes.
         
-    mode: "A" classical PLS and "B" CCA.
+    mode: "A" classical PLS and "B" CCA. See notes.
     
     center_X: boolean, center X? (default True)
     
     center_Y: boolean, center Y? (default True)
         
-    scale_X: boolean, scale X? (default True)
+    scale_X : boolean, scale X? (default True)
             
-    scale_X: boolean, scale X? (default True)
+    scale_X : boolean, scale X? (default True)
     
     algorithm: str "nipals" or "svd" the algorithm used to estimate the 
         loadings, it will be called "n_components" time ie.: for each iteration
@@ -107,25 +106,6 @@ class PLS(BaseEstimator):
     tol: a not negative real, the tolerance used in the iterative algorithm
          default 1e-06.
  
-    Notes
-    -----
-    PLS mode A, regression, ie.: the PLS regression also known as PLS2
-    
-    PLS mode A, canonical a symetric version of the PLS regression
-    
-        Optimize:
-        max corr(Xu, Yv) * var(Xu), |u| = |v| = 1
-    
-
-    
-    PLS mode C, canonical, ie.: the CCA
-    
-    References
-    ----------
-    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with 
-    emphasis on the two-block case. Technical Report 371, Department of 
-    Statistics, University of Washington, Seattle, 2000.
- 
     Attributes
     ----------
     x_loadings_: array, [p x n_components] loadings for the X block
@@ -133,18 +113,86 @@ class PLS(BaseEstimator):
     x_score_: array, [p x n_samples] scores for the X block
     y_score_: array, [q x n_samples] scores for the Y block
 
+    Notes
+    -----
+    PLS mode A
+        For each component k, find loadings u, v that optimizes:
+        max corr(Xk u, Yk v) * var(Xk u) var(Yk u) 
+         |u| = |v| = 1
+        max u'Xk' Yk v 
+         |u| = |v| = 1
+        
+        Note that it maximizes both the correlations between the scores and the
+        intra-block variances.
+        
+        With all deflation modes, the residual matrix of X (Xk+1) block is
+        obtained by the deflation on the current X score: x_score.
+    
+        deflation_mode == "regression",the residual matrix of Y (Yk+1) block is 
+            obtained by deflation on the current X score. This performs the PLS
+            regression known as PLS2. This mode is prediction oriented.
 
+        deflation_mode == "canonical",the residual matrix of Y (Yk+1) block is 
+            obtained by deflation on the current Y score. This performs a
+            canonical symetric version of the PLS regression. But slightly
+            different than the CCA. This is mode mostly used for modeling
+
+    PLS mode B, canonical, ie.: the CCA
+        For each component k, find the loadings u, v that maximizes
+        max corr(Xk u, Yk v)
+         |u| = |v| = 1
+        max u'Xk' Yk v 
+         |u| = |v| = 1
+
+        Note that it maximizes only the correlations between the scores.
+
+    References
+    ----------
+    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with 
+    emphasis on the two-block case. Technical Report 371, Department of 
+    Statistics, University of Washington, Seattle, 2000.
+    
+    In french but still a reference:
+    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
+    Editions Technic.
+    
     Examples
     --------
     >>> import numpy as np
     >>> from scikits.learn.pls import PLS
-    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> Y = np.array([[-3, -2], [-1, -2], [-5, -3], [4, 1], [-2, 2], [5, 6]])
-    >>> pls = PLS(n_components=2)
-    >>> pls.fit(X, Y)
-    PCA(copy=True, n_components=2, whiten=False)
-    >>> print pca.explained_variance_ratio_
-    [ 0.99244289  0.00755711]
+    >>> from scikits.learn.datasets import load_linnerud
+    >>> d=load_linnerud()
+    >>> X = d['data_exercise']
+    >>> Y = d['data_physiological']
+    
+    >>> ## Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
+    >>> pls = PLS(deflation_mode="canonical")
+    >>> pls.fit(X,Y, n_components=2)
+    PLS(algorithm='nipals', deflation_mode='canonical', max_iter=500,
+      center_X=True, center_Y=True, n_components=2, tol=1e-06, scale_X=True,
+      scale_Y=True, mode='A')
+    >>> print pls.x_loadings_
+    [[-0.58989155 -0.78900503]
+     [-0.77134037  0.61351764]
+     [ 0.23887653  0.03266757]]
+    >>> print pls.y_loadings_
+    [[ 0.61330741 -0.25616063]
+     [ 0.7469717  -0.11930623]
+     [ 0.25668522  0.95924333]]
+    >>> # check orthogonality of latent scores
+    >>> print np.corrcoef(pls.x_scores_,rowvar=0)
+    [[  1.00000000e+00   2.51221165e-17]
+     [  2.51221165e-17   1.00000000e+00]]
+    >>> print np.corrcoef(pls.y_scores_,rowvar=0)
+    [[  1.00000000e+00  -8.57631722e-17]
+     [ -8.57631722e-17   1.00000000e+00]]
+     
+    >>> ## Regression PLS (PLS 2 blocks regression mode A known as PLS2)
+    >>> pls2 = PLS(deflation_mode="regression")
+    >>> pls2.fit(X,Y, n_components=2)
+    PLS(algorithm='nipals', deflation_mode='regression', max_iter=500,
+      center_X=True, center_Y=True, n_components=2, tol=1e-06, scale_X=True,
+      scale_Y=True, mode='A')
 
     See also
     --------
@@ -167,6 +215,7 @@ class PLS(BaseEstimator):
         self.algorithm = algorithm
         self.max_iter = max_iter
         self.tol      = tol
+        self._DEBUG = False
 
     def fit(self, X, Y,  **params):
         self._set_params(**params)
@@ -184,17 +233,17 @@ class PLS(BaseEstimator):
             raise ValueError(
                 'Incompatible shapes: X has %s samples, while Y '
                 'has %s' % (X.shape[0], Y.shape[0]))
-
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
-            
         if self.algorithm is "svd" and self.mode is "B":
             raise ValueError(
                 'Incompatible configuration: mode B is not implemented with svd'
                 'algorithm')
         if not self.deflation_mode in ["canonical","regression"]:
             raise ValueError(
-                'The deflation mode is not valid')
+                'The deflation mode is unknown')
+        if self.mode is "B":
+            raise ValueError('The mode B (CCA) is not implemented yet')
 
         # Scale the data
         if self.center_X:
@@ -217,10 +266,11 @@ class PLS(BaseEstimator):
         self.y_scores_ = np.zeros((n, self.n_components))
         self.x_loadings_ = np.zeros((p, self.n_components))
         self.y_loadings_ = np.zeros((q, self.n_components))
-        self.x_regs_     = np.zeros((p, self.n_components))#Xk'x_scorek/x_scorek'x_scorek
+        self.x_regs_     = np.zeros((p, self.n_components))
+            # x_regs_ contains, for each k, the regression of Xk on its score, 
+            # ie.: Xk'x_scorek/x_scorek'x_scorek
         # NIPALS algo: outer loop, over components
         for k in xrange(self.n_components):
-            #print " comp",k,"--------------------------------------------------"
             #1) Loadings estimation (inner loop)
             # -----------------------------------
             if self.algorithm is "nipals":
@@ -253,13 +303,14 @@ class PLS(BaseEstimator):
             self.y_loadings_[:,k] = v.ravel()
             self.x_regs_[:,k]     = a.ravel()
             
-            print "component",k,"----------------------------------------------"
-            print "X rank-one approximations and residual"
-            print np.dot(x_score, a.T)
-            print Xk
-            print "Y rank-one approximations and residual"
-            print np.dot(y_score, b.T)
-            print Yk
+            if self._DEBUG:
+                print "component",k,"----------------------------------------------"
+                print "X rank-one approximations and residual"
+                print np.dot(x_score, a.T)
+                print Xk
+                print "Y rank-one approximations and residual"
+                print np.dot(y_score, b.T)
+                print Yk
         return self
 
 
@@ -292,15 +343,29 @@ class PLS_SVD(BaseEstimator):
      
     Attributes
     ----------
-    u_: array, [p x n_components] loadings for the X block
-    v_: array, [q x n_components] loadings for the Y block
+    x_loadings_: array, [p x n_components] loadings for the X block
+    y_loadings_: array, [q x n_components] loadings for the Y block
     x_score_: array, [p x n_samples] scores for X the block
     y_score_: array, [q x n_samples] scores for the Y block
 
     Examples
     --------
     >>> import numpy as np
-    >>> from scikits.learn.pls import PLS
+    >>> from scikits.learn.pls import PLS_SVD
+    >>> pls_svd = PLS_SVD()
+    >>> pls_svd.fit(X, Y)
+    PLS_SVD(scale_X=True, scale_Y=True, center_X=True, center_Y=True,
+        n_components=2)
+    >>> print pls_svd.x_loadings_
+    [[-0.58989118 -0.77210756  0.23638594]
+     [-0.77134059  0.45220001 -0.44782681]
+     [ 0.23887675 -0.44650316 -0.86230669]]
+    >>> print pls_svd.y_loadings_
+    [[ 0.61330742 -0.21404398  0.76028888]
+     [ 0.7469717  -0.15563957 -0.64638193]
+     [ 0.25668519  0.96434511  0.06442989]]
+    >>> # note that on the first compements all PLS methods (PLS_SVD, PLS2, PLS 
+    >>> # canonical) give the same results
 
     See also
     --------
@@ -355,9 +420,9 @@ class PLS_SVD(BaseEstimator):
         U, s, V = linalg.svd(C, full_matrices = False)
         V = V.T
         self.x_score_    = np.dot(X, U)
-        self.y_score_ = np.dot(Y, V)
-        self.u_     = U
-        self.v_     = V
+        self.y_score_    = np.dot(Y, V)
+        self.x_loadings_ = U
+        self.y_loadings_ = V
         return self
 
 

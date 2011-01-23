@@ -14,7 +14,7 @@ Tenenhaus, M. (1998), Table 1, page 15.
 References
 ----------
 
-Tenenhaus, M. (1998). La r'egression PLS: th'eorie et pratique. Paris: Editions Technic.
+Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris: Editions Technic.
 
 Number of Instances: 20
 
