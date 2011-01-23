@@ -433,9 +433,10 @@ class Ward(BaseEstimator):
     k : int or ndarray
                  The number of clusters.
 
-    memory : Instance of joblib.Memory
+    memory : Instance of joblib.Memory or string
         Used to cache the output of the computation of the tree.
-        By default, no caching is done.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
 
     Methods
     -------
@@ -518,9 +519,13 @@ class Ward(BaseEstimator):
                 " and the maximal number of clusters will be ", n_comp
             self.k = np.max([self.k, n_comp])
 
+        memory = self.memory
+        if isinstance(memory, basestring):
+            memory = Memory(cachedir=memory)
+
         # Construct the tree
         self.parent_, self.children_, self.heights_, self.adjacency_matrix = \
-                    self.memory.cache(ward_tree)(X, self.adjacency_matrix)
+                    memory.cache(ward_tree)(X, self.adjacency_matrix)
 
         # Cut the tree
         self.labels_, self.active_nodes_ = _hc_cut(self.k,
