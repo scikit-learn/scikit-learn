@@ -42,7 +42,7 @@ class BaseLibSVM(BaseEstimator):
             raise ValueError("impl should be one of %s, %s was given" % (
                 self._svm_types, impl))
 
-        if not kernel in self._kernel_types or hasattr(kernel, '__call__'):
+        if not (kernel in self._kernel_types or hasattr(kernel, '__call__')):
             raise ValueError("kernel should be one of %s or a callable, " \
                              "%s was given." % ( self._kernel_types, kernel))
 

@@ -201,10 +201,8 @@ def decision_function_wrap(
     model = set_model(param, coef_.data, coef_.shape, label.data, bias)
 
     n_class = label.shape[0]
-    if n_class > 2:
-        dec_values = np.empty((T.shape[0], n_class), dtype=np.float64)
-    else:
-        dec_values = np.empty((T.shape[0], 1), dtype=np.float64)
+    if n_class <= 2: n_class = 1
+    dec_values = np.empty((T.shape[0], n_class), dtype=np.float64)
 
     if copy_predict_values(T.data, model, T.shape, dec_values.data, n_class) < 0:
         raise MemoryError("We've run out of of memory")

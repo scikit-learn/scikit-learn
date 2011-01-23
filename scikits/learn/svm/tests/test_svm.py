@@ -362,8 +362,10 @@ def test_LinearSVC():
     assert_array_equal(clf.predict(T), true_result)
 
     # test also decision function
-    dec = clf.decision_function(X)
-    assert_array_equal(np.argmax(dec, 1), true_result)
+    dec = clf.decision_function(T).ravel()
+    res = (dec > 0).astype(np.int) + 1
+    assert_array_equal(res, true_result)
+
 
 def test_LinearSVC_iris():
     """
@@ -371,6 +373,10 @@ def test_LinearSVC_iris():
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
     assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
+
+    dec = clf.decision_function(iris.data)
+    res = np.argmax(dec, 1)
+    assert_array_equal(res, clf.predict(iris.data))
 
 
 def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
