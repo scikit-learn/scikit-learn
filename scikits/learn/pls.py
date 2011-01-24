@@ -24,7 +24,6 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter = 500, tol = 1e-06):
     ite = 1
     # Inner loop of the Wold algo.
     while True:
-        #print " ite",ite
         # Update y_score: the Y latent scores
         y_score = np.dot(Y, v)/np.dot(v.T, v)
         
@@ -55,7 +54,29 @@ def _svd_cross_product(X, Y):
     u = U[:,[0]]
     v = Vh.T[:,[0]]
     return u, v
-    
+
+def _scale_xy(X, Y, center_x, center_y, scale_x, scale_y):
+    """ Scale/center (in place!) X, Y
+    Return
+    ------
+        X, Y, x_mu, y_mu, x_std, y_std
+    """
+    x_mu  = y_mu  = 0
+    x_std = x_std = 1
+    if center_x:
+        x_mu  = X.mean(axis=0)
+        X -= x_mu 
+    if scale_x :
+        x_std = X.std(axis=0, ddof=1)
+        X /= x_std
+    if center_y:
+        y_mu  = Y.mean(axis=0)
+        Y -= y_mu 
+    if scale_y:
+        y_std = Y.std(axis=0, ddof=1)
+        Y /= y_std
+    return X, Y, x_mu, y_mu, x_std, y_std
+
 class PLS(BaseEstimator):
     """Partial Least Square (PLS)
 
@@ -88,13 +109,13 @@ class PLS(BaseEstimator):
         
     mode: "A" classical PLS and "B" CCA. See notes.
     
-    center_X: boolean, center X? (default True)
+    center_x: boolean, center X? (default True)
     
-    center_Y: boolean, center Y? (default True)
+    center_y: boolean, center Y? (default True)
         
-    scale_X : boolean, scale X? (default True)
+    scale_x : boolean, scale X? (default True)
             
-    scale_X : boolean, scale X? (default True)
+    scale_y : boolean, scale Y? (default True)
     
     algorithm: str "nipals" or "svd" the algorithm used to estimate the 
         loadings, it will be called "n_components" time ie.: for each iteration
@@ -169,8 +190,8 @@ class PLS(BaseEstimator):
     >>> pls = PLS(deflation_mode="canonical")
     >>> pls.fit(X,Y, n_components=2)
     PLS(algorithm='nipals', deflation_mode='canonical', max_iter=500,
-      center_X=True, center_Y=True, n_components=2, tol=1e-06, scale_X=True,
-      scale_Y=True, mode='A')
+      center_x=True, center_y=True, n_components=2, tol=1e-06, scale_x=True,
+      scale_y=True, mode='A')
     >>> print pls.x_loadings_
     [[-0.58989155 -0.78900503]
      [-0.77134037  0.61351764]
@@ -191,8 +212,8 @@ class PLS(BaseEstimator):
     >>> pls2 = PLS(deflation_mode="regression")
     >>> pls2.fit(X,Y, n_components=2)
     PLS(algorithm='nipals', deflation_mode='regression', max_iter=500,
-      center_X=True, center_Y=True, n_components=2, tol=1e-06, scale_X=True,
-      scale_Y=True, mode='A')
+      center_x=True, center_y=True, n_components=2, tol=1e-06, scale_x=True,
+      scale_y=True, mode='A')
 
     See also
     --------
@@ -201,26 +222,27 @@ class PLS(BaseEstimator):
 
     """
     def __init__(self, n_components=2, deflation_mode = "canonical", mode = "A",
-                 center_X = True, center_Y = True,
-                 scale_X  = True, scale_Y  = True,
+                 center_x = True, center_y = True,
+                 scale_x  = True, scale_y  = True,
                  algorithm = "nipals",
                  max_iter = 500, tol = 1e-06):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
         self.mode = mode
-        self.center_X = center_X
-        self.center_Y = center_Y
-        self.scale_X  = scale_X
-        self.scale_Y  = scale_Y
+        self.center_x = center_x
+        self.center_y = center_y
+        self.scale_x  = scale_x
+        self.scale_y  = scale_y
         self.algorithm = algorithm
         self.max_iter = max_iter
         self.tol      = tol
-        self._DEBUG = False
+        self._DEBUG   = False
 
     def fit(self, X, Y,  **params):
         self._set_params(**params)
-        X = np.asanyarray(X)
-        y = np.asanyarray(Y)
+        # copy since this will contains the residuals (deflated) matrices
+        X = np.asanyarray(X).copy()
+        y = np.asanyarray(Y).copy()
 
         n = X.shape[0]
         p = X.shape[1]
@@ -244,20 +266,10 @@ class PLS(BaseEstimator):
                 'The deflation mode is unknown')
         if self.mode is "B":
             raise ValueError('The mode B (CCA) is not implemented yet')
-
-        # Scale the data
-        if self.center_X:
-            self.X_mu_  = X.mean(axis=0)
-            X = (X - self.X_mu_)  
-        if self.scale_X :
-            self.X_std_ = X.std(axis=0,ddof=1)
-            X = X / self.X_std_
-        if self.center_Y:
-            self.Y_mu_  = Y.mean(axis=0)
-            Y = Y - self.Y_mu_  
-        if self.scale_Y :
-            self.Y_std_ = Y.std(axis=0,ddof=1)
-            Y = Y / self.Y_std_
+        # Scale (in place)
+        X, Y, self.x_mu_, self.y_mu_, self.x_std_, self.y_std_\
+            = _scale_xy(X, Y, self.center_x, self.center_y,\
+                        self.scale_x, self.scale_y)
         # Residuals (deflated) matrices
         Xk = X
         Yk = Y
@@ -269,8 +281,10 @@ class PLS(BaseEstimator):
         self.x_regs_     = np.zeros((p, self.n_components))
             # x_regs_ contains, for each k, the regression of Xk on its score, 
             # ie.: Xk'x_scorek/x_scorek'x_scorek
+            
         # NIPALS algo: outer loop, over components
         for k in xrange(self.n_components):
+        
             #1) Loadings estimation (inner loop)
             # -----------------------------------
             if self.algorithm is "nipals":
@@ -282,6 +296,7 @@ class PLS(BaseEstimator):
             # compute scores
             x_score = np.dot(Xk, u)
             y_score = np.dot(Yk, v)
+            
             #2) Deflation
             # ------------
             # - regress Xk's on x_score
@@ -296,6 +311,7 @@ class PLS(BaseEstimator):
                 # - regress Yk's on x_score, then substract rank-one approximation
                 b  = np.dot(Yk.T, x_score)/np.dot(x_score.T, x_score) # q x 1
                 Yk = Yk - np.dot(x_score, b.T)
+            
             # 3) Store loadings and scores
             self.x_scores_[:,k] = x_score.ravel()
             self.y_scores_[:,k] = y_score.ravel()
@@ -333,13 +349,13 @@ class PLS_SVD(BaseEstimator):
 
     n_components: int, number of components to keep. (default 2).
     
-    center_X: boolean, center X? (default True)
+    center_x: boolean, center X? (default True)
     
-    center_Y: boolean, center Y? (default True)
+    center_y: boolean, center Y? (default True)
         
-    scale_X: boolean, scale X? (default True)
+    scale_x: boolean, scale X? (default True)
             
-    scale_X: boolean, scale X? (default True)
+    scale_y: boolean, scale Y? (default True)
      
     Attributes
     ----------
@@ -354,7 +370,7 @@ class PLS_SVD(BaseEstimator):
     >>> from scikits.learn.pls import PLS_SVD
     >>> pls_svd = PLS_SVD()
     >>> pls_svd.fit(X, Y)
-    PLS_SVD(scale_X=True, scale_Y=True, center_X=True, center_Y=True,
+    PLS_SVD(scale_x=True, scale_y=True, center_x=True, center_y=True,
         n_components=2)
     >>> print pls_svd.x_loadings_
     [[-0.58989118 -0.77210756  0.23638594]
@@ -374,19 +390,21 @@ class PLS_SVD(BaseEstimator):
 
     """
     def __init__(self, n_components=2,
-                 center_X = True, center_Y = True,
-                 scale_X  = True, scale_Y  = True):
+                 center_x = True, center_y = True,
+                 scale_x  = True, scale_y  = True):
         self.n_components = n_components
-        self.center_X = center_X
-        self.center_Y = center_Y
-        self.scale_X  = scale_X
-        self.scale_Y  = scale_Y
+        self.center_x = center_x
+        self.center_y = center_y
+        self.scale_x  = scale_x
+        self.scale_y  = scale_y
  
     def fit(self, X, Y,  **params):
         self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(Y)
-        
+        if self.center_x or self.scale_x: X = X.copy()
+        if self.center_y or self.scale_y: Y = Y.copy()
+
         n = X.shape[0]
         p = X.shape[1]
         q = Y.shape[1]
@@ -402,20 +420,11 @@ class PLS_SVD(BaseEstimator):
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
 
-        # Scale the data
-        if self.center_X:
-            self.X_mu_  = X.mean(axis=0)
-            X -= self.X_mu_  
-        if self.scale_X :
-            self.X_std_ = X.std(axis=0)
-            X /= self.X_std_
-        if self.center_Y:
-            self.Y_mu_  = Y.mean(axis=0)
-            Y -= self.Y_mu_  
-        if self.scale_Y :
-            self.Y_std_ = Y.std(axis=0)
-            Y /= self.Y_std_
-        
+        # Scale (in place)
+        X, Y, self.x_mu_, self.y_mu_, self.x_std_, self.y_std_\
+            = _scale_xy(X, Y, self.center_x, self.center_y,\
+                        self.scale_x, self.scale_y)
+        # svd(X'Y)
         C = np.dot(X.T,Y)
         U, s, V = linalg.svd(C, full_matrices = False)
         V = V.T

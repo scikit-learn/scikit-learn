@@ -1,29 +1,3 @@
-# Check
-# -----
-
-# QC routines
-
-def check(m):
-    n_components = m.x_loadings_.shape[1]
-    print "score correlations:"
-    print "X scores\n",np.corrcoef(m.x_scores_,rowvar=0)
-    print "Y scores\n",np.corrcoef(m.y_scores_,rowvar=0)
-    print "correlations between pairs of scores"
-    print [np.corrcoef(m.x_scores_[:,k], m.y_scores_[:,k])[0,1] for k in xrange(n_components)]
-    
-
-# Compare loadings and score of the two algo.
-def compare(m1, m2):
-    n_components = m1.x_loadings_.shape[1]
-    print "correlations X loadings"
-    print [np.corrcoef(m1.x_loadings_[:,k], m2.x_loadings_[:,k])[0,1] for k in xrange(n_components)]
-    print "correlations Y loadings"
-    print [np.corrcoef(m1.y_loadings_[:,k], m2.y_loadings_[:,k])[0,1] for k in xrange(n_components)]
-    print "correlations X scores"
-    print [np.corrcoef(m1.x_scores_[:,k], m2.x_scores_[:,k])[0,1] for k in xrange(n_components)]
-    print "correlations Y scores"
-    print [np.corrcoef(m1.y_scores_[:,k], m2.y_scores_[:,k])[0,1] for k in xrange(n_components)]
-
 import numpy as np
 from scikits.learn.datasets import load_linnerud
 from scikits.learn.pls import PLS
@@ -34,23 +8,6 @@ Y = d['data_physiological']
 
 ## Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
 ## --------------------------------------------------------
-
-# algo nipals vs svd
-# ~~~~~~~~~~~~~~~~~~
-
-pls_bynpl = PLS()
-pls_bynpl.fit(X,Y, n_components=2)
-check(pls_bynpl)
-
-
-pls_bysvd = PLS(algorithm="svd")
-pls_bysvd.fit(X,Y, n_components=2)
-check(pls_bysvd)
-
-compare(pls_bynpl, pls_bysvd)
-
-# Non regression
-# ~~~~~~~~~~~~~~
 
 pls = PLS(deflation_mode="canonical")
 pls.fit(X,Y, n_components=2)

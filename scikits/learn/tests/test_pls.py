@@ -2,15 +2,14 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from scikits.learn.datasets import load_linnerud
-from scikits.learn.pls import PLS
-from .. import pls
+from scikits.learn import pls
 
 d=load_linnerud()
 X = d['data_exercise']
 Y = d['data_physiological']
 
 def test_pls():
-    n_components=2
+    n_components = 2
     
     # 1) Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
     # -----------------------------------------------------------    
@@ -26,8 +25,8 @@ def test_pls():
     assert_array_almost_equal(pls_bynipals.x_scores_,pls_bysvd.x_scores_, 5)
     assert_array_almost_equal(pls_bynipals.y_scores_,pls_bysvd.y_scores_, 5)
 
-    # Check vs know results
-    # ~~~~~~~~~~~~~~~~~~~~~
+    # Non regression test
+    # ~~~~~~~~~~~~~~~~~~~
     x_loadings = np.array(
         [[-0.58989155, -0.78900503],
         [-0.77134037,  0.61351764],
