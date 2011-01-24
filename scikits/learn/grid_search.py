@@ -168,6 +168,15 @@ class GridSearchCV(BaseEstimator):
     GridSearchCV(n_jobs=1, fit_params={}, loss_func=None, iid=True,
            estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
            ...
+
+    Notes
+    ------
+
+    The parameters selected are those that maximize the score of the
+    left out data, unless an explicit score_func is passed in which
+    case it is used instead. If a loss function loss_func is passed,
+    it overrides the score functions and is minimized.
+
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
