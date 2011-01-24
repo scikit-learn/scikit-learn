@@ -16,6 +16,7 @@ from ..utils import safe_asanyarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
+
 class Ridge(LinearModel):
     """
     Ridge regression.
@@ -87,12 +88,12 @@ class Ridge(LinearModel):
         if n_samples > n_features:
             # w = inv(X^t X + alpha*Id) * X.T y
             A = np.dot(X.T, X)
-            A.flat[::n_features+1] += self.alpha
+            A.flat[::n_features + 1] += self.alpha
             self.coef_ = self._solve(A, np.dot(X.T, y))
         else:
             # w = X.T * inv(X X^t + alpha*Id) y
             A = np.dot(X, X.T)
-            A.flat[::n_samples+1] += self.alpha
+            A.flat[::n_samples + 1] += self.alpha
             self.coef_ = np.dot(X.T, self._solve(A, y))
 
     def _solve_sparse(self, X, y):
@@ -113,12 +114,14 @@ class Ridge(LinearModel):
             # this solver cannot handle a 2-d b.
             sol, error = sp_linalg.cg(A, b)
             if error:
-                raise ValueError, "Failed with error code %d" % error
+                raise ValueError("Failed with error code %d" % error)
             return sol
         else:
             # we are working with dense symmetric positive A
-            if sp.issparse(A): A = A.todense()
+            if sp.issparse(A):
+                A = A.todense()
             return linalg.solve(A, b, sym_pos=True, overwrite_a=True)
+
 
 class RidgeClassifier(Ridge):
 
@@ -192,7 +195,7 @@ class _RidgeLOO(LinearModel):
         c = np.dot(G, y)
         G_diag = np.diag(G)
         # handle case when y is 2-d
-        G_diag = G_diag if len(y.shape) == 1 else G_diag[:,np.newaxis]
+        G_diag = G_diag if len(y.shape) == 1 else G_diag[:, np.newaxis]
         return (c / G_diag) ** 2, c
 
     def _values(self, K, v, Q, y, alpha):
@@ -207,8 +210,8 @@ class _RidgeLOO(LinearModel):
         denom = np.ones(n_samples) - KG_diag
         if len(y.shape) == 2:
             # handle case when y is 2-d
-            KG_diag = KG_diag[:,np.newaxis]
-            denom = denom[:,np.newaxis]
+            KG_diag = KG_diag[:, np.newaxis]
+            denom = denom[:, np.newaxis]
 
         num = np.dot(KG, y) - KG_diag * y
 
@@ -248,14 +251,14 @@ class _RidgeLOO(LinearModel):
                 out, c = self._errors(v, Q, y, sample_weight * alpha)
             else:
                 out, c = self._values(K, v, Q, y, sample_weight * alpha)
-            M[:,i] = out.ravel()
+            M[:, i] = out.ravel()
             C.append(c)
 
         if error:
             best = M.mean(axis=0).argmin()
         else:
             func = self.score_func if self.score_func else self.loss_func
-            out = [func(y.ravel(), M[:,i]) for i in range(len(self.alphas))]
+            out = [func(y.ravel(), M[:, i]) for i in range(len(self.alphas))]
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
         self.best_alpha = self.alphas[best]
@@ -265,6 +268,7 @@ class _RidgeLOO(LinearModel):
         self._set_intercept(Xmean, ymean)
 
         return self
+
 
 class RidgeCV(LinearModel):
     """
@@ -318,6 +322,7 @@ class RidgeCV(LinearModel):
 
         return self
 
+
 class RidgeClassifierCV(RidgeCV):
 
     def fit(self, X, y, sample_weight=1.0, class_weight={}, cv=None):
@@ -360,4 +365,3 @@ class RidgeClassifierCV(RidgeCV):
     def predict(self, X):
         Y = self.decision_function(X)
         return self.lb.inverse_transform(Y)
-

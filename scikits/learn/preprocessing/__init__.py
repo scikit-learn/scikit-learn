@@ -99,7 +99,7 @@ class LengthNormalizer(BaseEstimator):
         if copy:
             X = X.copy()
 
-        norms = np.sqrt(np.sum(X ** 2, axis=1))[:,np.newaxis]
+        norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
         norms[norms == 0.0] = 1.0
         X /= norms
 
@@ -126,6 +126,7 @@ class Binarizer(BaseEstimator):
         X[not_cond] = 0
 
         return X
+
 
 class LabelBinarizer(BaseEstimator):
     """Binarize labels in a one-vs-all fashion, a.k.a 1-of-K coding scheme"""
@@ -159,7 +160,7 @@ class LabelBinarizer(BaseEstimator):
         """
         if len(self.classes) == 2:
             Y = np.zeros((len(y), 1))
-            Y[y == self.classes[1],0] = 1
+            Y[y == self.classes[1], 0] = 1
             return Y
 
         elif len(self.classes) >= 2:
@@ -191,4 +192,3 @@ class LabelBinarizer(BaseEstimator):
         else:
             y = Y.argmax(axis=1)
         return self.classes[y]
-
