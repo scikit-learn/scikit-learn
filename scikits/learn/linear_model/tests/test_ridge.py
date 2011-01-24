@@ -171,9 +171,15 @@ def _test_ridge_cv(filter_):
     ridge_cv.fit(filter_(X_diabetes), y_diabetes)
     ridge_cv.predict(filter_(X_diabetes))
 
+    assert_equal(len(ridge_cv.coef_.shape), 1)
+    assert_equal(type(ridge_cv.intercept_), np.float64)
+
     cv = KFold(n_samples, 5)
-    ridge_cv.fit(filter_(X_diabetes), y_diabetes)
+    ridge_cv.fit(filter_(X_diabetes), y_diabetes, cv=cv)
     ridge_cv.predict(filter_(X_diabetes))
+
+    assert_equal(len(ridge_cv.coef_.shape), 1)
+    assert_equal(type(ridge_cv.intercept_), np.float64)
 
 def _test_ridge_diabetes(filter_):
     ridge = Ridge(fit_intercept=False)
@@ -197,6 +203,13 @@ def _test_ridge_classifiers(filter_):
         clf.fit(filter_(X_iris), y_iris)
         y_pred = clf.predict(filter_(X_iris))
         assert np.mean(y_iris == y_pred) >= 0.8
+
+    clf = RidgeClassifierCV()
+    n_samples = X_iris.shape[0]
+    cv = KFold(n_samples, 5)
+    clf.fit(filter_(X_iris), y_iris, cv=cv)
+    y_pred = clf.predict(filter_(X_iris))
+    assert np.mean(y_iris == y_pred) >= 0.8
 
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,

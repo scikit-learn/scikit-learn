@@ -302,18 +302,19 @@ class RidgeCV(LinearModel):
         self : Returns self.
         """
         if cv is None:
-            cv_gen = _RidgeLOO(self.alphas, self.fit_intercept,
-                               self.score_func, self.loss_func)
-            cv_gen.fit(X, y, sample_weight)
-            self.coef_ = cv_gen.coef_
-            self.intercept_ = cv_gen.intercept_
+            estimator = _RidgeLOO(self.alphas, self.fit_intercept,
+                                  self.score_func, self.loss_func)
+            estimator.fit(X, y, sample_weight)
         else:
             parameters = {'alpha': self.alphas}
-            self.cv_gen = GridSearchCV(svr, parameters)
-            self.cv_gen.fit(X, y, cv)
+            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
+                              parameters)
             # FIXME: need to implement sample_weight in Ridge
-            self.coef_ = cv_gen.best_estimator.coef_
-            self.intercept_ = cv_gen.best_estimator.intercept_
+            gs.fit(X, y, cv=cv)
+            estimator = gs.best_estimator
+
+        self.coef_ = estimator.coef_
+        self.intercept_ = estimator.intercept_
 
         return self
 
