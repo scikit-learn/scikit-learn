@@ -266,9 +266,6 @@ class _RidgeLOO(LinearModel):
 
         return self
 
-    def predict(self, X):
-        return safe_sparse_dot(X, self.coef_) + self.intercept_
-
 class RidgeCV(LinearModel):
     """
     Ridge regression with built-in cross-validation.
