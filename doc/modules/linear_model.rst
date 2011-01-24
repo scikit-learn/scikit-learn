@@ -17,8 +17,8 @@ value.
 Across the module, we designate the vector :math:`\beta = (\beta_1,
 ..., \beta_D)` as ``coef_`` and :math:`\beta_0` as ``intercept_``.
 
-
-.. TODO: reference to logistic regression.
+To perform classification with generalized linear models, see
+:ref:`Logistic regression`.
 
 .. _ordinary_least_squares:
 
@@ -426,6 +426,26 @@ where :math:`\alpha` is the precision of the noise.
 
  * Original Algorithm is detailed in the  book *Bayesian learning for neural
    networks* by Radford M. Neal
+
+Logisitic regression
+======================
+
+If the task at hand is to do choose which class a sample belongs to given
+a finite (hopefuly small) set of choices, the learning problem is a
+classification, rather than regression. Linear models can be used for
+such a decision, but it is best to use what is called a 
+`logistic regression <http://en.wikipedia.org/wiki/Logistic_regression>`__, 
+that doesn't try to minimize the sum of square residuals, as in regression, 
+but rather a "hit or miss" cost.
+
+The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
+logistic regression, in order to have sparse predicting weights.
+
+.. topic:: Examples:
+
+  * :ref:`example_logistic_l1_l2_coef.py`
+
+  * :ref:`example_linear_model_plot_logistic_path.py`
 
 Stochastic Gradient Descent - SGD
 =================================
