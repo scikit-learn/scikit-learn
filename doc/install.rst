@@ -30,8 +30,8 @@ Installing an official release
 Installing from source
 ----------------------
 
-Installing from source requires you to have installed numpy,
-setuptools, python development headers and a working C++
+Installing from source requires you to have installed numpy, 
+scipy, setuptools, python development headers and a working C++
 compiler. Under debian-like systems you can get all this by executing
 with root privileges::
 
@@ -117,6 +117,13 @@ The macport's package is named py26-scikits-learn and can be installed
 by typing the following command::
 
     sudo port install py26-scikits-learn
+
+NetBSD
+------
+
+scikits.learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
+
+    http://pkgsrc.se/wip/py-scikits_learn
 
 .. _install_bleeding_edge:
 

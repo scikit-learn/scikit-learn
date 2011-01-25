@@ -66,12 +66,12 @@ def _assess_dimension_(spectrum, rank, n_samples, dim):
     spectrum_ = spectrum.copy()
     spectrum_[rank:dim] = v
     for i in range(rank):
-        for j in range (i + 1, dim):
+        for j in range(i + 1, dim):
             pa += (np.log((spectrum[i] - spectrum[j])
                           * (1. / spectrum_[j] - 1. / spectrum_[i]))
                    + np.log(n_samples))
 
-    ll = pu + pl + pv + pp -pa / 2 - rank * np.log(n_samples) / 2
+    ll = pu + pl + pv + pp - pa / 2 - rank * np.log(n_samples) / 2
 
     return ll
 
@@ -132,6 +132,9 @@ class PCA(BaseEstimator):
     components_: array, [n_features, n_components]
         Components with maximum variance.
 
+    components_coefs: array, [n_components]
+        Eigenvalues associated with principal components_.
+
     explained_variance_ratio_: array, [n_components]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
@@ -182,8 +185,10 @@ class PCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
+            self.components_coefs_ = S / np.sqrt(n)
         else:
             self.components_ = V.T
+            self.components_coefs_ = np.ones_like(S)
 
         if self.n_components == 'mle':
             self.n_components = _infer_dimension_(self.explained_variance_,
@@ -191,6 +196,7 @@ class PCA(BaseEstimator):
 
         if self.n_components is not None:
             self.components_ = self.components_[:, :self.n_components]
+            self.components_coefs_ = self.components_coefs_[:self.n_components]
             self.explained_variance_ = \
                     self.explained_variance_[:self.n_components]
             self.explained_variance_ratio_ = \
@@ -203,6 +209,12 @@ class PCA(BaseEstimator):
         Xr = X - self.mean_
         Xr = np.dot(Xr, self.components_)
         return Xr
+
+    def inverse_transform(self, Y):
+        """Return an input X whose transform would be Y"""
+        r = np.dot(Y * self.components_coefs_, self.components_.T)
+        r += self.mean_
+        return r
 
 
 class ProbabilisticPCA(PCA):
@@ -228,13 +240,14 @@ class ProbabilisticPCA(PCA):
         if self.dim <= self.n_components:
             delta = np.zeros(self.dim)
         elif homoscedastic:
-            delta = (Xr ** 2).sum() / (n_samples*(self.dim)) * np.ones(self.dim)
+            delta = (Xr ** 2).sum() * np.ones(self.dim) \
+                    / (n_samples * self.dim)
         else:
             delta = (Xr ** 2).mean(0) / (self.dim - self.n_components)
         self.covariance_ = np.diag(delta)
         for k in range(self.n_components):
-            add_cov =  np.dot(
-                self.components_[:, k:k+1], self.components_[:, k:k+1].T)
+            add_cov = np.dot(
+                self.components_[:, k:k + 1], self.components_[:, k:k + 1].T)
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
@@ -365,8 +378,10 @@ class RandomizedPCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
+            self.components_coefs_ = S / np.sqrt(n)
         else:
             self.components_ = V.T
+            self.components_coefs_ = np.ones_like(S)
 
         return self
 
@@ -377,5 +392,4 @@ class RandomizedPCA(BaseEstimator):
 
         X = safe_sparse_dot(X, self.components_)
         return X
-
 

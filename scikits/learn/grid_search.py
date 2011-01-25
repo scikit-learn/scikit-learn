@@ -156,27 +156,18 @@ class GridSearchCV(BaseEstimator):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    Methods
-    -------
-    fit(X, Y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from scikits.learn.cross_val import LeaveOneOut
-    >>> from scikits.learn.svm import SVR
-    >>> from scikits.learn.grid_search import GridSearchCV
-    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> y = np.array([1, 1, 2, 2])
+    >>> from scikits.learn import svm, grid_search, datasets
+    >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = SVR()
-    >>> clf = GridSearchCV(svr, parameters, n_jobs=1)
-    >>> clf.fit(X, y).predict([[-0.8, -1]])
-    array([ 1.13101459])
+    >>> svr = svm.SVR()
+    >>> clf = grid_search.GridSearchCV(svr, parameters)
+    >>> clf.fit(iris.data, iris.target) # doctest: +ELLIPSIS
+    GridSearchCV(n_jobs=1, fit_params={}, loss_func=None, iid=True,
+           estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
+           ...
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
