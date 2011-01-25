@@ -170,24 +170,34 @@ def ward_tree(X, connectivity=None, n_comp=None, copy=True):
         for tupl in ini:
             heapq.heappush(inertia, tupl)
 
-    return parent, children, heights, n_comp
+    # Separate leaves in children (empty lists up to now)
+    n_leaves = 0
+    while len(children) > 0 and len(children[0]) == 0:
+        n_leaves += 1
+        children.pop(0)
+    children = np.array(children) # return as numpy array for efficient caching
+
+    return parent, children, heights, n_comp, n_leaves
 
 
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
 
-def _hc_get_descendent(ind, children):
+def _hc_get_descendent(ind, children, n_leaves):
     """
     Function returning all the descendent leaves of a set of nodes in the tree.
 
     Parameters
     ----------
     ind : list of int
-          A list that indicates the nodes for which we want the descendents.
+        A list that indicates the nodes for which we want the descendents.
 
-    children : list of pairs. Lenght of n_nodes
-               list of the children of each nodes.
-               Leaves of the tree have empty list of children.
+    children : list of pairs. Length of n_nodes
+        List of the children of each nodes.
+        This is not defined for leaves.
+
+    n_leaves : int
+        Number of leaves.
 
     Return
     ------
@@ -196,15 +206,15 @@ def _hc_get_descendent(ind, children):
     descendent = []
     while len(ind) != 0:
         i = ind.pop()
-        ci = children[i]
-        if len(ci) == 0:
+        if i < n_leaves:
             descendent.append(i)
         else:
-            ind.extend(ci)
+            ci = children[i - n_leaves]
+            ind.extend((ci[0], ci[1]))
     return descendent
 
 
-def _hc_cut(n_clusters, parent, children, heights):
+def _hc_cut(n_clusters, parent, children, n_leaves, heights):
     """
     Function cutting the ward tree for a given number of clusters.
 
@@ -214,21 +224,24 @@ def _hc_cut(n_clusters, parent, children, heights):
         The number of clusters to form.
 
     parent : array-like, shape = [n_nodes]
-            Int. Gives the parent node for each node, i.e. parent[i] is the
-            parent node of the node i. The last value of parent is the
-            root node, that is its self parent, so the last value is taken
-            3 times in the array.
-            The n_nodes is equal at  (2*n_samples - 1), and takes into
-            account the nb_samples leaves, and the unique root.
+        Int. Gives the parent node for each node, i.e. parent[i] is the
+        parent node of the node i. The last value of parent is the
+        root node, that is its self parent, so the last value is taken
+        3 times in the array.
+        The n_nodes is equal at  (2*n_samples - 1), and takes into
+        account the nb_samples leaves, and the unique root.
 
     children : list of pairs. Lenght of n_nodes
-               list of the children of each nodes.
-               Leaves of the tree have empty list of children.
+        List of the children of each nodes.
+        Leaves have empty list of children and are not stored.
+
+    n_leaves : int
+        Number of leaves of the tree.
 
     heights : array-like, shape = [n_nodes]
-            Float. Gives the inertia of the created nodes. The n_samples first
-            values of the array are 0, and thus the values are positive (or
-            null) and are ranked in an increasing order.
+        Float. Gives the inertia of the created nodes. The n_samples first
+        values of the array are 0, and thus the values are positive (or
+        null) and are ranked in an increasing order.
 
     Return
     ------
@@ -250,10 +263,10 @@ def _hc_cut(n_clusters, parent, children, heights):
         else:
             active_nodes.append(node_to_cut)
         node_to_cut = active_nodes[np.argmax(heights[active_nodes])]
-    label = np.zeros(children.count([]))
+    label = np.zeros(n_leaves)
     for j in active_nodes[:n_clusters - 1]:
         ind = [j]
-        label[_hc_get_descendent(ind, children)] = np.max(label) + 1
+        label[_hc_get_descendent(ind, children, n_leaves)] = np.max(label) + 1
     return label, active_nodes
 
 ###############################################################################
@@ -281,24 +294,27 @@ class Ward(BaseEstimator):
     Attributes
     ----------
     parent_ : array-like, shape = [n_nodes]
-            Int. Gives the parent node for each node, i.e. parent[i] is the
-            parent node of the node i. The last value of parent is the
-            root node, that is its self parent, so the last value is taken
-            3 times in the array.
-            The n_nodes is equal at  (2*n_samples - 1), and takes into
-            account the nb_samples leaves, and the unique root.
+        Int. Gives the parent node for each node, i.e. parent[i] is the
+        parent node of the node i. The last value of parent is the
+        root node, that is its self parent, so the last value is taken
+        3 times in the array.
+        The n_nodes is equal at  (2*n_samples - 1), and takes into
+        account the nb_samples leaves, and the unique root.
 
-    children_ : list of pairs. Lenght of n_nodes
-               list of the children of each nodes.
-               Leaves of the tree have empty list of children.
+    children_ : list of pairs. Length of n_nodes
+        List of the children of each nodes.
+        Leaves of the tree have empty list of children.
 
     heights_ : array-like, shape = [n_nodes]
-            Float. Gives the inertia of the created nodes. The n_samples first
-            values of the array are 0, and thus the values are positive (or
-            null) and are ranked in an increasing order.
+        Gives the inertia of the created nodes. The n_samples first
+        values of the array are 0, and thus the values are positive (or
+        null) and are ranked in an increasing order.
 
     labels_ : array [n_points]
         cluster labels for each point
+
+    n_leaves_ : int
+        Number of leaves in the hiearchical tree.
 
     Return
     ------
@@ -341,13 +357,14 @@ class Ward(BaseEstimator):
             memory = Memory(cachedir=memory)
 
         # Construct the tree
-        self.parent_, self.children_, self.heights_, self.n_comp = \
-                    memory.cache(ward_tree)(X, self.connectivity,
-                                        n_comp=self.n_comp, copy=self.copy)
+        self.parent_, self.children_, self.heights_, self.n_comp, \
+            self.n_leaves_ = memory.cache(ward_tree)(X, self.connectivity,
+                                          n_comp=self.n_comp, copy=self.copy)
 
         # Cut the tree
         self.labels_, self.active_nodes_ = _hc_cut(self.n_clusters,
-                                self.parent_, self.children_, self.heights_)
+                                self.parent_, self.children_, self.n_leaves_,
+                                self.heights_)
         return self
 
 ###############################################################################
