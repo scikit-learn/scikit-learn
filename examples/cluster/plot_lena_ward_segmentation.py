@@ -38,8 +38,8 @@ connectivity = img_to_graph(mask, mask)
 # Compute clustering
 print "Compute structured hierarchical clustering..."
 st = time.time()
-k = 15 # number of regions
-ward = Ward(k=k).fit(X, connectivity=connectivity)
+n_clusters = 15 # number of regions
+ward = Ward(n_clusters=n_clusters).fit(X, connectivity=connectivity)
 label = np.reshape(ward.labels_, mask.shape)
 print "Elaspsed time: ", time.time() - st
 print "Number of pixels: ", label.size
@@ -49,9 +49,9 @@ print "Number of clusters: ", np.unique(label).size
 # Plot the results on an image
 pl.figure(figsize=(5, 5))
 pl.imshow(lena, cmap=pl.cm.gray)
-for l in range(k):
+for l in range(n_clusters):
     pl.contour(label == l, contours=1,
-            colors=[pl.cm.spectral(l/float(k)), ])
+            colors=[pl.cm.spectral(l/float(n_clusters)), ])
 pl.xticks(())
 pl.yticks(())
 pl.show()
