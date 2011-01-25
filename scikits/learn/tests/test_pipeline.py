@@ -96,4 +96,4 @@ def test_pipeline_methods():
     support_ = pipe.get_support()
     assert np.sum(support_) == 2
     coef_ = pipe.coef_
-    assert np.size(coef_) == 4
+    assert coef_.shape[1] == 4

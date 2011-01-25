@@ -16,8 +16,8 @@ def test_structured_ward_tree():
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
-    adjacency_matrix = img_to_graph(mask, mask)
-    parent, children, height, n_comp = ward_tree(X.T, adjacency_matrix)
+    connectivity = img_to_graph(mask, mask)
+    parent, children, height, n_comp = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
     assert(len(parent) == n_nodes)
     assert(len(children) == n_nodes)
@@ -44,8 +44,8 @@ def test_height_ward_tree():
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
-    adjacency_matrix = img_to_graph(mask, mask)
-    parent, children, height, n_nodes = ward_tree(X.T, adjacency_matrix)
+    connectivity = img_to_graph(mask, mask)
+    parent, children, height, n_nodes = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
     assert(np.sum(np.argsort(height)[100:] - np.arange(n_nodes)[100:]) == 0)
 
@@ -57,8 +57,8 @@ def test_ward_clustering():
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(100, 50)
-    adjacency_matrix = img_to_graph(mask, mask)
-    clustering = Ward(10, adjacency_matrix=adjacency_matrix)
+    connectivity = img_to_graph(mask, mask)
+    clustering = Ward(n_clusters=10, connectivity=connectivity)
     clustering.fit(X)
     assert(np.size(np.unique(clustering.labels_)) == 10)
 
@@ -70,8 +70,8 @@ def test_ward_agglomeration():
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
-    adjacency_matrix = img_to_graph(mask, mask)
-    ward = WardAgglomeration(k=5, adjacency_matrix=adjacency_matrix)
+    connectivity = img_to_graph(mask, mask)
+    ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
     ward.fit(X)
     assert(np.size(np.unique(ward.labels_)) == 5)
 

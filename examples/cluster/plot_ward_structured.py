@@ -36,13 +36,13 @@ t = t.ravel()
 
 ###############################################################################
 # Define the structure A of the data. Here a 10 nearest neighbors
-adjacency_matrix = kneighbors_graph(X, n_neighbors=10)
+connectivity = kneighbors_graph(X, n_neighbors=10)
 
 ###############################################################################
 # Compute clustering
 print "Compute structured hierarchical clustering..."
 st = time.time()
-ward = Ward(k=10).fit(X, adjacency_matrix=adjacency_matrix)
+ward = Ward(n_clusters=10).fit(X, connectivity=connectivity)
 label = ward.labels_
 print "Elapsed time: ", time.time() - st
 print "Number of points: ", label.size

@@ -22,7 +22,7 @@ from ._feature_agglomeration import AgglomerationTransform
 ###############################################################################
 # Ward's algorithm
 
-def ward_tree(X, adjacency_matrix=None, n_comp=None, copy=True):
+def ward_tree(X, connectivity=None, n_comp=None, copy=True):
     """Ward clustering based on a Feature matrix. Heapq-based representation
     of the inertia matrix.
 
@@ -34,17 +34,17 @@ def ward_tree(X, adjacency_matrix=None, n_comp=None, copy=True):
     X : array of shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
-    adjacency_matrix : sparse matrix.
-        adjacency matrix. Defines for each sample the neigbhoring samples
+    connectivity : sparse matrix.
+        connectivity matrix. Defines for each sample the neigbhoring samples
         following a given structure of the data.
         Defaut is None, i.e, the ward algorithm is unstructured.
 
     n_comp : int (optional)
         Number of connected components. If None the number of connected
-        components is estimated from the adjacency matrix.
+        components is estimated from the connectivity matrix.
 
     copy : bool (optional)
-        Make a copy of adjacency_matrix or work inplace. If adjacency_matrix
+        Make a copy of connectivity or work inplace. If connectivity
         is not of LIL type there will be a copy in any case.
 
     Returns
@@ -76,33 +76,33 @@ def ward_tree(X, adjacency_matrix=None, n_comp=None, copy=True):
         X = np.reshape(X, (-1, 1))
 
     # Compute the number of nodes
-    if adjacency_matrix is not None:
+    if connectivity is not None:
         if n_comp is None:
-            n_comp, _ = cs_graph_components(adjacency_matrix)
+            n_comp, _ = cs_graph_components(connectivity)
     else:
         n_comp = 1
 
     if n_comp > 1:
         warnings.warn("the number of connected components of the"
-        " adjacency matrix is %d > 1. The tree will be stopped early."
+        " connectivity matrix is %d > 1. The tree will be stopped early."
         % n_comp)
 
     n_nodes = 2 * n_samples - n_comp
 
-    # convert adjacency matrix to LIL eventually with a copy
-    if adjacency_matrix is None:
-        adjacency_matrix = np.ones([n_samples, n_samples])
-        adjacency_matrix.flat[::n_samples+1] = 0 # set diagonal to 0
-        adjacency_matrix = sparse.lil_matrix(adjacency_matrix)
+    # convert connectivity matrix to LIL eventually with a copy
+    if connectivity is None:
+        connectivity = np.ones([n_samples, n_samples])
+        connectivity.flat[::n_samples+1] = 0 # set diagonal to 0
+        connectivity = sparse.lil_matrix(connectivity)
         n_nodes = 2 * n_samples - 1
     else:
-        if sparse.isspmatrix_lil(adjacency_matrix) and copy:
-            adjacency_matrix = adjacency_matrix.copy()
+        if sparse.isspmatrix_lil(connectivity) and copy:
+            connectivity = connectivity.copy()
         else:
-            adjacency_matrix = adjacency_matrix.tolil()
+            connectivity = connectivity.tolil()
 
-    # Remove diagonal from adjacency matrix
-    adjacency_matrix.setdiag(np.zeros(adjacency_matrix.shape[0]))
+    # Remove diagonal from connectivity matrix
+    connectivity.setdiag(np.zeros(connectivity.shape[0]))
 
     # build moments as a list
     moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features)),
@@ -115,7 +115,7 @@ def ward_tree(X, adjacency_matrix=None, n_comp=None, copy=True):
     cord_row = []
     cord_col = []
     B = []
-    for ind, row in enumerate(adjacency_matrix.rows):
+    for ind, row in enumerate(connectivity.rows):
         cord_row.extend(list(ind * np.ones(len(row), dtype=int)))
         cord_col.extend(row)
         B.append(row)
@@ -204,13 +204,13 @@ def _hc_get_descendent(ind, children):
     return descendent
 
 
-def _hc_cut(k, parent, children, heights):
+def _hc_cut(n_clusters, parent, children, heights):
     """
     Function cutting the ward tree for a given number of clusters.
 
     Parameters
     ----------
-    k : int or ndarray
+    n_clusters : int or ndarray
         The number of clusters to form.
 
     parent : array-like, shape = [n_nodes]
@@ -242,7 +242,7 @@ def _hc_cut(k, parent, children, heights):
     heights = heights[:-1]
     active_nodes = [len(parent)]
     node_to_cut = active_nodes[0]
-    for i in range(k - 1):
+    for i in range(n_clusters - 1):
         if np.sum(parent == node_to_cut) != 0:
             active_nodes.append(np.where(parent == node_to_cut)[0][0])
             active_nodes.append(np.where(parent == node_to_cut)[0][1])
@@ -251,7 +251,7 @@ def _hc_cut(k, parent, children, heights):
             active_nodes.append(node_to_cut)
         node_to_cut = active_nodes[np.argmax(heights[active_nodes])]
     label = np.zeros(children.count([]))
-    for j in active_nodes[:k - 1]:
+    for j in active_nodes[:n_clusters - 1]:
         ind = [j]
         label[_hc_get_descendent(ind, children)] = np.max(label) + 1
     return label, active_nodes
@@ -265,8 +265,8 @@ class Ward(BaseEstimator):
 
     Parameters
     ----------
-    k : int or ndarray
-                 The number of clusters.
+    n_clusters : int or ndarray
+        The number of clusters.
 
     memory : Instance of joblib.Memory or string
         Used to cache the output of the computation of the tree.
@@ -305,20 +305,20 @@ class Ward(BaseEstimator):
     self
     """
 
-    def __init__(self, k, memory=Memory(cachedir=None, verbose=0),
-                 adjacency_matrix=None, copy=True, n_comp=None):
+    def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
+                 connectivity=None, copy=True, n_comp=None):
         """
-        adjacency_matrix : sparse matrix.
-            adjacency matrix. Defines for each sample the neigbhoring
+        connectivity : sparse matrix.
+            connectivity matrix. Defines for each sample the neigbhoring
             samples following a given structure of the data.
             Defaut is None, i.e, the hiearchical clustering algorithm is
             unstructured.
         """
-        self.k = k
+        self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
         self.n_comp = n_comp
-        self.adjacency_matrix = adjacency_matrix
+        self.connectivity = connectivity
 
     def fit(self, X, **params):
         """
@@ -342,12 +342,11 @@ class Ward(BaseEstimator):
 
         # Construct the tree
         self.parent_, self.children_, self.heights_, self.n_comp = \
-                    memory.cache(ward_tree)(X, self.adjacency_matrix,
+                    memory.cache(ward_tree)(X, self.connectivity,
                                         n_comp=self.n_comp, copy=self.copy)
 
         # Cut the tree
-        # self.labels_, self.active_nodes_ = memory.cache(_hc_cut)(self.k,
-        self.labels_, self.active_nodes_ = _hc_cut(self.k,
+        self.labels_, self.active_nodes_ = _hc_cut(self.n_clusters,
                                 self.parent_, self.children_, self.heights_)
         return self
 
@@ -361,4 +360,4 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     """
 
     def fit(self, X, y=None, **params):
-        return Ward.fit(self, X.T, k=self.k, **params)
+        return Ward.fit(self, X.T, n_clusters=self.n_clusters, **params)

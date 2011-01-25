@@ -32,14 +32,14 @@ X = np.atleast_2d(lena[mask]).T
 
 ###############################################################################
 # Define the structure A of the data. Here a 10 nearest neighbors
-adjacency_matrix = img_to_graph(mask, mask)
+connectivity = img_to_graph(mask, mask)
 
 ###############################################################################
 # Compute clustering
 print "Compute structured hierarchical clustering..."
 st = time.time()
 k = 15 # number of regions
-ward = Ward(k=k).fit(X, adjacency_matrix=adjacency_matrix)
+ward = Ward(k=k).fit(X, connectivity=connectivity)
 label = np.reshape(ward.labels_, mask.shape)
 print "Elaspsed time: ", time.time() - st
 print "Number of pixels: ", label.size
