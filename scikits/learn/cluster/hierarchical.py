@@ -2,11 +2,12 @@
 These routines perform some hierachical agglomerative clustering of some input
 data. Currently, only Ward's algorithm is implemented.
 
-Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort, 
+Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
 import heapq as heapq
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -21,7 +22,7 @@ from ._feature_agglomeration import AgglomerationTransform
 ###############################################################################
 # Ward's algorithm
 
-def ward_tree(X, adjacency_matrix=None):
+def ward_tree(X, adjacency_matrix=None, n_comp=None, copy=True):
     """Ward clustering based on a Feature matrix. Heapq-based representation
     of the inertia matrix.
 
@@ -30,13 +31,21 @@ def ward_tree(X, adjacency_matrix=None):
 
     Parameters
     ----------
-    X:  array of shape (n_samples, n_features)
+    X : array of shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
     adjacency_matrix : sparse matrix.
         adjacency matrix. Defines for each sample the neigbhoring samples
         following a given structure of the data.
         Defaut is None, i.e, the ward algorithm is unstructured.
+
+    n_comp : int (optional)
+        Number of connected components. If None the number of connected
+        components is estimated from the adjacency matrix.
+
+    copy : bool (optional)
+        Make a copy of adjacency_matrix or work inplace. If adjacency_matrix
+        is not of LIL type there will be a copy in any case.
 
     Returns
     -------
@@ -57,9 +66,8 @@ def ward_tree(X, adjacency_matrix=None):
             values of the array are 0, and thus the values are positive (or
             null) and are ranked in an increasing order.
 
-    adjacency_matrix : sparse matrix.
-        The update version of adjacency matrix. Defines for each node the
-        neigbhoring nodes following a given structure of the data.
+    n_comp : sparse matrix.
+        The number of connected components in the graph.
 
     """
     X = np.asanyarray(X)
@@ -67,24 +75,34 @@ def ward_tree(X, adjacency_matrix=None):
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
 
-    # Adjacency matrix
+    # Compute the number of nodes
+    if adjacency_matrix is not None:
+        if n_comp is None:
+            n_comp, _ = cs_graph_components(adjacency_matrix)
+    else:
+        n_comp = 1
+
+    if n_comp > 1:
+        warnings.warn("the number of connected components of the"
+        " adjacency matrix is %d > 1. The tree will be stopped early."
+        % n_comp)
+
+    n_nodes = 2 * n_samples - n_comp
+
+    # convert adjacency matrix to LIL eventually with a copy
     if adjacency_matrix is None:
         adjacency_matrix = np.ones([n_samples, n_samples])
         adjacency_matrix.flat[::n_samples+1] = 0 # set diagonal to 0
         adjacency_matrix = sparse.lil_matrix(adjacency_matrix)
         n_nodes = 2 * n_samples - 1
     else:
-        adjacency_matrix = adjacency_matrix.tolil()
+        if sparse.isspmatrix_lil(adjacency_matrix) and copy:
+            adjacency_matrix = adjacency_matrix.copy()
+        else:
+            adjacency_matrix = adjacency_matrix.tolil()
 
     # Remove diagonal from adjacency matrix
     adjacency_matrix.setdiag(np.zeros(adjacency_matrix.shape[0]))
-
-    # Compute the number of nodes
-    n_comp, label = cs_graph_components(adjacency_matrix)
-    n_nodes = 2 * n_samples - n_comp
-    if n_comp > 1:
-        print "Warning: the number of connected compoments of the" + \
-    " adjacency matrix is ", n_comp, " > 1. The tree will be stopped early."
 
     # build moments as a list
     moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features)),
@@ -93,7 +111,7 @@ def ward_tree(X, adjacency_matrix=None):
     moments[1][:n_samples] = X
     moments[2][:n_samples] = X ** 2
 
-    # create a inertia matrix
+    # create inertia matrix
     cord_row = []
     cord_col = []
     B = []
@@ -111,7 +129,7 @@ def ward_tree(X, adjacency_matrix=None):
     heapq.heapify(inertia)
 
     # prepare the main fields
-    parent = np.arange(n_nodes).astype(np.int)
+    parent = np.arange(n_nodes, dtype=np.int)
     heights = np.zeros(n_nodes)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
@@ -152,7 +170,7 @@ def ward_tree(X, adjacency_matrix=None):
         for tupl in ini:
             heapq.heappush(inertia, tupl)
 
-    return parent, children, heights, A
+    return parent, children, heights, n_comp
 
 
 ###############################################################################
@@ -470,9 +488,8 @@ class Ward(BaseEstimator):
     self
     """
 
-    def __init__(self, k, memory=Memory(cachedir=None, verbose=0), 
-                 adjacency_matrix=None, copy=True, 
-                 check_adjacency_matrix=True):
+    def __init__(self, k, memory=Memory(cachedir=None, verbose=0),
+                 adjacency_matrix=None, copy=True, n_comp=None):
         """
         adjacency_matrix : sparse matrix.
             adjacency matrix. Defines for each sample the neigbhoring
@@ -482,14 +499,9 @@ class Ward(BaseEstimator):
         """
         self.k = k
         self.memory = memory
-        self.adjacency_matrix = adjacency_matrix
-        self.check_adjacency_matrix = check_adjacency_matrix
         self.copy = copy
-        # If necessary, copy the adjacency matrix
-        if copy and adjacency_matrix is not None:
-            self.adjacency_matrix = adjacency_matrix.copy()
-        else:
-            self.adjacency_matrix = adjacency_matrix
+        self.n_comp = n_comp
+        self.adjacency_matrix = adjacency_matrix
 
     def fit(self, X, **params):
         """
@@ -507,27 +519,17 @@ class Ward(BaseEstimator):
         """
         self._set_params(**params)
 
-        # Check if the adjacency matrix is well-connected
-        if self.check_adjacency_matrix and self.adjacency_matrix is not None:
-            self.adjacency_matrix = self.adjacency_matrix.tolil()
-            self.adjacency_matrix.setdiag(
-                                    np.zeros(self.adjacency_matrix.shape[0]))
-            n_comp, label = cs_graph_components(self.adjacency_matrix)
-            if n_comp > 1:
-                print "Warning: the number of connected compoments of the" + \
-                " adjacency matrix is > 1. The tree will be stopped early," + \
-                " and the maximal number of clusters will be ", n_comp
-            self.k = np.max([self.k, n_comp])
-
         memory = self.memory
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 
         # Construct the tree
-        self.parent_, self.children_, self.heights_, self.adjacency_matrix = \
-                    memory.cache(ward_tree)(X, self.adjacency_matrix)
+        self.parent_, self.children_, self.heights_, self.n_comp = \
+                    memory.cache(ward_tree)(X, self.adjacency_matrix,
+                                        n_comp=self.n_comp, copy=self.copy)
 
         # Cut the tree
+        # self.labels_, self.active_nodes_ = memory.cache(_hc_cut)(self.k,
         self.labels_, self.active_nodes_ = _hc_cut(self.k,
                                 self.parent_, self.children_, self.heights_)
         return self
@@ -536,7 +538,7 @@ class Ward(BaseEstimator):
 # Ward-based feature agglomeration
 
 class WardAgglomeration(AgglomerationTransform, Ward):
-    """Feature agglomeration base on Ward hierarchical clustering
+    """Feature agglomeration based on Ward hierarchical clustering
 
     XXX
     """

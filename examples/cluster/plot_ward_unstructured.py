@@ -7,10 +7,12 @@ Example builds a swiss roll dataset and runs the hierarchical
 clustering on k-Nearest Neighbors graph. It's a hierarchical
 clustering without structure prior.
 
-Authors : Vincent Michel, 2010
-          Alexandre Gramfort, 2010
-
 """
+
+# Authors : Vincent Michel, 2010
+#           Alexandre Gramfort, 2010
+# License: BSD
+
 print __doc__
 
 import time as time

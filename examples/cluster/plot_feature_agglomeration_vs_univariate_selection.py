@@ -22,11 +22,12 @@ from scipy import linalg, ndimage
 
 from scikits.learn.feature_extraction.image import img_to_graph
 from scikits.learn import feature_selection
-from scikits.learn.cluster.feature_agglomeration import WardAgglomeration
+from scikits.learn.cluster import WardAgglomeration
 from scikits.learn.linear_model import BayesianRidge
 from scikits.learn.pipeline import Pipeline
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.externals.joblib import Memory
+from scikits.learn.cross_val import KFold
 
 ###############################################################################
 # Generate data
@@ -54,24 +55,20 @@ y += noise_coef * noise # add noise
 
 ###############################################################################
 # Compute the coefs of a Bayesian Ridge with GridSearch
+
+cv = KFold(len(y), 2) # cross-validation generator for model selection
+
 ridge = BayesianRidge()
 mem = Memory(cachedir='.', verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
 A = img_to_graph(mask, mask)
-ward = WardAgglomeration(adjacency_matrix=A, memory=mem)
+ward = WardAgglomeration(k=10, adjacency_matrix=A, memory=mem, n_comp=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
-# parameters = {'ward__k': [10, 20, 30]}
-parameters = {'ward__k': [10, 20]}
+parameters = {'ward__k': [10, 20, 30]}
 # Select the optimal number of parcels with grid search
 clf = GridSearchCV(clf, parameters, n_jobs=1)
-
-from scikits.learn.cross_val import KFold
-cv = KFold(len(y), 2)
-from time import time
-t0 = time()
 clf.fit(X, y, cv=cv) # set the best parameters
-print "Time : %s" % (time() - t0)
 coef_agglomeration_ = clf.coef_.reshape(size, size)
 
 # Anova univariate feature selection followed by BayesianRidge
@@ -81,7 +78,7 @@ clf = Pipeline([('anova', anova), ('ridge', ridge)])
 parameters = {'anova__percentile': [5, 10, 20]}
 # Select the optimal percentage of features with grid search
 clf = GridSearchCV(clf, parameters)
-clf.fit(X, y) # set the best parameters
+clf.fit(X, y, cv=cv) # set the best parameters
 coef_selection_ = clf.coef_.reshape(size, size)
 
 ###############################################################################
