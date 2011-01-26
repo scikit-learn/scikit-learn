@@ -144,11 +144,15 @@ class RidgeClassifier(Ridge):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    Note
+    ----
+    For multi-class classification, n_class classifiers are trained in
+    a one-versus-all approach.
     """
 
     def fit(self, X, y):
         """
-        Fit Ridge regression model
+        Fit Ridge regression model.
 
         Parameters
         ----------
