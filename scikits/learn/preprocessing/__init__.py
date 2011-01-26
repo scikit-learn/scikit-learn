@@ -129,7 +129,27 @@ class Binarizer(BaseEstimator):
 
 
 class LabelBinarizer(BaseEstimator):
-    """Binarize labels in a one-vs-all fashion, a.k.a 1-of-K coding scheme"""
+    """Binarize labels in a one-vs-all fashion.
+    
+    Also known as 1-of-K coding scheme.
+
+    Attributes
+    ----------
+    classes_ : array of shape [n_class]
+        Holds the label for each class.
+
+    Examples
+    --------
+    >>> from scikits.learn import preprocessing
+    >>> clf = preprocessing.LabelBinarizer()
+    >>> clf.fit([1,2,6,4,2])
+    LabelBinarizer()
+    >>> clf.classes_
+    array([1, 2, 4, 6])
+    >>> clf.transform([1, 6])
+    array([[ 1.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  1.]])
+    """
 
     def fit(self, y):
         """Fit label binarizer
@@ -143,7 +163,7 @@ class LabelBinarizer(BaseEstimator):
         -------
         self : returns an instance of self.
         """
-        self.classes = np.unique(y)
+        self.classes_ = np.unique(y)
         return self
 
     def transform(self, y):
@@ -158,14 +178,14 @@ class LabelBinarizer(BaseEstimator):
         -------
         Y : numpy array of shape [n_samples, n_classes]
         """
-        if len(self.classes) == 2:
+        if len(self.classes_) == 2:
             Y = np.zeros((len(y), 1))
-            Y[y == self.classes[1], 0] = 1
+            Y[y == self.classes_[1], 0] = 1
             return Y
 
-        elif len(self.classes) >= 2:
-            Y = np.zeros((len(y), len(self.classes)))
-            for i, k in enumerate(self.classes):
+        elif len(self.classes_) >= 2:
+            Y = np.zeros((len(y), len(self.classes_)))
+            for i, k in enumerate(self.classes_):
                 Y[y == k, i] = 1
             return Y
 
@@ -191,4 +211,4 @@ class LabelBinarizer(BaseEstimator):
             y = np.array(Y.ravel() > 0, dtype=int)
         else:
             y = Y.argmax(axis=1)
-        return self.classes[y]
+        return self.classes_[y]

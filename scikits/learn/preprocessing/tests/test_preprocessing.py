@@ -154,7 +154,7 @@ def test_label_binarizer_iris():
     lb = LabelBinarizer()
     Y = lb.fit_transform(iris.target)
     clfs = [SGDClassifier().fit(iris.data, Y[:, k])
-            for k in range(len(lb.classes))]
+            for k in range(len(lb.classes_))]
     Y_pred = np.array([clf.decision_function(iris.data) for clf in clfs]).T
     y_pred = lb.inverse_transform(Y_pred)
     accuracy = np.mean(iris.target == y_pred)
