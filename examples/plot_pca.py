@@ -1,6 +1,6 @@
 """
 ====================================
-PCA 2d projection of of Iris dataset
+PCA 2D projection of Iris dataset
 ====================================
 
 The Iris dataset represents 3 kind of Iris flowers (Setosa, Versicolour
