@@ -77,7 +77,8 @@ class Ridge(LinearModel):
         X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
 
-        X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
+        X, y, Xmean, ymean = \
+           LinearModel._center_data(X, y, self.fit_intercept)
 
         if sp.issparse(X):
             self._solve_sparse(X, y)
@@ -161,8 +162,8 @@ class RidgeClassifier(Ridge):
         -------
         self : returns an instance of self.
         """
-        self.lb = LabelBinarizer()
-        Y = self.lb.fit_transform(y)
+        self.label_binarizer = LabelBinarizer()
+        Y = self.label_binarizer.fit_transform(y)
         Ridge.fit(self, X, Y)
         return self
 
@@ -182,7 +183,7 @@ class RidgeClassifier(Ridge):
         C : array, shape = [n_samples]
         """
         Y = self.decision_function(X)
-        return self.lb.inverse_transform(Y)
+        return self.label_binarizer.inverse_transform(Y)
 
 
 class _RidgeLOO(LinearModel):
@@ -398,8 +399,8 @@ class RidgeClassifierCV(RidgeCV):
             Returns self.
         """
         sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
-        self.lb = LabelBinarizer()
-        Y = self.lb.fit_transform(y)
+        self.label_binarizer = LabelBinarizer()
+        Y = self.label_binarizer.fit_transform(y)
         RidgeCV.fit(self, X, Y,
                     sample_weight=sample_weight * sample_weight2,
                     cv=cv)
@@ -410,4 +411,4 @@ class RidgeClassifierCV(RidgeCV):
 
     def predict(self, X):
         Y = self.decision_function(X)
-        return self.lb.inverse_transform(Y)
+        return self.label_binarizer.inverse_transform(Y)
