@@ -57,24 +57,23 @@ def _svd_cross_product(X, Y):
     v = Vh.T[:,[0]]
     return u, v
 
-def _scale_xy(X, Y, center_x, center_y, scale_x, scale_y):
-    """ Scale/center (in place!) X, Y
+def _center_scale_xy(X, Y, scale):
+    """ Center X, Y and scale if the scale parameter==True
     Return
     ------
         X, Y, x_mu, y_mu, x_std, y_std
     """
     x_mu  = y_mu  = 0
     x_std = x_std = 1
-    if center_x:
-        x_mu  = X.mean(axis=0)
-        X -= x_mu 
-    if scale_x :
+    # center
+    x_mu  = X.mean(axis=0)
+    X    -= x_mu
+    y_mu  = Y.mean(axis=0)
+    Y    -= y_mu
+    # scale
+    if scale :
         x_std = X.std(axis=0, ddof=1)
         X /= x_std
-    if center_y:
-        y_mu  = Y.mean(axis=0)
-        Y -= y_mu 
-    if scale_y:
         y_std = Y.std(axis=0, ddof=1)
         Y /= y_std
     return X, Y, x_mu, y_mu, x_std, y_std
@@ -131,11 +130,13 @@ class PLS(BaseEstimator):
  
     Attributes
     ----------
-    x_weights_: array, [p x n_components] weights for the X block
-    y_weights_: array, [q x n_components] weights for the Y block
-    x_score_: array, [p x n_samples] scores for the X block
-    y_score_: array, [q x n_samples] scores for the Y block
-
+    x_weights_  : array, [p x n_components] weights for the X block
+    y_weights_  : array, [q x n_components] weights for the Y block
+    x_loadings_ : array, [p x n_components] loadings for the X block
+    y_loadings_ : array, [q x n_components] loadings for the Y block
+    x_score_    : array, [p x n_samples] scores for X the block
+    y_score_    : array, [q x n_samples] scores for the Y block
+    
     Notes
     -----
     PLS mode A
@@ -224,17 +225,13 @@ class PLS(BaseEstimator):
 
     """
     def __init__(self, n_components=2, deflation_mode = "canonical", mode = "A",
-                 center_x = True, center_y = True,
-                 scale_x  = True, scale_y  = True,
+                 scale = True,
                  algorithm = "nipals",
                  max_iter = 500, tol = 1e-06):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
         self.mode = mode
-        self.center_x = center_x
-        self.center_y = center_y
-        self.scale_x  = scale_x
-        self.scale_y  = scale_y
+        self.scale = scale
         self.algorithm = algorithm
         self.max_iter = max_iter
         self.tol      = tol
@@ -270,21 +267,17 @@ class PLS(BaseEstimator):
             raise ValueError('The mode B (CCA) is not implemented yet')
         # Scale (in place)
         X, Y, self.x_mu_, self.y_mu_, self.x_std_, self.y_std_\
-            = _scale_xy(X, Y, self.center_x, self.center_y,\
-                        self.scale_x, self.scale_y)
+            = _center_scale_xy(X, Y, self.scale)
         # Residuals (deflated) matrices
         Xk = X
         Yk = Y
         # Results matrices
-        self.x_scores_ = np.zeros((n, self.n_components))
-        self.y_scores_ = np.zeros((n, self.n_components))
-        self.x_weights_ = np.zeros((p, self.n_components))
-        self.y_weights_ = np.zeros((q, self.n_components))
-        # matrix of coefficients to be used internally by predict
-        self.x_loadings_    = np.zeros((p, self.n_components))
-        self.y_loadings_    = np.zeros((q, self.n_components))
-            # x_regs_ contains, for each k, the regression of Xk on its score, 
-            # ie.: Xk'x_scorek/x_scorek'x_scorek
+        self.x_scores_   = np.zeros((n, self.n_components))
+        self.y_scores_   = np.zeros((n, self.n_components))
+        self.x_weights_  = np.zeros((p, self.n_components))
+        self.y_weights_  = np.zeros((q, self.n_components))
+        self.x_loadings_ = np.zeros((p, self.n_components))
+        self.y_loadings_ = np.zeros((q, self.n_components))
             
         # NIPALS algo: outer loop, over components
         for k in xrange(self.n_components):
@@ -317,12 +310,12 @@ class PLS(BaseEstimator):
                 Yk -= np.dot(x_score, y_loadings.T)
             
             # 3) Store weights and scores
-            self.x_scores_[:,k] = x_score.ravel()
-            self.y_scores_[:,k] = y_score.ravel()
-            self.x_weights_[:,k] = u.ravel()
-            self.y_weights_[:,k] = v.ravel()
-            self.x_loadings_[:,k]= x_loadings.ravel()
-            self.y_loadings_[:,k]= y_loadings.ravel()
+            self.x_scores_[:,k]   = x_score.ravel()
+            self.y_scores_[:,k]   = y_score.ravel()
+            self.x_weights_[:,k]  = u.ravel()
+            self.y_weights_[:,k]  = v.ravel()
+            self.x_loadings_[:,k] = x_loadings.ravel()
+            self.y_loadings_[:,k] = y_loadings.ravel()
             if self._DEBUG:
                 print "component",k,"----------------------------------------------"
                 print "X rank-one approximations and residual"
@@ -345,28 +338,25 @@ class PLS_SVD(BaseEstimator):
     ----------
     X: array-like of predictors, shape (n_samples, p)
         Training vector, where n_samples in the number of samples and
-        p is the number of predictors.
+        p is the number of predictors. X will be centered before any analysis.
 
     Y: array-like of response, shape (n_samples, q)
         Training vector, where n_samples in the number of samples and
-        q is the number of response variables.
+        q is the number of response variables. X will be centered before any 
+        analysis.
 
     n_components: int, number of components to keep. (default 2).
     
-    center_x: boolean, center X? (default True)
-    
-    center_y: boolean, center Y? (default True)
-        
-    scale_x: boolean, scale X? (default True)
-            
-    scale_y: boolean, scale Y? (default True)
+    scale: boolean, scale X and Y (default True)
      
     Attributes
     ----------
-    x_weights_: array, [p x n_components] weights for the X block
-    y_weights_: array, [q x n_components] weights for the Y block
-    x_score_: array, [p x n_samples] scores for X the block
-    y_score_: array, [q x n_samples] scores for the Y block
+    x_weights_  : array, [p x n_components] weights for the X block
+    y_weights_  : array, [q x n_components] weights for the Y block
+    x_loadings_ : array, [p x n_components] loadings for the X block
+    y_loadings_ : array, [q x n_components] loadings for the Y block
+    x_score_    : array, [p x n_samples] scores for X the block
+    y_score_    : array, [q x n_samples] scores for the Y block
 
     Examples
     --------
@@ -426,7 +416,7 @@ class PLS_SVD(BaseEstimator):
 
         # Scale (in place)
         X, Y, self.x_mu_, self.y_mu_, self.x_std_, self.y_std_\
-            = _scale_xy(X, Y, self.center_x, self.center_y,\
+            = _center_scale_xy(X, Y, self.center_x, self.center_y,\
                         self.scale_x, self.scale_y)
         # svd(X'Y)
         C = np.dot(X.T,Y)

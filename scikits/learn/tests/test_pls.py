@@ -7,25 +7,6 @@ from scikits.learn import pls
 d=load_linnerud()
 X = d['data_exercise']
 Y = d['data_physiological']
-###
-n_components = 2
-pls_ca = pls.PLS(deflation_mode="canonical")
-pls_ca.fit(X,Y, n_components=n_components)
-pls_ca.x_loadings_
-pls_ca.y_loadings_
-pls_ca.x_weights_
-pls_ca.y_weights_
-
-
-
-pls_2 = pls.PLS(deflation_mode="regression")
-pls_2.fit(X,Y, n_components=n_components)
-pls_2.x_loadings_
-pls_2.y_loadings_
-pls_2.x_weights_
-pls_2.y_weights_
-
-
 
 ###
 def test_pls():
@@ -59,11 +40,31 @@ def test_pls():
                               np.eye(n_components),
                               err_msg="x scores are not orthogonal")
     assert_array_almost_equal(np.corrcoef(pls_bynipals.y_scores_,rowvar=0),
-                              np.eye(n_components)),
+                              np.eye(n_components),
                               err_msg="y scores are not orthogonal")
+
+    # Check X = TP' and Y = UQ' (with (p == q) components)
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    plsca = pls.PLS(deflation_mode="canonical")
+    plsca.fit(X, Y, n_components=X.shape[1])
+    T = plsca.x_scores_
+    P = plsca.x_loadings_
+    U = plsca.y_scores_
+    Q = plsca.y_loadings_
+    # center scale X, Y
+    Xc, Yc, x_mu, y_mu, x_std, y_std =\
+         pls._center_scale_xy(X.copy(), Y.copy(), scale=True)
+    assert_array_almost_equal(Xc, np.dot(T, P.T),
+        err_msg="X != TP'")
+    assert_array_almost_equal(Yc, np.dot(U, Q.T),
+            err_msg="Y != UQ'")
 
     # "Non regression test" on canonical PLS
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    pls_bynipals = pls.PLS(deflation_mode="canonical")
+    pls_bynipals.fit(X,Y, n_components=n_components)
+
+    pls_ca = pls_bynipals
     x_loadings = np.array(
           [[-0.66591531,  0.77356014],
            [-0.67602366, -0.62873035],
