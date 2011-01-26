@@ -243,31 +243,6 @@ BallTree_query(BallTreeObject *self, PyObject *args, PyObject *kwds){
         }
     }
 
-  //if only one neighbor is requested, then resize the neighbors array
-    if(k==1){
-        PyArray_Dims dims;
-        dims.ptr = PyArray_DIMS(arr);
-        dims.len = PyArray_NDIM(arr)-1;
-
-    //PyArray_Resize returns None - this needs to be picked
-    // up and dereferenced.
-        PyObject *NoneObj = PyArray_Resize( (PyArrayObject*)nbrs, &dims,
-            0, NPY_ANYORDER );
-        if (NoneObj == NULL){
-            goto fail;
-        }
-        Py_DECREF(NoneObj);
-
-        if(return_distance){
-            NoneObj = PyArray_Resize( (PyArrayObject*)dist, &dims,
-                0, NPY_ANYORDER );
-            if (NoneObj == NULL){
-                goto fail;
-            }
-            Py_DECREF(NoneObj);
-        }
-    }
-
     if(return_distance){
         Py_DECREF(arr_iter);
         Py_DECREF(nbrs_iter);
