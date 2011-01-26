@@ -61,6 +61,12 @@ class Ridge(LinearModel):
         y : numpy array of shape [n_samples]
             Target values
 
+        solver : 'default' | 'cg'
+            Solver to use in the computational routines. 'default'
+            will use the standard scipy.linalg.solve function, 'cg'
+            will use the a conjugate gradient solver as found in
+            scipy.sparse.linalg.cg.
+
         Returns
         -------
         self : returns an instance of self.
@@ -124,8 +130,37 @@ class Ridge(LinearModel):
 
 
 class RidgeClassifier(Ridge):
+    """Classifier using Ridge regression
+
+    Parameters
+    ----------
+    alpha : float
+        Small positive values of alpha improve the coditioning of the
+        problem and reduce the variance of the estimates.
+
+    fit_intercept : boolean
+        wether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    """
 
     def fit(self, X, y):
+        """
+        Fit Ridge regression model
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples,n_features]
+            Training data
+
+        y : numpy array of shape [n_samples]
+            Target values
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         self.lb = LabelBinarizer()
         Y = self.lb.fit_transform(y)
         Ridge.fit(self, X, Y)
@@ -135,6 +170,17 @@ class RidgeClassifier(Ridge):
         return Ridge.predict(self, X)
 
     def predict(self, X):
+        """
+        Predict target values according to the fitted model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+        """
         Y = self.decision_function(X)
         return self.lb.inverse_transform(Y)
 
