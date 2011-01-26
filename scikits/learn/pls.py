@@ -17,26 +17,28 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter = 500, tol = 1e-06):
     """
     p = X.shape[1]
     q = Y.shape[1]
-    u = np.ones((p,1))/p
-    v = np.ones((q,1))/q
-    
+    y_score = Y[:,[0]]
     u_old = 0
     ite = 1
     # Inner loop of the Wold algo.
     while True:
-        # Update y_score: the Y latent scores
-        y_score = np.dot(Y, v)/np.dot(v.T, v)
-        
-        # Update u: the X loadings
+        # Update u: the X weights
+        # Mode A regress each X column on y_score
         u = np.dot(X.T, y_score)/np.dot(y_score.T, y_score)
-        u = u / np.sqrt(np.dot(u.T,u))
+        # Normalize u
+        u /= np.sqrt(np.dot(u.T,u))
         
         # Update x_score: the X latent scores
-        x_score    = np.dot(X, u)/np.dot(u.T, u)
+        x_score    = np.dot(X, u)
         
-        # Update v: the Y loadings
+        # Update v: the Y weights
+        # Mode A regress each X column on y_score
         v = np.dot(Y.T, x_score)/np.dot(x_score.T, x_score)
-        v = v / np.sqrt(np.dot(v.T,v))
+        # Normalize v
+        v /= np.sqrt(np.dot(v.T,v))
+        
+        # Update y_score: the Y latent scores
+        y_score = np.dot(Y, v)
         
         u_diff = u - u_old
         if np.dot(u_diff.T, u_diff) < tol:
@@ -118,7 +120,7 @@ class PLS(BaseEstimator):
     scale_y : boolean, scale Y? (default True)
     
     algorithm: str "nipals" or "svd" the algorithm used to estimate the 
-        loadings, it will be called "n_components" time ie.: for each iteration
+        weights, it will be called "n_components" time ie.: for each iteration
         of the outer loop.
     
     max_iter: an integer, the maximum number of iterations (default 500) of the
@@ -129,15 +131,15 @@ class PLS(BaseEstimator):
  
     Attributes
     ----------
-    x_loadings_: array, [p x n_components] loadings for the X block
-    y_loadings_: array, [q x n_components] loadings for the Y block
+    x_weights_: array, [p x n_components] weights for the X block
+    y_weights_: array, [q x n_components] weights for the Y block
     x_score_: array, [p x n_samples] scores for the X block
     y_score_: array, [q x n_samples] scores for the Y block
 
     Notes
     -----
     PLS mode A
-        For each component k, find loadings u, v that optimizes:
+        For each component k, find weights u, v that optimizes:
         max corr(Xk u, Yk v) * var(Xk u) var(Yk u) 
          |u| = |v| = 1
         max u'Xk' Yk v 
@@ -159,7 +161,7 @@ class PLS(BaseEstimator):
             different than the CCA. This is mode mostly used for modeling
 
     PLS mode B, canonical, ie.: the CCA
-        For each component k, find the loadings u, v that maximizes
+        For each component k, find the weights u, v that maximizes
         max corr(Xk u, Yk v)
          |u| = |v| = 1
         max u'Xk' Yk v 
@@ -192,11 +194,11 @@ class PLS(BaseEstimator):
     PLS(algorithm='nipals', deflation_mode='canonical', max_iter=500,
       center_x=True, center_y=True, n_components=2, tol=1e-06, scale_x=True,
       scale_y=True, mode='A')
-    >>> print pls.x_loadings_
+    >>> print pls.x_weights_
     [[-0.58989155 -0.78900503]
      [-0.77134037  0.61351764]
      [ 0.23887653  0.03266757]]
-    >>> print pls.y_loadings_
+    >>> print pls.y_weights_
     [[ 0.61330741 -0.25616063]
      [ 0.7469717  -0.11930623]
      [ 0.25668522  0.95924333]]
@@ -242,7 +244,7 @@ class PLS(BaseEstimator):
         self._set_params(**params)
         # copy since this will contains the residuals (deflated) matrices
         X = np.asanyarray(X).copy()
-        y = np.asanyarray(Y).copy()
+        Y = np.asanyarray(Y).copy()
 
         n = X.shape[0]
         p = X.shape[1]
@@ -276,16 +278,18 @@ class PLS(BaseEstimator):
         # Results matrices
         self.x_scores_ = np.zeros((n, self.n_components))
         self.y_scores_ = np.zeros((n, self.n_components))
-        self.x_loadings_ = np.zeros((p, self.n_components))
-        self.y_loadings_ = np.zeros((q, self.n_components))
-        self.x_regs_     = np.zeros((p, self.n_components))
+        self.x_weights_ = np.zeros((p, self.n_components))
+        self.y_weights_ = np.zeros((q, self.n_components))
+        # matrix of coefficients to be used internally by predict
+        self.x_loadings_    = np.zeros((p, self.n_components))
+        self.y_loadings_    = np.zeros((q, self.n_components))
             # x_regs_ contains, for each k, the regression of Xk on its score, 
             # ie.: Xk'x_scorek/x_scorek'x_scorek
             
         # NIPALS algo: outer loop, over components
         for k in xrange(self.n_components):
         
-            #1) Loadings estimation (inner loop)
+            #1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm is "nipals":
                 u, v = _nipals_twoblocks_inner_loop(
@@ -297,35 +301,35 @@ class PLS(BaseEstimator):
             x_score = np.dot(Xk, u)
             y_score = np.dot(Yk, v)
             
-            #2) Deflation
-            # ------------
+            #2) Deflation (in place)
+            # ----------------------
             # - regress Xk's on x_score
-            a = np.dot(Xk.T, x_score)/np.dot(x_score.T, x_score) # p x 1
+            x_loadings = np.dot(Xk.T, x_score)/np.dot(x_score.T, x_score) # p x 1
             # - substract rank-one approximations to obtain remainder matrix
-            Xk = Xk - np.dot(x_score, a.T)
+            Xk -= np.dot(x_score, x_loadings.T)
             if self.deflation_mode is "canonical":
                 # - regress Yk's on y_score, then substract rank-one approximation
-                b  = np.dot(Yk.T, y_score)/np.dot(y_score.T, y_score) # q x 1
-                Yk = Yk - np.dot(y_score, b.T)
+                y_loadings  = np.dot(Yk.T, y_score)/np.dot(y_score.T, y_score) # q x 1
+                Yk -= np.dot(y_score, y_loadings.T)
             if self.deflation_mode is "regression":
                 # - regress Yk's on x_score, then substract rank-one approximation
-                b  = np.dot(Yk.T, x_score)/np.dot(x_score.T, x_score) # q x 1
-                Yk = Yk - np.dot(x_score, b.T)
+                y_loadings  = np.dot(Yk.T, x_score)/np.dot(x_score.T, x_score) # q x 1
+                Yk -= np.dot(x_score, y_loadings.T)
             
-            # 3) Store loadings and scores
+            # 3) Store weights and scores
             self.x_scores_[:,k] = x_score.ravel()
             self.y_scores_[:,k] = y_score.ravel()
-            self.x_loadings_[:,k] = u.ravel()
-            self.y_loadings_[:,k] = v.ravel()
-            self.x_regs_[:,k]     = a.ravel()
-            
+            self.x_weights_[:,k] = u.ravel()
+            self.y_weights_[:,k] = v.ravel()
+            self.x_loadings_[:,k]= x_loadings.ravel()
+            self.y_loadings_[:,k]= y_loadings.ravel()
             if self._DEBUG:
                 print "component",k,"----------------------------------------------"
                 print "X rank-one approximations and residual"
-                print np.dot(x_score, a.T)
+                print np.dot(x_score, x_loadings.T)
                 print Xk
                 print "Y rank-one approximations and residual"
-                print np.dot(y_score, b.T)
+                print np.dot(y_score, y_loadings.T)
                 print Yk
         return self
 
@@ -359,8 +363,8 @@ class PLS_SVD(BaseEstimator):
      
     Attributes
     ----------
-    x_loadings_: array, [p x n_components] loadings for the X block
-    y_loadings_: array, [q x n_components] loadings for the Y block
+    x_weights_: array, [p x n_components] weights for the X block
+    y_weights_: array, [q x n_components] weights for the Y block
     x_score_: array, [p x n_samples] scores for X the block
     y_score_: array, [q x n_samples] scores for the Y block
 
@@ -372,11 +376,11 @@ class PLS_SVD(BaseEstimator):
     >>> pls_svd.fit(X, Y)
     PLS_SVD(scale_x=True, scale_y=True, center_x=True, center_y=True,
         n_components=2)
-    >>> print pls_svd.x_loadings_
+    >>> print pls_svd.x_weights_
     [[-0.58989118 -0.77210756  0.23638594]
      [-0.77134059  0.45220001 -0.44782681]
      [ 0.23887675 -0.44650316 -0.86230669]]
-    >>> print pls_svd.y_loadings_
+    >>> print pls_svd.y_weights_
     [[ 0.61330742 -0.21404398  0.76028888]
      [ 0.7469717  -0.15563957 -0.64638193]
      [ 0.25668519  0.96434511  0.06442989]]
@@ -430,8 +434,8 @@ class PLS_SVD(BaseEstimator):
         V = V.T
         self.x_score_    = np.dot(X, U)
         self.y_score_    = np.dot(Y, V)
-        self.x_loadings_ = U
-        self.y_loadings_ = V
+        self.x_weights_ = U
+        self.y_weights_ = V
         return self
 
 
