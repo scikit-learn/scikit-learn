@@ -320,11 +320,18 @@ class PLS(BaseEstimator):
             self.y_weights_[:,k]  = v.ravel()
             self.x_loadings_[:,k] = x_loadings.ravel()
             self.y_loadings_[:,k] = y_loadings.ravel()
+        # 4) Compute rotations from input space to transformed space (scores)
+        # Use the property:T = XW(P'W)^-1 = XW*
+        # where T are the desired scores, X (the centerred data).
+        # P and W are the x_loadings_ and the x_weights: 
+        self.x_rotation = np.dot(self.x_weights_, 
+            linalg.inv(np.dot(self.x_loadings_.T, self.x_weights_)))
+        self.y_rotation = np.dot(self.y_weights_, 
+            linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
         return self
 
-    def transform(self, X, Y, n_components=None):
+    def transform(self, X, Y, copy=True):
         """Apply the dimension reduction learned on the train data.
-            copy: boolean, should the deflation been made on a copy? Let the default
             Parameters
             ----------
             X: array-like of predictors, shape (n_samples, p)
@@ -334,44 +341,25 @@ class PLS(BaseEstimator):
             Y: array-like of response, shape (n_samples, q)
                 Training vectors, where n_samples in the number of samples and
                 q is the number of response variables.
-            
-            n_components: the number of components to get. if None use the
-                number of components estimated during the fit.
-                
-            Notes
-            -----
-            Be aware, that this transform is not a simple rotation like in
-            PCA, here a deflation is performed for each component.
-                
-            Deflations are made on a is a new chunk of data that may cause 
-            memory issues, but there are no side effects.
+
+            copy: X and Y have to be normalize, do it on a copy or in place
+                with side effect!
         """
-        if n_components is None: n_components = self.x_weights_.shape[1]
-        # Note Xk 
-        Xk = (X - self.x_mean_) / self.x_std_
-        Yk = (Y - self.y_mean_) / self.y_std_
-        
-        x_scores   = np.zeros((Xk.shape[0], n_components))
-        y_scores   = np.zeros((Yk.shape[0], n_components))
- 
-        # - regress Xk's on x_score
-        for k in xrange(n_components):
-            x_score = np.dot(Xk, self.x_weights_[:,[k]])
-            x_loadings = np.dot(Xk.T, x_score)/np.dot(x_score.T, x_score) # p x 1
-            # - substract rank-one approximations to obtain remainder matrix
-            Xk -= np.dot(x_score, x_loadings.T)
-            if self.deflation_mode is "canonical":
-                y_score = np.dot(Yk, self.y_weights_[:,[k]])
-                # - regress Yk's on y_score, then substract rank-one approximation
-                y_loadings  = np.dot(Yk.T, y_score)/np.dot(y_score.T, y_score) # q x 1
-                Yk -= np.dot(y_score, y_loadings.T)
-            if self.deflation_mode is "regression":
-                x_score = np.dot(Xk, self.x_weights_[:,[k]])
-                # - regress Yk's on x_score, then substract rank-one approximation
-                y_loadings  = np.dot(Yk.T, x_score)/np.dot(x_score.T, x_score) # q x 1
-                Yk -= np.dot(x_score, y_loadings.T)
-            x_scores[:,k]   = x_score.ravel()
-            y_scores[:,k]   = y_score.ravel()
+        # Normalize
+        if copy:
+            Xc = (np.asanyarray(X) - self.x_mean_) / self.x_std_
+            Yc = (np.asanyarray(Y) - self.y_mean_) / self.y_std_
+        else:
+            X = np.asanyarray(X)
+            Y = np.asanyarray(Y)
+            Xc -= self.x_mean_
+            Xc /= self.x_std_
+            Yc -= self.y_mean_
+            Yc /= self.y_std_
+            
+        # Apply rotation
+        x_scores = np.dot(Xc, self.x_rotation)
+        y_scores = np.dot(Yc, self.y_rotation)
         return x_scores, y_scores
 
 class PLS_SVD(BaseEstimator):

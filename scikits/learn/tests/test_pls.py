@@ -14,7 +14,7 @@ def test_pls():
     
     # 1) Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
     # ===========================================================    
-    # Compare 2 algo.: nipals vs svd
+    # Compare 2 algo.: nipals vs. svd
     # ------------------------------
     pls_bynipals = pls.PLS(deflation_mode="canonical")
     pls_bynipals.fit(X,Y, n_components=n_components)
@@ -51,12 +51,12 @@ def test_pls():
         zero_mat = np.zeros(MtM.size).reshape(MtM.shape)
         assert_array_almost_equal(MtM_rmdiag, zero_mat, err_msg=err_msg)
     
-    # orthogonality of weights 
+    # Orthogonality of weights 
     # ~~~~~~~~~~~~~~~~~~~~~~~~ 
     check_ortho(Wx, "x weights are not orthogonal")
     check_ortho(Wy, "y weights are not orthogonal")
 
-    # orthogonality of latent scores
+    # Orthogonality of latent scores
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     check_ortho(T, "x scores are not orthogonal")
     check_ortho(U, "y scores are not orthogonal")
@@ -70,6 +70,15 @@ def test_pls():
         err_msg="X != TP'")
     assert_array_almost_equal(Yc, np.dot(U, Q.T),
             err_msg="Y != UQ'")
+
+    # Check that rotations on training data lead to scores
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Xr, Yr = plsca.transform(X, Y)
+    assert_array_almost_equal(Xr, plsca.x_scores_,
+        err_msg="rotation on X failed")
+    assert_array_almost_equal(Yr, plsca.y_scores_,
+        err_msg="rotation on Y failed")
+
 
     # "Non regression test" on canonical PLS
     # --------------------------------------
