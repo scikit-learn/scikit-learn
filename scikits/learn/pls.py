@@ -193,33 +193,29 @@ class PLS(BaseEstimator):
     >>> Y = d['data_physiological']
     
     >>> ## Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
-    >>> pls = PLS(deflation_mode="canonical")
-    >>> pls.fit(X,Y, n_components=2)
-    PLS(algorithm='nipals', deflation_mode='canonical', max_iter=500,
-      center_x=True, center_y=True, n_components=2, tol=1e-06, scale_x=True,
-      scale_y=True, mode='A')
-    >>> print pls.x_weights_
-    [[-0.58989155 -0.78900503]
-     [-0.77134037  0.61351764]
-     [ 0.23887653  0.03266757]]
-    >>> print pls.y_weights_
-    [[ 0.61330741 -0.25616063]
-     [ 0.7469717  -0.11930623]
-     [ 0.25668522  0.95924333]]
-    >>> # check orthogonality of latent scores
-    >>> print np.corrcoef(pls.x_scores_,rowvar=0)
-    [[  1.00000000e+00   2.51221165e-17]
-     [  2.51221165e-17   1.00000000e+00]]
-    >>> print np.corrcoef(pls.y_scores_,rowvar=0)
-    [[  1.00000000e+00  -8.57631722e-17]
-     [ -8.57631722e-17   1.00000000e+00]]
-     
+    >>> plsca = PLS(deflation_mode="canonical")
+    >>> plsca.fit(X,Y, n_components=2)
+    PLS(scale=True, deflation_mode='canonical', algorithm='nipals', max_iter=500,
+      n_components=2, tol=1e-06, copy=True, mode='A')
+    >>> print plsca.x_weights_
+    [[-0.58989082  0.78900159]
+    [-0.77134081 -0.61352087]
+    [ 0.23887693 -0.03269003]]
+
+    >>> print plsca.y_weights_
+    [[ 0.61330742  0.25616374]
+    [ 0.74697171  0.11930342]
+    [ 0.25668516 -0.95924284]]
+
+    >>> print plsca.x_loadings_
+    [[-0.66591531  0.77356014]
+     [-0.67602366 -0.62873035]
+     [ 0.35892139 -0.11993352]]
+
+    >>> Xc, Yc = plsca.transform(X,Y)
     >>> ## Regression PLS (PLS 2 blocks regression mode A known as PLS2)
     >>> pls2 = PLS(deflation_mode="regression")
     >>> pls2.fit(X,Y, n_components=2)
-    PLS(algorithm='nipals', deflation_mode='regression', max_iter=500,
-      center_x=True, center_y=True, n_components=2, tol=1e-06, scale_x=True,
-      scale_y=True, mode='A')
 
     See also
     --------
@@ -403,34 +399,13 @@ class PLS_SVD(BaseEstimator):
     ----------
     x_weights_  : array, [p x n_components] weights for the X block
     y_weights_  : array, [q x n_components] weights for the Y block
-    x_loadings_ : array, [p x n_components] loadings for the X block
-    y_loadings_ : array, [q x n_components] loadings for the Y block
     x_score_    : array, [p x n_samples] scores for X the block
     y_score_    : array, [q x n_samples] scores for the Y block
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from scikits.learn.pls import PLS_SVD
-    >>> pls_svd = PLS_SVD()
-    >>> pls_svd.fit(X, Y)
-    PLS_SVD(scale_x=True, scale_y=True, center_x=True, center_y=True,
-        n_components=2)
-    >>> print pls_svd.x_weights_
-    [[-0.58989118 -0.77210756  0.23638594]
-     [-0.77134059  0.45220001 -0.44782681]
-     [ 0.23887675 -0.44650316 -0.86230669]]
-    >>> print pls_svd.y_weights_
-    [[ 0.61330742 -0.21404398  0.76028888]
-     [ 0.7469717  -0.15563957 -0.64638193]
-     [ 0.25668519  0.96434511  0.06442989]]
-    >>> # note that on the first compements all PLS methods (PLS_SVD, PLS2, PLS 
-    >>> # canonical) give the same results
 
     See also
     --------
     PLS
-    CCA
 
     """
     def __init__(self, n_components=2,

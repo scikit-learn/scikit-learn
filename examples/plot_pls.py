@@ -32,12 +32,12 @@ np.round(Xc - np.dot(T, P.T), decimals=2)
 np.round(Yc - np.dot(U, Q.T), decimals=2)
 
 # scores orthogonality
-np.round(np.dot(T.T,T), decimals=2)
-np.round(np.dot(U.T,U), decimals=2)
+np.round(np.dot(T.T, T), decimals=2)
+np.round(np.dot(U.T, U), decimals=2)
 
 # weights orthogonality
-np.round(np.dot(Wx.T,Wx), decimals=2)
-np.round(np.dot(Wy.T,Wy), decimals=2)
+np.round(np.dot(Wx.T, Wx), decimals=2)
+np.round(np.dot(Wy.T, Wy), decimals=2)
 
 
 # Transform on new data
