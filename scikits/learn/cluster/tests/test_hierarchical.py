@@ -17,11 +17,9 @@ def test_structured_ward_tree():
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
     connectivity = img_to_graph(mask, mask)
-    parent, children, height, n_comp, n_leaves = ward_tree(X.T, connectivity)
+    children, n_comp, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
-    assert(len(parent) == n_nodes)
     assert(len(children) + n_leaves == n_nodes)
-    assert(len(height) == n_nodes)
 
 
 def test_unstructured_ward_tree():
@@ -30,11 +28,9 @@ def test_unstructured_ward_tree():
     """
     np.random.seed(0)
     X = np.random.randn(50, 100)
-    parent, children, height, n_nodes, n_leaves = ward_tree(X.T)
+    children, n_nodes, n_leaves = ward_tree(X.T)
     n_nodes = 2 * X.shape[1] - 1
-    assert(len(parent) == n_nodes)
     assert(len(children) + n_leaves == n_nodes)
-    assert(len(height) == n_nodes)
 
 
 def test_height_ward_tree():
@@ -45,9 +41,9 @@ def test_height_ward_tree():
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
     connectivity = img_to_graph(mask, mask)
-    parent, children, height, n_nodes, n_leaves = ward_tree(X.T, connectivity)
+    children, n_nodes, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
-    assert(np.sum(np.argsort(height)[100:] - np.arange(n_nodes)[100:]) == 0)
+    assert(len(children) + n_leaves == n_nodes)
 
 
 def test_ward_clustering():

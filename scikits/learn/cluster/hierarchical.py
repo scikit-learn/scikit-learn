@@ -177,7 +177,7 @@ def ward_tree(X, connectivity=None, n_comp=None, copy=True):
         children.pop(0)
     children = np.array(children) # return as numpy array for efficient caching
 
-    return parent, children, heights, n_comp, n_leaves
+    return children, n_comp, n_leaves
 
 
 ###############################################################################
@@ -214,7 +214,7 @@ def _hc_get_descendent(ind, children, n_leaves):
     return descendent
 
 
-def _hc_cut(n_clusters, parent, children, n_leaves, heights):
+def _hc_cut(n_clusters, children, n_leaves):
     """
     Function cutting the ward tree for a given number of clusters.
 
@@ -239,7 +239,7 @@ def _hc_cut(n_clusters, parent, children, n_leaves, heights):
         Number of leaves of the tree.
 
     heights : array-like, shape = [n_nodes]
-        Float. Gives the inertia of the created nodes. The n_samples first
+        Gives the inertia of the created nodes. The n_samples first
         values of the array are 0, and thus the values are positive (or
         null) and are ranked in an increasing order.
 
@@ -251,23 +251,15 @@ def _hc_cut(n_clusters, parent, children, n_leaves, heights):
     active_nodes : list of int
                 index of the nodes kept for the labeling
     """
-    parent = parent[:-1]
-    heights = heights[:-1]
-    active_nodes = [len(parent)]
-    node_to_cut = active_nodes[0]
+    nodes = [np.max(children[-1]) + 1]
     for i in range(n_clusters - 1):
-        if np.sum(parent == node_to_cut) != 0:
-            active_nodes.append(np.where(parent == node_to_cut)[0][0])
-            active_nodes.append(np.where(parent == node_to_cut)[0][1])
-            active_nodes.remove(node_to_cut)
-        else:
-            active_nodes.append(node_to_cut)
-        node_to_cut = active_nodes[np.argmax(heights[active_nodes])]
+        nodes.extend(children[np.max(nodes) - n_leaves])
+        nodes.remove(np.max(nodes))
     label = np.zeros(n_leaves)
-    for j in active_nodes[:n_clusters - 1]:
-        ind = [j]
-        label[_hc_get_descendent(ind, children, n_leaves)] = np.max(label) + 1
-    return label, active_nodes
+    for i, node in enumerate(nodes):
+        label[_hc_get_descendent([node], children, n_leaves)] = i
+    return label
+
 
 ###############################################################################
 # Class for Ward hierarchical clustering
@@ -357,14 +349,12 @@ class Ward(BaseEstimator):
             memory = Memory(cachedir=memory)
 
         # Construct the tree
-        self.parent_, self.children_, self.heights_, self.n_comp, \
-            self.n_leaves_ = memory.cache(ward_tree)(X, self.connectivity,
-                                          n_comp=self.n_comp, copy=self.copy)
+        self.children_, self.n_comp, self.n_leaves_ = \
+                memory.cache(ward_tree)(X, self.connectivity,
+                                        n_comp=self.n_comp, copy=self.copy)
 
         # Cut the tree
-        self.labels_, self.active_nodes_ = _hc_cut(self.n_clusters,
-                                self.parent_, self.children_, self.n_leaves_,
-                                self.heights_)
+        self.labels_ = _hc_cut(self.n_clusters, self.children_, self.n_leaves_)
         return self
 
 ###############################################################################
