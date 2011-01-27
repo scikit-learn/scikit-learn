@@ -132,9 +132,6 @@ class PCA(BaseEstimator):
     components_: array, [n_features, n_components]
         Components with maximum variance.
 
-    components_coefs: array, [n_components]
-        Eigenvalues associated with principal components_.
-
     explained_variance_ratio_: array, [n_components]
         Percentage of variance explained by each of the selected components.
         k is not set then all components are stored and the sum of
@@ -185,10 +182,8 @@ class PCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
-            self.components_coefs_ = S / np.sqrt(n)
         else:
             self.components_ = V.T
-            self.components_coefs_ = np.ones_like(S)
 
         if self.n_components == 'mle':
             self.n_components = _infer_dimension_(self.explained_variance_,
@@ -196,7 +191,6 @@ class PCA(BaseEstimator):
 
         if self.n_components is not None:
             self.components_ = self.components_[:, :self.n_components]
-            self.components_coefs_ = self.components_coefs_[:self.n_components]
             self.explained_variance_ = \
                     self.explained_variance_[:self.n_components]
             self.explained_variance_ratio_ = \
@@ -206,15 +200,17 @@ class PCA(BaseEstimator):
 
     def transform(self, X):
         """Apply the dimension reduction learned on the train data."""
-        Xr = X - self.mean_
-        Xr = np.dot(Xr, self.components_)
-        return Xr
+        X_transformed = X - self.mean_
+        X_transformed = np.dot(X_transformed, self.components_)
+        return X_transformed
 
-    def inverse_transform(self, Y):
-        """Return an input X whose transform would be Y"""
-        r = np.dot(Y * self.components_coefs_, self.components_.T)
-        r += self.mean_
-        return r
+    def inverse_transform(self, X):
+        """Return an input X_original whose transform would be X
+
+        Note: if whitening is enabled, inverse_transform does not compute the
+        exact inverse operation as transform.
+        """
+        return np.dot(X, self.components_.T) + self.mean_
 
 
 class ProbabilisticPCA(PCA):
@@ -378,10 +374,8 @@ class RandomizedPCA(BaseEstimator):
         if self.whiten:
             n = X.shape[0]
             self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
-            self.components_coefs_ = S / np.sqrt(n)
         else:
             self.components_ = V.T
-            self.components_coefs_ = np.ones_like(S)
 
         return self
 
@@ -392,4 +386,11 @@ class RandomizedPCA(BaseEstimator):
 
         X = safe_sparse_dot(X, self.components_)
         return X
+
+    def inverse_transform(self, X):
+        """Return an reconstructed input whose transform would be X"""
+        X_original = safe_sparse_dot(X, self.components_.T)
+        if self.mean_ is not None:
+            X_original = X_original + self.mean_
+        return X_original
 

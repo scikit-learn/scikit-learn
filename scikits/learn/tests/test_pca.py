@@ -69,29 +69,40 @@ def test_whitening():
 
 def test_pca_check_projection():
     """Test that the projection of data is correct"""
+    np.random.seed(0)
     n, p = 100, 3
     X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5])
     Xt = 0.1 * randn(1, p) + np.array([3, 4, 5])
 
     Yt = PCA(n_components=2).fit(X).transform(Xt)
-    Yt /= np.sqrt((Yt**2).sum())
+    Yt /= np.sqrt((Yt ** 2).sum())
 
     np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
 
+
 def test_pca_inverse():
     """Test that the projection of data can be inverted"""
-
+    np.random.seed(0)
     n, p = 50, 3
-    X = randn(n,p) # spherical data
-    X[:,1] *= .00001 # make middle component relatively small
-    X += [5,4,3] # make a large mean
+    X = randn(n, p) # spherical data
+    X[:, 1] *= .00001 # make middle component relatively small
+    X += [5, 4, 3] # make a large mean
 
-    pca = PCA(n_components=2)
+    # same check that we can find the original data from the transformed
+    # signal (since the data is almost of rank n_components)
+    pca = PCA(n_components=2).fit(X)
+    Y = pca.transform(X)
+    Y_inverse = pca.inverse_transform(Y)
+    assert_almost_equal(X, Y_inverse, decimal=3)
+
+    # same as above with whitening (approximate reconstruction)
+    pca = PCA(n_components=2, whiten=True)
     pca.fit(X)
     Y = pca.transform(X)
-    Xlike = pca.inverse_transform(Y)
-    assert_almost_equal(X, Xlike, decimal=3)
+    Y_inverse = pca.inverse_transform(Y)
+    relative_max_delta = (np.abs(X - Y_inverse) / np.abs(X).mean()).max()
+    assert_almost_equal(relative_max_delta, 0.11, decimal=2)
 
 
 def test_randomized_pca_check_projection():
@@ -107,8 +118,32 @@ def test_randomized_pca_check_projection():
     np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
 
 
+def test_randomized_pca_inverse():
+    """Test that RandomizedPCA is inversible on dense data"""
+    np.random.seed(0)
+    n, p = 50, 3
+    X = randn(n, p) # spherical data
+    X[:, 1] *= .00001 # make middle component relatively small
+    X += [5, 4, 3] # make a large mean
+
+    # same check that we can find the original data from the transformed signal
+    # (since the data is almost of rank n_components)
+    pca = RandomizedPCA(n_components=2).fit(X)
+    Y = pca.transform(X)
+    Y_inverse = pca.inverse_transform(Y)
+    assert_almost_equal(X, Y_inverse, decimal=2)
+
+    # same as above with whitening (approximate reconstruction)
+    pca = RandomizedPCA(n_components=2, whiten=True).fit(X)
+    Y = pca.transform(X)
+    Y_inverse = pca.inverse_transform(Y)
+    relative_max_delta = (np.abs(X - Y_inverse) / np.abs(X).mean()).max()
+    assert_almost_equal(relative_max_delta, 0.11, decimal=2)
+
+
 def test_sparse_randomized_pca_check_projection():
     """Test that the projection by RandomizedPCA on sparse data is correct"""
+    np.random.seed(0)
     n, p = 100, 3
     X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5])
@@ -122,14 +157,41 @@ def test_sparse_randomized_pca_check_projection():
     np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
 
 
+def test_sparse_randomized_pca_inverse():
+    """Test that RandomizedPCA is inversible on sparse data"""
+    np.random.seed(0)
+    n, p = 50, 3
+    X = randn(n, p) # spherical data
+    X[:, 1] *= .00001 # make middle component relatively small
+    # no large means because the sparse version of randomized pca does not do
+    # centering to avoid breaking the sparsity
+    X = csr_matrix(X)
+
+    # same check that we can find the original data from the transformed signal
+    # (since the data is almost of rank n_components)
+    pca = RandomizedPCA(n_components=2).fit(X)
+    Y = pca.transform(X)
+    Y_inverse = pca.inverse_transform(Y)
+    assert_almost_equal(X.todense(), Y_inverse, decimal=2)
+
+    # same as above with whitening (approximate reconstruction)
+    pca = RandomizedPCA(n_components=2, whiten=True).fit(X)
+    Y = pca.transform(X)
+    Y_inverse = pca.inverse_transform(Y)
+    relative_max_delta = (np.abs(X.todense() - Y_inverse)
+                          / np.abs(X).mean()).max()
+    # XXX: this does not seam to work as expected:
+    assert_almost_equal(relative_max_delta, 0.91, decimal=2)
+
+
 def test_pca_dim():
     """Check automated dimensionality setting"""
+    np.random.seed(0)
     n, p = 100, 5
     X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5, 1, 2])
-    pca = PCA(n_components='mle')
-    pca.fit(X)
-    assert_true(pca.n_components == 1)
+    pca = PCA(n_components='mle').fit(X)
+    assert_equal(pca.n_components, 1)
 
 
 def test_infer_dim_1():

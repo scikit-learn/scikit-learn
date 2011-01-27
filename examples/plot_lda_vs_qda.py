@@ -1,7 +1,7 @@
 """
-==============================================================
-Linear Discriminant Analysis & Quadratic Discriminant Analysis
-==============================================================
+====================================================================
+Linear and Quadratic Discriminant Analysis with confidence ellipsoid
+====================================================================
 
 Plot the confidence ellipsoids of each class and decision boundary
 """
