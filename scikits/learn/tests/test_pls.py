@@ -13,9 +13,9 @@ def test_pls():
     n_components = 2
     
     # 1) Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
-    # -----------------------------------------------------------    
+    # ===========================================================    
     # Compare 2 algo.: nipals vs svd
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ------------------------------
     pls_bynipals = pls.PLS(deflation_mode="canonical")
     pls_bynipals.fit(X,Y, n_components=n_components)
     pls_bysvd = pls.PLS(deflation_mode="canonical",algorithm="svd")
@@ -34,33 +34,45 @@ def test_pls():
                            err_msg="nipals and svd implementation lead to\
                                     different y loadings")
 
-    # Check orthogonality of latent scores
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    assert_array_almost_equal(np.corrcoef(pls_bynipals.x_scores_,rowvar=0),
-                              np.eye(n_components),
-                              err_msg="x scores are not orthogonal")
-    assert_array_almost_equal(np.corrcoef(pls_bynipals.y_scores_,rowvar=0),
-                              np.eye(n_components),
-                              err_msg="y scores are not orthogonal")
-
-    # Check X = TP' and Y = UQ' (with (p == q) components)
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Check PLS properties (with n_components=X.shape[1])
+    # ---------------------------------------------------
     plsca = pls.PLS(deflation_mode="canonical")
     plsca.fit(X, Y, n_components=X.shape[1])
-    T = plsca.x_scores_
-    P = plsca.x_loadings_
-    U = plsca.y_scores_
-    Q = plsca.y_loadings_
+    T  = plsca.x_scores_
+    P  = plsca.x_loadings_
+    Wx = plsca.x_weights_
+    U  = plsca.y_scores_
+    Q  = plsca.y_loadings_
+    Wy = plsca.y_weights_
+    
+    def check_ortho(M, err_msg):
+        MtM = np.dot(M.T,M)
+        MtM_rmdiag = MtM - np.diag(np.diag(MtM))
+        zero_mat = np.zeros(MtM.size).reshape(MtM.shape)
+        assert_array_almost_equal(MtM_rmdiag, zero_mat, err_msg=err_msgcheck_ortho(Wx, "x weights are not orthogonal"))
+    
+    # orthogonality of weights 
+    # ~~~~~~~~~~~~~~~~~~~~~~~~ 
+    check_ortho(Wx, "x weights are not orthogonal")
+    check_ortho(Wy, "y weights are not orthogonal")
+
+    # orthogonality of latent scores
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    check_ortho(T, "x scores are not orthogonal")
+    check_ortho(U, "y scores are not orthogonal")
+
+    # Check X = TP' and Y = UQ' (with (p == q) components)
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
     # center scale X, Y
-    Xc, Yc, x_mu, y_mu, x_std, y_std =\
-         pls._center_scale_xy(X.copy(), Y.copy(), scale=True)
+    Xc, Yc, x_mean, y_mean, x_std, y_std =\
+         pls.center_scale_xy(X.copy(), Y.copy(), scale=True)
     assert_array_almost_equal(Xc, np.dot(T, P.T),
         err_msg="X != TP'")
     assert_array_almost_equal(Yc, np.dot(U, Q.T),
             err_msg="Y != UQ'")
 
     # "Non regression test" on canonical PLS
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # --------------------------------------
     pls_bynipals = pls.PLS(deflation_mode="canonical")
     pls_bynipals.fit(X,Y, n_components=n_components)
 
@@ -90,8 +102,8 @@ def test_pls():
     assert_array_almost_equal(pls_ca.y_weights_,y_weights)
 
 
-    # "Non regression test" on Regression PLS (PLS2)
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # 2) Regression PLS (PLS2): "Non regression test" 
+    # ===============================================
     pls2 = pls.PLS(deflation_mode="regression")
     pls2.fit(X, Y, n_components=n_components)
 

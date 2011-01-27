@@ -57,26 +57,26 @@ def _svd_cross_product(X, Y):
     v = Vh.T[:,[0]]
     return u, v
 
-def _center_scale_xy(X, Y, scale):
+def center_scale_xy(X, Y, scale):
     """ Center X, Y and scale if the scale parameter==True
     Return
     ------
-        X, Y, x_mu, y_mu, x_std, y_std
+        X, Y, x_mean, y_mean, x_std, y_std
     """
-    x_mu  = y_mu  = 0
+    x_mean  = y_mean  = 0
     x_std = x_std = 1
     # center
-    x_mu  = X.mean(axis=0)
-    X    -= x_mu
-    y_mu  = Y.mean(axis=0)
-    Y    -= y_mu
+    x_mean  = X.mean(axis=0)
+    X    -= x_mean
+    y_mean  = Y.mean(axis=0)
+    Y    -= y_mean
     # scale
     if scale :
         x_std = X.std(axis=0, ddof=1)
         X /= x_std
         y_std = Y.std(axis=0, ddof=1)
         Y /= y_std
-    return X, Y, x_mu, y_mu, x_std, y_std
+    return X, Y, x_mean, y_mean, x_std, y_std
 
 class PLS(BaseEstimator):
     """Partial Least Square (PLS)
@@ -127,7 +127,10 @@ class PLS(BaseEstimator):
     
     tol: a not negative real, the tolerance used in the iterative algorithm
          default 1e-06.
- 
+    
+    copy: boolean, should the deflation been made on a copy? Let the default
+        value to True unless you don't care about side effect 
+    
     Attributes
     ----------
     x_weights_  : array, [p x n_components] weights for the X block
@@ -227,21 +230,26 @@ class PLS(BaseEstimator):
     def __init__(self, n_components=2, deflation_mode = "canonical", mode = "A",
                  scale = True,
                  algorithm = "nipals",
-                 max_iter = 500, tol = 1e-06):
-        self.n_components = n_components
+                 max_iter = 500, tol = 1e-06, copy=True):
+        self.n_components   = n_components
         self.deflation_mode = deflation_mode
-        self.mode = mode
-        self.scale = scale
-        self.algorithm = algorithm
-        self.max_iter = max_iter
-        self.tol      = tol
-        self._DEBUG   = False
+        self.mode           = mode
+        self.scale          = scale
+        self.algorithm      = algorithm
+        self.max_iter       = max_iter
+        self.tol            = tol
+        self.copy           = copy
+        self._DEBUG         = False
 
     def fit(self, X, Y,  **params):
         self._set_params(**params)
         # copy since this will contains the residuals (deflated) matrices
-        X = np.asanyarray(X).copy()
-        Y = np.asanyarray(Y).copy()
+        if self.copy:
+            X = np.asanyarray(X).copy()
+            Y = np.asanyarray(Y).copy()
+        else:
+            X = np.asanyarray(X)
+            Y = np.asanyarray(Y)
 
         n = X.shape[0]
         p = X.shape[1]
@@ -266,8 +274,8 @@ class PLS(BaseEstimator):
         if self.mode is "B":
             raise ValueError('The mode B (CCA) is not implemented yet')
         # Scale (in place)
-        X, Y, self.x_mu_, self.y_mu_, self.x_std_, self.y_std_\
-            = _center_scale_xy(X, Y, self.scale)
+        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
+            = center_scale_xy(X, Y, self.scale)
         # Residuals (deflated) matrices
         Xk = X
         Yk = Y
@@ -316,17 +324,59 @@ class PLS(BaseEstimator):
             self.y_weights_[:,k]  = v.ravel()
             self.x_loadings_[:,k] = x_loadings.ravel()
             self.y_loadings_[:,k] = y_loadings.ravel()
-            if self._DEBUG:
-                print "component",k,"----------------------------------------------"
-                print "X rank-one approximations and residual"
-                print np.dot(x_score, x_loadings.T)
-                print Xk
-                print "Y rank-one approximations and residual"
-                print np.dot(y_score, y_loadings.T)
-                print Yk
         return self
 
+    def transform(self, X, Y, n_components=None):
+        """Apply the dimension reduction learned on the train data.
+            copy: boolean, should the deflation been made on a copy? Let the default
+            Parameters
+            ----------
+            X: array-like of predictors, shape (n_samples, p)
+                Training vectors, where n_samples in the number of samples and
+                p is the number of predictors.
 
+            Y: array-like of response, shape (n_samples, q)
+                Training vectors, where n_samples in the number of samples and
+                q is the number of response variables.
+            
+            n_components: the number of components to get. if None use the
+                number of components estimated during the fit.
+                
+            Notes
+            -----
+            Be aware, that this transform is not a simple rotation like in
+            PCA, here a deflation is performed for each component.
+                
+            Deflations are made on a is a new chunk of data that may cause 
+            memory issues, but there are no side effects.
+        """
+        if n_components is None: n_components = self.x_weights_.shape[1]
+        # Note Xk 
+        Xk = (X - self.x_mean_) / self.x_std_
+        Yk = (Y - self.y_mean_) / self.y_std_
+        
+        x_scores   = np.zeros((Xk.shape[0], n_components))
+        y_scores   = np.zeros((Yk.shape[0], n_components))
+ 
+        # - regress Xk's on x_score
+        for k in xrange(n_components):
+            x_score = np.dot(Xk, self.x_weights_[:,[k]])
+            x_loadings = np.dot(Xk.T, x_score)/np.dot(x_score.T, x_score) # p x 1
+            # - substract rank-one approximations to obtain remainder matrix
+            Xk -= np.dot(x_score, x_loadings.T)
+            if self.deflation_mode is "canonical":
+                y_score = np.dot(Yk, self.y_weights_[:,[k]])
+                # - regress Yk's on y_score, then substract rank-one approximation
+                y_loadings  = np.dot(Yk.T, y_score)/np.dot(y_score.T, y_score) # q x 1
+                Yk -= np.dot(y_score, y_loadings.T)
+            if self.deflation_mode is "regression":
+                x_score = np.dot(Xk, self.x_weights_[:,[k]])
+                # - regress Yk's on x_score, then substract rank-one approximation
+                y_loadings  = np.dot(Yk.T, x_score)/np.dot(x_score.T, x_score) # q x 1
+                Yk -= np.dot(x_score, y_loadings.T)
+            x_scores[:,k]   = x_score.ravel()
+            y_scores[:,k]   = y_score.ravel()
+        return x_scores, y_scores
 
 class PLS_SVD(BaseEstimator):
     """Partial Least Square SVD
@@ -415,8 +465,8 @@ class PLS_SVD(BaseEstimator):
             raise ValueError('invalid number of components')
 
         # Scale (in place)
-        X, Y, self.x_mu_, self.y_mu_, self.x_std_, self.y_std_\
-            = _center_scale_xy(X, Y, self.center_x, self.center_y,\
+        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
+            = center_scale_xy(X, Y, self.center_x, self.center_y,\
                         self.scale_x, self.scale_y)
         # svd(X'Y)
         C = np.dot(X.T,Y)
@@ -428,4 +478,11 @@ class PLS_SVD(BaseEstimator):
         self.y_weights_ = V
         return self
 
+    def transform(self, X, Y):
+        """Apply the dimension reduction learned on the train data."""
+        Xr = (X - self.x_mean_) / self.x_std_
+        Yr = (Y - self.y_mean_) / self.y_std_
+        x_scores = np.dot(Xr, self.x_weights_)
+        y_scores = np.dot(Yr, self.y_weights_)
+        return x_scores, y_scores
 
