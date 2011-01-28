@@ -327,7 +327,8 @@ class RidgeCV(LinearModel):
     Ridge regression with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation.
+    efficient Leave-One-Out cross-validation. Currently, only the n_features >
+    n_samples case is handled efficiently.
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
