@@ -130,8 +130,19 @@ class Binarizer(BaseEstimator):
 
 class LabelBinarizer(BaseEstimator):
     """Binarize labels in a one-vs-all fashion.
-    
-    Also known as 1-of-K coding scheme.
+
+    Several regression and binary classification algorithms are available in the
+    scikit. A simple way to extend these algorithms to the multi-class
+    classification case is to use the so-called one-vs-all scheme.
+
+    At learning time, this simply consists in learning one regressor or binary
+    classifier per class. In doing so, one needs to convert multi-class labels
+    to binary labels (belong or does not belong to the class). LabelBinarizer
+    makes this process easy with the transform method.
+
+    At prediction time, one assigns the class for which the corresponding model
+    gave the greatest confidence. LabelBinarizer makes this easy with the
+    inverse_transform method.
 
     Attributes
     ----------
@@ -168,6 +179,9 @@ class LabelBinarizer(BaseEstimator):
 
     def transform(self, y):
         """Transform multi-class labels to binary labels
+
+        The output of transform is sometimes referred to by some authors as the
+        1-of-K coding scheme.
 
         Parameters
         ----------
@@ -206,6 +220,13 @@ class LabelBinarizer(BaseEstimator):
         Returns
         -------
         y : numpy array of shape [n_samples]
+
+        Note
+        -----
+        In the case when the binary labels are fractional (probabilistic),
+        inverse_transform chooses the class with the greatest value. Typically,
+        this allows to use the output of a linear model's decision_function
+        method output directly as the input of inverse_transform.
         """
         if len(Y.shape) == 1 or Y.shape[1] == 1:
             y = np.array(Y.ravel() > 0, dtype=int)
