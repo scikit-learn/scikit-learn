@@ -7,7 +7,7 @@
 
 import numpy as np
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 
 
 def _mean_and_std(X, axis=0, with_std=True):
@@ -128,7 +128,7 @@ class Binarizer(BaseEstimator):
         return X
 
 
-class LabelBinarizer(BaseEstimator):
+class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion.
 
     Several regression and binary classification algorithms are available in the
@@ -205,9 +205,6 @@ class LabelBinarizer(BaseEstimator):
 
         else:
             raise ValueError
-
-    def fit_transform(self, y):
-        return self.fit(y).transform(y)
 
     def inverse_transform(self, Y):
         """Transform binary labels back to multi-class labels
