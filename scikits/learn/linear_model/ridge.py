@@ -190,9 +190,10 @@ class RidgeClassifier(Ridge):
         return self.label_binarizer.inverse_transform(Y)
 
 
-class _RidgeLOO(LinearModel):
+class _RidgeGCV(LinearModel):
     """
-    Ridge regression with built-in efficient Leave-One-Out cross-validation.
+    Ridge regression with built-in Generalized Cross-Validation, i.e.
+    efficient Leave-One-Out cross-validation.
 
     This class is not intended to be used directly. Use RidgeCV instead.
 
@@ -325,7 +326,8 @@ class RidgeCV(LinearModel):
     """
     Ridge regression with built-in cross-validation.
 
-    Defaults to Leave-One-Out, which is handled efficiently.
+    By default, it performs Generalized Cross-Validation, which is a form of
+    efficient Leave-One-Out cross-validation.
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
@@ -350,14 +352,15 @@ class RidgeCV(LinearModel):
             Sample weight
 
         cv : cross-validation generator, optional
-            If None, Leave-One-Out will be used.
+            If None, Generalized Cross-Validationn (efficient Leave-One-Out)
+            will be used.
 
         Returns
         -------
         self : Returns self.
         """
         if cv is None:
-            estimator = _RidgeLOO(self.alphas, self.fit_intercept,
+            estimator = _RidgeGCV(self.alphas, self.fit_intercept,
                                   self.score_func, self.loss_func)
             estimator.fit(X, y, sample_weight)
         else:

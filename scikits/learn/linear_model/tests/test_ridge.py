@@ -10,7 +10,7 @@ from scikits.learn.metrics import mean_square_error
 from scikits.learn.linear_model.base import LinearRegression
 
 from scikits.learn.linear_model.ridge import Ridge
-from scikits.learn.linear_model.ridge import _RidgeLOO
+from scikits.learn.linear_model.ridge import _RidgeGCV
 from scikits.learn.linear_model.ridge import RidgeCV
 from scikits.learn.linear_model.ridge import RidgeClassifier
 from scikits.learn.linear_model.ridge import RidgeClassifierCV
@@ -111,15 +111,15 @@ def _test_ridge_loo(filter_):
 
     ret = []
 
-    ridge_loo = _RidgeLOO(fit_intercept=False)
+    ridge_gcv = _RidgeGCV(fit_intercept=False)
     ridge = Ridge(fit_intercept=False)
 
-    # efficient LOO
-    K, v, Q = ridge_loo._pre_compute(X_diabetes, y_diabetes)
-    errors, c = ridge_loo._errors(v, Q, y_diabetes, 1.0)
-    values, c = ridge_loo._values(K, v, Q, y_diabetes, 1.0)
+    # generalized cross-validation (efficient leave-one-out)
+    K, v, Q = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
+    errors, c = ridge_gcv._errors(v, Q, y_diabetes, 1.0)
+    values, c = ridge_gcv._values(K, v, Q, y_diabetes, 1.0)
 
-    # brute-force LOO: remove one example at a time
+    # brute-force leave-one-out: remove one example at a time
     errors2 = []
     values2 = []
     for i in range(n_samples):
@@ -137,27 +137,27 @@ def _test_ridge_loo(filter_):
     assert_almost_equal(values, values2)
 
     # check best alpha
-    ridge_loo.fit(filter_(X_diabetes), y_diabetes)
-    best_alpha = ridge_loo.best_alpha
+    ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
+    best_alpha = ridge_gcv.best_alpha
     ret.append(best_alpha)
 
     # check that we get same best alpha with custom loss_func
-    ridge_loo2 = _RidgeLOO(fit_intercept=False, loss_func=mean_square_error)
-    ridge_loo2.fit(filter_(X_diabetes), y_diabetes)
-    assert_equal(ridge_loo2.best_alpha, best_alpha)
+    ridge_gcv2 = _RidgeGCV(fit_intercept=False, loss_func=mean_square_error)
+    ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
+    assert_equal(ridge_gcv2.best_alpha, best_alpha)
 
     # check that we get same best alpha with sample weights
-    ridge_loo.fit(filter_(X_diabetes), y_diabetes,
+    ridge_gcv.fit(filter_(X_diabetes), y_diabetes,
                   sample_weight=np.ones(n_samples))
-    assert_equal(ridge_loo.best_alpha, best_alpha)
+    assert_equal(ridge_gcv.best_alpha, best_alpha)
 
     # simulate several responses
     Y = np.vstack((y_diabetes,y_diabetes)).T
 
-    ridge_loo.fit(filter_(X_diabetes), Y)
-    Y_pred = ridge_loo.predict(filter_(X_diabetes))
-    ridge_loo.fit(filter_(X_diabetes), y_diabetes)
-    y_pred = ridge_loo.predict(filter_(X_diabetes))
+    ridge_gcv.fit(filter_(X_diabetes), Y)
+    Y_pred = ridge_gcv.predict(filter_(X_diabetes))
+    ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
+    y_pred = ridge_gcv.predict(filter_(X_diabetes))
 
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
                               Y_pred)
