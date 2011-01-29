@@ -14,9 +14,9 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter = 500, tol = 1e-06):
     """Inner loop of the iterative NIPALS algorithm. provide an alternative
     of the svd(X'Y) ie. return the first left and rigth singular vectors of X'Y
     See PLS for the meaning of the parameters.
+    It is similar to the Power method for determining the eigenvectors and
+    eigenvalues of a X'Y
     """
-    p = X.shape[1]
-    q = Y.shape[1]
     y_score = Y[:,[0]]
     u_old = 0
     ite = 1
@@ -314,20 +314,30 @@ class PLS(BaseEstimator):
                 Yk -= np.dot(x_score, y_loadings.T)
             
             # 3) Store weights and scores
-            self.x_scores_[:,k]   = x_score.ravel()
-            self.y_scores_[:,k]   = y_score.ravel()
-            self.x_weights_[:,k]  = u.ravel()
-            self.y_weights_[:,k]  = v.ravel()
-            self.x_loadings_[:,k] = x_loadings.ravel()
-            self.y_loadings_[:,k] = y_loadings.ravel()
-        # 4) Compute rotations from input space to transformed space (scores)
-        # Use the property:T = XW(P'W)^-1 = XW*
-        # where T are the desired scores, X (the centerred data).
-        # P and W are the x_loadings_ and the x_weights: 
-        self.x_rotation = np.dot(self.x_weights_, 
+            self.x_scores_[:,k]   = x_score.ravel()    # T
+            self.y_scores_[:,k]   = y_score.ravel()    # U
+            self.x_weights_[:,k]  = u.ravel()          # W
+            self.y_weights_[:,k]  = v.ravel()          # C
+            self.x_loadings_[:,k] = x_loadings.ravel() # P
+            self.y_loadings_[:,k] = y_loadings.ravel() # Q
+        # X = TP' + Err
+        # Y = UQ' + Err
+        # 4) rotations from input space to transformed space (scores)
+        # T = X W(P'W)^-1 = XW* (W* : p x k matrix)
+        # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
+        self.x_rotation_ = np.dot(self.x_weights_, 
             linalg.inv(np.dot(self.x_loadings_.T, self.x_weights_)))
-        self.y_rotation = np.dot(self.y_weights_, 
+        self.y_rotation_ = np.dot(self.y_weights_, 
             linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
+        
+        # Estimate regression coeficient
+        # Regress Y on T 
+        # Y = TC' + Err,
+        # Then express in function of X
+        # Y = X W(P'W)^-1C' + Err = XB + Err
+        # => B = W*C' (p x q)
+        self.coefs = np.dot(self.x_rotation_,  self.x_weights_.T)
+        
         return self
 
     def transform(self, X, Y, copy=True):
@@ -356,11 +366,37 @@ class PLS(BaseEstimator):
             Xc /= self.x_std_
             Yc -= self.y_mean_
             Yc /= self.y_std_
-            
+           
         # Apply rotation
-        x_scores = np.dot(Xc, self.x_rotation)
-        y_scores = np.dot(Yc, self.y_rotation)
+        x_scores = np.dot(Xc, self.x_rotation_)
+        y_scores = np.dot(Yc, self.y_rotation_)
         return x_scores, y_scores
+
+    def predict(self, X, copy=True):
+        """Apply the dimension reduction learned on the train data.
+            Parameters
+            ----------
+            X: array-like of predictors, shape (n_samples, p)
+                Training vectors, where n_samples in the number of samples and
+                p is the number of predictors.
+                
+            copy: X has to be normalize, do it on a copy or in place
+                with side effect!
+                
+            Notes
+            -----
+            This call require the estimation of a p x q matrix, which may
+            be an issue in high dimensional space.             
+        """
+        # Normalize
+        if copy:
+            Xc = (np.asanyarray(X) - self.x_mean_) / self.x_std_
+        else:
+            X = np.asanyarray(X)
+            Xc -= self.x_mean_
+            Xc /= self.x_std_
+        Ypred = np.dot(Xc, self.coefs)
+        return (Ypred * self.y_std_) + self.y_mean_
 
 class PLS_SVD(BaseEstimator):
     """Partial Least Square SVD
@@ -408,13 +444,12 @@ class PLS_SVD(BaseEstimator):
     def fit(self, X, Y,  **params):
         self._set_params(**params)
         X = np.asanyarray(X)
-        y = np.asanyarray(Y)
+        Y = np.asanyarray(Y)
         if self.center_x or self.scale_x: X = X.copy()
         if self.center_y or self.scale_y: Y = Y.copy()
 
         n = X.shape[0]
         p = X.shape[1]
-        q = Y.shape[1]
 
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
