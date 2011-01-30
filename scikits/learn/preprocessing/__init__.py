@@ -7,7 +7,7 @@
 
 import numpy as np
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 
 
 def _mean_and_std(X, axis=0, with_std=True):
@@ -99,7 +99,7 @@ class LengthNormalizer(BaseEstimator):
         if copy:
             X = X.copy()
 
-        norms = np.sqrt(np.sum(X ** 2, axis=1))[:,np.newaxis]
+        norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
         norms[norms == 0.0] = 1.0
         X /= norms
 
@@ -127,3 +127,106 @@ class Binarizer(BaseEstimator):
 
         return X
 
+
+class LabelBinarizer(BaseEstimator, TransformerMixin):
+    """Binarize labels in a one-vs-all fashion.
+
+    Several regression and binary classification algorithms are available in the
+    scikit. A simple way to extend these algorithms to the multi-class
+    classification case is to use the so-called one-vs-all scheme.
+
+    At learning time, this simply consists in learning one regressor or binary
+    classifier per class. In doing so, one needs to convert multi-class labels
+    to binary labels (belong or does not belong to the class). LabelBinarizer
+    makes this process easy with the transform method.
+
+    At prediction time, one assigns the class for which the corresponding model
+    gave the greatest confidence. LabelBinarizer makes this easy with the
+    inverse_transform method.
+
+    Attributes
+    ----------
+    classes_ : array of shape [n_class]
+        Holds the label for each class.
+
+    Examples
+    --------
+    >>> from scikits.learn import preprocessing
+    >>> clf = preprocessing.LabelBinarizer()
+    >>> clf.fit([1,2,6,4,2])
+    LabelBinarizer()
+    >>> clf.classes_
+    array([1, 2, 4, 6])
+    >>> clf.transform([1, 6])
+    array([[ 1.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  1.]])
+    """
+
+    def fit(self, y):
+        """Fit label binarizer
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.classes_ = np.unique(y)
+        return self
+
+    def transform(self, y):
+        """Transform multi-class labels to binary labels
+
+        The output of transform is sometimes referred to by some authors as the
+        1-of-K coding scheme.
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values
+
+        Returns
+        -------
+        Y : numpy array of shape [n_samples, n_classes]
+        """
+        if len(self.classes_) == 2:
+            Y = np.zeros((len(y), 1))
+            Y[y == self.classes_[1], 0] = 1
+            return Y
+
+        elif len(self.classes_) >= 2:
+            Y = np.zeros((len(y), len(self.classes_)))
+            for i, k in enumerate(self.classes_):
+                Y[y == k, i] = 1
+            return Y
+
+        else:
+            raise ValueError
+
+    def inverse_transform(self, Y):
+        """Transform binary labels back to multi-class labels
+
+        Parameters
+        ----------
+        Y : numpy array of shape [n_samples, n_classes]
+            Target values
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+
+        Note
+        -----
+        In the case when the binary labels are fractional (probabilistic),
+        inverse_transform chooses the class with the greatest value. Typically,
+        this allows to use the output of a linear model's decision_function
+        method output directly as the input of inverse_transform.
+        """
+        if len(Y.shape) == 1 or Y.shape[1] == 1:
+            y = np.array(Y.ravel() > 0, dtype=int)
+        else:
+            y = Y.argmax(axis=1)
+        return self.classes_[y]
