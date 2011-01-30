@@ -139,14 +139,14 @@ class PLS(BaseEstimator):
     y_loadings_ : array, [q x n_components] loadings for the Y block
     x_score_    : array, [p x n_samples] scores for X the block
     y_score_    : array, [q x n_samples] scores for the Y block
+    x_rotations_: array, [p x n_components] rotation for the X block
+    x_rotations_: array, [q x n_components] rotation for the Y block
     
     Notes
     -----
     PLS mode A
         For each component k, find weights u, v that optimizes:
         max corr(Xk u, Yk v) * var(Xk u) var(Yk u) 
-         |u| = |v| = 1
-        max u'Xk' Yk v 
          |u| = |v| = 1
         
         Note that it maximizes both the correlations between the scores and the
@@ -168,11 +168,11 @@ class PLS(BaseEstimator):
         For each component k, find the weights u, v that maximizes
         max corr(Xk u, Yk v)
          |u| = |v| = 1
-        max u'Xk' Yk v 
-         |u| = |v| = 1
 
         Note that it maximizes only the correlations between the scores.
-
+        
+        This mode is not implemented yet!
+        
     References
     ----------
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with 
@@ -197,31 +197,17 @@ class PLS(BaseEstimator):
     >>> plsca.fit(X,Y, n_components=2)
     PLS(scale=True, deflation_mode='canonical', algorithm='nipals', max_iter=500,
       n_components=2, tol=1e-06, copy=True, mode='A')
-    >>> print plsca.x_weights_
-    [[-0.58989082  0.78900159]
-    [-0.77134081 -0.61352087]
-    [ 0.23887693 -0.03269003]]
-
-    >>> print plsca.y_weights_
-    [[ 0.61330742  0.25616374]
-    [ 0.74697171  0.11930342]
-    [ 0.25668516 -0.95924284]]
-
-    >>> print plsca.x_loadings_
-    [[-0.66591531  0.77356014]
-     [-0.67602366 -0.62873035]
-     [ 0.35892139 -0.11993352]]
-
     >>> Xc, Yc = plsca.transform(X,Y)
     >>> ## Regression PLS (PLS 2 blocks regression mode A known as PLS2)
     >>> pls2 = PLS(deflation_mode="regression")
     >>> pls2.fit(X,Y, n_components=2)
-
+    PLS(scale=True, deflation_mode='regression', algorithm='nipals', max_iter=500,
+      n_components=2, tol=1e-06, copy=True, mode='A')
+    >>> Ypred = pls2.predict(X)
+    
     See also
     --------
     PLS_SVD
-    CCA
-
     """
     def __init__(self, n_components=2, deflation_mode = "canonical", mode = "A",
                  scale = True,
@@ -300,6 +286,11 @@ class PLS(BaseEstimator):
             
             #2) Deflation (in place)
             # ----------------------
+            # Possible memory footprint reduction may done here: in order to 
+            # avoid the allocation of a data chunk for the rank-one 
+            # approximations matrix which is then substracted to Xk, we sugest
+            # to perform a column-wise deflation.
+            #
             # - regress Xk's on x_score
             x_loadings = np.dot(Xk.T, x_score)/np.dot(x_score.T, x_score) # p x 1
             # - substract rank-one approximations to obtain remainder matrix
@@ -325,19 +316,19 @@ class PLS(BaseEstimator):
         # 4) rotations from input space to transformed space (scores)
         # T = X W(P'W)^-1 = XW* (W* : p x k matrix)
         # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
-        self.x_rotation_ = np.dot(self.x_weights_, 
+        self.x_rotations_ = np.dot(self.x_weights_, 
             linalg.inv(np.dot(self.x_loadings_.T, self.x_weights_)))
-        self.y_rotation_ = np.dot(self.y_weights_, 
+        self.y_rotations_ = np.dot(self.y_weights_, 
             linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
         
         # Estimate regression coeficient
         # Regress Y on T 
-        # Y = TC' + Err,
+        # Y = TQ' + Err,
         # Then express in function of X
-        # Y = X W(P'W)^-1C' + Err = XB + Err
-        # => B = W*C' (p x q)
-        self.coefs = np.dot(self.x_rotation_,  self.x_weights_.T)
-        
+        # Y = X W(P'W)^-1Q' + Err = XB + Err
+        # => B = W*Q' (p x q)
+        self.coefs = np.dot(self.x_rotations_,  self.y_loadings_.T)
+        self.coefs = 1./self.x_std_.reshape((p,1)) * self.coefs * self.y_std_
         return self
 
     def transform(self, X, Y, copy=True):
@@ -368,8 +359,8 @@ class PLS(BaseEstimator):
             Yc /= self.y_std_
            
         # Apply rotation
-        x_scores = np.dot(Xc, self.x_rotation_)
-        y_scores = np.dot(Yc, self.y_rotation_)
+        x_scores = np.dot(Xc, self.x_rotations_)
+        y_scores = np.dot(Yc, self.y_rotations_)
         return x_scores, y_scores
 
     def predict(self, X, copy=True):
@@ -390,13 +381,13 @@ class PLS(BaseEstimator):
         """
         # Normalize
         if copy:
-            Xc = (np.asanyarray(X) - self.x_mean_) / self.x_std_
+            Xc = (np.asanyarray(X) - self.x_mean_)
         else:
             X = np.asanyarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
         Ypred = np.dot(Xc, self.coefs)
-        return (Ypred * self.y_std_) + self.y_mean_
+        return Ypred + self.y_mean_
 
 class PLS_SVD(BaseEstimator):
     """Partial Least Square SVD
