@@ -90,8 +90,36 @@ pl.show()
 
 ## Regression PLS (PLS 2 blocks regression mode A known as PLS2)
 ## -------------------------------------------------------------
+n=1000
+q=3
+p=10
+X =  rnd.normal(size=n*p).reshape((n,p))
+B = np.array([[1,2]+[0]*(p-2)]*q).T
+# each Yj = 1*X1 + 2*X2 + noize
+Y = np.dot(X,B) + rnd.normal(size=n*q).reshape((n,q)) + 5
+
 pls2 = PLS(deflation_mode="regression")
-pls2.fit(X,Y, n_components=2)
+pls2.fit(X,Y, n_components=3)
+print "True B (such that: Y = XB + Err)"
+print B
+# compare pls2.coefs with B
+print "Estimated B"
+print np.round(pls2.coefs,1)
+
 pls2.predict(X)
+
+
+## Regression PLS with 1 dimensional response (PLS1)
+## -------------------------------------------------------------
+n=1000
+p=10
+X =  rnd.normal(size=n*p).reshape((n,p))
+y = X[:,0] + 2*X[:,1] + rnd.normal(size=n*1) + 5
+pls1 = PLS(deflation_mode="regression")
+pls1.fit(X,y, n_components=3)
+# note that the number of compements exceeds 1 (the dimension of y)
+print "Estimated betas"
+print np.round(pls1.coefs,1)
+
 
 

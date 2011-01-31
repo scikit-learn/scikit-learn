@@ -41,7 +41,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter = 500, tol = 1e-06):
         y_score = np.dot(Y, v)
         
         u_diff = u - u_old
-        if np.dot(u_diff.T, u_diff) < tol:
+        if np.dot(u_diff.T, u_diff) < tol or Y.shape[1] == 1:
             break
         if ite == max_iter:
             warnings.warn('Maximum number of iterations reached')
@@ -57,25 +57,26 @@ def _svd_cross_product(X, Y):
     v = Vh.T[:,[0]]
     return u, v
 
-def center_scale_xy(X, Y, scale):
+def center_scale_xy(X, Y, scale=True):
     """ Center X, Y and scale if the scale parameter==True
     Return
     ------
         X, Y, x_mean, y_mean, x_std, y_std
     """
-    x_mean  = y_mean  = 0
-    x_std = x_std = 1
     # center
     x_mean  = X.mean(axis=0)
-    X    -= x_mean
+    X      -= x_mean
     y_mean  = Y.mean(axis=0)
-    Y    -= y_mean
+    Y      -= y_mean
     # scale
     if scale :
         x_std = X.std(axis=0, ddof=1)
         X /= x_std
         y_std = Y.std(axis=0, ddof=1)
         Y /= y_std
+    else:
+       x_std =  np.ones(X.shape[1])
+       y_std =  np.ones(Y.shape[1])
     return X, Y, x_mean, y_mean, x_std, y_std
 
 class PLS(BaseEstimator):
@@ -204,7 +205,16 @@ class PLS(BaseEstimator):
     PLS(scale=True, deflation_mode='regression', algorithm='nipals', max_iter=500,
       n_components=2, tol=1e-06, copy=True, mode='A')
     >>> Ypred = pls2.predict(X)
-    
+    >>> ## Regression PLS with 1 dimensional response (PLS1)
+    >>> n=1000
+    >>> p=10
+    >>> X =  rnd.normal(size=n*p).reshape((n,p))
+    >>> y = X[:,0] + 2*X[:,1] + rnd.normal(size=n*1) + 5
+    >>> pls1 = PLS(deflation_mode="regression")
+    >>> pls1.fit(X,y, n_components=3)
+    PLS(scale=True, deflation_mode='regression', algorithm='nipals', max_iter=500,
+      n_components=3, tol=1e-06, copy=True, mode='A')
+    >>> # compare pls1.coefs with [1, 2, 0, ...., 0]
     See also
     --------
     PLS_SVD
@@ -233,12 +243,16 @@ class PLS(BaseEstimator):
             X = np.asanyarray(X)
             Y = np.asanyarray(Y)
 
+        if X.ndim != 2:
+            raise ValueError('X must be a 2D array')
+        if Y.ndim == 1:
+            Y = Y.reshape((Y.size,1))
+        if Y.ndim != 2:
+            raise ValueError('Y must be a 1D or a 2D array')
+
         n = X.shape[0]
         p = X.shape[1]
         q = Y.shape[1]
-
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
 
         if n != Y.shape[0]:
             raise ValueError(
@@ -318,9 +332,11 @@ class PLS(BaseEstimator):
         # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
         self.x_rotations_ = np.dot(self.x_weights_, 
             linalg.inv(np.dot(self.x_loadings_.T, self.x_weights_)))
-        self.y_rotations_ = np.dot(self.y_weights_, 
-            linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
-        
+        if Y.shape[1] > 1:
+            self.y_rotations_ = np.dot(self.y_weights_, 
+                linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
+        else :
+            self.y_rotations_ = np.ones(1)
         # Estimate regression coeficient
         # Regress Y on T 
         # Y = TQ' + Err,
