@@ -26,36 +26,37 @@ def compare_nbrs(nbrs1, nbrs2):
     elif(nbrs1.ndim == 1):
         return np.all(nbrs1 == nbrs2)
 
-n_samples = 1000
-leaf_size = 1 # leaf size
-k = 20
-BT_results = []
-KDT_results = []
+if __name__ == '__main__':
+    n_samples = 1000
+    leaf_size = 1 # leaf size
+    k = 20
+    BT_results = []
+    KDT_results = []
 
-for i in range(1, 10):
-    print 'Iteration %s' %i
-    n_features = i*100
-    X = np.random.random([n_samples, n_features])
+    for i in range(1, 10):
+        print 'Iteration %s' %i
+        n_features = i*100
+        X = np.random.random([n_samples, n_features])
 
-    t0 = time()
-    BT = BallTree(X, leaf_size)
-    d, nbrs1 = BT.query(X, k)
-    delta = time() - t0
-    BT_results.append(delta)
+        t0 = time()
+        BT = BallTree(X, leaf_size)
+        d, nbrs1 = BT.query(X, k)
+        delta = time() - t0
+        BT_results.append(delta)
 
-    t0 = time()
-    KDT = cKDTree(X, leaf_size)
-    d, nbrs2 = KDT.query(X, k)
-    delta = time() - t0
-    KDT_results.append(delta)
+        t0 = time()
+        KDT = cKDTree(X, leaf_size)
+        d, nbrs2 = KDT.query(X, k)
+        delta = time() - t0
+        KDT_results.append(delta)
 
-    # this checks we get the correct result
-    assert compare_nbrs(nbrs1, nbrs2)
+        # this checks we get the correct result
+        assert compare_nbrs(nbrs1, nbrs2)
 
-xx = 100 * np.arange(1, 10)
-pl.plot(xx, BT_results, label='scikits.learn (BallTree)')
-pl.plot(xx, KDT_results, label='scipy (cKDTree)')
-pl.xlabel('number of dimensions')
-pl.ylabel('time (seconds)')
-pl.legend()
-pl.show()
+    xx = 100 * np.arange(1, 10)
+    pl.plot(xx, BT_results, label='scikits.learn (BallTree)')
+    pl.plot(xx, KDT_results, label='scipy (cKDTree)')
+    pl.xlabel('number of dimensions')
+    pl.ylabel('time (seconds)')
+    pl.legend()
+    pl.show()
