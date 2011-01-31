@@ -528,6 +528,25 @@ From text
    feature_extraction.text.Vectorizer
 
 
+Manifold learning
+=================
+
+.. autosummary::
+
+    :toctree: generated
+    :template: class.rst
+
+    manifold.LocallyLinearEmbedding
+
+
+.. autosummary::
+
+    :toctree: generated
+    :template: function.rst
+
+    manifold.locally_linear_embedding
+
+
 Pipeline
 ========
 

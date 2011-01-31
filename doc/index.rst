@@ -1,5 +1,5 @@
 
-..  
+..
     We are putting the title as a raw HTML so that it doesn't appear in
     the contents
 
@@ -34,7 +34,7 @@
         </div>
 
 
-    |center-div| |banner1| |banner2| |banner3| |banner4| |end-div| 
+    |center-div| |banner1| |banner2| |banner3| |banner4| |end-div|
 
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
@@ -44,19 +44,19 @@
     packages (`numpy <http://www.scipy.org>`_, `scipy
     <http://www.scipy.org>`_, `matplotlib
     <http://matplotlib.sourceforge.net/>`_).
-    
+
     It aims to provide simple and efficient solutions to learning
     problems that are accessible to everybody and reusable in various
     contexts: **machine-learning as a versatile tool for science and
     engineering**.
-    
+
 
 
 :Features:
   * **Solid**: :ref:`supervised-learning`: :ref:`svm`, :ref:`linear_model`.
 
   * **Work in progress**: :ref:`unsupervised-learning`:
-    :ref:`clustering`, :ref:`mixture`, manifold learning, :ref:`ICA
+    :ref:`clustering`, :ref:`mixture`, :ref:`manifold learning <manifold>`, :ref:`ICA
     <ICA>`, :ref:`gaussian_process`
 
   * **Planed**: Gaussian graphical models, matrix factorization
