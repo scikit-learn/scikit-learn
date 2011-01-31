@@ -12,7 +12,7 @@ from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import load_20newsgroups
-
+from .samples_generator import swiss_roll
 
 # backward compatibility
 def load_files(*args, **kwargs):
