@@ -223,7 +223,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         In the case when the binary labels are fractional (probabilistic),
         inverse_transform chooses the class with the greatest value. Typically,
         this allows to use the output of a linear model's decision_function
-        method output directly as the input of inverse_transform.
+        method directly as the input of inverse_transform.
         """
         if len(Y.shape) == 1 or Y.shape[1] == 1:
             y = np.array(Y.ravel() > 0, dtype=int)
