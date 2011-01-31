@@ -213,7 +213,7 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def predict(self, X, **params):
+    def predict(self, X, eps=1e-6, **params):
         """Predict the target for the provided data.
 
         Parameters
@@ -221,9 +221,12 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
         X : array
             A 2-D array representing the test data.
 
-        n_neighbors : int
+        n_neighbors : int, optional
             Number of neighbors to get (default is the value
             passed to the constructor).
+
+        eps : float, optional
+           Amount of regularization to add to the Gram matrix.
 
         Returns
         -------
@@ -250,7 +253,7 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
         neigh = self.ball_tree.data[neigh_ind]
 
         # compute barycenters at each point
-        B = barycenter(X, neigh)
+        B = barycenter(X, neigh, eps=eps)
         labels = self._y[neigh_ind]
 
         return (B * labels).sum(axis=1)
@@ -357,7 +360,6 @@ def kneighbors_graph(X, n_neighbors, mode='adjacency', eps=1e-6):
     X = np.asanyarray(X)
 
     n_samples = X.shape[0]
-
     ball_tree = BallTree(X)
 
     # CSR matrix A is represented as A_data, A_ind and A_indptr.
