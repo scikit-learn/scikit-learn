@@ -21,11 +21,13 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
     y_score = Y[:, [0]]
     u_old = 0
     ite = 1
+    X_pinv = Y_pinv = None
     # Inner loop of the Wold algo.
     while True:
         # 1.1 Update u: the X weights
         if mode is "B":
-            u, res, rank, singular = np.linalg.lstsq(X, y_score)
+            if not X_pinv: X_pinv = np.linalg.pinv(X)   # compute once pinv(X)
+            u = np.dot(X_pinv, y_score)
         else: # mode A
         # Mode A regress each X column on y_score
             u = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
@@ -36,7 +38,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
 
         # 2.1 Update v: the Y weights
         if mode is "B":
-            v, res, rank, singular = np.linalg.lstsq(Y, x_score)
+            if not Y_pinv: Y_pinv = np.linalg.pinv(Y)    # compute once pinv(Y)
+            v = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each X column on y_score
             v = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
@@ -414,7 +417,7 @@ class PLS(BaseEstimator):
 class PLSRegression(PLS):
     """PLS regression (Also known PLS2 or PLS in case of one dimensional
     response). PLSregression inherits from PLS with mode="A" and
-    deflation_mode="regression"
+    deflation_mode="regression".
 
     For details see PLS.
     """
@@ -429,7 +432,7 @@ class PLSRegression(PLS):
 
 class PLSCanonical(PLS):
     """PLS canonical. PLSCanonical inherits from PLS with mode="A" and
-    deflation_mode="canonical"
+    deflation_mode="canonical".
 
     For details see PLS.
     """
@@ -444,7 +447,7 @@ class PLSCanonical(PLS):
 
 class CCA(PLS):
     """CCA Canonical Correlation Analysis. CCA inherits from PLS with
-    mode="B" and deflation_mode="canonical"
+    mode="B" and deflation_mode="canonical".
 
     For details see PLS.
     """
