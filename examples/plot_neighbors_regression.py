@@ -16,7 +16,7 @@ import numpy as np
 
 np.random.seed(0)
 X = np.sort(5*np.random.rand(40, 1), axis=0)
-T = np.linspace(0, 5, 500)
+T = np.linspace(0, 5, 500)[:, np.newaxis]
 y = np.sin(X).ravel()
 
 # Add noise to targets
