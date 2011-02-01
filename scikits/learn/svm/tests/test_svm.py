@@ -434,7 +434,7 @@ def liblinear_prediction_function(farray , clas, labels):
     nw = len(weights)
     nv = nw / nlabels
     
-    D = np.column_stack([farray,np.array([1]).repeat(nf)]).ravel().repeat(nlabels)
+    D = np.column_stack([farray,np.ones(nf)]).ravel().repeat(nlabels)
     W = np.tile(weights,nf)
     H = W * D
     H1 = H.reshape((len(H)/nw,nv,nlabels))
