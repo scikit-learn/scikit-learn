@@ -410,7 +410,6 @@ def test_liblinear_predict():
     Sanity check, test that predict implemented in python
     returns the same as the one in libliblinear
 
-    TODO: proabably could be simplified
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
 
@@ -420,6 +419,13 @@ def test_liblinear_predict():
     
 
 def liblinear_prediction_function(farray , clas, labels):
+    """
+       Note this is only intended for multiclass prediction.   For
+       binary, the usual "argmax" procedure works.
+       
+       TODO: 1) Probably could be simplified.   
+             2) Add case for binary prediction?  
+    """
 
     nf = farray.shape[0]
     nlabels = len(labels)
