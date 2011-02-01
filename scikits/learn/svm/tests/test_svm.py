@@ -422,7 +422,7 @@ def liblinear_prediction_function(farray, clas, labels):
        Note this is only intended for multiclass prediction.   For
        binary, the usual "argmax" procedure works.
 
-       TODO: 1) Add case for binary prediction?  
+       TODO: 1) Add case for binary prediction?
              2) redefine weights in the actual liblinear API?
     """
 
