@@ -427,7 +427,7 @@ def liblinear_prediction_function(farray, clas, labels):
     """
 
     weights = clas.raw_coef_
-    (a,b) = weights.shape
+    a, b = weights.shape
     weights = weights.reshape((b,a))
 
     D = np.column_stack([farray,np.ones(farray.shape[0])])
