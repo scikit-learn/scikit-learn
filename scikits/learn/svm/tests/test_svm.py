@@ -417,7 +417,7 @@ def test_liblinear_predict():
     assert_array_equal(clf.predict(iris.data), prediction)
 
 
-def liblinear_prediction_function(farray, clas, labels):
+def liblinear_prediction_function(farray, clf, labels):
     """
        Note this is only intended for multiclass prediction.   For
        binary, the usual "argmax" procedure works.
@@ -426,7 +426,7 @@ def liblinear_prediction_function(farray, clas, labels):
              2) redefine weights in the actual liblinear API?
     """
 
-    weights = clas.raw_coef_
+    weights = clf.raw_coef_
     a, b = weights.shape
     weights = weights.reshape((b, a))
 
