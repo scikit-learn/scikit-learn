@@ -428,15 +428,13 @@ def liblinear_prediction_function(farray, clas, labels):
 
     weights = clas.raw_coef_
     a, b = weights.shape
-    weights = weights.reshape((b,a))
+    weights = weights.reshape((b, a))
 
     D = np.column_stack([farray,np.ones(farray.shape[0])])
 
     H = np.dot(D,weights)
 
-    predict = H.argmax(1)
-
-    return predict
+    return H.argmax(1)
 
 
 if __name__ == '__main__':
