@@ -93,15 +93,16 @@ class PLS(BaseEstimator):
     We use the therminology defined by [Wegelin et al. 2000].
     This implementation uses the PLS Wold 2 blocks algorithm or NIPALS which is
     based on two nested loops:
-    (i) The outer loop iterate over compements.
+    (i) The outer loop iterate over compoments.
         (ii) The inner loop estimates the loading vectors. This can be done
         with two algo. (a) the inner loop of the original NIPALS algo or (b) a
         SVD on residuals cross-covariance matrices.
 
-    This implementation can provide:
-    - PLS regression (PLS2) (PLS 2 blocks, mode A, with asymetric deflation)
-    - PLS canonical (PLS 2 blocks, mode A, with symetric deflation)
-    - CCA (PLS 2 blocks, mode B, with symetric deflation)
+    This implementation provides:
+    - PLS regression, ie., PLS 2 blocks, mode A, with asymetric deflation.
+      A.k.a. PLS2, with multivariate response or PLS1 with univariate response.
+    - PLS canonical, ie., PLS 2 blocks, mode A, with symetric deflation.
+    - CCA, ie.,  PLS 2 blocks, mode B, with symetric deflation.
 
     Parameters
     ----------
@@ -156,7 +157,7 @@ class PLS(BaseEstimator):
 
     x_rotations_: array, [p, n_components]
         X block to latents rotations.
-    
+
     y_rotations_: array, [q, n_components]
         Y block to latents rotations.
 
@@ -165,10 +166,9 @@ class PLS(BaseEstimator):
 
     Notes
     -----
-    PLS mode A
+    PLS mode A (PLSCanonical, PLSRegression)
         For each component k, find weights u, v that optimizes:
-        max corr(Xk u, Yk v) * var(Xk u) var(Yk u)
-         |u| = |v| = 1
+        max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
 
         Note that it maximizes both the correlations between the scores and the
         intra-block variances.
@@ -176,23 +176,20 @@ class PLS(BaseEstimator):
         With all deflation modes, the residual matrix of X (Xk+1) block is
         obtained by the deflation on the current X score: x_score.
 
-        deflation_mode == "regression",the residual matrix of Y (Yk+1) block is
-            obtained by deflation on the current X score. This performs the PLS
-            regression known as PLS2. This mode is prediction oriented.
+        deflation_mode="regression", the residual matrix of Y (Yk+1) block is
+        obtained by deflation on the current X score. This performs the PLS
+        regression known as PLS2. This mode is prediction oriented.
 
-        deflation_mode == "canonical",the residual matrix of Y (Yk+1) block is
-            obtained by deflation on the current Y score. This performs a
-            canonical symetric version of the PLS regression. But slightly
-            different than the CCA. This is mode mostly used for modeling
+        deflation_mode="canonical", the residual matrix of Y (Yk+1) block is
+        obtained by deflation on the current Y score. This performs a canonical
+        symetric version of the PLS regression. But slightly different than the
+        CCA. This is mode mostly used for modeling
 
-    PLS mode B, canonical, ie.: the CCA
+    PLS mode B, (CCA)
         For each component k, find the weights u, v that maximizes
-        max corr(Xk u, Yk v)
-         |u| = |v| = 1
+        max corr(Xk u, Yk v), such that |u| = |v| = 1
 
         Note that it maximizes only the correlations between the scores.
-
-        This mode is not implemented yet!
 
     References
     ----------
@@ -206,36 +203,30 @@ class PLS(BaseEstimator):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from scikits.learn.pls import PLS
-    >>> from scikits.learn.datasets import load_linnerud
-    >>> d=load_linnerud()
-    >>> X = d['data_exercise']
-    >>> Y = d['data_physiological']
-    >>> ## Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
-    >>> plsca = PLS(deflation_mode="canonical")
-    >>> plsca.fit(X,Y, n_components=2)
-    PLS(scale=True, deflation_mode='canonical', algorithm='nipals', max_iter=500,
-      n_components=2, tol=1e-06, copy=True, mode='A')
-    >>> Xc, Yc = plsca.transform(X,Y)
-    >>> ## Regression PLS (PLS 2 blocks regression mode A known as PLS2)
-    >>> pls2 = PLS(deflation_mode="regression")
-    >>> pls2.fit(X,Y, n_components=2)
-    PLS(scale=True, deflation_mode='regression', algorithm='nipals', max_iter=500,
-      n_components=2, tol=1e-06, copy=True, mode='A')
-    >>> Ypred = pls2.predict(X)
-    >>> ## Regression PLS with 1 dimensional response (PLS1)
-    >>> n=1000
-    >>> p=10
-    >>> X =  rnd.normal(size=n*p).reshape((n,p))
-    >>> y = X[:,0] + 2*X[:,1] + rnd.normal(size=n*1) + 5
-    >>> pls1 = PLS(deflation_mode="regression")
-    >>> pls1.fit(X,y, n_components=3)
-    PLS(scale=True, deflation_mode='regression', algorithm='nipals', max_iter=500,
-      n_components=3, tol=1e-06, copy=True, mode='A')
-    >>> # compare pls1.coefs with [1, 2, 0, ...., 0]
+    >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> plsca = PLSCanonical()
+    >>> plsca.fit(X, Y, n_components=2)
+    PLSCanonical(scale=True, algorithm='nipals', max_iter=500, n_components=2,
+           tol=1e-06, copy=True)
+    >>> X_c, Y_c = plsca.transform(X, Y)
+    >>> cca = CCA()
+    >>> cca.fit(X, Y, n_components=2)
+    CCA(scale=True, algorithm='nipals', max_iter=500, n_components=2, tol=1e-06,
+      copy=True)
+    >>> X_c, Y_c = cca.transform(X, Y)
+    >>> pls2 = PLSRegression()
+    >>> pls2.fit(X, Y, n_components=2)
+    PLSRegression(scale=True, algorithm='nipals', max_iter=500, n_components=2,
+           tol=1e-06, copy=True)
+    >>> Y_pred = pls2.predict(X)
+
     See also
     --------
+    PLSCanonical
+    PLSRegression
+    CCA
     PLS_SVD
     """
 
@@ -418,6 +409,52 @@ class PLS(BaseEstimator):
             Xc /= self.x_std_
         Ypred = np.dot(Xc, self.coefs)
         return Ypred + self.y_mean_
+
+
+class PLSRegression(PLS):
+    """PLS regression (Also known PLS2 or PLS in case of one dimensional
+    response). PLSregression inherits from PLS with mode="A" and
+    deflation_mode="regression"
+
+    For details see PLS.
+    """
+
+    def __init__(self, n_components=2, scale=True, algorithm="nipals",
+                 max_iter=500, tol=1e-06, copy=True):
+        PLS.__init__(self, n_components=n_components,
+                        deflation_mode="regression", mode="A",
+                        scale=scale, algorithm=algorithm,
+                        max_iter=max_iter, tol=tol, copy=copy)
+
+
+class PLSCanonical(PLS):
+    """PLS canonical. PLSCanonical inherits from PLS with mode="A" and
+    deflation_mode="canonical"
+
+    For details see PLS.
+    """
+
+    def __init__(self, n_components=2, scale=True, algorithm="nipals",
+                 max_iter=500, tol=1e-06, copy=True):
+        PLS.__init__(self, n_components=n_components,
+                        deflation_mode="canonical", mode="A",
+                        scale=scale, algorithm=algorithm,
+                        max_iter=max_iter, tol=tol, copy=copy)
+
+
+class CCA(PLS):
+    """CCA Canonical Correlation Analysis. CCA inherits from PLS with
+    mode="B" and deflation_mode="canonical"
+
+    For details see PLS.
+    """
+
+    def __init__(self, n_components=2, scale=True, algorithm="nipals",
+                 max_iter=500, tol=1e-06, copy=True):
+        PLS.__init__(self, n_components=n_components,
+                        deflation_mode="canonical", mode="B",
+                        scale=scale, algorithm=algorithm,
+                        max_iter=max_iter, tol=tol, copy=copy)
 
 
 class PLS_SVD(BaseEstimator):
