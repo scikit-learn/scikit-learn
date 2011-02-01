@@ -3,7 +3,7 @@ import numpy as np
 from ._libsvm import libsvm_train, libsvm_predict, libsvm_predict_proba, \
      libsvm_decision_function, set_verbosity_wrap
 from . import _liblinear
-from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
+from ..base import BaseEstimator
 
 def _get_class_weight(class_weight, y):
     """
@@ -395,15 +395,16 @@ class BaseLibLinear(BaseEstimator):
 
     def decision_function(self, X):
         """
-        Calculate the distance of the samples in T to the separating hyperplane.
+        Return the decision function of X according to the trained
+        model.
 
         Parameters
         ----------
-        T : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+        T : array-like, shape = [n_samples, n_class]
             Returns the decision function of the sample for each class
             in the model.
         """
@@ -417,7 +418,11 @@ class BaseLibLinear(BaseEstimator):
                                       self.class_weight, self.label_,
                                       self._get_bias())
 
-        return -dec_func
+        if len(self.label_) <= 2:
+            # one class
+            return -dec_func
+        else:
+            return dec_func
 
 
     def _check_n_features(self, X):

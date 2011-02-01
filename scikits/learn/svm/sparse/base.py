@@ -1,6 +1,5 @@
 import numpy as np
 
-from ...base import ClassifierMixin
 from ..base import BaseLibSVM, BaseLibLinear, _get_class_weight
 
 from ._libsvm_sparse import libsvm_sparse_train, \

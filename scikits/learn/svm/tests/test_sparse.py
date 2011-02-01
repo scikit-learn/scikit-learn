@@ -61,11 +61,12 @@ def test_SVC_iris():
     """Test the sparse SVC with the iris dataset"""
     for k in ('linear', 'rbf'):
         sp_clf = svm.sparse.SVC(kernel=k).fit(iris.data, iris.target)
-        clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
+        clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
 
         assert_array_almost_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
         assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
-        assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris.data))
+        assert_array_almost_equal(
+            clf.predict(iris.data.todense()), sp_clf.predict(iris.data))
         if k == 'linear':
             assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
 
@@ -124,7 +125,7 @@ def test_LinearSVC_iris():
         clf.predict(iris.data.todense()), sp_clf.predict(iris.data))
 
     # check decision_function
-    pred = np.argmax(sp_clf.decision_function(iris.data))
+    pred = np.argmax(sp_clf.decision_function(iris.data), 1)
     assert_array_almost_equal(pred, clf.predict(iris.data.todense()))
 
 def test_weight():
