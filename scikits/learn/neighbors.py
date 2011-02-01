@@ -30,14 +30,14 @@ class Neighbors(BaseEstimator, ClassifierMixin):
 
     Examples
     --------
-    >>> samples = [[0.,0.,1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
-    >>> labels = [0, 0, 1, 1]
+    >>> samples = [[0, 0, 1], [1, 0, 0]]
+    >>> labels = [0, 1]
     >>> from scikits.learn.neighbors import Neighbors
-    >>> neigh = Neighbors(n_neighbors=3)
+    >>> neigh = Neighbors(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    Neighbors(n_neighbors=3, window_size=1)
+    Neighbors(n_neighbors=1, window_size=1)
     >>> print neigh.predict([[0,0,0]])
-    [0]
+    [1]
 
     Notes
     -----
