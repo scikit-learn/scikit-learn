@@ -55,13 +55,13 @@ class Scaler(BaseEstimator):
     def __init__(self, with_std=True):
         self.with_std = with_std
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, **params):
         self._set_params(**params)
         self.mean_, self.std_ = _mean_and_std(X, axis=0,
                                               with_std=self.with_std)
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, copy=True):
         if copy:
             X = X.copy()
         # We are taking a view of the X array and modifying it
@@ -74,11 +74,11 @@ class Scaler(BaseEstimator):
 class Normalizer(BaseEstimator):
     """Normalize vectors such that they sum to 1"""
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, copy=True):
         if copy:
             X = X.copy()
         norms = X.sum(axis=1)[:, np.newaxis]
@@ -91,11 +91,11 @@ class Normalizer(BaseEstimator):
 class LengthNormalizer(BaseEstimator):
     """Normalize vectors to unit vectors"""
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, copy=True):
         if copy:
             X = X.copy()
 
@@ -112,11 +112,11 @@ class Binarizer(BaseEstimator):
     def __init__(self, threshold=0.0):
         self.threshold = threshold
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, copy=True):
         if copy:
             X = X.copy()
 
