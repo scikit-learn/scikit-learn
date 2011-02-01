@@ -138,4 +138,8 @@ for more details>`_.
  * :ref:`example_cluster_plot_ward_unstructured.py`: Example of Ward algorithm
     on a swiss-roll, without structure.
 
+ * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
+    Example of dimensionality reduction with feature agglomeration based on
+    Ward hierarchical clustering.
+
 
