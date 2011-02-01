@@ -375,8 +375,8 @@ def test_LinearSVC_iris():
     assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
     dec = clf.decision_function(iris.data)
-    res = np.argmax(dec, 1)
-    assert_array_equal(res, clf.predict(iris.data))
+    pred = np.argmax(dec, 1)
+    assert_array_equal(pred, clf.predict(iris.data))
 
 
 def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):

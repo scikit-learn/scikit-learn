@@ -23,7 +23,12 @@ true_result2 = [1, 2, 3]
 
 
 iris = datasets.load_iris()
-
+# permute
+perm = np.random.permutation(iris.target.size)
+iris.data = iris.data[perm]
+iris.target = iris.target[perm]
+# sparsify
+iris.data = scipy.sparse.csr_matrix(iris.data)
 
 def test_SVC():
     """Check that sparse SVC gives the same result as SVC"""
@@ -79,7 +84,7 @@ def test_error():
 
     Y2 = Y[:-1] # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
-    assert_raises(AssertionError, svm.SVC, X, Y2)
+    assert_raises(ValueError, svm.SVC, X, Y2)
 
     clf = svm.sparse.SVC()
     clf.fit(X, Y)
@@ -107,15 +112,20 @@ def test_LinearSVC():
 
 def test_LinearSVC_iris():
     """Test the sparse LinearSVC with the iris dataset"""
-    iris = datasets.load_iris()
+
     sp_clf = svm.sparse.LinearSVC().fit(iris.data, iris.target)
-    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    clf = svm.LinearSVC().fit(iris.data.todense(), iris.target)
 
     assert_array_almost_equal(clf.label_, sp_clf.label_)
     assert_equal (clf.fit_intercept, sp_clf.fit_intercept)
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
-    assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris.data))
+    assert_array_almost_equal(
+        clf.predict(iris.data.todense()), sp_clf.predict(iris.data))
+
+    # check decision_function
+    pred = np.argmax(sp_clf.decision_function(iris.data))
+    assert_array_almost_equal(pred, clf.predict(iris.data.todense()))
 
 def test_weight():
     """

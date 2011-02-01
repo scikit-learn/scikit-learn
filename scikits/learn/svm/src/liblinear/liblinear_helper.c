@@ -64,7 +64,7 @@ struct feature_node **dense_to_sparse (double *x, npy_intp *dims, double bias)
 
 
 /*
- * Convert scipy.sparse.csr to libsvm's sparse data structure
+c * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
 struct feature_node **csr_to_sparse (double *values, npy_intp *shape_indices,
 		int *indices, npy_intp *shape_indptr, int *indptr, double bias,
@@ -272,6 +272,31 @@ int copy_predict_values (char *predict, struct model *model_,
     free(predict_nodes);
     return 0;
 }
+
+int csr_copy_predict_values(npy_intp n_features, npy_intp *data_size,
+                            char *data, npy_intp *index_size, char
+                            *index, npy_intp *indptr_shape, char
+                            *intptr, struct model *model_, char
+                            *dec_values, int nr_class) {
+
+    int *t = (int *) dec_values;
+    struct feature_node **predict_nodes;
+    npy_intp i;
+
+    predict_nodes = csr_to_sparse((double *) data, index_size,
+                                  (int *) index, indptr_shape, (int *) intptr, model_->bias, n_features);
+
+    if (predict_nodes == NULL)
+        return -1;
+    for (i = 0; i < indptr_shape[0] - 1; ++i) {
+        predict_values(model_, predict_nodes[i],
+                       ((double *) dec_values) + i*nr_class);
+        free(predict_nodes[i]);
+    }
+    free(predict_nodes);
+    return 0;
+}
+
 
 int copy_prob_predict(char *predict, struct model *model_, npy_intp *predict_dims,
                  char *dec_values)
