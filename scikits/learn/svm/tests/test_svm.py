@@ -422,23 +422,21 @@ def liblinear_prediction_function(farray, clas, labels):
        Note this is only intended for multiclass prediction.   For
        binary, the usual "argmax" procedure works.
 
-       TODO: 1) Probably could be simplified.   
-             2) Add case for binary prediction?  
+       TODO: 1) Add case for binary prediction?  
+             2) redefine weights in the actual liblinear API?
     """
 
-    nf = farray.shape[0]
-    nlabels = len(labels)
-    weights = clas.raw_coef_.ravel()
-    nw = len(weights)
-    nv = nw / nlabels
-    D = np.column_stack([farray,np.ones(nf)]).ravel().repeat(nlabels)
-    W = np.tile(weights,nf)
-    H = W * D
-    H1 = H.reshape((len(H)/nw,nv,nlabels))
-    H2 = H1.sum(1)
-    predict = H2.argmax(1)
-    return predict
+    weights = clas.raw_coef_
+    (a,b) = weights.shape
+    weights = weights.reshape((b,a))
 
+    D = np.column_stack([farray,np.ones(farray.shape[0])])
+
+    H = np.dot(D,weights)
+
+    predict = H.argmax(1)
+
+    return predict
 
 
 if __name__ == '__main__':
