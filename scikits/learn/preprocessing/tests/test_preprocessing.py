@@ -6,14 +6,20 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal, \
                           assert_almost_equal, assert_equal
 
 from scikits.learn.preprocessing import Scaler, scale, Normalizer, \
-                                        LengthNormalizer, Binarizer
+                                        LengthNormalizer, Binarizer, \
+                                        LabelBinarizer
 
 from scikits.learn.preprocessing.sparse import Normalizer as SparseNormalizer
 from scikits.learn.preprocessing.sparse import LengthNormalizer as \
                                                SparseLengthNormalizer
 from scikits.learn.preprocessing.sparse import Binarizer as SparseBinarizer
 
+from scikits.learn import datasets
+from scikits.learn.linear_model.stochastic_gradient import SGDClassifier
+
 np.random.seed(0)
+
+iris = datasets.load_iris()
 
 def toarray(a):
     if hasattr(a, "toarray"):
@@ -122,4 +128,37 @@ def test_binarizer():
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin==0), 2)
         assert_equal(np.sum(X_bin==1), 4)
+
+def test_label_binarizer():
+    lb = LabelBinarizer()
+
+    # two-class case
+    inp = np.array([0, 1, 1, 0])
+    expected = np.array([[0, 1, 1, 0]]).T
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+    assert_array_equal(lb.inverse_transform(got), inp)
+
+    # multi-class case
+    inp = np.array([3, 2, 1, 2, 0])
+    expected = np.array([[0, 0, 0, 1],
+                         [0, 0, 1, 0],
+                         [0, 1, 0, 0],
+                         [0, 0, 1, 0],
+                         [1, 0, 0, 0]])
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+    assert_array_equal(lb.inverse_transform(got), inp)
+
+def test_label_binarizer_iris():
+    lb = LabelBinarizer()
+    Y = lb.fit_transform(iris.target)
+    clfs = [SGDClassifier().fit(iris.data, Y[:, k])
+            for k in range(len(lb.classes_))]
+    Y_pred = np.array([clf.decision_function(iris.data) for clf in clfs]).T
+    y_pred = lb.inverse_transform(Y_pred)
+    accuracy = np.mean(iris.target == y_pred)
+    y_pred2 = SGDClassifier().fit(iris.data, iris.target).predict(iris.data)
+    accuracy2 = np.mean(iris.target == y_pred2)
+    assert_almost_equal(accuracy, accuracy2)
 

@@ -403,6 +403,44 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     assert_array_almost_equal(intercept1, intercept2, decimal=2)
 
 
+def test_liblinear_predict():
+    """
+    Test liblinear predict
+
+    Sanity check, test that predict implemented in python
+    returns the same as the one in libliblinear
+
+    """
+    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    prediction = liblinear_prediction_function(iris.data, clf,
+                                               np.unique(iris.target))
+    assert_array_equal(clf.predict(iris.data), prediction)
+
+
+def liblinear_prediction_function(farray, clas, labels):
+    """
+       Note this is only intended for multiclass prediction.   For
+       binary, the usual "argmax" procedure works.
+
+       TODO: 1) Probably could be simplified.   
+             2) Add case for binary prediction?  
+    """
+
+    nf = farray.shape[0]
+    nlabels = len(labels)
+    weights = clas.raw_coef_.ravel()
+    nw = len(weights)
+    nv = nw / nlabels
+    D = np.column_stack([farray,np.ones(nf)]).ravel().repeat(nlabels)
+    W = np.tile(weights,nf)
+    H = W * D
+    H1 = H.reshape((len(H)/nw,nv,nlabels))
+    H2 = H1.sum(1)
+    predict = H2.argmax(1)
+    return predict
+
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

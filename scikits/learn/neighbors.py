@@ -313,7 +313,7 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
     ball_tree : None or instance of precomputed BallTree
 
     window_size : int
-        Window size pass to the BallTree
+        Window size passed to the BallTree
 
     drop_first : bool
         Drops the first neighbor (Default: False)
