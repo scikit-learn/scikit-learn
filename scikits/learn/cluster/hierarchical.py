@@ -49,26 +49,15 @@ def ward_tree(X, connectivity=None, n_comp=None, copy=True):
 
     Returns
     -------
-    parent : array-like, shape = [n_nodes]
-            Int. Gives the parent node for each node, i.e. parent[i] is the
-            parent node of the node i. The last value of parent is the
-            root node, that is its self parent, so the last value is taken
-            3 times in the array.
-            The n_nodes is equal at  (2*n_samples - 1), and takes into
-            account the nb_samples leaves, and the unique root.
-
     children : list of pairs. Lenght of n_nodes
                list of the children of each nodes.
                Leaves of the tree have empty list of children.
 
-    heights : array-like, shape = [n_nodes]
-            Float. Gives the inertia of the created nodes. The n_samples first
-            values of the array are 0, and thus the values are positive (or
-            null) and are ranked in an increasing order.
-
     n_comp : sparse matrix.
         The number of connected components in the graph.
 
+    n_leaves : int
+        The number of leaves in the tree
     """
     X = np.asanyarray(X)
     n_samples, n_features = X.shape
@@ -265,18 +254,30 @@ def _hc_cut(n_clusters, children, n_leaves):
 # Class for Ward hierarchical clustering
 
 class Ward(BaseEstimator):
-    """
-    Class for Ward hierarchical clustering: constructs a tree and cuts it.
+    """Ward hierarchical clustering: constructs a tree and cuts it.
 
     Parameters
     ----------
     n_clusters : int or ndarray
         The number of clusters.
 
+    connectivity : sparse matrix.
+        connectivity matrix. Defines for each sample the neigbhoring
+        samples following a given structure of the data.
+        Defaut is None, i.e, the hiearchical clustering algorithm is
+        unstructured.
+
     memory : Instance of joblib.Memory or string
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
+
+    copy : bool
+        Copy the connectivity matrix or work inplace.
+
+    n_comp : int (optional)
+        The number of connected components in the graph defined by the
+        connectivity matrix. If not set, it is estimated.
 
     Methods
     -------
@@ -285,22 +286,9 @@ class Ward(BaseEstimator):
 
     Attributes
     ----------
-    parent_ : array-like, shape = [n_nodes]
-        Int. Gives the parent node for each node, i.e. parent[i] is the
-        parent node of the node i. The last value of parent is the
-        root node, that is its self parent, so the last value is taken
-        3 times in the array.
-        The n_nodes is equal at  (2*n_samples - 1), and takes into
-        account the nb_samples leaves, and the unique root.
-
-    children_ : list of pairs. Length of n_nodes
+    children_ : array-like, shape = [n_nodes, 2]
         List of the children of each nodes.
-        Leaves of the tree have empty list of children.
-
-    heights_ : array-like, shape = [n_nodes]
-        Gives the inertia of the created nodes. The n_samples first
-        values of the array are 0, and thus the values are positive (or
-        null) and are ranked in an increasing order.
+        Leaves of the tree do not appear.
 
     labels_ : array [n_points]
         cluster labels for each point
@@ -315,13 +303,6 @@ class Ward(BaseEstimator):
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, copy=True, n_comp=None):
-        """
-        connectivity : sparse matrix.
-            connectivity matrix. Defines for each sample the neigbhoring
-            samples following a given structure of the data.
-            Defaut is None, i.e, the hiearchical clustering algorithm is
-            unstructured.
-        """
         self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
@@ -329,14 +310,12 @@ class Ward(BaseEstimator):
         self.connectivity = connectivity
 
     def fit(self, X, **params):
-        """
-        Fit the hierarchical clustering on the data
+        """Fit the hierarchical clustering on the data
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            A M by N array of M observations in N dimensions or a length
-            M array of M one-dimensional observations.
+            The samples a.k.a. observations.
 
         Returns
         -------
@@ -363,8 +342,61 @@ class Ward(BaseEstimator):
 class WardAgglomeration(AgglomerationTransform, Ward):
     """Feature agglomeration based on Ward hierarchical clustering
 
-    XXX
+    Parameters
+    ----------
+    n_clusters : int or ndarray
+        The number of clusters.
+
+    connectivity : sparse matrix
+        connectivity matrix. Defines for each feature the neigbhoring
+        features following a given structure of the data.
+        Defaut is None, i.e, the hiearchical agglomeration algorithm is
+        unstructured.
+
+    memory : Instance of joblib.Memory or string
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
+    copy : bool
+        Copy the connectivity matrix or work inplace.
+
+    n_comp : int (optional)
+        The number of connected components in the graph defined by the
+        connectivity matrix. If not set, it is estimated.
+
+    Methods
+    -------
+    fit:
+        Compute the clustering of features
+
+    Attributes
+    ----------
+    children_ : array-like, shape = [n_nodes, 2]
+        List of the children of each nodes.
+        Leaves of the tree do not appear.
+
+    labels_ : array [n_points]
+        cluster labels for each point
+
+    n_leaves_ : int
+        Number of leaves in the hiearchical tree.
+
+    Return
+    ------
+    self
     """
 
     def fit(self, X, y=None, **params):
+        """Fit the hierarchical clustering on the data
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            The data
+
+        Returns
+        -------
+        self
+        """
         return Ward.fit(self, X.T, n_clusters=self.n_clusters, **params)
