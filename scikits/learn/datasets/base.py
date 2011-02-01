@@ -230,7 +230,7 @@ def load_digits():
     return Bunch(data=flat_data, target=target.astype(np.int),
                  target_names=np.arange(10),
                  images=images,
-                 DESCR=descr.read())
+                 DESCR=descr)
 
 
 def load_diabetes():
