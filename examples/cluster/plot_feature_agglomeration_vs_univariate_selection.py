@@ -3,8 +3,10 @@
 Feature agglomeration vs. univariate selection
 ==============================================
 
-This example compares 2 dimensionality reduction strategies :
+This example compares 2 dimensionality reduction strategies:
+
 - univariate feature selection with Anova
+
 - feature agglomeration with Ward hierarchical clustering
 
 Both methods are compared in a regression problem using
@@ -55,17 +57,15 @@ y += noise_coef * noise # add noise
 
 ###############################################################################
 # Compute the coefs of a Bayesian Ridge with GridSearch
-
 cv = KFold(len(y), 2) # cross-validation generator for model selection
-
 ridge = BayesianRidge()
 mem = Memory(cachedir='.', verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
 A = img_to_graph(mask, mask)
-ward = WardAgglomeration(k=10, connectivity=A, memory=mem, n_comp=1)
+ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem, n_comp=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
-parameters = {'ward__k': [10, 20, 30]}
+parameters = {'ward__n_clusters': [10, 20, 30]}
 # Select the optimal number of parcels with grid search
 clf = GridSearchCV(clf, parameters, n_jobs=1)
 clf.fit(X, y, cv=cv) # set the best parameters
@@ -84,7 +84,7 @@ coef_selection_ = clf.coef_.reshape(size, size)
 ###############################################################################
 # Inverse the transformation to plot the results on an image
 pl.close('all')
-pl.figure(figsize=(10, 4))
+pl.figure(figsize=(7.3, 2.7))
 pl.subplot(1, 3, 1)
 pl.imshow(coef, interpolation="nearest", cmap=pl.cm.RdBu_r)
 pl.title("True weights")
