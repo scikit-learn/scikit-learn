@@ -75,7 +75,7 @@ def test_kneighbors_graph():
     X = [[0, 0], [1.01, 0], [2, 0]]
 
     # n_neighbors = 1
-    A = neighbors.kneighbors_graph(X, 1, mode='adjacency')
+    A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
     assert_array_equal(A.todense(), np.eye(A.shape[0]))
 
     A = neighbors.kneighbors_graph(X, 1, mode='distance')
@@ -93,7 +93,7 @@ def test_kneighbors_graph():
         [ 0.,  1.,  0.]])
 
     # n_neigbors = 2
-    A = neighbors.kneighbors_graph(X, 2, mode='adjacency')
+    A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
     assert_array_equal(
         A.todense(),
         [[ 1.,  1.,  0.],
@@ -120,7 +120,7 @@ def test_kneighbors_graph():
         X, A.dot(X), decimal=3)
 
     # n_neighbors = 3
-    A = neighbors.kneighbors_graph(X, 3, mode='adjacency')
+    A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
     assert_array_almost_equal(
         A.todense(),
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])

@@ -322,7 +322,7 @@ def barycenter(X, Y, eps=1e-6):
     return B
 
 
-def kneighbors_graph(X, n_neighbors, mode='adjacency', eps=1e-6):
+def kneighbors_graph(X, n_neighbors, mode='connectivity', eps=1e-6):
     """Computes the (weighted) graph of k-Neighbors for points in X
 
     Parameters
@@ -333,12 +333,12 @@ def kneighbors_graph(X, n_neighbors, mode='adjacency', eps=1e-6):
     n_neighbors : int
         Number of neighbors for each sample.
 
-    mode : 'adjacency' | 'distance' | 'barycenter'
-        Type of returned matrix: 'adjacency' will return the adjacency
-        matrix with ones and zeros, in 'distance' the edges are
-        euclidian distance between points. In 'barycenter' they are
-        barycenter weights estimated by solving a linear system for
-        each point.
+    mode : 'connectivity' | 'distance' | 'barycenter'
+        Type of returned matrix: 'connectivity' will return the
+        connectivity matrix with ones and zeros, in 'distance' the
+        edges are euclidian distance between points. In 'barycenter'
+        they are barycenter weights estimated by solving a linear
+        system for each point.
 
     Returns
     -------
@@ -366,7 +366,7 @@ def kneighbors_graph(X, n_neighbors, mode='adjacency', eps=1e-6):
     n_nonzero = n_neighbors * n_samples
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
-    if mode is 'adjacency':
+    if mode is 'connectivity':
         A_data = np.ones((n_samples, n_neighbors))
         A_ind = ball_tree.query(
             X, k=n_neighbors, return_distance=False)
