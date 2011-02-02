@@ -26,7 +26,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
     while True:
         # 1.1 Update u: the X weights
         if mode is "B":
-            if not X_pinv: X_pinv = np.linalg.pinv(X)   # compute once pinv(X)
+            if X_pinv is None:
+                X_pinv = linalg.pinv(X)   # compute once pinv(X)
             u = np.dot(X_pinv, y_score)
         else: # mode A
         # Mode A regress each X column on y_score
@@ -38,7 +39,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
 
         # 2.1 Update v: the Y weights
         if mode is "B":
-            if not Y_pinv: Y_pinv = np.linalg.pinv(Y)    # compute once pinv(Y)
+            if Y_pinv is None:
+                Y_pinv = linalg.pinv(Y)    # compute once pinv(Y)
             v = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each X column on y_score
@@ -90,7 +92,7 @@ def center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class PLS(BaseEstimator):
+class _PLS(BaseEstimator):
     """Partial Least Square (PLS)
 
     We use the therminology defined by [Wegelin et al. 2000].
@@ -167,33 +169,6 @@ class PLS(BaseEstimator):
     coefs: array, [p, q]
         The coeficients of the linear model: Y = X coefs + Err
 
-    Notes
-    -----
-    PLS mode A (PLSCanonical, PLSRegression)
-        For each component k, find weights u, v that optimizes:
-        max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
-
-        Note that it maximizes both the correlations between the scores and the
-        intra-block variances.
-
-        With all deflation modes, the residual matrix of X (Xk+1) block is
-        obtained by the deflation on the current X score: x_score.
-
-        deflation_mode="regression", the residual matrix of Y (Yk+1) block is
-        obtained by deflation on the current X score. This performs the PLS
-        regression known as PLS2. This mode is prediction oriented.
-
-        deflation_mode="canonical", the residual matrix of Y (Yk+1) block is
-        obtained by deflation on the current Y score. This performs a canonical
-        symetric version of the PLS regression. But slightly different than the
-        CCA. This is mode mostly used for modeling
-
-    PLS mode B, (CCA)
-        For each component k, find the weights u, v that maximizes
-        max corr(Xk u, Yk v), such that |u| = |v| = 1
-
-        Note that it maximizes only the correlations between the scores.
-
     References
     ----------
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
@@ -203,27 +178,6 @@ class PLS(BaseEstimator):
     In french but still a reference:
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
-
-    Examples
-    --------
-    >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
-    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
-    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
-    >>> plsca = PLSCanonical()
-    >>> plsca.fit(X, Y, n_components=2)
-    PLSCanonical(scale=True, algorithm='nipals', max_iter=500, n_components=2,
-           tol=1e-06, copy=True)
-    >>> X_c, Y_c = plsca.transform(X, Y)
-    >>> cca = CCA()
-    >>> cca.fit(X, Y, n_components=2)
-    CCA(scale=True, algorithm='nipals', max_iter=500, n_components=2, tol=1e-06,
-      copy=True)
-    >>> X_c, Y_c = cca.transform(X, Y)
-    >>> pls2 = PLSRegression()
-    >>> pls2.fit(X, Y, n_components=2)
-    PLSRegression(scale=True, algorithm='nipals', max_iter=500, n_components=2,
-           tol=1e-06, copy=True)
-    >>> Y_pred = pls2.predict(X)
 
     See also
     --------
@@ -414,53 +368,332 @@ class PLS(BaseEstimator):
         return Ypred + self.y_mean_
 
 
-class PLSRegression(PLS):
+class PLSRegression(_PLS):
     """PLS regression (Also known PLS2 or PLS in case of one dimensional
     response). PLSregression inherits from PLS with mode="A" and
     deflation_mode="regression".
 
-    For details see PLS.
+    Parameters
+    ----------
+    X: array-like of predictors, shape (n_samples, p)
+        Training vectors, where n_samples in the number of samples and
+        p is the number of predictors.
+
+    Y: array-like of response, shape (n_samples, q)
+        Training vectors, where n_samples in the number of samples and
+        q is the number of response variables.
+
+    n_components: int, number of components to keep. (default 2).
+
+    scale: boolean, scale data? (default True)
+
+    algorithm: str "nipals" or "svd" the algorithm used to estimate the
+        weights, it will be called "n_components" time ie.: for each iteration
+        of the outer loop.
+
+    max_iter: an integer, the maximum number of iterations (default 500) of the
+        NIPALS inner loop (used only if algorithm="nipals")
+
+    tol: a not negative real, the tolerance used in the iterative algorithm
+         default 1e-06.
+
+    copy: boolean, should the deflation been made on a copy? Let the default
+        value to True unless you don't care about side effect
+
+    Attributes
+    ----------
+    x_weights_: array, [p, n_components]
+        X block weights vectors.
+
+    y_weights_: array, [q, n_components]
+        Y block weights vectors.
+
+    x_loadings_: array, [p, n_components]
+        X block loadings vectors.
+
+    y_loadings_: array, [q, n_components]
+        Y block loadings vectors.
+
+    x_scores_: array, [n_samples, n_components]
+        X scores.
+
+    y_scores_: array, [n_samples, n_components]
+        Y scores.
+
+    x_rotations_: array, [p, n_components]
+        X block to latents rotations.
+
+    y_rotations_: array, [q, n_components]
+        Y block to latents rotations.
+
+    coefs: array, [p, q]
+        The coeficients of the linear model: Y = X coefs + Err
+
+    Notes
+    -----
+    For each component k, find weights u, v that optimizes:
+    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
+
+    Note that it maximizes both the correlations between the scores and the
+    intra-block variances.
+
+    The residual matrix of X (Xk+1) block is obtained by the deflation on the
+    current X score: x_score.
+
+    The residual matrix of Y (Yk+1) block is obtained by deflation on the
+    current X score. This performs the PLS regression known as PLS2. This
+    mode is prediction oriented.
+
+    Examples
+    --------
+    >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> pls2 = PLSRegression()
+    >>> pls2.fit(X, Y, n_components=2)
+    PLSRegression(scale=True, algorithm='nipals', max_iter=500, n_components=2,
+           tol=1e-06, copy=True)
+    >>> Y_pred = pls2.predict(X)
+
+    References
+    ----------
+    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
+    emphasis on the two-block case. Technical Report 371, Department of
+    Statistics, University of Washington, Seattle, 2000.
+
+    In french but still a reference:
+    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
+    Editions Technic.
     """
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
-        PLS.__init__(self, n_components=n_components,
+        _PLS.__init__(self, n_components=n_components,
                         deflation_mode="regression", mode="A",
                         scale=scale, algorithm=algorithm,
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
-class PLSCanonical(PLS):
+class PLSCanonical(_PLS):
     """PLS canonical. PLSCanonical inherits from PLS with mode="A" and
     deflation_mode="canonical".
 
-    For details see PLS.
+    Parameters
+    ----------
+    X: array-like of predictors, shape (n_samples, p)
+        Training vectors, where n_samples in the number of samples and
+        p is the number of predictors.
+
+    Y: array-like of response, shape (n_samples, q)
+        Training vectors, where n_samples in the number of samples and
+        q is the number of response variables.
+
+    n_components: int, number of components to keep. (default 2).
+
+    scale: boolean, scale data? (default True)
+
+    algorithm: str "nipals" or "svd" the algorithm used to estimate the
+        weights, it will be called "n_components" time ie.: for each iteration
+        of the outer loop.
+
+    max_iter: an integer, the maximum number of iterations (default 500) of the
+        NIPALS inner loop (used only if algorithm="nipals")
+
+    tol: a not negative real, the tolerance used in the iterative algorithm
+         default 1e-06.
+
+    copy: boolean, should the deflation been made on a copy? Let the default
+        value to True unless you don't care about side effect
+
+    Attributes
+    ----------
+    x_weights_: array, [p, n_components]
+        X block weights vectors.
+
+    y_weights_: array, [q, n_components]
+        Y block weights vectors.
+
+    x_loadings_: array, [p, n_components]
+        X block loadings vectors.
+
+    y_loadings_: array, [q, n_components]
+        Y block loadings vectors.
+
+    x_scores_: array, [n_samples, n_components]
+        X scores.
+
+    y_scores_: array, [n_samples, n_components]
+        Y scores.
+
+    x_rotations_: array, [p, n_components]
+        X block to latents rotations.
+
+    y_rotations_: array, [q, n_components]
+        Y block to latents rotations.
+
+    coefs: array, [p, q]
+        The coeficients of the linear model: Y = X coefs + Err
+
+    Notes
+    -----
+    For each component k, find weights u, v that optimizes:
+    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that |u| = |v| = 1
+
+    Note that it maximizes both the correlations between the scores and the
+    intra-block variances.
+
+    The residual matrix of X (Xk+1) block is obtained by the deflation on the
+    current X score: x_score.
+
+    The residual matrix of Y (Yk+1) block is obtained by deflation on the
+    current Y score. This performs a canonical symetric version of the PLS
+    regression. But slightly different than the CCA. This is mode mostly used
+    for modeling
+
+    Examples
+    --------
+    >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> plsca = PLSCanonical()
+    >>> plsca.fit(X, Y, n_components=2)
+    PLSCanonical(scale=True, algorithm='nipals', max_iter=500, n_components=2,
+           tol=1e-06, copy=True)
+    >>> X_c, Y_c = plsca.transform(X, Y)
+
+    References
+    ----------
+    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
+    emphasis on the two-block case. Technical Report 371, Department of
+    Statistics, University of Washington, Seattle, 2000.
+
+    In french but still a reference:
+    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
+    Editions Technic.
+
+    See also
+    --------
+    CCA
+    PLSSVD
     """
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
-        PLS.__init__(self, n_components=n_components,
+        _PLS.__init__(self, n_components=n_components,
                         deflation_mode="canonical", mode="A",
                         scale=scale, algorithm=algorithm,
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
-class CCA(PLS):
+class CCA(_PLS):
     """CCA Canonical Correlation Analysis. CCA inherits from PLS with
     mode="B" and deflation_mode="canonical".
 
-    For details see PLS.
+    Parameters
+    ----------
+    X: array-like of predictors, shape (n_samples, p)
+        Training vectors, where n_samples in the number of samples and
+        p is the number of predictors.
+
+    Y: array-like of response, shape (n_samples, q)
+        Training vectors, where n_samples in the number of samples and
+        q is the number of response variables.
+
+    n_components: int, number of components to keep. (default 2).
+
+    scale: boolean, scale data? (default True)
+
+    algorithm: str "nipals" or "svd" the algorithm used to estimate the
+        weights, it will be called "n_components" time ie.: for each iteration
+        of the outer loop.
+
+    max_iter: an integer, the maximum number of iterations (default 500) of the
+        NIPALS inner loop (used only if algorithm="nipals")
+
+    tol: a not negative real, the tolerance used in the iterative algorithm
+         default 1e-06.
+
+    copy: boolean, should the deflation been made on a copy? Let the default
+        value to True unless you don't care about side effect
+
+    Attributes
+    ----------
+    x_weights_: array, [p, n_components]
+        X block weights vectors.
+
+    y_weights_: array, [q, n_components]
+        Y block weights vectors.
+
+    x_loadings_: array, [p, n_components]
+        X block loadings vectors.
+
+    y_loadings_: array, [q, n_components]
+        Y block loadings vectors.
+
+    x_scores_: array, [n_samples, n_components]
+        X scores.
+
+    y_scores_: array, [n_samples, n_components]
+        Y scores.
+
+    x_rotations_: array, [p, n_components]
+        X block to latents rotations.
+
+    y_rotations_: array, [q, n_components]
+        Y block to latents rotations.
+
+    coefs: array, [p, q]
+        The coeficients of the linear model: Y = X coefs + Err
+
+    Notes
+    -----
+    For each component k, find the weights u, v that maximizes
+    max corr(Xk u, Yk v), such that |u| = |v| = 1
+
+    Note that it maximizes only the correlations between the scores.
+
+    The residual matrix of X (Xk+1) block is obtained by the deflation on the
+    current X score: x_score.
+
+    The residual matrix of Y (Yk+1) block is obtained by deflation on the
+    current Y score.
+
+    Examples
+    --------
+    >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> cca = CCA()
+    >>> cca.fit(X, Y, n_components=2)
+    CCA(scale=True, algorithm='nipals', max_iter=500, n_components=2, tol=1e-06,
+      copy=True)
+    >>> X_c, Y_c = cca.transform(X, Y)
+
+    References
+    ----------
+    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
+    emphasis on the two-block case. Technical Report 371, Department of
+    Statistics, University of Washington, Seattle, 2000.
+
+    In french but still a reference:
+    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
+    Editions Technic.
+
+    See also
+    --------
+    PLSCanonical
+    PLSSVD
     """
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
-        PLS.__init__(self, n_components=n_components,
+        _PLS.__init__(self, n_components=n_components,
                         deflation_mode="canonical", mode="B",
                         scale=scale, algorithm=algorithm,
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
-class PLS_SVD(BaseEstimator):
+class PLSSVD(BaseEstimator):
     """Partial Least Square SVD
 
     Simply perform a svd on the crosscovariance matrix: X'Y
@@ -490,7 +723,8 @@ class PLS_SVD(BaseEstimator):
 
     See also
     --------
-    PLS
+    PLSCanonical
+    CCA
     """
 
     def __init__(self, n_components=2, scale=True, copy=True):
