@@ -101,20 +101,20 @@ def ward_tree(X, connectivity=None, n_comp=None, copy=True):
     moments[2][:n_samples] = X ** 2
 
     # create inertia matrix
-    cord_row = []
-    cord_col = []
+    coord_row = []
+    coord_col = []
     B = []
     for ind, row in enumerate(connectivity.rows):
-        cord_row.extend(list(ind * np.ones(len(row), dtype=int)))
-        cord_col.extend(row)
+        coord_row.extend(list(ind * np.ones(len(row), dtype=int)))
+        coord_col.extend(row)
         B.append(row)
     A = B
-    inertia = np.zeros(len(cord_row), dtype=np.float)
-    _inertia.compute_inertia(moments[0][cord_row], moments[0][cord_col], \
-                             moments[1][cord_row], moments[1][cord_col], \
-                             moments[2][cord_row], moments[2][cord_col], \
+    inertia = np.zeros(len(coord_row), dtype=np.float)
+    _inertia.compute_inertia(moments[0][coord_row], moments[0][coord_col], \
+                             moments[1][coord_row], moments[1][coord_col], \
+                             moments[2][coord_row], moments[2][coord_col], \
                              inertia)
-    inertia = zip(inertia, cord_row, cord_col)
+    inertia = zip(inertia, coord_row, coord_col)
     heapq.heapify(inertia)
 
     # prepare the main fields
@@ -143,19 +143,19 @@ def ward_tree(X, connectivity=None, n_comp=None, copy=True):
             moments[p][k] = moments[p][i] + moments[p][j]
 
         # update the structure matrix A and the inertia matrix
-        cord_col = []
+        coord_col = []
         for l in set(A[i]).union(A[j]):
             if parent[l] == l:
-                cord_col.append(l)
+                coord_col.append(l)
                 A[l].append(k)
-        A.append(cord_col)
-        cord_row = len(cord_col) * [k]
-        ini = np.zeros(len(cord_row), dtype=np.float)
-        _inertia.compute_inertia(moments[0][cord_row], moments[0][cord_col], \
-                             moments[1][cord_row], moments[1][cord_col], \
-                             moments[2][cord_row], moments[2][cord_col], \
+        A.append(coord_col)
+        coord_row = len(coord_col) * [k]
+        ini = np.zeros(len(coord_row), dtype=np.float)
+        _inertia.compute_inertia(moments[0][coord_row], moments[0][coord_col], \
+                             moments[1][coord_row], moments[1][coord_col], \
+                             moments[2][coord_row], moments[2][coord_col], \
                              ini)
-        ini = zip(ini, cord_row, cord_col)
+        ini = zip(ini, coord_row, coord_col)
         for tupl in ini:
             heapq.heappush(inertia, tupl)
 
