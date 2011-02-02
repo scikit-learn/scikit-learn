@@ -300,14 +300,16 @@ class _PLS(BaseEstimator):
                 linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
         else:
             self.y_rotations_ = np.ones(1)
-        # Estimate regression coeficient
-        # Regress Y on T
-        # Y = TQ' + Err,
-        # Then express in function of X
-        # Y = X W(P'W)^-1Q' + Err = XB + Err
-        # => B = W*Q' (p x q)
-        self.coefs = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self.coefs = 1. / self.x_std_.reshape((p, 1)) * self.coefs * self.y_std_
+
+        if self.deflation_mode is "regression":
+            # Estimate regression coeficient
+            # Regress Y on T
+            # Y = TQ' + Err,
+            # Then express in function of X
+            # Y = X W(P'W)^-1Q' + Err = XB + Err
+            # => B = W*Q' (p x q)
+            self.coefs = np.dot(self.x_rotations_, self.y_loadings_.T)
+            self.coefs = 1. / self.x_std_.reshape((p, 1)) * self.coefs * self.y_std_
         return self
 
     def transform(self, X, Y, copy=True):
@@ -531,9 +533,6 @@ class PLSCanonical(_PLS):
     y_rotations_: array, [q, n_components]
         Y block to latents rotations.
 
-    coefs: array, [p, q]
-        The coeficients of the linear model: Y = X coefs + Err
-
     Notes
     -----
     For each component k, find weights u, v that optimizes:
@@ -642,9 +641,6 @@ class CCA(_PLS):
     y_rotations_: array, [q, n_components]
         Y block to latents rotations.
 
-    coefs: array, [p, q]
-        The coeficients of the linear model: Y = X coefs + Err
-
     Notes
     -----
     For each component k, find the weights u, v that maximizes
@@ -716,10 +712,17 @@ class PLSSVD(BaseEstimator):
 
     Attributes
     ----------
-    x_weights_  : array, [p x n_components] weights for the X block
-    y_weights_  : array, [q x n_components] weights for the Y block
-    x_scores_    : array, [p x n_samples] scores for X the block
-    y_scores_    : array, [q x n_samples] scores for the Y block
+    x_weights_: array, [p, n_components]
+        X block weights vectors.
+
+    y_weights_: array, [q, n_components]
+        Y block weights vectors.
+
+    x_scores_: array, [n_samples, n_components]
+        X scores.
+
+    y_scores_: array, [n_samples, n_components]
+        Y scores.
 
     See also
     --------
