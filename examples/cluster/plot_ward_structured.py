@@ -20,19 +20,13 @@ import pylab as pl
 import mpl_toolkits.mplot3d.axes3d as p3
 from scikits.learn.neighbors import kneighbors_graph
 from scikits.learn.cluster import Ward
+from scikits.learn.datasets.samples_generator import swiss_roll
 
 ###############################################################################
 # Generate data (swiss roll dataset)
-#               http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
 n_samples = 5000
 noise = 0.05
-np.random.seed(0)
-t = 1.5 * np.pi * (1 + 2 * np.random.rand(1, n_samples))
-h = 21 * np.random.rand(1, n_samples)
-X = np.concatenate((t * np.cos(t), h, t * np.sin(t))) \
-       + noise * np.random.randn(3, n_samples)
-X = np.transpose(X)
-t = t.ravel()
+X = swiss_roll(n_samples, noise)
 
 ###############################################################################
 # Define the structure A of the data. Here a 10 nearest neighbors
@@ -52,6 +46,7 @@ print "Number of clusters: ", np.unique(label).size
 # Plot result
 fig = pl.figure()
 ax = p3.Axes3D(fig)
+ax.view_init(7, -80)
 for l in np.unique(label):
     ax.plot3D(X[label == l, 0], X[label == l, 1], X[label == l, 2],
               'o', color=pl.cm.jet(float(l) / np.max(label + 1)))
