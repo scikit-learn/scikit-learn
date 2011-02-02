@@ -277,11 +277,11 @@ class TransformerMixin(object):
         self : returns an instance of self.
         """
         if y is None:
-            # fit / transform methods of arity 1
+            # fit method of arity 1 (unsupervised transformation)
             return self.fit(X, **fit_params).transform(X)
         else:
-            # fit / transform methods of arity 2
-            return self.fit(X, y, **fit_params).transform(X, y)
+            # fit method of arity 2 (supervised transformation)
+            return self.fit(X, y, **fit_params).transform(X)
 
 ################################################################################
 # XXX: Temporary solution to figure out if an estimator is a classifier

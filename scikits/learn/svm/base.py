@@ -3,7 +3,7 @@ import numpy as np
 from ._libsvm import libsvm_train, libsvm_predict, libsvm_predict_proba, \
      libsvm_decision_function, set_verbosity_wrap
 from . import _liblinear
-from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
+from ..base import BaseEstimator
 
 def _get_class_weight(class_weight, y):
     """
@@ -38,14 +38,13 @@ class BaseLibSVM(BaseEstimator):
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  eps, C, nu, p, shrinking, probability):
 
-        assert impl in self._svm_types, \
-            "impl should be one of %s, %s was given" % (
-                self._svm_types, impl)
+        if not impl in self._svm_types:
+            raise ValueError("impl should be one of %s, %s was given" % (
+                self._svm_types, impl))
 
-        assert kernel in self._kernel_types or \
-               hasattr(kernel, '__call__'), \
-               "kernel should be one of %s or a callable, " \
-               "%s was given." % ( self._kernel_types, kernel)
+        if not (kernel in self._kernel_types or hasattr(kernel, '__call__')):
+            raise ValueError("kernel should be one of %s or a callable, " \
+                             "%s was given." % ( self._kernel_types, kernel))
 
         self.kernel = kernel
         self.impl = impl
@@ -393,6 +392,38 @@ class BaseLibLinear(BaseEstimator):
                                       self.class_weight_label,
                                       self.class_weight, self.label_,
                                       self._get_bias())
+
+    def decision_function(self, X):
+        """
+        Return the decision function of X according to the trained
+        model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_class]
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        self._check_n_features(X)
+
+        dec_func = _liblinear.decision_function_wrap(X, self.raw_coef_,
+                                      self._get_solver_type(),
+                                      self.eps, self.C,
+                                      self.class_weight_label,
+                                      self.class_weight, self.label_,
+                                      self._get_bias())
+
+        if len(self.label_) <= 2:
+            # one class
+            return -dec_func
+        else:
+            return dec_func
+
 
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]

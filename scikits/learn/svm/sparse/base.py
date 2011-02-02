@@ -1,6 +1,5 @@
 import numpy as np
 
-from ...base import ClassifierMixin
 from ..base import BaseLibSVM, BaseLibLinear, _get_class_weight
 
 from ._libsvm_sparse import libsvm_sparse_train, \
@@ -238,6 +237,39 @@ class SparseBaseLibLinear(BaseLibLinear):
                                       self.class_weight_label,
                                       self.class_weight, self.label_,
                                       self._get_bias())
+
+    def decision_function(self, X):
+        """
+        Return the decision function of X according to the trained
+        model.
+
+        Parameters
+        ----------
+        X : sparse matrix, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_class]
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        import scipy.sparse
+        X = scipy.sparse.csr_matrix(X)
+        self._check_n_features(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+
+        dec_func = _liblinear.csr_decision_function_wrap(
+            X.shape[1], X.data, X.indices, X.indptr, self.raw_coef_,
+            self._get_solver_type(), self.eps, self.C,
+            self.class_weight_label, self.class_weight, self.label_,
+            self._get_bias())
+
+        if len(self.label_) <= 2:
+            # one class
+            return -dec_func
+        else:
+            return dec_func
+    
 
 
 set_verbosity_wrap(0)

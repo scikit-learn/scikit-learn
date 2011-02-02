@@ -328,7 +328,7 @@ def test_error():
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
-    assert_raises(AssertionError, svm.SVC, X, Y2)
+    assert_raises(ValueError, svm.SVC, X, Y2)
 
     # Test with arrays that are non-contiguous.
     Xf = np.asfortranarray(X)
@@ -361,6 +361,11 @@ def test_LinearSVC():
     clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
+    # test also decision function
+    dec = clf.decision_function(T).ravel()
+    res = (dec > 0).astype(np.int) + 1
+    assert_array_equal(res, true_result)
+
 
 def test_LinearSVC_iris():
     """
@@ -368,6 +373,10 @@ def test_LinearSVC_iris():
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
     assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
+
+    dec = clf.decision_function(iris.data)
+    pred = np.argmax(dec, 1)
+    assert_array_equal(pred, clf.predict(iris.data))
 
 
 def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
