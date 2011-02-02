@@ -296,9 +296,6 @@ class Ward(BaseEstimator):
     n_leaves_ : int
         Number of leaves in the hiearchical tree.
 
-    Return
-    ------
-    self
     """
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
@@ -382,9 +379,6 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_leaves_ : int
         Number of leaves in the hiearchical tree.
 
-    Return
-    ------
-    self
     """
 
     def fit(self, X, y=None, **params):
