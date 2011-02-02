@@ -69,7 +69,7 @@ def _svd_cross_product(X, Y):
     return u, v
 
 
-def center_scale_xy(X, Y, scale=True):
+def _center_scale_xy(X, Y, scale=True):
     """ Center X, Y and scale if the scale parameter==True
     Return
     ------
@@ -235,7 +235,7 @@ class _PLS(BaseEstimator):
             raise ValueError('The deflation mode is unknown')
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
-            = center_scale_xy(X, Y, self.scale)
+            = _center_scale_xy(X, Y, self.scale)
         # Residuals (deflated) matrices
         Xk = X
         Yk = Y
@@ -757,7 +757,7 @@ class PLSSVD(BaseEstimator):
 
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ =\
-            center_scale_xy(X, Y, self.scale)
+            _center_scale_xy(X, Y, self.scale)
         # svd(X'Y)
         C = np.dot(X.T, Y)
         U, s, V = linalg.svd(C, full_matrices=False)
