@@ -41,7 +41,7 @@ pl.plot(xx, yy, 'k-')
 pl.plot(xx, yy_down, 'k--')
 pl.plot(xx, yy_up, 'k--')
 
-pl.scatter(clf.support_vectors_[:,0], clf.support_vectors_[:,1], 
+pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
            s=80, facecolors='none')
 pl.scatter(X[:,0], X[:,1], c=Y)
 
