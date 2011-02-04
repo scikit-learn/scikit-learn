@@ -156,6 +156,11 @@ class GridSearchCV(BaseEstimator):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
+    cv : crossvalidation generator
+        see scikits.learn.cross_val module
+
+    refit: boolean
+        refit the best estimator with the entire dataset
 
     Examples
     --------
@@ -165,7 +170,8 @@ class GridSearchCV(BaseEstimator):
     >>> svr = svm.SVR()
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target) # doctest: +ELLIPSIS
-    GridSearchCV(n_jobs=1, fit_params={}, loss_func=None, iid=True,
+    GridSearchCV(n_jobs=1, fit_params={}, loss_func=None, refit=True, cv=None,
+           iid=True,
            estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
            ...
 
@@ -180,7 +186,8 @@ class GridSearchCV(BaseEstimator):
     """
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
-                 fit_params={}, n_jobs=1, iid=True):
+                 fit_params={}, n_jobs=1, iid=True, refit=True, cv=None,
+                 ):
         assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
                         or hasattr(estimator, 'score')), (
             "estimator should a be an estimator implementing 'fit' and "
@@ -201,8 +208,10 @@ class GridSearchCV(BaseEstimator):
         self.n_jobs = n_jobs
         self.fit_params = fit_params
         self.iid = iid
+        self.refit = refit
+        self.cv = cv
 
-    def fit(self, X, y=None, refit=True, cv=None, **kw):
+    def fit(self, X, y=None, **kw):
         """Run fit with all sets of parameters
 
         Returns the best classifier
@@ -217,13 +226,9 @@ class GridSearchCV(BaseEstimator):
         y: array, [n_samples] or None
             Target vector relative to X, None for unsupervised problems
 
-        cv : crossvalidation generator
-            see scikits.learn.cross_val module
-
-        refit: boolean
-            refit the best estimator with the entire dataset
         """
         estimator = self.estimator
+        cv        = self.cv
         if cv is None:
             if hasattr(X, 'shape'):
                 n_samples = X.shape[0]
@@ -260,7 +265,7 @@ class GridSearchCV(BaseEstimator):
 
         self.best_score = best_score
 
-        if refit:
+        if self.refit:
             # fit the best estimator using the entire dataset
             best_estimator.fit(X, y, **self.fit_params)
 
