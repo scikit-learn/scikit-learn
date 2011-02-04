@@ -90,11 +90,11 @@ can be found in members `support_vectors_`, `support_` and
     array([[ 0.,  0.],
            [ 1.,  1.]])
     >>> # get indices of support vectors
-    >>> clf.support_
-    array([0, 1])
+    >>> clf.support_ # doctest: +ELLIPSIS
+    array([0, 1]...)
     >>> # get number of support vectors for each class
-    >>> clf.n_support_
-    array([1, 1])
+    >>> clf.n_support_ # doctest: +ELLIPSIS
+    array([1, 1]...)
 
 
 Multi-class classification
