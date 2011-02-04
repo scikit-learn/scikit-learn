@@ -3,7 +3,8 @@
 A demo of SelfOrganisingMap with colored neurons
 ===========================================================
 
-XXX : add description of example.
+Example for SOM clustering using 3 dimensionals vectors (RGB)
+with 8 colors (black, white, red, green, blue, yellow, cyan, magenta)
 
 """
 print __doc__
