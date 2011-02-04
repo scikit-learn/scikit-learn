@@ -20,7 +20,7 @@ cdef extern from "linear.h":
     void destroy_param (parameter *)
 
 cdef extern from "liblinear_helper.c":
-    void copy_w(char *, model *, int)
+    void copy_w(char *, model *, int,int,int)
     parameter *set_parameter (int, double, double, int,
                              char *, char *)
     problem *set_problem (char *, char *, np.npy_intp *, double)
@@ -83,17 +83,17 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     # early return
     model = train(problem, param)
 
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] w
+    cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = get_nr_feature(model)
     if bias > 0: nr_feature = nr_feature + 1
     if nr_class == 2:
-        w = np.empty((1, nr_feature))
-        copy_w(w.data, model, nr_feature)
+        w = np.empty((1, nr_feature),order='F')
+        copy_w(w.data, model, nr_feature,0,0)
     else:
         len_w = (nr_class) * nr_feature
-        w = np.empty((nr_class, nr_feature))
-        copy_w(w.data, model, len_w)
+        w = np.empty((nr_class, nr_feature),order='F')
+        copy_w(w.data, model, len_w,nr_class,nr_feature)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
     label = np.empty(nr_class, dtype=np.int32)
@@ -140,17 +140,17 @@ def csr_train_wrap ( int n_features,
     # early return
     model = train(problem, param)
 
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] w
+    cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = n_features
     if bias > 0: nr_feature = nr_feature + 1
     if nr_class == 2:
-        w = np.empty((1, nr_feature))
-        copy_w(w.data, model, nr_feature)
+        w = np.empty((1, nr_feature),order='F')
+        copy_w(w.data, model, nr_feature,0,0)
     else:
         len_w = (nr_class * nr_feature)
-        w = np.empty((nr_class, nr_feature))
-        copy_w(w.data, model, len_w)
+        w = np.empty((nr_class, nr_feature),order='F')
+        copy_w(w.data, model, len_w,nr_class,nr_feature)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
     label = np.empty((nr_class), dtype=np.int32)
@@ -167,7 +167,7 @@ def csr_train_wrap ( int n_features,
 
 def decision_function_wrap(
     np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+    np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
     int solver_type, double eps, double C,
     np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
@@ -202,7 +202,7 @@ def csr_decision_function_wrap(
     np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
     np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
     np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+    np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
     int solver_type, double eps, double C,
     np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
@@ -242,7 +242,7 @@ def csr_decision_function_wrap(
 
 def predict_wrap(
     np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+    np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
     int solver_type, double eps, double C,
     np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
@@ -272,7 +272,7 @@ def csr_predict_wrap(
         np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
-        np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+        np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
         int solver_type, double eps, double C,
         np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
         np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
@@ -308,7 +308,7 @@ def csr_predict_wrap(
 
 
 def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-                 np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+                 np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
                  int solver_type, double eps, double C,
                  np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
                  np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
@@ -366,7 +366,7 @@ def csr_predict_prob(
         np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
-        np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+        np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
         int solver_type, double eps, double C,
         np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
         np.ndarray[np.float64_t, ndim=1, mode='c'] weight,

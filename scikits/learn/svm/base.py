@@ -369,6 +369,7 @@ class BaseLibLinear(BaseEstimator):
                        self._get_bias(), self.C,
                        self.class_weight_label, self.class_weight)
 
+
         return self
 
     def predict(self, X):
@@ -385,8 +386,10 @@ class BaseLibLinear(BaseEstimator):
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
         self._check_n_features(X)
-
-        return _liblinear.predict_wrap(X, self.raw_coef_,
+        
+        coef = self.raw_coef_
+            
+        return _liblinear.predict_wrap(X, coef,
                                       self._get_solver_type(),
                                       self.eps, self.C,
                                       self.class_weight_label,
@@ -410,8 +413,10 @@ class BaseLibLinear(BaseEstimator):
         """
         X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
         self._check_n_features(X)
-
-        dec_func = _liblinear.decision_function_wrap(X, self.raw_coef_,
+        
+        coef = self.raw_coef_
+        
+        dec_func = _liblinear.decision_function_wrap(X, coef,
                                       self._get_solver_type(),
                                       self.eps, self.C,
                                       self.class_weight_label,
@@ -423,7 +428,7 @@ class BaseLibLinear(BaseEstimator):
             return -dec_func
         else:
             return dec_func
-
+            
 
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]

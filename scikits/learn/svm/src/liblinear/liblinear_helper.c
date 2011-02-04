@@ -182,17 +182,38 @@ struct model * set_model(struct parameter *param, char *coef, npy_intp *dims,
     memcpy(model->w, coef, len_w * sizeof(double));
 
     model->nr_feature = bias > 0 ? k - 1 : k;
-
     model->nr_class = m;
+	
     model->param = *param;
     model->bias = bias;
 
     return model;
 }
 
-void copy_w(char *data, struct model *model, int len)
+void cfort(double *data, int len, int l1, int l2)
 {
-    memcpy(data, model->w, len * sizeof(double));
+    if (l1 > 2)
+    {
+		int i,j;
+		
+		double cw[len * sizeof(double)];
+		
+		memcpy(cw,data,len * sizeof(double));
+		
+		for (i=0; i<l1; i++) {
+			for (j=0; j<l2; j++) 			
+				data[j*l1 + i] = cw[i*l2+j];
+	
+		}
+		
+	}
+	
+}
+
+void copy_w(char *data, struct model *model, int len, int l1, int l2)
+{
+    memcpy(data, model->w, len * sizeof(double)); 
+    
 }
 
 double get_bias(struct model *model)
