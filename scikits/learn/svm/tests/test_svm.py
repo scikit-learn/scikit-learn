@@ -372,7 +372,7 @@ def test_LinearSVC_iris():
     Test that LinearSVC gives plausible predictions on the iris dataset
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
-    assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
+    assert np.mean(clf.predict(iris.data) == iris.target) > 0.8
 
     dec = clf.decision_function(iris.data)
     pred = np.argmax(dec, 1)
@@ -437,13 +437,10 @@ def liblinear_prediction_function(farray, clf, labels):
              2) redefine weights in the actual liblinear API?
     """
 
-    weights = clf.raw_coef_
-    a, b = weights.shape
-    weights = weights.reshape((b, a))
+    weights = clf.coef_.T
+    bias = clf.intercept_
 
-    D = np.column_stack([farray, np.ones(farray.shape[0])])
-
-    H = np.dot(D, weights)
+    H = np.dot(farray, weights) + bias
 
     return H.argmax(1)
 

@@ -210,6 +210,7 @@ class SparseBaseLibLinear(BaseLibLinear):
                        self._get_solver_type(),
                        self.eps, self._get_bias(), self.C, self.class_weight_label,
                        self.class_weight)
+
         return self
 
     def predict(self, X):
