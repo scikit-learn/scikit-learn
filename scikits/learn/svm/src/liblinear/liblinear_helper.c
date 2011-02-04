@@ -210,7 +210,7 @@ void cfort(double *data, int len, int l1, int l2)
 	
 }
 
-void copy_w(char *data, struct model *model, int len, int l1, int l2)
+void copy_w(char *data, struct model *model, int len)
 {
     memcpy(data, model->w, len * sizeof(double)); 
     
