@@ -83,7 +83,8 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     # early return
     model = train(problem, param)
 
-    cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
+    # coef matrix holder created as fortran since that's what's used in liblinear
+    cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w  
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = get_nr_feature(model)
     if bias > 0: nr_feature = nr_feature + 1
@@ -92,7 +93,7 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         copy_w(w.data, model, nr_feature)
     else:
         len_w = (nr_class) * nr_feature
-        w = np.empty((nr_class, nr_feature),order='F')
+        w = np.empty((nr_class, nr_feature),order='F') 
         copy_w(w.data, model, len_w)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
@@ -140,6 +141,7 @@ def csr_train_wrap ( int n_features,
     # early return
     model = train(problem, param)
 
+    # fortran order since that's what liblinear does
     cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = n_features
@@ -167,7 +169,7 @@ def csr_train_wrap ( int n_features,
 
 def decision_function_wrap(
     np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-    np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
+    np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,   
     int solver_type, double eps, double C,
     np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
