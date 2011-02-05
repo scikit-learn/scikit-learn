@@ -190,25 +190,6 @@ struct model * set_model(struct parameter *param, char *coef, npy_intp *dims,
     return model;
 }
 
-void cfort(double *data, int len, int l1, int l2)
-{
-    if (l1 > 2)
-    {
-		int i,j;
-		
-		double cw[len * sizeof(double)];
-		
-		memcpy(cw,data,len * sizeof(double));
-		
-		for (i=0; i<l1; i++) {
-			for (j=0; j<l2; j++) 			
-				data[j*l1 + i] = cw[i*l2+j];
-	
-		}
-		
-	}
-	
-}
 
 void copy_w(char *data, struct model *model, int len)
 {
