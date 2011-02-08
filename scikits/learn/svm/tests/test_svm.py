@@ -423,26 +423,13 @@ def test_liblinear_predict():
 
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
-    prediction = liblinear_prediction_function(iris.data, clf,
-                                               np.unique(iris.target))
-    assert_array_equal(clf.predict(iris.data), prediction)
-
-
-def liblinear_prediction_function(farray, clf, labels):
-    """
-       Note this is only intended for multiclass prediction.   For
-       binary, the usual "argmax" procedure works.
-
-       TODO: 1) Add case for binary prediction?
-             2) redefine weights in the actual liblinear API?
-    """
 
     weights = clf.coef_.T
     bias = clf.intercept_
+    H = np.dot(iris.data, weights) + bias
 
-    H = np.dot(farray, weights) + bias
+    assert_array_equal(clf.predict(iris.data), H.argmax(axis=1))
 
-    return H.argmax(1)
 
 
 if __name__ == '__main__':
