@@ -24,11 +24,13 @@ class Ridge(LinearModel):
     Parameters
     ----------
     alpha : float
-        Small positive values of alpha improve the coditioning of the
+        Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
+        Alpha corresponds to (1/2*C) in other linear models such as
+        LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
-        wether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
@@ -147,11 +149,13 @@ class RidgeClassifier(Ridge):
     Parameters
     ----------
     alpha : float
-        Small positive values of alpha improve the coditioning of the
+        Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
+        Alpha corresponds to (1/2*C) in other linear models such as
+        LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
-        wether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
@@ -340,6 +344,34 @@ class RidgeCV(LinearModel):
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
     n_samples case is handled efficiently.
+
+    Parameters
+    ----------
+    alphas: numpy array of shape [n_alpha]
+            Array of alpha values to try.
+            Small positive values of alpha improve the conditioning of the
+            problem and reduce the variance of the estimates.
+            Alpha corresponds to (1/2*C) in other linear models such as
+            LogisticRegression or LinearSVC.
+
+    fit_intercept : boolean
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    loss_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediciton (small is good)
+        if None is passed, the score of the estimator is maximized
+
+    score_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediciton (big is good)
+        if None is passed, the score of the estimator is maximized
+
+    See also
+    --------
+    Ridge
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
