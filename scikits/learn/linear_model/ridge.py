@@ -26,7 +26,7 @@ class Ridge(LinearModel):
     alpha : float
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (1/2*C) in other linear models such as
+        Alpha corresponds to (2*C)^-1 in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -151,7 +151,7 @@ class RidgeClassifier(Ridge):
     alpha : float
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (1/2*C) in other linear models such as
+        Alpha corresponds to (2*C)^-1 in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -351,7 +351,7 @@ class RidgeCV(LinearModel):
             Array of alpha values to try.
             Small positive values of alpha improve the conditioning of the
             problem and reduce the variance of the estimates.
-            Alpha corresponds to (1/2*C) in other linear models such as
+            Alpha corresponds to (2*C)^-1 in other linear models such as
             LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
