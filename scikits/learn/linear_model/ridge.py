@@ -375,13 +375,14 @@ class RidgeCV(LinearModel):
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-                       score_func=None, loss_func=None):
+                       score_func=None, loss_func=None, cv=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.score_func = score_func
         self.loss_func = loss_func
+        self.cv = cv
 
-    def fit(self, X, y, sample_weight=1.0, cv=None):
+    def fit(self, X, y, sample_weight=1.0, **params):
         """Fit Ridge regression model
 
         Parameters
@@ -403,7 +404,9 @@ class RidgeCV(LinearModel):
         -------
         self : Returns self.
         """
-        if cv is None:
+        self._set_params(**params)
+
+        if self.cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
                                   self.score_func, self.loss_func)
             estimator.fit(X, y, sample_weight=sample_weight)
@@ -411,7 +414,7 @@ class RidgeCV(LinearModel):
             parameters = {'alpha': self.alphas}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters)
-            gs.fit(X, y, sample_weight=sample_weight, cv=cv)
+            gs.fit(X, y, sample_weight=sample_weight, cv=self.cv)
             estimator = gs.best_estimator
 
         self.coef_ = estimator.coef_
@@ -422,7 +425,7 @@ class RidgeCV(LinearModel):
 
 class RidgeClassifierCV(RidgeCV):
 
-    def fit(self, X, y, sample_weight=1.0, class_weight={}, cv=None):
+    def fit(self, X, y, sample_weight=1.0, class_weight={}, **params):
         """
         Fit the ridge classifier.
 
@@ -448,12 +451,13 @@ class RidgeClassifierCV(RidgeCV):
         self : object
             Returns self.
         """
+        self._set_params(**params)
         sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
         RidgeCV.fit(self, X, Y,
                     sample_weight=sample_weight * sample_weight2,
-                    cv=cv)
+                    cv=self.cv)
         return self
 
     def decision_function(self, X):
