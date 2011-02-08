@@ -412,9 +412,13 @@ class RidgeCV(LinearModel):
             estimator.fit(X, y, sample_weight=sample_weight)
         else:
             parameters = {'alpha': self.alphas}
+            # FIXME: sample_weight must be split into training/validation data
+            #        too!
+            #fit_params = {'sample_weight' : sample_weight}
+            fit_params = {}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
-                              parameters)
-            gs.fit(X, y, sample_weight=sample_weight, cv=self.cv)
+                              parameters, fit_params=fit_params, cv=self.cv)
+            gs.fit(X, y)
             estimator = gs.best_estimator
 
         self.coef_ = estimator.coef_
