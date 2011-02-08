@@ -49,7 +49,7 @@ class Ridge(LinearModel):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
 
-    def fit(self, X, y, solver="default", **params):
+    def fit(self, X, y, sample_weight=1.0, solver="default", **params):
         """
         Fit Ridge regression model
 
@@ -60,6 +60,9 @@ class Ridge(LinearModel):
 
         y : numpy array of shape [n_samples]
             Target values
+
+        sample_weight : float or numpy array of shape [n_samples]
+            Sample weight
 
         solver : 'default' | 'cg'
             Solver to use in the computational routines. 'default'
@@ -81,40 +84,48 @@ class Ridge(LinearModel):
            LinearModel._center_data(X, y, self.fit_intercept)
 
         if sp.issparse(X):
-            self._solve_sparse(X, y)
+            self._solve_sparse(X, y, sample_weight)
         else:
-            self._solve_dense(X, y)
+            self._solve_dense(X, y, sample_weight)
 
         self._set_intercept(Xmean, ymean)
 
         return self
 
-    def _solve_dense(self, X, y):
+    def _solve_dense(self, X, y, sample_weight):
         n_samples, n_features = X.shape
 
-        if n_samples > n_features:
+        if n_features > n_samples or \
+           isinstance(sample_weight, np.ndarray) or \
+           sample_weight != 1.0:
+
+            # kernel ridge
+            # w = X.T * inv(X X^t + alpha*Id) y
+            A = np.dot(X, X.T)
+            A.flat[::n_samples + 1] += self.alpha * sample_weight
+            self.coef_ = np.dot(X.T, self._solve(A, y))
+        else:
+            # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = np.dot(X.T, X)
             A.flat[::n_features + 1] += self.alpha
             self.coef_ = self._solve(A, np.dot(X.T, y))
-        else:
-            # w = X.T * inv(X X^t + alpha*Id) y
-            A = np.dot(X, X.T)
-            A.flat[::n_samples + 1] += self.alpha
-            self.coef_ = np.dot(X.T, self._solve(A, y))
 
-    def _solve_sparse(self, X, y):
+    def _solve_sparse(self, X, y, sample_weight):
         n_samples, n_features = X.shape
 
-        if n_samples > n_features:
+        if n_features > n_samples or \
+           isinstance(sample_weight, np.ndarray) or \
+           sample_weight != 1.0:
+
+            I = sp.lil_matrix((n_samples, n_samples))
+            I.setdiag(np.ones(n_samples) * self.alpha * sample_weight)
+            c = self._solve(X * X.T + I, y)
+            self.coef_ = X.T * c
+        else:
             I = sp.lil_matrix((n_features, n_features))
             I.setdiag(np.ones(n_features) * self.alpha)
             self.coef_ = self._solve(X.T * X + I, X.T * y)
-        else:
-            I = sp.lil_matrix((n_samples, n_samples))
-            I.setdiag(np.ones(n_samples) * self.alpha)
-            c = self._solve(X * X.T + I, y)
-            self.coef_ = X.T * c
 
     def _solve(self, A, b):
         if self.solver == "cg":
@@ -363,13 +374,12 @@ class RidgeCV(LinearModel):
         if cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
                                   self.score_func, self.loss_func)
-            estimator.fit(X, y, sample_weight)
+            estimator.fit(X, y, sample_weight=sample_weight)
         else:
             parameters = {'alpha': self.alphas}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters)
-            # FIXME: need to implement sample_weight in Ridge
-            gs.fit(X, y, cv=cv)
+            gs.fit(X, y, sample_weight=sample_weight, cv=cv)
             estimator = gs.best_estimator
 
         self.coef_ = estimator.coef_
