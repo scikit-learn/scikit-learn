@@ -213,7 +213,7 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def predict(self, X, eps=1e-6, **params):
+    def predict(self, X, **params):
         """Predict the target for the provided data.
 
         Parameters
@@ -224,9 +224,6 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
         n_neighbors : int, optional
             Number of neighbors to get (default is the value
             passed to the constructor).
-
-        eps : float, optional
-           Amount of regularization to add to the Gram matrix.
 
         Returns
         -------
@@ -253,7 +250,7 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
         neigh = self.ball_tree.data[neigh_ind]
 
         # compute barycenters at each point
-        B = barycenter(X, neigh, eps=eps)
+        B = barycenter(X, neigh)
         labels = self._y[neigh_ind]
 
         return (B * labels).sum(axis=1)
@@ -262,8 +259,8 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
 ###############################################################################
 # Utils k-NN based Functions
 
-def barycenter(X, Y, eps=1e-6):
-    """
+def barycenter(X, Z, cond=None):
+    """ 
     Compute barycenter weights of X from Y along the first axis.
 
     We estimate the weights to assign to each point in Y[i] to recover
@@ -273,56 +270,48 @@ def barycenter(X, Y, eps=1e-6):
     ----------
     X : array-like, shape (n_samples, n_dim)
 
-    Y : array-like, shape (n_samples, n_neighbors, n_dim)
+    Z : array-like, shape (n_samples, n_neighbors, n_dim)
 
-    eps: float, optional
-        Amount of regularization to add to the diagonal of the Gram
-        matrix.
+    cond: float, optional
+        Cutoff for small singular values; used to determine effective
+        rank of Z[i]. Singular values smaller than ``rcond *
+        largest_singular_value`` are considered zero.
 
     Returns
     -------
     B : array-like, shape (n_samples, n_neighbors)
 
-    Reference
-    ---------
-    'An introduction to Locally Linear Embeddings', Saul & Roweis
     """
+#
+#       .. local variables ..
+#
     from scipy import linalg
-
-    X = np.atleast_2d(X)
+    X, Z = map(np.asanyarray, (X, Z))
+    n_samples, n_neighbors = X.shape[0], Z.shape[1]
     if X.dtype.kind == 'i':
-        # integer arrays truncate regularization
         X = X.astype(np.float)
-
-    Y = np.asanyarray(Y)
-    n_samples, n_neighbors = X.shape[0], Y.shape[1]
-
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
+    v = np.ones(n_neighbors, dtype=X.dtype)
+    rank_update, = linalg.get_blas_funcs(('ger',), (X,))
 
-    Z = X[:, np.newaxis] - Y
-
-    # Compute the weights that best reconstruct each data point
-    # from its neighbors, minimizing the cost function:
-    #
-    #     phi(X) = Sum_i|X_i - Sum_j{W_ij X_j}|
-    #
-
-    for i, D in enumerate(Z):
-
-        # Compute Gram matrix
-        Gram = np.dot(D, D.T)
-
-        # Add regularization
-        Gram.flat[::n_neighbors + 1] += eps * np.trace(Gram)
-
-        # Solve the system
-        B[i] = linalg.solve(Gram, np.ones(Gram.shape[0]), sym_pos=True)
-        B[i] /= np.sum(B[i])
-
+#
+#       .. constrained least squares ..
+#
+    v[0] -= np.sqrt(n_neighbors)
+    B[:, 0] = 1. / np.sqrt(n_neighbors)
+    if n_neighbors <= 1:
+        return B
+    alpha = - 1. / (n_neighbors - np.sqrt(n_neighbors))
+    for i, A in enumerate(Z.transpose(0, 2, 1)):
+        C = rank_update(alpha, np.dot(A, v), v, a=A)
+        B[i, 1:] = linalg.lstsq(
+            C[:, 1:], X[i] - C[:, 0] / np.sqrt(n_neighbors), cond=cond,
+            overwrite_a=True, overwrite_b=True)[0]
+        B[i] = rank_update(alpha, v, np.dot(v.T, B[i]), a=B[i])
     return B
 
 
-def kneighbors_graph(X, n_neighbors, mode='connectivity', eps=1e-6):
+def kneighbors_graph(X, n_neighbors, mode='connectivity'):
     """Computes the (weighted) graph of k-Neighbors for points in X
 
     Parameters
@@ -379,7 +368,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', eps=1e-6):
         ind = ball_tree.query(
             X, k=n_neighbors + 1, return_distance=False)
         A_ind = ind[:, 1:]
-        A_data = barycenter(X, X[A_ind], eps=eps)
+        A_data = barycenter(X, X[A_ind])
 
     else:
         raise ValueError("Unsupported mode type")

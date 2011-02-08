@@ -65,59 +65,56 @@ def test_neighbors_barycenter():
     y = [0, 0, 1, 1]
     neigh = neighbors.NeighborsBarycenter(n_neighbors=2)
     neigh.fit(X, y)
-    assert_equal(neigh.predict([[1.5]]), 0.5)
+    assert_array_almost_equal(neigh.predict([[1.5]]), [0.5])
 
 
 def test_kneighbors_graph():
     """
     Test kneighbors_graph to build the k-Nearest Neighbor graph.
     """
-    X = [[0, 0], [1.01, 0], [2, 0]]
+    X = [[0, 1], [1.01, 1.], [2, 0]]
 
     # n_neighbors = 1
     A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
     assert_array_equal(A.todense(), np.eye(A.shape[0]))
 
     A = neighbors.kneighbors_graph(X, 1, mode='distance')
-    assert_array_equal(
+    assert_array_almost_equal(
         A.todense(),
-        [[ 0.  ,  1.01,  0.  ],
-         [ 0.  ,  0.  ,  0.99],
-         [ 0.  ,  0.99,  0.  ]])
+        [[ 0.        ,  1.01      ,  0.        ],
+         [ 1.01      ,  0.        ,  0.        ],
+         [ 0.        ,  1.40716026,  0.        ]])
 
     A = neighbors.kneighbors_graph(X, 1, mode='barycenter')
-    assert_array_equal(
+    assert_array_almost_equal(
         A.todense(),
         [[ 0.,  1.,  0.],
-        [ 0.,  0.,  1.],
-        [ 0.,  1.,  0.]])
+         [ 1.,  0.,  0.],
+         [ 0.,  1.,  0.]])
 
     # n_neigbors = 2
     A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
     assert_array_equal(
         A.todense(),
         [[ 1.,  1.,  0.],
-         [ 0.,  1.,  1.],
+         [ 1.,  1.,  0.],
          [ 0.,  1.,  1.]])
 
     A = neighbors.kneighbors_graph(X, 2, mode='distance')
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.  ,  1.01,  2.  ],
-        [ 1.01,  0.  ,  0.99],
-        [ 2.  ,  0.99,  0.  ]])
+        [[ 0.        ,  1.01      ,  2.23606798],
+         [ 1.01      ,  0.        ,  1.40716026],
+         [ 2.23606798,  1.40716026,  0.        ]])
 
     A = neighbors.kneighbors_graph(X, 2, mode='barycenter')
     # check that columns sum to one
     assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.        ,  2.02018645, -1.02018645],
-        [ 0.49500001,  0.        ,  0.50499999],
-        [-0.98018357,  1.98018357,  0.        ]])
-    # check that we can reconstruct X from A
-    assert_array_almost_equal(
-        X, A.dot(X), decimal=3)
+        [[ 0.        ,  1.5049745 , -0.5049745 ],
+        [ 0.596     ,  0.        ,  0.404     ],
+        [-0.98019802,  1.98019802,  0.        ]])
 
     # n_neighbors = 3
     A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
