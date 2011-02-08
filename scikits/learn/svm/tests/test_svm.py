@@ -229,7 +229,6 @@ def test_decision_function():
     data = iris.data[0]
 
     sv_start = np.r_[0, np.cumsum(clf.n_support_)]
-    n_features = iris.data.shape[1]
     n_class = 3
 
     kvalue = np.dot(data, clf.support_vectors_.T)
