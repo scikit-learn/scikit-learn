@@ -211,7 +211,7 @@ class GridSearchCV(BaseEstimator):
         self.refit = refit
         self.cv = cv
 
-    def fit(self, X, y=None, **kw):
+    def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
 
         Returns the best classifier
@@ -227,6 +227,7 @@ class GridSearchCV(BaseEstimator):
             Target vector relative to X, None for unsupervised problems
 
         """
+        self._set_params(**params)
         estimator = self.estimator
         cv        = self.cv
         if cv is None:
