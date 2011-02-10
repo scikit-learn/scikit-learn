@@ -306,7 +306,7 @@ def barycenter(X, Z, cond=None):
         C = rank_update(alpha, np.dot(A, v), v, a=A)
         B[i, 1:] = linalg.lstsq(
             C[:, 1:], X[i] - C[:, 0] / np.sqrt(n_neighbors), cond=cond,
-            overwrite_a=True, overwrite_b=True)[0]
+            overwrite_a=True, overwrite_b=True)[0].ravel()
         B[i] = rank_update(alpha, v, np.dot(v.T, B[i]), a=B[i])
     return B
 
