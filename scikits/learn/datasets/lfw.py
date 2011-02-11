@@ -47,24 +47,37 @@ def load_lfw_pairs(subset='train', data_dir=None):
     subset: optional, default: 'train'
         Select the dataset to load: 'train' for the development
         training set, 'test' for the development test set and '0_train',
-        '1_train', ...  '9_train' and '0_test', '1_test', ... '9_test'
+        '1_train'...,  '9_train' and '0_test', '1_test'..., '9_test'
         for the 10-fold cross-validation used for comparative evaluations.
 
     """
 
     data_dir = get_data_dir(data_dir=data_dir)
-    url = "http://vis-www.cs.umass.edu/lfw/lfw.tgz"
-    archive_path = join(data_dir, "lfw.tgz")
+    base_url = "http://vis-www.cs.umass.edu/lfw/"
+    archive_name = "lfw.tgz"
+    archive_path = join(data_dir, archive_name)
     folder_path = join(data_dir, "lfw")
+    target_filenames = ['pairsDevTrain.txt', 'pairsDevTest.txt',
+                        'pairs.txt', 'people.txt']
 
     if exists(folder_path):
+        os.makedirs(folder_path)
         if not exists(archive_path):
             import urllib
+            url = base_url + archive_name
             print "Downloading LFW data, please wait (234MB)..."
             print url
-            opener = urllib.urlopen(url)
-            open(archive_path, 'wb').write(opener.read())
+            downloader = urllib.urlopen(url)
+            open(archive_path, 'wb').write(downloader.read())
             print
+
+        for target_filename in target_filename:
+            if not exists(target_filepath):
+                url = base_url + target_filepath
+                print "Downloading " + url
+                target_filepath = join(folder_path, target_filepath)
+                downloader = urllib.urlopen(base_url + target_filename)
+                open(target_filepath, 'wb').write(downloader.read())
 
         import tarfile
         print "Decompressiong the archive: " + archive_path
