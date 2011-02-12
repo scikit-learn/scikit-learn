@@ -30,7 +30,7 @@ class Bunch(dict):
         self.__dict__ = self
 
 
-def get_data_dir(data_dir=None):
+def get_data_home(data_home=None):
     """Return the path of the scikit-learn data dir
 
     This folder is used by some large dataset loaders to avoid
@@ -45,12 +45,12 @@ def get_data_dir(data_dir=None):
 
     If the folder does not already exist, it is automatically created.
     """
-    if data_dir is None:
-        data_dir = environ.get('SCIKIT_LEARN_DATA',
+    if data_home is None:
+        data_home = environ.get('SCIKIT_LEARN_DATA',
                                join('~', 'scikit_learn_data'))
-    if not exists(data_dir):
-        makedirs(data_dir)
-    return expanduser(data_dir)
+    if not exists(data_home):
+        makedirs(data_home)
+    return expanduser(data_home)
 
 
 def load_files(container_path, description=None, categories=None, shuffle=True,
