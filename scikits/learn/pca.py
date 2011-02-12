@@ -104,10 +104,6 @@ class PCA(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like, shape (n_samples, n_features)
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-
     n_components: int, none or string
         Number of components to keep.
         if n_components is not set all components are kept:
@@ -165,7 +161,19 @@ class PCA(BaseEstimator):
         self.whiten = whiten
 
     def fit(self, X, **params):
-        """Fit the model to the data X"""
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self._set_params(**params)
         X = np.atleast_2d(X)
         n_samples = X.shape[0]
@@ -282,10 +290,6 @@ class RandomizedPCA(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-
     n_components: int
         Maximum number of components to keep: default is 50.
 
@@ -350,7 +354,19 @@ class RandomizedPCA(BaseEstimator):
         self.mean_ = None
 
     def fit(self, X, **params):
-        """Fit the model to the data X"""
+        """Fit the model to the data X.
+
+        Parameters
+        ----------
+        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self._set_params(**params)
         n_samples = X.shape[0]
 

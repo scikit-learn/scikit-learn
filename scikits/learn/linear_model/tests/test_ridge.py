@@ -53,6 +53,9 @@ def test_ridge():
     ridge.fit(X, y)
     assert ridge.score(X, y) > 0.5
 
+    ridge.fit(X, y, sample_weight=np.ones(n_samples))
+    assert ridge.score(X, y) > 0.5
+
     # With more features than samples
     n_samples, n_features = 5, 10
     y = np.random.randn(n_samples)
@@ -60,6 +63,9 @@ def test_ridge():
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
     assert ridge.score(X, y) > .9
+
+    ridge.fit(X, y, sample_weight=np.ones(n_samples))
+    assert ridge.score(X, y) > 0.9
 
 def test_toy_ridge_object():
     """Test BayesianRegression ridge classifier

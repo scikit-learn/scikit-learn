@@ -24,13 +24,14 @@ perm = np.random.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
+
 def test_libsvm_parameters():
     """
     Test parameters on classes that make use of libsvm.
     """
 
     clf = svm.SVC(kernel='linear').fit(X, Y)
-    assert_array_equal(clf.dual_coef_, [[ 0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.support_vectors_, (X[1], X[3]))
     assert_array_equal(clf.intercept_, [0.])
@@ -77,7 +78,7 @@ def test_precomputed():
     KT = np.zeros_like(KT)
     for i in range(len(T)):
         for j in clf.support_:
-            KT[i,j] = np.dot(T[i], X[j])
+            KT[i, j] = np.dot(T[i], X[j])
 
     pred = clf.predict(KT)
     assert_array_equal(pred, true_result)
@@ -113,7 +114,7 @@ def test_precomputed():
     K = np.zeros_like(K)
     for i in range(len(iris.data)):
         for j in clf.support_:
-            K[i,j] = np.dot(iris.data[i], iris.data[j])
+            K[i, j] = np.dot(iris.data[i], iris.data[j])
 
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
@@ -149,8 +150,8 @@ def test_SVR():
                               decimal=3)
     assert_raises(NotImplementedError, lambda: clf.coef_)
     assert_array_almost_equal(clf.support_vectors_, X)
-    assert_array_almost_equal(clf.intercept_, [ 1.49997261])
-    assert_array_almost_equal(pred, [ 1.10001274, 1.86682485, 1.73300377])
+    assert_array_almost_equal(clf.intercept_, [1.49997261])
+    assert_array_almost_equal(pred, [1.10001274, 1.86682485, 1.73300377])
 
 
 def test_oneclass():
@@ -163,7 +164,7 @@ def test_oneclass():
 
     assert_array_almost_equal(pred, [1, -1, -1])
     assert_array_almost_equal(clf.intercept_, [-1.351], decimal=3)
-    assert_array_almost_equal(clf.dual_coef_, [[ 0.750, 0.749, 0.749, 0.750]],
+    assert_array_almost_equal(clf.dual_coef_, [[0.750, 0.749, 0.749, 0.750]],
                               decimal=3)
     assert_raises(NotImplementedError, lambda: clf.coef_)
 
@@ -201,8 +202,8 @@ def test_probability():
     T = [[0, 0, 0, 0],
          [2, 2, 2, 2]]
     assert_array_almost_equal(clf.predict_proba(T),
-                [[ 0.993, 0.003, 0.002],
-                 [ 0.740, 0.223  , 0.035]],
+                [[0.993, 0.003, 0.002],
+                 [0.740, 0.223, 0.035]],
                  decimal=2)
 
     assert_almost_equal(clf.predict_proba(T),
@@ -228,7 +229,6 @@ def test_decision_function():
     data = iris.data[0]
 
     sv_start = np.r_[0, np.cumsum(clf.n_support_)]
-    n_features = iris.data.shape[1]
     n_class = 3
 
     kvalue = np.dot(data, clf.support_vectors_.T)
@@ -236,11 +236,11 @@ def test_decision_function():
     dec = np.empty(n_class * (n_class - 1) / 2)
     p = 0
     for i in range(n_class):
-        for j in range(i+1, n_class):
-            coef1 = clf.dual_coef_[j-1]
+        for j in range(i + 1, n_class):
+            coef1 = clf.dual_coef_[j - 1]
             coef2 = clf.dual_coef_[i]
-            idx1 = slice(sv_start[i], sv_start[i+1])
-            idx2 = slice(sv_start[j], sv_start[j+1])
+            idx1 = slice(sv_start[i], sv_start[i + 1])
+            idx2 = slice(sv_start[j], sv_start[j + 1])
             s = np.dot(coef1[idx1],  kvalue[idx1]) + \
                 np.dot(coef2[idx2], kvalue[idx2]) + \
                 clf.intercept_[p]
@@ -260,10 +260,10 @@ def test_weight():
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
-    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5,1],
+    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, param=[5, 1],
                                   seed=0)
     for clf in (linear_model.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
-        clf.fit(X_[:180], y_[:180], class_weight={0:5})
+        clf.fit(X_[: 180], y_[: 180], class_weight={0: 5})
         y_pred = clf.predict(X_[180:])
         assert np.sum(y_pred == y_[180:]) >= 11
 
@@ -276,7 +276,7 @@ def test_sample_weights():
     clf.fit(X, Y)
     assert_array_equal(clf.predict(X[2]), [1.])
 
-    sample_weight=[.1]*3 + [10]*3
+    sample_weight = [.1] * 3 + [10] * 3
     clf.fit(X, Y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X[2]), [2.])
 
@@ -298,7 +298,7 @@ def test_auto_weight():
     assert_array_almost_equal(clf.coef_, clf_auto.coef_, 6)
 
     # build an very very imbalanced dataset out of iris data
-    X_0 = X[y == 0,:]
+    X_0 = X[y == 0, :]
     y_0 = y[y == 0]
 
     X_imbalanced = np.vstack([X] + [X_0] * 10)
@@ -319,15 +319,15 @@ def test_error():
     Test that it gives proper exception on deficient input
     """
     # impossible value of C
-    assert_raises (ValueError, svm.SVC(C=-1).fit, X, Y)
+    assert_raises(ValueError, svm.SVC(C=-1).fit, X, Y)
 
     # impossible value of nu
     clf = svm.NuSVC(nu=0.0)
     assert_raises(ValueError, clf.fit, X, Y)
 
-    Y2 = Y[:-1] # wrong dimensions for labels
+    Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
-    assert_raises(AssertionError, svm.SVC, X, Y2)
+    assert_raises(ValueError, svm.SVC, X, Y2)
 
     # Test with arrays that are non-contiguous.
     Xf = np.asfortranarray(X)
@@ -360,13 +360,23 @@ def test_LinearSVC():
     clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
+    # test also decision function
+    dec = clf.decision_function(T).ravel()
+    res = (dec > 0).astype(np.int) + 1
+    assert_array_equal(res, true_result)
+
 
 def test_LinearSVC_iris():
     """
     Test that LinearSVC gives plausible predictions on the iris dataset
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
-    assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
+    assert np.mean(clf.predict(iris.data) == iris.target) > 0.8
+
+    dec = clf.decision_function(iris.data)
+    pred = np.argmax(dec, 1)
+    assert_array_equal(pred, clf.predict(iris.data))
+
 
 def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     """
@@ -412,32 +422,12 @@ def test_liblinear_predict():
 
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
-    prediction = liblinear_prediction_function(iris.data, clf,
-                                               np.unique(iris.target))
-    assert_array_equal(clf.predict(iris.data), prediction)
 
+    weights = clf.coef_.T
+    bias = clf.intercept_
+    H = np.dot(iris.data, weights) + bias
 
-def liblinear_prediction_function(farray, clas, labels):
-    """
-       Note this is only intended for multiclass prediction.   For
-       binary, the usual "argmax" procedure works.
-
-       TODO: 1) Probably could be simplified.   
-             2) Add case for binary prediction?  
-    """
-
-    nf = farray.shape[0]
-    nlabels = len(labels)
-    weights = clas.raw_coef_.ravel()
-    nw = len(weights)
-    nv = nw / nlabels
-    D = np.column_stack([farray,np.ones(nf)]).ravel().repeat(nlabels)
-    W = np.tile(weights,nf)
-    H = W * D
-    H1 = H.reshape((len(H)/nw,nv,nlabels))
-    H2 = H1.sum(1)
-    predict = H2.argmax(1)
-    return predict
+    assert_array_equal(clf.predict(iris.data), H.argmax(axis=1))
 
 
 
