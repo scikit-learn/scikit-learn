@@ -67,22 +67,15 @@ def _split(features, labels, weights, criterion, subsample, R):
 
 
 from ._tree import set_entropy
-from ._tree import information_gain as _information_gain
 def information_gain(labels0, labels1, include_entropy=False):
-    '''
-    ig = information_gain(labels0, labels1, include_entropy=False)
-
-    Information Gain
-    See http://en.wikipedia.org/wiki/Information_gain_in_decision_trees
-
-    The function calculated here does not include the original entropy unless
-    you explicitly ask for it (by passing include_entropy=True)
-    '''
+    clen = max(labels0.max(), labels1.max()) + 1
+    N0 = np.prod(labels0.shape)
+    N1 = np.prod(labels1.shape)
+    N = float(N0 + N1)
+    H = - N0/N * set_entropy(labels0, N0,  clen) - N1/N * set_entropy(labels1, N1, clen)
     if include_entropy:
-        return set_entropy(np.concatenate( (labels0, labels1) )) + \
-                _information_gain(labels0, labels1)
-    return _information_gain(labels0, labels1)
-
+        H += set_entropy(np.concatenate( (labels0, labels1) ), int(N), clen)
+    return H
 
 def z1_loss(labels0, labels1, weights0=None, weights1=None):
     '''
