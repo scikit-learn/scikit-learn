@@ -16,8 +16,8 @@ rf_learner : A learner object
 
 from __future__ import division
 import numpy as np
-import milk.supervised.tree
-from .normalise import normaliselabels
+from .base import normaliselabels
+#from .tree import tree
 
 __all__ = [
     'rf_learner',
@@ -52,18 +52,7 @@ def _sample(features, labels, n, R):
         slabels.append(labels[idx])
     return np.array(sfeatures), np.array(slabels)
 
-class rf_model(object):
-    def __init__(self, forest, names):
-        self.forest = forest
-        self.names = names
-
-    def apply(self, features):
-        rf = len(self.forest)
-        votes = sum(t.apply(features) for t in self.forest)
-        return (votes > (rf//2))
-        
-
-class rf_learner(object):
+class RandomForest(object):
     '''
     Random Forest Learner
 
@@ -79,8 +68,10 @@ class rf_learner(object):
     def __init__(self, rf=101, frac=.7):
         self.rf = rf
         self.frac = frac
+        self.forest = None
+        self.names = None
 
-    def train(self, features, labels, normalisedlabels=False, names=None, **kwargs):
+    def fit(self, features, labels, normalisedlabels=False, names=None, **kwargs):
         N,M = features.shape
         m = int(self.frac*M)
         n = int(self.frac*M)
@@ -95,6 +86,12 @@ class rf_learner(object):
             forest.append(
                     tree.train(*_sample(features, labels, n, R),
                                **{'normalisedlabels' : True})) # This syntax is necessary for Python 2.5
-        return rf_model(forest, names)
+        self.forest = forest
+        self.names = names
+        
+    def predict(self, features):
+        rf = len(self.forest)
+        votes = sum(t.apply(features) for t in self.forest)
+        return (votes > (rf//2))
 
 

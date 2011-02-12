@@ -15,11 +15,11 @@ Decision tree based classifier
 
 from __future__ import division
 import numpy as np
-from .classifier import normaliselabels
+from .base import normaliselabels
 
 __all__ = [
-    'tree_learner',
-    'stump_learner',
+    'DecisionTree',
+    'Stump',
     ]
 
 class Leaf(object):
@@ -162,7 +162,7 @@ def apply_tree(tree, features):
     return apply_tree(tree.right, features)
 
 
-class tree_learner(object):
+class DecisionTree(object):
     '''
     tree = tree_learner()
     model = tree.train(features, labels)
@@ -189,46 +189,33 @@ class tree_learner(object):
         self.subsample = subsample
         self.R = R
 
-    def train(self, features, labels, normalisedlabels=False, weights=None):
+    def fit(self, features, labels, normalisedlabels=False, weights=None):
         if not normalisedlabels:
             labels,names = normaliselabels(labels)
         tree = build_tree(features, labels, self.criterion, self.min_split, self.subsample, self.R, weights)
-        return tree_model(tree, self.return_label)
-
-tree_classifier = tree_learner
-
-class tree_model(object):
-    '''
-    tree model
-    '''
-    def __init__(self, tree, return_label):
         self.tree = tree
-        self.return_label = return_label
 
-    def apply(self,feats):
+    def predict(self,feats):
         value = apply_tree(self.tree, feats)
         if self.return_label:
             return value > .5
         return value
 
-class stump_model(object):
-    def __init__(self, idx, cutoff, names):
-        self.names = names
-        self.idx = idx
-        self.cutoff = cutoff
+tree_classifier = DecisionTree
 
-    def apply(self, f):
+class Stump(object):
+    def __init__(self):
+        pass
+
+    def fit(self, features, labels, normalisedlabels=False, weights=None, **kwargs):
+        if not normalisedlabels:
+            labels, self.names = normaliselabels(labels)
+        else:
+            self.names = labels
+        self.idx,self.cutoff = _split(features, labels, weights, z1_loss, subsample=None, R=None)
+
+    def predict(self, f):
         return self.names[f[self.idx] > self.cutoff]
 
     def __repr__(self):
         return '<stump(%s, %s)>' % (self.idx, self.cutoff)
-
-class stump_learner(object):
-    def __init__(self):
-        pass
-
-    def train(self, features, labels, normalisedlabels=False, weights=None, **kwargs):
-        if not normalisedlabels:
-            labels,names = normaliselabels(labels)
-        idx,cutoff = _split(features, labels, weights, z1_loss, subsample=None, R=None)
-        return stump_model(idx, cutoff, names)
