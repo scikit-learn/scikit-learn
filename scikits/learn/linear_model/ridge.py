@@ -244,9 +244,9 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
+    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
                        score_func=None, loss_func=None):
-        self.alphas = alphas
+        self.alphas = np.asanyarray(alphas)
         self.fit_intercept = fit_intercept
         self.score_func = score_func
         self.loss_func = loss_func
@@ -302,6 +302,9 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
+        X = safe_asanyarray(X, dtype=np.float)
+        y = np.asanyarray(y, dtype=np.float)
+
         n_samples = X.shape[0]
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
@@ -410,6 +413,7 @@ class RidgeCV(LinearModel):
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
                                   self.score_func, self.loss_func)
             estimator.fit(X, y, sample_weight=sample_weight)
+            self.best_alpha = estimator.best_alpha
         else:
             parameters = {'alpha': self.alphas}
             # FIXME: sample_weight must be split into training/validation data
@@ -420,6 +424,7 @@ class RidgeCV(LinearModel):
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
             estimator = gs.best_estimator
+            self.best_alpha = gs.best_estimator.alpha
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
