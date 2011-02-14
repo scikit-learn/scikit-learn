@@ -61,7 +61,7 @@ def iter_grid(param_grid):
 
 
 def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
-                   **fit_params):
+                   verbose, **fit_params):
     """Run fit on one set of parameters
 
     Returns the score and the instance of the classifier
@@ -94,6 +94,8 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
             y_test  = None
             y_train = None
 
+        if verbose > 1:
+            print '%s\nFitting %s' % (80*'.', clf)
         clf.fit(X_train, y_train, **fit_params)
 
         if loss_func is not None:
@@ -162,6 +164,9 @@ class GridSearchCV(BaseEstimator):
     refit: boolean
         refit the best estimator with the entire dataset
 
+    verbose: integer
+        Controls the verbosity: the higher, the more messages.
+
     Examples
     --------
     >>> from scikits.learn import svm, grid_search, datasets
@@ -187,6 +192,7 @@ class GridSearchCV(BaseEstimator):
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
                  fit_params={}, n_jobs=1, iid=True, refit=True, cv=None,
+                 verbose=0,
                  ):
         assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
                         or hasattr(estimator, 'score')), (
@@ -210,6 +216,7 @@ class GridSearchCV(BaseEstimator):
         self.iid = iid
         self.refit = refit
         self.cv = cv
+        self.verbose = verbose
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
@@ -244,10 +251,10 @@ class GridSearchCV(BaseEstimator):
 
         grid = iter_grid(self.param_grid)
         base_clf = clone(self.estimator)
-        out = Parallel(n_jobs=self.n_jobs)(
+        out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(fit_grid_point)(
                 X, y, base_clf, clf_params, cv, self.loss_func,
-                self.score_func, self.iid, **self.fit_params)
+                self.score_func, self.iid, self.verbose, **self.fit_params)
                     for clf_params in grid)
 
         # Out is a list of pairs: score, estimator
