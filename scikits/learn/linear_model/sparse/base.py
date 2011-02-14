@@ -3,6 +3,8 @@
 #
 # License: BSD Style.
 
+import numpy as np
+
 class SparseTransformerMixin(object):
     """Mixin for linear models that can find sparse solutions.
     """

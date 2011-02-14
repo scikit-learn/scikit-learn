@@ -2,10 +2,12 @@
 import numpy as np
 
 from ...base import ClassifierMixin
+from ...svm.sparse.base import SparseBaseLibLinear
+from ...linear_model.sparse.base import SparseTransformerMixin
 from .base import SparseBaseLibLinear
 from .. import _liblinear
 
-class LinearSVC(SparseBaseLibLinear, ClassifierMixin):
+class LinearSVC(SparseBaseLibLinear, ClassifierMixin, SparseTransformerMixin):
     """
     Linear Support Vector Classification, Sparse Version
 
