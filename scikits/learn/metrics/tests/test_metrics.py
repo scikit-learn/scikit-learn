@@ -203,7 +203,7 @@ avg / total       0.62      0.61      0.56        75
     assert_equal(report, expected_report)
 
 
-def _test_precision_recall_curve():
+def test_precision_recall_curve():
     """Test Precision-Recall and aread under PR curve"""
     y_true, _, probas_pred = make_prediction(binary=True)
 

@@ -9,6 +9,7 @@ better
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
 import numpy as np
