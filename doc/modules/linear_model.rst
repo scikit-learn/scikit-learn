@@ -119,6 +119,13 @@ The object works in the same way as GridSearchCV except that it defaults to Gene
     >>> clf.best_alpha
     0.10000000000000001
 
+.. topic:: References
+
+    * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
+      <http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+      `course slides
+      <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+
 Lasso
 =====
 

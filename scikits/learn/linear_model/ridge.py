@@ -241,6 +241,7 @@ class _RidgeGCV(LinearModel):
     Reference
     ---------
 
+    http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
