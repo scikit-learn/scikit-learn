@@ -7,6 +7,7 @@ Generalized Linear models.
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Vincent Michel <vincent.michel@inria.fr>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#         Mathieu Blondel <mathieu@mblondel.org>
 #
 # License: BSD Style.
 
@@ -297,3 +298,19 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         """
         X = np.asanyarray(X)
         return np.dot(X, self.coef_) + self.intercept_
+
+
+class SparseTransformerMixin(object):
+    """Mixin for linear models that can find sparse solutions.
+    """
+
+    def transform(self, X, threshold=1e-10):
+        if len(self.coef_.shape) == 1 or self.coef_.shape[1] == 1:
+            # 2-class case
+            coef = np.ravel(self.coef_)
+        else:
+            # multi-class case
+            coef = np.mean(self.coef_, axis=0)
+
+        return X[:, coef <= threshold]
+

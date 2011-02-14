@@ -429,8 +429,6 @@ def test_liblinear_predict():
 
     assert_array_equal(clf.predict(iris.data), H.argmax(axis=1))
 
-
-
 if __name__ == '__main__':
     import nose
     nose.runmodule()
