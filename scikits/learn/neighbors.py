@@ -250,7 +250,7 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
         neigh = self.ball_tree.data[neigh_ind]
 
         # compute barycenters at each point
-        B = barycenter(X, neigh)
+        B = barycenter_weights(X, neigh)
         labels = self._y[neigh_ind]
 
         return (B * labels).sum(axis=1)
@@ -259,7 +259,7 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
 ###############################################################################
 # Utils k-NN based Functions
 
-def barycenter(X, Z, cond=None):
+def barycenter_weights(X, Z, cond=None):
     """ 
     Compute barycenter weights of X from Y along the first axis.
 
@@ -368,7 +368,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
         ind = ball_tree.query(
             X, k=n_neighbors + 1, return_distance=False)
         A_ind = ind[:, 1:]
-        A_data = barycenter(X, X[A_ind])
+        A_data = barycenter_weights(X, X[A_ind])
 
     else:
         raise ValueError("Unsupported mode type")
