@@ -24,17 +24,23 @@ implemented in the OpenCV library.
 
 from os.path import join
 from os.path import exists
-from os.path import expanduser
 from os import listdir
 from os import makedirs
 
 import logging
 
+from scipy.misc import imread
+from scipy.misc import imresize
+import numpy as np
+
+from scikits.learn.externals.joblib import Memory
 from .base import get_data_home
+from .base import Bunch
 
 
 BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
 ARCHIVE_NAME = "lfw.tgz"
+FUNNELED_ARCHIVE_NAME = "lfw-funneled.tgz"
 TARGET_FILENAMES = [
     'pairsDevTrain.txt',
     'pairsDevTest.txt',
@@ -43,12 +49,26 @@ TARGET_FILENAMES = [
 ]
 
 
-def check_fetch_lfw(data_home=None):
+def scale_face(face):
+    """Scale back to 0-1 range in case of normalization for plotting"""
+    scaled = face - face.min()
+    scaled /= scaled.max()
+    return scaled
+
+
+def check_fetch_lfw(data_home=None, funneled=True):
     """Helper function to download any missing LFW data"""
     data_home = get_data_home(data_home=data_home)
     lfw_home = join(data_home, "lfw_home")
-    archive_path = join(lfw_home, ARCHIVE_NAME)
-    data_folder_path = join(lfw_home, "lfw")
+
+    if funneled:
+        archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
+        data_folder_path = join(lfw_home, "lfw_funneled")
+        archive_url = BASE_URL + FUNNELED_ARCHIVE_NAME
+    else:
+        archive_path = join(lfw_home, ARCHIVE_NAME)
+        data_folder_path = join(lfw_home, "lfw")
+        archive_url = BASE_URL + ARCHIVE_NAME
 
     if not exists(lfw_home):
         makedirs(lfw_home)
@@ -57,9 +77,8 @@ def check_fetch_lfw(data_home=None):
 
     if not exists(archive_path):
         import urllib
-        url = BASE_URL + ARCHIVE_NAME
-        logging.info("Downloading LFW data (234MB): %s", url)
-        downloader = urllib.urlopen(url)
+        logging.info("Downloading LFW data: %s", archive_url)
+        downloader = urllib.urlopen(archive_url)
         open(archive_path, 'wb').write(downloader.read())
 
     for target_filename in TARGET_FILENAMES:
@@ -75,10 +94,79 @@ def check_fetch_lfw(data_home=None):
         logging.info("Decompressing the data archive to %s", data_folder_path)
         tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
 
-    return lfw_home
+    return lfw_home, data_folder_path
 
 
-def load_lfw_pairs(subset='train', data_home=None):
+def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
+                    center=True, normalize=True, resize=None):
+    """Perform the actual data loading
+
+    This operation is meant to be cached by a joblib wrapper.
+    """
+    with open(index_file_path) as f:
+        splitted_lines = [l.strip().split('\t') for l in f.readlines()]
+    filtered = [l for l in splitted_lines if len(l) > 2]
+    n_pairs = len(filtered)
+
+    default_slice = (slice(0, 250), slice(0, 250), slice(0, 3))
+    if slice_ is None:
+        slice_ = default_slice
+    else:
+        slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
+
+    h_slice, w_slice, c_slice = slice_
+    h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
+    w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
+    c = (c_slice.stop - c_slice.start) / (c_slice.step or 1)
+
+    if resize is not None:
+        h = int(resize * h)
+        w = int(resize * w)
+
+    target = np.zeros(n_pairs, dtype=np.int)
+    pairs = np.zeros((n_pairs, 2, h, w, c), dtype=np.float32)
+
+    for i, components in enumerate(filtered):
+        if i % 1000 == 0:
+            logging.info("Loading pair #%05d / %05d", i + 1, n_pairs)
+
+        if len(components) == 3:
+            target[i] = 1
+            pair = (
+                (components[0], int(components[1]) - 1),
+                (components[0], int(components[2]) - 1),
+            )
+        elif len(components) == 4:
+            target[i] = -1
+            pair = (
+                (components[0], int(components[1]) - 1),
+                (components[2], int(components[3]) - 1),
+            )
+        else:
+            raise ValueError("invalid line %d: %r" % (i + 1, components))
+        for j, (name, idx) in enumerate(pair):
+            person_folder = join(data_folder_path, name)
+            filenames = list(sorted(listdir(person_folder)))
+            filepath = join(person_folder, filenames[idx])
+            face = np.asarray(imread(filepath)[slice_], dtype=np.float32)
+            face /= 255.0 # scale uint8 coded colors to the [0.0, 1.0] floats
+            if resize is not None:
+                face = imresize(face, resize)
+            face_shape = face.shape
+            raveled_face = face.ravel()
+            if center:
+                raveled_face -= raveled_face.mean()
+            stddev = raveled_face.std()
+            if normalize and stddev != 0.0:
+                raveled_face /= stddev
+            pairs[i, j, :, :, :] = raveled_face.reshape(face_shape)
+
+    return pairs, target
+
+
+def load_lfw_pairs(subset='train', data_home=None,
+                   slice_=(slice(50, 200), slice(75, 175), None),
+                   center=True, normalize=True, funneled=True, resize=0.5):
     """Loader for the Labeled Faces in the Wild (LFW) dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -95,12 +183,53 @@ def load_lfw_pairs(subset='train', data_home=None):
     ----------
     subset: optional, default: 'train'
         Select the dataset to load: 'train' for the development
-        training set, 'test' for the development test set and '0_train',
-        '1_train'...,  '9_train' and '0_test', '1_test'..., '9_test'
-        for the 10-fold cross-validation used for comparative evaluations.
+        training set, 'test' for the development test set, and '10_folds' for
+        the official evaluation set that is meant to be used with a 10-folds
+        cross validation.
 
+    data_home: optional, default: None
+        Specify another download and cache folder for the datasets. By default
+        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+
+    slice_: optional
+        Provide a custom 3D slice (width, height, channels) to extract the
+        'interesting' part of the jpeg files
+
+    center: optional, True by default
+        Locally center the each face by removing the mean.
+
+    normalize: optional, True by default
+        Perform local constrast normalization by dividing by the stddev.
     """
 
-    lfw_home = check_fetch_lfw(data_home=data_home)
+    parameters = locals().copy()
+    del parameters['subset']
+    del parameters['data_home']
+    del parameters['funneled']
 
+    lfw_home, data_folder_path = check_fetch_lfw(data_home=data_home,
+                                                 funneled=funneled)
+
+    # wrap the loader in a memoizing function that will return memmaped data
+    # arrays for optimal memory usage
+    m = Memory(cachedir=join(lfw_home, 'joblib'), mmap_mode='c', verbose=0)
+    load_func = m.cache(_load_lfw_pairs)
+
+    # select the right metadata file harcording to the requested subset
+    label_filenames = {
+        'train': 'pairsDevTrain.txt',
+        'test': 'pairsDevTest.txt',
+        '10_folds': 'pairs.txt',
+    }
+    if subset not in label_filenames:
+        raise ValueError("subset='%s' is invalid: should be one of %r" % (
+            subset, list(sorted(label_filenames.keys()))))
+    index_file_path = join(lfw_home, label_filenames[subset])
+
+    # load and memoize the pairs as np arrays
+    pairs, target = load_func(index_file_path, data_folder_path, **parameters)
+
+    # pack the results as a Bunch instance
+    return Bunch(data=pairs, target=target,
+                 DESCR="'%s' segment of the LFW pairs dataset" % subset)
 
