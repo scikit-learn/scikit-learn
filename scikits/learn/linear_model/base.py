@@ -300,7 +300,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         return np.dot(X, self.coef_) + self.intercept_
 
 
-class SparseTransformerMixin(object):
+class CoefSelectTransformerMixin(object):
     """Mixin for linear models that can find sparse solutions.
     """
 

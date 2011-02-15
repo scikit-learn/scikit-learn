@@ -5,7 +5,7 @@
 
 import numpy as np
 
-class SparseTransformerMixin(object):
+class CoefSelectTransformerMixin(object):
     """Mixin for linear models that can find sparse solutions.
     """
 

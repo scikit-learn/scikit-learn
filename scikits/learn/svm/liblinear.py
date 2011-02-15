@@ -1,10 +1,10 @@
 
 from ..base import ClassifierMixin
-from ..linear_model.base import SparseTransformerMixin
+from ..linear_model.base import CoefSelectTransformerMixin
 from .base import BaseLibLinear
 
 
-class LinearSVC(BaseLibLinear, ClassifierMixin, SparseTransformerMixin):
+class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but uses internally
