@@ -33,7 +33,8 @@ Performance
 -----------
 
 The algorithm has to iterate over n_samples, which is the main
-bottleneck. It would be great to vectorize this loop.
+bottleneck. It would be great to vectorize this loop. Also, the rank
+updates could probably be moved outside the loop.
 
 Also, least squares solution could be computed more efficiently by a
 QR factorization, since probably we don't care about a minimum norm
