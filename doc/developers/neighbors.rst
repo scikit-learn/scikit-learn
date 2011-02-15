@@ -33,7 +33,8 @@ Performance
 -----------
 
 The algorithm has to iterate over n_samples, which is the main
-bottleneck. It would be great to vectorize this loop.
+bottleneck. It would be great to vectorize this loop. Also, the rank
+updates could probably be moved outside the loop.
 
 Also, least squares solution could be computed more efficiently by a
 QR factorization, since probably we don't care about a minimum norm
@@ -41,9 +42,8 @@ solution for the undertermined case.
 
 The paper 'An introduction to Locally Linear Embeddings', Saul &
 Roweis solves the problem by the normal equation method over the
-covariance matrix. This has the disadvantage that it does not degrade
-grathefully when the covariance is singular, requiring to explicitly
-add regularization.
+covariance matrix. However, it does not degrade grathefully when the
+covariance is singular, requiring to explicitly add regularization.
 
 
 Stability

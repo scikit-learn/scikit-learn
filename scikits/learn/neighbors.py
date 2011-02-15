@@ -1,6 +1,5 @@
-"""
-Nearest Neighbor related algorithms.
-"""
+"""Nearest Neighbor related algorithms"""
+
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #
@@ -12,19 +11,14 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .ball_tree import BallTree
 
 
-class Neighbors(BaseEstimator, ClassifierMixin):
+class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     """Classifier implementing k-Nearest Neighbor Algorithm.
 
     Parameters
     ----------
-    data : array-like, shape (n, k)
-        The data points to be indexed. This array is not copied, and so
-        modifying this data will result in bogus results.
-    labels : array
-        An array representing labels for the data (only arrays of
-        integers are supported).
     n_neighbors : int
         default number of neighbors.
+
     window_size : int
         Window size passed to BallTree
 
@@ -32,10 +26,10 @@ class Neighbors(BaseEstimator, ClassifierMixin):
     --------
     >>> samples = [[0, 0, 1], [1, 0, 0]]
     >>> labels = [0, 1]
-    >>> from scikits.learn.neighbors import Neighbors
-    >>> neigh = Neighbors(n_neighbors=1)
+    >>> from scikits.learn.neighbors import NeighborsClassifier
+    >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    Neighbors(n_neighbors=1, window_size=1)
+    NeighborsClassifier(n_neighbors=1, window_size=1)
     >>> print neigh.predict([[0,0,0]])
     [1]
 
@@ -102,16 +96,16 @@ class Neighbors(BaseEstimator, ClassifierMixin):
 
         Examples
         --------
-        In the following example, we construnct a Neighbors class from an
-        array representing our data set and ask who's the closest point to
-        [1,1,1]
+        In the following example, we construnct a NeighborsClassifier
+        class from an array representing our data set and ask who's
+        the closest point to [1,1,1]
 
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
         >>> labels = [0, 0, 1]
-        >>> from scikits.learn.neighbors import Neighbors
-        >>> neigh = Neighbors(n_neighbors=1)
+        >>> from scikits.learn.neighbors import NeighborsClassifier
+        >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        Neighbors(n_neighbors=1, window_size=1)
+        NeighborsClassifier(n_neighbors=1, window_size=1)
         >>> print neigh.kneighbors([1., 1., 1.])
         (array([ 0.5]), array([2]))
 
@@ -145,19 +139,6 @@ class Neighbors(BaseEstimator, ClassifierMixin):
         -------
         labels: array
             List of class labels (one for each data sample).
-
-        Examples
-        --------
-        >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
-        >>> labels = [0, 0, 1]
-        >>> from scikits.learn.neighbors import Neighbors
-        >>> neigh = Neighbors(n_neighbors=1)
-        >>> neigh.fit(samples, labels)
-        Neighbors(n_neighbors=1, window_size=1)
-        >>> neigh.predict([.2, .1, .2])
-        array([0])
-        >>> neigh.predict([[0., -1., 0.], [3., 2., 0.]])
-        array([0, 1])
         """
         X = np.atleast_2d(X)
         self._set_params(**params)
@@ -172,39 +153,38 @@ class Neighbors(BaseEstimator, ClassifierMixin):
 
 
 ###############################################################################
-# Neighbors Barycenter class for regression problems
+# NeighborsRegressor class for regression problems
 
-class NeighborsBarycenter(Neighbors, RegressorMixin):
+class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     """Regression based on k-Nearest Neighbor Algorithm.
 
     The target is predicted by local interpolation of the targets
     associated of the k-Nearest Neighbors in the training set.
-    The interpolation weights correspond to barycenter weights.
+
+    Different modes for estimating the result can be set via parameter
+    mode. 'barycenter' will apply the weights that best reconstruct
+    the point from its neighbors while 'mean' will apply constant
+    weights to each point.
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
-        The data points to be indexed. This array is not copied, and so
-        modifying this data will result in bogus results.
-
-    y : array-like, shape (n_samples)
-        An array representing labels for the data (only arrays of
-        integers are supported).
-
     n_neighbors : int
         default number of neighbors.
 
     window_size : int
         Window size passed to BallTree
 
+    mode : {'mean', 'barycenter'}
+        Weights to apply to labels.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
     >>> y = [0, 0, 1, 1]
-    >>> from scikits.learn.neighbors import NeighborsBarycenter
-    >>> neigh = NeighborsBarycenter(n_neighbors=2)
+    >>> from scikits.learn.neighbors import NeighborsRegressor
+    >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsBarycenter(n_neighbors=2, window_size=1)
+    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean')
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -212,6 +192,13 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
     -----
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
+
+
+    def __init__(self, n_neighbors=5, mode='mean', window_size=1):
+        self.n_neighbors = n_neighbors
+        self.window_size = window_size
+        self.mode = mode
+
 
     def predict(self, X, **params):
         """Predict the target for the provided data.
@@ -229,32 +216,31 @@ class NeighborsBarycenter(Neighbors, RegressorMixin):
         -------
         y: array
             List of target values (one for each data sample).
-
-        Examples
-        --------
-        >>> X = [[0], [1], [2]]
-        >>> y = [0, 0, 1]
-        >>> from scikits.learn.neighbors import NeighborsBarycenter
-        >>> neigh = NeighborsBarycenter(n_neighbors=2)
-        >>> neigh.fit(X, y)
-        NeighborsBarycenter(n_neighbors=2, window_size=1)
-        >>> neigh.predict([[.5], [1.5]])
-        array([ 0. ,  0.5])
         """
         X = np.atleast_2d(np.asanyarray(X))
         self._set_params(**params)
 
-        # get neighbors of X
+#
+#       .. compute neighbors ..
+#
         neigh_ind = self.ball_tree.query(
             X, k=self.n_neighbors, return_distance=False)
         neigh = self.ball_tree.data[neigh_ind]
 
-        # compute barycenters at each point
-        B = barycenter_weights(X, neigh)
-        labels = self._y[neigh_ind]
+#
+#       .. return labels ..
+#
+        if self.mode == 'barycenter':
+            W = barycenter_weights(X, neigh)
+            return (W * self._y[neigh_ind]).sum(axis=1)
 
-        return (B * labels).sum(axis=1)
+        elif self.mode == 'mean':
+            return np.mean(self._y[neigh_ind], axis=1)
 
+        else:
+            raise ValueError(
+                'Unsupported mode, must be one of "barycenter" or '
+                '"mean" but got %s instead' % self.mode)
 
 ###############################################################################
 # Utils k-NN based Functions
@@ -281,6 +267,9 @@ def barycenter_weights(X, Z, cond=None):
     -------
     B : array-like, shape (n_samples, n_neighbors)
 
+    Notes
+    -----
+    See developers note for more information.
     """
 #
 #       .. local variables ..
@@ -308,6 +297,7 @@ def barycenter_weights(X, Z, cond=None):
             C[:, 1:], X[i] - C[:, 0] / np.sqrt(n_neighbors), cond=cond,
             overwrite_a=True, overwrite_b=True)[0].ravel()
         B[i] = rank_update(alpha, v, np.dot(v.T, B[i]), a=B[i])
+
     return B
 
 
@@ -322,7 +312,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
     n_neighbors : int
         Number of neighbors for each sample.
 
-    mode : 'connectivity' | 'distance' | 'barycenter'
+    mode : {'connectivity', 'distance', 'barycenter'}
         Type of returned matrix: 'connectivity' will return the
         connectivity matrix with ones and zeros, in 'distance' the
         edges are euclidian distance between points. In 'barycenter'
@@ -331,7 +321,6 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
 
     Returns
     -------
-
     A : CSR sparse matrix, shape = [n_samples, n_samples]
         A[i,j] is assigned the weight of edge that connects i to j.
 
@@ -345,16 +334,20 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
             [ 0.,  1.,  1.],
             [ 1.,  0.,  1.]])
     """
+
+#
+#       .. local variables ..
+#
     from scipy import sparse
     X = np.asanyarray(X)
-
     n_samples = X.shape[0]
     ball_tree = BallTree(X)
-
-    # CSR matrix A is represented as A_data, A_ind and A_indptr.
     n_nonzero = n_neighbors * n_samples
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
+#
+#       .. construct CSR matrix ..
+#
     if mode is 'connectivity':
         A_data = np.ones((n_samples, n_neighbors))
         A_ind = ball_tree.query(
@@ -371,7 +364,9 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
         A_data = barycenter_weights(X, X[A_ind])
 
     else:
-        raise ValueError("Unsupported mode type")
+        raise ValueError(
+            'Unsupported mode, must be one of "connectivity", '
+            '"distance" or "barycenter" but got %s instead' % mode)
 
     A = sparse.csr_matrix(
         (A_data.reshape(-1), A_ind.reshape(-1), A_indptr),

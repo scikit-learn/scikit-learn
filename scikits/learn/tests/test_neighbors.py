@@ -16,20 +16,20 @@ def test_neighbors_1D():
     Y = [0]*(n/2) + [1]*(n/2)
 
     # n_neighbors = 1
-    knn = neighbors.Neighbors(n_neighbors=1)
+    knn = neighbors.NeighborsClassifier(n_neighbors=1)
     knn.fit(X, Y)
     test = [[i + 0.01] for i in range(0, n/2)] + \
            [[i - 0.01] for i in range(n/2, n)]
     assert_array_equal(knn.predict(test), [0]*3 + [1]*3)
 
     # n_neighbors = 2
-    knn = neighbors.Neighbors(n_neighbors=2)
+    knn = neighbors.NeighborsClassifier(n_neighbors=2)
     knn.fit(X, Y)
     assert_array_equal(knn.predict(test), [0]*4 + [1]*2)
 
 
     # n_neighbors = 3
-    knn = neighbors.Neighbors(n_neighbors=3)
+    knn = neighbors.NeighborsClassifier(n_neighbors=3)
     knn.fit(X, Y)
     assert_array_equal(knn.predict([[i +0.01] for i in range(0, n/2)]),
                         [0 for i in range(n/2)])
@@ -49,22 +49,27 @@ def test_neighbors_2D():
         (-1, 0), (-1, -1), (0, -1)) # label 1
     n_2 = len(X)/2
     Y = [0]*n_2 + [1]*n_2
-    knn = neighbors.Neighbors()
+    knn = neighbors.NeighborsClassifier()
     knn.fit(X, Y)
 
     prediction = knn.predict([[0, .1], [0, -.1], [.1, 0], [-.1, 0]])
     assert_array_equal(prediction, [0, 1, 0, 1])
 
 
-def test_neighbors_barycenter():
+def test_neighbors_regressor():
     """
-    NeighborsBarycenter for regression using k-NN
+    NeighborsRegressor for regression using k-NN
     """
     X = [[0], [1], [2], [3]]
     y = [0, 0, 1, 1]
-    neigh = neighbors.NeighborsBarycenter(n_neighbors=2)
-    neigh.fit(X, y)
-    assert_array_almost_equal(neigh.predict([[1.5]]), [0.5])
+    neigh = neighbors.NeighborsRegressor(n_neighbors=3)
+    neigh.fit(X, y, mode='barycenter')
+    assert_array_almost_equal(
+        neigh.predict([[1.], [1.5]]), [0.333, 0.583], decimal=3)
+    neigh.fit(X, y, mode='mean')
+    assert_array_almost_equal(
+        neigh.predict([[1.], [1.5]]), [0.333, 0.333], decimal=3)
+    
 
 
 def test_kneighbors_graph():
