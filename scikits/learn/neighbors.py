@@ -188,7 +188,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     window_size : int
         Window size passed to BallTree
 
-    mode : 'barycenter' | 'distance' | 'mean'
+    mode : {'mean', 'barycenter'}
         Weights to apply to labels.
 
     Examples
@@ -198,7 +198,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, window_size=1, mode='barycenter')
+    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean')
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -208,7 +208,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     """
 
 
-    def __init__(self, n_neighbors=5, mode='barycenter', window_size=1):
+    def __init__(self, n_neighbors=5, mode='mean', window_size=1):
         self.n_neighbors = n_neighbors
         self.window_size = window_size
         self.mode = mode

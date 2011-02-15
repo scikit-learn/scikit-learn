@@ -63,7 +63,7 @@ def test_neighbors_regressor():
     X = [[0], [1], [2], [3]]
     y = [0, 0, 1, 1]
     neigh = neighbors.NeighborsRegressor(n_neighbors=3)
-    neigh.fit(X, y)
+    neigh.fit(X, y, mode='barycenter')
     assert_array_almost_equal(
         neigh.predict([[1.], [1.5]]), [0.333, 0.583], decimal=3)
     neigh.fit(X, y, mode='mean')
