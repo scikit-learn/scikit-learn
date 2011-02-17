@@ -17,10 +17,10 @@ rf_learner : A learner object
 from __future__ import division
 import numpy as np
 from .base import normaliselabels
-#from .tree import tree
+from .tree import DecisionTree
 
 __all__ = [
-    'rf_learner',
+    'RandomForest',
     ]
 
 def _sample(features, labels, n, R):
@@ -76,22 +76,22 @@ class RandomForest(object):
         m = int(self.frac*M)
         n = int(self.frac*M)
         R = np.random
-        tree = milk.supervised.tree.tree_learner()
+        tree = DecisionTree()
         forest = []
         if not normalisedlabels:
             labels,names = normaliselabels(labels)
         elif names is None:
             names = (0,1)
         for i in xrange(self.rf):
-            forest.append(
-                    tree.train(*_sample(features, labels, n, R),
-                               **{'normalisedlabels' : True})) # This syntax is necessary for Python 2.5
+            tree = DecisionTree()
+            tree.fit(*_sample(features, labels, n, R),
+                      **{'normalisedlabels' : True}) # This syntax is necessary for Python 2.5
+            forest.append(tree)
         self.forest = forest
         self.names = names
         
     def predict(self, features):
         rf = len(self.forest)
-        votes = sum(t.apply(features) for t in self.forest)
+        votes = sum(t.predict(features) for t in self.forest)
         return (votes > (rf//2))
-
 

@@ -16,6 +16,7 @@ Decision tree based classifier
 from __future__ import division
 import numpy as np
 from .base import normaliselabels
+from .criteria import information_gain
 
 __all__ = [
     'DecisionTree',
@@ -66,33 +67,6 @@ def _split(features, labels, weights, criterion, subsample, R):
     return best
 
 
-from ._tree import set_entropy
-def information_gain(labels0, labels1, include_entropy=False):
-    clen = max(labels0.max(), labels1.max()) + 1
-    N0 = np.prod(labels0.shape)
-    N1 = np.prod(labels1.shape)
-    N = float(N0 + N1)
-    H = - N0/N * set_entropy(labels0, N0,  clen) - N1/N * set_entropy(labels1, N1, clen)
-    if include_entropy:
-        H += set_entropy(np.concatenate( (labels0, labels1) ), int(N), clen)
-    return H
-
-def z1_loss(labels0, labels1, weights0=None, weights1=None):
-    '''
-    z = z1_loss(labels0, labels1)
-    z = z1_loss(labels0, labels1, weights0, weights1)
-
-    zero-one loss split for tree learning
-    '''
-    def _acc(labels, weights):
-        c = (labels.mean() > .5)
-        if weights is not None:
-            return -np.dot((labels != c), weights)
-        return -np.sum(labels != c)
-    return _acc(labels0, weights0) + _acc(labels1, weights1)
-
-
-
 def build_tree(features, labels, criterion, min_split=4, subsample=None, R=None, weights=None):
     '''
     tree = build_tree(features, labels, criterion, min_split=4, subsample=None, R=None, weights={all 1s})
@@ -124,7 +98,7 @@ def build_tree(features, labels, criterion, min_split=4, subsample=None, R=None,
     if subsample is not None:
         if subsample <= 0:
             raise ValueError('milk.supervised.tree.build_tree: `subsample` must be > 0.\nDid you mean to use None to signal no subsample?')
-        from ..utils import get_pyrandom
+        from .base import get_pyrandom
         R = get_pyrandom(R)
 
     def recursive(features, labels):
@@ -185,30 +159,17 @@ class DecisionTree(object):
     def fit(self, features, labels, normalisedlabels=False, weights=None):
         if not normalisedlabels:
             labels,names = normaliselabels(labels)
-        tree = build_tree(features, labels, self.criterion, self.min_split, self.subsample, self.R, weights)
-        self.tree = tree
+        self.tree = build_tree(features, labels, self.criterion, self.min_split, self.subsample, self.R, weights)
 
     def predict(self,feats):
-        value = apply_tree(self.tree, feats)
-        if self.return_label:
-            return value > .5
-        return value
-
-tree_classifier = DecisionTree
-
-class Stump(object):
-    def __init__(self):
-        pass
-
-    def fit(self, features, labels, normalisedlabels=False, weights=None, **kwargs):
-        if not normalisedlabels:
-            labels, self.names = normaliselabels(labels)
-        else:
-            self.names = labels
-        self.idx,self.cutoff = _split(features, labels, weights, z1_loss, subsample=None, R=None)
-
-    def predict(self, f):
-        return self.names[f[self.idx] > self.cutoff]
-
-    def __repr__(self):
-        return '<stump(%s, %s)>' % (self.idx, self.cutoff)
+        values = []
+        for f in feats:
+            value = apply_tree(self.tree, f)
+            print value
+            if self.return_label:
+                values.append(value > .5)
+            else:
+                values.append(value)
+        if len(feats.shape) == 1:
+            values = values[0]
+        return values
