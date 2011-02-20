@@ -1,5 +1,5 @@
-from numpy.testing import assert_array_equal, assert_array_almost_equal, \
-                          assert_equal
+import numpy as np
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from scikits.learn import neighbors
 
@@ -12,25 +12,29 @@ def test_neighbors_1D():
     """
     # some constants
     n = 6
-    n_2 = n/2
     X = [[x] for x in range(0, n)]
-    Y = [0]*n_2 + [1]*n_2
+    Y = [0]*(n/2) + [1]*(n/2)
 
     # n_neighbors = 1
-    knn = neighbors.Neighbors(n_neighbors=1)
+    knn = neighbors.NeighborsClassifier(n_neighbors=1)
     knn.fit(X, Y)
-    test = [[i + 0.01] for i in range(0, n_2)] + \
-           [[i - 0.01] for i in range(n_2, n)]
-    assert_array_equal(knn.predict(test), [0, 0, 0, 1, 1, 1])
-    # same as before, but using predict() instead of Neighbors object
+    test = [[i + 0.01] for i in range(0, n/2)] + \
+           [[i - 0.01] for i in range(n/2, n)]
+    assert_array_equal(knn.predict(test), [0]*3 + [1]*3)
+
+    # n_neighbors = 2
+    knn = neighbors.NeighborsClassifier(n_neighbors=2)
+    knn.fit(X, Y)
+    assert_array_equal(knn.predict(test), [0]*4 + [1]*2)
+
 
     # n_neighbors = 3
-    knn = neighbors.Neighbors(n_neighbors=3)
+    knn = neighbors.NeighborsClassifier(n_neighbors=3)
     knn.fit(X, Y)
-    assert_array_equal(knn.predict([[i +0.01] for i in range(0, n_2)]),
-                        [0 for i in range(n_2)])
-    assert_array_equal(knn.predict([[i-0.01] for i in range(n_2, n)]),
-                        [1 for i in range(n_2)])
+    assert_array_equal(knn.predict([[i +0.01] for i in range(0, n/2)]),
+                        [0 for i in range(n/2)])
+    assert_array_equal(knn.predict([[i-0.01] for i in range(n/2, n)]),
+                        [1 for i in range(n/2)])
 
 
 def test_neighbors_2D():
@@ -45,67 +49,82 @@ def test_neighbors_2D():
         (-1, 0), (-1, -1), (0, -1)) # label 1
     n_2 = len(X)/2
     Y = [0]*n_2 + [1]*n_2
-    knn = neighbors.Neighbors()
+    knn = neighbors.NeighborsClassifier()
     knn.fit(X, Y)
 
     prediction = knn.predict([[0, .1], [0, -.1], [.1, 0], [-.1, 0]])
     assert_array_equal(prediction, [0, 1, 0, 1])
 
 
-def test_neighbors_barycenter():
+def test_neighbors_regressor():
     """
-    NeighborsBarycenter for regression using k-NN
+    NeighborsRegressor for regression using k-NN
     """
     X = [[0], [1], [2], [3]]
     y = [0, 0, 1, 1]
-    neigh = neighbors.NeighborsBarycenter(n_neighbors=2)
-    neigh.fit(X, y)
-    assert_equal(neigh.predict([[1.5]]), 0.5)
+    neigh = neighbors.NeighborsRegressor(n_neighbors=3)
+    neigh.fit(X, y, mode='barycenter')
+    assert_array_almost_equal(
+        neigh.predict([[1.], [1.5]]), [0.333, 0.583], decimal=3)
+    neigh.fit(X, y, mode='mean')
+    assert_array_almost_equal(
+        neigh.predict([[1.], [1.5]]), [0.333, 0.333], decimal=3)
+    
 
 
 def test_kneighbors_graph():
     """
     Test kneighbors_graph to build the k-Nearest Neighbor graph.
     """
-    X = [[0], [1.01], [2]]
+    X = [[0, 1], [1.01, 1.], [2, 0]]
 
-    A = neighbors.kneighbors_graph(X, 2, weight=None)
-    assert_array_equal(A.todense(),
-                       [[1, 1, 0], [0, 1, 1], [0, 1, 1]])
+    # n_neighbors = 1
+    A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
+    assert_array_equal(A.todense(), np.eye(A.shape[0]))
 
-    A = neighbors.kneighbors_graph(X, 2, weight=None, drop_first=True)
-    assert_array_equal(A.todense(),
-                       [[0, 1, 0], [0, 0, 1], [0, 1, 0]])
+    A = neighbors.kneighbors_graph(X, 1, mode='distance')
+    assert_array_almost_equal(
+        A.todense(),
+        [[ 0.        ,  1.01      ,  0.        ],
+         [ 1.01      ,  0.        ,  0.        ],
+         [ 0.        ,  1.40716026,  0.        ]])
 
-    A = neighbors.kneighbors_graph(X, 2, weight="distance")
-    assert_array_almost_equal(A.todense(),
-                              [[0, 1.01, 0], [0, 0, 0.99], [0, 0.99, 0]], 4)
+    A = neighbors.kneighbors_graph(X, 1, mode='barycenter')
+    assert_array_almost_equal(
+        A.todense(),
+        [[ 0.,  1.,  0.],
+         [ 1.,  0.,  0.],
+         [ 0.,  1.,  0.]])
 
-    A = neighbors.kneighbors_graph(X, 2, weight="distance", drop_first=True)
-    assert_array_almost_equal(A.todense(),
-                              [[0, 1.01, 0], [0, 0, 0.99], [0, 0.99, 0]], 4)
+    # n_neigbors = 2
+    A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
+    assert_array_equal(
+        A.todense(),
+        [[ 1.,  1.,  0.],
+         [ 1.,  1.,  0.],
+         [ 0.,  1.,  1.]])
 
-    A = neighbors.kneighbors_graph(X, 2, weight='barycenter')
-    assert_array_almost_equal(A.todense(),
-                              [[0.99, 0, 0], [0, 0.99, 0], [0, 0, 0.99]], 2)
+    A = neighbors.kneighbors_graph(X, 2, mode='distance')
+    assert_array_almost_equal(
+        A.todense(),
+        [[ 0.        ,  1.01      ,  2.23606798],
+         [ 1.01      ,  0.        ,  1.40716026],
+         [ 2.23606798,  1.40716026,  0.        ]])
 
-    A = neighbors.kneighbors_graph(X, 2, weight='barycenter', drop_first=True)
-    assert_array_almost_equal(A.todense(),
-                              [[0, 1, 0], [0, 0, 1], [0, 1, 0]], 2)
+    A = neighbors.kneighbors_graph(X, 2, mode='barycenter')
+    # check that columns sum to one
+    assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
+    assert_array_almost_equal(
+        A.todense(),
+        [[ 0.        ,  1.5049745 , -0.5049745 ],
+        [ 0.596     ,  0.        ,  0.404     ],
+        [-0.98019802,  1.98019802,  0.        ]])
 
-    # Also check corner cases
-    # TODO: result should be compared
-    A = neighbors.kneighbors_graph(X, 3, weight=None)
-    assert_array_almost_equal(A.todense(),
-                              [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
-
-    A = neighbors.kneighbors_graph(X, 3, weight="distance")
-    assert_array_almost_equal(A.todense(),
-                              [[ 0.  ,  1.01,  2.  ],
-                               [ 1.01,  0.  ,  0.99],
-                               [ 2.  ,  0.99,  0.  ]])
-
-    A = neighbors.kneighbors_graph(X, 3, weight="barycenter")
+    # n_neighbors = 3
+    A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
+    assert_array_almost_equal(
+        A.todense(),
+        [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
 
 if __name__ == '__main__':

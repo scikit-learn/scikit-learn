@@ -1,7 +1,7 @@
 import numpy as np
 
 from numpy.testing import assert_array_equal, \
-     assert_array_almost_equal
+     assert_array_almost_equal, assert_almost_equal
 import nose
 from nose.tools import assert_raises
 
@@ -59,6 +59,15 @@ def test_inconsistent_input():
     assert_raises(ValueError,
                   logistic.LogisticRegression().fit(X_, y_).predict,
                   np.random.random((3,12)))
+
+def test_transform():
+    clf = logistic.LogisticRegression(penalty="l1")
+    clf.fit(iris.data, iris.target)
+    X_new = clf.transform(iris.data)
+    clf = logistic.LogisticRegression()
+    clf.fit(X_new, iris.target)
+    pred = clf.predict(X_new)
+    assert np.mean(pred == iris.target) >= 0.75
 
 if __name__ == '__main__':
     import nose

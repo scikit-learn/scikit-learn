@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_, assert_array_almost_equal
 
 from scikits.learn import linear_model, datasets
 
@@ -73,6 +73,19 @@ def test_lasso_gives_lstsq_solution():
     alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq , coef_path_[:,-1])
+
+
+def test_collinearity():
+    """Check that lars_path is robust to collinearity in input"""
+
+    X = np.array([[3., 3., 1.],
+                  [2., 2., 0.],
+                  [1., 1., 0]])
+    y = np.array([1., 0., 0])
+
+    _, _, coef_path_ = linear_model.lars_path(X, y)
+    assert_(not np.isnan(coef_path_).any())
+    assert_array_almost_equal(np.dot(X, coef_path_[:,-1]), y)
 
 
 def test_singular_matrix():

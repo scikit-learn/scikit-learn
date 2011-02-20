@@ -22,7 +22,7 @@ h = .02 # step size in the mesh
 
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-clf = neighbors.Neighbors()
+clf = neighbors.NeighborsClassifier()
 clf.fit(X, Y)
 
 # Plot the decision boundary. For that, we will asign a color to each

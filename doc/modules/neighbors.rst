@@ -16,9 +16,9 @@ the decision boundary is very irregular.
 Classification
 ==============
 
-The :class:`Neighbors` estimators implements the nearest-neighbors
-classification method using a vote heuristic: the class most present in
-the k nearest neighbors of a point is assigned to this point.
+The :class:`NeighborsClassifier` implements the nearest-neighbors
+classification method using a vote heuristic: the class most present
+in the k nearest neighbors of a point is assigned to this point.
 
 .. figure:: ../auto_examples/images/plot_neighbors.png
    :target: ../auto_examples/plot_neighbors.html
@@ -31,12 +31,17 @@ the k nearest neighbors of a point is assigned to this point.
   * :ref:`example_plot_neighbors.py`: an example of classification
     using nearest neighbor.
 
+
 Regression
 ==========
 
-The :class:`NeighborsBarycenter` estimator implements a nearest-neighbors
-regression method using barycenter weighting of the targets of the
-k-neighbors.
+The :class:`NeighborsRegressor` estimator implements a
+nearest-neighbors regression method by weighting the targets of the
+k-neighbors. Two different weighting strategies are implemented:
+``barycenter`` and ``mean``. ``barycenter`` will apply the weights
+that best reconstruct the point from its neighbors while ``mean`` will
+apply constant weights to each point. This plot shows the behavior of
+both classifier for a simple regression task.
 
 .. figure:: ../auto_examples/images/plot_neighbors_regression.png
    :target: ../auto_examples/plot_neighbors_regression.html

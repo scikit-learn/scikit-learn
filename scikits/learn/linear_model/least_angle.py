@@ -79,6 +79,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
     # holds the sign of covariance
     sign_active = np.empty(max_features, dtype=np.int8)
     drop = False
+    eps = np.finfo(X.dtype).eps
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
@@ -156,7 +157,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             arrayfuncs.solve_triangular(L[:n_active, :n_active],
                                         L[n_active, :n_active])
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
-            L[n_active,  n_active] = np.sqrt(c - v)
+            diag = max(np.sqrt(np.abs(c - v)), eps)
+            L[n_active,  n_active] = diag
 
             active.append(indices[n_active])
             n_active += 1

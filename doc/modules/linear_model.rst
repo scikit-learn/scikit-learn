@@ -64,12 +64,11 @@ example, when data are collected without an experimental design.
 
 
 OLS Complexity
-------------------
+--------------
 
 This method computes the least squares solution using a singular value
 decomposition of X. If X is a matrix of size (n, p ) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
-
 
 Ridge Regression
 ================
@@ -105,6 +104,27 @@ Ridge Complexity
 
 This method has the same order of complexity than an
 :ref:`ordinary_least_squares`.
+
+Generalized Cross-Validation
+----------------------------
+
+:class:`RidgeCV` implements ridge regression with built-in cross-validation of the alpha parameter.
+The object works in the same way as GridSearchCV except that it defaults to Generalized Cross-Validation (GCV), an efficient form of leave-one-out cross-validation.
+
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    RidgeCV(alphas=[0.10000000000000001, 1.0, 10.0], loss_func=None, cv=None,
+        score_func=None, fit_intercept=True)
+    >>> clf.best_alpha
+    0.10000000000000001
+
+.. topic:: References
+
+    * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
+      <http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+      `course slides
+      <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 Lasso
 =====
