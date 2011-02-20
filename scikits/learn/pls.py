@@ -204,11 +204,11 @@ class _PLS(BaseEstimator):
         self._set_params(**params)
         # copy since this will contains the residuals (deflated) matrices
         if self.copy:
-            X = np.asanyarray(X).copy()
-            Y = np.asanyarray(Y).copy()
+            X = np.asanyarray(X, dtype=np.float).copy()
+            Y = np.asanyarray(Y, dtype=np.float).copy()
         else:
-            X = np.asanyarray(X)
-            Y = np.asanyarray(Y)
+            X = np.asanyarray(X, dtype=np.float)
+            Y = np.asanyarray(Y, dtype=np.float)
 
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
@@ -260,7 +260,9 @@ class _PLS(BaseEstimator):
             # compute scores
             x_score = np.dot(Xk, u)
             y_score = np.dot(Yk, v)
-
+            # test for null variance
+            if np.dot(x_score.T, x_score) < np.finfo(np.double).eps:
+                warnings.warn('X scores are null at iteration %s' % k)
             #2) Deflation (in place)
             # ----------------------
             # Possible memory footprint reduction may done here: in order to
@@ -280,7 +282,6 @@ class _PLS(BaseEstimator):
                 # - regress Yk's on x_score, then substract rank-one approx.
                 y_loadings = np.dot(Yk.T, x_score) / np.dot(x_score.T, x_score)
                 Yk -= np.dot(x_score, y_loadings.T)
-
             # 3) Store weights, scores and loadings     # Notation:
             self.x_scores_[:, k] = x_score.ravel()      # T
             self.y_scores_[:, k] = y_score.ravel()      # U
@@ -301,7 +302,7 @@ class _PLS(BaseEstimator):
         else:
             self.y_rotations_ = np.ones(1)
 
-        if self.deflation_mode is "regression":
+        if True or self.deflation_mode is "regression":
             # Estimate regression coeficient
             # Regress Y on T
             # Y = TQ' + Err,

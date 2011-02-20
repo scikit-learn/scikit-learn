@@ -125,3 +125,4 @@ cca = CCA()
 cca.fit(X_train, Y_train, n_components=2)
 X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
 X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
+
