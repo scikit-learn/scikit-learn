@@ -73,8 +73,6 @@ def check_fetch_lfw(data_home=None, funneled=True):
     if not exists(lfw_home):
         makedirs(lfw_home)
 
-    logging.info("LFW parent data folder: %s", lfw_home)
-
     if not exists(archive_path):
         import urllib
         logging.info("Downloading LFW data: %s", archive_url)
@@ -98,16 +96,20 @@ def check_fetch_lfw(data_home=None, funneled=True):
 
 
 def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
-                    center=True, normalize=True, resize=None):
+                    resize=None):
     """Perform the actual data loading
 
     This operation is meant to be cached by a joblib wrapper.
     """
+    # parse the index file to find the number of pairs to be able to allocate
+    # the right amount of memory before starting to decode the jpeg files
     with open(index_file_path) as f:
         splitted_lines = [l.strip().split('\t') for l in f.readlines()]
-    filtered = [l for l in splitted_lines if len(l) > 2]
-    n_pairs = len(filtered)
+    pair_specs = [l for l in splitted_lines if len(l) > 2]
+    n_pairs = len(pair_specs)
 
+    # compute the portion of the images to load to respect the slice_ parameter
+    # given by the caller
     default_slice = (slice(0, 250), slice(0, 250), slice(0, 3))
     if slice_ is None:
         slice_ = default_slice
@@ -123,10 +125,13 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
         h = int(resize * h)
         w = int(resize * w)
 
+    # allocate some contiguous memory to host the decoded image slices
     target = np.zeros(n_pairs, dtype=np.int)
     pairs = np.zeros((n_pairs, 2, h, w, c), dtype=np.float32)
 
-    for i, components in enumerate(filtered):
+    # interating over the metadata lines for each pair to find the filename to
+    # decode and load in memory
+    for i, components in enumerate(pair_specs):
         if i % 1000 == 0:
             logging.info("Loading pair #%05d / %05d", i + 1, n_pairs)
 
@@ -154,19 +159,13 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
                 face = imresize(face, resize)
             face_shape = face.shape
             raveled_face = face.ravel()
-            if center:
-                raveled_face -= raveled_face.mean()
-            stddev = raveled_face.std()
-            if normalize and stddev != 0.0:
-                raveled_face /= stddev
             pairs[i, j, :, :, :] = raveled_face.reshape(face_shape)
 
     return pairs, target
 
 
-def load_lfw_pairs(subset='train', data_home=None,
-                   slice_=(slice(50, 200), slice(75, 175), None),
-                   center=True, normalize=True, funneled=True, resize=0.5):
+def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
+                   slice_=(slice(50, 200), slice(75, 175), None)):
     """Loader for the Labeled Faces in the Wild (LFW) dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -175,9 +174,12 @@ def load_lfw_pairs(subset='train', data_home=None,
 
         http://vis-www.cs.umass.edu/lfw/
 
-    Each picture is centered on a single face. The task is called Face
-    Verification: given a pair of two pictures, a binary classifier must
-    predict whether the two images are from the same person.
+    Each picture is centered on a single face. Each pixel of each channel (color
+    in RGB) is encoded by a float in range 0.0 - 1.0.
+
+    The task is called Face Verification: given a pair of two pictures,
+    a binary classifier must predict whether the two images are from
+    the same person.
 
     Parameters
     ----------
@@ -191,15 +193,15 @@ def load_lfw_pairs(subset='train', data_home=None,
         Specify another download and cache folder for the datasets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
+    funneled: boolean, optional, default: True
+        Download and use the funneled variant of the dataset.
+
+    resize: float, optional, default 0.5
+        Ratio used to resize the each face picture.
+
     slice_: optional
         Provide a custom 3D slice (width, height, channels) to extract the
         'interesting' part of the jpeg files
-
-    center: optional, True by default
-        Locally center the each face by removing the mean.
-
-    normalize: optional, True by default
-        Perform local constrast normalization by dividing by the stddev.
     """
 
     parameters = locals().copy()
@@ -209,6 +211,7 @@ def load_lfw_pairs(subset='train', data_home=None,
 
     lfw_home, data_folder_path = check_fetch_lfw(data_home=data_home,
                                                  funneled=funneled)
+    logging.info('Loading %s LFW pairs from %s', subset, lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
