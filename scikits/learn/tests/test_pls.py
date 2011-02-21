@@ -164,15 +164,3 @@ def test_pls():
     assert_array_almost_equal(pls2.predict(X), ypred)
     
 
-from scikits.learn.datasets import load_linnerud
-from scikits.learn import pls
-
-d = load_linnerud()
-X = d['data_exercise']
-Y = d['data_physiological']
-cca = pls.CCA(scale=False)
-
-cca.fit(X, Y, n_components=3)
-
-np.round(np.corrcoef(cca.x_scores_.T, cca.y_scores_.T),3)
-
