@@ -40,6 +40,6 @@ __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors',
            'pca', 'pipeline', 'preprocessing', 'qda', 'svm', 'test',
-           'clone']
+           'clone', 'pls']
 
 __version__ = '0.7.git'
