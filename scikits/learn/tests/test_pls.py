@@ -45,10 +45,8 @@ def test_pls():
     Wy = plsca.y_weights_
 
     def check_ortho(M, err_msg):
-        MtM = np.dot(M.T, M)
-        MtM_rmdiag = MtM - np.diag(np.diag(MtM))
-        zero_mat = np.zeros(MtM.size).reshape(MtM.shape)
-        assert_array_almost_equal(MtM_rmdiag, zero_mat, err_msg=err_msg)
+        K = np.dot(M.T, M)
+        assert_array_almost_equal(K, np.diag(np.diag(K)), err_msg=err_msg)
 
     # Orthogonality of weights
     # ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,16 +161,4 @@ def test_pls():
 
     assert_array_almost_equal(pls2.predict(X), ypred)
     
-
-from scikits.learn.datasets import load_linnerud
-from scikits.learn import pls
-
-d = load_linnerud()
-X = d['data_exercise']
-Y = d['data_physiological']
-cca = pls.CCA(scale=False)
-
-cca.fit(X, Y, n_components=3)
-
-np.round(np.corrcoef(cca.x_scores_.T, cca.y_scores_.T),3)
 
