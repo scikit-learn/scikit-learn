@@ -50,6 +50,7 @@ TARGET_FILENAMES = [
     'pairs.txt',
 ]
 
+
 def scale_face(face):
     """Scale back to 0-1 range in case of normalization for plotting"""
     scaled = face - face.min()
@@ -156,7 +157,7 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
             logging.info("Loading face #%05d / %05d", i + 1, n_faces)
 
         face = np.asarray(imread(file_path)[slice_], dtype=np.float32)
-        face /= 255.0 # scale uint8 coded colors to the [0.0, 1.0] floats
+        face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
         if resize is not None:
             face = imresize(face, resize)
         if not color:
@@ -187,11 +188,12 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
 
         http://vis-www.cs.umass.edu/lfw/
 
-    Each picture is centered on a single face. Each pixel of each channel (color
-    in RGB) is encoded by a float in range 0.0 - 1.0.
+    Each picture is centered on a single face. Each pixel of each channel
+    (color in RGB) is encoded by a float in range 0.0 - 1.0.
 
-    The task is called Face Recognition (or Identification): given the picture
-    of a face, find the name of the person given a training set (gallery).
+    The task is called Face Recognition (or Identification): given the
+    picture of a face, find the name of the person given a training set
+    (gallery).
 
     Parameters
     ----------
@@ -210,9 +212,9 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
         least `min_faces_per_person` different pictures.
 
     color: boolean, optional, default False
-        Keep the 3 RGB channels instead of averaging them to a single gray level
-        channel. If color is True the shape of the data has one more dimension
-        than than the shape with color = False.
+        Keep the 3 RGB channels instead of averaging them to a single
+        gray level channel. If color is True the shape of the data has
+        one more dimension than than the shape with color = False.
 
     slice_: optional
         Provide a custom 2D slice (height, width) to extract the
@@ -307,7 +309,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
             filenames = list(sorted(listdir(person_folder)))
             filepath = join(person_folder, filenames[idx])
             face = np.asarray(imread(filepath)[slice_], dtype=np.float32)
-            face /= 255.0 # scale uint8 coded colors to the [0.0, 1.0] floats
+            face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
             if resize is not None:
                 face = imresize(face, resize)
             if not color:
@@ -330,8 +332,8 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
         http://vis-www.cs.umass.edu/lfw/
 
-    Each picture is centered on a single face. Each pixel of each channel (color
-    in RGB) is encoded by a float in range 0.0 - 1.0.
+    Each picture is centered on a single face. Each pixel of each channel
+    (color in RGB) is encoded by a float in range 0.0 - 1.0.
 
     The task is called Face Verification: given a pair of two pictures,
     a binary classifier must predict whether the two images are from
@@ -346,14 +348,15 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     Parameters
     ----------
     subset: optional, default: 'train'
-        Select the dataset to load: 'train' for the development
-        training set, 'test' for the development test set, and '10_folds' for
-        the official evaluation set that is meant to be used with a 10-folds
+        Select the dataset to load: 'train' for the development training
+        set, 'test' for the development test set, and '10_folds' for the
+        official evaluation set that is meant to be used with a 10-folds
         cross validation.
 
     data_home: optional, default: None
-        Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        Specify another download and cache folder for the datasets. By
+        default all scikit learn data is stored in '~/scikit_learn_data'
+        subfolders.
 
     funneled: boolean, optional, default: True
         Download and use the funneled variant of the dataset.
@@ -362,9 +365,9 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         Ratio used to resize the each face picture.
 
     color: boolean, optional, default False
-        Keep the 3 RGB channels instead of averaging them to a single gray level
-        channel. If color is True the shape of the data has one more dimension
-        than than the shape with color = False.
+        Keep the 3 RGB channels instead of averaging them to a single
+        gray level channel. If color is True the shape of the data has
+        one more dimension than than the shape with color = False.
 
     slice_: optional
         Provide a custom 2D slice (height, width) to extract the
@@ -403,4 +406,3 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     # pack the results as a Bunch instance
     return Bunch(data=pairs, target=target,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
-
