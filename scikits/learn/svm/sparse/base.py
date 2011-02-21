@@ -1,12 +1,12 @@
 import numpy as np
 
-from ...base import ClassifierMixin
 from ..base import BaseLibSVM, BaseLibLinear, _get_class_weight
 
 from ._libsvm_sparse import libsvm_sparse_train, \
      libsvm_sparse_predict, set_verbosity_wrap
 
 from .. import _liblinear
+
 
 class SparseBaseLibSVM(BaseLibSVM):
 
@@ -22,7 +22,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         assert kernel in self._kernel_types, \
                "kernel should be one of %s, "\
-               "%s was given." % ( self._kernel_types, kernel)
+               "%s was given." % (self._kernel_types, kernel)
 
         self.kernel = kernel
         self.impl = impl
@@ -38,19 +38,18 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.probability = probability
 
         # container for when we call fit
-        self._support_data    = np.empty (0, dtype=np.float64, order='C')
-        self._support_indices = np.empty (0, dtype=np.int32, order='C')
-        self._support_indptr  = np.empty (0, dtype=np.int32, order='C')
+        self._support_data = np.empty(0, dtype=np.float64, order='C')
+        self._support_indices = np.empty(0, dtype=np.int32, order='C')
+        self._support_indptr = np.empty(0, dtype=np.int32, order='C')
 
         # strictly speaking, dual_coef is not sparse (see Notes above)
-        self._dual_coef_data    = np.empty (0, dtype=np.float64, order='C')
-        self._dual_coef_indices = np.empty (0, dtype=np.int32,   order='C')
-        self._dual_coef_indptr  = np.empty (0, dtype=np.int32,   order='C')
-        self.intercept_         = np.empty (0, dtype=np.float64, order='C')
+        self._dual_coef_data = np.empty(0, dtype=np.float64, order='C')
+        self._dual_coef_indices = np.empty(0, dtype=np.int32,   order='C')
+        self._dual_coef_indptr = np.empty(0, dtype=np.int32,   order='C')
+        self.intercept_ = np.empty(0, dtype=np.float64, order='C')
 
         # only used in classification
         self.n_support = np.empty(0, dtype=np.int32, order='C')
-
 
     def fit(self, X, y, class_weight={}, sample_weight=[], **params):
         """
@@ -93,7 +92,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         import scipy.sparse
         X = scipy.sparse.csr_matrix(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
-        y      = np.asanyarray(y,      dtype=np.float64, order='C')
+        y = np.asanyarray(y, dtype=np.float64, order='C')
         sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
                                       order='C')
 
@@ -105,9 +104,9 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         if (kernel_type == 2) and (self.gamma == 0):
             # if custom gamma is not provided ...
-            self.gamma = 1.0/X.shape[0]
+            self.gamma = 1.0 / X.shape[0]
 
-        self.label_, self.probA_, self.probB_ = libsvm_sparse_train (
+        self.label_, self.probA_, self.probB_ = libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y,
                  solver_type, kernel_type, self.degree, self.gamma,
                  self.coef0, self.eps, self.C, self._support_data,
@@ -129,7 +128,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.support_vectors_ = scipy.sparse.csr_matrix((self._support_data,
                                            self._support_indices,
                                            self._support_indptr),
-                                           (n_SV, X.shape[1]) )
+                                           (n_SV, X.shape[1]))
 
         self.dual_coef_ = scipy.sparse.csr_matrix((self._dual_coef_data,
                                              dual_coef_indices,
@@ -137,7 +136,6 @@ class SparseBaseLibSVM(BaseLibSVM):
                                             (n_class, n_SV)
                                             )
         return self
-
 
     def predict(self, T):
         """
@@ -163,15 +161,15 @@ class SparseBaseLibSVM(BaseLibSVM):
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
 
-        return libsvm_sparse_predict (T.data, T.indices, T.indptr,
+        return libsvm_sparse_predict(T.data, T.indices, T.indptr,
                       self.support_vectors_.data,
                       self.support_vectors_.indices,
                       self.support_vectors_.indptr,
                       self.dual_coef_.data, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.eps,
-                      self.C, self.class_weight_label, self.class_weight, self.nu,
-                      self.cache_size, self.p, self.shrinking,
+                      self.C, self.class_weight_label, self.class_weight,
+                      self.nu, self.cache_size, self.p, self.shrinking,
                       self.probability, self.n_support, self.label_,
                       self.probA_, self.probB_)
 
@@ -209,8 +207,9 @@ class SparseBaseLibLinear(BaseLibLinear):
                        _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, y,
                        self._get_solver_type(),
-                       self.eps, self._get_bias(), self.C, self.class_weight_label,
-                       self.class_weight)
+                       self.eps, self._get_bias(), self.C,
+                       self.class_weight_label, self.class_weight)
+
         return self
 
     def predict(self, X):
@@ -239,5 +238,36 @@ class SparseBaseLibLinear(BaseLibLinear):
                                       self.class_weight, self.label_,
                                       self._get_bias())
 
+    def decision_function(self, X):
+        """
+        Return the decision function of X according to the trained
+        model.
+
+        Parameters
+        ----------
+        X : sparse matrix, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_class]
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        import scipy.sparse
+        X = scipy.sparse.csr_matrix(X)
+        self._check_n_features(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+
+        dec_func = _liblinear.csr_decision_function_wrap(
+            X.shape[1], X.data, X.indices, X.indptr, self.raw_coef_,
+            self._get_solver_type(), self.eps, self.C,
+            self.class_weight_label, self.class_weight, self.label_,
+            self._get_bias())
+
+        if len(self.label_) <= 2:
+            # one class
+            return -dec_func
+        else:
+            return dec_func
 
 set_verbosity_wrap(0)

@@ -105,8 +105,8 @@ Nearest Neighbors
    :toctree: generated/
    :template: class.rst
 
-   neighbors.Neighbors
-   neighbors.NeighborsBarycenter
+   neighbors.NeighborsClassifier
+   neighbors.NeighborsRegressor
    ball_tree.BallTree
 
 .. autosummary::
@@ -179,6 +179,7 @@ Signal Decomposition
 
    pca.PCA
    pca.ProbabilisticPCA
+   pca.RandomizedPCA
    fastica.FastICA
 
 .. autosummary::

@@ -104,15 +104,16 @@ class PCA(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like, shape (n_samples, n_features)
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-
     n_components: int, none or string
         Number of components to keep.
         if n_components is not set all components are kept:
             n_components == min(n_samples, n_features)
+
         if n_components == 'mle', Minka's MLE is used to guess the dimension
+
+        if 0 < n_components < 1, select the number of components such that
+                                 the explained variance ratio is greater
+                                 than n_components
 
     copy: bool
         If False, data passed to fit are overwritten
@@ -165,10 +166,22 @@ class PCA(BaseEstimator):
         self.whiten = whiten
 
     def fit(self, X, **params):
-        """Fit the model to the data X"""
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self._set_params(**params)
         X = np.atleast_2d(X)
-        n_samples = X.shape[0]
+        n_samples, n_features = X.shape
         if self.copy:
             X = X.copy()
         # Center data
@@ -188,6 +201,13 @@ class PCA(BaseEstimator):
         if self.n_components == 'mle':
             self.n_components = _infer_dimension_(self.explained_variance_,
                                             n_samples, X.shape[1])
+
+        elif 0 < self.n_components and self.n_components < 1.0:
+            # number of components for which the cumulated explained variance
+            # percentage is superior to the desired threshold
+            n_remove = np.sum(self.explained_variance_ratio_.cumsum() >=
+                              self.n_components) - 1
+            self.n_components = n_features - n_remove
 
         if self.n_components is not None:
             self.components_ = self.components_[:, :self.n_components]
@@ -282,10 +302,6 @@ class RandomizedPCA(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-
     n_components: int
         Maximum number of components to keep: default is 50.
 
@@ -315,15 +331,6 @@ class RandomizedPCA(BaseEstimator):
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
 
-    References
-    -----
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909)
-
-    A randomized algorithm for the decomposition of matrices
-    Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
-
     Examples
     --------
     >>> import numpy as np
@@ -339,6 +346,19 @@ class RandomizedPCA(BaseEstimator):
     --------
     PCA
     ProbabilisticPCA
+
+    Notes
+    -------
+    References:
+    
+    * Finding structure with randomness: Stochastic algorithms for 
+      constructing approximate matrix decompositions Halko, et al., 2009 
+      (arXiv:909)
+
+    * A randomized algorithm for the decomposition of matrices
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+
+
     """
 
     def __init__(self, n_components, copy=True, iterated_power=3,
@@ -350,7 +370,19 @@ class RandomizedPCA(BaseEstimator):
         self.mean_ = None
 
     def fit(self, X, **params):
-        """Fit the model to the data X"""
+        """Fit the model to the data X.
+
+        Parameters
+        ----------
+        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self._set_params(**params)
         n_samples = X.shape[0]
 

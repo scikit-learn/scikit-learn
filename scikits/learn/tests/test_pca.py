@@ -240,6 +240,15 @@ def test_infer_dim_3():
     spect = pca.explained_variance_
     assert_true(_infer_dimension_(spect, n, p) > 2)
 
+def test_infer_dim_by_explained_variance():
+    X = iris.data
+    pca = PCA(n_components=0.95)
+    pca.fit(X)
+    assert_equal(pca.n_components, 2)
+
+    pca = PCA(n_components=0.01)
+    pca.fit(X)
+    assert_equal(pca.n_components, 1)
 
 def test_probabilistic_pca_1():
     """Test that probabilistic PCA yields a reasonable score"""

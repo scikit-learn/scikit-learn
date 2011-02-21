@@ -190,6 +190,9 @@ def test_select_percentile_regression():
     gtruth = np.zeros(20)
     gtruth[:5]=1
     assert_array_equal(support, gtruth)
+    X_2 = X.copy() 
+    X_2[:, np.logical_not(support)] = 0
+    assert_array_equal(X_2, univariate_filter.inverse_transform(X_r))
 
 
 def test_select_percentile_regression_full():

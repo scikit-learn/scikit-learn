@@ -1,10 +1,12 @@
 import numpy as np
 
 from ..base import ClassifierMixin
+from ..linear_model.base import CoefSelectTransformerMixin
 from ..svm.base import BaseLibLinear
 from ..svm import _liblinear
 
-class LogisticRegression(BaseLibLinear, ClassifierMixin):
+class LogisticRegression(BaseLibLinear, ClassifierMixin,
+                         CoefSelectTransformerMixin):
     """
     Logistic Regression.
 
