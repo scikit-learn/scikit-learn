@@ -167,10 +167,11 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
         else:
             faces[i, :, :, :] = face
 
-    # shuffle the faces with a deterministic RNG scheme to avoid having all
-    # faces of the same person in a row, would will break some cross validation
-    # and learning algorithms such as SGD and online k-means who make an IID
-    # assumption
+    # shuffle the faces with a deterministic RNG scheme to avoid having
+    # all faces of the same person in a row, as it would break some
+    # cross validation and learning algorithms such as SGD and online
+    # k-means that make an IID assumption
+
     indices = np.arange(n_faces)
     np.random.RandomState(42).shuffle(indices)
     faces, target = faces[indices], target[indices]
