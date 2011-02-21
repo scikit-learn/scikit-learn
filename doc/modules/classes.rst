@@ -88,6 +88,7 @@ Bayesian Regression
    linear_model.BayesianRidge
    linear_model.ARDRegression   
 
+
 Naive Bayes
 ===========
 
@@ -114,6 +115,7 @@ Nearest Neighbors
    :template: function.rst
 
    ball_tree.knn_brute
+
 
 Gaussian Mixture Models
 =======================
@@ -267,3 +269,16 @@ Pipeline
    :template: class.rst
 
    pipeline.Pipeline
+
+
+Partial Least Squares
+=====================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   pls.PLSRegression
+   pls.PLSCanonical
+   pls.CCA
+   pls.PLSSVD
