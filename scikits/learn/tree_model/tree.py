@@ -131,10 +131,11 @@ def apply_tree(tree, features):
 
 class DecisionTree(object):
     '''
-    tree = tree_learner()
-    model = tree.train(features, labels)
-    model2 = tree.train(features, labels, weights=weights)
-    predicted = model.apply(testfeatures)
+
+    >>> tree = DecisionTree()
+    >>> tree.fit(features, labels)
+    >>> tree.fit(features, labels, weights=weights)
+    >>> predicted = tree.predict(testfeatures)
 
     A decision tree classifier (currently, implements the greedy ID3
     algorithm without any pruning).
@@ -161,7 +162,7 @@ class DecisionTree(object):
             labels,names = normaliselabels(labels)
         self.tree = build_tree(features, labels, self.criterion, self.min_split, self.subsample, self.R, weights)
 
-    def predict(self,feats):
+    def predict(self, feats):
         values = []
         for f in feats:
             value = apply_tree(self.tree, f)
