@@ -27,6 +27,7 @@ print __doc__
 
 from time import time
 import logging
+import numpy as np
 import pylab as pl
 
 from scikits.learn.cross_val import StratifiedKFold
@@ -68,6 +69,7 @@ print "n_classes: %d" % n_classes
 ################################################################################
 # Split into a training set and a test set using a stratified k fold
 
+# split into a training and testing set
 train, test = iter(StratifiedKFold(y, k=4)).next()
 X_train, X_test = X[train], X[test]
 y_train, y_test = y[train], y[test]

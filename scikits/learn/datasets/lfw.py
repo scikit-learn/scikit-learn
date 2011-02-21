@@ -129,16 +129,15 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
-    default_slice = (slice(0, 250), slice(0, 250), slice(0, 3))
+    default_slice = (slice(0, 250), slice(0, 250))
     if slice_ is None:
         slice_ = default_slice
     else:
         slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
 
-    h_slice, w_slice, c_slice = slice_
+    h_slice, w_slice = slice_
     h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
     w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
-    c = (c_slice.stop - c_slice.start) / (c_slice.step or 1)
 
     if resize is not None:
         h = int(resize * h)
@@ -148,7 +147,7 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     if not color:
         faces = np.zeros((n_faces, h, w), dtype=np.float32)
     else:
-        faces = np.zeros((n_faces, h, w, c), dtype=np.float32)
+        faces = np.zeros((n_faces, h, w, 3), dtype=np.float32)
 
     # iterate over the collected file path to load the jpeg files as numpy
     # arrays
@@ -167,12 +166,19 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
         else:
             faces[i, :, :, :] = face
 
+    # shuffle the faces with a deterministic RNG scheme to avoid having all
+    # faces of the same person in a row, would will break some cross validation
+    # and learning algorithms such as SGD and online k-means who make an IID
+    # assumption
+    indices = np.arange(n_faces)
+    np.random.RandomState(42).shuffle(indices)
+    faces, target = faces[indices], target[indices]
     return faces, target, class_names
 
 
 def load_lfw_people(data_home=None, funneled=True, resize=0.5,
                     min_faces_per_person=10, color=False,
-                    slice_=(slice(50, 200), slice(75, 175), slice(0, 3))):
+                    slice_=(slice(92, 175), slice(83, 166))):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -209,9 +215,9 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
         than than the shape with color = False.
 
     slice_: optional
-        Provide a custom 3D slice (width, height, channels) to extract the
-        'interesting' part of the jpeg files
-
+        Provide a custom 2D slice (height, width) to extract the
+        'interesting' part of the jpeg files and avoid use statistical
+        correlation from the background
     """
 
     parameters = locals().copy()
@@ -255,16 +261,15 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
-    default_slice = (slice(0, 250), slice(0, 250), slice(0, 3))
+    default_slice = (slice(0, 250), slice(0, 250))
     if slice_ is None:
         slice_ = default_slice
     else:
         slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
 
-    h_slice, w_slice, c_slice = slice_
+    h_slice, w_slice = slice_
     h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
     w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
-    c = (c_slice.stop - c_slice.start) / (c_slice.step or 1)
 
     if resize is not None:
         h = int(resize * h)
@@ -275,7 +280,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     if not color:
         pairs = np.zeros((n_pairs, 2, h, w), dtype=np.float32)
     else:
-        pairs = np.zeros((n_pairs, 2, h, w, c), dtype=np.float32)
+        pairs = np.zeros((n_pairs, 2, h, w, 3), dtype=np.float32)
 
     # interating over the metadata lines for each pair to find the filename to
     # decode and load in memory
@@ -316,7 +321,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 
 
 def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
-                   color=False, slice_=(slice(50, 200), slice(75, 175), None)):
+                   color=False, slice_=(slice(92, 175), slice(83, 166))):
     """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -362,8 +367,9 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         than than the shape with color = False.
 
     slice_: optional
-        Provide a custom 3D slice (width, height, channels) to extract the
-        'interesting' part of the jpeg files
+        Provide a custom 2D slice (height, width) to extract the
+        'interesting' part of the jpeg files and avoid use statistical
+        correlation from the background
     """
 
     parameters = locals().copy()
