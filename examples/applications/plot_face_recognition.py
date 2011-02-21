@@ -46,7 +46,7 @@ logging.basicConfig(level=logging.INFO,
 ################################################################################
 # Download the data, if not already on disk and load it as numpy arrays
 
-lfw_people = load_lfw_people(min_faces_per_person=70)
+lfw_people = load_lfw_people(min_faces_per_person=70, resize=0.4)
 
 # reshape the data using the traditional (n_samples, n_features) shape
 faces = lfw_people.data
@@ -130,13 +130,17 @@ print confusion_matrix(y_test, y_pred, labels=range(n_classes))
 n_row = 3
 n_col = 4
 
-pl.figure(figsize=(2 * n_col, 2.3 * n_row))
-pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.95, hspace=.15)
+def title(y_pred, y_test, class_names, i):
+    pred_name = class_names[y_pred[i]].rsplit(' ', 1)[-1]
+    true_name = class_names[y_test[i]].rsplit(' ', 1)[-1]
+    return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
+
+pl.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
     pl.imshow(X_test[i].reshape((h, w)), cmap=pl.cm.gray)
-    pl.title('pred: %s\ntrue: %s' % (class_names[y_pred[i]],
-                                     class_names[y_test[i]]), size=12)
+    pl.title(title(y_pred, y_test, class_names, i), size=12)
     pl.xticks(())
     pl.yticks(())
 
