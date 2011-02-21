@@ -179,7 +179,7 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 def load_lfw_people(data_home=None, funneled=True, resize=0.5,
                     min_faces_per_person=10, color=False,
-                    slice_=(slice(92, 175), slice(83, 166))):
+                    slice_=(slice(70, 195), slice(78, 172))):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -323,7 +323,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 
 
 def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
-                   color=False, slice_=(slice(92, 175), slice(83, 166))):
+                   color=False, slice_=(slice(70, 195), slice(78, 172))):
     """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
 
     This dataset is a collection of JPEG pictures of famous people
