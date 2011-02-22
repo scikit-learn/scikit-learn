@@ -184,9 +184,13 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         if verbose:
             print 'Initialization complete'
         # iterations
+        x_squared_norms = X.copy()
+        x_squared_norms **=2
+        x_squared_norms = x_squared_norms.sum(axis=1)
         for i in range(max_iter):
             centers_old = centers.copy()
-            labels, inertia = _e_step(X, centers)
+            labels, inertia = _e_step(X, centers,
+                                        x_squared_norms=x_squared_norms)
             centers = _m_step(X, labels, k)
             if verbose:
                 print 'Iteration %i, inertia %s' % (i, inertia)
@@ -228,12 +232,18 @@ def _m_step(x, z, k):
         The resulting centers
     """
     dim = x.shape[1]
-    centers = np.repeat(np.reshape(x.mean(0), (1, dim)), k, 0)
+    centers = np.empty((k, dim))
+    X_center = None
     for q in range(k):
-        if np.sum(z == q) == 0:
-            pass
+        this_center_mask = (z == q)
+        if not np.any(this_center_mask):
+            # The centroid of empty clusters is set to the center of
+            # everything
+            if X_center is None:
+                X_center = x.mean(axis=0)
+            centers[q] = X_center
         else:
-            centers[q] = np.mean(x[z == q], axis=0)
+            centers[q] = np.mean(x[this_center_mask], axis=0)
     return centers
 
 
@@ -265,8 +275,10 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
     if precompute_distances:
         distances = euclidean_distances(centers, x, x_squared_norms,
                                         squared=True)
-    z = -np.ones(n_samples).astype(np.int)
-    mindist = np.infty * np.ones(n_samples)
+    z = np.empty(n_samples, dtype=np.int)
+    z.fill(-1)
+    mindist = np.empty(n_samples)
+    mindist.fill(np.infty)
     for q in range(k):
         if precompute_distances:
             dist = distances[q]
