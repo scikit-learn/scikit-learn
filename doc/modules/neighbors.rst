@@ -20,6 +20,19 @@ The :class:`NeighborsClassifier` implements the nearest-neighbors
 classification method using a vote heuristic: the class most present
 in the k nearest neighbors of a point is assigned to this point.
 
+It is possible to use different nearest neighbor search strategies by
+using the keyword ``strategy``. Possible values are ``'auto'``,
+``'ball_tree'``, ``'brute'`` and ``'inplace'``. ``'ball_tree'`` will
+create an instance of :class:`BallTree` to conduct the search, which
+is usually very efficient in low-dimensional spaces. In higher
+dimension, a brute-force approach is is prefered thus parameters
+``'brute'`` and ``'inplace'`` can be used . Both conduct a brute-force
+search, the difference being that ``'inplace'`` does not perform any
+precomputations, and thus is better suited for low-memory settings.
+Finally, ``'auto'`` is a simple heuristic that will guess the best
+approach based on the current dataset.
+
+
 .. figure:: ../auto_examples/images/plot_neighbors.png
    :target: ../auto_examples/plot_neighbors.html
    :align: center
