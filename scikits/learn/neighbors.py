@@ -16,16 +16,16 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    n_neighbors : int
-        default number of neighbors.
+    n_neighbors : int, optional
+        Default number of neighbors. Defaults to 5.
 
-    window_size : int
+    window_size : int, optional
         Window size passed to BallTree
 
-    strategy : {'auto', 'ball_tree', 'brute', 'inplace'}
-        Strategy used to compute the nearest neighbors. 'btree' will
-        construct a BallTree, 'brute' and 'inplace' will perform
-        brute-force searc.'auto' will guess the most appropriate based
+    strategy : {'auto', 'ball_tree', 'brute', 'inplace'}, optional
+        Strategy used to compute the nearest neighbors. 'ball_tree'
+        will construct a BallTree, 'brute' and 'inplace' will perform
+        brute-force search.'auto' will guess the most appropriate based
         on current dataset.
 
     Examples
@@ -194,19 +194,19 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
 
     Parameters
     ----------
-    n_neighbors : int
-        default number of neighbors.
+    n_neighbors : int, optional
+        Default number of neighbors. Defaults to 5.
 
-    window_size : int
+    window_size : int, optional
         Window size passed to BallTree
 
-    mode : {'mean', 'barycenter'}
+    mode : {'mean', 'barycenter'}, optional
         Weights to apply to labels.
 
-    strategy : {'auto', 'ball_tree', 'brute', 'inplace'}
-        Strategy used to compute the nearest neighbors. 'btree' will
-        construct a BallTree, 'brute' and 'inplace' will perform
-        brute-force searc.'auto' will guess the most appropriate based
+    strategy : {'auto', 'ball_tree', 'brute', 'inplace'}, optional
+        Strategy used to compute the nearest neighbors. 'ball_tree'
+        will construct a BallTree, 'brute' and 'inplace' will perform
+        brute-force search.'auto' will guess the most appropriate based
         on current dataset.
 
     Examples
