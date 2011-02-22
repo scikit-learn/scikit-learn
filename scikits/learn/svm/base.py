@@ -130,9 +130,14 @@ class BaseLibSVM(BaseEstimator):
                              "X has %s features, but y has %s." % \
                              (_X.shape[0], y.shape[0]))
 
+        if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
+            raise ValueError("X.shape[0] should be equal to X.shape[1]")
+
         if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
             self.gamma = 1.0 / _X.shape[0]
+
+        self.shape_fit_ = X.shape
 
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
@@ -146,30 +151,38 @@ class BaseLibSVM(BaseEstimator):
 
         return self
 
-    def predict(self, T):
+    def predict(self, X):
         """
         This function does classification or regression on an array of
-        test vectors T.
+        test vectors X.
 
         For a classification model, the predicted class for each
-        sample in T is returned.  For a regression model, the function
-        value of T calculated is returned.
+        sample in X is returned.  For a regression model, the function
+        value of X calculated is returned.
 
         For an one-class model, +1 or -1 is returned.
 
         Parameters
         ----------
-        T : array-like, shape = [n_samples, n_features]
-
+        X : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
         C : array, shape = [n_samples]
         """
-        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        kernel_type, T = self._get_kernel(T)
+        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        n_samples, n_features = X.shape
+        kernel_type, X = self._get_kernel(X)
 
-        return libsvm_predict(T, self.support_vectors_,
+        if self.kernel == "precomputed":
+            if X.shape[1] != self.shape_fit_[0]:
+                raise ValueError("X.shape[1] should be equal to the number of "
+                                 "samples at training time!")
+        elif n_features != self.shape_fit_[1]:
+            raise ValueError("X.shape[1] should be equal to the number of "
+                             "features at training time!")
+
+        return libsvm_predict(X, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.eps,
