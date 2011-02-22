@@ -712,22 +712,6 @@ BallTree_knn_brute(PyObject *self, PyObject *args, PyObject *kwds){
     for(int i=0;i<N;i++)
         delete Points[i];
 
-  //if only one neighbor is requested, then resize the neighbors array
-    if(k==1){
-        PyArray_Dims dims;
-        dims.ptr = PyArray_DIMS(arr2);
-        dims.len = PyArray_NDIM(arr2)-1;
-
-    //PyArray_Resize returns None - this needs to be picked
-    // up and dereferenced.
-        PyObject *NoneObj = PyArray_Resize( (PyArrayObject*)nbrs, &dims,
-            0, NPY_ANYORDER );
-        if (NoneObj == NULL){
-            goto fail;
-        }
-        Py_DECREF(NoneObj);
-    }
-
     return nbrs;
 
     fail:
