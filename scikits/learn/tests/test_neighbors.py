@@ -15,26 +15,26 @@ def test_neighbors_1D():
     X = [[x] for x in range(0, n)]
     Y = [0]*(n/2) + [1]*(n/2)
 
-    # n_neighbors = 1
-    knn = neighbors.NeighborsClassifier(n_neighbors=1)
-    knn.fit(X, Y)
-    test = [[i + 0.01] for i in range(0, n/2)] + \
-           [[i - 0.01] for i in range(n/2, n)]
-    assert_array_equal(knn.predict(test), [0]*3 + [1]*3)
+    for s in ('auto', 'ball_tree', 'brute', 'inplace'):
+        # n_neighbors = 1
+        knn = neighbors.NeighborsClassifier(n_neighbors=1, strategy=s)
+        knn.fit(X, Y)
+        test = [[i + 0.01] for i in range(0, n/2)] + \
+               [[i - 0.01] for i in range(n/2, n)]
+        assert_array_equal(knn.predict(test), [0]*3 + [1]*3)
 
-    # n_neighbors = 2
-    knn = neighbors.NeighborsClassifier(n_neighbors=2)
-    knn.fit(X, Y)
-    assert_array_equal(knn.predict(test), [0]*4 + [1]*2)
+        # n_neighbors = 2
+        knn = neighbors.NeighborsClassifier(n_neighbors=2, strategy=s)
+        knn.fit(X, Y)
+        assert_array_equal(knn.predict(test), [0]*4 + [1]*2)
 
-
-    # n_neighbors = 3
-    knn = neighbors.NeighborsClassifier(n_neighbors=3)
-    knn.fit(X, Y)
-    assert_array_equal(knn.predict([[i +0.01] for i in range(0, n/2)]),
-                        [0 for i in range(n/2)])
-    assert_array_equal(knn.predict([[i-0.01] for i in range(n/2, n)]),
-                        [1 for i in range(n/2)])
+        # n_neighbors = 3
+        knn = neighbors.NeighborsClassifier(n_neighbors=3, strategy=s)
+        knn.fit(X, Y)
+        assert_array_equal(knn.predict([[i +0.01] for i in range(0, n/2)]),
+                            [0 for i in range(n/2)])
+        assert_array_equal(knn.predict([[i-0.01] for i in range(n/2, n)]),
+                            [1 for i in range(n/2)])
 
 
 def test_neighbors_2D():

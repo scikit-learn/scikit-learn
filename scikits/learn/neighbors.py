@@ -8,7 +8,7 @@
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .ball_tree import BallTree
+from .ball_tree import BallTree, knn_brute
 
 
 class NeighborsClassifier(BaseEstimator, ClassifierMixin):
@@ -22,6 +22,12 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     window_size : int
         Window size passed to BallTree
 
+    strategy : {'auto', 'ball_tree', 'brute', 'inplace'}
+        Strategy used to compute the nearest neighbors. 'btree' will
+        construct a BallTree, 'brute' and 'inplace' will perform
+        brute-force searc.'auto' will guess the most appropriate based
+        on current dataset.
+
     Examples
     --------
     >>> samples = [[0, 0, 1], [1, 0, 0]]
@@ -29,24 +35,25 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    NeighborsClassifier(n_neighbors=1, window_size=1)
+    NeighborsClassifier(n_neighbors=1, window_size=1, strategy='auto')
     >>> print neigh.predict([[0,0,0]])
     [1]
 
-    Notes
-    -----
-    Internally uses the ball tree datastructure and algorithm for fast
-    neighbors lookups on high dimensional datasets.
+    See also
+    --------
+    BallTree
 
     References
     ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, window_size=1):
+    def __init__(self, n_neighbors=5, strategy='auto', window_size=1):
         self.n_neighbors = n_neighbors
         self.window_size = window_size
+        self.strategy = strategy
 
+        
     def fit(self, X, Y, **params):
         """
         Fit the model using X, y as training data.
@@ -62,11 +69,18 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         params : list of keyword, optional
             Overwrite keywords from __init__
         """
+        X = np.asanyarray(X)
         self._y = np.asanyarray(Y)
         self._set_params(**params)
 
-        self.ball_tree = BallTree(X, self.window_size)
+        if self.strategy == 'ball_tree' or \
+           (self.strategy == 'auto' and X.shape[1] < 20):
+            self.ball_tree = BallTree(X, self.window_size)
+        else:
+            self.ball_tree = None
+            self._fit_X = X
         return self
+
 
     def kneighbors(self, data, return_distance=True, **params):
         """Finds the K-neighbors of a point.
@@ -105,7 +119,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> from scikits.learn.neighbors import NeighborsClassifier
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        NeighborsClassifier(n_neighbors=1, window_size=1)
+        NeighborsClassifier(n_neighbors=1, window_size=1, strategy='auto')
         >>> print neigh.kneighbors([1., 1., 1.])
         (array([ 0.5]), array([2]))
 
@@ -122,6 +136,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self._set_params(**params)
         return self.ball_tree.query(
             data, k=self.n_neighbors, return_distance=return_distance)
+
 
     def predict(self, X, **params):
         """Predict the class labels for the provided data.
@@ -143,10 +158,21 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         X = np.atleast_2d(X)
         self._set_params(**params)
 
-        ind = self.ball_tree.query(
-            X, self.n_neighbors, return_distance=False)
-        pred_labels = self._y[ind]
+        # .. get neighbors ..
+        if self.ball_tree is None:
+            if self.strategy == 'inplace':
+                neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
+            else:
+                from .metrics.pairwise import euclidean_distances
+                dist = euclidean_distances(
+                    X, self._fit_X, squared=False)
+                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+        else:
+            neigh_ind = self.ball_tree.query(
+                X, self.n_neighbors, return_distance=False)
 
+        # .. most popular label ..
+        pred_labels = self._y[neigh_ind]
         from scipy import stats
         mode, _ = stats.mode(pred_labels, axis=1)
         return mode.flatten().astype(np.int)
@@ -177,6 +203,12 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     mode : {'mean', 'barycenter'}
         Weights to apply to labels.
 
+    strategy : {'auto', 'ball_tree', 'brute', 'inplace'}
+        Strategy used to compute the nearest neighbors. 'btree' will
+        construct a BallTree, 'brute' and 'inplace' will perform
+        brute-force searc.'auto' will guess the most appropriate based
+        on current dataset.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -184,7 +216,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean')
+    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean', strategy='auto')
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -194,10 +226,12 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     """
 
 
-    def __init__(self, n_neighbors=5, mode='mean', window_size=1):
+    def __init__(self, n_neighbors=5, mode='mean', strategy='auto',
+                 window_size=1):
         self.n_neighbors = n_neighbors
         self.window_size = window_size
         self.mode = mode
+        self.strategy = strategy
 
 
     def predict(self, X, **params):
@@ -220,16 +254,22 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         X = np.atleast_2d(np.asanyarray(X))
         self._set_params(**params)
 
-#
-#       .. compute neighbors ..
-#
-        neigh_ind = self.ball_tree.query(
-            X, k=self.n_neighbors, return_distance=False)
-        neigh = self.ball_tree.data[neigh_ind]
-
-#
-#       .. return labels ..
-#
+        # .. get neighbors ..
+        if self.ball_tree is None:
+            if self.strategy == 'inplace':
+                neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
+            else:
+                from .metrics.pairwise import euclidean_distances
+                dist = euclidean_distances(
+                    X, self._fit_X, squared=False)
+                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+            neigh = self._fit_X[neigh_ind]
+        else:
+            neigh_ind = self.ball_tree.query(
+                X, self.n_neighbors, return_distance=False)
+            neigh = self.ball_tree.data[neigh_ind]
+        
+        # .. return labels ..
         if self.mode == 'barycenter':
             W = barycenter_weights(X, neigh)
             return (W * self._y[neigh_ind]).sum(axis=1)
