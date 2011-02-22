@@ -88,10 +88,10 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
             X_train = X[train]
             X_test = X[test]
         if y is not None:
-            y_test  = y[test]
+            y_test = y[test]
             y_train = y[train]
         else:
-            y_test  = None
+            y_test = None
             y_train = None
 
         clf.fit(X_train, y_train, **fit_params)
@@ -192,14 +192,12 @@ class GridSearchCV(BaseEstimator):
                         or hasattr(estimator, 'score')), (
             "estimator should a be an estimator implementing 'fit' and "
             "'predict' or 'score' methods, %s (type %s) was passed" %
-                    (estimator, type(estimator))
-            )
+                    (estimator, type(estimator)))
         if loss_func is None and score_func is None:
             assert hasattr(estimator, 'score'), ValueError(
                     "If no loss_func is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
-                    "does not." % estimator
-                    )
+                    "does not." % estimator)
 
         self.estimator = estimator
         self.param_grid = param_grid
@@ -290,3 +288,4 @@ class GridSearchCV(BaseEstimator):
         # found has a score function.
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
+

@@ -12,7 +12,6 @@ from ..base import BaseEstimator, TransformerMixin
 
 ######################################################################
 # Scoring functions
-######################################################################
 
 # The following function is a rewriting of scipy.stats.f_oneway
 # Contrary to the scipy.stats.f_oneway implementation it does not
@@ -59,7 +58,8 @@ def f_oneway(*args):
     References
     ----------
     .. [1] Lowry, Richard.  "Concepts and Applications of Inferential
-           Statistics". Chapter 14. http://faculty.vassar.edu/lowry/ch14pt1.html
+           Statistics". Chapter 14.
+           http://faculty.vassar.edu/lowry/ch14pt1.html
 
     .. [2] Heiman, G.W.  Research Methods in Statistics. 2002.
 
@@ -158,11 +158,8 @@ def f_regression(X, y, center=True):
     pv = stats.f.sf(F, 1, dof)
     return F, pv
 
-
 ######################################################################
 # General class for filter univariate selection
-######################################################################
-
 
 class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
     """ Abstract class, not meant to be used directly
@@ -179,10 +176,8 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         assert callable(score_func), ValueError(
                 "The score function should be a callable, '%s' (type %s) "
-                "was passed." % (score_func, type(score_func))
-            )
+                "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
-
 
     def fit(self, X, y, **params):
         """
@@ -194,7 +189,6 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         self._pvalues = _scores[1]
         return self
 
-
     def transform(self, X, **params):
         """
         Transform a new matrix using the selected features
@@ -202,19 +196,17 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         return X[:, self.get_support()]
 
-
-    def inverse_transform(self, X_red):
-        """ Transform reduced data back in original feature space
+    def inverse_transform(self, X, **params):
         """
-        n_samples, _ = X_red.shape
-        support = self.get_support()
-        if n_samples == 1:
-            X = np.zeros((support.shape[0]), dtype=X_red.dtype)
-            X[support] = X_red
-        else:
-            X = np.zeros((n_samples, support.shape[0]), dtype=X_red.dtype)
-            X[:, support] = X_red
-        return X
+        Transform a new matrix using the selected features
+        """
+        self._set_params(**params)
+        support_ = self.get_support()
+        if X.ndim == 1:
+            X = X[None, :]
+        Xt = np.zeros((X.shape[0], support_.size))
+        Xt[:, support_] = X
+        return Xt
 
 
 ######################################################################
@@ -257,6 +249,7 @@ class SelectKBest(_AbstractUnivariateFilter):
     """
     Filter : Select the k lowest p-values
     """
+
     def __init__(self, score_func, k=10):
         """ Initialize the univariate feature selection.
 
@@ -283,6 +276,7 @@ class SelectFpr(_AbstractUnivariateFilter):
     """
     Filter : Select the pvalues below alpha
     """
+
     def __init__(self, score_func, alpha=5e-2):
         """ Initialize the univariate feature selection.
 
@@ -307,6 +301,7 @@ class SelectFdr(_AbstractUnivariateFilter):
     Filter : Select the p-values corresponding to an estimated false
     discovery rate of alpha. This uses the Benjamini-Hochberg procedure
     """
+
     def __init__(self, score_func, alpha=5e-2):
         """ Initialize the univariate feature selection.
 
@@ -332,6 +327,7 @@ class SelectFwe(_AbstractUnivariateFilter):
     """
     Filter : Select the p-values corresponding to a corrected p-value of alpha
     """
+
     def __init__(self, score_func, alpha=5e-2):
         """ Initialize the univariate feature selection.
 
@@ -378,8 +374,7 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
         """ % self._selection_modes.keys()
         assert callable(score_func), ValueError(
                 "The score function should be a callable, '%s' (type %s) "
-                "was passed." % (score_func, type(score_func))
-            )
+                "was passed." % (score_func, type(score_func)))
         assert mode in self._selection_modes, ValueError(
                 "The mode passed should be one of %s, '%s', (type %s) "
                 "was passed." % (
@@ -389,17 +384,13 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
         self.mode = mode
         self.param = param
 
-
     def get_support(self):
-        selector = self._selection_modes[self.mode](lambda x:x)
+        selector = self._selection_modes[self.mode](lambda x: x)
         selector._pvalues = self._pvalues
-        selector._scores  = self._scores
+        selector._scores = self._scores
         # Now make some acrobaties to set the right named parameter in
         # the selector
         possible_params = selector._get_param_names()
         possible_params.remove('score_func')
         selector._set_params(**{possible_params[0]: self.param})
         return selector.get_support()
-
-
-

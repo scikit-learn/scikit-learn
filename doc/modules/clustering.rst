@@ -112,3 +112,45 @@ function of the gradient of the image.
  * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
+
+
+
+
+Hierarchical clustering
+=======================
+
+:class:`Ward` performs a hierarchical clustering [Johnson 67] based on Ward
+algorithm [Ward 63], that is a variance-minimizing approach. At each step,
+it minimizes the sum of squared differences within all clusters (inertia
+criterion). This algoritm creates a hierarchy of clusters represented as a tree
+(or dendrogram). The root of the tree is the unique cluster that gathers all
+the samples, the leaves being the clusters with only one sample.
+Connectivity constraints can be added to this algorithm (only adjacent clusters
+can be merged together), through an connectivity matrix that defines for each
+sample the neighboring samples following a given structure of the
+data.
+This algorithm can scale to large number of samples when it is used jointly
+with an connectivity matrix, but can be computationally expensive when no
+constraints are added between samples (it considers at each step all the
+possible merges).
+
+
+See the `Wikipedia page <http://en.wikipedia.org/wiki/Hierarchical_clustering
+for more details>`_.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering 
+   to split the image of lena in regions.
+
+ * :ref:`example_cluster_plot_ward_structured.py`: Example of Ward algorithm on
+    a swiss-roll, with structure that constraints to merge only adjacent sample.
+
+ * :ref:`example_cluster_plot_ward_unstructured.py`: Example of Ward algorithm
+    on a swiss-roll, without structure.
+
+ * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
+    Example of dimensionality reduction with feature agglomeration based on
+    Ward hierarchical clustering.
+
+
