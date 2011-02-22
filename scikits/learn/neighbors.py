@@ -165,7 +165,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             else:
                 from .metrics.pairwise import euclidean_distances
                 dist = euclidean_distances(
-                    X, self._fit_X, squared=False)
+                    X, self._fit_X, squared=True)
                 neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
         else:
             neigh_ind = self.ball_tree.query(
