@@ -381,7 +381,7 @@ class LeaveOneLabelOut(object):
                 ind = np.arange(len(labels))
                 train_index = ind[train_index]
                 test_index = ind[test_index]
-            yield train_index, test_index
+            yield train_index, test_index, i
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
