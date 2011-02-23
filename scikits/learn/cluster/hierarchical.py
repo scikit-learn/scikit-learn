@@ -105,10 +105,10 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     coord_col = []
     A = []
     for ind, row in enumerate(connectivity.rows):
-        coord_row.extend(list(ind * np.ones(len(row), dtype=int)))
+        coord_row.extend(len(row)*[ind,])
         coord_col.extend(row)
         A.append(row)
-    inertia = np.zeros(len(coord_row), dtype=np.float)
+    inertia = np.empty(len(coord_row), dtype=np.float)
     _inertia.compute_inertia(moments[0][coord_row], moments[0][coord_col], \
                              moments[1][coord_row], moments[1][coord_col], \
                              moments[2][coord_row], moments[2][coord_col], \
@@ -121,8 +121,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     heights = np.zeros(n_nodes)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
-    for k in range(n_samples):
-        children.append([])
 
     # recursive merge loop
     for k in range(n_samples, n_nodes):
@@ -159,10 +157,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
             heapq.heappush(inertia, tupl)
 
     # Separate leaves in children (empty lists up to now)
-    n_leaves = 0
-    while len(children) > 0 and len(children[0]) == 0:
-        n_leaves += 1
-        children.pop(0)
+    n_leaves = n_samples
     children = np.array(children) # return as numpy array for efficient caching
 
     return children, n_components, n_leaves
