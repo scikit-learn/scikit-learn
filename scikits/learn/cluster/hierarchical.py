@@ -147,7 +147,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
                 A[l].append(k)
         A.append(coord_col)
         coord_row = len(coord_col) * [k]
-        ini = np.zeros(len(coord_row), dtype=np.float)
+        ini = np.empty(len(coord_row), dtype=np.float)
         _inertia.compute_inertia(moments[0][coord_row], moments[0][coord_col], \
                              moments[1][coord_row], moments[1][coord_col], \
                              moments[2][coord_row], moments[2][coord_col], \
