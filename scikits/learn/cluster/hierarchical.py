@@ -6,7 +6,8 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
-import heapq as heapq
+import heapq
+import itertools
 import warnings
 
 import numpy as np
@@ -36,7 +37,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
     connectivity : sparse matrix.
         connectivity matrix. Defines for each sample the neigbhoring samples
-        following a given structure of the data.
+        following a given structure of the data. The matrix is assumed to
+        be symmetric and only the upper triangular half is used.
         Defaut is None, i.e, the ward algorithm is unstructured.
 
     n_components : int (optional)
@@ -158,8 +160,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         ini = np.empty(len(coord_row), dtype=np.float)
         _inertia.compute_inertia(moments[0], moments[1], moments[2],
                                 coord_row, coord_col, ini)
-        ini = zip(ini, coord_row, coord_col)
-        for tupl in ini:
+        for tupl in itertools.izip(ini, coord_row, coord_col):
             heapq.heappush(inertia, tupl)
 
     # Separate leaves in children (empty lists up to now)
