@@ -26,7 +26,7 @@ for i, n in enumerate(n_samples):
         ward.fit(X)
         scikits_time[j, i] = time.time() - t0
         t0 = time.time()
-        hierarchy.ward(X.T)
+        hierarchy.ward(X)
         scipy_time[j, i] = time.time() - t0
 
 ratio = scikits_time/scipy_time
