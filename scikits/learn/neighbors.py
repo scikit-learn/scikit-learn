@@ -22,11 +22,11 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     window_size : int, optional
         Window size passed to BallTree
 
-    strategy : {'auto', 'ball_tree', 'brute', 'inplace'}, optional
+    strategy : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
         Strategy used to compute the nearest neighbors. 'ball_tree'
-        will construct a BallTree, 'brute' and 'inplace' will perform
-        brute-force search.'auto' will guess the most appropriate based
-        on current dataset.
+        will construct a BallTree, 'brute' and 'brute_inplace' will
+        perform brute-force search.'auto' will guess the most
+        appropriate based on current dataset.
 
     Examples
     --------
@@ -160,7 +160,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         # .. get neighbors ..
         if self.ball_tree is None:
-            if self.strategy == 'inplace':
+            if self.strategy == 'brute_inplace':
                 neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
             else:
                 from .metrics import euclidean_distances
@@ -203,11 +203,11 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     mode : {'mean', 'barycenter'}, optional
         Weights to apply to labels.
 
-    strategy : {'auto', 'ball_tree', 'brute', 'inplace'}, optional
+    strategy : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
         Strategy used to compute the nearest neighbors. 'ball_tree'
-        will construct a BallTree, 'brute' and 'inplace' will perform
-        brute-force search.'auto' will guess the most appropriate based
-        on current dataset.
+        will construct a BallTree, 'brute' and 'brute_inplace' will
+        perform brute-force search.'auto' will guess the most
+        appropriate based on current dataset.
 
     Examples
     --------
@@ -256,7 +256,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
 
         # .. get neighbors ..
         if self.ball_tree is None:
-            if self.strategy == 'inplace':
+            if self.strategy == 'brute_inplace':
                 neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
             else:
                 from .metrics.pairwise import euclidean_distances
