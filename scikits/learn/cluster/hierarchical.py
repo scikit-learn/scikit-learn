@@ -21,7 +21,6 @@ from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
 # Ward's algorithm
-import time
 
 def ward_tree(X, connectivity=None, n_components=None, copy=True):
     """Ward clustering based on a Feature matrix. Heapq-based representation
@@ -60,7 +59,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_leaves : int
         The number of leaves in the tree
     """
-    start = time.time()
     X = np.asanyarray(X)
     n_samples, n_features = X.shape
     if X.ndim == 1:
@@ -86,7 +84,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         connectivity.flat[::n_samples+1] = 0 # set diagonal to 0
         connectivity = sparse.lil_matrix(connectivity)
         n_nodes = 2 * n_samples - 1
+        # XXX: Should create A and coord_row, coord_row here
     else:
+        if (connectivity.shape[0] != n_samples or
+                            connectivity.shape[1] != n_samples):
+            raise ValueError('Wrong shape for connectivity matrix: %s '
+                    'when X is %s' % (connectivity.shape, X.shape))
         if sparse.isspmatrix_lil(connectivity) and copy:
             connectivity = connectivity.copy()
         else:
@@ -110,16 +113,13 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_row.extend(len(row)*[ind,])
         coord_col.extend(row)
         A.append(row)
-    print 'Starting inertia: %.1f' % (start - time.time())
-    coord_row = np.array(coord_row)
-    coord_col = np.array(coord_col)
+    coord_row = np.array(coord_row, dtype=np.int)
+    coord_col = np.array(coord_col, dtype=np.int)
     inertia = np.empty(len(coord_row), dtype=np.float)
     _inertia.compute_inertia(moments[0], moments[1], moments[2],
                              coord_row, coord_col, inertia)
-    print 'Inertia computed: %.1f' % (start - time.time())
     inertia = zip(inertia, coord_row, coord_col)
     heapq.heapify(inertia)
-    print 'Inertia heapified: %.1f' % (start - time.time())
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
