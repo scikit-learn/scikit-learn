@@ -68,13 +68,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     if connectivity is not None:
         if n_components is None:
             n_components, _ = cs_graph_components(connectivity)
+        if n_components > 1:
+            warnings.warn("the number of connected components of the"
+            " connectivity matrix is %d > 1. The tree will be stopped early."
+            % n_components)
     else:
         n_components = 1
-
-    if n_components > 1:
-        warnings.warn("the number of connected components of the"
-        " connectivity matrix is %d > 1. The tree will be stopped early."
-        % n_components)
 
     n_nodes = 2 * n_samples - n_components
 
@@ -83,7 +82,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         connectivity = np.ones([n_samples, n_samples])
         connectivity.flat[::n_samples+1] = 0 # set diagonal to 0
         connectivity = sparse.lil_matrix(connectivity)
-        n_nodes = 2 * n_samples - 1
         # XXX: Should create A and coord_row, coord_row here
     else:
         if (connectivity.shape[0] != n_samples or
@@ -110,9 +108,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     coord_col = []
     A = []
     for ind, row in enumerate(connectivity.rows):
+        A.append(row)
+        # We keep only the upper triangular for the moments
+        # Generator expressions are faster than arrays on the following
+        row = [i for i in row if i < ind]
         coord_row.extend(len(row)*[ind,])
         coord_col.extend(row)
-        A.append(row)
     coord_row = np.array(coord_row, dtype=np.int)
     coord_col = np.array(coord_col, dtype=np.int)
     inertia = np.empty(len(coord_row), dtype=np.float)

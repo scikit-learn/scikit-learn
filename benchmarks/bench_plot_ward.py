@@ -12,7 +12,7 @@ from scikits.learn.cluster import Ward
 
 ward = Ward(n_clusters=15)
 
-n_samples = np.logspace(.5, 2, 9)
+n_samples = np.logspace(.5, 3, 9)
 n_features = np.logspace(1, 3.5, 7)
 N_samples, N_features = np.meshgrid(n_samples, 
                                     n_features)
