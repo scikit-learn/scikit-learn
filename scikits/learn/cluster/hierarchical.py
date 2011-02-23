@@ -392,4 +392,4 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         -------
         self
         """
-        return Ward.fit(self, X.T, n_clusters=self.n_clusters, **params)
+        return Ward.fit(self, X.T, **params)

@@ -7,7 +7,6 @@ agglomeration.
 
 import numpy as np
 from ..base import TransformerMixin
-from ..externals.joblib import Memory
 
 ###############################################################################
 # Mixin class for feature agglomeration.
