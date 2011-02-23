@@ -25,7 +25,7 @@ using the keyword ``strategy``. Possible values are ``'auto'``,
 ``'ball_tree'``, ``'brute'`` and ``'brute_inplace'``. ``'ball_tree'``
 will create an instance of :class:`BallTree` to conduct the search,
 which is usually very efficient in low-dimensional spaces. In higher
-dimension, a brute-force approach is is prefered thus parameters
+dimension, a brute-force approach is prefered thus parameters
 ``'brute'`` and ``'brute_inplace'`` can be used . Both conduct a
 brute-force search, the difference being that ``'brute_inplace'`` does
 not perform any precomputations, and thus is better suited for
