@@ -244,7 +244,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     for i in range(n_clusters - 1):
         nodes.extend(children[np.max(nodes) - n_leaves])
         nodes.remove(np.max(nodes))
-    label = np.zeros(n_leaves)
+    label = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
         label[_hc_get_descendent([node], children, n_leaves)] = i
     return label
