@@ -79,24 +79,37 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
     n_nodes = 2 * n_samples - n_components
 
-    # convert connectivity matrix to LIL eventually with a copy
     if connectivity is None:
-        connectivity = np.ones([n_samples, n_samples])
-        connectivity.flat[::n_samples+1] = 0 # set diagonal to 0
-        connectivity = sparse.lil_matrix(connectivity)
-        # XXX: Should create A and coord_row, coord_row here
+        coord_row, coord_col = np.tril_indices(n_samples, k=-1)
+        A = [range(0, ind) + range(ind+1, n_samples)
+             for ind in range(n_samples)]
     else:
         if (connectivity.shape[0] != n_samples or
                             connectivity.shape[1] != n_samples):
             raise ValueError('Wrong shape for connectivity matrix: %s '
                     'when X is %s' % (connectivity.shape, X.shape))
+        # convert connectivity matrix to LIL eventually with a copy
         if sparse.isspmatrix_lil(connectivity) and copy:
             connectivity = connectivity.copy()
         else:
             connectivity = connectivity.tolil()
 
-    # Remove diagonal from connectivity matrix
-    connectivity.setdiag(np.zeros(connectivity.shape[0]))
+        # Remove diagonal from connectivity matrix
+        connectivity.setdiag(np.zeros(connectivity.shape[0]))
+
+        # create inertia matrix
+        coord_row = []
+        coord_col = []
+        A = []
+        for ind, row in enumerate(connectivity.rows):
+            A.append(row)
+            # We keep only the upper triangular for the moments
+            # Generator expressions are faster than arrays on the following
+            row = [i for i in row if i < ind]
+            coord_row.extend(len(row)*[ind,])
+            coord_col.extend(row)
+        coord_row = np.array(coord_row, dtype=np.int)
+        coord_col = np.array(coord_col, dtype=np.int)
 
     # build moments as a list
     moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features)),
@@ -104,20 +117,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     moments[0][:n_samples] = 1
     moments[1][:n_samples] = X
     moments[2][:n_samples] = X ** 2
-
-    # create inertia matrix
-    coord_row = []
-    coord_col = []
-    A = []
-    for ind, row in enumerate(connectivity.rows):
-        A.append(row)
-        # We keep only the upper triangular for the moments
-        # Generator expressions are faster than arrays on the following
-        row = [i for i in row if i < ind]
-        coord_row.extend(len(row)*[ind,])
-        coord_col.extend(row)
-    coord_row = np.array(coord_row, dtype=np.int)
-    coord_col = np.array(coord_col, dtype=np.int)
     inertia = np.empty(len(coord_row), dtype=np.float)
     _inertia.compute_inertia(moments[0], moments[1], moments[2],
                              coord_row, coord_col, inertia)
