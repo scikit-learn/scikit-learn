@@ -1,7 +1,14 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal, \
+     assert_allclose, assert_
 
-from scikits.learn import neighbors
+from scikits.learn import neighbors, datasets
+
+# load and shuffle iris dataset
+iris = datasets.load_iris()
+perm = np.random.permutation(iris.target.size)
+iris.data = iris.data[perm]
+iris.target = iris.target[perm]
 
 
 def test_neighbors_1D():
@@ -37,39 +44,27 @@ def test_neighbors_1D():
                             [1 for i in range(n/2)])
 
 
-def test_neighbors_2D():
+def test_neighbors_iris():
     """
-    Nearest Neighbor in the plane.
+    Sanity checks on the iris dataset
 
     Puts three points of each label in the plane and performs a
     nearest neighbor query on points near the decision boundary.
     """
-    X = (
-        (0, 1), (1, 1), (1, 0), # label 0
-        (-1, 0), (-1, -1), (0, -1)) # label 1
-    n_2 = len(X)/2
-    Y = [0]*n_2 + [1]*n_2
-    knn = neighbors.NeighborsClassifier()
-    knn.fit(X, Y)
 
-    prediction = knn.predict([[0, .1], [0, -.1], [.1, 0], [-.1, 0]])
-    assert_array_equal(prediction, [0, 1, 0, 1])
+    for s in ('auto', 'ball_tree', 'brute', 'inplace'):
+        clf = neighbors.NeighborsClassifier()
+        clf.fit(iris.data, iris.target, n_neighbors=1, strategy=s)
+        assert_array_equal(clf.predict(iris.data), iris.target)
 
+        clf.fit(iris.data, iris.target, n_neighbors=9, strategy=s)
+        assert_(np.mean(clf.predict(iris.data)== iris.target) > 0.95)
 
-def test_neighbors_regressor():
-    """
-    NeighborsRegressor for regression using k-NN
-    """
-    X = [[0], [1], [2], [3]]
-    y = [0, 0, 1, 1]
-    neigh = neighbors.NeighborsRegressor(n_neighbors=3)
-    neigh.fit(X, y, mode='barycenter')
-    assert_array_almost_equal(
-        neigh.predict([[1.], [1.5]]), [0.333, 0.583], decimal=3)
-    neigh.fit(X, y, mode='mean')
-    assert_array_almost_equal(
-        neigh.predict([[1.], [1.5]]), [0.333, 0.333], decimal=3)
-    
+        for m in ('barycenter', 'mean'):
+            rgs = neighbors.NeighborsRegressor()
+            rgs.fit(iris.data, iris.target, mode=m, strategy=s)
+            assert_(np.mean(
+                rgs.predict(iris.data).round() == iris.target) > 0.95)
 
 
 def test_kneighbors_graph():
