@@ -79,23 +79,26 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
     return lmvnpdf_dict[cvtype](obs, means, covars)
 
 
-def sample_gaussian(mean, covar, cvtype='diag', n=1):
+def sample_gaussian(mean, covar, cvtype='diag', n_samples=1):
     """Generate random samples from a Gaussian distribution.
 
     Parameters
     ----------
     mean : array_like, shape (n_features,)
         Mean of the distribution.
-    covars : array_like
+
+    covars : array_like, optional
         Covariance of the distribution.  The shape depends on `cvtype`:
             scalar  if 'spherical',
             (D)     if 'diag',
             (D, D)  if 'tied', or 'full'
-    cvtype : string
+
+    cvtype : string, optional
         Type of the covariance parameters.  Must be one of
         'spherical', 'tied', 'diag', 'full'.  Defaults to 'diag'.
-    n : int
-        Number of samples to generate.
+
+    n_samples : int, optional
+        Number of samples to generate. Defaults to 1.
 
     Returns
     -------
@@ -103,8 +106,8 @@ def sample_gaussian(mean, covar, cvtype='diag', n=1):
         Randomly generated sample
     """
     ndim = len(mean)
-    rand = np.random.randn(ndim, n)
-    if n == 1:
+    rand = np.random.randn(ndim, n_samples)
+    if n_samples == 1:
         rand.shape = (ndim,)
 
     if cvtype == 'spherical':

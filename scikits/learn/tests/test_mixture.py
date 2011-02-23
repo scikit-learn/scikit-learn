@@ -62,22 +62,26 @@ def test_sample_gaussian():
     mu = np.random.randint(10) * np.random.rand(n_features)
     cv = (np.random.rand(n_features) + 1.0) ** 2
 
-    samples = mixture.sample_gaussian(mu, cv, cvtype='diag', n=n_samples)
+    samples = mixture.sample_gaussian(
+        mu, cv, cvtype='diag', n_samples=n_samples)
 
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
     assert np.allclose(samples.var(axis),  cv, atol=0.5)
 
     # the same for spherical covariances
     cv = (np.random.rand() + 1.0) ** 2
-    samples = mixture.sample_gaussian(mu, cv, cvtype='spherical', n=n_samples)
+    samples = mixture.sample_gaussian(
+        mu, cv, cvtype='spherical', n_samples=n_samples)
 
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
-    assert np.allclose(samples.var(axis),  np.repeat(cv, n_features), atol=0.5)
+    assert np.allclose(
+        samples.var(axis), np.repeat(cv, n_features), atol=0.5)
 
     # and for full covariances
     A = np.random.randn(n_features, n_features)
     cv = np.dot(A.T, A) + np.eye(n_features)
-    samples = mixture.sample_gaussian(mu, cv, cvtype='full', n=n_samples)
+    samples = mixture.sample_gaussian(
+        mu, cv, cvtype='full', n_samples=n_samples)
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
     assert np.allclose(np.cov(samples), cv, atol=1.)
 
@@ -219,7 +223,7 @@ class GMMTester():
         g._covars = 20 * self.covars[self.cvtype]
 
         # Create a training set by sampling from the predefined distribution.
-        train_obs = g.rvs(n=100)
+        train_obs = g.rvs(n_samples=100)
 
         g.fit(train_obs, n_iter=0, init_params=params)
 
