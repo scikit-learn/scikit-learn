@@ -21,6 +21,7 @@ from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
 # Ward's algorithm
+import time
 
 def ward_tree(X, connectivity=None, n_components=None, copy=True):
     """Ward clustering based on a Feature matrix. Heapq-based representation
@@ -59,6 +60,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_leaves : int
         The number of leaves in the tree
     """
+    start = time.time()
     X = np.asanyarray(X)
     n_samples, n_features = X.shape
     if X.ndim == 1:
@@ -108,13 +110,16 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_row.extend(len(row)*[ind,])
         coord_col.extend(row)
         A.append(row)
+    print 'Starting inertia: %.1f' % (start - time.time())
+    coord_row = np.array(coord_row)
+    coord_col = np.array(coord_col)
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _inertia.compute_inertia(moments[0][coord_row], moments[0][coord_col], \
-                             moments[1][coord_row], moments[1][coord_col], \
-                             moments[2][coord_row], moments[2][coord_col], \
-                             inertia)
+    _inertia.compute_inertia(moments[0], moments[1], moments[2],
+                             coord_row, coord_col, inertia)
+    print 'Inertia computed: %.1f' % (start - time.time())
     inertia = zip(inertia, coord_row, coord_col)
     heapq.heapify(inertia)
+    print 'Inertia heapified: %.1f' % (start - time.time())
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
@@ -146,12 +151,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
                 coord_col.append(l)
                 A[l].append(k)
         A.append(coord_col)
-        coord_row = len(coord_col) * [k]
+        coord_col = np.array(coord_col, dtype=np.int)
+        coord_row = np.empty_like(coord_col)
+        coord_row.fill(k)
         ini = np.empty(len(coord_row), dtype=np.float)
-        _inertia.compute_inertia(moments[0][coord_row], moments[0][coord_col], \
-                             moments[1][coord_row], moments[1][coord_col], \
-                             moments[2][coord_row], moments[2][coord_col], \
-                             ini)
+        _inertia.compute_inertia(moments[0], moments[1], moments[2],
+                                coord_row, coord_col, ini)
         ini = zip(ini, coord_row, coord_col)
         for tupl in ini:
             heapq.heappush(inertia, tupl)

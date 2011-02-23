@@ -2,27 +2,29 @@ import numpy as np
 cimport numpy as np
 cimport cython
 ctypedef np.float64_t DOUBLE
+ctypedef np.int_t INT
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def compute_inertia(np.ndarray[DOUBLE, ndim=1] mi_1,\
-                    np.ndarray[DOUBLE, ndim=1] mj_1,\
-                    np.ndarray[DOUBLE, ndim=2] mi_2,\
-                    np.ndarray[DOUBLE, ndim=2] mj_2,\
-                    np.ndarray[DOUBLE, ndim=2] mi_3,\
-                    np.ndarray[DOUBLE, ndim=2] mj_3,\
+def compute_inertia(np.ndarray[DOUBLE, ndim=1] m_1,\
+                    np.ndarray[DOUBLE, ndim=2] m_2,\
+                    np.ndarray[DOUBLE, ndim=2] m_3,\
+                    np.ndarray[INT, ndim=1] coord_row, 
+                    np.ndarray[INT, ndim=1] coord_col,\
                     np.ndarray[DOUBLE, ndim=1] res):
-    cdef int size_max = mj_3.shape[0]
-    cdef int n_features = mj_3.shape[1]
-    cdef int i, j
+    cdef int size_max = coord_row.shape[0]
+    cdef int n_features = m_3.shape[1]
+    cdef int i, j, row, col
     cdef DOUBLE pa, n
     for i in range(size_max):
-        n = mi_1[i] + mj_1[i]
+        row = coord_row[i]
+        col = coord_col[i]
+        n = m_1[row] + m_1[col]
         pa = 0.
         for j in range(n_features):
-            pa += mi_3[i,j] + mj_3[i,j]
-            pa -= ((mi_2[i,j] + mj_2[i,j])**2) / n
+            pa += m_3[row, j] + m_3[col, j]
+            pa -= ((m_2[row, j] + m_2[col, j])**2) / n
         res[i] = pa
     return res
