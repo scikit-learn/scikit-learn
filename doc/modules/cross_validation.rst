@@ -166,8 +166,8 @@ Example of stratified 2-fold:
 >>> print skf
 scikits.learn.cross_val.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
 >>> for train, test in skf: print train, test
-[False  True False False  True False  True] [ True False  True  True False  True False]
-[ True False  True  True False  True False] [False  True False False  True False  True]
+[False False  True False  True  True  True] [ True  True False  True False False False]
+[ True  True False  True False False False] [False False  True False  True  True  True]
 
 
 
