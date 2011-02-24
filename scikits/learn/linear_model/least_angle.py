@@ -424,11 +424,11 @@ class LassoLARS (LARS):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LassoLARS(alpha=0.1)
+    >>> clf = linear_model.LassoLARS(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
+    LassoLARS(alpha=0.01, verbose=False, fit_intercept=True)
     >>> print clf.coef_
-    [ 0.          0.08350342]
+    [ 0.         -0.72649658]
 
     References
     ----------
