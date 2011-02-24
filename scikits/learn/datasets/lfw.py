@@ -298,7 +298,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
                 (components[0], int(components[2]) - 1),
             )
         elif len(components) == 4:
-            target[i] = -1
+            target[i] = 0
             pair = (
                 (components[0], int(components[1]) - 1),
                 (components[2], int(components[3]) - 1),
@@ -320,7 +320,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
             else:
                 pairs[i, j, :, :, :] = face
 
-    return pairs, target
+    return pairs, target, np.array(['Different persons', 'Same person'])
 
 
 def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
@@ -402,8 +402,9 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     index_file_path = join(lfw_home, label_filenames[subset])
 
     # load and memoize the pairs as np arrays
-    pairs, target = load_func(index_file_path, data_folder_path, **parameters)
+    pairs, target, class_names = load_func(index_file_path, data_folder_path,
+                                           **parameters)
 
     # pack the results as a Bunch instance
-    return Bunch(data=pairs, target=target,
+    return Bunch(data=pairs, target=target, class_names=class_names,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
