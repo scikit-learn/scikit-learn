@@ -1,11 +1,11 @@
 """This test for the LFW require medium-size data dowloading and processing
 
-If the data has not been already downloaded by runnning the examples, the tests
-won't run (skipped).
+If the data has not been already downloaded by runnning the examples,
+the tests won't run (skipped).
 
-If the test are run, the first execution will be long (typically a bit more than
-a couple of minutes) but as the dataset loader is leveraging joblib, successive
-runs will be fast (less than 200ms).
+If the test are run, the first execution will be long (typically a bit
+more than a couple of minutes) but as the dataset loader is leveraging
+joblib, successive runs will be fast (less than 200ms).
 """
 
 import os
@@ -25,9 +25,9 @@ def test_load_lfw_people():
         # downloaded to avoid having tests rely on the availability of a
         # fast internet connection
 
-        # to download the data, run the face recognition / verification examples
-        # or call load_lfw_people function from an interactive shell for
-        # instance
+        # to download the data, run the face recognition / verification
+        # examples or call load_lfw_people function from an interactive shell
+        # for instance
         raise SkipTest
 
     lfw_people = load_lfw_people(min_faces_per_person=100)
@@ -92,4 +92,3 @@ def test_load_lfw_pairs():
 
     lfw_pairs_10_folds = load_lfw_pairs(subset='10_folds')
     assert_equal(lfw_pairs_10_folds.data.shape, (6000, 2, 62, 47))
-
