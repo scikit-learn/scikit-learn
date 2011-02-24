@@ -135,7 +135,7 @@ class Neighbors(BaseEstimator, ClassifierMixin):
         >>> neigh.fit(samples, labels)
         Neighbors(n_neighbors=1, window_size=1)
         >>> print neigh.predict([.2, .1, .2])
-        0
+        [0]
         >>> print neigh.predict([[0., -1., 0.], [3., 2., 0.]])
         [0 1]
         """

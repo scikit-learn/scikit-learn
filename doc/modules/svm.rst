@@ -87,12 +87,12 @@ training data, called the support vectors. These vectors can be
 accessed in member `support_`:
 
     >>> clf.support_
-    array([0, 1], dtype=int32)
+    array([0, 1])
 
 Member `n_support_` holds the number of support vectors for each class:
 
     >>> clf.n_support_
-    array([1, 1], dtype=int32)
+    array([1, 1])
 
 
 .. topic:: Examples:
