@@ -265,7 +265,8 @@ class SparseBaseLibLinear(BaseLibLinear):
             self._get_bias())
 
         if len(self.label_) <= 2:
-            # one class
+            # in the two-class case, the decision sign needs be flipped
+            # due to liblinear's design
             return -dec_func
         else:
             return dec_func

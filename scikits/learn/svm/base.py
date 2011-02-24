@@ -425,17 +425,14 @@ class BaseLibLinear(BaseEstimator):
         X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
         self._check_n_features(X)
 
-        coef = self.raw_coef_
-
-        dec_func = _liblinear.decision_function_wrap(X, coef,
-                                      self._get_solver_type(),
-                                      self.eps, self.C,
-                                      self.class_weight_label,
-                                      self.class_weight, self.label_,
-                                      self._get_bias())
+        dec_func = _liblinear.decision_function_wrap(
+            X, self.raw_coef_, self._get_solver_type(), self.eps,
+            self.C, self.class_weight_label, self.class_weight,
+            self.label_, self._get_bias())
 
         if len(self.label_) <= 2:
-            # one class
+            # in the two-class case, the decision sign needs be flipped
+            # due to liblinear's design
             return -dec_func
         else:
             return dec_func
@@ -451,14 +448,22 @@ class BaseLibLinear(BaseEstimator):
     @property
     def intercept_(self):
         if self.fit_intercept:
-            return self.intercept_scaling * self.raw_coef_[:, -1]
+            ret = self.intercept_scaling * self.raw_coef_[:, -1]
+            if len(self.label_) <= 2:
+                ret *= -1
+            return ret
         return 0.0
 
     @property
     def coef_(self):
         if self.fit_intercept:
-            return self.raw_coef_[:, : -1]
-        return self.raw_coef_
+            ret = self.raw_coef_[:, : -1]
+        else:
+            ret = self.raw_coef_
+        if len(self.label_) <= 2:
+            return -ret
+        else:
+            return ret
 
     def predict_proba(self, T):
         # only available for logistic regression
