@@ -63,7 +63,8 @@ mem = Memory(cachedir='.', verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
 A = img_to_graph(mask, mask)
-ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem, n_comp=1)
+ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem,
+                         n_components=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
 parameters = {'ward__n_clusters': [10, 20, 30]}
 # Select the optimal number of parcels with grid search
