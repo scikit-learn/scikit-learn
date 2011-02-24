@@ -120,7 +120,17 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         alphas[n_iter] = C / n_samples
 
-        if (C < alpha_min) or (n_active == max_features):
+        # Check for early stopping
+        if alphas[n_iter] < alpha_min: # interpolate
+            # interpolation factor 0 <= ss < 1
+            ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
+                                                   alphas[n_iter])
+            coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] -
+                            coefs[n_iter-1])
+            alphas[n_iter] = alpha_min
+            break
+
+        if n_active == max_features:
             break
 
         if not drop:
@@ -270,13 +280,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             if verbose:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
                                                       n_active, abs(temp))
-    if alphas[n_iter] < alpha_min: # interpolate
-        # interpolation factor 0 <= ss < 1
-        ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
-                                               alphas[n_iter])
-        coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] - coefs[n_iter-1])
-        alphas[n_iter] = alpha_min
-        
 
     # resize coefs in case of early stop
     alphas = alphas[:n_iter+1]
