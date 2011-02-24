@@ -80,7 +80,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_nodes = 2 * n_samples - n_components
 
     if connectivity is None:
-        coord_row, coord_col = np.tril_indices(n_samples, k=-1)
+        coord_row, coord_col = np.where(np.tril(np.ones((n_samples, n_samples),
+                                        dtype=np.bool), k=-1))
         A = [range(0, ind) + range(ind+1, n_samples)
              for ind in range(n_samples)]
     else:
