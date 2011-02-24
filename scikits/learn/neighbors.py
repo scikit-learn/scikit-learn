@@ -22,8 +22,8 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     window_size : int, optional
         Window size passed to BallTree
 
-    strategy : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
-        Strategy used to compute the nearest neighbors. 'ball_tree'
+    algorithm : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
+        Algorithm used to compute the nearest neighbors. 'ball_tree'
         will construct a BallTree, 'brute' and 'brute_inplace' will
         perform brute-force search.'auto' will guess the most
         appropriate based on current dataset.
@@ -35,7 +35,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.neighbors import NeighborsClassifier
     >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    NeighborsClassifier(n_neighbors=1, window_size=1, strategy='auto')
+    NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
     >>> print neigh.predict([[0,0,0]])
     [1]
 
@@ -48,10 +48,10 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, strategy='auto', window_size=1):
+    def __init__(self, n_neighbors=5, algorithm='auto', window_size=1):
         self.n_neighbors = n_neighbors
         self.window_size = window_size
-        self.strategy = strategy
+        self.algorithm = algorithm
 
         
     def fit(self, X, Y, **params):
@@ -73,8 +73,8 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self._y = np.asanyarray(Y)
         self._set_params(**params)
 
-        if self.strategy == 'ball_tree' or \
-           (self.strategy == 'auto' and X.shape[1] < 20):
+        if self.algorithm == 'ball_tree' or \
+           (self.algorithm == 'auto' and X.shape[1] < 20):
             self.ball_tree = BallTree(X, self.window_size)
         else:
             self.ball_tree = None
@@ -119,7 +119,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> from scikits.learn.neighbors import NeighborsClassifier
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        NeighborsClassifier(n_neighbors=1, window_size=1, strategy='auto')
+        NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
         >>> print neigh.kneighbors([1., 1., 1.])
         (array([ 0.5]), array([2]))
 
@@ -160,7 +160,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         # .. get neighbors ..
         if self.ball_tree is None:
-            if self.strategy == 'brute_inplace':
+            if self.algorithm == 'brute_inplace':
                 neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
             else:
                 from .metrics import euclidean_distances
@@ -203,8 +203,8 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     mode : {'mean', 'barycenter'}, optional
         Weights to apply to labels.
 
-    strategy : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
-        Strategy used to compute the nearest neighbors. 'ball_tree'
+    algorithm : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
+        Algorithm used to compute the nearest neighbors. 'ball_tree'
         will construct a BallTree, 'brute' and 'brute_inplace' will
         perform brute-force search.'auto' will guess the most
         appropriate based on current dataset.
@@ -216,7 +216,8 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     >>> from scikits.learn.neighbors import NeighborsRegressor
     >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean', strategy='auto')
+    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean',
+              algorithm='auto')
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -226,12 +227,12 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     """
 
 
-    def __init__(self, n_neighbors=5, mode='mean', strategy='auto',
+    def __init__(self, n_neighbors=5, mode='mean', algorithm='auto',
                  window_size=1):
         self.n_neighbors = n_neighbors
         self.window_size = window_size
         self.mode = mode
-        self.strategy = strategy
+        self.algorithm = algorithm
 
 
     def predict(self, X, **params):
@@ -256,7 +257,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
 
         # .. get neighbors ..
         if self.ball_tree is None:
-            if self.strategy == 'brute_inplace':
+            if self.algorithm == 'brute_inplace':
                 neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
             else:
                 from .metrics.pairwise import euclidean_distances

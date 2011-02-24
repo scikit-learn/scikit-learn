@@ -20,8 +20,8 @@ The :class:`NeighborsClassifier` implements the nearest-neighbors
 classification method using a vote heuristic: the class most present
 in the k nearest neighbors of a point is assigned to this point.
 
-It is possible to use different nearest neighbor search strategies by
-using the keyword ``strategy``. Possible values are ``'auto'``,
+It is possible to use different nearest neighbor search algorithms by
+using the keyword ``algorithm``. Possible values are ``'auto'``,
 ``'ball_tree'``, ``'brute'`` and ``'brute_inplace'``. ``'ball_tree'``
 will create an instance of :class:`BallTree` to conduct the search,
 which is usually very efficient in low-dimensional spaces. In higher

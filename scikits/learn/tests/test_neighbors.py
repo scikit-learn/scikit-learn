@@ -24,19 +24,19 @@ def test_neighbors_1D():
 
     for s in ('auto', 'ball_tree', 'brute', 'inplace'):
         # n_neighbors = 1
-        knn = neighbors.NeighborsClassifier(n_neighbors=1, strategy=s)
+        knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         knn.fit(X, Y)
         test = [[i + 0.01] for i in range(0, n/2)] + \
                [[i - 0.01] for i in range(n/2, n)]
         assert_array_equal(knn.predict(test), [0]*3 + [1]*3)
 
         # n_neighbors = 2
-        knn = neighbors.NeighborsClassifier(n_neighbors=2, strategy=s)
+        knn = neighbors.NeighborsClassifier(n_neighbors=2, algorithm=s)
         knn.fit(X, Y)
         assert_array_equal(knn.predict(test), [0]*4 + [1]*2)
 
         # n_neighbors = 3
-        knn = neighbors.NeighborsClassifier(n_neighbors=3, strategy=s)
+        knn = neighbors.NeighborsClassifier(n_neighbors=3, algorithm=s)
         knn.fit(X, Y)
         assert_array_equal(knn.predict([[i +0.01] for i in range(0, n/2)]),
                             [0 for i in range(n/2)])
@@ -54,15 +54,15 @@ def test_neighbors_iris():
 
     for s in ('auto', 'ball_tree', 'brute', 'inplace'):
         clf = neighbors.NeighborsClassifier()
-        clf.fit(iris.data, iris.target, n_neighbors=1, strategy=s)
+        clf.fit(iris.data, iris.target, n_neighbors=1, algorithm=s)
         assert_array_equal(clf.predict(iris.data), iris.target)
 
-        clf.fit(iris.data, iris.target, n_neighbors=9, strategy=s)
+        clf.fit(iris.data, iris.target, n_neighbors=9, algorithm=s)
         assert_(np.mean(clf.predict(iris.data)== iris.target) > 0.95)
 
         for m in ('barycenter', 'mean'):
             rgs = neighbors.NeighborsRegressor()
-            rgs.fit(iris.data, iris.target, mode=m, strategy=s)
+            rgs.fit(iris.data, iris.target, mode=m, algorithm=s)
             assert_(np.mean(
                 rgs.predict(iris.data).round() == iris.target) > 0.95)
 
