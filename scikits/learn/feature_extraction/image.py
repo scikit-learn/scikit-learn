@@ -103,4 +103,46 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return return_as(graph)
 
 
+def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
+                  dtype=np.int):
+    """Graph of the pixel-to-pixel connections
+
+    Edges exist if 2 voxels are connected.
+
+    Parameters
+    ===========
+    n_x: int
+        Dimension in x axis
+    n_y: int
+        Dimension in y axis
+    n_z: int, optional, default 1
+        Dimension in z axis
+    mask : ndarray of booleans, optional
+        An optional mask of the image, to consider only part of the
+        pixels.
+    return_as: np.ndarray or a sparse matrix class, optional
+        The class to use to build the returned adjacency matrix.
+    dtype: dtype, optional, default int
+        The data of the returned sparse matrix. By default it is int
+    """
+    edges = _make_edges_3d(n_x, n_y, n_z)
+    n_edges = edges.shape[1]
+    weights = np.ones(n_edges, dtype=np.int)
+    n_voxels = n_x * n_y * n_z
+    if mask is not None:
+        edges, weights = _mask_edges_weights(mask, edges, weights)
+        n_voxels = np.sum(mask)
+    diag_idx = np.arange(n_voxels)
+    i_idx = np.hstack((edges[0], edges[1]))
+    j_idx = np.hstack((edges[1], edges[0]))
+    diag = np.zeros(n_voxels)
+    graph = sparse.coo_matrix((np.hstack((weights, weights, diag)),
+                              (np.hstack((i_idx, diag_idx)),
+                               np.hstack((j_idx, diag_idx)))),
+                              (n_voxels, n_voxels),
+                              dtype=dtype)
+    if return_as is np.ndarray:
+        return graph.todense()
+    return return_as(graph)
+
 
