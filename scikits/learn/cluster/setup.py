@@ -10,9 +10,6 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('_inertia',
                          sources=['_inertia.c'],
                          include_dirs=[numpy.get_include()])
-    config.add_extension('_ward_dist',
-                         sources=['_ward_dist.c'],
-                         include_dirs=[numpy.get_include()])
     return config
 
 if __name__ == '__main__':

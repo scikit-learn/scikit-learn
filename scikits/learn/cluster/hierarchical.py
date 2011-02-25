@@ -17,7 +17,7 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from . import _inertia, _ward_dist
+from . import _inertia
 from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
@@ -127,8 +127,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         _inertia.compute_inertia(moments[0], moments[1], moments[2],
                                  coord_row, coord_col, inertia)
     else:
-        _ward_dist.compute_inertia(moments[0], moments[1], moments[2],
-                                   coord_row, coord_col, inertia)
+        _inertia.compute_ward_dist(moments[0], moments[1], moments[2],
+                           coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
     heapq.heapify(inertia)
 
@@ -170,7 +170,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
             _inertia.compute_inertia(moments[0], moments[1], moments[2],
                                      coord_row, coord_col, ini)
         else:
-            _ward_dist.compute_inertia(moments[0], moments[1], moments[2],
+            _inertia.compute_ward_dist(moments[0], moments[1], moments[2],
                                        coord_row, coord_col, ini)
         for tupl in itertools.izip(ini, coord_row, coord_col):
             heapq.heappush(inertia, tupl)
