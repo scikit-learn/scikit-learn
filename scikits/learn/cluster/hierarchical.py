@@ -17,13 +17,14 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from . import _inertia
+from . import _inertia, _ward_dist
 from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
 # Ward's algorithm
 
-def ward_tree(X, connectivity=None, n_components=None, copy=True):
+def ward_tree(X, connectivity=None, n_components=None, copy=True, 
+              inertia_criterion=False):
     """Ward clustering based on a Feature matrix. Heapq-based representation
     of the inertia matrix.
 
@@ -48,6 +49,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     copy : bool (optional)
         Make a copy of connectivity or work inplace. If connectivity
         is not of LIL type there will be a copy in any case.
+    
+    inertia_criterion: bool (optional)
+        Use an inertia criterion instead of classical Ward's criterion
 
     Returns
     -------
@@ -82,7 +86,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     if connectivity is None:
         coord_row, coord_col = np.where(np.tril(np.ones((n_samples, n_samples),
                                         dtype=np.bool), k=-1))
-        A = [range(0, ind) + range(ind+1, n_samples)
+        A = [range(0, ind) + range(ind + 1, n_samples)
              for ind in range(n_samples)]
     else:
         if (connectivity.shape[0] != n_samples or
@@ -107,7 +111,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
             # We keep only the upper triangular for the moments
             # Generator expressions are faster than arrays on the following
             row = [i for i in row if i < ind]
-            coord_row.extend(len(row)*[ind,])
+            coord_row.extend(len(row) * [ind,])
             coord_col.extend(row)
         coord_row = np.array(coord_row, dtype=np.int)
         coord_col = np.array(coord_col, dtype=np.int)
@@ -119,8 +123,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     moments[1][:n_samples] = X
     moments[2][:n_samples] = X ** 2
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _inertia.compute_inertia(moments[0], moments[1], moments[2],
-                             coord_row, coord_col, inertia)
+    if inertia_criterion:
+        _inertia.compute_inertia(moments[0], moments[1], moments[2],
+                                 coord_row, coord_col, inertia)
+    else:
+        _ward_dist.compute_inertia(moments[0], moments[1], moments[2],
+                                   coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
     heapq.heapify(inertia)
 
@@ -158,8 +166,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_row = np.empty_like(coord_col)
         coord_row.fill(k)
         ini = np.empty(len(coord_row), dtype=np.float)
-        _inertia.compute_inertia(moments[0], moments[1], moments[2],
-                                coord_row, coord_col, ini)
+        if inertia_criterion:
+            _inertia.compute_inertia(moments[0], moments[1], moments[2],
+                                     coord_row, coord_col, ini)
+        else:
+            _ward_dist.compute_inertia(moments[0], moments[1], moments[2],
+                                       coord_row, coord_col, ini)
         for tupl in itertools.izip(ini, coord_row, coord_col):
             heapq.heappush(inertia, tupl)
 
