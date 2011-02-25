@@ -5,7 +5,10 @@ Author : Vincent Michel, 2010
 """
 
 import numpy as np
+from scipy.cluster import hierarchy
+
 from scikits.learn.cluster import Ward, WardAgglomeration, ward_tree
+from scikits.learn.cluster.hierarchical import _hc_cut
 from scikits.learn.feature_extraction.image import img_to_graph
 
 
@@ -76,6 +79,37 @@ def test_ward_agglomeration():
     Xfull = ward.inverse_transform(Xred)
     assert(np.unique(Xfull[0]).size == 5)
 
+
+def assess_same_labelling(cut1, cut2):
+    """Util for comparison with scipy"""
+    co_clust = []
+    for cut in [cut1, cut2]:
+        n = len(cut)
+        k = cut.max() + 1
+        ecut = np.zeros((n, k))
+        ecut[np.arange(n), cut] = 1
+        co_clust.append(np.dot(ecut, ecut.T))
+    assert((co_clust[0] == co_clust[1]).all())
+
+
+def test_scikit_vs_scipy():
+    """Test scikit unstructured ward against scipy
+    """
+    n, p, k = 10, 5, 3
+
+    for i in range(5):
+        X = .1*np.random.normal(size=(n, p))
+        X -= 4*np.arange(n)[:, np.newaxis]
+        X -= X.mean(axis=1)[:, np.newaxis]
+
+        out = hierarchy.ward(X)
+
+        children_ = out[:, :2].astype(np.int)
+        children, _, n_leaves = ward_tree(X)
+
+        cut  = _hc_cut(k, children, n_leaves)
+        cut_ = _hc_cut(k, children_, n_leaves)
+        assess_same_labelling(cut, cut_)
 
 if __name__ == '__main__':
     import nose

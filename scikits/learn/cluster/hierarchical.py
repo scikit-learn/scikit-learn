@@ -23,7 +23,7 @@ from ._feature_agglomeration import AgglomerationTransform
 ###############################################################################
 # Ward's algorithm
 
-def ward_tree(X, connectivity=None, n_components=None, copy=True, 
+def ward_tree(X, connectivity=None, n_components=None, copy=True,
               inertia_criterion=False):
     """Ward clustering based on a Feature matrix. Heapq-based representation
     of the inertia matrix.
@@ -49,7 +49,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     copy : bool (optional)
         Make a copy of connectivity or work inplace. If connectivity
         is not of LIL type there will be a copy in any case.
-    
+
     inertia_criterion: bool (optional)
         Use an inertia criterion instead of classical Ward's criterion
 
@@ -111,14 +111,14 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
             # We keep only the upper triangular for the moments
             # Generator expressions are faster than arrays on the following
             row = [i for i in row if i < ind]
-            coord_row.extend(len(row) * [ind,])
+            coord_row.extend(len(row) * [ind, ])
             coord_col.extend(row)
         coord_row = np.array(coord_row, dtype=np.int)
         coord_col = np.array(coord_col, dtype=np.int)
 
     # build moments as a list
     moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features)),
-                np.zeros((n_nodes, n_features))]
+               np.zeros((n_nodes, n_features))]
     moments[0][:n_samples] = 1
     moments[1][:n_samples] = X
     moments[2][:n_samples] = X ** 2
