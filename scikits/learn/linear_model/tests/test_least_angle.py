@@ -111,6 +111,22 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
         error = np.linalg.norm(c - lasso_cd.coef_)
         assert error < 0.01
 
+def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
+    """
+    Test that LassoLars and Lasso using coordinate descent give the
+    same results when early stopping is used.
+    (test : before, in the middle, and in the last part of the path)
+    """
+    alphas_min = [10, 0.9, 1e-4]
+    for alphas_min in alphas_min:
+        alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
+                                                    alpha_min=0.9)
+        lasso_cd = linear_model.Lasso(fit_intercept=False)
+        lasso_cd.alpha = alphas[-1]
+        lasso_cd.fit(X, y, tol=1e-8)
+        error = np.linalg.norm(lasso_path[:,-1] - lasso_cd.coef_)
+        assert error < 0.01
+
 
 if __name__ == '__main__':
     import nose

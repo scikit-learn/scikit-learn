@@ -417,7 +417,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     clf.intercept_scaling = 100
     clf.fit(X, y)
     intercept1 = clf.intercept_
-    assert intercept1 > 1
+    assert intercept1 < -1
 
     # when intercept_scaling is sufficiently high, the intercept value
     # doesn't depend on intercept_scaling value
@@ -435,13 +435,25 @@ def test_liblinear_predict():
     returns the same as the one in libliblinear
 
     """
+    # multi-class case
     clf = svm.LinearSVC().fit(iris.data, iris.target)
-
     weights = clf.coef_.T
     bias = clf.intercept_
     H = np.dot(iris.data, weights) + bias
-
     assert_array_equal(clf.predict(iris.data), H.argmax(axis=1))
+
+    # binary-class case
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+
+    clf = svm.LinearSVC().fit(X, y)
+    weights = np.ravel(clf.coef_)
+    bias = clf.intercept_
+    H = np.dot(X, weights) + bias
+    assert_array_equal(clf.predict(X), (H > 0).astype(int))
 
 if __name__ == '__main__':
     import nose

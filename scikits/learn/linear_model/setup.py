@@ -1,11 +1,9 @@
 from os.path import join
-import warnings
 import numpy
-import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, get_standard_file, BlasNotFoundError
+    from numpy.distutils.system_info import get_info
     config = Configuration('linear_model', parent_package, top_path)
 
     # cd fast needs CBLAS
