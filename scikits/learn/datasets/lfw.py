@@ -79,11 +79,6 @@ def check_fetch_lfw(data_home=None, funneled=True):
     if not exists(lfw_home):
         makedirs(lfw_home)
 
-    if not exists(archive_path):
-        logging.info("Downloading LFW data: %s", archive_url)
-        downloader = urllib.urlopen(archive_url)
-        open(archive_path, 'wb').write(downloader.read())
-
     for target_filename in TARGET_FILENAMES:
         target_filepath = join(lfw_home, target_filename)
         if not exists(target_filepath):
@@ -93,9 +88,16 @@ def check_fetch_lfw(data_home=None, funneled=True):
             open(target_filepath, 'wb').write(downloader.read())
 
     if not exists(data_folder_path):
+
+        if not exists(archive_path):
+            logging.info("Downloading LFW data: %s", archive_url)
+            downloader = urllib.urlopen(archive_url)
+            open(archive_path, 'wb').write(downloader.read())
+
         import tarfile
         logging.info("Decompressing the data archive to %s", data_folder_path)
         tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
+        os.remove(archive_path)
 
     return lfw_home, data_folder_path
 
@@ -105,7 +107,7 @@ def check_fetch_lfw(data_home=None, funneled=True):
 #
 
 def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
-                     min_faces_per_person=10):
+                     min_faces_per_person=0):
     """Perform the actual data loading for the lfw people dataset
 
     This operation is meant to be cached by a joblib wrapper.
@@ -125,6 +127,10 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
             file_paths.extend(paths)
 
     n_faces = len(file_paths)
+    if n_faces == 0:
+        raise ValueError("min_faces_per_person=%d is too restrictive" %
+                         min_faces_per_person)
+
     class_names = np.unique(person_names)
     target = np.searchsorted(class_names, person_names)
 
@@ -141,6 +147,7 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
 
     if resize is not None:
+        resize = float(resize)
         h = int(resize * h)
         w = int(resize * w)
 
@@ -233,7 +240,7 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    m = Memory(cachedir=join(lfw_home, 'joblib'), mmap_mode='c', verbose=0)
+    m = Memory(cachedir=lfw_home, mmap_mode='c', verbose=0)
     load_func = m.cache(_load_lfw_people)
 
     # load and memoize the pairs as np arrays
@@ -275,6 +282,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
 
     if resize is not None:
+        resize = float(resize)
         h = int(resize * h)
         w = int(resize * w)
 
@@ -387,7 +395,7 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    m = Memory(cachedir=join(lfw_home, 'joblib'), mmap_mode='c', verbose=0)
+    m = Memory(cachedir=lfw_home, mmap_mode='c', verbose=0)
     load_func = m.cache(_load_lfw_pairs)
 
     # select the right metadata file according to the requested subset
