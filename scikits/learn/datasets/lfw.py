@@ -23,11 +23,8 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
-from os.path import join
-from os.path import exists
-from os.path import isdir
-from os import listdir
-from os import makedirs
+from os.path import join, exists, isdir
+from os import listdir, makedirs, remove
 
 import urllib
 import logging
@@ -97,7 +94,7 @@ def check_fetch_lfw(data_home=None, funneled=True):
         import tarfile
         logging.info("Decompressing the data archive to %s", data_folder_path)
         tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
-        os.remove(archive_path)
+        remove(archive_path)
 
     return lfw_home, data_folder_path
 
