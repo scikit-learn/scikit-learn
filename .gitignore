@@ -13,6 +13,7 @@ doc/modules/generated/
 pip-log.txt
 scikits.learn.egg-info/
 .coverage
+coverage
 tags
 covtype.data.gz
 20news-18828/

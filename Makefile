@@ -34,7 +34,7 @@ test-doc:
 	--doctest-fixtures=_fixture doc/modules/
 
 test-coverage:
-	$(NOSETESTS) --with-coverage
+	$(NOSETESTS) --with-coverage --cover-html --cover-html-dir=coverage
 
 
 trailing-spaces:
