@@ -22,6 +22,7 @@ from scikits.learn.datasets import get_data_home
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 from nose import SkipTest
+from nose.tools import raises
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -58,6 +59,10 @@ def setup_module():
             file_path = os.path.join(folder_name, name + '_%04d.jpg' % i)
             uniface = np_rng.randint(0, 255, size=(250, 250, 3))
             imsave(file_path, uniface)
+
+    # add some random file pollution to test robustness
+    with open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb') as f:
+        f.write('Text file to be ignored by the dataset loader.')
 
     # generate some pairing metadata files using the same format as LFW
     with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
@@ -114,6 +119,11 @@ def test_load_fake_lfw_people():
     # the ids and class names are the same as previously
     assert_array_equal(lfw_people.target, [2, 0, 1, 0, 2, 0, 2, 1, 1, 2])
     assert_array_equal(lfw_people.class_names, expected_classes)
+
+
+@raises(ValueError)
+def test_load_fake_lfw_people_too_restrictive():
+    load_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100)
 
 
 def test_load_fake_lfw_pairs():
