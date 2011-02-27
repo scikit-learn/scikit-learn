@@ -235,11 +235,6 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
     """
-
-    parameters = locals().copy()
-    del parameters['data_home']
-    del parameters['funneled']
-
     lfw_home, data_folder_path = check_fetch_lfw(data_home=data_home,
                                                  funneled=funneled)
     logging.info('Loading LFW people faces from %s', lfw_home)
@@ -250,7 +245,9 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
     load_func = m.cache(_load_lfw_people)
 
     # load and memoize the pairs as np arrays
-    faces, target, class_names = load_func(data_folder_path, **parameters)
+    faces, target, class_names = load_func(
+        data_folder_path, resize=resize,
+        min_faces_per_person=min_faces_per_person, color=color, slice_=slice_)
 
     # pack the results as a Bunch instance
     return Bunch(data=faces, target=target, class_names=class_names,
@@ -362,12 +359,6 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
     """
-
-    parameters = locals().copy()
-    del parameters['subset']
-    del parameters['data_home']
-    del parameters['funneled']
-
     lfw_home, data_folder_path = check_fetch_lfw(data_home=data_home,
                                                  funneled=funneled)
     logging.info('Loading %s LFW pairs from %s', subset, lfw_home)
@@ -389,8 +380,9 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     index_file_path = join(lfw_home, label_filenames[subset])
 
     # load and memoize the pairs as np arrays
-    pairs, target, class_names = load_func(index_file_path, data_folder_path,
-                                           **parameters)
+    pairs, target, class_names = load_func(
+        index_file_path, data_folder_path, resize=resize, color=color,
+        slice_=slice_)
 
     # pack the results as a Bunch instance
     return Bunch(data=pairs, target=target, class_names=class_names,
