@@ -86,8 +86,8 @@ array::
   >>> lfw_people.target.shape
   (1140,)
 
-  >>> lfw_people.target[:10]
-  memmap([2, 3, 1, 4, 1, 0, 2, 0, 2, 1])
+  >>> list(lfw_people.target[:10])
+  [2, 3, 1, 4, 1, 0, 2, 0, 2, 1]
 
 The second loader is typically used for the face verification task: each sample
 is a pair of two picture belonging or not to the same person::
