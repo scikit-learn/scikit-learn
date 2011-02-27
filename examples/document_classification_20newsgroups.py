@@ -150,11 +150,11 @@ for clf, name in ((RidgeClassifier(), "Ridge Classifier"),):
     results = benchmark(clf)
 
 for penalty in ["l2", "l1"]:
-    print 80*'='
+    print 80 * '='
     print "%s penalty" % penalty.upper()
     # Train Liblinear model
     liblinear_results = benchmark(LinearSVC(loss='l2', penalty=penalty, C=1000,
-                                        dual=False, eps=1e-3))
+                                            dual=False, eps=1e-3))
 
     # Train SGD model
     sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
