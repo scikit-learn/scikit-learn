@@ -102,7 +102,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n_samples=1):
 
     Returns
     -------
-    obs : array, shape (n_features, n)
+    obs : array, shape (n_features, n_samples)
         Randomly generated sample
     """
     n_dim = len(mean)
@@ -304,15 +304,15 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_features)
+        obs : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
 
         Returns
         -------
-        logprob : array_like, shape (n,)
+        logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
-        posteriors: array_like, shape (n, n_states)
+        posteriors: array_like, shape (n_samples, n_states)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -328,13 +328,13 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n, n_features)
+        obs : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
 
         Returns
         -------
-        logprob : array_like, shape (n,)
+        logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
         """
         logprob, posteriors = self.eval(obs)
@@ -351,9 +351,9 @@ class GMM(BaseEstimator):
 
         Returns
         -------
-        logprobs : array_like, shape (n,)
+        logprobs : array_like, shape (n_samples,)
             Log probability of each point in `obs` under the model.
-        components : array_like, shape (n,)
+        components : array_like, shape (n_samples,)
             Index of the most likelihod mixture components for each observation
         """
         logprob, posteriors = self.eval(obs)
@@ -368,7 +368,7 @@ class GMM(BaseEstimator):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape = (n_samples,)
         """
         logprob, components = self.decode(X)
         return components
@@ -383,7 +383,7 @@ class GMM(BaseEstimator):
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_states]
+        T : array-like, shape = (n_samples, n_states)
             Returns the probability of the sample for each Gaussian
             (state) in the model.
         """
