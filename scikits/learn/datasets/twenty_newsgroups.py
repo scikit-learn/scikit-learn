@@ -110,4 +110,6 @@ def load_20newsgroups(data_home=None, subset='train', categories=None,
         raise ValueError(
             "subset can only be 'train' or 'test', got '%s'" % subset)
 
-    return load_files(folder_path, categories)
+    description = subset + ' subset of the 20 newsgroups by date dataset'
+    return load_files(folder_path, description=description,
+                      categories=categories, shuffle=shuffle, rng=rng)
