@@ -55,9 +55,54 @@ def scale_face(face):
     return scaled
 
 
+#
+# Common private utilities for data fetching from the original LFW website
+# local disk caching, and image decoding.
+#
+
+
+def check_fetch_lfw(data_home=None, funneled=True):
+    """Helper function to download any missing LFW data"""
+    data_home = get_data_home(data_home=data_home)
+    lfw_home = join(data_home, "lfw_home")
+
+    if funneled:
+        archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
+        data_folder_path = join(lfw_home, "lfw_funneled")
+        archive_url = BASE_URL + FUNNELED_ARCHIVE_NAME
+    else:
+        archive_path = join(lfw_home, ARCHIVE_NAME)
+        data_folder_path = join(lfw_home, "lfw")
+        archive_url = BASE_URL + ARCHIVE_NAME
+
+    if not exists(lfw_home):
+        makedirs(lfw_home)
+
+    for target_filename in TARGET_FILENAMES:
+        target_filepath = join(lfw_home, target_filename)
+        if not exists(target_filepath):
+            url = BASE_URL + target_filename
+            logging.info("Downloading LFW metadata: %s", url)
+            downloader = urllib.urlopen(BASE_URL + target_filename)
+            open(target_filepath, 'wb').write(downloader.read())
+
+    if not exists(data_folder_path):
+
+        if not exists(archive_path):
+            logging.info("Downloading LFW data: %s", archive_url)
+            downloader = urllib.urlopen(archive_url)
+            open(archive_path, 'wb').write(downloader.read())
+
+        import tarfile
+        logging.info("Decompressing the data archive to %s", data_folder_path)
+        tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
+        remove(archive_path)
+
+    return lfw_home, data_folder_path
+
+
 def _load_imgs(file_paths, slice_, color, resize):
-    """ Internaly used to load imgs
-    """
+    """Internaly used to load images"""
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
     default_slice = (slice(0, 250), slice(0, 250))
@@ -99,49 +144,6 @@ def _load_imgs(file_paths, slice_, color, resize):
         faces[i, ...] = face
 
     return faces
-
-#
-# Common data fetching from the original LFW website and local disk caching
-#
-
-def check_fetch_lfw(data_home=None, funneled=True):
-    """Helper function to download any missing LFW data"""
-    data_home = get_data_home(data_home=data_home)
-    lfw_home = join(data_home, "lfw_home")
-
-    if funneled:
-        archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
-        data_folder_path = join(lfw_home, "lfw_funneled")
-        archive_url = BASE_URL + FUNNELED_ARCHIVE_NAME
-    else:
-        archive_path = join(lfw_home, ARCHIVE_NAME)
-        data_folder_path = join(lfw_home, "lfw")
-        archive_url = BASE_URL + ARCHIVE_NAME
-
-    if not exists(lfw_home):
-        makedirs(lfw_home)
-
-    for target_filename in TARGET_FILENAMES:
-        target_filepath = join(lfw_home, target_filename)
-        if not exists(target_filepath):
-            url = BASE_URL + target_filename
-            logging.info("Downloading LFW metadata: %s", url)
-            downloader = urllib.urlopen(BASE_URL + target_filename)
-            open(target_filepath, 'wb').write(downloader.read())
-
-    if not exists(data_folder_path):
-
-        if not exists(archive_path):
-            logging.info("Downloading LFW data: %s", archive_url)
-            downloader = urllib.urlopen(archive_url)
-            open(archive_path, 'wb').write(downloader.read())
-
-        import tarfile
-        logging.info("Decompressing the data archive to %s", data_folder_path)
-        tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
-        remove(archive_path)
-
-    return lfw_home, data_folder_path
 
 
 #
