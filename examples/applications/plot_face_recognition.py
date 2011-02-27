@@ -57,8 +57,8 @@ n_features = X.shape[1]
 
 # the label to predict is the id of the person
 y = lfw_people.target
-class_names = lfw_people.class_names
-n_classes = class_names.shape[0]
+target_names = lfw_people.target_names
+n_classes = target_names.shape[0]
 
 print "Total dataset size:"
 print "n_samples: %d" % n_samples
@@ -120,7 +120,7 @@ t0 = time()
 y_pred = clf.predict(X_test_pca)
 print "done in %0.3fs" % (time() - t0)
 
-print classification_report(y_test, y_pred, class_names=class_names)
+print classification_report(y_test, y_pred, target_names=target_names)
 print confusion_matrix(y_test, y_pred, labels=range(n_classes))
 
 
@@ -130,9 +130,9 @@ print confusion_matrix(y_test, y_pred, labels=range(n_classes))
 n_row = 3
 n_col = 4
 
-def title(y_pred, y_test, class_names, i):
-    pred_name = class_names[y_pred[i]].rsplit(' ', 1)[-1]
-    true_name = class_names[y_test[i]].rsplit(' ', 1)[-1]
+def title(y_pred, y_test, target_names, i):
+    pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]
+    true_name = target_names[y_test[i]].rsplit(' ', 1)[-1]
     return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
 
 pl.figure(figsize=(1.8 * n_col, 2.4 * n_row))
@@ -140,7 +140,7 @@ pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
     pl.imshow(X_test[i].reshape((h, w)), cmap=pl.cm.gray)
-    pl.title(title(y_pred, y_test, class_names, i), size=12)
+    pl.title(title(y_pred, y_test, target_names, i), size=12)
     pl.xticks(())
     pl.yticks(())
 

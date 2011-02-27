@@ -135,7 +135,7 @@ def benchmark(clf):
     if print_report:
         print "classification report:"
         print metrics.classification_report(y_test, pred,
-                                            class_names=categories)
+                                            target_names=categories)
 
     if print_cm:
         print "confusion matrix:"

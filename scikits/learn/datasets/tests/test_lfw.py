@@ -105,9 +105,9 @@ def test_load_fake_lfw_people():
     # the target is array of person integer ids
     assert_array_equal(lfw_people.target, [2, 0, 1, 0, 2, 0, 2, 1, 1, 2])
 
-    # names of the persons can be found using the class_names array
+    # names of the persons can be found using the target_names array
     expected_classes = ['Abdelatif Smith', 'Abhati Kepler', 'Onur Lopez']
-    assert_array_equal(lfw_people.class_names, expected_classes)
+    assert_array_equal(lfw_people.target_names, expected_classes)
 
     # It is possible to ask for the original data without any croping or color
     # conversion
@@ -118,7 +118,7 @@ def test_load_fake_lfw_people():
 
     # the ids and class names are the same as previously
     assert_array_equal(lfw_people.target, [2, 0, 1, 0, 2, 0, 2, 1, 1, 2])
-    assert_array_equal(lfw_people.class_names, expected_classes)
+    assert_array_equal(lfw_people.target_names, expected_classes)
 
 
 @raises(ValueError)
@@ -136,9 +136,9 @@ def test_load_fake_lfw_pairs():
     # the target is whether the person is the same or not
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
 
-    # names of the persons can be found using the class_names array
+    # names of the persons can be found using the target_names array
     expected_classes = ['Different persons', 'Same person']
-    assert_array_equal(lfw_pairs_train.class_names, expected_classes)
+    assert_array_equal(lfw_pairs_train.target_names, expected_classes)
 
     # It is possible to ask for the original data without any croping or color
     # conversion
@@ -148,7 +148,7 @@ def test_load_fake_lfw_pairs():
 
     # the ids and class names are the same as previously
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
-    assert_array_equal(lfw_pairs_train.class_names, expected_classes)
+    assert_array_equal(lfw_pairs_train.target_names, expected_classes)
 
 
 def test_load_lfw_people():
@@ -167,7 +167,7 @@ def test_load_lfw_people():
     # only 5 person have more than 100 pictures each in the dataset
     top_classes = ['Colin Powell', 'Donald Rumsfeld', 'George W Bush',
                    'Gerhard Schroeder', 'Tony Blair']
-    assert_array_equal(lfw_people.class_names, top_classes)
+    assert_array_equal(lfw_people.target_names, top_classes)
 
     # default slice is a rectangular shape around the face, removing
     # most of the background
@@ -200,7 +200,7 @@ def test_load_lfw_pairs():
     # this dataset is used for training supervised face verification models,
     # this is a binary classification task
     top_classes = ['Different persons', 'Same person']
-    assert_array_equal(lfw_pairs_train.class_names, top_classes)
+    assert_array_equal(lfw_pairs_train.target_names, top_classes)
 
     # default slice is a rectangular shape around the face, removing
     # most of the background, for each of the 2 face pictures

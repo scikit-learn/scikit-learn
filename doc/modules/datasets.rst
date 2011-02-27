@@ -62,7 +62,7 @@ classification task (hence supervised learning)::
   >>> from scikits.learn.datasets import load_lfw_people
   >>> lfw_people = load_lfw_people(min_faces_per_person=100)
 
-  >>> for name in lfw_people.class_names:
+  >>> for name in lfw_people.target_names:
   ...     print name
   ...
   Colin Powell
@@ -95,7 +95,7 @@ is a pair of two picture belonging or not to the same person::
   >>> from scikits.learn.datasets import load_lfw_pairs
   >>> lfw_pairs_train = load_lfw_pairs(subset='train')
 
-  >>> list(lfw_pairs_train.class_names)
+  >>> list(lfw_pairs_train.target_names)
   ['Different persons', 'Same person']
 
   >>> lfw_pairs_train.data.shape

@@ -131,8 +131,8 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
         raise ValueError("min_faces_per_person=%d is too restrictive" %
                          min_faces_per_person)
 
-    class_names = np.unique(person_names)
-    target = np.searchsorted(class_names, person_names)
+    target_names = np.unique(person_names)
+    target = np.searchsorted(target_names, person_names)
 
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
@@ -182,7 +182,7 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     indices = np.arange(n_faces)
     np.random.RandomState(42).shuffle(indices)
     faces, target = faces[indices], target[indices]
-    return faces, target, class_names
+    return faces, target, target_names
 
 
 def load_lfw_people(data_home=None, funneled=True, resize=0.5,
@@ -244,10 +244,10 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
     load_func = m.cache(_load_lfw_people)
 
     # load and memoize the pairs as np arrays
-    faces, target, class_names = load_func(data_folder_path, **parameters)
+    faces, target, target_names = load_func(data_folder_path, **parameters)
 
     # pack the results as a Bunch instance
-    return Bunch(data=faces, target=target, class_names=class_names,
+    return Bunch(data=faces, target=target, target_names=target_names,
                  DESCR="LFW faces dataset")
 
 
@@ -410,9 +410,9 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     index_file_path = join(lfw_home, label_filenames[subset])
 
     # load and memoize the pairs as np arrays
-    pairs, target, class_names = load_func(index_file_path, data_folder_path,
+    pairs, target, target_names = load_func(index_file_path, data_folder_path,
                                            **parameters)
 
     # pack the results as a Bunch instance
-    return Bunch(data=pairs, target=target, class_names=class_names,
+    return Bunch(data=pairs, target=target, target_names=target_names,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
