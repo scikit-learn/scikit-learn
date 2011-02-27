@@ -6,3 +6,4 @@ from .base import get_data_home
 from .mlcomp import load_mlcomp
 from .lfw import load_lfw_pairs
 from .lfw import load_lfw_people
+from .twenty_newsgroups import load_20newsgroups
