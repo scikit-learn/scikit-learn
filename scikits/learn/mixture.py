@@ -105,10 +105,10 @@ def sample_gaussian(mean, covar, cvtype='diag', n_samples=1):
     obs : array, shape (n_features, n)
         Randomly generated sample
     """
-    ndim = len(mean)
-    rand = np.random.randn(ndim, n_samples)
+    n_dim = len(mean)
+    rand = np.random.randn(n_dim, n_samples)
     if n_samples == 1:
-        rand.shape = (ndim,)
+        rand.shape = (n_dim,)
 
     if cvtype == 'spherical':
         rand *= np.sqrt(covar)
@@ -526,11 +526,11 @@ class GMM(BaseEstimator):
 
 
 def _lmvnpdfdiag(obs, means=0.0, covars=1.0):
-    nobs, ndim = obs.shape
+    nobs, n_dim = obs.shape
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
     #lpr = -0.5 * (np.tile((np.sum((means**2) / covars, 1)
     #                  + np.sum(np.log(covars), 1))[np.newaxis,:], (nobs,1))
-    lpr = -0.5 * (ndim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
+    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
                   + np.sum((means ** 2) / covars, 1)
                   - 2 * np.dot(obs, (means / covars).T)
                   + np.dot(obs ** 2, (1.0 / covars).T))
@@ -546,10 +546,10 @@ def _lmvnpdfspherical(obs, means=0.0, covars=1.0):
 
 def _lmvnpdftied(obs, means, covars):
     from scipy import linalg
-    nobs, ndim = obs.shape
+    nobs, n_dim = obs.shape
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
     icv = linalg.pinv(covars)
-    lpr = -0.5 * (ndim * np.log(2 * np.pi) + np.log(linalg.det(covars))
+    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars))
                   + np.sum(obs * np.dot(obs, icv), 1)[:,np.newaxis]
                   - 2 * np.dot(np.dot(obs, icv), means.T)
                   + np.sum(means * np.dot(means, icv), 1))
@@ -568,7 +568,7 @@ def _lmvnpdffull(obs, means, covars):
     else:
         # slower, but works
         solve_triangular = linalg.solve
-    nobs, ndim = obs.shape
+    nobs, n_dim = obs.shape
     nmix = len(means)
     log_prob = np.empty((nobs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
@@ -576,12 +576,12 @@ def _lmvnpdffull(obs, means, covars):
         cv_log_det  = 2*np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol  = solve_triangular(cv_chol, (obs - mu).T, lower=True).T
         log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=1) + \
-                           ndim * np.log(2 * np.pi) + cv_log_det)
+                           n_dim * np.log(2 * np.pi) + cv_log_det)
 
     return log_prob
 
 
-def _validate_covars(covars, cvtype, nmix, ndim):
+def _validate_covars(covars, cvtype, nmix, n_dim):
     from scipy import linalg
     if cvtype == 'spherical':
         if len(covars) != nmix:
@@ -589,21 +589,21 @@ def _validate_covars(covars, cvtype, nmix, ndim):
         elif np.any(covars <= 0):
             raise ValueError("'spherical' covars must be non-negative")
     elif cvtype == 'tied':
-        if covars.shape != (ndim, ndim):
-            raise ValueError("'tied' covars must have shape (ndim, ndim)")
+        if covars.shape != (n_dim, n_dim):
+            raise ValueError("'tied' covars must have shape (n_dim, n_dim)")
         elif (not np.allclose(covars, covars.T)
               or np.any(linalg.eigvalsh(covars) <= 0)):
             raise ValueError("'tied' covars must be symmetric, "
                              "positive-definite")
     elif cvtype == 'diag':
-        if covars.shape != (nmix, ndim):
-            raise ValueError("'diag' covars must have shape (nmix, ndim)")
+        if covars.shape != (nmix, n_dim):
+            raise ValueError("'diag' covars must have shape (nmix, n_dim)")
         elif np.any(covars <= 0):
             raise ValueError("'diag' covars must be non-negative")
     elif cvtype == 'full':
-        if covars.shape != (nmix, ndim, ndim):
+        if covars.shape != (nmix, n_dim, n_dim):
             raise ValueError("'full' covars must have shape "
-                             "(nmix, ndim, ndim)")
+                             "(nmix, n_dim, n_dim)")
         for n,cv in enumerate(covars):
             if (not np.allclose(cv, cv.T)
                 or np.any(linalg.eigvalsh(cv) <= 0)):
