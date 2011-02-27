@@ -269,22 +269,3 @@ Pipeline
 
    pipeline.Pipeline
 
-
-Dataset generation and loading
-==============================
-
-.. currentmodule:: scikits.learn.datasets
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   get_data_home
-   load_diabetes
-   load_digits
-   load_files
-   load_iris
-   load_lfw_pairs
-   load_lfw_people
-   load_mlcomp
-
