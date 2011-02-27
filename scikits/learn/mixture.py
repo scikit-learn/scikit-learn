@@ -526,10 +526,10 @@ class GMM(BaseEstimator):
 
 
 def _lmvnpdfdiag(obs, means=0.0, covars=1.0):
-    nobs, n_dim = obs.shape
+    n_obs, n_dim = obs.shape
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
     #lpr = -0.5 * (np.tile((np.sum((means**2) / covars, 1)
-    #                  + np.sum(np.log(covars), 1))[np.newaxis,:], (nobs,1))
+    #                  + np.sum(np.log(covars), 1))[np.newaxis,:], (n_obs,1))
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
                   + np.sum((means ** 2) / covars, 1)
                   - 2 * np.dot(obs, (means / covars).T)
@@ -546,7 +546,7 @@ def _lmvnpdfspherical(obs, means=0.0, covars=1.0):
 
 def _lmvnpdftied(obs, means, covars):
     from scipy import linalg
-    nobs, n_dim = obs.shape
+    n_obs, n_dim = obs.shape
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
     icv = linalg.pinv(covars)
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars))
@@ -568,9 +568,9 @@ def _lmvnpdffull(obs, means, covars):
     else:
         # slower, but works
         solve_triangular = linalg.solve
-    nobs, n_dim = obs.shape
+    n_obs, n_dim = obs.shape
     nmix = len(means)
-    log_prob = np.empty((nobs,nmix))
+    log_prob = np.empty((n_obs,nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
         cv_chol = linalg.cholesky(cv, lower=True)
         cv_log_det  = 2*np.sum(np.log(np.diagonal(cv_chol)))
