@@ -44,7 +44,7 @@ import numpy as np
 
 from .base import Bunch
 from .base import get_data_home
-from .base import load_files
+from .base import load_filenames
 
 
 URL = ("http://people.csail.mit.edu/jrennie/"
@@ -111,5 +111,5 @@ def load_20newsgroups(data_home=None, subset='train', categories=None,
             "subset can only be 'train' or 'test', got '%s'" % subset)
 
     description = subset + ' subset of the 20 newsgroups by date dataset'
-    return load_files(folder_path, description=description,
+    return load_filenames(folder_path, description=description,
                       categories=categories, shuffle=shuffle, rng=rng)

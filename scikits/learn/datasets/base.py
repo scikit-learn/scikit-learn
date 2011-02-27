@@ -53,9 +53,9 @@ def get_data_home(data_home=None):
     return expanduser(data_home)
 
 
-def load_files(container_path, description=None, categories=None, shuffle=True,
-               rng=42):
-    """Load files with categories as subfolder names
+def load_filenames(container_path, description=None, categories=None,
+                   shuffle=True, rng=42):
+    """Load filenames with categories as subfolder names
 
     Individual samples are assumed to be files stored a two levels folder
     structure such as the following:

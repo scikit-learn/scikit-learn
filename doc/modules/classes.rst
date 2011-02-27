@@ -282,7 +282,7 @@ Dataset generation and loading
    get_data_home
    load_diabetes
    load_digits
-   load_files
+   load_filenames
    load_iris
    load_lfw_pairs
    load_lfw_people
