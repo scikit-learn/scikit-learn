@@ -23,7 +23,7 @@ Support Vector Machines
    svm.OneClassSVM
 
 For sparse data
------------------
+---------------
 
 .. autosummary::
    :toctree: generated/
@@ -76,7 +76,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
-        
+
 
 Bayesian Regression
 ===================
@@ -86,7 +86,8 @@ Bayesian Regression
    :template: class.rst
 
    linear_model.BayesianRidge
-   linear_model.ARDRegression   
+   linear_model.ARDRegression
+
 
 Naive Bayes
 ===========
@@ -114,6 +115,7 @@ Nearest Neighbors
    :template: function.rst
 
    ball_tree.knn_brute
+
 
 Gaussian Mixture Models
 =======================
@@ -153,7 +155,6 @@ Clustering
 Covariance Estimators
 =====================
 
-
 .. autosummary::
    :toctree: generated/
    :template: class.rst
@@ -169,9 +170,8 @@ Covariance Estimators
    covariance.ledoit_wolf
 
 
-
 Signal Decomposition
-=======================
+====================
 
 .. autosummary::
    :toctree: generated/
@@ -189,12 +189,12 @@ Signal Decomposition
    fastica.fastica
 
 Cross Validation
-===================
+================
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   
+
    cross_val.LeaveOneOut
    cross_val.LeavePOut
    cross_val.KFold
@@ -256,8 +256,8 @@ For sparse data
    :template: class.rst
 
    feature_extraction.text.sparse.TfidfTransformer
-   feature_extraction.text.sparse.CountVectorizer 
-   feature_extraction.text.sparse.Vectorizer 
+   feature_extraction.text.sparse.CountVectorizer
+   feature_extraction.text.sparse.Vectorizer
 
 
 Pipeline
@@ -268,3 +268,4 @@ Pipeline
    :template: class.rst
 
    pipeline.Pipeline
+

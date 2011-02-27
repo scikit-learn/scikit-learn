@@ -7,7 +7,15 @@ Base IO code for all datasets
 # License: Simplified BSD
 
 import csv
-import os
+from os import environ
+from os.path import dirname
+from os.path import join
+from os.path import exists
+from os.path import expanduser
+from os.path import isdir
+from os import listdir
+from os import makedirs
+
 
 import numpy as np
 
@@ -20,6 +28,29 @@ class Bunch(dict):
     def __init__(self, **kwargs):
         dict.__init__(self, kwargs)
         self.__dict__ = self
+
+
+def get_data_home(data_home=None):
+    """Return the path of the scikit-learn data dir
+
+    This folder is used by some large dataset loaders to avoid
+    downloading the data several times.
+
+    By default the data dir is set to a folder named 'scikit_learn_data'
+    in the user home folder.
+
+    Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
+    variable or programatically by giving an explit folder path. The
+    '~' symbol is expanded to the user home folder.
+
+    If the folder does not already exist, it is automatically created.
+    """
+    if data_home is None:
+        data_home = environ.get('SCIKIT_LEARN_DATA',
+                               join('~', 'scikit_learn_data'))
+    if not exists(data_home):
+        makedirs(data_home)
+    return expanduser(data_home)
 
 
 def load_files(container_path, description=None, categories=None, shuffle=True,
@@ -89,17 +120,17 @@ def load_files(container_path, description=None, categories=None, shuffle=True,
     target_names = []
     filenames = []
 
-    folders = [f for f in sorted(os.listdir(container_path))
-               if os.path.isdir(os.path.join(container_path, f))]
+    folders = [f for f in sorted(listdir(container_path))
+               if isdir(join(container_path, f))]
 
     if categories is not None:
         folders = [f for f in folders if f in categories]
 
     for label, folder in enumerate(folders):
         target_names.append(folder)
-        folder_path = os.path.join(container_path, folder)
-        documents = [os.path.join(folder_path, d)
-                     for d in sorted(os.listdir(folder_path))]
+        folder_path = join(container_path, folder)
+        documents = [join(folder_path, d)
+                     for d in sorted(listdir(folder_path))]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
@@ -148,10 +179,9 @@ def load_iris():
 
     """
 
-    data_file = csv.reader(open(os.path.dirname(__file__)
-                        + '/data/iris.csv'))
-    fdescr = open(os.path.dirname(__file__)
-                        + '/descr/iris.rst')
+    module_path = dirname(__file__)
+    data_file = csv.reader(open(join(module_path, 'data', 'iris.csv')))
+    fdescr = open(join(module_path, 'descr', 'iris.rst'))
     temp = data_file.next()
     n_samples = int(temp[0])
     n_features = int(temp[1])
@@ -189,10 +219,10 @@ def load_digits():
 
     """
 
-    data = np.loadtxt(os.path.join(os.path.dirname(__file__)
-                        + '/data/digits.csv.gz'), delimiter=',')
-    fdescr = open(os.path.join(os.path.dirname(__file__)
-                        + '/descr/digits.rst'))
+    module_path = dirname(__file__)
+    data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
+                      delimiter=',')
+    descr = open(join(module_path, 'descr', 'digits.rst')).read()
     target = data[:, -1]
     flat_data = data[:, :-1]
     images = flat_data.view()
@@ -200,11 +230,12 @@ def load_digits():
     return Bunch(data=flat_data, target=target.astype(np.int),
                  target_names=np.arange(10),
                  images=images,
-                 DESCR=fdescr.read())
+                 DESCR=descr)
 
 
 def load_diabetes():
-    base_dir = os.path.join(os.path.dirname(__file__), 'data/')
-    data   = np.loadtxt(base_dir + 'diabetes_data.csv.gz')
-    target = np.loadtxt(base_dir + 'diabetes_target.csv.gz')
-    return Bunch (data=data, target=target)
+    base_dir = join(dirname(__file__), 'data')
+    data   = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
+    target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
+    return Bunch(data=data, target=target)
+
