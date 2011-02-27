@@ -161,7 +161,7 @@ for penalty in ["l2", "l1"]:
                                           penalty=penalty))
 
 # Train SGD with Elastic Net penalty
-print 80*'='
+print 80 * '='
 print "Elastic-Net penalty"
 sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                       penalty="elasticnet"))
