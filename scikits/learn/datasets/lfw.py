@@ -23,11 +23,8 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
-from os.path import join
-from os.path import exists
-from os.path import isdir
-from os import listdir
-from os import makedirs
+from os.path import join, exists, isdir
+from os import listdir, makedirs, remove
 
 import urllib
 import logging
@@ -57,6 +54,51 @@ def scale_face(face):
     scaled /= scaled.max()
     return scaled
 
+
+def _load_imgs(file_paths, slice_, color, resize):
+    """ Internaly used to load imgs
+    """
+    # compute the portion of the images to load to respect the slice_ parameter
+    # given by the caller
+    default_slice = (slice(0, 250), slice(0, 250))
+    if slice_ is None:
+        slice_ = default_slice
+    else:
+        slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
+
+    h_slice, w_slice = slice_
+    h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
+    w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
+
+    if resize is not None:
+        resize = float(resize)
+        h = int(resize * h)
+        w = int(resize * w)
+
+    # allocate some contiguous memory to host the decoded image slices
+    n_faces = len(file_paths)
+    if not color:
+        faces = np.zeros((n_faces, h, w), dtype=np.float32)
+    else:
+        faces = np.zeros((n_faces, h, w, 3), dtype=np.float32)
+
+    # iterate over the collected file path to load the jpeg files as numpy
+    # arrays
+    for i, file_path in enumerate(file_paths):
+        if i % 1000 == 0:
+            logging.info("Loading face #%05d / %05d", i + 1, n_faces)
+        face = np.asarray(imread(file_path)[slice_], dtype=np.float32)
+        face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
+        if resize is not None:
+            face = imresize(face, resize)
+        if not color:
+            # average the color channels to compute a gray levels
+            # representaion
+            face = face.mean(axis=2)
+
+        faces[i, ...] = face
+
+    return faces
 
 #
 # Common data fetching from the original LFW website and local disk caching
@@ -97,7 +139,7 @@ def check_fetch_lfw(data_home=None, funneled=True):
         import tarfile
         logging.info("Decompressing the data archive to %s", data_folder_path)
         tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
-        os.remove(archive_path)
+        remove(archive_path)
 
     return lfw_home, data_folder_path
 
@@ -134,45 +176,7 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     class_names = np.unique(person_names)
     target = np.searchsorted(class_names, person_names)
 
-    # compute the portion of the images to load to respect the slice_ parameter
-    # given by the caller
-    default_slice = (slice(0, 250), slice(0, 250))
-    if slice_ is None:
-        slice_ = default_slice
-    else:
-        slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
-
-    h_slice, w_slice = slice_
-    h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
-    w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
-
-    if resize is not None:
-        resize = float(resize)
-        h = int(resize * h)
-        w = int(resize * w)
-
-    # allocate some contiguous memory to host the decoded image slices
-    if not color:
-        faces = np.zeros((n_faces, h, w), dtype=np.float32)
-    else:
-        faces = np.zeros((n_faces, h, w, 3), dtype=np.float32)
-
-    # iterate over the collected file path to load the jpeg files as numpy
-    # arrays
-    for i, file_path in enumerate(file_paths):
-        if i % 1000 == 0:
-            logging.info("Loading face #%05d / %05d", i + 1, n_faces)
-
-        face = np.asarray(imread(file_path)[slice_], dtype=np.float32)
-        face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
-        if resize is not None:
-            face = imresize(face, resize)
-        if not color:
-            # average the color channels to compute a gray levels
-            # representaion
-            faces[i, :, :] = face.mean(axis=2)
-        else:
-            faces[i, :, :, :] = face
+    faces = _load_imgs(file_paths, slice_, color, resize)
 
     # shuffle the faces with a deterministic RNG scheme to avoid having
     # all faces of the same person in a row, as it would break some
@@ -269,36 +273,11 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     pair_specs = [l for l in splitted_lines if len(l) > 2]
     n_pairs = len(pair_specs)
 
-    # compute the portion of the images to load to respect the slice_ parameter
-    # given by the caller
-    default_slice = (slice(0, 250), slice(0, 250))
-    if slice_ is None:
-        slice_ = default_slice
-    else:
-        slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
-
-    h_slice, w_slice = slice_
-    h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
-    w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
-
-    if resize is not None:
-        resize = float(resize)
-        h = int(resize * h)
-        w = int(resize * w)
-
-    # allocate some contiguous memory to host the decoded image slices
-    target = np.zeros(n_pairs, dtype=np.int)
-    if not color:
-        pairs = np.zeros((n_pairs, 2, h, w), dtype=np.float32)
-    else:
-        pairs = np.zeros((n_pairs, 2, h, w, 3), dtype=np.float32)
-
     # interating over the metadata lines for each pair to find the filename to
     # decode and load in memory
+    target = np.zeros(n_pairs, dtype=np.int)
+    file_paths = list()
     for i, components in enumerate(pair_specs):
-        if i % 1000 == 0:
-            logging.info("Loading pair #%05d / %05d", i + 1, n_pairs)
-
         if len(components) == 3:
             target[i] = 1
             pair = (
@@ -316,17 +295,15 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
         for j, (name, idx) in enumerate(pair):
             person_folder = join(data_folder_path, name)
             filenames = list(sorted(listdir(person_folder)))
-            filepath = join(person_folder, filenames[idx])
-            face = np.asarray(imread(filepath)[slice_], dtype=np.float32)
-            face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
-            if resize is not None:
-                face = imresize(face, resize)
-            if not color:
-                # average the color channels to compute a gray levels
-                # representaion
-                pairs[i, j, :, :] = face.mean(axis=2)
-            else:
-                pairs[i, j, :, :, :] = face
+            file_path = join(person_folder, filenames[idx])
+            file_paths.append(file_path)
+
+    pairs = _load_imgs(file_paths, slice_, color, resize)
+    shape = list(pairs.shape)
+    n_faces = shape.pop(0)
+    shape.insert(0, 2)
+    shape.insert(0, n_faces//2)
+    pairs.shape = shape
 
     return pairs, target, np.array(['Different persons', 'Same person'])
 
