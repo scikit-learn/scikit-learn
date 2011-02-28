@@ -94,7 +94,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
             n_voxels = n_x * n_y * n_z
         else:
             n_voxels = np.sum(mask)
-        diag = np.zeros(n_voxels)
+        diag = np.ones(n_voxels, dtype=dtype)
 
     diag_idx = np.arange(n_voxels)
     i_idx = np.hstack((edges[0], edges[1]))
