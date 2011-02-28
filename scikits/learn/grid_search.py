@@ -5,12 +5,13 @@
 # License: BSD Style.
 
 import copy
-import itertools
+import time
 
 import numpy as np
 import scipy.sparse as sp
 
 from .externals.joblib import Parallel, delayed
+from .externals.joblib.logger import short_format_time
 from .cross_val import KFold, StratifiedKFold
 from .base import BaseEstimator, is_classifier, clone
 
@@ -27,7 +28,7 @@ except:
             yield tuple(prod)
 
 
-def iter_grid(param_grid):
+class IterGrid(object):
     """Generators on the combination of the various parameter lists given
 
     Parameters
@@ -44,21 +45,26 @@ def iter_grid(param_grid):
 
     Examples
     ---------
-    >>> from scikits.learn.grid_search import iter_grid
+    >>> from scikits.learn.grid_search import IterGrid
     >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-    >>> list(iter_grid(param_grid))
+    >>> list(IterGrid(param_grid))
     [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
 
     """
-    if hasattr(param_grid, 'has_key'):
-        param_grid = [param_grid]
-    for p in param_grid:
-        # Always sort the keys of a dictionary, for reproducibility
-        items = sorted(p.items())
-        keys, values = zip(*items)
-        for v in product(*values):
-            params = dict(zip(keys, v))
-            yield params
+    def __init__(self, param_grid):
+        self.param_grid = param_grid
+
+    def __iter__(self):
+        param_grid = self.param_grid
+        if hasattr(param_grid, 'has_key'):
+            param_grid = [param_grid]
+        for p in param_grid:
+            # Always sort the keys of a dictionary, for reproducibility
+            items = sorted(p.items())
+            keys, values = zip(*items)
+            for v in product(*values):
+                params = dict(zip(keys, v))
+                yield params
 
 
 def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func, 
@@ -67,6 +73,11 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
 
     Returns the score and the instance of the classifier
     """
+    if verbose > 1:
+        start_time = time.time()
+        msg = '%s' % (', '.join('%s=%s' % (k, v) 
+                                     for k, v in clf_params.iteritems()))
+        print "[GridSearchCV] %s %s" % (msg, (64-len(msg))*'.')
     # update parameters of the classifier after a copy of its base structure
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
@@ -92,10 +103,6 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         y_test  = None
         y_train = None
 
-    if verbose > 1:
-        msg = '[GridSearchCV] %s' % (', '.join('%s=%s' % (k, v) 
-                                     for k, v in clf_params.iteritems()))
-        print "%s %s" % (msg, (79-len(msg))*'.')
     clf.fit(X_train, y_train, **fit_params)
 
     if loss_func is not None:
@@ -112,6 +119,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     else:
         this_n_test_samples = X.shape[0]
 
+    if verbose > 1:
+        end_msg = "%s -%s" % (msg, 
+                                short_format_time(time.time() - start_time))
+        print "[GridSearchCV] %s %s" % ((64-len(end_msg))*'.', end_msg)
     return this_score, clf, this_n_test_samples
 
 
@@ -244,17 +255,17 @@ class GridSearchCV(BaseEstimator):
             else:
                 cv = KFold(n_samples, k=3)
 
-        grid = iter_grid(self.param_grid)
+        grid = IterGrid(self.param_grid)
         base_clf = clone(self.estimator)
         # XXX: Need to make use of Parallel's new pre_dispatch
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(fit_grid_point)(
                 X, y, base_clf, clf_params, train, test, self.loss_func,
                 self.score_func, self.verbose, **self.fit_params)
-                    for train, test in cv for clf_params in grid)
+                    for clf_params in grid for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
-        n_grid_points = len(list(iter_grid(self.param_grid)))
+        n_grid_points = len(list(grid))
         n_fits        = len(out)
         n_folds       = n_fits//n_grid_points
         
@@ -263,7 +274,7 @@ class GridSearchCV(BaseEstimator):
             n_test_samples = 0
             score = 0
             for this_score, estimator, this_n_test_samples in \
-                        itertools.islice(out, grid_start, grid_start+n_folds):
+                                    out[grid_start:grid_start+n_folds]:
                 if self.iid:
                     this_score *= this_n_test_samples
                 score += this_score
@@ -272,7 +283,6 @@ class GridSearchCV(BaseEstimator):
                 score /= float(n_test_samples)
             scores.append((score, estimator))
             
-
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         best_score = None
@@ -298,7 +308,6 @@ class GridSearchCV(BaseEstimator):
             self.score = best_estimator.score
 
         # Store the computed scores
-        grid = iter_grid(self.param_grid)
         # XXX: the name is too specific, it shouldn't have
         # 'grid' in it. Also, we should be retrieving/storing variance
         self.grid_points_scores_ = dict((tuple(clf_params.items()), score)
