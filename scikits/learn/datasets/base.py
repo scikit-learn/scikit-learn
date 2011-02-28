@@ -53,6 +53,7 @@ def get_data_home(data_home=None):
         makedirs(data_home)
     return data_home
 
+
 def load_filenames(container_path, description=None, categories=None,
                    shuffle=True, rng=42):
     """Load filenames with categories as subfolder names
@@ -152,7 +153,7 @@ def load_filenames(container_path, description=None, categories=None,
                  DESCR=description)
 
 
-################################################################################
+###############################################################################
 
 def load_iris():
     """load the iris dataset and returns it.
@@ -235,7 +236,6 @@ def load_digits():
 
 def load_diabetes():
     base_dir = join(dirname(__file__), 'data')
-    data   = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
+    data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
     return Bunch(data=data, target=target)
-
