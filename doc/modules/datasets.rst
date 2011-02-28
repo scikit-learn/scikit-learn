@@ -47,6 +47,10 @@ most popular model for Face Detection is called Viola-Johns and is
 implemented in the OpenCV library. The LFW faces were extracted by this
 face detector from various online websites.
 
+
+Usage
+-----
+
 ``scikit-learn`` provides two loaders that will automatically download,
 cache, parse the metadata files, decode the jpeg and convert the
 interesting slices into memmaped numpy arrays. This dataset size if more
@@ -117,17 +121,20 @@ The ``load_lfw_pairs`` datasets is subdived in 3 subsets: the development
 set meant to compute performance metrics using a 10-folds cross
 validation scheme.
 
+.. topic:: References:
+
+ * `Labeled Faces in the Wild: A Database for Studying Face Recognition
+   in Unconstrained Environments.
+   <http://vis-www.cs.umass.edu/lfw/lfw.pdf>`_
+   Gary B. Huang, Manu Ramesh, Tamara Berg, and Erik Learned-Miller.
+   University of Massachusetts, Amherst, Technical Report 07-49, October, 2007.
+
 
 Examples
 --------
 
 :ref:`example_applications_plot_face_recognition.py`
 
-
-References
-----------
-
-TODO
 
 
 The 20 newsgroups text dataset
@@ -139,9 +146,13 @@ and the other one for testing (or for performance evaluation). The split
 between the train and test set is based upon a messages posted before
 and after a specific date.
 
+
+Usage
+-----
+
 The ``scikits.learn.datasets.load_20newsgroups`` function is a data
 fetching / caching functions that downloads the data archive from
-the original `20 newsgroup website`_, extracts the archive contents
+the original `20 newsgroups website`_, extracts the archive contents
 in the ``~/scikit_learn_data/20news_home`` folder and calls the
 ``scikits.learn.datasets.load_filenames`` on either the training or
 testing set folder::
@@ -197,10 +208,29 @@ list of the categories to load to the ``load_20newsgroups`` function::
   >>> newsgroups_train.target[:10]
   array([1, 1, 1, 0, 1, 0, 0, 1, 1, 1])
 
+In order to feed predictive or clustering models with the text data,
+one first need to turn the text into vectors of numerical values suitable
+for statitiscal analysis. This can be achieved with the utilities of the
+``scikits.learn.feature_extraction.text`` as demonstrated in the following
+example that extract `TF-IDF`_ vectors of unigram tokens::
 
 
+  >>> from scikits.learn.feature_extraction.text.sparse import Vectorizer
+  >>> documents = [open(f).read() for f in newsgroups_train.filenames]
+  >>> vectorizer = Vectorizer()
+  >>> vectors = vectorizer.fit_transform(documents)
+  >>> vectors.shape
+  (1073, 21107)
+
+The extracted TF-IDF vectors are very sparse with an average of 118 non zero
+components by sample in a more than 20000 dimensional space (less than 1% non
+zero features)::
+
+  >>> vectors.nnz / vectors.shape[0]
+  118
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
+.. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
 
 
 Examples
@@ -210,7 +240,4 @@ Examples
 
 :ref:`example_document_classification_20newsgroups.py`
 
-
-References
-----------
 
