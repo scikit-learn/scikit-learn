@@ -25,7 +25,7 @@ Changelog
 
   - Better handling of collinearity and early stopping in
     :func:`linear_model.lars_path` [`Alexandre Gramfort`_ and `Fabian
-    Pedregosa`_ ].
+    Pedregosa`_].
 
   - Fixes for liblinear ordering of labels and sign of coefficients
     [Dan Yamins, Paolo Losi, `Mathieu Blondel`_ and `Fabian Pedregosa`_ ].
@@ -34,33 +34,34 @@ Changelog
     high-dimensional spaces [`Fabian Pedregosa`_ ].
 
   - Performance improvements for :class:`cluster.KMeans` [`Gael
-    Varoquaux`_ and `James Bergstra`_ ].
+    Varoquaux`_ and `James Bergstra`_].
 
-  - Sanity checks for SVM-based classes [`Mathieu Blondel`_ ].
+  - Sanity checks for SVM-based classes [`Mathieu Blondel`_].
 
   - Refactoring of :class:`neighbors.NeighborsClassifier` and
     :func:`neighbors.kneighbors_graph`: added different algorithms for
     the k-Nearest Neighbor Search and implemented a more stable
-    algorithm for finding barycenter weigths [`Fabian Pedregosa`_ ].
+    algorithm for finding barycenter weigths [`Fabian Pedregosa`_].
 
-  - Documentation improvements: Added
-    :class:`pca.RandomizedPCA`. :class:`linear_model.LogisticRegression`. Also
-    added references of matrices used for clustering and other fixes
-    [`Gael Varoquaux`_, `Fabian Pedregosa`_, `Mathieu Blondel`_,
-    `Olivier Grisel`_, Virgile Fritsch , Emmanuelle Gouillart ]
+  - Documentation improvements: Added :class:`pca.RandomizedPCA` and
+    :class:`linear_model.LogisticRegression` to the class
+    reference. Also added references of matrices used for clustering
+    and other fixes [`Gael Varoquaux`_, `Fabian Pedregosa`_, `Mathieu
+    Blondel`_, `Olivier Grisel`_, Virgile Fritsch , Emmanuelle
+    Gouillart]
 
   - Binded decision_function in classes that make use of liblinear_,
     dense and sparse variants, like :class:`svm.LinearSVC` or
-    :class:`linear_model.LogisticRegression` [`Fabian Pedregosa`_ ].
+    :class:`linear_model.LogisticRegression` [`Fabian Pedregosa`_].
 
   - Performance and API improvements to
     :func:`metrics.euclidian_distances` and to
-    :class:`pca.RandomizedPCA` [`James Bergstra`_ ] 
+    :class:`pca.RandomizedPCA` [`James Bergstra`_].
 
   - Fix compilation issues under NetBSD [Kamel Ibn Hassen Derouiche]
 
   - Allow input sequences of different lengths in :class:`hmm.GaussianHMM`
-    [`Ron Weiss`_ ]
+    [`Ron Weiss`_].
 
   - Fix bug in affinity propagation caused by incorrect indexing [mxf]
 
