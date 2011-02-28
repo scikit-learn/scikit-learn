@@ -9,7 +9,7 @@
 
 scikits.learn 0.7 was released in March 2011, roughly three months
 after the 0.6 release. This release is marked by the speed
-improvements in existing algorithms, like k-Nearest Neighbors and
+improvements in existing algorithms like k-Nearest Neighbors and
 K-Means algorithm and by the inclusion of an efficient algorithm for
 computing the Ridge Generalized Cross Validation solution. Unlike the
 preceding release, no new modules where added to this release.
@@ -80,7 +80,7 @@ People that made this release possible preceeded by number of commits:
     - 4  Edouard Duchesnay
     - 4  `Ron Weiss`_
     - 2  Satrajit Ghosh
-    - 2  `Vincent Dubourg`_
+    - 2  Vincent Dubourg
     - 1  Emmanuelle Gouillart
     - 1  Kamel Ibn Hassen Derouiche
     - 1  Paolo Losi
@@ -194,8 +194,7 @@ People that made this release possible preceeded by number of commits:
 
    * 97 `Peter Prettenhofer <http://sites.google.com/site/peterprettenhofer/>`_
 
-   * 68 `Alexandre Gramfort
-     <http://www-sop.inria.fr/members/Alexandre.Gramfort/>`_
+   * 68 `Alexandre Gramfort <http://www-sop.inria.fr/members/Alexandre.Gramfort/>`_
 
    * 59  `Mathieu Blondel <http://www.mblondel.org/journal/>`_
 
@@ -388,7 +387,7 @@ of commits):
     *  1  Chris Filo Gorgolewski
 
 
-.. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html
+.. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
