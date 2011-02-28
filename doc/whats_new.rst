@@ -195,7 +195,7 @@ People that made this release possible preceeded by number of commits:
    * 97 `Peter Prettenhofer <http://sites.google.com/site/peterprettenhofer/>`_
 
    * 68 `Alexandre Gramfort
-     <http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html>`_
+     <http://www-sop.inria.fr/members/Alexandre.Gramfort/>`_
 
    * 59  `Mathieu Blondel <http://www.mblondel.org/journal/>`_
 
