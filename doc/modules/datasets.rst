@@ -114,7 +114,7 @@ passing ``color=True``::
 
 The ``load_lfw_pairs`` datasets is subdived in 3 subsets: the development
 ``train`` set, the development ``test`` set and an evaluation ``10_folds``
-set meant to be compute performance metrics using a 10-folds cross
+set meant to compute performance metrics using a 10-folds cross
 validation scheme.
 
 
@@ -124,11 +124,93 @@ Examples
 :ref:`example_applications_plot_face_recognition.py`
 
 
-The 20 newsgroups text dataset
-==============================
+References
+----------
 
 TODO
 
 
+The 20 newsgroups text dataset
+==============================
 
+The 20 newsgroups dataset comprises around 18000 newsgroups posts on
+20 topics splitted in two subsets: one for training (or development)
+and the other one for testing (or for performance evaluation). The split
+between the train and test set is based upon a messages posted before
+and after a specific date.
+
+The ``scikits.learn.datasets.load_20newsgroups`` function is a data
+fetching / caching functions that downloads the data archive from
+the original `20 newsgroup website`_, extracts the archive contents
+in the ``~/scikit_learn_data/20news_home`` folder and calls the
+``scikits.learn.datasets.load_filenames`` on either the training or
+testing set folder::
+
+  >>> from scikits.learn.datasets import load_20newsgroups
+  >>> newsgroups_train = load_20newsgroups(subset='train')
+
+  >>> from pprint import pprint
+  >>> pprint(list(newsgroups_train.target_names))
+  ['alt.atheism',
+   'comp.graphics',
+   'comp.os.ms-windows.misc',
+   'comp.sys.ibm.pc.hardware',
+   'comp.sys.mac.hardware',
+   'comp.windows.x',
+   'misc.forsale',
+   'rec.autos',
+   'rec.motorcycles',
+   'rec.sport.baseball',
+   'rec.sport.hockey',
+   'sci.crypt',
+   'sci.electronics',
+   'sci.med',
+   'sci.space',
+   'soc.religion.christian',
+   'talk.politics.guns',
+   'talk.politics.mideast',
+   'talk.politics.misc',
+   'talk.religion.misc']
+
+The real data lies in the ``filenames`` and ``target`` attributes. The target
+attribute is the integer index of the category::
+
+  >>> newsgroups_train.filenames.shape
+  (11314,)
+  >>> newsgroups_train.target.shape
+  (11314,)
+  >>> newsgroups_train.target[:10]
+  array([12,  6,  9,  8,  6,  7,  9,  2, 13, 19])
+
+It is possible to load only a sub-selection of the categories by passing the
+list of the categories to load to the ``load_20newsgroups`` function::
+
+  >>> cats = ['alt.atheism', 'sci.space']
+  >>> newsgroups_train = load_20newsgroups(subset='train', categories=cats)
+
+  >>> list(newsgroups_train.target_names)
+  ['alt.atheism', 'sci.space']
+  >>> newsgroups_train.filenames.shape
+  (1073,)
+  >>> newsgroups_train.target.shape
+  (1073,)
+  >>> newsgroups_train.target[:10]
+  array([1, 1, 1, 0, 1, 0, 0, 1, 1, 1])
+
+
+
+
+.. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
+
+
+Examples
+--------
+
+:ref:`example_grid_search_text_feature_extraction.py`
+
+:ref:`example_document_classification_20newsgroups.py`
+
+
+References
+----------
 

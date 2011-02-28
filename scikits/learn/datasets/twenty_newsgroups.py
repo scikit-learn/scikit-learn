@@ -112,4 +112,4 @@ def load_20newsgroups(data_home=None, subset='train', categories=None,
 
     description = subset + ' subset of the 20 newsgroups by date dataset'
     return load_filenames(folder_path, description=description,
-                      categories=categories, shuffle=shuffle, rng=rng)
+                          categories=categories, shuffle=shuffle, rng=rng)
