@@ -154,6 +154,32 @@ Clustering
    cluster.AffinityPropagation
 
 
+Metrics
+=======
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.euclidean_distances
+   metrics.unique_labels
+   metrics.confusion_matrix
+   metrics.roc_curve
+   metrics.auc
+   metrics.precision_score
+   metrics.recall_score
+   metrics.fbeta_score
+   metrics.f1_score
+   metrics.precision_recall_fscore_support
+   metrics.classification_report
+   metrics.precision_recall_curve
+   metrics.r2_score
+   metrics.zero_one_score
+   metrics.zero_one
+   metrics.mean_square_error
+
+
 Covariance Estimators
 =====================
 
