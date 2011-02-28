@@ -87,13 +87,12 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
             diag = img.ravel()
         n_voxels = diag.size
     else:
+        weights = np.ones(edges.shape[1], dtype=dtype)
         if mask is not None:
             edges = _mask_edges_weights(mask, edges)
-        weights = np.ones(edges.shape[1], dtype=dtype)
-        if mask is None:
-            n_voxels = n_x * n_y * n_z
-        else:
             n_voxels = np.sum(mask)
+        else:
+            n_voxels = n_x * n_y * n_z
         diag = np.ones(n_voxels, dtype=dtype)
 
     diag_idx = np.arange(n_voxels)
