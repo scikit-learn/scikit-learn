@@ -101,7 +101,9 @@ def load_filenames(container_path, description=None, categories=None,
       if not Non, list of category names to load (other categories ignored)
 
     shuffle : True by default
-      whether or not to shuffle the data: might be important for
+      whether or not to shuffle the data: might be important for models that
+      make the assumption that the samples are independent and identically
+      distributed (i.i.d.) such as stochastic gradient descent for instance.
 
     rng : a numpy random number generator or a seed integer, 42 by default
       used to shuffle the dataset
