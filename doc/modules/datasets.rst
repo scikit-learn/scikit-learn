@@ -210,7 +210,7 @@ list of the categories to load to the ``load_20newsgroups`` function::
 
 In order to feed predictive or clustering models with the text data,
 one first need to turn the text into vectors of numerical values suitable
-for statitiscal analysis. This can be achieved with the utilities of the
+for statistical analysis. This can be achieved with the utilities of the
 ``scikits.learn.feature_extraction.text`` as demonstrated in the following
 example that extract `TF-IDF`_ vectors of unigram tokens::
 
