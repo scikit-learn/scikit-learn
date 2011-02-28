@@ -17,6 +17,7 @@ obtained in the first place.
 print __doc__
 
 import numpy as np
+import pylab as pl
 
 from scikits.learn.svm import SVC
 from scikits.learn.cross_val import StratifiedKFold, permutation_test_score
@@ -49,15 +50,13 @@ print "Classification score %s (pvalue : %s)" % (score, pvalue)
 
 ###############################################################################
 # View histogram of permutation scores
-import pylab as pl
-pl.close('all')
 pl.hist(permutation_scores, label='Permutation scores')
 ylim = pl.ylim()
 pl.vlines(score, ylim[0], ylim[1], linestyle='--',
-                        color='g', linewidth=3, label='Classification Score'
-                                                      ' (pvalue %s)' % pvalue)
+          color='g', linewidth=3, label='Classification Score'
+          ' (pvalue %s)' % pvalue)
 pl.vlines(1.0 / n_classes, ylim[0], ylim[1], linestyle='--',
-                        color='k', linewidth=3, label='Luck')
+          color='k', linewidth=3, label='Luck')
 pl.ylim(ylim)
 pl.legend()
 pl.xlabel('Score')
