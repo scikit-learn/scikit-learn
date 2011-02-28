@@ -9,7 +9,7 @@ from scipy.cluster import hierarchy
 
 from scikits.learn.cluster import Ward, WardAgglomeration, ward_tree
 from scikits.learn.cluster.hierarchical import _hc_cut
-from scikits.learn.feature_extraction.image import img_to_graph
+from scikits.learn.feature_extraction.image import grid_to_graph
 
 
 def test_structured_ward_tree():
@@ -19,7 +19,7 @@ def test_structured_ward_tree():
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
-    connectivity = img_to_graph(mask, mask)
+    connectivity = grid_to_graph(*mask.shape)
     children, n_components, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
     assert(len(children) + n_leaves == n_nodes)
@@ -43,7 +43,7 @@ def test_height_ward_tree():
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
-    connectivity = img_to_graph(mask, mask)
+    connectivity = grid_to_graph(*mask.shape)
     children, n_nodes, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
     assert(len(children) + n_leaves == n_nodes)
@@ -56,7 +56,7 @@ def test_ward_clustering():
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(100, 50)
-    connectivity = img_to_graph(mask, mask)
+    connectivity = grid_to_graph(*mask.shape)
     clustering = Ward(n_clusters=10, connectivity=connectivity)
     clustering.fit(X)
     assert(np.size(np.unique(clustering.labels_)) == 10)
@@ -69,7 +69,7 @@ def test_ward_agglomeration():
     np.random.seed(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = np.random.randn(50, 100)
-    connectivity = img_to_graph(mask, mask)
+    connectivity = grid_to_graph(*mask.shape)
     ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
     ward.fit(X)
     assert(np.size(np.unique(ward.labels_)) == 5)

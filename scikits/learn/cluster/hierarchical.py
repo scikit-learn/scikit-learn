@@ -113,6 +113,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
             row = [i for i in row if i < ind]
             coord_row.extend(len(row) * [ind, ])
             coord_col.extend(row)
+
         coord_row = np.array(coord_row, dtype=np.int)
         coord_col = np.array(coord_col, dtype=np.int)
 

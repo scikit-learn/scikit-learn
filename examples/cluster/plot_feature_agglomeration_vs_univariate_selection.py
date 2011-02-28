@@ -22,7 +22,7 @@ import numpy as np
 import pylab as pl
 from scipy import linalg, ndimage
 
-from scikits.learn.feature_extraction.image import img_to_graph
+from scikits.learn.feature_extraction.image import grid_to_graph
 from scikits.learn import feature_selection
 from scikits.learn.cluster import WardAgglomeration
 from scikits.learn.linear_model import BayesianRidge
@@ -62,7 +62,7 @@ ridge = BayesianRidge()
 mem = Memory(cachedir='.', verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
-A = img_to_graph(mask, mask)
+A = grid_to_graph(n_x=size, n_y=size)
 ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem,
                          n_components=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])

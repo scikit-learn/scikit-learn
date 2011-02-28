@@ -33,9 +33,13 @@ def test_connect_regions():
 
 def test_connect_regions_with_grid():
     lena = sp.lena()
-    for thr in (50, 150):
-        mask = lena > thr
-        graph = grid_to_graph(*lena.shape, mask=mask)
-        nose.tools.assert_equal(ndimage.label(mask)[1],
-                                cs_graph_components(graph)[0])
+    mask = lena > 50
+    graph = grid_to_graph(*lena.shape, mask=mask)
+    nose.tools.assert_equal(ndimage.label(mask)[1],
+                            cs_graph_components(graph)[0])
+
+    mask = lena > 150
+    graph = grid_to_graph(*lena.shape, mask=mask, dtype=None)
+    nose.tools.assert_equal(ndimage.label(mask)[1],
+                            cs_graph_components(graph)[0])
 
