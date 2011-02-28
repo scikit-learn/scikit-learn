@@ -93,7 +93,9 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         y_train = None
 
     if verbose > 1:
-        print '%s\nFitting %s' % (80*'.', clf)
+        msg = '[GridSearchCV] %s' % (', '.join('%s=%s' % (k, v) 
+                                     for k, v in clf_params.iteritems()))
+        print "%s %s" % (msg, (79-len(msg))*'.')
     clf.fit(X_train, y_train, **fit_params)
 
     if loss_func is not None:
