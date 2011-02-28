@@ -46,6 +46,7 @@ Generalized Linear Models
 
    linear_model.LinearRegression
    linear_model.Ridge
+   linear_model.RidgeCV
    linear_model.Lasso
    linear_model.LassoCV
    linear_model.ElasticNet
@@ -114,6 +115,7 @@ Nearest Neighbors
    :toctree: generated/
    :template: function.rst
 
+   neighbors.kneighbors_graph
    ball_tree.knn_brute
 
 
