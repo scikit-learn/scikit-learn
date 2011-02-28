@@ -21,17 +21,17 @@ Changelog
     Schlüter].
 
   - Implementation of efficient leave-one-out cross-validated Ridge in
-    :class:`linear_model.RidgeCV` [`Mathieu Blondel`_ ]
+    :class:`linear_model.RidgeCV` [`Mathieu Blondel`_]
 
   - Better handling of collinearity and early stopping in
     :func:`linear_model.lars_path` [`Alexandre Gramfort`_ and `Fabian
     Pedregosa`_].
 
   - Fixes for liblinear ordering of labels and sign of coefficients
-    [Dan Yamins, Paolo Losi, `Mathieu Blondel`_ and `Fabian Pedregosa`_ ].
+    [Dan Yamins, Paolo Losi, `Mathieu Blondel`_ and `Fabian Pedregosa`_].
 
   - Performance improvements for Nearest Neighbors algorithm in
-    high-dimensional spaces [`Fabian Pedregosa`_ ].
+    high-dimensional spaces [`Fabian Pedregosa`_].
 
   - Performance improvements for :class:`cluster.KMeans` [`Gael
     Varoquaux`_ and `James Bergstra`_].
@@ -55,7 +55,7 @@ Changelog
     :class:`linear_model.LogisticRegression` [`Fabian Pedregosa`_].
 
   - Performance and API improvements to
-    :func:`metrics.euclidian_distances` and to
+    :func:`metrics.euclidean_distances` and to
     :class:`pca.RandomizedPCA` [`James Bergstra`_].
 
   - Fix compilation issues under NetBSD [Kamel Ibn Hassen Derouiche]
