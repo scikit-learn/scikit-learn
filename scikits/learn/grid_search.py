@@ -5,6 +5,7 @@
 # License: BSD Style.
 
 import copy
+import itertools
 
 import numpy as np
 import scipy.sparse as sp
@@ -60,8 +61,8 @@ def iter_grid(param_grid):
             yield params
 
 
-def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
-                   verbose, **fit_params):
+def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func, 
+                score_func, verbose, **fit_params):
     """Run fit on one set of parameters
 
     Returns the score and the instance of the classifier
@@ -70,54 +71,46 @@ def fit_grid_point(X, y, base_clf, clf_params, cv, loss_func, score_func, iid,
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
 
-    score = 0.
-    n_test_samples = 0.
-    for train, test in cv:
-        if isinstance(X, list) or isinstance(X, tuple):
-            X_train = [X[i] for i, cond in enumerate(train) if cond]
-            X_test = [X[i] for i, cond in enumerate(test) if cond]
-        else:
-            if sp.issparse(X):
-                # For sparse matrices, slicing only works with indices
-                # (no masked array). Convert to CSR format for efficiency and
-                # because some sparse formats don't support row slicing.
-                X = sp.csr_matrix(X)
-                ind = np.arange(X.shape[0])
-                train = ind[train]
-                test = ind[test]
-            X_train = X[train]
-            X_test = X[test]
-        if y is not None:
-            y_test  = y[test]
-            y_train = y[train]
-        else:
-            y_test  = None
-            y_train = None
+    if isinstance(X, list) or isinstance(X, tuple):
+        X_train = [X[i] for i, cond in enumerate(train) if cond]
+        X_test = [X[i] for i, cond in enumerate(test) if cond]
+    else:
+        if sp.issparse(X):
+            # For sparse matrices, slicing only works with indices
+            # (no masked array). Convert to CSR format for efficiency and
+            # because some sparse formats don't support row slicing.
+            X = sp.csr_matrix(X)
+            ind = np.arange(X.shape[0])
+            train = ind[train]
+            test = ind[test]
+        X_train = X[train]
+        X_test = X[test]
+    if y is not None:
+        y_test  = y[test]
+        y_train = y[train]
+    else:
+        y_test  = None
+        y_train = None
 
-        if verbose > 1:
-            print '%s\nFitting %s' % (80*'.', clf)
-        clf.fit(X_train, y_train, **fit_params)
+    if verbose > 1:
+        print '%s\nFitting %s' % (80*'.', clf)
+    clf.fit(X_train, y_train, **fit_params)
 
-        if loss_func is not None:
-            y_pred = clf.predict(X_test)
-            this_score = -loss_func(y_test, y_pred)
-        elif score_func is not None:
-            y_pred = clf.predict(X_test)
-            this_score = score_func(y_test, y_pred)
-        else:
-            this_score = clf.score(X_test, y_test)
-        if iid:
-            if y is not None:
-                this_n_test_samples = y.shape[0]
-            else:
-                this_n_test_samples = X.shape[0]
-            this_score *= this_n_test_samples
-            n_test_samples += this_n_test_samples
-        score += this_score
-    if iid:
-        score /= n_test_samples
+    if loss_func is not None:
+        y_pred = clf.predict(X_test)
+        this_score = -loss_func(y_test, y_pred)
+    elif score_func is not None:
+        y_pred = clf.predict(X_test)
+        this_score = score_func(y_test, y_pred)
+    else:
+        this_score = clf.score(X_test, y_test)
 
-    return score, clf
+    if y is not None:
+        this_n_test_samples = y.shape[0]
+    else:
+        this_n_test_samples = X.shape[0]
+
+    return this_score, clf, this_n_test_samples
 
 
 class GridSearchCV(BaseEstimator):
@@ -251,18 +244,37 @@ class GridSearchCV(BaseEstimator):
 
         grid = iter_grid(self.param_grid)
         base_clf = clone(self.estimator)
+        # XXX: Need to make use of Parallel's new pre_dispatch
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(fit_grid_point)(
-                X, y, base_clf, clf_params, cv, self.loss_func,
-                self.score_func, self.iid, self.verbose, **self.fit_params)
-                    for clf_params in grid)
+                X, y, base_clf, clf_params, train, test, self.loss_func,
+                self.score_func, self.verbose, **self.fit_params)
+                    for train, test in cv for clf_params in grid)
 
-        # Out is a list of pairs: score, estimator
+        # Out is a list of triplet: score, estimator, n_test_samples
+        n_grid_points = len(list(iter_grid(self.param_grid)))
+        n_fits        = len(out)
+        n_folds       = n_fits//n_grid_points
+        
+        scores = list()
+        for grid_start in range(0, n_fits, n_folds):
+            n_test_samples = 0
+            score = 0
+            for this_score, estimator, this_n_test_samples in \
+                        itertools.islice(out, grid_start, grid_start+n_folds):
+                if self.iid:
+                    this_score *= this_n_test_samples
+                score += this_score
+                n_test_samples += this_n_test_samples
+            if self.iid:
+                score /= float(n_test_samples)
+            scores.append((score, estimator))
+            
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         best_score = None
-        for score, estimator in out:
+        for score, estimator in scores:
             if best_score is None:
                 best_score = score
                 best_estimator = estimator
@@ -288,7 +300,7 @@ class GridSearchCV(BaseEstimator):
         # XXX: the name is too specific, it shouldn't have
         # 'grid' in it. Also, we should be retrieving/storing variance
         self.grid_points_scores_ = dict((tuple(clf_params.items()), score)
-                    for clf_params, (score, _) in zip(grid, out))
+                    for clf_params, (score, _) in zip(grid, scores))
 
         return self
 
