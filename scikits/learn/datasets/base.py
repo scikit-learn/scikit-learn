@@ -48,10 +48,10 @@ def get_data_home(data_home=None):
     if data_home is None:
         data_home = environ.get('SCIKIT_LEARN_DATA',
                                join('~', 'scikit_learn_data'))
+    data_home = expanduser(data_home)
     if not exists(data_home):
         makedirs(data_home)
-    return expanduser(data_home)
-
+    return data_home
 
 def load_filenames(container_path, description=None, categories=None,
                    shuffle=True, rng=42):
