@@ -267,9 +267,9 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     """
     # parse the index file to find the number of pairs to be able to allocate
     # the right amount of memory before starting to decode the jpeg files
-    with open(index_file_path) as f:
-        splitted_lines = [l.strip().split('\t') for l in f.readlines()]
-    pair_specs = [l for l in splitted_lines if len(l) > 2]
+    splitted_lines = [l.strip().split('\t')
+                      for l in open(index_file_path, 'rb').readlines()]
+    pair_specs = [sl for sl in splitted_lines if len(sl) > 2]
     n_pairs = len(pair_specs)
 
     # interating over the metadata lines for each pair to find the filename to
