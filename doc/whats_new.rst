@@ -41,7 +41,9 @@ Changelog
   - Refactoring of :class:`neighbors.NeighborsClassifier` and
     :func:`neighbors.kneighbors_graph`: added different algorithms for
     the k-Nearest Neighbor Search and implemented a more stable
-    algorithm for finding barycenter weigths [`Fabian Pedregosa`_].
+    algorithm for finding barycenter weigths. Also added some
+    developer documentation for this module, see
+    :ref:`notes_neighbors` for more information [`Fabian Pedregosa`_].
 
   - Documentation improvements: Added :class:`pca.RandomizedPCA` and
     :class:`linear_model.LogisticRegression` to the class
