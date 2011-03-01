@@ -72,7 +72,7 @@ training samples::
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
       cache_size=100.0, shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
@@ -110,7 +110,7 @@ classifiers are constructed and each one trains data from two classes.
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
       cache_size=100.0, shrinking=True, gamma=0.25)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
@@ -124,8 +124,8 @@ two classes, only one model is trained.
 
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
-    LinearSVC(loss='l2', C=1.0, intercept_scaling=1, fit_intercept=True,
-         eps=0.0001, penalty='l2', multi_class=False, dual=True)
+    LinearSVC(loss='l2', C=1.0, dual=True, fit_intercept=True, penalty='l2',
+         multi_class=False, tol=0.0001, intercept_scaling=1)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -169,8 +169,8 @@ floating point values instead of integer values.
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
-    SVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-      eps=0.001, p=0.1, cache_size=100.0, coef0=0.0, nu=0.5, gamma=0.5)
+    SVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True, p=0.1,
+      tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5, gamma=0.5)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -270,7 +270,7 @@ Tips on Practical Use
   * The underlying :class:`LinearSVC` implementation uses a random
     number generator to select features when fitting the model. It is
     thus not uncommon, to have slightly different results for the same
-    input data. If that happens, try with a smaller eps parameter.
+    input data. If that happens, try with a smaller tol parameter.
 
 
 .. _svm_kernels:

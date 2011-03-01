@@ -28,8 +28,8 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         Select the algorithm to either solve the dual or primal
         optimization problem.
 
-    eps: float, optional
-         precision for stopping criteria
+    tol: float, optional
+         tolerance for stopping criteria
 
     multi_class: boolean, optional
          perform multi-class SVM by Cramer and Singer. If active,
@@ -60,7 +60,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     The underlying C implementation uses a random number generator to
     select features when fitting the model. It is thus not uncommon,
     to have slightly different results for the same input data. If
-    that happens, try with a smaller eps parameter.
+    that happens, try with a smaller tol parameter.
 
     See also
     --------

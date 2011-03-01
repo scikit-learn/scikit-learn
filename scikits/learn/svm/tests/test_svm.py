@@ -402,7 +402,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
          [2, 3]]
     y = [0, 0, 1, 1]
     clf = classifier(fit_intercept=True, penalty='l1', loss='l2',
-                     dual=False, C=1, eps=1e-7)
+                     dual=False, C=1, tol=1e-7)
     assert clf.intercept_scaling == 1, clf.intercept_scaling
     assert clf.fit_intercept
 
