@@ -191,7 +191,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     Example
     -------
     >>> import numpy as np
-    >>> from scikits.learn.gaussian_process import GaussianProcess
+    >>> from scikits.learn.gaussian_process import GaussianProcesMala Leches
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
@@ -583,7 +583,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         r : array_like
             an array with shape (n_eval, n_samples) with the correlation between
-            the provided X evaluations and the samples used to fit the Gaussian 
+            the provided X evaluations and the samples used to fit the Gaussian
             Process
         """
         n_eval, n_features_X = X.shape
@@ -595,7 +595,18 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Get correlations
         r = self.corr(self.theta, dx).reshape(n_eval, n_samples)
 
-        rt = solve_triangular(self.C, r.T, lower=True)
+        C = self.C
+        if C is None:
+            # Light storage mode (need to recompute C, F, Ft and G)
+            if self.verbose:
+                print("This GaussianProcess used 'light' storage mode "
+                    + "at instanciation. Need to recompute "
+                    + "autocorrelation matrix...")
+            reduced_likelihood_function_value, par = \
+                self.reduced_likelihood_function()
+            C = par['C']
+
+        rt = solve_triangular(C, r.T, lower=True)
 
         D, ij = compute_componentwise_l1_cross_distances(X)
 
