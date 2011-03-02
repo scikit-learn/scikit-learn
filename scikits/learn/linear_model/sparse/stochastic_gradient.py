@@ -89,7 +89,7 @@ class SGDClassifier(BaseSGDClassifier):
     >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
+           fit_intercept=True, penalty='l2', seed=0, rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -362,7 +362,8 @@ class SGDRegressor(BaseSGDRegressor):
     >>> clf = linear_model.sparse.SGDRegressor()
     >>> clf.fit(X, y)
     SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', p=0.1, rho=1.0, alpha=0.0001)
+           fit_intercept=True, penalty='l2', p=0.1, seed=0, rho=1.0,
+           alpha=0.0001)
 
     See also
     --------

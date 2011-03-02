@@ -140,7 +140,7 @@ class BaseSGD(BaseEstimator):
 
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0):
+                 verbose=0, seed=0):
         self.loss = str(loss)
         self.penalty = str(penalty)
         self.alpha = float(alpha)
@@ -152,6 +152,7 @@ class BaseSGD(BaseEstimator):
         if not isinstance(shuffle, bool):
             raise ValueError("shuffle must be either True or False")
         self.shuffle = bool(shuffle)
+        self.seed = seed
         self.verbose = int(verbose)
         self._get_loss_function()
         self._get_penalty_type()
@@ -178,12 +179,13 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, n_jobs=1):
+                 verbose=0, n_jobs=1, seed=0):
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, rho=rho,
                                                 fit_intercept=fit_intercept,
                                                 n_iter=n_iter, shuffle=shuffle,
-                                                verbose=verbose)
+                                                verbose=verbose,
+                                                seed=seed)
         self.n_jobs = int(n_jobs)
 
     def _get_loss_function(self):
@@ -263,13 +265,13 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, p=0.1):
+                 verbose=0, p=0.1, seed=0):
         self.p = float(p)
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, rho=rho,
                                                fit_intercept=fit_intercept,
                                                n_iter=n_iter, shuffle=shuffle,
-                                               verbose=verbose)
+                                               verbose=verbose, seed=seed)
 
     def _get_loss_function(self):
         """Get concrete LossFunction"""
