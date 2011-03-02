@@ -35,7 +35,7 @@ alphas = np.logspace(2, -4, 100)
 
 print "Computing regularization path ..."
 start = datetime.now()
-clf = linear_model.LogisticRegression(C=1.0, penalty='l1', eps=1e-6)
+clf = linear_model.LogisticRegression(C=1.0, penalty='l1', tol=1e-6)
 coefs_ = [clf.fit(X, y, C=1.0/alpha).coef_.ravel().copy() for alpha in alphas]
 print "This took ", datetime.now() - start
 
