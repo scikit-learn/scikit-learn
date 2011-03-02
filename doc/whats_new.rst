@@ -65,7 +65,7 @@ Changelog
   - Allow input sequences of different lengths in :class:`hmm.GaussianHMM`
     [`Ron Weiss`_].
 
-  - Fix bug in affinity propagation caused by incorrect indexing [mxf]
+  - Fix bug in affinity propagation caused by incorrect indexing [Xinfan Meng]
 
 
 People
@@ -89,7 +89,7 @@ People that made this release possible preceeded by number of commits:
     - 1  Paolo Losi
     - 1  VirgileFritsch
     - 1  `Yaroslav Halchenko`_
-    - 1  mxf
+    - 1  Xinfan Meng
 
 
 .. _changes_0_6:
