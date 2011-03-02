@@ -27,8 +27,18 @@ Installing an official release
 ==============================
 
 
+Installing from source
+----------------------
+
+Installing from source requires you to have installed numpy, 
+scipy, setuptools, python development headers and a working C++
+compiler. Under debian-like systems you can get all this by executing
+with root privileges::
+
+    sudo apt-get install python-dev python-numpy python-setuptools python-scipy libatlas-dev g++
+
 Easy install
-------------
+~~~~~~~~~~~~
 
 This is usually the fastest way to install the latest stable
 release. If you have pip or easy_install, you can install or update
@@ -40,7 +50,20 @@ or::
 
     easy_install -U scikits.learn
 
-for easy_install.
+for easy_install. Note that you might need root privileges to run
+these commands.
+
+
+From source package
+~~~~~~~~~~~~~~~~~~~
+
+Download the package from http://sourceforge.net/projects/scikit-learn/files
+, unpack the sources and cd into archive.
+
+This packages uses distutils, which is the default way of installing
+python modules. The install command is::
+
+  python setup.py install
 
 
 Windows installer
@@ -51,24 +74,7 @@ You can download a windows installer from `downloads
 project's web page. Note that must also have installed the packages
 numpy and setuptools.
 
-.. warning::
-
-   As of python(x,y) 2.6.5.3, python(x,y) users should use `this
-   package <http://sourceforge.net/projects/scikit-learn/files/scikits.learn-0.5-numpy-1.3.win32-py2.6.exe/download>`_
-   instead, the reason being that python(x, y) ships an old version of
-   numpy. This problem will dissapear when they upgrade to numpy 1.4
-   or newer.
-
-
-From Source
------------
-Download the package from http://sourceforge.net/projects/scikit-learn/files
-, unpack the sources and cd into archive.
-
-This packages uses distutils, which is the default way of installing
-python modules. The install command is::
-
-  python setup.py install
+This package is also expected to work with python(x,y) as of 2.6.5.5.
 
 
 .. _install_by_distribution:
@@ -112,9 +118,56 @@ by typing the following command::
 
     sudo port install py26-scikits-learn
 
+NetBSD
+------
+
+scikits.learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
+
+    http://pkgsrc.se/wip/py-scikits_learn
+
 .. _install_bleeding_edge:
 
 Bleeding Edge
 =============
 
 See section :ref:`git_repo` on how to get the development version.
+
+
+.. _testing:
+
+Testing
+=======
+
+Testing requires having the `nose
+<http://somethingaboutorange.com/mrl/projects/nose/>`_ library. After
+installation, the package can be tested by executing from outside the
+source directory::
+
+    python -c "import scikits.learn as skl; skl.test()"
+
+This should give you a lot of output (and some warnings) but
+eventually should finish with the a text similar to::
+
+           Ran 601 tests in 27.920s
+           OK (SKIP=2)
+
+otherwise please consider submitting a bug in the :ref:`bug_tracker`
+or to the :ref:`mailing_lists`.
+
+scikits.learn can also be tested without having the package
+installed. For this you must compile the sources inplace from the
+source directory::
+
+    python setup.py build_ext --inplace
+
+Test can now be run using nosetest::
+
+     nosetests scikits/learn/
+
+If you are running the deveopment version, this is automated in the
+commands `make in` and `make test`.
+
+.. warning::
+
+   Because nosetest does not play well with multiprocessing on
+   windows, this last approach is not recommended on such system.

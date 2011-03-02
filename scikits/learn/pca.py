@@ -66,12 +66,12 @@ def _assess_dimension_(spectrum, rank, n_samples, dim):
     spectrum_ = spectrum.copy()
     spectrum_[rank:dim] = v
     for i in range(rank):
-        for j in range (i + 1, dim):
+        for j in range(i + 1, dim):
             pa += (np.log((spectrum[i] - spectrum[j])
                           * (1. / spectrum_[j] - 1. / spectrum_[i]))
                    + np.log(n_samples))
 
-    ll = pu + pl + pv + pp -pa / 2 - rank * np.log(n_samples) / 2
+    ll = pu + pl + pv + pp - pa / 2 - rank * np.log(n_samples) / 2
 
     return ll
 
@@ -104,15 +104,16 @@ class PCA(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like, shape (n_samples, n_features)
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-
     n_components: int, none or string
         Number of components to keep.
         if n_components is not set all components are kept:
             n_components == min(n_samples, n_features)
+
         if n_components == 'mle', Minka's MLE is used to guess the dimension
+
+        if 0 < n_components < 1, select the number of components such that
+                                 the explained variance ratio is greater
+                                 than n_components
 
     copy: bool
         If False, data passed to fit are overwritten
@@ -145,8 +146,8 @@ class PCA(BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> from scikits.learn.pca import PCA
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
     PCA(copy=True, n_components=2, whiten=False)
@@ -165,10 +166,22 @@ class PCA(BaseEstimator):
         self.whiten = whiten
 
     def fit(self, X, **params):
-        """Fit the model to the data X"""
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self._set_params(**params)
         X = np.atleast_2d(X)
-        n_samples = X.shape[0]
+        n_samples, n_features = X.shape
         if self.copy:
             X = X.copy()
         # Center data
@@ -189,6 +202,13 @@ class PCA(BaseEstimator):
             self.n_components = _infer_dimension_(self.explained_variance_,
                                             n_samples, X.shape[1])
 
+        elif 0 < self.n_components and self.n_components < 1.0:
+            # number of components for which the cumulated explained variance
+            # percentage is superior to the desired threshold
+            n_remove = np.sum(self.explained_variance_ratio_.cumsum() >=
+                              self.n_components) - 1
+            self.n_components = n_features - n_remove
+
         if self.n_components is not None:
             self.components_ = self.components_[:, :self.n_components]
             self.explained_variance_ = \
@@ -200,9 +220,17 @@ class PCA(BaseEstimator):
 
     def transform(self, X):
         """Apply the dimension reduction learned on the train data."""
-        Xr = X - self.mean_
-        Xr = np.dot(Xr, self.components_)
-        return Xr
+        X_transformed = X - self.mean_
+        X_transformed = np.dot(X_transformed, self.components_)
+        return X_transformed
+
+    def inverse_transform(self, X):
+        """Return an input X_original whose transform would be X
+
+        Note: if whitening is enabled, inverse_transform does not compute the
+        exact inverse operation as transform.
+        """
+        return np.dot(X, self.components_.T) + self.mean_
 
 
 class ProbabilisticPCA(PCA):
@@ -228,13 +256,14 @@ class ProbabilisticPCA(PCA):
         if self.dim <= self.n_components:
             delta = np.zeros(self.dim)
         elif homoscedastic:
-            delta = (Xr ** 2).sum() / (n_samples*(self.dim)) * np.ones(self.dim)
+            delta = (Xr ** 2).sum() * np.ones(self.dim) \
+                    / (n_samples * self.dim)
         else:
             delta = (Xr ** 2).mean(0) / (self.dim - self.n_components)
         self.covariance_ = np.diag(delta)
         for k in range(self.n_components):
-            add_cov =  np.dot(
-                self.components_[:, k:k+1], self.components_[:, k:k+1].T)
+            add_cov = np.dot(
+                self.components_[:, k:k + 1], self.components_[:, k:k + 1].T)
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
@@ -273,10 +302,6 @@ class RandomizedPCA(BaseEstimator):
 
     Parameters
     ----------
-    X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-
     n_components: int
         Maximum number of components to keep: default is 50.
 
@@ -306,20 +331,11 @@ class RandomizedPCA(BaseEstimator):
         k is not set then all components are stored and the sum of
         explained variances is equal to 1.0
 
-    References
-    -----
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909)
-
-    A randomized algorithm for the decomposition of matrices
-    Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
-
     Examples
     --------
     >>> import numpy as np
+    >>> from scikits.learn.pca import RandomizedPCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> from scikits.learn.pca import PCA
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)
     RandomizedPCA(copy=True, n_components=2, iterated_power=3, whiten=False)
@@ -330,6 +346,19 @@ class RandomizedPCA(BaseEstimator):
     --------
     PCA
     ProbabilisticPCA
+
+    Notes
+    -------
+    References:
+    
+    * Finding structure with randomness: Stochastic algorithms for 
+      constructing approximate matrix decompositions Halko, et al., 2009 
+      (arXiv:909)
+
+    * A randomized algorithm for the decomposition of matrices
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+
+
     """
 
     def __init__(self, n_components, copy=True, iterated_power=3,
@@ -341,7 +370,19 @@ class RandomizedPCA(BaseEstimator):
         self.mean_ = None
 
     def fit(self, X, **params):
-        """Fit the model to the data X"""
+        """Fit the model to the data X.
+
+        Parameters
+        ----------
+        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self._set_params(**params)
         n_samples = X.shape[0]
 
@@ -378,4 +419,10 @@ class RandomizedPCA(BaseEstimator):
         X = safe_sparse_dot(X, self.components_)
         return X
 
+    def inverse_transform(self, X):
+        """Return an reconstructed input whose transform would be X"""
+        X_original = safe_sparse_dot(X, self.components_.T)
+        if self.mean_ is not None:
+            X_original = X_original + self.mean_
+        return X_original
 

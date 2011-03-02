@@ -8,7 +8,6 @@ from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
-import scipy.sparse as sp
 from ...base import BaseEstimator
 
 ENGLISH_STOP_WORDS = set([
@@ -97,6 +96,7 @@ class RomanPreprocessor(object):
 
 DEFAULT_PREPROCESSOR = RomanPreprocessor()
 
+DEFAULT_TOKEN_PATTERN = r"\b\w\w+\b"
 
 class WordNGramAnalyzer(BaseEstimator):
     """Simple analyzer: transform a text document into a sequence of word tokens
@@ -105,20 +105,20 @@ class WordNGramAnalyzer(BaseEstimator):
       - lower case conversion
       - unicode accents removal
       - token extraction using unicode regexp word bounderies for token of
-        minimum size of 2 symbols
+        minimum size of 2 symbols (by default)
       - output token n-grams (unigram only by default)
     """
 
-    token_pattern = re.compile(r"\b\w\w+\b", re.UNICODE)
-
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
                  preprocessor=DEFAULT_PREPROCESSOR,
-                 stop_words=ENGLISH_STOP_WORDS):
+                 stop_words=ENGLISH_STOP_WORDS,
+                 token_pattern=DEFAULT_TOKEN_PATTERN):
         self.charset = charset
         self.stop_words = stop_words
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
+        self.token_pattern = token_pattern
 
     def analyze(self, text_document):
         if hasattr(text_document, 'read'):
@@ -130,8 +130,10 @@ class WordNGramAnalyzer(BaseEstimator):
 
         text_document = self.preprocessor.preprocess(text_document)
 
-        # word boundaries tokenizer
-        tokens = self.token_pattern.findall(text_document)
+        # word boundaries tokenizer (cannot compile it in the __init__ because
+        # we want support for pickling and runtime parameter fitting)
+        compiled = re.compile(self.token_pattern, re.UNICODE)
+        tokens = compiled.findall(text_document)
 
         # handle token n-grams
         if self.min_n != 1 or self.max_n != 1:

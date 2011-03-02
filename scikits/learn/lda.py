@@ -37,14 +37,6 @@ class LDA(BaseEstimator, ClassifierMixin):
     `covariance_` : array-like, shape = [n_features, n_features]
         Covariance matrix (shared by all classes)
 
-    Methods
-    -------
-    fit(X, y) : self
-        Fit the model
-
-    predict(X) : array
-        Predict using the model.
-
     Examples
     --------
     >>> import numpy as np
@@ -84,19 +76,30 @@ class LDA(BaseEstimator, ClassifierMixin):
         self._set_params(**params)
         X = np.asanyarray(X)
         y = np.asanyarray(y)
+        if y.dtype.char.lower() not in ('b', 'h', 'i'):
+            # We need integer values to be able to use
+            # ndimage.measurements and np.bincount on numpy >= 2.0.
+            # We currently support (u)int8, (u)int16 and (u)int32.
+            # Note that versions of scipy >= 0.8 can also accept
+            # (u)int64. We however don't support it for backwards
+            # compatibility.
+            y = y.astype(np.int32)
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
+        if X.shape[0] != y.shape[0]:
+            raise ValueError(
+                'Incompatible shapes: X has %s samples, while y '
+                'has %s' % (X.shape[0], y.shape[0]))
         n_samples = X.shape[0]
         n_features = X.shape[1]
-        # We need int32 to be able to use ndimage.measurements
-        classes = np.unique(y).astype(np.int32)
+        classes = np.unique(y)
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array(ndimage.measurements.sum(np.ones(len(y)),
-                                                    y, index=classes))
+            counts = np.array(ndimage.measurements.sum(
+                np.ones(n_samples, dtype=y.dtype), y, index=classes))
             self.priors_ = counts / float(n_samples)
         else:
             self.priors_ = self.priors

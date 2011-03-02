@@ -17,8 +17,8 @@ value.
 Across the module, we designate the vector :math:`\beta = (\beta_1,
 ..., \beta_D)` as ``coef_`` and :math:`\beta_0` as ``intercept_``.
 
-
-.. TODO: reference to logistic regression.
+To perform classification with generalized linear models, see
+:ref:`Logistic regression`.
 
 .. _ordinary_least_squares:
 
@@ -64,12 +64,11 @@ example, when data are collected without an experimental design.
 
 
 OLS Complexity
-------------------
+--------------
 
 This method computes the least squares solution using a singular value
 decomposition of X. If X is a matrix of size (n, p ) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
-
 
 Ridge Regression
 ================
@@ -106,6 +105,27 @@ Ridge Complexity
 This method has the same order of complexity than an
 :ref:`ordinary_least_squares`.
 
+Generalized Cross-Validation
+----------------------------
+
+:class:`RidgeCV` implements ridge regression with built-in cross-validation of the alpha parameter.
+The object works in the same way as GridSearchCV except that it defaults to Generalized Cross-Validation (GCV), an efficient form of leave-one-out cross-validation.
+
+    >>> from scikits.learn import linear_model
+    >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    RidgeCV(alphas=[0.10000000000000001, 1.0, 10.0], loss_func=None, cv=None,
+        score_func=None, fit_intercept=True)
+    >>> clf.best_alpha
+    0.10000000000000001
+
+.. topic:: References
+
+    * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
+      <http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+      `course slides
+      <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+
 Lasso
 =====
 
@@ -127,7 +147,7 @@ this reason, the Lasso and its variants are fundamental to the field
 of compressed sensing.
 
 This implementation uses coordinate descent as the algorithm to fit
-the coefficients. See :ref:`lars_algorithm` for another implementation.
+the coefficients. See :ref:`least_angle_regression` for another implementation.
 
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
@@ -200,9 +220,6 @@ The disadvantages of the LARS method include:
 The LARS model can be used using estimator :class:`LARS`, or its
 low-level implementation :func:`lars_path`.
 
-.. topic:: Examples:
-
- * :ref:`example_linear_model_plot_lar.py`
 
 LARS Lasso
 ==========
@@ -351,7 +368,7 @@ Regression* is more robust to ill-posed problem.
 
 .. topic:: References
 
-  * More details can be found in the article `paper <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_ 
+  * More details can be found in the article `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_ 
     by MacKay, David J. C.
 
 
@@ -429,6 +446,26 @@ where :math:`\alpha` is the precision of the noise.
 
  * Original Algorithm is detailed in the  book *Bayesian learning for neural
    networks* by Radford M. Neal
+
+Logisitic regression
+======================
+
+If the task at hand is to do choose which class a sample belongs to given
+a finite (hopefuly small) set of choices, the learning problem is a
+classification, rather than regression. Linear models can be used for
+such a decision, but it is best to use what is called a 
+`logistic regression <http://en.wikipedia.org/wiki/Logistic_regression>`__, 
+that doesn't try to minimize the sum of square residuals, as in regression, 
+but rather a "hit or miss" cost.
+
+The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
+logistic regression, in order to have sparse predicting weights.
+
+.. topic:: Examples:
+
+  * :ref:`example_logistic_l1_l2_coef.py`
+
+  * :ref:`example_linear_model_plot_logistic_path.py`
 
 Stochastic Gradient Descent - SGD
 =================================

@@ -192,12 +192,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     -------
     >>> import numpy as np
     >>> from scikits.learn.gaussian_process import GaussianProcess
-    >>> f = lambda x: x * np.sin(x)
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
-    >>> y = f(X).ravel()
-    >>> gp = GaussianProcess(theta0=1e-1, thetaL=1e-3, thetaU=1e0).fit(X, y)
-    >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
-    >>> y_pred, MSE = gp.predict(x, eval_MSE=True)
+    >>> y = (X * np.sin(X)).ravel()
+    >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
+    >>> gp.fit(X, y) # doctest: +ELLIPSIS
+    GaussianProcess(normalize=True, ...)
 
     Implementation details
     ----------------------
@@ -472,7 +471,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     self.Ft = par['Ft']
                     self.G = par['G']
 
-                rt = solve_triangular(C, r.T, lower=True)
+                rt = solve_triangular(self.C, r.T, lower=True)
 
                 if self.beta0 is None:
                     # Universal Kriging
@@ -504,11 +503,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if eval_MSE:
 
                 y, MSE = np.zeros(n_eval), np.zeros(n_eval)
-                for k in range(n_eval / batch_size):
+                for k in range(max(1, n_eval / batch_size)):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to], MSE[batch_from:batch_to] = \
-                        self.predict(X[batch_from:batch_to][:],
+                        self.predict(X[batch_from:batch_to],
                                      eval_MSE=eval_MSE, batch_size=None)
 
                 return y, MSE
@@ -516,11 +515,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             else:
 
                 y = np.zeros(n_eval)
-                for k in range(n_eval / batch_size):
+                for k in range(max(1, n_eval / batch_size)):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to] = \
-                        self.predict(X[batch_from:batch_to][:],
+                        self.predict(X[batch_from:batch_to],
                                      eval_MSE=eval_MSE, batch_size=None)
 
                 return y
@@ -579,7 +578,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            D, ij = compute_componentwise_l1_cross_distances(X)
+            D, ij = compute_componentwise_l1_cross_distances(self.X)
             if np.min(np.sum(np.abs(D), axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
                 raise Exception("Multiple X are not allowed")

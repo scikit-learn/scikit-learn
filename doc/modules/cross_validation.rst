@@ -56,7 +56,7 @@ data as only one sample is removed from the learning set.
     >>> loo = LeaveOneOut(len(Y))
     >>> print loo
     scikits.learn.cross_val.LeaveOneOut(n=4)
-    >>> for train, test in loo: print train,test
+    >>> for train, test in loo: print train, test
     [False  True  True  True] [ True False False False]
     [ True False  True  True] [False  True False False]
     [ True  True False  True] [False False  True False]
@@ -69,10 +69,22 @@ Thus, one can create the training/test sets using:
 
     >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
 
+If X or Y are `scipy.sparse` matrices, train and test need to be
+integer indices. It can be obtained by setting the parameter indices to True
+when creating the cross-validation procedure.
 
-
-
-
+    >>> import numpy as np
+    >>> from scikits.learn.cross_val import LeaveOneOut
+    >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
+    >>> Y = np.array([0, 1, 0, 1])
+    >>> loo = LeaveOneOut(len(Y), indices=True)
+    >>> print loo
+    scikits.learn.cross_val.LeaveOneOut(n=4)
+    >>> for train, test in loo: print train, test
+    [1 2 3] [0]
+    [0 2 3] [1]
+    [0 1 3] [2]
+    [0 1 2] [3]
 
 
 Leave-P-Out - LPO
@@ -162,13 +174,13 @@ Example of stratified 2-fold:
 >>> from scikits.learn.cross_val import StratifiedKFold
 >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.], [0., 1.]]
 >>> Y = [0, 0, 0, 1, 1, 1, 0]
->>> loo = StratifiedKFold(Y, 2)
->>> print loo
+>>> skf = StratifiedKFold(Y, 2)
+>>> print skf
 scikits.learn.cross_val.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
->>> for train, test in loo: print train,test
-[False False  True False  True  True  True] [ True  True False  True False False False]
-[ True  True False  True False False False] [False False  True False  True  True  True]
- 
+>>> for train, test in skf: print train, test
+[False  True False False  True False  True] [ True False  True  True False  True False]
+[ True False  True  True False  True False] [False  True False False  True False  True]
+
 
 
 

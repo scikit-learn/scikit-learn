@@ -83,9 +83,10 @@ class SGDClassifier(BaseSGDClassifier):
     Examples
     --------
     >>> import numpy as np
+    >>> from scikits.learn import linear_model
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
-    >>> clf = SGDClassifier()
+    >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
            fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
@@ -353,11 +354,12 @@ class SGDRegressor(BaseSGDRegressor):
     Examples
     --------
     >>> import numpy as np
+    >>> from scikits.learn import linear_model    
     >>> n_samples, n_features = 10, 5
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = SGDRegressor()
+    >>> clf = linear_model.sparse.SGDRegressor()
     >>> clf.fit(X, y)
     SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
            fit_intercept=True, penalty='l2', p=0.1, rho=1.0, alpha=0.0001)

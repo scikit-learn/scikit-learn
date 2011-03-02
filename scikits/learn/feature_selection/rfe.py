@@ -8,9 +8,9 @@
 import numpy as np
 from ..base import BaseEstimator
 
+
 class RFE(BaseEstimator):
-    """
-    Feature ranking with Recursive feature elimination
+    """Feature ranking with Recursive feature elimination
 
     Parameters
     ----------
@@ -64,7 +64,7 @@ class RFE(BaseEstimator):
         self.estimator = estimator
 
     def fit(self, X, y):
-        """Fit the RFE model according to the given training data and parameters.
+        """Fit the RFE model
 
         Parameters
         ----------
@@ -80,11 +80,12 @@ class RFE(BaseEstimator):
         support_ = np.ones(n_features_total, dtype=np.bool)
         ranking_ = np.ones(n_features_total, dtype=np.int)
         while np.sum(support_) > self.n_features:
-            estimator.fit(X[:,support_], y)
+            estimator.fit(X[:, support_], y)
             # rank features based on coef_ (handle multi class)
             abs_coef_ = np.sum(estimator.coef_ ** 2, axis=0)
             sorted_abs_coef_ = np.sort(abs_coef_)
-            threshold = sorted_abs_coef_[np.int(np.sum(support_) * self.percentage)]
+            threshold = sorted_abs_coef_[np.int(np.sum(support_) *
+                                         self.percentage)]
             support_[support_] = abs_coef_ > threshold
             ranking_[support_] += 1
         self.support_ = support_
@@ -100,7 +101,7 @@ class RFE(BaseEstimator):
             Vector, where n_samples in the number of samples and
             n_features is the number of features.
         """
-        X_r = X[:,self.support_]
+        X_r = X[:, self.support_]
         return X_r.copy() if copy else X_r
 
 
@@ -161,7 +162,7 @@ class RFECV(RFE):
         self.loss_func = loss_func
 
     def fit(self, X, y, cv=None):
-        """Fit the RFE model according to the given training data and parameters.
+        """Fit the RFE model with cross-validation
 
         The final size of the support is tuned by cross validation.
 
@@ -181,7 +182,7 @@ class RFECV(RFE):
         clf = self.estimator
         n_models = np.max(self.ranking_)
         self.cv_scores_ = np.zeros(n_models)
-        self.n_features_ = np.bincount(self.ranking_)[::-1].cumsum()[-2::-1] 
+        self.n_features_ = np.bincount(self.ranking_)[::-1].cumsum()[-2::-1]
 
         for train, test in cv:
             ranking_ = rfe.fit(X[train], y[train]).ranking_
@@ -189,11 +190,12 @@ class RFECV(RFE):
             # assert n_models == np.max(ranking_)
             for k in range(n_models):
                 mask = ranking_ >= (k+1)
-                clf.fit(X[train][:,mask], y[train])
-                y_pred = clf.predict(X[test][:,mask])
+                clf.fit(X[train][:, mask], y[train])
+                y_pred = clf.predict(X[test][:, mask])
                 self.cv_scores_[k] += self.loss_func(y[test], y_pred)
 
-        self.support_ = self.ranking_ >= (np.argmin(self.cv_scores_) + 1)
+        # Take the best model (if multiple models have the same accuracy
+        # use the last one ie the one with minimum number of features)
+        min_score = n_models - np.argmin(self.cv_scores_[::-1])
+        self.support_ = self.ranking_ >= min_score
         return self
-
-

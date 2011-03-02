@@ -42,20 +42,8 @@ The disadvantages of Support Vector Machines include:
 Classification
 ==============
 
-Suppose some given data points each belonging to one of N classes, and
-the goal is to decide which class a new data point will be in. This
-problem is called classification, and can be solved with SVMs using
-*Support Vector Classifiers*, SVC. The
-classes that perform this task are :class:`SVC`, :class:`NuSVC` and
-:class:`LinearSVC`.
-
-:class:`SVC` and :class:`NuSVC` are similar methods, but accept
-slightly different sets of parameters and have different mathematical
-formulations (see section :ref:`svm_mathematical_formulation`). On the
-other hand, :class:`LinearSVC` is another implementation of SVC
-optimized in the case of a linear kernel. Note that :class:`LinearSVC`
-does not accept keyword 'kernel', as this is assumed to be linear. It
-also lacks some of the members of SVC and NuSVC, like support\_.
+:class:`SVC`, :class:`NuSVC` and :class:`LinearSVC` are classes
+capable of performing multi-class classification on a dataset.
 
 
 .. figure:: ../auto_examples/svm/images/plot_iris.png
@@ -63,14 +51,24 @@ also lacks some of the members of SVC and NuSVC, like support\_.
    :align: center
 
 
-As other classifiers, SVC and NuSVC have to be fitted with two arrays:
-an array X of size [m_samples, n_features] holding the training
-samples, and an array Y of size [n_samples] holding the target values
-(class labels) for the training samples::
+:class:`SVC` and :class:`NuSVC` are similar methods, but accept
+slightly different sets of parameters and have different mathematical
+formulations (see section :ref:`svm_mathematical_formulation`). On the
+other hand, :class:`LinearSVC` is another implementation of Support
+Vector Classification for the case of a linear kernel. Note that
+:class:`LinearSVC` does not accept keyword 'kernel', as this is
+assumed to be linear. It also lacks some of the members of
+:class:`SVC` and :class:`NuSVC`, like support\_.
+
+As other classifiers, :class:`SVC`, :class:`NuSVC` and
+:class:`LinearSVC` take as input two arrays: an array X of size
+[n_samples, n_features] holding the training samples, and an array Y
+of integer values, size [n_samples], holding the class labels for the
+training samples::
 
 
     >>> from scikits.learn import svm
-    >>> X = [[0., 0.], [1., 1.]]
+    >>> X = [[0, 0], [1, 1]]
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
@@ -82,18 +80,59 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict([[2., 2.]])
     array([ 1.])
 
-SVMs perform classification as a function of some subset of the
-training data, called the support vectors. These vectors can be
-accessed in member `support_`:
+SVMs decision function depends on some subset of the training data,
+called the support vectors. Some properties of these support vectors
+can be found in members `support_vectors_`, `support_` and
+`n_support`::
 
-    >>> clf.support_
-    array([0, 1], dtype=int32)
+    >>> # get support vectors
+    >>> clf.support_vectors_
+    array([[ 0.,  0.],
+           [ 1.,  1.]])
+    >>> # get indices of support vectors
+    >>> clf.support_ # doctest: +ELLIPSIS
+    array([0, 1]...)
+    >>> # get number of support vectors for each class
+    >>> clf.n_support_ # doctest: +ELLIPSIS
+    array([1, 1]...)
 
-Member `n_support_` holds the number of support vectors for each class:
 
-    >>> clf.n_support_
-    array([1, 1], dtype=int32)
+Multi-class classification
+--------------------------
 
+:class:`SVC` and :class:`NuSVC` implement the "one-against-one"
+approach (Knerr et al., 1990) for multi- class classification. If
+n_class is the number of classes, then n_class * (n_class - 1)/2
+classifiers are constructed and each one trains data from two classes.
+
+
+    >>> X = [[0], [1], [2], [3]]
+    >>> Y = [0, 1, 2, 3]
+    >>> clf = svm.SVC()
+    >>> clf.fit(X, Y)
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+      cache_size=100.0, shrinking=True, gamma=0.25)
+    >>> dec = clf.decision_function([[1]])
+    >>> dec.shape[1] # 4 classes: 4*3/2 = 6
+    6
+
+
+On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
+multi-class strategy, thus training n_class models. If there are only
+two classes, only one model is trained.
+
+
+    >>> lin_clf = svm.LinearSVC()
+    >>> lin_clf.fit(X, Y)
+    LinearSVC(loss='l2', C=1.0, intercept_scaling=1, fit_intercept=True,
+         eps=0.0001, penalty='l2', multi_class=False, dual=True)
+    >>> dec = lin_clf.decision_function([[1]])
+    >>> dec.shape[1]
+    4
+    
+
+See :ref:`svm_mathematical_formulation` for a complete description of
+the decision function.
 
 .. topic:: Examples:
 
@@ -125,6 +164,16 @@ As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
 floating point values instead of integer values.
 
+    >>> from scikits.learn import svm
+    >>> X = [[0, 0], [2, 2]]
+    >>> y = [0.5, 2.5]
+    >>> clf = svm.SVR()
+    >>> clf.fit(X, y)
+    SVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
+      eps=0.001, p=0.1, cache_size=100.0, coef0=0.0, nu=0.5, gamma=0.5)
+    >>> clf.predict([[1, 1]])
+    array([ 1.5])
+
 
 .. topic:: Examples:
 
@@ -154,7 +203,7 @@ will only take as input an array X, as there are no class labels.
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_oneclass.py`
-
+ * :ref:`example_applications_plot_species_distribution_modeling.py`
 
 .. currentmodule:: scikits.learn.svm.sparse
 
@@ -217,6 +266,11 @@ Tips on Practical Use
     penalty parameters C.
 
   * Specify larger cache size (keyword cache) for huge problems.
+
+  * The underlying :class:`LinearSVC` implementation uses a random
+    number generator to select features when fitting the model. It is
+    thus not uncommon, to have slightly different results for the same
+    input data. If that happens, try with a smaller eps parameter.
 
 
 .. _svm_kernels:

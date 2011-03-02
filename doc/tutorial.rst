@@ -23,7 +23,7 @@ We can separate learning problems in a few large categories:
 
     * **classification**: samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
-      of un-labeled data. An example of classification problem would
+      of unlabeled data. An example of classification problem would
       be the digit recognition example, in which the aim is to assign
       each input vector to one of a finite number of discrete
       categories.
@@ -143,7 +143,7 @@ box and not worry about these:
 We call our estimator instance `clf` as it is a classifier. It now must
 be fitted to the model, that is, it must `learn` from the model. This is
 done by passing our training set to the ``fit`` method. As a training
-set, let us use the all the images of our dataset appart from the last
+set, let us use all the images of our dataset apart from the last
 one:
 
 >>> clf.fit(digits.data[:-1], digits.target[:-1])
@@ -169,3 +169,33 @@ resolution. Do you agree with the classifier?
 A complete example of this classification problem is available as an
 example that you can run and study:
 :ref:`example_plot_digits_classification.py`.
+
+Model persistence
+-----------------
+
+It is possible to save a model in the scikit by using Python's built-in
+persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_.
+
+>>> from scikits.learn import svm
+>>> from scikits.learn import datasets
+>>> clf = svm.SVC()
+>>> iris = datasets.load_iris()
+>>> X, y = iris.data, iris.target
+>>> clf.fit(X, y)
+SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+  cache_size=100.0, shrinking=True, gamma=0.00666666666667)
+>>> import pickle
+>>> s = pickle.dumps(clf)
+>>> clf2 = pickle.loads(s)
+>>> clf2.predict(X[0])
+array([ 0.])
+>>> y[0]
+0
+
+In the specific case of the scikit, it may be more interesting to use
+joblib's replacement of pickle, which is more efficient on big data, but
+can only pickle to the disk and not to a string:
+
+>>> from scikits.learn.externals import joblib
+>>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
+

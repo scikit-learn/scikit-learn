@@ -15,7 +15,7 @@ from .k_means_ import k_means
 
 def spectral_embedding(adjacency, k=8, mode=None):
     """ Spectral embedding: project the sample on the k first
-        eigen vectors of the graph laplacian.
+        eigen vectors of the normalized graph Laplacian.
 
         Parameters
         -----------
@@ -40,7 +40,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
     """
 
     from scipy import sparse
-    from scipy.sparse.linalg.eigen.arpack import eigen_symmetric
+    from ..utils.fixes import arpack_eigsh
     from scipy.sparse.linalg import lobpcg
     try:
         from pyamg import smoothed_aggregation_solver
@@ -78,7 +78,7 @@ def spectral_embedding(adjacency, k=8, mode=None):
                 # csr has the fastest matvec and is thus best suited to
                 # arpack
                 laplacian = laplacian.tocsr()
-        lambdas, diffusion_map = eigen_symmetric(-laplacian, k=k, which='LA')
+        lambdas, diffusion_map = arpack_eigsh(-laplacian, k=k, which='LA')
         embedding = diffusion_map.T[::-1]*dd
     elif mode == 'amg':
         # Use AMG to get a preconditionner and speed up the eigenvalue
@@ -123,6 +123,9 @@ def spectral_clustering(adjacency, k=8, mode=None):
         ------
         The graph should contain only one connect component,
         elsewhere the results make little sens.
+
+        This algorithm solves the normalized cut for k=2: it is a
+        normalized spectral clustering.
     """
     maps = spectral_embedding(adjacency, k=k, mode=mode)
     maps = maps[1:]
@@ -172,9 +175,21 @@ class SpectralClustering(BaseEstimator):
             -----------
             X: array-like or sparse matrix, shape: (p, p)
                 The adjacency matrix of the graph to embed.
+                X is an adjacency matrix of a similarity graph: its
+                entries must be positive or zero. Zero means that
+                elements have nothing in common, whereas high values mean
+                that elements are strongly similar.
 
             Notes
             ------
+            If you have an affinity matrix, such as a distance matrix,
+            for which 0 means identical elements, and high values means
+            very dissimilar elements, it can be transformed in a
+            similarity matrix that is well suited for the algorithm by
+            applying the gaussian (heat) kernel::
+
+                np.exp(- X**2/2. * delta**2)
+
             If the pyamg package is installed, it is used. This
             greatly speeds up computation.
         """

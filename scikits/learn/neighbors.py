@@ -1,115 +1,151 @@
-"""
-k-Nearest Neighbor Algorithm.
+"""Nearest Neighbor related algorithms"""
 
-Uses BallTree algorithm, which is an efficient way to perform fast
-neighbor searches in high dimensionality.
-"""
+# Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#
+# License: BSD, (C) INRIA
+
 import numpy as np
-from scipy import stats
-from scipy import linalg
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .ball_tree import BallTree
+from .ball_tree import BallTree, knn_brute
 
 
-class Neighbors(BaseEstimator, ClassifierMixin):
+class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     """Classifier implementing k-Nearest Neighbor Algorithm.
 
     Parameters
     ----------
-    data : array-like, shape (n, k)
-        The data points to be indexed. This array is not copied, and so
-        modifying this data will result in bogus results.
-    labels : array
-        An array representing labels for the data (only arrays of
-        integers are supported).
-    n_neighbors : int
-        default number of neighbors.
-    window_size : int
+    n_neighbors : int, optional
+        Default number of neighbors. Defaults to 5.
+
+    window_size : int, optional
         Window size passed to BallTree
+
+    algorithm : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
+        Algorithm used to compute the nearest neighbors. 'ball_tree'
+        will construct a BallTree, 'brute' and 'brute_inplace' will
+        perform brute-force search.'auto' will guess the most
+        appropriate based on current dataset.
 
     Examples
     --------
-    >>> samples = [[0.,0.,1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
-    >>> labels = [0,0,1,1]
-    >>> from scikits.learn.neighbors import Neighbors
-    >>> neigh = Neighbors(n_neighbors=3)
+    >>> samples = [[0, 0, 1], [1, 0, 0]]
+    >>> labels = [0, 1]
+    >>> from scikits.learn.neighbors import NeighborsClassifier
+    >>> neigh = NeighborsClassifier(n_neighbors=1)
     >>> neigh.fit(samples, labels)
-    Neighbors(n_neighbors=3, window_size=1)
+    NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
     >>> print neigh.predict([[0,0,0]])
-    [ 0.]
+    [1]
 
-    Notes
-    -----
+    See also
+    --------
+    BallTree
+
+    References
+    ----------
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, window_size=1):
-        """Internally uses the ball tree datastructure and algorithm for fast
-        neighbors lookups on high dimensional datasets.
-        """
+    def __init__(self, n_neighbors=5, algorithm='auto', window_size=1):
         self.n_neighbors = n_neighbors
         self.window_size = window_size
+        self.algorithm = algorithm
 
-    def fit(self, X, Y=()):
-        # we need Y to be an integer, because after we'll use it an index
-        self.Y = np.asanyarray(Y, dtype=np.int)
-        self.ball_tree = BallTree(X, self.window_size)
+        
+    def fit(self, X, Y, **params):
+        """
+        Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data.
+
+        y : array-like, shape = [n_samples]
+            Target values, array of integer values.
+
+        params : list of keyword, optional
+            Overwrite keywords from __init__
+        """
+        X = np.asanyarray(X)
+        self._y = np.asanyarray(Y)
+        self._set_params(**params)
+
+        if self.algorithm == 'ball_tree' or \
+           (self.algorithm == 'auto' and X.shape[1] < 20):
+            self.ball_tree = BallTree(X, self.window_size)
+        else:
+            self.ball_tree = None
+            self._fit_X = X
         return self
 
-    def kneighbors(self, data, n_neighbors=None):
+
+    def kneighbors(self, data, return_distance=True, **params):
         """Finds the K-neighbors of a point.
+
+        Returns distance
 
         Parameters
         ----------
         point : array-like
             The new point.
+
         n_neighbors : int
             Number of neighbors to get (default is the value
             passed to the constructor).
 
+        return_distance : boolean, optional. Defaults to True.
+           If False, distances will not be returned
+
         Returns
         -------
         dist : array
-            Array representing the lengths to point.
+            Array representing the lengths to point, only present if
+            return_distance=True
+
         ind : array
-            Array representing the indices of the nearest points in the
-            population matrix.
+            Indices of the nearest points in the population matrix.
 
         Examples
         --------
-        In the following example, we construnct a Neighbors class from an
-        array representing our data set and ask who's the closest point to
-        [1,1,1]
+        In the following example, we construnct a NeighborsClassifier
+        class from an array representing our data set and ask who's
+        the closest point to [1,1,1]
 
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
         >>> labels = [0, 0, 1]
-        >>> from scikits.learn.neighbors import Neighbors
-        >>> neigh = Neighbors(n_neighbors=1)
+        >>> from scikits.learn.neighbors import NeighborsClassifier
+        >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
-        Neighbors(n_neighbors=1, window_size=1)
+        NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
         >>> print neigh.kneighbors([1., 1., 1.])
-        (array(0.5), array(2))
+        (array([ 0.5]), array([2]))
 
         As you can see, it returns [0.5], and [2], which means that the
         element is at distance 0.5 and is the third element of samples
         (indexes start at 0). You can also query for multiple points:
 
-        >>> print neigh.kneighbors([[0., 1., 0.], [1., 0., 1.]])
-        (array([ 0.5       ,  1.11803399]), array([1, 2]))
+        >>> X = [[0., 1., 0.], [1., 0., 1.]]
+        >>> neigh.kneighbors(X, return_distance=False)
+        array([[1],
+               [2]])
 
         """
-        if n_neighbors is None:
-            n_neighbors = self.n_neighbors
-        return self.ball_tree.query(data, k=n_neighbors)
+        self._set_params(**params)
+        return self.ball_tree.query(
+            data, k=self.n_neighbors, return_distance=return_distance)
 
-    def predict(self, T, n_neighbors=None):
+
+    def predict(self, X, **params):
         """Predict the class labels for the provided data.
 
         Parameters
         ----------
-        test: array
+        X: array
             A 2-D array representing the test point.
+
         n_neighbors : int
             Number of neighbors to get (default is the value
             passed to the constructor).
@@ -118,68 +154,70 @@ class Neighbors(BaseEstimator, ClassifierMixin):
         -------
         labels: array
             List of class labels (one for each data sample).
-
-        Examples
-        --------
-        >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
-        >>> labels = [0, 0, 1]
-        >>> from scikits.learn.neighbors import Neighbors
-        >>> neigh = Neighbors(n_neighbors=1)
-        >>> neigh.fit(samples, labels)
-        Neighbors(n_neighbors=1, window_size=1)
-        >>> print neigh.predict([.2, .1, .2])
-        0
-        >>> print neigh.predict([[0., -1., 0.], [3., 2., 0.]])
-        [0 1]
         """
-        T = np.asanyarray(T)
-        if n_neighbors is None:
-            n_neighbors = self.n_neighbors
-        return _predict_from_BallTree(self.ball_tree, self.Y, T, n_neighbors)
+        X = np.atleast_2d(X)
+        self._set_params(**params)
 
+        # .. get neighbors ..
+        if self.ball_tree is None:
+            if self.algorithm == 'brute_inplace':
+                neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
+            else:
+                from .metrics import euclidean_distances
+                dist = euclidean_distances(
+                    X, self._fit_X, squared=True)
+                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+        else:
+            neigh_ind = self.ball_tree.query(
+                X, self.n_neighbors, return_distance=False)
 
-def _predict_from_BallTree(ball_tree, Y, test, n_neighbors):
-    """Predict target from BallTree object containing the data points.
+        # .. most popular label ..
+        pred_labels = self._y[neigh_ind]
+        from scipy import stats
+        mode, _ = stats.mode(pred_labels, axis=1)
+        return mode.flatten().astype(np.int)
 
-    This is a helper method, not meant to be used directly. It will
-    not check that input is of the correct type.
-    """
-    Y_ = Y[ball_tree.query(test, k=n_neighbors, return_distance=False)]
-    if n_neighbors == 1:
-        return Y_
-    return (stats.mode(Y_, axis=1)[0]).ravel()
 
 ###############################################################################
-# Neighbors Barycenter class for regression problems
+# NeighborsRegressor class for regression problems
 
-class NeighborsBarycenter(BaseEstimator, RegressorMixin):
+class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     """Regression based on k-Nearest Neighbor Algorithm.
 
     The target is predicted by local interpolation of the targets
     associated of the k-Nearest Neighbors in the training set.
-    The interpolation weights correspond to barycenter weights.
+
+    Different modes for estimating the result can be set via parameter
+    mode. 'barycenter' will apply the weights that best reconstruct
+    the point from its neighbors while 'mean' will apply constant
+    weights to each point.
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
-        The data points to be indexed. This array is not copied, and so
-        modifying this data will result in bogus results.
-    y : array
-        An array representing labels for the data (only arrays of
-        integers are supported).
-    n_neighbors : int
-        default number of neighbors.
-    window_size : int
+    n_neighbors : int, optional
+        Default number of neighbors. Defaults to 5.
+
+    window_size : int, optional
         Window size passed to BallTree
+
+    mode : {'mean', 'barycenter'}, optional
+        Weights to apply to labels.
+
+    algorithm : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
+        Algorithm used to compute the nearest neighbors. 'ball_tree'
+        will construct a BallTree, 'brute' and 'brute_inplace' will
+        perform brute-force search.'auto' will guess the most
+        appropriate based on current dataset.
 
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
     >>> y = [0, 0, 1, 1]
-    >>> from scikits.learn.neighbors import NeighborsBarycenter
-    >>> neigh = NeighborsBarycenter(n_neighbors=2)
+    >>> from scikits.learn.neighbors import NeighborsRegressor
+    >>> neigh = NeighborsRegressor(n_neighbors=2)
     >>> neigh.fit(X, y)
-    NeighborsBarycenter(n_neighbors=2, window_size=1)
+    NeighborsRegressor(n_neighbors=2, window_size=1, mode='mean',
+              algorithm='auto')
     >>> print neigh.predict([[1.5]])
     [ 0.5]
 
@@ -188,26 +226,24 @@ class NeighborsBarycenter(BaseEstimator, RegressorMixin):
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, window_size=1):
-        """Internally uses the ball tree datastructure and algorithm for fast
-        neighbors lookups on high dimensional datasets.
-        """
+
+    def __init__(self, n_neighbors=5, mode='mean', algorithm='auto',
+                 window_size=1):
         self.n_neighbors = n_neighbors
         self.window_size = window_size
+        self.mode = mode
+        self.algorithm = algorithm
 
-    def fit(self, X, y, copy=True):
-        self._y = np.array(y, copy=copy)
-        self.ball_tree = BallTree(X, self.window_size)
-        return self
 
-    def predict(self, T, n_neighbors=None):
+    def predict(self, X, **params):
         """Predict the target for the provided data.
 
         Parameters
         ----------
-        T : array
+        X : array
             A 2-D array representing the test data.
-        n_neighbors : int
+
+        n_neighbors : int, optional
             Number of neighbors to get (default is the value
             passed to the constructor).
 
@@ -215,80 +251,99 @@ class NeighborsBarycenter(BaseEstimator, RegressorMixin):
         -------
         y: array
             List of target values (one for each data sample).
-
-        Examples
-        --------
-        >>> X = [[0], [1], [2]]
-        >>> y = [0, 0, 1]
-        >>> from scikits.learn.neighbors import NeighborsBarycenter
-        >>> neigh = NeighborsBarycenter(n_neighbors=2)
-        >>> neigh.fit(X, y)
-        NeighborsBarycenter(n_neighbors=2, window_size=1)
-        >>> print neigh.predict([[.5], [1.5]])
-        [ 0.   0.5]
         """
-        T = np.asanyarray(T)
-        if T.ndim == 1:
-            T = T[:,None]
-        if n_neighbors is None:
-            n_neighbors = self.n_neighbors
-        A = kneighbors_graph(T, n_neighbors=n_neighbors, weight="barycenter",
-                                  ball_tree=self.ball_tree).tocsr()
-        return A * self._y
+        X = np.atleast_2d(np.asanyarray(X))
+        self._set_params(**params)
+
+        # .. get neighbors ..
+        if self.ball_tree is None:
+            if self.algorithm == 'brute_inplace':
+                neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
+            else:
+                from .metrics.pairwise import euclidean_distances
+                dist = euclidean_distances(
+                    X, self._fit_X, squared=False)
+                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+            neigh = self._fit_X[neigh_ind]
+        else:
+            neigh_ind = self.ball_tree.query(
+                X, self.n_neighbors, return_distance=False)
+            neigh = self.ball_tree.data[neigh_ind]
+        
+        # .. return labels ..
+        if self.mode == 'barycenter':
+            W = barycenter_weights(X, neigh)
+            return (W * self._y[neigh_ind]).sum(axis=1)
+
+        elif self.mode == 'mean':
+            return np.mean(self._y[neigh_ind], axis=1)
+
+        else:
+            raise ValueError(
+                'Unsupported mode, must be one of "barycenter" or '
+                '"mean" but got %s instead' % self.mode)
 
 ###############################################################################
 # Utils k-NN based Functions
 
-def barycenter_weights(x, X_neighbors, tol=1e-3):
-    """Computes barycenter weights
+def barycenter_weights(X, Z, cond=None):
+    """ 
+    Compute barycenter weights of X from Y along the first axis.
 
-    We estimate the weights to assign to each point in X_neighbors
-    to recover the point x. The barycenter weights sum to 1.
-    If x do not belong to the span of X_neighbors, it's the
-    projection of x onto the span that is recovered.
+    We estimate the weights to assign to each point in Y[i] to recover
+    the point X[i]. The barycenter weights sum to 1.
 
     Parameters
     ----------
-    x : array
-        a 1D array
+    X : array-like, shape (n_samples, n_dim)
 
-    X_neighbors : array
-        a 2D array containing samples
+    Z : array-like, shape (n_samples, n_neighbors, n_dim)
 
-    tol : float
-        tolerance
+    cond: float, optional
+        Cutoff for small singular values; used to determine effective
+        rank of Z[i]. Singular values smaller than ``rcond *
+        largest_singular_value`` are considered zero.
 
     Returns
     -------
-    array of barycenter weights that sum to 1
+    B : array-like, shape (n_samples, n_neighbors)
 
-    Examples
-    --------
-    >>> X_neighbors = [[0], [2]]
-    >>> x = [0.5]
-    >>> from scikits.learn.neighbors import barycenter_weights
-    >>> print barycenter_weights(x, X_neighbors)
-    [ 0.74968789  0.25031211]
+    Notes
+    -----
+    See developers note for more information.
     """
-    x = np.asanyarray(x)
-    X_neighbors = np.asanyarray(X_neighbors)
-    if x.ndim == 1:
-        x = x[None,:]
-    if X_neighbors.ndim == 1:
-        X_neighbors = X_neighbors[:,None]
-    z = x - X_neighbors
-    gram = np.dot(z, z.T)
-    # Add constant on diagonal to avoid singular matrices
-    diag_stride = gram.shape[0] + 1
-    gram.flat[::diag_stride] += tol * np.trace(gram)
-    w = linalg.solve(gram, np.ones(len(X_neighbors)))
-    w /= np.sum(w)
-    return w
+#
+#       .. local variables ..
+#
+    from scipy import linalg
+    X, Z = map(np.asanyarray, (X, Z))
+    n_samples, n_neighbors = X.shape[0], Z.shape[1]
+    if X.dtype.kind == 'i':
+        X = X.astype(np.float)
+    B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
+    v = np.ones(n_neighbors, dtype=X.dtype)
+    rank_update, = linalg.get_blas_funcs(('ger',), (X,))
+
+#
+#       .. constrained least squares ..
+#
+    v[0] -= np.sqrt(n_neighbors)
+    B[:, 0] = 1. / np.sqrt(n_neighbors)
+    if n_neighbors <= 1:
+        return B
+    alpha = - 1. / (n_neighbors - np.sqrt(n_neighbors))
+    for i, A in enumerate(Z.transpose(0, 2, 1)):
+        C = rank_update(alpha, np.dot(A, v), v, a=A)
+        B[i, 1:] = linalg.lstsq(
+            C[:, 1:], X[i] - C[:, 0] / np.sqrt(n_neighbors), cond=cond,
+            overwrite_a=True, overwrite_b=True)[0].ravel()
+        B[i] = rank_update(alpha, v, np.dot(v.T, B[i]), a=B[i])
+
+    return B
 
 
-def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
-                     window_size=1):
-    """Computes the (weighted) graph of k-Neighbors
+def kneighbors_graph(X, n_neighbors, mode='connectivity'):
+    """Computes the (weighted) graph of k-Neighbors for points in X
 
     Parameters
     ----------
@@ -298,62 +353,64 @@ def kneighbors_graph(X, n_neighbors, weight=None, ball_tree=None,
     n_neighbors : int
         Number of neighbors for each sample.
 
-    weight : None (default)
-        Weights to apply on graph edges. If weight is None
-        then no weighting is applied (1 for each edge).
-        If weight equals "distance" the edge weight is the
-        euclidian distance. If weight equals "barycenter"
-        the weights are barycenter weights estimated by
-        solving a linear system for each point.
-
-    ball_tree : None or instance of precomputed BallTree
-
-    window_size : int
-        Window size pass to the BallTree
+    mode : {'connectivity', 'distance', 'barycenter'}
+        Type of returned matrix: 'connectivity' will return the
+        connectivity matrix with ones and zeros, in 'distance' the
+        edges are euclidian distance between points. In 'barycenter'
+        they are barycenter weights estimated by solving a linear
+        system for each point.
 
     Returns
     -------
-    A : sparse matrix, shape = [n_samples, n_samples]
-        A is returned as LInked List Sparse matrix
-        A[i,j] = weight of edge that connects i to j
+    A : CSR sparse matrix, shape = [n_samples, n_samples]
+        A[i,j] is assigned the weight of edge that connects i to j.
 
     Examples
     --------
-    >>> X = [[0], [2], [1]]
-    >>> A = kneighbors_graph(X, n_neighbors=2, weight=None)
-    >>> print A.todense()
-    [[ 1.  0.  1.]
-     [ 0.  1.  1.]
-     [ 0.  1.  1.]]
+    >>> X = [[0], [3], [1]]
+    >>> from scikits.learn.neighbors import kneighbors_graph
+    >>> A = kneighbors_graph(X, 2)
+    >>> A.todense()
+    matrix([[ 1.,  0.,  1.],
+            [ 0.,  1.,  1.],
+            [ 1.,  0.,  1.]])
     """
+
+#
+#       .. local variables ..
+#
     from scipy import sparse
     X = np.asanyarray(X)
     n_samples = X.shape[0]
-    if ball_tree is None:
-        ball_tree = BallTree(X, window_size)
-    A = sparse.lil_matrix((n_samples, ball_tree.size))
-    dist, ind = ball_tree.query(X, k=n_neighbors)
-    if weight is None:
-        for i, li in enumerate(ind):
-            if n_neighbors > 1:
-                A[i, list(li)] = np.ones(n_neighbors)
-            else:
-                A[i, li] = 1.0
-    elif weight is "distance":
-        for i, li in enumerate(ind):
-            if n_neighbors > 1:
-                A[i, list(li)] = dist[i, :]
-            else:
-                A[i, li] = dist[i, 0]
-    elif weight is "barycenter":
-        # XXX : the next loop could be done in parallel
-        # by parallelizing groups of indices
-        for i, li in enumerate(ind):
-            if n_neighbors > 1:
-                X_i = ball_tree.data[li]
-                A[i, list(li)] = barycenter_weights(X[i], X_i)
-            else:
-                A[i, li] = 1.0
+    ball_tree = BallTree(X)
+    n_nonzero = n_neighbors * n_samples
+    A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
+
+#
+#       .. construct CSR matrix ..
+#
+    if mode is 'connectivity':
+        A_data = np.ones((n_samples, n_neighbors))
+        A_ind = ball_tree.query(
+            X, k=n_neighbors, return_distance=False)
+
+    elif mode is 'distance':
+        data, ind = ball_tree.query(X, k=n_neighbors + 1)
+        A_data, A_ind = data[:, 1:], ind[:, 1:]
+
+    elif mode is 'barycenter':
+        ind = ball_tree.query(
+            X, k=n_neighbors + 1, return_distance=False)
+        A_ind = ind[:, 1:]
+        A_data = barycenter_weights(X, X[A_ind])
+
     else:
-        raise ValueError("Unknown weight type")
+        raise ValueError(
+            'Unsupported mode, must be one of "connectivity", '
+            '"distance" or "barycenter" but got %s instead' % mode)
+
+    A = sparse.csr_matrix(
+        (A_data.reshape(-1), A_ind.reshape(-1), A_indptr),
+        shape=(n_samples, n_samples))
+
     return A

@@ -1,9 +1,9 @@
 """
-==============================================================
-Linear Discriminant Analysis & Quadratic Discriminant Analysis
-==============================================================
+==============================================================================
+Linear Discriminant Analysis & Quadratic Discriminant Analysis with confidence
+==============================================================================
 
-Plot the confidence ellipsoids of each class and decision boundary
+Plot the decision boundary
 """
 print __doc__
 
