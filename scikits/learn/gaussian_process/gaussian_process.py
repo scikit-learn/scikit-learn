@@ -620,7 +620,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return covariance, r
 
-    def sample(self, X, size=1):
+    def sample(self, X, size=1, rng=None):
         """
         This function returns functions sampled from the
         Gaussian Process model at x.
@@ -634,9 +634,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         size : integer, optional
             An integer specifying how many samples to draw from the
             distribution.
-            If size = 1, only an array will be returned;
-            if size > 1, a list of arrays will be returned with each element
-            being a sample
+
+        rng: RandomState or an int seed (0 by default)
+            A random number generator instance to make behavior
+            deterministic.
+
 
 
         Returns
@@ -645,6 +647,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             An array with shape (n_eval, size) with the samples
             drawn from the fitted Gaussian Process at x
         """
+        if rng is None:
+            rng = np.random.RandomState()
+        elif isinstance(rng, int):
+            rng = np.random.RandomState(rng)
+
         HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY = 1e-10
         # Run input checks
         self._check_params()
@@ -679,7 +686,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             np.eye(n_eval) * HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
         )
 
-        return y + np.dot(L.T, np.random.randn(*X.shape, size)).T
+        return y + np.dot(L.T, rng.randn(*X.shape, size)).T
 
     def reduced_likelihood_function(self, theta=None):
         """
