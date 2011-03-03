@@ -37,7 +37,7 @@ class BaseLibSVM(BaseEstimator):
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
-                 eps, C, nu, p, shrinking, probability):
+                 tol, C, nu, p, shrinking, probability):
 
         if not impl in self._svm_types:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -53,7 +53,7 @@ class BaseLibSVM(BaseEstimator):
         self.gamma = gamma
         self.coef0 = coef0
         self.cache_size = cache_size
-        self.eps = eps
+        self.tol = tol
         self.C = C
         self.nu = nu
         self.p = p
@@ -143,7 +143,7 @@ class BaseLibSVM(BaseEstimator):
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = \
         libsvm_train(_X, y, solver_type, kernel_type, self.degree,
-                      self.gamma, self.coef0, self.eps, self.C,
+                      self.gamma, self.coef0, self.tol, self.C,
                       self.nu, self.cache_size, self.p,
                       self.class_weight_label, self.class_weight,
                       sample_weight, int(self.shrinking),
@@ -185,7 +185,7 @@ class BaseLibSVM(BaseEstimator):
         return libsvm_predict(X, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label,
                       self.class_weight, self.nu, self.cache_size,
                       self.p, int(self.shrinking),
@@ -225,7 +225,7 @@ class BaseLibSVM(BaseEstimator):
         pprob = libsvm_predict_proba(T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label,
                       self.class_weight, self.nu, self.cache_size,
                       self.p, int(self.shrinking),
@@ -280,7 +280,7 @@ class BaseLibSVM(BaseEstimator):
         dec_func = libsvm_decision_function(T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label,
                       self.class_weight, self.nu, self.cache_size,
                       self.p, int(self.shrinking),
@@ -319,12 +319,12 @@ class BaseLibLinear(BaseEstimator):
         'PL2_LLR_D1' : 7,  # L2 penalty, logistic regression, dual form
         }
 
-    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
+    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class=False, fit_intercept=True, intercept_scaling=1):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
-        self.eps = eps
+        self.tol = tol
         self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
@@ -377,7 +377,7 @@ class BaseLibLinear(BaseEstimator):
         y = np.asanyarray(y, dtype=np.int32, order='C')
 
         self.raw_coef_, self.label_ = _liblinear.train_wrap(X, y,
-                       self._get_solver_type(), self.eps,
+                       self._get_solver_type(), self.tol,
                        self._get_bias(), self.C,
                        self.class_weight_label, self.class_weight)
 
@@ -402,7 +402,7 @@ class BaseLibLinear(BaseEstimator):
 
         return _liblinear.predict_wrap(X, coef,
                                       self._get_solver_type(),
-                                      self.eps, self.C,
+                                      self.tol, self.C,
                                       self.class_weight_label,
                                       self.class_weight, self.label_,
                                       self._get_bias())
@@ -426,7 +426,7 @@ class BaseLibLinear(BaseEstimator):
         self._check_n_features(X)
 
         dec_func = _liblinear.decision_function_wrap(
-            X, self.raw_coef_, self._get_solver_type(), self.eps,
+            X, self.raw_coef_, self._get_solver_type(), self.tol,
             self.C, self.class_weight_label, self.class_weight,
             self.label_, self._get_bias())
 

@@ -165,7 +165,7 @@ class PCA(BaseEstimator):
         self.copy = copy
         self.whiten = whiten
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         """Fit the model from data in X.
 
         Parameters
@@ -238,7 +238,7 @@ class ProbabilisticPCA(PCA):
 
     """ + PCA.__doc__
 
-    def fit(self, X, homoscedastic=True):
+    def fit(self, X, y=None, homoscedastic=True):
         """Additionally to PCA.fit, learns a covariance model
 
         Parameters
@@ -369,7 +369,7 @@ class RandomizedPCA(BaseEstimator):
         self.whiten = whiten
         self.mean_ = None
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         """Fit the model to the data X.
 
         Parameters

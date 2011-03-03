@@ -257,7 +257,7 @@ def f1_score(y_true, y_pred, pos_label=1):
     score at 0. The relative contribution of precision and recall to the f1
     score are equal.
 
-        :math:`F_1 = 2 \cdot \frac{p \cdot r}{p + r}`
+        F_1 = 2 * (precision * recall) / (precision + recall)
 
     See: http://en.wikipedia.org/wiki/F1_score
 

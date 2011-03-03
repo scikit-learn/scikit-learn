@@ -200,7 +200,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               np.ndarray[double, ndim=1] Y,
               int n_iter, int fit_intercept,
               int verbose, int shuffle,
-              double weight_pos, double weight_neg):
+              double weight_pos, double weight_neg, int seed):
     """Cython impl. of SGD for generic loss functions and penalties
 
     This implementation assumes X represented as a dense array of floats.
@@ -235,6 +235,10 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         The weight (importance) of the positive class.
     weight_neg : float
         The weight (importance) of the negative class. 
+    seed : int
+        The seed of the pseudo random number generator to use when
+        shuffling the data
+
     Returns
     -------
     w : array, shape [n_features]
@@ -298,7 +302,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
-            np.random.shuffle(index)
+            np.random.RandomState(seed).shuffle(index)
         for i from 0 <= i < n_samples:
             sample_idx = index_data_ptr[i]
             offset = row_stride * sample_idx / elem_stride # row offset in elem
