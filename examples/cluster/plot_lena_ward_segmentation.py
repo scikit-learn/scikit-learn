@@ -18,7 +18,7 @@ import time as time
 import numpy as np
 import scipy as sp
 import pylab as pl
-from scikits.learn.feature_extraction.image import img_to_graph
+from scikits.learn.feature_extraction.image import grid_to_graph
 from scikits.learn.cluster import Ward
 
 ###############################################################################

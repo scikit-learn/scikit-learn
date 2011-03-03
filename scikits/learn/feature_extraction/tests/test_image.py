@@ -31,6 +31,7 @@ def test_connect_regions():
         nose.tools.assert_equal(ndimage.label(mask)[1],
                                 cs_graph_components(graph)[0])
 
+
 def test_connect_regions_with_grid():
     lena = sp.lena()
     mask = lena > 50
