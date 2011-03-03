@@ -557,7 +557,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Normalize input
         X = (X - self.X_mean) / self.X_std
 
-        covariance, _ = self._compute_covariance_matrix_from_centered_distribution(X)
+        covariance, _ = \
+                self._compute_covariance_matrix_from_centered_distribution(X)
 
         return covariance
 
@@ -582,9 +583,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             matrix at x.
 
         r : array_like
-            an array with shape (n_eval, n_samples) with the correlation between
-            the provided X evaluations and the samples used to fit the Gaussian
-            Process
+            an array with shape (n_eval, n_samples) with the correlation
+            between the provided X evaluations and the samples used to fit
+            the Gaussian Process
         """
         n_eval, n_features_X = X.shape
         n_samples, n_features = self.X.shape
@@ -615,14 +616,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         R[ij[:, 0], ij[:, 1]] = r_samples
         R[ij[:, 1], ij[:, 0]] = r_samples
 
-        covariance = R - np.dot( rt.T, rt )
+        covariance = R - np.dot(rt.T, rt)
 
         return covariance, r
 
-
-    def sample(self, X, size = 1):
+    def sample(self, X, size=1):
         """
-        This function returns functions sampled from the Gaussian Process model at x.
+        This function returns functions sampled from the
+        Gaussian Process model at x.
 
         Parameters
         ----------
@@ -631,15 +632,17 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             which the prediction(s) should be made.
 
         size : integer, optional
-            An integer specifying how many samples to draw from the distribution.
+            An integer specifying how many samples to draw from the
+            distribution.
             If size = 1, only an array will be returned;
-            if size > 1, a list of arrays will be returned with each element being
-            a sample
+            if size > 1, a list of arrays will be returned with each element
+            being a sample
+
 
         Returns
         -------
         y : array_like or list of array_like
-            An array (or list of arrays) with shape (n_eval, ) with the samples
+            An array with shape (n_eval, size) with the samples
             drawn from the fitted Gaussian Process at x
         """
         HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY = 1e-10
@@ -659,26 +662,24 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Normalize input
         X = (X - self.X_mean) / self.X_std
 
-        covariance, r = self._compute_covariance_matrix_from_centered_distribution(X)
+        covariance, r =\
+                self._compute_covariance_matrix_from_centered_distribution(X)
 
         y = np.zeros(n_eval)
 
-
         # Scaled predictor
-
         f = self.regr(X)
         y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
         # Predictor
         y = (self.y_mean + self.y_std * y_).ravel()
 
-        L = linalg.cholesky( covariance + np.eye(n_eval) * HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY )
+        L = linalg.cholesky(
+            covariance +
+            np.eye(n_eval) * HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
+        )
 
-        if size == 1:
-            return y + np.dot(L.T, np.random.randn( *X.shape )).squeeze()
-        else:
-            return [ y + np.dot(L.T, np.random.randn( *X.shape )).squeeze() for _ in xrange( size ) ]
-
+        return y + np.dot(L.T, np.random.randn(*X.shape, size)).T
 
     def reduced_likelihood_function(self, theta=None):
         """
