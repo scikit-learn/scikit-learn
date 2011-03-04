@@ -77,6 +77,36 @@ numpy and setuptools.
 This package is also expected to work with python(x,y) as of 2.6.5.5.
 
 
+.. _build_on_windows
+
+Building on windows
+-------------------
+
+To build scikits.learn on windows you will need a C/C++ compiler in
+addition to numpy, scipy and setuptools. At least
+`MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and the
+Microsoft Visual C++ 2008 should work out of the box. To force the use
+of a particular compiler, write a file named ``setup.cfg`` in the
+source directory with the content::
+
+    [build_ext]
+    compiler=my_compiler
+
+    [build]
+    compiler=my_compiler
+
+where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+
+When the appropriate compiler has been set, and assuming Python is
+in your PATH (see
+`Python FAQ for windows <http://docs.python.org/faq/windows.html>`_
+for more details), installation is done by
+executing the command::
+
+    python setup.py install
+
+
+
 .. _install_by_distribution:
 
 Third party distributions of scikits.learn
