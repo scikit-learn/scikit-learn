@@ -13,13 +13,12 @@ import numpy as np
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
-from scipy.spatial.distances import cdist
 
 
 ###############################################################################
 # Initialisation heuristic
 
-def k_init(X, k, n_trials=None, rng=None):
+def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
     """Init k seeds according to kmeans++
 
     Parameters
@@ -30,11 +29,18 @@ def k_init(X, k, n_trials=None, rng=None):
     k: integer
         The number of seeds to choose
 
-    n_trials: integer, optional
+    n_local_trials: integer, optional
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
+
+    rng: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
+
+    x_squared_norms: array, shape (n_samples,), optional
+        Squared euclidean norm of each data point. Pass it if you have it at
+        hands already to avoid it being recomputed here. Default: None
 
     Notes
     ------
@@ -54,35 +60,39 @@ def k_init(X, k, n_trials=None, rng=None):
     centers = np.empty((k, feat_dim))
 
     # Set the number of local seeding trials if none is given
-    if n_trials is None:
+    if n_local_trials is None:
         # This is what Arthur/Vassilvitskii tried, but did not report
         # specific results for other than mentioning in the conclusion
         # that it helped.
-        n_trials = 2 + int(np.log(k))
+        n_local_trials = 2 + int(np.log(k))
 
     # Pick first center randomly
     center_id = np.random.randint(n_samples)
     centers[0] = X[center_id]
 
     # Initialize list of closest distances and calculate current potential
-    closest_dist_sq = cdist(np.atleast_2d(centers[0]), X, 'sqeuclidean')
+    if x_squared_norms is None:
+        x_squared_norms = (X ** 2).sum(axis=1)
+    closest_dist_sq = euclidean_distances(np.atleast_2d(centers[0]), X,
+            Y_norm_squared=x_squared_norms, squared=True)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining k-1 points
     for c in xrange(1, k):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
-        rand_vals = np.random.random(n_trials) * current_pot
+        rand_vals = np.random.random(n_local_trials) * current_pot
         candidate_ids = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
 
         # Compute distances to center candidates
-        distance_to_candidates = cdist(X[candidate_ids], X, 'sqeuclidean')
+        distance_to_candidates = euclidean_distances(X[candidate_ids], X,
+                Y_norm_squared=x_squared_norms, squared=True)
 
         # Decide which candidate is the best
         best_candidate = None
         best_pot = None
         best_dist_sq = None
-        for trial in xrange(n_trials):
+        for trial in xrange(n_local_trials):
             # Compute potential when including center candidate
             new_dist_sq = np.minimum(closest_dist_sq,
                     distance_to_candidates[trial])
@@ -189,10 +199,14 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     if copy_x:
         X = X.copy()
     X -= Xmean
+    'precompute squared norms of data points'
+    x_squared_norms = X.copy()
+    x_squared_norms **= 2
+    x_squared_norms = x_squared_norms.sum(axis=1)
     for it in range(n_init):
         # init
         if init == 'k-means++':
-            centers = k_init(X, k, rng=rng)
+            centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
         elif init == 'random':
             seeds = np.argsort(rng.rand(n_samples))[:k]
             centers = X[seeds]
@@ -208,9 +222,6 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         if verbose:
             print 'Initialization complete'
         # iterations
-        x_squared_norms = X.copy()
-        x_squared_norms **= 2
-        x_squared_norms = x_squared_norms.sum(axis=1)
         for i in range(max_iter):
             centers_old = centers.copy()
             labels, inertia = _e_step(X, centers,
@@ -243,16 +254,17 @@ def _m_step(x, z, k):
 
     Parameters
     ----------
-    x array of shape (n,p)
-      n = number of samples, p = number of features
-    z, array of shape (x.shape[0])
+    x: array, shape (n_samples, n_features)
+
+    z: array, shape (n_samples)
         Current assignment
-    k, int
+
+    k: int
         Number of desired clusters
 
     Returns
     -------
-    centers, array of shape (k, p)
+    centers: array, shape (k, n_features)
         The resulting centers
     """
     dim = x.shape[1]
@@ -278,11 +290,18 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
 
     Parameters
     ----------
-    x: array of shape (n, p)
-      n = number of samples, p = number of features
+    x: array, shape (n_samples, n_features)
 
-    centers: array of shape (k, p)
+    centers: array, shape (k, n_features)
         The cluster centers
+
+    precompute_distances: bool, optional
+        Whether to compute the full distance matrix between centers and data
+        points at once for more speed at the cost of memory. Default: True
+
+    x_squared_norms: array, shape (n_samples,), optional
+        Squared euclidean norm of each data point, speeds up computations in
+        case of precompute_distances == True. Default: None
 
     Returns
     -------
