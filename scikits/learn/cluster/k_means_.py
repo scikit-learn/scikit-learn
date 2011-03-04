@@ -15,25 +15,26 @@ from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
 from scipy.spatial.distances import cdist
 
+
 ###############################################################################
 # Initialisation heuristic
 
-def k_init(X, k, numLocalTries=None, rng=None):
+def k_init(X, k, n_trials=None, rng=None):
     """Init k seeds according to kmeans++
 
     Parameters
     -----------
     X: array, shape (n_samples, n_features)
-        The data
+        The data to pick seeds for
 
     k: integer
         The number of seeds to choose
 
-    numLocalTries: integer, optional
+    n_trials: integer, optional
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
-        on the number of seeds.
+        on the number of seeds (2+log(k)); this is the default.
 
     Notes
     ------
@@ -42,61 +43,63 @@ def k_init(X, k, numLocalTries=None, rng=None):
     "k-means++: the advantages of careful seeding". ACM-SIAM symposium
     on Discrete algorithms. 2007
 
-    Version ported from	http://www.stanford.edu/~darthur/kMeansppTest.zip,
+    Version ported from http://www.stanford.edu/~darthur/kMeansppTest.zip,
     which is the implementation used in the aforementioned paper.
     """
     n_samples, n_features = X.shape
     if rng is None:
         rng = np.random
 
-	centers = np.empty((k, n_features))
-	
-	# Set the number of local seeding trials if none is given
-	if numLocalTries is None:
-		# This is what Arthur/Vassilvitskii tried, but did not report
-		# specific results for other than mentioning in the conclusion
-		# that it helped.
-		numLocalTries = 2 + int(np.log(k))
-	
-	# Pick first center randomly
-	center_id = rng.randint(n_samples)
-	centers[0] = X[center_id]
-	
-	# Initialize list of closest distances and calculate current potential
-	closestDistSq = cdist(np.atleast_2d(centers[0]), X, 'sqeuclidean')
-	currentPot = closestDistSq.sum()
+    n_samples, feat_dim = X.shape
+    centers = np.empty((k, feat_dim))
 
-	# Pick the remaining k-1 points
-	for c in xrange(1, k):
-		# Choose center candidates by sampling with probability proportional
-		# to the squared distance to the closest existing center
-		randVals = rng.random(numLocalTries) * currentPot
-		candidate_ids = np.searchsorted(closestDistSq.cumsum(), randVals)
-		
-		# Compute distances to center candidates
-		distanceToCandidates = cdist(X[candidate_ids], X, 'sqeuclidean')
-		
-		# Decide which candidate is the best
-		bestCandidate = None
-		bestPot = None
-		bestDistSq = None
-		for localTrial in xrange(numLocalTries):
-			# Compute potential when including center candidate
-			newDistSq = np.minimum(closestDistSq, distanceToCandidates[localTrial])
-			newPot = newDistSq.sum()
-			
-			# Store result if it is the best local trial so far
-			if (bestCandidate is None) or (newPot < bestPot):
-				bestCandidate = candidate_ids[localTrial]
-				bestPot = newPot
-				bestDistSq = newDistSq
-		
-		# Permanently add best center candidate found in local tries
-		centers[c] = X[bestCandidate]
-		currentPot = bestPot
-		closestDistSq = bestDistSq
-	
-	return centers
+    # Set the number of local seeding trials if none is given
+    if n_trials is None:
+        # This is what Arthur/Vassilvitskii tried, but did not report
+        # specific results for other than mentioning in the conclusion
+        # that it helped.
+        n_trials = 2 + int(np.log(k))
+
+    # Pick first center randomly
+    center_id = np.random.randint(n_samples)
+    centers[0] = X[center_id]
+
+    # Initialize list of closest distances and calculate current potential
+    closest_dist_sq = cdist(np.atleast_2d(centers[0]), X, 'sqeuclidean')
+    current_pot = closest_dist_sq.sum()
+
+    # Pick the remaining k-1 points
+    for c in xrange(1, k):
+        # Choose center candidates by sampling with probability proportional
+        # to the squared distance to the closest existing center
+        rand_vals = np.random.random(n_trials) * current_pot
+        candidate_ids = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
+
+        # Compute distances to center candidates
+        distance_to_candidates = cdist(X[candidate_ids], X, 'sqeuclidean')
+
+        # Decide which candidate is the best
+        best_candidate = None
+        best_pot = None
+        best_dist_sq = None
+        for trial in xrange(n_trials):
+            # Compute potential when including center candidate
+            new_dist_sq = np.minimum(closest_dist_sq,
+                    distance_to_candidates[trial])
+            new_pot = new_dist_sq.sum()
+
+            # Store result if it is the best local trial so far
+            if (best_candidate is None) or (new_pot < best_pot):
+                best_candidate = candidate_ids[trial]
+                best_pot = new_pot
+                best_dist_sq = new_dist_sq
+
+        # Permanently add best center candidate found in local tries
+        centers[c] = X[best_candidate]
+        current_pot = best_pot
+        closest_dist_sq = best_dist_sq
+
+    return centers
 
 
 ###############################################################################
@@ -206,7 +209,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             print 'Initialization complete'
         # iterations
         x_squared_norms = X.copy()
-        x_squared_norms **=2
+        x_squared_norms **= 2
         x_squared_norms = x_squared_norms.sum(axis=1)
         for i in range(max_iter):
             centers_old = centers.copy()
@@ -411,4 +414,3 @@ class KMeans(BaseEstimator):
             max_iter=self.max_iter, verbose=self.verbose,
             tol=self.tol, rng=self.rng, copy_x=self.copy_x)
         return self
-
