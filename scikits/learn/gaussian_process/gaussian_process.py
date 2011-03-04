@@ -616,7 +616,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         R[ij[:, 0], ij[:, 1]] = r_samples
         R[ij[:, 1], ij[:, 0]] = r_samples
 
-        covariance = R - np.dot(rt.T, rt)
+        covariance = self.sigma2 * (R - np.dot(rt.T, rt))
 
         return covariance, r
 
