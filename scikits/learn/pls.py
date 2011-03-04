@@ -313,7 +313,7 @@ class _PLS(BaseEstimator):
             self.coefs = 1. / self.x_std_.reshape((p, 1)) * self.coefs * self.y_std_
         return self
 
-    def transform(self, X, Y, copy=True):
+    def transform(self, X, Y=None, copy=True):
         """Apply the dimension reduction learned on the train data.
             Parameters
             ----------
@@ -321,28 +321,38 @@ class _PLS(BaseEstimator):
                 Training vectors, where n_samples in the number of samples and
                 p is the number of predictors.
 
-            Y: array-like of response, shape (n_samples, q)
+            Y: array-like of response, shape (n_samples, q), optional
                 Training vectors, where n_samples in the number of samples and
                 q is the number of response variables.
 
             copy: X and Y have to be normalize, do it on a copy or in place
                 with side effect!
+
+            Returns
+            -------
+            x_scores if Y is not given, (x_scores, y_scores) otherwise.
+
         """
         # Normalize
         if copy:
             Xc = (np.asanyarray(X) - self.x_mean_) / self.x_std_
-            Yc = (np.asanyarray(Y) - self.y_mean_) / self.y_std_
+            if Y is not None:
+                Yc = (np.asanyarray(Y) - self.y_mean_) / self.y_std_
         else:
             X = np.asanyarray(X)
-            Y = np.asanyarray(Y)
             Xc -= self.x_mean_
             Xc /= self.x_std_
-            Yc -= self.y_mean_
-            Yc /= self.y_std_
+            if Y is not None:
+                Y = np.asanyarray(Y)
+                Yc -= self.y_mean_
+                Yc /= self.y_std_
         # Apply rotation
         x_scores = np.dot(Xc, self.x_rotations_)
-        y_scores = np.dot(Yc, self.y_rotations_)
-        return x_scores, y_scores
+        if Y is not None:
+            y_scores = np.dot(Yc, self.y_rotations_)
+            return x_scores, y_scores
+
+        return x_scores
 
     def predict(self, X, copy=True):
         """Apply the dimension reduction learned on the train data.
@@ -772,10 +782,12 @@ class PLSSVD(BaseEstimator):
         self.y_weights_ = V
         return self
 
-    def transform(self, X, Y):
+    def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
         Xr = (X - self.x_mean_) / self.x_std_
-        Yr = (Y - self.y_mean_) / self.y_std_
         x_scores = np.dot(Xr, self.x_weights_)
-        y_scores = np.dot(Yr, self.y_weights_)
-        return x_scores, y_scores
+        if Y is not None:
+            Yr = (Y - self.y_mean_) / self.y_std_
+            y_scores = np.dot(Yr, self.y_weights_)
+            return x_scores, y_scores
+        return x_scores

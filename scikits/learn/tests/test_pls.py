@@ -70,6 +70,9 @@ def test_pls():
 
     # Check that rotations on training data lead to scores
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Xr = plsca.transform(X)
+    assert_array_almost_equal(Xr, plsca.x_scores_,
+        err_msg="rotation on X failed")
     Xr, Yr = plsca.transform(X, Y)
     assert_array_almost_equal(Xr, plsca.x_scores_,
         err_msg="rotation on X failed")
