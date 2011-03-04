@@ -4,6 +4,7 @@
 # Authors: Gael Varoquaux <gael.xaroquaux@normalesup.org>
 #          Thomas Rueckstiess <ruecksti@in.tum.de>
 #          James Bergstra <james.bergstra@umontreal.ca>
+#          Jan Schlueter <scikit-learn@jan-schlueter.de>
 # License: BSD
 
 import warnings
@@ -12,12 +13,12 @@ import numpy as np
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
-
+from scipy.spatial.distances import cdist
 
 ###############################################################################
 # Initialisation heuristic
 
-def k_init(X, k, n_samples_max=500, rng=None):
+def k_init(X, k, numLocalTries=None, rng=None):
     """Init k seeds according to kmeans++
 
     Parameters
@@ -28,11 +29,11 @@ def k_init(X, k, n_samples_max=500, rng=None):
     k: integer
         The number of seeds to choose
 
-    n_samples_max: integer, optional
-        The maximum number of samples to use: the complexity of the
-        algorithm is n_samples**2, if n_samples > n_samples_max,
-        we use the Niquist strategy, and choose our centers in the
-        n_samples_max samples randomly choosen.
+    numLocalTries: integer, optional
+        The number of seeding trials for each center (except the first),
+        of which the one reducing inertia the most is greedily chosen.
+        Set to None to make the number of trials depend logarithmically
+        on the number of seeds.
 
     Notes
     ------
@@ -41,41 +42,61 @@ def k_init(X, k, n_samples_max=500, rng=None):
     "k-means++: the advantages of careful seeding". ACM-SIAM symposium
     on Discrete algorithms. 2007
 
-    Implementation from Yong Sun's website
-    http://blogs.sun.com/yongsun/entry/k_means_and_k_means
-
-    kinit originaly from pybrain:
-    http://github.com/pybrain/pybrain/raw/master/pybrain/auxiliary/kmeans.py
+    Version ported from	http://www.stanford.edu/~darthur/kMeansppTest.zip,
+    which is the implementation used in the aforementioned paper.
     """
-    n_samples = X.shape[0]
+    n_samples, n_features = X.shape
     if rng is None:
         rng = np.random
 
-    if n_samples >= n_samples_max:
-        X = X[rng.randint(n_samples, size=n_samples_max)]
-        n_samples = n_samples_max
+	centers = np.empty((k, n_features))
+	
+	# Set the number of local seeding trials if none is given
+	if numLocalTries is None:
+		# This is what Arthur/Vassilvitskii tried, but did not report
+		# specific results for other than mentioning in the conclusion
+		# that it helped.
+		numLocalTries = 2 + int(np.log(k))
+	
+	# Pick first center randomly
+	center_id = rng.randint(n_samples)
+	centers[0] = X[center_id]
+	
+	# Initialize list of closest distances and calculate current potential
+	closestDistSq = cdist(np.atleast_2d(centers[0]), X, 'sqeuclidean')
+	currentPot = closestDistSq.sum()
 
-    distances = euclidean_distances(X, X, squared=True)
-
-    # choose the 1st seed randomly, and store D(x)^2 in D[]
-    first_idx = rng.randint(n_samples)
-    centers = [X[first_idx]]
-    D = distances[first_idx]
-
-    for _ in range(k - 1):
-        best_d_sum = best_idx = -1
-
-        for i in range(n_samples):
-            # d_sum = sum_{x in X} min(D(x)^2, ||x - xi||^2)
-            d_sum = np.minimum(D, distances[i]).sum()
-
-            if best_d_sum < 0 or d_sum < best_d_sum:
-                best_d_sum, best_idx = d_sum, i
-
-        centers.append(X[best_idx])
-        D = np.minimum(D, distances[best_idx])
-
-    return np.array(centers)
+	# Pick the remaining k-1 points
+	for c in xrange(1, k):
+		# Choose center candidates by sampling with probability proportional
+		# to the squared distance to the closest existing center
+		randVals = rng.random(numLocalTries) * currentPot
+		candidate_ids = np.searchsorted(closestDistSq.cumsum(), randVals)
+		
+		# Compute distances to center candidates
+		distanceToCandidates = cdist(X[candidate_ids], X, 'sqeuclidean')
+		
+		# Decide which candidate is the best
+		bestCandidate = None
+		bestPot = None
+		bestDistSq = None
+		for localTrial in xrange(numLocalTries):
+			# Compute potential when including center candidate
+			newDistSq = np.minimum(closestDistSq, distanceToCandidates[localTrial])
+			newPot = newDistSq.sum()
+			
+			# Store result if it is the best local trial so far
+			if (bestCandidate is None) or (newPot < bestPot):
+				bestCandidate = candidate_ids[localTrial]
+				bestPot = newPot
+				bestDistSq = newDistSq
+		
+		# Permanently add best center candidate found in local tries
+		centers[c] = X[bestCandidate]
+		currentPot = bestPot
+		closestDistSq = bestDistSq
+	
+	return centers
 
 
 ###############################################################################
