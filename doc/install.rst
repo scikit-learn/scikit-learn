@@ -106,6 +106,14 @@ executing the command::
     python setup.py install
 
 
+To build a precompiled package like the ones distributed at 
+`the downloads section <https://sourceforge.net/projects/scikit-learn/files/>`_,
+the command to execute is::
+
+    python setup.py bdist_wininst -b doc/logos/scikit-learn-logo.bmp
+
+This will create an installable binary under directory ``dist/``.
+
 
 .. _install_by_distribution:
 
