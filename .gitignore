@@ -1,0 +1,10 @@
+*.swp
+*.pyc
+
+tutorial/_build
+
+data/movie_reviews/txt_sentoken
+data/movie_reviews/poldata.README.2.0
+data/languages/paragraphs
+data/languages/short_paragraphs
+data/languages/html
