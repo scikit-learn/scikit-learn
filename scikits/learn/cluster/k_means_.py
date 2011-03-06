@@ -1,7 +1,7 @@
 """ K-means clustering
 """
 
-# Authors: Gael Varoquaux <gael.xaroquaux@normalesup.org>
+# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Thomas Rueckstiess <ruecksti@in.tum.de>
 #          James Bergstra <james.bergstra@umontreal.ca>
 #          Jan Schlueter <scikit-learn@jan-schlueter.de>
