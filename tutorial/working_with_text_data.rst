@@ -22,7 +22,7 @@ description, quoted from the `website
   experiments in text applications of machine learning techniques,
   such as text classification and text clustering.
 
-To download the dataset, go to ``$TUTORIRAL_HOME/twenty_newsgroups``
+To download the dataset, go to ``$TUTORIAL_HOME/twenty_newsgroups``
 run the ``fetch_data.py`` script.
 
 Once the data is downloaded, fire an ipython shell from and define
