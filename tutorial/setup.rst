@@ -37,7 +37,7 @@ You must have ``numpy``, ``scipy`` and ``matplotlib`` installed first.
 
 Here are the instructions to install the 0.7 release from source
 on a POSIX system (e.g. Linux and MacOSX). First download the release
-archive and extract it **in the folder next to ``$TUTORIAL_HOME``**::
+archive and extract it **in the folder next to $TUTORIAL_HOME**::
 
     % wget http://pypi.python.org/packages/source/s/scikits.learn/scikits.learn-0.7.tar.gz
     % tar zxvf scikits.learn-0.7.tar.gz
@@ -54,15 +54,29 @@ If you want to install the library globally, do the following instead::
     % python setup.py build
     % sudo python setup.py install
 
+In both case you should be able to launch the tests from anywhere in the system
+(if nose is installed) with the following::
+
+    % python -c "import scikits.learn as skl; skl.test()"
+
+The output should end with ``OK`` as in::
+
+    ----------------------------------------------------------------------
+    Ran 623 tests in 26.108s
+
+    OK (SKIP=2)
+
+
 In the rest of the tutorial, the path to the extracted archive folder
 ``scikits.learn-0.7`` will be named ``$SKL_HOME``.
+
 
 
 Download the datasets
 ---------------------
 
 Machine Learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
-subfolders and run the ``fetch_data.py`` script from there (after
+sub-folder and run the ``fetch_data.py`` script from there (after
 having read them first).
 
 For instance::

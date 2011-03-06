@@ -45,7 +45,7 @@ in memory.
 
 
 A simple example: the iris dataset
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The machine learning community often uses a simple flowers database
 were each row in the database (or CSV file) is a set of measurements
@@ -119,7 +119,7 @@ The names of the classes is stored in the last attribute, namely
 
 
 Handling categorical features
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes people describe samples with categorical descriptors that
 have no obvious numerical representation. For instance assume that
@@ -148,7 +148,7 @@ The enriched iris feature set would hence be in this case:
 
 
 Extracting features from unstructured data
-------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The previous example deals with features that are readily available
 in a structured datasets with rows and columns of numerical or
@@ -204,11 +204,19 @@ Practical implementations of such feature extraction strategies
 will be presented in the last sections of this tutorial.
 
 
-How to evaluate the quality of feature extraction strategy
-----------------------------------------------------------
+How to build "good" feature extraction strategy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The rule of thumb is two samples that seem close or related to
-TODO
+The good rule of thumb is to imagine a human being performing the
+task the machine is trying to accomplish using only the numerical
+features provided to the machine.
+
+Usually it helps if and only if two samples **judged similar in
+real life** by the human being are **close according to some
+similarity metric in feature space**.
+
+In other words, the feature extraction strategy must somehow preserve
+the intuitive topology of the sample set.
 
 
 Supervised Learning: ``model.fit(X, y)``

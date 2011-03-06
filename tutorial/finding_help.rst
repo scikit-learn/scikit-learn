@@ -17,18 +17,22 @@ Q&A communities with Machine Learning practictioners
 
     A forum for Machine Learning, Natural Language Processing and
     other Data Analytics discussions (similar to what Stackoverflow
-    is for developers):
+    is for developers): http://metaoptimize.com/qa
 
-    http://metaoptimize.com/qa
+    A good starting point is the discussion on `good freely available
+    textbooks on machine learning`_
 
   :Quora.com:
 
-    Quora as a topic for Machine Learning related questions that also features
-    some interesting discussions:
-
+    Quora as a topic for Machine Learning related questions that
+    also features some interesting discussions:
     http://quora.com/Machine-Learning
 
-    Have a look at the best questions section, eg:
+    Have a look at the best questions section, eg: `What are some
+    good resources for learning about machine learning`_.
 
-    http://www.quora.com/What-are-some-good-resources-for-learning-about-machine-learning
 
+
+.. _`good freely available textbooks on machine learning`: http://metaoptimize.com/qa/questions/186/good-freely-available-textbooks-on-machine-learning
+
+.. _`What are some good resources for learning about machine learning`: http://www.quora.com/What-are-some-good-resources-for-learning-about-machine-learning
