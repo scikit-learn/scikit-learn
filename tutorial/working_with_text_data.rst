@@ -38,7 +38,7 @@ a partial dataset to work faster)::
   ``>>>`` and ``...`` prompt signs, enable the ipython doctest mode with:
   ``%doctest_mode``
 
-
+We can now load the list of files matching those categories as follows::
 
   >>> from scikits.learn.datasets import load_files
   >>> training_set = load_files('data/twenty_newsgroups/20news-bydate-train',
@@ -70,15 +70,15 @@ The files them-selves are not loaded in memory yet::
   From: clipper@mccarthy.csd.uwo.ca (Khun Yee Fung)
   Subject: Re: looking for circle algorithm faster than Bresenhams
 
-Supervised learning algorithms will information on the right category
-to predict for document. In this case the category is the name of the
-newsgroups, which also happen to be the name of folder holding the
-individual documents.
+Supervised learning algorithms will require information on the right
+category to predict for document. In this case the category is the
+name of the newsgroups, which also happen to be the name of folder
+holding the individual documents.
 
-For speed and space efficiency ``scikit-learn`` loads the target signal as
-integers that corresponds to the position of the category name in the
-``target_names`` list. The category integer id of each sample is stored in
-the ``target`` attribute::
+For speed and space efficiency ``scikit-learn`` loads the target
+signal as integers that corresponds to the position of the category
+name in the ``target_names`` list. The category integer id of each
+sample is stored in the ``target`` attribute::
 
   >>> training_set.target[:10]
   array([1, 0, 2, 2, 0, 1, 1, 3, 3, 2])
