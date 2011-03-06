@@ -1,10 +1,15 @@
-*.swp
+.*.swp
 *.pyc
 
 tutorial/_build
 
+data/twenty_newsgroups/20news-bydate.tar.gz
+data/twenty_newsgroups/20news-bydate-train
+data/twenty_newsgroups/20news-bydate-test
+
 data/movie_reviews/txt_sentoken
 data/movie_reviews/poldata.README.2.0
+
 data/languages/paragraphs
 data/languages/short_paragraphs
 data/languages/html

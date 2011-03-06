@@ -20,6 +20,13 @@
 
 
 .. toctree::
+   :numbered:
    :maxdepth: 2
 
+   setup
+   general_concepts
+   working_with_text_data
+   exercices
+   which_algorithm
+   finding_help
 
