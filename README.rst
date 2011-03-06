@@ -14,8 +14,8 @@ The target audience is experienced Python developers familiar with
 numpy and scipy.
 
 
-Dowloading the PDF
-==================
+Downloading the PDF
+===================
 
 Prebuilt versions of this tutorial are available from the `github download
 page`_.
