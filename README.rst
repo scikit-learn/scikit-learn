@@ -26,8 +26,8 @@ While following the exercices you might find helpful to use the official
 If you need a numpy refresher please first have a look at the
 `Scientific Python lecture notes (PDF)`_, esp. chapter 4.
 
-.. _`github dowload page`: https://github.com/scikit-learn/scikit-learn-tutorial/archives/master
-.. _`scikit-learn user guide (PDF)`: https://github.com/downloads/scikit-learn/scikit-learn/skl_user_guide-0.7.pdf
+.. _`github download page`: https://github.com/scikit-learn/scikit-learn-tutorial/archives/master
+.. _`scikit-learn User Guide (PDF)`: https://github.com/downloads/scikit-learn/scikit-learn/skl_user_guide-0.7.pdf
 .. _`Scientific Python lecture notes (PDF)`: http://scipy-lectures.github.com/_downloads/PythonScientific.pdf
 
 
@@ -59,7 +59,7 @@ To build the PDF variant::
   $ cd _build/latex
   $ pdflatex scikit_learn_tutorial.tex
 
-You should get a file names ``scikit_learn_tutorial.pdf`` as output.
+You should get a file named ``scikit_learn_tutorial.pdf`` as output.
 
 
 Mailing list
