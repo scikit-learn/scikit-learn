@@ -26,7 +26,7 @@
    setup
    general_concepts
    working_with_text_data
-   exercices
+   exercises
    which_algorithm
    finding_help
 

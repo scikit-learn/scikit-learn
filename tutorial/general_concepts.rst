@@ -121,7 +121,31 @@ The names of the classes is stored in the last attribute, namely
 Handling categorical features
 -----------------------------
 
-TODO
+Sometimes people describe samples with categorical descriptors that
+have no obvious numerical representation. For instance assume that
+each flower is further described by a color name among a fixed list
+of color names::
+
+  color in ['purple', 'blue', 'red']
+
+The simple way to turn this categorical feature into numerical
+features suitable for machine learning is to create new features
+for each distinct color name that can be valued to ``1.0`` if the
+category is matching or ``0.0`` if not.
+
+The enriched iris feature set would hence be in this case:
+
+
+ :Features in the extended Iris dataset:
+
+   0. sepal length in cm
+   1. sepal width in cm
+   2. petal length in cm
+   3. petal width in cm
+   4. color#purple (1.0 or 0.0)
+   5. color#blue (1.0 or 0.0)
+   6. color#red (1.0 or 0.0)
+
 
 Extracting features from unstructured data
 ------------------------------------------
@@ -184,8 +208,7 @@ How to evaluate the quality of feature extraction strategy
 ----------------------------------------------------------
 
 The rule of thumb is two samples that seem close or related to
-
-And conversely, samples that seem close in
+TODO
 
 
 Supervised Learning: ``model.fit(X, y)``
