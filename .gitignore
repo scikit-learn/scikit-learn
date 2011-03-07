@@ -13,3 +13,5 @@ data/movie_reviews/poldata.README.2.0
 data/languages/paragraphs
 data/languages/short_paragraphs
 data/languages/html
+
+data/labeled_faces_wild/lfw_preprocessed/
