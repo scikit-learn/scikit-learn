@@ -339,7 +339,7 @@ TODO
 Linearly separable data
 -----------------------
 
-- TODO: explain the concept using the 2D project iris data
+- TODO: explain the concept using the 2D projected iris data
 
 - Play with the interactive example from the ``examples`` folder of the
   ``scikit-learn`` distribution:
