@@ -209,15 +209,15 @@ How to devise a "good" feature extraction strategy
 
 The feature extraction strategy both depends on the task we are
 trying to perform and the nature of the collected data. Therefore
-there is not formal rule to define which strategy is the best.
+there is no formal rule to define which strategy is the best.
 
-A good rule of thumb is to imagine a human being performing the
+A good rule of thumb is to imagine a human-being performing the
 task the machine is trying to accomplish using only the numerical
 features provided to the machine.
 
-Usually it helps if and only if two samples **judged similar in
-real life** by the human being are **close according to some
-similarity metric in feature space**.
+Usually the feature extraction is useful if and only if two samples
+**judged similar in real life** by the human-being are **close
+according to some similarity metric in feature space**.
 
 In other words, the feature extraction strategy must somehow preserve
 the intuitive topology of the sample set.
