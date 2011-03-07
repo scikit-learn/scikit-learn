@@ -204,10 +204,14 @@ Practical implementations of such feature extraction strategies
 will be presented in the last sections of this tutorial.
 
 
-How to build "good" feature extraction strategy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+How to devise a "good" feature extraction strategy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The good rule of thumb is to imagine a human being performing the
+The feature extraction strategy both depends on the task we are
+trying to perform and the nature of the collected data. Therefore
+there is not formal rule to define which strategy is the best.
+
+A good rule of thumb is to imagine a human being performing the
 task the machine is trying to accomplish using only the numerical
 features provided to the machine.
 
@@ -222,24 +226,119 @@ the intuitive topology of the sample set.
 Supervised Learning: ``model.fit(X, y)``
 ----------------------------------------
 
- - Principles
+.. figure:: images/supervised.png
+   :scale: 75 %
+   :align: center
+   :alt: Flow diagram for supervised learning
 
- - Sample algorithms in ``scikit-learn``
+   Supervised Learning overview
 
- - Real life applications
+A supervised learning algorithm makes the distinction between the
+raw observed data ``X`` with shape ``(n_samples, n_features)`` and
+some label given to the model while training by some teacher. In
+``scikit-learn`` this array is often noted ``y`` and has generally
+the shape ``(n_samples,)``.
+
+After training, the fitted model does no longer expect the ``y``
+as an input: it will try to predict the most likely labels ``y_new``
+for new a set of samples ``X_new``.
+
+Depending on the nature of the target ``y``, supervised learning
+can be given different names:
+
+  - If ``y`` has values in a fixed set of categorical outcomes
+    (represented by integers) the task to predict ``y`` is called
+    classification.
+
+  - If ``y`` has floating point values (e.g. to represent a price,
+    a temperature, a size...), the task to predict ``y`` is called
+    regression.
+
+
+Classification
+~~~~~~~~~~~~~~
+
+In the iris dataset example, suppose we are assigned the task to
+guess the class of an individual flower given the measurements of
+petals and sepals. This is a classification task, hence we have::
+
+  >>> X, y = iris.data, iris.target
+
+TODO: sample SVM classifier
+
+TODO: table of scikit-learn classifier models
+
+TODO: turn the following into a table
+
+
+Some potential application of automated classification:
+
+  - finding spam or priority emails
+
+  - detecting the language of a text document
+
+  - finding the main categories of an article (Business, Technology,
+    Sports...)
+
+  - finding the polarity of customer feedback, a.k.a sentiment analysis
+    (Negative, Neutral, Positive)
+
+  - telling whether two pictures of faces are from the same person
+
+  - telling whether two recorder speech sounds are from the same person
+
+
+Regression
+~~~~~~~~~~
+
+TODO
 
 
 Unsupervised Learning: ``model.fit(X)``
 ---------------------------------------
 
- - Principles
+.. figure:: images/unsupervised.png
+   :scale: 75 %
+   :align: center
+   :alt: Flow diagram for unsupervised learning
 
- - Sample algorithms in ``scikit-learn``
+   Unsupervised Learning overview
 
- - Real life applications
+An unsupervised learning algorithm only uses a single set of
+observations ``X`` with shape ``(n_samples, n_features)`` and does
+not use any kind of labels.
 
+An unsupervised learning model will try to fit its parameters so
+as to best summarize regularities found in the data.
+
+
+Dimensionality Reduction and visualization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+
+Clustering
+~~~~~~~~~~
+
+TODO
+
+
+Density estimation and outlier detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+
+Unsupervised feature extraction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
 
 
 Training set, test sets and overfitting
 ---------------------------------------
+
+TODO
+
 
