@@ -217,7 +217,7 @@ features provided to the machine.
 
 Usually the feature extraction is useful if and only if two samples
 **judged similar in real life** by the human-being are **close
-according to some similarity metric in feature space**.
+according to some similarity metric of the feature space**.
 
 In other words, the feature extraction strategy must somehow preserve
 the intuitive topology of the sample set.
