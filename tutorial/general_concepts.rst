@@ -336,6 +336,19 @@ Unsupervised feature extraction
 TODO
 
 
+Linearly separable data
+-----------------------
+
+- TODO: explain the concept using the 2D project iris data
+
+- Play with the interactive example from the ``examples`` folder of the
+  ``scikit-learn`` distribution:
+
+    % python $SKL_HOME/examples/applications/svm_gui.py
+
+- Exercise: find a model that is able to solve the XOR problem using the GUI
+
+
 Training set, test sets and overfitting
 ---------------------------------------
 
