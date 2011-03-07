@@ -7,7 +7,7 @@ import tarfile
 URL = ("http://people.csail.mit.edu/jrennie/"
        "20Newsgroups/20news-bydate.tar.gz")
 
-ARCHIVE_NAME = "20news-bydate.tar.gz"
+ARCHIVE_NAME = URL.rsplit('/', 1)[1]
 TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
