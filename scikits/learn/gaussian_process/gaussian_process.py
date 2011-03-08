@@ -681,10 +681,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Predictor
         y = (self.y_mean + self.y_std * y_).ravel()
 
-        L = linalg.cholesky(
-            covariance +
-            np.eye(n_eval) * HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
-        )
+        #Adding a small constant to the diagonal in order to stabilize cholesky
+        covariance.flat[::n_eval + 1] += HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
+        L = linalg.cholesky(covariance)
 
         shape = list(X.shape)
         return y + np.dot(L.T, rng.randn(shape + [size])).T
