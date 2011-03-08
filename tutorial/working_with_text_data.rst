@@ -1,13 +1,13 @@
-The Big Tour: working with text data
-====================================
+Working with text data
+======================
 
 The goal of this section is to explore some of the main ``scikit-learn``
 tools on a single practical task: analysing a collection of  text
 documents (newsgroups posts) on twenty different topics.
 
 
-Donwloading the data and loading from Python
---------------------------------------------
+Downloading the data and loading it from Python
+-----------------------------------------------
 
 The dataset is called "Twenty Newsgroups". Here is the official
 description, quoted from the `website
