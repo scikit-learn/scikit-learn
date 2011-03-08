@@ -523,7 +523,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 return y
 
-    def covariance_matrix(self, X):
+    def predict_covariance_matrix(self, X):
         """
         This function returns the covariance matrix corresponding to the
         Gaussian Process model at x.
