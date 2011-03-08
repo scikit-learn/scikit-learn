@@ -256,6 +256,10 @@ can be given different names:
 Classification
 ~~~~~~~~~~~~~~
 
+
+A first classifier example with ``scikit-learn``
+++++++++++++++++++++++++++++++++++++++++++++++++
+
 In the iris dataset example, suppose we are assigned the task to
 guess the class of an individual flower given the measurements of
 petals and sepals. This is a classification task, hence we have::
@@ -358,11 +362,11 @@ Notable implementations of classifiers
   dimensional data and brute force search for high dimensional data
 
 
-
+Sample application of classifiers
++++++++++++++++++++++++++++++++++
 
 The following table gives example of application of such algorithm for some
 common engineering tasks:
-
 
 ============================================ =================================
 Task                                         Predicted outcomes
