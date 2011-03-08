@@ -419,4 +419,7 @@ table.field-list {
   margin: 1em;
 }
 
+.align-center {
+    clear: none;
+}
 
