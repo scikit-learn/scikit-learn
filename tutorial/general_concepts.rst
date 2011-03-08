@@ -264,7 +264,75 @@ petals and sepals. This is a classification task, hence we have::
 
   >>> X, y = iris.data, iris.target
 
-TODO: sample SVM classifier
+Once the data has this format it is trivial to train a classifier,
+for instance a support vector machine with a linear kernel (or lack
+of thereof)::
+
+  >>> from scikits.learn.svm import LinearSVC
+  >>> clf = LinearSVC()
+
+``clf`` is a statistical model that has parameters that control the
+learning algorithm (those parameters are sometimes called the
+hyper-parameters). Those hyperparameters can be supplied by the
+user in the constructore of the model. We will explain later choose
+a good combination either using simple empirical rules or data
+driven selection::
+
+  >>> clf
+  LinearSVC(loss='l2', C=1.0, intercept_scaling=1, fit_intercept=True,
+       eps=0.0001, penalty='l2', multi_class=False, dual=True)
+
+By default the real model parameters are not initialized. They will be
+automatically be tuned from the data by calling the ``fit`` method::
+
+  >>> clf = clf.fit(X, y)
+
+  >>> clf.coef_
+  array([[ 0.18423474,  0.45122764, -0.80794654, -0.45071379],
+         [ 0.04864394, -0.88914385,  0.40540293, -0.93720122],
+         [-0.85086062, -0.98671553,  1.38098573,  1.8653574 ]])
+
+  >>> clf.intercept_
+  array([ 0.10956015,  1.6738296 , -1.70973044])
+
+Once the model is trained, it can be used to predict the most likely outcome on
+unseen data. For instance let us define a list of a simple sample that looks
+like the first sample of the iris dataset::
+
+  >>> X_new = [[ 5.0,  3.6,  1.3,  0.25]]
+
+  >>> clf.predict(X_new)
+  array([0], dtype=int32)
+
+The outcome is ``0`` which the id of the first iris class namely
+'setosa'.
+
+Some ``scikit-learn`` classifiers can further predicts probabilities
+of the outcome.  This is the case of logistic regression models::
+
+  >>> from scikits.learn.linear_model import LogisticRegression
+  >>> clf2 = LogisticRegression().fit(X, y)
+  >>> clf2
+  LogisticRegression(C=1.0, intercept_scaling=1, fit_intercept=True, eps=0.0001,
+            penalty='l2', dual=False)
+
+  >>> clf2.predict_proba(X_new)
+  array([[  9.07512928e-01,   9.24770379e-02,   1.00343962e-05]])
+
+This means that the model estimates that the sample in ``X_new`` has:
+
+  - 90% likelyhood to be belong to the 'setosa' class
+
+  - 9% likelyhood to be belong to the 'versicolor' class
+
+  - 1% likelyhood to be belong to the 'virginica' class
+
+Of course the ``predict`` method that output the label id of the
+most likely outcome is also available::
+
+  >>> clf2.predict(X_new)
+  array([0], dtype=int32)
+
 
 TODO: table of scikit-learn classifier models
 
