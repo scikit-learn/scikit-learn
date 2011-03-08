@@ -21,20 +21,20 @@ Features and feature extraction
 -------------------------------
 
 Most machine learning algorithms implemented in ``scikit-learn``
-expect a numpy array as input ``X``.  The expected shape of X is
+expect a numpy array as input ``X``.  The expected shape of ``X`` is
 ``(n_samples, n_features)``.
 
-  :``n_samples``:
+:``n_samples``:
 
-    The number of samples: each sample is an item to process (e.g.
-    classifiy). A sample can be a document, a picture, a sound, a
-    video, a row in database or CSV file, or whatever you can
-    describe with a fixed set of quantitative traits.
+  The number of samples: each sample is an item to process (e.g.
+  classifiy). A sample can be a document, a picture, a sound, a
+  video, a row in database or CSV file, or whatever you can
+  describe with a fixed set of quantitative traits.
 
-  :``n_features``:
+:``n_features``:
 
-    The number of features or distinct traits that can be used to
-    describe each item in a quantitative manner.
+  The number of features or distinct traits that can be used to
+  describe each item in a quantitative manner.
 
 
 The number of features must be fixed in advance. However it can be
@@ -86,6 +86,7 @@ The features of each sample flower is stored in the ``data`` attribute
 of the dataset::
 
   >>> n_samples, n_features = iris.data.shape
+
   >>> n_samples
   150
 
@@ -135,16 +136,13 @@ category is matching or ``0.0`` if not.
 
 The enriched iris feature set would hence be in this case:
 
-
- :Features in the extended Iris dataset:
-
-   0. sepal length in cm
-   1. sepal width in cm
-   2. petal length in cm
-   3. petal width in cm
-   4. color#purple (1.0 or 0.0)
-   5. color#blue (1.0 or 0.0)
-   6. color#red (1.0 or 0.0)
+  0. sepal length in cm
+  1. sepal width in cm
+  2. petal length in cm
+  3. petal width in cm
+  4. color#purple (1.0 or 0.0)
+  5. color#blue (1.0 or 0.0)
+  6. color#red (1.0 or 0.0)
 
 
 Extracting features from unstructured data
@@ -334,26 +332,53 @@ most likely outcome is also available::
   array([0], dtype=int32)
 
 
-TODO: table of scikit-learn classifier models
+Notable implementations of classifiers
+++++++++++++++++++++++++++++++++++++++
 
-TODO: turn the following into a table
+:``scikits.learn.linear_model.LogisticRegression``:
+
+  Regularized Logistic Regression based on ``liblinear``
+
+:``scikits.learn.svm.LinearSVC``:
+
+  Support Vector Machines without kernels based on ``liblinear``
+
+:``scikits.learn.svm.SVC``:
+
+  Support Vector Machines with kernels based on ``libsvm``
+
+:``scikits.learn.linear_model.SGDClassifier``:
+
+  Regularized linear models (SVM or logistic regression) using a Stochastic
+  Gradient Descent algorithm written in ``Cython``
+
+:``scikits.learn.neighbors.NeighborsClassifier``:
+
+  k-Nearest Neighbors classifier based on the ball tree datastructure for low
+  dimensional data and brute force search for high dimensional data
 
 
-Some potential application of automated classification:
 
-  - finding spam or priority emails
 
-  - detecting the language of a text document
+The following table gives example of application of such algorithm for some
+common engineering tasks:
 
-  - finding the main categories of an article (Business, Technology,
-    Sports...)
 
-  - finding the polarity of customer feedback, a.k.a sentiment analysis
-    (Negative, Neutral, Positive)
-
-  - telling whether two pictures of faces are from the same person
-
-  - telling whether two recorder speech sounds are from the same person
+============================================ =================================
+Task                                         Predicted outcomes
+============================================ =================================
+E-mail classification                        Spam, normal, priority mail
+-------------------------------------------- ---------------------------------
+Language identification in text documents    en, es, de, fr, ja, zh, ar, ru...
+-------------------------------------------- ---------------------------------
+News articles categorization                 Business, technology, sports...
+-------------------------------------------- ---------------------------------
+Sentiment Analysis in customer feedback      Negative, neutral, positive
+-------------------------------------------- ---------------------------------
+Face verification in pictures                Same / different persons
+-------------------------------------------- ---------------------------------
+Speaker verification on voice recordings     Same / different persons
+============================================ =================================
 
 
 Regression
@@ -410,6 +435,7 @@ Once fitted, the ``pca`` model exposes the singular vectors as in the
   >>> pca.components_.T
   array([[ 0.17650757, -0.04015901,  0.41812992,  0.17516725],
          [-1.33840478, -1.48757227,  0.35831476,  0.15229463]])
+
   >>> pca.explained_variance_ratio_
   array([ 0.92461621,  0.05301557])
 
@@ -423,16 +449,20 @@ Let us project the iris dataset along those first 3 dimensions::
 And visualize the dataset using ``pylab``, for instance by defining the
 following utility function::
 
-  >>> def plot_2D(X_pca, labels):
-  ...     import pylab as pl
+  >>> import pylab as pl
+  >>> from itertools import cycle
+  >>> def plot_2D(data, target, target_names):
+  ...     colors = cycle('rgbcmykw')
+  ...     target_ids = range(len(target_names))
   ...     pl.figure()
-  ...     for c, i, label in zip("rgb", range(len(labels)), labels):
-  ...        pl.scatter(X_pca[y == i, 0], X_pca[y == i, 1], c=c, label=label)
+  ...     for i, c, label in zip(target_ids, colors, target_names):
+  ...         pl.scatter(data[target == i, 0], data[target == i, 1],
+  ...                    c=c, label=label)
   ...     pl.legend()
   ...
 
-Calling ``plot_2D(X_pca, iris.target_names)`` will display something
-like the following:
+Calling ``plot_2D(X_pca, iris.target, iris.target_names)`` will
+display something like the following:
 
 
 .. figure:: images/iris_pca_2d.png
@@ -443,7 +473,12 @@ like the following:
    2D PCA projection of the iris dataset
 
 
-TODO: dim reduction for performance matters
+Dimensionality Reduction is not just useful for visualization of
+high dimensional datasets. I can also be used as a preprocessing
+step (often called data normalization) to help speed up supervised
+machine learning that are not computationally efficient with high
+``n_features`` such as SVM classifiers with gaussian kernels for
+instance or that do not work well with linearly correlated features.
 
 
 Clustering
@@ -452,8 +487,9 @@ Clustering
 TODO
 
 
-Density estimation and outlier detection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Density estimation and outliers detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 TODO
 
