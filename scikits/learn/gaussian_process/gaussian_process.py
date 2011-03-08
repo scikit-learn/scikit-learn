@@ -686,7 +686,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             np.eye(n_eval) * HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
         )
 
-        return y + np.dot(L.T, rng.randn(*X.shape, size)).T
+        shape = list(X.shape)
+        return y + np.dot(L.T, rng.randn(shape + [size])).T
 
     def reduced_likelihood_function(self, theta=None):
         """
