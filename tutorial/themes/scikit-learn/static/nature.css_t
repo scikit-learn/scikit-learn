@@ -380,8 +380,10 @@ div.highlight-python pre {
 }
 
 tt {
+    /*
     background-color: #ecf0f3;
-    color: #222;
+    */
+    color: #444;
     /* padding: 1px 2px; */
     font-size: 1.1em;
     font-family: monospace;
@@ -396,3 +398,25 @@ div.viewcode-block:target {
     border-top: 1px solid #ac9;
     border-bottom: 1px solid #ac9;
 }
+
+table.docutils {
+  margin: auto;
+}
+
+table.docutils td {
+  padding: 0.5em;
+}
+
+table.field-list th {
+  padding: 1em 0 0.8em 0;
+}
+
+table.field-list td {
+  padding: 0.8em 1em 0.8em 1em;
+}
+
+table.field-list {
+  margin: 1em;
+}
+
+
