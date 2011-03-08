@@ -401,21 +401,49 @@ If the number of retained components is 2 or 3, PCA can be used to
 visualize the dataset::
 
 
-    >>> from scikits.learn.pca import RandomizedPCA
-    >>> pca = RandomizedPCA(3, whiten=True).fit(X)
+  >>> from scikits.learn.pca import PCA
+  >>> pca = PCA(n_components=2, whiten=True).fit(X)
 
 Once fitted, the ``pca`` model exposes the singular vectors as in the
 ``components_`` attribute::
 
-    >>> pca.components_.T
-    array([[ 0.17650757, -0.04015901,  0.41812992,  0.17516725],
-           [ 1.33840478,  1.48757227, -0.35831476, -0.15229463],
-           [-2.08029843,  2.13551363,  0.25967715,  1.96594819]])
+  >>> pca.components_.T
+  array([[ 0.17650757, -0.04015901,  0.41812992,  0.17516725],
+         [-1.33840478, -1.48757227,  0.35831476,  0.15229463]])
+  >>> pca.explained_variance_ratio_
+  array([ 0.92461621,  0.05301557])
+
+  >>> pca.explained_variance_ratio_.sum()
+  0.97763177502480336
 
 Let us project the iris dataset along those first 3 dimensions::
 
-    >>> X_pca = pca.transform(X)
+  >>> X_pca = pca.transform(X)
 
+And visualize the dataset using ``pylab``, for instance by defining the
+following utility function::
+
+  >>> def plot_2D(X_pca, labels):
+  ...     import pylab as pl
+  ...     pl.figure()
+  ...     for c, i, label in zip("rgb", range(len(labels)), labels):
+  ...        pl.scatter(X_pca[y == i, 0], X_pca[y == i, 1], c=c, label=label)
+  ...     pl.legend()
+  ...
+
+Calling ``plot_2D(X_pca, iris.target_names)`` will display something
+like the following:
+
+
+.. figure:: images/iris_pca_2d.png
+   :scale: 65 %
+   :align: center
+   :alt: 2D PCA projection of the iris dataset
+
+   2D PCA projection of the iris dataset
+
+
+TODO: dim reduction for performance matters
 
 
 Clustering
