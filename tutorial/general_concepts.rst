@@ -379,11 +379,43 @@ not use any kind of labels.
 An unsupervised learning model will try to fit its parameters so
 as to best summarize regularities found in the data.
 
+The following introduces the main variants of unsupervised learning
+algorithms.
+
 
 Dimensionality Reduction and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+Dimensionality reduction the task to **derive a set of new artificial
+features that is smaller than the original feature set while retaining
+most of the variance of the original data**.
+
+The most common technique for dimensionality reduction is called
+**Principal Component Analysis**.
+
+PCA can be done using linear combinations of the original features
+using a truncated Singular Value Decomposition of the matrix ``X``
+so as to project the data onto a base of the top singular vectors.
+
+If the number of retained components is 2 or 3, PCA can be used to
+visualize the dataset::
+
+
+    >>> from scikits.learn.pca import RandomizedPCA
+    >>> pca = RandomizedPCA(3, whiten=True).fit(X)
+
+Once fitted, the ``pca`` model exposes the singular vectors as in the
+``components_`` attribute::
+
+    >>> pca.components_.T
+    array([[ 0.17650757, -0.04015901,  0.41812992,  0.17516725],
+           [ 1.33840478,  1.48757227, -0.35831476, -0.15229463],
+           [-2.08029843,  2.13551363,  0.25967715,  1.96594819]])
+
+Let us project the iris dataset along those first 3 dimensions::
+
+    >>> X_pca = pca.transform(X)
+
 
 
 Clustering
