@@ -328,7 +328,6 @@ data which already comes as vectors of features:
    Supervised Learning with scikit-learn
 
 
-
 Some ``scikit-learn`` classifiers can further predicts probabilities
 of the outcome.  This is the case of logistic regression models::
 
@@ -435,9 +434,9 @@ algorithms namely dimensionality reduction and clustering.
 Dimensionality Reduction and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Dimensionality reduction the task to **derive a set of new artificial
-features that is smaller than the original feature set while retaining
-most of the variance of the original data**.
+Dimensionality reduction the task to derive a set of **new artificial
+features** that is **smaller** than the original feature set while
+retaining **most of the variance** of the original data.
 
 
 Normalization and visualization with PCA
@@ -633,23 +632,43 @@ Applications of clustering
 
 Here are some common applications of clustering algorithms:
 
- - Building customer profiles for market analysis
- - Grouping related web news (e.g. Google News) and websearch results
- - Grouping related stock quotes for investment portfolio management
- - Can be used as a preprocessing step for recommender systems
- - Can be used to build a code book of prototype samples for unsupervised
-   feature extraction for supervised learning algorithms
+- Building customer profiles for market analysis
+
+- Grouping related web news (e.g. Google News) and websearch results
+
+- Grouping related stock quotes for investment portfolio management
+
+- Can be used as a preprocessing step for recommender systems
+
+- Can be used to build a code book of prototype samples for unsupervised
+  feature extraction for supervised learning algorithms
 
 
 Linearly separable data
 -----------------------
 
-- Play with the interactive example from the ``examples`` folder of the
-  ``scikit-learn`` distribution::
+Some supervised learning problems can be solved by very simple models
+(generalized models) depending on the data. Others simply don't.
+
+To grasp the difference between the two cases run the interactive
+example from the ``examples`` folder of the ``scikit-learn`` source
+distribution::
 
     % python $SKL_HOME/examples/applications/svm_gui.py
 
+1. Put some data points belonging to one of the two target classes
+   ('white' or 'black') using left click and right click.
 
+2. Choose some parameters of a Support Vector Machine to be trained on
+   this toy dataset (``n_samples`` is the number of clicks, ``n_features``
+   is 2).
+
+3. Click the Fit but to train the model and see the decision boundary.
+   The accurracy of the model is displayed on stdout.
+
+The following figures demonstrate one case where a linear model can
+perflectly separate the two classes while the other is not linearly
+separable (a model with a gaussian kernel is required in that case).
 
 .. figure:: images/linearly_separable_data.png
    :scale: 75 %
@@ -667,8 +686,19 @@ Linearly separable data
    This dataset would not have been seperated by a simple linear
    model.
 
+Exercise: find a model that is able to solve the XOR problem using
+the GUI: the XOR problem is composed of 4 samples:
 
-- Exercise: find a model that is able to solve the XOR problem using the GUI
+  - 2 white samples in the top-left and bottom-right corners
+
+  - 2 black samples in the bottom-left and top-right corners
+
+Question: is the XOR problem linearly separable?
+
+
+Note: the higher the dimension of the feature space, the more likely
+the data is linearly separable: for instance this is often the case
+for text classification tasks.
 
 
 Training set, test sets and overfitting
@@ -680,8 +710,7 @@ TODO
 Main Takeway points
 -------------------
 
-- Start by extracting feature vector ``X`` with shape
-  ``(n_samples, n_features)``
+- Build ``X`` (features vectors) with shape ``(n_samples, n_features)``
 
 - Metrics in feature space should try to preserve the intuitive pairwise
   "closeness" of samples
@@ -715,4 +744,10 @@ Main Takeway points
 
   - use test set for model evaluation
 
+- Complex models can overfit (learn by heart) the training data and
+  fail to generalize correctly on test data:
+
+  - try simpler models first
+
+  - tune the regularization parameter on a validation set
 
