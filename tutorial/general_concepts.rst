@@ -407,8 +407,8 @@ Speaker verification on voice recordings     Same / different persons
 Regression
 ~~~~~~~~~~
 
-Regression is the task to prediction a continuously varying output
-value (e.g. a price, a temperature, a conversion rate...) given
+Regression is the task to predict the value of a continuously varying
+variable (e.g. a price, a temperature, a conversion rate...) given
 some input variables (a.k.a. the features, "predictors" or
 "regressors"). Some notable implementations of regression model in
 ``scikit-learn`` include:
@@ -582,7 +582,7 @@ Clustering
 ~~~~~~~~~~
 
 Clustering is the task of gathering samples into groups of similar
-samples according to some predifined similarity or dissimilarity
+samples according to some predefined similarity or dissimilarity
 measure (such as the Euclidean distance).
 
 For instance let us reuse the output of the 2D PCA of the iris
@@ -744,7 +744,101 @@ separable (a model with a gaussian kernel is required in that case).
 Training set, test set and overfitting
 --------------------------------------
 
-TODO
+The most common mistake beginners do when training statistical
+models is to evaluate the quality of the model on the same data
+using for fitting the model:
+
+  If you do this, **you are doing it wrong!**
+
+
+The overfitting issue
++++++++++++++++++++++
+
+The problem lies in the fact that some models can be subject to the
+**overfitting** issue: they can **learn the training data by heart**
+without generalizing. The symptoms are:
+
+  - the predictive accurracy on the data used for training can be excellent
+    (sometimes 100%)
+
+  - however they do little better than random prediction when facing
+    new data not part of the training set
+
+If you evaluate your model on your training data you won't be able to tell
+whether your model is overfitting or not.
+
+
+Solutions to overfitting
+++++++++++++++++++++++++
+
+The solution to this issue is twofold:
+
+  1. Split your data into two sets to detect overfitting situations:
+
+    - one for training and model selection: the **training set**
+
+    - one for evaluation: the **test set**
+
+  2. Avoid overfitting by using simpler models (e.g. linear classifiers
+     instead of gaussian kernel SVM) or by increasing the regularization
+     parameter of the model if available (see the docstring of the
+     model for details)
+
+
+Measuring classification performance on a test set
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Here is an example on you to split the data on the iris dataset.
+
+First we need to shuffle the order of the samples and the target
+to ensure that all classes are well represented on both sides of
+the split::
+
+  >>> indices = np.arange(n_samples)
+  >>> indices[:10]
+  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+  >>> RandomState(42).shuffle(indices)
+  >>> indices[:10]
+  array([ 73,  18, 118,  78,  76,  31,  64, 141,  68,  82])
+
+  >>> X = iris.data[indices]
+  >>> y = iris.target[indices]
+
+We can now split the data using a 2/3 - 1/3 ratio::
+
+  >>> split = (n_samples * 2) / 3
+
+  >>> X_train, X_test = X[:split], X[split:]
+  >>> y_train, y_test = y[:split], y[split:]
+
+  >>> X_train.shape
+  (100, 4)
+
+  >>> X_test.shape
+  (50, 4)
+
+  >>> y_train.shape
+  (100,)
+
+  >>> y_test.shape
+  (50,)
+
+We can now re-train a new linear classifier on the training set only::
+
+  >>> clf = LinearSVC().fit(X_train, y_train)
+
+To evaluate its quality we can compute the average number of correct
+classification on the test set::
+
+  >>> np.mean(clf.predict(X_test) == y_test)
+  1.0
+
+This shows that the model has a predictive accurracy of 100% which
+means that the classification model was perfectly capable on
+generalizing what was learned from the training set to the test
+set: this is rarely so easy on real life datasets as we will see
+on the following chapter.
 
 
 Key takeaway points
