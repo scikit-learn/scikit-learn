@@ -38,15 +38,9 @@ We can now load the list of files matching those categories as follows::
   >>> training_set = load_files('data/twenty_newsgroups/20news-bydate-train',
   ...                           categories=categories)
 
-.. note::
 
-    Whenever you import a scikit-learn class or function of the first time,
-    you are advised to read the docstring by using the ``?`` magic suffix
-    of ipython, for instance type: ``load_files?``.
-
-
-The returned dataset is a ``scikit-learn`` "bunch": a simple class
-holder with fields that can be both accessed as python ``dict``
+The returned dataset is a ``scikit-learn`` "bunch": a simple holder
+object with fields that can be both accessed as python ``dict``
 keys or ``object`` attributes for convenience, for instance the
 ``target_names`` holds the list of the requested category names::
 

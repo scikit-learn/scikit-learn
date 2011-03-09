@@ -208,25 +208,6 @@ Practical implementations of such feature extraction strategies
 will be presented in the last sections of this tutorial.
 
 
-How to devise a "good" feature extraction strategy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The feature extraction strategy both depends on the task we are
-trying to perform and the nature of the collected data. Therefore
-there is no formal rule to define which strategy is the best.
-
-A good rule of thumb is to imagine a human-being performing the
-task the machine is trying to accomplish using only the numerical
-features provided to the machine.
-
-Usually the feature extraction is useful if and only if two samples
-**judged similar in real life** by the human-being are **close
-according to some similarity metric of the feature space**.
-
-In other words, the feature extraction strategy must somehow preserve
-the intuitive topology of the sample set.
-
-
 Supervised Learning: ``model.fit(X, y)``
 ----------------------------------------
 
@@ -278,6 +259,13 @@ of thereof)::
 
   >>> from scikits.learn.svm import LinearSVC
   >>> clf = LinearSVC()
+
+.. note::
+
+    Whenever you import a scikit-learn class or function of the first time,
+    you are advised to read the docstring by using the ``?`` magic suffix
+    of ipython, for instance type: ``LinearSVC?``.
+
 
 ``clf`` is a statistical model that has parameters that control the
 learning algorithm (those parameters are sometimes called the
@@ -752,7 +740,7 @@ using for fitting the model:
 
 
 The overfitting issue
-+++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~
 
 The problem lies in the fact that some models can be subject to the
 **overfitting** issue: they can **learn the training data by heart**
@@ -769,7 +757,7 @@ whether your model is overfitting or not.
 
 
 Solutions to overfitting
-++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The solution to this issue is twofold:
 
@@ -786,7 +774,7 @@ The solution to this issue is twofold:
 
 
 Measuring classification performance on a test set
-++++++++++++++++++++++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is an example on you to split the data on the iris dataset.
 
@@ -845,9 +833,6 @@ Key takeaway points
 -------------------
 
 - Build ``X`` (features vectors) with shape ``(n_samples, n_features)``
-
-- Metrics in feature space should try to preserve the intuitive pairwise
-  "closeness" of samples
 
 - Supervised learning: ``clf.fit(X, y)`` and then ``clf.predict(X_new)``
 
