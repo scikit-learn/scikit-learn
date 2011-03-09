@@ -11,7 +11,6 @@ Supervised learning
     modules/svm
     modules/sgd
     modules/neighbors
-    modules/logistic
     modules/feature_selection
     modules/gaussian_process
     modules/pls

@@ -18,7 +18,7 @@ Across the module, we designate the vector :math:`\beta = (\beta_1,
 ..., \beta_D)` as ``coef_`` and :math:`\beta_0` as ``intercept_``.
 
 To perform classification with generalized linear models, see
-:ref:`Logistic regression`.
+:ref:`Logistic_regression`.
 
 .. _ordinary_least_squares:
 
@@ -30,10 +30,8 @@ Ordinary Least Squares (OLS)
 of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation.
 
-
 .. figure:: ../auto_examples/linear_model/images/plot_ols.png
    :target: ../auto_examples/linear_model/plot_ols.html
-   :align: center
    :scale: 50%
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
@@ -234,6 +232,7 @@ function of the norm of its coefficients.
    :align: center
    :scale: 50%
 
+::
 
    >>> from scikits.learn import linear_model
    >>> clf = linear_model.LassoLARS(alpha=.1)
@@ -446,6 +445,8 @@ where :math:`\alpha` is the precision of the noise.
 
  * Original Algorithm is detailed in the  book *Bayesian learning for neural
    networks* by Radford M. Neal
+
+.. _Logistic_regression:
 
 Logisitic regression
 ======================
