@@ -63,10 +63,10 @@ category to predict for each document. In this case the category is the
 name of the newsgroups, which also happen to be the name of folder
 holding the individual documents.
 
-For speed and space efficiency ``scikit-learn`` loads the target
-signal as integers that corresponds to the position of the category
-name in the ``target_names`` list. The category integer id of each
-sample is stored in the ``target`` attribute::
+For speed and space efficiency reasons ``scikit-learn`` loads the
+target attribute as an array of integers that corresponds to the
+index of the category name in the ``target_names`` list. The category
+integer id of each sample is stored in the ``target`` attribute::
 
   >>> training_set.target[:10]
   array([1, 0, 2, 2, 0, 1, 1, 3, 3, 2])
