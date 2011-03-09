@@ -688,15 +688,19 @@ Main Takeway points
 
 - Supervised learning: ``clf.fit(X, y)`` and then ``clf.predict(X_new)``
 
-  - classification: ``y`` is an array of integers
+  - Classification: ``y`` is an array of integers
 
-  - regression: ``y`` is an array of floats
+  - Regression: ``y`` is an array of floats
 
 - Unsupervised learning: ``clf.fit(X)``
 
-  - dimensionality reduction with ``clf.transform(X_new)``
+  - Dimensionality Reduction with ``clf.transform(X_new)``
 
-  - clustering to find group id for each sample
+    - for visualization
+
+    - for scalability
+
+  - Clustering finds group id for each sample
 
 - Some models work much better with data normalized with PCA
 
@@ -705,7 +709,7 @@ Main Takeway points
 - Simple linear models often very useful in practice (esp. with
   large ``n_features``)
 
-- Before starting training models, split train / test data:
+- Before starting to training a model: split train / test data:
 
   - use training set for model selection and fitting
 
