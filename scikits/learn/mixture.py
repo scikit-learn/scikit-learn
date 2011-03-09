@@ -235,7 +235,8 @@ class GMM(BaseEstimator):
 
         self.weights = np.ones(self._n_states) / self._n_states
 
-        # flag to indicate exit status of fit() method: converged (True) or max-iter reached (False)
+        # flag to indicate exit status of fit() method: converged (True) or
+        # n_iter reached (False)
         self.converged_ = False
 
     # Read-only properties.
