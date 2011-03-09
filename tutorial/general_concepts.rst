@@ -575,10 +575,9 @@ to be cluster to have shape ``(n_samples, n_features)``:
   Can find better looking clusters than KMeans but is not scalable
   to high number of samples.
 
-Note: some clustering algorithms do not work with a data matrix
-with shape ``(n_samples, n_features)`` but directly with a precomputed
+Other clustering algorithms do not work with a data matrix with
+shape ``(n_samples, n_features)`` but directly with a precomputed
 affinity matrix with shape ``(n_samples, n_samples)``:
-
 
 :``scikits.learn.cluster.AffinityPropagation``:
 
