@@ -1,8 +1,13 @@
 .*.swp
 *.pyc
 
+# folder to be used for working on the exercises
+workspace
+
+# output of the sphinx build of the documentation
 tutorial/_build
 
+# datasets to be fetched from the web and cached locally
 data/twenty_newsgroups/20news-bydate.tar.gz
 data/twenty_newsgroups/20news-bydate-train
 data/twenty_newsgroups/20news-bydate-test
