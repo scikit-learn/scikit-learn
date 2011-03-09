@@ -82,6 +82,12 @@ helper function to load it into numpy arrays::
   >>> from scikits.learn.datasets import load_iris
   >>> iris = load_iris()
 
+.. note::
+
+  To be able to copy and paste examples without taking care of the leading
+  ``>>>`` and ``...`` prompt signs, enable the ipython doctest mode with:
+  ``%doctest_mode``
+
 The features of each sample flower is stored in the ``data`` attribute
 of the dataset::
 
@@ -309,6 +315,20 @@ like the first sample of the iris dataset::
 The outcome is ``0`` which the id of the first iris class namely
 'setosa'.
 
+The following figure places the location of the fit and predict
+calls on the previous flow diagram. The ``vec`` object is a vectorizer
+used for feature extractor that is not used in the case of the iris
+data which already comes as vectors of features:
+
+.. figure:: images/supervised_scikit_learn.png
+   :scale: 75 %
+   :align: center
+   :alt: Flow diagram for supervised learning with scikit-learn
+
+   Supervised Learning with scikit-learn
+
+
+
 Some ``scikit-learn`` classifiers can further predicts probabilities
 of the outcome.  This is the case of logistic regression models::
 
@@ -499,19 +519,32 @@ display the following:
    2D PCA projection of the iris dataset
 
 
-Other application of dimensionality reduction
-+++++++++++++++++++++++++++++++++++++++++++++
+.. note::
+
+  The default implementation of PCA computes the SVD of the full
+  data matrix which is not scalable when both ``n_samples`` and
+  ``n_features`` are big (more that a few thousands).
+
+  If you are interested in a number of components that is much
+  smaller than both ``n_samples`` and ``n_features`` consider using
+  ``scikits.learn.pca.RandomizedPCA`` instead.
+
+
+Other applications of dimensionality reduction
+++++++++++++++++++++++++++++++++++++++++++++++
 
 Dimensionality Reduction is not just useful for visualization of
-high dimensional datasets. I can also be used as a preprocessing
+high dimensional datasets. It can also be used as a preprocessing
 step (often called data normalization) to help speed up supervised
 machine learning that are not computationally efficient with high
 ``n_features`` such as SVM classifiers with gaussian kernels for
 instance or that do not work well with linearly correlated features.
 
-Note: ``scikit-learn`` also features an implementation of Independant
-Component Analysis (ICA) and work is under way to implement common
-manifold extraction strategies.
+.. note::
+
+  ``scikit-learn`` also features an implementation of Independant
+  Component Analysis (ICA) and work is under way to implement common
+  manifold extraction strategies.
 
 
 Clustering
@@ -614,11 +647,6 @@ Density estimation and outliers detection
 
 TODO
 
-
-Unsupervised feature extraction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO
 
 Linearly separable data
 -----------------------

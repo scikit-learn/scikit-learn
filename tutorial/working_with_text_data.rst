@@ -32,12 +32,6 @@ a partial dataset to work faster)::
   >>> categories = ['alt.atheism', 'soc.religion.christian',
   ...               'comp.graphics', 'sci.med']
 
-.. note::
-
-  To be able to copy and paste examples without taking care of the leading
-  ``>>>`` and ``...`` prompt signs, enable the ipython doctest mode with:
-  ``%doctest_mode``
-
 We can now load the list of files matching those categories as follows::
 
   >>> from scikits.learn.datasets import load_files
@@ -71,7 +65,7 @@ The files them-selves are not loaded in memory yet::
   Subject: Re: looking for circle algorithm faster than Bresenhams
 
 Supervised learning algorithms will require information on the right
-category to predict for document. In this case the category is the
+category to predict for each document. In this case the category is the
 name of the newsgroups, which also happen to be the name of folder
 holding the individual documents.
 
