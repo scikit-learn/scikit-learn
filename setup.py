@@ -9,7 +9,7 @@ import os
 
 DISTNAME            = 'scikits.learn'
 DESCRIPTION         = 'A set of python modules for machine learning and data mining'
-LONG_DESCRIPTION    = descr
+LONG_DESCRIPTION    = open('README.rst').read()
 MAINTAINER          = 'Fabian Pedregosa'
 MAINTAINER_EMAIL    = 'fabian.pedregosa@inria.fr'
 URL                 = 'http://scikit-learn.sourceforge.net'
