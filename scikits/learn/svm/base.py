@@ -221,6 +221,8 @@ class BaseLibSVM(BaseEstimator):
                     "probability estimates must be enabled to use this method")
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
+        if self.impl not in ('c_svc', 'nu_svc'):
+            raise NotImplementedError
 
         pprob = libsvm_predict_proba(T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
