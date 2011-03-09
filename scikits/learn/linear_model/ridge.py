@@ -6,9 +6,6 @@ Ridge regression
 # License: Simplified BSD
 
 import numpy as np
-import scipy.sparse as sp
-from scipy import linalg
-from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearModel
 from ..utils.extmath import safe_sparse_dot
@@ -85,6 +82,7 @@ class Ridge(LinearModel):
         X, y, Xmean, ymean = \
            LinearModel._center_data(X, y, self.fit_intercept)
 
+        import scipy.sparse as sp
         if sp.issparse(X):
             self._solve_sparse(X, y, sample_weight)
         else:
@@ -116,6 +114,7 @@ class Ridge(LinearModel):
     def _solve_sparse(self, X, y, sample_weight):
         n_samples, n_features = X.shape
 
+        import scipy.sparse as sp
         if n_features > n_samples or \
            isinstance(sample_weight, np.ndarray) or \
            sample_weight != 1.0:
@@ -132,14 +131,17 @@ class Ridge(LinearModel):
     def _solve(self, A, b):
         if self.solver == "cg":
             # this solver cannot handle a 2-d b.
+            from scipy.sparse import linalg as sp_linalg
             sol, error = sp_linalg.cg(A, b)
             if error:
                 raise ValueError("Failed with error code %d" % error)
             return sol
         else:
+            import scipy.sparse as sp
             # we are working with dense symmetric positive A
             if sp.issparse(A):
                 A = A.todense()
+            from scipy import linalg
             return linalg.solve(A, b, sym_pos=True, overwrite_a=True)
 
 
@@ -255,6 +257,7 @@ class _RidgeGCV(LinearModel):
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
         K = safe_sparse_dot(X, X.T, dense_output=True)
+        from scipy import linalg
         v, Q = linalg.eigh(K)
         return K, v, Q
 
