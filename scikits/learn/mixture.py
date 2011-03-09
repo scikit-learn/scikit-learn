@@ -235,6 +235,8 @@ class GMM(BaseEstimator):
 
         self.weights = np.ones(self._n_states) / self._n_states
 
+        self.converged_ = False
+
     # Read-only properties.
     @property
     def cvtype(self):
@@ -415,7 +417,7 @@ class GMM(BaseEstimator):
             # occurrences of current component in obs
             comp_in_obs = (comp==comps)
             # number of those occurrences
-            num_comp_in_obs = comp_in_obs.sum() 
+            num_comp_in_obs = comp_in_obs.sum()
             if num_comp_in_obs > 0:
                 if self._cvtype == 'tied':
                     cv = self._covars
@@ -496,6 +498,7 @@ class GMM(BaseEstimator):
 
             # Check for convergence.
             if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
+                self.converged_ = True
                 break
 
             # Maximization step
