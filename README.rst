@@ -27,7 +27,7 @@ If you need a numpy refresher please first have a look at the
 `Scientific Python lecture notes (PDF)`_, esp. chapter 4.
 
 .. _`github download page`: https://github.com/scikit-learn/scikit-learn-tutorial/archives/master
-.. _`scikit-learn User Guide (PDF)`: https://github.com/downloads/scikit-learn/scikit-learn/skl_user_guide-0.7.pdf
+.. _`scikit-learn User Guide (PDF)`: http://downloads.sourceforge.net/project/scikit-learn/documentation/user_guide-0.7.pdf
 .. _`Scientific Python lecture notes (PDF)`: http://scipy-lectures.github.com/_downloads/PythonScientific.pdf
 
 
