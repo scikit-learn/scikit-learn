@@ -644,12 +644,29 @@ Here are some common applications of clustering algorithms:
 Linearly separable data
 -----------------------
 
-- TODO: explain the concept using the 2D projected iris data
-
 - Play with the interactive example from the ``examples`` folder of the
-  ``scikit-learn`` distribution:
+  ``scikit-learn`` distribution::
 
     % python $SKL_HOME/examples/applications/svm_gui.py
+
+
+
+.. figure:: images/linearly_separable_data.png
+   :scale: 75 %
+   :align: center
+
+   Linear Support Vector Machine trained to perflectly separate 2
+   sets of data points labeled as white and black in a 2D space.
+
+.. figure:: images/non_linearly_separable_data.png
+   :scale: 75 %
+   :align: center
+
+   Support Vector Machine with gaussian kernel trained to separate
+   2 sets of data points labeled as white and black in a 2D space.
+   This dataset would not have been seperated by a simple linear
+   model.
+
 
 - Exercise: find a model that is able to solve the XOR problem using the GUI
 
