@@ -429,7 +429,7 @@ An unsupervised learning model will try to fit its parameters so
 as to best summarize regularities found in the data.
 
 The following introduces the main variants of unsupervised learning
-algorithms.
+algorithms namely dimensionality reduction and clustering.
 
 
 Dimensionality Reduction and visualization
@@ -639,13 +639,6 @@ Here are some common applications of clustering algorithms:
  - Can be used as a preprocessing step for recommender systems
  - Can be used to build a code book of prototype samples for unsupervised
    feature extraction for supervised learning algorithms
-
-
-Density estimation and outliers detection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-TODO
 
 
 Linearly separable data
