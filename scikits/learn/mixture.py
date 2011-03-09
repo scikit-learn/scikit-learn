@@ -166,6 +166,9 @@ class GMM(BaseEstimator):
             (`n_features`, `n_features`)              if 'tied',
             (`n_states`, `n_features`)                if 'diag',
             (`n_states`, `n_features`, `n_features`)  if 'full'
+    converged_ : bool
+        True when convergence was reached in fit(), False
+        otherwise.
 
     Methods
     -------
