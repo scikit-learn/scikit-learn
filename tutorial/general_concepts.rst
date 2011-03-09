@@ -250,13 +250,13 @@ for new a set of samples ``X_new``.
 Depending on the nature of the target ``y``, supervised learning
 can be given different names:
 
-  - If ``y`` has values in a fixed set of categorical outcomes
-    (represented by integers) the task to predict ``y`` is called
-    classification.
+  - If ``y`` has values in a fixed set of **categorical outcomes**
+    (represented by **integers**) the task to predict ``y`` is called
+    **classification**.
 
-  - If ``y`` has floating point values (e.g. to represent a price,
+  - If ``y`` has **floating point values** (e.g. to represent a price,
     a temperature, a size...), the task to predict ``y`` is called
-    regression.
+    **regression**.
 
 
 Classification
@@ -407,7 +407,39 @@ Speaker verification on voice recordings     Same / different persons
 Regression
 ~~~~~~~~~~
 
-TODO
+Regression is the task to prediction a continuously varying output
+value (e.g. a price, a temperature, a conversion rate...) given
+some input variables (a.k.a. the features, "predictors" or
+"regressors"). Some notable implementations of regression model in
+``scikit-learn`` include:
+
+:``scikits.learn.linear_model.Ridge``:
+
+  L2-regularized least squares linear model
+
+:``scikits.learn.linear_model.ElasticNet``:
+
+  L1+L2-regularized least squares linear model trained using
+  Coordinate Descent
+
+:``scikits.learn.linear_model.LassoLARS``:
+
+  L1-regularized least squares linear model trained with Least Angle
+  Regression
+
+:``scikits.learn.linear_model.SGDRegressor``:
+
+  L1+L2-regularized least squares linear model trained using
+  Stochastic Gradient Descent
+
+:``scikits.learn.linear_model.ARDRegression``:
+
+  Bayesian Automated Relevance Determination regression
+
+:``scikits.learn.svm.SVR``:
+
+  Non-linear regression using Support Vector Machines (wrapper for
+  ``libsvm``)
 
 
 Unsupervised Learning: ``model.fit(X)``
@@ -709,8 +741,8 @@ separable (a model with a gaussian kernel is required in that case).
   case for text classification tasks.
 
 
-Training set, test sets and overfitting
----------------------------------------
+Training set, test set and overfitting
+--------------------------------------
 
 TODO
 
