@@ -237,11 +237,10 @@ def load_digits():
 
 
 def load_diabetes():
-<<<<<<< HEAD
-    base_dir = os.path.join(os.path.dirname(__file__), 'data/')
-    data   = np.loadtxt(base_dir + 'diabetes_data.csv.gz')
-    target = np.loadtxt(base_dir + 'diabetes_target.csv.gz')
-    return Bunch (data=data, target=target)
+    base_dir = join(dirname(__file__), 'data')
+    data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
+    target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
+    return Bunch(data=data, target=target)
 
 
 def load_linnerud():
@@ -262,9 +261,4 @@ def load_linnerud():
         data_physiological=data_physiological,
         header_physiological=header_physiological,
         DESCR=fdescr.read())
-=======
-    base_dir = join(dirname(__file__), 'data')
-    data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
-    target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
-    return Bunch(data=data, target=target)
->>>>>>> 39e7a68eab3e70e9a45392552c99658ab7144765
+

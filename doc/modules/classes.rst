@@ -298,7 +298,6 @@ Pipeline
 
    pipeline.Pipeline
 
-<<<<<<< HEAD
 
 Partial Least Squares
 =====================
@@ -311,5 +310,4 @@ Partial Least Squares
    pls.PLSCanonical
    pls.CCA
    pls.PLSSVD
-=======
->>>>>>> 39e7a68eab3e70e9a45392552c99658ab7144765
+
