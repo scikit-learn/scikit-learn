@@ -1,6 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, \
-     assert_
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from scikits.learn import neighbors, datasets
 
@@ -58,13 +57,13 @@ def test_neighbors_iris():
         assert_array_equal(clf.predict(iris.data), iris.target)
 
         clf.fit(iris.data, iris.target, n_neighbors=9, algorithm=s)
-        assert_(np.mean(clf.predict(iris.data)== iris.target) > 0.95)
+        assert np.mean(clf.predict(iris.data)== iris.target) > 0.95
 
         for m in ('barycenter', 'mean'):
             rgs = neighbors.NeighborsRegressor()
             rgs.fit(iris.data, iris.target, mode=m, algorithm=s)
-            assert_(np.mean(
-                rgs.predict(iris.data).round() == iris.target) > 0.95)
+            assert np.mean(
+                rgs.predict(iris.data).round() == iris.target) > 0.95
 
 
 def test_kneighbors_graph():
