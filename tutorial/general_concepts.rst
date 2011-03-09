@@ -667,8 +667,9 @@ Here are some common applications of clustering algorithms:
 Linearly separable data
 -----------------------
 
-Some supervised learning problems can be solved by very simple models
-(generalized models) depending on the data. Others simply don't.
+Some supervised learning problems can be solved by very simple
+models (called generalized linear models) depending on the data.
+Others simply don't.
 
 To grasp the difference between the two cases run the interactive
 example from the ``examples`` folder of the ``scikit-learn`` source
