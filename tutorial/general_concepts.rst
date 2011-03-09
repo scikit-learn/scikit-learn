@@ -384,8 +384,8 @@ Notable implementations of classifiers
 Sample application of classifiers
 +++++++++++++++++++++++++++++++++
 
-The following table gives example of application of such algorithms for
-some common engineering tasks:
+The following table gives examples of applications of classifiers
+for some common engineering tasks:
 
 ============================================ =================================
 Task                                         Predicted outcomes
@@ -686,19 +686,27 @@ separable (a model with a gaussian kernel is required in that case).
    This dataset would not have been seperated by a simple linear
    model.
 
-Exercise: find a model that is able to solve the XOR problem using
-the GUI: the XOR problem is composed of 4 samples:
+:Exercise:
 
-  - 2 white samples in the top-left and bottom-right corners
+  Fit a model that is able to solve the XOR problem using the GUI:
+  the XOR problem is composed of 4 samples:
 
-  - 2 black samples in the bottom-left and top-right corners
+    - 2 white samples in the top-left and bottom-right corners
 
-Question: is the XOR problem linearly separable?
+    - 2 black samples in the bottom-left and top-right corners
 
+  **Question**: is the XOR problem linearly separable?
 
-Note: the higher the dimension of the feature space, the more likely
-the data is linearly separable: for instance this is often the case
-for text classification tasks.
+:Exercise:
+
+   Construct a problem with less than 10 points where the predictive
+   accurracy of the best linear model is 50%.
+
+.. note:
+
+  the higher the dimension of the feature space, the more likely
+  the data is linearly separable: for instance this is often the
+  case for text classification tasks.
 
 
 Training set, test sets and overfitting
