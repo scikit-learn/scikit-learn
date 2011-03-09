@@ -715,7 +715,7 @@ Training set, test sets and overfitting
 TODO
 
 
-Main Takeway points
+Key takeaway points
 -------------------
 
 - Build ``X`` (features vectors) with shape ``(n_samples, n_features)``
