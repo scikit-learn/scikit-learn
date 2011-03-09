@@ -53,13 +53,17 @@ class SGDClassifier(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int
+    n_iter: int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle: bool
+    shuffle: bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
+
+    seed: int, optional
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
 
     verbose: integer, optional
         The verbosity level
@@ -87,7 +91,7 @@ class SGDClassifier(BaseSGDClassifier):
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
+           fit_intercept=True, penalty='l2', seed=0, rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -175,7 +179,9 @@ class SGDClassifier(BaseSGDClassifier):
                                       int(self.fit_intercept),
                                       int(self.verbose),
                                       int(self.shuffle),
-                                      self.weight[1], self.weight[0])
+                                      self.weight[1], self.weight[0],
+                                      int(self.seed),
+                                      )
 
         self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
@@ -214,7 +220,7 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.rho, self.n_iter,
                                                self.fit_intercept,
                                                self.verbose, self.shuffle,
-                                               self.weight[i])
+                                               self.weight[i], seed=self.seed)
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
@@ -243,14 +249,15 @@ class SGDClassifier(BaseSGDClassifier):
 
 def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,
                           penalty_type, alpha, rho, n_iter, fit_intercept,
-                          verbose, shuffle, weight_pos):
+                          verbose, shuffle, weight_pos, seed):
     """Inner loop for One-vs.-All scheme"""
     y_i = np.ones(y.shape, dtype=np.float64) * -1.0
     y_i[y == c] = 1.0
     coef, intercept = plain_sgd(coef_, intercept_, loss_function,
                                 penalty_type, alpha, rho,
                                 X, y_i, n_iter, fit_intercept,
-                                verbose, shuffle, weight_pos, 1.0)
+                                verbose, shuffle, weight_pos, 1.0,
+                                seed)
     return (i, coef, intercept)
 
 
@@ -295,13 +302,17 @@ class SGDRegressor(BaseSGDRegressor):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int
+    n_iter: int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle: bool
+    shuffle: bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
+
+    seed: int, optional
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
 
     verbose: integer, optional
         The verbosity level.
@@ -329,7 +340,8 @@ class SGDRegressor(BaseSGDRegressor):
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
     SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', p=0.1, rho=1.0, alpha=0.0001)
+           fit_intercept=True, penalty='l2', p=0.1, seed=0, rho=1.0,
+           alpha=0.0001)
 
     See also
     --------
@@ -386,7 +398,7 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.fit_intercept),
                                       int(self.verbose),
                                       int(self.shuffle),
-                                      1.0, 1.0)
+                                      1.0, 1.0, self.seed)
 
         self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)

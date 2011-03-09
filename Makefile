@@ -30,10 +30,11 @@ inplace:
 test: in
 	$(NOSETESTS) scikits/learn
 test-doc:
-	$(NOSETESTS) --with-doctest --doctest-tests --doctest-extension=rst doc/ doc/modules/
+	$(NOSETESTS) --with-doctest --doctest-tests --doctest-extension=rst \
+	--doctest-fixtures=_fixture doc/modules/
 
 test-coverage:
-	$(NOSETESTS) --with-coverage
+	$(NOSETESTS) --with-coverage --cover-html --cover-html-dir=coverage
 
 
 trailing-spaces:

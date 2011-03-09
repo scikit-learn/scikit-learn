@@ -8,10 +8,7 @@ sets of points.
 
 import numpy as np
 
-
-def euclidean_distances(X, Y,
-        Y_norm_squared=None,
-        squared=False):
+def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -61,7 +58,9 @@ def euclidean_distances(X, Y,
     if X is Y: # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is None:
-        YY = np.sum(Y * Y, axis=1)[np.newaxis, :]
+        YY = Y.copy()
+        YY **= 2
+        YY = np.sum(YY, axis=1)[np.newaxis, :]
     else:
         YY = np.asanyarray(Y_norm_squared)
         if YY.shape != (Y.shape[0],):

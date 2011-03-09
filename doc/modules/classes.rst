@@ -23,7 +23,7 @@ Support Vector Machines
    svm.OneClassSVM
 
 For sparse data
------------------
+---------------
 
 .. autosummary::
    :toctree: generated/
@@ -46,6 +46,7 @@ Generalized Linear Models
 
    linear_model.LinearRegression
    linear_model.Ridge
+   linear_model.RidgeCV
    linear_model.Lasso
    linear_model.LassoCV
    linear_model.ElasticNet
@@ -76,7 +77,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
-        
+
 
 Bayesian Regression
 ===================
@@ -86,7 +87,8 @@ Bayesian Regression
    :template: class.rst
 
    linear_model.BayesianRidge
-   linear_model.ARDRegression   
+   linear_model.ARDRegression
+
 
 
 Naive Bayes
@@ -114,6 +116,7 @@ Nearest Neighbors
    :toctree: generated/
    :template: function.rst
 
+   neighbors.kneighbors_graph
    ball_tree.knn_brute
 
 
@@ -152,9 +155,34 @@ Clustering
    cluster.AffinityPropagation
 
 
+Metrics
+=======
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.euclidean_distances
+   metrics.unique_labels
+   metrics.confusion_matrix
+   metrics.roc_curve
+   metrics.auc
+   metrics.precision_score
+   metrics.recall_score
+   metrics.fbeta_score
+   metrics.f1_score
+   metrics.precision_recall_fscore_support
+   metrics.classification_report
+   metrics.precision_recall_curve
+   metrics.r2_score
+   metrics.zero_one_score
+   metrics.zero_one
+   metrics.mean_square_error
+
+
 Covariance Estimators
 =====================
-
 
 .. autosummary::
    :toctree: generated/
@@ -171,9 +199,8 @@ Covariance Estimators
    covariance.ledoit_wolf
 
 
-
 Signal Decomposition
-=======================
+====================
 
 .. autosummary::
    :toctree: generated/
@@ -191,12 +218,12 @@ Signal Decomposition
    fastica.fastica
 
 Cross Validation
-===================
+================
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   
+
    cross_val.LeaveOneOut
    cross_val.LeavePOut
    cross_val.KFold
@@ -258,8 +285,8 @@ For sparse data
    :template: class.rst
 
    feature_extraction.text.sparse.TfidfTransformer
-   feature_extraction.text.sparse.CountVectorizer 
-   feature_extraction.text.sparse.Vectorizer 
+   feature_extraction.text.sparse.CountVectorizer
+   feature_extraction.text.sparse.Vectorizer
 
 
 Pipeline
@@ -271,6 +298,7 @@ Pipeline
 
    pipeline.Pipeline
 
+<<<<<<< HEAD
 
 Partial Least Squares
 =====================
@@ -283,3 +311,5 @@ Partial Least Squares
    pls.PLSCanonical
    pls.CCA
    pls.PLSSVD
+=======
+>>>>>>> 39e7a68eab3e70e9a45392552c99658ab7144765

@@ -1,7 +1,6 @@
 from os.path import join
 import warnings
 import numpy
-import sys
 
 
 def configuration(parent_package='', top_path=None):
@@ -36,12 +35,7 @@ def configuration(parent_package='', top_path=None):
         ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
         config.add_library('cblas',
                            sources=[join('src', 'cblas', '*.c')])
-        cblas_libs = ['cblas']
-        blas_info.pop('libraries', None)
         warnings.warn(BlasNotFoundError.__doc__)
-    else:
-        cblas_libs = blas_info.pop('libraries', [])
-
 
     config.add_extension('ball_tree',
                          sources=[join('src', 'BallTree.cpp')],

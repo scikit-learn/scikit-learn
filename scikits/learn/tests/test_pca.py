@@ -281,7 +281,7 @@ def test_probabilistic_pca_3():
     ppca = ProbabilisticPCA(n_components=2)
     ppca.fit(X)
     ll1 = ppca.score(X)
-    ppca.fit(X, False)
+    ppca.fit(X, homoscedastic=False)
     ll2 = ppca.score(X)
     assert_true(ll1.mean() < ll2.mean())
 

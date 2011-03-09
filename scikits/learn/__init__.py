@@ -42,4 +42,4 @@ __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets',
            'pca', 'pipeline', 'preprocessing', 'qda', 'svm', 'test',
            'clone', 'pls']
 
-__version__ = '0.7.git'
+__version__ = '0.8.git'

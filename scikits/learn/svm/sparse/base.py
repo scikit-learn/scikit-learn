@@ -14,7 +14,7 @@ class SparseBaseLibSVM(BaseLibSVM):
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
-                 eps, C, nu, p, shrinking, probability):
+                 tol, C, nu, p, shrinking, probability):
 
         assert impl in self._svm_types, \
             "impl should be one of %s, %s was given" % (
@@ -30,7 +30,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.gamma = gamma
         self.coef0 = coef0
         self.cache_size = cache_size
-        self.eps = eps
+        self.tol = tol
         self.C = C
         self.nu = nu
         self.p = p
@@ -109,7 +109,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.label_, self.probA_, self.probB_ = libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y,
                  solver_type, kernel_type, self.degree, self.gamma,
-                 self.coef0, self.eps, self.C, self._support_data,
+                 self.coef0, self.tol, self.C, self._support_data,
                  self._support_indices, self._support_indptr,
                  self._dual_coef_data, self.intercept_,
                  self.class_weight_label, self.class_weight, sample_weight,
@@ -167,7 +167,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.support_vectors_.indptr,
                       self.dual_coef_.data, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label, self.class_weight,
                       self.nu, self.cache_size, self.p, self.shrinking,
                       self.probability, self.n_support, self.label_,
@@ -207,7 +207,7 @@ class SparseBaseLibLinear(BaseLibLinear):
                        _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, y,
                        self._get_solver_type(),
-                       self.eps, self._get_bias(), self.C,
+                       self.tol, self._get_bias(), self.C,
                        self.class_weight_label, self.class_weight)
 
         return self
@@ -233,7 +233,7 @@ class SparseBaseLibLinear(BaseLibLinear):
                                       X.indices, X.indptr,
                                       self.raw_coef_,
                                       self._get_solver_type(),
-                                      self.eps, self.C,
+                                      self.tol, self.C,
                                       self.class_weight_label,
                                       self.class_weight, self.label_,
                                       self._get_bias())
@@ -260,12 +260,13 @@ class SparseBaseLibLinear(BaseLibLinear):
 
         dec_func = _liblinear.csr_decision_function_wrap(
             X.shape[1], X.data, X.indices, X.indptr, self.raw_coef_,
-            self._get_solver_type(), self.eps, self.C,
+            self._get_solver_type(), self.tol, self.C,
             self.class_weight_label, self.class_weight, self.label_,
             self._get_bias())
 
         if len(self.label_) <= 2:
-            # one class
+            # in the two-class case, the decision sign needs be flipped
+            # due to liblinear's design
             return -dec_func
         else:
             return dec_func

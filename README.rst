@@ -79,8 +79,8 @@ Bugs
 ----
 
 Please submit bugs you might encounter, as well as patches and feature
-requests to the tracker located at the address
-https://sourceforge.net/apps/trac/scikit-learn/report
+requests to the tracker located at github
+https://github.com/scikit-learn/scikit-learn/issues
 
 
 Testing
