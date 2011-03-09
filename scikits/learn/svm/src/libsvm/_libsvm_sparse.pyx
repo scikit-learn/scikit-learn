@@ -170,11 +170,13 @@ def libsvm_sparse_train ( int n_features,
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
     if probability != 0:
-        # this is only valid for SVC
-        probA = np.empty(nr*(nr-1)/2, dtype=np.float64)
-        probB = np.empty(nr*(nr-1)/2, dtype=np.float64)
-        copy_probA(probA.data, model, probA.shape)
-        copy_probB(probB.data, model, probB.shape)
+        if svm_type < 2: # SVC and NuSVC
+            probA = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+            probB = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+            copy_probB(probB.data, model, probB.shape)
+        else:
+            probA = np.empty(1, dtype=np.float64)
+            probB = np.empty(0, dtype=np.float64)
 
     svm_csr_free_and_destroy_model (&model)
     free_problem(problem)

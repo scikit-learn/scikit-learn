@@ -212,21 +212,14 @@ def test_probability():
     clf = svm.SVC(probability=True)
     clf.fit(iris.data, iris.target)
 
-    # predict on a simple dataset
-    T = [[0, 0, 0, 0],
-         [2, 2, 2, 2]]
-    assert_array_almost_equal(clf.predict_proba(T),
-                [[0.993, 0.003, 0.002],
-                 [0.740, 0.223, 0.035]],
-                 decimal=2)
+    prob_predict = clf.predict_proba(iris.data)
+    assert_array_almost_equal(
+        np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
+    assert np.mean(np.argmax(prob_predict, 1) 
+                   == clf.predict(iris.data)) > 0.95
 
-    assert_almost_equal(clf.predict_proba(T),
-                        np.exp(clf.predict_log_proba(T)), 8)
-
-    # make sure probabilities sum to one
-    pprob = clf.predict_proba(X)
-    assert_array_almost_equal(pprob.sum(axis=1),
-                               np.ones(len(X)))
+    assert_almost_equal(clf.predict_proba(iris.data),
+                        np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
 def test_decision_function():
