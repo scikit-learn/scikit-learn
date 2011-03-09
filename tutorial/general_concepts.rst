@@ -677,3 +677,38 @@ Training set, test sets and overfitting
 TODO
 
 
+Main Takeway points
+-------------------
+
+- Start by extracting feature vector ``X`` with shape
+  ``(n_samples, n_features)``
+
+- Metrics in feature space should try to preserve the intuitive pairwise
+  "closeness" of samples
+
+- Supervised learning: ``clf.fit(X, y)`` and then ``clf.predict(X_new)``
+
+  - classification: ``y`` is an array of integers
+
+  - regression: ``y`` is an array of floats
+
+- Unsupervised learning: ``clf.fit(X)``
+
+  - dimensionality reduction with ``clf.transform(X_new)``
+
+  - clustering to find group id for each sample
+
+- Some models work much better with data normalized with PCA
+
+- Simple linear models can fail completely (non linearly separable data)
+
+- Simple linear models often very useful in practice (esp. with
+  large ``n_features``)
+
+- Before starting training models, split train / test data:
+
+  - use training set for model selection and fitting
+
+  - use test set for model evaluation
+
+
