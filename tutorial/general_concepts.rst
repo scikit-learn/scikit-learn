@@ -365,8 +365,8 @@ Notable implementations of classifiers
 Sample application of classifiers
 +++++++++++++++++++++++++++++++++
 
-The following table gives example of application of such algorithm for some
-common engineering tasks:
+The following table gives example of application of such algorithms for
+some common engineering tasks:
 
 ============================================ =================================
 Task                                         Predicted outcomes
@@ -450,6 +450,24 @@ Let us project the iris dataset along those first 3 dimensions::
 
   >>> X_pca = pca.transform(X)
 
+The dataset has been "normalized", which means that the data is now centered on
+both components with unit variance::
+
+  >>> X_pca.mean(axis=0)
+  array([ -1.42478621e-15,   1.71936539e-15])
+
+  >>> X_pca.std(axis=0)
+  array([ 1.,  1.])
+
+Furthermore the samples components do no longer carry any linear
+correlation::
+
+  >>> import numpy as np
+  >>> np.corrcoef(X_pca.T)
+  array([[  1.00000000e+00,   4.60742555e-16],
+         [  4.60742555e-16,   1.00000000e+00]])
+
+
 And visualize the dataset using ``pylab``, for instance by defining the
 following utility function::
 
@@ -484,11 +502,104 @@ machine learning that are not computationally efficient with high
 ``n_features`` such as SVM classifiers with gaussian kernels for
 instance or that do not work well with linearly correlated features.
 
+Note: ``scikit-learn`` also features an implementation of Independant
+Component Analysis (ICA) and work is under way to implement common
+manifold extraction strategies.
+
 
 Clustering
 ~~~~~~~~~~
 
-TODO
+Clustering is the task of gathering samples into groups of similar
+samples according to some predifined similarity or dissimilarity
+measure (such as the Euclidean distance).
+
+For instance let us reuse the output of the 2D PCA of the iris
+dataset and try to find 3 groups of samples using the slimplest
+clustering algorithm (KMeans)::
+
+  >>> from scikits.learn.cluster import KMeans
+  >>> from numpy.random import RandomState
+  >>> rng = RandomState(42)
+
+  >>> kmeans = KMeans(3, rng=rng).fit(X_pca)
+
+  >>> kmeans.cluster_centers_
+  array([[ 1.01505989, -0.70632886],
+         [ 0.33475124,  0.89126382],
+         [-1.287003  , -0.43512572]])
+
+
+  >>> kmeans.labels_[:10]
+  array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+
+  >>> kmeans.labels_[-10:]
+  array([0, 0, 1, 0, 0, 0, 1, 0, 0, 1])
+
+We can plot the assigned cluster labels instead of the target names
+with::
+
+   plot_2D(X_pca, kmeans.labels_, ["c0", "c1", "c2"])
+
+
+.. figure:: images/iris_pca_2d_kmeans.png
+   :scale: 65 %
+   :align: center
+   :alt: KMeans cluster assignements on 2D PCA iris data
+
+   KMeans cluster assignements on 2D PCA iris data
+
+
+Notable implementations of clustering models
+++++++++++++++++++++++++++++++++++++++++++++
+
+The following are two well known clustering algorithms. Like most
+unsupervised learning models in the scikit, they expect the data
+to be cluster to have shape ``(n_samples, n_features)``:
+
+:``scikits.learn.cluster.KMeans``:
+
+  The simplest yet effective clustering algorithm. Need to be
+  provided the number of clusters in advance and assume that the
+  data is normalized as input (but use a PCA model as preprocessor).
+
+:``scikits.learn.cluster.MeanShift``:
+
+  Can find better looking clusters than KMeans but is not scalable
+  to high number of samples.
+
+Note: some clustering algorithms do not work with a data matrix
+with shape ``(n_samples, n_features)`` but directly with a precomputed
+affinity matrix with shape ``(n_samples, n_samples)``:
+
+
+:``scikits.learn.cluster.AffinityPropagation``:
+
+  Clustering algorithm based on message passing between data points.
+
+:``scikits.learn.cluster.SpectralClustering``:
+
+  KMeans applied to a projection of the normalized graph Laplacian:
+  finds normalized graph cuts if the affinity matrix is interpreted
+  as an adjacency matrix of a graph.
+
+
+Hierarchical clustering is being implemented in a branch that is
+likely to be merged into master before the release of ``scikit-learn``
+0.8.
+
+
+Applications of clustering
+++++++++++++++++++++++++++
+
+Here are some common applications of clustering algorithms:
+
+ - Building customer profiles for market analysis
+ - Grouping related web news (e.g. Google News) and websearch results
+ - Grouping related stock quotes for investment portfolio management
+ - Can be used as a preprocessing step for recommender systems
+ - Can be used to build a code book of prototype samples for unsupervised
+   feature extraction for supervised learning algorithms
 
 
 Density estimation and outliers detection
@@ -502,7 +613,6 @@ Unsupervised feature extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO
-
 
 Linearly separable data
 -----------------------
