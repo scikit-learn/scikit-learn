@@ -235,6 +235,7 @@ class GMM(BaseEstimator):
 
         self.weights = np.ones(self._n_states) / self._n_states
 
+        # flag to indicate exit status of fit() method: converged (True) or max-iter reached (False)
         self.converged_ = False
 
     # Read-only properties.
@@ -491,6 +492,8 @@ class GMM(BaseEstimator):
 
         # EM algorithm
         logprob = []
+        # reset self.converged_ to False
+        self.converged_ = False
         for i in xrange(n_iter):
             # Expectation step
             curr_logprob, posteriors = self.eval(X)
