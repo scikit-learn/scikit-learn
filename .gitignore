@@ -1,5 +1,7 @@
+# cruft
 .*.swp
 *.pyc
+.DS_Store
 
 # folder to be used for working on the exercises
 workspace
