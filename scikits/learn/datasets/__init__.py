@@ -2,11 +2,8 @@ from .base import load_diabetes
 from .base import load_digits
 from .base import load_filenames
 from .base import load_iris
-<<<<<<< HEAD
 from .base import load_linnerud
-=======
 from .base import get_data_home
->>>>>>> 39e7a68eab3e70e9a45392552c99658ab7144765
 from .mlcomp import load_mlcomp
 from .lfw import load_lfw_pairs
 from .lfw import load_lfw_people
