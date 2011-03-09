@@ -419,6 +419,10 @@ Dimensionality reduction the task to **derive a set of new artificial
 features that is smaller than the original feature set while retaining
 most of the variance of the original data**.
 
+
+Normalization and visualization with PCA
+++++++++++++++++++++++++++++++++++++++++
+
 The most common technique for dimensionality reduction is called
 **Principal Component Analysis**.
 
@@ -484,7 +488,7 @@ following utility function::
   ...
 
 Calling ``plot_2D(X_pca, iris.target, iris.target_names)`` will
-display something like the following:
+display the following:
 
 
 .. figure:: images/iris_pca_2d.png
@@ -494,6 +498,9 @@ display something like the following:
 
    2D PCA projection of the iris dataset
 
+
+Other application of dimensionality reduction
++++++++++++++++++++++++++++++++++++++++++++++
 
 Dimensionality Reduction is not just useful for visualization of
 high dimensional datasets. I can also be used as a preprocessing
