@@ -4,9 +4,11 @@
 
 import sys
 
-from scikits.learn.feature_extraction.text.sparse import Vectorizer
+from scikits.learn.feature_extraction.text.sparse import CountVectorizer
+from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
 from scikits.learn.feature_extraction.text import CharNGramAnalyzer
 from scikits.learn.svm.sparse import LinearSVC
+from scikits.learn.pipeline import Pipeline
 from scikits.learn.datasets import load_files
 from scikits.learn import metrics
 
@@ -34,61 +36,59 @@ languages_data_folder = sys.argv[1]
 dataset = load_files(languages_data_folder)
 
 # split the dataset in training and test set:
+n_samples_total = dataset.filenames.shape[0]
 
-# TODO: define variables 'filenames_train' and 'filenames_test'
-# TODO: define variables 'y_train' and 'y_test'
+docs_train = [open(f).read()
+              for f in dataset.filenames[:n_samples_total/2]]
+docs_test = [open(f).read()
+             for f in dataset.filenames[n_samples_total/2:]]
+
+
+y_train = dataset.target[:n_samples_total/2]
+y_test = dataset.target[n_samples_total/2:]
 
 
 # Build a an analyzer that split strings into sequence of 1 to 3 characters
-# using the previous preprocessor
+# after using the previous preprocessor
+analyzer = CharNGramAnalyzer(
+    min_n=1,
+    max_n=3,
+    preprocessor=LowerCasePreprocessor(),
+)
 
-# TODO: define a variable named analyzer
+# Build a vectorizer / classifier pipeline using the previous analyzer
+clf = Pipeline([
+    ('vec', CountVectorizer(analyzer=analyzer)),
+    ('tfidf', TfidfTransformer()),
+    ('clf', LinearSVC(loss='l2', penalty='l1', dual=False, C=100)),
+])
 
-
-# Build a vectorizer using the analyzer, learn the mapping from feature name to
-# feature id on the training data and then transform it into feature vectors.
-# Then use the fitted vectorizer on the test data
-
-# TODO: define a variable named 'vectorizer'
-# TODO: define a variable named 'X_train'
-# TODO: define a variable named 'X_test'
-
-# XXX: Don't forget to read the content of the text files before feeding it to
-# the vectorizer
-
-# Build a linear classifier and train it on the training set
-
-# TODO: define a variable named 'clf'
+# Fit the pipeline on the training set
+clf.fit(docs_train, y_train)
 
 # Predict the outcome on the testing set
+y_predicted = clf.predict(docs_test)
 
-# TODO: define a variable named 'y_predicted'
+# Print the classification report
+print metrics.classification_report(y_test, y_predicted,
+                                    class_names=dataset.target_names)
 
+# Plot the confusion matrix
+cm = metrics.confusion_matrix(y_test, y_predicted)
+print cm
 
-#
-# Evaluation of the quality of the predictions: uncomment the following when all
-# of the above as been implemented
-#
+# import pylab as pl
+#pl.matshow(cm)
+#pl.show()
 
-## Print the classification report
-#
-#print metrics.classification_report(y_test, y_predicted,
-#                                    class_names=dataset.target_names)
-#
-## Print the confusion matrix
-#
-#cm = metrics.confusion_matrix(y_test, y_predicted)
-#print cm
-#
 # Predict the result on some short new sentences:
-#sentences = [
-#    u'This is a language detection test.',
-#    u'Ceci est un test de d\xe9tection de la langue.',
-#    u'Dies ist ein Test, um die Sprache zu erkennen.',
-#]
-#vectors = vectorizer.transform(sentences)
-#predicted = clf.predict(vectors)
-#
-#for s, p in zip(sentences, predicted):
-#    print u'The language of "%s" is "%s"' % (s, dataset.target_names[p])
+sentences = [
+    u'This is a language detection test.',
+    u'Ceci est un test de d\xe9tection de la langue.',
+    u'Dies ist ein Test, um die Sprache zu erkennen.',
+]
+predicted = clf.predict(sentences)
+
+for s, p in zip(sentences, predicted):
+    print u'The language of "%s" is "%s"' % (s, dataset.target_names[p])
 
