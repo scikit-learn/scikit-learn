@@ -54,7 +54,13 @@ If you want to install the library globally, do the following instead::
     % python setup.py build
     % sudo python setup.py install
 
-In both case you should be able to launch the tests from anywhere in the system
+Whatever the installation procedure you should check that the '0.7' version is
+active in your python path::
+
+    % python -c "import scikits.learn; print scikits.learn.__version__"
+    0.7
+
+You should also be able to launch the tests from anywhere in the system
 (if nose is installed) with the following::
 
     % python -c "import scikits.learn as skl; skl.test()"
