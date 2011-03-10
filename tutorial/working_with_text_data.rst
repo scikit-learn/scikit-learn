@@ -242,7 +242,7 @@ Both TF and TF-IDF can be computed as follows::
 
 
 Training a linear classifier
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 Now that we have our feature, we can train a linear classifier to
 try to predict the category of a post::
@@ -268,7 +268,7 @@ the features using the same feature extracting chain::
 
 
 Building a pipeline
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 In order to make the vectorizer => transformer => classifier easier
 to work with, scikit-learn provides a ``Pipeline`` class that behaves
@@ -287,7 +287,7 @@ We can now train the model with a single command::
 
 
 Evaluation of the performance on the test set
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------
 
 Evaluating the predictive accurracy of the model is equally easy::
 
@@ -326,7 +326,7 @@ analysis of the results::
 
 
 Parameter tuning using grid search
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------
 
 Instead of tweaking the parameters of the various components of the
 chain, it is possible to run an exhaustive search of the best
