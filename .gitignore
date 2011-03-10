@@ -2,6 +2,7 @@
 .*.swp
 *.pyc
 .DS_Store
+*.pdf
 
 # folder to be used for working on the exercises
 workspace

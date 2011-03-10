@@ -2,11 +2,11 @@ Exercises
 =========
 
 To do the exercises, copy the content of the 'skeletons' folder as
-a new folder named 'workspaces'.
+a new folder named 'workspace'.
 
 Then fire an ipython shell and run the work-in-progress script with::
 
-  >>> %run workspace/exercise_XX_script.py arg1 arg2 arg3
+  [1] %run workspace/exercise_XX_script.py arg1 arg2 arg3
 
 If an exception is triggered, use the ``%debug`` to fire-up a post
 mortem ipdb session.
@@ -24,6 +24,10 @@ Exercise 1: Sentiment Analysis on movie reviews
 
 - Evaluate the performance on a held out test set.
 
+ipython command line::
+
+  %run workspace/exercise_01_sentiment.py data/movie_reviews/txt_sentoken/
+
 
 Exercise 2: Language identification
 -----------------------------------
@@ -32,6 +36,10 @@ Exercise 2: Language identification
   CharNGramAnalyzer using data from Wikipedia articles as training set.
 
 - Evaluate the performance on some held out test set.
+
+ipython command line::
+
+  %run workspace/exercise_02_language_train_model.py data/languages/paragraphs/
 
 
 Exercise 3: CLI text classification utility
@@ -53,3 +61,6 @@ Exercise 4: Face recognition
 Build a classifier that recognize person on faces pictures from the
 Labeled Faces in the Wild dataset.
 
+ipython command line::
+
+  %run workspace/exercise_04_face_recognition.py data/data/labeled_faces_wild/lfw_preprocessed/
