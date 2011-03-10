@@ -178,12 +178,12 @@ These tools are wrapped into a higher level component that is able to build a
 dictionary of features::
 
   >>> from scikits.learn.feature_extraction.text.sparse import CountVectorizer
-  >>> vectorizer = CountVectorizer()
-  >>> _ = vectorizer.fit(open(f).read() for f in twenty_train.filenames)
+  >>> count_vect = CountVectorizer()
+  >>> _ = count_vect.fit(open(f).read() for f in twenty_train.filenames)
 
 Once fitted, the vectorizer has build a dictionary of feature indices::
 
-  >>> vectorizer.vocabulary.get(u'algorithm')
+  >>> count_vect.vocabulary.get(u'algorithm')
   1513
 
 The index value of a word in the vocabulary is linked to its frequency
@@ -192,12 +192,49 @@ in the whole training corpus.
 Once the vocabulary is built, it is possible to rescan the training
 set so as to perform the actual feature extraction::
 
-  >>> X_train = vectorizer.transform(
+  >>> X_train_counts = count_vect.transform(
   ...     open(f).read() for f in twenty_train.filenames)
-  >>> X_train.shape
+  >>> X_train_counts.shape
   (2257, 33881)
 
 
 From occurrences to frequencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Occurrence count is a good start but there is an issue: longer
+documents will have higher average count values than shorter document,
+even though they might talk about the same topics.
+
+To avoid these potential discrepancies is suffice to divide the
+number of occurrences of each words in document by the total number
+of words in the document: this new features are called TF for Term
+Frequency.
+
+Another refinement on top of TF is to downscale term weights for
+words that occur in many documents in the corpus and are therefore
+less informative than those that occur only in a smaller portion of the
+corpus.
+
+This downscaling is called `TF-IDF`_ for "Term Frequency times
+Inverse Document Frequency".
+
+.. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
+
+
+Both TF and TF-IDF can be computed as follows::
+
+  >>> from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
+  >>> tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
+  >>> X_train_tf = tf_transformer.transform(X_train_counts)
+  >>> X_train_tf.shape
+  (2257, 33881)
+
+  >>> tfidf_transformer = TfidfTransformer().fit(X_train_counts)
+  >>> X_train_tfidf = tfidf_transformer.transform(X_train_counts)
+  >>> X_train_tfidf.shape
+  (2257, 33881)
+
+
+
+
 

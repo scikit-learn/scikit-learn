@@ -12,9 +12,26 @@ to make computer learn to behave more intelligently by somehow
 **generalizing** rather that just storing and retrieving data items
 like a database system would do.
 
+.. figure:: images/decision_boundary.png
+   :scale: 50%
+   :align: center
+
+   Decision boundary learned from data points from two categories:
+   white and black
+
+
 The following will introduce the main concepts used to qualify
-machine learning algorithms, show how those concepts match with the
-``scikit-learn`` API and give example applications.
+machine learning algorithms as implemented in ``scikit-learn``:
+
+- how to turn raw data info numerical arrays
+
+- what is supervised learning
+
+- what is unsupervised learning
+
+- what is linearly separable data
+
+- what is overfitting
 
 
 Features and feature extraction
