@@ -36,11 +36,11 @@ description, quoted from the `website
 To download the dataset, go to ``$TUTORIAL_HOME/twenty_newsgroups``
 run the ``fetch_data.py`` script.
 
-Once the data is downloaded, fire an ipython shell from and define
-a variable to hold the list of categories to load. In order to get
-fast execution times for this first example we will work on a partial
-dataset with only 4 categories out of the 20 available in the
-dataset::
+Once the data is downloaded, fire an ipython shell in the
+``$TUTORIAL_HOME`` folder and define a variable to hold the list
+of categories to load. In order to get fast execution times for
+this first example we will work on a partial dataset with only 4
+categories out of the 20 available in the dataset::
 
   >>> categories = ['alt.atheism', 'soc.religion.christian',
   ...               'comp.graphics', 'sci.med']
@@ -179,7 +179,8 @@ dictionary of features::
 
   >>> from scikits.learn.feature_extraction.text.sparse import CountVectorizer
   >>> count_vect = CountVectorizer()
-  >>> _ = count_vect.fit(open(f).read() for f in twenty_train.filenames)
+  >>> docs_train = [open(f).read() for f in twenty_train.filenames]
+  >>> _ = count_vect.fit(docs_train)
 
 Once fitted, the vectorizer has build a dictionary of feature indices::
 
@@ -192,10 +193,15 @@ in the whole training corpus.
 Once the vocabulary is built, it is possible to rescan the training
 set so as to perform the actual feature extraction::
 
-  >>> X_train_counts = count_vect.transform(
-  ...     open(f).read() for f in twenty_train.filenames)
+  >>> X_train_counts = count_vect.transform(docs_train)
   >>> X_train_counts.shape
   (2257, 33881)
+
+.. note:
+
+  to avoid reading and tokenizing each text file twice it is possible
+  use to call ``count_vect.fit_transform(documents)`` and get the
+  same output as ``count_vect.fit(documents).transform(documents)``.
 
 
 From occurrences to frequencies
@@ -205,14 +211,14 @@ Occurrence count is a good start but there is an issue: longer
 documents will have higher average count values than shorter document,
 even though they might talk about the same topics.
 
-To avoid these potential discrepancies is suffice to divide the
-number of occurrences of each words in document by the total number
-of words in the document: this new features are called TF for Term
-Frequency.
+To avoid these potential discrepancies it suffices to divide the
+number of occurrences of each word in a document by the total number
+of words in the document: these new features are called "TF" for Term
+Frequencies.
 
-Another refinement on top of TF is to downscale term weights for
-words that occur in many documents in the corpus and are therefore
-less informative than those that occur only in a smaller portion of the
+Another refinement on top of TF is to downscale weights for words
+that occur in many documents in the corpus and are therefore less
+informative than those that occur only in a smaller portion of the
 corpus.
 
 This downscaling is called `TF-IDF`_ for "Term Frequency times
@@ -235,6 +241,119 @@ Both TF and TF-IDF can be computed as follows::
   (2257, 33881)
 
 
+Training a linear classifier
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Now that we have our feature, we can train a linear classifier to
+try to predict the category of a post::
+
+  >>> from scikits.learn.svm.sparse import LinearSVC
+  >>> clf = LinearSVC(C=1000).fit(X_train_tfidf, twenty_train.target)
+
+To try to predict the outcome on a new document we need to extract
+the features using the same feature extracting chain::
+
+
+  >>> docs_new = ['God is love', 'OpenGL on the GPU is fast']
+  >>> X_new_counts = count_vect.transform(docs_new)
+  >>> X_new_tfidf = tfidf_transformer.transform(X_new_counts)
+
+  >>> predicted = clf.predict(X_new_tfidf)
+
+  >>> for doc, category in zip(docs_new, predicted):
+  ...     print '%r => %s' % (doc, twenty_train.target_names[category])
+  ...
+  'God is love' => soc.religion.christian
+  'OpenGL on the GPU is fast' => comp.graphics
+
+
+Building a pipeline
+~~~~~~~~~~~~~~~~~~~
+
+In order to make the vectorizer => transformer => classifier easier
+to work with, scikit-learn provides a ``Pipeline`` class that behaves
+like a compound estimator::
+
+  >>> from scikits.learn.pipeline import Pipeline
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', LinearSVC(C=1000)),
+  ... ])
+
+We can now train the model with a single command::
+
+  >>> _ = text_clf.fit(docs_train, twenty_train.target)
+
+
+Evaluation of the performance on the test set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Evaluating the predictive accurracy of the model is equally easy::
+
+  >>> import numpy as np
+  >>> twenty_test = load_files('data/twenty_newsgroups/20news-bydate-test',
+  ...                           categories=categories)
+  ...
+  >>> docs_test = [open(f).read() for f in twenty_test.filenames]
+  >>> predicted = text_clf.predict(docs_test)
+  >>> np.mean(predicted == twenty_test.target)
+  0.93075898801597867
+
+``scikit-learn`` further provides utilities for more detailed performance
+analysis of the results::
+
+  >>> from scikits.learn import metrics
+  >>> print metrics.classification_report(
+  ...     twenty_test.target, predicted,
+  ...     class_names=twenty_test.target_names)
+  ...
+                          precision    recall  f1-score   support
+  <BLANKLINE>
+             alt.atheism       0.93      0.85      0.89       319
+           comp.graphics       0.97      0.95      0.96       389
+                 sci.med       0.94      0.95      0.95       396
+  soc.religion.christian       0.88      0.95      0.92       398
+  <BLANKLINE>
+             avg / total       0.93      0.93      0.93      1502
+  <BLANKLINE>
+
+  >>> metrics.confusion_matrix(twenty_test.target, predicted)
+  array([[271,   3,   9,  36],
+         [  4, 371,   9,   5],
+         [  4,   6, 377,   9],
+         [ 11,   4,   4, 379]])
+
+
+Parameter tuning using grid search
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of tweaking the parameters of the various components of the
+chain, it is possible to run an exhaustive search of the best
+parameters on a grid of possible values::
+
+  >>> from scikits.learn.grid_search import GridSearchCV
+  >>> parameters = {
+  ...     'vect__analyzer__max_n': (1, 2), # words or bigrams
+  ...     'tfidf__use_idf': (True, False),
+  ...     'clf__C': (100, 1000),
+  ... }
+  >>> gs_clf = GridSearchCV(text_clf, parameters, n_jobs=-1)
+
+The grid search instance behaves like a normal ``scikit-learn``
+model. Let us perform the search on a smaller subset of the dataset
+to speed up the computation::
+
+  >>> gs_clf.fit(docs_train[:400], twenty_train.target[:400])
+
+The best model found during fit is available as a special attribute::
+
+  >>> best_parameters = gs_clf.best_estimator._get_params()
+  >>> for param_name in sorted(parameters.keys()):
+  ...     print "%s: %r" % (param_name, best_parameters[param_name])
+  ...
+  clf__C: 100
+  tfidf__use_idf: True
+  vect__analyzer__max_n: 2
 
 
