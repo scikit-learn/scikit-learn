@@ -253,6 +253,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples, n_classes]
         """
-        # XXX : can do better to avoid precision overflows
-        probas_ = self.predict_proba(X)
-        return np.log(probas_)
+        values = self.decision_function(X)
+        loglikelihood = (values - values.min(axis=1)[:, np.newaxis])
+        normalization = np.logaddexp.reduce(loglikelihood, axis=1)
+        return loglikelihood - normalization[:, np.newaxis]
