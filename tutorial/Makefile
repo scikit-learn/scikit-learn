@@ -2,6 +2,7 @@
 #
 
 # You can set these variables from the command line.
+GHPIMPORT     = ghp-import
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
@@ -94,3 +95,8 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+github:
+	@echo "Send to github"
+	$(GHPIMPORT) -p $(BUILDDIR)/html
+
