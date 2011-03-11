@@ -1,7 +1,8 @@
 """
 LDA: Linear Discriminant Analysis
 """
-# Author: Matthieu Perrot
+# Authors: Matthieu Perrot
+#          Mathieu Blondel
 
 import warnings
 
@@ -17,11 +18,9 @@ class LDA(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-    y : array, shape = [n_samples]
-        Target vector relative to X
+
+    n_components: int
+        Number of components (< n_classes - 1)
 
     priors : array, optional, shape = [n_classes]
         Priors on classes
@@ -55,7 +54,8 @@ class LDA(BaseEstimator, ClassifierMixin):
 
     """
 
-    def __init__(self, priors=None):
+    def __init__(self, n_components=None, priors=None):
+        self.n_components = n_components
         self.priors = np.asarray(priors) if priors is not None else None
 
     def fit(self, X, y, store_covariance=False, tol=1.0e-4, **params):
@@ -155,10 +155,13 @@ class LDA(BaseEstimator, ClassifierMixin):
 
         rank = np.sum(S > tol*S[0])
         # compose the scalings
-        scaling = np.dot(scaling, V.T[:, :rank])
-        self.scaling = scaling
-        self.means_ = means
+        self.scaling = np.dot(scaling, V.T[:, :rank])
         self.xbar_ = xbar
+        # weight vectors / centroids
+        self.coef_ = np.dot(means - self.xbar_, self.scaling)
+        self.intercept_ = -0.5 * np.sum(self.coef_ ** 2, axis=1) + \
+                           np.log(self.priors_)
+
         self.classes = classes
         return self
 
@@ -176,16 +179,28 @@ class LDA(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples, n_classes]
         """
         X = np.asanyarray(X)
-        scaling = self.scaling
-        # Remove overall mean (center) and scale
-        # a) data
-        X = np.dot(X - self.xbar_, scaling)
-        # b) centers
-        dm = np.dot(self.means_ - self.xbar_, scaling)
-        # for each class k, compute the linear discrinant function
-        # (p. 87 Hastie) of sphered (scaled data)
-        return -0.5 * np.sum(dm ** 2, 1) + \
-                np.log(self.priors_) + np.dot(X, dm.T)
+        # center and scale data
+        X = np.dot(X - self.xbar_, self.scaling)
+        return np.dot(X, self.coef_.T) + self.intercept_
+
+    def transform(self, X):
+        """
+        This function return the decision function values related to each
+        class on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X_new : array, shape = [n_samples, n_components]
+        """
+        X = np.asanyarray(X)
+        # center and scale data
+        X = np.dot(X - self.xbar_, self.scaling)
+        n_comp = X.shape[1] if self.n_components is None else self.n_components
+        return np.dot(X, self.coef_[:, :n_comp].T) + self.intercept_
 
     def predict(self, X):
         """
