@@ -1,14 +1,14 @@
 
 .. _feature_selection_doc:
 
-=======================
+=================
 Feature selection
-=======================
+=================
 
 
 
 Univariate feature selection
-=============================
+============================
 
 Univariate feature selection works by selecting the best features based on
 univariate statistical tests. It can seen as a preprocessing step
@@ -37,19 +37,19 @@ univariate p-values.
 
 
 Feature scoring functions
---------------------------
+-------------------------
 
 .. warning::
 
     Beware not to use a regression scoring function with a classification problem.
 
 For classification
-.......................
+..................
 
 .. autofunction:: scikits.learn.feature_selection.univariate_selection.f_classif
 
 For regression
-.................
+..............
 
 .. autofunction:: scikits.learn.feature_selection.univariate_selection.f_regression
 

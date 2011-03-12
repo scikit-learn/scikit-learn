@@ -90,7 +90,6 @@ Bayesian Regression
    linear_model.ARDRegression
 
 
-
 Naive Bayes
 ===========
 
@@ -244,6 +243,7 @@ Grid Search
 
 .. _feature_selection_ref:
 
+
 Feature Selection
 =================
 
@@ -256,6 +256,7 @@ Feature Selection
 
 
 .. _feature_extraction_ref:
+
 
 Feature Extraction
 ==================
