@@ -53,7 +53,6 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self.window_size = window_size
         self.algorithm = algorithm
 
-
     def fit(self, X, Y, **params):
         """
         Fit the model using X, y as training data.
@@ -80,7 +79,6 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             self.ball_tree = None
             self._fit_X = X
         return self
-
 
     def kneighbors(self, data, return_distance=True, **params):
         """Finds the K-neighbors of a point.
@@ -136,7 +134,6 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self._set_params(**params)
         return self.ball_tree.query(
             data, k=self.n_neighbors, return_distance=return_distance)
-
 
     def predict(self, X, **params):
         """Predict the class labels for the provided data.
@@ -226,14 +223,12 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-
     def __init__(self, n_neighbors=5, mode='mean', algorithm='auto',
                  window_size=1):
         self.n_neighbors = n_neighbors
         self.window_size = window_size
         self.mode = mode
         self.algorithm = algorithm
-
 
     def predict(self, X, **params):
         """Predict the target for the provided data.
@@ -283,12 +278,12 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
                 'Unsupported mode, must be one of "barycenter" or '
                 '"mean" but got %s instead' % self.mode)
 
+
 ###############################################################################
 # Utils k-NN based Functions
 
 def barycenter_weights(X, Z, cond=None):
-    """
-    Compute barycenter weights of X from Y along the first axis.
+    """Compute barycenter weights of X from Y along the first axis
 
     We estimate the weights to assign to each point in Y[i] to recover
     the point X[i]. The barycenter weights sum to 1.
@@ -312,9 +307,6 @@ def barycenter_weights(X, Z, cond=None):
     -----
     See developers note for more information.
     """
-#
-#       .. local variables ..
-#
     from scipy import linalg
     X, Z = map(np.asanyarray, (X, Z))
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
@@ -324,9 +316,7 @@ def barycenter_weights(X, Z, cond=None):
     v = np.ones(n_neighbors, dtype=X.dtype)
     rank_update, = linalg.get_blas_funcs(('ger',), (X,))
 
-#
-#       .. constrained least squares ..
-#
+    # constrained least squares
     v[0] -= np.sqrt(n_neighbors)
     B[:, 0] = 1. / np.sqrt(n_neighbors)
     if n_neighbors <= 1:
@@ -375,10 +365,6 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
             [ 0.,  1.,  1.],
             [ 1.,  0.,  1.]])
     """
-
-#
-#       .. local variables ..
-#
     from scipy import sparse
     X = np.asanyarray(X)
     n_samples = X.shape[0]
@@ -386,9 +372,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
     n_nonzero = n_neighbors * n_samples
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
-#
-#       .. construct CSR matrix ..
-#
+    # construct CSR matrix representation of the k-NN graph
     if mode is 'connectivity':
         A_data = np.ones((n_samples, n_neighbors))
         A_ind = ball_tree.query(
