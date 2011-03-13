@@ -53,7 +53,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self.window_size = window_size
         self.algorithm = algorithm
 
-        
+
     def fit(self, X, Y, **params):
         """
         Fit the model using X, y as training data.
@@ -269,7 +269,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
             neigh_ind = self.ball_tree.query(
                 X, self.n_neighbors, return_distance=False)
             neigh = self.ball_tree.data[neigh_ind]
-        
+
         # .. return labels ..
         if self.mode == 'barycenter':
             W = barycenter_weights(X, neigh)
@@ -287,7 +287,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
 # Utils k-NN based Functions
 
 def barycenter_weights(X, Z, cond=None):
-    """ 
+    """
     Compute barycenter weights of X from Y along the first axis.
 
     We estimate the weights to assign to each point in Y[i] to recover
