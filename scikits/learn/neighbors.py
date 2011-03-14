@@ -54,8 +54,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self.algorithm = algorithm
 
     def fit(self, X, y, **params):
-        """
-        Fit the model using X, y as training data.
+        """Fit the model using X, y as training data
 
         Parameters
         ----------
