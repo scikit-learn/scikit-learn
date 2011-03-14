@@ -384,6 +384,9 @@ class RandomizedPCA(BaseEstimator):
             Returns the instance itself.
         """
         self._set_params(**params)
+        if not hasattr(X, 'todense'):
+            X = np.atleast_2d(X)
+
         n_samples = X.shape[0]
 
         if self.copy:
