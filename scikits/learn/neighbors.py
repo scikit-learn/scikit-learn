@@ -69,6 +69,8 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             Overwrite keywords from __init__
         """
         X = np.asanyarray(X)
+        if y is None:
+            raise ValueError("y must not be None")
         self._y = np.asanyarray(y)
         self._set_params(**params)
 
