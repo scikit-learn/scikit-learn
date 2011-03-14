@@ -1,5 +1,4 @@
-""" K-means clustering
-"""
+"""K-means clustering"""
 
 # Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Thomas Rueckstiess <ruecksti@in.tum.de>
@@ -72,8 +71,9 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
     # Initialize list of closest distances and calculate current potential
     if x_squared_norms is None:
         x_squared_norms = (X ** 2).sum(axis=1)
-    closest_dist_sq = euclidean_distances(np.atleast_2d(centers[0]), X,
-                                          Y_norm_squared=x_squared_norms, squared=True)
+    closest_dist_sq = euclidean_distances(
+        np.atleast_2d(centers[0]), X, Y_norm_squared=x_squared_norms,
+        squared=True)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining k-1 points
@@ -84,8 +84,8 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
         candidate_ids   = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
 
         # Compute distances to center candidates
-        distance_to_candidates = euclidean_distances(X[candidate_ids], X,
-                                                Y_norm_squared=x_squared_norms, squared=True)
+        distance_to_candidates = euclidean_distances(
+            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
         # Decide which candidate is the best
         best_candidate  = None
@@ -338,10 +338,6 @@ class KMeans(BaseEstimator):
     Parameters
     ----------
 
-    data : ndarray
-        A M by N array of M observations in N dimensions or a length
-        M array of M one-dimensional observations.
-
     k : int or ndarray
         The number of clusters to form as well as the number of
         centroids to generate. If init initialization string is
@@ -426,6 +422,9 @@ class KMeans(BaseEstimator):
     def fit(self, X, **params):
         """Compute k-means"""
         X = np.asanyarray(X)
+        if X.shape[0] < self.k:
+            raise ValueError("n_samples=%d should be larger than k=%d" % (
+                X.shape[0], self.k))
         self._set_params(**params)
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
