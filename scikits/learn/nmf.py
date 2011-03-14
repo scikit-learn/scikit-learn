@@ -17,7 +17,6 @@ from numpy.linalg import norm
 _pos_ = lambda x: (x >= 0) * x
 _neg_ = lambda x: (x < 0) * (-x)
 
-
 def _initialize_nmf_(X, n_comp):
     """
     Computes a good initial guess for the non-negative
@@ -89,12 +88,6 @@ def _initialize_nmf_(X, n_comp):
         W[:, j] = lbd * u
         H[j, :] = lbd * v
 
-    # Apparently this sometimes happens. I think this is
-    # exactly why and when convergence fails.
-    # I probably messed something up.
-    #if (W < 0).any() or (H < 0).any():
-    #    raise SystemError("failure in initialization!")
-
     return W, H
 
 
@@ -102,7 +95,7 @@ def _nls_subproblem_(V, W, Hinit, tolerance, max_iter):
     """
     Solves a non-negative least squares subproblem using the
     projected gradient descent algorithm.
-    min || WH - V ||_2 (I think)
+    min || WH - V ||_2
 
     Parameters
     ----------
@@ -198,6 +191,7 @@ class NMF(BaseEstimator):
         Default: fast_svd
         Valid options:
             "fast_svd" for initialization based on fast SVD,
+            "cro" for CRO-based initialization,
             int seed or RandomState for non-negative random matrices
 
     tolerance: double
@@ -283,6 +277,11 @@ class NMF(BaseEstimator):
             H = np.abs(self.initial.randn(self.n_comp, n_samples))
         elif self.initial == "fast_svd":
             W, H = _initialize_nmf_(X, self.n_comp)
+        elif self.initial == "cro":
+            from cro import CRO
+            m = CRO(self.n_comp)
+            m.fit(X.T)
+            W, H = np.abs(m.components_.T), np.abs(m.data_.T)
         else:
             raise ValueError("Invalid value for initial parameter.")
 

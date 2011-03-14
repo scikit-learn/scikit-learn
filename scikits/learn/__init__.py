@@ -38,7 +38,7 @@ except:
 __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets',
            'fastica', 'feature_extraction', 'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
-           'metrics', 'mixture', 'naive_bayes', 'neighbors',
+           'metrics', 'mixture', 'naive_bayes', 'neighbors', 'nmf',
            'pca', 'pipeline', 'preprocessing', 'qda', 'svm', 'test',
            'clone']
 
