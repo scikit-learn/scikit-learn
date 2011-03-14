@@ -53,7 +53,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self.window_size = window_size
         self.algorithm = algorithm
 
-    def fit(self, X, Y, **params):
+    def fit(self, X, y, **params):
         """
         Fit the model using X, y as training data.
 
@@ -69,7 +69,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             Overwrite keywords from __init__
         """
         X = np.asanyarray(X)
-        self._y = np.asanyarray(Y)
+        self._y = np.asanyarray(y)
         self._set_params(**params)
 
         if self.algorithm == 'ball_tree' or \
@@ -136,7 +136,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             data, k=self.n_neighbors, return_distance=return_distance)
 
     def predict(self, X, **params):
-        """Predict the class labels for the provided data.
+        """Predict the class labels for the provided data
 
         Parameters
         ----------
@@ -155,7 +155,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         X = np.atleast_2d(X)
         self._set_params(**params)
 
-        # .. get neighbors ..
+        # get neighbors
         if self.ball_tree is None:
             if self.algorithm == 'brute_inplace':
                 neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
@@ -168,7 +168,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             neigh_ind = self.ball_tree.query(
                 X, self.n_neighbors, return_distance=False)
 
-        # .. most popular label ..
+        # compute the most popular label
         pred_labels = self._y[neigh_ind]
         from scipy import stats
         mode, _ = stats.mode(pred_labels, axis=1)
@@ -179,7 +179,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 # NeighborsRegressor class for regression problems
 
 class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
-    """Regression based on k-Nearest Neighbor Algorithm.
+    """Regression based on k-Nearest Neighbor Algorithm
 
     The target is predicted by local interpolation of the targets
     associated of the k-Nearest Neighbors in the training set.
@@ -231,7 +231,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         self.algorithm = algorithm
 
     def predict(self, X, **params):
-        """Predict the target for the provided data.
+        """Predict the target for the provided data
 
         Parameters
         ----------
@@ -250,7 +250,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         X = np.atleast_2d(np.asanyarray(X))
         self._set_params(**params)
 
-        # .. get neighbors ..
+        # compute nearest neighbors
         if self.ball_tree is None:
             if self.algorithm == 'brute_inplace':
                 neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
@@ -265,7 +265,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
                 X, self.n_neighbors, return_distance=False)
             neigh = self.ball_tree.data[neigh_ind]
 
-        # .. return labels ..
+        # compute interpolation on y
         if self.mode == 'barycenter':
             W = barycenter_weights(X, neigh)
             return (W * self._y[neigh_ind]).sum(axis=1)
