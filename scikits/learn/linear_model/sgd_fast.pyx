@@ -264,8 +264,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double *X_data_ptr = <double *>X.data
     cdef double *Y_data_ptr = <double *>Y.data
 
+    cdef double *sample_weight_data = <double *>sample_weight.data
+
     # Use index array for fast shuffling
-    # FIXME unsined int?
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
                                                              dtype = np.int32)
     cdef int *index_data_ptr = <int *>index.data
@@ -318,7 +319,8 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                 class_weight = weight_pos
             else:
                 class_weight = weight_neg
-            update = eta * loss.dloss(p, y) * class_weight
+            update = eta * loss.dloss(p, y) * class_weight * \
+                sample_weight_data[sample_idx]
             if update != 0.0:
                 add(w_data_ptr, wscale, X_data_ptr, offset, n_features, update)
                 if fit_intercept == 1:

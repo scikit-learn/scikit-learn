@@ -1,11 +1,19 @@
 import numpy as np
-from scikits.learn import linear_model
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_equal, assert_approx_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
+
+from scikits.learn import linear_model, datasets, metrics
+from scikits.learn import preprocessing
 
 import unittest
 from nose.tools import raises
 from nose.tools import assert_raises
+
+
+##
+## Test Data
+##
+
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -34,6 +42,13 @@ X4 = np.array([[1,0.9,0.8,0,0,0], [1,.84,.98,0,0,0],
                [0,0,0,.89,.91,1], [0,0,0,.79,.84,1],
                [0,0,0,.91,.95,1], [0,0,0,.93,1,1]])
 Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
+
+iris = datasets.load_iris()
+
+
+##
+## Classification Test Case
+##
 
 
 class DenseSGDClassifierTestCase(unittest.TestCase):
@@ -192,11 +207,117 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
 
+    def test_class_weight(self):
+        """
+        Test class weights FIXED.
+        """
+        X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                      [1.0, 1.0], [1.0, 0.0]])
+        y = [1, 1, 1, -1, -1]
+
+        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
+        clf.fit(X, y)
+        assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
+
+        # we give a small weights to class 1
+        clf.fit(X, y, class_weight={1: 0.001})
+
+        # now the hyperplane should rotate clock-wise and
+        # the prediction on this point should shift
+        assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
+
+    def test_equal_class_weight(self):
+        """Test if equal class weights approx. equals no class weights. """
+        X = [[1,0],[1,0],[0,1],[0,1]]
+        y = [0, 0, 1, 1]
+        clf = self.factory(alpha=0.1, n_iter=1000)
+        clf.fit(X, y)
+
+        X = [[1,0],[0,1]]
+        y = [0, 1]
+        clf_weighted = self.factory(alpha=0.1, n_iter=1000)
+        clf_weighted.fit(X, y, class_weight={0:0.5, 1:0.5})
+
+        # should be similar up to some epsilon due to learning rate schedule
+        assert_almost_equal(clf.coef_, clf_weighted.coef_, decimal=2)
+
+    @raises(ValueError)
+    def test_wrong_class_weight_label(self):
+        """ValueError due to not existing class label."""
+        clf = self.factory(alpha=0.1, n_iter=1000)
+        clf.fit(X, Y, class_weight={0:0.5})
+
+    @raises(ValueError)
+    def test_wrong_class_weight_format(self):
+        """ValueError due to wrong class_weight argument type."""
+        clf = self.factory(alpha=0.1, n_iter=1000)
+        clf.fit(X, Y, class_weight=[0.5])
+
+    def test_auto_weight(self):
+        """Test class weights for imbalanced data"""
+        # compute reference metrics on iris dataset that is quite balanced by
+        # default
+        X, y = iris.data, iris.target
+        X = preprocessing.scale(X)
+        idx = np.arange(X.shape[0])
+        np.random.seed(13)
+        np.random.shuffle(idx)
+        X = X[idx]
+        y = y[idx]
+        clf = self.factory(alpha=0.0001, n_iter=1000).fit(X, y)
+        assert_approx_equal(metrics.f1_score(y, clf.predict(X)), 0.96, 2)
+
+        # make the same prediction using automated class_weight
+        clf_auto = self.factory(alpha=0.0001,
+                                n_iter=1000).fit(X, y, class_weight="auto")
+        assert_approx_equal(metrics.f1_score(y, clf_auto.predict(X)), 0.96, 2)
+
+        # Make sure that in the balanced case it does not change anything
+        # to use "auto"
+        assert_array_almost_equal(clf.coef_, clf_auto.coef_, 6)
+
+        # build an very very imbalanced dataset out of iris data
+        X_0 = X[y == 0, :]
+        y_0 = y[y == 0]
+
+        X_imbalanced = np.vstack([X] + [X_0] * 10)
+        y_imbalanced = np.concatenate([y] + [y_0] * 10)
+
+        # fit a model on the imbalanced data without class weight info
+        clf = self.factory(n_iter=1000)
+        clf.fit(X_imbalanced, y_imbalanced)
+        y_pred = clf.predict(X)
+        assert metrics.f1_score(y, y_pred) < 0.96
+
+        # fit a model with auto class_weight enabled
+        clf = self.factory(n_iter=1000)
+        clf.fit(X_imbalanced, y_imbalanced, class_weight="auto")
+        y_pred = clf.predict(X)
+        assert metrics.f1_score(y, y_pred) > 0.96
+
+    def test_sample_weights(self):
+        """
+        Test weights on individual samples
+        """
+        clf = self.factory(alpha=0.01, n_iter=100,
+                           shuffle=True)
+        clf.fit(X, Y)
+        assert_array_equal(clf.predict(X[2]), [1.])
+
+        sample_weight=[.1]*3 + [10]*3
+        clf.fit(X, Y, sample_weight=sample_weight)
+        assert_array_equal(clf.predict(X[2]), [2.])
+        
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
     factory = linear_model.sparse.SGDClassifier
+
+
+##
+## Regression Test Case
+##
 
 
 class DenseSGDRegressorTestCase(unittest.TestCase):
@@ -208,7 +329,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         """Check that SGD gives any results."""
         clf = self.factory(alpha=0.1, n_iter=2,
                            fit_intercept=False)
-        clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+        clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
         assert clf.coef_[0] == clf.coef_[1]
 
     def test_sgd_penalties(self):

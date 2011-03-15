@@ -259,9 +259,15 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
                               dtype=np.float64, order='C')
             weight *= classes.shape[0] / np.sum(weight)
         else:
-            weight = np.zeros(classes.shape[0], dtype=np.float64, order='C')
-            for i, c in enumerate(classes):
-                weight[i] = class_weight.get(i, 1.0)
+            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+            if not isinstance(class_weight, dict):
+                raise ValueError("class_weight must be dict, 'auto', or None.")
+            for c in class_weight:
+                i = np.searchsorted(classes, c)
+                if classes[i] != c:
+                    raise ValueError("Class label %d not present." % c)
+                else:
+                    weight[i] = class_weight[c]
 
         self.class_weight = weight
 
@@ -310,7 +316,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             n_samples, n_features = X.shape
 
         if n_samples != len(y):
-            raise AttributeError("Shapes of X and y do not match.")
+            raise ValueError("Shapes of X and y do not match.")
 
         # sort in asc order; largest class id is positive class
         self.classes = np.unique(y)
@@ -450,7 +456,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             n_samples, n_features = X.shape
 
         if n_samples != len(y):
-            raise AttributeError("Shapes of X and y do not match.")
+            raise ValueError("Shapes of X and y do not match.")
 
         # get sample weights
         if len(sample_weight) == 0:
