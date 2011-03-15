@@ -135,6 +135,7 @@ class LinearRegression(LinearModel):
 ## TODO add sample_weights to signature (see LibSVM)
 ## TODO adher to svm signature (return values of score etc.)
 
+
 class BaseSGD(BaseEstimator):
     """Base class for dense and sparse SGD."""
 
@@ -154,23 +155,70 @@ class BaseSGD(BaseEstimator):
         self.shuffle = bool(shuffle)
         self.seed = seed
         self.verbose = int(verbose)
-        self._get_loss_function()
-        self._get_penalty_type()
+        self._set_loss_function(self.loss)
+        self._set_penalty_type(self.penalty)
 
-    def _get_loss_function(self):
+    def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
         raise NotImplementedError("BaseSGD is an abstract class.")
 
-    def _get_penalty_type(self):
+    def _set_penalty_type(self, penalty):
         penalty_types = {"l2": 2, "l1": 1, "elasticnet": 3}
         try:
-            self.penalty_type = penalty_types[self.penalty]
+            self.penalty_type = penalty_types[penalty]
             if self.penalty_type == 2:
                 self.rho = 1.0
             elif self.penalty_type == 1:
                 self.rho = 0.0
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % self.penalty)
+
+    def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
+                                intercept_init=None):
+        """Allocate mem for parameters; initialize if provided."""
+        if n_classes > 2:
+            # allocate coef_ for multi-class
+            if coef_init is not None:
+                coef_init = np.asanyarray(coef_init)
+                if coef_init.shape != (n_classes, n_features):
+                    raise ValueError("Provided coef_ does not match dataset. ")
+                self.coef_ = coef_init
+            else:
+                self.coef_ = np.zeros((n_classes, n_features),
+                                      dtype=np.float64, order="C")
+
+            # allocate intercept_ for multi-class
+            if intercept_init is not None:
+                intercept_init = np.asanyarray(intercept_init)
+                if intercept_init.shape != (n_classes, ):
+                    raise ValueError("Provided intercept_init " \
+                                     "does not match dataset.")
+                self.intercept_ = intercept_init
+            else:
+                self.intercept_ = np.zeros(n_classes, dtype=np.float64,
+                                           order="C")
+        else:
+            # allocate coef_ for binary problem
+            if coef_init is not None:
+                coef_init = np.asanyarray(coef_init, dtype=np.float64,
+                                          order="C")
+                coef_init = coef_init.ravel()
+                if coef_init.shape != (n_features,):
+                    raise ValueError("Provided coef_init does not " \
+                                     "match dataset.")
+                self.coef_ = coef_init
+            else:
+                self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
+
+            # allocate intercept_ for binary problem
+            if intercept_init is not None:
+                intercept_init = np.asanyarray(intercept_init, dtype=np.float64)
+                if intercept_init.shape != (1,):
+                    raise ValueError("Provided intercept_init " \
+                                 "does not match dataset.")
+                self.intercept_ = intercept_init
+            else:
+                self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
 
 class BaseSGDClassifier(BaseSGD, ClassifierMixin):
@@ -188,7 +236,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
                                                 seed=seed)
         self.n_jobs = int(n_jobs)
 
-    def _get_loss_function(self):
+    def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
         loss_functions = {
             "hinge": Hinge(),
@@ -196,11 +244,11 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             "modified_huber": ModifiedHuber(),
         }
         try:
-            self.loss_function = loss_functions[self.loss]
+            self.loss_function = loss_functions[loss]
         except KeyError:
-            raise ValueError("The loss %s is not supported. " % self.loss)
+            raise ValueError("The loss %s is not supported. " % loss)
 
-    def _get_class_weight(self, class_weight, classes, y):
+    def _set_class_weight(self, class_weight, classes, y):
         """
         Estimate class weights for unbalanced datasets.
         """
@@ -215,7 +263,89 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             for i, c in enumerate(classes):
                 weight[i] = class_weight.get(i, 1.0)
 
-        return weight
+        self.class_weight = weight
+
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            class_weight={}, sample_weight=[], **params):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples,n_features]
+            Training data
+
+        y : numpy array of shape [n_samples]
+            Target values
+
+        coef_init : array, shape = [n_classes,n_features]
+            The initial coeffients to warm-start the optimization.
+
+        intercept_init : array, shape = [n_classes]
+            The initial intercept to warm-start the optimization.
+
+        class_weight : dict, {class_label : weight} or "auto"
+            Weights associated with classes. If not given, all classes
+            are supposed to have weight one.
+
+            The "auto" mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_params(**params)
+
+        # check only y because X might be dense or sparse
+        y = np.asanyarray(y, dtype=np.float64, order='C')
+
+        # make sure X has shape
+        try:
+            n_samples, n_features = X.shape
+        except AttributeError:
+            X = np.asanyarray(X)
+            n_samples, n_features = X.shape
+
+        if n_samples != len(y):
+            raise AttributeError("Shapes of X and y do not match.")
+
+        # sort in asc order; largest class id is positive class
+        self.classes = np.unique(y)
+        n_classes = self.classes.shape[0]
+
+        # set class weights
+        self._set_class_weight(class_weight, self.classes, y)
+
+        # set sample weights
+        if len(sample_weight) == 0:
+            sample_weight = np.ones(y.shape[0], dtype=np.float64, order='C')
+        else:
+            sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
+                                          order="C")
+        self.sample_weight = sample_weight
+
+        self._allocate_parameter_mem(n_classes, n_features,
+                                     coef_init, intercept_init)
+
+        # delegate to concrete training procedure
+        if n_classes > 2:
+            self._fit_multiclass(X, y)
+        elif n_classes == 2:
+            self._fit_binary(X, y)
+        else:
+            raise ValueError("The number of class labels must be "
+                             "greater than one.")
+        # return self for chaining fit and predict calls
+        return self
+
+    def _fit_binary(self, X, y):
+        raise NotImplementedError("BaseSGDClassifier is an abstract class.")
+
+    def _fit_multiclass(self, X, y):
+        raise NotImplementedError("BaseSGDClassifier is an abstract class.")
 
     def predict(self, X):
         """Predict using the linear model
@@ -273,16 +403,73 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                n_iter=n_iter, shuffle=shuffle,
                                                verbose=verbose, seed=seed)
 
-    def _get_loss_function(self):
+    def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
         loss_functions = {
             "squared_loss": SquaredLoss(),
             "huber": Huber(self.p),
         }
         try:
-            self.loss_function = loss_functions[self.loss]
+            self.loss_function = loss_functions[loss]
         except KeyError:
-            raise ValueError("The loss %s is not supported. " % self.loss)
+            raise ValueError("The loss %s is not supported. " % loss)
+
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=[], **params):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples,n_features]
+            Training data
+
+        y : numpy array of shape [n_samples]
+            Target values
+
+        coef_init : array, shape = [n_features]
+            The initial coeffients to warm-start the optimization.
+
+        intercept_init : array, shape = [1]
+            The initial intercept to warm-start the optimization.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_params(**params)
+        y = np.asanyarray(y, dtype=np.float64, order="C")
+
+        # make sure X has shape
+        try:
+            n_samples, n_features = X.shape
+        except AttributeError:
+            X = np.asanyarray(X)
+            n_samples, n_features = X.shape
+
+        if n_samples != len(y):
+            raise AttributeError("Shapes of X and y do not match.")
+
+        # get sample weights
+        if len(sample_weight) == 0:
+            sample_weight = np.ones(y.shape[0], dtype=np.float64,
+                                    order='C')
+        else:
+            sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
+                                          order='C')
+        self.sample_weight = sample_weight
+
+        # allocate memory for coef and intercept
+        self._allocate_parameter_mem(1, n_features,
+                                     coef_init, intercept_init)
+
+        self._fit_regressor(X, y)
+        return self
+
+    def _fit_regressor(self, X, y):
+        raise NotImplementedError("BaseSGDRegressor is an abstract class.")
 
     def predict(self, X):
         """Predict using the linear model
@@ -315,4 +502,3 @@ class CoefSelectTransformerMixin(object):
             coef = np.mean(self.coef_, axis=0)
 
         return X[:, coef <= threshold]
-

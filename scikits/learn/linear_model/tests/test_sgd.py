@@ -183,10 +183,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         X = X4[idx, :]
         Y = Y4[idx, :]
 
+        print "factory", self.factory
         clf = self.factory(penalty='l1', alpha=.2, fit_intercept=False,
                            n_iter=2000)
         clf.fit(X, Y)
-        assert_array_equal(clf.coef_[1:-1], np.zeros((4,)))
+        assert_array_equal(clf.coef_[0, 1:-1], np.zeros((4,)))
 
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
