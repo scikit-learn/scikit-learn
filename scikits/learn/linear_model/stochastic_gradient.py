@@ -75,9 +75,9 @@ class SGDClassifier(BaseSGDClassifier):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes,
+    `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
     n_features]
-        Weights asigned to the features.
+        Weights assigned to the features.
 
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.

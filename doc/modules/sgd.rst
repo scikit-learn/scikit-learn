@@ -71,7 +71,7 @@ SGD fits a linear model to the training data. The member `coef_` holds
 the model parameters::
 
     >>> clf.coef_
-    array([ 9.90090187,  9.90090187])
+    array([[ 9.90090187,  9.90090187]])
 
 Member `intercept_` holds the intercept (aka offset or bias)::
 
@@ -143,6 +143,8 @@ indexed in ascending order (see member `classes`).
 
  * :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
  * :ref:`example_linear_model_plot_sgd_iris.py`
+ * :ref:`example_linear_model_plot_sgd_weighted_classes.py`
+ * :ref:`example_linear_model_plot_sgd_weighted_samples.py`
 
 Regression
 ==========
@@ -187,6 +189,9 @@ For maximum efficiency, use the CSR matrix format as defined in
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
 Implemented classes are :class:`SGDClassifier` and :class:`SGDRegressor`.
+During training both classes maintain a dense representation of the model
+parameters. After training has completed you can obtain a sparse representation
+of the model parameters via the attribute `sparse_coef_`.
 
 .. topic:: Examples:
 

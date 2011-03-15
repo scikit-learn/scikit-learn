@@ -209,7 +209,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
 
     def test_class_weight(self):
         """
-        Test class weights FIXED.
+        Test class weights.
         """
         X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                       [1.0, 1.0], [1.0, 0.0]])
@@ -299,14 +299,27 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         """
         Test weights on individual samples
         """
-        clf = self.factory(alpha=0.01, n_iter=100,
-                           shuffle=True)
-        clf.fit(X, Y)
-        assert_array_equal(clf.predict(X[2]), [1.])
+        X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                      [1.0, 1.0], [1.0, 0.0]])
+        y = [1, 1, 1, -1, -1]
 
-        sample_weight=[.1]*3 + [10]*3
-        clf.fit(X, Y, sample_weight=sample_weight)
-        assert_array_equal(clf.predict(X[2]), [2.])
+        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
+        clf.fit(X, y)
+        assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
+
+        # we give a small weights to class 1
+        clf.fit(X, y, sample_weight=[0.001]*3 + [1]*2)
+
+        # now the hyperplane should rotate clock-wise and
+        # the prediction on this point should shift
+        assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
+
+    @raises(ValueError)
+    def test_wrong_sample_weights(self):
+        """Test if ValueError is raised if sample_weight has wrong shape"""
+        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
+        # provided sample_weight too long
+        clf.fit(X, Y, sample_weight=range(7))
         
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):

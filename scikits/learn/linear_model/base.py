@@ -327,11 +327,13 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
         # set sample weights
         if len(sample_weight) == 0:
-            sample_weight = np.ones(y.shape[0], dtype=np.float64, order='C')
+            sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         else:
             sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
                                           order="C")
         self.sample_weight = sample_weight
+        if self.sample_weight.shape[0] != n_samples:
+            raise ValueError("Shapes of X and sample_weight do not match.")
 
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
@@ -460,12 +462,14 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         # get sample weights
         if len(sample_weight) == 0:
-            sample_weight = np.ones(y.shape[0], dtype=np.float64,
+            sample_weight = np.ones(n_samples, dtype=np.float64,
                                     order='C')
         else:
             sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
                                           order='C')
         self.sample_weight = sample_weight
+        if self.sample_weight.shape[0] != n_samples:
+            raise ValueError("Shapes of X and sample_weight do not match.")
 
         # allocate memory for coef and intercept
         self._allocate_parameter_mem(1, n_features,

@@ -1,6 +1,6 @@
 """
 =====================
-SVM: Weighted samples
+SGD: Weighted samples
 =====================
 
 Plot decision function of a weighted dataset, where the size of points
@@ -39,7 +39,8 @@ Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 pl.contour(xx, yy, Z, levels=[0], linestyles=['dashed'])
 
-pl.legend(["Unweighted", "Weighted"])
+pl.legend(["no weights", "with weights"],
+          loc="lower left")
 
 pl.axis('off')
 pl.show()
