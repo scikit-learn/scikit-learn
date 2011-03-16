@@ -223,16 +223,22 @@ def classify_features(n_examples_to_use=50000, alpha=.0001, n_iter=20,
     # I can't figure out how to get good classification results
     # using scikits linear classifiers(!?)
     #
+
+    shuffle = False
+    normalize = False
+    
     if 0:
         classif = SGDClassifier(
                 loss='hinge',
                 penalty='l2',
-                alpha=alpha,
-                shuffle=True,
-                n_iter=n_iter,
+                alpha=1e-5,
+                n_iter=50,
                 n_jobs=1)
-    elif 0:
-        classif = LinearSVC()
+        shuffle = True
+        normalize = True
+    elif 1:
+        classif = LinearSVC(C=0.01)
+        
     else:
         classif = TheanoSGDClassifier(n_classes=10,
                 learnrate=.005,
@@ -242,7 +248,7 @@ def classify_features(n_examples_to_use=50000, alpha=.0001, n_iter=20,
                 n_epochs=500,
                 validset_max_examples=0, #400 filters sees no overfitting
                 min_feature_std=0.001)
-        scale_input=False # the classifier does it
+        scale_input=True # the classifier does it
 
     print classif
 
@@ -253,25 +259,43 @@ def classify_features(n_examples_to_use=50000, alpha=.0001, n_iter=20,
 
     print 'loaded data of shape', X_train.shape, y_train.shape, X_train.dtype, y_train.dtype
     print 'loaded data of shape', X_test.shape, y_test.shape, X_test.dtype, y_test.dtype
-    print "scaling features to centered, unit variance vectors"
+    
+    X_train = X_train.reshape((X_train.shape[0],-1))
+    X_test = X_test.reshape((X_test.shape[0],-1))
 
     if scale_input:
+        print "scaling features to centered, unit variance vectors"
         scaler = Scaler().fit(X_train)
         X_train = scaler.transform(X_train, copy=False)
         X_test = scaler.transform(X_test,copy=False)
 
+    if shuffle:
+        print "shuffling training data"
+        idx = np.arange(len(y_train))
+        np.random.seed(13)
+        np.random.shuffle(idx)
+        X_train = X_train[idx]
+        y_train = y_train[idx]
+
+    if normalize:
+        print "normalize to avg norm 1"
+        avg_norm = np.mean(np.sqrt(np.sum(X_train ** 2, axis=1))[:,np.newaxis])
+        X_train /= avg_norm
+        X_test /= avg_norm
+        print "new avg norm:", np.mean(np.sqrt(np.sum(X_train ** 2, axis=1))[:,np.newaxis])
+
     print 'training classifier'
-    classif.fit(X_train.reshape((X_train.shape[0], -1)),y_train)
+    classif.fit(X_train,y_train)
 
 
-    pred_train = classif.predict(X_train.reshape((X_train.shape[0],-1)))
-    pred_test = classif.predict(X_test.reshape((X_test.shape[0],-1)))
+    pred_train = classif.predict(X_train)
+    pred_test = classif.predict(X_test)
 
     print 'train accuracy', (pred_train == y_train).mean()
     print 'test accuracy', (pred_test == y_test).mean()
 
 
-if 1:
+if 0:
     # Example of a BaseEstimator implemented with Theano.
     # This could use the GPU, except that 
     # a) linear regression isn't really worth it, and
