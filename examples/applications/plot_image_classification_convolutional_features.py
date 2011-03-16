@@ -243,7 +243,7 @@ def classify_features(n_examples_to_use=50000, alpha=.0001, n_iter=20,
         classif = TheanoSGDClassifier(n_classes=10,
                 learnrate=.005,
                 l2_regularization=.1,
-                center_and_normalize=True,
+                center_and_normalize=False,
                 anneal_epoch=50,
                 n_epochs=500,
                 validset_max_examples=0, #400 filters sees no overfitting
