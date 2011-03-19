@@ -350,9 +350,9 @@ class RandomizedPCA(BaseEstimator):
     Notes
     -------
     References:
-    
-    * Finding structure with randomness: Stochastic algorithms for 
-      constructing approximate matrix decompositions Halko, et al., 2009 
+
+    * Finding structure with randomness: Stochastic algorithms for
+      constructing approximate matrix decompositions Halko, et al., 2009
       (arXiv:909)
 
     * A randomized algorithm for the decomposition of matrices
