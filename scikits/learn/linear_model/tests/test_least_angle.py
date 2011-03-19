@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_, assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal
 
 from scikits.learn import linear_model, datasets
 
@@ -84,7 +84,7 @@ def test_collinearity():
     y = np.array([1., 0., 0])
 
     _, _, coef_path_ = linear_model.lars_path(X, y)
-    assert_(not np.isnan(coef_path_).any())
+    assert (not np.isnan(coef_path_).any())
     assert_array_almost_equal(np.dot(X, coef_path_[:,-1]), y)
 
 
