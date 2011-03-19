@@ -97,7 +97,7 @@ def load_20newsgroups(data_home=None, subset='train', categories=None,
     if not os.path.exists(train_path) or not os.path.exists(test_path):
 
         if not os.path.exists(archive_path):
-            logging.info("Downloading dataset from %s (14 MB)", URL)
+            logging.warn("Downloading dataset from %s (14 MB)", URL)
             opener = urllib.urlopen(URL)
             open(archive_path, 'wb').write(opener.read())
 

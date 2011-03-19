@@ -82,14 +82,14 @@ def check_fetch_lfw(data_home=None, funneled=True):
         target_filepath = join(lfw_home, target_filename)
         if not exists(target_filepath):
             url = BASE_URL + target_filename
-            logging.info("Downloading LFW metadata: %s", url)
+            logging.warn("Downloading LFW metadata: %s", url)
             downloader = urllib.urlopen(BASE_URL + target_filename)
             open(target_filepath, 'wb').write(downloader.read())
 
     if not exists(data_folder_path):
 
         if not exists(archive_path):
-            logging.info("Downloading LFW data: %s", archive_url)
+            logging.warn("Downloading LFW data (around 200MB): %s", archive_url)
             downloader = urllib.urlopen(archive_url)
             open(archive_path, 'wb').write(downloader.read())
 
