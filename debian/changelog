@@ -1,3 +1,9 @@
+scikit-learn (0.7.1.dfsg-1) unstable; urgency=low
+
+  * [8972010] New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 19 Mar 2011 11:31:00 -0400
+
 scikit-learn (0.6.0.dfsg-1) experimental; urgency=low
 
   * [05f0870] Disabled use of system libsvm - scikits.learn has its own
