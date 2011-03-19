@@ -11,6 +11,7 @@ from .lfw import load_lfw_people
 from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
+from .twenty_newsgroups import load_20newsgroups
 
 
 # backward compatibility
