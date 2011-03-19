@@ -61,7 +61,7 @@ def scale_face(face):
 #
 
 
-def check_fetch_lfw(data_home=None, funneled=True):
+def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     """Helper function to download any missing LFW data"""
     data_home = get_data_home(data_home=data_home)
     lfw_home = join(data_home, "lfw_home")
@@ -81,17 +81,23 @@ def check_fetch_lfw(data_home=None, funneled=True):
     for target_filename in TARGET_FILENAMES:
         target_filepath = join(lfw_home, target_filename)
         if not exists(target_filepath):
-            url = BASE_URL + target_filename
-            logging.warn("Downloading LFW metadata: %s", url)
-            downloader = urllib.urlopen(BASE_URL + target_filename)
-            open(target_filepath, 'wb').write(downloader.read())
+            if download_if_missing:
+                url = BASE_URL + target_filename
+                logging.warn("Downloading LFW metadata: %s", url)
+                downloader = urllib.urlopen(BASE_URL + target_filename)
+                open(target_filepath, 'wb').write(downloader.read())
+            else:
+                raise IOError("%s is missing" % target_filepath)
 
     if not exists(data_folder_path):
 
         if not exists(archive_path):
-            logging.warn("Downloading LFW data (~200MB): %s", archive_url)
-            downloader = urllib.urlopen(archive_url)
-            open(archive_path, 'wb').write(downloader.read())
+            if download_if_missing:
+                logging.warn("Downloading LFW data (~200MB): %s", archive_url)
+                downloader = urllib.urlopen(archive_url)
+                open(archive_path, 'wb').write(downloader.read())
+            else:
+                raise IOError("%s is missing" % target_filepath)
 
         import tarfile
         logging.info("Decompressing the data archive to %s", data_folder_path)
@@ -193,7 +199,8 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
                     min_faces_per_person=10, color=False,
-                    slice_=(slice(70, 195), slice(78, 172))):
+                    slice_=(slice(70, 195), slice(78, 172)),
+                    download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -234,9 +241,14 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
+
+    download_if_missing: optional, True by default
+        If False, raise a IOError if the data is not locally available
+        instead of trying to download the data from the source site.
     """
-    lfw_home, data_folder_path = check_fetch_lfw(data_home=data_home,
-                                                 funneled=funneled)
+    lfw_home, data_folder_path = check_fetch_lfw(
+        data_home=data_home, funneled=funneled,
+        download_if_missing=download_if_missing)
     logging.info('Loading LFW people faces from %s', lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
@@ -307,8 +319,17 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
+def load_lfw_people(download_if_missing=False, **kwargs):
+    """Alias for fetch_lfw_people(download_if_missing=False)
+
+    Check fetch_lfw_people.__doc__ for the documentation and parameter list.
+    """
+    return fetch_lfw_people(download_if_missing=download_if_missing, **kwargs)
+
+
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
-                   color=False, slice_=(slice(70, 195), slice(78, 172))):
+                   color=False, slice_=(slice(70, 195), slice(78, 172)),
+                    download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -358,9 +379,14 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
+
+    download_if_missing: optional, True by default
+        If False, raise a IOError if the data is not locally available
+        instead of trying to download the data from the source site.
     """
-    lfw_home, data_folder_path = check_fetch_lfw(data_home=data_home,
-                                                 funneled=funneled)
+    lfw_home, data_folder_path = check_fetch_lfw(
+        data_home=data_home, funneled=funneled,
+        download_if_missing=download_if_missing)
     logging.info('Loading %s LFW pairs from %s', subset, lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
@@ -387,3 +413,11 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     # pack the results as a Bunch instance
     return Bunch(data=pairs, target=target, target_names=target_names,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
+
+
+def load_lfw_pairs(download_if_missing=False, **kwargs):
+    """Alias for fetch_lfw_pairs(download_if_missing=False)
+
+    Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
+    """
+    return fetch_lfw_pairs(download_if_missing=download_if_missing, **kwargs)
