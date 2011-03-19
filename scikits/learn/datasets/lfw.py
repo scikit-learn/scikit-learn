@@ -89,7 +89,7 @@ def check_fetch_lfw(data_home=None, funneled=True):
     if not exists(data_folder_path):
 
         if not exists(archive_path):
-            logging.warn("Downloading LFW data (around 200MB): %s", archive_url)
+            logging.warn("Downloading LFW data (~200MB): %s", archive_url)
             downloader = urllib.urlopen(archive_url)
             open(archive_path, 'wb').write(downloader.read())
 
@@ -301,7 +301,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     shape = list(pairs.shape)
     n_faces = shape.pop(0)
     shape.insert(0, 2)
-    shape.insert(0, n_faces//2)
+    shape.insert(0, n_faces // 2)
     pairs.shape = shape
 
     return pairs, target, np.array(['Different persons', 'Same person'])

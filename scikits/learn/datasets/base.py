@@ -254,8 +254,8 @@ def load_linnerud():
     base_dir = join(dirname(__file__), 'data/')
     # Read data
     data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
-    data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv', 
-                                        skiprows=1)
+    data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv',
+                                    skiprows=1)
     # Read header
     f = open(base_dir + 'linnerud_exercise.csv')
     header_exercise = f.readline().split()
@@ -268,4 +268,3 @@ def load_linnerud():
                  data_physiological=data_physiological,
                  header_physiological=header_physiological,
                  DESCR=fdescr.read())
-

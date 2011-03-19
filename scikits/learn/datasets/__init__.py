@@ -10,10 +10,10 @@ from .lfw import load_lfw_pairs
 from .lfw import load_lfw_people
 from .twenty_newsgroups import load_20newsgroups
 
+
 # backward compatibility
 def load_files(*args, **kwargs):
     """Deprecated, use ``scikits.learn.datasets.load_filenames`` instead"""
     import warnings
     warnings.warn("Deprecated in 0.8 to be removed in 0.9: use load_filenames")
     return load_filenames(*args, **kwargs)
-
