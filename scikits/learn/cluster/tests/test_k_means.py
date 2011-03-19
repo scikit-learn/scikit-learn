@@ -1,7 +1,4 @@
-"""
-Testing for K-means.
-
-"""
+"""Testing for K-means"""
 
 import numpy as np
 from numpy.testing import assert_equal
@@ -54,6 +51,4 @@ def test_k_means_fixed_array_init():
     assert_equal(np.unique(labels[:20]).size, 1)
     assert_equal(np.unique(labels[20:40]).size, 1)
     assert_equal(np.unique(labels[40:]).size, 1)
-
-
 

@@ -41,6 +41,7 @@ import sys
 
 from scikits.learn.datasets import load_files
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
+from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn import metrics
@@ -153,6 +154,11 @@ def benchmark(clf):
 
     print
     return score, train_time, test_time
+
+for clf, name in ((RidgeClassifier(), "Ridge Classifier"),):
+    print 80*'='
+    print name
+    results = benchmark(clf)
 
 for penalty in ["l2", "l1"]:
     print 80*'='

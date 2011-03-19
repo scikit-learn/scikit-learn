@@ -77,7 +77,6 @@ def plot_samples(S, axis_list=None):
     pl.xlabel('$x$')
     pl.ylabel('$y$')
 
-pl.close('all')
 pl.subplot(2, 2, 1)
 plot_samples(S / S.std())
 pl.title('True Independant Sources')

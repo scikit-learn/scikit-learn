@@ -1,3 +1,10 @@
+/* 
+   Modified 2011:
+
+   - Make labels sorted in group_classes, Dan Yamins.
+   
+ */
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1689,12 +1696,11 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 	int *label = Malloc(int,max_nr_class);
 	int *count = Malloc(int,max_nr_class);
 	int *data_label = Malloc(int,l);
-	int i;
+	int i,j, this_label, this_count;
 
 	for(i=0;i<l;i++)
 	{
-		int this_label = prob->y[i];
-		int j;
+		this_label = (int)prob->y[i];
 		for(j=0;j<nr_class;j++)
 		{
 			if(this_label == label[j])
@@ -1717,6 +1723,38 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 			++nr_class;
 		}
 	}
+
+        /* START MOD: Sort labels and apply to array count --dyamins */
+        
+        for(j=1; j<nr_class; j++)
+        {
+                i = j-1;
+                this_label = label[j];
+                this_count = count[j];
+                while(i>=0 && label[i] > this_label)
+                {
+                        label[i+1] = label[i];
+                        count[i+1] = count[i];
+                        i--;
+                }
+                label[i+1] = this_label;
+                count[i+1] = this_count;
+        }
+        
+        for (i=0; i <l; i++)
+        {
+                j = 0;
+                this_label = (int)prob->y[i];
+                while(this_label != label[j])
+                {
+                        j++;      
+                }
+                data_label[i] = j;
+
+        }
+
+        /* END MOD */
+
 
 	int *start = Malloc(int,nr_class);
 	start[0] = 0;
@@ -2009,7 +2047,9 @@ int predict_values(const struct model *model_, const struct feature_node *x, dou
 		// the dimension of testing data may exceed that of training
 		if(idx<=n)
 			for(i=0;i<nr_w;i++)
-				dec_values[i] += w[(idx-1)*nr_w+i]*lx->value;
+		        dec_values[i] += w[(idx-1)*nr_w+i]*lx->value;
+
+				
 	}
 
 	if(nr_class==2)
@@ -2018,7 +2058,7 @@ int predict_values(const struct model *model_, const struct feature_node *x, dou
 	{
 		int dec_max_idx = 0;
 		for(i=1;i<nr_class;i++)
-		{
+		{		    
 			if(dec_values[i] > dec_values[dec_max_idx])
 				dec_max_idx = i;
 		}

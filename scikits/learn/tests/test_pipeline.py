@@ -93,7 +93,3 @@ def test_pipeline_methods():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
-    support_ = pipe.get_support()
-    assert np.sum(support_) == 2
-    coef_ = pipe.coef_
-    assert np.size(coef_) == 4

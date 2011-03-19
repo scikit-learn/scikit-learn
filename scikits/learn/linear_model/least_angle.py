@@ -16,7 +16,7 @@ from .base import LinearModel
 from ..utils import arrayfuncs
 
 def lars_path(X, y, Xy=None, Gram=None, max_features=None,
-              alpha_min=0, method="lar", overwrite_X=False,
+              alpha_min=0, method='lar', overwrite_X=False,
               overwrite_Gram=False, verbose=False):
 
     """ Compute Least Angle Regression and LASSO path
@@ -39,21 +39,25 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             Minimum correlation along the path. It corresponds to the
             regularization parameter alpha parameter in the Lasso.
 
-        method: 'lar' or 'lasso'
-            Specifies the problem solved: the LAR or its variant the
-            LASSO-LARS that gives the solution of the LASSO problem
-            for any regularization parameter.
+        method: 'lar' | 'lasso'
+            Specifies the returned model. Select 'lar' for Least Angle
+            Regression, 'lasso' for the Lasso.
 
         Returns
         --------
-        alphas: array, shape: (k)
-            The alphas along the path
+        alphas: array, shape: (max_features + 1,)
+            Maximum of covariances (in absolute value) at each
+            iteration.
 
-        active: array, shape (?)
+        active: array, shape (max_features,)
             Indices of active variables at the end of the path.
 
-        coefs: array, shape (p, k)
+        coefs: array, shape (n_features, max_features+1)
             Coefficients along the path
+
+        See also
+        --------
+        :ref:`LassoLARS`, :ref:`LARS`
 
         Notes
         ------
@@ -75,6 +79,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
     # holds the sign of covariance
     sign_active = np.empty(max_features, dtype=np.int8)
     drop = False
+    eps = np.finfo(X.dtype).eps
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
@@ -103,8 +108,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
     while 1:
 
         if Cov.size:
-            imax = np.argmax(np.abs(Cov)) # TODO: rename
-            C_ = Cov[imax]
+            C_idx = np.argmax(np.abs(Cov))
+            C_ = Cov[C_idx]
             C = np.fabs(C_)
             # to match a for computing gamma_
         else:
@@ -115,7 +120,17 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         alphas[n_iter] = C / n_samples
 
-        if (C < alpha_min) or (n_active == max_features):
+        # Check for early stopping
+        if alphas[n_iter] < alpha_min: # interpolate
+            # interpolation factor 0 <= ss < 1
+            ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
+                                                   alphas[n_iter])
+            coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] -
+                            coefs[n_iter-1])
+            alphas[n_iter] = alpha_min
+            break
+
+        if n_active == max_features:
             break
 
         if not drop:
@@ -129,9 +144,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             #   where u is the last added to the active set   #
 
             sign_active[n_active] = np.sign(C_)
-            m, n = n_active, imax+n_active
+            m, n = n_active, C_idx+n_active
 
-            Cov[imax], Cov[0] = swap(Cov[imax], Cov[0])
+            Cov[C_idx], Cov[0] = swap(Cov[C_idx], Cov[0])
             indices[n], indices[m] = indices[m], indices[n]
             Cov = Cov[1:] # remove Cov[0]
 
@@ -152,7 +167,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             arrayfuncs.solve_triangular(L[:n_active, :n_active],
                                         L[n_active, :n_active])
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
-            L[n_active,  n_active] = np.sqrt(c - v)
+            diag = max(np.sqrt(np.abs(c - v)), eps)
+            L[n_active,  n_active] = diag
 
             active.append(indices[n_active])
             n_active += 1
@@ -182,24 +198,31 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             corr_eq_dir = np.dot(Gram[:n_active, n_active:].T,
                                  least_squares)
 
-        # equation 2.13
+
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir))
         g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir))
         gamma_ = min(g1, g2, C/AA)
 
-        if method == 'lasso':
-            drop = False
-            z = - coefs[n_iter, active] / least_squares
-            z_pos = arrayfuncs.min_pos(z)
-            if z_pos < gamma_:
-                idx = np.where(z == z_pos)[0]
-                gamma_ = z_pos
-                drop = True
+        # TODO: better names for these variables: z
+        drop = False
+        z = - coefs[n_iter, active] / least_squares
+        z_pos = arrayfuncs.min_pos(z)
+        if z_pos < gamma_:
+
+            # some coefficients have changed sign
+            idx = np.where(z == z_pos)[0]
+
+            # update the sign, important for LAR
+            sign_active[idx] = -sign_active[idx]
+
+            if method == 'lasso': gamma_ = z_pos
+            drop = True
 
         n_iter += 1
 
-        if n_iter >= coefs.shape[0]: # resize
-            add_features = 2 * (max_features - n_active) # heuristic
+        if n_iter >= coefs.shape[0]:
+            # resize the coefs and alphas array
+            add_features = 2 * (max_features - n_active)
             coefs.resize((n_iter + add_features, n_features))
             alphas.resize(n_iter + add_features)
 
@@ -212,7 +235,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
         if n_active > n_features:
             break
 
-        if drop:
+        # See if any coefficient has changed sign
+        if drop and method == 'lasso':
 
             arrayfuncs.cholesky_delete(L[:n_active, :n_active], idx)
 
@@ -251,19 +275,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
                 temp = np.dot(X.T[drop_idx], residual)
                 Cov = np.r_[temp, Cov]
 
-            # do an append to maintain size
             sign_active = np.delete(sign_active, idx)
-            sign_active = np.append(sign_active, 0.)
+            sign_active = np.append(sign_active, 0.) # just to maintain size
             if verbose:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
                                                       n_active, abs(temp))
-    if C < alpha_min: # interpolate
-        # interpolation factor 0 <= ss < 1
-        ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
-                                               alphas[n_iter])
-        coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] - coefs[n_iter-1])
-        alphas[n_iter] = alpha_min
-
 
     # resize coefs in case of early stop
     alphas = alphas[:n_iter+1]
@@ -408,11 +424,11 @@ class LassoLARS (LARS):
     Examples
     --------
     >>> from scikits.learn import linear_model
-    >>> clf = linear_model.LassoLARS(alpha=0.1)
+    >>> clf = linear_model.LassoLARS(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
+    LassoLARS(alpha=0.01, verbose=False, fit_intercept=True)
     >>> print clf.coef_
-    [ 0.          0.08350342]
+    [ 0.         -0.72649658]
 
     References
     ----------

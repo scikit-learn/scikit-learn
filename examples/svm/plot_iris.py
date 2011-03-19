@@ -53,12 +53,11 @@ for i, clf in enumerate((svc, rbf_svc, nu_svc, lin_svc)):
     Z = Z.reshape(xx.shape)
     pl.set_cmap(pl.cm.Paired)
     pl.contourf(xx, yy, Z)
-    pl.axis('tight')
+    pl.axis('off')
 
     # Plot also the training points
     pl.scatter(X[:,0], X[:,1], c=Y)
 
     pl.title(titles[i])
 
-pl.axis('tight')
 pl.show()

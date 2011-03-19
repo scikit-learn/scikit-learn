@@ -25,9 +25,7 @@ Dependencies
 ============
 
 The required dependencies to build the software are python >= 2.5,
-setuptools, NumPy >= 1.1, SciPy >= 0.6 (although having at least 0.7
-is highly recommended and required by some modules) and a working C++
-compiler.
+setuptools, NumPy >= 1.2, SciPy >= 0.7 and a working C++ compiler.
 
 To run the tests you will also need nose >= 0.10.
 
@@ -79,8 +77,8 @@ Bugs
 ----
 
 Please submit bugs you might encounter, as well as patches and feature
-requests to the tracker located at the address
-https://sourceforge.net/apps/trac/scikit-learn/report
+requests to the tracker located at github
+https://github.com/scikit-learn/scikit-learn/issues
 
 
 Testing

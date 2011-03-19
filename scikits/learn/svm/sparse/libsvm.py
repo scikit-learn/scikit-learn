@@ -1,5 +1,5 @@
 
-from ..base import ClassifierMixin, RegressorMixin
+from ...base import ClassifierMixin, RegressorMixin
 from .base import SparseBaseLibSVM
 
 
