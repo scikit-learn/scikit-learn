@@ -4,6 +4,7 @@ from .base import load_filenames
 from .base import load_iris
 from .base import load_linnerud
 from .base import get_data_home
+from .base import clear_data_home
 from .mlcomp import load_mlcomp
 from .lfw import load_lfw_pairs
 from .lfw import load_lfw_people
