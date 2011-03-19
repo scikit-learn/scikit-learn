@@ -19,7 +19,7 @@ import pylab as pl
 from scikits.learn import datasets
 digits = datasets.load_digits()
 
-# The data that we are interesting in is made of 8x8 images of digits,
+# The data that we are interested in is made of 8x8 images of digits,
 # let's have a look at the first 3 images. We know which digit they
 # represent: it is given in the 'target' of the dataset.
 for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):

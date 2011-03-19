@@ -13,13 +13,24 @@ that, given train data, returns an array of integer labels corresponding
 to the different clusters. For the class, the labels over the training
 data can be found in the `labels_` attribute.
 
-Here, we only explain the different algorithms. For usage examples, click
-on the class name to read the reference documentation.
+.. currentmodule:: scikits.learn.cluster
+
+One important thing to note is that the algorithms implemented in this module
+take different kinds of matrix as input.  On one hand, :class:`MeanShift` and
+:class:`KMeans` take data matrices of shape [n_samples, n_features]. These can
+be obtained from the classes in the `scikits.learn.feature_extraction` module.
+On the other hand, :class:`AffinityPropagation` and :class:`SpectralClustering`
+take similarity matrices of shape [n_samples, n_samples].  These can be
+obtained from the functions in the `scikits.learn.metrics.pairwise` module.
+In other words, :class:`MeanShift` and :class:`KMeans` work with points in a
+vector space, whereas :class:`AffinityPropagation` and
+:class:`SpectralClustering` can work with arbitrary objects, as long as a
+similarity measure exists for such objects.
+
 
 Affinity propagation
 ====================
 
-.. currentmodule:: scikits.learn.cluster
 
 :class:`AffinityPropagation` clusters data by diffusion in the similarity
 matrix. This algorithm automatically sets its numbers of cluster. It

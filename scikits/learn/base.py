@@ -253,6 +253,37 @@ class RegressorMixin(object):
 
 
 ################################################################################
+class TransformerMixin(object):
+    """ Mixin class for all transformers in the scikit learn
+    """
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Fit model to data and subsequently transform the data
+
+        Sometimes, fit and transform can be implemented more efficiently jointly
+        than separately. In those cases, the estimator will typically override
+        the method.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+            Training set.
+
+        y : numpy array of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if y is None:
+            # fit method of arity 1 (unsupervised transformation)
+            return self.fit(X, **fit_params).transform(X)
+        else:
+            # fit method of arity 2 (supervised transformation)
+            return self.fit(X, y, **fit_params).transform(X)
+
+################################################################################
 # XXX: Temporary solution to figure out if an estimator is a classifier
 
 def _get_sub_estimator(estimator):

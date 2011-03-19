@@ -36,6 +36,7 @@ This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
     * `Development version <http://scikit-learn.sf.net/dev/>`_
+    * `0.7 <http://scikit-learn.sf.net/0.7/>`_
     * `0.6 <http://scikit-learn.sf.net/0.6/>`_
     * `0.5 <http://scikit-learn.sf.net/0.5/>`_
 

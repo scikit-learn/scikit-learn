@@ -176,19 +176,3 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
 
-    def get_support(self):
-        support_ = None
-        for name, transform in self.steps[:-1]:
-            if hasattr(transform, 'get_support'):
-                support_ = transform.get_support()
-        if support_ is None:
-            support_ = np.ones(self.steps[-1][-1].coef_.shape, dtype=np.bool)
-        return support_
-
-    @property
-    def coef_(self):
-        support_ = self.get_support()
-        coef = np.zeros(support_.shape, dtype=np.float)
-        coef[support_] = self.steps[-1][-1].coef_
-        return coef
-

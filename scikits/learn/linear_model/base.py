@@ -7,13 +7,18 @@ Generalized Linear models.
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Vincent Michel <vincent.michel@inria.fr>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#         Mathieu Blondel <mathieu@mblondel.org>
 #
 # License: BSD Style.
 
 import numpy as np
+import scipy.sparse as sp
 
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
+from ..utils.extmath import safe_sparse_dot
+from ..utils import safe_asanyarray
+
 
 ###
 ### TODO: intercept for all models
@@ -39,8 +44,8 @@ class LinearModel(BaseEstimator, RegressorMixin):
         C : array, shape = [n_samples]
             Returns predicted values.
         """
-        X = np.asanyarray(X)
-        return np.dot(X, self.coef_) + self.intercept_
+        X = safe_asanyarray(X)
+        return safe_sparse_dot(X, self.coef_) + self.intercept_
 
     @staticmethod
     def _center_data(X, y, fit_intercept):
@@ -50,9 +55,12 @@ class LinearModel(BaseEstimator, RegressorMixin):
         centered.
         """
         if fit_intercept:
-            Xmean = X.mean(axis=0)
+            if sp.issparse(X):
+                Xmean = np.zeros(X.shape[1])
+            else:
+                Xmean = X.mean(axis=0)
+                X = X - Xmean
             ymean = y.mean()
-            X = X - Xmean
             y = y - ymean
         else:
             Xmean = np.zeros(X.shape[1])
@@ -290,3 +298,19 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         """
         X = np.asanyarray(X)
         return np.dot(X, self.coef_) + self.intercept_
+
+
+class CoefSelectTransformerMixin(object):
+    """Mixin for linear models that can find sparse solutions.
+    """
+
+    def transform(self, X, threshold=1e-10):
+        if len(self.coef_.shape) == 1 or self.coef_.shape[1] == 1:
+            # 2-class case
+            coef = np.ravel(self.coef_)
+        else:
+            # multi-class case
+            coef = np.mean(self.coef_, axis=0)
+
+        return X[:, coef <= threshold]
+
