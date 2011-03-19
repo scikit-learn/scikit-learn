@@ -120,10 +120,10 @@ def test_randomized_pca_check_projection():
 
 def test_randomized_pca_check_list():
     """Test that the projection by RandomizedPCA on list data is correct"""
-    X = [[1.0, 0.0], [0.0, 1.0]]
+    X = [[1.0, 0.0], [0.0, 0.99]]
     X_transformed = RandomizedPCA(n_components=1).fit(X).transform(X)
     np.testing.assert_almost_equal(
-        X_transformed, np.array([[-0.71], [0.71]]), 2)
+        X_transformed, np.array([[0.70], [-0.70]]), 2)
 
 
 def test_randomized_pca_inverse():
