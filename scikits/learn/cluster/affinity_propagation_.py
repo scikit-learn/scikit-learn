@@ -51,7 +51,9 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     """
     if copy:
         # Copy the affinity matrix to avoid modifying it inplace
-        S = S.copy()
+        S = np.array(S, copy=True, dtype=np.float)
+    else:
+        S = np.asanyarray(S, dtype=np.float)
 
     n_points = S.shape[0]
 
@@ -72,9 +74,8 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     R = np.zeros((n_points, n_points)) # Initialize messages
 
     # Remove degeneracies
-    S += (  np.finfo(np.double).eps*S
-          + np.finfo(np.double).tiny*100
-         )*random_state.randn(n_points, n_points)
+    S += (np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) * \
+         random_state.randn(n_points, n_points)
 
     # Execute parallel affinity propagation updates
     e = np.zeros((n_points, convit))
@@ -118,7 +119,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         K = np.sum(E, axis=0)
 
         if it >= convit:
-            se = np.sum(e, axis=1);
+            se = np.sum(e, axis=1)
             unconverged = np.sum((se == convit) + (se == 0)) != n_points
             if (not unconverged and (K>0)) or (it==max_iter):
                 if verbose:
@@ -137,7 +138,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         # Refine the final set of exemplars and clusters and return results
         for k in range(K):
             ii = np.where(c==k)[0]
-            j = np.argmax(np.sum(S[ii, ii], axis=0))
+            j = np.argmax(np.sum(S[ii[:,np.newaxis], ii], axis=0))
             I[k] = ii[j]
 
         c = np.argmax(S[:, I], axis=1)
@@ -153,7 +154,8 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
 
     return cluster_centers_indices, labels
 
-################################################################################
+###############################################################################
+
 class AffinityPropagation(BaseEstimator):
     """Perform Affinity Propagation Clustering of data
 
@@ -225,8 +227,8 @@ class AffinityPropagation(BaseEstimator):
 
         """
         self._set_params(**params)
-        self.cluster_centers_indices_, self.labels_ = affinity_propagation(S, p,
-                max_iter=self.max_iter, convit=self.convit, damping=self.damping,
+        self.cluster_centers_indices_, self.labels_ = affinity_propagation(S,
+                                p, max_iter=self.max_iter, convit=self.convit,
+                                damping=self.damping,
                 copy=self.copy)
         return self
-

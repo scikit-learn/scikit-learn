@@ -46,6 +46,7 @@ Generalized Linear Models
 
    linear_model.LinearRegression
    linear_model.Ridge
+   linear_model.RidgeCV
    linear_model.Lasso
    linear_model.LassoCV
    linear_model.ElasticNet
@@ -105,14 +106,15 @@ Nearest Neighbors
    :toctree: generated/
    :template: class.rst
 
-   neighbors.Neighbors
-   neighbors.NeighborsBarycenter
+   neighbors.NeighborsClassifier
+   neighbors.NeighborsRegressor
    ball_tree.BallTree
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
+   neighbors.kneighbors_graph
    ball_tree.knn_brute
 
 Gaussian Mixture Models
@@ -150,6 +152,32 @@ Clustering
    cluster.AffinityPropagation
 
 
+Metrics
+=======
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.euclidean_distances
+   metrics.unique_labels
+   metrics.confusion_matrix
+   metrics.roc_curve
+   metrics.auc
+   metrics.precision_score
+   metrics.recall_score
+   metrics.fbeta_score
+   metrics.f1_score
+   metrics.precision_recall_fscore_support
+   metrics.classification_report
+   metrics.precision_recall_curve
+   metrics.r2_score
+   metrics.zero_one_score
+   metrics.zero_one
+   metrics.mean_square_error
+
+
 Covariance Estimators
 =====================
 
@@ -179,6 +207,7 @@ Signal Decomposition
 
    pca.PCA
    pca.ProbabilisticPCA
+   pca.RandomizedPCA
    fastica.FastICA
 
 .. autosummary::

@@ -31,17 +31,25 @@ cdef extern from "liblinear_helper.c":
                           
     model *set_model(parameter *, char *, np.npy_intp *, char *, double)
     int copy_predict(char *, model *, np.npy_intp *, char *)
-    int csr_copy_predict (np.npy_intp n_features, np.npy_intp *data_size, char *data, np.npy_intp *index_size,
-		char *index, np.npy_intp *intptr_size, char *intptr, model *model,
-		char *dec_values)
 
-    int csr_copy_predict_proba(np.npy_intp n_features, np.npy_intp *data_size, 
-                           char *data, np.npy_intp *index_size,
-                           char *index, np.npy_intp *indptr_shape, 
-                           char *indptr, model *model_,
-                           char *dec_values)
+    int csr_copy_predict(
+        np.npy_intp n_features, np.npy_intp *data_size, char *data,
+        np.npy_intp *index_size, char *index, np.npy_intp
+        *intptr_size, char *intptr, model *model, char *dec_values)
+
+    int csr_copy_predict_values(
+        np.npy_intp n_features, np.npy_intp *data_size, char *data, np.npy_intp
+        *index_size, char *index, np.npy_intp *indptr_shape, char
+        *intptr, model *model_, char *dec_values, int nr_class)
+
+
+    int csr_copy_predict_proba(
+        np.npy_intp n_features, np.npy_intp *data_size, char *data,
+        np.npy_intp *index_size, char *index, np.npy_intp
+        *indptr_shape, char *indptr, model *model_, char *dec_values)
 
     int copy_prob_predict(char *, model *, np.npy_intp *, char *)
+    int copy_predict_values(char *, model *, np.npy_intp *, char *, int)
     int copy_label(char *, model *, int)
     double get_bias(model *)
     void free_problem (problem *)
@@ -75,16 +83,17 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     # early return
     model = train(problem, param)
 
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] w
+    # coef matrix holder created as fortran since that's what's used in liblinear
+    cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w  
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = get_nr_feature(model)
     if bias > 0: nr_feature = nr_feature + 1
     if nr_class == 2:
-        w = np.empty((1, nr_feature))
+        w = np.empty((1, nr_feature),order='F')
         copy_w(w.data, model, nr_feature)
     else:
         len_w = (nr_class) * nr_feature
-        w = np.empty((nr_class, nr_feature))
+        w = np.empty((nr_class, nr_feature),order='F') 
         copy_w(w.data, model, len_w)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
@@ -132,16 +141,17 @@ def csr_train_wrap ( int n_features,
     # early return
     model = train(problem, param)
 
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] w
+    # fortran order since that's what liblinear does
+    cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = n_features
     if bias > 0: nr_feature = nr_feature + 1
     if nr_class == 2:
-        w = np.empty((1, nr_feature))
+        w = np.empty((1, nr_feature),order='F')
         copy_w(w.data, model, nr_feature)
     else:
         len_w = (nr_class * nr_feature)
-        w = np.empty((nr_class, nr_feature))
+        w = np.empty((nr_class, nr_feature),order='F')
         copy_w(w.data, model, len_w)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
@@ -156,13 +166,90 @@ def csr_train_wrap ( int n_features,
 
     return w, label
 
-def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-                 np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
-                 int solver_type, double eps, double C,
-                 np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
-                 np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
-                 np.ndarray[np.int32_t, ndim=1, mode='c'] label,
-                 double bias):
+
+def decision_function_wrap(
+    np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+    np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,   
+    int solver_type, double eps, double C,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+    double bias):
+
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef parameter *param
+    cdef model *model
+
+    param = set_parameter(
+        solver_type, eps, C, weight.shape[0], weight_label.data, weight.data)
+
+    model = set_model(param, coef_.data, coef_.shape, label.data, bias)
+
+    n_class = label.shape[0]
+    if n_class <= 2: n_class = 1
+    dec_values = np.empty((T.shape[0], n_class), dtype=np.float64)
+
+    if copy_predict_values(T.data, model, T.shape, dec_values.data, n_class) < 0:
+        raise MemoryError("We've run out of of memory")
+
+    ### FREE
+    free_parameter(param)
+    free_and_destroy_model(&model)
+    return dec_values
+
+
+
+def csr_decision_function_wrap(
+    int n_features,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
+    np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
+    int solver_type, double eps, double C,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+    double bias):
+    """
+    Predict from model
+
+    Test data given in CSR format
+    """
+
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef parameter *param
+    cdef model *model
+
+    param = set_parameter(
+        solver_type, eps, C, weight.shape[0], weight_label.data, weight.data)
+
+    model = set_model(param, coef_.data, coef_.shape, label.data, bias)
+
+    n_class = label.shape[0]
+    if n_class <= 2: n_class = 1
+
+    dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
+
+    if csr_copy_predict_values(
+        n_features, T_values.shape, T_values.data, T_indices.shape,
+        T_indices.data, T_indptr.shape, T_indptr.data, model,
+        dec_values.data, n_class) < 0:
+        raise MemoryError("We've run out of of memory")
+
+    ### FREE
+    free_parameter(param)
+    free_and_destroy_model(&model)
+    return dec_values
+                          
+
+def predict_wrap(
+    np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+    np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
+    int solver_type, double eps, double C,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+    double bias):
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] dec_values
     cdef parameter *param
@@ -180,14 +267,14 @@ def predict_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     free_parameter(param)
     free_and_destroy_model(&model)
     return dec_values
-                          
+
 
 def csr_predict_wrap(
         int n_features,
         np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
-        np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+        np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
         int solver_type, double eps, double C,
         np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
         np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
@@ -223,7 +310,7 @@ def csr_predict_wrap(
 
 
 def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-                 np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+                 np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
                  int solver_type, double eps, double C,
                  np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
                  np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
@@ -281,7 +368,7 @@ def csr_predict_prob(
         np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
-        np.ndarray[np.float64_t, ndim=2, mode='c'] coef_,
+        np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
         int solver_type, double eps, double C,
         np.ndarray[np.int32_t, ndim=1, mode='c'] weight_label,
         np.ndarray[np.float64_t, ndim=1, mode='c'] weight,

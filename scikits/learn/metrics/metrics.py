@@ -9,6 +9,7 @@ better
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
 import numpy as np
@@ -256,7 +257,7 @@ def f1_score(y_true, y_pred, pos_label=1):
     score at 0. The relative contribution of precision and recall to the f1
     score are equal.
 
-        :math:`F_1 = 2 \cdot \frac{p \cdot r}{p + r}`
+        F_1 = 2 * (precision * recall) / (precision + recall)
 
     See: http://en.wikipedia.org/wiki/F1_score
 
@@ -533,6 +534,26 @@ def r2_score(y_true, y_pred):
     return 1 - (((y_true - y_pred)**2).sum() /
                 ((y_true - y_true.mean())**2).sum())
 
+
+def zero_one_score(y_true, y_pred):
+    """Zero-One classification score
+
+    Positive integer (number of good classifications).
+    The best performance is 1.
+
+    Return the percentage of good predictions.
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+
+    Returns
+    -------
+    score : integer
+    """
+    return np.mean(y_pred == y_true)
 
 
 ###############################################################################

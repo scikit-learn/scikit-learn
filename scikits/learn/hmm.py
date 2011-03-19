@@ -327,8 +327,6 @@ class _BaseHMM(BaseEstimator):
         small).  You can fix this by getting more training data, or
         decreasing `covars_prior`.
         """
-        obs = np.asanyarray(obs)
-
         self._init(obs, init_params)
 
         logprob = []
@@ -679,11 +677,13 @@ class GaussianHMM(_BaseHMM):
     def _init(self, obs, params='stmc'):
         super(GaussianHMM, self)._init(obs, params=params)
 
-        if hasattr(self, 'n_features') and self.n_features != obs.shape[2]:
+        if (hasattr(self, 'n_features')
+            and self.n_features != obs[0].shape[1]):
             raise ValueError('Unexpected number of dimensions, got %s but '
-                             'expected %s' % (obs.shape[2], self.n_features))
+                             'expected %s' % (obs[0].shape[1],
+                                              self.n_features))
 
-        self.n_features = obs.shape[2]
+        self.n_features = obs[0].shape[1]
 
         if 'm' in params:
             self._means = cluster.KMeans(

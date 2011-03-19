@@ -8,7 +8,7 @@ Univariate features selection.
 import numpy as np
 from scipy import stats
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 
 ######################################################################
 # Scoring functions
@@ -164,7 +164,7 @@ def f_regression(X, y, center=True):
 ######################################################################
 
 
-class _AbstractUnivariateFilter(BaseEstimator):
+class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
     """ Abstract class, not meant to be used directly
     """
 
@@ -184,10 +184,11 @@ class _AbstractUnivariateFilter(BaseEstimator):
         self.score_func = score_func
 
 
-    def fit(self, X, y):
+    def fit(self, X, y, **params):
         """
         Evaluate the function
         """
+        self._set_params(**params)
         _scores = self.score_func(X, y)
         self._scores = _scores[0]
         self._pvalues = _scores[1]
@@ -200,6 +201,20 @@ class _AbstractUnivariateFilter(BaseEstimator):
         """
         self._set_params(**params)
         return X[:, self.get_support()]
+
+
+    def inverse_transform(self, X_red):
+        """ Transform reduced data back in original feature space
+        """
+        n_samples, _ = X_red.shape
+        support = self.get_support()
+        if n_samples == 1:
+            X = np.zeros((support.shape[0]), dtype=X_red.dtype)
+            X[support] = X_red
+        else:
+            X = np.zeros((n_samples, support.shape[0]), dtype=X_red.dtype)
+            X[:, support] = X_red
+        return X
 
 
 ######################################################################
