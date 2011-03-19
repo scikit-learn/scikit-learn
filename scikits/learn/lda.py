@@ -123,7 +123,7 @@ class LDA(BaseEstimator, ClassifierMixin):
             cov /= (n_samples - n_classes)
             self.covariance_ = cov
 
-        means = np.asarray(means)
+        self.means_ = np.asarray(means)
         Xc = np.concatenate(Xc, 0)
 
         # ----------------------------
@@ -144,10 +144,10 @@ class LDA(BaseEstimator, ClassifierMixin):
         ## ----------------------------
         ## 3) Between variance scaling
         # Overall mean
-        xbar = np.dot(self.priors_, means)
+        xbar = np.dot(self.priors_, self.means_)
         # Scale weighted centers
         X = np.dot(((np.sqrt((n_samples * self.priors_)*fac)) *
-                          (means - xbar).T).T, scaling)
+                          (self.means_ - xbar).T).T, scaling)
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use svd to find projection in the space spanned by the
         # (n_classes) centers
@@ -158,7 +158,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         self.scaling = np.dot(scaling, V.T[:, :rank])
         self.xbar_ = xbar
         # weight vectors / centroids
-        self.coef_ = np.dot(means - self.xbar_, self.scaling)
+        self.coef_ = np.dot(self.means_ - self.xbar_, self.scaling)
         self.intercept_ = -0.5 * np.sum(self.coef_ ** 2, axis=1) + \
                            np.log(self.priors_)
 
