@@ -6,9 +6,9 @@ from .base import load_linnerud
 from .base import get_data_home
 from .base import clear_data_home
 from .mlcomp import load_mlcomp
-from .lfw import load_lfw_pairs
-from .lfw import load_lfw_people
-from .twenty_newsgroups import load_20newsgroups
+from .lfw import fetch_lfw_pairs
+from .lfw import fetch_lfw_people
+from .twenty_newsgroups import fetch_20newsgroups
 
 
 # backward compatibility

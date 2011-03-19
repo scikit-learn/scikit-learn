@@ -31,7 +31,7 @@ import numpy as np
 import pylab as pl
 
 from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.datasets import load_lfw_people
+from scikits.learn.datasets import fetch_lfw_people
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.metrics import classification_report
 from scikits.learn.metrics import confusion_matrix
@@ -46,7 +46,7 @@ logging.basicConfig(level=logging.INFO,
 ################################################################################
 # Download the data, if not already on disk and load it as numpy arrays
 
-lfw_people = load_lfw_people(min_faces_per_person=70, resize=0.4)
+lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
 # reshape the data using the traditional (n_samples, n_features) shape
 faces = lfw_people.data

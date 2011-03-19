@@ -54,7 +54,7 @@ TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
 
-def load_20newsgroups(data_home=None, subset='train', categories=None,
+def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                       shuffle=True, rng=42):
     """Load the filenames of the 20 newsgroups dataset
 

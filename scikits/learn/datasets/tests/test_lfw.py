@@ -15,8 +15,8 @@ import tempfile
 import numpy as np
 from scipy.misc import imsave
 
-from scikits.learn.datasets import load_lfw_pairs
-from scikits.learn.datasets import load_lfw_people
+from scikits.learn.datasets import fetch_lfw_pairs
+from scikits.learn.datasets import fetch_lfw_people
 from scikits.learn.datasets import get_data_home
 
 from numpy.testing import assert_array_equal
@@ -99,7 +99,7 @@ def teardown_module():
 
 
 def test_load_fake_lfw_people():
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
+    lfw_people = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA,
                                  min_faces_per_person=3)
 
     # The data is croped around the center as a rectangular bounding box
@@ -115,7 +115,7 @@ def test_load_fake_lfw_people():
 
     # It is possible to ask for the original data without any croping or color
     # conversion
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
+    lfw_people = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA,
                                  min_faces_per_person=3,
                                  resize=None, slice_=None, color=True)
     assert_equal(lfw_people.data.shape, (10, 250, 250, 3))
@@ -127,11 +127,11 @@ def test_load_fake_lfw_people():
 
 @raises(ValueError)
 def test_load_fake_lfw_people_too_restrictive():
-    load_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100)
+    fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100)
 
 
 def test_load_fake_lfw_pairs():
-    lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA)
+    lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA)
 
     # The data is croped around the center as a rectangular bounding box
     # arounthe the face. Colors are converted to gray levels:
@@ -146,7 +146,7 @@ def test_load_fake_lfw_pairs():
 
     # It is possible to ask for the original data without any croping or color
     # conversion
-    lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
+    lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
                                      resize=None, slice_=None, color=True)
     assert_equal(lfw_pairs_train.data.shape, (10, 2, 250, 250, 3))
 
@@ -155,18 +155,18 @@ def test_load_fake_lfw_pairs():
     assert_array_equal(lfw_pairs_train.target_names, expected_classes)
 
 
-def test_load_lfw_people():
+def test_fetch_lfw_people():
     if not os.path.exists(os.path.join(get_data_home(), 'lfw_home')):
         # skip this test is the data has not already been previously
         # downloaded to avoid having tests rely on the availability of a
         # fast internet connection
 
         # to download the data, run the face recognition / verification
-        # examples or call load_lfw_people function from an interactive shell
+        # examples or call fetch_lfw_people function from an interactive shell
         # for instance
         raise SkipTest
 
-    lfw_people = load_lfw_people(min_faces_per_person=100)
+    lfw_people = fetch_lfw_people(min_faces_per_person=100)
 
     # only 5 person have more than 100 pictures each in the dataset
     top_classes = ['Colin Powell', 'Donald Rumsfeld', 'George W Bush',
@@ -184,22 +184,22 @@ def test_load_lfw_people():
 
     # it is possible to slice the data in different ways and to resize the
     # outpout without changing the width / heigh ratio
-    lfw_people = load_lfw_people(min_faces_per_person=100,
+    lfw_people = fetch_lfw_people(min_faces_per_person=100,
                                  slice_=(slice(50, 200), slice(50, 200)),
                                  resize=0.1)
     assert_equal(lfw_people.data.shape, (1140, 15, 15))
 
     # it is also possible to load the color version of the data, in that
     # case the color channels are stored in the last dimension of the data
-    lfw_people = load_lfw_people(min_faces_per_person=100, color=True)
+    lfw_people = fetch_lfw_people(min_faces_per_person=100, color=True)
     assert_equal(lfw_people.data.shape, (1140, 62, 47, 3))
 
 
-def test_load_lfw_pairs():
+def test_fetch_lfw_pairs():
     if not os.path.exists(os.path.join(get_data_home(), 'lfw_home')):
         raise SkipTest
 
-    lfw_pairs_train = load_lfw_pairs(subset='train')
+    lfw_pairs_train = fetch_lfw_pairs(subset='train')
 
     # this dataset is used for training supervised face verification models,
     # this is a binary classification task
@@ -218,13 +218,13 @@ def test_load_lfw_pairs():
 
     # as for the people loader it is also possible to load the color channels
     # in the last dimension
-    lfw_pairs_train = load_lfw_pairs(subset='train', color=True)
+    lfw_pairs_train = fetch_lfw_pairs(subset='train', color=True)
     assert_equal(lfw_pairs_train.data.shape, (2200, 2, 62, 47, 3))
 
     # the data also has a test development set and a 10-fold CV dataset for
     # final evaluation
-    lfw_pairs_test = load_lfw_pairs(subset='test')
+    lfw_pairs_test = fetch_lfw_pairs(subset='test')
     assert_equal(lfw_pairs_test.data.shape, (1000, 2, 62, 47))
 
-    lfw_pairs_10_folds = load_lfw_pairs(subset='10_folds')
+    lfw_pairs_10_folds = fetch_lfw_pairs(subset='10_folds')
     assert_equal(lfw_pairs_10_folds.data.shape, (6000, 2, 62, 47))

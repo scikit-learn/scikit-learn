@@ -150,7 +150,7 @@ def _load_imgs(file_paths, slice_, color, resize):
 # Task #1:  Face Identification on picture with names
 #
 
-def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
+def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
                      min_faces_per_person=0):
     """Perform the actual data loading for the lfw people dataset
 
@@ -191,7 +191,7 @@ def _load_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     return faces, target, target_names
 
 
-def load_lfw_people(data_home=None, funneled=True, resize=0.5,
+def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
                     min_faces_per_person=10, color=False,
                     slice_=(slice(70, 195), slice(78, 172))):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
@@ -242,7 +242,7 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
     m = Memory(cachedir=lfw_home, mmap_mode='c', verbose=0)
-    load_func = m.cache(_load_lfw_people)
+    load_func = m.cache(_fetch_lfw_people)
 
     # load and memoize the pairs as np arrays
     faces, target, target_names = load_func(
@@ -259,7 +259,7 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
 #
 
 
-def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
+def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
                     color=False, resize=None):
     """Perform the actual data loading for the LFW pairs dataset
 
@@ -307,7 +307,7 @@ def _load_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
-def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
+def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                    color=False, slice_=(slice(70, 195), slice(78, 172))):
     """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
 
@@ -366,7 +366,7 @@ def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
     m = Memory(cachedir=lfw_home, mmap_mode='c', verbose=0)
-    load_func = m.cache(_load_lfw_pairs)
+    load_func = m.cache(_fetch_lfw_pairs)
 
     # select the right metadata file according to the requested subset
     label_filenames = {
