@@ -102,7 +102,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
-        if (kernel_type == 2) and (self.gamma == 0):
+        if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
             self.gamma = 1.0 / X.shape[0]
 

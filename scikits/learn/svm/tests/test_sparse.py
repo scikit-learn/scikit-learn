@@ -60,7 +60,7 @@ def test_SVC():
 
 def test_SVC_iris():
     """Test the sparse SVC with the iris dataset"""
-    for k in ('linear', 'rbf'):
+    for k in ('linear', 'poly', 'rbf'):
         sp_clf = svm.sparse.SVC(kernel=k).fit(iris.data, iris.target)
         clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
 
