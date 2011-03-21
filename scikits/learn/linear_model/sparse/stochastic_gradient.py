@@ -147,7 +147,7 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.class_weight[1],
                                       self.class_weight[0],
                                       self.sample_weight,
-                                      self.learning_rate,
+                                      self.learning_rate_code,
                                       self.eta0, self.power_t)
 
         # update self.coef_ and self.sparse_coef_ consistently
@@ -179,7 +179,7 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.seed,
                                                self.class_weight[i],
                                                self.sample_weight,
-                                               self.learning_rate,
+                                               self.learning_rate_code,
                                                self.eta0, self.power_t)
             for i, c in enumerate(self.classes))
 
@@ -352,7 +352,7 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.seed),
                                       1.0, 1.0,
                                       self.sample_weight,
-                                      self.learning_rate,
+                                      self.learning_rate_code,
                                       self.eta0, self.power_t)
 
         # update self.coef_ and self.sparse_coef_ consistently
