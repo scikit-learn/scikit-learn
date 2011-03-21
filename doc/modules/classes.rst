@@ -98,6 +98,7 @@ Naive Bayes
    :template: class.rst
 
    naive_bayes.GNB
+   naive_bayes.MNNB
 
 
 Nearest Neighbors

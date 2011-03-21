@@ -23,3 +23,21 @@ def test_gnb():
     y_pred_log_proba = clf.predict_log_proba(X)
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
     
+# Data is 6 random points in an 100 dimensional space classified to
+# three classes.
+X2 = np.random.randint( 5, size=(6, 100) )
+y2 = np.array( [1, 1, 2, 2, 3, 3] )
+
+def test_mnnb():
+    """
+    Multinomial Naive Bayes classification.
+
+    This checks that MNNB implements fit and predict and returns
+    correct values for a simple toy dataset.
+    """
+
+    clf =  naive_bayes.MNNB()
+    y_pred = clf.fit(X2, y2).predict(X2)
+
+    assert_array_equal(y_pred, y2)
+    

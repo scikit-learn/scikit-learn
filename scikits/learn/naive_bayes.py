@@ -2,6 +2,8 @@
 """
 
 # Author: Vincent Michel <vincent.michel@inria.fr>
+#         Amit Aides <amitibo@tx.technion.ac.il>
+#
 # License: BSD Style.
 import numpy as np
 
@@ -108,3 +110,138 @@ class GNB(BaseEstimator, ClassifierMixin):
         aB[sup] = np.exp(logaB[sup])
         log_proba -= np.log(np.sum(aB, axis=1))[:, np.newaxis] + B
         return log_proba
+
+
+class MNNB( BaseEstimator, ClassifierMixin  ):
+    r"""
+    Multinomial Naive Bayes (MNNB)
+    
+    The Multinomial Naive Bayes classifier is suitable for text classification.
+
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
+    y : array, shape = [n_samples]
+        Target vector relative to X
+
+    Parameters
+    ----------
+    alpha_i: float, optional (default=1.0)
+        smoothing constant.
+    
+    alpha_ratio: float, optional (default=1.0)
+        smoothing ratio.
+
+    Methods
+    -------
+    fit(X, y) : self
+        Fit the model
+
+    predict(X) : array
+        Predict using the model.
+
+    predict_proba(X) : array
+        Predict the probability of each class using the model.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.random.randint( 5, size=(6, 100) )
+    >>> Y = np.array([1, 2, 3, 4, 5, 6])
+    >>> from scikits.learn.naive_bayes import MNNB
+    >>> clf = MNNB()
+    >>> clf.fit(X, Y)
+    MNNB(alpha_ratio=1.0, alpha_i=1.0)
+    >>> print clf.predict(X[2])
+    3
+
+    See also
+    --------
+
+    """
+
+    def __init__( self, alpha_i=1.0, alpha_ratio=1.0 ):
+        
+        self.alpha_i = alpha_i
+        self.alpha_ratio = alpha_ratio
+    
+    def fit(self, X, y ):
+        """Fit the Multinomial distribution"""
+        
+        #
+        # N_c is the count of all words in all documents of class c.
+        # N_c_i is the a count of word i in all documents of class c.
+        # theta_c is the prior empirical probability of a document of class c.
+        # theta_c_i is the (smoothened) empirical likelihood of word i
+        # given a document of class c.
+        #
+        N_c_i_temp = []
+        theta_c = []
+        self.unique_y = np.unique(y)
+        
+        for yi in self.unique_y:
+            N_c_i_temp.append( np.sum( X[y==yi, :], 0 ) )
+            theta_c.append( np.float(np.sum(y==yi)) / y.size )
+
+        N_c_i = np.array( N_c_i_temp )
+        N_c = np.sum( N_c_i, axis=1 )
+        
+        #
+        # Smoothing
+        #
+        alpha_i = self.alpha_i
+        alpha = self.alpha_ratio * X.shape[1] 
+
+        #
+        # Estimate the parameters of the distribution
+        #
+        self.theta_c_i = (N_c_i + alpha_i) / (N_c.reshape(-1, 1) + alpha)
+        self.theta_c = np.array( theta_c )
+    
+        return self
+
+    def predict(self, X):
+        """Predict the classification of samples X"""
+        
+        y_pred = self.unique_y[np.argmax( self.predict_log_proba( X ), axis=0 )]
+        return y_pred
+
+    def _joint_log_likelihood(self, X):
+        """Calculate the posterior log probability of the samples X"""
+        
+        joint_log_likelihood = []
+        for i in range( self.unique_y.size ):
+            jointi = np.log( self.theta_c[i] )
+            n_ij   = np.dot( np.log( self.theta_c_i[i] ), X.T )
+            joint_log_likelihood.append( jointi + n_ij )
+            
+        joint_log_likelihood = np.array(joint_log_likelihood)
+        
+        return joint_log_likelihood
+
+    def predict_proba(self, X):
+        """
+        Predict the posterior probability of samples X
+        
+        Notes
+        -----
+        The values calculated by the joint log likelihood are very small and
+        might cause numerical underflow when used as the power of an exponent.
+        This function should be used with caution. It is preferable to use the
+        predict_log_proba() function instead.
+        """
+        
+        joint_log_likelihood = self._joint_log_likelihood( X )
+        proba = np.exp( joint_log_likelihood )
+        proba = proba / np.sum( proba, 1 )[:, np.newaxis]
+        return proba
+
+    def predict_log_proba(self, X):
+        """Predict the posterior log probability of samples X"""
+        
+        joint_log_likelihood = self._joint_log_likelihood( X )
+        return joint_log_likelihood
+
+
