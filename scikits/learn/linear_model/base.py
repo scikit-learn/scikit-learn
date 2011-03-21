@@ -157,20 +157,21 @@ class BaseSGD(BaseEstimator):
         self._set_loss_function(self.loss)
         self._set_penalty_type(self.penalty)
 
-        self._set_learning_rate(learning_rate)
+        self.learning_rate = str(learning_rate)
+        self._set_learning_rate(self.learning_rate)
         self.eta0 = float(eta0)
         self.power_t = float(power_t)
-        if self.learning_rate != 2:
+        if self.learning_rate != "optimal":
             if eta0 <= 0.0:
                 raise ValueError("eta0 must be greater than 0.0")
 
     def _set_learning_rate(self, learning_rate):
         learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
         try:
-            self.learning_rate = learning_rate_codes[learning_rate]
+            self.learning_rate_code = learning_rate_codes[learning_rate]
         except KeyError:
             raise ValueError("learning rate %s"
-            "is not supported. " % self.learning_rate)
+            "is not supported. " % learning_rate)
 
     def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
@@ -185,7 +186,7 @@ class BaseSGD(BaseEstimator):
             elif self.penalty_type == 1:
                 self.rho = 0.0
         except KeyError:
-            raise ValueError("Penalty %s is not supported. " % self.penalty)
+            raise ValueError("Penalty %s is not supported. " % penalty)
 
     def _set_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""

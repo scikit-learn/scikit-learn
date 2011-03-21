@@ -125,7 +125,7 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.class_weight[1],
                                       self.class_weight[0],
                                       self.sample_weight,
-                                      self.learning_rate, self.eta0,
+                                      self.learning_rate_code, self.eta0,
                                       self.power_t)
 
         self.coef_ = np.atleast_2d(coef_)
@@ -151,7 +151,7 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.seed,
                                                self.class_weight[i],
                                                self.sample_weight,
-                                               self.learning_rate,
+                                               self.learning_rate_code,
                                                self.eta0, self.power_t)
             for i, c in enumerate(self.classes))
 
@@ -298,7 +298,7 @@ class SGDRegressor(BaseSGDRegressor):
                                       self.seed,
                                       1.0, 1.0,
                                       self.sample_weight,
-                                      self.learning_rate,
+                                      self.learning_rate_code,
                                       self.eta0, self.power_t)
 
         self.coef_ = coef_

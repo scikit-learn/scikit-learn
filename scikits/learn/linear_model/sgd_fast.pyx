@@ -314,8 +314,6 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
 
     cdef double typw = sqrt(1.0 / sqrt(alpha))
 
-    print "==================="
-    print "Learning Rate:", learning_rate
     if learning_rate == OPTIMAL:
         # computing eta0, the initial learning rate
         eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
@@ -327,9 +325,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         t = 1.0 / (eta0 * alpha)
     else:
         t = 1.0
-    print "eta0:", eta0
-    print "t:", t
-
+    
     t_start = time()
     for epoch from 0 <= epoch < n_iter:
         if verbose > 0:
