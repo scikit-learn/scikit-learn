@@ -137,7 +137,12 @@ In the case of multi-class classification `coef_` is a two-dimensionaly
 array of shape [n_classes, n_features] and `intercept_` is a one
 dimensional array of shape [n_classes]. The i-th row of `coef_` holds
 the weight vector of the OVA classifier for the i-th class; classes are
-indexed in ascending order (see member `classes`).
+indexed in ascending order (see attribute `classes`).
+
+:class:`SGDClassifier` supports both weighted classes and weighted
+instances via the fit parameters `class_weight` and `sample_weight`. See
+the examples below and the doc string of :meth:`SGDClassifier.fit` for 
+further information.
 
 .. topic:: Examples:
 
@@ -151,7 +156,10 @@ Regression
 
 The class :class:`SGDRegressor` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
-penalties to fit linear regression models.
+penalties to fit linear regression models. :class:`SGDRegressor` is
+well suited for regression problems with a large number of training
+samples (> 10.000), for other problems we recommend :class:`Ridge`,
+:class:`Lasso`, or :class:`ElasticNet`.
 
 .. figure:: ../auto_examples/linear_model/images/plot_sgd_ols.png
    :target: ../auto_examples/linear_model/plot_sgd_ols.html
@@ -163,6 +171,10 @@ parameter. :class:`SGDRegressor` supports the following loss functions:
 
   - `loss="squared_loss"`: Ordinary least squares.
   - `loss="huber"`: Huber loss for robust regression.
+
+The Huber loss function is an epsilon insensitive loss function for 
+robust regression. The width of the insensitive region has to be 
+specified via the parameter `epsilon`.
 
 .. topic:: Examples:
 
@@ -217,14 +229,19 @@ Tips on Practical Use
     attribute on the input vector X to [0,1] or [-1,+1], or standardize
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
-    results. See `The CookBook
-    <https://sourceforge.net/apps/trac/scikit-learn/wiki/CookBook>`_
-    for some examples on scaling. If your attributes have an intrinsic
-    scale (e.g. word frequencies or indicator features) scaling is
-    not needed.
+    results. This can be easily done using :class:`Scaler`::
+      from scikits.learn.preprocessing import Scaler
+      scaler = Scaler()
+      scaler.fit(X_train)  # Don't cheat - fit only on training data
+      scaler.transform(X_train)
+      scaler.transform(X_test)  # apply same transformation to test data
+
+    If your attributes have an intrinsic scale (e.g. word frequencies or 
+    indicator features) scaling is not needed.
 
   * Finding a reasonable regularization term :math:`\alpha` is
-    best done using grid search `for alpha in 10.0**-np.arange(1,7)`.
+    best done using :class:`GridSearchCV`, usually in the 
+    range `10.0**-np.arange(1,7)`.
 
   * Empirically, we found that SGD converges after observing
     approx. 10^6 training samples. Thus, a reasonable first guess
