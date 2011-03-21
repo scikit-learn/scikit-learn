@@ -52,7 +52,7 @@ from time import time
 import os
 import logging
 
-from scikits.learn.datasets import load_20newsgroups
+from scikits.learn.datasets import fetch_20newsgroups
 from scikits.learn.feature_extraction.text.sparse import CountVectorizer
 from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
 from scikits.learn.linear_model.sparse import SGDClassifier
@@ -76,7 +76,7 @@ categories = [
 print "Loading 20 newsgroups dataset for categories:"
 print categories
 
-data = load_20newsgroups(subset='train', categories=categories)
+data = fetch_20newsgroups(subset='train', categories=categories)
 print "%d documents" % len(data.filenames)
 print "%d categories" % len(data.target_names)
 print

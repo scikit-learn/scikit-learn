@@ -63,8 +63,8 @@ less than 200ms by using a memmaped version memoized on the disk in the
 The first loader is used for the Face Identification task: a multi-class
 classification task (hence supervised learning)::
 
-  >>> from scikits.learn.datasets import load_lfw_people
-  >>> lfw_people = load_lfw_people(min_faces_per_person=100)
+  >>> from scikits.learn.datasets import fetch_lfw_people
+  >>> lfw_people = fetch_lfw_people(min_faces_per_person=100)
 
   >>> for name in lfw_people.target_names:
   ...     print name
@@ -96,8 +96,8 @@ array::
 The second loader is typically used for the face verification task: each sample
 is a pair of two picture belonging or not to the same person::
 
-  >>> from scikits.learn.datasets import load_lfw_pairs
-  >>> lfw_pairs_train = load_lfw_pairs(subset='train')
+  >>> from scikits.learn.datasets import fetch_lfw_pairs
+  >>> lfw_pairs_train = fetch_lfw_pairs(subset='train')
 
   >>> list(lfw_pairs_train.target_names)
   ['Different persons', 'Same person']
@@ -108,15 +108,15 @@ is a pair of two picture belonging or not to the same person::
   >>> lfw_pairs_train.target.shape
   (2200,)
 
-Both for the ``load_lfw_people`` and ``load_lfw_pairs`` function it is
+Both for the ``fetch_lfw_people`` and ``fetch_lfw_pairs`` function it is
 possible to get an additional dimension with the RGB color channels by
 passing ``color=True``::
 
-  >>> lfw_pairs_train = load_lfw_pairs(subset='train', color=True)
+  >>> lfw_pairs_train = fetch_lfw_pairs(subset='train', color=True)
   >>> lfw_pairs_train.data.shape
   (2200, 2, 62, 47, 3)
 
-The ``load_lfw_pairs`` datasets is subdived in 3 subsets: the development
+The ``fetch_lfw_pairs`` datasets is subdived in 3 subsets: the development
 ``train`` set, the development ``test`` set and an evaluation ``10_folds``
 set meant to compute performance metrics using a 10-folds cross
 validation scheme.
@@ -150,15 +150,15 @@ and after a specific date.
 Usage
 -----
 
-The ``scikits.learn.datasets.load_20newsgroups`` function is a data
+The ``scikits.learn.datasets.fetch_20newsgroups`` function is a data
 fetching / caching functions that downloads the data archive from
 the original `20 newsgroups website`_, extracts the archive contents
 in the ``~/scikit_learn_data/20news_home`` folder and calls the
 ``scikits.learn.datasets.load_filenames`` on either the training or
 testing set folder::
 
-  >>> from scikits.learn.datasets import load_20newsgroups
-  >>> newsgroups_train = load_20newsgroups(subset='train')
+  >>> from scikits.learn.datasets import fetch_20newsgroups
+  >>> newsgroups_train = fetch_20newsgroups(subset='train')
 
   >>> from pprint import pprint
   >>> pprint(list(newsgroups_train.target_names))
@@ -194,10 +194,10 @@ attribute is the integer index of the category::
   array([12,  6,  9,  8,  6,  7,  9,  2, 13, 19])
 
 It is possible to load only a sub-selection of the categories by passing the
-list of the categories to load to the ``load_20newsgroups`` function::
+list of the categories to load to the ``fetch_20newsgroups`` function::
 
   >>> cats = ['alt.atheism', 'sci.space']
-  >>> newsgroups_train = load_20newsgroups(subset='train', categories=cats)
+  >>> newsgroups_train = fetch_20newsgroups(subset='train', categories=cats)
 
   >>> list(newsgroups_train.target_names)
   ['alt.atheism', 'sci.space']

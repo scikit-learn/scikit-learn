@@ -26,6 +26,8 @@ from nose.tools import raises
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
+SCIKIT_LEARN_EMPTY_DATA = tempfile.mkdtemp(prefix="scikit_learn_empty_test_")
+
 LFW_HOME = os.path.join(SCIKIT_LEARN_DATA, 'lfw_home')
 FAKE_NAMES = [
     'Abdelatif_Smith',
@@ -96,6 +98,13 @@ def teardown_module():
     """Test fixture (clean up) run once after all tests of this module"""
     if os.path.isdir(SCIKIT_LEARN_DATA):
         shutil.rmtree(SCIKIT_LEARN_DATA)
+    if os.path.isdir(SCIKIT_LEARN_EMPTY_DATA):
+        shutil.rmtree(SCIKIT_LEARN_EMPTY_DATA)
+
+
+@raises(IOError)
+def test_load_empty_lfw_people():
+    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA)
 
 
 def test_load_fake_lfw_people():
@@ -130,6 +139,11 @@ def test_load_fake_lfw_people_too_restrictive():
     load_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100)
 
 
+@raises(IOError)
+def test_load_empty_lfw_pairs():
+    lfw_people = load_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA)
+
+
 def test_load_fake_lfw_pairs():
     lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA)
 
@@ -162,7 +176,7 @@ def test_load_lfw_people():
         # fast internet connection
 
         # to download the data, run the face recognition / verification
-        # examples or call load_lfw_people function from an interactive shell
+        # examples or call fetch_lfw_people function from an interactive shell
         # for instance
         raise SkipTest
 

@@ -40,7 +40,7 @@ import logging
 import os
 import sys
 
-from scikits.learn.datasets import load_20newsgroups
+from scikits.learn.datasets import fetch_20newsgroups
 from scikits.learn.feature_extraction.text.sparse import Vectorizer
 from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
@@ -78,10 +78,10 @@ categories = [
 print "Loading 20 newsgroups dataset for categories:"
 print categories
 
-data_train = load_20newsgroups(subset='train', categories=categories,
+data_train = fetch_20newsgroups(subset='train', categories=categories,
                                shuffle=True, rng=42)
 
-data_test = load_20newsgroups(subset='test', categories=categories,
+data_test = fetch_20newsgroups(subset='test', categories=categories,
                               shuffle=True, rng=42)
 
 print "%d documents (training set)" % len(data_train.filenames)

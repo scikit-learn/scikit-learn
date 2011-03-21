@@ -350,9 +350,9 @@ class RandomizedPCA(BaseEstimator):
     Notes
     -------
     References:
-    
-    * Finding structure with randomness: Stochastic algorithms for 
-      constructing approximate matrix decompositions Halko, et al., 2009 
+
+    * Finding structure with randomness: Stochastic algorithms for
+      constructing approximate matrix decompositions Halko, et al., 2009
       (arXiv:909)
 
     * A randomized algorithm for the decomposition of matrices
@@ -384,6 +384,9 @@ class RandomizedPCA(BaseEstimator):
             Returns the instance itself.
         """
         self._set_params(**params)
+        if not hasattr(X, 'todense'):
+            X = np.atleast_2d(X)
+
         n_samples = X.shape[0]
 
         if self.copy:
