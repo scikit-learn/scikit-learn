@@ -124,7 +124,9 @@ class SGDClassifier(BaseSGDClassifier):
                                       self.seed,
                                       self.class_weight[1],
                                       self.class_weight[0],
-                                      self.sample_weight)
+                                      self.sample_weight,
+                                      self.learning_rate, self.eta0,
+                                      self.power_t)
 
         self.coef_ = np.atleast_2d(coef_)
         self.intercept_ = np.asarray(intercept_)
@@ -148,7 +150,9 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.verbose, self.shuffle,
                                                self.seed,
                                                self.class_weight[i],
-                                               self.sample_weight)
+                                               self.sample_weight,
+                                               self.learning_rate,
+                                               self.eta0, self.power_t)
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
@@ -178,15 +182,16 @@ class SGDClassifier(BaseSGDClassifier):
 def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,
                           penalty_type, alpha, rho, n_iter, fit_intercept,
                           verbose, shuffle, seed, class_weight_pos,
-                          sample_weight):
-    """Inner loop for One-vs.-All scheme"""
+                          sample_weight, learning_rate, eta0, power_t):
+    """Inner loop for one-vs-all scheme."""
     y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
     y_i[y == c] = 1.0
     coef, intercept = plain_sgd(coef_, intercept_, loss_function,
                                 penalty_type, alpha, rho,
                                 X, y_i, n_iter, fit_intercept,
                                 verbose, shuffle, seed, class_weight_pos, 1.0,
-                                sample_weight)
+                                sample_weight, learning_rate, eta0,
+                                power_t)
     return (i, coef, intercept)
 
 
@@ -292,7 +297,9 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.shuffle),
                                       self.seed,
                                       1.0, 1.0,
-                                      self.sample_weight)
+                                      self.sample_weight,
+                                      self.learning_rate,
+                                      self.eta0, self.power_t)
 
         self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
