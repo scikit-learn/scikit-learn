@@ -101,7 +101,6 @@ class SGDClassifier(BaseSGDClassifier):
 
     """
 
-
     def _fit_binary(self, X, y):
         """Fit a single binary classifier"""
         # interprete X as dense array
@@ -155,7 +154,6 @@ class SGDClassifier(BaseSGDClassifier):
         for i, coef, intercept in res:
             self.coef_[i] = coef
             self.intercept_[i] = intercept
-  
 
     def decision_function(self, X):
         """Predict signed 'distance' to the hyperplane (aka confidence score)

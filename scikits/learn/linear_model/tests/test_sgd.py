@@ -30,17 +30,17 @@ T2 = np.array([[-1.5, 0.5], [1, 2], [0, -2]])
 true_result2 = [1, 2, 3]
 
 # test sample 3
-X3 = np.array([[1,1,0,0,0,0], [1,1,0,0,0,0],
-               [0,0,1,0,0,0], [0,0,1,0,0,0],
-               [0,0,0,0,1,1], [0,0,0,0,1,1],
-               [0,0,0,1,0,0], [0,0,0,1,0,0]])
+X3 = np.array([[1, 1, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0],
+               [0, 0, 1, 0, 0, 0], [0, 0, 1, 0, 0, 0],
+               [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 1, 1],
+               [0, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 0]])
 Y3 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
 # test sample 4 - two more or less redundent feature groups
-X4 = np.array([[1,0.9,0.8,0,0,0], [1,.84,.98,0,0,0],
-               [1,.96,.88,0,0,0], [1,.91,.99,0,0,0],
-               [0,0,0,.89,.91,1], [0,0,0,.79,.84,1],
-               [0,0,0,.91,.95,1], [0,0,0,.93,1,1]])
+X4 = np.array([[1, 0.9, 0.8, 0, 0, 0], [1, .84, .98, 0, 0, 0],
+               [1, .96, .88, 0, 0, 0], [1, .91, .99, 0, 0, 0],
+               [0, 0, 0, .89, .91, 1], [0, 0, 0, .79, .84, 1],
+               [0, 0, 0, .91, .95, 1], [0, 0, 0, .93, 1, 1]])
 Y4 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
 iris = datasets.load_iris()
@@ -164,7 +164,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         assert_raises(ValueError, clf.fit, X2, Y2, coef_init=np.zeros((2, 2)))
 
         # Provided coef_ does match dataset
-        clf = self.factory().fit(X2, Y2, coef_init=np.zeros((3,2)))
+        clf = self.factory().fit(X2, Y2, coef_init=np.zeros((3, 2)))
 
         # Provided intercept_ does not match dataset
         clf = self.factory()
@@ -198,7 +198,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         X = X4[idx, :]
         Y = Y4[idx, :]
 
-        print "factory", self.factory
         clf = self.factory(penalty='l1', alpha=.2, fit_intercept=False,
                            n_iter=2000)
         clf.fit(X, Y)
@@ -228,15 +227,15 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
 
     def test_equal_class_weight(self):
         """Test if equal class weights approx. equals no class weights. """
-        X = [[1,0],[1,0],[0,1],[0,1]]
+        X = [[1, 0], [1, 0], [0, 1], [0, 1]]
         y = [0, 0, 1, 1]
         clf = self.factory(alpha=0.1, n_iter=1000)
         clf.fit(X, y)
 
-        X = [[1,0],[0,1]]
+        X = [[1, 0], [0, 1]]
         y = [0, 1]
         clf_weighted = self.factory(alpha=0.1, n_iter=1000)
-        clf_weighted.fit(X, y, class_weight={0:0.5, 1:0.5})
+        clf_weighted.fit(X, y, class_weight={0: 0.5, 1: 0.5})
 
         # should be similar up to some epsilon due to learning rate schedule
         assert_almost_equal(clf.coef_, clf_weighted.coef_, decimal=2)
@@ -245,7 +244,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
     def test_wrong_class_weight_label(self):
         """ValueError due to not existing class label."""
         clf = self.factory(alpha=0.1, n_iter=1000)
-        clf.fit(X, Y, class_weight={0:0.5})
+        clf.fit(X, Y, class_weight={0: 0.5})
 
     @raises(ValueError)
     def test_wrong_class_weight_format(self):
@@ -308,7 +307,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
         # we give a small weights to class 1
-        clf.fit(X, y, sample_weight=[0.001]*3 + [1]*2)
+        clf.fit(X, y, sample_weight=[0.001] * 3 + [1] * 2)
 
         # now the hyperplane should rotate clock-wise and
         # the prediction on this point should shift
@@ -320,7 +319,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
         # provided sample_weight too long
         clf.fit(X, Y, sample_weight=range(7))
-        
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""

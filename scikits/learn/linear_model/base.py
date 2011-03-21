@@ -173,6 +173,17 @@ class BaseSGD(BaseEstimator):
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % self.penalty)
 
+    def _set_sample_weight(self, sample_weight, n_samples):
+        """Set the sample weight array."""
+        if sample_weight == None:
+            sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+        else:
+            sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
+                                          order="C")
+        self.sample_weight = sample_weight
+        if self.sample_weight.shape[0] != n_samples:
+            raise ValueError("Shapes of X and sample_weight do not match.")
+
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
         """Allocate mem for parameters; initialize if provided."""
@@ -212,7 +223,8 @@ class BaseSGD(BaseEstimator):
 
             # allocate intercept_ for binary problem
             if intercept_init is not None:
-                intercept_init = np.asanyarray(intercept_init, dtype=np.float64)
+                intercept_init = np.asanyarray(intercept_init,
+                                               dtype=np.float64)
                 if intercept_init.shape != (1,):
                     raise ValueError("Provided intercept_init " \
                                  "does not match dataset.")
@@ -237,7 +249,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         self.n_jobs = int(n_jobs)
 
     def _set_loss_function(self, loss):
-        """Get concrete LossFunction"""
+        """Set concrete LossFunction."""
         loss_functions = {
             "hinge": Hinge(),
             "log": Log(),
@@ -249,13 +261,12 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
             raise ValueError("The loss %s is not supported. " % loss)
 
     def _set_class_weight(self, class_weight, classes, y):
-        """
-        Estimate class weights for unbalanced datasets.
-        """
+        """Estimate class weights for unbalanced datasets."""
+        class_weight = {} if class_weight is None else class_weight
         if class_weight == {}:
             weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
         elif class_weight == 'auto':
-            weight = np.array([1.0 / np.sum(y==i) for i in classes],
+            weight = np.array([1.0 / np.sum(y == i) for i in classes],
                               dtype=np.float64, order='C')
             weight *= classes.shape[0] / np.sum(weight)
         else:
@@ -272,7 +283,7 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         self.class_weight = weight
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight={}, sample_weight=[], **params):
+            class_weight=None, sample_weight=None, **params):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -322,19 +333,9 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
         self.classes = np.unique(y)
         n_classes = self.classes.shape[0]
 
-        # set class weights
+        # Allocate datastructures from input arguments
         self._set_class_weight(class_weight, self.classes, y)
-
-        # set sample weights
-        if len(sample_weight) == 0:
-            sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-        else:
-            sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
-                                          order="C")
-        self.sample_weight = sample_weight
-        if self.sample_weight.shape[0] != n_samples:
-            raise ValueError("Shapes of X and sample_weight do not match.")
-
+        self._set_sample_weight(sample_weight, n_samples)
         self._allocate_parameter_mem(n_classes, n_features,
                                      coef_init, intercept_init)
 
@@ -423,7 +424,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             raise ValueError("The loss %s is not supported. " % loss)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=[], **params):
+            sample_weight=None, **params):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -460,18 +461,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if n_samples != len(y):
             raise ValueError("Shapes of X and y do not match.")
 
-        # get sample weights
-        if len(sample_weight) == 0:
-            sample_weight = np.ones(n_samples, dtype=np.float64,
-                                    order='C')
-        else:
-            sample_weight = np.asanyarray(sample_weight, dtype=np.float64,
-                                          order='C')
-        self.sample_weight = sample_weight
-        if self.sample_weight.shape[0] != n_samples:
-            raise ValueError("Shapes of X and sample_weight do not match.")
-
-        # allocate memory for coef and intercept
+        # Allocate datastructures from input arguments
+        self._set_sample_weight(sample_weight, n_samples)
         self._allocate_parameter_mem(1, n_features,
                                      coef_init, intercept_init)
 

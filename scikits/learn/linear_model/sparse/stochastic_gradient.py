@@ -85,8 +85,8 @@ class SGDClassifier(BaseSGDClassifier):
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
-    `sparse_coef_` : sparse.csr_matrix, , shape = [1, n_features] if n_classes == 2 
-    else [n_classes, n_features]
+    `sparse_coef_` : sparse.csr_matrix, , shape = [1, n_features]
+    if n_classes == 2 else [n_classes, n_features]
         Weights represented as Row Compressed Matrix.
 
     Examples
@@ -221,7 +221,7 @@ def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, y, coef_,
                                 alpha, rho, X_data, X_indices,
                                 X_indptr, y_i, n_iter,
                                 int(fit_intercept), int(verbose),
-                                int(shuffle), int(seed), 
+                                int(shuffle), int(seed),
                                 class_weight_pos, 1.0,
                                 sample_weight)
     return (i, coef, intercept)
