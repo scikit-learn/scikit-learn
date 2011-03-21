@@ -1,4 +1,4 @@
-scikit-learn (0.7.1.dfsg-1) unstable; urgency=low
+scikit-learn (0.7.1.dfsg-1) experimental; urgency=low
 
   * [8972010] New upstream release
 
