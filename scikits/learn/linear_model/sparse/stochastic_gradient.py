@@ -76,6 +76,18 @@ class SGDClassifier(BaseSGDClassifier):
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
+    learning_rate : int
+        The learning rate:
+        (1) constant, eta = eta0
+        (2) optimal, eta = 1.0/(t+t0)
+        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+
+    eta0 : double
+        The initial learning rate [default 0.01].
+
+    power_t : double
+        The exponent for inverse scaling learning rate [default 0.25].
+
     Attributes
     ----------
     `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
@@ -98,7 +110,8 @@ class SGDClassifier(BaseSGDClassifier):
     >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', seed=0, rho=1.0, alpha=0.0001)
+           learning_rate='optimal', fit_intercept=True, penalty='l2',
+           power_t=0.5, seed=0, eta0=0.0, rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -293,6 +306,18 @@ class SGDRegressor(BaseSGDRegressor):
         Epsilon in the epsilon insensitive huber loss function;
         only if `loss=='huber'`.
 
+    learning_rate : int
+        The learning rate:
+        (1) constant, eta = eta0
+        (2) optimal, eta = 1.0/(t+t0)
+        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+
+    eta0 : double
+        The initial learning rate [default 0.01].
+
+    power_t : double
+        The exponent for inverse scaling learning rate [default 0.25].
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -311,9 +336,9 @@ class SGDRegressor(BaseSGDRegressor):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = linear_model.sparse.SGDRegressor()
     >>> clf.fit(X, y)
-    SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', p=0.1, seed=0, rho=1.0,
-           alpha=0.0001)
+    SGDRegressor(loss='squared_loss', power_t=0.25, shuffle=False, verbose=0,
+           n_iter=5, learning_rate='invscaling', fit_intercept=True,
+           penalty='l2', p=0.1, seed=0, eta0=0.01, rho=1.0, alpha=0.0001)
 
     See also
     --------
