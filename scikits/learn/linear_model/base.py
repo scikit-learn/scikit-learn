@@ -421,8 +421,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, p=0.1, seed=0, learning_rate="optimal",
-                 eta0=0.0, power_t=0.5):
+                 verbose=0, p=0.1, seed=0, learning_rate="invscaling",
+                 eta0=0.01, power_t=0.25):
         self.p = float(p)
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, rho=rho,
