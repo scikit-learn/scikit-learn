@@ -113,7 +113,7 @@ class GNB(BaseEstimator, ClassifierMixin):
 
 
 class MNNB( BaseEstimator, ClassifierMixin  ):
-    r"""
+    """
     Multinomial Naive Bayes (MNNB)
     
     The Multinomial Naive Bayes classifier is suitable for text classification.
@@ -145,6 +145,9 @@ class MNNB( BaseEstimator, ClassifierMixin  ):
     predict_proba(X) : array
         Predict the probability of each class using the model.
 
+    predict_log_proba(X) : array
+        Predict the log probability of each class using the model.
+        
     Examples
     --------
     >>> import numpy as np
@@ -189,7 +192,7 @@ class MNNB( BaseEstimator, ClassifierMixin  ):
         N_c = np.sum( N_c_i, axis=1 )
         
         #
-        # Smoothing
+        # Smoothing coefficients
         #
         alpha_i = self.alpha_i
         alpha = self.alpha_ratio * X.shape[1] 
