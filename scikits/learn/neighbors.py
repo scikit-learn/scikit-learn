@@ -9,6 +9,7 @@ import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .ball_tree import BallTree, knn_brute
+from .metrics import euclidean_distances
 
 
 class NeighborsClassifier(BaseEstimator, ClassifierMixin):
@@ -81,7 +82,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             self._fit_X = X
         return self
 
-    def kneighbors(self, data, return_distance=True, **params):
+    def kneighbors(self, X, return_distance=True, **params):
         """Finds the K-neighbors of a point.
 
         Returns distance
@@ -120,9 +121,9 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> neigh.fit(samples, labels)
         NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
         >>> print neigh.kneighbors([1., 1., 1.])
-        (array([ 0.5]), array([2]))
+        (array([[ 0.5]]), array([[2]]))
 
-        As you can see, it returns [0.5], and [2], which means that the
+        As you can see, it returns [[0.5]], and [[2]], which means that the
         element is at distance 0.5 and is the third element of samples
         (indexes start at 0). You can also query for multiple points:
 
@@ -133,8 +134,21 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         """
         self._set_params(**params)
-        return self.ball_tree.query(
-            data, k=self.n_neighbors, return_distance=return_distance)
+        X = np.atleast_2d(X)
+        if self.ball_tree is None:
+            if self.algorithm == 'brute_inplace' and not return_distance:
+                return knn_brute(self._fit_X, X, self.n_neighbors)
+            else:
+                dist = euclidean_distances(X, self._fit_X, squared=True)
+                # XXX: should be implemented with a partial sort
+                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+            if not return_distance:
+                return neigh_ind
+            else:
+                return dist.T[neigh_ind], neigh_ind
+        else:
+            return self.ball_tree.query(X, self.n_neighbors,
+                                        return_distance=return_distance)
 
     def predict(self, X, **params):
         """Predict the class labels for the provided data
@@ -157,17 +171,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self._set_params(**params)
 
         # get neighbors
-        if self.ball_tree is None:
-            if self.algorithm == 'brute_inplace':
-                neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
-            else:
-                from .metrics import euclidean_distances
-                dist = euclidean_distances(
-                    X, self._fit_X, squared=True)
-                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
-        else:
-            neigh_ind = self.ball_tree.query(
-                X, self.n_neighbors, return_distance=False)
+        neigh_ind = self.kneighbors(X, return_distance=False)
 
         # compute the most popular label
         pred_labels = self._y[neigh_ind]
@@ -252,18 +256,10 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         self._set_params(**params)
 
         # compute nearest neighbors
+        neigh_ind = self.kneighbors(X, return_distance=False)
         if self.ball_tree is None:
-            if self.algorithm == 'brute_inplace':
-                neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
-            else:
-                from .metrics.pairwise import euclidean_distances
-                dist = euclidean_distances(
-                    X, self._fit_X, squared=False)
-                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
             neigh = self._fit_X[neigh_ind]
         else:
-            neigh_ind = self.ball_tree.query(
-                X, self.n_neighbors, return_distance=False)
             neigh = self.ball_tree.data[neigh_ind]
 
         # compute interpolation on y
