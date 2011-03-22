@@ -29,7 +29,6 @@ doc/samples
 
 lfw_preprocessed/
 nips2010_pdf/
-cifar-10-batches-py/
 
 *.nt.bz2
 *.tar.gz
