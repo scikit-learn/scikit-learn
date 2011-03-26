@@ -278,7 +278,7 @@ class NMF(BaseEstimator):
         elif self.initial == "fast_svd":
             W, H = _initialize_nmf_(X, self.n_comp)
         elif self.initial == "cro":
-            from cro import CRO
+            from scikits.learn.cro import CRO
             m = CRO(self.n_comp)
             m.fit(X.T)
             W, H = np.abs(m.components_.T), np.abs(m.data_.T)
