@@ -15,7 +15,7 @@ numpy and scipy.
 
 
 Downloading the PDF
-===================
+-------------------
 
 Prebuilt versions of this tutorial are available from the `github download
 page`_.
@@ -31,8 +31,16 @@ If you need a numpy refresher please first have a look at the
 .. _`Scientific Python lecture notes (PDF)`: http://scipy-lectures.github.com/_downloads/PythonScientific.pdf
 
 
-Source code of the tutorial
-===========================
+Online HTML version
+-------------------
+
+The prebuilt HTML version is published as a github pages:
+
+  http://scikit-learn.github.com/scikit-learn-tutorial
+
+
+Source code of the tutorial and exercises
+-----------------------------------------
 
 The project is hosted on github at https://github.com/scikit-learn/scikit-learn-tutorial
 
