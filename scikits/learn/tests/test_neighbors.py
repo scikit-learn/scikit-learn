@@ -1,6 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, \
-     assert_
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from scikits.learn import neighbors, datasets
 
@@ -44,6 +43,24 @@ def test_neighbors_1D():
                             [1 for i in range(n/2)])
 
 
+def test_neighbors_high_dimension():
+    """ Nearest Neighbors on high-dimensional data.
+    """
+    # some constants
+    n = 20
+    p = 40
+    X = 2*np.random.random(size=(n, p)) - 1
+    Y = ((X**2).sum(axis=1) < .25).astype(np.int)
+
+    for s in ('auto', 'ball_tree', 'brute', 'inplace'):
+        knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
+        knn.fit(X, Y)
+        for i, (x, y) in enumerate(zip(X[:10], Y[:10])):
+            epsilon = 1e-5*(2*np.random.random(size=p)-1)
+            assert_array_equal(knn.predict(x+epsilon), y)
+            dist, idxs = knn.kneighbors(x+epsilon, n_neighbors=1)
+
+
 def test_neighbors_iris():
     """
     Sanity checks on the iris dataset
@@ -58,13 +75,13 @@ def test_neighbors_iris():
         assert_array_equal(clf.predict(iris.data), iris.target)
 
         clf.fit(iris.data, iris.target, n_neighbors=9, algorithm=s)
-        assert_(np.mean(clf.predict(iris.data)== iris.target) > 0.95)
+        assert np.mean(clf.predict(iris.data)== iris.target) > 0.95
 
         for m in ('barycenter', 'mean'):
             rgs = neighbors.NeighborsRegressor()
             rgs.fit(iris.data, iris.target, mode=m, algorithm=s)
-            assert_(np.mean(
-                rgs.predict(iris.data).round() == iris.target) > 0.95)
+            assert np.mean(
+                rgs.predict(iris.data).round() == iris.target) > 0.95
 
 
 def test_kneighbors_graph():
@@ -91,7 +108,7 @@ def test_kneighbors_graph():
          [ 1.,  0.,  0.],
          [ 0.,  1.,  0.]])
 
-    # n_neigbors = 2
+    # n_neighbors = 2
     A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
     assert_array_equal(
         A.todense(),

@@ -166,6 +166,9 @@ class GMM(BaseEstimator):
             (`n_features`, `n_features`)              if 'tied',
             (`n_states`, `n_features`)                if 'diag',
             (`n_states`, `n_features`, `n_features`)  if 'full'
+    converged_ : bool
+        True when convergence was reached in fit(), False
+        otherwise.
 
     Methods
     -------
@@ -234,6 +237,10 @@ class GMM(BaseEstimator):
             raise ValueError('bad cvtype')
 
         self.weights = np.ones(self._n_states) / self._n_states
+
+        # flag to indicate exit status of fit() method: converged (True) or
+        # n_iter reached (False)
+        self.converged_ = False
 
     # Read-only properties.
     @property
@@ -415,7 +422,7 @@ class GMM(BaseEstimator):
             # occurrences of current component in obs
             comp_in_obs = (comp==comps)
             # number of those occurrences
-            num_comp_in_obs = comp_in_obs.sum() 
+            num_comp_in_obs = comp_in_obs.sum()
             if num_comp_in_obs > 0:
                 if self._cvtype == 'tied':
                     cv = self._covars
@@ -489,6 +496,8 @@ class GMM(BaseEstimator):
 
         # EM algorithm
         logprob = []
+        # reset self.converged_ to False
+        self.converged_ = False
         for i in xrange(n_iter):
             # Expectation step
             curr_logprob, posteriors = self.eval(X)
@@ -496,6 +505,7 @@ class GMM(BaseEstimator):
 
             # Check for convergence.
             if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
+                self.converged_ = True
                 break
 
             # Maximization step

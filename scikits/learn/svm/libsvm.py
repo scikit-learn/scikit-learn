@@ -35,7 +35,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     shrinking: boolean, optional
          wether to use the shrinking heuristic.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     cache_size: float, optional
@@ -72,7 +72,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> from scikits.learn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
       cache_size=100.0, shrinking=True, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -84,10 +84,10 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 eps=1e-3, cache_size=100.0):
+                 tol=1e-3, cache_size=100.0):
 
         BaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, 0., 0.,
+                         cache_size, tol, C, 0., 0.,
                          shrinking, probability)
 
 
@@ -125,7 +125,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     shrinking: boolean, optional
          wether to use the shrinking heuristic.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     cache_size: float, optional
@@ -179,7 +179,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> from scikits.learn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
-    NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, eps=0.001,
+    NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, tol=0.001,
        cache_size=100.0, shrinking=True, nu=0.5, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -191,10 +191,10 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 eps=1e-3, cache_size=100.0):
+                 tol=1e-3, cache_size=100.0):
 
         BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma, coef0,
-                         cache_size, eps, 0., nu, 0.,
+                         cache_size, tol, 0., nu, 0.,
                          shrinking, probability)
 
 
@@ -231,7 +231,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         enable probability estimates. This must be enabled prior
         to calling prob_predict.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     coef0 : float, optional
@@ -267,11 +267,11 @@ class SVR(BaseLibSVM, RegressorMixin):
     NuSVR
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
+                 cache_size=100.0, tol=1e-3, C=1.0, nu=0.5, p=0.1,
                  shrinking=True, probability=False):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
+                         cache_size, tol, C, nu, p,
                          shrinking, probability)
 
     def fit(self, X, y, sample_weight=[]):
@@ -325,7 +325,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         kernel coefficient for rbf and poly, by default 1/n_features
         will be taken.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     probability: boolean, optional (False by default)
@@ -367,10 +367,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, cache_size=100.0, eps=1e-3):
+                 probability=False, cache_size=100.0, tol=1e-3):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, 0.,
+                         cache_size, tol, C, nu, 0.,
                          shrinking, probability)
 
     def fit(self, X, y):
@@ -423,7 +423,7 @@ class OneClassSVM(BaseLibSVM):
         Independent term in kernel function. It is only significant in
         poly/sigmoid.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     shrinking: boolean, optional
@@ -452,9 +452,9 @@ class OneClassSVM(BaseLibSVM):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, nu=0.5, shrinking=True):
+                 cache_size=100.0, tol=1e-3, nu=0.5, shrinking=True):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                             cache_size, eps, 0.0, nu, 0.0, shrinking, False)
+                             cache_size, tol, 0.0, nu, 0.0, shrinking, False)
 
     def fit(self, X, class_weight={}, sample_weight=[], **params):
         """

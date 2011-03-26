@@ -4,10 +4,19 @@ Base IO code for all datasets
 
 # Copyright (c) 2007 David Cournapeau <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
 import csv
-import os
+import shutil
+from os import environ
+from os.path import dirname
+from os.path import join
+from os.path import exists
+from os.path import expanduser
+from os.path import isdir
+from os import listdir
+from os import makedirs
 
 import numpy as np
 
@@ -22,9 +31,39 @@ class Bunch(dict):
         self.__dict__ = self
 
 
-def load_files(container_path, description=None, categories=None, shuffle=True,
-               rng=42):
-    """Load files with categories as subfolder names
+def get_data_home(data_home=None):
+    """Return the path of the scikit-learn data dir
+
+    This folder is used by some large dataset loaders to avoid
+    downloading the data several times.
+
+    By default the data dir is set to a folder named 'scikit_learn_data'
+    in the user home folder.
+
+    Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
+    variable or programatically by giving an explit folder path. The
+    '~' symbol is expanded to the user home folder.
+
+    If the folder does not already exist, it is automatically created.
+    """
+    if data_home is None:
+        data_home = environ.get('SCIKIT_LEARN_DATA',
+                               join('~', 'scikit_learn_data'))
+    data_home = expanduser(data_home)
+    if not exists(data_home):
+        makedirs(data_home)
+    return data_home
+
+
+def clear_data_home(data_home=None):
+    """Delete all the content of the data home cache"""
+    data_home = get_data_home(data_home)
+    shutil.rmtree(data_home)
+
+
+def load_filenames(container_path, description=None, categories=None,
+                   shuffle=True, rng=42):
+    """Load filenames with categories as subfolder names
 
     Individual samples are assumed to be files stored a two levels folder
     structure such as the following:
@@ -69,7 +108,9 @@ def load_files(container_path, description=None, categories=None, shuffle=True,
       if not Non, list of category names to load (other categories ignored)
 
     shuffle : True by default
-      whether or not to shuffle the data: might be important for
+      whether or not to shuffle the data: might be important for models that
+      make the assumption that the samples are independent and identically
+      distributed (i.i.d.) such as stochastic gradient descent for instance.
 
     rng : a numpy random number generator or a seed integer, 42 by default
       used to shuffle the dataset
@@ -89,17 +130,17 @@ def load_files(container_path, description=None, categories=None, shuffle=True,
     target_names = []
     filenames = []
 
-    folders = [f for f in sorted(os.listdir(container_path))
-               if os.path.isdir(os.path.join(container_path, f))]
+    folders = [f for f in sorted(listdir(container_path))
+               if isdir(join(container_path, f))]
 
     if categories is not None:
         folders = [f for f in folders if f in categories]
 
     for label, folder in enumerate(folders):
         target_names.append(folder)
-        folder_path = os.path.join(container_path, folder)
-        documents = [os.path.join(folder_path, d)
-                     for d in sorted(os.listdir(folder_path))]
+        folder_path = join(container_path, folder)
+        documents = [join(folder_path, d)
+                     for d in sorted(listdir(folder_path))]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
@@ -121,7 +162,7 @@ def load_files(container_path, description=None, categories=None, shuffle=True,
                  DESCR=description)
 
 
-################################################################################
+###############################################################################
 
 def load_iris():
     """load the iris dataset and returns it.
@@ -148,10 +189,9 @@ def load_iris():
 
     """
 
-    data_file = csv.reader(open(os.path.dirname(__file__)
-                        + '/data/iris.csv'))
-    fdescr = open(os.path.dirname(__file__)
-                        + '/descr/iris.rst')
+    module_path = dirname(__file__)
+    data_file = csv.reader(open(join(module_path, 'data', 'iris.csv')))
+    fdescr = open(join(module_path, 'descr', 'iris.rst'))
     temp = data_file.next()
     n_samples = int(temp[0])
     n_features = int(temp[1])
@@ -189,10 +229,10 @@ def load_digits():
 
     """
 
-    data = np.loadtxt(os.path.join(os.path.dirname(__file__)
-                        + '/data/digits.csv.gz'), delimiter=',')
-    fdescr = open(os.path.join(os.path.dirname(__file__)
-                        + '/descr/digits.rst'))
+    module_path = dirname(__file__)
+    data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
+                      delimiter=',')
+    descr = open(join(module_path, 'descr', 'digits.rst')).read()
     target = data[:, -1]
     flat_data = data[:, :-1]
     images = flat_data.view()
@@ -200,11 +240,31 @@ def load_digits():
     return Bunch(data=flat_data, target=target.astype(np.int),
                  target_names=np.arange(10),
                  images=images,
-                 DESCR=fdescr.read())
+                 DESCR=descr)
 
 
 def load_diabetes():
-    base_dir = os.path.join(os.path.dirname(__file__), 'data/')
-    data   = np.loadtxt(base_dir + 'diabetes_data.csv.gz')
-    target = np.loadtxt(base_dir + 'diabetes_target.csv.gz')
-    return Bunch (data=data, target=target)
+    base_dir = join(dirname(__file__), 'data')
+    data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
+    target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
+    return Bunch(data=data, target=target)
+
+
+def load_linnerud():
+    base_dir = join(dirname(__file__), 'data/')
+    # Read data
+    data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
+    data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv',
+                                    skiprows=1)
+    # Read header
+    f = open(base_dir + 'linnerud_exercise.csv')
+    header_exercise = f.readline().split()
+    f.close()
+    f = open(base_dir + 'linnerud_physiological.csv')
+    header_physiological = f.readline().split()
+    f.close()
+    fdescr = open(dirname(__file__) + '/descr/linnerud.rst')
+    return Bunch(data_exercise=data_exercise, header_exercise=header_exercise,
+                 data_physiological=data_physiological,
+                 header_physiological=header_physiological,
+                 DESCR=fdescr.read())

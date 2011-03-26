@@ -40,7 +40,6 @@ negative_logliks = [-cov.fit(X_train, shrinkage=s).score(X_test) \
 
 ###############################################################################
 # Plot results
-pl.close('all')
 pl.loglog(shrinkages, negative_logliks)
 pl.xlabel('Shrinkage')
 pl.ylabel('Negative log-likelihood')

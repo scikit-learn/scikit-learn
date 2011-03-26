@@ -212,21 +212,14 @@ def test_probability():
     clf = svm.SVC(probability=True)
     clf.fit(iris.data, iris.target)
 
-    # predict on a simple dataset
-    T = [[0, 0, 0, 0],
-         [2, 2, 2, 2]]
-    assert_array_almost_equal(clf.predict_proba(T),
-                [[0.993, 0.003, 0.002],
-                 [0.740, 0.223, 0.035]],
-                 decimal=2)
+    prob_predict = clf.predict_proba(iris.data)
+    assert_array_almost_equal(
+        np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
+    assert np.mean(np.argmax(prob_predict, 1) 
+                   == clf.predict(iris.data)) > 0.95
 
-    assert_almost_equal(clf.predict_proba(T),
-                        np.exp(clf.predict_log_proba(T)), 8)
-
-    # make sure probabilities sum to one
-    pprob = clf.predict_proba(X)
-    assert_array_almost_equal(pprob.sum(axis=1),
-                               np.ones(len(X)))
+    assert_almost_equal(clf.predict_proba(iris.data),
+                        np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
 def test_decision_function():
@@ -402,7 +395,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
          [2, 3]]
     y = [0, 0, 1, 1]
     clf = classifier(fit_intercept=True, penalty='l1', loss='l2',
-                     dual=False, C=1, eps=1e-7)
+                     dual=False, C=1, tol=1e-7)
     assert clf.intercept_scaling == 1, clf.intercept_scaling
     assert clf.fit_intercept
 

@@ -199,8 +199,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               np.ndarray[double, ndim=2] X,
               np.ndarray[double, ndim=1] Y,
               int n_iter, int fit_intercept,
-              int verbose, int shuffle,
-              double weight_pos, double weight_neg):
+              int verbose, int shuffle, int seed,
+              double weight_pos, double weight_neg,
+              np.ndarray[double, ndim=1] sample_weight):
     """Cython impl. of SGD for generic loss functions and penalties
 
     This implementation assumes X represented as a dense array of floats.
@@ -232,9 +233,15 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     shuffle : int
         Whether to shuffle the training data before each epoch.
     weight_pos : float
-        The weight (importance) of the positive class.
+        The weight of the positive class.
     weight_neg : float
-        The weight (importance) of the negative class. 
+        The weight of the negative class. 
+    seed : int
+        The seed of the pseudo random number generator to use when
+        shuffling the data
+    sample_weight : array, shape = [n_samples]
+        The importance weight of each sample.
+
     Returns
     -------
     w : array, shape [n_features]
@@ -257,8 +264,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double *X_data_ptr = <double *>X.data
     cdef double *Y_data_ptr = <double *>Y.data
 
+    cdef double *sample_weight_data = <double *>sample_weight.data
+
     # Use index array for fast shuffling
-    # FIXME unsined int?
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
                                                              dtype = np.int32)
     cdef int *index_data_ptr = <int *>index.data
@@ -273,7 +281,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double wnorm = 0.0
     cdef double t = 0.0
     cdef double y = 0.0
-    cdef double importance = 1.0
+    cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
@@ -298,7 +306,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
-            np.random.shuffle(index)
+            np.random.RandomState(seed).shuffle(index)
         for i from 0 <= i < n_samples:
             sample_idx = index_data_ptr[i]
             offset = row_stride * sample_idx / elem_stride # row offset in elem
@@ -308,10 +316,11 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                 ) + intercept
             sumloss += loss.loss(p, y)
             if y > 0:
-                importance = weight_pos
+                class_weight = weight_pos
             else:
-                importance = weight_neg
-            update = eta * loss.dloss(p, y) * importance
+                class_weight = weight_neg
+            update = eta * loss.dloss(p, y) * class_weight * \
+                sample_weight_data[sample_idx]
             if update != 0.0:
                 add(w_data_ptr, wscale, X_data_ptr, offset, n_features, update)
                 if fit_intercept == 1:

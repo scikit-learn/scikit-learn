@@ -1,9 +1,9 @@
-""" K-means clustering
-"""
+"""K-means clustering"""
 
-# Authors: Gael Varoquaux <gael.xaroquaux@normalesup.org>
+# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Thomas Rueckstiess <ruecksti@in.tum.de>
 #          James Bergstra <james.bergstra@umontreal.ca>
+#          Jan Schlueter <scikit-learn@jan-schlueter.de>
 # License: BSD
 
 import warnings
@@ -17,22 +17,29 @@ from ..metrics.pairwise import euclidean_distances
 ###############################################################################
 # Initialisation heuristic
 
-def k_init(X, k, n_samples_max=500, rng=None):
+def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
     """Init k seeds according to kmeans++
 
     Parameters
     -----------
     X: array, shape (n_samples, n_features)
-        The data
+        The data to pick seeds for
 
     k: integer
         The number of seeds to choose
 
-    n_samples_max: integer, optional
-        The maximum number of samples to use: the complexity of the
-        algorithm is n_samples**2, if n_samples > n_samples_max,
-        we use the Niquist strategy, and choose our centers in the
-        n_samples_max samples randomly choosen.
+    n_local_trials: integer, optional
+        The number of seeding trials for each center (except the first),
+        of which the one reducing inertia the most is greedily chosen.
+        Set to None to make the number of trials depend logarithmically
+        on the number of seeds (2+log(k)); this is the default.
+
+    rng: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
+
+    x_squared_norms: array, shape (n_samples,), optional
+        Squared euclidean norm of each data point. Pass it if you have it at
+        hands already to avoid it being recomputed here. Default: None
 
     Notes
     ------
@@ -41,41 +48,67 @@ def k_init(X, k, n_samples_max=500, rng=None):
     "k-means++: the advantages of careful seeding". ACM-SIAM symposium
     on Discrete algorithms. 2007
 
-    Implementation from Yong Sun's website
-    http://blogs.sun.com/yongsun/entry/k_means_and_k_means
-
-    kinit originaly from pybrain:
-    http://github.com/pybrain/pybrain/raw/master/pybrain/auxiliary/kmeans.py
+    Version ported from http://www.stanford.edu/~darthur/kMeansppTest.zip,
+    which is the implementation used in the aforementioned paper.
     """
-    n_samples = X.shape[0]
+    n_samples, n_features = X.shape
     if rng is None:
         rng = np.random
 
-    if n_samples >= n_samples_max:
-        X = X[rng.randint(n_samples, size=n_samples_max)]
-        n_samples = n_samples_max
+    centers = np.empty((k, n_features))
 
-    distances = euclidean_distances(X, X, squared=True)
+    # Set the number of local seeding trials if none is given
+    if n_local_trials is None:
+        # This is what Arthur/Vassilvitskii tried, but did not report
+        # specific results for other than mentioning in the conclusion
+        # that it helped.
+        n_local_trials = 2 + int(np.log(k))
 
-    # choose the 1st seed randomly, and store D(x)^2 in D[]
-    first_idx = rng.randint(n_samples)
-    centers = [X[first_idx]]
-    D = distances[first_idx]
+    # Pick first center randomly
+    center_id = rng.randint(n_samples)
+    centers[0] = X[center_id]
 
-    for _ in range(k - 1):
-        best_d_sum = best_idx = -1
+    # Initialize list of closest distances and calculate current potential
+    if x_squared_norms is None:
+        x_squared_norms = (X ** 2).sum(axis=1)
+    closest_dist_sq = euclidean_distances(
+        np.atleast_2d(centers[0]), X, Y_norm_squared=x_squared_norms,
+        squared=True)
+    current_pot = closest_dist_sq.sum()
 
-        for i in range(n_samples):
-            # d_sum = sum_{x in X} min(D(x)^2, ||x - xi||^2)
-            d_sum = np.minimum(D, distances[i]).sum()
+    # Pick the remaining k-1 points
+    for c in xrange(1, k):
+        # Choose center candidates by sampling with probability proportional
+        # to the squared distance to the closest existing center
+        rand_vals       = rng.random(n_local_trials) * current_pot
+        candidate_ids   = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
 
-            if best_d_sum < 0 or d_sum < best_d_sum:
-                best_d_sum, best_idx = d_sum, i
+        # Compute distances to center candidates
+        distance_to_candidates = euclidean_distances(
+            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
-        centers.append(X[best_idx])
-        D = np.minimum(D, distances[best_idx])
+        # Decide which candidate is the best
+        best_candidate  = None
+        best_pot        = None
+        best_dist_sq    = None
+        for trial in xrange(n_local_trials):
+            # Compute potential when including center candidate
+            new_dist_sq = np.minimum(closest_dist_sq,
+                                     distance_to_candidates[trial])
+            new_pot = new_dist_sq.sum()
 
-    return np.array(centers)
+            # Store result if it is the best local trial so far
+            if (best_candidate is None) or (new_pot < best_pot):
+                best_candidate  = candidate_ids[trial]
+                best_pot        = new_pot
+                best_dist_sq    = new_dist_sq
+
+        # Permanently add best center candidate found in local tries
+        centers[c]      = X[best_candidate]
+        current_pot     = best_pot
+        closest_dist_sq = best_dist_sq
+
+    return centers
 
 
 ###############################################################################
@@ -165,10 +198,14 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     if copy_x:
         X = X.copy()
     X -= Xmean
+    'precompute squared norms of data points'
+    x_squared_norms = X.copy()
+    x_squared_norms **= 2
+    x_squared_norms = x_squared_norms.sum(axis=1)
     for it in range(n_init):
         # init
         if init == 'k-means++':
-            centers = k_init(X, k, rng=rng)
+            centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
         elif init == 'random':
             seeds = np.argsort(rng.rand(n_samples))[:k]
             centers = X[seeds]
@@ -184,9 +221,6 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         if verbose:
             print 'Initialization complete'
         # iterations
-        x_squared_norms = X.copy()
-        x_squared_norms **=2
-        x_squared_norms = x_squared_norms.sum(axis=1)
         for i in range(max_iter):
             centers_old = centers.copy()
             labels, inertia = _e_step(X, centers,
@@ -219,16 +253,17 @@ def _m_step(x, z, k):
 
     Parameters
     ----------
-    x array of shape (n,p)
-      n = number of samples, p = number of features
-    z, array of shape (x.shape[0])
+    x: array, shape (n_samples, n_features)
+
+    z: array, shape (n_samples)
         Current assignment
-    k, int
+
+    k: int
         Number of desired clusters
 
     Returns
     -------
-    centers, array of shape (k, p)
+    centers: array, shape (k, n_features)
         The resulting centers
     """
     dim = x.shape[1]
@@ -254,11 +289,18 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
 
     Parameters
     ----------
-    x: array of shape (n, p)
-      n = number of samples, p = number of features
+    x: array, shape (n_samples, n_features)
 
-    centers: array of shape (k, p)
+    centers: array, shape (k, n_features)
         The cluster centers
+
+    precompute_distances: bool, optional
+        Whether to compute the full distance matrix between centers and data
+        points at once for more speed at the cost of memory. Default: True
+
+    x_squared_norms: array, shape (n_samples,), optional
+        Squared euclidean norm of each data point, speeds up computations in
+        case of precompute_distances == True. Default: None
 
     Returns
     -------
@@ -295,10 +337,6 @@ class KMeans(BaseEstimator):
 
     Parameters
     ----------
-
-    data : ndarray
-        A M by N array of M observations in N dimensions or a length
-        M array of M one-dimensional observations.
 
     k : int or ndarray
         The number of clusters to form as well as the number of
@@ -384,10 +422,12 @@ class KMeans(BaseEstimator):
     def fit(self, X, **params):
         """Compute k-means"""
         X = np.asanyarray(X)
+        if X.shape[0] < self.k:
+            raise ValueError("n_samples=%d should be larger than k=%d" % (
+                X.shape[0], self.k))
         self._set_params(**params)
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             tol=self.tol, rng=self.rng, copy_x=self.copy_x)
         return self
-

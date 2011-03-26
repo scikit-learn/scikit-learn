@@ -9,6 +9,7 @@ import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .ball_tree import BallTree, knn_brute
+from .metrics import euclidean_distances
 
 
 class NeighborsClassifier(BaseEstimator, ClassifierMixin):
@@ -53,10 +54,8 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self.window_size = window_size
         self.algorithm = algorithm
 
-        
-    def fit(self, X, Y, **params):
-        """
-        Fit the model using X, y as training data.
+    def fit(self, X, y, **params):
+        """Fit the model using X, y as training data
 
         Parameters
         ----------
@@ -70,7 +69,9 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             Overwrite keywords from __init__
         """
         X = np.asanyarray(X)
-        self._y = np.asanyarray(Y)
+        if y is None:
+            raise ValueError("y must not be None")
+        self._y = np.asanyarray(y)
         self._set_params(**params)
 
         if self.algorithm == 'ball_tree' or \
@@ -81,8 +82,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
             self._fit_X = X
         return self
 
-
-    def kneighbors(self, data, return_distance=True, **params):
+    def kneighbors(self, X, return_distance=True, **params):
         """Finds the K-neighbors of a point.
 
         Returns distance
@@ -121,9 +121,9 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> neigh.fit(samples, labels)
         NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
         >>> print neigh.kneighbors([1., 1., 1.])
-        (array([ 0.5]), array([2]))
+        (array([[ 0.5]]), array([[2]]))
 
-        As you can see, it returns [0.5], and [2], which means that the
+        As you can see, it returns [[0.5]], and [[2]], which means that the
         element is at distance 0.5 and is the third element of samples
         (indexes start at 0). You can also query for multiple points:
 
@@ -134,12 +134,24 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 
         """
         self._set_params(**params)
-        return self.ball_tree.query(
-            data, k=self.n_neighbors, return_distance=return_distance)
-
+        X = np.atleast_2d(X)
+        if self.ball_tree is None:
+            if self.algorithm == 'brute_inplace' and not return_distance:
+                return knn_brute(self._fit_X, X, self.n_neighbors)
+            else:
+                dist = euclidean_distances(X, self._fit_X, squared=True)
+                # XXX: should be implemented with a partial sort
+                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+            if not return_distance:
+                return neigh_ind
+            else:
+                return dist.T[neigh_ind], neigh_ind
+        else:
+            return self.ball_tree.query(X, self.n_neighbors,
+                                        return_distance=return_distance)
 
     def predict(self, X, **params):
-        """Predict the class labels for the provided data.
+        """Predict the class labels for the provided data
 
         Parameters
         ----------
@@ -158,20 +170,10 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         X = np.atleast_2d(X)
         self._set_params(**params)
 
-        # .. get neighbors ..
-        if self.ball_tree is None:
-            if self.algorithm == 'brute_inplace':
-                neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
-            else:
-                from .metrics import euclidean_distances
-                dist = euclidean_distances(
-                    X, self._fit_X, squared=True)
-                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
-        else:
-            neigh_ind = self.ball_tree.query(
-                X, self.n_neighbors, return_distance=False)
+        # get neighbors
+        neigh_ind = self.kneighbors(X, return_distance=False)
 
-        # .. most popular label ..
+        # compute the most popular label
         pred_labels = self._y[neigh_ind]
         from scipy import stats
         mode, _ = stats.mode(pred_labels, axis=1)
@@ -182,7 +184,7 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
 # NeighborsRegressor class for regression problems
 
 class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
-    """Regression based on k-Nearest Neighbor Algorithm.
+    """Regression based on k-Nearest Neighbor Algorithm
 
     The target is predicted by local interpolation of the targets
     associated of the k-Nearest Neighbors in the training set.
@@ -226,7 +228,6 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-
     def __init__(self, n_neighbors=5, mode='mean', algorithm='auto',
                  window_size=1):
         self.n_neighbors = n_neighbors
@@ -234,9 +235,8 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         self.mode = mode
         self.algorithm = algorithm
 
-
     def predict(self, X, **params):
-        """Predict the target for the provided data.
+        """Predict the target for the provided data
 
         Parameters
         ----------
@@ -255,22 +255,14 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
         X = np.atleast_2d(np.asanyarray(X))
         self._set_params(**params)
 
-        # .. get neighbors ..
+        # compute nearest neighbors
+        neigh_ind = self.kneighbors(X, return_distance=False)
         if self.ball_tree is None:
-            if self.algorithm == 'brute_inplace':
-                neigh_ind = knn_brute(self._fit_X, X, self.n_neighbors)
-            else:
-                from .metrics.pairwise import euclidean_distances
-                dist = euclidean_distances(
-                    X, self._fit_X, squared=False)
-                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
             neigh = self._fit_X[neigh_ind]
         else:
-            neigh_ind = self.ball_tree.query(
-                X, self.n_neighbors, return_distance=False)
             neigh = self.ball_tree.data[neigh_ind]
-        
-        # .. return labels ..
+
+        # compute interpolation on y
         if self.mode == 'barycenter':
             W = barycenter_weights(X, neigh)
             return (W * self._y[neigh_ind]).sum(axis=1)
@@ -283,12 +275,12 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
                 'Unsupported mode, must be one of "barycenter" or '
                 '"mean" but got %s instead' % self.mode)
 
+
 ###############################################################################
 # Utils k-NN based Functions
 
 def barycenter_weights(X, Z, cond=None):
-    """ 
-    Compute barycenter weights of X from Y along the first axis.
+    """Compute barycenter weights of X from Y along the first axis
 
     We estimate the weights to assign to each point in Y[i] to recover
     the point X[i]. The barycenter weights sum to 1.
@@ -312,9 +304,6 @@ def barycenter_weights(X, Z, cond=None):
     -----
     See developers note for more information.
     """
-#
-#       .. local variables ..
-#
     from scipy import linalg
     X, Z = map(np.asanyarray, (X, Z))
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
@@ -324,9 +313,7 @@ def barycenter_weights(X, Z, cond=None):
     v = np.ones(n_neighbors, dtype=X.dtype)
     rank_update, = linalg.get_blas_funcs(('ger',), (X,))
 
-#
-#       .. constrained least squares ..
-#
+    # constrained least squares
     v[0] -= np.sqrt(n_neighbors)
     B[:, 0] = 1. / np.sqrt(n_neighbors)
     if n_neighbors <= 1:
@@ -375,10 +362,6 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
             [ 0.,  1.,  1.],
             [ 1.,  0.,  1.]])
     """
-
-#
-#       .. local variables ..
-#
     from scipy import sparse
     X = np.asanyarray(X)
     n_samples = X.shape[0]
@@ -386,9 +369,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
     n_nonzero = n_neighbors * n_samples
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
-#
-#       .. construct CSR matrix ..
-#
+    # construct CSR matrix representation of the k-NN graph
     if mode is 'connectivity':
         A_data = np.ones((n_samples, n_neighbors))
         A_ind = ball_tree.query(

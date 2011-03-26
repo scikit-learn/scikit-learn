@@ -50,7 +50,7 @@ Approximate PCA
 ---------------
 
 Often we are interested in projecting the data onto a lower dimensional
-space that preseves most of the variance by droping the singular vector
+space that preserves most of the variance by dropping the singular vector
 of components associated with lower singular values.
 
 For instance for face recognition, if we work with 64x64 gray level pixel

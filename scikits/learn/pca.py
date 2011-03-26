@@ -165,7 +165,7 @@ class PCA(BaseEstimator):
         self.copy = copy
         self.whiten = whiten
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         """Fit the model from data in X.
 
         Parameters
@@ -238,7 +238,7 @@ class ProbabilisticPCA(PCA):
 
     """ + PCA.__doc__
 
-    def fit(self, X, homoscedastic=True):
+    def fit(self, X, y=None, homoscedastic=True):
         """Additionally to PCA.fit, learns a covariance model
 
         Parameters
@@ -350,9 +350,9 @@ class RandomizedPCA(BaseEstimator):
     Notes
     -------
     References:
-    
-    * Finding structure with randomness: Stochastic algorithms for 
-      constructing approximate matrix decompositions Halko, et al., 2009 
+
+    * Finding structure with randomness: Stochastic algorithms for
+      constructing approximate matrix decompositions Halko, et al., 2009
       (arXiv:909)
 
     * A randomized algorithm for the decomposition of matrices
@@ -369,7 +369,7 @@ class RandomizedPCA(BaseEstimator):
         self.whiten = whiten
         self.mean_ = None
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         """Fit the model to the data X.
 
         Parameters
@@ -384,6 +384,9 @@ class RandomizedPCA(BaseEstimator):
             Returns the instance itself.
         """
         self._set_params(**params)
+        if not hasattr(X, 'todense'):
+            X = np.atleast_2d(X)
+
         n_samples = X.shape[0]
 
         if self.copy:

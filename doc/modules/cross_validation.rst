@@ -1,6 +1,6 @@
-=======================
+================
 Cross-Validation
-=======================
+================
 
 .. currentmodule:: scikits.learn.cross_val
 
@@ -14,7 +14,7 @@ which can be used for learning the model, and the results can depend on a
 particular couple of *learning set* and *test set*.
 
 A solution is to split the whole data in different learning set and test set,
-and to return the the averaged value of the prediction scores obtained with
+and to return the averaged value of the prediction scores obtained with
 the different sets. Such a procedure is called *cross-validation*. This approach
 can  be computationally expensive, but does not waste too much data (as it is the
 case when fixing an arbitrary test set), which is a major advantage in problem
@@ -45,7 +45,7 @@ The *Leave-One-Out* (or LOO) is a simple cross-validation. Each learning
 set is created by taking all the samples except one, the test set being the
 sample left out. Thus, for *n* samples, we have *n* different learning sets and
 *n* different tests set. This cross-validation procedure does not waste much
-data as only one sample is removed from the learning set. 
+data as only one sample is removed from the learning set.
 
 
 
@@ -63,7 +63,7 @@ data as only one sample is removed from the learning set.
     [ True  True  True False] [False False False  True]
 
 
-Each fold is constitued by two arrays: the first one is related to the
+Each fold is constituted by two arrays: the first one is related to the
 *training set*, and the second one to the *test set*.
 Thus, one can create the training/test sets using:
 
@@ -137,7 +137,7 @@ K-fold
 The *K-fold* divides all the samples in *K* groups of samples, called folds (if
 :math:`K = n`, we retrieve the *LOO*), of equal sizes (if possible). The
 prediction function is learned using *K - 1* folds, and the fold left out is
-used for test. 
+used for test.
 
 
 Example of 2-fold:
@@ -166,7 +166,7 @@ Stratified K-Fold
 
 The *Stratified K-Fold* is a variation of *K-fold*, which returns stratified
 folds, *i.e* which creates folds by preserving the same percentage for each
-class than in the complete set.
+class as in the complete set.
 
 
 Example of stratified 2-fold:
@@ -199,7 +199,7 @@ Leave-One-Label-Out - LOLO
 
 The *Leave-One-Label-Out* (LOLO) is a cross-validation scheme which removes the
 samples according to a specific label.
-Each training set is thus constitued by all the samples except the ones related
+Each training set is thus constituted by all the samples except the ones related
 to a specific label.
 
 For example, in the cases of multiple experiments, *LOLO* can be used to
