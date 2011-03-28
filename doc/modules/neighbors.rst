@@ -71,19 +71,20 @@ Efficient implementation: the ball tree
 ==========================================
 
 Behind the scenes, nearest neighbor search is done by the object
-:class:`BallTree`, which is a fast way to perform neighbor searches in data
-sets of very high dimensionality.
+:class:`BallTree`. This algorithm makes it possible to rapidly look up
+the nearest neighbors in low-dimensional spaces.
 
 This class provides an interface to an optimized BallTree
 implementation to rapidly look up the nearest neighbors of any point.
-Ball Trees are particularly useful for very high-dimensionality data,
-where more traditional tree searches (e.g. KD-Trees) perform poorly.
+Ball Trees are particularly useful for low-dimensional data and scales
+better than traditional tree searches (e.g. KD-Trees) as the number of
+dimensions grow. However, on high-dimensional spaces (dim > 50), brute
+force will eventually take on and become more efficient on such spaces.
 
-The cost is a slightly longer construction time, though for repeated
-queries, this added construction time quickly becomes insignificant.
-
-A Ball Tree reduces the number of candidate points for a neighbor search
-through use of the triangle inequality:
+Compared to a KDTree, the cost is a slightly longer construction time,
+though for repeated queries, this added construction time quickly
+becomes insignificant. A Ball Tree reduces the number of candidate
+points for a neighbor search through use of the triangle inequality:
 
 .. math::   |x+y| \leq |x| + |y|
 
