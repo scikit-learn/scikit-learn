@@ -36,8 +36,18 @@ def test_mnnb():
     correct values for a simple toy dataset.
     """
 
+    #
+    # Check the ability to predict the learning set.
+    #
     clf =  naive_bayes.MNNB()
     y_pred = clf.fit(X2, y2).predict(X2)
 
     assert_array_equal(y_pred, y2)
     
+    #
+    # Verify that np.log(clf.predict_proba(X)) gives the same results as
+    # clf.predict_log_proba(X)
+    #
+    y_pred_proba = clf.predict_proba(X2)
+    y_pred_log_proba = clf.predict_log_proba(X2)
+    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
