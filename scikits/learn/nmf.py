@@ -10,6 +10,7 @@ from __future__ import division
 import warnings
 
 import numpy as np
+from numpy import r_, c_, zeros, ones, eye, sqrt
 from .base import BaseEstimator
 from .utils.extmath import fast_svd
 from numpy.linalg import norm
@@ -17,7 +18,11 @@ from numpy.linalg import norm
 _pos_ = lambda x: (x >= 0) * x
 _neg_ = lambda x: (x < 0) * (-x)
 
-def _initialize_nmf_(X, n_comp):
+def _sparseness_(x):
+    n = len(x)
+    return (sqrt(n) - norm(x, 1) / norm(x, 2)) / (sqrt(n) - 1)
+
+def _initialize_nmf_(X, n_comp, variant = None, eps = 1e-6, seed = None):
     """
     Computes a good initial guess for the non-negative
     rank k matrix approximation for X: X = WH
@@ -31,6 +36,16 @@ def _initialize_nmf_(X, n_comp):
     n_comp:
         The number of components desired in the
         approximation.
+        
+    variant:
+        The variant of the NNDSVD algorithm. 
+        Accepts None, "a", "ar"
+        
+    eps:
+        Truncate all values less then this in output to zero.
+    
+    seed:
+        Seed for random number generator, when using NNSVDar.
 
     Returns
     -------
@@ -51,17 +66,18 @@ def _initialize_nmf_(X, n_comp):
     """
     if (X < 0).any():
         raise ValueError("Negative values in data passed to initialization")
-
+    if variant not in (None, 'a', 'ar'):
+        raise ValueError("Invalid variant name")
+    
     U, S, V = fast_svd(X, n_comp)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
 
-    ## The leading singular triplet is non-negative
-    ## so it can be used as is for initialization.
-    # !!!!! apparently not!
-    # W[:, 0] = np.sqrt(S[0]) * U[:, 0]
-    # H[0, :] = np.sqrt(S[0]) * V[0, :]
+    # The leading singular triplet is non-negative
+    # so it can be used as is for initialization.
+    W[:, 0] = np.sqrt(S[0]) * np.abs(U[:, 0])
+    H[0, :] = np.sqrt(S[0]) * np.abs(V[0, :])
 
-    for j in xrange(0, n_comp):
+    for j in xrange(1, n_comp):
         x, y = U[:, j], V[j, :]
 
         # extract positive and negative parts of column vectors
@@ -87,7 +103,19 @@ def _initialize_nmf_(X, n_comp):
         lbd = np.sqrt(S[j] * sigma)
         W[:, j] = lbd * u
         H[j, :] = lbd * v
-
+        
+    W[W < eps] = 0
+    H[H < eps] = 0
+    
+    if variant == "a":
+        avg = X.mean()
+        W[W == 0] = avg
+        H[H == 0] = avg
+    elif variant == "ar":
+        rnd = np.random.mtrand.RandomState(seed)
+        W[W == 0] = rnd.randn(len(W[W == 0]))
+        H[H == 0] = rnd.randn(len(H[H == 0]))
+        
     return W, H
 
 class Bunch:
@@ -341,7 +369,19 @@ class NMF(BaseEstimator):
     tolerance: double
         Tolerance value used in stopping conditions.
         Default: 0.001
-
+        
+    sparsity: string or None
+        'data' or 'components', where to enforce sparsity
+        Default: None
+        
+    beta: double
+        Degree of sparsity, if sparsity is not None
+        Default: 1
+                
+    eta: double
+        Degree of correctness to mantain, if sparsity is not None
+        Default: 0.1
+                
     max_iter: int
         Number of iterations to compute.
         Default: 100
@@ -391,11 +431,16 @@ class NMF(BaseEstimator):
 
     """
 
-    def __init__(self, n_comp=None, initial="fast_svd",
-                tolerance=0.001, max_iter=100, nls_max_iter=2000):
+    def __init__(self, n_comp=None, initial="fast_svd", sparsity=None, beta=1,
+                 eta=0.1, tolerance=0.001, max_iter=100, nls_max_iter=2000):
         self.n_comp = n_comp
         self.initial = initial
         self.tolerance = tolerance
+        if sparsity not in (None, 'data', 'components'):
+            raise ValueError('Invalid sparsity target')
+        self.sparsity = sparsity
+        self.beta = beta
+        self.eta = eta
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
@@ -443,20 +488,45 @@ class NMF(BaseEstimator):
                 break
 
             # update W
-            W, gradW, iterW = _nls_subproblem_(X.T, H.T, W.T, tolW,
-                                               self.nls_max_iter)
+            if self.sparsity == None:
+                W, gradW, iterW = _nls_subproblem_(X.T, H.T, W.T, tolW,
+                                                   self.nls_max_iter)
+            elif self.sparsity == 'data':
+                W, gradW, iterW = _nls_subproblem_(
+                        r_[X.T, zeros((1, n_features))],
+                        r_[H.T, sqrt(self.beta) * ones((1, self.n_comp))],
+                        W.T, tolW, self.nls_max_iter)
+            elif self.sparsity == 'components':
+                W, gradW, iterW = _nls_subproblem_(
+                        r_[X.T, zeros((self.n_comp, n_features))],
+                        r_[H.T, sqrt(self.eta) * eye(self.n_comp)],
+                        W.T, tolW, self.nls_max_iter)
+                        
             W = W.T
             gradW = gradW.T
             if iterW == 1:
                 tolW = 0.1 * tolW
 
             # update H
-            H, gradH, iterH = _nls_subproblem_(X, W, H, tolH,
-                                               self.nls_max_iter)
+            if self.sparsity == None:
+                H, gradH, iterH = _nls_subproblem_(X, W, H, tolH,
+                                                   self.nls_max_iter)
+            elif self.sparsity == 'data':
+                H, gradH, iterH = _nls_subproblem_(
+                        r_[X, zeros((self.n_comp, n_samples))],
+                        r_[W, sqrt(self.eta) * eye(self.n_comp)],
+                        H, tolH, self.nls_max_iter)
+            elif self.sparsity == 'components':
+                H, gradH, iterH = _nls_subproblem_(
+                        r_[X, zeros((1, n_samples))],
+                        r_[W, sqrt(self.beta) * ones((1, self.n_comp))],
+                        H, tolH, self.nls_max_iter)                                     
             if iterH == 1:
                 tolH = 0.1 * tolH
-
-            self.components_ = H
+            sparH = sum(_sparseness_(v) for v in H)   # ? ?
+            sparW = sum(_sparseness_(v) for v in W.T) # ? ?
+            self.sparsity_ = (sparH, sparW)
+            self.components_ = H.T
             self.data_ = W
             self.reconstruction_err_ = norm(X - np.dot(W, H))
         if iter == self.max_iter:
