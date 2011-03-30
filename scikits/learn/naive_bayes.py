@@ -3,13 +3,13 @@
 
 # Author: Vincent Michel <vincent.michel@inria.fr>
 #         Amit Aides <amitibo@tx.technion.ac.il>
+#         Yehuda Finkelstein <yehudaf@tx.technion.ac.il>
 #
 # License: BSD Style.
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
 
-eps = np.finfo(np.float).eps
 
 class GNB(BaseEstimator, ClassifierMixin):
     """
@@ -229,11 +229,11 @@ class MNNB(BaseEstimator, ClassifierMixin):
 
     def _mininf(self, X, axis=None):
         """Calculate the minimum of a matrix ignoring -inf values"""
-        
+
         A = X.copy()
         A[np.isinf(X)] = np.inf
         return np.min(X, axis=axis)
-        
+
     def predict_proba(self, X):
         """Predict the posterior probability of samples X"""
 
