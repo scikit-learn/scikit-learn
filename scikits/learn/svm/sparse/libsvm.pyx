@@ -130,17 +130,17 @@ def libsvm_sparse_train ( int n_features,
     model = svm_csr_train(problem, param)
 
     cdef np.npy_intp SV_len = get_l(model)
-    cdef np.npy_intp nr     = get_nr(model)
+    cdef np.npy_intp n_class     = get_nr(model)
 
     # copy model.sv_coef
     # we create a new array instead of resizing, otherwise
     # it would not erase previous information
-    sv_coef_data.resize ((nr-1)*SV_len, refcheck=False)
+    sv_coef_data.resize ((n_class-1)*SV_len, refcheck=False)
     copy_sv_coef (sv_coef_data.data, model)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
-    intercept.resize (nr*(nr-1)/2, refcheck=False)
+    intercept.resize (n_class*(n_class-1)/2, refcheck=False)
     copy_intercept (intercept.data, model, intercept.shape)
 
     # copy model.SV
@@ -158,12 +158,12 @@ def libsvm_sparse_train ( int n_features,
 
     # copy model.nSV
     # TODO: do only in classification
-    nclass_SV.resize(nr, refcheck=False)
+    nclass_SV.resize(n_class, refcheck=False)
     copy_nSV(nclass_SV.data, model)
 
     # # copy label
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
-    label = np.empty((nr), dtype=np.int32)
+    label = np.empty((n_class), dtype=np.int32)
     copy_label(label.data, model)
 
     # # copy probabilities
