@@ -1,5 +1,6 @@
 import numpy as np
-from base import BaseBoost, clone
+from .base import BaseBoost
+from ..base import clone
 
 class AdaBoost(BaseBoost):
 
@@ -18,7 +19,7 @@ class AdaBoost(BaseBoost):
 
     def predict(self, X):
         
-        prediction = np.zeros(len(X))
+        prediction = np.zeros(X.shape[0])
         for weight, estimator in self:
             prediction += weight * estimator
         prediction /= len(self)
