@@ -88,13 +88,12 @@ class BaseLibSVM(BaseEstimator):
             Target values (integers in classification, real numbers in
             regression)
 
-        class_weight : dict | 'auto', optional
-            Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
-            supposed to have weight one.
-
-            The 'auto' mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies.
+        class_weight : {dict, 'auto'}, optional
+            Set the parameter C of class i to class_weight[i]*C for
+            SVC. If not given, all classes are supposed to have
+            weight one. The 'auto' mode uses the values of y to
+            automatically adjust weights inversely proportional to
+            class frequencies.
 
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
@@ -357,9 +356,11 @@ class BaseLibLinear(BaseEstimator):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
+
         y : array-like, shape = [n_samples]
             Target vector relative to X
-        class_weight : dict , {class_label : weight}
+
+        class_weight : {dict, 'auto'}, optional
             Weights associated with classes. If not given, all classes
             are supposed to have weight one.
 

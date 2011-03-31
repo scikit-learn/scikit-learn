@@ -63,7 +63,7 @@ class SparseBaseLibSVM(BaseLibSVM):
             Target values (integers in classification, real numbers in
             regression)
 
-        class_weight : dict | 'auto', optional
+        class_weight : {dict, 'auto'}, optional
             Weights associated with classes in the form
             {class_label : weight}. If not given, all classes are
             supposed to have weight one.

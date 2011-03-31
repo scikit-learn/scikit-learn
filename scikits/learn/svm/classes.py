@@ -266,8 +266,8 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=100.0):
 
-        BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma, coef0,
-                         cache_size, tol, 0., nu, 0.,
+        BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
+                         coef0, cache_size, tol, 0., nu, 0.,
                          shrinking, probability)
 
 
