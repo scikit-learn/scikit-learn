@@ -139,7 +139,7 @@ class BaseLibSVM(BaseEstimator):
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = \
-        libsvm.libsvm_train(_X, y, solver_type, kernel_type, self.degree,
+        libsvm.train(_X, y, solver_type, kernel_type, self.degree,
                       self.gamma, self.coef0, self.tol, self.C,
                       self.nu, self.cache_size, self.p,
                       self.class_weight_label, self.class_weight,
@@ -179,16 +179,14 @@ class BaseLibSVM(BaseEstimator):
             raise ValueError("X.shape[1] should be equal to the number of "
                              "features at training time!")
 
-        return libsvm.libsvm_predict(X, self.support_vectors_,
-                      self.dual_coef_, self.intercept_,
-                      self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.tol,
-                      self.C, self.class_weight_label,
-                      self.class_weight, self.nu, self.cache_size,
-                      self.p, int(self.shrinking),
-                      int(self.probability), self.n_support_,
-                      self.support_, self.label_, self.probA_,
-                      self.probB_)
+        return libsvm.predict( X, self.support_vectors_,
+            self.dual_coef_, self.intercept_,
+            self._svm_types.index(self.impl), kernel_type,
+            self.degree, self.gamma, self.coef0, self.tol, self.C,
+            self.nu, self.cache_size, self.p, self.n_support_,
+            self.support_, self.label_, self.class_weight_label,
+            self.class_weight, self.probA_, self.probB_,
+            int(self.shrinking), int(self.probability))
 
     def predict_proba(self, T):
         """
@@ -221,16 +219,17 @@ class BaseLibSVM(BaseEstimator):
         if self.impl not in ('c_svc', 'nu_svc'):
             raise NotImplementedError
 
-        pprob = libsvm.libsvm_predict_proba(T, self.support_vectors_,
+        pprob = libsvm.predict_proba(T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
-                      self.C, self.class_weight_label,
-                      self.class_weight, self.nu, self.cache_size,
-                      self.p, int(self.shrinking),
-                      int(self.probability), self.n_support_,
-                      self.support_, self.label_, self.probA_,
-                      self.probB_)
+                      self.C, self.nu, self.cache_size,
+                      self.p, self.n_support_,
+                      self.support_, self.label_,
+                      self.class_weight_label,
+                      self.class_weight, 
+                      self.probA_, self.probB_, int(self.shrinking),
+                      int(self.probability))
 
         return pprob
 
@@ -276,7 +275,7 @@ class BaseLibSVM(BaseEstimator):
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
 
-        dec_func = libsvm.libsvm_decision_function(T, self.support_vectors_,
+        dec_func = libsvm.decision_function(T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
