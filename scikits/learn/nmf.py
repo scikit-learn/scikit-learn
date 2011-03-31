@@ -414,18 +414,16 @@ class NMF(BaseEstimator):
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from scikits.learn.nmf import NMF
-    >>> model = NMF(n_comp=2, initial=0, tolerance=0.001)
+    >>> model = NMF(n_comp=2, initial=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=1000, n_comp=2,
-      initial=<mtrand.RandomState object at 0x...>, tolerance=0.001,
-      max_iter=50)
+    NMF(nls_max_iter=2000, n_comp=2, max_iter=100,
+      initial=<mtrand.RandomState object at 0x...>, sparsity=None, beta=1,
+      eta=0.1, tolerance=0.0001)
     >>> model.components_
-    array([[ 0.76551648,  0.11408118],
-           [ 0.4167371 ,  0.36376783]])
+    array([[ 0.77032744,  0.38526873],
+           [ 0.11118662,  0.38228063]])
     >>> model.reconstruction_err_
-    0.11760278071752467
-    >>> np.linalg.norm(model.data_[0, :] - model.transform(X[0, :]))
-    0.023723012161826595
+    0.0074679497834630824
 
     Notes
     -----
