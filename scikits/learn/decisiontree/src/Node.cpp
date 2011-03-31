@@ -1,74 +1,66 @@
 #include "Node.h"
 
-#include <iostream>
-
-float Node::response(const Object* object)
+double Node::predict(const double* attrs)
 {
-    if (leaf())
+    if (this->leaf())
     {
-        return purity;
+        return this->purity;
     }
-    else if (!complete())
+    else if (*attrs[this->attribute] > this->cut)
     {
-        return -100.;
-    }
-    else if (object->attribute(splitAttribute) > splitAttributeValue)
-    {
-        return get_right_child()->response(object);
+        return this->get_right_child()->predict(attrs);
     }
     else
     {
-        return get_left_child()->response(object);
+        return this->get_left_child()->predict(attrs);
     }
 }
-
 
 void Node::recursive_split(unsigned int minLeafSize, unsigned int numCuts)
 {
-    cout << calc_purity() << endl;
-    if (split(minLeafSize,numCuts))
+    if (this->split(minLeafSize,numCuts))
     {
-        get_left_child()->recursive_split(minLeafSize,numCuts);
-        get_right_child()->recursive_split(minLeafSize,numCuts);
+        this->get_left_child()->recursive_split(minLeafSize,numCuts);
+        this->get_right_child()->recursive_split(minLeafSize,numCuts);
     }
     else
     {
-        purity = calc_purity();
-        update_classification();
+        this->calc_purity();
+        this->update_classification();
     }
 }
 
-float Node::calc_purity()
+void Node::calc_purity()
 {
-    vector<Object*>::const_iterator it(signal.begin());
-    float weightedSignal = 0.;
-    for (; it != signal.end(); ++it)
-        weightedSignal += (*it)->get_weight();
-    it = background.begin();
-    float weightedBackground = 0.;
-    for (; it != background.end(); ++it)
-        weightedBackground += (*it)->get_weight();
-    return (weightedSignal + weightedBackground) > 0 ? weightedSignal / (weightedSignal + weightedBackground) : -1.;
+    vector<Object*>::const_iterator it(this->signal.begin());
+    double weightedSignal(0.);
+    for (; it != this->signal.end(); ++it)
+        weightedSignal += (*it)->weight;
+    it = this->background.begin();
+    double weightedBackground(0.);
+    for (; it != this->background.end(); ++it)
+        weightedBackground += (*it)->weight;
+    this->purity = (weightedSignal + weightedBackground) > 0 ? weightedSignal / (weightedSignal + weightedBackground) : -1.;
 }
 
 void Node::update_classification()
 {
-    vector<Object*>::const_iterator it(signal.begin());
-    if (purity > .5)
+    vector<Object*>::const_iterator it(this->signal.begin());
+    if (this->purity > .5)
     {
-        for (; it != signal.end(); ++it)
-            (*it)->set_class(SIGNAL);
-        it = background.begin();
-        for (; it != background.end(); ++it)
-            (*it)->set_class(SIGNAL);
+        for (; it != this->signal.end(); ++it)
+            (*it)->label = SIGNAL;
+        it = this->background.begin();
+        for (; it != this->background.end(); ++it)
+            (*it)->label = SIGNAL;
     }
     else
     {
-        for (; it != signal.end(); ++it)
-            (*it)->set_class(BACKGROUND);
-        it = background.begin();
-        for (; it != background.end(); ++it)
-            (*it)->set_class(BACKGROUND);
+        for (; it != this->signal.end(); ++it)
+            (*it)->label = BACKGROUND;
+        it = this->background.begin();
+        for (; it != this->background.end(); ++it)
+            (*it)->label = BACKGROUND;
     }
 }
 
@@ -79,22 +71,22 @@ bool Node::split(unsigned int minSize, unsigned int resolution)
         return false;
     }
     Object* sample = signal.at(0);
-    unsigned int numAttributes = sample->num_attributes();
-    int bestAttribute = -1;
-    float bestSplit = 0.;
-    pair<float,float> extrema;
-    Histogram<double,float>* sigHist;
-    Histogram<double,float>* bkgHist;
+    unsigned int numAttributes = sample->dim;
+    int bestAttribute(-1);
+    double bestSplit(0.);
+    pair<double,double> extrema;
+    Histogram<double,double>* sigHist;
+    Histogram<double,double>* bkgHist;
     float bestGini = -1;
     for (unsigned int i(0); i < numAttributes; ++i)
     {
         // get max and min value of this attribute over signal and background combined
-        extrema = get_extrema(i);
+        extrema = this->minmax(i);
         // create histograms for signal and background
-        float step = (extrema.second - extrema.first)/resolution;
+        double step = (extrema.second - extrema.first)/resolution;
         if (step==0) continue;
-        sigHist = new Histogram<double,float>(resolution,extrema.first,extrema.second+step);
-        bkgHist = new Histogram<double,float>(resolution,extrema.first,extrema.second+step);
+        sigHist = new Histogram<double,double>(resolution, extrema.first, extrema.second+step);
+        bkgHist = new Histogram<double,double>(resolution, extrema.first, extrema.second+step);
         // fill histograms
         std::vector<Object*>::const_iterator it(signal.begin());
         for (; it != signal.end(); ++it)
@@ -103,11 +95,11 @@ bool Node::split(unsigned int minSize, unsigned int resolution)
         for (; it != background.end(); ++it)
             bkgHist->fill((*it)->attribute(i),(*it)->get_weight());
         // calculate Gini_left + Gini_right for a split at each internal bin boundary and find minimum where minSize is respected
-        float Gini_left;
-        float Gini_right;
-        float sig_left, sig_right;
-        float bkg_left, bkg_right;
-        float purity_left, purity_right;
+        double Gini_left;
+        double Gini_right;
+        double sig_left, sig_right;
+        double bkg_left, bkg_right;
+        double purity_left, purity_right;
         for (unsigned int binCut(1); binCut < resolution; ++binCut)
         {
             if (sigHist->integral(0,binCut,false) + bkgHist->integral(0,binCut,false) >= minSize && \
@@ -134,42 +126,42 @@ bool Node::split(unsigned int minSize, unsigned int resolution)
         delete bkgHist;
     }
     if (bestAttribute == -1) return false;
-    // create left and right partitions and add them as children
+    // create left and right Nodes and add them as children
     Node* left = new Node();
     Node* right = new Node();
     std::vector<Object*>::const_iterator it(signal.begin());
     for (; it != signal.end(); ++it)
     {
-        if ((*it)->attribute(bestAttribute) > bestSplit) right->add_signal(*it);
+        if ((*it)->attrs[bestAttribute] > bestSplit) right->add_signal(*it);
         else left->add_signal(*it);
     }
     it = background.begin();
     for (; it != background.end(); ++it)
     {
-        if ((*it)->attribute(bestAttribute) > bestSplit) right->add_background(*it);
+        if ((*it)->attrs[bestAttribute] > bestSplit) right->add_background(*it);
         else left->add_background(*it);
     }
-    splitAttribute = bestAttribute;
-    set_left_child(left);
-    set_right_child(right);
+    this->attribute = bestAttribute;
+    this->set_left_child(left);
+    this->set_right_child(right);
     return true;
 }
 
-pair<float,float> Node::minmax(unsigned int attribute)
+pair<double,double> Node::minmax(unsigned int attribute)
 {
     vector<Object*>::const_iterator it(signal.begin());
-    float value = (*it++)->attribute(attribute);
-    pair<float,float> extrema(value,value); // min,max
+    double value = (*it++)->attrs[attribute];
+    pair<double,double> extrema(value,value); // min,max
     for (; it != signal.end(); ++it)
     {
-        value = (*it)->attribute(attribute);
+        value = (*it)->attrs[attribute];
         if (value < extrema.first) extrema.first = value;
         if (value > extrema.second) extrema.second = value;
     }
     it = background.begin();
     for (; it != background.end(); ++it)
     {
-        value = (*it)->attribute(attribute);
+        value = (*it)->attrs[attribute];
         if (value < extrema.first) extrema.first = value;
         if (value > extrema.second) extrema.second = value;
     }

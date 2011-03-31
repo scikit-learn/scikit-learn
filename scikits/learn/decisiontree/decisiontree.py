@@ -1,3 +1,4 @@
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClassifierMixin
+from . import libdecisiontree
 
-class DecisionTree(BaseEstimator): pass
+class DecisionTree(BaseEstimator, ClassifierMixin): pass

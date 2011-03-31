@@ -29,6 +29,10 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics')
     config.add_subpackage('metrics/tests')
 
+    config.add_subpackage("boosting")
+    config.add_subpackage("bagging")
+    config.add_subpackage("decisiontree")
+
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (

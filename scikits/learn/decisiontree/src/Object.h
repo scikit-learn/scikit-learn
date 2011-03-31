@@ -1,12 +1,17 @@
 #ifndef OBJECT_H
 #define OBJECT_H
+enum label_t
+{
+    SIGNAL,
+    BACKGROUND
+};
 
 struct Object
 {
     double* attrs;
     unsigned int dim;
     double weight;
-    bool label;
+    label_t label;
 };
 
 class ObjectCompare

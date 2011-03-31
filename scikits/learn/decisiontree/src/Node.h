@@ -8,27 +8,21 @@
 
 using namespace std;
 
-enum Classes
-{
-    SIGNAL,
-    BACKGROUND
-};
-
 class Node
 {
     public:
         
         Node():
-            leftChild(0),
-            rightChild(0),
-            splitAttribute(-1),
-            splitAttributeValue(0),
+            left_child(0),
+            right_child(0),
+            attribute(-1),
+            cut(0),
             purity(0)
         {}
 
-        ~Node(){ delete leftChild; delete rightChild; }
+        ~Node(){ delete left_child; delete right_child; }
 
-        float calc_purity();
+        void calc_purity();
 
         void update_classification();
 
@@ -44,45 +38,57 @@ class Node
         
         bool split(unsigned int minSize, unsigned int resolution);
 
-        Node* get_left_child() { return leftChild; }
-
-        Node* get_right_child() { return rightChild; }
-
-        void set_left_child(Node* child)
+        const Node* get_left_child() const
         {
-            if (leftChild) delete leftChild;
-            leftChild = child;
+            return left_child;
+        }
+
+        const Node* get_right_child() const
+        {
+            return right_child;
+        }
+
+        void set_left_child(const Node* child)
+        {
+            if (this->left_child) delete this->left_child;
+            this->left_child = child;
         }
 
         void set_right_child(Node* child)
         {
-            if (rightChild) delete rightChild;
-            rightChild = child;
+            if (this->right_child) delete this->right_child;
+            this->right_child = child;
         }
 
-        bool leaf()
+        bool leaf() const
         {
-            return !leftChild && !rightChild;
+            return !this->left_child && !this->right_child;
         }
 
-        bool complete()
+        bool complete() const
         {
-            return leftChild&&rightChild;
+            return this->left_child && this->right_child;
         }
 
-        float response(const Object* object);
+        float predict(const double* attrs) const;
 
         pair<float,float> get_extrema(unsigned int attribute);
+
+        void drop_objects()
+        {
+            this->signal.clear();
+            this->background.clear();
+        }
 
     private:
 
         vector<Object*> signal;
         vector<Object*> background;
-        Node* leftChild;
-        Node* rightChild;
-        int splitAttribute;
-        float splitAttributeValue;
-        float purity;
+        Node* left_child;
+        Node* right_child;
+        int attribute;
+        double cut;
+        double purity;
 };
 
 #endif
