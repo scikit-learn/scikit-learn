@@ -19,12 +19,22 @@ _pos_ = lambda x: (x >= 0) * x
 _neg_ = lambda x: (x < 0) * (-x)
 
 
+class Bunch:
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+
 def _sparseness_(x):
     """
     Hoyer's measure of sparsity for a vector
     """
     n = len(x)
     return (sqrt(n) - norm(x, 1) / norm(x, 2)) / (sqrt(n) - 1)
+
+
+def dict_argmax(dictionary):
+    val = lambda x: x[1]
+    return max(dictionary.items(), key=val)[0]
 
 
 def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
@@ -128,16 +138,6 @@ def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
     return W, H
 
 
-class Bunch:
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
-
-
-def dict_argmax(dictionary):
-    val = lambda x: x[1]
-    return max(dictionary.items(), key=val)[0]
-
-
 class CRO():
     """
     Closeness to Rank One Hierarchical Clustering
@@ -227,7 +227,6 @@ class CRO():
                     cros[i, j] = cro
 
             pair = dict_argmax(cros)
-            print pair
             t, s = self.clusters[pair[0]], self.clusters[pair[1]]
             self.clusters[pair[0]] = self._merge(t, s)
             del self.clusters[pair[1]]
