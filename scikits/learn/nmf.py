@@ -176,12 +176,8 @@ class CRO():
     ...      [3, 6, 4, 9, 4],
     ...      [0, 0, 2, 0, 0]]
     >>> X = np.array(X)
-    >>> model = CRO(1)
+    >>> model = CRO(n_comp=1)
     >>> model.fit(X)
-    (0, 1)
-    (0, 2)
-    (0, 2)
-    (0, 1)
     >>> model.clusters[0].data
     array([[1, 2, 3, 1, 0],
            [0, 0, 0, 0, 1],
@@ -418,8 +414,7 @@ class NMF(BaseEstimator):
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from scikits.learn.nmf import NMF
-    >>> from scipy.optimize import nnls
-    >>> model = NMF(n_comp=2, initial=0)
+    >>> model = NMF(n_comp=2, initial=0, tolerance=0.001)
     >>> model.fit(X) #doctest: +ELLIPSIS
     NMF(nls_max_iter=1000, n_comp=2,
       initial=<mtrand.RandomState object at 0x...>, tolerance=0.001,
