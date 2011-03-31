@@ -79,21 +79,21 @@ cdef extern from "libsvm_helper.c":
 ################################################################################
 # Wrapper functions
 
-def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X, 
-                  np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-                  int svm_type, int kernel_type, int degree, double gamma,
-                  double coef0, double eps, double C,
-                  double nu, double cache_size, double p,
-                  np.ndarray[np.int32_t, ndim=1, mode='c']
-                      class_weight_label=np.empty(0, dtype=np.int32),
-                  np.ndarray[np.float64_t, ndim=1, mode='c']
-                      class_weight=np.empty(0),
-                  np.ndarray[np.float64_t, ndim=1, mode='c']
-                      sample_weight=np.empty(0),
-                  int shrinking=0, int probability=0):
+def train(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
+          np.ndarray[np.float64_t, ndim=1, mode='c'] Y, int
+          svm_type, int kernel_type, int degree, double gamma,
+          double coef0, double eps, double C, double nu,
+          double cache_size, double p,
+          np.ndarray[np.int32_t, ndim=1, mode='c']
+              class_weight_label=np.empty(0, dtype=np.int32),
+          np.ndarray[np.float64_t, ndim=1, mode='c']
+              class_weight=np.empty(0),
+          np.ndarray[np.float64_t, ndim=1, mode='c']
+              sample_weight=np.empty(0),
+          int shrinking=0, int probability=0):
 
     """
-    Train the model
+    Train the model using libsvm (low-level method)
 
     Parameters
     ----------
@@ -126,12 +126,16 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     C : float
         C parameter in C-Support Vector Classification
 
+    nu : float
+
+    cache_size : float
+
     Return
     ------
-    support : array
+    support : array, shape=[n_support]
         index of support vectors
 
-    support_vectors : array
+    support_vectors : array, shape=[n_support, n_features]
         support vectors (equivalent to X[support]). Will return an
         empty array in the case of precomputed kernel.
 
@@ -145,8 +149,9 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         intercept in decision function
 
     label : labels for different classes (only relevant in classification).
-    probA : probability estimates
-    probB : probability estimates
+
+    probA, probB : array
+        probability estimates, empty array for probability=False
     """
 
     cdef svm_parameter *param
@@ -247,39 +252,54 @@ def libsvm_train (np.ndarray[np.float64_t, ndim=2, mode='c'] X,
            probA, probB
 
 
-def libsvm_predict (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-                    np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-                    np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-                    np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-                    int svm_type, int kernel_type, int degree,
-                    double gamma, double coef0, double eps, double C, 
-                    np.ndarray[np.int32_t, ndim=1] class_weight_label,
-                    np.ndarray[np.float64_t, ndim=1] class_weight,
-                    double nu, double cache_size, double p, int
-                    shrinking, int probability,
-                    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-                    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
-                    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
-                    np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
-                    np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
+def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
+            np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+            np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
+            int svm_type, int kernel_type, int degree,
+            double gamma, double coef0, double eps, double C, 
+            double nu, double cache_size, double p,
+            np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
+            np.ndarray[np.int32_t, ndim=1, mode='c'] support,
+            np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+            np.ndarray[np.int32_t, ndim=1]
+                class_weight_label=np.empty(0, dtype=np.int32),
+          np.ndarray[np.float64_t, ndim=1, mode='c']
+              class_weight=np.empty(0),
+            np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
+            np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
+            int shrinking=0, int probability=0):
     """
-    Predict values T given a model.
-
-    For speed, all real work is done at the C level in function
-    copy_predict (libsvm_helper.c).
-
-    We have to reconstruct model and parameters to make sure we stay
-    in sync with the python object.
+    Predict target values of X given a model (low-level method)
 
     Parameters
     ----------
-    X: array-like, dtype=float
-    Y: array
-        target vector
+    X: array-like, dtype=float, size=[n_samples, n_features]
 
-    Optional Parameters
-    -------------------
-    See scikits.learn.svm.predict for a complete list of parameters.
+    svm_type : {0, 1, 2, 3, 4}
+        Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
+
+    kernel_type : {0, 1, 2, 3, 4}
+        Kernel to use in the model: linear, polynomial, RBF, sigmoid
+        or precomputed.
+
+    degree : int
+        Degree of the polynomial kernel (only relevant if kernel is
+        set to polynomial)
+
+    gamma : float
+        Gamma parameter in RBF kernel (only relevant if kernel is set
+        to RBF)
+
+    coef0 : float
+        Independent parameter in poly/sigmoid kernel.
+
+    eps : float
+        Stopping criteria.
+
+    C : float
+        C parameter in C-Support Vector Classification
+
 
     Return
     ------
@@ -301,8 +321,8 @@ def libsvm_predict (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                       label.data, probA.data, probB.data)
     
     #TODO: use check_model
-    dec_values = np.empty(T.shape[0])
-    if copy_predict(T.data, model, T.shape, dec_values.data) < 0:
+    dec_values = np.empty(X.shape[0])
+    if copy_predict(X.data, model, X.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
     free_model(model)
     free_param(param)
@@ -310,22 +330,24 @@ def libsvm_predict (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 
 
 
-def libsvm_predict_proba (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
-                            np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-                            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-                            np.ndarray[np.float64_t, ndim=1, mode='c']
-                            intercept, int svm_type, int kernel_type, int
-                            degree, double gamma, double coef0, double
-                            eps, double C, 
-                            np.ndarray[np.int32_t, ndim=1] class_weight_label,
-                            np.ndarray[np.float_t, ndim=1] class_weight,
-                            double nu, double cache_size, double p, int
-                            shrinking, int probability,
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] support,                          
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] label,
-                            np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
-                            np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
+def predict_proba(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+                  np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+                  np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+                  np.ndarray[np.float64_t, ndim=1, mode='c']
+                  intercept, int svm_type, int kernel_type, int
+                  degree, double gamma, double coef0, double
+                  eps, double C, 
+                  double nu, double cache_size, double p,
+                  np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
+                  np.ndarray[np.int32_t, ndim=1, mode='c'] support,                          
+                  np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+                  np.ndarray[np.int32_t, ndim=1]
+                      class_weight_label=np.empty(0, dtype=np.int32),
+                  np.ndarray[np.float64_t, ndim=1, mode='c']
+                      class_weight=np.empty(0),
+                  np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
+                  np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
+                  int shrinking=0, int probability=0):
     """
     Predict probabilities
 
@@ -375,7 +397,7 @@ def libsvm_predict_proba (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     return dec_values
 
 
-def libsvm_decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
+def decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
                             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
                             np.ndarray[np.float64_t, ndim=1, mode='c']

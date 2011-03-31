@@ -7,7 +7,7 @@ Author: fabian.pedregosa@inria.fr
 import  numpy as np
 cimport numpy as np
 
-cdef extern from "linear.h":
+cdef extern from "src/liblinear/linear.h":
     cdef struct feature_node
     cdef struct problem
     cdef struct model
@@ -19,7 +19,7 @@ cdef extern from "linear.h":
     void free_and_destroy_model (model **)
     void destroy_param (parameter *)
 
-cdef extern from "liblinear_helper.c":
+cdef extern from "src/liblinear/liblinear_helper.c":
     void copy_w(char *, model *, int)
     parameter *set_parameter (int, double, double, int,
                              char *, char *)

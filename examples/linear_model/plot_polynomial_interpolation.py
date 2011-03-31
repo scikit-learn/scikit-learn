@@ -39,13 +39,6 @@ def f(x):
     return x * np.sin(x)
 
 
-def vandermonde(x, degree=1):
-    """ build vandermonde matrix from 1d points"""
-    X = [np.ones(len(x))]
-    for n in range(degree):
-        X.append(x ** (n + 1))
-    return np.array(X).T
-
 # generate points used to plot
 x_plot = np.linspace(0, 10, 100)
 
@@ -60,8 +53,8 @@ pl.scatter(x, y, label="training points")
 
 for degree in [3, 4, 5]:
     ridge = Ridge()
-    ridge.fit(vandermonde(x, degree), y)
-    pl.plot(x_plot, ridge.predict(vandermonde(x_plot, degree)),
+    ridge.fit(np.vander(x, degree + 1), y)
+    pl.plot(x_plot, ridge.predict(np.vander(x_plot, degree + 1)),
             label="degree %d" % degree)
 
 pl.legend(loc='lower left')
