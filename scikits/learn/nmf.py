@@ -377,10 +377,6 @@ class NMF(BaseEstimator):
             "cro" for CRO-based initialization,
             int seed or RandomState for non-negative random matrices
 
-    tolerance: double
-        Tolerance value used in stopping conditions.
-        Default: 0.001
-
     sparsity: string or None
         'data' or 'components', where to enforce sparsity
         Default: None
@@ -392,6 +388,10 @@ class NMF(BaseEstimator):
     eta: double
         Degree of correctness to mantain, if sparsity is not None
         Default: 0.1
+        
+    tolerance: double
+        Tolerance value used in stopping conditions.
+        Default: 1e-4
 
     max_iter: int
         Number of iterations to compute.
@@ -443,7 +443,7 @@ class NMF(BaseEstimator):
     """
 
     def __init__(self, n_comp=None, initial="fast_svd", sparsity=None, beta=1,
-                 eta=0.1, tolerance=0.001, max_iter=100, nls_max_iter=2000):
+                 eta=0.1, tolerance=1e-4, max_iter=100, nls_max_iter=2000):
         self.n_comp = n_comp
         self.initial = initial
         self.tolerance = tolerance
