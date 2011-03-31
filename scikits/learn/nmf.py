@@ -10,7 +10,7 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from numpy import r_, c_, zeros, ones, eye, sqrt
+from numpy import r_, zeros, ones, eye, sqrt
 from .base import BaseEstimator
 from .utils.extmath import fast_svd
 from numpy.linalg import norm
@@ -18,12 +18,18 @@ from numpy.linalg import norm
 _pos_ = lambda x: (x >= 0) * x
 _neg_ = lambda x: (x < 0) * (-x)
 
+
 def _sparseness_(x):
+    """
+    Hoyer's measure of sparsity for a vector
+    """
     n = len(x)
     return (sqrt(n) - norm(x, 1) / norm(x, 2)) / (sqrt(n) - 1)
 
-def _initialize_nmf_(X, n_comp, variant = None, eps = 1e-6, seed = None):
+
+def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
     """
+    NNDSVD algorithm for NMF initialization.
     Computes a good initial guess for the non-negative
     rank k matrix approximation for X: X = WH
 
@@ -36,16 +42,19 @@ def _initialize_nmf_(X, n_comp, variant = None, eps = 1e-6, seed = None):
     n_comp:
         The number of components desired in the
         approximation.
-        
+
     variant:
-        The variant of the NNDSVD algorithm. 
+        The variant of the NNDSVD algorithm.
         Accepts None, "a", "ar"
-        
+        None: leaves the zero entries as zero
+        "a": Fills the zero entries with the average of X
+        "ar": Fills the zero entries with standard normal random variates.
+
     eps:
         Truncate all values less then this in output to zero.
-    
+
     seed:
-        Seed for random number generator, when using NNSVDar.
+        Seed for random number generator, when using variant="ar".
 
     Returns
     -------
@@ -68,7 +77,7 @@ def _initialize_nmf_(X, n_comp, variant = None, eps = 1e-6, seed = None):
         raise ValueError("Negative values in data passed to initialization")
     if variant not in (None, 'a', 'ar'):
         raise ValueError("Invalid variant name")
-    
+
     U, S, V = fast_svd(X, n_comp)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
 
@@ -103,10 +112,10 @@ def _initialize_nmf_(X, n_comp, variant = None, eps = 1e-6, seed = None):
         lbd = np.sqrt(S[j] * sigma)
         W[:, j] = lbd * u
         H[j, :] = lbd * v
-        
+
     W[W < eps] = 0
     H[H < eps] = 0
-    
+
     if variant == "a":
         avg = X.mean()
         W[W == 0] = avg
@@ -115,45 +124,48 @@ def _initialize_nmf_(X, n_comp, variant = None, eps = 1e-6, seed = None):
         rnd = np.random.mtrand.RandomState(seed)
         W[W == 0] = rnd.randn(len(W[W == 0]))
         H[H == 0] = rnd.randn(len(H[H == 0]))
-        
+
     return W, H
 
+
 class Bunch:
-     def __init__(self, **kwds):
-         self.__dict__.update(kwds)
-         
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+
 def dict_argmax(dictionary):
     val = lambda x: x[1]
     return max(dictionary.items(), key=val)[0]
-    
+
+
 class CRO():
     """
     Closeness to Rank One Hierarchical Clustering
-    
+
     Model that clusters the columns of a matrix into a given number of clusters
     by joining at each step the clusters with the largest CRO value.
-    
+
     Parameters
     ----------
         n_comp: int or None
             Target number of components (clusters) to extract.
             Defaults to 1
-        
+
         epsilon: double or None
             Padding value for output matrices. The value influences sparsity
             and NMF convergence time, but does not influence the performance
             of the initialization.
-        
+
     Attributes
     ----------
         components_, data_:
             Output matrices to be used for NMF initialization
-        clusters: 
+        clusters:
             List of clusters extracted, each one having:
                 size: int, the number of columns in the cluster
                 data: array, the submatrix corresponding to the cluster
                 svd: tuple (u, s, v), the rank-one approximation of the data
-    
+
     Examples
     --------
     The example in the paper outputs the given result
@@ -177,66 +189,65 @@ class CRO():
            [2, 4, 6, 3, 2],
            [3, 6, 9, 4, 4],
            [0, 0, 0, 0, 2]])
-           
+
     Notes
     -----
     See the paper "A method of initialization for nonnegative matrix
     factorization" by Yong-Deok Kim and Seungjin Choi, available at:
     http://www.postech.ac.kr/~seungjin/publications/icassp07_ydkim.pdf
-    
+
     """
-    def __init__(self, n_comp = 1, epsilon = 1e-5):
+    def __init__(self, n_comp=1, epsilon=1e-5):
         """
         Initializes the CRO model
         """
         self.n_comp = n_comp
         self.clusters = []
         self.epsilon = epsilon
-        
+
     def fit(self, X):
         """
         Clusters the matrix X
         """
-        
+
         # Each column is an individual clusters
         n_samples, n_features = X.shape
         for col in X.T:
             norm = np.linalg.norm(col)
             svd = (col / norm, norm, np.ones(1))
-            self.clusters.append(Bunch(size = 1,
-                                       data = col,
-                                       svd = svd))
-        
+            self.clusters.append(Bunch(size=1,
+                                       data=col,
+                                       svd=svd))
+
         for step in xrange(n_features, self.n_comp, -1):
             cros = {}
             for i in xrange(step - 1):
                 for j in xrange(i + 1, step):
                     cro = self.pairwise_cro(self.clusters[i], self.clusters[j])
-                    cros[i, j] = cro 
-            
+                    cros[i, j] = cro
+
             pair = dict_argmax(cros)
-            print pair   
+            print pair
             t, s = self.clusters[pair[0]], self.clusters[pair[1]]
             self.clusters[pair[0]] = self._merge(t, s)
             del self.clusters[pair[1]]
-        
+
         self.data_ = np.zeros((n_samples, 0))
         self.components_ = np.zeros((self.n_comp, n_features))
         j = 0
         for i, cl in enumerate(self.clusters):
             self.data_ = np.c_[self.data_, cl.svd[1] * cl.svd[0]]
-            self.components_[i, j:j+cl.size] = cl.svd[2]
+            self.components_[i, j:j + cl.size] = cl.svd[2]
             j += cl.size
-        
+
         self.data_[self.data_ == 0] += self.epsilon
         self.components_[self.components_ == 0] += self.epsilon
-        
-        
+
     def _merge(self, target, source):
         """
         Merges two clusters and updates the rank-one approximation
         """
-        
+
         size = target.size + source.size
         data = np.c_[target.data, source.data]
         L = np.c_[target.svd[0] * target.svd[1],
@@ -246,12 +257,11 @@ class CRO():
         _, S, V = np.linalg.svd(np.dot(L.T, L))
         S = np.sqrt(S) + 1e-8
         assert (S != 0).all()
-        U = np.atleast_2d(np.dot(np.dot(L, V), np.diag(1 / S))) #WORKS, more precision
-        #U = np.atleast_2d(np.dot(np.dot(L, V), 1 / S)  #SHOULD WORK
-        
+        U = np.atleast_2d(np.dot(np.dot(L, V), np.diag(1 / S)))
+
         svd = U[:, 0], S[0], np.dot(R, V[0])
         return Bunch(size=size, data=data, svd=svd)
-        
+
     def pairwise_cro(self, u, v):
         """
         CRO between two clusters
@@ -261,7 +271,8 @@ class CRO():
         #sigma = max(np.linalg.eigvals(np.dot(X.T, X)))
         #return sigma / np.linalg.norm(X) ** 2
         result = self._merge(u, v)
-        return (result.svd[1] / np.linalg.norm(result.data)) ** 2      
+        return (result.svd[1] / np.linalg.norm(result.data)) ** 2
+
 
 def _nls_subproblem_(V, W, Hinit, tolerance, max_iter):
     """
@@ -369,19 +380,19 @@ class NMF(BaseEstimator):
     tolerance: double
         Tolerance value used in stopping conditions.
         Default: 0.001
-        
+
     sparsity: string or None
         'data' or 'components', where to enforce sparsity
         Default: None
-        
+
     beta: double
         Degree of sparsity, if sparsity is not None
         Default: 1
-                
+
     eta: double
         Degree of correctness to mantain, if sparsity is not None
         Default: 0.1
-                
+
     max_iter: int
         Number of iterations to compute.
         Default: 100
@@ -501,7 +512,7 @@ class NMF(BaseEstimator):
                         r_[X.T, zeros((self.n_comp, n_features))],
                         r_[H.T, sqrt(self.eta) * eye(self.n_comp)],
                         W.T, tolW, self.nls_max_iter)
-                        
+
             W = W.T
             gradW = gradW.T
             if iterW == 1:
@@ -520,11 +531,11 @@ class NMF(BaseEstimator):
                 H, gradH, iterH = _nls_subproblem_(
                         r_[X, zeros((1, n_samples))],
                         r_[W, sqrt(self.beta) * ones((1, self.n_comp))],
-                        H, tolH, self.nls_max_iter)                                     
+                        H, tolH, self.nls_max_iter)
             if iterH == 1:
                 tolH = 0.1 * tolH
-            sparH = sum(_sparseness_(v) for v in H)   # ? ?
-            sparW = sum(_sparseness_(v) for v in W.T) # ? ?
+            sparH = sum(_sparseness_(v) for v in H)    # ? ?
+            sparW = sum(_sparseness_(v) for v in W.T)  # ? ?
             self.sparsity_ = (sparH, sparW)
             self.components_ = H.T
             self.data_ = W
