@@ -388,7 +388,7 @@ class NMF(BaseEstimator):
     eta: double
         Degree of correctness to mantain, if sparsity is not None
         Default: 0.1
-        
+
     tolerance: double
         Tolerance value used in stopping conditions.
         Default: 1e-4
@@ -534,9 +534,9 @@ class NMF(BaseEstimator):
                         H, tolH, self.nls_max_iter)
             if iterH == 1:
                 tolH = 0.1 * tolH
-            sparH = sum(_sparseness_(v) for v in H)    # ? ?
-            sparW = sum(_sparseness_(v) for v in W.T)  # ? ?
-            self.sparsity_ = (sparH, sparW)
+            sparH = _sparseness_(H.flatten())
+            sparW = _sparseness_(W.flatten())
+            self.sparseness_ = (sparH, sparW)
             self.components_ = H.T
             self.data_ = W
             self.reconstruction_err_ = norm(X - np.dot(W, H))
