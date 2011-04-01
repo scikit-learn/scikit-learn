@@ -132,8 +132,8 @@ def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
         H[H == 0] = avg
     elif variant == "ar":
         rnd = np.random.mtrand.RandomState(seed)
-        W[W == 0] = rnd.randn(len(W[W == 0]))
-        H[H == 0] = rnd.randn(len(H[H == 0]))
+        W[W == 0] = abs(rnd.randn(len(W[W == 0])))
+        H[H == 0] = abs(rnd.randn(len(H[H == 0])))
 
     return W, H
 

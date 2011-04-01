@@ -15,8 +15,9 @@ def test_initialize_nn_output():
     """
 
     data = np.abs(np.random.randn(10,10))
-    W, H = nmf._initialize_nmf_(data, 10)
-    assert_false((W < 0).any() or (H < 0).any())
+    for var in (None, 'a', 'ar'):
+        W, H = nmf._initialize_nmf_(data, 10)
+        assert_false((W < 0).any() or (H < 0).any())
 
 def test_initialize_close():
     """
@@ -30,12 +31,26 @@ def test_initialize_close():
     sdev = np.linalg.norm(A - A.mean())
     assert_true(error <= sdev)
 
+def test_initialize_variants():
+    """
+    Test that the variants 'a' and 'ar'
+    differ from basic NNDSVD only where
+    the basic version has zeros
+    """
+    data = np.abs(np.random.randn(10,10))
+    W0, H0 = nmf._initialize_nmf_(data, 10, variant=None)
+    Wa, Ha = nmf._initialize_nmf_(data, 10, variant='a')
+    War, Har = nmf._initialize_nmf_(data, 10, variant='ar')
+
+    for ref, evl in ((W0, Wa), (W0, War), (H0, Ha), (H0, Har)):
+        assert_true(np.allclose(evl[ref <> 0], ref[ref <> 0]))
+        
 @raises(ValueError)
 def test_fit_nn_input():
     """
     Test model fit behaviour on negative input
     """
-    A = -np.ones((2,2)), 2
+    A = -np.ones((2,2))
     m = nmf.NMF(2, initial=None)
     m.fit(A)
 
@@ -45,17 +60,18 @@ def test_fit_nn_output():
     """
     A = np.c_[5 * np.ones(5) - xrange(1, 6),
               5 * np.ones(5) + xrange(1, 6)]
-    model = nmf.NMF(2, initial=None)
-    model.fit(A)
-    assert_false((model.components_ < 0).any() or
-                 (model.data_ < 0).any())
+    for initial in (None, 'nndsvd', 'cro'):
+        model = nmf.NMF(2, initial=initial)
+        model.fit(A)
+        assert_false((model.components_ < 0).any() or
+                     (model.data_ < 0).any())
 
 def test_fit_nn_close():
     """
     Test that the fit is "close enough"
     """
     assert nmf.NMF(5).fit(np.abs(
-      np.random.randn(6, 5))).reconstruction_err_ < 0.01
+      np.random.randn(6, 5))).reconstruction_err_ < 0.05
 
 @raises(ValueError)
 def test_nls_nn_input():
@@ -75,13 +91,33 @@ def test_nls_nn_output():
 
 def test_nls_close():
     """
-    Test that the nls results should be close
+    Test that the NLS results should be close
     """
     A = np.atleast_2d(range(1,5))
     Ap, _, _ = nmf._nls_subproblem_(np.dot(A.T, A), A.T, np.zeros_like(A), 
                                     0.001, 20)
     assert_true((np.abs(Ap - A) < 0.01).all())
 
+def test_nmf_transform():
+    """
+    Test that NMF.transform returns close values
+    (transform uses scipy.optimize.nnls for now)
+    """
+    A = np.abs(np.random.randn(6, 5))
+    m = nmf.NMF(5).fit(A)
+    assert_true(np.allclose(m.data_, m.transform(A), atol=1e-2, rtol=0))
+
+def test_nmf_sparseness():
+    """
+    Test that sparsity contraints actually increase
+    sparseness where appropriate
+    """
+    
+    A = np.abs(np.random.randn(6, 5))
+    no_s_comp, no_s_data = nmf.NMF(5).fit(A).sparseness_
+    s_d_comp, s_d_data = nmf.NMF(5, sparseness='data').fit(A).sparseness_
+    s_c_comp, s_c_data = nmf.NMF(5, sparseness='components').fit(A).sparseness_
+    assert_true(s_d_data > no_s_data and s_c_comp > no_s_comp)
 if __name__ == '__main__':
     import nose
     nose.run(argv=['', __file__])
