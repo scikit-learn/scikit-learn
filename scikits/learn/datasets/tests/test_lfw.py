@@ -13,7 +13,13 @@ import os
 import shutil
 import tempfile
 import numpy as np
-from scipy.misc import imsave
+try:
+    try:
+        from scipy.misc import imsave
+    except ImportError:
+        from scipy.misc.pilutil import imsave
+except ImportError:
+    imsave = None
 
 from scikits.learn.datasets import load_lfw_pairs
 from scikits.learn.datasets import load_lfw_people
@@ -42,6 +48,9 @@ FAKE_NAMES = [
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
+    if imsave is None:
+        raise SkipTest
+
     if not os.path.exists(LFW_HOME):
         os.makedirs(LFW_HOME)
 
@@ -60,7 +69,11 @@ def setup_module():
         for i in range(n_faces):
             file_path = os.path.join(folder_name, name + '_%04d.jpg' % i)
             uniface = np_rng.randint(0, 255, size=(250, 250, 3))
-            imsave(file_path, uniface)
+            try:
+                imsave(file_path, uniface)
+            except ImportError:
+                # PIL is not properly installed, skip those tests
+                raise SkipTest
 
     # add some random file pollution to test robustness
     f = open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb')

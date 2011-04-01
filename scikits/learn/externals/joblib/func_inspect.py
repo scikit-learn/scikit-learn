@@ -170,7 +170,7 @@ def filter_args(func, ignore_lst, *args, **kwargs):
 
     _, name = get_func_name(func, resolv_alias=False)
     arg_dict = dict()
-    arg_position = 0
+    arg_position = -1
     for arg_position, arg_name in enumerate(arg_names):
         if arg_position < len(args):
             # Positional argument or keyword argument given as positional

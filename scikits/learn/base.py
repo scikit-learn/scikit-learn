@@ -1,15 +1,9 @@
-"""
-Base class for all estimators.
-
-"""
+"""Base class for all estimators."""
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-
 # License: BSD Style
-import inspect
-import copy
 
+import copy, inspect
 import numpy as np
-
 from .metrics import r2_score
 
 ################################################################################
@@ -21,9 +15,10 @@ def clone(estimator, safe=True):
     with the same parameters that has not been fit on any data.
 
     Parameters
-    ============
+    ----------
     estimator: estimator object, or list, tuple or set of objects
         The estimator or group of estimators to be cloned
+
     safe: boolean, optional
         If safe is false, clone will fall back to a deepcopy on objects
         that are not estimators.
@@ -59,11 +54,13 @@ def _pprint(params, offset=0, printer=repr):
     """ Pretty print the dictionnary 'params'
 
         Parameters
-        ==========
+        ----------
         params: dict
             The dictionnary to pretty print
+
         offset: int
             The offset in characters to add at the begin of each line.
+
         printer:
             The function to convert entries to strings, typically
             the builtin str or repr
@@ -138,7 +135,7 @@ class BaseEstimator(object):
         """ Get parameters for the estimator
 
             Parameters
-            ==========
+            ----------
             deep: boolean, optional
                 If True, will return the parameters for this estimator and
                 contained subobjects that are estimators.
