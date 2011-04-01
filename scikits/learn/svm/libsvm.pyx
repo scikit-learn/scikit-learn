@@ -454,7 +454,7 @@ def decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 def cross_validation(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-    int nr_fold, int svm_type, int kernel_type, int degree,
+    int n_fold, int svm_type, int kernel_type, int degree,
     double gamma, double coef0, double eps, double C, double nu,
     double cache_size, double p,
     np.ndarray[np.int32_t, ndim=1, mode='c']
@@ -524,14 +524,18 @@ def cross_validation(
                "sample_weight has %s samples while X has %s" % \
                (sample_weight.shape[0], X.shape[0])
 
-    # set libsvm problem
-    problem = set_problem(X.data, Y.data, sample_weight.data,
-                          X.shape, kernel_type)
+    if X.shape[0] < n_fold:
+        raise ValueError
 
-    param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
-                          nu, cache_size, C, eps, p, shrinking,
-                          probability, <int> class_weight.shape[0],
-                          class_weight_label.data, class_weight.data)
+    # set libsvm problem
+    problem = set_problem(
+        X.data, Y.data, sample_weight.data, X.shape, kernel_type)
+
+    param = set_parameter(
+        svm_type, kernel_type, degree, gamma, coef0, nu, cache_size,
+        C, eps, p, shrinking, probability, <int>
+        class_weight.shape[0], class_weight_label.data,
+        class_weight.data)
 
     # check parameters
     if (param == NULL or problem == NULL):
@@ -542,9 +546,9 @@ def cross_validation(
         free_param(param)
         raise ValueError(error_msg)
 
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] target
-    target = np.empty((X.shape[0], nr_fold), dtype=np.float64)
-    svm_cross_validation(problem, param, nr_fold, <double *> target.data)
+    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] target
+    target = np.empty((X.shape[0]), dtype=np.float64)
+    svm_cross_validation(problem, param, n_fold, <double *> target.data)
 
     return target
 
