@@ -23,6 +23,10 @@ For (1) and (3), however, you can use the VBGMM implementation which
 doesn't use the DP but has reasonably exchangeable components. You do
 lose advantage (1) as well, unfortunately.
 
+The API is identical to that of gmm with the main difference that this
+returns precision instead of covariance matrices, as these are a lot
+cheaper to keep around in inference time.
+
 The spherical model
 ===================
 

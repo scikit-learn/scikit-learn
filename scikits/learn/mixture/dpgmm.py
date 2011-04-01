@@ -126,6 +126,8 @@ class DPGMM(mixture.GMM):
         self._covars = covars
 
     precisions = property(_get_covars, _set_covars)
+    covars = property(lambda *args: raise NotImplementedError("Use precisions"),
+                      lambda *args: raise NotImplementedError("Use precisions"))
 
     def _bound_pxgivenz(self, x, k):
         bound = -0.5*self.n_features*np.log(2*np.pi)
