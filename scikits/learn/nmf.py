@@ -11,7 +11,7 @@ import warnings
 
 import numpy as np
 from numpy import r_, zeros, ones, eye, sqrt
-from .base import BaseEstimator
+from .base import BaseEstimator, TransformerMixin
 from .utils.extmath import fast_svd
 from numpy.linalg import norm
 
@@ -351,7 +351,7 @@ def _nls_subproblem_(V, W, Hinit, tol, max_iter):
     return H, grad, iter
 
 
-class NMF(BaseEstimator):
+class NMF(BaseEstimator, TransformerMixin):
     """
     Non-Negative matrix factorization (NMF, NNMF)
 
