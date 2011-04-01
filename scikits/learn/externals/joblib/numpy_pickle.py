@@ -8,7 +8,12 @@ A pickler to save numpy arrays in separate .npy files.
 
 import pickle
 import traceback
-import os
+import sys, os
+
+if sys.version_info[0] == 3:
+    from pickle import _Unpickler as Unpickler
+else:
+    from pickle import Unpickler
 
 ################################################################################
 # Utility objects for persistence.
@@ -66,17 +71,17 @@ class NumpyPickler(pickle.Pickler):
 
 
 
-class NumpyUnpickler(pickle.Unpickler):
+class NumpyUnpickler(Unpickler):
     """ A subclass of the Unpickler to unpickle our numpy pickles.
     """
-    dispatch = pickle.Unpickler.dispatch.copy()
+    dispatch = Unpickler.dispatch.copy()
 
     def __init__(self, filename, mmap_mode=None):
         self._filename = filename
         self.mmap_mode = mmap_mode
         self._dirname  = os.path.dirname(filename)
         self.file = open(filename, 'rb')
-        pickle.Unpickler.__init__(self, self.file)
+        Unpickler.__init__(self, self.file)
         import numpy as np
         self.np = np
 
@@ -89,7 +94,7 @@ class NumpyUnpickler(pickle.Unpickler):
             NDArrayWrapper, by the array we are interested in. We
             replace directly in the stack of pickler.
         """
-        pickle.Unpickler.load_build(self)
+        Unpickler.load_build(self)
         if isinstance(self.stack[-1], NDArrayWrapper):
             nd_array_wrapper = self.stack.pop()
             if self.np.__version__ >= '1.3':
