@@ -116,7 +116,9 @@ def polynomial_kernel(X, Y, degree=3):
     -------
     gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    return (1 + linear_kernel(X, Y)) ** degree
+    K = (1 + linear_kernel(X, Y))
+    K **= degree
+    return K
 
 
 def rbf_kernel(X, Y, sigma=1.0):
@@ -135,4 +137,7 @@ def rbf_kernel(X, Y, sigma=1.0):
     -------
     gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    return np.exp(-euclidean_distances(X, Y, squared=True) / (2 * (sigma ** 2)))
+    K = -euclidean_distances(X, Y, squared=True)
+    K /= (2 * (sigma ** 2))
+    np.exp(K, K)
+    return K
