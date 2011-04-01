@@ -29,7 +29,10 @@ from os import listdir, makedirs, remove
 import urllib
 import logging
 
-from scipy.misc import imread
+try:
+    from scipy.misc import imread
+except ImportError:
+    from scipy.misc.pilutil import imread
 from scipy.misc import imresize
 import numpy as np
 
