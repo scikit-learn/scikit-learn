@@ -74,9 +74,9 @@ class DPGMM(mixture.GMM):
         Mixing weights for each mixture component.
     means : array, shape (`n_states`, `n_features`)
         Mean parameters for each mixture component.
-    covars : array
-        Covariance parameters for each mixture component.  The shape
-        depends on `cvtype`:
+    precisions : array
+        Precision (inverse covariance) parameters for each mixture 
+        component.  The shape depends on `cvtype`:
             (`n_states`,)                             if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_states`, `n_features`)                if 'diag',
@@ -103,51 +103,29 @@ class DPGMM(mixture.GMM):
     score(X)
         Compute the log likelihood of `X` under the model.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from scikits.learn import mixture
-    >>> g = mixture.DPGMM(n_states=2)
-
-    >>> # Generate random observations with two modes centered on 0
-    >>> # and 10 to use for training.
-    >>> np.random.seed(0)
-    >>> obs = np.concatenate((np.random.randn(100, 1),
-    ...                       10 + np.random.randn(300, 1)))
-    >>> g.fit(obs)
-    GMM(cvtype='diag', n_states=2)
-    >>> g.weights
-    array([ 0.25,  0.75])
-    >>> g.means
-    array([[ 0.05980802],
-           [ 9.94199467]])
-    >>> g.covars
-    [array([[ 1.01682662]]), array([[ 0.96080513]])]
-    >>> np.round(g.weights, 2)
-    array([ 0.25,  0.75])
-    >>> np.round(g.means, 2)
-    array([[ 0.06],
-           [ 9.94]])
-    >>> np.round(g.covars, 2)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    array([[[ 1.02]],
-           [[ 0.96]]])
-    >>> g.predict([[0], [2], [9], [10]])
-    array([0, 0, 1, 1])
-    >>> np.round(g.score([[0], [2], [9], [10]]), 2)
-    array([-2.32, -4.16, -1.65, -1.19])
-
-    >>> # Refit the model on new data (initial parameters remain the
-    >>> # same), this time with an even split between the two modes.
-    >>> g.fit(20 * [[0]] +  20 * [[10]])
-    GMM(cvtype='diag', n_states=2)
-    >>> np.round(g.weights, 2)
-    array([ 0.5,  0.5])
     """
 
     def __init__(self, n_states=1, cvtype='diag', alpha=1.0):
         self.alpha = alpha
         super(DPGMM, self).__init__(n_states, cvtype)
+
+    def _get_precisions(self):
+        """Return precisions as a full matrix."""
+        if self.cvtype == 'full':
+            return self._covars
+        elif self.cvtype == 'diag':
+            return [np.diag(cov) for cov in self._covars]
+        elif self.cvtype == 'tied':
+            return [self._covars] * self._n_states
+        elif self.cvtype == 'spherical':
+            return [np.eye(self.n_features) * f for f in self._covars]
+
+    def _set_covars(self, covars):
+        covars = np.asanyarray(covars)
+        _validate_covars(covars, self._cvtype, self._n_states, self.n_features)
+        self._covars = covars
+
+    precisions = property(_get_covars, _set_covars)
 
     def _bound_pxgivenz(self, x, k):
         bound = -0.5*self.n_features*np.log(2*np.pi)
@@ -433,9 +411,9 @@ class VBGMM(DPGMM):
         Mixing weights for each mixture component.
     means : array, shape (`n_states`, `n_features`)
         Mean parameters for each mixture component.
-    covars : array
-        Covariance parameters for each mixture component.  The shape
-        depends on `cvtype`:
+    precisions : array
+        Precision (inverse covariance) parameters for each mixture 
+        component.  The shape depends on `cvtype`:
             (`n_states`,)                             if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_states`, `n_features`)                if 'diag',
@@ -461,48 +439,8 @@ class VBGMM(DPGMM):
         Generate `n` samples from the posterior for the model.
     score(X)
         Compute the log likelihood of `X` under the model.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from scikits.learn import mixture
-    >>> g = mixture.DPGMM(n_states=2)
-
-    >>> # Generate random observations with two modes centered on 0
-    >>> # and 10 to use for training.
-    >>> np.random.seed(0)
-    >>> obs = np.concatenate((np.random.randn(100, 1),
-    ...                       10 + np.random.randn(300, 1)))
-    >>> g.fit(obs)
-    GMM(cvtype='diag', n_states=2)
-    >>> g.weights
-    array([ 0.25,  0.75])
-    >>> g.means
-    array([[ 0.05980802],
-           [ 9.94199467]])
-    >>> g.covars
-    [array([[ 1.01682662]]), array([[ 0.96080513]])]
-    >>> np.round(g.weights, 2)
-    array([ 0.25,  0.75])
-    >>> np.round(g.means, 2)
-    array([[ 0.06],
-           [ 9.94]])
-    >>> np.round(g.covars, 2)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    array([[[ 1.02]],
-           [[ 0.96]]])
-    >>> g.predict([[0], [2], [9], [10]])
-    array([0, 0, 1, 1])
-    >>> np.round(g.score([[0], [2], [9], [10]]), 2)
-    array([-2.32, -4.16, -1.65, -1.19])
-
-    >>> # Refit the model on new data (initial parameters remain the
-    >>> # same), this time with an even split between the two modes.
-    >>> g.fit(20 * [[0]] +  20 * [[10]])
-    GMM(cvtype='diag', n_states=2)
-    >>> np.round(g.weights, 2)
-    array([ 0.5,  0.5])
     """
+
 
 
     def eval(self, obs):
