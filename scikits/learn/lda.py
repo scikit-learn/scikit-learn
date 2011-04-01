@@ -57,6 +57,14 @@ class LDA(BaseEstimator, ClassifierMixin):
     def __init__(self, n_components=None, priors=None):
         self.n_components = n_components
         self.priors = np.asarray(priors) if priors is not None else None
+            
+        if self.priors is not None:
+            if (self.priors < 0).any():
+                raise ValueError('priors must be non-negative')
+            if self.priors.sum() != 1:
+                print 'warning: the priors do not sum to 1. Renormalizing'
+                self.priors = self.priors / self.priors.sum()
+            
 
     def fit(self, X, y, store_covariance=False, tol=1.0e-4, **params):
         """
@@ -103,7 +111,7 @@ class LDA(BaseEstimator, ClassifierMixin):
             self.priors_ = counts / float(n_samples)
         else:
             self.priors_ = self.priors
-
+        
         # Group means n_classes*n_features matrix
         means = []
         Xc = []
@@ -141,6 +149,7 @@ class LDA(BaseEstimator, ClassifierMixin):
             warnings.warn("Variables are collinear")
         # Scaling of within covariance is: V' 1/S
         scaling = (scaling * V.T[:, :rank].T).T / S[:rank]
+        
         ## ----------------------------
         ## 3) Between variance scaling
         # Overall mean
@@ -148,12 +157,14 @@ class LDA(BaseEstimator, ClassifierMixin):
         # Scale weighted centers
         X = np.dot(((np.sqrt((n_samples * self.priors_)*fac)) *
                           (means - xbar).T).T, scaling)
+        
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use svd to find projection in the space spanned by the
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
 
-        rank = np.sum(S > tol*S[0])
+        rank = np.sum(S > tol * S[0])
+        print S, rank
         # compose the scalings
         self.scaling = np.dot(scaling, V.T[:, :rank])
         self.xbar_ = xbar
@@ -236,7 +247,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         values = self.decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
-        likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
+        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
@@ -254,6 +265,6 @@ class LDA(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples, n_classes]
         """
         values = self.decision_function(X)
-        loglikelihood = (values - values.min(axis=1)[:, np.newaxis])
+        loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
         normalization = np.logaddexp.reduce(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]
