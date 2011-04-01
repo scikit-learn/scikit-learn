@@ -204,8 +204,7 @@ class PCA(BaseEstimator, TransformerMixin):
         if self.whiten:
             U *= np.sqrt(X.shape[0])
         else:
-            S = S[:self.n_components]
-            U *= S
+            U *= S[:self.n_components]
 
         return U
 
