@@ -3,15 +3,18 @@
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD Style.
 
 import numpy as np
 from scipy import linalg
 
-from .base import BaseEstimator
+from .base import BaseEstimator, TransformerMixin
 from .utils.extmath import fast_logdet
 from .utils.extmath import fast_svd
 from .utils.extmath import safe_sparse_dot
+from .preprocessing import KernelCenterer
+from .metrics.pairwise import linear_kernel, polynomial_kernel, rbf_kernel
 
 
 def _assess_dimension_(spectrum, rank, n_samples, dim):
@@ -88,7 +91,7 @@ def _infer_dimension_(spectrum, n, p):
     return ll.argmax()
 
 
-class PCA(BaseEstimator):
+class PCA(BaseEstimator, TransformerMixin):
     """Principal component analysis (PCA)
 
     Linear dimensionality reduction using Singular Value Decomposition of the
@@ -429,3 +432,92 @@ class RandomizedPCA(BaseEstimator):
             X_original = X_original + self.mean_
         return X_original
 
+
+class KernelPCA(BaseEstimator):
+
+    def __init__(self, n_components=None, kernel="linear", sigma=1.0, degree=3,
+                alpha=1.0, fit_inverse_transform=False):
+        self.n_components = None
+        self.kernel = kernel.lower()
+        self.sigma = sigma
+        self.degree = degree
+        self.alpha = alpha
+        self.fit_inverse_transform = fit_inverse_transform
+        self.centerer = KernelCenterer()
+
+    def _get_kernel(self, X, Y=None):
+        if Y is None: Y = X
+
+        if self.kernel == "precomputed":
+            return X
+        elif self.kernel == "rbf":
+            return rbf_kernel(X, Y, self.sigma)
+        elif self.kernel == "poly":
+            return polynomial_kernel(X, Y, self.degree)
+        elif self.kernel == "linear":
+            return linear_kernel(X, Y)
+        else:
+            raise ValueError, "Invalid kernel"
+
+    def _fit_transform(self, X):
+        n_samples = X.shape[0]
+
+        # compute kernel and eigenvectors
+        K = self.centerer.fit_transform(self._get_kernel(X))
+        self.lambdas, self.alphas = linalg.eigh(K)
+
+        # sort eignenvectors in descending order
+        indices = self.lambdas.argsort()[::-1]
+        if self.n_components is not None:
+            indices = indices[:n_components]
+        self.lambdas = self.lambdas[indices]
+        self.alphas = self.alphas[:, indices]
+
+        # remove eigenvectors with a zero eigenvalue
+        self.alphas = self.alphas[:, self.lambdas > 0]
+        self.lambdas = self.lambdas[self.lambdas > 0]
+
+        self.X_fit = X
+
+        return K
+
+    def _fit_inverse_transform(self, X_transformed, X):
+        n_samples = X_transformed.shape[0]
+        K = self._get_kernel(X_transformed)
+        K.flat[::n_samples + 1] += self.alpha
+        self.dual_coef_ = linalg.solve(K, X, sym_pos=True, overwrite_a=True)
+        self.X_transformed_fit = X_transformed
+
+    def fit(self, X):
+        self._fit_transform(X)
+
+        if self.fit_inverse_transform:
+            sqrt_lambdas = np.diag(np.sqrt(self.lambdas))
+            X_transformed = np.dot(self.alphas, sqrt_lambdas)
+            self._fit_inverse_transform(X_transformed, X)
+
+        return self
+
+    def fit_transform(self, X):
+        self.fit(X)
+
+        sqrt_lambdas = np.diag(np.sqrt(self.lambdas))
+        X_transformed = np.dot(self.alphas, sqrt_lambdas)
+
+        if self.fit_inverse_transform:
+            self._fit_inverse_transform(X_transformed, X)
+
+        return X_transformed
+
+    def transform(self, X):
+        K = self.centerer.transform(self._get_kernel(X, self.X_fit))
+        inv_sqrt_lambdas = np.diag(1.0 / np.sqrt(self.lambdas))
+        return np.dot(K, np.dot(self.alphas, inv_sqrt_lambdas))
+
+    def inverse_transform(self, X):
+        if not self.fit_inverse_transform:
+            raise ValueError, "Inverse transform was not fitted!"
+
+        K = self._get_kernel(X, self.X_transformed_fit)
+
+        return np.dot(K, self.dual_coef_)

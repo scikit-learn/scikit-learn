@@ -4,14 +4,15 @@ from nose.tools import assert_true
 from nose.tools import assert_equal
 
 from scipy.sparse import csr_matrix
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
-from .. import datasets
-from ..pca import PCA
-from ..pca import ProbabilisticPCA
-from ..pca import RandomizedPCA
-from ..pca import _assess_dimension_
-from ..pca import _infer_dimension_
+from scikits.learn import datasets
+from scikits.learn.pca import PCA
+from scikits.learn.pca import ProbabilisticPCA
+from scikits.learn.pca import RandomizedPCA
+from scikits.learn.pca import _assess_dimension_
+from scikits.learn.pca import _infer_dimension_
+from scikits.learn.pca import KernelPCA
 
 iris = datasets.load_iris()
 
@@ -308,6 +309,33 @@ def test_probabilistic_pca_4():
         ll[k] = ppca.score(Xt).mean()
 
     assert_true(ll.argmax() == 1)
+
+
+def test_kernel_pca():
+    X_fit = np.random.random((5,4))
+    X_pred = np.random.random((2,4))
+
+    for kernel in ("linear", "rbf", "poly"):
+        # transform fit data
+        kpca = KernelPCA(kernel=kernel, fit_inverse_transform=True)
+        X_fit_transformed = kpca.fit_transform(X_fit)
+        X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
+        assert_array_almost_equal(X_fit_transformed, X_fit_transformed2)
+
+        # transform new data
+        X_pred_transformed = kpca.transform(X_pred)
+        assert_equal(X_pred_transformed.shape[1], X_fit_transformed.shape[1])
+
+        # inverse transform
+        X_pred2 = kpca.inverse_transform(X_pred_transformed)
+        assert_equal(X_pred2.shape, X_pred.shape)
+
+    # for a linear kernel, kernel PCA should find the same projection as PCA
+    # modulo the sign (direction)
+    kpca = KernelPCA()
+    pca = PCA()
+    assert_array_almost_equal(np.abs(kpca.fit(X_fit).transform(X_pred)),
+                              np.abs(pca.fit(X_fit).transform(X_pred)))
 
 
 if __name__ == '__main__':
