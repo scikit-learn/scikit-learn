@@ -85,8 +85,24 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             print "benching nndsvd-nmf: "
             tstart = time()
             m = NMF(n_components=50, max_iter=1000, tol=tolerance).fit(X)
-            timeset['svd-nmf'].append(time() - tstart)
-            err['svd-nmf'].append(m.reconstruction_err_)
+            timeset['nndsvd-nmf'].append(time() - tstart)
+            err['nndsvd-nmf'].append(m.reconstruction_err_)
+
+            gc.collect()
+            print "benching nndsvda-nmf: "
+            tstart = time()
+            m = NMF(n_components=50, max_iter=1000, init='nndsvda',
+                    tol=tolerance).fit(X)
+            timeset['nndsvda-nmf'].append(time() - tstart)
+            err['nndsvda-nmf'].append(m.reconstruction_err_)
+
+            gc.collect()
+            print "benching nndsvdar-nmf: "
+            tstart = time()
+            m = NMF(n_components=50, max_iter=1000, init='nndsvdar',
+                    tol=tolerance).fit(X)
+            timeset['nndsvdar-nmf'].append(time() - tstart)
+            err['nndsvdar-nmf'].append(m.reconstruction_err_)
 
             gc.collect()
             print "benching random-nmf"

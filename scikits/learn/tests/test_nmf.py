@@ -4,6 +4,7 @@ from nose.tools import assert_true, assert_false, raises
 
 rng = np.random.mtrand.RandomState(0)
 
+
 @raises(ValueError)
 def test_initialize_nn_input():
     """
