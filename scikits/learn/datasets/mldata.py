@@ -51,6 +51,9 @@ def fetch_mldata(dataname, data_home=None):
     7129
     """
 
+    # normalize dataset name
+    dataname = dataname.lower().replace(' ', '-').replace('.', '')
+
     # check if this data set has been already downloaded
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'mldata')
