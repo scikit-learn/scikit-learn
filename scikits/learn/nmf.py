@@ -269,7 +269,7 @@ class CRO():
         return (result.svd[1] / np.linalg.norm(result.data)) ** 2
 
 
-def _nls_subproblem_(V, W, Hinit, tolerance, max_iter):
+def _nls_subproblem_(V, W, Hinit, tol, max_iter):
     """
     Solves a non-negative least squares subproblem using the
     projected gradient descent algorithm.
@@ -283,7 +283,7 @@ def _nls_subproblem_(V, W, Hinit, tolerance, max_iter):
     Hinit:
         Initial guess for the solution
 
-    tolerance:
+    tol:
         Tolerance of the stopping condition.
 
     max_iter:
@@ -315,7 +315,7 @@ def _nls_subproblem_(V, W, Hinit, tolerance, max_iter):
     for iter in xrange(1, max_iter + 1):
         grad = np.dot(WtW, H) - WtV
         proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
-        if proj_gradient < tolerance:
+        if proj_gradient < tol:
             break
 
         for inner_iter in xrange(1, 20):
@@ -384,7 +384,7 @@ class NMF(BaseEstimator):
         Degree of correctness to mantain, if sparsity is not None
         Default: 0.1
 
-    tolerance: double
+    tol: double
         Tolerance value used in stopping conditions.
         Default: 1e-4
 
@@ -418,7 +418,7 @@ class NMF(BaseEstimator):
     >>> model.fit(X) #doctest: +ELLIPSIS
     NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness=None,
       initial=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
-      tolerance=0.0001)
+      tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.38526873],
            [ 0.11118662,  0.38228063]])
@@ -428,7 +428,7 @@ class NMF(BaseEstimator):
     >>> model.fit(X) #doctest: +ELLIPSIS
     NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness='components',
       initial=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
-      tolerance=0.0001)
+      tol=0.0001)
     >>> model.components_
     array([[ 1.67481991, -0.        ],
            [ 0.29614922,  0.4681982 ]])
@@ -445,10 +445,10 @@ class NMF(BaseEstimator):
     """
 
     def __init__(self, n_comp=None, initial="nndsvd", sparseness=None, beta=1,
-                 eta=0.1, tolerance=1e-4, max_iter=100, nls_max_iter=2000):
+                 eta=0.1, tol=1e-4, max_iter=100, nls_max_iter=2000):
         self.n_comp = n_comp
         self.initial = initial
-        self.tolerance = tolerance
+        self.tol = tol
         if sparseness not in (None, 'data', 'components'):
             raise ValueError('Invalid sparsity target')
         self.sparseness = sparseness
@@ -490,7 +490,7 @@ class NMF(BaseEstimator):
         gradW = np.dot(W, np.dot(H, H.T)) - np.dot(X, H.T)
         gradH = np.dot(np.dot(W.T, W), H) - np.dot(W.T, X)
         init_grad = norm(np.r_[gradW, gradH.T])
-        tolW = max(0.001, self.tolerance) * init_grad  # why max?
+        tolW = max(0.001, self.tol) * init_grad  # why max?
         tolH = tolW
 
         for iter in xrange(1, self.max_iter + 1):
@@ -498,7 +498,7 @@ class NMF(BaseEstimator):
             # as discussed in paper
             proj_norm = norm(np.r_[gradW[np.logical_or(gradW < 0, W > 0)],
                                    gradH[np.logical_or(gradH < 0, H > 0)]])
-            if proj_norm < self.tolerance * init_grad:
+            if proj_norm < self.tol * init_grad:
                 break
 
             # update W
