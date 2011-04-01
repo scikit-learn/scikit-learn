@@ -457,7 +457,7 @@ class NMF(BaseEstimator):
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
-    def fit(self, X):
+    def _fit_transform(self, X):
         """
         Fit the model to the data
         """
@@ -537,16 +537,22 @@ class NMF(BaseEstimator):
                         H, tolH, self.nls_max_iter)
             if iterH == 1:
                 tolH = 0.1 * tolH
-            sparH = _sparseness_(H.flatten())
-            sparW = _sparseness_(W.flatten())
-            self.sparseness_ = (sparH, sparW)
-            self.components_ = H.T
-            self.data_ = W
+            self.comp_sparseness_ = _sparseness_(H.flatten())
+            self.data_sparseness_ = _sparseness_(W.flatten())         
             self.reconstruction_err_ = norm(X - np.dot(W, H))
+            self.components_ = H.T
+            
         if iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
-        return self
+        return W
 
+    def fit_transform(self, X):
+        return self._fit_transform(X)
+    
+    def fit(self, X):
+        self._fit_transform(X)
+        return self
+        
     def transform(self, X):
         """
         Transform the data X according to the model
