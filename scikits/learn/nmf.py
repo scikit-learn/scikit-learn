@@ -26,7 +26,7 @@ def _sparseness_(x):
     return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
 
 
-def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, seed=None):
+def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, rng=None):
     """
     NNDSVD algorithm for NMF initialization.
     Computes a good initial guess for the non-negative
@@ -42,18 +42,20 @@ def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, seed=None):
         The number of components desired in the
         approximation.
 
-    variant:
+    variant: None | 'a' | 'ar'
         The variant of the NNDSVD algorithm.
-        Accepts None, "a", "ar"
+        Accepts None, 'a', 'ar'
         None: leaves the zero entries as zero
-        "a": Fills the zero entries with the average of X
-        "ar": Fills the zero entries with standard normal random variates.
+        'a': Fills the zero entries with the average of X
+        'ar': Fills the zero entries with standard normal random variates.
+        Default: None
 
     eps:
         Truncate all values less then this in output to zero.
 
-    seed:
-        Seed for random number generator, when using variant="ar".
+    rng: numpy.RandomState | int, optional
+        The generator used to fill in the zeros, when using variant='ar'
+        Default: numpy.random
 
     Returns
     -------
@@ -120,9 +122,14 @@ def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, seed=None):
         W[W == 0] = avg
         H[H == 0] = avg
     elif variant == "ar":
-        rnd = np.random.mtrand.RandomState(seed)
-        W[W == 0] = abs(rnd.randn(len(W[W == 0])))
-        H[H == 0] = abs(rnd.randn(len(H[H == 0])))
+        if rng is None:
+            rng = np.random
+        elif isinstance(rng, int):
+            rng = np.random.mtrand.RandomState(rng)
+        elif not isinstance(rng, np.random.mtrand.RandomState):
+            raise ValueError('Invalid random state in _nmf_initialize_')
+        W[W == 0] = abs(rng.randn(len(W[W == 0])))
+        H[H == 0] = abs(rng.randn(len(H[H == 0])))
 
     return W, H
 
@@ -222,9 +229,9 @@ class NMF(BaseEstimator, TransformerMixin):
         Number of components
         if n_components is not set all components are kept
 
-    init: 'nndsvd', int or RandomState
+    init:  'nndsvd' |  'nndsvda' | 'nndsvdar' | int | RandomState
         Method used to initialize the procedure.
-        Default: 'nndsvd'
+        Default: 'nndsvdar'
         Valid options:
             'nndsvd' for SVD-based initialization,
             'nndsvda' for NNDSVD with zeros filled with the mean of X,
@@ -300,7 +307,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, init="nndsvd", sparseness=None,
+    def __init__(self, n_components=None, init="nndsvdar", sparseness=None,
                  beta=1, eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000):
         self.n_components = n_components
         self.init = init

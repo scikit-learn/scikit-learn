@@ -125,3 +125,20 @@ separation*), as in the example below:
     * :ref:`example_plot_ica_blind_source_separation.py`
     * :ref:`example_plot_ica_vs_pca.py`
 
+.. _NMF:
+
+Non-negative matrix factorization (NMF)
+==================================
+
+.. currentmodule:: scikits.learn.nmf
+
+NMF is an alternative approach to decomposition that assumes that the
+data and the components are non-negative. This means that, unlike PCA, 
+the representation of a vector is obtained in an additive fashion, by
+superimposing the components, without substracting. Such additive models
+are efficient in representing images and text.
+
+It has been observed that, when carefully constrained, NMF can produce
+a parts-based representation of the dataset, resulting in interpretable
+models.
+  

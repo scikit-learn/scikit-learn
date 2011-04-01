@@ -84,45 +84,50 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             gc.collect()
             print "benching nndsvd-nmf: "
             tstart = time()
-            m = NMF(n_components=30, tol=tolerance).fit(X)
-            timeset['nndsvd-nmf'].append(time() - tstart)
+            m = NMF(n_components=30, tol=tolerance, init='nndsvd').fit(X)
+            tend = time() - tstart
+            timeset['nndsvd-nmf'].append(tend)
             err['nndsvd-nmf'].append(m.reconstruction_err_)
-            print m.reconstruction_err_
+            print m.reconstruction_err_, tend
 
             gc.collect()
             print "benching nndsvda-nmf: "
             tstart = time()
             m = NMF(n_components=30, init='nndsvda',
                     tol=tolerance).fit(X)
-            timeset['nndsvda-nmf'].append(time() - tstart)
+            tend = time() - tstart
+            timeset['nndsvda-nmf'].append(tend)
             err['nndsvda-nmf'].append(m.reconstruction_err_)
-            print m.reconstruction_err_
+            print m.reconstruction_err_, tend
 
             gc.collect()
             print "benching nndsvdar-nmf: "
             tstart = time()
             m = NMF(n_components=30, init='nndsvdar',
                     tol=tolerance).fit(X)
-            timeset['nndsvdar-nmf'].append(time() - tstart)
+            tend = time() - tstart
+            timeset['nndsvdar-nmf'].append(tend)
             err['nndsvdar-nmf'].append(m.reconstruction_err_)
-            print m.reconstruction_err_
+            print m.reconstruction_err_, tend
 
             gc.collect()
             print "benching random-nmf"
             tstart = time()
             m = NMF(n_components=30, init=None, max_iter=1000,
                     tol=tolerance).fit(X)
-            timeset['random-nmf'].append(time() - tstart)
+            tend = time() - tstart
+            timeset['random-nmf'].append(tend)
             err['random-nmf'].append(m.reconstruction_err_)
-            print m.reconstruction_err_
+            print m.reconstruction_err_, tend
 
             gc.collect()
             print "benching alt-random-nmf"
             tstart = time()
             W, H = alt_nnmf(X, r=30, R=None, tol=tolerance)
-            timeset['alt-random-nmf'].append(time() - tstart)
+            tend = time() - tstart
+            timeset['alt-random-nmf'].append(tend)
             err['alt-random-nmf'].append(np.linalg.norm(X - np.dot(W, H)))
-            print np.linalg.norm(X - np.dot(W, H))
+            print np.linalg.norm(X - np.dot(W, H)), tend
 
     return timeset, err
 
