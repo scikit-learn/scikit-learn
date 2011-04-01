@@ -1,3 +1,8 @@
+""" Cython bindings for the C++ BallTree code.
+"""
+# Author: Thouis Jones
+# License: BSD
+
 from libcpp.vector cimport vector
 
 import numpy as np
@@ -12,11 +17,13 @@ cdef extern from "BallTreePoint.h":
 
 ctypedef Point *Point_p
 
+
 cdef extern from "BallTree.h":
     cdef cppclass cBallTree "BallTree<Point>":
         cBallTree(vector[Point_p] *, int)
         double query(Point *, vector[long int] &) except +
     double Euclidean_Dist(Point *, Point *) except +
+
 
 cdef Point *make_point(vals):
     pt = new Point(vals.size)
@@ -24,6 +31,8 @@ cdef Point *make_point(vals):
         SET(pt, idx, v)
     return pt
     
+
+################################################################################
 # Cython wrapper
 cdef class BallTree:
     cdef cBallTree *bt_ptr
@@ -31,6 +40,7 @@ cdef class BallTree:
     cdef int num_points
     cdef int num_dims
     cdef public object data
+
     def __cinit__(self, arr, leafsize=20):
         # copy points into ptdata
         num_points, num_dims = self.num_points, self.num_dims = arr.shape
@@ -39,6 +49,7 @@ cdef class BallTree:
             self.ptdata.push_back(make_point(arr[i, :]))
         self.bt_ptr = new cBallTree(self.ptdata, leafsize)
         self.data = arr.copy()
+
     def __dealloc__(self):
         cdef Point *temp
         for idx in range(self.ptdata.size()):
@@ -47,6 +58,7 @@ cdef class BallTree:
             del temp
         del self.ptdata
         del self.bt_ptr
+
     def query(self, x, k=1, return_distance=True):
         x = np.atleast_2d(x)
         assert x.shape[-1] == self.num_dims
