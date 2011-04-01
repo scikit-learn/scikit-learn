@@ -242,7 +242,7 @@ class DPGMM(mixture.GMM):
                     self._b[k,d] = 1.
                     for i in xrange(X.shape[0]):
                         dif = X[i,d]-self._means[k,d]
-                        self._b[k,d] += z[i,k]*dif*dif
+                        self._b[k,d] += z[i,k]*(dif*dif+1)
             self._covars = self._a/self._b
         elif self.cvtype == 'tied':
             self._a = 2+X.shape[0]+self.n_features

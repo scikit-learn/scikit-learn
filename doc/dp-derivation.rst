@@ -313,7 +313,7 @@ Hence
 
 .. math::
 
-  b_{k,d} = 1 + \frac{1}{2} \sum_i \nu_{z_{i,k}}((X_{i,d}-\mu_{k,d})^2 + D)
+  b_{k,d} = 1 + \frac{1}{2} \sum_i \nu_{z_{i,k}}((X_{i,d}-\mu_{k,d})^2 + 1)
 
 
 The tied model
