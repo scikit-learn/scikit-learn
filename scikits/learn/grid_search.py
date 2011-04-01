@@ -23,7 +23,7 @@ except:
         pools = map(tuple, args) * kwds.get('repeat', 1)
         result = [[]]
         for pool in pools:
-            result = [x+[y] for x in result for y in pool]
+            result = [x + [y] for x in result for y in pool]
         for prod in result:
             yield tuple(prod)
 
@@ -67,7 +67,7 @@ class IterGrid(object):
                 yield params
 
 
-def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func, 
+def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
                 score_func, verbose, **fit_params):
     """Run fit on one set of parameters
 
@@ -75,9 +75,9 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     """
     if verbose > 1:
         start_time = time.time()
-        msg = '%s' % (', '.join('%s=%s' % (k, v) 
+        msg = '%s' % (', '.join('%s=%s' % (k, v)
                                      for k, v in clf_params.iteritems()))
-        print "[GridSearchCV] %s %s" % (msg, (64-len(msg))*'.')
+        print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
     # update parameters of the classifier after a copy of its base structure
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
@@ -97,10 +97,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         X_train = X[train]
         X_test = X[test]
     if y is not None:
-        y_test  = y[test]
+        y_test = y[test]
         y_train = y[train]
     else:
-        y_test  = None
+        y_test = None
         y_train = None
 
     clf.fit(X_train, y_train, **fit_params)
@@ -120,9 +120,9 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         this_n_test_samples = X.shape[0]
 
     if verbose > 1:
-        end_msg = "%s -%s" % (msg, 
+        end_msg = "%s -%s" % (msg,
                                 short_format_time(time.time() - start_time))
-        print "[GridSearchCV] %s %s" % ((64-len(end_msg))*'.', end_msg)
+        print "[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg)
     return this_score, clf, this_n_test_samples
 
 
@@ -240,7 +240,7 @@ class GridSearchCV(BaseEstimator):
         """
         self._set_params(**params)
         estimator = self.estimator
-        cv        = self.cv
+        cv = self.cv
         if cv is None:
             if hasattr(X, 'shape'):
                 n_samples = X.shape[0]
@@ -264,15 +264,15 @@ class GridSearchCV(BaseEstimator):
 
         # Out is a list of triplet: score, estimator, n_test_samples
         n_grid_points = len(list(grid))
-        n_fits        = len(out)
-        n_folds       = n_fits//n_grid_points
-        
+        n_fits = len(out)
+        n_folds = n_fits // n_grid_points
+
         scores = list()
         for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
             for this_score, estimator, this_n_test_samples in \
-                                    out[grid_start:grid_start+n_folds]:
+                                    out[grid_start:grid_start + n_folds]:
                 if self.iid:
                     this_score *= this_n_test_samples
                 score += this_score
@@ -280,7 +280,7 @@ class GridSearchCV(BaseEstimator):
             if self.iid:
                 score /= float(n_test_samples)
             scores.append((score, estimator))
-            
+
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         best_score = None
@@ -318,4 +318,3 @@ class GridSearchCV(BaseEstimator):
         # found has a score function.
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
-
