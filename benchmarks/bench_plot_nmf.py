@@ -122,7 +122,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             W, H = alt_nnmf(X, r=30, R=None, tol=tolerance)
             timeset['alt-random-nmf'].append(time() - tstart)
             err['alt-random-nmf'].append(np.linalg.norm(X - np.dot(W, H)))
-            print m.reconstruction_err_
+            print np.linalg.norm(X - np.dot(W, H))
 
     return timeset, err
 
