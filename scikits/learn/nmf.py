@@ -33,7 +33,7 @@ def _sparseness_(x):
     return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
 
 
-def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
+def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, seed=None):
     """
     NNDSVD algorithm for NMF initialization.
     Computes a good initial guess for the non-negative
@@ -45,7 +45,7 @@ def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
     X:
         The data matrix to be decomposed.
 
-    n_comp:
+    n_components:
         The number of components desired in the
         approximation.
 
@@ -67,7 +67,7 @@ def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
 
     (W, H):
         Initial guesses for solving X ~= WH such that
-        the number of columns in W is n_comp.
+        the number of columns in W is n_components.
 
     Remarks
     -------
@@ -84,7 +84,7 @@ def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
     if variant not in (None, 'a', 'ar'):
         raise ValueError("Invalid variant name")
 
-    U, S, V = fast_svd(X, n_comp)
+    U, S, V = fast_svd(X, n_components)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
 
     # The leading singular triplet is non-negative
@@ -92,7 +92,7 @@ def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
     W[:, 0] = np.sqrt(S[0]) * np.abs(U[:, 0])
     H[0, :] = np.sqrt(S[0]) * np.abs(V[0, :])
 
-    for j in xrange(1, n_comp):
+    for j in xrange(1, n_components):
         x, y = U[:, j], V[j, :]
 
         # extract positive and negative parts of column vectors
@@ -143,24 +143,24 @@ class CRO(BaseEstimator):
 
     Parameters
     ----------
-        n_comp: int or None
-            Target number of components (clusters) to extract.
-            Defaults to 1
+    n_components: int or None
+        Target number of components (clusters) to extract.
+        Defaults to 1
 
-        eps: double or None
-            Padding value for output matrices. The value influences sparsity
-            and NMF convergence time, but does not influence the performance
-            of the initialization.
+    eps: double or None
+        Padding value for output matrices. The value influences sparsity
+        and NMF convergence time, but does not influence the performance
+        of the initialization.
 
     Attributes
     ----------
-        components_, data_:
-            Output matrices to be used for NMF initialization
-        clusters:
-            List of clusters extracted, each one having:
-                size: int, the number of columns in the cluster
-                data: array, the submatrix corresponding to the cluster
-                svd: tuple (u, s, v), the rank-one approximation of the data
+    components_, data_:
+        Output matrices to be used for NMF initialization
+    clusters:
+        List of clusters extracted, each one having:
+            size: int, the number of columns in the cluster
+            data: array, the submatrix corresponding to the cluster
+            svd: tuple (u, s, v), the rank-one approximation of the data
 
     Examples
     --------
@@ -172,7 +172,7 @@ class CRO(BaseEstimator):
     ...      [3, 6, 4, 9, 4],
     ...      [0, 0, 2, 0, 0]]
     >>> X = np.array(X)
-    >>> model = CRO(n_comp=1)
+    >>> model = CRO(n_components=1)
     >>> model.fit(X)
     >>> model.clusters[0].data
     array([[1, 2, 3, 1, 0],
@@ -189,18 +189,20 @@ class CRO(BaseEstimator):
     http://www.postech.ac.kr/~seungjin/publications/icassp07_ydkim.pdf
 
     """
-    def __init__(self, n_comp=1, eps=1e-5):
+    def __init__(self, n_components=1, eps=1e-5):
         """
         Initializes the CRO model
         """
-        self.n_comp = n_comp
+        self.n_components = n_components
         self.clusters = []
         self.eps = eps
 
-    def fit(self, X):
+    def fit(self, X, **params):
         """
         Clusters the matrix X
         """
+        self._set_params(**params)
+        X = np.asanyarray(X)
 
         # Each column is an individual clusters
         n_samples, n_features = X.shape
@@ -211,7 +213,7 @@ class CRO(BaseEstimator):
                                        data=col,
                                        svd=svd))
 
-        for step in xrange(n_features, self.n_comp, -1):
+        for step in xrange(n_features, self.n_components, -1):
             cros = {}
             for i in xrange(step - 1):
                 for j in xrange(i + 1, step):
@@ -224,7 +226,7 @@ class CRO(BaseEstimator):
             del self.clusters[pair[1]]
 
         self.data_ = np.zeros((n_samples, 0))
-        self.components_ = np.zeros((self.n_comp, n_features))
+        self.components_ = np.zeros((self.n_components, n_features))
         j = 0
         for i, cl in enumerate(self.clusters):
             self.data_ = np.c_[self.data_, cl.svd[1] * cl.svd[0]]
@@ -356,9 +358,9 @@ class NMF(BaseEstimator, TransformerMixin):
     X: array, [n_samples, n_features]
         Data the model will be fit to.
 
-    n_comp: int or None
+    n_components: int or None
         Number of components
-        if n_comp is not set all components are kept
+        if n_components is not set all components are kept
 
     init: 'nndsvd', int or RandomState
         Method used to initialize the procedure.
@@ -386,7 +388,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     max_iter: int
         Number of iterations to compute.
-        Default: 100
+        Default: 200
 
     nls_max_iter: int
         Number of iterations in NLS subproblem
@@ -394,11 +396,8 @@ class NMF(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_features, n_comp]
+    components_: array, [n_features, n_components]
         Non-negative components of the data
-    data_: array, [n_comp, n_samples]
-        Projection of the data used to fit the model onto
-        the non-negative components.
     reconstruction_err_: number
         Frobenius norm of the matrix difference between the
         training data and the reconstructed data from the
@@ -410,21 +409,21 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from scikits.learn.nmf import NMF
-    >>> model = NMF(n_comp=2, init=0)
+    >>> model = NMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness=None,
-      init=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
-      tol=0.0001)
+    NMF(nls_max_iter=2000, eta=0.1, max_iter=100,
+      init=<mtrand.RandomState object at 0x...>, beta=1, sparseness=None,
+      n_components=2, tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.38526873],
            [ 0.11118662,  0.38228063]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.00746...
-    >>> model = NMF(n_comp=2, init=0, sparseness='components')
+    >>> model = NMF(n_components=2, init=0, sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness='components',
-      init=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
-      tol=0.0001)
+    NMF(nls_max_iter=2000, eta=0.1, max_iter=100,
+      init=<mtrand.RandomState object at 0x...>, beta=1,
+      sparseness='components', n_components=2, tol=0.0001)
     >>> model.components_
     array([[ 1.67481991, -0.        ],
            [ 0.29614922,  0.4681982 ]])
@@ -440,9 +439,9 @@ class NMF(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_comp=None, init="nndsvd", sparseness=None, beta=1,
-                 eta=0.1, tol=1e-4, max_iter=100, nls_max_iter=2000):
-        self.n_comp = n_comp
+    def __init__(self, n_components=None, init="nndsvd", sparseness=None,
+                 beta=1, eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000):
+        self.n_components = n_components
         self.init = init
         self.tol = tol
         if sparseness not in (None, 'data', 'components'):
@@ -453,15 +452,16 @@ class NMF(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, **params):
+        self._set_params(**params)
         X = np.atleast_2d(X)
         if (X < 0).any():
             raise ValueError("Negative data passed to NMF.fit.")
 
         n_features, n_samples = X.shape
 
-        if not self.n_comp:
-            self.n_comp = n_features
+        if not self.n_components:
+            self.n_components = n_features
 
         if self.init == None:
             self.init = np.random.RandomState()
@@ -469,12 +469,12 @@ class NMF(BaseEstimator, TransformerMixin):
             self.init = np.random.RandomState(self.init)
 
         if isinstance(self.init, np.random.RandomState):
-            W = np.abs(self.init.randn(n_features, self.n_comp))
-            H = np.abs(self.init.randn(self.n_comp, n_samples))
+            W = np.abs(self.init.randn(n_features, self.n_components))
+            H = np.abs(self.init.randn(self.n_components, n_samples))
         elif self.init == "nndsvd":
-            W, H = _initialize_nmf_(X, self.n_comp)
+            W, H = _initialize_nmf_(X, self.n_components)
         elif self.init == "cro":
-            m = CRO(self.n_comp)
+            m = CRO(self.n_components)
             m.fit(X.T)
             W, H = np.abs(m.components_.T), np.abs(m.data_.T)
         else:
@@ -501,13 +501,14 @@ class NMF(BaseEstimator, TransformerMixin):
             elif self.sparseness == 'data':
                 W, gradW, iterW = _nls_subproblem_(
                         np.r_[X.T, np.zeros((1, n_features))],
-                        np.r_[H.T, np.sqrt(self.beta) * 
-                              np.ones((1, self.n_comp))],
+                        np.r_[H.T, np.sqrt(self.beta) *
+                              np.ones((1, self.n_components))],
                         W.T, tolW, self.nls_max_iter)
             elif self.sparseness == 'components':
                 W, gradW, iterW = _nls_subproblem_(
-                        np.r_[X.T, np.zeros((self.n_comp, n_features))],
-                        np.r_[H.T, np.sqrt(self.eta) * np.eye(self.n_comp)],
+                        np.r_[X.T, np.zeros((self.n_components, n_features))],
+                        np.r_[H.T, np.sqrt(self.eta) *
+                              np.eye(self.n_components)],
                         W.T, tolW, self.nls_max_iter)
 
             W = W.T
@@ -521,37 +522,38 @@ class NMF(BaseEstimator, TransformerMixin):
                                                    self.nls_max_iter)
             elif self.sparseness == 'data':
                 H, gradH, iterH = _nls_subproblem_(
-                        np.r_[X, np.zeros((self.n_comp, n_samples))],
-                        np.r_[W, np.sqrt(self.eta) * np.eye(self.n_comp)],
+                        np.r_[X, np.zeros((self.n_components, n_samples))],
+                        np.r_[W, np.sqrt(self.eta) *
+                              np.eye(self.n_components)],
                         H, tolH, self.nls_max_iter)
             elif self.sparseness == 'components':
                 H, gradH, iterH = _nls_subproblem_(
                         np.r_[X, np.zeros((1, n_samples))],
-                        np.r_[W, np.sqrt(self.beta) * 
-                              np.ones((1, self.n_comp))],
+                        np.r_[W, np.sqrt(self.beta) *
+                              np.ones((1, self.n_components))],
                         H, tolH, self.nls_max_iter)
             if iterH == 1:
                 tolH = 0.1 * tolH
             self.comp_sparseness_ = _sparseness_(H.flatten())
-            self.data_sparseness_ = _sparseness_(W.flatten())         
+            self.data_sparseness_ = _sparseness_(W.flatten())
             self.reconstruction_err_ = norm(X - np.dot(W, H))
             self.components_ = H.T
-            
+
         if n_iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
         return W
-    
-    def fit(self, X):
-        self.fit_transform(X)
+
+    def fit(self, X, **params):
+        self.fit_transform(X, **params)
         return self
-        
+
     def transform(self, X):
         """
         Transform the data X according to the model
         """
         from scipy.optimize import nnls
         X = np.atleast_2d(X)
-        H = np.zeros((X.shape[0], self.n_comp))
+        H = np.zeros((X.shape[0], self.n_components))
         for j in xrange(0, X.shape[0]):
             H[j, :], _ = nnls(self.components_, X[j, :])
         return H

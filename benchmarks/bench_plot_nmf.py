@@ -1,7 +1,7 @@
-"""Benchmarks of Singular Values Decomposition (Exact and Approximate)
-
-The data is mostly low rank but is a fat infinite tail.
 """
+Benchmarks of Non-Negative Matrix Factorization
+"""
+
 import gc
 from time import time
 import numpy as np
@@ -25,7 +25,8 @@ def alt_nnmf(V, r, cost='norm2', max_iter=1000, tol=1e-3, R=None):
         nr of latent features
     cost : one of:
         'norm2' : minimise || X - AS ||_2 (default)
-        'i-div' : minimise D(X||AS), where D is I-divergence (generalisation of K-L divergence)
+        'i-div' : minimise D(X||AS), where D is I-divergence 
+        (generalisation of K-L divergence)
     max_iter : integer, optional
         maximum number of iterations (default: 10000)
     tol : double
@@ -45,7 +46,8 @@ def alt_nnmf(V, r, cost='norm2', max_iter=1000, tol=1e-3, R=None):
     by Daniel D Lee, Sebastian H Seung
     (available at http://citeseer.ist.psu.edu/lee01algorithms.html)
     '''
-    # Nomenclature in the function follows lee & seung, while outside nomenclature follows
+    # Nomenclature in the function follows lee & seung, while outside 
+    # nomenclature follows
     eps = 1e-5
     n,m = V.shape
     if R == "svd":
@@ -70,7 +72,7 @@ def alt_nnmf(V, r, cost='norm2', max_iter=1000, tol=1e-3, R=None):
     return W, H
 
 
-def compute_bench(samples_range, features_range, rank=50, tolerance=1e-3):
+def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
 
     it = 0
 
@@ -84,13 +86,13 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-3):
             print '===================='
             print 'Iteration %03d of %03d' % (it, max_it)
             print '===================='
-            X = np.abs(low_rank_fat_tail(n_samples, n_features, effective_rank=rank,
-                                  tail_strength=0.2))
+            X = np.abs(low_rank_fat_tail(n_samples, n_features,
+                       effective_rank=rank,  tail_strength=0.2))
             
             gc.collect()
-            print "benching svd-nmf: "
+            print "benching nndsvd-nmf: "
             tstart = time()
-            m = NMF(50, max_iter=1000, tolerance=tolerance).fit(X)
+            m = NMF(n_components=50, max_iter=1000, tol=tolerance).fit(X)
             timeset['svd-nmf'].append(time() - tstart)
             err['svd-nmf'].append(m.reconstruction_err_)
 
@@ -104,7 +106,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-3):
             gc.collect()
             print "benching random-nmf"
             tstart = time()
-            m = NMF(50, initial=None, max_iter=1000, tolerance=tolerance).fit(X)
+            m = NMF(n_components=50, initial=None, max_iter=1000, tol=tolerance).fit(X)
             timeset['random-nmf'].append(time() - tstart)
             err['random-nmf'].append(m.reconstruction_err_)
 
@@ -122,11 +124,11 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d # register the 3d projection
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(50, 1000, 4).astype(np.int)
-    features_range = np.linspace(50, 1000, 4).astype(np.int)
+    samples_range = np.linspace(50, 200, 4).astype(np.int)
+    features_range = np.linspace(50, 200, 4).astype(np.int)
     timeset, err = compute_bench(samples_range, features_range)
 
-    for results in (timeset,err):
+    for i, results in enumerate((timeset,err)):
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         for c, (label, timings) in zip('rbg', sorted(results.iteritems())):
@@ -142,6 +144,7 @@ if __name__ == '__main__':
 
         ax.set_xlabel('n_samples')
         ax.set_ylabel('n_features')
-        ax.set_zlabel('time (s)')
+        zlabel = 'time (s)' if i == 0 else 'reconstruction error'
+        ax.set_zlabel(zlabel)
         ax.legend()
         plt.show()
