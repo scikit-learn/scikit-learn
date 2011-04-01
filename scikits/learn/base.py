@@ -145,6 +145,8 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
+            if not hasattr(self, key):
+                continue
             value = getattr (self, key)
             if deep and hasattr (value, '_get_params'):
                 deep_items = value._get_params().items()
