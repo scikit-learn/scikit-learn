@@ -401,7 +401,7 @@ class _BaseHMM(BaseEstimator):
         lattice[0] = self._log_startprob + framelogprob[0]
         for n in xrange(1, nobs):
             idx = self._prune_states(lattice[n - 1], maxrank, beamlogprob)
-            pr = self._log_transmat[idx].T + lattice[n - 1,idx]
+            pr = self._log_transmat[idx].T + lattice[n - 1, idx]
             lattice[n] = np.max(pr, axis=1) + framelogprob[n]
             traceback[n] = np.argmax(pr, axis=1)
         lattice[lattice <= ZEROLOGPROB] = -np.Inf
@@ -409,7 +409,7 @@ class _BaseHMM(BaseEstimator):
         # Do traceback.
         reverse_state_sequence = []
         s = lattice[-1].argmax()
-        logprob = lattice[-1,s]
+        logprob = lattice[-1, s]
         for frame in reversed(traceback):
             reverse_state_sequence.append(s)
             s = frame[s]
@@ -426,7 +426,7 @@ class _BaseHMM(BaseEstimator):
         for n in xrange(1, nobs):
             idx = self._prune_states(fwdlattice[n - 1], maxrank, beamlogprob)
             fwdlattice[n] = (logsum(self._log_transmat[idx].T
-                                    + fwdlattice[n - 1,idx], axis=1)
+                                    + fwdlattice[n - 1, idx], axis=1)
                              + framelogprob[n])
         fwdlattice[fwdlattice <= ZEROLOGPROB] = -np.Inf
 
@@ -446,9 +446,10 @@ class _BaseHMM(BaseEstimator):
                                      -50)
                                      #beamlogprob)
                                      #-np.Inf)
-            bwdlattice[n - 1] = logsum(self._log_transmat[:,idx]
-                                     + bwdlattice[n,idx] + framelogprob[n,idx],
-                                     axis=1)
+            bwdlattice[n - 1] = logsum(self._log_transmat[:, idx] +
+                                       bwdlattice[n, idx] +
+                                       framelogprob[n, idx],
+                                       axis=1)
         bwdlattice[bwdlattice <= ZEROLOGPROB] = -np.Inf
 
         return bwdlattice
@@ -511,7 +512,7 @@ class _BaseHMM(BaseEstimator):
             stats['start'] += posteriors[0]
         if 't' in params:
             for t in xrange(len(framelogprob)):
-                zeta = (fwdlattice[t - 1][:,np.newaxis] + self._log_transmat
+                zeta = (fwdlattice[t - 1][:, np.newaxis] + self._log_transmat
                         + framelogprob[t] + bwdlattice[t])
                 stats['trans'] += np.exp(zeta - logsum(zeta))
 
@@ -722,14 +723,14 @@ class GaussianHMM(_BaseHMM):
                 for t, o in enumerate(obs):
                     obsobsT = np.outer(o, o)
                     for c in xrange(self._n_states):
-                        stats['obs*obs.T'][c] += posteriors[t,c] * obsobsT
+                        stats['obs*obs.T'][c] += posteriors[t, c] * obsobsT
 
     def _do_mstep(self, stats, params, **kwargs):
         super(GaussianHMM, self)._do_mstep(stats, params)
 
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
         # p. 443 - 445
-        denom = stats['post'][:,np.newaxis]
+        denom = stats['post'][:, np.newaxis]
         if 'm' in params:
             prior = self.means_prior
             weight = self.means_weight
@@ -781,7 +782,7 @@ class GaussianHMM(_BaseHMM):
                                     / (cvweight + stats['post'].sum()))
                 elif self._cvtype == 'full':
                     self._covars = ((covars_prior + cvnum)
-                                   / (cvweight + stats['post'][:,None,None]))
+                                   / (cvweight + stats['post'][:, None, None]))
 
 
 class MultinomialHMM(_BaseHMM):
@@ -865,10 +866,10 @@ class MultinomialHMM(_BaseHMM):
     emissionprob = property(_get_emissionprob, _set_emissionprob)
 
     def _compute_log_likelihood(self, obs):
-        return self._log_emissionprob[:,obs].T
+        return self._log_emissionprob[:, obs].T
 
     def _generate_sample_from_state(self, state):
-        cdf = np.cumsum(self.emissionprob[state,:])
+        cdf = np.cumsum(self.emissionprob[state, :])
         rand = np.random.rand()
         symbol = (cdf > rand).argmax()
         return symbol
@@ -893,14 +894,14 @@ class MultinomialHMM(_BaseHMM):
             stats, obs, framelogprob, posteriors, fwdlattice, bwdlattice,
             params)
         if 'e' in params:
-            for t,symbol in enumerate(obs):
-                stats['obs'][:,symbol] += posteriors[t,:]
+            for t, symbol in enumerate(obs):
+                stats['obs'][:, symbol] += posteriors[t, :]
 
     def _do_mstep(self, stats, params, **kwargs):
         super(MultinomialHMM, self)._do_mstep(stats, params)
         if 'e' in params:
             self.emissionprob = (stats['obs']
-                                 / stats['obs'].sum(1)[:,np.newaxis])
+                                 / stats['obs'].sum(1)[:, np.newaxis])
 
 
 class GMMHMM(_BaseHMM):
@@ -1008,9 +1009,9 @@ class GMMHMM(_BaseHMM):
             stats, obs, framelogprob, posteriors, fwdlattice, bwdlattice,
             params)
 
-        for state,g in enumerate(self.gmms):
+        for state, g in enumerate(self.gmms):
             gmm_logprob, gmm_posteriors = g.eval(obs)
-            gmm_posteriors *= posteriors[:,state][:,np.newaxis]
+            gmm_posteriors *= posteriors[:, state][:, np.newaxis]
             tmpgmm = GMM(g.n_states, cvtype=g.cvtype)
             tmpgmm.n_features = g.n_features
             tmpgmm.covars = _distribute_covar_matrix_to_match_cvtype(
@@ -1019,7 +1020,7 @@ class GMMHMM(_BaseHMM):
 
             stats['norm'][state] += norm
             if 'm' in params:
-                stats['means'][state] += tmpgmm.means * norm[:,np.newaxis]
+                stats['means'][state] += tmpgmm.means * norm[:, np.newaxis]
             if 'c' in params:
                 if tmpgmm.cvtype == 'tied':
                     stats['covars'][state] += tmpgmm._covars * norm.sum()
@@ -1034,12 +1035,12 @@ class GMMHMM(_BaseHMM):
         super(GMMHMM, self)._do_mstep(stats, params)
         # All that is left to do is to apply covars_prior to the
         # parameters updated in _accumulate_sufficient_statistics.
-        for state,g in enumerate(self.gmms):
+        for state, g in enumerate(self.gmms):
             norm = stats['norm'][state]
             if 'w' in params:
                 g.weights = normalize(norm)
             if 'm' in params:
-                g.means = stats['means'][state] / norm[:,np.newaxis]
+                g.means = stats['means'][state] / norm[:, np.newaxis]
             if 'c' in params:
                 if g.cvtype == 'tied':
                     g.covars = ((stats['covars'][state]
@@ -1056,5 +1057,5 @@ class GMMHMM(_BaseHMM):
                     elif g.cvtype == 'full':
                         eye = np.eye(g.n_features)
                         g.covars = ((stats['covars'][state]
-                                     + covars_prior * eye[np.newaxis,:,:])
+                                     + covars_prior * eye[np.newaxis, :, :])
                                     / cvnorm)
