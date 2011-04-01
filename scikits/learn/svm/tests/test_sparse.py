@@ -85,7 +85,6 @@ def test_error():
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
-    assert_raises(ValueError, svm.SVC, X, Y2)
 
     clf = svm.sparse.SVC()
     clf.fit(X, Y)

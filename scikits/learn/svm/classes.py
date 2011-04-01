@@ -579,3 +579,4 @@ class OneClassSVM(BaseLibSVM):
         super(OneClassSVM, self).fit(
             X, [], class_weight=class_weight, sample_weight=sample_weight,
             **params)
+
