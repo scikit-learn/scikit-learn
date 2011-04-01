@@ -10,8 +10,6 @@ from scipy import linalg, optimize, rand
 from ..base import BaseEstimator, RegressorMixin
 from . import regression_models as regression
 from . import correlation_models as correlation
-from ..cross_val import LeaveOneOut
-from ..externals.joblib import Parallel, delayed
 MACHINE_EPSILON = np.finfo(np.double).eps
 if hasattr(linalg, 'solve_triangular'):
     # only in scipy since 0.9
@@ -682,7 +680,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         y = (self.y_mean + self.y_std * y_).ravel()
 
         #Adding a small constant to the diagonal in order to stabilize cholesky
-        covariance.flat[::n_eval + 1] += HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
+        covariance.flat[::n_eval + 1] += \
+                                    HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
         L = linalg.cholesky(covariance)
 
         return y + [np.dot(L.T, rng.randn(*X.shape)).T for _ in xrange(size)]
