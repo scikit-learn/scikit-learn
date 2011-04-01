@@ -182,7 +182,7 @@ class Parallel(Logger):
         A simple example:
 
         >>> from math import sqrt
-        >>> from joblib import Parallel, delayed
+        >>> from scikits.learn.externals.joblib import Parallel, delayed
         >>> Parallel(n_jobs=1)(delayed(sqrt)(i**2) for i in range(10))
         [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
 
@@ -190,7 +190,7 @@ class Parallel(Logger):
         values:
         
         >>> from math import modf
-        >>> from joblib import Parallel, delayed
+        >>> from scikits.learn.externals.joblib import Parallel, delayed
         >>> r = Parallel(n_jobs=1)(delayed(modf)(i/2.) for i in range(10))
         >>> res, i = zip(*r)
         >>> res
@@ -201,7 +201,7 @@ class Parallel(Logger):
         The progress meter::
 
             >>> from time import sleep
-            >>> from joblib import Parallel, delayed
+            >>> from scikits.learn.externals.joblib import Parallel, delayed
             >>> r = Parallel(n_jobs=2, verbose=1)(delayed(sleep)(.1) for _ in range(10)) #doctest: +SKIP
             [Parallel(n_jobs=2)]: Done   1 out of  10 |elapsed:    0.1s remaining:    0.9s
             [Parallel(n_jobs=2)]: Done   3 out of  10 |elapsed:    0.2s remaining:    0.5s
@@ -215,7 +215,7 @@ class Parallel(Logger):
         child process::
 
          >>> from string import atoi
-         >>> from joblib import Parallel, delayed
+         >>> from scikits.learn.externals.joblib import Parallel, delayed
          >>> Parallel(n_jobs=2)(delayed(atoi)(n) for n in ('1', '300', 30)) #doctest: +SKIP
          #...
          ---------------------------------------------------------------------------
@@ -246,7 +246,7 @@ class Parallel(Logger):
         number of iterations reported is underestimated::
 
          >>> from math import sqrt
-         >>> from joblib import Parallel, delayed
+         >>> from scikits.learn.externals.joblib import Parallel, delayed
 
          >>> def producer():
          ...     for i in range(6):
