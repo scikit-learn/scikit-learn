@@ -44,8 +44,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     by Daniel D Lee, Sebastian H Seung
     (available at http://citeseer.ist.psu.edu/lee01algorithms.html)
     '''
-    # Nomenclature in the function follows lee & seung, while outside
-    # nomenclature follows
+    # Nomenclature in the function follows Lee & Seung
     eps = 1e-5
     n, m = V.shape
     if R == "svd":
@@ -88,13 +87,6 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             m = NMF(n_components=50, max_iter=1000, tol=tolerance).fit(X)
             timeset['svd-nmf'].append(time() - tstart)
             err['svd-nmf'].append(m.reconstruction_err_)
-
-        #    gc.collect()
-        #    print "benching alt-svd-nmf: "
-        #    tstart = time()
-        #    W, H = alt_nnmf(X, r=50, R="svd")
-        #    timeset['alt-svd-nmf'].append(time() - tstart)
-        #    err['alt-svd-nmf'].append(np.linalg.norm(X - np.dot(W,H)))
 
             gc.collect()
             print "benching random-nmf"

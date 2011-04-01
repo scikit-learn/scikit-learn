@@ -11,7 +11,6 @@ import warnings
 
 import operator
 import numpy as np
-#from numpy.linalg import norm
 from .base import BaseEstimator, TransformerMixin
 from .utils.extmath import fast_svd
 from scikits.learn.datasets.base import Bunch
@@ -19,10 +18,6 @@ from scikits.learn.datasets.base import Bunch
 _pos_ = lambda x: (x >= 0) * x
 _neg_ = lambda x: (x < 0) * (-x)
 norm = lambda x: np.sqrt(np.dot(x.flatten().T, x.flatten()))
-
-#class Bunch:
-#    def __init__(self, **kwds):
-#        self.__dict__.update(kwds)
 
 
 def _sparseness_(x):
