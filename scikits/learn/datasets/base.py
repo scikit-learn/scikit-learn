@@ -202,7 +202,9 @@ def load_iris():
         data[i] = np.asanyarray(ir[:-1], dtype=np.float)
         target[i] = np.asanyarray(ir[-1], dtype=np.int)
     return Bunch(data=data, target=target, target_names=target_names,
-                 DESCR=fdescr.read())
+                 DESCR=fdescr.read(),
+                 feature_names=['sepal length (cm)', 'sepal width (cm)',
+                                'petal length (cm)', 'petal width (cm)'])
 
 
 def load_digits():
