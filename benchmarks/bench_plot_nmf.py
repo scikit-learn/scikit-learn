@@ -66,7 +66,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     return W, H
 
 
-def compute_bench(samples_range, features_range, rank=50, tolerance=1e-4):
+def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
     it = 0
     timeset = defaultdict(lambda: [])
     err = defaultdict(lambda: [])
@@ -126,14 +126,14 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(50, 200, 4).astype(np.int)
-    features_range = np.linspace(50, 200, 4).astype(np.int)
+    samples_range = np.linspace(50, 500, 3).astype(np.int)
+    features_range = np.linspace(50, 500, 3).astype(np.int)
     timeset, err = compute_bench(samples_range, features_range)
 
     for i, results in enumerate((timeset, err)):
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        for c, (label, timings) in zip('rbg', sorted(results.iteritems())):
+        for c, (label, timings) in zip('rbgcm', sorted(results.iteritems())):
             X, Y = np.meshgrid(samples_range, features_range)
             Z = np.asarray(timings).reshape(samples_range.shape[0],
                                             features_range.shape[0])
