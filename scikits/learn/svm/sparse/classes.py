@@ -17,11 +17,11 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
     """
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, shrinking=True,
+                 cache_size=100.0, tol=1e-3, C=1.0, shrinking=True,
                  probability=False):
 
         SparseBaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, 0., 0.,
+                         cache_size, tol, C, 0., 0.,
                          shrinking, probability)
 
 
@@ -41,10 +41,10 @@ class NuSVC (SparseBaseLibSVM, ClassifierMixin):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 eps=1e-3, cache_size=100.0):
+                 tol=1e-3, cache_size=100.0):
 
         SparseBaseLibSVM.__init__(self, 'nu_svc', kernel, degree,
-                         gamma, coef0, cache_size, eps, 0., nu, 0.,
+                         gamma, coef0, cache_size, tol, 0., nu, 0.,
                          shrinking, probability)
 
 
@@ -64,11 +64,11 @@ class SVR (SparseBaseLibSVM, RegressorMixin):
 
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
+                 cache_size=100.0, tol=1e-3, C=1.0, nu=0.5, p=0.1,
                  shrinking=True, probability=False):
 
         SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
-                         degree, gamma, coef0, cache_size, eps, C, nu,
+                         degree, gamma, coef0, cache_size, tol, C, nu,
                          p, shrinking, probability)
 
 
@@ -89,10 +89,10 @@ class NuSVR (SparseBaseLibSVM, RegressorMixin):
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, cache_size=100.0, eps=1e-3):
+                 probability=False, cache_size=100.0, tol=1e-3):
 
         SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
-                         degree, gamma, coef0, cache_size, eps, C, nu,
+                         degree, gamma, coef0, cache_size, tol, C, nu,
                          0., shrinking, probability)
 
 
@@ -110,11 +110,11 @@ class OneClassSVM (SparseBaseLibSVM):
     """
 
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, nu=0.5, shrinking=True,
+                 cache_size=100.0, tol=1e-3, nu=0.5, shrinking=True,
                  probability=False):
 
         SparseBaseLibSVM.__init__(self, 'one_class', kernel, degree,
-                         gamma, coef0, cache_size, eps, 0.0, nu, 0.0,
+                         gamma, coef0, cache_size, tol, 0.0, nu, 0.0,
                          shrinking, probability)
 
     def fit(self, X, class_weight={}, sample_weight=[]):
