@@ -12,8 +12,8 @@ cdef extern from "BallTreePoint.h":
 ctypedef Point *Point_p
 
 cdef extern from "BallTree.h":
-    cdef cppclass BallTree[Point]:
-        BallTree(vector[Point_p] *, int)
+    cdef cppclass cBallTree "BallTree<Point>":
+        cBallTree(vector[Point_p] *, int)
         double query(Point *, vector[long int] &) except +
     double Euclidean_Dist(Point *, Point *) except +
 
@@ -24,8 +24,8 @@ cdef Point *make_point(vals):
     return pt
     
 # Cython wrapper
-cdef class PyBallTree:
-    cdef BallTree *bt_ptr
+cdef class BallTree:
+    cdef cBallTree *bt_ptr
     cdef vector[Point_p] *ptdata
     cdef int num_points
     cdef int num_dims
@@ -36,7 +36,7 @@ cdef class PyBallTree:
         self.ptdata = new vector[Point_p]()
         for i in range(num_points):
             self.ptdata.push_back(make_point(arr[i, :]))
-        self.bt_ptr = new BallTree(self.ptdata, leafsize)
+        self.bt_ptr = new cBallTree(self.ptdata, leafsize)
         self.data = arr.copy()
     def __dealloc__(self):
         cdef Point *temp
