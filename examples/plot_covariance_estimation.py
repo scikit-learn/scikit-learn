@@ -13,6 +13,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
+from scipy import linalg
 
 ###############################################################################
 # Generate sample data
@@ -28,15 +29,22 @@ X_test = np.dot(X_test, coloring_matrix)
 ###############################################################################
 # Compute Ledoit-Wolf and Covariances on a grid of shrinkages
 
-from scikits.learn.covariance import LedoitWolf, ShrunkCovariance
+from scikits.learn.covariance import LedoitWolf, OAS, ShrunkCovariance
+from scikits.learn.covariance import Covariance, log_likelihood
 
 lw = LedoitWolf()
 loglik_lw = lw.fit(X_train).score(X_test)
 
-cov = ShrunkCovariance()
+oa = OAS()
+loglik_oa = oa.fit(X_train).score(X_test)
+
 shrinkages = np.logspace(-2, 0, 30)
-negative_logliks = [-cov.fit(X_train, shrinkage=s).score(X_test) \
+negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(X_train).score(X_test) \
                                                         for s in shrinkages]
+
+emp_cov = Covariance(store_precision=False).fit(X_test).covariance_
+real_cov = np.dot(coloring_matrix.T, coloring_matrix)
+loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################
 # Plot results
@@ -44,6 +52,11 @@ pl.loglog(shrinkages, negative_logliks)
 pl.xlabel('Shrinkage')
 pl.ylabel('Negative log-likelihood')
 pl.vlines(lw.shrinkage_, pl.ylim()[0], -loglik_lw, color='g',
-                        linewidth=3, label='Ledoit-Wolf estimate')
+          linewidth=3, label='Ledoit-Wolf estimate')
+pl.vlines(oa.shrinkage_, pl.ylim()[0], -loglik_oa, color='orange',
+          linewidth=3, label='OAS estimate')
+pl.hlines(loglik_real, pl.xlim()[0], pl.xlim()[1], color='red',
+          label="Real covariance")
+pl.ylim(pl.ylim()[0] - (pl.ylim()[1]-pl.ylim()[0]), pl.ylim()[1])
 pl.legend()
 pl.show()

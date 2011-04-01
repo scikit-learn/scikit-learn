@@ -14,6 +14,21 @@ from scipy import linalg
 from ..base import BaseEstimator
 from ..utils.extmath import fast_logdet as exact_logdet
 
+
+def log_likelihood(emp_cov, precision):
+    """Computes the negative log_likelihood of the data
+
+    Params
+    ------
+    emp_cov: 2D ndarray (n_features, n_features)
+      MLE of covariance
+    precision: 2D ndarray (n_features, n_features)
+      The precision matrix of the covariance model to be tested
+
+    """
+    
+    return -np.sum(emp_cov*precision) + exact_logdet(precision)
+
 ################################################################################
 # Covariance estimator
 
@@ -82,10 +97,14 @@ class Covariance(BaseEstimator):
     def score(self, X_test):
         n_samples = X_test.shape[0]
         test_cov = np.dot(X_test.T, X_test) / n_samples
-        return self.log_likelihood(test_cov)
+        if self.store_precision:
+            precision = self.precision_
+        else:
+            precision = linalg.inv(self.covariance_)
 
-
-    def log_likelihood(self, test_cov):
-        return -np.sum(test_cov*self.precision_) + \
-                                            exact_logdet(self.precision_)
-
+        return log_likelihood(test_cov, precision)
+    
+    def mse(self, real_cov):
+        diff = real_cov - self.covariance_
+        
+        return np.sum(diff**2)
