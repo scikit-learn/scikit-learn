@@ -52,37 +52,38 @@ def _sample(features, labels, n, R):
         slabels.append(labels[idx])
     return np.array(sfeatures), np.array(slabels)
 
-class RandomForest(object):
-    '''
-    Random Forest Learner
-
-    learner = rf_learner(rf=101, frac=.7)
+class RandomForestBase(object):
+    '''Random Forest base class
 
     Attributes
     ----------
-    rf : integer, optional
+    
+    criterion_func : function handle
+        criterion_function to use
+    num_trees : integer, optional
         Nr of trees to learn (default: 101)
-    frac : float, optional
+    sample_fraction : float, optional
         Sample fraction
+        
     '''
-    def __init__(self, rf=101, frac=.7):
-        self.rf = rf
-        self.frac = frac
+    
+    def __init__(self, num_trees=101, sample_fraction=.7):
+        self.num_trees = num_trees
+        self.sample_fraction = sample_fraction
         self.forest = None
         self.names = None
 
     def fit(self, features, labels, normalisedlabels=False, names=None, **kwargs):
         N,M = features.shape
-        m = int(self.frac*M)
-        n = int(self.frac*M)
+        m = int(self.sample_fraction*M)
+        n = int(self.sample_fraction*M)
         R = np.random
-        tree = DecisionTree()
         forest = []
         if not normalisedlabels:
             labels,names = normaliselabels(labels)
         elif names is None:
             names = (0,1)
-        for i in xrange(self.rf):
+        for i in xrange(self.num_trees):
             tree = DecisionTree()
             tree.fit(*_sample(features, labels, n, R),
                       **{'normalisedlabels' : True}) # This syntax is necessary for Python 2.5
@@ -91,7 +92,9 @@ class RandomForest(object):
         self.names = names
         
     def predict(self, features):
-        rf = len(self.forest)
+        num_trees = len(self.forest)
         votes = sum(t.predict(features) for t in self.forest)
-        return (votes > (rf//2))
+        return (votes > (num_trees//2))
 
+class RandomForest(RandomForestBase):
+    pass

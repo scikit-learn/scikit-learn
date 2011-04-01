@@ -22,7 +22,11 @@ __all__ = [
     ]
 
 from ._tree import set_entropy
+
 def information_gain(labels0, labels1, include_entropy=False):
+    """
+    http://en.wikipedia.org/wiki/Information_gain_in_decision_trees
+    """
     clen = max(labels0.max(), labels1.max()) + 1
     N0 = np.prod(labels0.shape)
     N1 = np.prod(labels1.shape)

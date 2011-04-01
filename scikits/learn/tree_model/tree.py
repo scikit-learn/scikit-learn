@@ -17,10 +17,11 @@ from __future__ import division
 import numpy as np
 from .base import normaliselabels
 from .criteria import information_gain
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 
 __all__ = [
-    'DecisionTree',
-    'Stump',
+    'DecisionTreeClassifier',
+    'DecisionTreeRegressor',
     ]
 
 class Leaf(object):
@@ -82,9 +83,9 @@ def build_tree(features, labels, criterion, min_split=4, subsample=None, R=None,
     min_split : integer
         minimum size to split on
     subsample : integer, optional
-        if given, then, at each step, choose
+        if given, then, at each step, choose subsample features
     R : source of randomness, optional
-        See `milk.util.get_pyrandom`
+        See `get_pyrandom`
     weights : sequence, optional
         weight of instance (default: all the same)
 
@@ -97,7 +98,7 @@ def build_tree(features, labels, criterion, min_split=4, subsample=None, R=None,
     labels = np.asanyarray(labels)
     if subsample is not None:
         if subsample <= 0:
-            raise ValueError('milk.supervised.tree.build_tree: `subsample` must be > 0.\nDid you mean to use None to signal no subsample?')
+            raise ValueError('tree_model.build_tree: `subsample` must be > 0.\nDid you mean to use None to signal no subsample?')
         from .base import get_pyrandom
         R = get_pyrandom(R)
 
@@ -128,49 +129,83 @@ def apply_tree(tree, features):
         return apply_tree(tree.left, features)
     return apply_tree(tree.right, features)
 
-
-class DecisionTree(object):
+def print_tree(tree):
+    '''Print decision tree
     '''
+    pass
 
-    >>> tree = DecisionTree()
-    >>> tree.fit(features, labels)
-    >>> tree.fit(features, labels, weights=weights)
-    >>> predicted = tree.predict(testfeatures)
-
-    A decision tree classifier (currently, implements the greedy ID3
-    algorithm without any pruning).
+class DecisionTree(BaseEstimator):
+    '''A decision tree classifier (currently, implements the greedy ID3 algorithm without any pruning).
 
     Attributes
     ----------
+    
     criterion : function, optional
         criterion to use for tree construction,
-        this should be a function that receives a set of labels
-        (default: information_gain).
+        this should be a function that receives two pairs of labels and returns
+        a value that indicates how much more information is contained in one
+        set of labels over the other.
 
     min_split : integer, optional
         minimum size to split on (default: 4).
+        
+    n_subsample : integer, optional
+        if given, then, at each step, choose
+        
+    R : source of randomness, optional
+        See `get_pyrandom`
+    
     '''
-    def __init__(self, criterion=information_gain, min_split=4, return_label=True, subsample=None, R=None):
+    def __init__(self, criterion=None, min_split=4, n_subsample=None, R=None):
         self.criterion = criterion
         self.min_split = min_split
-        self.return_label = return_label
-        self.subsample = subsample
+        self.subsample = n_subsample
         self.R = R
+        self.tree = None
 
-    def fit(self, features, labels, normalisedlabels=False, weights=None):
-        if not normalisedlabels:
-            labels,names = normaliselabels(labels)
-        self.tree = build_tree(features, labels, self.criterion, self.min_split, self.subsample, self.R, weights)
+    def fit(self, X, y, weights=None):
+        self.tree = build_tree(X, y, self.criterion, self.min_split, self.subsample, self.R, weights)
+        return self
 
-    def predict(self, feats):
-        values = []
-        for f in feats:
-            value = apply_tree(self.tree, f)
-            print value
-            if self.return_label:
-                values.append(value > .5)
-            else:
-                values.append(value)
-        if len(feats.shape) == 1:
-            values = values[0]
+    def __repr__(self):
+        print_tree(self.tree)
+        
+    def predict(self, X):
+        if self.tree is None:
+            raise Exception('Tree not initialized. Perform a fit first')
+        n_observations,_ = X.shape
+        values = np.zeros(n_observations)
+        for idx, observation in enumerate(X):
+            values[idx] = apply_tree(self.tree, observation)
         return values
+
+class DecisionTreeClassifier(DecisionTree, ClassifierMixin):
+    """Classify a multi-labeled dataset with a decision tree.
+    
+    Example
+    -------
+    
+    >>> from scikits.learn.datasets import load_iris
+    >>> from scikits.learn.cross_val import StratifiedKFold
+    >>> data = load_iris()
+    >>> train, test = StratifiedKFold(data.target, 10).next()
+    >>> tree = DecisionTreeClassifier()
+    >>> tree.fit(data.data[train], data.target[train])
+    >>> tree.predict(data.data[test])
+
+    """
+    def __init__(self, criterion=information_gain, min_split=4, subsample=None, R=None):
+        super(DecisionTreeClassifier, self).__init__(criterion=criterion)
+        
+    def fit(self, X, y, normalisedlabels=False, weights=None):
+        if not normalisedlabels:
+            labels, self.classes = normaliselabels(y)
+        return super(DecisionTreeClassifier, self).fit(X, labels, weights)
+    
+    def predict(self, X):
+        values = super(DecisionTreeClassifier, self).predict(X)
+        return np.round(values)
+
+class DecisionTreeRegressor(DecisionTree, RegressorMixin):
+    raise NotImplementedError('Coming soon')
+
