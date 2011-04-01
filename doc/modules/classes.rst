@@ -208,6 +208,7 @@ Signal Decomposition
    pca.PCA
    pca.ProbabilisticPCA
    pca.RandomizedPCA
+   pca.KernelPCA
    fastica.FastICA
 
 .. autosummary::

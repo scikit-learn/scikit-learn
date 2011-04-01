@@ -434,6 +434,33 @@ class RandomizedPCA(BaseEstimator):
 
 
 class KernelPCA(BaseEstimator):
+    """Kernel Principal component analysis (KPCA)
+
+    Non-linear dimensionality reduction through the use of kernels.
+
+    Parameters
+    ----------
+    n_components: int or none
+        number of components
+
+    kernel: "linear"|"poly"|"rbf"|"precomputed"
+        kernel
+
+    sigma: float
+        width of the rbf kernel
+
+    degree: int
+        degree of the polynomial kernel
+
+    alpha: int
+        hyperparameter of the ridge regression that learns the inverse transform
+        (when fit_inverse_transform=True)
+
+    fit_inverse_transform: bool
+        learn the inverse transform
+        (i.e. learn to find the pre-image of a point)
+
+    """
 
     def __init__(self, n_components=None, kernel="linear", sigma=1.0, degree=3,
                 alpha=1.0, fit_inverse_transform=False):
@@ -489,6 +516,19 @@ class KernelPCA(BaseEstimator):
         self.X_transformed_fit = X_transformed
 
     def fit(self, X):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self._fit_transform(X)
 
         if self.fit_inverse_transform:
@@ -499,6 +539,18 @@ class KernelPCA(BaseEstimator):
         return self
 
     def fit_transform(self, X):
+        """Fit the model from data in X and transform X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new: array-like, shape (n_samples, n_components)
+        """
         self.fit(X)
 
         sqrt_lambdas = np.diag(np.sqrt(self.lambdas))
@@ -510,11 +562,35 @@ class KernelPCA(BaseEstimator):
         return X_transformed
 
     def transform(self, X):
+        """Transform X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        X_new: array-like, shape (n_samples, n_components)
+        """
         K = self.centerer.transform(self._get_kernel(X, self.X_fit))
         inv_sqrt_lambdas = np.diag(1.0 / np.sqrt(self.lambdas))
         return np.dot(K, np.dot(self.alphas, inv_sqrt_lambdas))
 
     def inverse_transform(self, X):
+        """Transform X back to original space.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_components)
+
+        Returns
+        -------
+        X_new: array-like, shape (n_samples, n_features)
+
+        Reference
+        ---------
+        "Learning to Find Pre-Images", G BakIr et al, 2004.
+        """
         if not self.fit_inverse_transform:
             raise ValueError, "Inverse transform was not fitted!"
 
