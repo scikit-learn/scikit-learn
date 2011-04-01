@@ -216,8 +216,8 @@ class DPGMM(mixture.GMM):
                 for j in xrange(k):
                     z[i,k] += digamma(self._gamma[j,2])
                     z[i,k] -= digamma(self._gamma[j,1]+self._gamma[j,2])
-                z[i] = lognormalize(z[i])
-                bound[i] = np.sum(z[i]*p)
+            z[i] = lognormalize(z[i])
+            bound[i] = np.sum(z[i]*p)
         return bound, z
 
     def _update_gamma(self, z):
@@ -236,14 +236,8 @@ class DPGMM(mixture.GMM):
                     num += X[i]*z[i,k]
                 num *= self._covars[k]
                 den = 1. + self._covars[k]*np.sum(z.T[k])
+                #print k, self._means[k], num
                 self._means[k] = num/den
-            # elif self.cvtype == 'diag':
-            #     den = np.ones(self.n_features) + self._covars[k]*np.sum(z.T[k])
-            #     num = X[0]*z[0,k]
-            #     for i in xrange(1,X.shape[0]):
-            #         num += X[i]*z[i,k]
-            #     num *= self._covars[k]
-            #     self._means[k] = num/den
             elif self.cvtype == 'tied' or self.cvtype == 'full':
                 if self.cvtype == 'tied': 
                     cov = self._covars
@@ -357,7 +351,7 @@ class DPGMM(mixture.GMM):
         self._gamma = self.alpha*np.ones((self.n_states,3))
 
         if 'm' in init_params or not hasattr(self, 'means'):
-            self._means = np.random.normal(0, 1, size=(self.n_states, self.n_features))
+            self._means = np.random.normal(0, 10, size=(self.n_states, self.n_features))
 
         if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self._n_states, self._n_states)
