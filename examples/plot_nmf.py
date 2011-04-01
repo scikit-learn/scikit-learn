@@ -4,9 +4,7 @@ NMF for digits feature extraction
 ===================================================
 
 NMF with sparseness enforced in the components,
-in comparison with RandomizedPCA for feature
-extraction.
-
+in comparison with PCA for feature extraction.
 
 """
 
@@ -34,10 +32,10 @@ n_samples = len(digits.images)
 X = digits.images.reshape((n_samples, -1))
 n_features = X.shape[1]
 
-######################################################################
-# Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
-# dataset): unsupervised feature extraction / dimensionality reduction
 n_components = 16
+
+######################################################################
+# Compute a PCA (eigendigits) on the digit dataset
 
 print "Extracting the top %d eigendigits from %d images" % (
     n_components, X.shape[0])
@@ -47,12 +45,9 @@ print "done in %0.3fs" % (time() - t0)
 
 eigendigits = pca.components_.T
 
-#print "Projecting the data on the eigenfaces orthonormal basis"
-#t0 = time()
-#X_pca = pca.transform(X)
-#print "done in %0.3fs" % (time() - t0)
-
 ######################################################################
+# Compute a NMF on the digit dataset
+
 print "Extracting %d non-negative features from %d images" % (
     n_components, X.shape[0])
 t0 = time()
@@ -63,6 +58,7 @@ print "done in %0.3fs" % (time() - t0)
 nmfdigits = nmf.components_.T
 
 ######################################################################
+# Plot the results
 
 n_row, n_col = 4, 4
 
