@@ -44,7 +44,6 @@ def configuration(parent_package='', top_path=None):
                          libraries=["stdc++"],
                          include_dirs=[numpy.get_include()])
 
-
     # the following packages depend on cblas, so they have to be build
     # after the above.
     config.add_subpackage('linear_model')
