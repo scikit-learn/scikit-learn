@@ -62,9 +62,9 @@ def test_fit_nn_output():
               5 * np.ones(5) + xrange(1, 6)]
     for initial in (None, 'nndsvd', 'cro'):
         model = nmf.NMF(2, initial=initial)
-        model.fit(A)
+        transf = model.fit_transform(A)
         assert_false((model.components_ < 0).any() or
-                     (model.data_ < 0).any())
+                     (transf < 0).any())
 
 def test_fit_nn_close():
     """
@@ -104,8 +104,9 @@ def test_nmf_transform():
     (transform uses scipy.optimize.nnls for now)
     """
     A = np.abs(np.random.randn(6, 5))
-    m = nmf.NMF(5).fit(A)
-    assert_true(np.allclose(m.data_, m.transform(A), atol=1e-2, rtol=0))
+    m = nmf.NMF(5)
+    transf = m.fit_transform(A)
+    assert_true(np.allclose(transf, m.transform(A), atol=1e-2, rtol=0))
 
 def test_nmf_sparseness():
     """
@@ -114,10 +115,11 @@ def test_nmf_sparseness():
     """
     
     A = np.abs(np.random.randn(6, 5))
-    no_s_comp, no_s_data = nmf.NMF(5).fit(A).sparseness_
-    s_d_comp, s_d_data = nmf.NMF(5, sparseness='data').fit(A).sparseness_
-    s_c_comp, s_c_data = nmf.NMF(5, sparseness='components').fit(A).sparseness_
-    assert_true(s_d_data > no_s_data and s_c_comp > no_s_comp)
+    m = nmf.NMF(5).fit(A)
+    data_sp = nmf.NMF(5, sparseness='data').fit(A).data_sparseness_
+    comp_sp = nmf.NMF(5, sparseness='components').fit(A).comp_sparseness_
+    assert_true(data_sp > m.data_sparseness_ and comp_sp > m.comp_sparseness_)
+    
 if __name__ == '__main__':
     import nose
     nose.run(argv=['', __file__])
