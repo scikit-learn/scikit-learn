@@ -35,7 +35,7 @@ Affinity propagation
 matrix. This algorithm automatically sets its numbers of cluster. It
 will have difficulties scaling to thousands of samples.
 
-.. figure:: ../auto_examples/cluster/images/plot_affinity_propagation.png
+.. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_1.png
    :target: ../auto_examples/cluster/plot_affinity_propagation.html
    :align: center
    :scale: 50
@@ -57,7 +57,7 @@ density of points matrix. This algorithm automatically sets its numbers
 of cluster. It will have difficulties scaling to thousands of samples.
 
 
-.. figure:: ../auto_examples/cluster/images/plot_mean_shift.png
+.. figure:: ../auto_examples/cluster/images/plot_mean_shift_1.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
    :align: center
    :scale: 50
@@ -98,7 +98,7 @@ cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
 
-.. figure:: ../auto_examples/cluster/images/plot_segmentation_toy.png
+.. figure:: ../auto_examples/cluster/images/plot_segmentation_toy_1.png
    :target: ../auto_examples/cluster/plot_segmentation_toy.html
    :align: center
    :scale: 50

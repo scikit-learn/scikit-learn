@@ -9,19 +9,19 @@
 
 .. only:: html
 
-    .. |banner1| image:: auto_examples/cluster/images/plot_affinity_propagation.png
+    .. |banner1| image:: auto_examples/cluster/images/plot_affinity_propagation_1.png
        :height: 150
        :target: auto_examples/cluster/plot_affinity_propagation.html
 
-    .. |banner2| image:: auto_examples/gaussian_process/images/plot_gp_regression.png
+    .. |banner2| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
        :height: 150
        :target: auto_examples/gaussian_process/plot_gp_regression.html
 
-    .. |banner3| image:: auto_examples/svm/images/plot_oneclass.png
+    .. |banner3| image:: auto_examples/svm/images/plot_oneclass_1.png
        :height: 150
        :target: auto_examples/svm/plot_oneclass.html
 
-    .. |banner4| image:: auto_examples/cluster/images/plot_lena_segmentation.png
+    .. |banner4| image:: auto_examples/cluster/images/plot_lena_segmentation_1.png
        :height: 150
        :target: auto_examples/cluster/plot_lena_segmentation.html
 
