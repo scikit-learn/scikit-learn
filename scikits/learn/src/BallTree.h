@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <sstream>
+#include <exception>
 
 /************************************************************
  * templated Ball Tree class
@@ -42,13 +43,13 @@
 
 
 /* Custom exception to allow Python to catch C++ exceptions */
-class BallTreeException {
-  public:
-    BallTreeException(const char* str = "There's a problem") : message(str) {}
-    const char* what() const {return message;}
-
-  private:
-    const char* message;
+class BallTreeException : public std::exception {
+public:
+    BallTreeException(std::string msg) { message = msg; }
+    ~BallTreeException() throw() {};
+    virtual const char* what() const throw() { return message.c_str(); }
+private:
+    std::string message;
 };
 
 
@@ -65,7 +66,7 @@ template<class P1_Type,class P2_Type>
     if(p2.size() != D){
         std::stringstream oss;
         oss << "Euclidean_Dist : point sizes must match (" << D << " != " << p2.size() << ").\n";
-        throw BallTreeException(oss.str().c_str());
+        throw BallTreeException(oss.str());
     }
     typename P1_Type::value_type dist = 0;
     typename P1_Type::value_type diff;
@@ -536,7 +537,7 @@ public:
         if(num_nbrs > (int)(Points_.size()) ){
             std::stringstream oss;
             oss << "query: k must be less than or equal to N Points (" << num_nbrs << " > " << (int)(Points_.size()) << ")\n";
-            throw BallTreeException(oss.str().c_str());
+            throw BallTreeException(oss.str());
         }
 
         std::vector<pd_tuple<value_type> > PointSet;
