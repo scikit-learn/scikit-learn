@@ -266,3 +266,50 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y = Y.argmax(axis=1)
 
         return self.classes_[y]
+
+class KernelCenterer(BaseEstimator, TransformerMixin):
+    """
+    Centers a kernel. This is equivalent to centering phi(X) with
+    scikits.learn.preprocessing.Scaler(with_std=False).
+    """
+
+    def fit(self, K):
+        """Fit KernelCenterer
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples, n_samples]
+            Kernel matrix
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        n_samples = K.shape[0]
+        self.K_fit_rows = np.sum(K, axis=0) / n_samples
+        self.K_fit_all = K.sum() / (n_samples ** 2)
+        return self
+
+    def transform(self, K, copy=True):
+        """Center kernel
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples1, n_samples2]
+            Kernel matrix
+
+        Returns
+        -------
+        K_new : numpy array of shape [n_samples1, n_samples2]
+        """
+
+        if copy: K = K.copy()
+
+        K_pred_cols = (np.sum(K, axis=1) /
+                       self.K_fit_rows.shape[0])[:, np.newaxis]
+
+        K -= self.K_fit_rows
+        K -= K_pred_cols
+        K += self.K_fit_all
+
+        return K
