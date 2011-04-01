@@ -685,8 +685,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         covariance.flat[::n_eval + 1] += HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
         L = linalg.cholesky(covariance)
 
-        shape = list(X.shape)
-        return y + np.dot(L.T, rng.randn(shape + [size])).T
+        return y + [np.dot(L.T, rng.randn(*X.shape)).T for _ in xrange(size)]
 
     def reduced_likelihood_function(self, theta=None):
         """

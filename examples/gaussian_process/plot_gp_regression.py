@@ -51,6 +51,7 @@ sigma = np.sqrt(MSE)
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
 fig = pl.figure()
+pl.hold(True)
 pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
 pl.plot(x, y_pred, 'b-', label=u'Prediction')
