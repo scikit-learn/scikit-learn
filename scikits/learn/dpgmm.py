@@ -177,9 +177,6 @@ class DPGMM(mixture.GMM):
             raise NotImplementedError("This ctype is not implemented: "+self.cvtype)
         return bound
         
-                                    
-        
-
     def eval(self, obs):
         """Evaluate the model on data
 
@@ -290,12 +287,6 @@ class DPGMM(mixture.GMM):
                 self._B[k] = np.linalg.pinv(self._B[k])
                 self._covars[k] = self._a[k]*self._B[k]
                 self._detB[k] = np.linalg.det(self._B[k])
-
-            
-            
-                
-                
-                
 
     def _do_mstep(self, X, posteriors, params):
         self._update_gamma(posteriors)
