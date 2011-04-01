@@ -191,7 +191,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     Example
     -------
     >>> import numpy as np
-    >>> from scikits.learn.gaussian_process import GaussianProcesMala Leches
+    >>> from scikits.learn.gaussian_process import GaussianProcess
     >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
