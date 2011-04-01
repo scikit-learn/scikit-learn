@@ -460,7 +460,7 @@ class RandomizedPCA(BaseEstimator):
         return X_original
 
 
-class KernelPCA(BaseEstimator):
+class KernelPCA(BaseEstimator, TransformerMixin):
     """Kernel Principal component analysis (KPCA)
 
     Non-linear dimensionality reduction through the use of kernels.
