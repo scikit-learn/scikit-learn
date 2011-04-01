@@ -116,7 +116,8 @@ def polynomial_kernel(X, Y, degree=3):
     -------
     gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    K = (1 + linear_kernel(X, Y))
+    K = linear_kernel(X, Y)
+    K += 1
     K **= degree
     return K
 
