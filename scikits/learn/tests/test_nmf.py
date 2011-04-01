@@ -54,7 +54,8 @@ def test_fit_nn_close():
     """
     Test that the fit is "close enough"
     """
-    assert False
+    assert nmf.NMF(5).fit(np.abs(
+      np.random.randn(8, 5))).reconstruction_err_ < 0.01
 
 @raises(ValueError)
 def test_nls_nn_input():
@@ -72,12 +73,11 @@ def test_nls_nn_output():
     Ap, _, _ = nmf._nls_subproblem_(np.dot(A.T, -A), A.T, A, 0.001, 20)
     assert_false((Ap < 0).any())
 
-def test_nls_close():
-    """
-    Test that the nls results should be close
-    """
-    assert False
-
+#def test_nls_close():
+#    """
+#    Test that the nls results should be close
+#    """
+#
 
 if __name__ == '__main__':
     import nose

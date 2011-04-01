@@ -364,20 +364,20 @@ class NMF(BaseEstimator):
         Number of components
         if n_comp is not set all components are kept
 
-    initial: "fast_svd", int or RandomState
+    initial: 'nndsvd', int or RandomState
         Method used to initialize the procedure.
-        Default: fast_svd
+        Default: 'nndsvd'
         Valid options:
-            "fast_svd" for initialization based on fast SVD,
-            "cro" for CRO-based initialization,
+            'nndsvd' for SVD-based initialization,
+            'cro' for CRO-based initialization,
             int seed or RandomState for non-negative random matrices
 
-    sparsity: string or None
+    sparseness: string or None
         'data' or 'components', where to enforce sparsity
         Default: None
 
     beta: double
-        Degree of sparsity, if sparsity is not None
+        Degree of sparseness, if sparseness is not None
         Default: 1
 
     eta: double
@@ -416,14 +416,24 @@ class NMF(BaseEstimator):
     >>> from scikits.learn.nmf import NMF
     >>> model = NMF(n_comp=2, initial=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, n_comp=2, max_iter=100,
-      initial=<mtrand.RandomState object at 0x...>, sparsity=None, beta=1,
-      eta=0.1, tolerance=0.0001)
+    NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness=None,
+      initial=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
+      tolerance=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.38526873],
            [ 0.11118662,  0.38228063]])
     >>> model.reconstruction_err_
     0.0074679497834630824
+    >>> model = NMF(n_comp=2, initial=0, sparseness='components')
+    >>> model.fit(X) #doctest: +ELLIPSIS
+    NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness='components',
+      initial=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
+      tolerance=0.0001)
+    >>> model.components_
+    array([[ 1.67481991, -0.        ],
+           [ 0.29614922,  0.4681982 ]])
+    >>> model.reconstruction_err_
+    0.51328426689311935
 
     Notes
     -----
@@ -434,21 +444,22 @@ class NMF(BaseEstimator):
 
     """
 
-    def __init__(self, n_comp=None, initial="fast_svd", sparsity=None, beta=1,
+    def __init__(self, n_comp=None, initial="nndsvd", sparseness=None, beta=1,
                  eta=0.1, tolerance=1e-4, max_iter=100, nls_max_iter=2000):
         self.n_comp = n_comp
         self.initial = initial
         self.tolerance = tolerance
-        if sparsity not in (None, 'data', 'components'):
+        if sparseness not in (None, 'data', 'components'):
             raise ValueError('Invalid sparsity target')
-        self.sparsity = sparsity
+        self.sparseness = sparseness
         self.beta = beta
         self.eta = eta
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
     def fit(self, X):
-        """ Fit the model to the data
+        """
+        Fit the model to the data
         """
         X = np.atleast_2d(X)
         if (X < 0).any():
@@ -467,7 +478,7 @@ class NMF(BaseEstimator):
         if isinstance(self.initial, np.random.RandomState):
             W = np.abs(self.initial.randn(n_features, self.n_comp))
             H = np.abs(self.initial.randn(self.n_comp, n_samples))
-        elif self.initial == "fast_svd":
+        elif self.initial == "nndsvd":
             W, H = _initialize_nmf_(X, self.n_comp)
         elif self.initial == "cro":
             m = CRO(self.n_comp)
@@ -491,15 +502,15 @@ class NMF(BaseEstimator):
                 break
 
             # update W
-            if self.sparsity == None:
+            if self.sparseness == None:
                 W, gradW, iterW = _nls_subproblem_(X.T, H.T, W.T, tolW,
                                                    self.nls_max_iter)
-            elif self.sparsity == 'data':
+            elif self.sparseness == 'data':
                 W, gradW, iterW = _nls_subproblem_(
                         r_[X.T, zeros((1, n_features))],
                         r_[H.T, sqrt(self.beta) * ones((1, self.n_comp))],
                         W.T, tolW, self.nls_max_iter)
-            elif self.sparsity == 'components':
+            elif self.sparseness == 'components':
                 W, gradW, iterW = _nls_subproblem_(
                         r_[X.T, zeros((self.n_comp, n_features))],
                         r_[H.T, sqrt(self.eta) * eye(self.n_comp)],
@@ -511,15 +522,15 @@ class NMF(BaseEstimator):
                 tolW = 0.1 * tolW
 
             # update H
-            if self.sparsity == None:
+            if self.sparseness == None:
                 H, gradH, iterH = _nls_subproblem_(X, W, H, tolH,
                                                    self.nls_max_iter)
-            elif self.sparsity == 'data':
+            elif self.sparseness == 'data':
                 H, gradH, iterH = _nls_subproblem_(
                         r_[X, zeros((self.n_comp, n_samples))],
                         r_[W, sqrt(self.eta) * eye(self.n_comp)],
                         H, tolH, self.nls_max_iter)
-            elif self.sparsity == 'components':
+            elif self.sparseness == 'components':
                 H, gradH, iterH = _nls_subproblem_(
                         r_[X, zeros((1, n_samples))],
                         r_[W, sqrt(self.beta) * ones((1, self.n_comp))],
@@ -537,11 +548,12 @@ class NMF(BaseEstimator):
         return self
 
     def transform(self, X):
-        """ Transform the data X according to the model
+        """
+        Transform the data X according to the model
         """
         from scipy.optimize import nnls
         X = np.atleast_2d(X)
         H = np.zeros((X.shape[0], self.n_comp))
         for j in xrange(0, X.shape[0]):
-            H[j, :], _ = nnls(self.components_.T, X[j, :])
+            H[j, :], _ = nnls(self.components_, X[j, :])
         return H
