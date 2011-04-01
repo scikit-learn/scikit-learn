@@ -453,10 +453,7 @@ class NMF(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
-    def _fit_transform(self, X):
-        """
-        Fit the model to the data
-        """
+    def fit_transform(self, X):
         X = np.atleast_2d(X)
         if (X < 0).any():
             raise ValueError("Negative data passed to NMF.fit.")
@@ -543,12 +540,9 @@ class NMF(BaseEstimator, TransformerMixin):
         if n_iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
         return W
-
-    def fit_transform(self, X):
-        return self._fit_transform(X)
     
     def fit(self, X):
-        self._fit_transform(X)
+        self.fit_transform(X)
         return self
         
     def transform(self, X):
