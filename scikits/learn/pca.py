@@ -182,6 +182,34 @@ class PCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
+        self._fit(X, **params)
+        return self
+
+    def fit_transform(self, X, y=None, **params):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new array-like, shape (n_samples, n_components)
+        """
+        U, S, V = self._fit(X, **params)
+        U = U[:, :self.n_components]
+
+        if self.whiten:
+            U *= np.sqrt(X.shape[0])
+        else:
+            S = S[:self.n_components]
+            U *= S
+
+        return U
+
+    def _fit(self, X, **params):
         self._set_params(**params)
         X = np.atleast_2d(X)
         n_samples, n_features = X.shape
@@ -197,7 +225,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         if self.whiten:
             n = X.shape[0]
-            self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
+            self.components_ = V.T / S * np.sqrt(n)
         else:
             self.components_ = V.T
 
@@ -219,7 +247,7 @@ class PCA(BaseEstimator, TransformerMixin):
             self.explained_variance_ratio_ = \
                     self.explained_variance_ratio_[:self.n_components]
 
-        return self
+        return (U, S, V)
 
     def transform(self, X):
         """Apply the dimension reduction learned on the train data."""

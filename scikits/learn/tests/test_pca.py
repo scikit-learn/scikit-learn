@@ -24,9 +24,17 @@ def test_pca():
     X_r = pca.fit(X).transform(X)
     np.testing.assert_equal(X_r.shape[1], 2)
 
+    X_r2 = pca.fit_transform(X)
+    assert_array_almost_equal(X_r, X_r2)
+
     pca = PCA()
     pca.fit(X)
     assert_almost_equal(pca.explained_variance_ratio_.sum(), 1.0, 3)
+
+    X_r = pca.transform(X)
+    X_r2 = pca.fit_transform(X)
+
+    assert_array_almost_equal(X_r, X_r2)
 
 
 def test_whitening():
@@ -54,6 +62,10 @@ def test_whitening():
     pca = PCA(n_components=n_components, whiten=True).fit(X)
     X_whitened = pca.transform(X)
     assert_equal(X_whitened.shape, (n_samples, n_components))
+
+    # test fit_transform
+    X_whitened2 = pca.fit_transform(X)
+    assert_array_almost_equal(X_whitened, X_whitened2)
 
     # all output component have unit variances
     assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
