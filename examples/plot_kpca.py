@@ -46,7 +46,10 @@ X_back = kpca.inverse_transform(X_kpca)
 pca = PCA()
 X_pca = pca.fit_transform(X)
 
-pl.subplot(4, 1, 1)
+# Plot results
+
+pl.figure()
+pl.subplot(2, 2, 1, aspect='equal')
 pl.title("Original space")
 pl.plot(X[:200, 0], X[:200, 1], "ro")
 pl.plot(X[200:, 0], X[200:, 1], "bo")
@@ -59,21 +62,21 @@ X_grid = np.array([np.ravel(X1), np.ravel(X2)]).T
 Z_grid = kpca.transform(X_grid)[:, 0].reshape(X1.shape)
 pl.contour(X1, X2, Z_grid, colors='grey', linewidths=1, origin='lower')
 
-pl.subplot(4, 1, 2)
+pl.subplot(2, 2, 2, aspect='equal')
 pl.plot(X_kpca[:200, 0], X_pca[:200, 1], "ro")
 pl.plot(X_pca[200:, 0], X_pca[200:, 1], "bo")
 pl.title("Projection by PCA")
 pl.xlabel("1st principal component")
 pl.ylabel("2nd component")
 
-pl.subplot(4, 1, 3)
+pl.subplot(2, 2, 3, aspect='equal')
 pl.plot(X_kpca[:200, 0], X_kpca[:200, 1], "ro")
 pl.plot(X_kpca[200:, 0], X_kpca[200:, 1], "bo")
 pl.title("Projection by KPCA")
 pl.xlabel("1st principal component in space induced by $\phi$")
 pl.ylabel("2nd component")
 
-pl.subplot(4, 1, 4)
+pl.subplot(2, 2, 4, aspect='equal')
 pl.plot(X_back[:200, 0], X_back[:200, 1], "ro")
 pl.plot(X_back[200:, 0], X_back[200:, 1], "bo")
 pl.title("Original space after inverse transform")
