@@ -1,4 +1,5 @@
 from libcpp.vector cimport vector
+
 import numpy as np
 cimport numpy as np
 
@@ -59,9 +60,9 @@ cdef class BallTree:
         x.reshape((-1, self.num_dims))
 
         # allocate output
-        out_indices = np.zeros((x.shape[0], k), np.long)
+        out_indices = np.zeros((x.shape[0], k), np.int64)
         if return_distance:
-            out_distances = np.zeros((x.shape[0], k), np.double)
+            out_distances = np.zeros((x.shape[0], k), np.float64)
         for pt_idx, pt in enumerate(x):
             temp = make_point(pt)
             self.bt_ptr.query(temp, results)
