@@ -13,7 +13,7 @@ from scikits.learn.datasets.samples_generator import low_rank_fat_tail
 
 def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     '''
-    A, S = nnmf(X, r, cost='norm2', tol=1e-5, R=None)
+    A, S = nnmf(X, r, tol=1e-3, R=None)
 
     Implement Lee & Seung's algorithm
 
@@ -66,7 +66,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     return W, H
 
 
-def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
+def compute_bench(samples_range, features_range, rank=50, tolerance=1e-4):
     it = 0
     timeset = defaultdict(lambda: [])
     err = defaultdict(lambda: [])
@@ -84,14 +84,14 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             gc.collect()
             print "benching nndsvd-nmf: "
             tstart = time()
-            m = NMF(n_components=50, max_iter=1000, tol=tolerance).fit(X)
+            m = NMF(n_components=30, tol=tolerance).fit(X)
             timeset['nndsvd-nmf'].append(time() - tstart)
             err['nndsvd-nmf'].append(m.reconstruction_err_)
 
             gc.collect()
             print "benching nndsvda-nmf: "
             tstart = time()
-            m = NMF(n_components=50, max_iter=1000, init='nndsvda',
+            m = NMF(n_components=30, init='nndsvda',
                     tol=tolerance).fit(X)
             timeset['nndsvda-nmf'].append(time() - tstart)
             err['nndsvda-nmf'].append(m.reconstruction_err_)
@@ -99,7 +99,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             gc.collect()
             print "benching nndsvdar-nmf: "
             tstart = time()
-            m = NMF(n_components=50, max_iter=1000, init='nndsvdar',
+            m = NMF(n_components=30, init='nndsvdar',
                     tol=tolerance).fit(X)
             timeset['nndsvdar-nmf'].append(time() - tstart)
             err['nndsvdar-nmf'].append(m.reconstruction_err_)
@@ -107,7 +107,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             gc.collect()
             print "benching random-nmf"
             tstart = time()
-            m = NMF(n_components=50, initial=None, max_iter=1000,
+            m = NMF(n_components=30, init=None, max_iter=1000,
                     tol=tolerance).fit(X)
             timeset['random-nmf'].append(time() - tstart)
             err['random-nmf'].append(m.reconstruction_err_)
@@ -115,7 +115,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             gc.collect()
             print "benching alt-random-nmf"
             tstart = time()
-            W, H = alt_nnmf(X, r=50, R=None, tol=tolerance)
+            W, H = alt_nnmf(X, r=30, R=None, tol=tolerance)
             timeset['alt-random-nmf'].append(time() - tstart)
             err['alt-random-nmf'].append(np.linalg.norm(X - np.dot(W, H)))
 

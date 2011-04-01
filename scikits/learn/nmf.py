@@ -9,7 +9,6 @@
 from __future__ import division
 import warnings
 
-import operator
 import numpy as np
 from .base import BaseEstimator, TransformerMixin
 from .utils.extmath import fast_svd
