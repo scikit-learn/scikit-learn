@@ -27,7 +27,8 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('libdecisiontree',
                          sources = libdecisiontree_sources,
                          include_dirs = [numpy.get_include(), 'src'],
-                         depends = libdecisiontree_depends
+                         depends = libdecisiontree_depends,
+                         language = 'c++'
                          )
 
     return config
