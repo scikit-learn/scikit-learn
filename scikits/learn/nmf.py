@@ -134,7 +134,7 @@ def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
     return W, H
 
 
-class CRO():
+class CRO(BaseEstimator):
     """
     Closeness to Rank One Hierarchical Clustering
 
