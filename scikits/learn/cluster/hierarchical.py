@@ -12,6 +12,7 @@ import warnings
 
 import numpy as np
 from scipy import sparse
+from scipy.cluster import hierarchy
 
 from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
@@ -79,43 +80,40 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
             " connectivity matrix is %d > 1. The tree will be stopped early."
             % n_components)
     else:
-        n_components = 1
+        out = hierarchy.ward(X)
+        children_ = out[:, :2].astype(np.int)
+        return children_, 1, n_samples
+        
 
     n_nodes = 2 * n_samples - n_components
 
-    if connectivity is None:
-        coord_row, coord_col = np.where(np.tril(np.ones((n_samples, n_samples),
-                                        dtype=np.bool), k=-1))
-        A = [range(0, ind) + range(ind + 1, n_samples)
-             for ind in range(n_samples)]
+    if (connectivity.shape[0] != n_samples or
+        connectivity.shape[1] != n_samples):
+        raise ValueError('Wrong shape for connectivity matrix: %s '
+                         'when X is %s' % (connectivity.shape, X.shape))
+    # convert connectivity matrix to LIL eventually with a copy
+    if sparse.isspmatrix_lil(connectivity) and copy:
+        connectivity = connectivity.copy()
     else:
-        if (connectivity.shape[0] != n_samples or
-                            connectivity.shape[1] != n_samples):
-            raise ValueError('Wrong shape for connectivity matrix: %s '
-                    'when X is %s' % (connectivity.shape, X.shape))
-        # convert connectivity matrix to LIL eventually with a copy
-        if sparse.isspmatrix_lil(connectivity) and copy:
-            connectivity = connectivity.copy()
-        else:
-            connectivity = connectivity.tolil()
+        connectivity = connectivity.tolil()
 
-        # Remove diagonal from connectivity matrix
-        connectivity.setdiag(np.zeros(connectivity.shape[0]))
+    # Remove diagonal from connectivity matrix
+    connectivity.setdiag(np.zeros(connectivity.shape[0]))
 
-        # create inertia matrix
-        coord_row = []
-        coord_col = []
-        A = []
-        for ind, row in enumerate(connectivity.rows):
-            A.append(row)
-            # We keep only the upper triangular for the moments
-            # Generator expressions are faster than arrays on the following
-            row = [i for i in row if i < ind]
-            coord_row.extend(len(row) * [ind, ])
-            coord_col.extend(row)
+    # create inertia matrix
+    coord_row = []
+    coord_col = []
+    A = []
+    for ind, row in enumerate(connectivity.rows):
+        A.append(row)
+        # We keep only the upper triangular for the moments
+        # Generator expressions are faster than arrays on the following
+        row = [i for i in row if i < ind]
+        coord_row.extend(len(row) * [ind, ])
+        coord_col.extend(row)
 
-        coord_row = np.array(coord_row, dtype=np.int)
-        coord_col = np.array(coord_col, dtype=np.int)
+    coord_row = np.array(coord_row, dtype=np.int)
+    coord_col = np.array(coord_col, dtype=np.int)
 
     # build moments as a list
     moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features)),
@@ -226,25 +224,12 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_clusters : int or ndarray
         The number of clusters to form.
 
-    parent : array-like, shape = [n_nodes]
-        Int. Gives the parent node for each node, i.e. parent[i] is the
-        parent node of the node i. The last value of parent is the
-        root node, that is its self parent, so the last value is taken
-        3 times in the array.
-        The n_nodes is equal at  (2*n_samples - 1), and takes into
-        account the nb_samples leaves, and the unique root.
-
     children : list of pairs. Lenght of n_nodes
         List of the children of each nodes.
         Leaves have empty list of children and are not stored.
 
     n_leaves : int
         Number of leaves of the tree.
-
-    heights : array-like, shape = [n_nodes]
-        Gives the inertia of the created nodes. The n_samples first
-        values of the array are 0, and thus the values are positive (or
-        null) and are ranked in an increasing order.
 
     Return
     ------

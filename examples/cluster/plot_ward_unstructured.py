@@ -4,8 +4,8 @@ A demo of hierarchical clustering - unstructured ward
 ===========================================================
 
 Example builds a swiss roll dataset and runs the hierarchical
-clustering on k-Nearest Neighbors graph. It's a hierarchical
-clustering without structure prior.
+clustering on their position. It's a hierarchical clustering 
+without structure prior.
 
 """
 
@@ -24,7 +24,7 @@ from scikits.learn.datasets.samples_generator import swiss_roll
 
 ###############################################################################
 # Generate data (swiss roll dataset)
-n_samples = 500
+n_samples = 1000
 noise = 0.05
 X = swiss_roll(n_samples, noise)
 

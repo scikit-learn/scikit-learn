@@ -93,10 +93,12 @@ def assess_same_labelling(cut1, cut2):
 
 
 def test_scikit_vs_scipy():
-    """Test scikit unstructured ward against scipy
+    """Test scikit ward with full connectivity (i.e. unstructured) against scipy
     """
+    from scipy.sparse import lil_matrix
     n, p, k = 10, 5, 3
-
+    
+    connectivity = lil_matrix(np.ones((n, n)))
     for i in range(5):
         X = .1*np.random.normal(size=(n, p))
         X -= 4*np.arange(n)[:, np.newaxis]
@@ -105,7 +107,7 @@ def test_scikit_vs_scipy():
         out = hierarchy.ward(X)
 
         children_ = out[:, :2].astype(np.int)
-        children, _, n_leaves = ward_tree(X)
+        children, _, n_leaves = ward_tree(X, connectivity)
 
         cut  = _hc_cut(k, children, n_leaves)
         cut_ = _hc_cut(k, children_, n_leaves)
