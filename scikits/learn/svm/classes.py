@@ -1,6 +1,6 @@
 from ..base import ClassifierMixin, RegressorMixin
 from ..linear_model.base import CoefSelectTransformerMixin
-from .base import BaseLibLinear, BaseLibSVM, BaseLibSVMCV
+from .base import BaseLibLinear, BaseLibSVM
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
@@ -162,22 +162,6 @@ class SVC(BaseLibSVM, ClassifierMixin):
         BaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
                          cache_size, tol, C, 0., 0.,
                          shrinking, probability)
-
-
-class SVCCV(BaseLibSVMCV, ClassifierMixin):
-    """
-    early draft implementation of cross validated SVC
-
-    just give parameters as lists and it will iterate over.
-    """
-
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=100.0):
-
-            BaseLibSVMCV.__init__(
-                self, 'c_svc', kernel, degree, gamma, coef0,
-                cache_size, tol, C, 0., 0., shrinking, probability)
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
