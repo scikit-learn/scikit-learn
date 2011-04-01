@@ -650,7 +650,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         elif isinstance(rng, int):
             rng = np.random.RandomState(rng)
 
-        HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY = 1e-10
+        
         # Run input checks
         self._check_params()
 
@@ -670,6 +670,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         covariance, r =\
                 self._compute_covariance_matrix_from_centered_distribution(X)
 
+        HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY = covariance.diagonal().mean() * 1e-6
+
         y = np.zeros(n_eval)
 
         # Scaled predictor
@@ -684,7 +686,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                     HACKY_EPSILON_ADDED_TO_STABILIZE_CHOLESKY
         L = linalg.cholesky(covariance)
 
-        return y + [np.dot(L.T, rng.randn(*X.shape)).T for _ in xrange(size)]
+        return y + np.dot(L.T, rng.randn(n_eval, n_features_X * size)).reshape(n_eval, n_features_X, size).squeeze().T
 
     def reduced_likelihood_function(self, theta=None):
         """
