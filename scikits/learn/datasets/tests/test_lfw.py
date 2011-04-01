@@ -66,7 +66,11 @@ def setup_module():
         for i in range(n_faces):
             file_path = os.path.join(folder_name, name + '_%04d.jpg' % i)
             uniface = np_rng.randint(0, 255, size=(250, 250, 3))
-            imsave(file_path, uniface)
+            try:
+                imsave(file_path, uniface)
+            except ImportError:
+                # PIL is not properly installed, skip those tests
+                raise SkipTest
 
     # add some random file pollution to test robustness
     f = open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb')
