@@ -52,6 +52,14 @@ class DPGMM(mixture.GMM):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
+    alpha : float, optional
+        Real number representing the concentration parameter of
+        the dirichlet process. Intuitively, the DP is as likely
+        to start a new cluster for a point as it is to add that
+        point to a cluster with alpha elements. A higher alpha
+        means more clusters, as the expected number of clusters
+        is alpha*log(N). Defaults to 1.
+
 
     Attributes
     ----------
@@ -137,6 +145,10 @@ class DPGMM(mixture.GMM):
     array([ 0.5,  0.5])
     """
 
+    def __init__(self, n_states=1, cvtype='diag', alpha=1.0):
+        self._alpha = alpha
+        super(DPGMM, self).__init__(n_states, cvtype)
+
     def _bound_pxgivenz(self, x, k):
         bound = -0.5*self.n_features*np.log(2*np.pi)
         bound -= np.log(2*np.pi*np.e)
@@ -152,13 +164,15 @@ class DPGMM(mixture.GMM):
                 bound -= 0.5*digamma((self._a-1-i)/2.) 
             bound -= 0.5*self.n_features*np.log(2)
             bound -= 0.5*np.log(self._detB)
-            bound -= 0.5*squarenorm(x-self._means[k], self._ab)
+            bound -= 0.5*squarenorm(x-self._means[k], self._aB)
+            bound -= 0.5*self._a*np.trace(self._B)
         elif self.ctype == 'full':
             for i in xrange(self.n_features):
                 bound -= 0.5*digamma((self._a[k]-1-i)/2.) 
             bound -= 0.5*self.n_features*np.log(2)
             bound -= 0.5*np.log(self._detB[k])
             bound -= 0.5*squarenorm(x-self._means[k], self._ab[k])
+            bound -= 0.5*self._a[k]*np.trace(self._B[k])
         else: 
             raise NotImplementedError("This ctype is not implemented: "+self.ctype)
         return bound
@@ -193,7 +207,7 @@ class DPGMM(mixture.GMM):
         obs = np.asanyarray(obs)
         z = np.zeros((obs.shape[0],self.n_states))
         p = np.zeros(self.n_states)
-        bound = 0.
+        bound = np.array(obs.shape[0])
         for i in xrange(obs.shape[0]):
             for k in xrange(self.n_states):
                 p[k] = z[i,k] = self._bound_pxgivenz(obs[i], k)
@@ -203,8 +217,90 @@ class DPGMM(mixture.GMM):
                     z[i,k] += digamma(self._gamma[j,2])
                     z[i,k] -= digamma(self._gamma[j,1]+self._gamma[j,2])
                 z[i] = lognormalize(z[i])
-                bound += np.sum(z[i]*p)
+                bound[i] = np.sum(z[i]*p)
         return bound, z
+
+    def _update_gamma(self, z):
+        for i in xrange(self.n_states):
+            self.gamma[i,1] = 1. + np.sum(z.T[i])
+            self.gamma[i,2] = self._alpha
+            for k in xrange(i+1, self.n_states):
+                for j in xrange(z.shape[0]):
+                    self.gamma[i,2] += z[j,k]
+
+    def _update_mu(self, X, z):
+        for k in xrange(self.n_states):
+            if self.ctype == 'spherical':
+                num = np.sum(z.T[k]*X, axis=0)
+                num *= self._a[k]/self._b[k]
+                den = 1. + self._a[k]/self._b[k]*np.sum(z.T[k])
+                self._means[k] = num/den
+            elif self.ctype == 'diag':
+                den = np.ones(self.n_features) + self.ab[k]*np.sum(z.T[k])
+                num = np.sum(z.T[k]*X, axis=0)
+                num *= self._ab[k]
+                self._means[k] = num/den
+            elif self.ctype == 'tied' or self.ctype == 'full':
+                if self.ctype == 'tied': 
+                    cov = self._aB
+                else:
+                    cov = self._aB[k]
+                den = np.identity(self.n_features) + cov*np.sum(z.T[k])
+                num = np.dot(cov, np.sum(z.T[k]*X, axis=0))
+                self._means[k] = np.linalg.lstsq(den, num)[0]
+
+    def _update_ab(self, X, z):
+        if self.ctype == 'spherical':
+            self._a = 1+ 0.5*self.n_features*np.sum(z, axis=0)
+            for k in xrange(self.n_states):
+                difs = np.sum((X-self._means[k])*(X-self._means[k]), axis=1)
+                self._b[k] = 1 + 0.5*np.sum(z.T[k]*(difs+self.n_features))
+        elif self.ctype == 'diag':
+            self._a = np.ones((self.n_states, self.n_features))
+            for k in xrange(self.n_states):
+                self._a[k] *= 1+ 0.5*self.n_features*np.sum(z.T[k], axis=0)
+                for d in xrange(self.n_features):
+                    self._b[k,d] = 1.
+                    for i in xrange(X.shape[0]):
+                        dif = X[i,d]-self._means[k,d]
+                        self._b[k,d] += z[i,k]*dif*dif
+            self._ab = self._a/self._b
+        elif self.ctype == 'tied':
+            self._a = 2+X.shape[0]+self.n_features
+            self._B = (X.shape[0]+1)*np.identity(self.n_features)
+            for i in xrange(X.shape[0]):
+                for k in xrange(self.n_states):
+                    dif = X[i]-self._means[k]
+                    self._B += z[i,k]*np.dot(dif.reshape((-1,1)),
+                                             dif.reshape((1,-1)))
+            self._B = np.linalg.pinv(self._B)
+            self._aB = self._a*self._B
+            self._detB = np.linalg.det(self._B)
+        elif self.ctype == 'full':
+            for k in xrange(self.n_states):
+                T = np.sum(z.T[k])
+                self._a[k] = 2+T+self.n_features
+                self._B[k]= (T+1)*np.identity(self.n_features)
+                for i in xrange(X.shape[0]):
+                    dif = X[i]-self._means[k]
+                    self._B[k] += z[i,k]*np.dot(dif.reshape((-1,1)),
+                                                dif.reshape((1,-1)))
+                self._B[k] = np.linalg.pinv(self._B[k])
+                self._aB[k] = self._a[k]*self._B[k]
+                self._detB[k] = np.linalg.det(self._B[k])
+
+            
+            
+                
+                
+                
+
+    def _do_mstep(self, X, posteriors, params):
+        self._update_gamma(posteriors)
+        if 'm' in params:
+            self._update_mu(X, posteriors)
+        if 'c' in params:
+            self._update_ab(X, posteriors)
 
 
     def fit(self, X, n_iter=10, thresh=1e-2, params='wmc',
@@ -250,23 +346,32 @@ class DPGMM(mixture.GMM):
 
         self.n_features = X.shape[1]
 
-        if 'm' in init_params:
-            self._means = np.random.normal(0, 1, size=(self.n_states, self.n_features))
-        elif not hasattr(self, 'means'): 
+        self._gamma = self._alpha*np.ones(self.n_states)
+
+        if 'm' in init_params or not hasattr(self, 'means'):
             self._means = np.random.normal(0, 1, size=(self.n_states, self.n_features))
 
         if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self._n_states, self._n_states)
 
-        if 'c' in init_params:
-            cv = np.identity(self.n_features)
-            if not cv.shape:
-                cv.shape = (1, 1)
-            self._covars = _distribute_covar_matrix_to_match_cvtype(cv, self._cvtype, 
-                                                                    self._n_states)
-        elif not hasattr(self, 'covars'):
-                self.covars = _distribute_covar_matrix_to_match_cvtype(
-                    np.eye(self.n_features), self.cvtype, self.n_states)
+        if 'c' in init_params or not hasattr(self, 'covars'):
+            if self.ctype == 'spherical':
+                self._a = np.ones(self.n_states)
+                self._b = np.ones(self.n_states)
+            elif self.ctype == 'diag':
+                self._a = np.ones((self.n_states,self.n_features))
+                self._b = np.ones((self.n_states,self.n_features))
+                self._ab = np.ones((self.n_states,self.n_features))
+            elif self.ctype == 'tied':
+                self._a = 1.
+                self._B = np.identity(self.n_features)
+                self._aB = np.identity(self.n_features)
+                self._detB = 1.
+            elif self.ctype == 'full':
+                self._a = np.ones(self.n_states)
+                self._B = [np.identity(self.n_features) for i in xrange(self.n_states)]
+                self._aB = [np.identity(self.n_features) for i in xrange(self.n_states)]
+                self._detB = np.ones(self.n_states)
 
         logprob = []
         # reset self.converged_ to False
@@ -282,6 +387,6 @@ class DPGMM(mixture.GMM):
                 break
 
             # Maximization step
-            self._do_mstep(X, posteriors, params, min_covar)
+            self._do_mstep(X, posteriors, params)
 
         return self
