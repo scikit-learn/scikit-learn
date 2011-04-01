@@ -335,6 +335,19 @@ class SVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    Examples
+    --------
+    >>> from scikits.learn.svm import SVR
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> clf = SVR(C=1.0, p=0.2)
+    >>> clf.fit(X, y)
+    SVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True, p=0.2,
+      tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5, gamma=0.1)
+
     See also
     --------
     NuSVR
@@ -432,6 +445,19 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
+
+    Examples
+    --------
+    >>> from scikits.learn.svm import NuSVR
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> clf = NuSVR(nu=0.1, C=1.0)
+    >>> clf.fit(X, y)
+    NuSVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
+       tol=0.001, cache_size=100.0, coef0=0.0, nu=0.1, gamma=0.1)
 
     See also
     --------
