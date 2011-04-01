@@ -6,6 +6,7 @@ Quadratic Discriminant Analysis
 #
 # License: BSD Style.
 
+import exceptions
 import warnings
 
 import numpy as np
@@ -82,7 +83,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
         if X.ndim!=2:
-            raise ValueError('X must be a 2D array')
+            raise exceptions.ValueError('X must be a 2D array')
         if X.shape[0] != y.shape[0]:
             raise ValueError(
                 'Incompatible shapes: X has %s samples, while y '
@@ -99,7 +100,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         classes = np.unique(y)
         n_classes = classes.size
         if n_classes < 2:
-            raise ValueError('y has less than 2 classes')
+            raise exceptions.ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
             counts = np.array(ndimage.measurements.sum(

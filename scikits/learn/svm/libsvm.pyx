@@ -43,7 +43,8 @@ cdef extern from "svm.h":
     cdef struct svm_problem
     char *svm_check_parameter(svm_problem *, svm_parameter *)
     svm_model *svm_train(svm_problem *, svm_parameter *)
-    void svm_free_and_destroy_model(svm_model** model_ptr_ptr)    
+    void svm_free_and_destroy_model(svm_model** model_ptr_ptr)
+    void svm_cross_validation(svm_problem *, svm_parameter *, int nr_fold, double *target)
 
 
 cdef extern from "libsvm_helper.c":
@@ -97,6 +98,7 @@ def train(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     Parameters
     ----------
+
     X: array-like, dtype=float, size=[n_samples, n_features]
 
     Y: array, dtype=float, size=[n_samples]
@@ -447,6 +449,104 @@ def decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     free_model(model)
     free_param(param)
     return dec_values
+
+
+def cross_validation(
+    np.ndarray[np.float64_t, ndim=2, mode='c'] X,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+    int nr_fold, int svm_type, int kernel_type, int degree,
+    double gamma, double coef0, double eps, double C, double nu,
+    double cache_size, double p,
+    np.ndarray[np.int32_t, ndim=1, mode='c']
+        class_weight_label=np.empty(0, dtype=np.int32),
+    np.ndarray[np.float64_t, ndim=1, mode='c']
+        class_weight=np.empty(0),
+    np.ndarray[np.float64_t, ndim=1, mode='c']
+        sample_weight=np.empty(0),
+    int shrinking=0, int probability=0):
+    """
+    Binding of the cross-validation routine (low-level routine)
+
+    Parameters
+    ----------
+
+    X: array-like, dtype=float, size=[n_samples, n_features]
+
+    Y: array, dtype=float, size=[n_samples]
+        target vector
+
+    svm_type : {0, 1, 2, 3, 4}
+        Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
+
+    kernel_type : {0, 1, 2, 3, 4}
+        Kernel to use in the model: linear, polynomial, RBF, sigmoid
+        or precomputed.
+
+    degree : int
+        Degree of the polynomial kernel (only relevant if kernel is
+        set to polynomial)
+
+    gamma : float
+        Gamma parameter in RBF kernel (only relevant if kernel is set
+        to RBF)
+
+    coef0 : float
+        Independent parameter in poly/sigmoid kernel.
+
+    eps : float
+        Stopping criteria.
+
+    C : float
+        C parameter in C-Support Vector Classification
+
+    nu : float
+
+    cache_size : float
+
+    Returns
+    -------
+    target : array, float
+
+    """
+
+    cdef svm_parameter *param
+    cdef svm_problem *problem
+    cdef svm_model *model
+    cdef char *error_msg
+    cdef np.npy_intp SV_len    
+    cdef np.npy_intp nr
+
+    if len(sample_weight) == 0:
+        sample_weight = np.ones(X.shape[0], dtype=np.float64)
+    else:
+        assert sample_weight.shape[0] == X.shape[0], \
+               "sample_weight and X have incompatible shapes: " + \
+               "sample_weight has %s samples while X has %s" % \
+               (sample_weight.shape[0], X.shape[0])
+
+    # set libsvm problem
+    problem = set_problem(X.data, Y.data, sample_weight.data,
+                          X.shape, kernel_type)
+
+    param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
+                          nu, cache_size, C, eps, p, shrinking,
+                          probability, <int> class_weight.shape[0],
+                          class_weight_label.data, class_weight.data)
+
+    # check parameters
+    if (param == NULL or problem == NULL):
+        raise MemoryError("Seems we've run out of of memory")
+    error_msg = svm_check_parameter(problem, param);
+    if error_msg:
+        free_problem(problem)
+        free_param(param)
+        raise ValueError(error_msg)
+
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] target
+    target = np.empty((X.shape[0], nr_fold), dtype=np.float64)
+    svm_cross_validation(problem, param, nr_fold, <double *> target.data)
+
+    return target
 
 def set_verbosity_wrap(int verbosity):
     """

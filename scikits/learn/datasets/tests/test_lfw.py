@@ -13,7 +13,10 @@ import os
 import shutil
 import tempfile
 import numpy as np
-from scipy.misc import imsave
+try:
+    from scipy.misc import imsave
+except ImportError:
+    imsave = None
 
 from scikits.learn.datasets import load_lfw_pairs
 from scikits.learn.datasets import load_lfw_people
@@ -42,6 +45,9 @@ FAKE_NAMES = [
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
+    if imsave is None:
+        raise SkipTest
+
     if not os.path.exists(LFW_HOME):
         os.makedirs(LFW_HOME)
 
