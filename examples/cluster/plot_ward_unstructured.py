@@ -4,7 +4,7 @@ A demo of hierarchical clustering - unstructured ward
 ===========================================================
 
 Example builds a swiss roll dataset and runs the hierarchical
-clustering on their position. It's a hierarchical clustering 
+clustering on their position. It's a hierarchical clustering
 without structure prior.
 
 """

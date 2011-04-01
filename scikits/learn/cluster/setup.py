@@ -1,4 +1,4 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr> 
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
 import numpy
