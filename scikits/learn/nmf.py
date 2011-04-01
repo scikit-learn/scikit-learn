@@ -9,19 +9,20 @@
 from __future__ import division
 import warnings
 
+import operator
 import numpy as np
-from numpy import r_, zeros, ones, eye, sqrt
+#from numpy.linalg import norm
 from .base import BaseEstimator, TransformerMixin
 from .utils.extmath import fast_svd
-from numpy.linalg import norm
+from scikits.learn.datasets.base import Bunch
 
 _pos_ = lambda x: (x >= 0) * x
 _neg_ = lambda x: (x < 0) * (-x)
+norm = lambda x: np.sqrt(np.dot(x.flatten().T, x.flatten()))
 
-
-class Bunch:
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
+#class Bunch:
+#    def __init__(self, **kwds):
+#        self.__dict__.update(kwds)
 
 
 def _sparseness_(x):
@@ -29,12 +30,7 @@ def _sparseness_(x):
     Hoyer's measure of sparsity for a vector
     """
     n = len(x)
-    return (sqrt(n) - norm(x, 1) / norm(x, 2)) / (sqrt(n) - 1)
-
-
-def dict_argmax(dictionary):
-    val = lambda x: x[1]
-    return max(dictionary.items(), key=val)[0]
+    return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
 
 
 def _initialize_nmf_(X, n_comp, variant=None, eps=1e-6, seed=None):
@@ -151,7 +147,7 @@ class CRO():
             Target number of components (clusters) to extract.
             Defaults to 1
 
-        epsilon: double or None
+        eps: double or None
             Padding value for output matrices. The value influences sparsity
             and NMF convergence time, but does not influence the performance
             of the initialization.
@@ -193,13 +189,13 @@ class CRO():
     http://www.postech.ac.kr/~seungjin/publications/icassp07_ydkim.pdf
 
     """
-    def __init__(self, n_comp=1, epsilon=1e-5):
+    def __init__(self, n_comp=1, eps=1e-5):
         """
         Initializes the CRO model
         """
         self.n_comp = n_comp
         self.clusters = []
-        self.epsilon = epsilon
+        self.eps = eps
 
     def fit(self, X):
         """
@@ -222,7 +218,7 @@ class CRO():
                     cro = self.pairwise_cro(self.clusters[i], self.clusters[j])
                     cros[i, j] = cro
 
-            pair = dict_argmax(cros)
+            pair = max(cros.items(), key=operator.itemgetter(1))[0]
             t, s = self.clusters[pair[0]], self.clusters[pair[1]]
             self.clusters[pair[0]] = self._merge(t, s)
             del self.clusters[pair[1]]
@@ -235,8 +231,8 @@ class CRO():
             self.components_[i, j:j + cl.size] = cl.svd[2]
             j += cl.size
 
-        self.data_[self.data_ == 0] += self.epsilon
-        self.components_[self.components_ == 0] += self.epsilon
+        self.data_[self.data_ == 0] += self.eps
+        self.components_[self.components_ == 0] += self.eps
 
     def _merge(self, target, source):
         """
@@ -269,7 +265,7 @@ class CRO():
         return (result.svd[1] / np.linalg.norm(result.data)) ** 2
 
 
-def _nls_subproblem_(V, W, Hinit, tol, max_iter):
+def _nls_subproblem_(V, W, H_init, tol, max_iter):
     """
     Solves a non-negative least squares subproblem using the
     projected gradient descent algorithm.
@@ -280,7 +276,7 @@ def _nls_subproblem_(V, W, Hinit, tol, max_iter):
     V, W:
         Constant matrices
 
-    Hinit:
+    H_init:
         Initial guess for the solution
 
     tol:
@@ -298,21 +294,21 @@ def _nls_subproblem_(V, W, Hinit, tol, max_iter):
     grad:
         The gradient.
 
-    iter:
+    n_iter:
         The number of iterations done by the algorithm.
 
     """
-    if (Hinit < 0).any():
-        raise ValueError("Negative values in Hinit passed to NLS solver.")
+    if (H_init < 0).any():
+        raise ValueError("Negative values in H_init passed to NLS solver.")
 
-    H = Hinit
+    H = H_init
     WtV = np.dot(W.T, V)
     WtW = np.dot(W.T, W)
 
     # values justified in the paper
     alpha = 1
     beta = 0.1
-    for iter in xrange(1, max_iter + 1):
+    for n_iter in xrange(1, max_iter + 1):
         grad = np.dot(WtW, H) - WtV
         proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
         if proj_gradient < tol:
@@ -345,10 +341,10 @@ def _nls_subproblem_(V, W, Hinit, tol, max_iter):
                     alpha = alpha / beta
                     Hp = Hn
 
-    if iter == max_iter:
+    if n_iter == max_iter:
         warnings.warn("Iteration limit reached in nls subproblem.")
 
-    return H, grad, iter
+    return H, grad, n_iter
 
 
 class NMF(BaseEstimator, TransformerMixin):
@@ -364,7 +360,7 @@ class NMF(BaseEstimator, TransformerMixin):
         Number of components
         if n_comp is not set all components are kept
 
-    initial: 'nndsvd', int or RandomState
+    init: 'nndsvd', int or RandomState
         Method used to initialize the procedure.
         Default: 'nndsvd'
         Valid options:
@@ -414,20 +410,20 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from scikits.learn.nmf import NMF
-    >>> model = NMF(n_comp=2, initial=0)
+    >>> model = NMF(n_comp=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
     NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness=None,
-      initial=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
+      init=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
       tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.38526873],
            [ 0.11118662,  0.38228063]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.00746...
-    >>> model = NMF(n_comp=2, initial=0, sparseness='components')
+    >>> model = NMF(n_comp=2, init=0, sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS
     NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness='components',
-      initial=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
+      init=<mtrand.RandomState object at 0x...>, beta=1, eta=0.1,
       tol=0.0001)
     >>> model.components_
     array([[ 1.67481991, -0.        ],
@@ -444,10 +440,10 @@ class NMF(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_comp=None, initial="nndsvd", sparseness=None, beta=1,
+    def __init__(self, n_comp=None, init="nndsvd", sparseness=None, beta=1,
                  eta=0.1, tol=1e-4, max_iter=100, nls_max_iter=2000):
         self.n_comp = n_comp
-        self.initial = initial
+        self.init = init
         self.tol = tol
         if sparseness not in (None, 'data', 'components'):
             raise ValueError('Invalid sparsity target')
@@ -470,17 +466,17 @@ class NMF(BaseEstimator, TransformerMixin):
         if not self.n_comp:
             self.n_comp = n_features
 
-        if self.initial == None:
-            self.initial = np.random.RandomState()
-        elif isinstance(self.initial, int):
-            self.initial = np.random.RandomState(self.initial)
+        if self.init == None:
+            self.init = np.random.RandomState()
+        elif isinstance(self.init, int):
+            self.init = np.random.RandomState(self.init)
 
-        if isinstance(self.initial, np.random.RandomState):
-            W = np.abs(self.initial.randn(n_features, self.n_comp))
-            H = np.abs(self.initial.randn(self.n_comp, n_samples))
-        elif self.initial == "nndsvd":
+        if isinstance(self.init, np.random.RandomState):
+            W = np.abs(self.init.randn(n_features, self.n_comp))
+            H = np.abs(self.init.randn(self.n_comp, n_samples))
+        elif self.init == "nndsvd":
             W, H = _initialize_nmf_(X, self.n_comp)
-        elif self.initial == "cro":
+        elif self.init == "cro":
             m = CRO(self.n_comp)
             m.fit(X.T)
             W, H = np.abs(m.components_.T), np.abs(m.data_.T)
@@ -493,7 +489,7 @@ class NMF(BaseEstimator, TransformerMixin):
         tolW = max(0.001, self.tol) * init_grad  # why max?
         tolH = tolW
 
-        for iter in xrange(1, self.max_iter + 1):
+        for n_iter in xrange(1, self.max_iter + 1):
             # stopping condition
             # as discussed in paper
             proj_norm = norm(np.r_[gradW[np.logical_or(gradW < 0, W > 0)],
@@ -507,13 +503,14 @@ class NMF(BaseEstimator, TransformerMixin):
                                                    self.nls_max_iter)
             elif self.sparseness == 'data':
                 W, gradW, iterW = _nls_subproblem_(
-                        r_[X.T, zeros((1, n_features))],
-                        r_[H.T, sqrt(self.beta) * ones((1, self.n_comp))],
+                        np.r_[X.T, np.zeros((1, n_features))],
+                        np.r_[H.T, np.sqrt(self.beta) * 
+                              np.ones((1, self.n_comp))],
                         W.T, tolW, self.nls_max_iter)
             elif self.sparseness == 'components':
                 W, gradW, iterW = _nls_subproblem_(
-                        r_[X.T, zeros((self.n_comp, n_features))],
-                        r_[H.T, sqrt(self.eta) * eye(self.n_comp)],
+                        np.r_[X.T, np.zeros((self.n_comp, n_features))],
+                        np.r_[H.T, np.sqrt(self.eta) * np.eye(self.n_comp)],
                         W.T, tolW, self.nls_max_iter)
 
             W = W.T
@@ -527,13 +524,14 @@ class NMF(BaseEstimator, TransformerMixin):
                                                    self.nls_max_iter)
             elif self.sparseness == 'data':
                 H, gradH, iterH = _nls_subproblem_(
-                        r_[X, zeros((self.n_comp, n_samples))],
-                        r_[W, sqrt(self.eta) * eye(self.n_comp)],
+                        np.r_[X, np.zeros((self.n_comp, n_samples))],
+                        np.r_[W, np.sqrt(self.eta) * np.eye(self.n_comp)],
                         H, tolH, self.nls_max_iter)
             elif self.sparseness == 'components':
                 H, gradH, iterH = _nls_subproblem_(
-                        r_[X, zeros((1, n_samples))],
-                        r_[W, sqrt(self.beta) * ones((1, self.n_comp))],
+                        np.r_[X, np.zeros((1, n_samples))],
+                        np.r_[W, np.sqrt(self.beta) * 
+                              np.ones((1, self.n_comp))],
                         H, tolH, self.nls_max_iter)
             if iterH == 1:
                 tolH = 0.1 * tolH
@@ -542,7 +540,7 @@ class NMF(BaseEstimator, TransformerMixin):
             self.reconstruction_err_ = norm(X - np.dot(W, H))
             self.components_ = H.T
             
-        if iter == self.max_iter:
+        if n_iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
         return W
 

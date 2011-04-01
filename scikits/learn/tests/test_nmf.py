@@ -53,7 +53,7 @@ def test_fit_nn_input():
     Test model fit behaviour on negative input
     """
     A = -np.ones((2,2))
-    m = nmf.NMF(2, initial=None)
+    m = nmf.NMF(2, init=None)
     m.fit(A)
 
 def test_fit_nn_output():
@@ -62,8 +62,8 @@ def test_fit_nn_output():
     """
     A = np.c_[5 * np.ones(5) - xrange(1, 6),
               5 * np.ones(5) + xrange(1, 6)]
-    for initial in (None, 'nndsvd', 'cro'):
-        model = nmf.NMF(2, initial=initial)
+    for init in (None, 'nndsvd', 'cro'):
+        model = nmf.NMF(2, init=init)
         transf = model.fit_transform(A)
         assert_false((model.components_ < 0).any() or
                      (transf < 0).any())
