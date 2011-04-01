@@ -87,6 +87,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             m = NMF(n_components=30, tol=tolerance).fit(X)
             timeset['nndsvd-nmf'].append(time() - tstart)
             err['nndsvd-nmf'].append(m.reconstruction_err_)
+            print m.reconstruction_err_
 
             gc.collect()
             print "benching nndsvda-nmf: "
@@ -95,6 +96,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
                     tol=tolerance).fit(X)
             timeset['nndsvda-nmf'].append(time() - tstart)
             err['nndsvda-nmf'].append(m.reconstruction_err_)
+            print m.reconstruction_err_
 
             gc.collect()
             print "benching nndsvdar-nmf: "
@@ -103,6 +105,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
                     tol=tolerance).fit(X)
             timeset['nndsvdar-nmf'].append(time() - tstart)
             err['nndsvdar-nmf'].append(m.reconstruction_err_)
+            print m.reconstruction_err_
 
             gc.collect()
             print "benching random-nmf"
@@ -111,6 +114,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
                     tol=tolerance).fit(X)
             timeset['random-nmf'].append(time() - tstart)
             err['random-nmf'].append(m.reconstruction_err_)
+            print m.reconstruction_err_
 
             gc.collect()
             print "benching alt-random-nmf"
@@ -118,6 +122,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
             W, H = alt_nnmf(X, r=30, R=None, tol=tolerance)
             timeset['alt-random-nmf'].append(time() - tstart)
             err['alt-random-nmf'].append(np.linalg.norm(X - np.dot(W, H)))
+            print m.reconstruction_err_
 
     return timeset, err
 
