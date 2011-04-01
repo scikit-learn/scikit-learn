@@ -7,6 +7,7 @@
 #include <limits>
 #include <algorithm>
 #include <cstdlib>
+#include <sstream>
 
 /************************************************************
  * templated Ball Tree class
@@ -40,6 +41,17 @@
  ************************************************************/
 
 
+/* Custom exception to allow Python to catch C++ exceptions */
+class BallTreeException {
+  public:
+    BallTreeException(const char* str = "There's a problem") : message(str) {}
+    const char* what() const {return message;}
+
+  private:
+    const char* message;
+};
+
+
 /************************************************************
  * Euclidean distance between two points
  *  this is used by default, but a function pointer to a
@@ -51,8 +63,9 @@ template<class P1_Type,class P2_Type>
                                              const P2_Type& p2){
     int D = p1.size();
     if(p2.size() != D){
-        std::cerr << "Euclidean_Dist : point sizes must match\n";
-        std::exit(-1);
+        std::stringstream oss;
+        oss << "Euclidean_Dist : point sizes must match (" << D << " != " << p2.size() << ").\n";
+        throw BallTreeException(oss.str().c_str());
     }
     typename P1_Type::value_type dist = 0;
     typename P1_Type::value_type diff;
@@ -62,6 +75,13 @@ template<class P1_Type,class P2_Type>
     }
     return sqrt(dist);
 }
+
+template<class P1_Type,class P2_Type>
+ typename P1_Type::value_type Euclidean_Dist(const P1_Type* p1,
+                                             const P2_Type* p2){
+  return Euclidean_Dist(*p1, *p2);
+}
+
 
 /************************************************************
  * VectorView object
@@ -189,8 +209,7 @@ struct Node{
         int D = Points[0]->size();
         int N = indices.size();
         if(N==0){
-            std::cerr << "Node : zero-sized node\n   Abort\n";
-            std::exit(-1);
+          throw BallTreeException("Node : zero-sized node\n   Abort\n");
         }else if (N==1){
             radius = 0;
             is_leaf = true;
@@ -468,12 +487,11 @@ public:
 
   //----------------------------------------------------------------------
   // BallTree::BallTree
-    BallTree(const std::vector<Point*>& Points,
+    BallTree(std::vector<Point*>* Points,
         int leaf_size = 1,
         DistFunc Dist_Func = &(Euclidean_Dist<Point,Point>))
-        : Points_(Points), indices_(Points_.size()),
+        : Points_(*Points), indices_(Points_.size()),
     Dist(Dist_Func), leaf_size_(leaf_size){
-
     //initialize indices
         for(size_t i=0;i<indices_.size();i++)
             indices_[i] = i;
@@ -506,13 +524,19 @@ public:
         query(pt,nbrs.size(),&(nbrs[0]));
     }
 
+    value_type query(const Point* pt,
+                     std::vector<long int>& nbrs) const{
+        query(*pt,nbrs.size(),&(nbrs[0]));
+    }
+
     value_type query(const Point& pt,
                      int num_nbrs,
                      long int* nbrs,
                      double* dist = NULL) const{
         if(num_nbrs > (int)(Points_.size()) ){
-            std::cerr << "query: k must be less than or equal to N Points\n";
-            std::exit(-1);
+            std::stringstream oss;
+            oss << "query: k must be less than or equal to N Points (" << num_nbrs << " > " << (int)(Points_.size()) << ")\n";
+            throw BallTreeException(oss.str().c_str());
         }
 
         std::vector<pd_tuple<value_type> > PointSet;

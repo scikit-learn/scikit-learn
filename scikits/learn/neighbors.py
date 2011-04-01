@@ -8,7 +8,7 @@
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .ball_tree import BallTree, knn_brute
+from .ball_tree import PyBallTree as BallTree
 from .metrics import euclidean_distances
 
 

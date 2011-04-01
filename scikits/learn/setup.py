@@ -38,7 +38,10 @@ def configuration(parent_package='', top_path=None):
         warnings.warn(BlasNotFoundError.__doc__)
 
     config.add_extension('ball_tree',
-                         sources=[join('src', 'BallTree.cpp')],
+                         sources=[join('src', 'ball_tree.cpp')],
+                         depends=[join('src', 'BallTree.h'),
+                                  join('src', 'BallTreePoint.h')],
+                         libraries=["stdc++"],
                          include_dirs=[numpy.get_include()])
 
 
