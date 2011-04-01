@@ -120,17 +120,17 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
         NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
-        >>> print neigh.kneighbors([1., 1., 1.])
-        (array([[ 0.5]]), array([[2]]))
+        >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
+        (array([[ 0.5]]), array([[2]]...))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
         element is at distance 0.5 and is the third element of samples
         (indexes start at 0). You can also query for multiple points:
 
         >>> X = [[0., 1., 0.], [1., 0., 1.]]
-        >>> neigh.kneighbors(X, return_distance=False)
+        >>> neigh.kneighbors(X, return_distance=False) # doctest: +ELLIPSIS
         array([[1],
-               [2]])
+               [2]]...)
 
         """
         self._set_params(**params)
