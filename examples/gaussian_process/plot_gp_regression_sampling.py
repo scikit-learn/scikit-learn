@@ -12,9 +12,7 @@ model whose parameters are estimated using the maximum likelihood principle.
 The figure illustrates the stochastic nature of the Gaussian Processes,
 it shows the estimated mean function, which is also the predictor,
 a set of functions sampled from the GP stochastic process,
-the predicted covariance matrix and the estimated error as the
-squared diagonal of the predicted covariance matrix in the form of a
-pointwise 95% confidence interval.
+the predicted covariance matrix the predicted 95% variance range.
 """
 print __doc__
 
@@ -41,7 +39,7 @@ y = f(X).ravel()
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # Instanciate a Gaussian Process model
-gp = GaussianProcess(corr='squared_exponential', theta0=1e-1, thetaL=1e-4, thetaU=5, \
+gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1, \
                      random_start=100)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
@@ -53,36 +51,28 @@ covariance_pred = gp.predict_covariance_matrix(x)
 sigma_pred = np.sqrt(covariance_pred.diagonal())
 y_samples = gp.sample(x, size=10)
 
-# Plot the function, the prediction and the 95% confidence interval based on
-# the MSE
+# Plot the function, the prediction and the 95% predictive variance
 fig = pl.figure()
-pl.subplot(2,1,1)
 
 pl.hold(True)
 
-#Plot the samples
-for y_sample in y_samples:
-    pl.plot(x, y_sample,'--')
-
-pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
-pl.plot(x, y_pred, 'b-', lw=3, label=u'Prediction')
+pl.plot(X, y, 'r.', markersize=15, label=u'Observations')
+pl.plot(x, y_pred, 'b-', lw=2, label=u'Prediction')
 pl.plot(x, f(x), 'r:', lw=3, label=u'$f(x) = x\,\sin(x)$')
 
-#pl.fill(np.concatenate([x, x[::-1]]), \
-#        np.concatenate([y_pred - 1.9600 * sigma,
-#                       (y_pred + 1.9600 * sigma)[::-1]]), \
-#        alpha=.5, fc='b', ec='None', label='95% confidence interval')
 pl.fill(np.concatenate([x, x[::-1]]), \
         np.concatenate([y_pred - 1.9600 * sigma_pred,
                        (y_pred + 1.9600 * sigma_pred)[::-1]]), \
-        alpha=.5, fc='g', ec='None', label='95% predicted variance')
+        alpha=.5, fc='b', ec='None', label='95\% predicted variance')
+
+#Plot the samples
+pl.plot(x, y_samples[0], '--', c=pl.cm.spring(0.), label=u'Sampled function')
+for i, y_sample in enumerate(y_samples[1:]):
+    pl.plot(x, y_sample, '--', c=pl.cm.spring((i + 1.) / len(y_samples)))
+
 
 pl.xlabel('$x$')
 pl.ylabel('$f(x)$')
 pl.ylim(-10, 20)
 pl.legend(loc='upper left')
-
-pl.subplot(2,1,2)
-pl.imshow(covariance_pred)
-
 pl.show()
