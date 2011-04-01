@@ -22,7 +22,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     V : 2-ndarray, [n_samples, n_features]
         input matrix
     r : integer
-        nr of latent features
+        number of latent features
     max_iter : integer, optional
         maximum number of iterations (default: 10000)
     tol : double
