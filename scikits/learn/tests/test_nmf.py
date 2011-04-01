@@ -67,7 +67,7 @@ def test_fit_nn_output():
     """
     A = np.c_[5 * np.ones(5) - xrange(1, 6),
               5 * np.ones(5) + xrange(1, 6)]
-    for init in (None, 'nndsvd', 'cro'):
+    for init in (None, 'nndsvd', 'cro', 'nndsvda', 'nndsvdar'):
         model = nmf.NMF(n_components=2, init=init)
         transf = model.fit_transform(A)
         assert_false((model.components_ < 0).any() or

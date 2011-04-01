@@ -362,6 +362,8 @@ class NMF(BaseEstimator, TransformerMixin):
         Default: 'nndsvd'
         Valid options:
             'nndsvd' for SVD-based initialization,
+            'nndsvda' for NNDSVD with zeros filled with the mean of X,
+            'nndsvdar' for NNDSVD with zeros filled with small random values,
             'cro' for CRO-based initialization,
             int seed or RandomState for non-negative random matrices
 
@@ -466,9 +468,13 @@ class NMF(BaseEstimator, TransformerMixin):
         if isinstance(self.init, np.random.RandomState):
             W = np.abs(self.init.randn(n_features, self.n_components))
             H = np.abs(self.init.randn(self.n_components, n_samples))
-        elif self.init == "nndsvd":
+        elif self.init == 'nndsvd':
             W, H = _initialize_nmf_(X, self.n_components)
-        elif self.init == "cro":
+        elif self.init == 'nndsvda':
+            W, H = _initialize_nmf_(X, self.n_components, variant='a')
+        elif self.init == 'nndsvdar':
+            W, H = _initialize_nmf_(X, self.n_components, variant='ar')
+        elif self.init == 'cro':
             m = CRO(self.n_components)
             m.fit(X.T)
             W, H = np.abs(m.components_.T), np.abs(m.data_.T)
