@@ -330,12 +330,22 @@ def test_kernel_pca():
         X_pred2 = kpca.inverse_transform(X_pred_transformed)
         assert_equal(X_pred2.shape, X_pred.shape)
 
+
     # for a linear kernel, kernel PCA should find the same projection as PCA
     # modulo the sign (direction)
-    kpca = KernelPCA()
-    pca = PCA()
-    assert_array_almost_equal(np.abs(kpca.fit(X_fit).transform(X_pred)),
-                              np.abs(pca.fit(X_fit).transform(X_pred)))
+    assert_array_almost_equal(np.abs(KernelPCA().fit(X_fit).transform(X_pred)),
+                              np.abs(PCA().fit(X_fit).transform(X_pred)))
+
+
+def test_kernel_pca_precomputed():
+    X_fit = np.random.random((5,4))
+    X_pred = np.random.random((2,4))
+
+    X_kpca = KernelPCA().fit(X_fit).transform(X_pred)
+    X_kpca2 = KernelPCA(kernel="precomputed").fit(np.dot(X_fit, X_fit.T)). \
+              transform(np.dot(X_pred, X_fit.T))
+
+    assert_array_almost_equal(X_kpca, X_kpca2)
 
 
 if __name__ == '__main__':
