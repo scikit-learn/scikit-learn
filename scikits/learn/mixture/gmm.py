@@ -8,8 +8,8 @@ Gaussian Mixture Models
 
 import numpy as np
 
-from .base import BaseEstimator
-from . import cluster
+from scikits.learn.base import BaseEstimator
+from scikits.learn import cluster
 
 
 def logsum(A, axis=None):
