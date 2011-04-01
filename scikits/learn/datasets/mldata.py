@@ -12,9 +12,7 @@ import urllib2
 from .base import get_data_home, Bunch
 
 # TODO: test: it download the first time, it loads it the second
-# TODO: function to search dataset name and return best match
-# TODO: error checking!
-# XXX: what is 'mldata_descr_ordering'?
+# XXX: is the assignment of data and labels the mldata.org standard?
 
 MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
@@ -27,7 +25,8 @@ def fetch_mldata(dataname, data_home=None):
     Parameters
     ----------
     dataname:
-        Name of the dataset on mldata.org
+        Name of the dataset on mldata.org,
+        e.g.: "leukemia", "Whistler Daily Snowfall", etc.
     
     data_home: optional, default: None
         Specify another download and cache folder for the datasets. By default
@@ -82,7 +81,16 @@ def fetch_mldata(dataname, data_home=None):
     with open(filename, 'rb') as matlab_file:
         matlab_dict = io.loadmat(matlab_file, struct_as_record=True)
 
-    return Bunch(data=matlab_dict['data'],
-                 target=matlab_dict.get('label', None),
-                 mldata_descr_ordering=matlab_dict['mldata_descr_ordering'],
+    # extract data from matlab_dict
+    ordering = matlab_dict['mldata_descr_ordering']
+    # no labels
+    if ordering.shape[1] == 1:
+        data_name = ordering[0, 0][0]
+        return Bunch(data=matlab_dict[data_name],
+                     DESCR='mldata.org dataset: %s' % dataname)
+    # with labels
+    label_name = ordering[0, 0][0]
+    data_name = ordering[0, 1][0]
+    return Bunch(data=matlab_dict[data_name],
+                 target=matlab_dict[label_name],
                  DESCR='mldata.org dataset: %s' % dataname)
