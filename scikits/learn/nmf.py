@@ -422,8 +422,8 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> model.components_
     array([[ 0.77032744,  0.38526873],
            [ 0.11118662,  0.38228063]])
-    >>> model.reconstruction_err_
-    0.0074679497834630824
+    >>> model.reconstruction_err_ #doctest: +ELLIPSIS
+    0.00746...
     >>> model = NMF(n_comp=2, initial=0, sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS
     NMF(nls_max_iter=2000, n_comp=2, max_iter=100, sparseness='components',
@@ -432,8 +432,8 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> model.components_
     array([[ 1.67481991, -0.        ],
            [ 0.29614922,  0.4681982 ]])
-    >>> model.reconstruction_err_
-    0.51328426689311935
+    >>> model.reconstruction_err_ #doctest: +ELLIPSIS
+    0.513...
 
     Notes
     -----
