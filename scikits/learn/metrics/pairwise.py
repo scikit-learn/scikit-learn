@@ -4,6 +4,7 @@ sets of points.
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD Style.
 
 import numpy as np
@@ -80,3 +81,58 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
         return np.sqrt(distances)
 
 euclidian_distances = euclidean_distances # both spelling for backward compat
+
+
+def linear_kernel(X, Y):
+    """
+    Compute the linear kernel between X and Y.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples_1, n_features)
+
+    Y: array of shape (n_samples_2, n_features)
+
+    Returns
+    -------
+    gram matrix: array of shape (n_samples_1, n_samples_2)
+    """
+    return np.dot(X, Y.T)
+
+
+def polynomial_kernel(X, Y, degree=3):
+    """
+    Compute the polynomial kernel between X and Y.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples_1, n_features)
+
+    Y: array of shape (n_samples_2, n_features)
+
+    degree: int
+
+    Returns
+    -------
+    gram matrix: array of shape (n_samples_1, n_samples_2)
+    """
+    return (1 + linear_kernel(X, Y)) ** degree
+
+
+def rbf_kernel(X, Y, sigma=1.0):
+    """
+    Compute the rbf (gaussian) kernel between X and Y.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples_1, n_features)
+
+    Y: array of shape (n_samples_2, n_features)
+
+    sigma: float
+
+    Returns
+    -------
+    gram matrix: array of shape (n_samples_1, n_samples_2)
+    """
+    return np.exp(-euclidean_distances(X, Y, squared=True) / (2 * (sigma ** 2)))
