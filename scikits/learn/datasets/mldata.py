@@ -23,7 +23,16 @@ def fetch_mldata(dataname, data_home=None):
     Fecth an mldata.org data set.
     
     If the file does not exist yet, it is downloaded from mldata.org .
+
+    Parameters
+    ----------
+    dataname:
+        Name of the dataset on mldata.org
     
+    data_home: optional, default: None
+        Specify another download and cache folder for the datasets. By default
+        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+
     Returns
     -------
     data : Bunch
@@ -41,13 +50,13 @@ def fetch_mldata(dataname, data_home=None):
     >>> print data.data.shape[0]
     7129
     """
-    
+
     # check if this data set has been already downloaded
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'mldata')
     if not exists(data_home):
         makedirs(data_home)
-        
+
     matlab_name = dataname + '.mat'
     filename = join(data_home, matlab_name)
     print matlab_name, filename
@@ -56,17 +65,20 @@ def fetch_mldata(dataname, data_home=None):
     if not exists(filename):
         print 'download'
         urlname = MLDATA_BASE_URL % (dataname)
-        mldata_url = urllib2.urlopen(urlname)
+        try:
+            mldata_url = urllib2.urlopen(urlname)
+        except urllib2.URLError as e:
+            msg = "Dataset '%s' not found on mldata.org." % dataname
+            raise IOError(msg)
         # store Matlab file
         with open(filename, 'w+b') as matlab_file:
             matlab_file.write(mldata_url.read())
         mldata_url.close()
 
-    # load dataset
+    # load dataset matlab file
     with open(filename, 'rb') as matlab_file:
         matlab_dict = io.loadmat(matlab_file, struct_as_record=True)
 
-    # create Bunch object
     return Bunch(data=matlab_dict['data'],
                  target=matlab_dict.get('label', None),
                  mldata_descr_ordering=matlab_dict['mldata_descr_ordering'],
