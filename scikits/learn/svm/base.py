@@ -505,6 +505,15 @@ class BaseLibSVMCV(BaseLibSVM):
         best_score = np.inf
         param = {} # empty case
         iter_grid = grid_search.IterGrid(cv_params)
+
+        if solver_type in [0, 1]:
+            # SVC and NuSVC
+            # XXX will this be pickelizable ?
+            score_func = lambda x, y: np.mean(target == y)
+        elif solver_type in [2, 3]:
+            from .metrics import r2_score
+            score_func = r2_score
+
         for param in iter_grid:
             self._set_params(**param)
             target = libsvm.cross_validation(
@@ -513,7 +522,8 @@ class BaseLibSVMCV(BaseLibSVM):
                 self.cache_size, self.p, self.class_weight_label,
                 self.class_weight, sample_weight, int(self.shrinking),
                 int(self.probability))
-            score = np.mean(np.abs(target - y)) # uses broadcasting
+
+            score = score_func(target, y)
             if score > best_score:
                 best_params = param
 
