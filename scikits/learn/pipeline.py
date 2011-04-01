@@ -4,6 +4,7 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 # Author: Edouard Duchesnay
 #         Gael Varoquaux
 #         Virgile Fritsch
+#         Alexandre Gramfort
 # Licence: BSD
 
 from .base import BaseEstimator
@@ -170,9 +171,16 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].transform(Xt)
 
+    def inverse_transform(self, X):
+        if X.ndim == 1:
+            X = X[None, :]
+        Xt = X
+        for name, step in self.steps[:-1][::-1]:
+            Xt = step.inverse_transform(Xt)
+        return Xt
+
     def score(self, X, y=None):
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
-

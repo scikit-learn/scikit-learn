@@ -204,14 +204,12 @@ class GridSearchCV(BaseEstimator):
                         or hasattr(estimator, 'score')), (
             "estimator should a be an estimator implementing 'fit' and "
             "'predict' or 'score' methods, %s (type %s) was passed" %
-                    (estimator, type(estimator))
-            )
+                    (estimator, type(estimator)))
         if loss_func is None and score_func is None:
             assert hasattr(estimator, 'score'), ValueError(
                     "If no loss_func is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
-                    "does not." % estimator
-                    )
+                    "does not." % estimator)
 
         self.estimator = estimator
         self.param_grid = param_grid
@@ -320,3 +318,4 @@ class GridSearchCV(BaseEstimator):
         # found has a score function.
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
+

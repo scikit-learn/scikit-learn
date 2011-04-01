@@ -13,8 +13,6 @@ a result it can identify only the first class.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
-# $Id$
-
 import pylab as pl
 import numpy as np
 
