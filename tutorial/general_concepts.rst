@@ -541,6 +541,7 @@ following utility function::
   ...         pl.scatter(data[target == i, 0], data[target == i, 1],
   ...                    c=c, label=label)
   ...     pl.legend()
+  ...     pl.show()
   ...
 
 Calling ``plot_2D(X_pca, iris.target, iris.target_names)`` will
