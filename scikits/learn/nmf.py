@@ -411,7 +411,7 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> from scikits.learn.nmf import NMF
     >>> model = NMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, eta=0.1, max_iter=100,
+    NMF(nls_max_iter=2000, eta=0.1, max_iter=200,
       init=<mtrand.RandomState object at 0x...>, beta=1, sparseness=None,
       n_components=2, tol=0.0001)
     >>> model.components_
@@ -421,7 +421,7 @@ class NMF(BaseEstimator, TransformerMixin):
     0.00746...
     >>> model = NMF(n_components=2, init=0, sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, eta=0.1, max_iter=100,
+    NMF(nls_max_iter=2000, eta=0.1, max_iter=200,
       init=<mtrand.RandomState object at 0x...>, beta=1,
       sparseness='components', n_components=2, tol=0.0001)
     >>> model.components_
