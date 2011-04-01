@@ -13,7 +13,6 @@ print __doc__
 
 from time import time
 import logging
-import numpy as np
 import pylab as pl
 
 from scikits.learn.pca import RandomizedPCA
