@@ -8,7 +8,7 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 # Licence: BSD
 
 from .base import BaseEstimator
-import numpy as np
+
 
 class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator

@@ -327,7 +327,7 @@ class GMM(BaseEstimator):
         lpr = (lmvnpdf(obs, self._means, self._covars, self._cvtype)
                + self._log_weights)
         logprob = logsum(lpr, axis=1)
-        posteriors = np.exp(lpr - logprob[:,np.newaxis])
+        posteriors = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, posteriors
 
     def score(self, obs):
@@ -420,7 +420,7 @@ class GMM(BaseEstimator):
         # for each component, generate all needed samples
         for comp in xrange(self._n_states):
             # occurrences of current component in obs
-            comp_in_obs = (comp==comps)
+            comp_in_obs = (comp == comps)
             # number of those occurrences
             num_comp_in_obs = comp_in_obs.sum()
             if num_comp_in_obs > 0:
@@ -516,7 +516,7 @@ class GMM(BaseEstimator):
     def _do_mstep(self, X, posteriors, params, min_covar=0):
             w = posteriors.sum(axis=0)
             avg_obs = np.dot(posteriors.T, X)
-            norm = 1.0 / (w[:,np.newaxis] + 1e-200)
+            norm = 1.0 / (w[:, np.newaxis] + 1e-200)
 
             if 'w' in params:
                 self._log_weights = np.log(w / w.sum())
@@ -550,7 +550,7 @@ def _lmvnpdfdiag(obs, means=0.0, covars=1.0):
 def _lmvnpdfspherical(obs, means=0.0, covars=1.0):
     cv = covars.copy()
     if covars.ndim == 1:
-        cv = cv[:,np.newaxis]
+        cv = cv[:, np.newaxis]
     return _lmvnpdfdiag(obs, means, np.tile(cv, (1, obs.shape[-1])))
 
 
@@ -560,7 +560,7 @@ def _lmvnpdftied(obs, means, covars):
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
     icv = linalg.pinv(covars)
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars))
-                  + np.sum(obs * np.dot(obs, icv), 1)[:,np.newaxis]
+                  + np.sum(obs * np.dot(obs, icv), 1)[:, np.newaxis]
                   - 2 * np.dot(np.dot(obs, icv), means.T)
                   + np.sum(means * np.dot(means, icv), 1))
     return lpr
@@ -580,12 +580,12 @@ def _lmvnpdffull(obs, means, covars):
         solve_triangular = linalg.solve
     n_obs, n_dim = obs.shape
     nmix = len(means)
-    log_prob = np.empty((n_obs,nmix))
+    log_prob = np.empty((n_obs, nmix))
     for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
         cv_chol = linalg.cholesky(cv, lower=True)
-        cv_log_det  = 2*np.sum(np.log(np.diagonal(cv_chol)))
-        cv_sol  = solve_triangular(cv_chol, (obs - mu).T, lower=True).T
-        log_prob[:, c]  = -.5 * (np.sum(cv_sol**2, axis=1) + \
+        cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
+        cv_sol = solve_triangular(cv_chol, (obs - mu).T, lower=True).T
+        log_prob[:, c] = -.5 * (np.sum(cv_sol ** 2, axis=1) + \
                            n_dim * np.log(2 * np.pi) + cv_log_det)
 
     return log_prob
@@ -614,7 +614,7 @@ def _validate_covars(covars, cvtype, nmix, n_dim):
         if covars.shape != (nmix, n_dim, n_dim):
             raise ValueError("'full' covars must have shape "
                              "(nmix, n_dim, n_dim)")
-        for n,cv in enumerate(covars):
+        for n, cv in enumerate(covars):
             if (not np.allclose(cv, cv.T)
                 or np.any(linalg.eigvalsh(cv) <= 0)):
                 raise ValueError("component %d of 'full' covars must be "
@@ -660,7 +660,7 @@ def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     # Distribution"
     cv = np.empty((gmm._n_states, gmm.n_features, gmm.n_features))
     for c in xrange(gmm._n_states):
-        post = posteriors[:,c]
+        post = posteriors[:, c]
         avg_cv = np.dot(post * obs.T, obs) / post.sum()
         mu = gmm._means[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu)
@@ -687,8 +687,8 @@ def _covar_mstep_slow(gmm, obs, posteriors, avg_obs, norm, min_covar):
         mu = gmm._means[c]
         #cv = np.dot(mu.T, mu)
         avg_obs2 = np.zeros((gmm.n_features, gmm.n_features))
-        for t,o in enumerate(obs):
-            avg_obs2 += posteriors[t,c] * np.outer(o, o)
+        for t, o in enumerate(obs):
+            avg_obs2 += posteriors[t, c] * np.outer(o, o)
         cv = (avg_obs2 / w[c]
               - 2 * np.outer(avg_obs[c] / w[c], mu)
               + np.outer(mu, mu)
