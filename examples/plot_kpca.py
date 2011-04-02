@@ -3,8 +3,8 @@
 Kernel PCA
 ==========
 
-This example shows that Kernel PCA is able to find a projection of the data that
-makes data linearly separable.
+This example shows that Kernel PCA is able to find a projection of the data
+that makes data linearly separable.
 """
 print __doc__
 
@@ -18,6 +18,7 @@ from scikits.learn.pca import PCA, KernelPCA
 
 np.random.seed(0)
 
+
 def genenerate_rings(n_samples=200):
     x_red = np.random.random((n_samples,)) * 2 - 1
     signs_red = np.sign(np.random.random(x_red.shape) - 0.5)
@@ -28,6 +29,7 @@ def genenerate_rings(n_samples=200):
     y_blue = np.sqrt(np.abs(x_blue ** 2 - 9)) * signs_blue
 
     return np.hstack(([x_red, y_red], [x_blue, y_blue])).T
+
 
 def generate_clusters(n_samples=200):
     mean1 = np.array([0, 2])
@@ -56,7 +58,7 @@ pl.plot(X[200:, 0], X[200:, 1], "bo")
 pl.xlabel("$x_1$")
 pl.ylabel("$x_2$")
 
-X1, X2 = np.meshgrid(np.linspace(-6,6,50), np.linspace(-6,6,50))
+X1, X2 = np.meshgrid(np.linspace(-6, 6, 50), np.linspace(-6, 6, 50))
 X_grid = np.array([np.ravel(X1), np.ravel(X2)]).T
 # projection on the first principal component (in the phi space)
 Z_grid = kpca.transform(X_grid)[:, 0].reshape(X1.shape)
@@ -83,6 +85,6 @@ pl.title("Original space after inverse transform")
 pl.xlabel("$x_1$")
 pl.ylabel("$x_2$")
 
-pl.subplots_adjust(hspace=1.5)
+pl.subplots_adjust(0.02, 0.10, 0.98, 0.94, 0.04, 0.35)
 
 pl.show()
