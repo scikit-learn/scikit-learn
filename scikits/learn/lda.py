@@ -146,14 +146,14 @@ class LDA(BaseEstimator, ClassifierMixin):
         # Overall mean
         xbar = np.dot(self.priors_, means)
         # Scale weighted centers
-        X = np.dot(((np.sqrt((n_samples * self.priors_)*fac)) *
-                          (means - xbar).T).T, scaling)
+        X = np.dot(((np.sqrt((n_samples * self.priors_) * fac)) *
+                    (means - xbar).T).T, scaling)
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use svd to find projection in the space spanned by the
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
 
-        rank = np.sum(S > tol*S[0])
+        rank = np.sum(S > tol * S[0])
         # compose the scalings
         scaling = np.dot(scaling, V.T[:, :rank])
         self.scaling = scaling
