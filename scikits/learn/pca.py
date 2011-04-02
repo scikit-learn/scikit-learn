@@ -490,8 +490,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     Reference
     ---------
     Kernel PCA was intoduced in:
-        Bernhard Schölkopf, Alexander J. Smola,
-        and Klaus-Robert Müller. 1999. Kernel principal
+        Bernhard Schoelkopf, Alexander J. Smola,
+        and Klaus-Robert Mueller. 1999. Kernel principal
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
     """
