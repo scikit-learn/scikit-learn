@@ -414,7 +414,7 @@ class NMF(BaseEstimator, TransformerMixin):
             warnings.warn("Iteration limit reached during fit")
         return W
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self.fit_transform(X, **params)
         return self
 
