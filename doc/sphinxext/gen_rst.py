@@ -10,8 +10,7 @@ Files that generate images should start with 'plot'
 import os
 import shutil
 import traceback
-
-fileList = []
+import glob
 
 import matplotlib
 matplotlib.use('Agg')
@@ -44,18 +43,21 @@ plot_rst_template = """
     :lines: %(end_row)s-
     """
 
-# The following strings are used when we have several pictures: we use hlist.
+# The following strings are used when we have several pictures: we use
+# an html div tag that our CSS uses to turn the lists into horizontal
+# lists.
 HLIST_HEADER = """
-.. hlist::
+.. rst-class:: horizontal
 
-%(rst_figure_list)s
 """
+
 HLIST_IMAGE_TEMPLATE = """
-    * **ImageData**
+    * 
 
       .. image:: images/%s
             :scale: 50
 """
+
 SINGLE_IMAGE = """
 .. image:: images/%s
     :align: center
@@ -127,8 +129,12 @@ Examples
 def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     """ Generate the rst file for an example directory.
     """
-    target_dir = os.path.join(root_dir, dir)
-    src_dir = os.path.join(example_dir, dir)
+    if not dir == '.':
+        target_dir = os.path.join(root_dir, dir)
+        src_dir = os.path.join(example_dir, dir)
+    else:
+        target_dir = root_dir
+        src_dir = example_dir
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
         print 80*'_'
         print ('Example directory %s does not have a README.txt file'
@@ -155,15 +161,16 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     """ Generate the rst file for a given example.
     """
     base_image_name = os.path.splitext(fname)[0]
-    image_fname = '%s_%%d.png' % base_image_name
+    image_fname = '%s_%%s.png' % base_image_name
 
-    global rst_template, plot_rst_template
     this_template = rst_template
     last_dir = os.path.split(src_dir)[-1]
     # to avoid leading . in file names
-    if last_dir == '.': last_dir = ''
-    else: last_dir += '_'
-    short_fname =  last_dir + fname
+    if last_dir == '.': 
+        last_dir = ''
+    else: 
+        last_dir += '_'
+    short_fname = last_dir + fname
     src_file = os.path.join(src_dir, fname)
     example_file = os.path.join(target_dir, fname)
     shutil.copyfile(src_file, example_file)
@@ -184,7 +191,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
         if (not os.path.exists(first_image_file) or
                 os.stat(first_image_file).st_mtime <=
-                    os.stat(src_file).st_mtime):
+                                    os.stat(src_file).st_mtime):
+            # We need to execute the code
             print 'plotting %s' % fname
             import matplotlib.pyplot as plt
             plt.close('all')
@@ -204,27 +212,31 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                     plt.figure(fig_num)
                     plt.savefig(image_path % fig_num)
                     figure_list.append(image_fname % fig_num)
-
             except:
                 print 80*'_'
                 print '%s is not compiling:' % fname
                 traceback.print_exc()
                 print 80*'_'
+        else:
+            figure_list = [f[len(image_dir):] 
+                            for f in glob.glob(image_path % '[1-9]')]
+                            #for f in glob.glob(image_path % '*')]
         this_template = plot_rst_template
 
     docstring, short_desc, end_row = extract_docstring(example_file)
 
-    # Depending on whether we have one or more figures, we're using a hlist or
-    # a single rst call to 'image'.
+    # Depending on whether we have one or more figures, we're using a
+    # horizontal list or a single rst call to 'image'.
     if len(figure_list) == 1:
-        image_list = SINGLE_IMAGE % figure_list[0]
+        figure_name = figure_list[0]
+        image_list = SINGLE_IMAGE % figure_name
     else:
         image_list = HLIST_HEADER
         for figure_name in figure_list:
             image_list += HLIST_IMAGE_TEMPLATE % figure_name
 
     f = open(os.path.join(target_dir, fname[:-2] + 'rst'),'w')
-    f.write( this_template % locals())
+    f.write(this_template % locals())
     f.flush()
 
 
