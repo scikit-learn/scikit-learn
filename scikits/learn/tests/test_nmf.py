@@ -4,17 +4,16 @@ from nose.tools import assert_true, assert_false, raises
 
 rng = np.random.mtrand.RandomState(0)
 
+
 @raises(ValueError)
 def test_initialize_nn_input():
-    """
-    Test _initialize_nmf_ behaviour on negative input
+    """Test NNDSVD behaviour on negative input
     """
     nmf._initialize_nmf_(-np.ones((2, 2)), 2)
 
 
 def test_initialize_nn_output():
-    """
-    Test that _initialize_nmf_ does not suggest negative values anywhere.
+    """Test that NNDSVD does not return negative values
     """
 
     data = np.abs(rng.randn(10, 10))
@@ -24,7 +23,8 @@ def test_initialize_nn_output():
 
 
 def test_initialize_close():
-    """
+    """Test NNDSVD error
+
     Test that _initialize_nmf_ error is
     less than the standard deviation
     of the entries in the matrix
@@ -37,7 +37,8 @@ def test_initialize_close():
 
 
 def test_initialize_variants():
-    """
+    """Test NNDSVD variants correctness.
+
     Test that the variants 'a' and 'ar'
     differ from basic NNDSVD only where
     the basic version has zeros
@@ -53,8 +54,7 @@ def test_initialize_variants():
 
 @raises(ValueError)
 def test_fit_nn_input():
-    """
-    Test model fit behaviour on negative input
+    """Test model fit behaviour on negative input
     """
     A = -np.ones((2, 2))
     m = nmf.NMF(n_components=2, init=None)
@@ -62,8 +62,7 @@ def test_fit_nn_input():
 
 
 def test_fit_nn_output():
-    """
-    Test that the model does not use negative values anywhere
+    """Test that the decomposition does not contain negative values.
     """
     A = np.c_[5 * np.ones(5) - xrange(1, 6),
               5 * np.ones(5) + xrange(1, 6)]
@@ -75,8 +74,7 @@ def test_fit_nn_output():
 
 
 def test_fit_nn_close():
-    """
-    Test that the fit is "close enough"
+    """Test that the fit is not too far away
     """
     assert nmf.NMF(5).fit(np.abs(
       rng.randn(6, 5))).reconstruction_err_ < 0.05
@@ -84,16 +82,14 @@ def test_fit_nn_close():
 
 @raises(ValueError)
 def test_nls_nn_input():
-    """
-    Test NLS behaviour on negative input
+    """Test NLS solver's behaviour on negative input
     """
     A = np.ones((2, 2))
     nmf._nls_subproblem_(A, A, -A, 0.001, 20)
 
 
 def test_nls_nn_output():
-    """
-    Test NLS doesn't return negative input.
+    """Test that NLS solver doesn't return negative values.
     """
     A = np.atleast_2d(range(1, 5))
     Ap, _, _ = nmf._nls_subproblem_(np.dot(A.T, -A), A.T, A, 0.001, 100)
@@ -101,8 +97,7 @@ def test_nls_nn_output():
 
 
 def test_nls_close():
-    """
-    Test that the NLS results should be close
+    """Test that the NLS results should be close
     """
     A = np.atleast_2d(range(1, 5))
     Ap, _, _ = nmf._nls_subproblem_(np.dot(A.T, A), A.T, np.zeros_like(A),
@@ -111,8 +106,8 @@ def test_nls_close():
 
 
 def test_nmf_transform():
-    """
-    Test that NMF.transform returns close values
+    """Test that NMF.transform returns close values
+
     (transform uses scipy.optimize.nnls for now)
     """
     A = np.abs(rng.randn(6, 5))
@@ -122,9 +117,10 @@ def test_nmf_transform():
 
 
 def test_nmf_sparseness():
-    """
-    Test that sparsity contraints actually increase
-    sparseness where appropriate
+    """Test sparseness
+
+    Test that sparsity contraints actually increase sparseness in the
+    part where they are applied.
     """
 
     A = np.abs(rng.randn(10, 10))
