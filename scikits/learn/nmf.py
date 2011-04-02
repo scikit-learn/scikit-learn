@@ -1,8 +1,9 @@
 """ Non-negative matrix factorization
 """
-# Author: Chih-Jen Lin, National Taiwan University
-# Python/numpy translation: Anthony Di Franco
-# scikit.learn integration: Vlad Niculae
+# Author: Vlad Niculae
+# Author: Chih-Jen Lin, National Taiwan University (original projected gradient
+#     NMF implementation)
+# Author: Anthony Di Franco (original Python and NumPy port)
 # License: BSD
 
 
