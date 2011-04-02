@@ -245,6 +245,79 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         X += Xmean
     return best_centers + Xmean, best_labels, best_inertia
 
+def _calculate_labels_inertia(X, centers):
+    """
+    I return the inertia and the labels of the dataset and centers I am given
+    """
+    norm = (X**2).sum(axis=1)
+    distance = euclidean_distances(centers, X, norm, squared=True)
+    return distance.min(axis=0).min(), distance.argmin(axis=0)
+
+def batch_k_means(X, k, chunk=300, init='k-means++', n_init=10, max_iter=300,
+                  verbose=0, tol=1e-4, rng=None, copy_x=True):
+    """
+    TODO documentation
+    """
+    # FIXME code deduplication with the k_means method
+    vdata = np.mean(np.var(X, 0))
+
+    if rng is None:
+        rng = np.random
+    n_samples = X.shape[0]
+
+
+    if hasattr(init, '__array__'):
+        init = np.asarray(init)
+        if not n_init == 1:
+            warnings.warn('Explicite initial center position passed: '
+                          'performing only one init in the k-means')
+            n_init = 1
+
+    x_squared_norms = X.copy()
+    x_squared_norms **=2
+    x_squared_norms = x_squared_norms.sum(axis=1)
+    for it in range(n_init):
+        # init
+        if init == 'k-means++':
+            centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
+        elif init == 'random':
+            seeds = np.argsort(rng.rand(n_samples))[:k]
+            centers = X[seeds]
+        elif hasattr(init, '__array__'):
+            centers = np.asanyarray(init).copy()
+        elif callable(init):
+            centers = init(X, k, rng=rng)
+        else:
+            raise ValueError("the init parameter for the k-means should "
+                "be 'k-means++' or 'random' or an ndarray, "
+                "'%s' (type '%s') was passed.")
+        if verbose:
+            print 'Initialization complete'
+
+        v = np.zeros(k)
+        for i in range(max_iter):
+            centers_old = centers.copy()
+            # Let's split the data into chunks
+            j = i * chunk % len(X)
+            M = X[j:j + chunk]
+            m_norm = (M**2).sum(axis=1)
+            distance = euclidean_distances(centers, M, m_norm)
+
+            # Let's take the position of the mininum distance on the first axis
+            cache = distance.argmin(axis=0)
+            for l, c in enumerate(cache):
+                v[c] += 1
+                centers[c] = (1 - 1./v[c])*centers[c] + \
+                                    1./v[c]*M[l]
+
+            if np.sum((centers_old - centers) ** 2) < tol * vdata:
+                if verbose:
+                    print 'Converged to similar centers at iteration', i
+                break
+        inertia, labels = _calculate_labels_inertia(X, centers)
+        return centers, labels, inertia
+
+
 
 def _m_step(x, z, k):
     """ M step of the K-means EM algorithm
@@ -430,4 +503,29 @@ class KMeans(BaseEstimator):
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             tol=self.tol, rng=self.rng, copy_x=self.copy_x)
+        return self
+
+
+class BatchKMeans(KMeans):
+    """
+    Batch K-Means clustering
+    """
+
+    def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=300, tol=1e-4,
+            verbose=0, rng=None, copy_x=True):
+        super(BatchKMeans, self).__init__(k, init, n_init, max_iter, tol,
+              verbose, rng=None, copy_x=True)
+        self.chunk = chunk
+
+    def fit(self, X, **params):
+        # FIXME code deduplication with kmeans fit method
+        X = np.asarray(X)
+        if X.shape[0] < self.k:
+            raise ValueError("n_samples=%d should be larger than k=%d" % (
+                X.shape[0], self.k))
+        self._set_params(**params)
+        self.cluster_centers, self.labels, self.inertia_ = batch_k_means(
+            X, k=self.k, chunk=self.chunk, init=self.init, n_init=self.n_init,
+            max_iter=self.max_iter, verbose=self.verbose, tol=self.tol,
+            rng=self.rng, copy_x=self.copy_x)
         return self
