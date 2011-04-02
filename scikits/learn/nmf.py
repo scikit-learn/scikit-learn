@@ -238,7 +238,8 @@ class NMF(BaseEstimator, TransformerMixin):
             'nndsvda': NNDSVD with zeros filled with the average of X
                 (better when sparsity is not desired)
             'nndsvdar': NNDSVD with zeros filled with small random values
-                (faster, less accurate alternative to NNDSVDa for dense NMF)
+                (generally faster, less accurate alternative to NNDSVDa
+                for when sparsity is not desired)
             int seed or RandomState: non-negative random matrices
 
     sparseness: 'data' | 'components' | None

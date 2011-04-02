@@ -66,7 +66,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     return W, H
 
 
-def compute_bench(samples_range, features_range, rank=50, tolerance=1e-5):
+def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
     it = 0
     timeset = defaultdict(lambda: [])
     err = defaultdict(lambda: [])
