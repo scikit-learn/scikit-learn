@@ -116,7 +116,7 @@ def test_nmf_transform():
     (transform uses scipy.optimize.nnls for now)
     """
     A = np.abs(rng.randn(6, 5))
-    m = nmf.NMF(n_components=5)
+    m = nmf.NMF(n_components=5, init='nndsvd')
     transf = m.fit_transform(A)
     assert_true(np.allclose(transf, m.transform(A), atol=1e-2, rtol=0))
 

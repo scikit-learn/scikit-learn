@@ -233,9 +233,10 @@ class NMF(BaseEstimator, TransformerMixin):
         Method used to initialize the procedure.
         Default: 'nndsvdar'
         Valid options:
-            'nndsvd' for SVD-based initialization,
-            'nndsvda' for NNDSVD with zeros filled with the mean of X,
+            'nndsvd' for default NNDSVD initialization (slow)
+            'nndsvda' for NNDSVD with zeros filled with the mean of X (fast)
             'nndsvdar' for NNDSVD with zeros filled with small random values,
+                (faster than nndsvd, better accuracy than nndsvda)
             int seed or RandomState for non-negative random matrices
 
     sparseness: string or None
@@ -243,11 +244,13 @@ class NMF(BaseEstimator, TransformerMixin):
         Default: None
 
     beta: double
-        Degree of sparseness, if sparseness is not None
+        Degree of sparseness, if sparseness is not None. Larger values mean
+        more sparseness
         Default: 1
 
     eta: double
-        Degree of correctness to mantain, if sparsity is not None
+        Degree of correctness to mantain, if sparsity is not None. Smaller
+        values mean larger error.
         Default: 0.1
 
     tol: double
@@ -320,7 +323,7 @@ class NMF(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
 
-    def fit_transform(self, X, **params):
+    def fit_transform(self, X, y=None, **params):
         self._set_params(**params)
         X = np.atleast_2d(X)
         if (X < 0).any():

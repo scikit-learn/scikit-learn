@@ -128,17 +128,55 @@ separation*), as in the example below:
 .. _NMF:
 
 Non-negative matrix factorization (NMF)
-==================================
+=======================================
 
 .. currentmodule:: scikits.learn.nmf
 
-NMF is an alternative approach to decomposition that assumes that the
-data and the components are non-negative. This means that, unlike PCA, 
-the representation of a vector is obtained in an additive fashion, by
-superimposing the components, without substracting. Such additive models
-are efficient in representing images and text.
+:class:`NMF` is an alternative approach to decomposition that assumes that the
+data and the components are non-negative. :class:`NMF` can be plugged in
+instead of :class:`PCA` or its variants, in the cases where the data matrix
+does not contain negative values.
 
-It has been observed that, when carefully constrained, NMF can produce
-a parts-based representation of the dataset, resulting in interpretable
-models.
-  
+Unlike :class:`PCA`, the representation of a vector is obtained in an additive
+fashion, by superimposing the components, without substracting. Such additive
+models are efficient for representing images and text.
+
+It has been observed in [Hoyer, 04] that, when carefully constrained,
+:class:`NMF` can produce a parts-based representation of the dataset, resulting 
+in interpretable models.
+
+In :class:`NMF`, sparseness can be enforced by setting the attribute
+:attr:`sparseness` to `data` or `components`. Sparse components lead to
+localized features, and sparse data leads to a more efficient representation
+of the data.
+
+The :attr:`init` determines the initialization method applied, which has a
+great impact on the performance of the method.
+
+.. figure:: ../auto_examples/images/plot_nmf.png
+    :target: ../auto_examples/plot_nmf.html
+    :align: center
+    :scale: 50%
+
+.. topic:: Examples:
+
+    * :ref:`example_plot_nmf.py`
+
+.. topic:: References:
+
+    * `"Learning the parts of objects by non-negative matrix factorization"
+      <www.seas.upenn.edu/~ddlee/Papers/nmf.pdf>`_
+      D. Lee, S. Seung, 1999
+
+    * `"Non-negative Matrix Factorization with Sparseness Constraints"
+      <www.cs.helsinki.fi/u/phoyer/papers/pdf/NMFscweb.pdf>`_
+      P. Hoyer, 2004
+
+    * `"Projected gradient methods for non-negative matrix factorization"
+      <http://www.csie.ntu.edu.tw/~cjlin/nmf/>`_
+      C.-J. Lin, 2007
+
+    * `"SVD based initialization: A head start for nonnegative
+      matrix factorization"
+      <http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf>`_
+      C. Boutsidis, E. Gallopoulos, 2008 
