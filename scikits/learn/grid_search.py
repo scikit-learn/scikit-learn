@@ -47,8 +47,9 @@ class IterGrid(object):
     ---------
     >>> from scikits.learn.grid_search import IterGrid
     >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-    >>> list(IterGrid(param_grid))
-    [{'a': 1, 'b': True}, {'a': 1, 'b': False}, {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+    >>> list(IterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
+    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
+     {'a': 2, 'b': True}, {'a': 2, 'b': False}]
 
     """
     def __init__(self, param_grid):
@@ -180,11 +181,11 @@ class GridSearchCV(BaseEstimator):
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svr = svm.SVR()
     >>> clf = grid_search.GridSearchCV(svr, parameters)
-    >>> clf.fit(iris.data, iris.target) # doctest: +ELLIPSIS
-    GridSearchCV(n_jobs=1, verbose=0, fit_params={}, loss_func=None, refit=True,
-           cv=None, iid=True,
-           estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
-           ...
+    >>> clf.fit(iris.data, iris.target) # doctest: +NORMALIZE_WHITESPACE
+    GridSearchCV(n_jobs=1, verbose=0, fit_params={}, loss_func=None,
+                 refit=True, cv=None, iid=True,
+                 estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
+                 ...
 
     Notes
     ------
