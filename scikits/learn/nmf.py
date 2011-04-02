@@ -375,7 +375,10 @@ class NMF(BaseEstimator, TransformerMixin):
         elif self.init == 'nndsvdar':
             W, H = _initialize_nmf_(X, self.n_components, variant='ar')
         else:
-            raise ValueError("Invalid value for initial parameter.")
+            raise ValueError(
+                'Invalid init parameter: got %r instead of one of %r' %
+                (self.init, (None, 'nndsvd', 'nndsvda', 'nndsvdar',
+                             int, np.random.RandomState)))
 
         gradW = np.dot(W, np.dot(H, H.T)) - np.dot(X, H.T)
         gradH = np.dot(np.dot(W.T, W), H) - np.dot(W.T, X)
