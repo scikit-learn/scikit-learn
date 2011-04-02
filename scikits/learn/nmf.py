@@ -217,8 +217,8 @@ def _nls_subproblem_(V, W, H_init, tol, max_iter):
     return H, grad, n_iter
 
 
-class NMF(BaseEstimator, TransformerMixin):
-    """Non-Negative matrix factorization (NMF, NNMF)
+class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
+    """Non-Negative matrix factorization by Projected Gradient (NMF)
 
     Parameters
     ----------
@@ -283,21 +283,22 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from scikits.learn.nmf import NMF
-    >>> model = NMF(n_components=2, init=0)
+    >>> model = ProjectedGradientNMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, eta=0.1, max_iter=200,
-      init=<mtrand.RandomState object at 0x...>, beta=1, sparseness=None,
-      n_components=2, tol=0.0001)
+    ProjectedGradientNMF(nls_max_iter=2000, eta=0.1, max_iter=200,
+               init=<mtrand.RandomState object at 0x...>, beta=1,
+               sparseness=None, n_components=2, tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.11118662],
            [ 0.38526873,  0.38228063]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.00746...
-    >>> model = NMF(n_components=2, init=0, sparseness='components')
+    >>> model = ProjectedGradientNMF(n_components=2, init=0,
+    ...                              sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, eta=0.1, max_iter=200,
-      init=<mtrand.RandomState object at 0x...>, beta=1,
-      sparseness='components', n_components=2, tol=0.0001)
+    ProjectedGradientNMF(nls_max_iter=2000, eta=0.1, max_iter=200,
+               init=<mtrand.RandomState object at 0x...>, beta=1,
+               sparseness='components', n_components=2, tol=0.0001)
     >>> model.components_
     array([[ 1.67481991,  0.29614922],
            [-0.        ,  0.4681982 ]])
@@ -479,3 +480,7 @@ class NMF(BaseEstimator, TransformerMixin):
         for j in xrange(0, X.shape[0]):
             H[j, :], _ = nnls(self.components_.T, X[j, :])
         return H
+
+
+class NMF(ProjectedGradientNMF):
+    pass
