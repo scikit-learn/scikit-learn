@@ -232,19 +232,20 @@ class NMF(BaseEstimator, TransformerMixin):
         Method used to initialize the procedure.
         Default: 'nndsvdar'
         Valid options:
-            'nndsvd' for default NNDSVD initialization (slow)
-            'nndsvda' for NNDSVD with zeros filled with the mean of X (fast)
-            'nndsvdar' for NNDSVD with zeros filled with small random values,
+            'nndsvd': default Nonnegative Double Singular Value
+                Decomposition (NNDSVD) initialization (slow)
+            'nndsvda': NNDSVD with zeros filled with the average of X (fast)
+            'nndsvdar': NNDSVD with zeros filled with small random values
                 (faster than nndsvd, better accuracy than nndsvda)
-            int seed or RandomState for non-negative random matrices
+            int seed or RandomState: non-negative random matrices
 
-    sparseness: string or None
-        'data' or 'components', where to enforce sparsity
+    sparseness: 'data' | 'components' | None
+        Where to enforce sparsity in the model.
         Default: None
 
     beta: double
         Degree of sparseness, if sparseness is not None. Larger values mean
-        more sparseness
+        more sparseness.
         Default: 1
 
     eta: double
@@ -261,7 +262,7 @@ class NMF(BaseEstimator, TransformerMixin):
         Default: 200
 
     nls_max_iter: int
-        Number of iterations in NLS subproblem
+        Number of iterations in NLS subproblem.
         Default: 2000
 
     Attributes
@@ -306,6 +307,12 @@ class NMF(BaseEstimator, TransformerMixin):
     for non-negative matrix factorization. Neural
     Computation, 19(2007), 2756-2779.
     http://www.csie.ntu.edu.tw/~cjlin/nmf/
+
+    NNDSVD is introduced in
+    C. Boutsidis, E. Gallopoulos: SVD based
+    initialization: A head start for nonnegative
+    matrix factorization - Pattern Recognition, 2008
+    http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
 
     """
 
