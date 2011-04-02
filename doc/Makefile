@@ -36,6 +36,7 @@ clean:
 	-rm -rf modules/generated/*
 
 html:
+	-rm -rf $(BUILDDIR)/html/_images/
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
