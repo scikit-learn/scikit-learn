@@ -34,9 +34,9 @@ class Node
 
         void set_background(vector<Object*> s) { background = s; }
 
-        void recursive_split(unsigned int minLeafSize, unsigned int numCuts);
+        void recursive_split(unsigned int min_leaf_size, unsigned int bins);
         
-        bool split(unsigned int minSize, unsigned int resolution);
+        bool split(unsigned int min_leaf_size, unsigned int bins);
 
         const Node* get_left_child() const
         {
@@ -73,13 +73,7 @@ class Node
         float predict(const double* attrs) const;
 
         pair<float,float> get_extrema(unsigned int attribute);
-
-        void drop_objects()
-        {
-            this->signal.clear();
-            this->background.clear();
-        }
-
+    
     private:
 
         vector<Object*> signal;
