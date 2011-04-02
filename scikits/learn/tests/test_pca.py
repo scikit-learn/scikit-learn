@@ -59,12 +59,12 @@ def test_whitening():
     assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
 
     # whiten the data while projecting to the lower dim subspace
-    pca = PCA(n_components=n_components, whiten=True).fit(X)
-    X_whitened = pca.transform(X)
-    assert_equal(X_whitened.shape, (n_samples, n_components))
-
+    pca = PCA(n_components=n_components, whiten=True)
+    
     # test fit_transform
-    X_whitened2 = pca.fit_transform(X)
+    X_whitened = pca.fit_transform(X)
+    assert_equal(X_whitened.shape, (n_samples, n_components))
+    X_whitened2 = pca.transform(X)
     assert_array_almost_equal(X_whitened, X_whitened2)
 
     # all output component have unit variances
