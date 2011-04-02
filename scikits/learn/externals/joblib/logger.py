@@ -16,10 +16,22 @@ import shutil
 import logging
 import pprint
 
+def _squeeze_time(t):
+    """Remove .1s to the time under Windows: this is the time it take to
+    stat files. This is needed to make results similar to timings under
+    Unix, for tests
+    """
+    if sys.platform.startswith('win'):
+        return max(0, t - .1)
+    else:
+        return t
+
 def format_time(t):
+    t = _squeeze_time(t)
     return "%.1fs, %.1fmin" % (t, t/60.)
 
 def short_format_time(t):
+    t = _squeeze_time(t)
     if t > 60:
         return "%4.1fmin" % (t/60.)
     else:
