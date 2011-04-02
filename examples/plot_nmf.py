@@ -61,7 +61,7 @@ nmfdigits = nmf.components_
 
 n_row, n_col = 4, 4
 
-f1 = pl.figure(figsize=(1.5 * n_col, 2. * n_row))
+f1 = pl.figure(figsize=(1. * n_col, 1.13 * n_row))
 f1.text(.5, .95, 'Principal components', horizontalalignment='center')
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
@@ -69,9 +69,9 @@ for i in range(n_row * n_col):
               interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
-pl.subplots_adjust(0.02, 0.02, 0.98, 0.94, 0.04, 0.02)
+pl.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
 
-f2 = pl.figure(figsize=(1.5 * n_col, 2. * n_row))
+f2 = pl.figure(figsize=(1. * n_col, 1.13 * n_row))
 f2.text(.5, .95, 'Non-negative components', horizontalalignment='center')
 for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
@@ -79,6 +79,5 @@ for i in range(n_row * n_col):
               interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
-
-pl.subplots_adjust(0.02, 0.02, 0.98, 0.94, 0.04, 0.02)
+pl.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
 pl.show()
