@@ -270,7 +270,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_features, n_components]
+    components_: array, [n_components, n_features]
         Non-negative components of the data
     reconstruction_err_: number
         Frobenius norm of the matrix difference between the
@@ -289,8 +289,8 @@ class NMF(BaseEstimator, TransformerMixin):
       init=<mtrand.RandomState object at 0x...>, beta=1, sparseness=None,
       n_components=2, tol=0.0001)
     >>> model.components_
-    array([[ 0.77032744,  0.38526873],
-           [ 0.11118662,  0.38228063]])
+    array([[ 0.77032744,  0.11118662],
+           [ 0.38526873,  0.38228063]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.00746...
     >>> model = NMF(n_components=2, init=0, sparseness='components')
@@ -299,8 +299,8 @@ class NMF(BaseEstimator, TransformerMixin):
       init=<mtrand.RandomState object at 0x...>, beta=1,
       sparseness='components', n_components=2, tol=0.0001)
     >>> model.components_
-    array([[ 1.67481991, -0.        ],
-           [ 0.29614922,  0.4681982 ]])
+    array([[ 1.67481991,  0.29614922],
+           [-0.        ,  0.4681982 ]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.513...
 
@@ -437,7 +437,7 @@ class NMF(BaseEstimator, TransformerMixin):
             self.comp_sparseness_ = _sparseness_(H.flatten())
             self.data_sparseness_ = _sparseness_(W.flatten())
             self.reconstruction_err_ = norm(X - np.dot(W, H))
-            self.components_ = H.T
+            self.components_ = H
 
         if n_iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
@@ -477,5 +477,5 @@ class NMF(BaseEstimator, TransformerMixin):
         X = np.atleast_2d(X)
         H = np.zeros((X.shape[0], self.n_components))
         for j in xrange(0, X.shape[0]):
-            H[j, :], _ = nnls(self.components_, X[j, :])
+            H[j, :], _ = nnls(self.components_.T, X[j, :])
         return H

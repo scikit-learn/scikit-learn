@@ -54,7 +54,7 @@ nmf = NMF(n_components=n_components, init='nndsvd', beta=5, tol=1e-2,
           sparseness="components").fit(X)
 print "done in %0.3fs" % (time() - t0)
 
-nmfdigits = nmf.components_.T
+nmfdigits = nmf.components_
 
 ######################################################################
 # Plot the results
