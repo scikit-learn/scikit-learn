@@ -550,7 +550,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.dual_coef_ = linalg.solve(K, X, sym_pos=True, overwrite_a=True)
         self.X_transformed_fit = X_transformed
 
-    def fit(self, X):
+    def fit(self, X, y=None, **params):
         """Fit the model from data in X.
 
         Parameters
@@ -564,6 +564,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
+        self._set_params(**params)
         self._fit_transform(X)
 
         if self.fit_inverse_transform:
@@ -573,7 +574,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         return self
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None, **params):
         """Fit the model from data in X and transform X.
 
         Parameters
@@ -586,7 +587,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-        self.fit(X)
+        self.fit(X, **params)
 
         sqrt_lambdas = np.diag(np.sqrt(self.lambdas))
         X_transformed = np.dot(self.alphas, sqrt_lambdas)

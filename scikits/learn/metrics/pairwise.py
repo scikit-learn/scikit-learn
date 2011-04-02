@@ -95,7 +95,7 @@ def linear_kernel(X, Y):
 
     Returns
     -------
-    gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
     return np.dot(X, Y.T)
 
@@ -114,7 +114,7 @@ def polynomial_kernel(X, Y, degree=3):
 
     Returns
     -------
-    gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
     K = linear_kernel(X, Y)
     K += 1
@@ -136,7 +136,7 @@ def rbf_kernel(X, Y, sigma=1.0):
 
     Returns
     -------
-    gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
     K = -euclidean_distances(X, Y, squared=True)
     K /= (2 * (sigma ** 2))
