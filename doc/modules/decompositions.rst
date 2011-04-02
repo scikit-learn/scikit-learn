@@ -165,11 +165,11 @@ great impact on the performance of the method.
 .. topic:: References:
 
     * `"Learning the parts of objects by non-negative matrix factorization"
-      <www.seas.upenn.edu/~ddlee/Papers/nmf.pdf>`_
+      <http://www.seas.upenn.edu/~ddlee/Papers/nmf.pdf>`_
       D. Lee, S. Seung, 1999
 
     * `"Non-negative Matrix Factorization with Sparseness Constraints"
-      <www.cs.helsinki.fi/u/phoyer/papers/pdf/NMFscweb.pdf>`_
+      <http://www.cs.helsinki.fi/u/phoyer/papers/pdf/NMFscweb.pdf>`_
       P. Hoyer, 2004
 
     * `"Projected gradient methods for non-negative matrix factorization"
