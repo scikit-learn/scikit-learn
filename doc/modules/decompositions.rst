@@ -145,18 +145,20 @@ It has been observed in [Hoyer, 04] that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset, resulting 
 in interpretable models.
 
+The :attr:`init` determines the initialization method applied, which has a
+great impact on the performance of the method.
+
 In :class:`NMF`, sparseness can be enforced by setting the attribute
 :attr:`sparseness` to `data` or `components`. Sparse components lead to
 localized features, and sparse data leads to a more efficient representation
-of the data.
+of the data. The following example displays 16 sparse components found by
+:class:`NMF` on the digits dataset.
 
-The :attr:`init` determines the initialization method applied, which has a
-great impact on the performance of the method.
 
 .. figure:: ../auto_examples/images/plot_nmf.png
     :target: ../auto_examples/plot_nmf.html
     :align: center
-    :scale: 50%
+    :scale: 33%
 
 .. topic:: Examples:
 
