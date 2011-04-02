@@ -209,6 +209,7 @@ Signal Decomposition
    pca.ProbabilisticPCA
    pca.RandomizedPCA
    fastica.FastICA
+   nmf.NMF
 
 .. autosummary::
    :toctree: generated/
