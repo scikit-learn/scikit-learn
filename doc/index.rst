@@ -21,9 +21,9 @@
        :height: 150
        :target: auto_examples/svm/plot_oneclass.html
 
-    .. |banner4| image:: auto_examples/cluster/images/plot_lena_segmentation_1.png
+    .. |banner4| image:: auto_examples/cluster/images/plot_lena_ward_segmentation_1.png
        :height: 150
-       :target: auto_examples/cluster/plot_lena_segmentation.html
+       :target: auto_examples/cluster/plot_lena_ward_segmentation.html
 
     .. |center-div| raw:: html
 
