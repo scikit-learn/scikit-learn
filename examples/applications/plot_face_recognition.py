@@ -144,5 +144,14 @@ for i in range(n_row * n_col):
     pl.xticks(())
     pl.yticks(())
 
+pl.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
+for i in range(n_row * n_col):
+    pl.subplot(n_row, n_col, i + 1)
+    pl.imshow(eigenfaces[i].reshape((h, w)), cmap=pl.cm.gray)
+    pl.title("eigenface %d" % i, size=12)
+    pl.xticks(())
+    pl.yticks(())
+
 pl.show()
 

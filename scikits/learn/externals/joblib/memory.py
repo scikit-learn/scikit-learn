@@ -108,7 +108,7 @@ class MemorizedFunc(Logger):
     #-------------------------------------------------------------------------
    
     def __init__(self, func, cachedir, ignore=None, save_npy=True, 
-                             mmap_mode=None, verbose=1):
+                             mmap_mode=None, verbose=1, timestamp=None):
         """
             Parameters
             ----------
@@ -128,7 +128,10 @@ class MemorizedFunc(Logger):
                 cache was created.
             verbose: int, optional
                 Verbosity flag, controls the debug messages that are issued 
-                as functions are revaluated.
+                as functions are revaluated. The higher, the more verbose
+            timestamp: float, optional
+                The reference time from which times in tracing messages
+                are reported.
         """
         Logger.__init__(self)
         self._verbose = verbose
@@ -136,6 +139,9 @@ class MemorizedFunc(Logger):
         self.func = func
         self.save_npy = save_npy
         self.mmap_mode = mmap_mode
+        if timestamp is None:
+            timestamp = time.time()
+        self.timestamp = timestamp
         if ignore is None:
             ignore = []
         self.ignore = ignore
@@ -173,7 +179,7 @@ class MemorizedFunc(Logger):
                     (args, kwargs, traceback.format_exc())
                     )
 
-                shutil.rmtree(output_dir)
+                shutil.rmtree(output_dir, ignore_errors=True)
                 return self.call(*args, **kwargs)
 
     #-------------------------------------------------------------------------
@@ -232,11 +238,14 @@ class MemorizedFunc(Logger):
         func_dir = self._get_func_dir()
         func_code_file = os.path.join(func_dir, 'func_code.py')
 
-        if not os.path.exists(func_code_file): 
-            self._write_func_code(func_code_file, func_code, first_line)
-            return False
-        old_func_code, old_first_line = \
-                        extract_first_line(file(func_code_file).read())
+        try:
+            if not os.path.exists(func_code_file): 
+                raise IOError
+            old_func_code, old_first_line = \
+                            extract_first_line(file(func_code_file).read())
+        except IOError:
+                self._write_func_code(func_code_file, func_code, first_line)
+                return False
         if old_func_code == func_code:
             return True
 
@@ -289,8 +298,12 @@ class MemorizedFunc(Logger):
         if self._verbose and warn:
             self.warn("Clearing cache %s" % func_dir)
         if os.path.exists(func_dir):
-            shutil.rmtree(func_dir)
-        os.makedirs(func_dir)
+            shutil.rmtree(func_dir, ignore_errors=True)
+        try:
+            os.makedirs(func_dir)
+        except OSError:
+            """ Directory exists: it has been created by another process
+            in the mean time. """
         func_code, _, first_line = get_func_code(self.func)
         func_code_file = os.path.join(func_dir, 'func_code.py')
         self._write_func_code(func_code_file, func_code, first_line)
@@ -358,16 +371,19 @@ class MemorizedFunc(Logger):
     def _persist_output(self, output, dir):
         """ Persist the given output tuple in the directory.
         """
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        filename = os.path.join(dir, 'output.pkl')
+        try:
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+            filename = os.path.join(dir, 'output.pkl')
 
-        if 'numpy' in sys.modules and self.save_npy:
-            numpy_pickle.dump(output, filename) 
-        else:
-            output_file = file(filename, 'w')
-            pickle.dump(output, output_file, protocol=2)
-            output_file.close()
+            if 'numpy' in sys.modules and self.save_npy:
+                numpy_pickle.dump(output, filename) 
+            else:
+                output_file = file(filename, 'w')
+                pickle.dump(output, output_file, protocol=2)
+                output_file.close()
+        except OSError:
+            " Race condition in the creation of the directory "
 
 
     def _persist_input(self, output_dir, *args, **kwargs):
@@ -379,16 +395,29 @@ class MemorizedFunc(Logger):
 
         input_repr = dict((k, repr(v)) for k, v in argument_dict.iteritems())
         if json is not None:
-            json.dump(
-                input_repr,
-                file(os.path.join(output_dir, 'input_args.json'), 'w'),
-                )
+            # This can fail do to race-conditions with multiple
+            # concurrent joblibs removing the file or the directory
+            try:
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                json.dump(
+                    input_repr,
+                    file(os.path.join(output_dir, 'input_args.json'), 'w'),
+                    )
+            except:
+                pass
         return input_repr
 
     def load_output(self, output_dir):
         """ Read the results of a previous calculation from the directory
             it was cached in.
         """
+        if self._verbose > 1:
+            t = time.time() - self.timestamp
+            print '[Memory]% 16s: Loading %s...' % (
+                                    format_time(t),
+                                    self.format_signature(self.func)[0]
+                                    )
         filename = os.path.join(output_dir, 'output.pkl')
         if self.save_npy:
             return numpy_pickle.load(filename, 
@@ -454,6 +483,7 @@ class Memory(Logger):
         self._verbose = verbose
         self.save_npy = save_npy
         self.mmap_mode = mmap_mode
+        self.timestamp = time.time()
         if cachedir is None:
             self.cachedir = None
         else:
@@ -462,9 +492,24 @@ class Memory(Logger):
                 os.makedirs(self.cachedir)
 
 
-    def cache(self, func=None, ignore=None):
+    def cache(self, func=None, ignore=None, verbose=None,
+                        mmap_mode=False):
         """ Decorates the given function func to only compute its return
             value for input arguments not cached on disk.
+
+            Parameters
+            ----------
+            func: callable, optional
+                The function to be decorated
+            ignore: list of strings
+                A list of arguments name to ignore in the hashing
+            verbose: integer, optional
+                The verbosity mode of the function. By default that
+                of the memory object is used.
+            mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
+                The memmapping mode used when loading from cache
+                numpy arrays. See numpy.load for the meaning of the
+                arguments. By default that of the memory object is used.
 
             Returns
             -------
@@ -480,11 +525,18 @@ class Memory(Logger):
             return functools.partial(self.cache, ignore=ignore)
         if self.cachedir is None:
             return func
+        if verbose is None:
+            verbose = self._verbose
+        if mmap_mode is False:
+            mmap_mode = self.mmap_mode
+        if isinstance(func, MemorizedFunc):
+            func = func.func
         return MemorizedFunc(func, cachedir=self.cachedir,
                                    save_npy=self.save_npy,
-                                   mmap_mode=self.mmap_mode,
+                                   mmap_mode=mmap_mode,
                                    ignore=ignore,
-                                   verbose=self._verbose)
+                                   verbose=verbose,
+                                   timestamp=self.timestamp)
 
 
     def clear(self, warn=True):

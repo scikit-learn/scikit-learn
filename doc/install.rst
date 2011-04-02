@@ -35,7 +35,18 @@ scipy, setuptools, python development headers and a working C++
 compiler. Under debian-like systems you can get all this by executing
 with root privileges::
 
-    sudo apt-get install python-dev python-numpy python-setuptools python-scipy libatlas-dev g++
+    sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
+
+.. note::
+
+    In Order to build the documentation and run the example code contains in
+    this documentation you will need matplotlib::
+
+        sudo apt-get install python-matplotlib
+
+.. note::
+
+    On Ubuntu LTS (10.04) the package `libatlas-dev` is called `libatlas-headers`
 
 Easy install
 ~~~~~~~~~~~~

@@ -102,19 +102,19 @@ inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
 
-.. |banner1| image:: auto_examples/applications/images/plot_face_recognition.png
+.. |banner1| image:: auto_examples/applications/images/plot_face_recognition_1.png
    :height: 150
    :target: auto_examples/applications/plot_face_recognition.html
 
-.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling.png
+.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
    :height: 150
    :target: auto_examples/linear_model/plot_species_distribution.html
 
-.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression.png
+.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
    :height: 150
    :target: auto_examples/gaussian_process/plot_gp_regression.html
 
-.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris.png
+.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris_1.png
    :height: 150
    :target: auto_examples/linear_model/plot_lasso_lars.html
 

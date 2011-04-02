@@ -428,4 +428,3 @@ class RandomizedPCA(BaseEstimator):
         if self.mean_ is not None:
             X_original = X_original + self.mean_
         return X_original
-

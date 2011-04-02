@@ -20,4 +20,4 @@ static int __pyinstance_check_guard(PyObject *x)
 
 #endif
 
-#include "numpy/npy_3kcompat.h"
+#include "npy_3kcompat.h"
