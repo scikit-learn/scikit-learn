@@ -127,8 +127,9 @@ def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, rng=None):
             rng = np.random.mtrand.RandomState(rng)
         elif not isinstance(rng, np.random.mtrand.RandomState):
             raise ValueError('Invalid random state in _nmf_initialize_')
-        W[W == 0] = abs(rng.randn(len(W[W == 0])))
-        H[H == 0] = abs(rng.randn(len(H[H == 0])))
+        avg = X.mean()
+        W[W == 0] = abs(avg * rng.randn(len(W[W == 0])) / 100)
+        H[H == 0] = abs(avg * rng.randn(len(H[H == 0])) / 100)
 
     return W, H
 
@@ -233,10 +234,11 @@ class NMF(BaseEstimator, TransformerMixin):
         Default: 'nndsvdar'
         Valid options:
             'nndsvd': default Nonnegative Double Singular Value
-                Decomposition (NNDSVD) initialization (slow)
-            'nndsvda': NNDSVD with zeros filled with the average of X (fast)
+                Decomposition (NNDSVD) initialization (better for sparseness)
+            'nndsvda': NNDSVD with zeros filled with the average of X
+                (better when sparsity is not desired)
             'nndsvdar': NNDSVD with zeros filled with small random values
-                (faster than nndsvd, better accuracy than nndsvda)
+                (slower but more accurate alternative to NNDSVDa for dense NMF)
             int seed or RandomState: non-negative random matrices
 
     sparseness: 'data' | 'components' | None
