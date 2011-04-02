@@ -19,23 +19,22 @@ norm = lambda x: np.sqrt(np.dot(x.flatten().T, x.flatten()))
 
 
 def _sparseness_(x):
-    """
-    Hoyer's measure of sparsity for a vector
+    """Hoyer's measure of sparsity for a vector
     """
     n = len(x)
     return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
 
 
 def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, rng=None):
-    """
-    NNDSVD algorithm for NMF initialization.
+    """NNDSVD algorithm for NMF initialization.
+
     Computes a good initial guess for the non-negative
     rank k matrix approximation for X: X = WH
 
     Parameters
     ----------
 
-    X:
+    X: array, [n_samples, n_features]
         The data matrix to be decomposed.
 
     n_components:
@@ -135,7 +134,8 @@ def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, rng=None):
 
 
 def _nls_subproblem_(V, W, H_init, tol, max_iter):
-    """
+    """Non-negative least square solver
+
     Solves a non-negative least squares subproblem using the
     projected gradient descent algorithm.
     min || WH - V ||_2
@@ -217,8 +217,7 @@ def _nls_subproblem_(V, W, H_init, tol, max_iter):
 
 
 class NMF(BaseEstimator, TransformerMixin):
-    """
-    Non-Negative matrix factorization (NMF, NNMF)
+    """Non-Negative matrix factorization (NMF, NNMF)
 
     Parameters
     ----------
@@ -324,6 +323,21 @@ class NMF(BaseEstimator, TransformerMixin):
         self.nls_max_iter = nls_max_iter
 
     def fit_transform(self, X, y=None, **params):
+        """Learn a NMF model for the data X and returns the transformed data.
+
+        This is more efficient than calling fit followed by transform.
+
+        Parameters
+        ----------
+
+        X: array, [n_samples, n_features]
+            Data matrix to be decomposed
+
+        Returns
+        -------
+        data: array, [n_samples, n_components]
+            Transformed data
+        """
         self._set_params(**params)
         X = np.atleast_2d(X)
         if (X < 0).any():
@@ -415,12 +429,34 @@ class NMF(BaseEstimator, TransformerMixin):
         return W
 
     def fit(self, X, y=None, **params):
+        """Learn a NMF model for the data X.
+
+        Parameters
+        ----------
+
+        X: array, [n_samples, n_features]
+            Data matrix to be decomposed
+
+        Returns
+        -------
+        self
+        """
         self.fit_transform(X, **params)
         return self
 
     def transform(self, X):
-        """
-        Transform the data X according to the model
+        """Transform the data X according to the fitted NMF model
+
+        Parameters
+        ----------
+
+        X: array, [n_samples, n_features]
+            Data matrix to be transformed by the model
+
+        Returns
+        -------
+        data: array, [n_samples, n_components]
+            Transformed data
         """
         from scipy.optimize import nnls
         X = np.atleast_2d(X)
