@@ -98,17 +98,10 @@ cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
 
-.. hlist::
-
- * Raw noisy image
-
-   .. figure:: ../auto_examples/cluster/images/plot_segmentation_toy_1.png
+.. image:: ../auto_examples/cluster/images/plot_segmentation_toy_1.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
-
- * Segmented image
-
-   .. figure:: ../auto_examples/cluster/images/plot_segmentation_toy_2.png
+.. image:: ../auto_examples/cluster/images/plot_segmentation_toy_2.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
 
@@ -122,40 +115,71 @@ function of the gradient of the image.
    to split the image of lena in regions.
 
 
-
+.. _hierarchical_clustering:
 
 Hierarchical clustering
 =======================
 
-:class:`Ward` performs a hierarchical clustering [Johnson 67] based on Ward
-algorithm [Ward 63], that is a variance-minimizing approach. At each step,
-it minimizes the sum of squared differences within all clusters (inertia
-criterion). This algoritm creates a hierarchy of clusters represented as a tree
-(or dendrogram). The root of the tree is the unique cluster that gathers all
-the samples, the leaves being the clusters with only one sample.
-Connectivity constraints can be added to this algorithm (only adjacent clusters
-can be merged together), through an connectivity matrix that defines for each
-sample the neighboring samples following a given structure of the
-data.
+Hierarchical clustering is a general family of clustering algorithms that
+build nested clusters by merging them successively. This hierarchy of
+clusters represented as a tree (or dendrogram). The root of the tree is
+the unique cluster that gathers all the samples, the leaves being the
+clusters with only one sample. See the `Wikipedia page
+<http://en.wikipedia.org/wiki/Hierarchical_clustering for more
+details>`_.
+
+
+The :class:`Ward` object performs a hierarchical clustering based on Ward
+algorithm, that is a variance-minimizing approach. At each step, it
+minimizes the sum of squared differences within all clusters (inertia
+criterion). 
+
 This algorithm can scale to large number of samples when it is used jointly
 with an connectivity matrix, but can be computationally expensive when no
-constraints are added between samples (it considers at each step all the
-possible merges).
+connectivity constraints are added between samples: it considers at each step
+all the possible merges.
 
+Adding connectivity constraints 
+----------------------------------
 
-See the `Wikipedia page <http://en.wikipedia.org/wiki/Hierarchical_clustering
-for more details>`_.
+An interesting aspect of the :class:`Ward` object is that connectivity
+constraints can be added to this algorithm (only adjacent clusters can be
+merged together), through an connectivity matrix that defines for each
+sample the neighboring samples following a given structure of the data. For 
+instance, in the swiss-roll example below, the connectivity constraints
+forbid the merging of points that are not adjacent on the swiss roll, and
+thus avoid forming clusters that extend across overlapping folds of the
+roll.
+
+.. image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
+    :scale: 50
+
+.. image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
+    :scale: 50
+
+The connectivity constraints are imposed via an connectivity matrix: a
+scipy sparse matrix that has elements only at the intersection of a row
+and a column with indices of the dataset that should be connected. This
+matrix can be constructed from apriori information, for instance if you
+whish to cluster web pages, but only merging pages with a link pointing
+from one to another. It can also be learned from the data, for instance
+using :func:`scikits.learn.neighbors.kneighbors_graph` to restrict
+merging to nearest neighbors as in the :ref:`swiss roll
+<example_cluster_plot_ward_structured_vs_unstructured.py>` example, or
+using :func:`scikits.learn.feature_extraction.image.grid_to_graph` to
+enable only merging of neighboring pixels on an image, as in the
+:ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 
  * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering 
    to split the image of lena in regions.
 
- * :ref:`example_cluster_plot_ward_structured.py`: Example of Ward algorithm on
-    a swiss-roll, with structure that constraints to merge only adjacent sample.
-
- * :ref:`example_cluster_plot_ward_unstructured.py`: Example of Ward algorithm
-    on a swiss-roll, without structure.
+ * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of 
+    Ward algorithm on a swiss-roll, comparison of structured approaches
+    versus unstructured approaches.
 
  * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
     Example of dimensionality reduction with feature agglomeration based on
