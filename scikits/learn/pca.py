@@ -480,13 +480,20 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         degree of the polynomial kernel
 
     alpha: int
-        hyperparameter of the ridge regression that learns the inverse transform
-        (when fit_inverse_transform=True)
+        hyperparameter of the ridge regression that learns the
+        inverse transform (when fit_inverse_transform=True)
 
     fit_inverse_transform: bool
         learn the inverse transform
         (i.e. learn to find the pre-image of a point)
 
+    Reference
+    ---------
+    Kernel PCA was intoduced in:
+        Bernhard Schölkopf, Alexander J. Smola,
+        and Klaus-Robert Müller. 1999. Kernel principal
+        component analysis. In Advances in kernel methods,
+        MIT Press, Cambridge, MA, USA 327-352.
     """
 
     def __init__(self, n_components=None, kernel="linear", sigma=1.0, degree=3,
@@ -500,7 +507,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.centerer = KernelCenterer()
 
     def _get_kernel(self, X, Y=None):
-        if Y is None: Y = X
+        if Y is None:
+            Y = X
 
         if self.kernel == "precomputed":
             return X
@@ -511,10 +519,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         elif self.kernel == "linear":
             return linear_kernel(X, Y)
         else:
-            raise ValueError, "Invalid kernel"
+            raise ValueError("Invalid kernel")
 
     def _fit_transform(self, X):
-        n_samples = X.shape[0]
+        n_samples, n_components = X.shape
 
         # compute kernel and eigenvectors
         K = self.centerer.fit_transform(self._get_kernel(X))
@@ -619,7 +627,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         "Learning to Find Pre-Images", G BakIr et al, 2004.
         """
         if not self.fit_inverse_transform:
-            raise ValueError, "Inverse transform was not fitted!"
+            raise ValueError("Inverse transform was not fitted!")
 
         K = self._get_kernel(X, self.X_transformed_fit)
 
