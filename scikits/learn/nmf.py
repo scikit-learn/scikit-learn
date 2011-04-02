@@ -19,23 +19,22 @@ norm = lambda x: np.sqrt(np.dot(x.flatten().T, x.flatten()))
 
 
 def _sparseness_(x):
-    """
-    Hoyer's measure of sparsity for a vector
+    """Hoyer's measure of sparsity for a vector
     """
     n = len(x)
     return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
 
 
 def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, rng=None):
-    """
-    NNDSVD algorithm for NMF initialization.
+    """NNDSVD algorithm for NMF initialization.
+
     Computes a good initial guess for the non-negative
     rank k matrix approximation for X: X = WH
 
     Parameters
     ----------
 
-    X:
+    X: array, [n_samples, n_features]
         The data matrix to be decomposed.
 
     n_components:
@@ -128,14 +127,16 @@ def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, rng=None):
             rng = np.random.mtrand.RandomState(rng)
         elif not isinstance(rng, np.random.mtrand.RandomState):
             raise ValueError('Invalid random state in _nmf_initialize_')
-        W[W == 0] = abs(rng.randn(len(W[W == 0])))
-        H[H == 0] = abs(rng.randn(len(H[H == 0])))
+        avg = X.mean()
+        W[W == 0] = abs(avg * rng.randn(len(W[W == 0])) / 100)
+        H[H == 0] = abs(avg * rng.randn(len(H[H == 0])) / 100)
 
     return W, H
 
 
 def _nls_subproblem_(V, W, H_init, tol, max_iter):
-    """
+    """Non-negative least square solver
+
     Solves a non-negative least squares subproblem using the
     projected gradient descent algorithm.
     min || WH - V ||_2
@@ -217,8 +218,7 @@ def _nls_subproblem_(V, W, H_init, tol, max_iter):
 
 
 class NMF(BaseEstimator, TransformerMixin):
-    """
-    Non-Negative matrix factorization (NMF, NNMF)
+    """Non-Negative matrix factorization (NMF, NNMF)
 
     Parameters
     ----------
@@ -233,19 +233,22 @@ class NMF(BaseEstimator, TransformerMixin):
         Method used to initialize the procedure.
         Default: 'nndsvdar'
         Valid options:
-            'nndsvd' for default NNDSVD initialization (slow)
-            'nndsvda' for NNDSVD with zeros filled with the mean of X (fast)
-            'nndsvdar' for NNDSVD with zeros filled with small random values,
-                (faster than nndsvd, better accuracy than nndsvda)
-            int seed or RandomState for non-negative random matrices
+            'nndsvd': default Nonnegative Double Singular Value
+                Decomposition (NNDSVD) initialization (better for sparseness)
+            'nndsvda': NNDSVD with zeros filled with the average of X
+                (better when sparsity is not desired)
+            'nndsvdar': NNDSVD with zeros filled with small random values
+                (generally faster, less accurate alternative to NNDSVDa
+                for when sparsity is not desired)
+            int seed or RandomState: non-negative random matrices
 
-    sparseness: string or None
-        'data' or 'components', where to enforce sparsity
+    sparseness: 'data' | 'components' | None
+        Where to enforce sparsity in the model.
         Default: None
 
     beta: double
         Degree of sparseness, if sparseness is not None. Larger values mean
-        more sparseness
+        more sparseness.
         Default: 1
 
     eta: double
@@ -262,7 +265,7 @@ class NMF(BaseEstimator, TransformerMixin):
         Default: 200
 
     nls_max_iter: int
-        Number of iterations in NLS subproblem
+        Number of iterations in NLS subproblem.
         Default: 2000
 
     Attributes
@@ -308,6 +311,12 @@ class NMF(BaseEstimator, TransformerMixin):
     Computation, 19(2007), 2756-2779.
     http://www.csie.ntu.edu.tw/~cjlin/nmf/
 
+    NNDSVD is introduced in
+    C. Boutsidis, E. Gallopoulos: SVD based
+    initialization: A head start for nonnegative
+    matrix factorization - Pattern Recognition, 2008
+    http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
+
     """
 
     def __init__(self, n_components=None, init="nndsvdar", sparseness=None,
@@ -324,6 +333,21 @@ class NMF(BaseEstimator, TransformerMixin):
         self.nls_max_iter = nls_max_iter
 
     def fit_transform(self, X, y=None, **params):
+        """Learn a NMF model for the data X and returns the transformed data.
+
+        This is more efficient than calling fit followed by transform.
+
+        Parameters
+        ----------
+
+        X: array, [n_samples, n_features]
+            Data matrix to be decomposed
+
+        Returns
+        -------
+        data: array, [n_samples, n_components]
+            Transformed data
+        """
         self._set_params(**params)
         X = np.atleast_2d(X)
         if (X < 0).any():
@@ -415,12 +439,34 @@ class NMF(BaseEstimator, TransformerMixin):
         return W
 
     def fit(self, X, y=None, **params):
+        """Learn a NMF model for the data X.
+
+        Parameters
+        ----------
+
+        X: array, [n_samples, n_features]
+            Data matrix to be decomposed
+
+        Returns
+        -------
+        self
+        """
         self.fit_transform(X, **params)
         return self
 
     def transform(self, X):
-        """
-        Transform the data X according to the model
+        """Transform the data X according to the fitted NMF model
+
+        Parameters
+        ----------
+
+        X: array, [n_samples, n_features]
+            Data matrix to be transformed by the model
+
+        Returns
+        -------
+        data: array, [n_samples, n_components]
+            Transformed data
         """
         from scipy.optimize import nnls
         X = np.atleast_2d(X)

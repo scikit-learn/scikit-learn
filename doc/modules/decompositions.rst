@@ -145,8 +145,19 @@ It has been observed in [Hoyer, 04] that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset, resulting 
 in interpretable models.
 
-The :attr:`init` determines the initialization method applied, which has a
-great impact on the performance of the method.
+The :attr:`init` attribute determines the initialization method applied, which
+has a great impact on the performance of the method. :class:`NMF` implements 
+the method Nonnegative Double Singular Value Decomposition. NNDSVD is based on
+two SVD processes, one approximating the data matrix, the other approximating 
+positive sections of the resulting partial SVD factors utilizing an algebraic 
+property of unit rank matrices. The basic NNDSVD algorithm is better fit for
+sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to 
+the mean of all elements of the data), and NNDSVDar (in which the zeros are set 
+to random perturbations less than the mean of the data divided by 100) are 
+recommended in the dense case.
+
+:class:`NMF` can also be initialized with random non-negative matrices, by
+passing an integer seed or a `RandomState` to :attr:`init`.
 
 In :class:`NMF`, sparseness can be enforced by setting the attribute
 :attr:`sparseness` to `data` or `components`. Sparse components lead to
