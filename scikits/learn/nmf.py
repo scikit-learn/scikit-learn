@@ -325,7 +325,9 @@ class NMF(BaseEstimator, TransformerMixin):
         self.init = init
         self.tol = tol
         if sparseness not in (None, 'data', 'components'):
-            raise ValueError('Invalid sparsity target')
+            raise ValueError(
+                'Invalid sparseness parameter: got %r instead of one of %r' %
+                (sparseness, (None, 'data', 'components')))
         self.sparseness = sparseness
         self.beta = beta
         self.eta = eta
