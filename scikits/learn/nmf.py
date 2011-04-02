@@ -545,6 +545,18 @@ class NMF(BaseEstimator, TransformerMixin):
         return W
 
     def fit(self, X, **params):
+        """Learn a NMF model for the data X.
+
+        Parameters
+        ----------
+
+        X: array (n_features, n_samples)
+            Data matrix to be decomposed
+
+        Returns
+        -------
+        self
+        """
         self.fit_transform(X, **params)
         return self
 
