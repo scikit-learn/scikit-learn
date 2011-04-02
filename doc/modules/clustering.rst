@@ -98,20 +98,28 @@ cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
 
-.. figure:: ../auto_examples/cluster/images/plot_segmentation_toy_1.png
-   :target: ../auto_examples/cluster/plot_segmentation_toy.html
-   :align: center
-   :scale: 50
+.. hlist::
+
+ * Raw noisy image
+
+   .. figure:: ../auto_examples/cluster/images/plot_segmentation_toy_1.png
+    :target: ../auto_examples/cluster/plot_segmentation_toy.html
+    :scale: 50
+
+ * Segmented image
+
+   .. figure:: ../auto_examples/cluster/images/plot_segmentation_toy_2.png
+    :target: ../auto_examples/cluster/plot_segmentation_toy.html
+    :scale: 50
 
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
-   to split the image of lena in regions.
-
  * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
+ * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
+   to split the image of lena in regions.
 
 
 
