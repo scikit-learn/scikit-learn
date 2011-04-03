@@ -53,8 +53,8 @@ import os
 import logging
 
 from scikits.learn.datasets import fetch_20newsgroups
-from scikits.learn.feature_extraction.text.sparse import CountVectorizer
-from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
+from scikits.learn.feature_extraction.text import CountVectorizer
+from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline

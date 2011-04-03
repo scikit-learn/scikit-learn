@@ -41,7 +41,7 @@ import os
 import sys
 
 from scikits.learn.datasets import fetch_20newsgroups
-from scikits.learn.feature_extraction.text.sparse import Vectorizer
+from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
