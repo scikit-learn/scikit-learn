@@ -9,9 +9,9 @@ Independent Component Analysis, by  Hyvarinen et al.
 #         Bertrand Thirion, Alexandre Gramfort
 # License: BSD 3 clause
 
+import types
 import numpy as np
 from scipy import linalg
-import types
 
 from .base import BaseEstimator
 
@@ -349,6 +349,7 @@ class FastICA(BaseEstimator):
                         self.fun, self.fun_prime, self.fun_args, self.max_iter,
                         self.tol, self.w_init)
         self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+        self.components_ = sources_
         return self
 
     def transform(self, X):
