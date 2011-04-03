@@ -128,13 +128,10 @@ distribution.
   \begin{array}{rcl}
   && E_q[\log P(z)] - E_q[\log Q(z)] \\
   &=&
-  \sum_{k} \left( \left(\sum_{j=k+1}^K
-  \nu_{z_{i,j}}\right)(\Psi(\gamma{k,1})-\Psi(\gamma{k,1}+\gamma_{k,2})) 
-  +
-  \nu_{z_{i,k}}(\Psi(\gamma_{k,1})-\Psi(\gamma_{k,1}+\gamma_{k,2}))\right)
-  \\ &&
-  - \sum_k
-  \nu_{z_{i,k}} \log \nu_{z_{i,k}} \\
+  \sum_{k} \left( 
+       \left(\sum_{j=k+1}^K  \nu_{z_{i,j}}\right)(\Psi(\gamma{k,1})-\Psi(\gamma{k,1}+\gamma_{k,2})) 
+   +  \nu_{z_{i,k}}(\Psi(\gamma_{k,1})-\Psi(\gamma_{k,1}+\gamma_{k,2}))
+   - \log \nu_{z_{i,k}} \right)
   \end{array}
 
 
