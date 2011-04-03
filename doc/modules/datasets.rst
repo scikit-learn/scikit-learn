@@ -215,7 +215,7 @@ for statistical analysis. This can be achieved with the utilities of the
 example that extract `TF-IDF`_ vectors of unigram tokens::
 
 
-  >>> from scikits.learn.feature_extraction.text.sparse import Vectorizer
+  >>> from scikits.learn.feature_extraction.text import Vectorizer
   >>> documents = [open(f).read() for f in newsgroups_train.filenames]
   >>> vectorizer = Vectorizer()
   >>> vectors = vectorizer.fit_transform(documents)
