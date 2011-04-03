@@ -57,7 +57,7 @@ data. Depending on the number of parameters provided at instanciation, the
 fitting procedure may recourse to maximum likelihood estimation for the
 parameters or alternatively it uses the given parameters.
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression.png
+.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_1.png
    :target: ../auto_examples/gaussian_process/plot_gp_regression.html
    :align: center
 

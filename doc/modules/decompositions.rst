@@ -36,7 +36,7 @@ data based on the amount of variance it explains. As such it implements a
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
-.. figure:: ../auto_examples/images/plot_pca.png
+.. figure:: ../auto_examples/images/plot_pca_1.png
     :target: ../auto_examples/plot_pca.html
     :align: center
     :scale: 75%
@@ -114,7 +114,7 @@ ICA finds components that are maximally independent. It is classically
 used to separate mixed signals (a problem know as *blind source
 separation*), as in the example below:
 
-.. figure:: ../auto_examples/images/plot_ica_blind_source_separation.png
+.. figure:: ../auto_examples/images/plot_ica_blind_source_separation_1.png
     :target: ../auto_examples/plot_ica_blind_source_separation.html
     :align: center
     :scale: 50%

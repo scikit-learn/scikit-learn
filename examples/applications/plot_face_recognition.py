@@ -26,12 +26,13 @@ Expected results for the top 5 most represented people in the dataset::
 print __doc__
 
 from time import time
+import sys
 import logging
 import numpy as np
 import pylab as pl
 
 from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.datasets import fetch_lfw_people
+from scikits.learn.datasets import load_lfw_people
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.metrics import classification_report
 from scikits.learn.metrics import confusion_matrix
@@ -46,7 +47,14 @@ logging.basicConfig(level=logging.INFO,
 ################################################################################
 # Download the data, if not already on disk and load it as numpy arrays
 
-lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
+download_if_missing = '--download' in sys.argv
+try:
+    lfw_people = load_lfw_people(min_faces_per_person=70, resize=0.4,
+                                 download_if_missing=download_if_missing)
+except IOError:
+    print "This example needs more than 200MB of data not locally available:"
+    print "re-run this script with '--download' to download it explicitly"
+    print sys.exit(0)
 
 # reshape the data using the traditional (n_samples, n_features) shape
 faces = lfw_people.data
@@ -141,6 +149,15 @@ for i in range(n_row * n_col):
     pl.subplot(n_row, n_col, i + 1)
     pl.imshow(X_test[i].reshape((h, w)), cmap=pl.cm.gray)
     pl.title(title(y_pred, y_test, target_names, i), size=12)
+    pl.xticks(())
+    pl.yticks(())
+
+pl.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
+for i in range(n_row * n_col):
+    pl.subplot(n_row, n_col, i + 1)
+    pl.imshow(eigenfaces[i].reshape((h, w)), cmap=pl.cm.gray)
+    pl.title("eigenface %d" % i, size=12)
     pl.xticks(())
     pl.yticks(())
 

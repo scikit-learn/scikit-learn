@@ -10,7 +10,7 @@ Partial least squares (PLS) models are useful to find linear relations
 between two multivariate datasets: in PLS the `X` and `Y` arguments of
 the `fit` method are 2D arrays.
 
-.. figure:: ../auto_examples/images/plot_pls.png
+.. figure:: ../auto_examples/images/plot_pls_1.png
    :target: ../auto_examples/plot_pls.html
    :scale: 75%
    :align: center

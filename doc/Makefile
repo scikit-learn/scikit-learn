@@ -36,6 +36,7 @@ clean:
 	-rm -rf modules/generated/*
 
 html:
+	-rm -rf $(BUILDDIR)/html/_images/
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -97,3 +98,6 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+download-data:
+	python -c "from scikits.learn.datasets.lfw import check_fetch_lfw; check_fetch_lfw()"
