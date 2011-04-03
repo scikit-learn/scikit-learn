@@ -467,25 +467,42 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int or none
-        number of components
+    n_components: int or None
+        Number of components. If None, all non-zero components are kept.
 
-    kernel: "linear"|"poly"|"rbf"|"precomputed"
+    kernel: "linear" | "poly" | "rbf" | "precomputed"
         kernel
+        Default: "linear"
 
     sigma: float
         width of the rbf kernel
+        Default: 1.0
 
     degree: int
         degree of the polynomial kernel
+        Default: 3
 
     alpha: int
         hyperparameter of the ridge regression that learns the
         inverse transform (when fit_inverse_transform=True)
+        Default: 1.0
 
     fit_inverse_transform: bool
         learn the inverse transform
         (i.e. learn to find the pre-image of a point)
+        Default: False
+
+    Attributes
+    ----------
+
+    lambdas_, alphas_:
+        Eigenvalues and eigenvectors of the centered kernel matrix
+
+    dual_coef_:
+        Inverse transform matrix
+
+    X_transformed_fit_:
+        Projection of the fitted data on the kernel principal components
 
     Reference
     ---------
@@ -526,20 +543,20 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         # compute kernel and eigenvectors
         K = self.centerer.fit_transform(self._get_kernel(X))
-        self.lambdas, self.alphas = linalg.eigh(K)
+        self.lambdas_, self.alphas_ = linalg.eigh(K)
 
         # sort eignenvectors in descending order
-        indices = self.lambdas.argsort()[::-1]
+        indices = self.lambdas_.argsort()[::-1]
         if self.n_components is not None:
             indices = indices[:n_components]
-        self.lambdas = self.lambdas[indices]
-        self.alphas = self.alphas[:, indices]
+        self.lambdas_ = self.lambdas_[indices]
+        self.alphas_ = self.alphas_[:, indices]
 
         # remove eigenvectors with a zero eigenvalue
-        self.alphas = self.alphas[:, self.lambdas > 0]
-        self.lambdas = self.lambdas[self.lambdas > 0]
+        self.alphas_ = self.alphas_[:, self.lambdas_ > 0]
+        self.lambdas_ = self.lambdas_[self.lambdas_ > 0]
 
-        self.X_fit = X
+        self.X_fit_ = X
 
         return K
 
@@ -548,7 +565,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         K = self._get_kernel(X_transformed)
         K.flat[::n_samples + 1] += self.alpha
         self.dual_coef_ = linalg.solve(K, X, sym_pos=True, overwrite_a=True)
-        self.X_transformed_fit = X_transformed
+        self.X_transformed_fit_ = X_transformed
 
     def fit(self, X, y=None, **params):
         """Fit the model from data in X.
@@ -567,9 +584,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         self._fit_transform(X)
 
+        # XXX: Doesn't the below get computed twice if calling fit_transform?
         if self.fit_inverse_transform:
-            sqrt_lambdas = np.diag(np.sqrt(self.lambdas))
-            X_transformed = np.dot(self.alphas, sqrt_lambdas)
+            sqrt_lambdas = np.diag(np.sqrt(self.lambdas_))
+            X_transformed = np.dot(self.alphas_, sqrt_lambdas)
             self._fit_inverse_transform(X_transformed, X)
 
         return self
@@ -589,8 +607,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         self.fit(X, **params)
 
-        sqrt_lambdas = np.diag(np.sqrt(self.lambdas))
-        X_transformed = np.dot(self.alphas, sqrt_lambdas)
+        sqrt_lambdas = np.diag(np.sqrt(self.lambdas_))
+        X_transformed = np.dot(self.alphas_, sqrt_lambdas)
 
         if self.fit_inverse_transform:
             self._fit_inverse_transform(X_transformed, X)
@@ -608,9 +626,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-        K = self.centerer.transform(self._get_kernel(X, self.X_fit))
-        inv_sqrt_lambdas = np.diag(1.0 / np.sqrt(self.lambdas))
-        return np.dot(K, np.dot(self.alphas, inv_sqrt_lambdas))
+        K = self.centerer.transform(self._get_kernel(X, self.X_fit_))
+        inv_sqrt_lambdas = np.diag(1.0 / np.sqrt(self.lambdas_))
+        return np.dot(K, np.dot(self.alphas_, inv_sqrt_lambdas))
 
     def inverse_transform(self, X):
         """Transform X back to original space.
@@ -630,6 +648,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         if not self.fit_inverse_transform:
             raise ValueError("Inverse transform was not fitted!")
 
-        K = self._get_kernel(X, self.X_transformed_fit)
+        K = self._get_kernel(X, self.X_transformed_fit_)
 
         return np.dot(K, self.dual_coef_)
