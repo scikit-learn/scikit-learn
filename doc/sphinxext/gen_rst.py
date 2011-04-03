@@ -196,8 +196,13 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
             print 'plotting %s' % fname
             import matplotlib.pyplot as plt
             plt.close('all')
+            cwd = os.getcwd()
             try:
-                execfile(example_file, {'pl' : plt})
+                # First CD in the original example dir, so that any file created
+                # by the example get created in this directory
+                os.chdir(os.path.dirname(src_file))
+                execfile(os.path.basename(src_file), {'pl' : plt})
+                os.chdir(cwd)
 
                 # In order to save every figure we have two solutions :
                 # * iterate from 1 to infinity and call plt.fignum_exists(n)
@@ -217,6 +222,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                 print '%s is not compiling:' % fname
                 traceback.print_exc()
                 print 80*'_'
+            finally:
+                os.chdir(cwd)
         else:
             figure_list = [f[len(image_dir):] 
                             for f in glob.glob(image_path % '[1-9]')]
