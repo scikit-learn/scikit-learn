@@ -166,15 +166,12 @@ of the data. The following example displays 16 sparse components found by
 :class:`NMF` on the digits dataset.
 
 
-.. figure:: ../auto_examples/images/plot_nmf_1.png
+.. image:: ../auto_examples/images/plot_nmf_1.png
     :target: ../auto_examples/plot_nmf.html
-    :align: center
-    :scale: 33%
-
-.. figure:: ../auto_examples/images/plot_nmf_2.png
+    :scale: 50%
+.. image:: ../auto_examples/images/plot_nmf_2.png
     :target: ../auto_examples/plot_nmf.html
-    :align: center
-    :scale: 33%
+    :scale: 50%
 
 .. topic:: Examples:
 
