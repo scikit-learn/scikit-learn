@@ -1,8 +1,9 @@
 """ Non-negative matrix factorization
 """
-# Author: Chih-Jen Lin, National Taiwan University
-# Python/numpy translation: Anthony Di Franco
-# scikit.learn integration: Vlad Niculae
+# Author: Vlad Niculae
+# Author: Chih-Jen Lin, National Taiwan University (original projected gradient
+#     NMF implementation)
+# Author: Anthony Di Franco (original Python and NumPy port)
 # License: BSD
 
 
@@ -217,8 +218,8 @@ def _nls_subproblem_(V, W, H_init, tol, max_iter):
     return H, grad, n_iter
 
 
-class NMF(BaseEstimator, TransformerMixin):
-    """Non-Negative matrix factorization (NMF, NNMF)
+class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
+    """Non-Negative matrix factorization by Projected Gradient (NMF)
 
     Parameters
     ----------
@@ -270,7 +271,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_features, n_components]
+    components_: array, [n_components, n_features]
         Non-negative components of the data
     reconstruction_err_: number
         Frobenius norm of the matrix difference between the
@@ -283,24 +284,25 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from scikits.learn.nmf import NMF
-    >>> model = NMF(n_components=2, init=0)
+    >>> model = ProjectedGradientNMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, eta=0.1, max_iter=200,
-      init=<mtrand.RandomState object at 0x...>, beta=1, sparseness=None,
-      n_components=2, tol=0.0001)
+    ProjectedGradientNMF(nls_max_iter=2000, eta=0.1, max_iter=200,
+               init=<mtrand.RandomState object at 0x...>, beta=1,
+               sparseness=None, n_components=2, tol=0.0001)
     >>> model.components_
-    array([[ 0.77032744,  0.38526873],
-           [ 0.11118662,  0.38228063]])
+    array([[ 0.77032744,  0.11118662],
+           [ 0.38526873,  0.38228063]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.00746...
-    >>> model = NMF(n_components=2, init=0, sparseness='components')
+    >>> model = ProjectedGradientNMF(n_components=2, init=0,
+    ...                              sparseness='components')
     >>> model.fit(X) #doctest: +ELLIPSIS
-    NMF(nls_max_iter=2000, eta=0.1, max_iter=200,
-      init=<mtrand.RandomState object at 0x...>, beta=1,
-      sparseness='components', n_components=2, tol=0.0001)
+    ProjectedGradientNMF(nls_max_iter=2000, eta=0.1, max_iter=200,
+               init=<mtrand.RandomState object at 0x...>, beta=1,
+               sparseness='components', n_components=2, tol=0.0001)
     >>> model.components_
-    array([[ 1.67481991, -0.        ],
-           [ 0.29614922,  0.4681982 ]])
+    array([[ 1.67481991,  0.29614922],
+           [-0.        ,  0.4681982 ]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.513...
 
@@ -325,7 +327,9 @@ class NMF(BaseEstimator, TransformerMixin):
         self.init = init
         self.tol = tol
         if sparseness not in (None, 'data', 'components'):
-            raise ValueError('Invalid sparsity target')
+            raise ValueError(
+                'Invalid sparseness parameter: got %r instead of one of %r' %
+                (sparseness, (None, 'data', 'components')))
         self.sparseness = sparseness
         self.beta = beta
         self.eta = eta
@@ -373,7 +377,10 @@ class NMF(BaseEstimator, TransformerMixin):
         elif self.init == 'nndsvdar':
             W, H = _initialize_nmf_(X, self.n_components, variant='ar')
         else:
-            raise ValueError("Invalid value for initial parameter.")
+            raise ValueError(
+                'Invalid init parameter: got %r instead of one of %r' %
+                (self.init, (None, 'nndsvd', 'nndsvda', 'nndsvdar',
+                             int, np.random.RandomState)))
 
         gradW = np.dot(W, np.dot(H, H.T)) - np.dot(X, H.T)
         gradH = np.dot(np.dot(W.T, W), H) - np.dot(W.T, X)
@@ -432,7 +439,7 @@ class NMF(BaseEstimator, TransformerMixin):
             self.comp_sparseness_ = _sparseness_(H.flatten())
             self.data_sparseness_ = _sparseness_(W.flatten())
             self.reconstruction_err_ = norm(X - np.dot(W, H))
-            self.components_ = H.T
+            self.components_ = H
 
         if n_iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
@@ -472,5 +479,9 @@ class NMF(BaseEstimator, TransformerMixin):
         X = np.atleast_2d(X)
         H = np.zeros((X.shape[0], self.n_components))
         for j in xrange(0, X.shape[0]):
-            H[j, :], _ = nnls(self.components_, X[j, :])
+            H[j, :], _ = nnls(self.components_.T, X[j, :])
         return H
+
+
+class NMF(ProjectedGradientNMF):
+    pass
