@@ -3,7 +3,7 @@
 NMF for digits feature extraction
 ===================================================
 
-NMF with sparseness enforced in the components,
+:ref:`NMF` with sparseness enforced in the components,
 in comparison with PCA for feature extraction.
 
 """

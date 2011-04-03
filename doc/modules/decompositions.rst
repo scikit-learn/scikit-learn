@@ -142,8 +142,20 @@ fashion, by superimposing the components, without substracting. Such additive
 models are efficient for representing images and text.
 
 It has been observed in [Hoyer, 04] that, when carefully constrained,
-:class:`NMF` can produce a parts-based representation of the dataset, resulting 
-in interpretable models.
+:class:`NMF` can produce a parts-based representation of the dataset,
+resulting in interpretable models. The following example displays 16
+sparse components found by :class:`NMF` on the digits dataset.
+
+.. |pca_img| image:: ../auto_examples/images/plot_nmf_1.png
+    :target: ../auto_examples/plot_nmf.html
+    :scale: 50%
+
+.. |nmf_img| image:: ../auto_examples/images/plot_nmf_2.png
+    :target: ../auto_examples/plot_nmf.html
+    :scale: 50%
+
+.. centered:: |pca_img| |nmf_img|
+
 
 The :attr:`init` attribute determines the initialization method applied, which
 has a great impact on the performance of the method. :class:`NMF` implements 
@@ -162,16 +174,7 @@ passing an integer seed or a `RandomState` to :attr:`init`.
 In :class:`NMF`, sparseness can be enforced by setting the attribute
 :attr:`sparseness` to `data` or `components`. Sparse components lead to
 localized features, and sparse data leads to a more efficient representation
-of the data. The following example displays 16 sparse components found by
-:class:`NMF` on the digits dataset.
-
-
-.. image:: ../auto_examples/images/plot_nmf_1.png
-    :target: ../auto_examples/plot_nmf.html
-    :scale: 50%
-.. image:: ../auto_examples/images/plot_nmf_2.png
-    :target: ../auto_examples/plot_nmf.html
-    :scale: 50%
+of the data. 
 
 .. topic:: Examples:
 
