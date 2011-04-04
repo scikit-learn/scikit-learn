@@ -65,7 +65,6 @@ class LDA(BaseEstimator, ClassifierMixin):
                 print 'warning: the priors do not sum to 1. Renormalizing'
                 self.priors = self.priors / self.priors.sum()
 
-
     def fit(self, X, y, store_covariance=False, tol=1.0e-4, **params):
         """
         Fit the LDA model according to the given training data and parameters.
