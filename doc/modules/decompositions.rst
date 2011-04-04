@@ -102,6 +102,19 @@ is not the exact inverse transform of `transform` even when
       <http://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
+Kernel PCA
+----------
+
+Kernel PCA is an extension of PCA which achieves non-linear dimensionality
+reduction through the use of kernels. It has many applications including
+denoising, compression and structured prediction (kernel dependency estimation). 
+:class:`KernelPCA` supports both `transform` and `inverse_transform`.
+
+.. figure:: ../auto_examples/images/plot_kpca.png
+    :target: ../auto_examples/plot_kpca.html
+    :align: center
+    :scale: 75%
+
 
 .. _ICA:
 
