@@ -98,13 +98,16 @@ cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
 
-.. image:: ../auto_examples/cluster/images/plot_segmentation_toy_1.png
-    :target: ../auto_examples/cluster/plot_segmentation_toy.html
-    :scale: 50
-.. image:: ../auto_examples/cluster/images/plot_segmentation_toy_2.png
+
+.. |noisy_img| image:: ../auto_examples/cluster/images/plot_segmentation_toy_1.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
 
+.. |segmented_img| image:: ../auto_examples/cluster/images/plot_segmentation_toy_2.png
+    :target: ../auto_examples/cluster/plot_segmentation_toy.html
+    :scale: 50
+
+.. centered:: |noisy_img| |segmented_img|
 
 .. topic:: Examples:
 
@@ -151,13 +154,16 @@ forbid the merging of points that are not adjacent on the swiss roll, and
 thus avoid forming clusters that extend across overlapping folds of the
 roll.
 
-.. image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
-    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-    :scale: 50
+.. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
+        :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
+        :scale: 50
 
-.. image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
-    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-    :scale: 50
+.. |structured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
+        :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
+        :scale: 50
+
+.. centered:: |unstructured| |structured|
+
 
 The connectivity constraints are imposed via an connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
