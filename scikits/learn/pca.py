@@ -202,8 +202,10 @@ class PCA(BaseEstimator, TransformerMixin):
         U = U[:, :self.n_components]
 
         if self.whiten:
+            # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
             U *= np.sqrt(X.shape[0])
         else:
+            # X_new = X * V = U * S * V^T * V = U * S
             U *= S[:self.n_components]
 
         return U
@@ -223,8 +225,7 @@ class PCA(BaseEstimator, TransformerMixin):
                                         self.explained_variance_.sum()
 
         if self.whiten:
-            n = X.shape[0]
-            self.components_ = V.T / S * np.sqrt(n)
+            self.components_ = V.T / S * np.sqrt(n_samples)
         else:
             self.components_ = V.T
 
