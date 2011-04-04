@@ -110,7 +110,7 @@ reduction through the use of kernels. It has many applications including
 denoising, compression and structured prediction (kernel dependency estimation). 
 :class:`KernelPCA` supports both `transform` and `inverse_transform`.
 
-.. figure:: ../auto_examples/images/plot_kernel_pca.png
+.. figure:: ../auto_examples/images/plot_kernel_pca_1.png
     :target: ../auto_examples/plot_kernel_pca.html
     :align: center
     :scale: 75%
