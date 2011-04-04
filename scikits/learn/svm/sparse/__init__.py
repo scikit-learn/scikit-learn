@@ -18,5 +18,5 @@ Author: Fabian Pedregosa <fabian.pedregosa@inria.fr> with help from
 License: New BSD, (C) INRIA 2010
 """
 
-from .libsvm import SVC, NuSVC, SVR, NuSVR, OneClassSVM
-from .liblinear import LinearSVC
+from .classes import SVC, NuSVC, SVR, NuSVR, OneClassSVM, LinearSVC
+from . import libsvm

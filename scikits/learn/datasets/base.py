@@ -4,9 +4,11 @@ Base IO code for all datasets
 
 # Copyright (c) 2007 David Cournapeau <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
 import csv
+import shutil
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -15,7 +17,6 @@ from os.path import expanduser
 from os.path import isdir
 from os import listdir
 from os import makedirs
-
 
 import numpy as np
 
@@ -52,6 +53,12 @@ def get_data_home(data_home=None):
     if not exists(data_home):
         makedirs(data_home)
     return data_home
+
+
+def clear_data_home(data_home=None):
+    """Delete all the content of the data home cache"""
+    data_home = get_data_home(data_home)
+    shutil.rmtree(data_home)
 
 
 def load_filenames(container_path, description=None, categories=None,
@@ -247,8 +254,8 @@ def load_linnerud():
     base_dir = join(dirname(__file__), 'data/')
     # Read data
     data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
-    data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv', 
-                                        skiprows=1)
+    data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv',
+                                    skiprows=1)
     # Read header
     f = open(base_dir + 'linnerud_exercise.csv')
     header_exercise = f.readline().split()
@@ -261,4 +268,3 @@ def load_linnerud():
                  data_physiological=data_physiological,
                  header_physiological=header_physiological,
                  DESCR=fdescr.read())
-

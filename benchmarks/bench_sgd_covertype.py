@@ -152,7 +152,7 @@ liblinear_parameters = {
     'penalty': 'l2',
     'C': 1000,
     'dual': False,
-    'eps': 1e-3,
+    'tol': 1e-3,
     }
 liblinear_res = benchmark(LinearSVC(**liblinear_parameters))
 liblinear_err, liblinear_train_time, liblinear_test_time = liblinear_res

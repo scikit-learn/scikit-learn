@@ -40,9 +40,6 @@ import urllib
 import logging
 import tarfile
 
-import numpy as np
-
-from .base import Bunch
 from .base import get_data_home
 from .base import load_filenames
 
@@ -54,8 +51,8 @@ TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
 
-def load_20newsgroups(data_home=None, subset='train', categories=None,
-                      shuffle=True, rng=42):
+def fetch_20newsgroups(data_home=None, subset='train', categories=None,
+                      shuffle=True, rng=42, download_if_missing=True):
     """Load the filenames of the 20 newsgroups dataset
 
     Parameters
@@ -83,6 +80,9 @@ def load_20newsgroups(data_home=None, subset='train', categories=None,
     rng: a numpy random number generator or a seed integer, 42 by default
         used to shuffle the dataset
 
+    download_if_missing: optional, True by default
+        If False, raise a IOError if the data is not locally available
+        instead of trying to download the data from the source site.
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -97,9 +97,12 @@ def load_20newsgroups(data_home=None, subset='train', categories=None,
     if not os.path.exists(train_path) or not os.path.exists(test_path):
 
         if not os.path.exists(archive_path):
-            logging.info("Downloading dataset from %s (14 MB)", URL)
-            opener = urllib.urlopen(URL)
-            open(archive_path, 'wb').write(opener.read())
+            if download_if_missing:
+                logging.warn("Downloading dataset from %s (14 MB)", URL)
+                opener = urllib.urlopen(URL)
+                open(archive_path, 'wb').write(opener.read())
+            else:
+                raise IOError("%s is missing" % archive_path)
 
         logging.info("Decompressing %s", archive_path)
         tarfile.open(archive_path, "r:gz").extractall(path=twenty_home)
@@ -116,3 +119,12 @@ def load_20newsgroups(data_home=None, subset='train', categories=None,
     description = subset + ' subset of the 20 newsgroups by date dataset'
     return load_filenames(folder_path, description=description,
                           categories=categories, shuffle=shuffle, rng=rng)
+
+
+def load_20newsgroups(download_if_missing=False, **kwargs):
+    """Alias for fetch_20newsgroups(download_if_missing=False)
+
+    Check out fetch_20newsgroups.__doc__ for the documentation and parameters
+    list.
+    """
+    return fetch_20newsgroups(download_if_missing=download_if_missing, **kwargs)

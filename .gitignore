@@ -3,6 +3,7 @@
 *~
 .#*
 *.swp
+.DS_Store
 build
 scikits/learn/datasets/__config__.py
 

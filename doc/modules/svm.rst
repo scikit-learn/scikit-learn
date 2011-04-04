@@ -46,7 +46,7 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/plot_iris.png
+.. figure:: ../auto_examples/svm/images/plot_iris_1.png
    :target: ../auto_examples/svm/plot_iris.html
    :align: center
 
@@ -129,17 +129,50 @@ two classes, only one model is trained.
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
-    
+
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+
+
+Unbalanced problems
+--------------------
+
+In problems where it is desired to give more importance to certain
+classes or certain individual samples keywords ``class_weight`` and
+``sample_weight`` can be used.
+
+:class:`SVC` (but not :class:`NuSVC`) implement a keyword
+``class_weight`` in the fit method. It's a dictionary of the form
+``{class_label : value}``, where value is a floating point number > 0
+that sets the parameter C of class ``class_label`` to C * value.
+
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_1.png
+   :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
+   :align: center
+   :scale: 75
+
+
+:class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR` and
+:class:`OneClassSVM` implement also weights for individual samples in method
+``fit`` through keyword sample_weight.
+
+
+.. figure:: ../auto_examples/svm/images/plot_weighted_samples_1.png
+   :target: ../auto_examples/svm/plot_weighted_samples.html
+   :align: center
+   :scale: 75
+
 
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_iris.py`,
  * :ref:`example_svm_plot_separating_hyperplane.py`,
+ * :ref:`example_svm_plot_separating_hyperplane_unbalanced.py`
  * :ref:`example_svm_plot_svm_anova.py`,
  * :ref:`example_svm_plot_svm_nonlinear.py`
+ * :ref:`example_svm_plot_weighted_samples.py`,
+
 
 .. _svm_regression:
 
@@ -194,7 +227,7 @@ In this case, as it is a type of unsupervised learning, the fit method
 will only take as input an array X, as there are no class labels.
 
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass.png
+.. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
@@ -261,9 +294,9 @@ Tips on Practical Use
   * Parameter nu in NuSVC/OneClassSVM/NuSVR approximates the fraction
     of training errors and support vectors.
 
-  * If data for classification are unbalanced (e.g. many positive and
-    few negative), set class_weight='auto' and/or try different
-    penalty parameters C.
+  * In SVC, if data for classification are unbalanced (e.g. many
+    positive and few negative), set class_weight='auto' and/or try
+    different penalty parameters C.
 
   * Specify larger cache size (keyword cache) for huge problems.
 
@@ -363,7 +396,7 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane.png
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_1.png
    :align: center
    :scale: 75
 

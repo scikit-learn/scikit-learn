@@ -101,5 +101,3 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     if loader is None:
         raise ValueError("No loader implemented for format: " + format)
     return loader(dataset_path, metadata, set_=set_, **kwargs)
-
-

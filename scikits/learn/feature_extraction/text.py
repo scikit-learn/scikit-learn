@@ -8,7 +8,8 @@ from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
-from ...base import BaseEstimator
+from ..base import BaseEstimator
+from ..preprocessing.sparse import Normalizer
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -198,11 +199,20 @@ class CharNGramAnalyzer(BaseEstimator):
 DEFAULT_ANALYZER = WordNGramAnalyzer(min_n=1, max_n=1)
 
 
-class BaseCountVectorizer(BaseEstimator):
+class CountVectorizer(BaseEstimator):
     """Convert a collection of raw documents to a matrix of token counts
 
-    This class can't be used directly, use either CountVectorizer or
-    sparse.CountVectorizer.
+    This implementation produces a sparse representation of the counts using
+    scipy.sparse.coo_matrix.
+
+    If you do not provide an a-priori dictionary and you do not use
+    an analyzer that does some kind of feature selection then the number of
+    features (the vocabulary size found by analysing the data) might be very
+    large and the count vectors might not fit in memory.
+
+    For this case it is either recommended to use the sparse.CountVectorizer
+    variant of this class or a HashingVectorizer that will reduce the
+    dimensionality to an arbitrary number by using random projection.
 
     Parameters
     ----------
@@ -239,7 +249,26 @@ class BaseCountVectorizer(BaseEstimator):
         self.max_features = max_features
 
     def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
-        raise NotImplementedError
+
+        import scipy.sparse as sp
+        i_indices = []
+        j_indices = []
+        values = []
+
+        for i, term_count_dict in enumerate(term_count_dicts):
+            for term, count in term_count_dict.iteritems():
+                j = vocabulary.get(term)
+                if j is not None:
+                    i_indices.append(i)
+                    j_indices.append(j)
+                    values.append(count)
+            # free memory as we go
+            term_count_dict.clear()
+
+        shape = (len(term_count_dicts), max(vocabulary.itervalues()) + 1)
+        return sp.coo_matrix((values, (i_indices, j_indices)),
+                             shape=shape, dtype=self.dtype)
+
 
     def _build_vectors_and_vocab(self, raw_documents):
         """Analyze documents, build vocabulary and vectorize"""
@@ -380,77 +409,7 @@ class BaseCountVectorizer(BaseEstimator):
         return self._build_vectors(raw_documents)
 
 
-class CountVectorizer(BaseCountVectorizer):
-    """Convert a collection of raw documents to a matrix of token counts
-
-    This implementation produces a dense representation of the counts using
-    a numpy array.
-
-    If you do not provide an a-priori dictionary and you do not use
-    an analyzer that does some kind of feature selection then the number of
-    features (the vocabulary size found by analysing the data) might be very
-    large and the count vectors might not fit in memory.
-
-    For this case it is either recommended to use the sparse.CountVectorizer
-    variant of this class or a HashingVectorizer that will reduce the
-    dimensionality to an arbitrary number by using random projection.
-
-    Parameters
-    ----------
-    analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
-
-    vocabulary: dict, optional
-        A dictionary where keys are tokens and values are indices in the
-        matrix.
-        This is useful in order to fix the vocabulary in advance.
-
-    dtype: type, optional
-        Type of the matrix returned by fit_transform() or transform().
-    """
-
-    def _term_count_dicts_to_matrix(self, term_count_dicts, vocabulary):
-        vectors = np.zeros((len(term_count_dicts), len(vocabulary)),
-                           dtype=self.dtype)
-
-        for i, term_count_dict in enumerate(term_count_dicts):
-            for term, count in term_count_dict.iteritems():
-                j = vocabulary.get(term)
-                if j is not None:
-                    vectors[i, j] = count
-            # free memory as we go
-            term_count_dict.clear()
-
-        return vectors
-
-
-class BaseTfidfTransformer(BaseEstimator):
-    """Transform a count matrix to a TF or TF-IDF representation
-
-    TF means term-frequency while TF-IDF means term-frequency times inverse
-    document-frequency:
-
-      http://en.wikipedia.org/wiki/TF-IDF
-
-    This class can't be used directly, use either TfidfTransformer or
-    sparse.TfidfTransformer.
-
-    Parameters
-    ----------
-
-    use_tf: boolean
-        enable term-frequency normalization
-
-    use_idf: boolean
-        enable inverse-document-frequency reweighting
-    """
-
-    def __init__(self, use_tf=True, use_idf=True):
-        self.use_tf = use_tf
-        self.use_idf = use_idf
-        self.idf = None
-
-
-class TfidfTransformer(BaseTfidfTransformer):
+class TfidfTransformer(BaseEstimator):
     """Transform a count matrix to a TF or TF-IDF representation
 
     TF means term-frequency while TF-IDF means term-frequency times inverse
@@ -476,19 +435,26 @@ class TfidfTransformer(BaseTfidfTransformer):
         enable inverse-document-frequency reweighting
     """
 
+    def __init__(self, use_tf=True, use_idf=True):
+        self.use_tf = use_tf
+        self.use_idf = use_idf
+        self.idf = None
+
     def fit(self, X, y=None):
         """Learn the IDF vector (global term weights)
 
         Parameters
         ----------
-        X: array, [n_samples, n_features]
+        X: sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
 
         """
-
+        n_samples, n_features = X.shape
         if self.use_idf:
             # how many documents include each token?
-            idc = np.sum(X > 0, axis=0)
+            idc = np.zeros(n_features, dtype=np.float64)
+            for doc, token in zip(*X.nonzero()):
+                idc[token] += 1
             self.idf = np.log(float(X.shape[0]) / idc)
 
         return self
@@ -498,31 +464,41 @@ class TfidfTransformer(BaseTfidfTransformer):
 
         Parameters
         ----------
-        X: array, [n_samples, n_features]
+        X: sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
 
         Returns
         -------
-        vectors: array, [n_samples, n_features]
+        vectors: sparse matrix, [n_samples, n_features]
         """
-        X = np.array(X, dtype=np.float64, copy=copy)
+        import scipy.sparse as sp
+        X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
+        n_samples, n_features = X.shape
 
         if self.use_tf:
-            # term-frequencies (normalized counts)
-            X /= np.sum(X, axis=1)[:,np.newaxis]
+            X = Normalizer().transform(X)
 
         if self.use_idf:
-            X *= self.idf
+            d = sp.lil_matrix((len(self.idf), len(self.idf)))
+            d.setdiag(self.idf)
+            # *= doesn't work
+            X = X * d
 
         return X
 
 
-class BaseVectorizer(BaseEstimator):
+class Vectorizer(BaseEstimator):
     """Convert a collection of raw documents to a matrix
 
-    This class can't be used directly, use either Vectorizer or
-    sparse.Vectorizer.
+    Equivalent to CountVectorizer followed by TfidfTransformer.
     """
+
+    def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
+                 max_features=None, use_tf=True, use_idf=True):
+        self.tc = CountVectorizer(analyzer, max_df=max_df,
+                                  max_features=max_features,
+                                  dtype=np.float64)
+        self.tfidf = TfidfTransformer(use_tf, use_idf)
 
     def fit(self, raw_documents):
         X = self.tc.fit_transform(raw_documents)
@@ -569,22 +545,3 @@ class BaseVectorizer(BaseEstimator):
         return self.tc.vocabulary
 
     vocabulary = property(_get_vocab)
-
-
-class Vectorizer(BaseVectorizer):
-    """Convert a collection of raw documents to a matrix
-
-    Equivalent to CountVectorizer followed by TfidfTransformer.
-    """
-
-    def __init__(self,
-                 analyzer=DEFAULT_ANALYZER,
-                 max_df=1.0,
-                 max_features=None,
-                 use_tf=True,
-                 use_idf=True):
-        self.tc = CountVectorizer(analyzer, max_df=max_df,
-                                  max_features=max_features,
-                                  dtype=np.float64)
-        self.tfidf = TfidfTransformer(use_tf, use_idf)
-

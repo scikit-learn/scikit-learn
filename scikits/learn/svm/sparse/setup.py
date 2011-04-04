@@ -1,19 +1,13 @@
 from os.path import join
-import sys
-import warnings
 import numpy
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, get_standard_file, \
-         BlasNotFoundError
 
     config = Configuration('sparse', parent_package, top_path)
 
-
-    libsvm_sparse_sources = [join('..', 'src', 'libsvm', '_libsvm_sparse.c')]
-
-    config.add_extension('_libsvm_sparse',
+    libsvm_sparse_sources = ['libsvm.c']
+    config.add_extension('libsvm',
                          libraries=['libsvm-skl'],
                          sources=libsvm_sparse_sources,
                          include_dirs=[numpy.get_include(),

@@ -31,6 +31,14 @@ div.header-wrapper {
     margin-top: 10px;
 }
 
+ul.horizontal, ul.horizontal li {
+    display: inline;
+    list-style: none;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+}
+
+
 div.header {
     /* for the logo to correctly expand when showing results
        but remain cut when not */

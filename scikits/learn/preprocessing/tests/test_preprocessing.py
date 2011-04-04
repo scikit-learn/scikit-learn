@@ -150,6 +150,17 @@ def test_label_binarizer():
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
+def test_label_binarizer_multilabel():
+    lb = LabelBinarizer()
+
+    inp = [(2, 3), (1,), (1, 2)]
+    expected = np.array([[0, 1, 1],
+                         [1, 0, 0],
+                         [1, 1, 0]])
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+    assert_equal(lb.inverse_transform(got), inp)
+
 def test_label_binarizer_iris():
     lb = LabelBinarizer()
     Y = lb.fit_transform(iris.target)

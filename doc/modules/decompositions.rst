@@ -36,7 +36,7 @@ data based on the amount of variance it explains. As such it implements a
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
-.. figure:: ../auto_examples/images/plot_pca.png
+.. figure:: ../auto_examples/images/plot_pca_1.png
     :target: ../auto_examples/plot_pca.html
     :align: center
     :scale: 75%
@@ -114,7 +114,7 @@ ICA finds components that are maximally independent. It is classically
 used to separate mixed signals (a problem know as *blind source
 separation*), as in the example below:
 
-.. figure:: ../auto_examples/images/plot_ica_blind_source_separation.png
+.. figure:: ../auto_examples/images/plot_ica_blind_source_separation_1.png
     :target: ../auto_examples/plot_ica_blind_source_separation.html
     :align: center
     :scale: 50%
@@ -125,3 +125,76 @@ separation*), as in the example below:
     * :ref:`example_plot_ica_blind_source_separation.py`
     * :ref:`example_plot_ica_vs_pca.py`
 
+.. _NMF:
+
+Non-negative matrix factorization (NMF)
+=======================================
+
+.. currentmodule:: scikits.learn.nmf
+
+:class:`NMF` is an alternative approach to decomposition that assumes that the
+data and the components are non-negative. :class:`NMF` can be plugged in
+instead of :class:`PCA` or its variants, in the cases where the data matrix
+does not contain negative values.
+
+Unlike :class:`PCA`, the representation of a vector is obtained in an additive
+fashion, by superimposing the components, without substracting. Such additive
+models are efficient for representing images and text.
+
+It has been observed in [Hoyer, 04] that, when carefully constrained,
+:class:`NMF` can produce a parts-based representation of the dataset,
+resulting in interpretable models. The following example displays 16
+sparse components found by :class:`NMF` on the digits dataset.
+
+.. |pca_img| image:: ../auto_examples/images/plot_nmf_1.png
+    :target: ../auto_examples/plot_nmf.html
+    :scale: 50%
+
+.. |nmf_img| image:: ../auto_examples/images/plot_nmf_2.png
+    :target: ../auto_examples/plot_nmf.html
+    :scale: 50%
+
+.. centered:: |pca_img| |nmf_img|
+
+
+The :attr:`init` attribute determines the initialization method applied, which
+has a great impact on the performance of the method. :class:`NMF` implements 
+the method Nonnegative Double Singular Value Decomposition. NNDSVD is based on
+two SVD processes, one approximating the data matrix, the other approximating 
+positive sections of the resulting partial SVD factors utilizing an algebraic 
+property of unit rank matrices. The basic NNDSVD algorithm is better fit for
+sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to 
+the mean of all elements of the data), and NNDSVDar (in which the zeros are set 
+to random perturbations less than the mean of the data divided by 100) are 
+recommended in the dense case.
+
+:class:`NMF` can also be initialized with random non-negative matrices, by
+passing an integer seed or a `RandomState` to :attr:`init`.
+
+In :class:`NMF`, sparseness can be enforced by setting the attribute
+:attr:`sparseness` to `data` or `components`. Sparse components lead to
+localized features, and sparse data leads to a more efficient representation
+of the data. 
+
+.. topic:: Examples:
+
+    * :ref:`example_plot_nmf.py`
+
+.. topic:: References:
+
+    * `"Learning the parts of objects by non-negative matrix factorization"
+      <http://www.seas.upenn.edu/~ddlee/Papers/nmf.pdf>`_
+      D. Lee, S. Seung, 1999
+
+    * `"Non-negative Matrix Factorization with Sparseness Constraints"
+      <http://www.cs.helsinki.fi/u/phoyer/papers/pdf/NMFscweb.pdf>`_
+      P. Hoyer, 2004
+
+    * `"Projected gradient methods for non-negative matrix factorization"
+      <http://www.csie.ntu.edu.tw/~cjlin/nmf/>`_
+      C.-J. Lin, 2007
+
+    * `"SVD based initialization: A head start for nonnegative
+      matrix factorization"
+      <http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf>`_
+      C. Boutsidis, E. Gallopoulos, 2008 

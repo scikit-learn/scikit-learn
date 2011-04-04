@@ -78,7 +78,7 @@ def test_pca_check_projection():
     Yt = PCA(n_components=2).fit(X).transform(Xt)
     Yt /= np.sqrt((Yt ** 2).sum())
 
-    np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
+    assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
 
 
 def test_pca_inverse():
@@ -115,7 +115,16 @@ def test_randomized_pca_check_projection():
     Yt = RandomizedPCA(n_components=2).fit(X).transform(Xt)
     Yt /= np.sqrt((Yt ** 2).sum())
 
-    np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
+    assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
+
+
+def test_randomized_pca_check_list():
+    """Test that the projection by RandomizedPCA on list data is correct"""
+    X = [[1.0, 0.0], [0.0, 1.0]]
+    X_transformed = RandomizedPCA(n_components=1).fit(X).transform(X)
+    assert_equal(X_transformed.shape, (2, 1))
+    assert_almost_equal(X_transformed.mean(), 0.00, 2)
+    assert_almost_equal(X_transformed.std(), 0.71, 2)
 
 
 def test_randomized_pca_inverse():
@@ -250,6 +259,7 @@ def test_infer_dim_by_explained_variance():
     pca.fit(X)
     assert_equal(pca.n_components, 1)
 
+
 def test_probabilistic_pca_1():
     """Test that probabilistic PCA yields a reasonable score"""
     n, p = 1000, 3
@@ -257,8 +267,8 @@ def test_probabilistic_pca_1():
     ppca = ProbabilisticPCA(n_components=2)
     ppca.fit(X)
     ll1 = ppca.score(X)
-    h = 0.5 * np.log(2 * np.pi * np.exp(1) / 0.1**2) * p
-    np.testing.assert_almost_equal(ll1.mean()/h, 1, 0)
+    h = 0.5 * np.log(2 * np.pi * np.exp(1) / 0.1 ** 2) * p
+    np.testing.assert_almost_equal(ll1.mean() / h, 1, 0)
 
 
 def test_probabilistic_pca_2():
@@ -289,8 +299,8 @@ def test_probabilistic_pca_3():
 def test_probabilistic_pca_4():
     """Check that ppca select the right model"""
     n, p = 200, 3
-    Xl = randn(n, p) + randn(n, 1)*np.array([3, 4, 5]) + np.array([1, 0, 7])
-    Xt = randn(n, p) + randn(n, 1)*np.array([3, 4, 5]) + np.array([1, 0, 7])
+    Xl = randn(n, p) + randn(n, 1) * np.array([3, 4, 5]) + np.array([1, 0, 7])
+    Xt = randn(n, p) + randn(n, 1) * np.array([3, 4, 5]) + np.array([1, 0, 7])
     ll = np.zeros(p)
     for k in range(p):
         ppca = ProbabilisticPCA(n_components=k)
@@ -303,4 +313,3 @@ def test_probabilistic_pca_4():
 if __name__ == '__main__':
     import nose
     nose.run(argv=['', __file__])
-

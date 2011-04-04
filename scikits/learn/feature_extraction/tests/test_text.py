@@ -7,16 +7,13 @@ from scikits.learn.feature_extraction.text import CountVectorizer
 from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.feature_extraction.text import Vectorizer
 
-import scikits.learn.feature_extraction.text.sparse as st
-
-SparseCountVectorizer = st.CountVectorizer
-SparseTfidfTransformer = st.TfidfTransformer
-SparseVectorizer = st.Vectorizer
+SparseCountVectorizer = CountVectorizer
+SparseTfidfTransformer = TfidfTransformer
+SparseVectorizer = Vectorizer
 
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
-from scikits.learn.svm import LinearSVC as DenseLinearSVC
-from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
+from scikits.learn.svm.sparse import LinearSVC as LinearSVC
 
 import numpy as np
 import numpy.linalg as la
@@ -265,7 +262,7 @@ def test_dense_vectorizer_pipeline_grid_selection():
     y_test = np.array([y[0],y[-1]])
 
     pipeline = Pipeline([('vect', CountVectorizer()),
-                         ('svc', DenseLinearSVC())])
+                         ('svc', LinearSVC())])
 
     parameters = {
         'vect__analyzer__max_n': (1, 2),

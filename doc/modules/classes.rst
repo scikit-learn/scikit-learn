@@ -116,7 +116,6 @@ Nearest Neighbors
    :template: function.rst
 
    neighbors.kneighbors_graph
-   ball_tree.knn_brute
 
 
 Gaussian Mixture Models
@@ -152,6 +151,7 @@ Clustering
    cluster.MeanShift
    cluster.SpectralClustering
    cluster.AffinityPropagation
+   cluster.Ward
 
 
 Metrics
@@ -209,6 +209,7 @@ Signal Decomposition
    pca.ProbabilisticPCA
    pca.RandomizedPCA
    fastica.FastICA
+   nmf.NMF
 
 .. autosummary::
    :toctree: generated/
@@ -266,6 +267,7 @@ Feature Extraction
    :template: function.rst
 
    feature_extraction.image.img_to_graph
+   feature_extraction.image.grid_to_graph
 
 .. autosummary::
    :toctree: generated/
