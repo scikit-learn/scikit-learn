@@ -206,7 +206,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 
 def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
-                    min_faces_per_person=10, color=False,
+                    min_faces_per_person=None, color=False,
                     slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
@@ -236,7 +236,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     resize: float, optional, default 0.5
         Ratio used to resize the each face picture.
 
-    min_faces_per_person=10: int, optional, default 10
+    min_faces_per_person: int, optional, default None
         The extracted dataset will only retain pictures of people that have at
         least `min_faces_per_person` different pictures.
 
