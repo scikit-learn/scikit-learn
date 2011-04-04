@@ -13,7 +13,7 @@ import itertools
 import pylab as pl
 import matplotlib as mpl
 
-n, m = 300, 2
+n, m = 200, 2
 
 # generate random sample, two components
 np.random.seed(0)
@@ -22,7 +22,7 @@ X = np.r_[np.dot(np.random.randn(n, 2), C),
           np.random.randn(n, 2) + np.array([3, 3])]
 
 for p,alpha in enumerate([0.01, 1., 100.]):
-    clf = mixture.DPGMM(n_states=10, cvtype='full', alpha=alpha)
+    clf = mixture.DPGMM(n_states=5, cvtype='full', alpha=alpha)
     clf.fit(X)
 
     splot = pl.subplot(310+p+1, aspect='equal')
