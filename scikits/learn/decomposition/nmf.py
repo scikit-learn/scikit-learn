@@ -283,7 +283,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from scikits.learn.nmf import NMF
+    >>> from scikits.learn.decomposition import ProjectedGradientNMF
     >>> model = ProjectedGradientNMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
     ProjectedGradientNMF(nls_max_iter=2000, eta=0.1, max_iter=200,

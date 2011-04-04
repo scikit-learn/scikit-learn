@@ -36,14 +36,14 @@ data based on the amount of variance it explains. As such it implements a
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
-.. figure:: ../auto_examples/images/plot_pca_1.png
-    :target: ../auto_examples/plot_pca.html
+.. figure:: ../auto_examples/images/plot_pca_vs_lda_1.png
+    :target: ../auto_examples/plot_pca_vs_lda.html
     :align: center
     :scale: 75%
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_pca.py`
+    * :ref:`example_plot_pca_vs_lda.py`
 
 
 Approximate PCA
