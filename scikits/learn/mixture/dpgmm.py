@@ -144,25 +144,20 @@ class DPGMM(mixture.GMM):
             bound += 0.5*self.n_features*(digamma(self._a[k])-np.log(self._b[k]))
             bound -= 0.5*(self._covars[k])*(norm(x-self._means[k])+self.n_features)
         elif self.cvtype == 'diag':
-            for i in xrange(self.n_features):
-                bound += 0.5*np.sum(digamma(self._a[k])-np.log(self._b[k]))
+            bound += 0.5*np.sum(digamma(self._a[k])-np.log(self._b[k]))
             bound -= 0.5*diagnorm(x-self._means[k], self._covars[k])
             bound -= 0.5*np.sum(self._covars[k])
-        elif self.cvtype == 'tied':
-            "check this bound"
+        elif self.cvtype == 'tied' or self.cvtype == 'full':
+            if self.cvtype == 'tied':
+                a, B, detB, c = self._a, self._b, self._detB, self._covars
+            else:
+                a, B, detB, c = self._a[k], self._b[k], self._detB[k], self._covars[k]
             for i in xrange(self.n_features):
-                bound += 0.5*digamma((self._a-1-i)/2.) 
+                bound += 0.5*digamma((a-1-i)/2.) 
             bound += 0.5*self.n_features*np.log(2)
-            bound += 0.5*np.log(self._detB)
-            bound -= 0.5*squarenorm(x-self._means[k], self._covars)
-            bound -= 0.5*self._a*np.trace(self._B)
-        elif self.cvtype == 'full':
-            for i in xrange(self.n_features):
-                bound += 0.5*digamma((self._a[k]-1-i)/2.) 
-            bound += 0.5*self.n_features*np.log(2)
-            bound += 0.5*np.log(self._detB[k])
-            bound -= 0.5*squarenorm(x-self._means[k], self._covars[k])
-            bound -= 0.5*self._a[k]*np.trace(self._B[k])
+            bound += 0.5*np.log(detB)
+            bound -= 0.5*squarenorm(x-self._means[k], c)
+            bound -= 0.5*a*np.trace(B)
         else: 
             raise NotImplementedError("This ctype is not implemented: "+self.cvtype)
         return bound
@@ -216,8 +211,7 @@ class DPGMM(mixture.GMM):
             self._gamma[i,1] = 1. + np.sum(self._z.T[i])
             self._gamma[i,2] = self.alpha
             for k in xrange(i+1, self.n_states):
-                for j in xrange(self._z.shape[0]):
-                    self._gamma[i,2] += self._z[j,k]
+                self._gamma[i,2] += np.sum(self._z.T[k])
 
 
     def _update_mu(self):
