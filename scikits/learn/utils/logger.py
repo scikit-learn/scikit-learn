@@ -140,6 +140,8 @@ def logtools(domain):
 
     Parameters:
     domain: str
+
+    returns (logger, log_helper(), threshold_helper())
     """
     logger = _getlogger(domain)
 
