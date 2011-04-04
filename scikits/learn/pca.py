@@ -536,7 +536,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         elif self.kernel == "linear":
             return linear_kernel(X, Y)
         else:
-            raise ValueError("Invalid kernel")
+            raise ValueError("%s is not a valid kernel. Valid kernels are: "
+                             "rbf, poly, linear and precomputed." % self.kernel)
 
     def _fit_transform(self, X):
         n_samples, n_components = X.shape
@@ -584,7 +585,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self._set_params(**params)
         self._fit_transform(X)
 
-        # XXX: Doesn't the below get computed twice if calling fit_transform?
         if self.fit_inverse_transform:
             sqrt_lambdas = np.diag(np.sqrt(self.lambdas_))
             X_transformed = np.dot(self.alphas_, sqrt_lambdas)

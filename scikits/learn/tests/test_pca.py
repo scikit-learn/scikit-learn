@@ -2,6 +2,7 @@ import numpy as np
 from numpy.random import randn
 from nose.tools import assert_true
 from nose.tools import assert_equal
+from nose.tools import assert_raises
 
 from scipy.sparse import csr_matrix
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
@@ -358,6 +359,12 @@ def test_kernel_pca_precomputed():
               transform(np.dot(X_pred, X_fit.T))
 
     assert_array_almost_equal(X_kpca, X_kpca2)
+
+
+def test_kernel_pca_invalid_kernel():
+    X_fit = np.random.random((2, 4))
+    kpca = KernelPCA(kernel="tototiti")
+    assert_raises(ValueError, kpca.fit, X_fit)
 
 
 if __name__ == '__main__':
