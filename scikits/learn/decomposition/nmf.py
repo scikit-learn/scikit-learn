@@ -357,7 +357,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         if (X < 0).any():
             raise ValueError("Negative data passed to NMF.fit.")
 
-        n_features, n_samples = X.shape
+        n_samples, n_features = X.shape
 
         if not self.n_components:
             self.n_components = n_features
@@ -368,8 +368,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             self.init = np.random.RandomState(self.init)
 
         if isinstance(self.init, np.random.RandomState):
-            W = np.abs(self.init.randn(n_features, self.n_components))
-            H = np.abs(self.init.randn(self.n_components, n_samples))
+            W = np.abs(self.init.randn(n_samples, self.n_components))
+            H = np.abs(self.init.randn(self.n_components, n_features))
         elif self.init == 'nndsvd':
             W, H = _initialize_nmf_(X, self.n_components)
         elif self.init == 'nndsvda':
@@ -402,13 +402,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                                                    self.nls_max_iter)
             elif self.sparseness == 'data':
                 W, gradW, iterW = _nls_subproblem_(
-                        np.r_[X.T, np.zeros((1, n_features))],
+                        np.r_[X.T, np.zeros((1, n_samples))],
                         np.r_[H.T, np.sqrt(self.beta) *
                               np.ones((1, self.n_components))],
                         W.T, tolW, self.nls_max_iter)
             elif self.sparseness == 'components':
                 W, gradW, iterW = _nls_subproblem_(
-                        np.r_[X.T, np.zeros((self.n_components, n_features))],
+                        np.r_[X.T, np.zeros((self.n_components, n_samples))],
                         np.r_[H.T, np.sqrt(self.eta) *
                               np.eye(self.n_components)],
                         W.T, tolW, self.nls_max_iter)
@@ -424,13 +424,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                                                    self.nls_max_iter)
             elif self.sparseness == 'data':
                 H, gradH, iterH = _nls_subproblem_(
-                        np.r_[X, np.zeros((self.n_components, n_samples))],
+                        np.r_[X, np.zeros((self.n_components, n_features))],
                         np.r_[W, np.sqrt(self.eta) *
                               np.eye(self.n_components)],
                         H, tolH, self.nls_max_iter)
             elif self.sparseness == 'components':
                 H, gradH, iterH = _nls_subproblem_(
-                        np.r_[X, np.zeros((1, n_samples))],
+                        np.r_[X, np.zeros((1, n_features))],
                         np.r_[W, np.sqrt(self.beta) *
                               np.ones((1, self.n_components))],
                         H, tolH, self.nls_max_iter)
