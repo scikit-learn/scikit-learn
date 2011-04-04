@@ -208,6 +208,7 @@ Signal Decomposition
    decomposition.PCA
    decomposition.ProbabilisticPCA
    decomposition.RandomizedPCA
+   decomposition.KernelPCA
    decomposition.FastICA
    decomposition.NMF
 

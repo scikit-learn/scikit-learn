@@ -2,9 +2,10 @@ import numpy as np
 from numpy.random import randn
 from nose.tools import assert_true
 from nose.tools import assert_equal
+from nose.tools import assert_raises
 
 from scipy.sparse import csr_matrix
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from ... import datasets
 from ..pca import PCA
@@ -12,6 +13,7 @@ from ..pca import ProbabilisticPCA
 from ..pca import RandomizedPCA
 from ..pca import _assess_dimension_
 from ..pca import _infer_dimension_
+from ..pca import KernelPCA
 
 iris = datasets.load_iris()
 
@@ -23,9 +25,17 @@ def test_pca():
     X_r = pca.fit(X).transform(X)
     np.testing.assert_equal(X_r.shape[1], 2)
 
+    X_r2 = pca.fit_transform(X)
+    assert_array_almost_equal(X_r, X_r2)
+
     pca = PCA()
     pca.fit(X)
     assert_almost_equal(pca.explained_variance_ratio_.sum(), 1.0, 3)
+
+    X_r = pca.transform(X)
+    X_r2 = pca.fit_transform(X)
+
+    assert_array_almost_equal(X_r, X_r2)
 
 
 def test_whitening():
@@ -50,9 +60,13 @@ def test_whitening():
     assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
 
     # whiten the data while projecting to the lower dim subspace
-    pca = PCA(n_components=n_components, whiten=True).fit(X)
-    X_whitened = pca.transform(X)
+    pca = PCA(n_components=n_components, whiten=True)
+
+    # test fit_transform
+    X_whitened = pca.fit_transform(X)
     assert_equal(X_whitened.shape, (n_samples, n_components))
+    X_whitened2 = pca.transform(X)
+    assert_array_almost_equal(X_whitened, X_whitened2)
 
     # all output component have unit variances
     assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
@@ -85,9 +99,9 @@ def test_pca_inverse():
     """Test that the projection of data can be inverted"""
     np.random.seed(0)
     n, p = 50, 3
-    X = randn(n, p) # spherical data
-    X[:, 1] *= .00001 # make middle component relatively small
-    X += [5, 4, 3] # make a large mean
+    X = randn(n, p)  # spherical data
+    X[:, 1] *= .00001  # make middle component relatively small
+    X += [5, 4, 3]  # make a large mean
 
     # same check that we can find the original data from the transformed
     # signal (since the data is almost of rank n_components)
@@ -131,9 +145,9 @@ def test_randomized_pca_inverse():
     """Test that RandomizedPCA is inversible on dense data"""
     np.random.seed(0)
     n, p = 50, 3
-    X = randn(n, p) # spherical data
-    X[:, 1] *= .00001 # make middle component relatively small
-    X += [5, 4, 3] # make a large mean
+    X = randn(n, p)  # spherical data
+    X[:, 1] *= .00001  # make middle component relatively small
+    X += [5, 4, 3]  # make a large mean
 
     # same check that we can find the original data from the transformed signal
     # (since the data is almost of rank n_components)
@@ -170,8 +184,8 @@ def test_sparse_randomized_pca_inverse():
     """Test that RandomizedPCA is inversible on sparse data"""
     np.random.seed(0)
     n, p = 50, 3
-    X = randn(n, p) # spherical data
-    X[:, 1] *= .00001 # make middle component relatively small
+    X = randn(n, p)  # spherical data
+    X[:, 1] *= .00001  # make middle component relatively small
     # no large means because the sparse version of randomized pca does not do
     # centering to avoid breaking the sparsity
     X = csr_matrix(X)
@@ -216,7 +230,7 @@ def test_infer_dim_1():
     spect = pca.explained_variance_
     ll = []
     for k in range(p):
-         ll.append(_assess_dimension_(spect, k, n, p))
+        ll.append(_assess_dimension_(spect, k, n, p))
     ll = np.array(ll)
     assert_true(ll[1] > ll.max() - .01 * n)
 
@@ -240,14 +254,15 @@ def test_infer_dim_3():
     """
     """
     n, p = 100, 5
-    X = randn(n, p)*.1
+    X = randn(n, p) * .1
     X[:10] += np.array([3, 4, 5, 1, 2])
     X[10:20] += np.array([6, 0, 7, 2, -1])
-    X[30:40] += 2*np.array([-1, 1, -1, 1, -1])
+    X[30:40] += 2 * np.array([-1, 1, -1, 1, -1])
     pca = PCA(n_components=p)
     pca.fit(X)
     spect = pca.explained_variance_
     assert_true(_infer_dimension_(spect, n, p) > 2)
+
 
 def test_infer_dim_by_explained_variance():
     X = iris.data
@@ -263,7 +278,7 @@ def test_infer_dim_by_explained_variance():
 def test_probabilistic_pca_1():
     """Test that probabilistic PCA yields a reasonable score"""
     n, p = 1000, 3
-    X = randn(n, p)*.1 + np.array([3, 4, 5])
+    X = randn(n, p) * .1 + np.array([3, 4, 5])
     ppca = ProbabilisticPCA(n_components=2)
     ppca.fit(X)
     ll1 = ppca.score(X)
@@ -287,7 +302,7 @@ def test_probabilistic_pca_3():
     than the heteroscedastic one in over-fitting condition
     """
     n, p = 100, 3
-    X = randn(n, p)*.1 + np.array([3, 4, 5])
+    X = randn(n, p) * .1 + np.array([3, 4, 5])
     ppca = ProbabilisticPCA(n_components=2)
     ppca.fit(X)
     ll1 = ppca.score(X)
@@ -308,6 +323,48 @@ def test_probabilistic_pca_4():
         ll[k] = ppca.score(Xt).mean()
 
     assert_true(ll.argmax() == 1)
+
+
+def test_kernel_pca():
+    X_fit = np.random.random((5, 4))
+    X_pred = np.random.random((2, 4))
+
+    for kernel in ("linear", "rbf", "poly"):
+        # transform fit data
+        kpca = KernelPCA(kernel=kernel, fit_inverse_transform=True)
+        X_fit_transformed = kpca.fit_transform(X_fit)
+        X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
+        assert_array_almost_equal(X_fit_transformed, X_fit_transformed2)
+
+        # transform new data
+        X_pred_transformed = kpca.transform(X_pred)
+        assert_equal(X_pred_transformed.shape[1], X_fit_transformed.shape[1])
+
+        # inverse transform
+        X_pred2 = kpca.inverse_transform(X_pred_transformed)
+        assert_equal(X_pred2.shape, X_pred.shape)
+
+    # for a linear kernel, kernel PCA should find the same projection as PCA
+    # modulo the sign (direction)
+    assert_array_almost_equal(np.abs(KernelPCA().fit(X_fit).transform(X_pred)),
+                              np.abs(PCA().fit(X_fit).transform(X_pred)))
+
+
+def test_kernel_pca_precomputed():
+    X_fit = np.random.random((5, 4))
+    X_pred = np.random.random((2, 4))
+
+    X_kpca = KernelPCA().fit(X_fit).transform(X_pred)
+    X_kpca2 = KernelPCA(kernel="precomputed").fit(np.dot(X_fit, X_fit.T)). \
+              transform(np.dot(X_pred, X_fit.T))
+
+    assert_array_almost_equal(X_kpca, X_kpca2)
+
+
+def test_kernel_pca_invalid_kernel():
+    X_fit = np.random.random((2, 4))
+    kpca = KernelPCA(kernel="tototiti")
+    assert_raises(ValueError, kpca.fit, X_fit)
 
 
 if __name__ == '__main__':
