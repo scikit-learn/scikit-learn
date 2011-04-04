@@ -11,8 +11,8 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from .base import BaseEstimator, TransformerMixin
-from .utils.extmath import fast_svd
+from ..base import BaseEstimator, TransformerMixin
+from ..utils.extmath import fast_svd
 
 _pos_ = lambda x: (x >= 0) * x
 _neg_ = lambda x: (x < 0) * (-x)

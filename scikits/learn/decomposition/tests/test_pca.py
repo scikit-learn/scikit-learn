@@ -6,7 +6,7 @@ from nose.tools import assert_equal
 from scipy.sparse import csr_matrix
 from numpy.testing import assert_almost_equal
 
-from .. import datasets
+from ... import datasets
 from ..pca import PCA
 from ..pca import ProbabilisticPCA
 from ..pca import RandomizedPCA

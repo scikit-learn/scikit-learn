@@ -17,7 +17,7 @@ import numpy as np
 
 from scikits.learn.cluster import KMeans
 from scikits.learn.datasets import load_digits
-from scikits.learn.pca import PCA
+from scikits.learn.decomposition import PCA
 from scikits.learn.preprocessing import scale
 
 np.random.seed(42)

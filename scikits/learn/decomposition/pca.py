@@ -8,10 +8,10 @@
 import numpy as np
 from scipy import linalg
 
-from .base import BaseEstimator
-from .utils.extmath import fast_logdet
-from .utils.extmath import fast_svd
-from .utils.extmath import safe_sparse_dot
+from ..base import BaseEstimator
+from ..utils.extmath import fast_logdet
+from ..utils.extmath import fast_svd
+from ..utils.extmath import safe_sparse_dot
 
 
 def _assess_dimension_(spectrum, rank, n_samples, dim):
@@ -146,7 +146,7 @@ class PCA(BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from scikits.learn.pca import PCA
+    >>> from scikits.learn.decomposition import PCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
@@ -334,7 +334,7 @@ class RandomizedPCA(BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from scikits.learn.pca import RandomizedPCA
+    >>> from scikits.learn.decomposition import RandomizedPCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)

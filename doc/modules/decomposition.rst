@@ -3,13 +3,13 @@
 Decomposing signals in components (matrix factorization problems)
 =================================================================
 
+.. currentmodule:: scikits.learn.decomposition
+
+
 .. _PCA:
 
 Principal component analysis (PCA)
 ==================================
-
-.. currentmodule:: scikits.learn.pca
-
 
 Exact PCA and probabilistic interpretation
 ------------------------------------------
@@ -108,8 +108,6 @@ is not the exact inverse transform of `transform` even when
 Independent component analysis (ICA)
 ====================================
 
-.. currentmodule:: scikits.learn.fastica
-
 ICA finds components that are maximally independent. It is classically
 used to separate mixed signals (a problem know as *blind source
 separation*), as in the example below:
@@ -125,12 +123,11 @@ separation*), as in the example below:
     * :ref:`example_plot_ica_blind_source_separation.py`
     * :ref:`example_plot_ica_vs_pca.py`
 
+
 .. _NMF:
 
 Non-negative matrix factorization (NMF)
 =======================================
-
-.. currentmodule:: scikits.learn.nmf
 
 :class:`NMF` is an alternative approach to decomposition that assumes that the
 data and the components are non-negative. :class:`NMF` can be plugged in

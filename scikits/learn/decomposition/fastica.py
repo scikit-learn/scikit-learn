@@ -13,7 +13,7 @@ import types
 import numpy as np
 from scipy import linalg
 
-from .base import BaseEstimator
+from ..base import BaseEstimator
 
 __all__ = ['fastica', 'FastICA']
 

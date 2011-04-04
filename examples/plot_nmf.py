@@ -15,8 +15,7 @@ from time import time
 import logging
 import pylab as pl
 
-from scikits.learn.pca import RandomizedPCA
-from scikits.learn.nmf import NMF
+from scikits.learn.decomposition import RandomizedPCA, NMF
 from scikits.learn import datasets
 
 

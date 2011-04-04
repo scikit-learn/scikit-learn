@@ -4,7 +4,7 @@ Test the fastica algorithm.
 
 import numpy as np
 
-import scikits.learn.fastica as fastica
+from .. import fastica
 
 
 def center_and_norm(x, axis=-1):

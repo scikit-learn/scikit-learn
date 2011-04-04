@@ -17,7 +17,7 @@ print __doc__
 import pylab as pl
 
 from scikits.learn import datasets
-from scikits.learn.pca import PCA
+from scikits.learn.decomposition import PCA
 
 iris = datasets.load_iris()
 

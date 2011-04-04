@@ -36,7 +36,7 @@ from scikits.learn.datasets import load_lfw_people
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.metrics import classification_report
 from scikits.learn.metrics import confusion_matrix
-from scikits.learn.pca import RandomizedPCA
+from scikits.learn.decomposition import RandomizedPCA
 from scikits.learn.svm import SVC
 
 # Display progress logs on stdout
