@@ -41,17 +41,18 @@ S = np.random.standard_t(1.5, size=(2, 10000))
 S[0] *= 2.
 
 # Mix data
-A = [[1, 1], [0, 2]] # Mixing matrix
+A = [[1, 1], [0, 2]]  # Mixing matrix
 
-X = np.dot(A, S) # Generate observations
+X = np.dot(A, S)  # Generate observations
 
 pca = PCA()
 S_pca_ = pca.fit(X.T).transform(X.T).T
 
 ica = FastICA()
-S_ica_ = ica.fit(X).transform(X) # Estimate the sources
+S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 
-S_ica_ /= S_ica_.std(axis=1)[:,np.newaxis]
+S_ica_ /= S_ica_.std(axis=1)[:, np.newaxis]
+
 
 ###############################################################################
 # Plot results
@@ -64,7 +65,7 @@ def plot_samples(S, axis_list=None):
             axis /= axis.std()
             x_axis, y_axis = axis
             # Trick to get legend to work
-            pl.plot(0.1*x_axis, 0.1*y_axis, linewidth=2, color=color)
+            pl.plot(0.1 * x_axis, 0.1 * y_axis, linewidth=2, color=color)
             # pl.quiver(x_axis, y_axis, x_axis, y_axis, zorder=11, width=0.01,
             pl.quiver(0, 0, x_axis, y_axis, zorder=11, width=0.01,
                         scale=6, color=color)
