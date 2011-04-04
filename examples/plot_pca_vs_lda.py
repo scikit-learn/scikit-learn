@@ -33,7 +33,8 @@ lda = LDA(n_components=2)
 X_r2 = lda.fit(X, y).transform(X)
 
 # Percentage of variance explained for each components
-print pca.explained_variance_
+print 'explained variance ratio (first two components):', \
+    pca.explained_variance_ratio_
 
 pl.figure()
 pl.subplot(2, 1, 1)

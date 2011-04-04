@@ -58,6 +58,14 @@ class LDA(BaseEstimator, ClassifierMixin):
         self.n_components = n_components
         self.priors = np.asarray(priors) if priors is not None else None
 
+        if self.priors is not None:
+            if (self.priors < 0).any():
+                raise ValueError('priors must be non-negative')
+            if self.priors.sum() != 1:
+                print 'warning: the priors do not sum to 1. Renormalizing'
+                self.priors = self.priors / self.priors.sum()
+
+
     def fit(self, X, y, store_covariance=False, tol=1.0e-4, **params):
         """
         Fit the LDA model according to the given training data and parameters.
@@ -141,6 +149,7 @@ class LDA(BaseEstimator, ClassifierMixin):
             warnings.warn("Variables are collinear")
         # Scaling of within covariance is: V' 1/S
         scaling = (scaling * V.T[:, :rank].T).T / S[:rank]
+
         ## ----------------------------
         ## 3) Between variance scaling
         # Overall mean
@@ -236,7 +245,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         values = self.decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
-        likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
+        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
@@ -254,6 +263,6 @@ class LDA(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples, n_classes]
         """
         values = self.decision_function(X)
-        loglikelihood = (values - values.min(axis=1)[:, np.newaxis])
+        loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
         normalization = np.logaddexp.reduce(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]
