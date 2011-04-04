@@ -146,6 +146,12 @@ class PCA(BaseEstimator, TransformerMixin):
     For n_components='mle', this class uses the method of Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 
+    Due to implementation subtleties of the Singular Value Decomposition (SVD),
+    which is used in this implementation, running fit twice on the same matrix
+    can lead to principal components with signs flipped (change in direction).
+    For this reason, it is important to always use the same estimator object to
+    transform data in a consistent fashion.
+
     Examples
     --------
     >>> import numpy as np
