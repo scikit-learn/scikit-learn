@@ -2787,14 +2787,13 @@ double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 
 double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values)
 {
-        int i;
+	int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
 	   model->param.svm_type == NU_SVR)
 	{
 		double *sv_coef = model->sv_coef[0];
 		double sum = 0;
-
 		
 		for(i=0;i<model->l;i++)
 #ifdef _DENSE_REP
@@ -2812,7 +2811,6 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	}
 	else
 	{
-		int i;
 		int nr_class = model->nr_class;
 		int l = model->l;
 		
