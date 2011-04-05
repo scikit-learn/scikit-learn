@@ -271,7 +271,7 @@ def _calculate_labels_inertia(X, centers):
 
 def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
     """
-    I return the new centers calculated for the batch K means
+    Computation of the new centers for the Batch K Means algorithm
 
     Parameters
     ----------
@@ -282,7 +282,9 @@ def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
         The cluster centers
 
     i: int
-        
+         The iterator: it is used to calculate which section of the data to
+         use for the computation of the new centers 
+
     chunk: int
          The size of chunks of data to run the computation of the new
            centers on
@@ -515,6 +517,73 @@ class KMeans(BaseEstimator):
 class BatchKMeans(KMeans):
     """
     Batch K-Means clustering
+
+    Parameters
+    ----------
+
+    k : int or ndarray
+        The number of clusters to form as well as the number of
+        centroids to generate. If init initialization string is
+        'matrix', or if a ndarray is given instead, it is
+        interpreted as initial cluster to use instead.
+
+    chunk: int
+        The size of the data to run the computation of the centers on.
+
+    max_iter : int
+        Maximum number of iterations of the k-means algorithm for a
+        single run.
+
+    n_init: int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
+
+    init : {'k-means++', 'random', 'points', 'matrix'}
+        Method for initialization, defaults to 'random':
+
+        'k-means++' : selects initial cluster centers for k-mean
+        clustering in a smart way to speed up convergence. See section
+        Notes in k_init for more details.
+
+        'random': generate k centroids from a Gaussian with mean and
+        variance estimated from the data.
+
+        'points': choose k observations (rows) at random from data for
+        the initial centroids.
+
+        'matrix': interpret the k parameter as a k by M (or length k
+        array for one-dimensional data) array of initial centroids.
+
+    tol: float, optional default: 1e-4
+        Relative tolerance w.r.t. inertia to declare convergence
+
+    Methods
+    -------
+
+    fit(X):
+        Compute K-Means clustering
+
+    Attributes
+    ----------
+
+    cluster_centers_: array, [n_clusters, n_features]
+        Coordinates of cluster centers
+
+    labels_:
+        Labels of each point
+
+    inertia_: float
+        The value of the inertia criterion associated with the chosen
+        partition.
+
+    Notes
+    ------
+
+    The batch k-means problem is solved using the Lloyd algorithm.
+
+    http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+
     """
 
     def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=300,
