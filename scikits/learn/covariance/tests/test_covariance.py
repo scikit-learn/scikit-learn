@@ -6,7 +6,7 @@
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
-from .. import BaseCovariance
+from .. import BaseCovariance, base_covariance
 from .. import ShrunkCovariance, shrunk_covariance
 from .. import LedoitWolf, ledoit_wolf
 from .. import OAS, oas
@@ -24,7 +24,7 @@ def test_covariance():
     # test covariance fit from data
     cov = BaseCovariance()
     cov.fit(X)
-    assert_array_almost_equal(np.dot(X.T, X) / n_samples, cov.covariance_, 4)
+    assert_array_almost_equal(base_covariance(X), cov.covariance_, 4)
 
 def test_shrunk_covariance():
     """Tests ShrunkCovariance module on a simple dataset.
@@ -34,7 +34,7 @@ def test_shrunk_covariance():
     cov = ShrunkCovariance(shrinkage=0.5)
     cov.fit(X)
     assert_array_almost_equal(
-        shrunk_covariance(np.dot(X.T, X) / n_samples, shrinkage=0.5),
+        shrunk_covariance(base_covariance(X), shrinkage=0.5),
         cov.covariance_, 4
         )
     
@@ -42,18 +42,13 @@ def test_shrunk_covariance():
     cov = ShrunkCovariance()
     cov.fit(X)
     assert_array_almost_equal(
-        shrunk_covariance(np.dot(X.T, X) / n_samples),
-        cov.covariance_, 4
-        )
+        shrunk_covariance(base_covariance(X)), cov.covariance_, 4)
 
     # test with n_features = 1
     X_1d = X[:,0]
     cov = ShrunkCovariance()
     cov.fit(X_1d)
-    assert_array_almost_equal(
-        shrunk_covariance(np.dot(X_1d.T, X_1d) / n_samples),
-        cov.covariance_, 4
-        )
+    assert_array_almost_equal(base_covariance(X_1d), cov.covariance_, 4)
 
 def test_lw():
     """Tests LedoitWolf module on a simple dataset.

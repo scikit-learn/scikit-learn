@@ -29,6 +29,25 @@ def log_likelihood(emp_cov, precision):
     
     return -np.sum(emp_cov*precision) + exact_logdet(precision)
 
+def base_covariance(X, biased=True):
+    """Computes the maximum likelihood covariance matrix
+
+    Parameters
+    ----------
+    X: 2D ndarray, shape (n_samples, n_features)
+      Data from which to compute the covariance estimate
+    
+    Returns
+    -------
+    cov: 2D ndarray, shape (n_features, n_features)
+      Maximum Likelihood Estimator of covariance
+
+    """
+    n_samples = X.shape[0]
+    cov = np.dot(X.T, X) / n_samples
+    
+    return cov
+
 
 class BaseCovariance(BaseEstimator):
     """Maximum likelihood covariance estimator
@@ -85,16 +104,14 @@ class BaseCovariance(BaseEstimator):
     
     def fit(self, X, **params):
         self._set_params(**params)
-        n_samples = X.shape[0]
-        covariance_ = np.dot(X.T, X) / n_samples
+        covariance_ = base_covariance(X)
         self._set_estimates(covariance_)
         
         return self
 
 
     def score(self, X_test):
-        n_samples = X_test.shape[0]
-        test_cov = np.dot(X_test.T, X_test) / n_samples
+        test_cov = base_covariance(X_test)
         if self.store_precision:
             precision = self.precision_
         else:

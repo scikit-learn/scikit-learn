@@ -13,7 +13,7 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 import numpy as np
 
-from .base_covariance_ import BaseCovariance
+from .base_covariance_ import BaseCovariance, base_covariance
 
 ###############################################################################
 # ShrunkCovariance estimator
@@ -90,9 +90,7 @@ class ShrunkCovariance(BaseCovariance):
 
     def fit(self, X, **params):
         self._set_params(**params)
-        emp_cov = BaseCovariance(store_precision=False)
-        emp_cov.fit(X)
-        covariance = shrunk_covariance(emp_cov.covariance_, self.shrinkage_)
+        covariance = shrunk_covariance(base_covariance(X), self.shrinkage_)
         self._set_estimates(covariance)
         
         return self
@@ -129,7 +127,7 @@ def ledoit_wolf(X):
     X = np.atleast_2d(X)
     n_samples, n_features = X.shape
     
-    emp_cov = BaseCovariance(store_precision=False).fit(X).covariance_
+    emp_cov = base_covariance(X)
     structured_estimate = np.eye(n_features)
     mu = np.trace(emp_cov) / n_features
     delta = ((emp_cov - mu*structured_estimate)**2).sum() / n_features
@@ -214,7 +212,7 @@ def oas(X):
     X = np.atleast_2d(X)
     n_samples, n_features = X.shape
     
-    emp_cov = BaseCovariance(store_precision=False).fit(X).covariance_
+    emp_cov = base_covariance(X)
     structured_estimator = np.eye(n_features)
     mu = np.trace(emp_cov) / n_features
     
