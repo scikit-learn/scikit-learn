@@ -41,7 +41,7 @@ t0 = time()
 pca = RandomizedPCA(n_components=n_components, whiten=True).fit(X)
 print "done in %0.3fs" % (time() - t0)
 
-eigendigits = pca.components_.T
+eigendigits = pca.components_
 
 ######################################################################
 # Compute a NMF on the digit dataset

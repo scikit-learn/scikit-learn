@@ -133,7 +133,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_: array, [n_features, n_components]
+    components_: array, [n_components, n_features]
         Components with maximum variance.
 
     explained_variance_ratio_: array, [n_components]
@@ -231,9 +231,9 @@ class PCA(BaseEstimator, TransformerMixin):
                                         self.explained_variance_.sum()
 
         if self.whiten:
-            self.components_ = V.T / S * np.sqrt(n_samples)
+            self.components_ = np.dot(np.diag(1.0 / S), V) * np.sqrt(n_samples)
         else:
-            self.components_ = V.T
+            self.components_ = V
 
         if self.n_components == 'mle':
             self.n_components = _infer_dimension_(self.explained_variance_,
@@ -247,7 +247,7 @@ class PCA(BaseEstimator, TransformerMixin):
             self.n_components = n_features - n_remove
 
         if self.n_components is not None:
-            self.components_ = self.components_[:, :self.n_components]
+            self.components_ = self.components_[:self.n_components, :]
             self.explained_variance_ = \
                     self.explained_variance_[:self.n_components]
             self.explained_variance_ratio_ = \
@@ -258,7 +258,7 @@ class PCA(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Apply the dimension reduction learned on the train data."""
         X_transformed = X - self.mean_
-        X_transformed = np.dot(X_transformed, self.components_)
+        X_transformed = np.dot(X_transformed, self.components_.T)
         return X_transformed
 
     def inverse_transform(self, X):
@@ -267,7 +267,7 @@ class PCA(BaseEstimator, TransformerMixin):
         Note: if whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
         """
-        return np.dot(X, self.components_.T) + self.mean_
+        return np.dot(X, self.components_) + self.mean_
 
 
 class ProbabilisticPCA(PCA):
@@ -288,7 +288,7 @@ class ProbabilisticPCA(PCA):
         PCA.fit(self, X)
         self.dim = X.shape[1]
         Xr = X - self.mean_
-        Xr -= np.dot(np.dot(Xr, self.components_), self.components_.T)
+        Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
         n_samples = X.shape[0]
         if self.dim <= self.n_components:
             delta = np.zeros(self.dim)
@@ -299,8 +299,8 @@ class ProbabilisticPCA(PCA):
             delta = (Xr ** 2).mean(0) / (self.dim - self.n_components)
         self.covariance_ = np.diag(delta)
         for k in range(self.n_components):
-            add_cov = np.dot(
-                self.components_[:, k:k + 1], self.components_[:, k:k + 1].T)
+            add_cov = np.inner(  # XXX: ugly, see why it didn't work w/o .T
+                self.components_.T[:, k:k + 1], self.components_.T[:, k:k + 1])
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
@@ -360,7 +360,7 @@ class RandomizedPCA(BaseEstimator):
 
     Attributes
     ----------
-    components_: array, [n_features, n_components]
+    components_: array, [n_components, n_features]
         Components with maximum variance.
 
     explained_variance_ratio_: array, [n_components]
@@ -445,9 +445,9 @@ class RandomizedPCA(BaseEstimator):
 
         if self.whiten:
             n = X.shape[0]
-            self.components_ = np.dot(V.T, np.diag(1.0 / S)) * np.sqrt(n)
+            self.components_ = np.dot(np.diag(1.0 / S), V) * np.sqrt(n)
         else:
-            self.components_ = V.T
+            self.components_ = V
 
         return self
 
@@ -456,12 +456,12 @@ class RandomizedPCA(BaseEstimator):
         if self.mean_ is not None:
             X = X - self.mean_
 
-        X = safe_sparse_dot(X, self.components_)
+        X = safe_sparse_dot(X, self.components_.T)
         return X
 
     def inverse_transform(self, X):
         """Return an reconstructed input whose transform would be X"""
-        X_original = safe_sparse_dot(X, self.components_.T)
+        X_original = safe_sparse_dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_
         return X_original
@@ -544,7 +544,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             return linear_kernel(X, Y)
         else:
             raise ValueError("%s is not a valid kernel. Valid kernels are: "
-                             "rbf, poly, linear and precomputed." % self.kernel)
+                             "rbf, poly, linear and precomputed."
+                             % self.kernel)
 
     def _fit_transform(self, X):
         n_samples, n_components = X.shape
