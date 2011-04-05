@@ -504,7 +504,7 @@ class KMeans(BaseEstimator):
 
     def fit(self, X, **params):
         """Compute k-means"""
-        W = self._check_data(self, X, **params)
+        X = self._check_data(X, **params)
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
@@ -528,7 +528,6 @@ class BatchKMeans(KMeans):
         Compute batch k means
         """
         X = self._check_data(X, **params)
-        
         self.cluster_centers, self.labels, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose, tol=self.tol,
