@@ -23,7 +23,7 @@ We can separate learning problems in a few large categories:
 
     * **classification**: samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
-      of un-labeled data. An example of classification problem would
+      of unlabeled data. An example of classification problem would
       be the digit recognition example, in which the aim is to assign
       each input vector to one of a finite number of discrete
       categories.
@@ -116,7 +116,7 @@ datasets for various tasks (binary & multi label classification, regression,
 document classification, ...) along with a runtime environment to compare
 program performance on those datasets. Please refer to the following example for
 for instructions on the ``mlcomp`` dataset loader:
-:ref:`example_mlcomp_document_classification.py`.
+:ref:`example mlcomp sparse document classification <example_mlcomp_sparse_document_classification.py>`.
 
 
 Learning and Predicting
@@ -169,3 +169,33 @@ resolution. Do you agree with the classifier?
 A complete example of this classification problem is available as an
 example that you can run and study:
 :ref:`example_plot_digits_classification.py`.
+
+Model persistence
+-----------------
+
+It is possible to save a model in the scikit by using Python's built-in
+persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_.
+
+>>> from scikits.learn import svm
+>>> from scikits.learn import datasets
+>>> clf = svm.SVC()
+>>> iris = datasets.load_iris()
+>>> X, y = iris.data, iris.target
+>>> clf.fit(X, y)
+SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+  cache_size=100.0, shrinking=True, gamma=0.00666666666667)
+>>> import pickle
+>>> s = pickle.dumps(clf)
+>>> clf2 = pickle.loads(s)
+>>> clf2.predict(X[0])
+array([ 0.])
+>>> y[0]
+0
+
+In the specific case of the scikit, it may be more interesting to use
+joblib's replacement of pickle, which is more efficient on big data, but
+can only pickle to the disk and not to a string:
+
+>>> from scikits.learn.externals import joblib
+>>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
+

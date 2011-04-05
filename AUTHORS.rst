@@ -77,7 +77,8 @@ People
 
   * `Mathieu Blondel <http://mblondel.org/journal>`_ joined the
     project in September 2010 and has worked since on the sparse
-    matrix support, text feature extraction and general bug fixes.
+    matrix support, Ridge generalized crossval, text feature
+    extraction and general bug fixes.
 
   * `Peter Prettenhofer
     <http://sites.google.com/site/peterprettenhofer/>`_ joined the

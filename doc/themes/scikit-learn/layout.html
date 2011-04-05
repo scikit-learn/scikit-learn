@@ -77,7 +77,7 @@
         {% else %}
         <h3>News</h3>
 
-       <p>scikits.learn 0.6 (release candidate) is available
+       <p>scikits.learn 0.7 is available
          for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
          See <a href="{{pathto('whats_new')}}">what's new</a> and tips
          on <a href="{{pathto('install')}}">installing</a>.</p>
@@ -152,6 +152,12 @@
     {%- endif %}
     {%- if show_sphinx %}
       {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://webylimonada.com">Web y Limonada</a>.
+    {%- endif %}
+    {%- if show_source and has_source and sourcename %}
+    <span style="padding-left: 5ex;">
+    <a href="{{ pathto('_sources/' + sourcename, true)|e }}"
+	    rel="nofollow">{{ _('Show this page source') }}</a>
+    </span>
     {%- endif %}
     </div>
 {%- endblock %}

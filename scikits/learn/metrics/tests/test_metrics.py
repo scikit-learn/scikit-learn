@@ -186,7 +186,7 @@ avg / total       0.62      0.61      0.56        75
 """
     report = classification_report(
         y_true, y_pred, labels=range(len(iris.target_names)),
-        class_names=iris.target_names)
+        target_names=iris.target_names)
     assert_equal(report, expected_report)
 
     # print classification report with label detection
@@ -203,7 +203,7 @@ avg / total       0.62      0.61      0.56        75
     assert_equal(report, expected_report)
 
 
-def test_precision_recall_curve():
+def _test_precision_recall_curve():
     """Test Precision-Recall and aread under PR curve"""
     y_true, _, probas_pred = make_prediction(binary=True)
 

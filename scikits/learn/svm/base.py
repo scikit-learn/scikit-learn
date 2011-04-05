@@ -1,9 +1,8 @@
 import numpy as np
 
-from ._libsvm import libsvm_train, libsvm_predict, libsvm_predict_proba, \
-     libsvm_decision_function, set_verbosity_wrap
-from . import _liblinear
-from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
+from . import libsvm, liblinear
+from ..base import BaseEstimator
+
 
 def _get_class_weight(class_weight, y):
     """
@@ -12,7 +11,7 @@ def _get_class_weight(class_weight, y):
     if class_weight == 'auto':
         uy = np.unique(y)
         weight_label = np.asarray(uy, dtype=np.int32, order='C')
-        weight = np.array([1.0 / np.sum(y==i) for i in uy],
+        weight = np.array([1.0 / np.sum(y == i) for i in uy],
                           dtype=np.float64, order='C')
         weight *= uy.shape[0] / np.sum(weight)
     else:
@@ -36,16 +35,15 @@ class BaseLibSVM(BaseEstimator):
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
-                 eps, C, nu, p, shrinking, probability):
+                 tol, C, nu, p, shrinking, probability):
 
-        assert impl in self._svm_types, \
-            "impl should be one of %s, %s was given" % (
-                self._svm_types, impl)
+        if not impl in self._svm_types:
+            raise ValueError("impl should be one of %s, %s was given" % (
+                self._svm_types, impl))
 
-        assert kernel in self._kernel_types or \
-               hasattr(kernel, '__call__'), \
-               "kernel should be one of %s or a callable, " \
-               "%s was given." % ( self._kernel_types, kernel)
+        if not (kernel in self._kernel_types or hasattr(kernel, '__call__')):
+            raise ValueError("kernel should be one of %s or a callable, " \
+                             "%s was given." % (self._kernel_types, kernel))
 
         self.kernel = kernel
         self.impl = impl
@@ -53,7 +51,7 @@ class BaseLibSVM(BaseEstimator):
         self.gamma = gamma
         self.coef0 = coef0
         self.cache_size = cache_size
-        self.eps = eps
+        self.tol = tol
         self.C = C
         self.nu = nu
         self.p = p
@@ -75,7 +73,6 @@ class BaseLibSVM(BaseEstimator):
             _X = X
         return kernel_type, _X
 
-
     def fit(self, X, y, class_weight={}, sample_weight=[], **params):
         """
         Fit the SVM model according to the given training data and
@@ -91,13 +88,12 @@ class BaseLibSVM(BaseEstimator):
             Target values (integers in classification, real numbers in
             regression)
 
-        class_weight : dict | 'auto', optional
-            Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
-            supposed to have weight one.
-
-            The 'auto' mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies.
+        class_weight : {dict, 'auto'}, optional
+            Set the parameter C of class i to class_weight[i]*C for
+            SVC. If not given, all classes are supposed to have
+            weight one. The 'auto' mode uses the values of y to
+            automatically adjust weights inversely proportional to
+            class frequencies.
 
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
@@ -123,7 +119,7 @@ class BaseLibSVM(BaseEstimator):
 
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
-            
+
         # check dimensions
         solver_type = self._svm_types.index(self.impl)
         if solver_type != 2 and _X.shape[0] != y.shape[0]:
@@ -131,15 +127,20 @@ class BaseLibSVM(BaseEstimator):
                              "X has %s features, but y has %s." % \
                              (_X.shape[0], y.shape[0]))
 
+        if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
+            raise ValueError("X.shape[0] should be equal to X.shape[1]")
+
         if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
-            self.gamma = 1.0/_X.shape[0]
+            self.gamma = 1.0 / _X.shape[0]
+
+        self.shape_fit_ = X.shape
 
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = \
-        libsvm_train( _X, y, solver_type, kernel_type, self.degree,
-                      self.gamma, self.coef0, self.eps, self.C,
+        libsvm.train(_X, y, solver_type, kernel_type, self.degree,
+                      self.gamma, self.coef0, self.tol, self.C,
                       self.nu, self.cache_size, self.p,
                       self.class_weight_label, self.class_weight,
                       sample_weight, int(self.shrinking),
@@ -147,39 +148,45 @@ class BaseLibSVM(BaseEstimator):
 
         return self
 
-    def predict(self, T):
+    def predict(self, X):
         """
         This function does classification or regression on an array of
-        test vectors T.
+        test vectors X.
 
         For a classification model, the predicted class for each
-        sample in T is returned.  For a regression model, the function
-        value of T calculated is returned.
+        sample in X is returned.  For a regression model, the function
+        value of X calculated is returned.
 
         For an one-class model, +1 or -1 is returned.
 
         Parameters
         ----------
-        T : array-like, shape = [n_samples, n_features]
-
+        X : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
         C : array, shape = [n_samples]
         """
-        T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
-        kernel_type, T = self._get_kernel(T)
+        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        n_samples, n_features = X.shape
+        kernel_type, X = self._get_kernel(X)
 
-        return libsvm_predict (T, self.support_vectors_,
-                      self.dual_coef_, self.intercept_,
-                      self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.eps,
-                      self.C, self.class_weight_label,
-                      self.class_weight, self.nu, self.cache_size,
-                      self.p, int(self.shrinking),
-                      int(self.probability), self.n_support_,
-                      self.support_, self.label_, self.probA_,
-                      self.probB_)
+        if self.kernel == "precomputed":
+            if X.shape[1] != self.shape_fit_[0]:
+                raise ValueError("X.shape[1] should be equal to the number of "
+                                 "samples at training time!")
+        elif n_features != self.shape_fit_[1]:
+            raise ValueError("X.shape[1] should be equal to the number of "
+                             "features at training time!")
+
+        return libsvm.predict( X, self.support_vectors_,
+            self.dual_coef_, self.intercept_,
+            self._svm_types.index(self.impl), kernel_type,
+            self.degree, self.gamma, self.coef0, self.tol, self.C,
+            self.nu, self.cache_size, self.p, self.n_support_,
+            self.support_, self.label_, self.class_weight_label,
+            self.class_weight, self.probA_, self.probB_,
+            int(self.shrinking), int(self.probability))
 
     def predict_proba(self, T):
         """
@@ -209,17 +216,20 @@ class BaseLibSVM(BaseEstimator):
                     "probability estimates must be enabled to use this method")
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
+        if self.impl not in ('c_svc', 'nu_svc'):
+            raise NotImplementedError
 
-        pprob = libsvm_predict_proba(T, self.support_vectors_,
+        pprob = libsvm.predict_proba(T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.eps,
-                      self.C, self.class_weight_label,
-                      self.class_weight, self.nu, self.cache_size,
-                      self.p, int(self.shrinking),
-                      int(self.probability), self.n_support_,
-                      self.support_, self.label_, self.probA_,
-                      self.probB_)
+                      self.degree, self.gamma, self.coef0, self.tol,
+                      self.C, self.nu, self.cache_size,
+                      self.p, self.n_support_,
+                      self.support_, self.label_,
+                      self.class_weight_label,
+                      self.class_weight, 
+                      self.probA_, self.probB_, int(self.shrinking),
+                      int(self.probability))
 
         return pprob
 
@@ -250,7 +260,7 @@ class BaseLibSVM(BaseEstimator):
 
     def decision_function(self, T):
         """
-        Calculate the distance of the samples in T to the separating hyperplane.
+        Calculate the distance of the samples T to the separating hyperplane.
 
         Parameters
         ----------
@@ -265,17 +275,16 @@ class BaseLibSVM(BaseEstimator):
         T = np.atleast_2d(np.asanyarray(T, dtype=np.float64, order='C'))
         kernel_type, T = self._get_kernel(T)
 
-        dec_func = libsvm_decision_function (T, self.support_vectors_,
+        dec_func = libsvm.decision_function(T, self.support_vectors_,
                       self.dual_coef_, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label,
                       self.class_weight, self.nu, self.cache_size,
                       self.p, int(self.shrinking),
                       int(self.probability), self.n_support_,
                       self.support_, self.label_, self.probA_,
                       self.probB_)
-
 
         if self.impl != 'one_class':
             # libsvm has the convention of returning negative values for
@@ -298,22 +307,22 @@ class BaseLibLinear(BaseEstimator):
     """
 
     _solver_type_dict = {
-        'PL2_LLR_D0' : 0, # L2 penalty, logistic regression
-        'PL2_LL2_D1' : 1, # L2 penalty, L2 loss, dual form
-        'PL2_LL2_D0' : 2, # L2 penalty, L2 loss, primal form
-        'PL2_LL1_D1' : 3, # L2 penalty, L1 Loss, dual form
-        'MC_SVC'     : 4, # Multi-class Support Vector Classification
-        'PL1_LL2_D0' : 5, # L1 penalty, L2 Loss, primal form
-        'PL1_LLR_D0' : 6, # L1 penalty, logistic regression
-        'PL2_LLR_D1' : 7, # L2 penalty, logistic regression, dual form
+        'PL2_LLR_D0' : 0,  # L2 penalty, logistic regression
+        'PL2_LL2_D1' : 1,  # L2 penalty, L2 loss, dual form
+        'PL2_LL2_D0' : 2,  # L2 penalty, L2 loss, primal form
+        'PL2_LL1_D1' : 3,  # L2 penalty, L1 Loss, dual form
+        'MC_SVC'     : 4,  # Multi-class Support Vector Classification
+        'PL1_LL2_D0' : 5,  # L1 penalty, L2 Loss, primal form
+        'PL1_LLR_D0' : 6,  # L1 penalty, logistic regression
+        'PL2_LLR_D1' : 7,  # L2 penalty, logistic regression, dual form
         }
 
-    def __init__(self, penalty='l2', loss='l2', dual=True, eps=1e-4, C=1.0,
+    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class=False, fit_intercept=True, intercept_scaling=1):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
-        self.eps = eps
+        self.tol = tol
         self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
@@ -329,14 +338,14 @@ class BaseLibLinear(BaseEstimator):
         if self.multi_class:
             solver_type = 'MC_SVC'
         else:
-            solver_type = "P%s_L%s_D%d"  % (
+            solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
             raise ValueError('Not supported set of arguments: '
                              + solver_type)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, y, class_weight={},**params):
+    def fit(self, X, y, class_weight={}, **params):
         """
         Fit the model according to the given training data and
         parameters.
@@ -346,9 +355,11 @@ class BaseLibLinear(BaseEstimator):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
+
         y : array-like, shape = [n_samples]
             Target vector relative to X
-        class_weight : dict , {class_label : weight}
+
+        class_weight : {dict, 'auto'}, optional
             Weights associated with classes. If not given, all classes
             are supposed to have weight one.
 
@@ -365,8 +376,8 @@ class BaseLibLinear(BaseEstimator):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         y = np.asanyarray(y, dtype=np.int32, order='C')
 
-        self.raw_coef_, self.label_ = _liblinear.train_wrap(X, y,
-                       self._get_solver_type(), self.eps,
+        self.raw_coef_, self.label_ = liblinear.train_wrap(X, y,
+                       self._get_solver_type(), self.tol,
                        self._get_bias(), self.C,
                        self.class_weight_label, self.class_weight)
 
@@ -387,30 +398,72 @@ class BaseLibLinear(BaseEstimator):
         X = np.asanyarray(X, dtype=np.float64, order='C')
         self._check_n_features(X)
 
-        return _liblinear.predict_wrap(X, self.raw_coef_,
+        coef = self.raw_coef_
+
+        return liblinear.predict_wrap(X, coef,
                                       self._get_solver_type(),
-                                      self.eps, self.C,
+                                      self.tol, self.C,
                                       self.class_weight_label,
                                       self.class_weight, self.label_,
                                       self._get_bias())
 
+    def decision_function(self, X):
+        """
+        Return the decision function of X according to the trained
+        model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_class]
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
+        self._check_n_features(X)
+
+        dec_func = liblinear.decision_function_wrap(
+            X, self.raw_coef_, self._get_solver_type(), self.tol,
+            self.C, self.class_weight_label, self.class_weight,
+            self.label_, self._get_bias())
+
+        if len(self.label_) <= 2:
+            # in the two-class case, the decision sign needs be flipped
+            # due to liblinear's design
+            return -dec_func
+        else:
+            return dec_func
+
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]
-        if self.fit_intercept: n_features -= 1
+        if self.fit_intercept:
+            n_features -= 1
         if X.shape[1] != n_features:
             raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
                                                                    X.shape[1]))
+
     @property
     def intercept_(self):
         if self.fit_intercept:
-            return self.intercept_scaling * self.raw_coef_[:,-1]
+            ret = self.intercept_scaling * self.raw_coef_[:, -1]
+            if len(self.label_) <= 2:
+                ret *= -1
+            return ret
         return 0.0
 
     @property
     def coef_(self):
         if self.fit_intercept:
-            return self.raw_coef_[:,:-1]
-        return self.raw_coef_
+            ret = self.raw_coef_[:, : -1]
+        else:
+            ret = self.raw_coef_
+        if len(self.label_) <= 2:
+            return -ret
+        else:
+            return ret
 
     def predict_proba(self, T):
         # only available for logistic regression
@@ -424,4 +477,4 @@ class BaseLibLinear(BaseEstimator):
             return -1.0
 
 
-set_verbosity_wrap(0)
+libsvm.set_verbosity_wrap(0)

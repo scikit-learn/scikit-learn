@@ -32,7 +32,7 @@ X = (X - mean) / std
 clf = SGDClassifier(n_iter=100, alpha=0.01)
 clf.fit(X, y)
 
-w = clf.coef_
+w = clf.coef_.ravel()
 a = -w[0] / w[1]
 xx = np.linspace(-5, 5)
 yy = a * xx - clf.intercept_ / w[1]
@@ -42,7 +42,7 @@ yy = a * xx - clf.intercept_ / w[1]
 wclf = SGDClassifier(n_iter=100, alpha=0.01)
 wclf.fit(X, y, class_weight={1: 10})
 
-ww = wclf.coef_
+ww = wclf.coef_.ravel()
 wa = -ww[0] / ww[1]
 wyy = wa * xx - wclf.intercept_ / ww[1]
 

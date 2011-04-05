@@ -9,9 +9,11 @@ import numpy as np
 
 from ...base import ClassifierMixin
 from ...svm.sparse.base import SparseBaseLibLinear
-from ...svm._liblinear import csr_predict_prob
+from ...linear_model.sparse.base import CoefSelectTransformerMixin
+from ...svm.liblinear import csr_predict_prob
 
-class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
+class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
+                         CoefSelectTransformerMixin):
     """
     Logistic Regression.
 
@@ -46,6 +48,9 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased
 
+    tol: float, optional
+         tolerance for stopping criteria
+
     Attributes
     ----------
 
@@ -65,7 +70,7 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
     The underlying C implementation uses a random number generator to
     select features when fitting the model. It is thus not uncommon,
     to have slightly different results for the same input data. If
-    that happens, try with a smaller eps parameter.
+    that happens, try with a smaller tol parameter.
 
     References
     ----------
@@ -73,11 +78,11 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
 
-    def __init__(self, penalty='l2', dual=False, eps=1e-4, C=1.0,
+    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1):
 
         super(LogisticRegression, self).__init__ (penalty=penalty,
-            dual=dual, loss='lr', eps=eps, C=C,
+            dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
 
     def predict_proba(self, X):
@@ -93,7 +98,7 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin):
         probas = csr_predict_prob(X.shape[1], X.data, X.indices,
                                   X.indptr, self.raw_coef_,
                                   self._get_solver_type(),
-                                  self.eps, self.C,
+                                  self.tol, self.C,
                                   self.class_weight_label,
                                   self.class_weight, self.label_,
                                   self._get_bias())

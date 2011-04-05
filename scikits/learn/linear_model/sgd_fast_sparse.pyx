@@ -34,12 +34,57 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               np.ndarray[int, ndim=1] X_indptr,
               np.ndarray[double, ndim=1] Y,
               int n_iter, int fit_intercept,
-              int verbose, int shuffle,
-              double weight_pos, double weight_neg):
+              int verbose, int shuffle, int seed,
+              double weight_pos, double weight_neg,
+              np.ndarray[double, ndim=1] sample_weight):
     """Cython impl. of SGD with different loss functions and penalties
 
     This representation assumes X represented using the Compressed Sparse Row
     representation of scipy.sparse.
+
+    Parameters
+    ----------
+    w : ndarray[double, ndim=1]
+        The allocated coef_ vector.
+    intercept : double
+        The initial intercept
+    loss : LossFunction
+        A concrete LossFunction object.
+    penalty_type : int
+        The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
+    alpha : float
+        The regularization parameter.
+    rho : float
+        The elastic net hyperparameter.
+    X : csr_matrix[double, ndim=2]
+        The dataset as a Compressed Sparse Row matrix 
+        (see scipy.sparse.csr_matrix).
+    Y : ndarray[double, ndim=1]
+        The labels.
+    n_iter : int
+        The number of iterations (epochs).
+    fit_intercept : int
+        Whether or not to fit the intercept (1 or 0).
+    verbose : int
+        Print verbose output; 0 for quite.
+    shuffle : int
+        Whether to shuffle the training data before each epoch.
+    weight_pos : float
+        The weight of the positive class.
+    weight_neg : float
+        The weight of the negative class. 
+    seed : int
+        The seed of the pseudo random number generator to use when
+        shuffling the data
+    sample_weight : array, shape = [n_samples]
+        The importance weight of each sample.
+
+    Returns
+    -------
+    w : array, shape [n_features]
+        The fitted weight vector. 
+    intercept : float
+        The fitted intercept term. 
     """
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
@@ -51,7 +96,8 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef int *X_indices_ptr = <int *>X_indices.data
     cdef double *Y_data_ptr = <double *>Y.data
 
-    # FIXME unsined int?
+    cdef double *sample_weight_data = <double *>sample_weight.data
+
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
                                                              dtype = np.int32)
     cdef int *index_data_ptr = <int *>index.data
@@ -65,7 +111,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double wnorm = 0.0
     cdef double t = 0.0
     cdef double y = 0.0
-    cdef double importance = 1.0
+    cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
@@ -85,7 +131,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
-            np.random.shuffle(index)
+            np.random.RandomState(seed).shuffle(index)
         for i from 0 <= i < n_samples:
             sample_idx = index_data_ptr[i]
             offset = X_indptr_ptr[sample_idx]
@@ -96,10 +142,11 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                      offset, xnnz) * wscale) + intercept
             sumloss += loss.loss(p, y)
             if y > 0:
-                importance = weight_pos
+                class_weight = weight_pos
             else:
-                importance = weight_neg
-            update = eta * loss.dloss(p, y) * importance
+                class_weight = weight_neg
+            update = eta * loss.dloss(p, y) * class_weight * \
+                sample_weight_data[sample_idx]
             if update != 0.0:
                 add(w_data_ptr, wscale, X_data_ptr, X_indices_ptr,
                     offset, xnnz, update)

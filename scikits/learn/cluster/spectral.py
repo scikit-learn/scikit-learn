@@ -177,7 +177,7 @@ class SpectralClustering(BaseEstimator):
                 The adjacency matrix of the graph to embed.
                 X is an adjacency matrix of a similarity graph: its
                 entries must be positive or zero. Zero means that
-                elements have nothing in conmon, whereas high values mean
+                elements have nothing in common, whereas high values mean
                 that elements are strongly similar.
 
             Notes
@@ -185,8 +185,8 @@ class SpectralClustering(BaseEstimator):
             If you have an affinity matrix, such as a distance matrix,
             for which 0 means identical elements, and high values means
             very dissimilar elements, it can be transformed in a
-            simimlarity matrix that is well suited for the algorithm by 
-            applying the heat kernel::
+            similarity matrix that is well suited for the algorithm by
+            applying the gaussian (heat) kernel::
 
                 np.exp(- X**2/2. * delta**2)
 

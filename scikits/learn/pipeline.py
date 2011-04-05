@@ -4,10 +4,11 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 # Author: Edouard Duchesnay
 #         Gael Varoquaux
 #         Virgile Fritsch
+#         Alexandre Gramfort
 # Licence: BSD
 
 from .base import BaseEstimator
-import numpy as np
+
 
 class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator
@@ -73,7 +74,7 @@ class Pipeline(BaseEstimator):
         >>> # For instance, fit using a k of 10 in the SelectKBest
         >>> # and a parameter 'C' of the svn
         >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
-        Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, eps=0.001,
+        Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, tol=0.001,
           cache_size=100.0, shrinking=True, gamma=0.0))])
 
         >>> prediction = anova_svm.predict(X)
@@ -170,25 +171,16 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].transform(Xt)
 
+    def inverse_transform(self, X):
+        if X.ndim == 1:
+            X = X[None, :]
+        Xt = X
+        for name, step in self.steps[:-1][::-1]:
+            Xt = step.inverse_transform(Xt)
+        return Xt
+
     def score(self, X, y=None):
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
-
-    def get_support(self):
-        support_ = None
-        for name, transform in self.steps[:-1]:
-            if hasattr(transform, 'get_support'):
-                support_ = transform.get_support()
-        if support_ is None:
-            support_ = np.ones(self.steps[-1][-1].coef_.shape, dtype=np.bool)
-        return support_
-
-    @property
-    def coef_(self):
-        support_ = self.get_support()
-        coef = np.zeros(support_.shape, dtype=np.float)
-        coef[support_] = self.steps[-1][-1].coef_
-        return coef
-

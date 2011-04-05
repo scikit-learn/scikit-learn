@@ -40,6 +40,11 @@ from __future__ import division
 
 print __doc__
 
+import os
+from os.path import normpath, split, exists
+from glob import glob
+from time import time
+
 import pylab as pl
 import numpy as np
 
@@ -49,9 +54,6 @@ try:
 except ImportError:
     basemap = False
 
-from time import time
-from os.path import normpath, split, exists
-from glob import glob
 from scikits.learn import svm
 from scikits.learn.metrics import roc_curve, auc
 from scikits.learn.datasets.base import Bunch
@@ -79,6 +81,9 @@ def download(url, archive_name):
         import zipfile
         print "Decompressiong the archive: " + archive_name
         zipfile.ZipFile(archive_name).extractall()
+        # Remove the archive: we don't need it as we have expanded it
+        # to directory
+        os.unlink(archive_name)
         print
 
 

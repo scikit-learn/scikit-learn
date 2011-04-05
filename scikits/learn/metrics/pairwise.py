@@ -4,14 +4,12 @@ sets of points.
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD Style.
 
 import numpy as np
 
-
-def euclidean_distances(X, Y,
-        Y_norm_squared=None,
-        squared=False):
+def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -61,7 +59,9 @@ def euclidean_distances(X, Y,
     if X is Y: # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is None:
-        YY = np.sum(Y * Y, axis=1)[np.newaxis, :]
+        YY = Y.copy()
+        YY **= 2
+        YY = np.sum(YY, axis=1)[np.newaxis, :]
     else:
         YY = np.asanyarray(Y_norm_squared)
         if YY.shape != (Y.shape[0],):
@@ -81,3 +81,64 @@ def euclidean_distances(X, Y,
         return np.sqrt(distances)
 
 euclidian_distances = euclidean_distances # both spelling for backward compat
+
+
+def linear_kernel(X, Y):
+    """
+    Compute the linear kernel between X and Y.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples_1, n_features)
+
+    Y: array of shape (n_samples_2, n_features)
+
+    Returns
+    -------
+    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    """
+    return np.dot(X, Y.T)
+
+
+def polynomial_kernel(X, Y, degree=3):
+    """
+    Compute the polynomial kernel between X and Y.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples_1, n_features)
+
+    Y: array of shape (n_samples_2, n_features)
+
+    degree: int
+
+    Returns
+    -------
+    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    """
+    K = linear_kernel(X, Y)
+    K += 1
+    K **= degree
+    return K
+
+
+def rbf_kernel(X, Y, sigma=1.0):
+    """
+    Compute the rbf (gaussian) kernel between X and Y.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples_1, n_features)
+
+    Y: array of shape (n_samples_2, n_features)
+
+    sigma: float
+
+    Returns
+    -------
+    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    """
+    K = -euclidean_distances(X, Y, squared=True)
+    K /= (2 * (sigma ** 2))
+    np.exp(K, K)
+    return K

@@ -1,6 +1,79 @@
-
 from ..base import ClassifierMixin, RegressorMixin
-from .base import BaseLibSVM
+from ..linear_model.base import CoefSelectTransformerMixin
+from .base import BaseLibLinear, BaseLibSVM
+
+
+class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
+    """Linear Support Vector Classification.
+
+    Similar to SVC with parameter kernel='linear', but uses internally
+    liblinear rather than libsvm, so it has more flexibility in the
+    choice of penalties and loss functions and should be faster for
+    huge datasets.
+
+    Parameters
+    ----------
+    loss : string, 'l1' or 'l2' (default 'l2')
+        Specifies the loss function. With 'l1' it is the standard SVM
+        loss (a.k.a. hinge Loss) while with 'l2' it is the squared loss.
+        (a.k.a. squared hinge Loss)
+
+    penalty : string, 'l1' or 'l2' (default 'l2')
+        Specifies the norm used in the penalization. The 'l2'
+        penalty is the standard used in SVC. The 'l1' leads to coef_
+        vectors that are sparse.
+
+    dual : bool, (default True)
+        Select the algorithm to either solve the dual or primal
+        optimization problem.
+
+    tol: float, optional
+         tolerance for stopping criteria
+
+    multi_class: boolean, optional
+         perform multi-class SVM by Cramer and Singer. If active,
+         options loss, penalty and dual will be ignored.
+
+    intercept_scaling : float, default: 1
+        when self.fit_intercept is True, instance vector x becomes
+        [x, self.intercept_scaling],
+        i.e. a "synthetic" feature with constant value equals to
+        intercept_scaling is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight
+        Note! the synthetic feature weight is subject to l1/l2 regularization
+        as all other features.
+        To lessen the effect of regularization on synthetic feature weight
+        (and therefore on the intercept) intercept_scaling has to be increased
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+        Weights asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
+        Constants in decision function.
+
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller tol parameter.
+
+    See also
+    --------
+    SVC
+
+    References
+    ----------
+    LIBLINEAR -- A Library for Large Linear Classification
+    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
+    """
+
+    # all the implementation is provided by the mixins
+    pass
 
 
 class SVC(BaseLibSVM, ClassifierMixin):
@@ -35,7 +108,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     shrinking: boolean, optional
          wether to use the shrinking heuristic.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     cache_size: float, optional
@@ -72,7 +145,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> from scikits.learn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
       cache_size=100.0, shrinking=True, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -84,10 +157,10 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 eps=1e-3, cache_size=100.0):
+                 tol=1e-3, cache_size=100.0):
 
         BaseLibSVM.__init__(self, 'c_svc', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, 0., 0.,
+                         cache_size, tol, C, 0., 0.,
                          shrinking, probability)
 
 
@@ -125,7 +198,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     shrinking: boolean, optional
          wether to use the shrinking heuristic.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     cache_size: float, optional
@@ -179,7 +252,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> from scikits.learn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
-    NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, eps=0.001,
+    NuSVC(kernel='rbf', probability=False, degree=3, coef0=0.0, tol=0.001,
        cache_size=100.0, shrinking=True, nu=0.5, gamma=0.25)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
@@ -191,10 +264,10 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 eps=1e-3, cache_size=100.0):
+                 tol=1e-3, cache_size=100.0):
 
-        BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma, coef0,
-                         cache_size, eps, 0., nu, 0.,
+        BaseLibSVM.__init__(self, 'nu_svc', kernel, degree, gamma,
+                         coef0, cache_size, tol, 0., nu, 0.,
                          shrinking, probability)
 
 
@@ -231,7 +304,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         enable probability estimates. This must be enabled prior
         to calling prob_predict.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     coef0 : float, optional
@@ -262,16 +335,29 @@ class SVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    Examples
+    --------
+    >>> from scikits.learn.svm import SVR
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> clf = SVR(C=1.0, p=0.2)
+    >>> clf.fit(X, y)
+    SVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True, p=0.2,
+      tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5, gamma=0.1)
+
     See also
     --------
     NuSVR
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, C=1.0, nu=0.5, p=0.1,
+                 cache_size=100.0, tol=1e-3, C=1.0, nu=0.5, p=0.1,
                  shrinking=True, probability=False):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, p,
+                         cache_size, tol, C, nu, p,
                          shrinking, probability)
 
     def fit(self, X, y, sample_weight=[]):
@@ -325,7 +411,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         kernel coefficient for rbf and poly, by default 1/n_features
         will be taken.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     probability: boolean, optional (False by default)
@@ -360,6 +446,19 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    Examples
+    --------
+    >>> from scikits.learn.svm import NuSVR
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> clf = NuSVR(nu=0.1, C=1.0)
+    >>> clf.fit(X, y)
+    NuSVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
+       tol=0.001, cache_size=100.0, coef0=0.0, nu=0.1, gamma=0.1)
+
     See also
     --------
     NuSVR
@@ -367,10 +466,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, cache_size=100.0, eps=1e-3):
+                 probability=False, cache_size=100.0, tol=1e-3):
 
         BaseLibSVM.__init__(self, 'epsilon_svr', kernel, degree, gamma, coef0,
-                         cache_size, eps, C, nu, 0.,
+                         cache_size, tol, C, nu, 0.,
                          shrinking, probability)
 
     def fit(self, X, y):
@@ -423,7 +522,7 @@ class OneClassSVM(BaseLibSVM):
         Independent term in kernel function. It is only significant in
         poly/sigmoid.
 
-    eps: float, optional
+    tol: float, optional
          precision for stopping criteria
 
     shrinking: boolean, optional
@@ -452,9 +551,9 @@ class OneClassSVM(BaseLibSVM):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, eps=1e-3, nu=0.5, shrinking=True):
+                 cache_size=100.0, tol=1e-3, nu=0.5, shrinking=True):
         BaseLibSVM.__init__(self, 'one_class', kernel, degree, gamma, coef0,
-                             cache_size, eps, 0.0, nu, 0.0, shrinking, False)
+                             cache_size, tol, 0.0, nu, 0.0, shrinking, False)
 
     def fit(self, X, class_weight={}, sample_weight=[], **params):
         """

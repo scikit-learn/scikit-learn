@@ -1,7 +1,6 @@
 from os.path import join
 import warnings
 import numpy
-import sys
 
 
 def configuration(parent_package='', top_path=None):
@@ -14,7 +13,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('datasets')
     config.add_subpackage('feature_extraction')
     config.add_subpackage('feature_extraction/tests')
-    config.add_subpackage('feature_extraction/text')
     config.add_subpackage('cluster')
     config.add_subpackage('cluster/tests')
     config.add_subpackage('covariance')
@@ -36,17 +34,14 @@ def configuration(parent_package='', top_path=None):
         ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
         config.add_library('cblas',
                            sources=[join('src', 'cblas', '*.c')])
-        cblas_libs = ['cblas']
-        blas_info.pop('libraries', None)
         warnings.warn(BlasNotFoundError.__doc__)
-    else:
-        cblas_libs = blas_info.pop('libraries', [])
-
 
     config.add_extension('ball_tree',
-                         sources=[join('src', 'BallTree.cpp')],
+                         sources=[join('src', 'ball_tree.cpp')],
+                         depends=[join('src', 'BallTree.h'),
+                                  join('src', 'BallTreePoint.h')],
+                         libraries=["stdc++"],
                          include_dirs=[numpy.get_include()])
-
 
     # the following packages depend on cblas, so they have to be build
     # after the above.

@@ -11,6 +11,7 @@ from ..pipeline import Pipeline
 from ..svm import SVC
 from ..linear_model import LogisticRegression
 from ..feature_selection import SelectKBest, f_classif
+from ..pca import PCA, RandomizedPCA
 from ..datasets import load_iris
 
 
@@ -78,22 +79,50 @@ def test_pipeline_init():
     assert_equal(params, params2)
 
 
-def test_pipeline_methods():
+def test_pipeline_methods_anova():
     """ Test the various methods of the pipeline.
     """
     iris = load_iris()
     X = iris.data
     y = iris.target
-    # Test with Anova+SVC
+    # Test with Anova + LogisticRegression
     clf = LogisticRegression()
     filter1 = SelectKBest(f_classif, k=2)
-    pipe = Pipeline([('anova', filter1), ('svc', clf)])
+    pipe = Pipeline([('anova', filter1), ('logistic', clf)])
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
-    support_ = pipe.get_support()
-    assert np.sum(support_) == 2
-    coef_ = pipe.coef_
-    assert np.size(coef_) == 4
+
+
+def test_pipeline_methods_pca_svm():
+    """Test the various methods of the pipeline."""
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    # Test with PCA + SVC
+    clf = SVC(probability=True)
+    pca = PCA(n_components='mle', whiten=True)
+    pipe = Pipeline([('pca', pca), ('svc', clf)])
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.predict_log_proba(X)
+    pipe.score(X, y)
+
+
+def test_pipeline_methods_randomized_pca_svm():
+    """Test the various methods of the pipeline."""
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    # Test with PCA + SVC
+    clf = SVC(probability=True)
+    pca = RandomizedPCA(n_components=2, whiten=True)
+    pipe = Pipeline([('pca', pca), ('svc', clf)])
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.predict_log_proba(X)
+    pipe.score(X, y)

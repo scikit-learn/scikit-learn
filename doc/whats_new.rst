@@ -1,6 +1,97 @@
 
 .. currentmodule:: scikits.learn
 
+
+.. _changes_0_7:
+
+0.7
+===
+
+scikits.learn 0.7 was released in March 2011, roughly three months
+after the 0.6 release. This release is marked by the speed
+improvements in existing algorithms like k-Nearest Neighbors and
+K-Means algorithm and by the inclusion of an efficient algorithm for
+computing the Ridge Generalized Cross Validation solution. Unlike the
+preceding release, no new modules where added to this release.
+
+Changelog
+---------
+
+  - Performance improvements for Gaussian Mixture Model sampling [Jan
+    Schlüter].
+
+  - Implementation of efficient leave-one-out cross-validated Ridge in
+    :class:`linear_model.RidgeCV` [`Mathieu Blondel`_]
+
+  - Better handling of collinearity and early stopping in
+    :func:`linear_model.lars_path` [`Alexandre Gramfort`_ and `Fabian
+    Pedregosa`_].
+
+  - Fixes for liblinear ordering of labels and sign of coefficients
+    [Dan Yamins, Paolo Losi, `Mathieu Blondel`_ and `Fabian Pedregosa`_].
+
+  - Performance improvements for Nearest Neighbors algorithm in
+    high-dimensional spaces [`Fabian Pedregosa`_].
+
+  - Performance improvements for :class:`cluster.KMeans` [`Gael
+    Varoquaux`_ and `James Bergstra`_].
+
+  - Sanity checks for SVM-based classes [`Mathieu Blondel`_].
+
+  - Refactoring of :class:`neighbors.NeighborsClassifier` and
+    :func:`neighbors.kneighbors_graph`: added different algorithms for
+    the k-Nearest Neighbor Search and implemented a more stable
+    algorithm for finding barycenter weigths. Also added some
+    developer documentation for this module, see
+    :ref:`notes_neighbors` for more information [`Fabian Pedregosa`_].
+
+  - Documentation improvements: Added :class:`pca.RandomizedPCA` and
+    :class:`linear_model.LogisticRegression` to the class
+    reference. Also added references of matrices used for clustering
+    and other fixes [`Gael Varoquaux`_, `Fabian Pedregosa`_, `Mathieu
+    Blondel`_, `Olivier Grisel`_, Virgile Fritsch , Emmanuelle
+    Gouillart]
+
+  - Binded decision_function in classes that make use of liblinear_,
+    dense and sparse variants, like :class:`svm.LinearSVC` or
+    :class:`linear_model.LogisticRegression` [`Fabian Pedregosa`_].
+
+  - Performance and API improvements to
+    :func:`metrics.euclidean_distances` and to
+    :class:`pca.RandomizedPCA` [`James Bergstra`_].
+
+  - Fix compilation issues under NetBSD [Kamel Ibn Hassen Derouiche]
+
+  - Allow input sequences of different lengths in :class:`hmm.GaussianHMM`
+    [`Ron Weiss`_].
+
+  - Fix bug in affinity propagation caused by incorrect indexing [Xinfan Meng]
+
+
+People
+------
+
+People that made this release possible preceeded by number of commits:
+
+    - 85  `Fabian Pedregosa`_
+    - 67  `Mathieu Blondel`_
+    - 20  `Alexandre Gramfort`_
+    - 19  `James Bergstra`_
+    - 14  Dan Yamins
+    - 13  `Olivier Grisel`_
+    - 12  `Gael Varoquaux`_
+    - 4  Edouard Duchesnay
+    - 4  `Ron Weiss`_
+    - 2  Satrajit Ghosh
+    - 2  Vincent Dubourg
+    - 1  Emmanuelle Gouillart
+    - 1  Kamel Ibn Hassen Derouiche
+    - 1  Paolo Losi
+    - 1  VirgileFritsch
+    - 1  `Yaroslav Halchenko`_
+    - 1  Xinfan Meng
+
+
 .. _changes_0_6:
 
 0.6
@@ -11,19 +102,19 @@ inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
 
-.. |banner1| image:: auto_examples/applications/images/plot_face_recognition.png
+.. |banner1| image:: auto_examples/applications/images/plot_face_recognition_1.png
    :height: 150
    :target: auto_examples/applications/plot_face_recognition.html
 
-.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling.png
+.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
    :height: 150
    :target: auto_examples/linear_model/plot_species_distribution.html
 
-.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression.png
+.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
    :height: 150
    :target: auto_examples/gaussian_process/plot_gp_regression.html
 
-.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris.png
+.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris_1.png
    :height: 150
    :target: auto_examples/linear_model/plot_lasso_lars.html
 
@@ -106,8 +197,7 @@ People that made this release possible preceeded by number of commits:
 
    * 97 `Peter Prettenhofer <http://sites.google.com/site/peterprettenhofer/>`_
 
-   * 68 `Alexandre Gramfort
-     <http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html>`_
+   * 68 `Alexandre Gramfort <http://www-sop.inria.fr/members/Alexandre.Gramfort/>`_
 
    * 59  `Mathieu Blondel <http://www.mblondel.org/journal/>`_
 
@@ -299,3 +389,15 @@ of commits):
     *  2  Vincent Michel
     *  1  Chris Filo Gorgolewski
 
+
+.. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/
+
+.. _Fabian Pedregosa: http://fseoane.net/blog/
+
+.. _Mathieu Blondel: http://www.mblondel.org/journal/
+
+.. _James Bergstra: http://www-etud.iro.umontreal.ca/~bergstrj/
+
+.. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
+.. _Yaroslav Halchenko: http://www.onerussian.com/

@@ -1,10 +1,12 @@
 import numpy as np
 
 from ..base import ClassifierMixin
+from ..linear_model.base import CoefSelectTransformerMixin
 from ..svm.base import BaseLibLinear
-from ..svm import _liblinear
+from ..svm import liblinear
 
-class LogisticRegression(BaseLibLinear, ClassifierMixin):
+class LogisticRegression(BaseLibLinear, ClassifierMixin,
+                         CoefSelectTransformerMixin):
     """
     Logistic Regression.
 
@@ -39,6 +41,9 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased
 
+    tol: float, optional
+         tolerance for stopping criteria
+
     Attributes
     ----------
 
@@ -58,7 +63,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
     The underlying C implementation uses a random number generator to
     select features when fitting the model. It is thus not uncommon,
     to have slightly different results for the same input data. If
-    that happens, try with a smaller eps parameter.
+    that happens, try with a smaller tol parameter.
 
     References
     ----------
@@ -66,11 +71,11 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
     http://www.csie.ntu.edu.tw/~cjlin/liblinear/
     """
 
-    def __init__(self, penalty='l2', dual=False, eps=1e-4, C=1.0,
+    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1):
 
         super(LogisticRegression, self).__init__ (penalty=penalty,
-            dual=dual, loss='lr', eps=eps, C=C,
+            dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
 
     def predict_proba(self, X):
@@ -92,9 +97,9 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin):
             order.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        probas = _liblinear.predict_prob_wrap(X, self.raw_coef_,
+        probas = liblinear.predict_prob_wrap(X, self.raw_coef_,
                                       self._get_solver_type(),
-                                      self.eps, self.C,
+                                      self.tol, self.C,
                                       self.class_weight_label,
                                       self.class_weight, self.label_,
                                       self._get_bias())

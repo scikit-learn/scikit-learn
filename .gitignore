@@ -3,6 +3,7 @@
 *~
 .#*
 *.swp
+.DS_Store
 build
 scikits/learn/datasets/__config__.py
 
@@ -13,6 +14,7 @@ doc/modules/generated/
 pip-log.txt
 scikits.learn.egg-info/
 .coverage
+coverage
 tags
 covtype.data.gz
 20news-18828/

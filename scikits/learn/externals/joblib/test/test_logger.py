@@ -11,6 +11,7 @@ import os
 import sys
 import StringIO
 from tempfile import mkdtemp
+import re
 
 import nose
 
@@ -52,9 +53,12 @@ def test_print_time():
         # And a third time 
         print_time = PrintTime(logfile=os.path.join(env['dir'], 'test.log'))
         print_time('Foo')
-        nose.tools.assert_equal(sys.stderr.getvalue(),
-            "Foo: 0.0s, 0.0min\nFoo: 0.0s, 0.0min\nFoo: 0.0s, 0.0min\n"
-            )
+        printed_text = sys.stderr.getvalue()
+        # Use regexps to be robust to time variations
+        match = r"Foo: 0\..s, 0\.0min\nFoo: 0\..s, 0.0min\nFoo: .\..s, 0.0min\n"
+        if not re.match(match, printed_text):
+            raise AssertionError('Excepted %s, got %s' % 
+                                    (match, printed_text))
     finally:
         sys.stderr = orig_stderr
 

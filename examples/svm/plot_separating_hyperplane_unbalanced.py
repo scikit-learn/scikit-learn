@@ -1,11 +1,14 @@
 """
-================================================
-SVM: Separating hyperplane with weighted classes
-================================================
+=================================================
+SVM: Separating hyperplane for unbalanced classes
+=================================================
 
-Fit linear SVMs with and without class weighting.
-Allows to handle problems with unbalanced classes.
+Find the optimal separating hyperplane using an SVC for classes that
+are unbalanced.
 
+We first find the separating plane with a plain SVC and then plot
+(dashed) the separating hyperplane with automatically correction for
+unbalanced classes.
 """
 print __doc__
 
