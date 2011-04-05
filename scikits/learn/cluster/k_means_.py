@@ -115,7 +115,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
 # K-means estimation by EM (expectation maximisation)
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
-                    tol=1e-4, rng=None, copy_x=True):
+                    tol=1e-4, rng=None, copy_x=True, batch=False, chunk=300):
     """ K-means clustering algorithm.
 
     Parameters
@@ -220,23 +220,37 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
         if verbose:
             print 'Initialization complete'
+
+        if batch:
+            v = np.zeros(k)
+
         # iterations
         for i in range(max_iter):
             centers_old = centers.copy()
-            labels, inertia = _e_step(X, centers,
+            if batch:
+                centers = _batch_step(X, centers, i, chunk, v,
                                         x_squared_norms=x_squared_norms)
-            centers = _m_step(X, labels, k)
+
+            else:
+                labels, inertia = _e_step(X, centers,
+                                            x_squared_norms=x_squared_norms)
+                centers = _m_step(X, labels, k)
+
             if verbose:
                 print 'Iteration %i, inertia %s' % (i, inertia)
+
             if np.sum((centers_old - centers) ** 2) < tol * vdata:
                 if verbose:
                     print 'Converged to similar centers at iteration', i
                 break
 
-            if inertia < best_inertia:
+            if not batch and inertia < best_inertia:
                 best_labels = labels.copy()
                 best_centers = centers.copy()
                 best_inertia = inertia
+
+        if batch:
+            inertia, labels = _calculate_labels_inertia(X, centers)
     else:
         best_labels = labels
         best_centers = centers
@@ -244,6 +258,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     if not copy_x:
         X += Xmean
     return best_centers + Xmean, best_labels, best_inertia
+
 
 def _calculate_labels_inertia(X, centers):
     """
@@ -253,70 +268,54 @@ def _calculate_labels_inertia(X, centers):
     distance = euclidean_distances(centers, X, norm, squared=True)
     return distance.min(axis=0).min(), distance.argmin(axis=0)
 
-def batch_k_means(X, k, chunk=300, init='k-means++', n_init=10, max_iter=300,
-                  verbose=0, tol=1e-4, rng=None, copy_x=True):
+
+def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
     """
-    TODO documentation
+    I return the new centers calculated for the batch K means
+
+    Parameters
+    ----------
+
+    x: array, shape (n_samples, n_features)
+
+    centers: array, shape (k, n_features)
+        The cluster centers
+
+    i: int
+        
+    chunk: int
+         The size of chunks of data to run the computation of the new
+           centers on
+
+    v: array, shape (k, )
+         The vector in which we keep track of the numbers of elements in a
+         cluster
+
+    x_squared_norms: array, shape (n_samples,)
+        Squared euclidean norm of each data point.
+
+    Returns
+    -------
+    centers: array, shape (k, n_features)
+        The resulting centers
+
+
     """
-    # FIXME code deduplication with the k_means method
-    vdata = np.mean(np.var(X, 0))
+    centers_old = centers.copy()
+    # Let's split the data into chunks
+    j = i * chunk % len(x)
+    M = x[j:j + chunk]
+    m_norm = (M**2).sum(axis=1)
+    distance = euclidean_distances(centers, M, m_norm)
 
-    if rng is None:
-        rng = np.random
-    n_samples = X.shape[0]
+    # Let's take the position of the mininum distance on the first axis
+    cache = distance.argmin(axis=0)
+    for l, c in enumerate(cache):
+        v[c] += 1
+        centers[c] = (1 - 1./v[c])*centers[c] + \
+                            1./v[c]*M[l]
 
-
-    if hasattr(init, '__array__'):
-        init = np.asarray(init)
-        if not n_init == 1:
-            warnings.warn('Explicite initial center position passed: '
-                          'performing only one init in the k-means')
-            n_init = 1
-
-    x_squared_norms = X.copy()
-    x_squared_norms **=2
-    x_squared_norms = x_squared_norms.sum(axis=1)
-    for it in range(n_init):
-        # init
-        if init == 'k-means++':
-            centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
-        elif init == 'random':
-            seeds = np.argsort(rng.rand(n_samples))[:k]
-            centers = X[seeds]
-        elif hasattr(init, '__array__'):
-            centers = np.asanyarray(init).copy()
-        elif callable(init):
-            centers = init(X, k, rng=rng)
-        else:
-            raise ValueError("the init parameter for the k-means should "
-                "be 'k-means++' or 'random' or an ndarray, "
-                "'%s' (type '%s') was passed.")
-        if verbose:
-            print 'Initialization complete'
-
-        v = np.zeros(k)
-        for i in range(max_iter):
-            centers_old = centers.copy()
-            # Let's split the data into chunks
-            j = i * chunk % len(X)
-            M = X[j:j + chunk]
-            m_norm = (M**2).sum(axis=1)
-            distance = euclidean_distances(centers, M, m_norm)
-
-            # Let's take the position of the mininum distance on the first axis
-            cache = distance.argmin(axis=0)
-            for l, c in enumerate(cache):
-                v[c] += 1
-                centers[c] = (1 - 1./v[c])*centers[c] + \
-                                    1./v[c]*M[l]
-
-            if np.sum((centers_old - centers) ** 2) < tol * vdata:
-                if verbose:
-                    print 'Converged to similar centers at iteration', i
-                break
-        inertia, labels = _calculate_labels_inertia(X, centers)
-        return centers, labels, inertia
-
+    return centers
 
 
 def _m_step(x, z, k):
@@ -492,13 +491,20 @@ class KMeans(BaseEstimator):
         self.rng = rng
         self.copy_x = copy_x
 
-    def fit(self, X, **params):
-        """Compute k-means"""
-        X = np.asanyarray(X)
+    def _check_data(self, X, **params):
+        """
+        Set parameters and check the sample given is larger than k
+        """
+        X = np.asarray(X)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be larger than k=%d" % (
                 X.shape[0], self.k))
         self._set_params(**params)
+        return X
+
+    def fit(self, X, **params):
+        """Compute k-means"""
+        W = self._check_data(self, X, **params)
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
@@ -511,21 +517,20 @@ class BatchKMeans(KMeans):
     Batch K-Means clustering
     """
 
-    def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=300, tol=1e-4,
-            verbose=0, rng=None, copy_x=True):
+    def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=300,
+                 tol=1e-4, verbose=0, rng=None, copy_x=True):
         super(BatchKMeans, self).__init__(k, init, n_init, max_iter, tol,
               verbose, rng=None, copy_x=True)
         self.chunk = chunk
 
     def fit(self, X, **params):
-        # FIXME code deduplication with kmeans fit method
-        X = np.asarray(X)
-        if X.shape[0] < self.k:
-            raise ValueError("n_samples=%d should be larger than k=%d" % (
-                X.shape[0], self.k))
-        self._set_params(**params)
-        self.cluster_centers, self.labels, self.inertia_ = batch_k_means(
-            X, k=self.k, chunk=self.chunk, init=self.init, n_init=self.n_init,
+        """
+        Compute batch k means
+        """
+        X = self._check_data(X, **params)
+        
+        self.cluster_centers, self.labels, self.inertia_ = k_means(
+            X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose, tol=self.tol,
-            rng=self.rng, copy_x=self.copy_x)
+            rng=self.rng, copy_x=self.copy_x, batch=True, chunk=self.chunk)
         return self
