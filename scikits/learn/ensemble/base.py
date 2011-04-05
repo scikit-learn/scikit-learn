@@ -21,7 +21,7 @@ class BaseEnsemble(BaseEstimator):
 
     def __setitem__(self, index, thing):
 
-        return self.estimators[index] = thing
+        self.estimators[index] = thing
 
     def __delitem__(self, index):
 
