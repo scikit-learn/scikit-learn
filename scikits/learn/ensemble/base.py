@@ -1,16 +1,15 @@
 
 from ..base import BaseEstimator
 """
-Base class for all boosting classes
+Base class for all ensemble classes
 """
-class BaseBoost(BaseEstimator):
+class BaseEnsemble(BaseEstimator):
 
     def __init__(self, boosts, estimator, **params):
 
         self.estimator = estimator
         self.params = params
         self.estimators = []
-        self.boosts = boosts
 
     def __len__(self):
 

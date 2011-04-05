@@ -1,10 +1,9 @@
 import numpy as np
-from .base import BaseBoost
-from ..base import clone
+from ..base import BaseEnsemble
 
-class AdaBoost(BaseBoost):
+class AdaBoost(BaseEnsemble):
 
-    def fit(self, X, Y, sample_weight = None, **params):
+    def fit(self, X, Y, sample_weight = None, boosts = 1, **params):
         """
         X: list of instance vectors
         Y: target values/classes
@@ -18,7 +17,7 @@ class AdaBoost(BaseBoost):
             sample_weight = np.ones(X.shape[0], dtype = np.float64) / X.shape[0]
         else:
             sample_weight = np.copy(sample_weight)
-        for boost in xrange(self.boosts):
+        for boost in xrange(boosts):
             estimator = self.estimator(**self.params)
             estimator.fit(X,Y,sample_weight,**params)
             # TODO request that classifiers return classification of training sets when fitting
