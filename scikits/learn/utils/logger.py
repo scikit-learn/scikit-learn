@@ -1,5 +1,4 @@
-"""
-Logging utility.
+"""Logging utility.
 
 Author: Feth Arezki <feth A+ tuttu.info>
 
@@ -61,9 +60,6 @@ We might use
 #LICENSE:BSD 3 clause
 
 
-__all__ = ['log', 'logtools', 'set_log_threshold', 'LOGGERS']
-
-
 #Importing sys and not sys.stdout because doctest is going to replace
 #sys.stdout and we need to access the same fd as doctest
 import sys
@@ -72,16 +68,19 @@ from logging import CRITICAL, INFO, getLogger, StreamHandler
 from operator import isSequenceType
 
 
+__all__ = ['DEFAULT_LOGGER', 'LOGGERS', 'log', 'logtools', 'set_log_threshold']
+
+
+DEFAULT_THRESHOLD = INFO
+LOGGERS = {}
+
+
 def _non_str_sequence(item):
     """
     Identifies tuples or lists from strings.
     Strings indeed have a special meaning for message formatting :-)
     """
     return isSequenceType(item) and not isinstance(item, (unicode, str))
-
-
-DEFAULT_THRESHOLD = INFO
-LOGGERS = {}
 
 
 def _getdefaulthandler():
