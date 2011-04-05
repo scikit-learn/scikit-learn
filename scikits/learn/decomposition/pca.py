@@ -231,7 +231,7 @@ class PCA(BaseEstimator, TransformerMixin):
                                         self.explained_variance_.sum()
 
         if self.whiten:
-            self.components_ = np.dot(np.diag(1.0 / S), V) * np.sqrt(n_samples)
+            self.components_ = V / S[:, np.newaxis] * np.sqrt(n_samples)
         else:
             self.components_ = V
 
@@ -299,8 +299,7 @@ class ProbabilisticPCA(PCA):
             delta = (Xr ** 2).mean(0) / (self.dim - self.n_components)
         self.covariance_ = np.diag(delta)
         for k in range(self.n_components):
-            add_cov = np.inner(  # XXX: ugly, see why it didn't work w/o .T
-                self.components_.T[:, k:k + 1], self.components_.T[:, k:k + 1])
+            add_cov = np.outer(self.components_[k], self.components_[k])
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
