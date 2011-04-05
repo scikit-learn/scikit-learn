@@ -5,9 +5,11 @@ Base class for all boosting classes
 """
 class BaseBoost(BaseEstimator):
 
-    def __init__(self, estimator, boosts = 1):
+    def __init__(self, boosts, estimator, **params):
 
-        self.estimators = [[1., estimator]]
+        self.estimator = estimator
+        self.params = params
+        self.estimators = []
         self.boosts = boosts
 
     def __len__(self):

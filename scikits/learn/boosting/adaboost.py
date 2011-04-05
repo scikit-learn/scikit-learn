@@ -4,23 +4,36 @@ from ..base import clone
 
 class AdaBoost(BaseBoost):
 
-    def fit(self, X, Y, W = None):
+    def fit(self, X, Y, sample_weight = None, **params):
         """
         X: list of instance vectors
         Y: target values/classes
-        W: weights
+        sample_weight: sample (X) weights
+
+        Notes: currently only binary classification is supported
+        I am making the assumption that one class label is positive and the other is negative
         """
-        if W is None:
-            W = np.ones(X.shape[0], dtype = np.float64)
+        if sample_weight is None:
+            # initialize weights to 1/N
+            sample_weight = np.ones(X.shape[0], dtype = np.float64) / X.shape[0]
+        else:
+            sample_weight = np.copy(sample_weight)
         for boost in xrange(self.boosts):
-            if boost > 0:
-                self.append(clone(self[-1]))
-            classification = self[-1].fit(X,Y,W)
+            estimator = self.estimator(**self.params)
+            estimator.fit(X,Y,sample_weight,**params)
+            # TODO request that classifiers return classification of training sets when fitting
+            # which would make the following line unnecessary 
+            T = estimator.predict(X)
+            incorrect = (T*X)<0
+            err = np.sum(sample_weight * incorrect) / np.sum(sample_weight)
+            alpha = math.log((1 - err) / err)
+            sample_weight *= np.exp(alpha * incorrect)
+            self.append((alpha, estimator))
 
     def predict(self, X):
         
         prediction = np.zeros(X.shape[0])
-        for weight, estimator in self:
-            prediction += weight * estimator
+        for alpha, estimator in self:
+            prediction += alpha * estimator.predict(X)
         prediction /= len(self)
         return prediction
