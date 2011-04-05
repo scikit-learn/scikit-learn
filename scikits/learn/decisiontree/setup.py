@@ -18,8 +18,9 @@ def configuration(parent_package='', top_path=None):
 
     config.add_subpackage('tests')
 
-    libdecisiontree_sources = ['libdecisiontree.c']
-    libdecisiontree_depends = [join('src', 'Histogram.h'),
+    libdecisiontree_sources = ['libdecisiontree.cpp']
+    libdecisiontree_depends = ['libdecisiontree_helper.cpp',
+                               join('src', 'Histogram.h'),
                                join('src', 'Node.h'),
                                join('src', 'Node.cpp'),
                                join('src', 'Object.h')]
@@ -28,7 +29,7 @@ def configuration(parent_package='', top_path=None):
                          sources = libdecisiontree_sources,
                          include_dirs = [numpy.get_include(), 'src'],
                          depends = libdecisiontree_depends,
-                         language = 'c++'
+                         language="c++"
                          )
 
     return config

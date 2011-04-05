@@ -9,8 +9,8 @@ enum label_t
 struct Object
 {
     double* attrs;
-    unsigned int dim;
     double weight;
+    unsigned int dim;
     label_t label;
 };
 

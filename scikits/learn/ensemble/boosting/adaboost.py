@@ -28,6 +28,7 @@ class AdaBoost(BaseEnsemble):
             alpha = math.log((1 - err) / err)
             sample_weight *= np.exp(alpha * incorrect)
             self.append((alpha, estimator))
+        return self
 
     def predict(self, X):
         

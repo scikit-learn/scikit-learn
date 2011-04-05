@@ -20,19 +20,19 @@ class Node
             purity(0)
         {}
 
-        ~Node(){ delete left_child; delete right_child; }
+        ~Node()
+        {
+            delete this->left_child;
+            delete this->right_child;
+        }
 
         void calc_purity();
 
         void update_classification();
 
-        void add_signal(Object* s) { signal.push_back(s); }
+        void add_signal(Object* s) { this->signal.push_back(s); }
 
-        void add_background(Object* s) { background.push_back(s); }
-
-        void set_signal(vector<Object*> s) { signal = s; }
-
-        void set_background(vector<Object*> s) { background = s; }
+        void add_background(Object* s) { this->background.push_back(s); }
 
         void recursive_split(unsigned int min_leaf_size, unsigned int bins);
         
