@@ -25,7 +25,7 @@ class BaseEnsemble(BaseEstimator):
 
     def __delitem__(self, index):
 
-        return del self.estimators[index]
+        del self.estimators[index]
     
     def append(self, thing):
 
