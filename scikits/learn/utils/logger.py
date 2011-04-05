@@ -14,14 +14,14 @@ Simple uses
 
 log() will trigger the general log system (to stdout):
 >>> log("message with %(placeholder)s but no replacement")
-message with %(placeholder)s but no replacement
+[scikits.learn] message with %(placeholder)s but no replacement
 >>> log("message with %s placeholder", 1)
-message with 1 placeholder
+[scikits.learn] message with 1 placeholder
 >>> log("message with %s + %s placeholder", (1, 1))
-message with 1 + 1 placeholder
+[scikits.learn] message with 1 + 1 placeholder
 >>> log("message with %(placeholder)s %(quantifier)s",
 ... {'placeholder': 'placeholder replaced', 'quantifier': 'twice'})
-message with placeholder replaced twice
+[scikits.learn] message with placeholder replaced twice
 
 
 Criticity
@@ -42,10 +42,10 @@ You want to use the generic log levels:
 >>> log("You should not be reading this", verbosity=DEBUG)
 >>> from logging import INFO
 >>> log("This must have been displayed", verbosity=INFO)
-This must have been displayed
+[scikits.learn] This must have been displayed
 >>> set_log_threshold(DEBUG)
 >>> log("You should now be reading this", verbosity=DEBUG)
-You should now be reading this
+[scikits.learn] You should now be reading this
 
 
 Later
@@ -64,7 +64,7 @@ We might use
 #sys.stdout and we need to access the same fd as doctest
 import sys
 
-from logging import CRITICAL, INFO, getLogger, StreamHandler
+from logging import CRITICAL, INFO, getLogger, Formatter, StreamHandler
 from operator import isSequenceType
 
 
@@ -88,7 +88,11 @@ def _getdefaulthandler():
     The default handler is writing to sys.stdout.
     """
     if not hasattr(_getdefaulthandler, 'handler'):
-        _getdefaulthandler.handler = StreamHandler(sys.stdout)
+        handler = StreamHandler(sys.stdout)
+        formatter = Formatter("[%(name)s] %(message)s")
+        handler.setFormatter(formatter)
+        _getdefaulthandler.handler = handler
+        return handler
     return _getdefaulthandler.handler
 
 
