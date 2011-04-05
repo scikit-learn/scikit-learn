@@ -46,7 +46,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.intercept_ = np.empty(0, dtype=np.float64, order='C')
 
         # only used in classification
-        self.n_support = np.empty(0, dtype=np.int32, order='C')
+        self.n_support_ = np.empty(0, dtype=np.int32, order='C')
 
     def fit(self, X, y, class_weight={}, sample_weight=[], **params):
         """
@@ -110,7 +110,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                  self._support_indices, self._support_indptr,
                  self._dual_coef_data, self.intercept_,
                  self.class_weight_label, self.class_weight, sample_weight,
-                 self.n_support, self.nu, self.cache_size, self.p,
+                 self.n_support_, self.nu, self.cache_size, self.p,
                  int(self.shrinking), int(self.probability))
 
         n_class = len(self.label_) - 1
@@ -167,7 +167,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label, self.class_weight,
                       self.nu, self.cache_size, self.p, self.shrinking,
-                      self.probability, self.n_support, self.label_,
+                      self.probability, self.n_support_, self.label_,
                       self.probA_, self.probB_)
 
 
