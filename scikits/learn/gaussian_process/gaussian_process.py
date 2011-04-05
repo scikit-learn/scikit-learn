@@ -6,8 +6,11 @@
 # License: BSD style
 
 import numpy as np
+from logging import DEBUG
 from scipy import linalg, optimize, rand
+
 from ..base import BaseEstimator, RegressorMixin
+from ..utils.logger import logtools
 from . import regression_models as regression
 from . import correlation_models as correlation
 from ..cross_val import LeaveOneOut
@@ -253,6 +256,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Run input checks
         self._check_params()
 
+        #logger local to ths class
+        self.logger, self.log, self.set_log_threshold = logtools('scikits.learn.gaussian_process')
+        #adapt logger verbosity
+        if self.verbose:
+            self.set_log_threshold(DEBUG)
+
     def fit(self, X, y):
         """
         The Gaussian Process model fitting method.
@@ -344,9 +353,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Determine Gaussian Process model parameters
         if self.thetaL is not None and self.thetaU is not None:
             # Maximum Likelihood Estimation of the parameters
-            if self.verbose:
-                print("Performing Maximum Likelihood Estimation of the "
-                    + "autocorrelation parameters...")
+            self.logger.debug("Performing Maximum Likelihood Estimation of the "
+                    "autocorrelation parameters...")
             self.theta, self.reduced_likelihood_function_value, par = \
                 self.arg_max_reduced_likelihood_function()
             if np.isinf(self.reduced_likelihood_function_value):
@@ -355,9 +363,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         else:
             # Given parameters
-            if self.verbose:
-                print("Given autocorrelation parameters. "
-                    + "Computing Gaussian Process model parameters...")
+            self.logger.debug("Given autocorrelation parameters. "
+                    "Computing Gaussian Process model parameters...")
             self.theta = self.theta0
             self.reduced_likelihood_function_value, par = \
                 self.reduced_likelihood_function()
@@ -374,9 +381,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if self.storage_mode == 'light':
             # Delete heavy data (it will be computed again if required)
             # (it is required only when MSE is wanted in self.predict)
-            if self.verbose:
-                print("Light storage mode specified. "
-                    + "Flushing autocorrelation matrix...")
+            self.logger.debug("Light storage mode specified. "
+                    "Flushing autocorrelation matrix...")
             self.D = None
             self.ij = None
             self.F = None
@@ -461,10 +467,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 C = self.C
                 if C is None:
                     # Light storage mode (need to recompute C, F, Ft and G)
-                    if self.verbose:
-                        print("This GaussianProcess used 'light' storage mode "
-                            + "at instanciation. Need to recompute "
-                            + "autocorrelation matrix...")
+                    self.debug("This GaussianProcess used 'light' storage mode "
+                            "at instanciation. Need to recompute "
+                            "autocorrelation matrix...")
                     reduced_likelihood_function_value, par = \
                         self.reduced_likelihood_function()
                     self.C = par['C']
@@ -675,10 +680,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         best_optimal_rlf_value = []
         best_optimal_par = []
 
-        if self.verbose:
-            print "The chosen optimizer is: " + str(self.optimizer)
-            if self.random_start > 1:
-                print str(self.random_start) + " random starts are required."
+        self.logger.debug("The chosen optimizer is: %s", str(self.optimizer))
+        if self.random_start > 1:
+            self.logger.debug("%d random starts are required.",
+                    self.random_start)
 
         percent_completed = 0.
 
@@ -735,7 +740,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.verbose and self.random_start > 1:
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
-                        print "%s completed" % (5 * percent_completed)
+                        self.log("%d completed", 5 * percent_completed)
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
@@ -753,8 +758,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.verbose = False
 
             # Initialize under isotropy assumption
-            if verbose:
-                print("Initialize under isotropy assumption...")
+            self.logger.debug("Initialize under isotropy assumption...")
             self.theta0 = np.atleast_2d(self.theta0.min())
             self.thetaL = np.atleast_2d(self.thetaL.min())
             self.thetaU = np.atleast_2d(self.thetaU.max())
@@ -763,11 +767,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             optimal_theta = theta_iso + np.zeros(theta0.shape)
 
             # Iterate over all dimensions of theta allowing for anisotropy
-            if verbose:
-                print("Now improving allowing for anisotropy...")
+            self.logger.debug("Now improving allowing for anisotropy...")
             for i in np.random.permutation(range(theta0.size)):
-                if verbose:
-                    print "Proceeding along dimension %d..." % (i + 1)
+                self.logger.debug("Proceeding along dimension %d...", i + 1)
                 self.theta0 = np.atleast_2d(theta_iso)
                 self.thetaL = np.atleast_2d(thetaL[0, i])
                 self.thetaU = np.atleast_2d(thetaU[0, i])
