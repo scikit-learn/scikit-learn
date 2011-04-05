@@ -9,6 +9,8 @@ Gaussian Mixture Models
 import numpy as np
 
 from .base import BaseEstimator
+from .utils.logger import log
+
 from . import cluster
 
 
@@ -673,7 +675,7 @@ def _covar_mstep_tied2(*args):
 
 
 def _covar_mstep_tied(gmm, obs, posteriors, avg_obs, norm, min_covar):
-    print "THIS IS BROKEN"
+    log("THIS IS BROKEN")
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
     avg_obs2 = np.dot(obs.T, obs)
     avg_means2 = np.dot(gmm._means.T, gmm._means)
