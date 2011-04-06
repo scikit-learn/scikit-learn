@@ -48,7 +48,7 @@ class Node
             return right_child;
         }
 
-        void set_left_child(const Node* child)
+        void set_left_child(Node* child)
         {
             if (this->left_child) delete this->left_child;
             this->left_child = child;

@@ -24,7 +24,7 @@ class ObjectCompare
 
         bool operator()(const Object& left, const Object& right)
         {
-            return *left.attrs[attr] < *right.attrs[attr];
+            return left.attrs[attr] < right.attrs[attr];
         }
 
     private:
