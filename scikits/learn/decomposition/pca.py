@@ -444,7 +444,7 @@ class RandomizedPCA(BaseEstimator):
 
         if self.whiten:
             n = X.shape[0]
-            self.components_ = np.dot(np.diag(1.0 / S), V) * np.sqrt(n)
+            self.components_ = V / S[:, np.newaxis] * np.sqrt(n)
         else:
             self.components_ = V
 
@@ -614,8 +614,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         self.fit(X, **params)
 
-        sqrt_lambdas = np.diag(np.sqrt(self.lambdas_))
-        X_transformed = np.dot(self.alphas_, sqrt_lambdas)
+        X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
 
         if self.fit_inverse_transform:
             self._fit_inverse_transform(X_transformed, X)
@@ -634,8 +633,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         X_new: array-like, shape (n_samples, n_components)
         """
         K = self.centerer.transform(self._get_kernel(X, self.X_fit_))
-        inv_sqrt_lambdas = np.diag(1.0 / np.sqrt(self.lambdas_))
-        return np.dot(K, np.dot(self.alphas_, inv_sqrt_lambdas))
+        return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
 
     def inverse_transform(self, X):
         """Transform X back to original space.
