@@ -20,7 +20,6 @@ cdef extern from "Node.h":
     cdef cppclass Node:
         Node()
         void recursive_split(int, int)
-        double predict(double*)
 
 cdef class PyNode:
     cdef Node *thisptr
@@ -58,16 +57,12 @@ def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     """
     cdef PyNode root
 
-    if len(sample_weight) == 0:
-        sample_weight = np.ones(X.shape[0], dtype=np.float64)
-    else:
-        assert sample_weight.shape[0] == X.shape[0], \
-               "sample_weight and X have incompatible shapes: " + \
-               "sample_weight has %s samples while X has %s" % \
-               (sample_weight.shape[0], X.shape[0])
-
+    root = PyNode()
+    print "init"
     init_root(X.data, Y.data, sample_weight.data, X.shape, root.thisptr)
+    print "split"
     root.thisptr.recursive_split(minleafsize, nbins)
+    print "done split"
     return root
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,

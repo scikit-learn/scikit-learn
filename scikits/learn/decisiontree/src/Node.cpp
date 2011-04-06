@@ -1,4 +1,5 @@
 #include "Node.h"
+#include <iostream>
 
 double Node::predict(const double* attrs) const
 {
@@ -18,6 +19,7 @@ double Node::predict(const double* attrs) const
 
 void Node::recursive_split(unsigned int min_leaf_size, unsigned int bins)
 {
+    std::cout << "SPLIT" << std::endl;
     if (this->split(min_leaf_size, bins))
     {
         this->left_child->recursive_split(min_leaf_size, bins);
@@ -81,7 +83,7 @@ bool Node::split(unsigned int min_leaf_size, unsigned int bins)
     pair<double,double> extrema;
     Histogram<double,double>* sigHist;
     Histogram<double,double>* bkgHist;
-    float bestGini = -1;
+    float bestGini(-1.);
     for (unsigned int i(0); i < numAttributes; ++i)
     {
         // get max and min value of this attribute over signal and background combined
