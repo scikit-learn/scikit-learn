@@ -58,11 +58,9 @@ def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef PyNode root
 
     root = PyNode()
-    print "init"
     init_root(X.data, Y.data, sample_weight.data, X.shape, root.thisptr)
-    print "split"
     root.thisptr.recursive_split(minleafsize, nbins)
-    print "done split"
+    
     return root
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,

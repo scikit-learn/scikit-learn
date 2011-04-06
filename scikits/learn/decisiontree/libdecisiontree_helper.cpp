@@ -24,7 +24,7 @@ void init_root(char* X, char* Y, char* weights, npy_intp* X_dims, Node* root)
     for(i=0; i<X_dims[0]; ++i)
     {
         obj = new Object();
-        obj->attrs = &x[X_dims[0] * i];
+        obj->attrs = &x[i * X_dims[1]];
         obj->weight = w[i];
         obj->dim =X_dims[1]; 
         if (y[i]==1)

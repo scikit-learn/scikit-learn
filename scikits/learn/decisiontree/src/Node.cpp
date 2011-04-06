@@ -1,5 +1,4 @@
 #include "Node.h"
-#include <iostream>
 
 double Node::predict(const double* attrs) const
 {
@@ -19,7 +18,6 @@ double Node::predict(const double* attrs) const
 
 void Node::recursive_split(unsigned int min_leaf_size, unsigned int bins)
 {
-    std::cout << "SPLIT" << std::endl;
     if (this->split(min_leaf_size, bins))
     {
         this->left_child->recursive_split(min_leaf_size, bins);
@@ -153,7 +151,7 @@ bool Node::split(unsigned int min_leaf_size, unsigned int bins)
     return true;
 }
 
-pair<double,double> Node::minmax(unsigned int attribute)
+pair<double,double> Node::minmax(unsigned int attribute) const
 {
     vector<Object*>::const_iterator it(signal.begin());
     double value = (*it++)->attrs[attribute];

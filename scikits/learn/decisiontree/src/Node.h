@@ -72,7 +72,7 @@ class Node
 
         double predict(const double* attrs) const;
 
-        pair<double,double> minmax(unsigned int attribute);
+        pair<double,double> minmax(unsigned int attribute) const;
     
     private:
 

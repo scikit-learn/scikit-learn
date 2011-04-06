@@ -13,6 +13,9 @@ print x.shape
 y = np.append(np.ones(1000),-np.ones(1000))
 print y.shape
 
+print x[0]
+print x[1]
+
 a.fit(x,y)
 
 print a.predict(x)
