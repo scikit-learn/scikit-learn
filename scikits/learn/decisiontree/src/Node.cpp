@@ -1,10 +1,11 @@
 #include "Node.h"
+#include <iostream>
 
 double Node::predict(const double* attrs) const
 {
     if (this->leaf())
     {
-        return this->purity;
+        return this->response;
     }
     else if (attrs[this->attribute] > this->cut)
     {
@@ -22,35 +23,40 @@ void Node::recursive_split(unsigned int min_leaf_size, unsigned int bins)
     {
         this->left_child->recursive_split(min_leaf_size, bins);
         this->right_child->recursive_split(min_leaf_size, bins);
-        this->signal.clear();
-        this->background.clear();
     }
     else
     {
-        this->calc_purity();
-        this->update_classification();
-        this->signal.clear();
-        this->background.clear();
+        this->calc_response();
     }
+    this->signal.clear();
+    this->background.clear();
 }
 
-void Node::calc_purity()
+void Node::calc_response()
 {
     vector<Object*>::const_iterator it(this->signal.begin());
     double weightedSignal(0.);
+    double weight(0.);
     for (; it != this->signal.end(); ++it)
-        weightedSignal += (*it)->weight;
+    {
+        weightedSignal += (*it)->weight * this->sig_score;
+        weight += (*it)->weight;
+    }
     it = this->background.begin();
     double weightedBackground(0.);
     for (; it != this->background.end(); ++it)
-        weightedBackground += (*it)->weight;
-    this->purity = (weightedSignal + weightedBackground) > 0 ? weightedSignal / (weightedSignal + weightedBackground) : -1.;
+    {
+        weightedBackground += (*it)->weight * this->bkg_score;
+        weight += (*it)->weight;
+    }
+    this->response = weight > 0 ? \
+        (weightedSignal + weightedBackground) / weight : (this->sig_score - this->bkg_score)/2.;
 }
 
 void Node::update_classification()
 {
     vector<Object*>::const_iterator it(this->signal.begin());
-    if (this->purity > .5)
+    if (this->response > (this->sig_score - this->bkg_score)/2.)
     {
         for (; it != this->signal.end(); ++it)
             (*it)->label = SIGNAL;

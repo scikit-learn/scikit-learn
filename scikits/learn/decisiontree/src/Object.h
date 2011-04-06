@@ -29,7 +29,7 @@ class ObjectCompare
 
     private:
 
-        int attr;
+        unsigned int attr;
 };
 
 #endif /* OBJECT_H_ */

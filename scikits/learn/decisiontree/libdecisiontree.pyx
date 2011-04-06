@@ -18,13 +18,13 @@ cimport numpy as np
 
 cdef extern from "Node.h":
     cdef cppclass Node:
-        Node()
+        Node(double, double)
         void recursive_split(int, int)
 
 cdef class PyNode:
     cdef Node *thisptr
-    def __cinit__(self):
-        self.thisptr = new Node()
+    def __cinit__(self, double sig_score, double bkg_score):
+        self.thisptr = new Node(sig_score, bkg_score)
     def __dealloc__(self):
         del self.thisptr
 
@@ -39,7 +39,9 @@ def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight = np.empty(0),
         int minleafsize = 10,
-        int nbins = 0):
+        int nbins = 0,
+        double sig_score = 1.,
+        double bkg_score = -1.):
 
     """
     Parameters
@@ -57,7 +59,7 @@ def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     """
     cdef PyNode root
 
-    root = PyNode()
+    root = PyNode(sig_score, bkg_score)
     init_root(X.data, Y.data, sample_weight.data, X.shape, root.thisptr)
     root.thisptr.recursive_split(minleafsize, nbins)
     

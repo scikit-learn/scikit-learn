@@ -5,7 +5,7 @@ Base class for all ensemble classes
 """
 class BaseEnsemble(BaseEstimator):
 
-    def __init__(self, boosts, estimator, **params):
+    def __init__(self, estimator, **params):
 
         self.estimator = estimator
         self.params = params

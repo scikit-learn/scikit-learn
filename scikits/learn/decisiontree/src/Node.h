@@ -12,12 +12,14 @@ class Node
 {
     public:
         
-        Node():
+        Node(double sig_score = 1, double bkg_score = -1):
             left_child(0),
             right_child(0),
             attribute(-1),
             cut(0),
-            purity(0)
+            response(0),
+            sig_score(sig_score),
+            bkg_score(bkg_score)
         {}
 
         ~Node()
@@ -26,7 +28,7 @@ class Node
             delete this->right_child;
         }
 
-        void calc_purity();
+        void calc_response();
 
         void update_classification();
 
@@ -82,7 +84,9 @@ class Node
         Node* right_child;
         int attribute;
         double cut;
-        double purity;
+        double response;
+        double sig_score;
+        double bkg_score;
 };
 
 #endif

@@ -1,21 +1,27 @@
 from scikits.learn.decisiontree import DecisionTree
+from scikits.learn.ensemble.boosting import AdaBoost
 import numpy as np
+import matplotlib.pyplot as plt
 
-a = DecisionTree(minleafsize=10)
+#a = AdaBoost(DecisionTree, minleafsize=1000, nbins=1000)
+a = DecisionTree(minleafsize=100)
 
-cov = [[1,.5],[.5,1]]
-X_bkg = np.random.multivariate_normal([.5,.5], cov, 1000)
-X_sig = np.random.multivariate_normal([-.5,-.5], cov, 1000)
+cov = [[1,0],[0,1]]
+X_bkg = np.reshape(np.random.multivariate_normal([-1,-1], cov, 100000), (100000,-1))
+X_sig = np.reshape(np.random.multivariate_normal([1,1], cov, 100000), (100000, -1))
 
-x = np.append(X_sig, X_bkg)
-x = np.reshape(x, (2000,-1))
-print x.shape
-y = np.append(np.ones(1000),-np.ones(1000))
-print y.shape
+x = np.concatenate([X_sig, X_bkg])
+y = np.append(np.ones(100000),-2*np.ones(100000))
 
-print x[0]
-print x[1]
+a.fit(x, y)
 
-a.fit(x,y)
+plt.figure()
+plt.hist(a.predict(x))
 
-print a.predict(x)
+plt.figure()
+Xs,Ys = X_sig.T
+Xb,Yb = X_bkg.T
+plt.plot(Xs,Ys,'x')
+plt.plot(Xb,Yb,'o',alpha=.3)
+plt.axis('equal')
+plt.show()
