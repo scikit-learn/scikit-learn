@@ -1,3 +1,12 @@
+scikit-learn (0.7.1.dfsg-2) unstable; urgency=low
+
+  * Upload to unstable
+  * Exclude objects.inv from being compressed (Closes: #608775)
+  * Restrict numpy versioned dependency only to -lib package. Thanks Jakub
+    Wilk
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 06 Apr 2011 14:24:35 -0400
+
 scikit-learn (0.7.1.dfsg-1) experimental; urgency=low
 
   * [8972010] New upstream release

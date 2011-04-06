@@ -59,14 +59,14 @@ override_dh_pysupport:
 	   echo "Moving '$$lib' into '$$tdir'." ; \
 	   mv $$lib $$tdir ; \
 	done
-	if [ -x /usr/bin/dh_numpy ]; then dh_numpy; fi
+	if [ -x /usr/bin/dh_numpy ]; then dh_numpy -ppython-scikits-learn-lib; fi
 	: # Prune scikits/__init__.py to avoid conflicts
 	find debian -wholename \*scikits/__init__.py -delete
 	dh_pysupport
 
 ## immediately useable documentation and exemplar scripts/data
 override_dh_compress:
-	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc
+	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc -Xobjects.inv
 
 
 ## to prepare next Debian upstream source tarball
