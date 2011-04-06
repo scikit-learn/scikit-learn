@@ -13,6 +13,9 @@ class AdaBoost(BaseEnsemble):
         Notes: currently only binary classification is supported
         I am making the assumption that one class label is positive and the other is negative
         """
+        if boosts < 1:
+            raise ValueError("You must specify a number of boosts greater than 0")
+        
         if len(sample_weight) == 0:
             # initialize weights to 1/N
             sample_weight = np.ones(X.shape[0], dtype = np.float64) / X.shape[0]
@@ -30,16 +33,21 @@ class AdaBoost(BaseEnsemble):
             incorrect = (T*Y)<0
             # error fraction
             err = np.sum(sample_weight * incorrect) / np.sum(sample_weight)
-            # boost weight
-            alpha = math.log((1 - err) / err)
+            print err
             # sanity check
-            if err >= 0.5:
+            if err == 0:
+                self.append((1., estimator))
+                break
+            elif err >= 0.5:
                 if i == 0:
                     self.append((1., estimator))
                 break
+            # boost weight
+            alpha = math.log((1 - err) / err)
             self.append((alpha, estimator))
             if i < boosts:
                 sample_weight *= np.exp(alpha * incorrect)
+        print len(self)
         return self
 
     def predict(self, X):
