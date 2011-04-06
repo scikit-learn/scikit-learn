@@ -59,7 +59,7 @@ analyzer = CharNGramAnalyzer(
 # Build a vectorizer / classifier pipeline using the previous analyzer
 clf = Pipeline([
     ('vec', CountVectorizer(analyzer=analyzer)),
-    ('tfidf', TfidfTransformer()),
+    ('tfidf', TfidfTransformer(use_idf=False)),
     ('clf', LinearSVC(loss='l2', penalty='l1', dual=False, C=100)),
 ])
 
