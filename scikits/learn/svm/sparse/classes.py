@@ -95,20 +95,20 @@ class SVR (SparseBaseLibSVM, RegressorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = SVR(C=1.0, p=0.2)
+    >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
-    SVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True, p=0.2,
-      tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5, gamma=0.1)
+    SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.2,
+      shrinking=True, tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5,
+      gamma=0.1)
     """
 
-
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 cache_size=100.0, tol=1e-3, C=1.0, nu=0.5, p=0.1,
+                 cache_size=100.0, tol=1e-3, C=1.0, nu=0.5, epsilon=0.1,
                  shrinking=True, probability=False):
 
         SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
                          degree, gamma, coef0, cache_size, tol, C, nu,
-                         p, shrinking, probability)
+                         epsilon, shrinking, probability)
 
 
 
@@ -136,16 +136,16 @@ class NuSVR (SparseBaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(nu=0.1, C=1.0)
     >>> clf.fit(X, y)
     NuSVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-       tol=0.001, cache_size=100.0, coef0=0.0, nu=0.1, gamma=0.1)
+       tol=0.001, epsilon=0.1, cache_size=100.0, coef0=0.0, nu=0.1, gamma=0.1)
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, shrinking=True,
+                 gamma=0.0, coef0=0.0, shrinking=True, epsilon=0.1,
                  probability=False, cache_size=100.0, tol=1e-3):
 
         SparseBaseLibSVM.__init__(self, 'epsilon_svr', kernel,
                          degree, gamma, coef0, cache_size, tol, C, nu,
-                         0., shrinking, probability)
+                         epsilon, shrinking, probability)
 
 
 
