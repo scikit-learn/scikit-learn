@@ -81,31 +81,31 @@ cdef extern from "libsvm_helper.c":
 # Wrapper functions
 
 def train(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-          np.ndarray[np.float64_t, ndim=1, mode='c'] Y, int
-          svm_type, int kernel_type, int degree, double gamma,
-          double coef0, double eps, double C, double nu,
-          double cache_size, double p,
+          np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+          int svm_type=0, int kernel_type=2, int degree=3,
+          double gamma=0.1, double coef0=0., double tol=1e-3,
+          double C=1., double nu=0.5, double epsilon=0.1,
           np.ndarray[np.int32_t, ndim=1, mode='c']
               class_weight_label=np.empty(0, dtype=np.int32),
           np.ndarray[np.float64_t, ndim=1, mode='c']
               class_weight=np.empty(0),
           np.ndarray[np.float64_t, ndim=1, mode='c']
               sample_weight=np.empty(0),
-          int shrinking=0, int probability=0):
-
+          int shrinking=0, int probability=0,
+          double cache_size=100.):
     """
     Train the model using libsvm (low-level method)
 
     Parameters
     ----------
-
     X: array-like, dtype=float, size=[n_samples, n_features]
 
     Y: array, dtype=float, size=[n_samples]
         target vector
 
     svm_type : {0, 1, 2, 3, 4}
-        Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+        respectevely.
 
     kernel_type : {0, 1, 2, 3, 4}
         Kernel to use in the model: linear, polynomial, RBF, sigmoid
@@ -122,7 +122,7 @@ def train(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     coef0 : float
         Independent parameter in poly/sigmoid kernel.
 
-    eps : float
+    tol : float
         Stopping criteria.
 
     C : float
@@ -177,7 +177,7 @@ def train(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                           X.shape, kernel_type)
 
     param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
-                          nu, cache_size, C, eps, p, shrinking,
+                          nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0],
                           class_weight_label.data, class_weight.data)
 
@@ -259,7 +259,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
             int svm_type, int kernel_type, int degree,
-            double gamma, double coef0, double eps, double C, 
+            double gamma, double coef0, double tol, double C, 
             double nu, double cache_size, double p,
             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
             np.ndarray[np.int32_t, ndim=1, mode='c'] support,
@@ -313,7 +313,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef svm_model *model
 
     param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
-                          nu, cache_size, C, eps, p, shrinking,
+                          nu, cache_size, C, tol, p, shrinking,
                           probability, <int> class_weight.shape[0],
                           class_weight_label.data, class_weight.data)
 
@@ -338,7 +338,7 @@ def predict_proba(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                   np.ndarray[np.float64_t, ndim=1, mode='c']
                   intercept, int svm_type, int kernel_type, int
                   degree, double gamma, double coef0, double
-                  eps, double C, 
+                  tol, double C, 
                   double nu, double cache_size, double p,
                   np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
                   np.ndarray[np.int32_t, ndim=1, mode='c'] support,                          
@@ -380,7 +380,7 @@ def predict_proba(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef svm_parameter *param
     cdef svm_model *model
     param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu, cache_size, C, eps, p, shrinking,
+                          coef0, nu, cache_size, C, tol, p, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
                           class_weight.data)
 
@@ -405,7 +405,7 @@ def decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                             np.ndarray[np.float64_t, ndim=1, mode='c']
                             intercept, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
-                            eps, double C, 
+                            tol, double C, 
                             np.ndarray[np.int32_t, ndim=1] class_weight_label,
                             np.ndarray[np.float_t, ndim=1] class_weight,
                             double nu, double cache_size, double p, int
@@ -427,7 +427,7 @@ def decision_function (np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     cdef np.npy_intp n_class
 
     param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu, cache_size, C, eps, p, shrinking,
+                          coef0, nu, cache_size, C, tol, p, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
                           class_weight.data)
 
@@ -455,7 +455,7 @@ def cross_validation(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
     int n_fold, int svm_type, int kernel_type, int degree,
-    double gamma, double coef0, double eps, double C, double nu,
+    double gamma, double coef0, double tol, double C, double nu,
     double cache_size, double p,
     np.ndarray[np.int32_t, ndim=1, mode='c']
         class_weight_label=np.empty(0, dtype=np.int32),
@@ -493,7 +493,7 @@ def cross_validation(
     coef0 : float
         Independent parameter in poly/sigmoid kernel.
 
-    eps : float
+    tol : float
         Stopping criteria.
 
     C : float
@@ -533,7 +533,7 @@ def cross_validation(
 
     param = set_parameter(
         svm_type, kernel_type, degree, gamma, coef0, nu, cache_size,
-        C, eps, p, shrinking, probability, <int>
+        C, tol, p, shrinking, probability, <int>
         class_weight.shape[0], class_weight_label.data,
         class_weight.data)
 
