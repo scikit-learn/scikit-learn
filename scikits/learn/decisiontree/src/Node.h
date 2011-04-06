@@ -36,9 +36,9 @@ class Node
 
         void add_background(Object* s) { this->background.push_back(s); }
 
-        void recursive_split(unsigned int min_leaf_size, unsigned int bins);
+        void recursive_split(unsigned int minleafsize, unsigned int nbins, unsigned int maxdepth = 0, unsigned int depth = 0);
         
-        bool split(unsigned int min_leaf_size, unsigned int bins);
+        bool split(unsigned int minleafsize, unsigned int nbins);
 
         const Node* get_left_child() const
         {

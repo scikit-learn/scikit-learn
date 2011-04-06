@@ -17,12 +17,12 @@ double Node::predict(const double* attrs) const
     }
 }
 
-void Node::recursive_split(unsigned int min_leaf_size, unsigned int bins)
+void Node::recursive_split(unsigned int minleafsize, unsigned int nbins, unsigned int maxdepth, unsigned int depth)
 {
-    if (this->split(min_leaf_size, bins))
+    if ( (depth < maxdepth || maxdepth == 0) && this->split(minleafsize, nbins))
     {
-        this->left_child->recursive_split(min_leaf_size, bins);
-        this->right_child->recursive_split(min_leaf_size, bins);
+        this->left_child->recursive_split(minleafsize, nbins, maxdepth, depth+1);
+        this->right_child->recursive_split(minleafsize, nbins, maxdepth, depth+1);
     }
     else
     {
@@ -74,9 +74,9 @@ void Node::update_classification()
     }
 }
 
-bool Node::split(unsigned int min_leaf_size, unsigned int bins)
+bool Node::split(unsigned int minleafsize, unsigned int nbins)
 {
-    if (signal.size()==0 || background.size()==0 || bins < 2 || signal.size() + background.size() <= min_leaf_size)
+    if (signal.size()==0 || background.size()==0 || nbins < 2 || signal.size() + background.size() <= minleafsize)
     {
         return false;
     }
@@ -93,10 +93,10 @@ bool Node::split(unsigned int min_leaf_size, unsigned int bins)
         // get max and min value of this attribute over signal and background combined
         extrema = this->minmax(i);
         // create histograms for signal and background
-        double step = (extrema.second - extrema.first)/bins;
+        double step = (extrema.second - extrema.first)/nbins;
         if (step==0) continue;
-        sigHist = new Histogram<double,double>(bins, extrema.first, extrema.second+step);
-        bkgHist = new Histogram<double,double>(bins, extrema.first, extrema.second+step);
+        sigHist = new Histogram<double,double>(nbins, extrema.first, extrema.second+step);
+        bkgHist = new Histogram<double,double>(nbins, extrema.first, extrema.second+step);
         // fill histograms
         std::vector<Object*>::const_iterator it(signal.begin());
         for (; it != signal.end(); ++it)
@@ -104,21 +104,21 @@ bool Node::split(unsigned int min_leaf_size, unsigned int bins)
         it = background.begin();
         for (; it != background.end(); ++it)
             bkgHist->fill((*it)->attrs[i],(*it)->weight);
-        // calculate Gini_left + Gini_right for a split at each internal bin boundary and find minimum where min_leaf_size is respected
+        // calculate Gini_left + Gini_right for a split at each internal bin boundary and find minimum where minleafsize is respected
         double Gini_left;
         double Gini_right;
         double sig_left, sig_right;
         double bkg_left, bkg_right;
         double purity_left, purity_right;
-        for (unsigned int binCut(1); binCut < bins; ++binCut)
+        for (unsigned int binCut(1); binCut < nbins; ++binCut)
         {
-            if (sigHist->integral(0,binCut,false) + bkgHist->integral(0,binCut,false) >= min_leaf_size && \
-                    sigHist->integral(binCut,bins,false) + bkgHist->integral(binCut,bins,false) >= min_leaf_size)
+            if (sigHist->integral(0,binCut,false) + bkgHist->integral(0,binCut,false) >= minleafsize && \
+                    sigHist->integral(binCut,nbins,false) + bkgHist->integral(binCut,nbins,false) >= minleafsize)
             {
                 sig_left = sigHist->integral(0,binCut);
                 bkg_left = bkgHist->integral(0,binCut);
-                sig_right = sigHist->integral(binCut,bins);
-                bkg_right = bkgHist->integral(binCut,bins);
+                sig_right = sigHist->integral(binCut,nbins);
+                bkg_right = bkgHist->integral(binCut,nbins);
                 purity_left = sig_left / (sig_left + bkg_left);
                 purity_right = sig_right / (sig_right + bkg_right);
                 Gini_left = purity_left * (1 - purity_left) * (sig_left + bkg_left);
@@ -128,7 +128,7 @@ bool Node::split(unsigned int min_leaf_size, unsigned int bins)
                 {
                     bestGini = Gini_left + Gini_right;
                     bestAttribute = i;
-                    bestSplit = extrema.first + binCut * (extrema.second + step - extrema.first) / bins;
+                    bestSplit = extrema.first + binCut * (extrema.second + step - extrema.first) / nbins;
                 }
             }
         }
@@ -137,8 +137,8 @@ bool Node::split(unsigned int min_leaf_size, unsigned int bins)
     }
     if (bestAttribute == -1) return false;
     // create left and right Nodes and add them as children
-    Node* left = new Node();
-    Node* right = new Node();
+    Node* left = new Node(this->sig_score, this->bkg_score);
+    Node* right = new Node(this->sig_score, this->bkg_score);
     std::vector<Object*>::const_iterator it(signal.begin());
     for (; it != signal.end(); ++it)
     {

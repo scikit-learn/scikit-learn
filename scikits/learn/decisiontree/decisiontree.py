@@ -4,7 +4,11 @@ import numpy as np
 
 class DecisionTree(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, minleafsize = None, maxdepth = -1, maxnodes = -1, nbins = 20, sepcriterion = "gini"):
+    def __init__(self, minleafsize = 0,
+                       maxdepth = 0,
+                       maxnodes = -1,
+                       nbins = 20,
+                       sepcriterion = "gini"):
 
         self.minleafsize = minleafsize
         self.maxdepth = maxdepth
@@ -40,10 +44,18 @@ class DecisionTree(BaseEstimator, ClassifierMixin):
                              "y must contain two unique values.")
         sig_score = labels[1]
         bkg_score = labels[0]
-        print sig_score
-        print bkg_score
 
-        self.root = libdecisiontree.fit(X, y, sample_weight, self.minleafsize, self.nbins, sig_score, bkg_score)
+        # Choose a suitable minleafsize if none was specified by the user
+        minleafsize = self.minleafsize
+        if minleafsize < 1:
+            minleafsize = max(20, X.shape[0] / X.shape[1]**2 / 10)
+
+        self.root = libdecisiontree.fit(X, y, sample_weight,
+                                              minleafsize,
+                                              self.nbins,
+                                              self.maxdepth,
+                                              sig_score,
+                                              bkg_score)
         self.nfeatures = X.shape[1]
         return self
 

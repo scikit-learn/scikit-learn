@@ -19,7 +19,7 @@ cimport numpy as np
 cdef extern from "Node.h":
     cdef cppclass Node:
         Node(double, double)
-        void recursive_split(int, int)
+        void recursive_split(unsigned int, unsigned int, unsigned int)
 
 cdef class PyNode:
     cdef Node *thisptr
@@ -38,8 +38,9 @@ cdef extern from "libdecisiontree_helper.cpp":
 def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight = np.empty(0),
-        int minleafsize = 10,
-        int nbins = 0,
+        unsigned int minleafsize = 10,
+        unsigned int nbins = 0,
+        unsigned int maxdepth = 0,
         double sig_score = 1.,
         double bkg_score = -1.):
 
@@ -61,7 +62,7 @@ def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     root = PyNode(sig_score, bkg_score)
     init_root(X.data, Y.data, sample_weight.data, X.shape, root.thisptr)
-    root.thisptr.recursive_split(minleafsize, nbins)
+    root.thisptr.recursive_split(minleafsize, nbins, maxdepth)
     
     return root
 
