@@ -1,21 +1,17 @@
 """
-===========================================================
-A demo of K-Means clustering on the handwritten digits data
-===========================================================
+===========================================================================
+A comparison of batch K-Means and normal K-Means on handwritten digits data
+===========================================================================
 
-Comparing various initialization strategies in terms of runtime and quality of
-the results.
-
-TODO: explode the ouput of the cluster labeling and digits.target groundtruth
-as categorical boolean arrays of shape (n_sample, n_unique_labels) and measure
-the Pearson correlation as an additional measure of the clustering quality.
+Comparing the batch K-Means with the normal K-Means algorithm in terms of
+runtime and quality of the results.
 """
 print __doc__
 
 from time import time
 import numpy as np
 
-from scikits.learn.cluster import BatchKMeans
+from scikits.learn.cluster import BatchKMeans, KMeans
 from scikits.learn.datasets import load_digits
 from scikits.learn.pca import PCA
 from scikits.learn.preprocessing import scale
@@ -35,25 +31,31 @@ print
 
 print "Raw k-means with k-means++ init..."
 t0 = time()
-km = BatchKMeans(init='k-means++', k=n_digits, n_init=10).fit(data)
+km = KMeans(init='k-means++', k=n_digits, n_init=10).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
-print "Raw k-means with random centroid init..."
+print "Batch k-means with k-means++ init, chunk 600..."
 t0 = time()
-km = BatchKMeans(init='random', k=n_digits, n_init=10).fit(data)
+km = BatchKMeans(init='k-means++', k=n_digits, n_init=10, chunk=600).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
-print "Raw k-means with PCA-based centroid init..."
-# in this case the seeding of the centers is deterministic, hence we run the
-# kmeans algorithm only once with n_init=1
+
+print "Batch k-means with k-means++ init, chunk 300..."
 t0 = time()
-pca = PCA(n_components=n_digits).fit(data)
-km = BatchKMeans(init=pca.components_.T, k=n_digits, n_init=1).fit(data)
+km = BatchKMeans(init='k-means++', k=n_digits, n_init=10, chunk=300).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
+
+print "Batch k-means with k-means++ init, chunk 150..."
+t0 = time()
+km = BatchKMeans(init='k-means++', k=n_digits, n_init=10, chunk=150).fit(data)
+print "done in %0.3fs" % (time() - t0)
+print "inertia: %f" % km.inertia_
+print
+
 

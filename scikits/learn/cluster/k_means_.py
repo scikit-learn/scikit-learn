@@ -266,7 +266,7 @@ def _calculate_labels_inertia(X, centers):
     """
     norm = (X**2).sum(axis=1)
     distance = euclidean_distances(centers, X, norm, squared=True)
-    return distance.min(axis=0).min(), distance.argmin(axis=0)
+    return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
 def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
@@ -283,7 +283,7 @@ def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
 
     i: int
          The iterator: it is used to calculate which section of the data to
-         use for the computation of the new centers 
+         use for the computation of the new centers
 
     chunk: int
          The size of chunks of data to run the computation of the new
@@ -308,14 +308,13 @@ def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
     j = i * chunk % len(x)
     M = x[j:j + chunk]
     m_norm = (M**2).sum(axis=1)
-    distance = euclidean_distances(centers, M, m_norm)
+    cache = euclidean_distances(centers, M, m_norm,
+                                squared=True).argmin(axis=0)
 
-    # Let's take the position of the mininum distance on the first axis
-    cache = distance.argmin(axis=0)
-    for l, c in enumerate(cache):
+    for index, c in enumerate(cache):
         v[c] += 1
         centers[c] = (1 - 1./v[c])*centers[c] + \
-                            1./v[c]*M[l]
+                            1./v[c]*M[index]
 
     return centers
 
