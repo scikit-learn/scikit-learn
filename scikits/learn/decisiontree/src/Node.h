@@ -70,9 +70,9 @@ class Node
             return this->left_child && this->right_child;
         }
 
-        float predict(const double* attrs) const;
+        double predict(const double* attrs) const;
 
-        pair<float,float> get_extrema(unsigned int attribute);
+        pair<double,double> minmax(unsigned int attribute);
     
     private:
 

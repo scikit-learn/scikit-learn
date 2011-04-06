@@ -1,18 +1,18 @@
 #include "Node.h"
 
-double Node::predict(const double* attrs)
+double Node::predict(const double* attrs) const
 {
     if (this->leaf())
     {
         return this->purity;
     }
-    else if (*attrs[this->attribute] > this->cut)
+    else if (attrs[this->attribute] > this->cut)
     {
-        return this->get_right_child()->predict(attrs);
+        return this->right_child->predict(attrs);
     }
     else
     {
-        return this->get_left_child()->predict(attrs);
+        return this->left_child->predict(attrs);
     }
 }
 
@@ -20,8 +20,8 @@ void Node::recursive_split(unsigned int min_leaf_size, unsigned int bins)
 {
     if (this->split(min_leaf_size, bins))
     {
-        this->get_left_child()->recursive_split(min_leaf_size, bins);
-        this->get_right_child()->recursive_split(min_leaf_size, bins);
+        this->left_child->recursive_split(min_leaf_size, bins);
+        this->right_child->recursive_split(min_leaf_size, bins);
         this->signal.clear();
         this->background.clear();
     }
@@ -94,10 +94,10 @@ bool Node::split(unsigned int min_leaf_size, unsigned int bins)
         // fill histograms
         std::vector<Object*>::const_iterator it(signal.begin());
         for (; it != signal.end(); ++it)
-            sigHist->fill((*it)->attribute(i),(*it)->get_weight());
+            sigHist->fill((*it)->attrs[i],(*it)->weight);
         it = background.begin();
         for (; it != background.end(); ++it)
-            bkgHist->fill((*it)->attribute(i),(*it)->get_weight());
+            bkgHist->fill((*it)->attrs[i],(*it)->weight);
         // calculate Gini_left + Gini_right for a split at each internal bin boundary and find minimum where min_leaf_size is respected
         double Gini_left;
         double Gini_right;

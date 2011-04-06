@@ -1,2 +1,2 @@
 
-from .decisiontree import DecisionTree, BoostedDecisionTree
+from .decisiontree import DecisionTree

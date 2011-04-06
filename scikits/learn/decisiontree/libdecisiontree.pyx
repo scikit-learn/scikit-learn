@@ -12,7 +12,6 @@ Authors
 
 import  numpy as np
 cimport numpy as np
-from cython.operator cimport dereference as deref
 
 ################################################################################
 # Includes
@@ -21,6 +20,7 @@ cdef extern from "Node.h":
     cdef cppclass Node:
         Node()
         void recursive_split(int, int)
+        double predict(double*)
 
 cdef class PyNode:
     cdef Node *thisptr

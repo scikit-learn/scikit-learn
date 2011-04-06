@@ -1,5 +1,5 @@
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from . import libdecisiontree
+import .libdecisiontree
 import numpy as np
 
 class DecisionTree(BaseEstimator, ClassifierMixin):

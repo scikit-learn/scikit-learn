@@ -16,9 +16,9 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('decisiontree', parent_package, top_path)
 
-    config.add_subpackage('tests')
+    #config.add_subpackage('tests')
 
-    libdecisiontree_sources = ['libdecisiontree.cpp']
+    libdecisiontree_sources = ['libdecisiontree.cpp', 'src/Node.cpp']
     libdecisiontree_depends = ['libdecisiontree_helper.cpp',
                                join('src', 'Histogram.h'),
                                join('src', 'Node.h'),
