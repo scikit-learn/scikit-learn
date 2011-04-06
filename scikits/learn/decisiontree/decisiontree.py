@@ -1,5 +1,5 @@
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-import .libdecisiontree
+from . import libdecisiontree
 import numpy as np
 
 class DecisionTree(BaseEstimator, ClassifierMixin):
@@ -13,12 +13,12 @@ class DecisionTree(BaseEstimator, ClassifierMixin):
         self.sepcriterion = sepcriterion
         self.root = None
 
-    def fit(X, Y, sampleweight = np.empty(0)):
+    def fit(self, X, Y, sample_weight = np.empty(0)):
 
         self.root = libdecisiontree.fit(X, Y, sample_weight, self.minleafsize, self.nbins)
         return self
 
-    def predict(X):
+    def predict(self, X):
 
         return libdecisiontree.predict(X, self.root)
         
