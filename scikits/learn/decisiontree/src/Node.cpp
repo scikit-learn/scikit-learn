@@ -1,4 +1,5 @@
 #include "Node.h"
+#include <limits>
 #include <iostream>
 
 using namespace std;
@@ -83,12 +84,12 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
     }
     Object* sample = signal.at(0);
     unsigned int numAttributes = sample->dim;
-    int bestAttribute(-1);
-    double bestSplit(0.);
     pair<double,double> extrema;
     Histogram<double,double>* sigHist;
     Histogram<double,double>* bkgHist;
-    double bestGini(-1.);
+    int bestAttribute(-1);
+    double bestSplit(0.);
+    double bestGini(numeric_limits<double>::infinity());
     double step;
     double min;
     double max;
@@ -138,11 +139,11 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
                 bkg_right = bkgHist->integral(binCut,nbins);
                 purity_left = sig_left / (sig_left + bkg_left);
                 purity_right = sig_right / (sig_right + bkg_right);
-                Gini_left = purity_left * (1 - purity_left) * (sig_left + bkg_left);
-                Gini_right = purity_right * (1 - purity_right) * (sig_right + bkg_right);
+                Gini_left = purity_left * (1 - purity_left) ;//* (sig_left + bkg_left);
+                Gini_right = purity_right * (1 - purity_right) ;//* (sig_right + bkg_right);
                 
                 // if a possible split is found and if this split is the best so far update bestAttribute and bestSplit
-                if (Gini_left + Gini_right < bestGini || bestGini == -1)
+                if (Gini_left + Gini_right < bestGini)
                 {
                     bestGini = Gini_left + Gini_right;
                     bestAttribute = i;
@@ -153,8 +154,6 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
         delete sigHist;
         delete bkgHist;
     }
-
-    cout << bestGini << endl;
     
     if (bestAttribute == -1) return false;
     
@@ -177,8 +176,6 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
     
     this->attribute = bestAttribute;
     this->cut = bestSplit;
-    cout << "best attr: " << bestAttribute << endl;
-    cout << "best cut:  " << bestSplit << endl;
     this->set_left_child(left);
     this->set_right_child(right);
     return true;

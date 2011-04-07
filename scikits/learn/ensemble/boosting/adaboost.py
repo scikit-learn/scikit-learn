@@ -32,8 +32,8 @@ class AdaBoost(BaseEnsemble):
             # which would make the following line unnecessary 
             T = estimator.predict(X)
             # instances incorrectly classified
-            incorrect = (T*Y)<0
-            correct = incorrect == 0
+            incorrect = ((T*Y)<0).astype(np.int32)
+            correct = (incorrect == 0).astype(np.int32)
             # error fraction
             err = np.sum(sample_weight * incorrect) / np.sum(sample_weight)
             # sanity check
