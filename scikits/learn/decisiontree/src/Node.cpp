@@ -115,22 +115,23 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
         // fill histograms
         std::vector<Object*>::const_iterator it(signal.begin());
         for (; it != signal.end(); ++it)
+        {
             sigHist->fill((*it)->attrs[i],(*it)->weight);
+        }
         
         it = background.begin();
         for (; it != background.end(); ++it)
+        {
             bkgHist->fill((*it)->attrs[i],(*it)->weight);
+        }
 
         // calculate Gini_left + Gini_right for a split at each internal bin boundary and find minimum where minleafsize is respected
         for (unsigned int binCut(1); binCut < nbins; ++binCut)
         {
-            cout << "asd" << endl;
-            cout << sigHist->integral(0,binCut,false) + bkgHist->integral(0,binCut,false) << endl;
-            cout << sigHist->integral(binCut,nbins,false) + bkgHist->integral(binCut,nbins,false) << endl;
+            // This can be optimized
             if (sigHist->integral(0,binCut,false) + bkgHist->integral(0,binCut,false) >= minleafsize && \
                 sigHist->integral(binCut,nbins,false) + bkgHist->integral(binCut,nbins,false) >= minleafsize)
             {
-                cout << "sdf" << endl;
                 sig_left = sigHist->integral(0,binCut);
                 bkg_left = bkgHist->integral(0,binCut);
                 sig_right = sigHist->integral(binCut,nbins);

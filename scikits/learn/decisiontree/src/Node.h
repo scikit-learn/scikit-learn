@@ -3,10 +3,23 @@
 
 #include <vector>
 #include <utility>
-#include "Object.h"
 #include "Histogram.h"
 
 using namespace std;
+
+enum label_t
+{
+    SIGNAL,
+    BACKGROUND
+};
+
+struct Object
+{
+    double* attrs;
+    double weight;
+    unsigned int dim;
+    label_t label;
+};
 
 class Node
 {

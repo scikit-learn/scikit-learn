@@ -10,6 +10,7 @@ else:
 import warnings
 
 def configuration(parent_package='', top_path=None):
+    
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, get_standard_file, \
          BlasNotFoundError
@@ -22,8 +23,7 @@ def configuration(parent_package='', top_path=None):
     libdecisiontree_depends = ['libdecisiontree_helper.cpp',
                                join('src', 'Histogram.h'),
                                join('src', 'Node.h'),
-                               join('src', 'Node.cpp'),
-                               join('src', 'Object.h')]
+                               join('src', 'Node.cpp')]
 
     config.add_extension('libdecisiontree',
                          sources = libdecisiontree_sources,
@@ -35,6 +35,7 @@ def configuration(parent_package='', top_path=None):
     return config
 
 if __name__ == '__main__':
+
     from numpy.distutils.core import setup
     setup(**configuration(top_path='').todict())
 

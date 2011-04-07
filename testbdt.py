@@ -3,14 +3,15 @@ from scikits.learn.ensemble.boosting import AdaBoost
 import numpy as np
 import matplotlib.pyplot as plt
 
-a = AdaBoost(DecisionTree, minleafsize=100, maxdepth = 1, nbins=100)
+a = AdaBoost(DecisionTree, minleafsize=5, maxdepth = 1, nbins=500)
 #a = DecisionTree(minleafsize=100, maxdepth=1, nbins=100)
 
-nsample = 50000
+nsample = 100
 #cov = [[.5,0,0],[0,.5,0],[0,0,0.5]]
 cov = [[.5,0],[0,.5]]
-X_bkg = np.reshape(np.random.multivariate_normal([.5,.5], cov, nsample), (nsample,-1))
-X_sig = np.reshape(np.random.multivariate_normal([-.5,-.5], cov, nsample), (nsample,-1))
+X_bkg = np.concatenate([np.reshape(np.random.multivariate_normal([.5,.5], cov, nsample/2), (nsample/2,-1)),
+                        np.reshape(np.random.multivariate_normal([0,-2], cov, nsample/2), (nsample/2,-1))])
+X_sig = np.reshape(np.random.multivariate_normal([-1,.2], cov, nsample), (nsample,-1))
 
 x = np.concatenate([X_sig, X_bkg])
 y = np.append(np.ones(nsample),-np.ones(nsample))

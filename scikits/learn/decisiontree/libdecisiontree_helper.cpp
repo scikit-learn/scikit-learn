@@ -1,7 +1,4 @@
-//#include <stdlib.h>
-//#include <numpy/arrayobject.h>
 #include "Node.h"
-#include "Object.h"
 
 /*
  * Helper methods for libdecisiontree bindings.
