@@ -6,25 +6,24 @@
 /*
  * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
-struct svm_csr_node **csr_to_libsvm (double *values, npy_intp *n_indices,
-		int *indices, npy_intp *n_indptr, int *indptr)
+struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, npy_int n_samples)
 {
     struct svm_csr_node **sparse, *temp;
     int i, j=0, k=0, n;
-    sparse = (struct svm_csr_node **) malloc (n_indptr[0] * sizeof(struct svm_csr_node *));
+    sparse = (struct svm_csr_node **) malloc (n_samples * sizeof(struct svm_csr_node *));
 
-    for (i=0; i<n_indptr[0]-1; ++i) {
+    for (i=0; i<n_samples; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
-        sparse[i] = (struct svm_csr_node *) malloc ((n+1) * 
+        temp = (struct svm_csr_node *) malloc ((n+1) * 
                                  sizeof(struct svm_csr_node));
-        temp = sparse[i];
         for (j=0; j<n; ++j) {
             temp[j].value = values[k];
             temp[j].index = indices[k] + 1; /* libsvm uses 1-based indexing */
             ++k;
         }
         /* set sentinel */
-        temp[j].index = -1;
+        temp[n].index = -1;
+        sparse[i] = temp;
     }
 
     return sparse;
@@ -75,8 +74,8 @@ struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] - 1;
     problem->y = (double *) Y;
-    problem->x = csr_to_libsvm((double *) values, n_indices, (int *) indices,
-			n_indptr, (int *) indptr);
+    problem->x = csr_to_libsvm((double *) values, (int *) indices, 
+                               (int *) indptr, problem->l);
     /* should be removed once we implement weighted samples */
     problem->W = (double *) sample_weight;
 
@@ -110,11 +109,11 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
     /* in the case of precomputed kernels we do not use
        dense_to_precomputed because we don't want the leading 0. As
        indices start at 1 (not at 0) this will work */
-    model->SV = csr_to_libsvm((double *) SV_data, SV_indices_dims,
-    		(int *) SV_indices, SV_indptr_dims, (int *) SV_intptr);
+    model->l = (int) SV_indptr_dims[0] - 1;
+    model->SV = csr_to_libsvm((double *) SV_data, (int *) SV_indices, 
+                              (int *) SV_intptr, model->l);
     model->nr_class = nr_class;
     model->param = *param;
-    model->l = (int) SV_indptr_dims[0] - 1;
 
     /*
      * regression and one-class does not use nSV, label.
@@ -211,8 +210,8 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     struct svm_csr_node **predict_nodes;
     npy_intp i;
 
-    predict_nodes = csr_to_libsvm((double *) data, index_size,
-    		(int *) index, intptr_size, (int *) intptr);
+    predict_nodes = csr_to_libsvm((double *) data, (int *) index, 
+                                  (int *) intptr, intptr_size[0]-1);
 
     if (predict_nodes == NULL)
         return -1;

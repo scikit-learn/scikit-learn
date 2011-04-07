@@ -35,7 +35,7 @@ class BaseLibSVM(BaseEstimator):
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
-                 tol, C, nu, p, shrinking, probability):
+                 tol, C, nu, epsilon, shrinking, probability):
 
         if not impl in self._svm_types:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -54,7 +54,7 @@ class BaseLibSVM(BaseEstimator):
         self.tol = tol
         self.C = C
         self.nu = nu
-        self.p = p
+        self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
 
@@ -141,10 +141,10 @@ class BaseLibSVM(BaseEstimator):
         self.probB_ = \
         libsvm.train(_X, y, solver_type, kernel_type, self.degree,
                       self.gamma, self.coef0, self.tol, self.C,
-                      self.nu, self.cache_size, self.p,
+                      self.nu, self.epsilon,
                       self.class_weight_label, self.class_weight,
                       sample_weight, int(self.shrinking),
-                      int(self.probability))
+                      int(self.probability), self.cache_size)
 
         return self
 
@@ -183,7 +183,7 @@ class BaseLibSVM(BaseEstimator):
             self.dual_coef_, self.intercept_,
             self._svm_types.index(self.impl), kernel_type,
             self.degree, self.gamma, self.coef0, self.tol, self.C,
-            self.nu, self.cache_size, self.p, self.n_support_,
+            self.nu, self.cache_size, self.epsilon, self.n_support_,
             self.support_, self.label_, self.class_weight_label,
             self.class_weight, self.probA_, self.probB_,
             int(self.shrinking), int(self.probability))
@@ -224,7 +224,7 @@ class BaseLibSVM(BaseEstimator):
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.nu, self.cache_size,
-                      self.p, self.n_support_,
+                      self.epsilon, self.n_support_,
                       self.support_, self.label_,
                       self.class_weight_label,
                       self.class_weight, 
@@ -281,7 +281,7 @@ class BaseLibSVM(BaseEstimator):
                       self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label,
                       self.class_weight, self.nu, self.cache_size,
-                      self.p, int(self.shrinking),
+                      self.epsilon, int(self.shrinking),
                       int(self.probability), self.n_support_,
                       self.support_, self.label_, self.probA_,
                       self.probB_)
