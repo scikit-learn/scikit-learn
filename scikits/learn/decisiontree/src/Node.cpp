@@ -36,23 +36,21 @@ void Node::calc_response()
 {
     vector<Object*>::const_iterator it(this->signal.begin());
     double weightedSignal(0.);
-    double weight(0.);
     for (; it != this->signal.end(); ++it)
     {
-        weightedSignal += (*it)->weight * this->sig_score;
-        weight += (*it)->weight;
+        weightedSignal += (*it)->weight;
     }
     it = this->background.begin();
     double weightedBackground(0.);
     for (; it != this->background.end(); ++it)
     {
-        weightedBackground += (*it)->weight * this->bkg_score;
-        weight += (*it)->weight;
+        weightedBackground += (*it)->weight;
     }
-    this->response = weight > 0 ? \
-        (weightedSignal + weightedBackground) / weight : (this->sig_score - this->bkg_score)/2.;
+    this->response = (weightedBackground + weightedSignal) > 0 ? \
+         -1. + 2. * weightedSignal / (weightedBackground + weightedSignal) : -1.;
 }
 
+/*
 void Node::update_classification()
 {
     vector<Object*>::const_iterator it(this->signal.begin());
@@ -73,6 +71,7 @@ void Node::update_classification()
             (*it)->label = BACKGROUND;
     }
 }
+*/
 
 bool Node::split(unsigned int minleafsize, unsigned int nbins)
 {
@@ -137,8 +136,8 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
     }
     if (bestAttribute == -1) return false;
     // create left and right Nodes and add them as children
-    Node* left = new Node(this->sig_score, this->bkg_score);
-    Node* right = new Node(this->sig_score, this->bkg_score);
+    Node* left = new Node();
+    Node* right = new Node();
     std::vector<Object*>::const_iterator it(signal.begin());
     for (; it != signal.end(); ++it)
     {

@@ -39,11 +39,9 @@ class DecisionTree(BaseEstimator, ClassifierMixin):
                              (sample_weight.shape[0], X.shape[0]))
        
         labels = np.unique(y)
-        if len(labels) != 2:
+        if not (labels == (-1, 1)).all():
             raise ValueError("Only binary classificiation is supported.\n" +
-                             "y must contain two unique values.")
-        sig_score = labels[1]
-        bkg_score = labels[0]
+                             "y must only contain -1 and 1.")
 
         # Choose a suitable minleafsize if none was specified by the user
         minleafsize = self.minleafsize
@@ -53,9 +51,7 @@ class DecisionTree(BaseEstimator, ClassifierMixin):
         self.root = libdecisiontree.fit(X, y, sample_weight,
                                               minleafsize,
                                               self.nbins,
-                                              self.maxdepth,
-                                              sig_score,
-                                              bkg_score)
+                                              self.maxdepth)
         self.nfeatures = X.shape[1]
         return self
 

@@ -12,14 +12,12 @@ class Node
 {
     public:
         
-        Node(double sig_score = 1, double bkg_score = -1):
+        Node():
             left_child(0),
             right_child(0),
             attribute(-1),
             cut(0),
-            response(0),
-            sig_score(sig_score),
-            bkg_score(bkg_score)
+            response(0)
         {}
 
         ~Node()
@@ -30,7 +28,7 @@ class Node
 
         void calc_response();
 
-        void update_classification();
+        //void update_classification();
 
         void add_signal(Object* s) { this->signal.push_back(s); }
 
@@ -85,8 +83,6 @@ class Node
         int attribute;
         double cut;
         double response;
-        double sig_score;
-        double bkg_score;
 };
 
 #endif

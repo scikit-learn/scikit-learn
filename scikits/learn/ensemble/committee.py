@@ -10,8 +10,11 @@ class Committee(BaseEnsemble):
         """
         Average the predictions of all models in committee
         """ 
+        norm = 0.
         prediction = np.zeros(X.shape[0])
-        for alpha, estimator in self:
-            prediction += estimator.predict(X)
-        prediction /= len(self)
+        for weight, estimator in self:
+            prediction += weight * estimator.predict(X)
+            norm += weight
+        if norm != 0:
+            prediction /= norm
         return prediction

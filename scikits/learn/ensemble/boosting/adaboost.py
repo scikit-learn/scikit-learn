@@ -4,7 +4,7 @@ import math
 
 class AdaBoost(BaseEnsemble):
 
-    def fit(self, X, Y, sample_weight = [], boosts = 1, **params):
+    def fit(self, X, Y, sample_weight = [], boosts = 1, beta = 0.5, **params):
         """
         X: list of instance vectors
         Y: target values/classes
@@ -15,6 +15,8 @@ class AdaBoost(BaseEnsemble):
         """
         if boosts < 1:
             raise ValueError("You must specify a number of boosts greater than 0")
+        if beta <= 0:
+            raise ValueError("Beta must be positive and non-zero")
         
         if len(sample_weight) == 0:
             # initialize weights to 1/N
@@ -31,9 +33,9 @@ class AdaBoost(BaseEnsemble):
             T = estimator.predict(X)
             # instances incorrectly classified
             incorrect = (T*Y)<0
+            correct = incorrect == 0
             # error fraction
             err = np.sum(sample_weight * incorrect) / np.sum(sample_weight)
-            print err
             # sanity check
             if err == 0:
                 self.append((1., estimator))
@@ -43,11 +45,10 @@ class AdaBoost(BaseEnsemble):
                     self.append((1., estimator))
                 break
             # boost weight
-            alpha = math.log((1 - err) / err)
+            alpha = beta * math.log((1 - err) / err)
             self.append((alpha, estimator))
             if i < boosts:
-                sample_weight *= np.exp(alpha * incorrect)
-        print len(self)
+                sample_weight *= np.exp(alpha * (incorrect - correct))
         return self
 
     def predict(self, X):
