@@ -27,7 +27,7 @@ void init_root(char* X, char* Y, char* weights, npy_intp* X_dims, Node* root)
         obj->attrs = &x[i * X_dims[1]];
         obj->weight = w[i];
         obj->dim =X_dims[1]; 
-        if (y[i]==1)
+        if (y[i]>0)
         {
             obj->label = SIGNAL;
             root->add_signal(obj);

@@ -1,4 +1,7 @@
 #include "Node.h"
+#include <iostream>
+
+using namespace std;
 
 double Node::predict(const double* attrs) const
 {
@@ -117,13 +120,17 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
         it = background.begin();
         for (; it != background.end(); ++it)
             bkgHist->fill((*it)->attrs[i],(*it)->weight);
-        
+
         // calculate Gini_left + Gini_right for a split at each internal bin boundary and find minimum where minleafsize is respected
         for (unsigned int binCut(1); binCut < nbins; ++binCut)
         {
+            cout << "asd" << endl;
+            cout << sigHist->integral(0,binCut,false) + bkgHist->integral(0,binCut,false) << endl;
+            cout << sigHist->integral(binCut,nbins,false) + bkgHist->integral(binCut,nbins,false) << endl;
             if (sigHist->integral(0,binCut,false) + bkgHist->integral(0,binCut,false) >= minleafsize && \
                 sigHist->integral(binCut,nbins,false) + bkgHist->integral(binCut,nbins,false) >= minleafsize)
             {
+                cout << "sdf" << endl;
                 sig_left = sigHist->integral(0,binCut);
                 bkg_left = bkgHist->integral(0,binCut);
                 sig_right = sigHist->integral(binCut,nbins);
@@ -145,6 +152,8 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
         delete sigHist;
         delete bkgHist;
     }
+
+    cout << bestGini << endl;
     
     if (bestAttribute == -1) return false;
     
@@ -167,6 +176,8 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
     
     this->attribute = bestAttribute;
     this->cut = bestSplit;
+    cout << "best attr: " << bestAttribute << endl;
+    cout << "best cut:  " << bestSplit << endl;
     this->set_left_child(left);
     this->set_right_child(right);
     return true;

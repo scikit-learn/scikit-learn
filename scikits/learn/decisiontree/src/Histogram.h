@@ -25,7 +25,7 @@ class Histogram
         void fill(U value, T weight = 1)
         {
             if (value < this->min || value >= this->max) return;
-            int bin = (this->nbins-1) * float(value - this->min) / float(this->max - this->min);
+            int bin = this->nbins * float(value - this->min) / float(this->max - this->min);
             this->bins->at(bin).first += weight;
             this->bins->at(bin).second += 1;
         }
@@ -42,9 +42,19 @@ class Histogram
             T sum(0);
             typename vector<pair<T,T> >::const_iterator it(this->bins->begin()+lowBin);
             if (weighted)
-                for (; it != this->bins->begin()+highBin; ++it) sum += it->first;
+            {
+                for (; it != this->bins->begin()+highBin; ++it)
+                {
+                    sum += it->first;
+                }
+            }
             else
-                for (; it != this->bins->begin()+highBin; ++it) sum += it->second;
+            {
+                for (; it != this->bins->begin()+highBin; ++it)
+                {
+                    sum += it->second;
+                }
+            }
             return sum;
         }
 

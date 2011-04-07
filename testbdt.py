@@ -3,10 +3,10 @@ from scikits.learn.ensemble.boosting import AdaBoost
 import numpy as np
 import matplotlib.pyplot as plt
 
-a = AdaBoost(DecisionTree, minleafsize=100, maxdepth = 0, nbins=100)
+a = AdaBoost(DecisionTree, minleafsize=100, maxdepth = 1, nbins=100)
 #a = DecisionTree(minleafsize=100, maxdepth=1, nbins=100)
 
-nsample = 10000
+nsample = 50000
 #cov = [[.5,0,0],[0,.5,0],[0,0,0.5]]
 cov = [[.5,0],[0,.5]]
 X_bkg = np.reshape(np.random.multivariate_normal([.5,.5], cov, nsample), (nsample,-1))
@@ -15,7 +15,7 @@ X_sig = np.reshape(np.random.multivariate_normal([-.5,-.5], cov, nsample), (nsam
 x = np.concatenate([X_sig, X_bkg])
 y = np.append(np.ones(nsample),-np.ones(nsample))
 
-a.fit(x, y, boosts=100)
+a.fit(x, y, boosts=20)
 
 plt.figure()
 plt.hist(a.predict(X_bkg), bins=20, range=(-1,1), label="Background")

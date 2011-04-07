@@ -37,7 +37,7 @@ cdef extern from "libdecisiontree_helper.cpp":
 
 def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-        np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight = np.empty(0),
+        np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
         unsigned int minleafsize = 10,
         unsigned int nbins = 0,
         unsigned int maxdepth = 0):
