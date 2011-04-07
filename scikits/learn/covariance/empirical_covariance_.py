@@ -21,41 +21,39 @@ def log_likelihood(emp_cov, precision):
     Params
     ------
     emp_cov: 2D ndarray (n_features, n_features)
-      MLE of covariance
+      Maximum Likelihood Estimator of covariance
     precision: 2D ndarray (n_features, n_features)
       The precision matrix of the covariance model to be tested
 
     """
-    
     return -np.sum(emp_cov*precision) + exact_logdet(precision)
 
-def base_covariance(X, biased=True):
-    """Computes the maximum likelihood covariance matrix
+
+def empirical_covariance(X):
+    """Computes the maximum likelihood estimator of the covariance matrix	
 
     Parameters
     ----------
     X: 2D ndarray, shape (n_samples, n_features)
-      Data from which to compute the covariance estimate
-    
+      Data from which to compute the covariance estimate	
+
     Returns
-    -------
+    -------	
     cov: 2D ndarray, shape (n_features, n_features)
       Maximum Likelihood Estimator of covariance
 
     """
-    n_samples = X.shape[0]
-    cov = np.dot(X.T, X) / n_samples
-    
-    return cov
+    X = np.asanyarray(X, dtype=np.float64, order='C')
+    if X.ndim == 1:
+        X = np.atleast_2d(X).T
 
+    return np.dot(X.T, X) / X.shape[0]
 
-class BaseCovariance(BaseEstimator):
+class EmpiricalCovariance(BaseEstimator):
     """Maximum likelihood covariance estimator
 
     Parameters
     ----------
-    store_covariance : bool
-        Specify if the estimated covariance is stored
     store_precision : bool
         Specify if the estimated precision is stored
 
@@ -66,11 +64,10 @@ class BaseCovariance(BaseEstimator):
         (stored only if store_covariance is True)
 
     `precision_` : 2D ndarray, shape (n_features, n_features)
-        Estimated precision matrix
+        Estimated pseudo inverse matrix
 
     """
-    def __init__(self, store_covariance=True, store_precision=True):
-        self.store_covariance = store_covariance
+    def __init__(self, store_precision=True):
         self.store_precision = store_precision
     
     def _set_estimates(self, covariance):
@@ -88,37 +85,31 @@ class BaseCovariance(BaseEstimator):
 
         """
         # set covariance
-        if self.store_covariance:
-            self.covariance_ = covariance
-        else:
-            self.covariance_ = None
+        self.covariance_ = covariance
         # set precision
         if self.store_precision:
-            try:
-                self.precision_ = linalg.inv(covariance)
-            except:
-                # /!\ add warning message or relevant exception handling here
-                self.precision_ = None
+            self.precision_ = linalg.pinv(covariance)
         else:
             self.precision_ = None
     
     def fit(self, X, **params):
         self._set_params(**params)
-        covariance_ = base_covariance(X)
-        self._set_estimates(covariance_)
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        covariance = empirical_covariance(X)
+        self._set_estimates(covariance)
         
         return self
 
-
     def score(self, X_test):
-        test_cov = base_covariance(X_test)
+        X_test = np.asanyarray(X_test, dtype=np.float64, order='C')
+        test_cov = empirical_covariance(X_test)
         if self.store_precision:
-            precision = self.precision_
+            res = log_likelihood(test_cov, self.precision_)
         else:
-            precision = linalg.inv(self.covariance_)
-
-        return log_likelihood(test_cov, precision)
-    
+            res = log_likelihood(test_cov, linalg.pinv(self.covariance_))
+        
+        return res
+        
     def mse(self, real_cov):
         diff = real_cov - self.covariance_
         

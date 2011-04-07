@@ -13,12 +13,12 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 import numpy as np
 
-from .base_covariance_ import BaseCovariance, base_covariance
+from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
 
 ###############################################################################
 # ShrunkCovariance estimator
 
-def shrunk_covariance(emp_cov, shrinkage=None):
+def shrunk_covariance(emp_cov, shrinkage=0.1):
     """Calculates a covariance matrix shrunk on the diagonal
     
     Params
@@ -46,17 +46,13 @@ def shrunk_covariance(emp_cov, shrinkage=None):
     """
     emp_cov = np.atleast_2d(emp_cov)
     n_features = emp_cov.shape[0]
-
-    if shrinkage is None:
-        shrinkage = np.trace(emp_cov) / n_features
     
     mu = np.trace(emp_cov) / n_features
     shrunk_cov = (1.-shrinkage)*emp_cov + shrinkage*mu*np.eye(n_features)
-    
+
     return shrunk_cov
 
-
-class ShrunkCovariance(BaseCovariance):
+class ShrunkCovariance(EmpiricalCovariance):
     """Covariance estimator with shrinkage
     
     Parameters
@@ -81,16 +77,15 @@ class ShrunkCovariance(BaseCovariance):
     where mu = trace(cov) / n_features
     
     """
-    def __init__(self, store_covariance=True, store_precision=True,
-                 shrinkage=None):
-        super(ShrunkCovariance, self).__init__(store_covariance,
-                                               store_precision)
+    def __init__(self, store_precision=True, shrinkage=0.1):
+        super(ShrunkCovariance, self).__init__(store_precision)
         self.shrinkage_ = shrinkage
 
 
     def fit(self, X, **params):
+        X = np.asanyarray(X, dtype=np.float64, order='C')
         self._set_params(**params)
-        covariance = shrunk_covariance(base_covariance(X), self.shrinkage_)
+        covariance = shrunk_covariance(empirical_covariance(X), self.shrinkage_)
         self._set_estimates(covariance)
         
         return self
@@ -124,17 +119,19 @@ def ledoit_wolf(X):
     where mu = trace(cov) / n_features
     
     """
-    X = np.atleast_2d(X)
+    X = np.asanyarray(X, dtype=np.float64, order='C')
+    if X.ndim == 1:
+        return np.atleast_2d((X**2).mean()), 0.
     n_samples, n_features = X.shape
     
-    emp_cov = base_covariance(X)
+    emp_cov = empirical_covariance(X)
     structured_estimate = np.eye(n_features)
     mu = np.trace(emp_cov) / n_features
     delta = ((emp_cov - mu*structured_estimate)**2).sum() / n_features
     X2 = X**2
     beta_ = 1./(n_features*n_samples) \
         * np.sum(np.dot(X2.T, X2)/n_samples - emp_cov**2)
-
+    
     beta = min(beta_, delta)
     shrinkage = beta/delta
     shrunk_cov = shrinkage*mu*structured_estimate + (1.-shrinkage)*emp_cov
@@ -169,11 +166,12 @@ class LedoitWolf(ShrunkCovariance):
     
     """
 
-    def __init__(self, store_covariance=True, store_precision=True):
-        super(LedoitWolf, self).__init__(store_covariance, store_precision)
+    def __init__(self, store_precision=True):
+        super(LedoitWolf, self).__init__(store_precision)
 
 
     def fit(self, X):
+        X = np.asanyarray(X, dtype=np.float64, order='C')
         covariance, shrinkage = ledoit_wolf(X)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
@@ -209,14 +207,16 @@ def oas(X):
     where mu = trace(cov) / n_features
     
     """
-    X = np.atleast_2d(X)
+    X = np.asanyarray(X, dtype=np.float64, order='C')
+    if X.ndim == 1:
+        return np.atleast_2d((X**2).mean()), 0.
     n_samples, n_features = X.shape
     
-    emp_cov = base_covariance(X)
+    emp_cov = empirical_covariance(X)
     structured_estimator = np.eye(n_features)
     mu = np.trace(emp_cov) / n_features
     
-    # formula from Chen et al.'s implementation
+    # formula from Chen et al.'s **implementation**
     num = np.sum(emp_cov**2) + (np.trace(emp_cov)**2)
     den = (n_samples+1.) \
         * (np.sum(emp_cov**2) - ((np.trace(emp_cov)**2)/n_features))
@@ -256,11 +256,12 @@ class OAS(ShrunkCovariance):
     
     """
 
-    def __init__(self, store_covariance=True, store_precision=True):
-        super(OAS, self).__init__(store_covariance, store_precision)
+    def __init__(self, store_precision=True):
+        super(OAS, self).__init__(store_precision)
 
 
     def fit(self, X):
+        X = np.asanyarray(X, dtype=np.float64, order='C')
         covariance, shrinkage = oas(X)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)

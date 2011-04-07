@@ -41,8 +41,8 @@ X_test = np.dot(base_X_test, coloring_matrix)
 ###############################################################################
 # Compute Ledoit-Wolf and Covariances on a grid of shrinkages
 
-from scikits.learn.covariance import LedoitWolf, OAS, ShrunkCovariance
-from scikits.learn.covariance import base_covariance, log_likelihood
+from scikits.learn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
+    log_likelihood, empirical_covariance
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate
 lw = LedoitWolf()
@@ -59,7 +59,7 @@ negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(X_train).score(X_test) \
 
 # getting the likelihood under the real model
 real_cov = np.dot(coloring_matrix.T, coloring_matrix)
-emp_cov = base_covariance(X_train)
+emp_cov = empirical_covariance(X_train)
 loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################
