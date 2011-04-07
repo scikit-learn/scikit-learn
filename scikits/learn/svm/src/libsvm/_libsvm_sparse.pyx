@@ -99,7 +99,7 @@ def libsvm_sparse_train ( int n_features,
     cdef char *error_msg
 
     if len(sample_weight) == 0:
-        sample_weight = np.ones(values.shape[0], dtype=np.float64)
+        sample_weight = np.ones(Y.shape[0], dtype=np.float64)
     else:
         assert sample_weight.shape[0] == indptr.shape[0] - 1, \
                "sample_weight and X have incompatible shapes: " + \
