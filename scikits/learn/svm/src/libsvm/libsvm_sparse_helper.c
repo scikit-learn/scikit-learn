@@ -74,8 +74,8 @@ struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] - 1;
     problem->y = (double *) Y;
-    problem->x = csr_to_libsvm((double *) values, (int *) indices, (int *) indptr,
-                               problem->l);
+    problem->x = csr_to_libsvm((double *) values, (int *) indices, 
+                               (int *) indptr, problem->l);
     /* should be removed once we implement weighted samples */
     problem->W = (double *) sample_weight;
 
