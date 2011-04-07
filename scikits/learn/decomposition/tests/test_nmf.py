@@ -52,30 +52,30 @@ def test_initialize_variants():
 
 
 @raises(ValueError)
-def test_fit_nn_input():
+def test_projgrad_nmf_fit_nn_input():
     """Test model fit behaviour on negative input
     """
     A = -np.ones((2, 2))
-    m = nmf.NMF(n_components=2, init=None)
+    m = nmf.ProjectedGradientNMF(n_components=2, init=None)
     m.fit(A)
 
 
-def test_fit_nn_output():
+def test_projgrad_nmf_fit_nn_output():
     """Test that the decomposition does not contain negative values.
     """
     A = np.c_[5 * np.ones(5) - xrange(1, 6),
               5 * np.ones(5) + xrange(1, 6)]
     for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar'):
-        model = nmf.NMF(n_components=2, init=init)
+        model = nmf.ProjectedGradientNMF(n_components=2, init=init)
         transf = model.fit_transform(A)
         assert_false((model.components_ < 0).any() or
                      (transf < 0).any())
 
 
-def test_fit_nn_close():
+def test_projgrad_nmf_fit_close():
     """Test that the fit is not too far away
     """
-    assert nmf.NMF(5, init='nndsvda').fit(np.abs(
+    assert nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
       rng.randn(6, 5))).reconstruction_err_ < 0.05
 
 
@@ -104,18 +104,18 @@ def test_nls_close():
     assert_true((np.abs(Ap - A) < 0.01).all())
 
 
-def test_nmf_transform():
+def test_projgrad_nmf_transform():
     """Test that NMF.transform returns close values
 
     (transform uses scipy.optimize.nnls for now)
     """
     A = np.abs(rng.randn(6, 5))
-    m = nmf.NMF(n_components=5, init='nndsvd')
+    m = nmf.ProjectedGradientNMF(n_components=5, init='nndsvd')
     transf = m.fit_transform(A)
     assert_true(np.allclose(transf, m.transform(A), atol=1e-2, rtol=0))
 
 
-def test_nmf_sparseness():
+def test_projgrad_nmf_sparseness():
     """Test sparseness
 
     Test that sparsity contraints actually increase sparseness in the
@@ -123,11 +123,11 @@ def test_nmf_sparseness():
     """
 
     A = np.abs(rng.randn(10, 10))
-    m = nmf.NMF(n_components=5).fit(A)
-    data_sp = nmf.NMF(n_components=5, sparseness='data'). \
-                  fit(A).data_sparseness_
-    comp_sp = nmf.NMF(n_components=5, sparseness='components'). \
-                  fit(A).comp_sparseness_
+    m = nmf.ProjectedGradientNMF(n_components=5).fit(A)
+    data_sp = nmf.ProjectedGradientNMF(n_components=5,
+                  sparseness='data').fit(A).data_sparseness_
+    comp_sp = nmf.ProjectedGradientNMF(n_components=5,
+                  sparseness='components').fit(A).comp_sparseness_
     assert_true(data_sp > m.data_sparseness_ and comp_sp > m.comp_sparseness_)
 
 

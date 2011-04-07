@@ -11,8 +11,8 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from .base import BaseEstimator, TransformerMixin
-from .utils.extmath import fast_svd
+from ..base import BaseEstimator, TransformerMixin
+from ..utils.extmath import fast_svd
 
 _pos_ = lambda x: (x >= 0) * x
 _neg_ = lambda x: (x < 0) * (-x)
@@ -283,7 +283,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from scikits.learn.nmf import NMF
+    >>> from scikits.learn.decomposition import ProjectedGradientNMF
     >>> model = ProjectedGradientNMF(n_components=2, init=0)
     >>> model.fit(X) #doctest: +ELLIPSIS
     ProjectedGradientNMF(nls_max_iter=2000, eta=0.1, max_iter=200,
@@ -484,4 +484,5 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
 
 class NMF(ProjectedGradientNMF):
+    __doc__ = ProjectedGradientNMF.__doc__
     pass

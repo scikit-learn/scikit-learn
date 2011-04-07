@@ -205,18 +205,18 @@ Signal Decomposition
    :toctree: generated/
    :template: class.rst
 
-   pca.PCA
-   pca.ProbabilisticPCA
-   pca.RandomizedPCA
-   pca.KernelPCA
-   fastica.FastICA
-   nmf.NMF
+   decomposition.PCA
+   decomposition.ProbabilisticPCA
+   decomposition.RandomizedPCA
+   decomposition.KernelPCA
+   decomposition.FastICA
+   decomposition.NMF
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   fastica.fastica
+   decomposition.fastica
 
 Cross Validation
 ================

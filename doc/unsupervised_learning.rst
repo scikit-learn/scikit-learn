@@ -9,6 +9,6 @@ Unsupervised learning
 
     modules/mixture
     modules/clustering
-    modules/decompositions
+    modules/decomposition
 
 

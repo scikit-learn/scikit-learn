@@ -7,13 +7,13 @@ from nose.tools import assert_raises
 from scipy.sparse import csr_matrix
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
-from scikits.learn import datasets
-from scikits.learn.pca import PCA
-from scikits.learn.pca import ProbabilisticPCA
-from scikits.learn.pca import RandomizedPCA
-from scikits.learn.pca import _assess_dimension_
-from scikits.learn.pca import _infer_dimension_
-from scikits.learn.pca import KernelPCA
+from ... import datasets
+from .. import PCA
+from .. import ProbabilisticPCA
+from .. import RandomizedPCA
+from .. import KernelPCA
+from ..pca import _assess_dimension_
+from ..pca import _infer_dimension_
 
 iris = datasets.load_iris()
 

@@ -36,7 +36,7 @@ from scikits.learn.datasets import load_lfw_people
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.metrics import classification_report
 from scikits.learn.metrics import confusion_matrix
-from scikits.learn.pca import RandomizedPCA
+from scikits.learn.decomposition import RandomizedPCA
 from scikits.learn.svm import SVC
 
 # Display progress logs on stdout
@@ -94,7 +94,7 @@ t0 = time()
 pca = RandomizedPCA(n_components=n_components, whiten=True).fit(X_train)
 print "done in %0.3fs" % (time() - t0)
 
-eigenfaces = pca.components_.T.reshape((n_components, h, w))
+eigenfaces = pca.components_.reshape((n_components, h, w))
 
 print "Projecting the input data on the eigenfaces orthonormal basis"
 t0 = time()
