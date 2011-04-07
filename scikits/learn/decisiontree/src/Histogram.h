@@ -30,12 +30,16 @@ class Histogram
             this->bins->at(bin).second += 1;
         }
 
+        /*
+         * Inclusive of the lowBin index and exclusive of the highBin index
+         */
         T integral(unsigned int lowBin = 0, unsigned int highBin = 0, bool weighted = true)
         {
             if (lowBin < 0) lowBin = 0;
             if (lowBin >= this->nbins) return 0;
-            if ((highBin <= lowBin) || (highBin > this->nbins)) highBin = this->nbins;
-            T sum = 0;
+            if (highBin <= lowBin) return 0;
+            if (highBin > this->nbins) highBin = this->nbins;
+            T sum(0);
             typename vector<pair<T,T> >::const_iterator it(this->bins->begin()+lowBin);
             if (weighted)
                 for (; it != this->bins->begin()+highBin; ++it) sum += it->first;

@@ -1,5 +1,4 @@
 #include "Node.h"
-#include <iostream>
 
 double Node::predict(const double* attrs) const
 {
@@ -86,33 +85,44 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
     pair<double,double> extrema;
     Histogram<double,double>* sigHist;
     Histogram<double,double>* bkgHist;
-    float bestGini(-1.);
+    double bestGini(-1.);
+    double step;
+    double min;
+    double max;
+    double Gini_left;
+    double Gini_right;
+    double sig_left, sig_right;
+    double bkg_left, bkg_right;
+    double purity_left, purity_right;
+
     for (unsigned int i(0); i < numAttributes; ++i)
     {
         // get max and min value of this attribute over signal and background combined
         extrema = this->minmax(i);
+        
         // create histograms for signal and background
-        double step = (extrema.second - extrema.first)/nbins;
+        step = (extrema.second - extrema.first)/nbins;
         if (step==0) continue;
-        sigHist = new Histogram<double,double>(nbins, extrema.first, extrema.second+step);
-        bkgHist = new Histogram<double,double>(nbins, extrema.first, extrema.second+step);
+        min = extrema.first-step/2;
+        max = extrema.second+step/2;
+        sigHist = new Histogram<double,double>(nbins, min, max);
+        bkgHist = new Histogram<double,double>(nbins, min, max);
+        step = (max - min)/nbins;
+        
         // fill histograms
         std::vector<Object*>::const_iterator it(signal.begin());
         for (; it != signal.end(); ++it)
             sigHist->fill((*it)->attrs[i],(*it)->weight);
+        
         it = background.begin();
         for (; it != background.end(); ++it)
             bkgHist->fill((*it)->attrs[i],(*it)->weight);
+        
         // calculate Gini_left + Gini_right for a split at each internal bin boundary and find minimum where minleafsize is respected
-        double Gini_left;
-        double Gini_right;
-        double sig_left, sig_right;
-        double bkg_left, bkg_right;
-        double purity_left, purity_right;
         for (unsigned int binCut(1); binCut < nbins; ++binCut)
         {
             if (sigHist->integral(0,binCut,false) + bkgHist->integral(0,binCut,false) >= minleafsize && \
-                    sigHist->integral(binCut,nbins,false) + bkgHist->integral(binCut,nbins,false) >= minleafsize)
+                sigHist->integral(binCut,nbins,false) + bkgHist->integral(binCut,nbins,false) >= minleafsize)
             {
                 sig_left = sigHist->integral(0,binCut);
                 bkg_left = bkgHist->integral(0,binCut);
@@ -122,22 +132,26 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
                 purity_right = sig_right / (sig_right + bkg_right);
                 Gini_left = purity_left * (1 - purity_left) * (sig_left + bkg_left);
                 Gini_right = purity_right * (1 - purity_right) * (sig_right + bkg_right);
+                
                 // if a possible split is found and if this split is the best so far update bestAttribute and bestSplit
                 if (Gini_left + Gini_right < bestGini || bestGini == -1)
                 {
                     bestGini = Gini_left + Gini_right;
                     bestAttribute = i;
-                    bestSplit = extrema.first + binCut * (extrema.second + step - extrema.first) / nbins;
+                    bestSplit = min + binCut * step;
                 }
             }
         }
         delete sigHist;
         delete bkgHist;
     }
+    
     if (bestAttribute == -1) return false;
+    
     // create left and right Nodes and add them as children
     Node* left = new Node();
     Node* right = new Node();
+    
     std::vector<Object*>::const_iterator it(signal.begin());
     for (; it != signal.end(); ++it)
     {
@@ -150,7 +164,9 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
         if ((*it)->attrs[bestAttribute] > bestSplit) right->add_background(*it);
         else left->add_background(*it);
     }
+    
     this->attribute = bestAttribute;
+    this->cut = bestSplit;
     this->set_left_child(left);
     this->set_right_child(right);
     return true;
