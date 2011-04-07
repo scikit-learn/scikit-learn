@@ -303,7 +303,6 @@ def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
 
 
     """
-    centers_old = centers.copy()
     # Let's split the data into chunks
     j = i * chunk % len(x)
     M = x[j:j + chunk]
@@ -311,11 +310,21 @@ def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
     cache = euclidean_distances(centers, M, m_norm,
                                 squared=True).argmin(axis=0)
 
-    for index, c in enumerate(cache):
-        v[c] += 1
-        centers[c] = (1 - 1./v[c])*centers[c] + \
-                            1./v[c]*M[index]
-
+    k = centers.shape[0]
+    X_centers = None
+    for q in range(k):
+        mask = (cache == q)
+        c = mask.sum()
+        if not np.any(mask):
+            # the centroid of empty centers is set to the center of the sample
+            # we are looking at.
+            if X_centers is None:
+                X_centers = M.mean(axis=0)
+            centers[q] = X_centers
+        else:
+            centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + np.mean(M[mask],
+                                                                  axis=0))
+            v[q] += c
     return centers
 
 
@@ -353,6 +362,24 @@ def _m_step(x, z, k):
         else:
             centers[q] = np.mean(x[this_center_mask], axis=0)
     return centers
+
+def _batch_m_step(x, z, k, centers, v):
+    """ M step of the Batch K-Means EM algorithm
+
+    Computation of cluster centers/means
+    """
+    dim = x.shape[1]
+    X_center = None
+    for q in range(k):
+        # This is the new center. Now let's weight the old center compared to
+        # that.
+        this_center_mask = (z == q)
+        c = this_center_mask.sum()
+        centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + c*np.mean(x[this_center_mask],
+                                                              axis=0))
+        v[q] += c
+    return centers
+
 
 
 def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
@@ -585,7 +612,7 @@ class BatchKMeans(KMeans):
 
     """
 
-    def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=300,
+    def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=600,
                  tol=1e-4, verbose=0, rng=None, copy_x=True):
         super(BatchKMeans, self).__init__(k, init, n_init, max_iter, tol,
               verbose, rng=None, copy_x=True)
