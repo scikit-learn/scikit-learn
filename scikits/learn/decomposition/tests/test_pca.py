@@ -8,12 +8,12 @@ from scipy.sparse import csr_matrix
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from ... import datasets
-from ..pca import PCA
-from ..pca import ProbabilisticPCA
-from ..pca import RandomizedPCA
+from .. import PCA
+from .. import ProbabilisticPCA
+from .. import RandomizedPCA
+from .. import KernelPCA
 from ..pca import _assess_dimension_
 from ..pca import _infer_dimension_
-from ..pca import KernelPCA
 
 iris = datasets.load_iris()
 

@@ -4,7 +4,8 @@ Test the fastica algorithm.
 
 import numpy as np
 from numpy.testing import assert_almost_equal
-from .. import fastica
+from .. import FastICA, fastica
+from ..fastica_ import _gs_decorrelation
 
 
 def center_and_norm(x, axis=-1):
@@ -30,10 +31,10 @@ def test_gs():
     # generate a random orthogonal  matrix
     W, _, _ = np.linalg.svd(np.random.randn(10, 10))
     w = np.random.randn(10)
-    fastica._gs_decorrelation(w, W, 10)
+    _gs_decorrelation(w, W, 10)
     assert (w ** 2).sum() < 1.e-10
     w = np.random.randn(10)
-    u = fastica._gs_decorrelation(w, W, 5)
+    u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
     assert((tmp[:5] ** 2).sum() < 1.e-10)
 
@@ -66,8 +67,7 @@ def test_fastica(add_noise=False):
     non_linearity = ['logcosh', 'exp', 'cube']
     for nl in non_linearity:
         for algo in algorithm:
-            k_, mixing_, s_ = fastica.fastica(
-                m, fun=nl, algorithm=algo)
+            k_, mixing_, s_ = fastica(m, fun=nl, algorithm=algo)
 
             # Check that the mixing model described in the docstring holds:
             assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
@@ -90,7 +90,7 @@ def test_fastica(add_noise=False):
                 assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
-    ica = fastica.FastICA(fun=nl, algorithm=algo)
+    ica = FastICA(fun=nl, algorithm=algo)
     ica.fit(m)
     ica.get_mixing_matrix()
 
@@ -117,7 +117,7 @@ def test_non_square_fastica(add_noise=False):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica.fastica(m, n_components=2)
+    k_, mixing_, s_ = fastica(m, n_components=2)
 
     # Check that the mixing model described in the docstring holds:
     assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))

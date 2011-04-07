@@ -216,7 +216,7 @@ Signal Decomposition
    :toctree: generated/
    :template: function.rst
 
-   decomposition.fastica.fastica
+   decomposition.fastica
 
 Cross Validation
 ================
