@@ -58,4 +58,31 @@ print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
+print "Batch k-means with k-means++ init, chunk 100..."
+t0 = time()
+km = BatchKMeans(init='k-means++', k=n_digits, n_init=10, chunk=100).fit(data)
+print "done in %0.3fs" % (time() - t0)
+print "inertia: %f" % km.inertia_
+print
+
+print "Batch k-means with k-means++ init, chunk 80..."
+t0 = time()
+km = BatchKMeans(init='k-means++', k=n_digits, n_init=10, chunk=80).fit(data)
+print "done in %0.3fs" % (time() - t0)
+print "inertia: %f" % km.inertia_
+print
+
+print "Batch k-means with k-means++ init, chunk 70..."
+t0 = time()
+km = BatchKMeans(init='k-means++', k=n_digits, n_init=10, chunk=70).fit(data)
+print "done in %0.3fs" % (time() - t0)
+print "inertia: %f" % km.inertia_
+print
+
+print "Batch k-means with k-means++ init, chunk 60..."
+t0 = time()
+km = BatchKMeans(init='k-means++', k=n_digits, n_init=10, chunk=60).fit(data)
+print "done in %0.3fs" % (time() - t0)
+print "inertia: %f" % km.inertia_
+print
 

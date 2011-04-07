@@ -311,18 +311,11 @@ def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
                                 squared=True).argmin(axis=0)
 
     k = centers.shape[0]
-    X_centers = None
     for q in range(k):
         mask = (cache == q)
         c = mask.sum()
-        if not np.any(mask):
-            # the centroid of empty centers is set to the center of the sample
-            # we are looking at.
-            if X_centers is None:
-                X_centers = M.mean(axis=0)
-            centers[q] = X_centers
-        else:
-            centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + np.mean(M[mask],
+        if np.any(mask):
+            centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + np.sum(M[mask],
                                                                   axis=0))
             v[q] += c
     return centers
@@ -612,7 +605,7 @@ class BatchKMeans(KMeans):
 
     """
 
-    def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=600,
+    def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=300,
                  tol=1e-4, verbose=0, rng=None, copy_x=True):
         super(BatchKMeans, self).__init__(k, init, n_init, max_iter, tol,
               verbose, rng=None, copy_x=True)
