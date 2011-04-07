@@ -271,9 +271,10 @@ class PCA(BaseEstimator, TransformerMixin):
 
 
 class ProbabilisticPCA(PCA):
-    """Additional layer on top of PCA that add a probabilistic evaluation
+    """Additional layer on top of PCA that adds a probabilistic evaluation
 
-    """ + PCA.__doc__
+    """
+    __doc__ += PCA.__doc__
 
     def fit(self, X, y=None, homoscedastic=True):
         """Additionally to PCA.fit, learns a covariance model

@@ -484,4 +484,5 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
 
 class NMF(ProjectedGradientNMF):
+    __doc__ = ProjectedGradientNMF.__doc__
     pass
