@@ -16,7 +16,7 @@ Decision tree based classifier
 from __future__ import division
 import numpy as np
 from .base import normaliselabels
-from .criteria import information_gain
+from .criteria import information_gain_gini, information_gain, information_gain_ratio
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 
 __all__ = [
@@ -194,10 +194,11 @@ class DecisionTreeClassifier(DecisionTree, ClassifierMixin):
     >>> tree.predict(data.data[test])
 
     """
-    def __init__(self, criterion=information_gain, min_split=4, subsample=None, R=None):
+    def __init__(self, criterion=information_gain_gini, min_split=4, subsample=None, R=None):
         super(DecisionTreeClassifier, self).__init__(criterion=criterion)
         
     def fit(self, X, y, normalisedlabels=False, weights=None):
+        labels = y
         if not normalisedlabels:
             labels, self.classes = normaliselabels(y)
         return super(DecisionTreeClassifier, self).fit(X, labels, weights)
@@ -206,6 +207,4 @@ class DecisionTreeClassifier(DecisionTree, ClassifierMixin):
         values = super(DecisionTreeClassifier, self).predict(X)
         return np.round(values)
 
-class DecisionTreeRegressor(DecisionTree, RegressorMixin):
-    raise NotImplementedError('Coming soon')
 
