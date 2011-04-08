@@ -39,6 +39,6 @@ __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets',
            'decomposition', 'feature_extraction', 'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline', 
-           'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
+           'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls', 'tree_model']
 
 __version__ = '0.8.git'
