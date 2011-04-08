@@ -10,7 +10,7 @@ class Bagged(BaseEnsemble):
         sample_fraction: fraction of X and Y randomly sampled
         baggs: number of sampling/training iterations
         """
-        if not 0. < sample_fraction < 1:
+        if not 0 < sample_fraction < 1:
             raise ValueError("You must specify sample_fraction between 0 and 1 (exclusive)")
         if baggs < 2:
             raise ValueError("baggs must be greater than 1")
@@ -25,7 +25,7 @@ class Bagged(BaseEnsemble):
         for bagg in xrange(baggs):
             # weight a random subsample with 0
             random_sample_weight = sample_weight * \
-                (np.random.random_sample(sample_weight.shape[0])>sample_fraction)
+                (np.random.random_sample(sample_weight.shape[0])<sample_fraction)
             estimator = self.estimator(**self.params)
             estimator.fit(X,Y,random_sample_weight,**params)
             self.append(estimator)
