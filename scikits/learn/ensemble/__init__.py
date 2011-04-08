@@ -1,1 +1,0 @@
-from .committee import Committee
