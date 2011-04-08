@@ -104,9 +104,8 @@ def test_oas():
     # test shrinkage coeff on a simple data set
     oa = OAS()
     oa.fit(X)
-    # /!\ reference values needed here
-    #assert_almost_equal(oa.shrinkage_, 0.00192, 4)
-    #assert_almost_equal(oa.score(X), -2.89795, 4)
+    assert_almost_equal(oa.shrinkage_, 0.018740, 4)
+    assert_almost_equal(oa.score(X), -5.03605, 4)
 
     # compare shrunk covariance obtained from data and from MLE estimate
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X)
@@ -130,7 +129,5 @@ def test_oas():
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False)
     oa.fit(X)
-    # /!\ reference values needed here
-    #assert_almost_equal(oa.shrinkage_, 0.00192, 4)
-    #assert_almost_equal(oa.score(X), -2.89795, 4)
-
+    assert_almost_equal(oa.shrinkage_, 0.018740, 4)
+    assert_almost_equal(oa.score(X), -5.03605, 4)

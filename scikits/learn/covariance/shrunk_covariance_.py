@@ -48,7 +48,8 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     n_features = emp_cov.shape[0]
     
     mu = np.trace(emp_cov) / n_features
-    shrunk_cov = (1.-shrinkage)*emp_cov + shrinkage*mu*np.eye(n_features)
+    shrunk_cov = (1.-shrinkage)*emp_cov
+    shrunk_cov.flat[::n_features + 1] += shrinkage*mu
 
     return shrunk_cov
 
@@ -83,7 +84,6 @@ class ShrunkCovariance(EmpiricalCovariance):
 
 
     def fit(self, X, **params):
-        X = np.asanyarray(X, dtype=np.float64, order='C')
         self._set_params(**params)
         covariance = shrunk_covariance(empirical_covariance(X), self.shrinkage_)
         self._set_estimates(covariance)
@@ -119,22 +119,27 @@ def ledoit_wolf(X):
     where mu = trace(cov) / n_features
     
     """
-    X = np.asanyarray(X, dtype=np.float64, order='C')
+    X = np.asanyarray(X, dtype=np.float64)
+    # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
         return np.atleast_2d((X**2).mean()), 0.
     n_samples, n_features = X.shape
     
     emp_cov = empirical_covariance(X)
-    structured_estimate = np.eye(n_features)
+    print emp_cov
     mu = np.trace(emp_cov) / n_features
-    delta = ((emp_cov - mu*structured_estimate)**2).sum() / n_features
+    delta_ = emp_cov.copy()
+    delta_.flat[::n_features + 1] -= mu
+    delta = (delta_**2).sum() / n_features
     X2 = X**2
     beta_ = 1./(n_features*n_samples) \
         * np.sum(np.dot(X2.T, X2)/n_samples - emp_cov**2)
     
+    print emp_cov
     beta = min(beta_, delta)
     shrinkage = beta/delta
-    shrunk_cov = shrinkage*mu*structured_estimate + (1.-shrinkage)*emp_cov
+    shrunk_cov = (1.-shrinkage)*emp_cov
+    shrunk_cov.flat[::n_features + 1] += shrinkage*mu
     
     return shrunk_cov, shrinkage
 
@@ -171,7 +176,7 @@ class LedoitWolf(ShrunkCovariance):
 
 
     def fit(self, X):
-        X = np.asanyarray(X, dtype=np.float64, order='C')
+        X = np.asanyarray(X)
         covariance, shrinkage = ledoit_wolf(X)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
@@ -207,22 +212,23 @@ def oas(X):
     where mu = trace(cov) / n_features
     
     """
-    X = np.asanyarray(X, dtype=np.float64, order='C')
+    X = np.asanyarray(X, dtype=np.float64)
+    # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
         return np.atleast_2d((X**2).mean()), 0.
     n_samples, n_features = X.shape
     
     emp_cov = empirical_covariance(X)
-    structured_estimator = np.eye(n_features)
     mu = np.trace(emp_cov) / n_features
     
     # formula from Chen et al.'s **implementation**
-    num = np.sum(emp_cov**2) + (np.trace(emp_cov)**2)
-    den = (n_samples+1.) \
-        * (np.sum(emp_cov**2) - ((np.trace(emp_cov)**2)/n_features))
+    alpha = np.mean(emp_cov**2)
+    num = alpha + mu**2
+    den = (n_samples+1.) * (alpha - (mu**2)/n_features)
     
     shrinkage = min(num/den, 1.)
-    shrunk_cov = (1.-shrinkage)*emp_cov + shrinkage*mu*structured_estimator
+    shrunk_cov = (1.-shrinkage)*emp_cov
+    shrunk_cov.flat[::n_features+1] += shrinkage*mu
     
     return shrunk_cov, shrinkage
 
@@ -261,7 +267,6 @@ class OAS(ShrunkCovariance):
 
 
     def fit(self, X):
-        X = np.asanyarray(X, dtype=np.float64, order='C')
         covariance, shrinkage = oas(X)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
