@@ -21,20 +21,42 @@ __all__ = [
     'z1_loss'
     ]
 
-from ._tree import set_entropy
+from ._tree import set_entropy, gini_index
 
-def information_gain(labels0, labels1, include_entropy=False):
+def information_gain(left_labels, right_labels, include_entropy=True):
     """
     http://en.wikipedia.org/wiki/Information_gain_in_decision_trees
     """
-    clen = max(labels0.max(), labels1.max()) + 1
-    N0 = np.prod(labels0.shape)
-    N1 = np.prod(labels1.shape)
+    clen = max(left_labels.max(), right_labels.max()) + 1
+    N0 = np.prod(left_labels.shape)
+    N1 = np.prod(right_labels.shape)
     N = N0 + N1
-    H = - N0/N * set_entropy(labels0, N0,  clen) - N1/N * set_entropy(labels1, N1, clen)
+    H = - N0/N * set_entropy(left_labels, N0,  clen) - N1/N * set_entropy(right_labels, N1, clen)
     if include_entropy:
-        H += set_entropy(np.concatenate( (labels0, labels1) ), N, clen)
+        H += set_entropy(np.concatenate( (left_labels, right_labels) ), N, clen)
     return H
+
+def information_gain_gini(left_labels, right_labels, include_entropy=True):
+    """
+    http://en.wikipedia.org/wiki/Information_gain_in_decision_trees
+    """
+    clen = max(left_labels.max(), right_labels.max()) + 1
+    N0 = np.prod(left_labels.shape)
+    N1 = np.prod(right_labels.shape)
+    N = N0 + N1
+    H = - N0/N * gini_index(left_labels, N0,  clen) - N1/N * gini_index(right_labels, N1, clen)
+    if include_entropy:
+        H += gini_index(np.concatenate( (left_labels, right_labels) ), N, clen)
+    return H
+
+def information_gain_ratio(left_labels, right_labels):
+    """
+    http://en.wikipedia.org/wiki/Information_gain_in_decision_trees
+    """
+    IG = information_gain(left_labels, right_labels)
+    N = np.prod(left_labels.shape) + np.prod(right_labels.shape)
+    IV = -N*(1/N)*np.log(1/N) 
+    return IG/IV
 
 def z1_loss(labels0, labels1, weights0=None, weights1=None):
     '''
