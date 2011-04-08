@@ -1,5 +1,5 @@
 import numpy as np
-from ..base import BaseEnsemble
+from .base import BaseEnsemble
 import math
 
 class AdaBoost(BaseEnsemble):

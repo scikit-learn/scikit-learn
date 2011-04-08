@@ -1,4 +1,4 @@
-from ..base import BaseEnsemble
+from .base import BaseEnsemble
 import numpy as np
 
 class Bagged(BaseEnsemble):
