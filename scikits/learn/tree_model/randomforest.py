@@ -17,7 +17,8 @@ rf_learner : A learner object
 from __future__ import division
 import numpy as np
 from .base import normaliselabels
-from .tree import DecisionTree
+from .tree import DecisionTreeClassifier
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 
 __all__ = [
     'RandomForest',
@@ -43,7 +44,7 @@ def _sample(features, labels, n, R):
     labels' : sequence
     '''
 
-    N = len(features)
+    N, _ = features.shape
     sfeatures = []
     slabels = []
     for i in xrange(n):
@@ -52,7 +53,7 @@ def _sample(features, labels, n, R):
         slabels.append(labels[idx])
     return np.array(sfeatures), np.array(slabels)
 
-class RandomForestBase(object):
+class RandomForestBase(BaseEstimator):
     '''Random Forest base class
 
     Attributes
@@ -67,34 +68,37 @@ class RandomForestBase(object):
         
     '''
     
-    def __init__(self, num_trees=101, sample_fraction=.7):
+    def __init__(self, num_trees=101, sample_fraction=.5):
         self.num_trees = num_trees
         self.sample_fraction = sample_fraction
         self.forest = None
-        self.names = None
 
-    def fit(self, features, labels, normalisedlabels=False, names=None, **kwargs):
-        N,M = features.shape
-        m = int(self.sample_fraction*M)
-        n = int(self.sample_fraction*M)
+    def fit(self, X, y, normalisedlabels=False):
+        observations, features = X.shape
+        n = int(self.sample_fraction*observations)
         R = np.random
         forest = []
+        labels = y
+        self.classes = np.unique(y)
         if not normalisedlabels:
-            labels,names = normaliselabels(labels)
-        elif names is None:
-            names = (0,1)
+            labels, names = normaliselabels(y)
+            self.classes = names
         for i in xrange(self.num_trees):
-            tree = DecisionTree()
-            tree.fit(*_sample(features, labels, n, R),
+            tree = DecisionTreeClassifier()
+            tree.fit(*_sample(X, labels, n, R),
                       **{'normalisedlabels' : True}) # This syntax is necessary for Python 2.5
             forest.append(tree)
         self.forest = forest
-        self.names = names
+        return self
         
-    def predict(self, features):
-        num_trees = len(self.forest)
-        votes = sum(t.predict(features) for t in self.forest)
-        return (votes > (num_trees//2))
+    def predict(self, X):
+        n_observations,_ = X.shape
+        values = np.zeros(n_observations)
+        for idx, f in enumerate(X):
+            out = [t.predict(f[None,:]).item() for t in self.forest]
+            votes = np.bincount(out)
+            values[idx] = votes.argmax()
+        return values
 
-class RandomForest(RandomForestBase):
+class RandomForest(RandomForestBase, ClassifierMixin):
     pass
