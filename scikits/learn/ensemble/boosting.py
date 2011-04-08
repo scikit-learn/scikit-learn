@@ -33,7 +33,6 @@ class AdaBoost(BaseEnsemble):
             T = estimator.predict(X)
             # instances incorrectly classified
             incorrect = ((T*Y)<0).astype(np.int32)
-            correct = (incorrect == 0).astype(np.int32)
             # error fraction
             err = np.sum(sample_weight * incorrect) / np.sum(sample_weight)
             # sanity check
@@ -48,6 +47,7 @@ class AdaBoost(BaseEnsemble):
             alpha = beta * math.log((1 - err) / err)
             self.append((alpha, estimator))
             if i < boosts:
+                correct = incorrect^1
                 sample_weight *= np.exp(alpha * (incorrect - correct))
         return self
 
