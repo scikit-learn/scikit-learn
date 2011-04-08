@@ -7,5 +7,5 @@ Random Forests ...
 
 """
 
-from .tree import DecisionTreeClassifier, DecisionTreeRegressor
+from .tree import DecisionTreeClassifier
 from .randomforest import RandomForest

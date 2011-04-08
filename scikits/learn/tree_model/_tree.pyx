@@ -51,3 +51,30 @@ def set_entropy(np.ndarray[np.int_t, ndim=1] data, N, clen):
     entropy /= -N;
     entropy += np.log(N);
     return entropy
+
+def gini_index(np.ndarray[np.int_t, ndim=1] data, N, clen):
+    '''Set gini index function
+    '''
+    cdef Py_ssize_t j
+    cdef int value
+    cdef np.ndarray[np.int_t, ndim=1] counts = np.zeros((clen), dtype=np.int)
+    for j from 0 <= j < N:
+        value = data[j]
+        if (value >= clen):
+            raise RuntimeError("tree_model._tree.gini_index: label value too large. aborting");
+        counts[value] += 1.;
+
+    '''
+    Here is the formula:
+    
+    GI = 1 - \sum px ** 2 
+    '''
+    
+    cdef double gini_index = 0.
+    cdef double cx
+    for j from 0 <= j < clen:
+        cx = counts[j]
+        if cx:
+            gini_index += np.power(cx, 2) ;
+    gini_index = 1-gini_index / (N**2);
+    return gini_index
