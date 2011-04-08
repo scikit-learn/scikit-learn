@@ -61,3 +61,11 @@ class AdaBoost(BaseEnsemble):
         if norm > 0:
             prediction /= norm
         return prediction
+
+"""
+YET TO BE IMPLEMENTED
+
+class GradientBoost(BaseEnsemble): pass
+
+class StochasticGradientBoost(BaseEnsemble): pass
+"""
