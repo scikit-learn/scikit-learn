@@ -139,8 +139,8 @@ bool Node::split(unsigned int minleafsize, unsigned int nbins)
                 bkg_right = bkgHist->integral(binCut,nbins);
                 purity_left = sig_left / (sig_left + bkg_left);
                 purity_right = sig_right / (sig_right + bkg_right);
-                Gini_left = purity_left * (1 - purity_left) ;//* (sig_left + bkg_left);
-                Gini_right = purity_right * (1 - purity_right) ;//* (sig_right + bkg_right);
+                Gini_left = purity_left * (1 - purity_left);
+                Gini_right = purity_right * (1 - purity_right);
                 
                 // if a possible split is found and if this split is the best so far update bestAttribute and bestSplit
                 if (Gini_left + Gini_right < bestGini)
