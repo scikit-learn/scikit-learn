@@ -124,3 +124,26 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
             order.
         """
         return np.log(self.predict_proba(X))
+
+    def min_C(self, X, y):
+        """
+        if C is greater that min_C there is at least one non-zero coefficient.
+
+        This value is valid if class_weight parameter in fit() is not set.
+        """
+        if self.penalty != 'l1':
+            raise ValueError('penalty is not l1')
+        classes = list(set(y))
+        if len(classes) != 2:
+            raise ValueError('min_C: number of classes != 2')
+
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+        y = np.asanyarray(y, dtype=np.int32, order='C')
+
+        if self.fit_intercept:
+            X = np.hstack((X, self.intercept_scaling * np.ones((len(y), 1))))
+
+        _y = np.ones(y.shape)
+        _y[np.where(y == classes[0])] *= -1
+        _y.shape = (len(y), 1)
+        return 2.0/np.max(np.abs((_y * X).sum(axis=0)))

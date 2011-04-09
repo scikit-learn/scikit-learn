@@ -69,7 +69,28 @@ def test_transform():
     pred = clf.predict(X_new)
     assert np.mean(pred == iris.target) >= 0.75
 
+def test_min_C():
+    expected_min_Cs = [1, 0.2]
+
+    cases = [{'fit_intercept': False },
+             {'fit_intercept': True, 'intercept_scaling': 10}]
+
+    for expected_min_C, params in zip(expected_min_Cs, cases):
+        clf = logistic.LogisticRegression(penalty='l1', **params)
+        min_C = clf.min_C(X, Y1)
+        assert_almost_equal(min_C, expected_min_C)
+
+        clf.C = min_C
+        clf.fit(X, Y1)
+        assert_array_almost_equal(clf.coef_, [[0.0, 0.0]])
+        assert_almost_equal(clf.intercept_, 0)
+
+        clf.C = min_C * 1.01
+        clf.fit(X, Y1)
+        assert len(np.flatnonzero(clf.coef_)) > 0 or clf.intercept_ != 0.0, \
+               "coef_=%s intercept_=%s" % (clf.coef_, clf.intercept_)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
-
