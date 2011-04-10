@@ -14,7 +14,7 @@ orthogonal in the whitened feature space, in which all directions
 correspond to the same variance.
 
 PCA, on the other hand, finds orthogonal directions in the raw feature
-space that correspond to directions accoutning for maximum variance.
+space that correspond to directions accounting for maximum variance.
 
 Here we simulate independent sources using a highly non-Gaussian
 process, 2 student T with a low number of degrees of freedom (top left
