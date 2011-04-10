@@ -17,6 +17,7 @@ Support Vector Machines
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -37,6 +38,7 @@ For sparse data
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -58,6 +60,7 @@ Generalized Linear Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -78,6 +81,7 @@ Generalized Linear Models
 
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
@@ -95,6 +99,7 @@ For sparse data
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -114,6 +119,7 @@ Naive Bayes
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -130,6 +136,7 @@ Nearest Neighbors
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -138,6 +145,7 @@ Nearest Neighbors
    ball_tree.BallTree
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
@@ -154,6 +162,7 @@ Gaussian Mixture Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -170,6 +179,7 @@ Hidden Markov Models
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -188,6 +198,7 @@ Clustering
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -208,6 +219,7 @@ Metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
@@ -237,6 +249,7 @@ Pairwise metrics
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
@@ -256,6 +269,7 @@ Covariance Estimators
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -264,6 +278,7 @@ Covariance Estimators
    covariance.LedoitWolf
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
@@ -280,6 +295,7 @@ Signal Decomposition
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -291,6 +307,7 @@ Signal Decomposition
    decomposition.NMF
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
@@ -306,6 +323,7 @@ Cross Validation
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -327,6 +345,7 @@ Grid Search
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -346,6 +365,7 @@ Feature Selection
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -375,6 +395,7 @@ From images
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
@@ -392,6 +413,7 @@ From text
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -413,6 +435,7 @@ Pipeline
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -429,6 +452,7 @@ Partial Least Squares
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
