@@ -54,7 +54,7 @@ try:
 except IOError:
     print "This example needs more than 200MB of data not locally available:"
     print "re-run this script with '--download' to download it explicitly"
-    print sys.exit(0)
+    sys.exit(0)
 
 # reshape the data using the traditional (n_samples, n_features) shape
 faces = lfw_people.data
