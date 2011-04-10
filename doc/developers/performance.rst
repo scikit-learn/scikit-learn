@@ -102,7 +102,7 @@ contains the "nmf.py" string. This is useful to have a quick look at the hotspot
 of the nmf python module it-self ignoring anything else.
 
 The above results show that the ``_nls_subproblem`` function is the hotspot: it
-takes almost 70% of the time of the module. In order to better understand the
+takes around 60% of the time of the module. In order to better understand the
 profile of this specific function, let us install ``line-prof`` and wire it to
 ipython::
 
