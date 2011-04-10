@@ -15,17 +15,31 @@ data can be found in the `labels_` attribute.
 
 .. currentmodule:: scikits.learn.cluster
 
-One important thing to note is that the algorithms implemented in this module
-take different kinds of matrix as input.  On one hand, :class:`MeanShift` and
-:class:`KMeans` take data matrices of shape [n_samples, n_features]. These can
-be obtained from the classes in the `scikits.learn.feature_extraction` module.
-On the other hand, :class:`AffinityPropagation` and :class:`SpectralClustering`
-take similarity matrices of shape [n_samples, n_samples].  These can be
-obtained from the functions in the `scikits.learn.metrics.pairwise` module.
-In other words, :class:`MeanShift` and :class:`KMeans` work with points in a
-vector space, whereas :class:`AffinityPropagation` and
-:class:`SpectralClustering` can work with arbitrary objects, as long as a
-similarity measure exists for such objects.
+.. topic:: Input data 
+
+    One important thing to note is that the algorithms implemented in
+    this module take different kinds of matrix as input.  On one hand,
+    :class:`MeanShift` and :class:`KMeans` take data matrices of shape
+    [n_samples, n_features]. These can be obtained from the classes in
+    the `scikits.learn.feature_extraction` module. On the other hand,
+    :class:`AffinityPropagation` and :class:`SpectralClustering` take
+    similarity matrices of shape [n_samples, n_samples].  These can be
+    obtained from the functions in the `scikits.learn.metrics.pairwise`
+    module. In other words, :class:`MeanShift` and :class:`KMeans` work
+    with points in a vector space, whereas :class:`AffinityPropagation`
+    and :class:`SpectralClustering` can work with arbitrary objects, as
+    long as a similarity measure exists for such objects.
+
+
+K-means
+=======
+
+The :class:`KMeans` algorithm clusters data by trying to separate samples
+in n groups of equal variance, minimizing a criterion known as the
+'inertia' of the groups. This algorithm requires the number of cluster to
+be specified. It scales well to large number of samples, however its
+results may be dependent on an initialisation.
+
 
 
 Affinity propagation
@@ -67,16 +81,6 @@ of cluster. It will have difficulties scaling to thousands of samples.
 
  * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
-
-
-K-means
-=======
-
-The :class:`KMeans` algorithm clusters data by trying to separate samples
-in n groups of equal variance, minimizing a criterion known as the
-'inertia' of the groups. This algorithm requires the number of cluster to
-be specified. It scales well to large number of samples, however its
-results may be dependent on an initialisation.
 
 
 Spectral clustering
