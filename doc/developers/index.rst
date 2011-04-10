@@ -258,7 +258,7 @@ try to adopt simple conventions and limit to a minimum the number of
 methods an object has to implement.
 
 Different objects
--------------------
+-----------------
 
 The main objects of the scikit learn are (one class can implement
 multiple interfaces):
@@ -295,7 +295,7 @@ multiple interfaces):
       score = obj.score(data)
 
 Estimators
---------------
+----------
 
 The API has one predominant object: the estimator. A estimator is an
 object that fits a model based on some training data and is capable of
