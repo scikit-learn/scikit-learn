@@ -27,8 +27,8 @@ description, quoted from the `website
   The 20 Newsgroups data set is a collection of approximately 20,000
   newsgroup documents, partitioned (nearly) evenly across 20 different
   newsgroups. To the best of my knowledge, it was originally collected
-  by Ken Lang, probably for his Newsweeder: Learning to filter
-  netnews paper, though he does not explicitly mention this collection.
+  by Ken Lang, probably for his "Newsweeder: Learning to filter
+  netnews" paper, though he does not explicitly mention this collection.
   The 20 newsgroups collection has become a popular data set for
   experiments in text applications of machine learning techniques,
   such as text classification and text clustering.
@@ -75,7 +75,7 @@ Let us print the first 2 lines of the first file::
 
 Supervised learning algorithms will require the category to predict
 for each document. In this case the category is the name of the
-newsgroup which also happens to be the name of folder holding the
+newsgroup which also happens to be the name of the folder holding the
 individual documents.
 
 For speed and space efficiency reasons ``scikit-learn`` loads the
@@ -102,7 +102,7 @@ It is possible to get back the category names as follows::
   soc.religion.christian
   sci.med
 
-You can notices that the samples have been shuffled randomly (with
+You can notice that the samples have been shuffled randomly (with
 a fixed RNG seed): this is useful if you select only the first
 samples to quickly train a model and get a first idea of the results
 before re-training on the complete dataset later.
@@ -112,7 +112,7 @@ Extracting features from text files
 -----------------------------------
 
 In order to perform machine learning on text documents, one first
-need to turn the text content into numerical feature vectors.
+needs to turn the text content into numerical feature vectors.
 
 
 Bags of words
@@ -125,7 +125,7 @@ The most intuitive way to do so is the bags of words representation:
      from words to integer indices).
 
   2. for each document #i, count the number of occurrences of each
-     word w and store it in ``X[i, j]`` as the the value of feature
+     word w and store it in ``X[i, j]`` as the value of feature
      #j where j is the index of word w in the dictionary
 
 The bags of words representation implies that ``n_features`` is
@@ -151,14 +151,14 @@ Tokenizing text with ``scikit-learn``
 
 ``scikit-learn`` offers a couple of basic yet useful utilities to
 work with text data. The first one is a preprocessor that removes
-accents and convert to lowercase on roman languages::
+accents and converts to lowercase on roman languages::
 
   >>> from scikits.learn.feature_extraction.text import RomanPreprocessor
   >>> text = u"J'ai bien mang\xe9."
   >>> print RomanPreprocessor().preprocess(text)
   j'ai bien mange.
 
-The second one is a utility that extract that splits the text into words after
+The second one is a utility that splits the text into words after
 having applied the preprocessor::
 
   >>> from scikits.learn.feature_extraction.text import WordNGramAnalyzer
@@ -182,7 +182,7 @@ dictionary of features::
   >>> docs_train = [open(f).read() for f in twenty_train.filenames]
   >>> _ = count_vect.fit(docs_train)
 
-Once fitted, the vectorizer has build a dictionary of feature indices::
+Once fitted, the vectorizer has built a dictionary of feature indices::
 
   >>> count_vect.vocabulary.get(u'algorithm')
   1513
@@ -200,7 +200,7 @@ set so as to perform the actual feature extraction::
 .. note:
 
   to avoid reading and tokenizing each text file twice it is possible
-  use to call ``count_vect.fit_transform(documents)`` and get the
+  to call ``count_vect.fit_transform(documents)`` and get the
   same output as ``count_vect.fit(documents).transform(documents)``.
 
 
