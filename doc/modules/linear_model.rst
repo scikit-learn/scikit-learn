@@ -85,8 +85,7 @@ of squares,
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls
 the amount of shrinkage: the larger the value of :math:`\alpha`, the
-greater the amount of shrinkage.
-
+greater the amount of shrinkage::
 
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
@@ -97,11 +96,13 @@ greater the amount of shrinkage.
     >>> clf.intercept_ #doctest: +ELLIPSIS
     0.13636...
 
+
 Ridge Complexity
---------------------
+----------------
 
 This method has the same order of complexity than an
 :ref:`ordinary_least_squares`.
+
 
 Generalized Cross-Validation
 ----------------------------
