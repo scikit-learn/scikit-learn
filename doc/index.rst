@@ -93,5 +93,5 @@ Development
    :maxdepth: 2
 
    developers/index
-   performance
+   developers/performance
    about
