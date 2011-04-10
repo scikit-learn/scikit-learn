@@ -242,6 +242,10 @@ In addition, we add the following guidelines:
       <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
       find bugs in the scikit.
 
+    * Use the `numpy docstring standard
+      <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ 
+      in all your docstrings
+
 A good example of code that we like can be found `here
 <https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
 
@@ -288,7 +292,7 @@ multiple interfaces):
     A model that can give a goodness of fit or a likelihood of unseen
     data, implements (higher is better)::
 
-    score = obj.score(data)
+      score = obj.score(data)
 
 Estimators
 --------------
