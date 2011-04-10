@@ -177,7 +177,8 @@ TODO: sample profiling session using YEP
 Performance tips for the cython developer
 =========================================
 
-TODO: html report, bound checks, division by zero, ...
+TODO: html report, type declarations, bound checks, division by zero checks,
+memory alignement, direct blas calls...
 
 - http://docs.cython.org/
 - http://www.euroscipy.org/file/3696?vid=download
