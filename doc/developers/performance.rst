@@ -173,6 +173,9 @@ Profiling compiled extensions
 
 TODO: sample profiling session using YEP
 
+- https://github.com/fabianp/yep
+- http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
+
 
 Performance tips for the cython developer
 =========================================
