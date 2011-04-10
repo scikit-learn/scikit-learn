@@ -76,21 +76,21 @@ def test_projgrad_nmf_fit_close():
 def test_nls_nn_input():
     """Test NLS solver's behaviour on negative input"""
     A = np.ones((2, 2))
-    nmf._nls_subproblem_(A, A, -A, 0.001, 20)
+    nmf._nls_subproblem(A, A, -A, 0.001, 20)
 
 
 def test_nls_nn_output():
     """Test that NLS solver doesn't return negative values"""
     A = np.atleast_2d(range(1, 5))
-    Ap, _, _ = nmf._nls_subproblem_(np.dot(A.T, -A), A.T, A, 0.001, 100)
+    Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, -A), A.T, A, 0.001, 100)
     assert_false((Ap < 0).any())
 
 
 def test_nls_close():
     """Test that the NLS results should be close"""
     A = np.atleast_2d(range(1, 5))
-    Ap, _, _ = nmf._nls_subproblem_(np.dot(A.T, A), A.T, np.zeros_like(A),
-                                    0.001, 100)
+    Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, A), A.T, np.zeros_like(A),
+                                   0.001, 100)
     assert_true((np.abs(Ap - A) < 0.01).all())
 
 
