@@ -165,8 +165,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
     this_template = rst_template
     last_dir = os.path.split(src_dir)[-1]
-    # to avoid leading . in file names
-    if last_dir == '.': 
+    # to avoid leading . in file names, and wrong names in links
+    if last_dir == '.' or last_dir == 'examples': 
         last_dir = ''
     else: 
         last_dir += '_'
