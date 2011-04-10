@@ -149,6 +149,9 @@ Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
 list or on the github wiki).
 
+Also check out the following guide on :ref:`performance-howto` for more
+details on profiling and cython optimizations.
+
 .. note::
 
   The current state of the scikit-learn code base is not compliant with
@@ -158,7 +161,7 @@ list or on the github wiki).
 
 
 EasyFix Issues
----------------
+--------------
 
 The best way to get your feet wet is
 to pick up an issue from the `issue tracker
@@ -249,6 +252,7 @@ In addition, we add the following guidelines:
 A good example of code that we like can be found `here
 <https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
 
+
 APIs of scikit learn objects
 =============================
 
@@ -256,6 +260,7 @@ To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
 methods an object has to implement.
+
 
 Different objects
 -----------------
@@ -293,6 +298,7 @@ multiple interfaces):
     data, implements (higher is better)::
 
       score = obj.score(data)
+
 
 Estimators
 ----------
@@ -335,6 +341,7 @@ to find what are the relevent attributes to set on an estimator when
 doing model selection.
 
 All estimators should inherit from `scikit.learn.base.BaseEstimator`
+
 
 Fitting
 ^^^^^^^
@@ -382,6 +389,7 @@ Optional Arguments
 In iterative algorithms, number of iterations should be specified by
 an int called ``n_iter``.
 
+
 Unresolved API issues
 ----------------------
 
@@ -391,12 +399,14 @@ Some things are must still be decided:
     * which exception should be raised when arrays' shape do not match
       in fit() ?
 
+
 Working notes
 ---------------
 
 For unresolved issues, TODOs, remarks on ongoing work, developers are
 adviced to maintain notes on the github wiki:
 https://github.com/scikit-learn/scikit-learn/wiki
+
 
 Specific models
 -----------------
