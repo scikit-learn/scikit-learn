@@ -105,10 +105,11 @@ is not the exact inverse transform of `transform` even when
 Kernel PCA
 ----------
 
-Kernel PCA is an extension of PCA which achieves non-linear dimensionality
-reduction through the use of kernels. It has many applications including
-denoising, compression and structured prediction (kernel dependency estimation). 
-:class:`KernelPCA` supports both `transform` and `inverse_transform`.
+:class:`KernelPCA` is an extension of PCA which achieves non-linear
+dimensionality reduction through the use of kernels. It has many
+applications including denoising, compression and structured prediction
+(kernel dependency estimation). :class:`KernelPCA` supports both
+`transform` and `inverse_transform`.
 
 .. figure:: ../auto_examples/decomposition/images/plot_kernel_pca_1.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
@@ -117,7 +118,7 @@ denoising, compression and structured prediction (kernel dependency estimation).
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_ica_blind_source_separation.py`
+    * :ref:`example_decomposition_plot_kernel_pca.py`
 
 
 .. _ICA:
