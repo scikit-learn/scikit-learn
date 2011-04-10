@@ -41,7 +41,7 @@ following:
 
   3. Otherwise, write an optimized version of your python function using
      **cython** directly. This strategy is used for the
-     ``scikits.learn.linear_model.ElasticNet`` class for instance.
+     :class:`scikits.learn.linear_model.ElasticNet` class for instance.
 
   4. **Move the python version of the function in the tests** and use it to
      check that the results of the compiled extension are consistent with the
