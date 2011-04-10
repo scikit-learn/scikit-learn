@@ -368,8 +368,8 @@ Major changes in this release include:
     - Documentation improvements (both docstring and rst).
 
     - Improvement of the build system to (optionally) link with MKL. 
- Also, provide a lite BLAS implementation in case no system-wide BLAS is 
- found.
+      Also, provide a lite BLAS implementation in case no system-wide BLAS is 
+      found.
 
     - Lots of new examples.
 

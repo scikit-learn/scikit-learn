@@ -230,6 +230,7 @@ Tips on Practical Use
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
     results. This can be easily done using :class:`Scaler`::
+
       from scikits.learn.preprocessing import Scaler
       scaler = Scaler()
       scaler.fit(X_train)  # Don't cheat - fit only on training data

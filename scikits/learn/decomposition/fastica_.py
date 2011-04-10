@@ -121,13 +121,13 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     Parameters
     ----------
-    X : (n, p) array of shape = [n_samples, n_features]
+    X : (n, p) array of shape = [n_samples, n_features], optional
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
     n_components : int, optional
         Number of components to extract. If None no dimension reduction
         is performed.
-    algorithm : {'parallel','deflation'}
+    algorithm : {'parallel','deflation'}, optional
         Apply an parallel or deflational FASTICA algorithm.
     whiten: boolean, optional
         If true perform an initial whitening of the data. Do not set to
@@ -135,38 +135,41 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         results.
         If whiten is true, the data is assumed to have already been
         preprocessed: it should be centered, normed and white.
-    fun : String or Function
-          The functional form of the G function used in the
-          approximation to neg-entropy. Could be either 'logcosh', 'exp',
-          or 'cube'.
-          You can also provide your own function but in this case, its
-          derivative should be provided via argument fun_prime
-    fun_prime : Empty string ('') or Function
-                See fun.
-    fun_args : Optional dictionnary
-               If empty and if fun='logcosh', fun_args will take value
-               {'alpha' : 1.0}
-    max_iter : int
-            Maximum number of iterations to perform
-    tol : float
-          A positive scalar giving the tolerance at which the
-          un-mixing matrix is considered to have converged
-    w_init : (n_components,n_components) array
-             Initial un-mixing array of dimension (n.comp,n.comp).
-             If None (default) then an array of normal r.v.'s is used
-    source_only: if True, only the sources matrix is returned
+    fun : string or function, optional
+        The functional form of the G function used in the
+        approximation to neg-entropy. Could be either 'logcosh', 'exp',
+        or 'cube'.
+        You can also provide your own function but in this case, its
+        derivative should be provided via argument fun_prime
+    fun_prime : empty string ('') or function, optional
+        See fun.
+    fun_args: dictionnary, optional
+        If empty and if fun='logcosh', fun_args will take value
+        {'alpha' : 1.0}
+    max_iter: int, optional
+        Maximum number of iterations to perform
+    tol: float, optional
+        A positive scalar giving the tolerance at which the
+        un-mixing matrix is considered to have converged
+    w_init: (n_components, n_components) array, optional
+        Initial un-mixing array of dimension (n.comp,n.comp).
+        If None (default) then an array of normal r.v.'s is used
+    source_only: boolean, optional
+        if True, only the sources matrix is returned
 
-    Results
+    Returns
     -------
-    K : (n_components, p) array
+    K: (n_components, p) array
         pre-whitening matrix that projects data onto th first n.comp
         principal components. Returned only if whiten is True
-    W : (n_components, n_components) array
+    W: (n_components, n_components) array
         estimated un-mixing matrix
         The mixing matrix can be obtained by::
+
             w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
-    S : (n_components, n) array
+
+    S: (n_components, n) array
         estimated source matrix
 
 
@@ -181,7 +184,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     Implemented using FastICA:
 
-      A. Hyvarinen and E. Oja, Independent Component Analysis:
+    * A. Hyvarinen and E. Oja, Independent Component Analysis:
       Algorithms and Applications, Neural Networks, 13(4-5), 2000,
       pp. 411-430
 
@@ -312,6 +315,7 @@ class FastICA(BaseEstimator):
     Attributes
     ----------
     unmixing_matrix_ : 2D array, [n_components, n_samples]
+        The unmixing matrix
 
     Methods
     -------
