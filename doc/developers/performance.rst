@@ -59,14 +59,114 @@ scikit on any machine with python, numpy, scipy and C/C++ compiler.
 
 .. _profiling-python-code:
 
-
 Profiling python code
 =====================
 
-TODO: sample profiling session with line-prof in ipython
+In order to profile python we recommend to write a script that loads
+and prepare you data and then use the ipython integrated python profiler
+for interactively exploring the relevant part for the code.
+
+Suppose we want to profile the Non Negative Matrix Factorization module
+of the scikit. Let us setup a new ipython session and load the digits dataset
+and as in the :ref:`example_decomposition_plot_nmf.py` example::
+
+  In [1]: from scikits.learn.decomposition import NMF
+  In [2]: from scikits.learn.datasets import load_digits
+  In [3]: X = load_digits().data
+
+Let us first have a look at the overall performance profile using the ``%prun``
+magic command::
+
+  In [4]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
+         15781 function calls in 1.843 CPU seconds
+
+   Ordered by: internal time
+   List reduced from 90 to 9 due to restriction <'nmf.py'>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+       38    0.671    0.018    1.666    0.044 nmf.py:137(_nls_subproblem)
+     1382    0.176    0.000    0.176    0.000 nmf.py:17(<lambda>)
+        1    0.054    0.054    1.843    1.843 nmf.py:338(fit_transform)
+      725    0.009    0.000    0.059    0.000 nmf.py:19(<lambda>)
+        1    0.007    0.007    0.041    0.041 nmf.py:28(_initialize_nmf)
+       38    0.001    0.000    0.010    0.000 nmf.py:22(_sparseness)
+       30    0.001    0.000    0.001    0.000 nmf.py:18(<lambda>)
+        1    0.000    0.000    1.843    1.843 nmf.py:447(fit)
+        1    0.000    0.000    0.000    0.000 nmf.py:323(__init__)
+
+Note the use of the ``-l nmf.py`` that restricts the output to lines that
+contains the "nmf.py" string. This is useful to have a quick look at the hotspot
+of the nmf python module it-self ignoring anything else.
+
+The above results show that the ``_nls_subproblem`` function is the hotspot: it
+takes almost 70% of the time of the module. In order to better understand the
+profile of this specific function, let us install ``line-prof`` and wire it to
+ipython::
+
+  $ pip install line-prof
+  $ vim ~/.ipython/ipy_user_conf.py
+
+Ensure the following lines are present::
+
+  import IPython.ipapi
+  ip = IPython.ipapi.get()
+
+Towards the end of the file, define the ``%lprun`` magic::
+
+  import line_profiler
+  ip.expose_magic('lprun', line_profiler.magic_lprun)
+
+Now restart ipython and let us use this new toy::
+
+  In [1]: from scikits.learn.datasets import load_digits
+
+  In [2]: from scikits.learn.decomposition.nmf import _nls_subproblem, NMF
+
+  In [3]: X = load_digits().data
+
+  In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
+  Timer unit: 1e-06 s
+
+  File: scikits/learn/decomposition/nmf.py
+  Function: _nls_subproblem at line 137
+  Total time: 1.73153 s
+
+  Line #      Hits         Time  Per Hit   % Time  Line Contents
+  ==============================================================
+     137                                           def _nls_subproblem(V, W, H_init, tol, max_iter):
+     138                                               """Non-negative least square solver
+     ...
+     170                                               """
+     171        48         5863    122.1      0.3      if (H_init < 0).any():
+     172                                                   raise ValueError("Negative values in H_init passed to NLS solver.")
+     173
+     174        48          139      2.9      0.0      H = H_init
+     175        48       112141   2336.3      5.8      WtV = np.dot(W.T, V)
+     176        48        16144    336.3      0.8      WtW = np.dot(W.T, W)
+     177
+     178                                               # values justified in the paper
+     179        48          144      3.0      0.0      alpha = 1
+     180        48          113      2.4      0.0      beta = 0.1
+     181       638         1880      2.9      0.1      for n_iter in xrange(1, max_iter + 1):
+     182       638       195133    305.9     10.2          grad = np.dot(WtW, H) - WtV
+     183       638       495761    777.1     25.9          proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
+     184       638         2449      3.8      0.1          if proj_gradient < tol:
+     185        48          130      2.7      0.0              break
+     186
+     187      1474         4474      3.0      0.2          for inner_iter in xrange(1, 20):
+     188      1474        83833     56.9      4.4              Hn = H - alpha * grad
+     189                                                       # Hn = np.where(Hn > 0, Hn, 0)
+     190      1474       194239    131.8     10.1              Hn = _pos(Hn)
+     191      1474        48858     33.1      2.5              d = Hn - H
+     192      1474       150407    102.0      7.8              gradd = np.sum(grad * d)
+     193      1474       515390    349.7     26.9              dQd = np.sum(np.dot(WtW, d) * d)
+     ...
+
+By looking at the top values of the ``% Time`` column it is really easy to
+pin-point the most expensive expressions that would deserve additional care.
+
 
 .. _profiling-compiled-extension:
-
 
 Profiling compiled extensions
 =============================
