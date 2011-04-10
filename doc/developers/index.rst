@@ -184,6 +184,16 @@ see README in that directory for more info). That should create a
 directory _build/html/ with html files that are viewable in a web
 browser.
 
+For building the documentation, you will need `sphinx
+<http://sphinx.pocoo.org/>`_ and `matplotlib
+<http://matplotlib.sourceforge.net/>`_.
+
+.. warning:: **Sphinx version**
+
+   While we do our best to have the documentation build under as many
+   version of Sphinx as possible, the different versions tend to behave
+   slightly differently. To get the best results, you should use version
+   1.0.
 
 Developers web site
 -------------------
