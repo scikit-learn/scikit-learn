@@ -14,9 +14,23 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.extmath import fast_svd
 
-_pos = lambda x: (x >= 0) * x
-_neg = lambda x: (x < 0) * (-x)
-norm = lambda x: np.sqrt(np.dot(x.flatten().T, x.flatten()))
+
+def _pos(x):
+    """Postive part of a vector / matrix"""
+    return (x >= 0) * x
+
+
+def _neg(x):
+    """Negative part of a vector / matrix"""
+    return (x < 0) * (-x)
+
+
+def norm(x):
+    """Dot product based Euclidean norm implementation
+
+    See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+    """
+    return np.sqrt(np.dot(x.flatten().T, x.flatten()))
 
 
 def _sparseness(x):

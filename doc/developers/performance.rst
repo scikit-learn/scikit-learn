@@ -71,28 +71,31 @@ of the scikit. Let us setup a new ipython session and load the digits dataset
 and as in the :ref:`example_decomposition_plot_nmf.py` example::
 
   In [1]: from scikits.learn.decomposition import NMF
+
   In [2]: from scikits.learn.datasets import load_digits
+
   In [3]: X = load_digits().data
 
 Let us first have a look at the overall performance profile using the ``%prun``
 magic command::
 
   In [4]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
-         15781 function calls in 1.843 CPU seconds
+           14496 function calls in 1.682 CPU seconds
 
-   Ordered by: internal time
-   List reduced from 90 to 9 due to restriction <'nmf.py'>
+     Ordered by: internal time
+     List reduced from 90 to 9 due to restriction <'nmf.py'>
 
-   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-       38    0.671    0.018    1.666    0.044 nmf.py:137(_nls_subproblem)
-     1382    0.176    0.000    0.176    0.000 nmf.py:17(<lambda>)
-        1    0.054    0.054    1.843    1.843 nmf.py:338(fit_transform)
-      725    0.009    0.000    0.059    0.000 nmf.py:19(<lambda>)
-        1    0.007    0.007    0.041    0.041 nmf.py:28(_initialize_nmf)
-       38    0.001    0.000    0.010    0.000 nmf.py:22(_sparseness)
-       30    0.001    0.000    0.001    0.000 nmf.py:18(<lambda>)
-        1    0.000    0.000    1.843    1.843 nmf.py:447(fit)
-        1    0.000    0.000    0.000    0.000 nmf.py:323(__init__)
+     ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+         36    0.609    0.017    1.499    0.042 nmf.py:151(_nls_subproblem)
+       1263    0.157    0.000    0.157    0.000 nmf.py:18(_pos)
+          1    0.053    0.053    1.681    1.681 nmf.py:352(fit_transform)
+        673    0.008    0.000    0.057    0.000 nmf.py:28(norm)
+          1    0.006    0.006    0.047    0.047 nmf.py:42(_initialize_nmf)
+         36    0.001    0.000    0.010    0.000 nmf.py:36(_sparseness)
+         30    0.001    0.000    0.001    0.000 nmf.py:23(_neg)
+          1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
+          1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
+
 
 Note the use of the ``-l nmf.py`` that restricts the output to lines that
 contains the "nmf.py" string. This is useful to have a quick look at the hotspot
