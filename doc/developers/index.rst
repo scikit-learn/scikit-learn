@@ -387,6 +387,12 @@ Some things are must still be decided:
     * which exception should be raised when arrays' shape do not match
       in fit() ?
 
+Working notes
+---------------
+
+For unresolved issues, TODOs, remarks on ongoing work, developers are
+adviced to maintain notes on the github wiki:
+https://github.com/scikit-learn/scikit-learn/wiki
 
 Specific models
 -----------------

@@ -189,12 +189,11 @@ div.rel {
 
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
-    margin: 0;
     padding: 5px 10px;
     background-color: #4EACC5;
     font-weight: normal;
     color: white;
-    margin: 25px 20px 0;
+    margin: 25px 20px 0 10px;
 }
 
 div.sphinxsidebar img {
@@ -210,7 +209,7 @@ div.sphinxsidebar p.topless {
 }
  
 div.sphinxsidebar ul {
-    margin: 10px 20px;
+    margin: 10px 10px;
     padding: 0;
     color: #000;
 }

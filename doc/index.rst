@@ -93,6 +93,5 @@ Development
    :maxdepth: 2
 
    developers/index
-   developers/neighbors
    performance
    about
