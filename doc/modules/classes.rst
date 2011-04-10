@@ -163,7 +163,6 @@ Metrics
    :template: function.rst
 
    metrics.euclidean_distances
-   metrics.unique_labels
    metrics.confusion_matrix
    metrics.roc_curve
    metrics.auc
