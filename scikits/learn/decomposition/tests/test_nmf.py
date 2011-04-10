@@ -7,45 +7,41 @@ rng = np.random.mtrand.RandomState(0)
 
 @raises(ValueError)
 def test_initialize_nn_input():
-    """Test NNDSVD behaviour on negative input
-    """
-    nmf._initialize_nmf_(-np.ones((2, 2)), 2)
+    """Test NNDSVD behaviour on negative input"""
+    nmf._initialize_nmf(-np.ones((2, 2)), 2)
 
 
 def test_initialize_nn_output():
-    """Test that NNDSVD does not return negative values
-    """
+    """Test that NNDSVD does not return negative values"""
     data = np.abs(rng.randn(10, 10))
     for var in (None, 'a', 'ar'):
-        W, H = nmf._initialize_nmf_(data, 10)
+        W, H = nmf._initialize_nmf(data, 10)
         assert_false((W < 0).any() or (H < 0).any())
 
 
 def test_initialize_close():
     """Test NNDSVD error
 
-    Test that _initialize_nmf_ error is
-    less than the standard deviation
-    of the entries in the matrix
+    Test that _initialize_nmf error is less than the standard deviation of the
+    entries in the matrix.
     """
     A = np.abs(rng.randn(10, 10))
-    W, H = nmf._initialize_nmf_(A, 10)
+    W, H = nmf._initialize_nmf(A, 10)
     error = np.linalg.norm(np.dot(W, H) - A)
     sdev = np.linalg.norm(A - A.mean())
     assert_true(error <= sdev)
 
 
 def test_initialize_variants():
-    """Test NNDSVD variants correctness.
+    """Test NNDSVD variants correctness
 
-    Test that the variants 'a' and 'ar'
-    differ from basic NNDSVD only where
-    the basic version has zeros
+    Test that the variants 'a' and 'ar' differ from basic NNDSVD only where
+    the basic version has zeros.
     """
     data = np.abs(rng.randn(10, 10))
-    W0, H0 = nmf._initialize_nmf_(data, 10, variant=None)
-    Wa, Ha = nmf._initialize_nmf_(data, 10, variant='a')
-    War, Har = nmf._initialize_nmf_(data, 10, variant='ar')
+    W0, H0 = nmf._initialize_nmf(data, 10, variant=None)
+    Wa, Ha = nmf._initialize_nmf(data, 10, variant='a')
+    War, Har = nmf._initialize_nmf(data, 10, variant='ar')
 
     for ref, evl in ((W0, Wa), (W0, War), (H0, Ha), (H0, Har)):
         assert_true(np.allclose(evl[ref != 0], ref[ref != 0]))
@@ -53,16 +49,14 @@ def test_initialize_variants():
 
 @raises(ValueError)
 def test_projgrad_nmf_fit_nn_input():
-    """Test model fit behaviour on negative input
-    """
+    """Test model fit behaviour on negative input"""
     A = -np.ones((2, 2))
     m = nmf.ProjectedGradientNMF(n_components=2, init=None)
     m.fit(A)
 
 
 def test_projgrad_nmf_fit_nn_output():
-    """Test that the decomposition does not contain negative values.
-    """
+    """Test that the decomposition does not contain negative values"""
     A = np.c_[5 * np.ones(5) - xrange(1, 6),
               5 * np.ones(5) + xrange(1, 6)]
     for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar'):
@@ -73,31 +67,27 @@ def test_projgrad_nmf_fit_nn_output():
 
 
 def test_projgrad_nmf_fit_close():
-    """Test that the fit is not too far away
-    """
+    """Test that the fit is not too far away"""
     assert nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
       rng.randn(6, 5))).reconstruction_err_ < 0.05
 
 
 @raises(ValueError)
 def test_nls_nn_input():
-    """Test NLS solver's behaviour on negative input
-    """
+    """Test NLS solver's behaviour on negative input"""
     A = np.ones((2, 2))
     nmf._nls_subproblem_(A, A, -A, 0.001, 20)
 
 
 def test_nls_nn_output():
-    """Test that NLS solver doesn't return negative values.
-    """
+    """Test that NLS solver doesn't return negative values"""
     A = np.atleast_2d(range(1, 5))
     Ap, _, _ = nmf._nls_subproblem_(np.dot(A.T, -A), A.T, A, 0.001, 100)
     assert_false((Ap < 0).any())
 
 
 def test_nls_close():
-    """Test that the NLS results should be close
-    """
+    """Test that the NLS results should be close"""
     A = np.atleast_2d(range(1, 5))
     Ap, _, _ = nmf._nls_subproblem_(np.dot(A.T, A), A.T, np.zeros_like(A),
                                     0.001, 100)
