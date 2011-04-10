@@ -212,12 +212,21 @@ div.sphinxsidebar ul {
     margin: 10px 10px;
     padding: 0;
     color: #000;
+    font-weight: bold;
 }
 
 div.sphinxsidebar ul ul {
     margin-right: 0;
+    margin-left: 10px;
+    list-style: disc outside none;
+    color: #355F7C;
+    font-weight: normal;
 }
- 
+
+div.sphinxsidebar ul ul ul {
+    font-size: 80%;
+    list-style: square outside none;
+}
 
 div.sphinxsidebar {
     width: 200px;
