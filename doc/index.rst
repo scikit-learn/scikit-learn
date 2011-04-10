@@ -65,7 +65,7 @@
   Open source, commercially usable: **BSD license** (3 clause)
 
 
-.. include:: big_toc_css.rst
+.. include:: includes/big_toc_css.rst
 
 .. note:: This document describes scikits.learn |release|. For other
    versions and printable format, see :ref:`documentation_resources`.

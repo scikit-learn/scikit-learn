@@ -288,9 +288,9 @@ For sparse data
    :toctree: generated/
    :template: class.rst
 
-   feature_extraction.text.sparse.TfidfTransformer
-   feature_extraction.text.sparse.CountVectorizer
-   feature_extraction.text.sparse.Vectorizer
+   feature_extraction.text.TfidfTransformer
+   feature_extraction.text.CountVectorizer
+   feature_extraction.text.Vectorizer
 
 
 Pipeline
