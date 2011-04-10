@@ -134,7 +134,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6, rng=None):
     return W, H
 
 
-def _nls_subproblem_(V, W, H_init, tol, max_iter):
+def _nls_subproblem(V, W, H_init, tol, max_iter):
     """Non-negative least square solver
 
     Solves a non-negative least squares subproblem using the
@@ -397,16 +397,16 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
             # update W
             if self.sparseness == None:
-                W, gradW, iterW = _nls_subproblem_(X.T, H.T, W.T, tolW,
-                                                   self.nls_max_iter)
+                W, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW,
+                                                  self.nls_max_iter)
             elif self.sparseness == 'data':
-                W, gradW, iterW = _nls_subproblem_(
+                W, gradW, iterW = _nls_subproblem(
                         np.r_[X.T, np.zeros((1, n_samples))],
                         np.r_[H.T, np.sqrt(self.beta) *
                               np.ones((1, self.n_components))],
                         W.T, tolW, self.nls_max_iter)
             elif self.sparseness == 'components':
-                W, gradW, iterW = _nls_subproblem_(
+                W, gradW, iterW = _nls_subproblem(
                         np.r_[X.T, np.zeros((self.n_components, n_samples))],
                         np.r_[H.T, np.sqrt(self.eta) *
                               np.eye(self.n_components)],
@@ -419,16 +419,16 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
             # update H
             if self.sparseness == None:
-                H, gradH, iterH = _nls_subproblem_(X, W, H, tolH,
-                                                   self.nls_max_iter)
+                H, gradH, iterH = _nls_subproblem(X, W, H, tolH,
+                                                  self.nls_max_iter)
             elif self.sparseness == 'data':
-                H, gradH, iterH = _nls_subproblem_(
+                H, gradH, iterH = _nls_subproblem(
                         np.r_[X, np.zeros((self.n_components, n_features))],
                         np.r_[W, np.sqrt(self.eta) *
                               np.eye(self.n_components)],
                         H, tolH, self.nls_max_iter)
             elif self.sparseness == 'components':
-                H, gradH, iterH = _nls_subproblem_(
+                H, gradH, iterH = _nls_subproblem(
                         np.r_[X, np.zeros((1, n_features))],
                         np.r_[W, np.sqrt(self.beta) *
                               np.ones((1, self.n_components))],
