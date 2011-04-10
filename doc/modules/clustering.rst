@@ -188,11 +188,11 @@ enable only merging of neighboring pixels on an image, as in the
    to split the image of lena in regions.
 
  * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of 
-    Ward algorithm on a swiss-roll, comparison of structured approaches
-    versus unstructured approaches.
+   Ward algorithm on a swiss-roll, comparison of structured approaches
+   versus unstructured approaches.
 
  * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
-    Example of dimensionality reduction with feature agglomeration based on
-    Ward hierarchical clustering.
+   Example of dimensionality reduction with feature agglomeration based on
+   Ward hierarchical clustering.
 
 
