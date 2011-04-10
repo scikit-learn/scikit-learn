@@ -5,7 +5,7 @@ Clustering
 ===================================================
 
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
-unlabeled data can be performed with the module `scikits.learn.cluster`.
+unlabeled data can be performed with the module :mod:`scikits.learn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements
 the `fit` method to learn the clusters on train data, and a function,
@@ -21,10 +21,10 @@ data can be found in the `labels_` attribute.
     this module take different kinds of matrix as input.  On one hand,
     :class:`MeanShift` and :class:`KMeans` take data matrices of shape
     [n_samples, n_features]. These can be obtained from the classes in
-    the `scikits.learn.feature_extraction` module. On the other hand,
+    the :mod:`scikits.learn.feature_extraction` module. On the other hand,
     :class:`AffinityPropagation` and :class:`SpectralClustering` take
     similarity matrices of shape [n_samples, n_samples].  These can be
-    obtained from the functions in the `scikits.learn.metrics.pairwise`
+    obtained from the functions in the :mod:`scikits.learn.metrics.pairwise`
     module. In other words, :class:`MeanShift` and :class:`KMeans` work
     with points in a vector space, whereas :class:`AffinityPropagation`
     and :class:`SpectralClustering` can work with arbitrary objects, as
