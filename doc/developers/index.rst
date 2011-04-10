@@ -12,7 +12,7 @@ Submitting a bug report
 
 In case you experience difficulties using the package, do not hesitate
 to submit a ticket to the
-`Bug Tracker <http://github.com/scikit-learn/scikit-lean/issues>`_.
+`Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_.
 
 You are also welcomed to post there feature requests and patches.
 
