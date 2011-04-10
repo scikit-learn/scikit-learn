@@ -14,19 +14,18 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.extmath import fast_svd
 
-_pos_ = lambda x: (x >= 0) * x
-_neg_ = lambda x: (x < 0) * (-x)
+_pos = lambda x: (x >= 0) * x
+_neg = lambda x: (x < 0) * (-x)
 norm = lambda x: np.sqrt(np.dot(x.flatten().T, x.flatten()))
 
 
-def _sparseness_(x):
-    """Hoyer's measure of sparsity for a vector
-    """
+def _sparseness(x):
+    """Hoyer's measure of sparsity for a vector"""
     n = len(x)
     return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
 
 
-def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, rng=None):
+def _initialize_nmf(X, n_components, variant=None, eps=1e-6, rng=None):
     """NNDSVD algorithm for NMF initialization.
 
     Computes a good initial guess for the non-negative
@@ -91,8 +90,8 @@ def _initialize_nmf_(X, n_components, variant=None, eps=1e-6, rng=None):
         x, y = U[:, j], V[j, :]
 
         # extract positive and negative parts of column vectors
-        x_p, y_p = _pos_(x), _pos_(y)
-        x_n, y_n = _neg_(x), _neg_(y)
+        x_p, y_p = _pos(x), _pos(y)
+        x_n, y_n = _neg(x), _neg(y)
 
         # and their norms
         x_p_nrm, y_p_nrm = norm(x_p), norm(y_p)
@@ -188,7 +187,7 @@ def _nls_subproblem_(V, W, H_init, tol, max_iter):
         for inner_iter in xrange(1, 20):
             Hn = H - alpha * grad
             # Hn = np.where(Hn > 0, Hn, 0)
-            Hn = _pos_(Hn)
+            Hn = _pos(Hn)
             d = Hn - H
             gradd = np.sum(grad * d)
             dQd = np.sum(np.dot(WtW, d) * d)
@@ -371,11 +370,11 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             W = np.abs(self.init.randn(n_samples, self.n_components))
             H = np.abs(self.init.randn(self.n_components, n_features))
         elif self.init == 'nndsvd':
-            W, H = _initialize_nmf_(X, self.n_components)
+            W, H = _initialize_nmf(X, self.n_components)
         elif self.init == 'nndsvda':
-            W, H = _initialize_nmf_(X, self.n_components, variant='a')
+            W, H = _initialize_nmf(X, self.n_components, variant='a')
         elif self.init == 'nndsvdar':
-            W, H = _initialize_nmf_(X, self.n_components, variant='ar')
+            W, H = _initialize_nmf(X, self.n_components, variant='ar')
         else:
             raise ValueError(
                 'Invalid init parameter: got %r instead of one of %r' %
@@ -436,8 +435,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                         H, tolH, self.nls_max_iter)
             if iterH == 1:
                 tolH = 0.1 * tolH
-            self.comp_sparseness_ = _sparseness_(H.flatten())
-            self.data_sparseness_ = _sparseness_(W.flatten())
+            self.comp_sparseness_ = _sparseness(H.flatten())
+            self.data_sparseness_ = _sparseness(W.flatten())
             self.reconstruction_err_ = norm(X - np.dot(W, H))
             self.components_ = H
 
