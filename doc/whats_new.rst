@@ -43,7 +43,8 @@ Changelog
     the k-Nearest Neighbor Search and implemented a more stable
     algorithm for finding barycenter weigths. Also added some
     developer documentation for this module, see
-    :ref:`notes_neighbors` for more information [`Fabian Pedregosa`_].
+    `notes_neighbors
+    <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].
 
   - Documentation improvements: Added :class:`pca.RandomizedPCA` and
     :class:`linear_model.LogisticRegression` to the class

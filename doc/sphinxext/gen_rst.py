@@ -165,8 +165,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
     this_template = rst_template
     last_dir = os.path.split(src_dir)[-1]
-    # to avoid leading . in file names
-    if last_dir == '.': 
+    # to avoid leading . in file names, and wrong names in links
+    if last_dir == '.' or last_dir == 'examples': 
         last_dir = ''
     else: 
         last_dir += '_'
@@ -236,11 +236,11 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     # horizontal list or a single rst call to 'image'.
     if len(figure_list) == 1:
         figure_name = figure_list[0]
-        image_list = SINGLE_IMAGE % figure_name
+        image_list = SINGLE_IMAGE % figure_name.lstrip('/')
     else:
         image_list = HLIST_HEADER
         for figure_name in figure_list:
-            image_list += HLIST_IMAGE_TEMPLATE % figure_name
+            image_list += HLIST_IMAGE_TEMPLATE % figure_name.lstrip('/')
 
     f = open(os.path.join(target_dir, fname[:-2] + 'rst'),'w')
     f.write(this_template % locals())
