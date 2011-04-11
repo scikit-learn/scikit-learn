@@ -342,6 +342,7 @@ def _init_centroids(X, k, init, rng=None, x_squared_norms=None):
     if rng is None:
         rng = np.random
 
+    n_samples = X.shape[0]
     if init == 'k-means++':
         centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
     elif init == 'random':
