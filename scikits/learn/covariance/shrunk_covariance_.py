@@ -126,7 +126,6 @@ def ledoit_wolf(X):
     n_samples, n_features = X.shape
     
     emp_cov = empirical_covariance(X)
-    print emp_cov
     mu = np.trace(emp_cov) / n_features
     delta_ = emp_cov.copy()
     delta_.flat[::n_features + 1] -= mu
@@ -135,7 +134,6 @@ def ledoit_wolf(X):
     beta_ = 1./(n_features*n_samples) \
         * np.sum(np.dot(X2.T, X2)/n_samples - emp_cov**2)
     
-    print emp_cov
     beta = min(beta_, delta)
     shrinkage = beta/delta
     shrunk_cov = (1.-shrinkage)*emp_cov
