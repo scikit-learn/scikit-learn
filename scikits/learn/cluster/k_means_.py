@@ -204,7 +204,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     x_squared_norms = x_squared_norms.sum(axis=1)
     for it in range(n_init):
         # init
-        centers = _init_centroids(X, k, rng=rng,
+        centers = _init_centroids(X, k, init, rng=rng,
                                   x_squared_norms=x_squared_norms)
         if verbose:
             print 'Initialization complete'
@@ -252,14 +252,14 @@ def _calculate_labels_inertia(X, centers):
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
-def _mini_batch_step(x, centers, v,  x_squared_norms=None):
+def _mini_batch_step(X, centers, v,  x_squared_norms=None):
     """
     Computation of the new centers for the Batch K Means algorithm
 
     Parameters
     ----------
 
-    x: array, shape (n_samples, n_features)
+    X: array, shape (n_samples, n_features)
 
     centers: array, shape (k, n_features)
         The cluster centers
@@ -299,7 +299,7 @@ def _mini_batch_step(x, centers, v,  x_squared_norms=None):
             centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + np.sum(X[mask],
                                                                   axis=0))
             v[q] += c
-    return centers
+    return centers, v
 
 
 def _m_step(x, z, k):
@@ -338,7 +338,10 @@ def _m_step(x, z, k):
     return centers
 
 
-def _init_centroids(X, k, rng=rng, x_squared_norms=x_squared_norms):
+def _init_centroids(X, k, init, rng=None, x_squared_norms=None):
+    if rng is None:
+        rng = np.random
+
     if init == 'k-means++':
         centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
     elif init == 'random':
@@ -603,24 +606,22 @@ class MiniBatchKMeans(KMeans):
 
     """
 
-    def __init__(self, k=8, init='random', n_init=10, 
+    def __init__(self, k=8, init='random', n_init=10,
                  verbose=0, rng=None, copy_x=True):
-        super(MiniBatchKMeans, self).__init__(k, init, n_init, 
+        super(MiniBatchKMeans, self).__init__(k, init, n_init,
               verbose, rng=None, copy_x=True)
         # FIXME
         # v is an array used to keep track of who went where
         self.v = None
+        self.cluster_centers = None
 
     def partial_fit(self, X, **params):
         """
         Compute batch k means
         """
         X = self._check_data(X, **params)
-        if rng is None:
-            rng = np.random
-
-        if hasattr(init, '__array__'):
-            init = np.asarray(init)
+        if hasattr(self.init, '__array__'):
+            self.init = np.asarray(self.init)
 
         x_squared_norms = X.copy()
         x_squared_norms **=2
@@ -628,12 +629,15 @@ class MiniBatchKMeans(KMeans):
 
         if self.v is None:
             # This is the first time I call partial_fit on this object.
-            # Therefor, I need to initialise the cluster centers
-            self.cluster_centers = _init_centroids(X, k, rng=rng,
-                                                   x_squared_norms=x_squared_norms)
-            self.v = np.zeroes(k)
-        self.cluster_centers = _mini_batch_step(X, centers, c,
-                                                x_squared_norm=x_squared_norms)
+            # Therefore, I need to initialise the cluster centers
+            self.cluster_centers = _init_centroids(X, self.k, self.init,
+                                            rng=self.rng,
+                                            x_squared_norms=x_squared_norms)
+            self.v = np.zeros(self.k)
+        self.cluster_centers, self.v = _mini_batch_step(X, 
+                                                self.cluster_centers,
+                                                self.v,
+                                                x_squared_norms=x_squared_norms)
         self.inertia_, self.labels_ = _calculate_labels_inertia(X,
                                                                 self.cluster_centers)
         return self

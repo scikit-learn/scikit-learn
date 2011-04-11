@@ -24,6 +24,22 @@ data = scale(digits.data)
 n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
 
+def mini_batch(X, chunk, iterations):
+    km = MiniBatchKMeans(init='k-means++',
+                         k=n_digits,
+                         n_init=10)
+
+    for i in xrange(iterations):
+        j = i * chunk % len(data)
+        sample = data[j:j+chunk]
+        km.partial_fit(sample)
+
+    # That last calculation is done only to get the inertia, to be able to compare
+    # to the previous calculation
+    km.partial_fit(data)
+    return km
+
+
 print "n_digits: %d" % n_digits
 print "n_features: %d" % n_features
 print "n_samples: %d" % n_samples
@@ -38,10 +54,7 @@ print
 
 print "Mini batch k-means with k-means++ init, chunk 600..."
 t0 = time()
-km = MiniBatchKMeans(init='k-means++',
-                     k=n_digits,
-                     n_init=10,
-                     chunk=600).fit(data)
+km = mini_batch(data, 600, 300)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
@@ -49,61 +62,23 @@ print
 
 print "Mini batch k-means with k-means++ init, chunk 300..."
 t0 = time()
-km = MiniBatchKMeans(init='k-means++',
-                     k=n_digits,
-                     n_init=10,
-                     chunk=300).fit(data)
+km = mini_batch(data, 600, 300)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
 print "Mini batch k-means with k-means++ init, chunk 150..."
 t0 = time()
-km = MiniBatchKMeans(init='k-means++',
-                     k=n_digits,
-                     n_init=10,
-                     chunk=150).fit(data)
+km = mini_batch(data, 600, 300)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
 print "Mini batch k-means with k-means++ init, chunk 100..."
 t0 = time()
-km = MiniBatchKMeans(init='k-means++',
-                     k=n_digits,
-                     n_init=10,
-                     chunk=100).fit(data)
+km = mini_batch(data, 600, 300)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
-print "Mini batch k-means with k-means++ init, chunk 80..."
-t0 = time()
-km = MiniBatchKMeans(init='k-means++',
-                     k=n_digits,
-                     n_init=10,
-                     chunk=80).fit(data)
-print "done in %0.3fs" % (time() - t0)
-print "inertia: %f" % km.inertia_
-print
-
-print "Mini batch k-means with k-means++ init, chunk 70..."
-t0 = time()
-km = MiniBatchKMeans(init='k-means++',
-                     k=n_digits,
-                     n_init=10,
-                     chunk=70).fit(data)
-print "done in %0.3fs" % (time() - t0)
-print "inertia: %f" % km.inertia_
-print
-
-print "Mini batch k-means with k-means++ init, chunk 60..."
-t0 = time()
-km = MiniBatchKMeans(init='k-means++',
-                     k=n_digits,
-                     n_init=10,
-                     chunk=60).fit(data)
-print "done in %0.3fs" % (time() - t0)
-print "inertia: %f" % km.inertia_
-print
 
