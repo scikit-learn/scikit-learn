@@ -5,7 +5,7 @@ Clustering
 ===================================================
 
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
-unlabeled data can be performed with the module `scikits.learn.cluster`.
+unlabeled data can be performed with the module :mod:`scikits.learn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements
 the `fit` method to learn the clusters on train data, and a function,
@@ -15,17 +15,31 @@ data can be found in the `labels_` attribute.
 
 .. currentmodule:: scikits.learn.cluster
 
-One important thing to note is that the algorithms implemented in this module
-take different kinds of matrix as input.  On one hand, :class:`MeanShift` and
-:class:`KMeans` take data matrices of shape [n_samples, n_features]. These can
-be obtained from the classes in the `scikits.learn.feature_extraction` module.
-On the other hand, :class:`AffinityPropagation` and :class:`SpectralClustering`
-take similarity matrices of shape [n_samples, n_samples].  These can be
-obtained from the functions in the `scikits.learn.metrics.pairwise` module.
-In other words, :class:`MeanShift` and :class:`KMeans` work with points in a
-vector space, whereas :class:`AffinityPropagation` and
-:class:`SpectralClustering` can work with arbitrary objects, as long as a
-similarity measure exists for such objects.
+.. topic:: Input data 
+
+    One important thing to note is that the algorithms implemented in
+    this module take different kinds of matrix as input.  On one hand,
+    :class:`MeanShift` and :class:`KMeans` take data matrices of shape
+    [n_samples, n_features]. These can be obtained from the classes in
+    the :mod:`scikits.learn.feature_extraction` module. On the other hand,
+    :class:`AffinityPropagation` and :class:`SpectralClustering` take
+    similarity matrices of shape [n_samples, n_samples].  These can be
+    obtained from the functions in the :mod:`scikits.learn.metrics.pairwise`
+    module. In other words, :class:`MeanShift` and :class:`KMeans` work
+    with points in a vector space, whereas :class:`AffinityPropagation`
+    and :class:`SpectralClustering` can work with arbitrary objects, as
+    long as a similarity measure exists for such objects.
+
+
+K-means
+=======
+
+The :class:`KMeans` algorithm clusters data by trying to separate samples
+in n groups of equal variance, minimizing a criterion known as the
+'inertia' of the groups. This algorithm requires the number of cluster to
+be specified. It scales well to large number of samples, however its
+results may be dependent on an initialisation.
+
 
 
 Affinity propagation
@@ -67,16 +81,6 @@ of cluster. It will have difficulties scaling to thousands of samples.
 
  * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
-
-
-K-means
-=======
-
-The :class:`KMeans` algorithm clusters data by trying to separate samples
-in n groups of equal variance, minimizing a criterion known as the
-'inertia' of the groups. This algorithm requires the number of cluster to
-be specified. It scales well to large number of samples, however its
-results may be dependent on an initialisation.
 
 
 Spectral clustering
@@ -184,11 +188,11 @@ enable only merging of neighboring pixels on an image, as in the
    to split the image of lena in regions.
 
  * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of 
-    Ward algorithm on a swiss-roll, comparison of structured approaches
-    versus unstructured approaches.
+   Ward algorithm on a swiss-roll, comparison of structured approaches
+   versus unstructured approaches.
 
  * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
-    Example of dimensionality reduction with feature agglomeration based on
-    Ward hierarchical clustering.
+   Example of dimensionality reduction with feature agglomeration based on
+   Ward hierarchical clustering.
 
 

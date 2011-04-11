@@ -7,7 +7,7 @@ from time import time
 import numpy as np
 from collections import defaultdict
 
-from scikits.learn.nmf import NMF, _initialize_nmf_
+from scikits.learn.decomposition.nmf import NMF, _initialize_nmf_
 from scikits.learn.datasets.samples_generator import low_rank_fat_tail
 
 

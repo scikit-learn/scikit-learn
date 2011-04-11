@@ -89,6 +89,7 @@ class RomanPreprocessor(object):
     """Fast preprocessor suitable for roman languages"""
 
     def preprocess(self, unicode_text):
+        """Preprocess strings"""
         return to_ascii(strip_tags(unicode_text.lower()))
 
     def __repr__(self):
@@ -122,6 +123,7 @@ class WordNGramAnalyzer(BaseEstimator):
         self.token_pattern = token_pattern
 
     def analyze(self, text_document):
+        """From documents to token"""
         if hasattr(text_document, 'read'):
             # ducktype for file-like objects
             text_document = text_document.read()
@@ -174,6 +176,7 @@ class CharNGramAnalyzer(BaseEstimator):
         self.preprocessor = preprocessor
 
     def analyze(self, text_document):
+        """From documents to token"""
         if hasattr(text_document, 'read'):
             # ducktype for file-like objects
             text_document = text_document.read()
@@ -501,6 +504,7 @@ class Vectorizer(BaseEstimator):
         self.tfidf = TfidfTransformer(use_tf, use_idf)
 
     def fit(self, raw_documents):
+        """Learn a conversion law from documents to array data"""
         X = self.tc.fit_transform(raw_documents)
         self.tfidf.fit(X)
         return self

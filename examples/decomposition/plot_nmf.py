@@ -15,8 +15,7 @@ from time import time
 import logging
 import pylab as pl
 
-from scikits.learn.pca import RandomizedPCA
-from scikits.learn.nmf import NMF
+from scikits.learn.decomposition import RandomizedPCA, NMF
 from scikits.learn import datasets
 
 
@@ -42,7 +41,7 @@ t0 = time()
 pca = RandomizedPCA(n_components=n_components, whiten=True).fit(X)
 print "done in %0.3fs" % (time() - t0)
 
-eigendigits = pca.components_.T
+eigendigits = pca.components_
 
 ######################################################################
 # Compute a NMF on the digit dataset
