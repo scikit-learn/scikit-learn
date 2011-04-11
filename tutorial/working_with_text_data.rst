@@ -344,7 +344,7 @@ The grid search instance behaves like a normal ``scikit-learn``
 model. Let us perform the search on a smaller subset of the dataset
 to speed up the computation::
 
-  >>> gs_clf.fit(docs_train[:400], twenty_train.target[:400])
+  >>> gs_clf = gs_clf.fit(docs_train[:400], twenty_train.target[:400])
 
 The best model found during fit is available as a special attribute::
 
