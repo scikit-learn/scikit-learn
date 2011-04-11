@@ -22,17 +22,22 @@ Expected results for the top 5 most represented people in the dataset::
 
         avg / total       0.86      0.84      0.85       282
 
+
+.. image:: /images/plot_face_recognition_1.png
+    :scale: 50%
+
+.. image:: /images/plot_face_recognition_2.png
+    :scale: 50%
+
 """
 print __doc__
 
 from time import time
-import sys
 import logging
-import numpy as np
 import pylab as pl
 
 from scikits.learn.cross_val import StratifiedKFold
-from scikits.learn.datasets import load_lfw_people
+from scikits.learn.datasets import fetch_lfw_people
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.metrics import classification_report
 from scikits.learn.metrics import confusion_matrix
@@ -40,21 +45,13 @@ from scikits.learn.decomposition import RandomizedPCA
 from scikits.learn.svm import SVC
 
 # Display progress logs on stdout
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 
 ################################################################################
 # Download the data, if not already on disk and load it as numpy arrays
 
-download_if_missing = '--download' in sys.argv
-try:
-    lfw_people = load_lfw_people(min_faces_per_person=70, resize=0.4,
-                                 download_if_missing=download_if_missing)
-except IOError:
-    print "This example needs more than 200MB of data not locally available:"
-    print "re-run this script with '--download' to download it explicitly"
-    sys.exit(0)
+lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
 # reshape the data using the traditional (n_samples, n_features) shape
 faces = lfw_people.data
