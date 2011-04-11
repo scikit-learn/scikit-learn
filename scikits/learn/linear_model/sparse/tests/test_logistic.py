@@ -1,7 +1,7 @@
 import numpy as np
 
 from numpy.testing import assert_array_equal, \
-     assert_array_almost_equal
+     assert_array_almost_equal, assert_almost_equal
 import nose
 from nose.tools import assert_raises
 
@@ -64,6 +64,26 @@ def test_inconsistent_input():
                   logistic.LogisticRegression().fit(X_, y_).predict,
                   np.random.random((3,12)))
 
+def test_min_C():
+    expected_min_Cs = [1, 0.2]
+
+    cases = [{'fit_intercept': False },
+             {'fit_intercept': True, 'intercept_scaling': 10}]
+
+    for expected_min_C, params in zip(expected_min_Cs, cases):
+        clf = logistic.LogisticRegression(penalty='l1', **params)
+        min_C = clf.min_C(X, Y1)
+        assert_almost_equal(min_C, expected_min_C)
+
+        clf.C = min_C
+        clf.fit(X, Y1)
+        assert_array_almost_equal(clf.coef_, [[0.0, 0.0]])
+        assert_almost_equal(clf.intercept_, 0)
+
+        clf.C = min_C * 1.01
+        clf.fit(X, Y1)
+        assert len(np.flatnonzero(clf.coef_)) > 0 or clf.intercept_ != 0.0, \
+               "coef_=%s intercept_=%s" % (clf.coef_, clf.intercept_)
 
 
 if __name__ == '__main__':

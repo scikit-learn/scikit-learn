@@ -6,6 +6,7 @@ designed to handle efficiently data in sparse matrix format.
 """
 
 import numpy as np
+from scipy import sparse
 
 from ...base import ClassifierMixin
 from ...svm.sparse.base import SparseBaseLibLinear
@@ -112,3 +113,28 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         label of classes.
         """
         return np.log(self.predict_proba(T))
+
+    def min_C(self, X, y):
+        """
+        if C is greater that min_C there is at least one non-zero coefficient.
+
+        This value is valid if class_weight parameter in fit() is not set.
+        """
+        if self.penalty != 'l1':
+            raise ValueError('penalty is not l1')
+        classes = list(set(y))
+        if len(classes) != 2:
+            raise ValueError('min_C: number of classes != 2')
+
+        X = sparse.csc_matrix(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        y = np.asanyarray(y, dtype=np.int32, order='C')
+
+        if self.fit_intercept:
+            bias = self.intercept_scaling * np.ones((len(y), 1))
+            X = sparse.hstack((X, bias))
+
+        _y = np.ones(y.shape)
+        _y[np.where(y == classes[0])] *= -1
+        _y.shape = (1, len(y))
+        return 2.0/np.max(np.abs(_y * X))
