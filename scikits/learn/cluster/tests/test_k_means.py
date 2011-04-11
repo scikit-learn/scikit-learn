@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
-from ..k_means_ import KMeans, BatchKMeans
+from ..k_means_ import KMeans, MiniBatchKMeans
 from .common import generate_clustered_data
 
 n_clusters = 3
@@ -27,11 +27,11 @@ def test_k_means_pp_init():
     # check error on dataset being too small
     assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
 
-def batch_test_k_means_pp_init():
+def test_mini_batch_k_means_pp_init():
     np.random.seed(1)
-    inertia = BatchKMeans(init="random").fit(X,
+    inertia = MiniBatchKMeans(init="random").fit(X,
                             k=n_clusters, max_iter=1).inertia_
-    next_inertia = BatchKMeans(init="random").fit(X,
+    next_inertia = MiniBatchKMeans(init="random").fit(X,
                             k=n_clusters, max_iter=21).inertia_
 
     assert(next_inertia < inertia)

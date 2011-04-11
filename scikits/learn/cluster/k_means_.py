@@ -204,31 +204,16 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     x_squared_norms = x_squared_norms.sum(axis=1)
     for it in range(n_init):
         # init
-        if init == 'k-means++':
-            centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
-        elif init == 'random':
-            seeds = np.argsort(rng.rand(n_samples))[:k]
-            centers = X[seeds]
-        elif hasattr(init, '__array__'):
-            centers = np.asanyarray(init).copy()
-        elif callable(init):
-            centers = init(X, k, rng=rng)
-        else:
-            raise ValueError("the init parameter for the k-means should "
-                "be 'k-means++' or 'random' or an ndarray, "
-                "'%s' (type '%s') was passed.")
-
+        centers = _init_centroids(X, k, rng=rng,
+                                  x_squared_norms=x_squared_norms)
         if verbose:
             print 'Initialization complete'
-
-        if batch:
-            v = np.zeros(k)
 
         # iterations
         for i in range(max_iter):
             centers_old = centers.copy()
             if batch:
-                centers = _batch_step(X, centers, i, chunk, v,
+                centers = _mini_batch_step(X, centers, i, chunk, v,
                                         x_squared_norms=x_squared_norms)
 
             else:
@@ -244,13 +229,11 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                     print 'Converged to similar centers at iteration', i
                 break
 
-            if not batch and inertia < best_inertia:
+            if inertia < best_inertia:
                 best_labels = labels.copy()
                 best_centers = centers.copy()
                 best_inertia = inertia
 
-        if batch:
-            inertia, labels = _calculate_labels_inertia(X, centers)
     else:
         best_labels = labels
         best_centers = centers
@@ -269,7 +252,7 @@ def _calculate_labels_inertia(X, centers):
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
-def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
+def _mini_batch_step(x, centers, v,  x_squared_norms=None):
     """
     Computation of the new centers for the Batch K Means algorithm
 
@@ -304,10 +287,8 @@ def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
 
     """
     # Let's split the data into chunks
-    j = i * chunk % len(x)
-    M = x[j:j + chunk]
-    m_norm = (M**2).sum(axis=1)
-    cache = euclidean_distances(centers, M, m_norm,
+    m_norm = (X**2).sum(axis=1)
+    cache = euclidean_distances(centers, X, m_norm,
                                 squared=True).argmin(axis=0)
 
     k = centers.shape[0]
@@ -315,7 +296,7 @@ def _batch_step(x, centers, i, chunk, v,  x_squared_norms=None):
         mask = (cache == q)
         c = mask.sum()
         if np.any(mask):
-            centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + np.sum(M[mask],
+            centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + np.sum(X[mask],
                                                                   axis=0))
             v[q] += c
     return centers
@@ -356,6 +337,24 @@ def _m_step(x, z, k):
             centers[q] = np.mean(x[this_center_mask], axis=0)
     return centers
 
+
+def _init_centroids(X, k, rng=rng, x_squared_norms=x_squared_norms):
+    if init == 'k-means++':
+        centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
+    elif init == 'random':
+        seeds = np.argsort(rng.rand(n_samples))[:k]
+        centers = X[seeds]
+    elif hasattr(init, '__array__'):
+        centers = np.asanyarray(init).copy()
+    elif callable(init):
+        centers = init(X, k, rng=rng)
+    else:
+        raise ValueError("the init parameter for the k-means should "
+            "be 'k-means++' or 'random' or an ndarray, "
+            "'%s' (type '%s') was passed.")
+    return centers
+
+
 def _batch_m_step(x, z, k, centers, v):
     """ M step of the Batch K-Means EM algorithm
 
@@ -372,7 +371,6 @@ def _batch_m_step(x, z, k, centers, v):
                                                               axis=0))
         v[q] += c
     return centers
-
 
 
 def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
@@ -533,7 +531,7 @@ class KMeans(BaseEstimator):
         return self
 
 
-class BatchKMeans(KMeans):
+class MiniBatchKMeans(KMeans):
     """
     Batch K-Means clustering
 
@@ -605,19 +603,39 @@ class BatchKMeans(KMeans):
 
     """
 
-    def __init__(self, k=8, chunk=300, init='random', n_init=10, max_iter=300,
-                 tol=1e-4, verbose=0, rng=None, copy_x=True):
-        super(BatchKMeans, self).__init__(k, init, n_init, max_iter, tol,
+    def __init__(self, k=8, init='random', n_init=10, 
+                 verbose=0, rng=None, copy_x=True):
+        super(MiniBatchKMeans, self).__init__(k, init, n_init, 
               verbose, rng=None, copy_x=True)
-        self.chunk = chunk
+        # FIXME
+        # v is an array used to keep track of who went where
+        self.v = None
 
-    def fit(self, X, **params):
+    def partial_fit(self, X, **params):
         """
         Compute batch k means
         """
         X = self._check_data(X, **params)
-        self.cluster_centers, self.labels, self.inertia_ = k_means(
-            X, k=self.k, init=self.init, n_init=self.n_init,
-            max_iter=self.max_iter, verbose=self.verbose, tol=self.tol,
-            rng=self.rng, copy_x=self.copy_x, batch=True, chunk=self.chunk)
+        if rng is None:
+            rng = np.random
+
+        if hasattr(init, '__array__'):
+            init = np.asarray(init)
+
+        x_squared_norms = X.copy()
+        x_squared_norms **=2
+        x_squared_norms = x_squared_norms.sum(axis=1)
+
+        if self.v is None:
+            # This is the first time I call partial_fit on this object.
+            # Therefor, I need to initialise the cluster centers
+            self.cluster_centers = _init_centroids(X, k, rng=rng,
+                                                   x_squared_norms=x_squared_norms)
+            self.v = np.zeroes(k)
+        self.cluster_centers = _mini_batch_step(X, centers, c,
+                                                x_squared_norm=x_squared_norms)
+        self.inertia_, self.labels_ = _calculate_labels_inertia(X,
+                                                                self.cluster_centers)
         return self
+
+
