@@ -76,10 +76,18 @@ and as in the :ref:`example_decomposition_plot_nmf.py` example::
 
   In [3]: X = load_digits().data
 
-Let us first have a look at the overall performance profile using the ``%prun``
+Before starting the profiling session and engaging in tentative
+optimization iterations, it is important to measure the total execution
+time of the function we want to optimize without any kind of profiler
+overhead and save it somewhere for later reference::
+
+  In [4]: %timeit NMF(n_components=16, tol=1e-2).fit(X)
+  1 loops, best of 3: 1.7 s per loop
+
+To have have a look at the overall performance profile using the ``%prun``
 magic command::
 
-  In [4]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
+  In [5]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
            14496 function calls in 1.682 CPU seconds
 
      Ordered by: internal time
@@ -96,15 +104,55 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
+The ``totime`` columns is the most interesting: it gives to total time spent
+executing the code of a given function ignoring the time spent in executing the
+sub-functions. The real total time (local code + sub-function calls) is given by
+the ``cumtime`` column.
 
 Note the use of the ``-l nmf.py`` that restricts the output to lines that
 contains the "nmf.py" string. This is useful to have a quick look at the hotspot
 of the nmf python module it-self ignoring anything else.
 
-The above results show that the ``_nls_subproblem`` function is the hotspot: it
-takes around 60% of the time of the module. In order to better understand the
-profile of this specific function, let us install ``line-prof`` and wire it to
-ipython::
+Here is the begining of the output of the same command without the ``-l nmf.py``
+filter::
+
+  In [5] %prun NMF(n_components=16, tol=1e-2).fit(X)
+           16159 function calls in 1.840 CPU seconds
+
+     Ordered by: internal time
+
+     ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+       2833    0.653    0.000    0.653    0.000 {numpy.core._dotblas.dot}
+         46    0.651    0.014    1.636    0.036 nmf.py:151(_nls_subproblem)
+       1397    0.171    0.000    0.171    0.000 nmf.py:18(_pos)
+       2780    0.167    0.000    0.167    0.000 {method 'sum' of 'numpy.ndarray' objects}
+          1    0.064    0.064    1.840    1.840 nmf.py:352(fit_transform)
+       1542    0.043    0.000    0.043    0.000 {method 'flatten' of 'numpy.ndarray' objects}
+        337    0.019    0.000    0.019    0.000 {method 'all' of 'numpy.ndarray' objects}
+       2734    0.011    0.000    0.181    0.000 fromnumeric.py:1185(sum)
+          2    0.010    0.005    0.010    0.005 {numpy.linalg.lapack_lite.dgesdd}
+        748    0.009    0.000    0.065    0.000 nmf.py:28(norm)
+  ...
+
+The above results show that the execution is largely dominated by
+dot products operations (delegated to blas). Hence there is probably
+no huge gain to expect by rewriting this code in Cython or C/C++: in
+this case out of the 1.7s total execution time, almost 0.7s are spent
+in compiled code we can consider optimal. By rewriting the rest of the
+Python code and assuming we could achieve a 1000% boost on this portion
+(which is highly unlikely given the shallowness of the python loops),
+we would not gain more than a 3x speed-up globally.
+
+Hence major improvements can only be achieved by algorithmic improvements
+in this particular example (e.g. trying to find operation that are both
+costly and useless to avoid computing then rather than trying to optimize
+their implementation).
+
+It is however still interesting to check what's happening inside the
+``_nls_subproblem`` function which is the hotspot if we only consider
+python code: it takes around 100% of the cumulated time of the module. In
+order to better understand the profile of this specific function, let
+us install ``line-prof`` and wire it to ipython::
 
   $ pip install line-prof
   $ vim ~/.ipython/ipy_user_conf.py
