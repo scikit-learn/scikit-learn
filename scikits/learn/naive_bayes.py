@@ -201,10 +201,7 @@ class MNNB(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     alpha_i: float, optional (default=1.0)
-        smoothing constant.
-
-    alpha_ratio: float, optional (default=1.0)
-        smoothing ratio.
+        smoothness prior.
 
     Methods
     -------
@@ -228,7 +225,7 @@ class MNNB(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.naive_bayes import MNNB
     >>> clf = MNNB()
     >>> clf.fit(X, Y)
-    MNNB(alpha_ratio=1.0, alpha_i=1.0)
+    MNNB(alpha_i=1.0)
     >>> print clf.predict(X[2])
     3
 
@@ -237,13 +234,29 @@ class MNNB(BaseEstimator, ClassifierMixin):
 
     """
 
-    def __init__(self, alpha_i=1.0, alpha_ratio=1.0):
+    def __init__(self, alpha_i=1.0):
 
         self.alpha_i = alpha_i
-        self.alpha_ratio = alpha_ratio
 
     def fit(self, X, y):
-        """Fit the Multinomial distribution"""
+        """Fit Multinomial Naive Bayes according to X, y
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
 
         #
         # N_c is the count of all words in all documents of class c.
@@ -267,7 +280,7 @@ class MNNB(BaseEstimator, ClassifierMixin):
         # Smoothing coefficients
         #
         alpha_i = self.alpha_i
-        alpha = self.alpha_ratio * alpha_i * X.shape[1]
+        alpha = alpha_i * X.shape[1]
 
         #
         # Estimate the parameters of the distribution
@@ -278,7 +291,17 @@ class MNNB(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        """Predict the classification of samples X"""
+        """
+        Perform classification on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+        """
 
         joint_log_likelihood = self._joint_log_likelihood(X)
         y_pred = self.unique_y[np.argmax(joint_log_likelihood, axis=0)]
@@ -306,7 +329,20 @@ class MNNB(BaseEstimator, ClassifierMixin):
         return np.min(X, axis=axis)
 
     def predict_proba(self, X):
-        """Predict the posterior probability of samples X"""
+        """
+        Return probability estimates for the test vector X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+        """
 
         joint_log_likelihood = self._joint_log_likelihood(X)
         
@@ -323,7 +359,20 @@ class MNNB(BaseEstimator, ClassifierMixin):
         return proba
 
     def predict_log_proba(self, X):
-        """Predict the posterior log probability of samples X"""
+        """
+        Return log-probability estimates for the test vector X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array-like, shape = [n_samples, n_classes]
+            Returns the log-probability of the sample for each class
+            in the model, where classes are ordered by arithmetical
+            order.
+        """
 
         joint_log_likelihood = self._joint_log_likelihood(X)
         
