@@ -45,6 +45,7 @@ from scikits.learn.feature_extraction.text.sparse import Vectorizer
 from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
+from scikits.learn.naive_bayes.sparse import MNNB
 from scikits.learn import metrics
 
 
@@ -128,9 +129,10 @@ def benchmark(clf):
     score = metrics.f1_score(y_test, pred)
     print "f1-score:   %0.3f" % score
 
-    nnz = clf.coef_.nonzero()[0].shape[0]
-    print "non-zero coef: %d" % nnz
-    print
+    if hasattr(clf, 'coef_'):
+        nnz = clf.coef_.nonzero()[0].shape[0]
+        print "non-zero coef: %d" % nnz
+        print
 
     if print_report:
         print "classification report:"
@@ -165,3 +167,8 @@ print 80 * '='
 print "Elastic-Net penalty"
 sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                       penalty="elasticnet"))
+
+# Train sparse MNNB
+print 80 * '='
+print "MNNB penalty"
+mnnb_results = benchmark(MNNB(alpha_i=.01))

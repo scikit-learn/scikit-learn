@@ -10,7 +10,7 @@
 # License: BSD Style.
 import numpy as np
 
-from .base import BaseEstimator, ClassifierMixin
+from ..base import BaseEstimator, ClassifierMixin
 
 
 class GNB(BaseEstimator, ClassifierMixin):
