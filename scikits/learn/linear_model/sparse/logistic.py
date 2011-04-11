@@ -119,6 +119,20 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         if C is greater that min_C there is at least one non-zero coefficient.
 
         This value is valid if class_weight parameter in fit() is not set.
+
+        Parameters
+        ----------
+        X : sparse matrix, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        y : array, shape = [n_samples]
+            Target vector relative to X
+
+        Returns
+        -------
+        min_C: float
+            minimum value for C
         """
         if self.penalty != 'l1':
             raise ValueError('penalty is not l1')
