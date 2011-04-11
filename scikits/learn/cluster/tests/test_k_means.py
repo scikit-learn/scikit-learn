@@ -29,12 +29,15 @@ def test_k_means_pp_init():
 
 def test_mini_batch_k_means_pp_init():
     np.random.seed(1)
-    inertia = MiniBatchKMeans(init="random").fit(X,
-                            k=n_clusters, max_iter=1).inertia_
-    next_inertia = MiniBatchKMeans(init="random").fit(X,
-                            k=n_clusters, max_iter=21).inertia_
-
-    assert(next_inertia < inertia)
+    sample = X[0:X.shape[0]/2]
+    km = MiniBatchKMeans(init="random").partial_fit(sample)
+    # Let's recalculate the inertia on the whole dataset
+    km.partial_fit(X)
+    inertia = km.inertia_
+    km.partial_fit(X[X.shape[0]/2:])
+    # And again
+    km.partial_fit(X)
+    assert(km.inertia_ < inertia)
 
 def test_k_means_pp_random_init():
     np.random.seed(1)
