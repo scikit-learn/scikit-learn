@@ -132,7 +132,7 @@ validation scheme.
 Examples
 --------
 
-:ref:`example_applications_plot_face_recognition.py`
+:ref:`example_applications_face_recognition.py`
 
 
 

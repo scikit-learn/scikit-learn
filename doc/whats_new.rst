@@ -103,9 +103,9 @@ inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
 
-.. |banner1| image:: auto_examples/applications/images/plot_face_recognition_1.png
+.. |banner1| image:: images/plot_face_recognition_1.png
    :height: 150
-   :target: auto_examples/applications/plot_face_recognition.html
+   :target: auto_examples/applications/face_recognition.html
 
 .. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
    :height: 150
