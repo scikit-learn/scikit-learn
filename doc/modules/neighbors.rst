@@ -33,7 +33,7 @@ low-memory settings.  Finally, ``'auto'`` is a simple heuristic that
 will guess the best approach based on the current dataset.
 
 
-.. figure:: ../auto_examples/images/plot_neighbors.png
+.. figure:: ../auto_examples/images/plot_neighbors_1.png
    :target: ../auto_examples/plot_neighbors.html
    :align: center
    :scale: 75
@@ -56,7 +56,7 @@ that best reconstruct the point from its neighbors while ``mean`` will
 apply constant weights to each point. This plot shows the behavior of
 both classifier for a simple regression task.
 
-.. figure:: ../auto_examples/images/plot_neighbors_regression.png
+.. figure:: ../auto_examples/images/plot_neighbors_regression_1.png
    :target: ../auto_examples/plot_neighbors_regression.html
    :align: center
    :scale: 75

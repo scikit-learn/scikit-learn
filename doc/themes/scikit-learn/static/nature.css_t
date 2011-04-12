@@ -31,6 +31,14 @@ div.header-wrapper {
     margin-top: 10px;
 }
 
+ul.horizontal, ul.horizontal li {
+    display: inline;
+    list-style: none;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+}
+
+
 div.header {
     /* for the logo to correctly expand when showing results
        but remain cut when not */
@@ -181,12 +189,11 @@ div.rel {
 
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
-    margin: 0;
     padding: 5px 10px;
     background-color: #4EACC5;
     font-weight: normal;
     color: white;
-    margin: 25px 20px 0;
+    margin: 25px 20px 0 10px;
 }
 
 div.sphinxsidebar img {
@@ -202,15 +209,24 @@ div.sphinxsidebar p.topless {
 }
  
 div.sphinxsidebar ul {
-    margin: 10px 20px;
+    margin: 10px 10px;
     padding: 0;
     color: #000;
+    font-weight: bold;
 }
 
 div.sphinxsidebar ul ul {
     margin-right: 0;
+    margin-left: 10px;
+    list-style: disc outside none;
+    color: #355F7C;
+    font-weight: normal;
 }
- 
+
+div.sphinxsidebar ul ul ul {
+    font-size: 80%;
+    list-style: square outside none;
+}
 
 div.sphinxsidebar {
     width: 200px;

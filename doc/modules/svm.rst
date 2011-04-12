@@ -46,7 +46,7 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/plot_iris.png
+.. figure:: ../auto_examples/svm/images/plot_iris_1.png
    :target: ../auto_examples/svm/plot_iris.html
    :align: center
 
@@ -147,7 +147,7 @@ classes or certain individual samples keywords ``class_weight`` and
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter C of class ``class_label`` to C * value.
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced.png
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_1.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
    :align: center
    :scale: 75
@@ -158,7 +158,7 @@ that sets the parameter C of class ``class_label`` to C * value.
 ``fit`` through keyword sample_weight.
 
 
-.. figure:: ../auto_examples/svm/images/plot_weighted_samples.png
+.. figure:: ../auto_examples/svm/images/plot_weighted_samples_1.png
    :target: ../auto_examples/svm/plot_weighted_samples.html
    :align: center
    :scale: 75
@@ -202,8 +202,9 @@ floating point values instead of integer values.
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
-    SVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True, p=0.1,
-      tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5, gamma=0.5)
+    SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.1,
+      shrinking=True, tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5,
+      gamma=0.5)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -227,7 +228,7 @@ In this case, as it is a type of unsupervised learning, the fit method
 will only take as input an array X, as there are no class labels.
 
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass.png
+.. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
@@ -396,7 +397,7 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane.png
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_1.png
    :align: center
    :scale: 75
 

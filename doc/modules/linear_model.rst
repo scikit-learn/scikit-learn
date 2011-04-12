@@ -30,7 +30,7 @@ Ordinary Least Squares (OLS)
 of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation.
 
-.. figure:: ../auto_examples/linear_model/images/plot_ols.png
+.. figure:: ../auto_examples/linear_model/images/plot_ols_1.png
    :target: ../auto_examples/linear_model/plot_ols.html
    :scale: 50%
 
@@ -85,8 +85,7 @@ of squares,
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls
 the amount of shrinkage: the larger the value of :math:`\alpha`, the
-greater the amount of shrinkage.
-
+greater the amount of shrinkage::
 
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
@@ -97,11 +96,13 @@ greater the amount of shrinkage.
     >>> clf.intercept_ #doctest: +ELLIPSIS
     0.13636...
 
+
 Ridge Complexity
---------------------
+----------------
 
 This method has the same order of complexity than an
 :ref:`ordinary_least_squares`.
+
 
 Generalized Cross-Validation
 ----------------------------
@@ -227,7 +228,7 @@ algorithm, and unlike the implementation based on coordinate_descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
 
-.. figure:: ../auto_examples/linear_model/images/plot_lasso_lars.png
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_lars_1.png
    :target: ../auto_examples/linear_model/plot_lasso_lars.html
    :align: center
    :scale: 50%
@@ -330,7 +331,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
 
 
 
-.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge.png
+.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
    :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
    :align: center
 
@@ -396,7 +397,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
  very slightly informative priors.
 
 
-.. figure:: ../auto_examples/linear_model/images/plot_ard.png
+.. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
    :target: ../auto_examples/linear_model/plot_ard.html
    :align: center
 

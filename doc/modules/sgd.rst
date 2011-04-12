@@ -44,7 +44,7 @@ The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
 penalties for classification.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane_1.png
    :target: ../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 75
@@ -128,7 +128,7 @@ below illustrates the OVA approach on the iris dataset.  The dashed
 lines represent the three OVA classifiers; the background colors show
 the decision surface induced by the three classifiers.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_iris.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_iris_1.png
    :target: ../auto_examples/linear_model/plot_sgd_iris.html
    :align: center
    :scale: 75
@@ -161,7 +161,7 @@ well suited for regression problems with a large number of training
 samples (> 10.000), for other problems we recommend :class:`Ridge`,
 :class:`Lasso`, or :class:`ElasticNet`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_ols.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_ols_1.png
    :target: ../auto_examples/linear_model/plot_sgd_ols.html
    :align: center
    :scale: 75
@@ -230,6 +230,7 @@ Tips on Practical Use
     it to have mean 0 and variance 1. Note that the *same* scaling
     must be applied to the test vector to obtain meaningful
     results. This can be easily done using :class:`Scaler`::
+
       from scikits.learn.preprocessing import Scaler
       scaler = Scaler()
       scaler.fit(X_train)  # Don't cheat - fit only on training data
@@ -284,7 +285,7 @@ Different choices for :math:`L` entail different classifiers such as
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions_1.png
    :align: center
    :scale: 75
 
@@ -298,7 +299,7 @@ Popular choices for the regularization term :math:`R` include:
 The Figure below shows the contours of the different regularization terms
 in the parameter space when :math:`R(w) = 1`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties_1.png
    :align: center
    :scale: 75
 

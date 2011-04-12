@@ -11,7 +11,7 @@ from ..pipeline import Pipeline
 from ..svm import SVC
 from ..linear_model import LogisticRegression
 from ..feature_selection import SelectKBest, f_classif
-from ..pca import PCA, RandomizedPCA
+from ..decomposition.pca import PCA, RandomizedPCA
 from ..datasets import load_iris
 
 
