@@ -136,7 +136,7 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         """
         if self.penalty != 'l1':
             raise ValueError('penalty is not l1')
-        classes = list(set(y))
+        classes = np.unique(y)
         if len(classes) != 2:
             raise ValueError('min_C: number of classes != 2')
 
@@ -150,5 +150,5 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
 
         _y = np.ones(y.shape)
         _y[np.where(y == classes[0])] *= -1
-        _y.shape = (1, len(y))
+        _y.shape = (1, np.size(y))
         return 2.0/np.max(np.abs(_y * X))
