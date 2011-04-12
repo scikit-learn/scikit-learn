@@ -162,4 +162,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         _y[np.where(y == classes[0])] = -1
         _y[np.where(y == classes[1])] = 1
         _y.shape = (1, np.size(y))
-        return 2.0 / np.max(np.abs(np.dot(_y, X)))
+        den = np.max(np.abs(np.dot(_y, X)))
+        if den == 0.0:
+            raise ValueError('Ill-posed problem')
+        return 2.0 / den
