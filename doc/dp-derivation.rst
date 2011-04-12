@@ -27,6 +27,14 @@ The API is identical to that of gmm with the main difference that this
 returns precision instead of covariance matrices, as these are a lot
 cheaper to keep around in inference time.
 
+The inference algorithm is the one from the following paper:
+
+    * `Variational Inference for Dirichlet Process Mixtures
+      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.61.4467&rep=rep1&type=pdf>`_ 
+      David Blei, Michael Jordan. Bayesian Analysis, 2006
+
+
+
 The spherical model
 ===================
 
