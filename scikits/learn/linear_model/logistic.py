@@ -130,6 +130,8 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         if C is greater that min_C there is at least one non-zero coefficient.
 
         This value is valid if class_weight parameter in fit() is not set.
+        min_C() raises ValueError if penalty is different from 'l1' or
+        the number of classes in y is different from 2.
 
         Parameters
         ----------
@@ -162,6 +164,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         _y[np.where(y == classes[0])] = -1
         _y[np.where(y == classes[1])] = 1
         _y.shape = (1, np.size(y))
+
         den = np.max(np.abs(np.dot(_y, X)))
         if den == 0.0:
             raise ValueError('Ill-posed min_C calculation')
