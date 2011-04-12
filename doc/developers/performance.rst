@@ -226,7 +226,10 @@ pin-point the most expensive expressions that would deserve additional care.
 Profiling compiled extensions
 =============================
 
-TODO: sample profiling session using YEP
+When working with compiled extensions (written in C/C++ with a wrapper or
+directly as cython extension), the default python profiler is useless:
+we need a dedicated tool to instrospect what's happening inside the
+compiled extension it-self.
 
 - https://github.com/fabianp/yep
 - http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
