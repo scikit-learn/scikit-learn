@@ -164,5 +164,5 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         _y.shape = (1, np.size(y))
         den = np.max(np.abs(np.dot(_y, X)))
         if den == 0.0:
-            raise ValueError('Ill-posed problem')
+            raise ValueError('Ill-posed min_C calculation')
         return 2.0 / den

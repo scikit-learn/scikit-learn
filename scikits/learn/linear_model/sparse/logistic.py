@@ -6,7 +6,6 @@ designed to handle efficiently data in sparse matrix format.
 """
 
 import numpy as np
-from scipy import sparse
 
 from ...base import ClassifierMixin
 from ...svm.sparse.base import SparseBaseLibLinear
@@ -134,6 +133,8 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         min_C: float
             minimum value for C
         """
+        from scipy import sparse
+
         if self.penalty != 'l1':
             raise ValueError('penalty is not l1')
         classes = np.unique(y)
@@ -154,5 +155,5 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         _y.shape = (1, np.size(y))
         den = np.max(np.abs(_y * X))
         if den == 0.0:
-            raise ValueError('Ill-posed problem')
+            raise ValueError('Ill-posed min_C calculation')
         return 2.0 / den
