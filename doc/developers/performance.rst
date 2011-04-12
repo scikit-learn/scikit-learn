@@ -11,6 +11,8 @@ code for the scikit-learn project.
 Python, Cython or C/C++?
 ========================
 
+.. currentmodule:: scikits.learn
+
 In general, the scikit-learn project emphasizes the **readability** of
 the source code to make it easy for the project users to dive into the
 source code so as to understand how the algorithm behaves on their data
@@ -28,24 +30,26 @@ However sometimes an algorithm cannot be expressed efficiently in simple
 vectorized numpy code. In this case, the recommended strategy is the
 following:
 
-  1. **Profile** the python implementation to find the main bottleneck and isolate
-     it in a **dedicated module level function**. This function will be
-     reimplemented as a compiled extension module.
+  1. **Profile** the python implementation to find the main bottleneck and
+     isolate it in a **dedicated module level function**. This function
+     will be reimplemented as a compiled extension module.
 
   2. If there exists a well maintained BSD or MIT **C/C++** implementation
-     of the same algorithm that is not too big, you can write a **cython
-     wrapper** for it and include a copy of the source code of the
-     library in the scikit-learn source tree: this strategy is used
-     for Support Vector Machine and logistic regression (wrappers for
-     liblinear and libsvm).
+     of the same algorithm that is not too big, you can write a
+     **cython wrapper** for it and include a copy of the source code
+     of the library in the scikit-learn source tree: this strategy is
+     used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
+     :class:`linear_model.LogisticRegression` (wrappers for liblinear
+     and libsvm).
 
   3. Otherwise, write an optimized version of your python function using
-     **cython** directly. This strategy is used for the
-     :class:`scikits.learn.linear_model.ElasticNet` class for instance.
+     **cython** directly. This strategy is used
+     for the :class:`linear_model.ElasticNet` and
+     :class:`linear_model.SGDClassifier` classes for instance.
 
-  4. **Move the python version of the function in the tests** and use it to
-     check that the results of the compiled extension are consistent with the
-     gold standard, easy to debug python version.
+  4. **Move the python version of the function in the tests** and use
+     it to check that the results of the compiled extension are consistent
+     with the gold standard, easy to debug python version.
 
   5. Once the code is optimized (not simple bottleneck spottable by
      profiling), check whether it is possible to have **coarse grained
