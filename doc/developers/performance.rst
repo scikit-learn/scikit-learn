@@ -19,60 +19,60 @@ source code so as to understand how the algorithm behaves on their data
 but also for ease of maintanability (by the developers).
 
 When implementing a new algorithm is thus recommended to **start
-implementing it in python using numpy and scipy** by taking care of avoiding
+implementing it in Python using Numpy and Scipy** by taking care of avoiding
 looping code using the vectorized idioms of those libraries. In practice
 this means trying to **replace any nested for loops by calls to equivalent
-numpy array methods**. The goal is to avoid the CPU wasting time in the
-python interpreter rather than crunching numbers to fit your statistical
+Numpy array methods**. The goal is to avoid the CPU wasting time in the
+Python interpreter rather than crunching numbers to fit your statistical
 model.
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized numpy code. In this case, the recommended strategy is the
 following:
 
-  1. **Profile** the python implementation to find the main bottleneck and
+  1. **Profile** the Python implementation to find the main bottleneck and
      isolate it in a **dedicated module level function**. This function
      will be reimplemented as a compiled extension module.
 
   2. If there exists a well maintained BSD or MIT **C/C++** implementation
      of the same algorithm that is not too big, you can write a
-     **cython wrapper** for it and include a copy of the source code
+     **Cython wrapper** for it and include a copy of the source code
      of the library in the scikit-learn source tree: this strategy is
      used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
      :class:`linear_model.LogisticRegression` (wrappers for liblinear
      and libsvm).
 
-  3. Otherwise, write an optimized version of your python function using
-     **cython** directly. This strategy is used
+  3. Otherwise, write an optimized version of your Python function using
+     **Cython** directly. This strategy is used
      for the :class:`linear_model.ElasticNet` and
      :class:`linear_model.SGDClassifier` classes for instance.
 
-  4. **Move the python version of the function in the tests** and use
+  4. **Move the Python version of the function in the tests** and use
      it to check that the results of the compiled extension are consistent
-     with the gold standard, easy to debug python version.
+     with the gold standard, easy to debug Python version.
 
   5. Once the code is optimized (not simple bottleneck spottable by
      profiling), check whether it is possible to have **coarse grained
      parallelism** that is amenable to **multi-processing** by using the
      ``joblib.Parallel`` class.
 
-When using cython, include the generated C source code alongside with
-the cython source code. The goal is to make it possible to install the
-scikit on any machine with python, numpy, scipy and C/C++ compiler.
+When using Cython, include the generated C source code alongside with
+the Cython source code. The goal is to make it possible to install the
+scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
 
 .. _profiling-python-code:
 
-Profiling python code
+Profiling Python code
 =====================
 
-In order to profile python we recommend to write a script that loads
-and prepare you data and then use the ipython integrated python profiler
+In order to profile Python code we recommend to write a script that
+loads and prepare you data and then use the IPython integrated profiler
 for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
-of the scikit. Let us setup a new ipython session and load the digits dataset
-and as in the :ref:`example_decomposition_plot_nmf.py` example::
+of the scikit. Let us setup a new IPython session and load the digits
+dataset and as in the :ref:`example_decomposition_plot_nmf.py` example::
 
   In [1]: from scikits.learn.decomposition import NMF
 
@@ -115,7 +115,7 @@ the ``cumtime`` column.
 
 Note the use of the ``-l nmf.py`` that restricts the output to lines that
 contains the "nmf.py" string. This is useful to have a quick look at the hotspot
-of the nmf python module it-self ignoring anything else.
+of the nmf Python module it-self ignoring anything else.
 
 Here is the begining of the output of the same command without the ``-l nmf.py``
 filter::
@@ -144,7 +144,7 @@ no huge gain to expect by rewriting this code in Cython or C/C++: in
 this case out of the 1.7s total execution time, almost 0.7s are spent
 in compiled code we can consider optimal. By rewriting the rest of the
 Python code and assuming we could achieve a 1000% boost on this portion
-(which is highly unlikely given the shallowness of the python loops),
+(which is highly unlikely given the shallowness of the Python loops),
 we would not gain more than a 3x speed-up globally.
 
 Hence major improvements can only be achieved by algorithmic improvements
@@ -154,9 +154,9 @@ their implementation).
 
 It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
-python code: it takes around 100% of the cumulated time of the module. In
+Python code: it takes around 100% of the cumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line-prof`` and wire it to ipython::
+us install ``line-prof`` and wire it to IPython::
 
   $ pip install line-prof
   $ vim ~/.ipython/ipy_user_conf.py
@@ -171,7 +171,7 @@ Towards the end of the file, define the ``%lprun`` magic::
   import line_profiler
   ip.expose_magic('lprun', line_profiler.magic_lprun)
 
-Now restart ipython and let us use this new toy::
+Now restart IPython and let us use this new toy::
 
   In [1]: from scikits.learn.datasets import load_digits
 
@@ -227,7 +227,7 @@ Profiling compiled extensions
 =============================
 
 When working with compiled extensions (written in C/C++ with a wrapper or
-directly as cython extension), the default python profiler is useless:
+directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to instrospect what's happening inside the
 compiled extension it-self.
 
@@ -235,7 +235,7 @@ compiled extension it-self.
 - http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
 
 
-Performance tips for the cython developer
+Performance tips for the Cython developer
 =========================================
 
 TODO: html report, type declarations, bound checks, division by zero checks,
