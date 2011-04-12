@@ -26,7 +26,7 @@ numpy array methods**. The goal is to avoid the CPU wasting time in the
 python interpreter rather than crunching numbers to fit your statistical
 model.
 
-However sometimes an algorithm cannot be expressed efficiently in simple
+Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized numpy code. In this case, the recommended strategy is the
 following:
 
