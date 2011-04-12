@@ -160,4 +160,4 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         _y = np.ones(y.shape)
         _y[np.where(y == classes[0])] *= -1
         _y.shape = (1, np.size(y))
-        return 2.0/np.max(np.abs(np.dot(_y, X)))
+        return 2.0 / np.max(np.abs(np.dot(_y, X)))
