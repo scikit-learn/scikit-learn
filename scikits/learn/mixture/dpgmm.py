@@ -137,6 +137,13 @@ class DPGMM(mixture.GMM):
     precisions = property(_get_precisions, _set_covars)
     covars = property(_get_covars, _set_covars)
 
+    def _wishart_detlogw(self, a, b, detB):
+        l = 0.
+        for i in xrange(self.n_features):
+            l += digamma(0.5*(a-i+1))
+        l += self.n_features*np.log(2)
+        return l + detB
+
     def _bound_pxgivenz(self, x, k):
         bound = -0.5*self.n_features*np.log(2*np.pi)
         bound -= np.log(2*np.pi*np.e)
@@ -149,13 +156,10 @@ class DPGMM(mixture.GMM):
             bound -= 0.5*np.sum(self._covars[k])
         elif self.cvtype == 'tied' or self.cvtype == 'full':
             if self.cvtype == 'tied':
-                a, B, detB, c = self._a, self._b, self._detB, self._covars
+                a, B, detB, c = self._a, self._B, self._detB, self._covars
             else:
-                a, B, detB, c = self._a[k], self._b[k], self._detB[k], self._covars[k]
-            for i in xrange(self.n_features):
-                bound += 0.5*digamma((a-1-i)/2.) 
-            bound += 0.5*self.n_features*np.log(2)
-            bound += 0.5*np.log(detB)
+                a, B, detB, c = self._a[k], self._B[k], self._detB[k], self._covars[k]
+            bound += 0.5*self._wishart_detlogw(a, B, detB)
             bound -= 0.5*squarenorm(x-self._means[k], c)
             bound -= 0.5*a*np.trace(B)
         else: 
@@ -241,19 +245,17 @@ class DPGMM(mixture.GMM):
             for k in xrange(self.n_states):
                 self._b[k] = 1.
                 for i in xrange(self._X.shape[0]):
-                    dif = norm((self._X[i]-self._means[k]))
+                    dif = norm((self._X[i]-self._means[k]))+self.n_features
                     self._b[k] += 0.5*self._z[i,k]*(dif)
             self._covars = self._a/self._b
         elif self.cvtype == 'diag':
             for k in xrange(self.n_states):
-                self._a[k] = 0.5*self.n_features*np.sum(self._z.T[k], axis=0)
-                self._covars[k] = self._a[k]/self._b[k]
-                continue
+                self._a[k].fill(1.+0.5*np.sum(self._z.T[k], axis=0))
                 for d in xrange(self.n_features):
                     self._b[k,d] = 1.
                     for i in xrange(self._X.shape[0]):
                         dif = self._X[i,d]-self._means[k,d]
-                        self._b[k,d] += self._z[i,k]*max((dif*dif+1),1)
+                        self._b[k,d] += 0.5*self._z[i,k]*(dif*dif+1)
                 self._b[k,d] = min(10*self._a[k,d], self._b[k,d])
                 self._covars[k] = self._a[k]/self._b[k]
         elif self.cvtype == 'tied':
@@ -263,7 +265,7 @@ class DPGMM(mixture.GMM):
                 for k in xrange(self.n_states):
                     dif = self._X[i]-self._means[k]
                     self._B += self._z[i,k]*np.dot(dif.reshape((-1,1)),
-                                             dif.reshape((1,-1)))
+                                                   dif.reshape((1,-1)))
             self._B = np.linalg.pinv(self._B)
             self._covars = self._a*self._B
             self._detB = np.linalg.det(self._B)
@@ -275,7 +277,7 @@ class DPGMM(mixture.GMM):
                 for i in xrange(self._X.shape[0]):
                     dif = self._X[i]-self._means[k]
                     self._B[k] += self._z[i,k]*np.dot(dif.reshape((-1,1)),
-                                                dif.reshape((1,-1)))
+                                                      dif.reshape((1,-1)))
                 self._B[k] = np.linalg.pinv(self._B[k])
                 self._covars[k] = self._a[k]*self._B[k]
                 self._detB[k] = np.linalg.det(self._B[k])
@@ -315,6 +317,23 @@ class DPGMM(mixture.GMM):
         for k in xrange(self.n_states):
             logprior -= 0.5*norm(self._means[k]) + 0.5*self.n_features
         return logprior
+
+
+    def _wishart_logz(self, v, s, dets):
+            z = 0.
+            z += 0.5*v*self.n_features*np.log(2)
+            z += 0.25*(self.n_features*(self.n_features-1))*np.log(np.pi)
+            z += 0.5*v*np.log(dets)
+            for i in xrange(self.n_features):
+                z += gammaln(0.5*(v-i+1))
+            return z
+
+    def _bound_wishart(self, a, B, detB):
+        logprior = self._wishart_logz(a, B, detB)
+        logprior -= self._wishart_logz(self.n_features, np.identity(self.n_features), 1)
+        logprior += 0.5*(a-1)*self._wishart_detlogw(a, B, detB)
+        logprior += 0.5*a*np.trace(B)
+        return logprior
     
     def _bound_ab(self):
         logprior = 0.
@@ -329,25 +348,10 @@ class DPGMM(mixture.GMM):
                     logprior -= (self._a[k,d]-1)*digamma(self._a[k,d])
                     logprior += -np.log(self._b[k,d])+self._a[k,d]-self._covars[k,d]
         elif self.cvtype == 'tied':
-            for d in xrange(self.n_features):
-                logprior += gammaln(0.5*(self.n_features+1-d))
-                logprior -= gammaln(0.5*(self._a+1-d))
-                logprior += (self._a-self.n_features)*0.5*(digamma(0.5*(self._a+1-d)))
-            logprior += (self._a-self.n_features)*0.5*np.log(self._detB)
-            logprior -= 0.5*self.n_features*self._a*np.log(2)
-            logprior += 0.5*self._a*np.log(self._detB)
-            logprior += 0.5*self._a*np.trace(self._B-np.identity(self.n_features))
+            logprior += self._bound_wishart(self._a, self._B, self._detB)
         elif self.cvtype == 'full':
             for k in xrange(self.n_states):
-                for d in xrange(self.n_features):
-                    logprior += gammaln(0.5*(self.n_features+1-d))
-                    logprior -= gammaln(0.5*(self._a[k]+1-d))
-                    logprior += (self._a[k]-self.n_features)*0.5*(digamma(0.5*(self._a[k]
-                                                                               +1-d)))
-                logprior += (self._a[k]-self.n_features)*0.5*np.log(self._detB[k])
-                logprior -= 0.5*self.n_features*self._a[k]*np.log(2)
-                logprior += 0.5*self._a[k]*np.log(self._detB[k])
-                logprior += 0.5*self._a[k]*np.trace(self._B[k]-np.identity(self.n_features))
+                logprior += self._bound_wishart(self._a[k], self._B[k], self._detB[k])
         return logprior
                                     
     def _bound_z(self):
@@ -355,7 +359,7 @@ class DPGMM(mixture.GMM):
         for i in xrange(self._z.shape[0]):
             for k in xrange(self.n_states):
                 a = 0.
-                for j in xrange(k, self.n_states):
+                for j in xrange(k+1, self.n_states):
                     a += self._z[i,j]
                 logprior += a*(digamma(self._gamma[k,2])
                                -digamma(self._gamma[k,1]+self._gamma[k,2]))
@@ -381,8 +385,8 @@ class DPGMM(mixture.GMM):
         
             
 
-    def fit(self, X, n_iter=20, thresh=1e-2, params='wmc',
-            init_params='wmc'):
+    def fit(self, X, n_iter=30, thresh=1e-2, params='wmc',
+            init_params='wmc', monitor=False):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -412,6 +416,9 @@ class DPGMM(mixture.GMM):
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+        monitor: boolean
+            Prints the lower bound at every step, to help monitor
+            convergence.
         """
 
         ## initialization step
@@ -428,7 +435,7 @@ class DPGMM(mixture.GMM):
 
         if 'm' in init_params or not hasattr(self, 'means'):
             self._means = cluster.KMeans(
-                k=self._n_states).fit(X).cluster_centers_
+                k=self._n_states).fit(X).cluster_centers_[::-1]
             #self._means = np.random.normal(0, 1, size=(self.n_states, self.n_features))
 
         if 'w' in init_params or not hasattr(self, 'weights'):
@@ -469,7 +476,7 @@ class DPGMM(mixture.GMM):
                 break
 
             # Maximization step
-            self._do_mstep(params)
+            self._do_mstep(params, monitor)
 
         return self
 

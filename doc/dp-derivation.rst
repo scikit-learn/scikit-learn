@@ -300,7 +300,7 @@ of the bound:
 .. math::
 
   \log Q(\sigma_{k,d}) = -\sigma_{k,d} + \sum_i \nu_{z_{i,k}}\frac{1}{2}\log \sigma_{k,d} 
-  - \frac{\sigma_{k,d}}{2}\sum_i \nu_{z_{i,k}} ((X_{i,d}-\mu_{k,d})^2 + D)
+  - \frac{\sigma_{k,d}}{2}\sum_i \nu_{z_{i,k}} ((X_{i,d}-\mu_{k,d})^2 + 1)
 
 
 Hence 
@@ -388,16 +388,16 @@ going at it the gradient way.
 
 .. math::
 
-   \log Q(\Sigma) = -\frac{1}{2}\log |\Sigma| - \frac{1}{2} \mathbf{tr}[\Sigma]
-   + \sum_i \sum_k \nu_{z_{i,k}} \left( -\frac{1}{2}\log |\Sigma| - \frac{1}{2}((X_i-\nu_{\mu_k})^T\Sigma(X_i-\nu_{\mu_k})+\mathbf{tr}[I \Sigma]) \right)
+   \log Q(\Sigma) = +\frac{1}{2}\log |\Sigma| - \frac{1}{2} \mathbf{tr}[\Sigma]
+   + \sum_i \sum_k \nu_{z_{i,k}} \left( +\frac{1}{2}\log |\Sigma| - \frac{1}{2}((X_i-\nu_{\mu_k})^T\Sigma(X_i-\nu_{\mu_k})+\mathbf{tr}[\Sigma]) \right)
 
 which non-trivially (seeing that the quadratic form with :math:`\Sigma` in
 the middle can be expressed as the trace of something) reduces to
 
 .. math::
 
-   \log Q(\Sigma) = -\frac{1}{2}\log |\Sigma| - \frac{1}{2} \mathbf{tr}[\Sigma]
-   + \sum_i \sum_k \nu_{z_{i,k}} \left( -\frac{1}{2}\log |\Sigma| - \frac{1}{2}(\mathbf{tr}[(X_i-\nu_{\mu_k})(X_i-\nu_{\mu_k})^T\Sigma]+\mathbf{tr}[I \Sigma]) \right)
+   \log Q(\Sigma) = +\frac{1}{2}\log |\Sigma| - \frac{1}{2} \mathbf{tr}[\Sigma]
+   + \sum_i \sum_k \nu_{z_{i,k}} \left( +\frac{1}{2}\log |\Sigma| - \frac{1}{2}(\mathbf{tr}[(X_i-\nu_{\mu_k})(X_i-\nu_{\mu_k})^T\Sigma]+\mathbf{tr}[I \Sigma]) \right)
 
 hence this (with a bit of squinting) looks like a wishart with parameters
 
@@ -405,11 +405,12 @@ hence this (with a bit of squinting) looks like a wishart with parameters
 
    a = 2 + D + T
 
+
 and
 
 .. math::
 
-   \mathbf{B} = \left((T+1)\mathbf{I} + \sum_i \sum_k \nu_{z_{i,k}}(X_i-\nu_{\mu_k})(X_i-\nu_{\mu_k})^T\right)^{-1}
+   \mathbf{B} = \left(\mathbf{I} + \sum_i \sum_k \nu_{z_{i,k}}(X_i-\nu_{\mu_k})(X_i-\nu_{\mu_k})^T\right)^{-1}
 
 
 
@@ -425,7 +426,7 @@ The full model
   \phi_k   &\sim& Beta(1, \alpha_1) \\
   \mu_k   &\sim& Normal(0,  \mathbf{I}) \\
   \Sigma_k &\sim& Wishart(D, \mathbf{I}) \\
-  z_{i}     &\sim& SBP(\phi) \\
+*  z_{i}     &\sim& SBP(\phi) \\
   X_t &\sim& Normal(\mu_{z_i},  \Sigma_{z,i}^{-1})
   \end{array}
 
