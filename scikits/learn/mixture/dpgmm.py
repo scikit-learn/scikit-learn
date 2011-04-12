@@ -130,14 +130,15 @@ class DPGMM(mixture.GMM):
 
     def _set_precisions(self, covars):
         covars = np.asanyarray(covars)
-        _validate_covars(covars, self._cvtype, self._n_states, self.n_features)
+        mixture._validate_covars(covars, self._cvtype, 
+                                 self._n_states, self.n_features)
         self._covars = covars
 
     def _get_covars(self):
         return [np.linalg.pinv(c) for c in self._get_precisions()]
 
     def _set_covars(self, covars):
-        self._covars = [np.linalg.pinv(c) for c in x]
+        self._covars = [np.linalg.pinv(c) for c in covars]
 
     precisions = property(_get_precisions, _set_covars)
     covars = property(_get_covars, _set_covars)
