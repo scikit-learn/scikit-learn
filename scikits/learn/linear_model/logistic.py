@@ -155,9 +155,11 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         y = np.asanyarray(y, dtype=np.int32, order='C')
 
         if self.fit_intercept:
-            X = np.hstack((X, self.intercept_scaling * np.ones((len(y), 1))))
+            bias = self.intercept_scaling * np.ones((np.size(y), 1))
+            X = np.hstack((X, bias))
 
-        _y = np.ones(y.shape)
-        _y[np.where(y == classes[0])] *= -1
+        _y = np.empty(y.shape)
+        _y[np.where(y == classes[0])] = -1
+        _y[np.where(y == classes[1])] = 1
         _y.shape = (1, np.size(y))
         return 2.0 / np.max(np.abs(np.dot(_y, X)))
