@@ -154,7 +154,7 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
         _y = np.empty(y.shape)
         _y[np.where(y == classes[0])] = -1
         _y[np.where(y == classes[1])] = 1
-        _y.shape = (1, np.size(y))
+        _y = _y.reshape((1, -1))
 
         den = np.max(np.abs(_y * X))
         if den == 0.0:
