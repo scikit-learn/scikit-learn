@@ -38,9 +38,13 @@ endif
 override_dh_installdocs:
 	: # Build Documentation using installed scikits.learn
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
+ifneq (,$(findstring -a,$(DH_INTERNAL_OPTIONS)))
+	: # not building documentation in -a
+else
 	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE_ROOT_DIR)/usr/lib/python$(PYVER)/*`; \
 	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
 	 cd doc; $(MAKE) html
+endif
 endif
 	: # Use jquery from Debian package, so prune shipped one
 	-rm doc/_build/html/_static/jquery.js

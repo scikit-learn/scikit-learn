@@ -1,3 +1,10 @@
+scikit-learn (0.7.1.dfsg-3) unstable; urgency=low
+
+  * Do not build documentation in -a mode, to prevent timeouts on buildd
+    servers
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 13 Apr 2011 16:27:14 -0400
+
 scikit-learn (0.7.1.dfsg-2) unstable; urgency=low
 
   * Upload to unstable
