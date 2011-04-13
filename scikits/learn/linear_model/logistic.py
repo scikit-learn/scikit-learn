@@ -154,6 +154,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         if len(classes) != 2:
             raise ValueError('min_C: number of classes != 2')
 
+        X = np.asanyarray(X)
         y = np.asanyarray(y)
 
         if self.fit_intercept:
