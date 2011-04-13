@@ -13,6 +13,86 @@ from ..utils import safe_asanyarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
+def _solve(A, b, solver):
+    # helper method for ridge_regression, A is symmetric positive
+    if solver == 'cg':
+        # this solver cannot handle a 2-d b.
+        from scipy.sparse import linalg as sp_linalg
+        sol, error = sp_linalg.cg(A, b)
+        if error:
+            raise ValueError("Failed with error code %d" % error)
+        return sol
+    elif solver == 'default':
+        from scipy import linalg
+        if hasattr(A, 'todense'):
+            A = A.todense()
+        return linalg.solve(A, b, sym_pos=True, overwrite_a=True)
+    else:
+        raise NotImplementedError('Solver %s not implemented' % solver)
+
+
+def ridge_regression(X, y, alpha, sample_weight=1.0, solver='default'):
+    """
+    Solve the ridge equation by the method of normal equations.
+
+    This is a low-leve routine, assumes X, y are centered and given as
+    np.arrays or sparse matrices.
+
+    Parameters
+    ----------
+    X : array-like or sparse matrix, shape [n_samples,n_features]
+        Training data
+
+    y : array-like, shape [n_samples]
+        Target values
+
+    sample_weight : float or numpy array of shape [n_samples]
+        Individual weights for each sample
+
+    solver : {'default', 'cg'}
+        Solver to use in the computational routines. 'default'
+        will use the standard scipy.linalg.solve function, 'cg'
+        will use the a conjugate gradient solver as found in
+        scipy.sparse.linalg.cg.
+    """
+
+    n_samples, n_features = X.shape
+    is_sparse = False
+
+    if hasattr(X, 'todense'): # lazy import of scipy.sparse
+        from scipy import sparse
+        is_sparse = sparse.issparse(X)
+
+    if is_sparse:
+        if n_features > n_samples or \
+           isinstance(sample_weight, np.ndarray) or \
+           sample_weight != 1.0:
+
+            I = sparse.lil_matrix((n_samples, n_samples))
+            I.setdiag(np.ones(n_samples) * alpha * sample_weight)
+            c = _solve(X * X.T + I, y, solver)
+            return X.T * c
+        else:
+            I = sparse.lil_matrix((n_features, n_features))
+            I.setdiag(np.ones(n_features) * alpha)
+            return _solve(X.T * X + I, X.T * y, solver)
+    else:
+        if n_features > n_samples or \
+           isinstance(sample_weight, np.ndarray) or \
+           sample_weight != 1.0:
+
+            # kernel ridge
+            # w = X.T * inv(X X^t + alpha*Id) y
+            A = np.dot(X, X.T)
+            A.flat[::n_samples + 1] += alpha * sample_weight
+            return np.dot(X.T, _solve(A, y, solver))
+        else:
+            # ridge
+            # w = inv(X^t X + alpha*Id) * X.T y
+            A = np.dot(X.T, X)
+            A.flat[::n_features + 1] += alpha
+            return _solve(A, np.dot(X.T, y), solver)
+
 
 class Ridge(LinearModel):
     """
@@ -48,22 +128,22 @@ class Ridge(LinearModel):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
 
-    def fit(self, X, y, sample_weight=1.0, solver="default", **params):
+    def fit(self, X, y, sample_weight=1.0, solver='default', **params):
         """
         Fit Ridge regression model
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : array-like or sparse matrix, shape [n_samples,n_features]
             Training data
 
-        y : numpy array of shape [n_samples]
+        y : array-like, shape [n_samples]
             Target values
 
         sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
+            Individual weights for each sample
 
-        solver : 'default' | 'cg'
+        solver : {'default', 'cg'}
             Solver to use in the computational routines. 'default'
             will use the standard scipy.linalg.solve function, 'cg'
             will use the a conjugate gradient solver as found in
@@ -74,75 +154,16 @@ class Ridge(LinearModel):
         self : returns an instance of self.
         """
         self._set_params(**params)
-        self.solver = solver
 
         X = safe_asanyarray(X, dtype=np.float)
         y = np.asanyarray(y, dtype=np.float)
 
-        X, y, Xmean, ymean = \
+        X, y, X_mean, y_mean = \
            LinearModel._center_data(X, y, self.fit_intercept)
 
-        import scipy.sparse as sp
-        if sp.issparse(X):
-            self._solve_sparse(X, y, sample_weight)
-        else:
-            self._solve_dense(X, y, sample_weight)
-
-        self._set_intercept(Xmean, ymean)
-
+        self.coef_ = ridge_regression(X, y, self.alpha, sample_weight, solver)
+        self._set_intercept(X_mean, y_mean)
         return self
-
-    def _solve_dense(self, X, y, sample_weight):
-        n_samples, n_features = X.shape
-
-        if n_features > n_samples or \
-           isinstance(sample_weight, np.ndarray) or \
-           sample_weight != 1.0:
-
-            # kernel ridge
-            # w = X.T * inv(X X^t + alpha*Id) y
-            A = np.dot(X, X.T)
-            A.flat[::n_samples + 1] += self.alpha * sample_weight
-            self.coef_ = np.dot(X.T, self._solve(A, y))
-        else:
-            # ridge
-            # w = inv(X^t X + alpha*Id) * X.T y
-            A = np.dot(X.T, X)
-            A.flat[::n_features + 1] += self.alpha
-            self.coef_ = self._solve(A, np.dot(X.T, y))
-
-    def _solve_sparse(self, X, y, sample_weight):
-        n_samples, n_features = X.shape
-
-        import scipy.sparse as sp
-        if n_features > n_samples or \
-           isinstance(sample_weight, np.ndarray) or \
-           sample_weight != 1.0:
-
-            I = sp.lil_matrix((n_samples, n_samples))
-            I.setdiag(np.ones(n_samples) * self.alpha * sample_weight)
-            c = self._solve(X * X.T + I, y)
-            self.coef_ = X.T * c
-        else:
-            I = sp.lil_matrix((n_features, n_features))
-            I.setdiag(np.ones(n_features) * self.alpha)
-            self.coef_ = self._solve(X.T * X + I, X.T * y)
-
-    def _solve(self, A, b):
-        if self.solver == "cg":
-            # this solver cannot handle a 2-d b.
-            from scipy.sparse import linalg as sp_linalg
-            sol, error = sp_linalg.cg(A, b)
-            if error:
-                raise ValueError("Failed with error code %d" % error)
-            return sol
-        else:
-            import scipy.sparse as sp
-            # we are working with dense symmetric positive A
-            if sp.issparse(A):
-                A = A.todense()
-            from scipy import linalg
-            return linalg.solve(A, b, sym_pos=True, overwrite_a=True)
 
 
 class RidgeClassifier(Ridge):
@@ -173,7 +194,7 @@ class RidgeClassifier(Ridge):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : ndarray or sparse matrix, shape [n_samples,n_features]
             Training data
 
         y : numpy array of shape [n_samples]
