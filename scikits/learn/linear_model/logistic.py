@@ -153,8 +153,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
         if len(classes) != 2:
             raise ValueError('min_C: number of classes != 2')
 
-        X = np.asanyarray(X, dtype=np.float64, order='C')
-        y = np.asanyarray(y, dtype=np.int32, order='C')
+        y = np.asanyarray(y)
 
         if self.fit_intercept:
             bias = self.intercept_scaling * np.ones((np.size(y), 1))
