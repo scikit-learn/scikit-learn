@@ -115,7 +115,8 @@ class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
 
     def min_C(self, X, y):
         """
-        if C is greater that min_C there is at least one non-zero coefficient.
+        Return the maximum value for C that yields a model with coefficients
+        and intercept set to zero.
 
         This value is valid if class_weight parameter in fit() is not set.
         min_C() raises ValueError if penalty is different from 'l1' or
