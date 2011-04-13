@@ -2,8 +2,11 @@ scikit-learn (0.7.1.dfsg-3) unstable; urgency=low
 
   * Do not build documentation in -a mode, to prevent timeouts on buildd
     servers
+  * Use JOBLIB_MULTIPROCESSING=0 to suppress use of multiprocessing by
+    joblib while running tests to prevent failures in chroots without
+    /dev/shm mounted
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 13 Apr 2011 16:27:14 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 13 Apr 2011 17:18:46 -0400
 
 scikit-learn (0.7.1.dfsg-2) unstable; urgency=low
 

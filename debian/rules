@@ -28,6 +28,7 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	: # Run unittests here against installed scikits.learn
 	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE_ROOT_DIR)/usr/lib/python$*/*/`; \
 	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
+	export JOBLIB_MULTIPROCESSING=0; \
 	cd build/; python$* /usr/bin/nosetests -s scikits.learn; \
 			   python$* /usr/bin/nosetests --with-doctest --doctest-extension=rst ../doc/
 else
