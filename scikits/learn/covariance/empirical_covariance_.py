@@ -43,7 +43,7 @@ def empirical_covariance(X):
       Maximum Likelihood Estimator of covariance
 
     """
-    X = np.asanyarray(X)
+    X = np.asanyarray(X, dtype=np.float)
     if X.ndim == 1:
         X = np.atleast_2d(X).T
 
@@ -94,7 +94,6 @@ class EmpiricalCovariance(BaseEstimator):
     
     def fit(self, X, **params):
         self._set_params(**params)
-        X = np.asanyarray(X, dtype=np.float64, order='C')
         covariance = empirical_covariance(X)
         self._set_estimates(covariance)
         

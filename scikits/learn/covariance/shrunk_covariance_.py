@@ -119,7 +119,7 @@ def ledoit_wolf(X):
     where mu = trace(cov) / n_features
     
     """
-    X = np.asanyarray(X, dtype=np.float64)
+    X = np.asanyarray(X, dtype=np.float)
     # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
         return np.atleast_2d((X**2).mean()), 0.
@@ -210,7 +210,7 @@ def oas(X):
     where mu = trace(cov) / n_features
     
     """
-    X = np.asanyarray(X, dtype=np.float64)
+    X = np.asanyarray(X, dtype=np.float)
     # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
         return np.atleast_2d((X**2).mean()), 0.

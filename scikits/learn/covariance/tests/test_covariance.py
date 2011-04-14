@@ -32,6 +32,11 @@ def test_covariance():
     assert_array_almost_equal(empirical_covariance(X_1d), cov.covariance_, 4)
     assert_almost_equal(cov.mse(empirical_covariance(X_1d)), 0)
 
+    # test integer type
+    X_integer = np.asarray([[0,1],[1,0]])
+    result = np.asarray([[0.5,0],[0,0.5]])
+    assert_array_almost_equal(empirical_covariance(X_integer), result)
+
 def test_shrunk_covariance():
     """Tests ShrunkCovariance module on a simple dataset.
     
