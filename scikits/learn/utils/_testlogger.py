@@ -175,7 +175,7 @@ progress_step
 ...
 [scikits.learn.utils.testlogger_verbose] Iteration 2000 done
 
->>> for count in range(2000): # doctest: -ELLIPSIS
+>>> for count in range(2000): # doctest:
 >>>     standard_logger.progress_dot()
 [scikits.learn.utils.testlogger_standard] Iteration 1000 done
 [scikits.learn.utils.testlogger_standard] Iteration 2000 done
@@ -184,9 +184,11 @@ progress_step
 >>>     laconic_logger.progress_dot()
 
 FROM HERE: questionnable ideas
->>> standard_logger.progress_complete()
-[scikits.learn.utils.testlogger_standard] Successfully completed 2000 iterations
->>> standard_logger.percent_print_every(10) # every 10 percent, requires a target
+>>> standard_logger.progress_complete() # doctest: +NORMALIZE_WHITESPACE
+[scikits.learn.utils.testlogger_standard]
+Successfully completed 2000 iterations
+>>> standard_logger.percent_print_every(10)
+... # every 10 percent, requires a target
 >>> standard_logger.percent_target(1000) # the scale. rename function?
 >>> for count in range(2000):
 >>>     standard_logger.progress_step()
@@ -213,4 +215,3 @@ FROM HERE: questionnable ideas
 
 
 """
-
