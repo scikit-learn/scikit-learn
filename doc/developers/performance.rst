@@ -11,64 +11,68 @@ code for the scikit-learn project.
 Python, Cython or C/C++?
 ========================
 
+.. currentmodule:: scikits.learn
+
 In general, the scikit-learn project emphasizes the **readability** of
 the source code to make it easy for the project users to dive into the
 source code so as to understand how the algorithm behaves on their data
 but also for ease of maintanability (by the developers).
 
 When implementing a new algorithm is thus recommended to **start
-implementing it in python using numpy and scipy** by taking care of avoiding
+implementing it in Python using Numpy and Scipy** by taking care of avoiding
 looping code using the vectorized idioms of those libraries. In practice
 this means trying to **replace any nested for loops by calls to equivalent
-numpy array methods**. The goal is to avoid the CPU wasting time in the
-python interpreter rather than crunching numbers to fit your statistical
+Numpy array methods**. The goal is to avoid the CPU wasting time in the
+Python interpreter rather than crunching numbers to fit your statistical
 model.
 
-However sometimes an algorithm cannot be expressed efficiently in simple
+Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized numpy code. In this case, the recommended strategy is the
 following:
 
-  1. **Profile** the python implementation to find the main bottleneck and isolate
-     it in a **dedicated module level function**. This function will be
-     reimplemented as a compiled extension module.
+  1. **Profile** the Python implementation to find the main bottleneck and
+     isolate it in a **dedicated module level function**. This function
+     will be reimplemented as a compiled extension module.
 
   2. If there exists a well maintained BSD or MIT **C/C++** implementation
-     of the same algorithm that is not too big, you can write a **cython
-     wrapper** for it and include a copy of the source code of the
-     library in the scikit-learn source tree: this strategy is used
-     for Support Vector Machine and logistic regression (wrappers for
-     liblinear and libsvm).
+     of the same algorithm that is not too big, you can write a
+     **Cython wrapper** for it and include a copy of the source code
+     of the library in the scikit-learn source tree: this strategy is
+     used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
+     :class:`linear_model.LogisticRegression` (wrappers for liblinear
+     and libsvm).
 
-  3. Otherwise, write an optimized version of your python function using
-     **cython** directly. This strategy is used for the
-     :class:`scikits.learn.linear_model.ElasticNet` class for instance.
+  3. Otherwise, write an optimized version of your Python function using
+     **Cython** directly. This strategy is used
+     for the :class:`linear_model.ElasticNet` and
+     :class:`linear_model.SGDClassifier` classes for instance.
 
-  4. **Move the python version of the function in the tests** and use it to
-     check that the results of the compiled extension are consistent with the
-     gold standard, easy to debug python version.
+  4. **Move the Python version of the function in the tests** and use
+     it to check that the results of the compiled extension are consistent
+     with the gold standard, easy to debug Python version.
 
   5. Once the code is optimized (not simple bottleneck spottable by
      profiling), check whether it is possible to have **coarse grained
      parallelism** that is amenable to **multi-processing** by using the
      ``joblib.Parallel`` class.
 
-When using cython, include the generated C source code alongside with
-the cython source code. The goal is to make it possible to install the
-scikit on any machine with python, numpy, scipy and C/C++ compiler.
+When using Cython, include the generated C source code alongside with
+the Cython source code. The goal is to make it possible to install the
+scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
 
 .. _profiling-python-code:
 
-Profiling python code
+Profiling Python code
 =====================
 
-In order to profile python we recommend to write a script that loads
-and prepare you data and then use the ipython integrated python profiler
+In order to profile Python code we recommend to write a script that
+loads and prepare you data and then use the IPython integrated profiler
 for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
-of the scikit. Let us setup a new ipython session and load the digits dataset
-and as in the :ref:`example_decomposition_plot_nmf.py` example::
+of the scikit. Let us setup a new IPython session and load the digits
+dataset and as in the :ref:`example_decomposition_plot_nmf.py` example::
 
   In [1]: from scikits.learn.decomposition import NMF
 
@@ -76,10 +80,18 @@ and as in the :ref:`example_decomposition_plot_nmf.py` example::
 
   In [3]: X = load_digits().data
 
-Let us first have a look at the overall performance profile using the ``%prun``
+Before starting the profiling session and engaging in tentative
+optimization iterations, it is important to measure the total execution
+time of the function we want to optimize without any kind of profiler
+overhead and save it somewhere for later reference::
+
+  In [4]: %timeit NMF(n_components=16, tol=1e-2).fit(X)
+  1 loops, best of 3: 1.7 s per loop
+
+To have have a look at the overall performance profile using the ``%prun``
 magic command::
 
-  In [4]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
+  In [5]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
            14496 function calls in 1.682 CPU seconds
 
      Ordered by: internal time
@@ -96,15 +108,55 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
+The ``totime`` columns is the most interesting: it gives to total time spent
+executing the code of a given function ignoring the time spent in executing the
+sub-functions. The real total time (local code + sub-function calls) is given by
+the ``cumtime`` column.
 
 Note the use of the ``-l nmf.py`` that restricts the output to lines that
 contains the "nmf.py" string. This is useful to have a quick look at the hotspot
-of the nmf python module it-self ignoring anything else.
+of the nmf Python module it-self ignoring anything else.
 
-The above results show that the ``_nls_subproblem`` function is the hotspot: it
-takes around 60% of the time of the module. In order to better understand the
-profile of this specific function, let us install ``line-prof`` and wire it to
-ipython::
+Here is the begining of the output of the same command without the ``-l nmf.py``
+filter::
+
+  In [5] %prun NMF(n_components=16, tol=1e-2).fit(X)
+           16159 function calls in 1.840 CPU seconds
+
+     Ordered by: internal time
+
+     ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+       2833    0.653    0.000    0.653    0.000 {numpy.core._dotblas.dot}
+         46    0.651    0.014    1.636    0.036 nmf.py:151(_nls_subproblem)
+       1397    0.171    0.000    0.171    0.000 nmf.py:18(_pos)
+       2780    0.167    0.000    0.167    0.000 {method 'sum' of 'numpy.ndarray' objects}
+          1    0.064    0.064    1.840    1.840 nmf.py:352(fit_transform)
+       1542    0.043    0.000    0.043    0.000 {method 'flatten' of 'numpy.ndarray' objects}
+        337    0.019    0.000    0.019    0.000 {method 'all' of 'numpy.ndarray' objects}
+       2734    0.011    0.000    0.181    0.000 fromnumeric.py:1185(sum)
+          2    0.010    0.005    0.010    0.005 {numpy.linalg.lapack_lite.dgesdd}
+        748    0.009    0.000    0.065    0.000 nmf.py:28(norm)
+  ...
+
+The above results show that the execution is largely dominated by
+dot products operations (delegated to blas). Hence there is probably
+no huge gain to expect by rewriting this code in Cython or C/C++: in
+this case out of the 1.7s total execution time, almost 0.7s are spent
+in compiled code we can consider optimal. By rewriting the rest of the
+Python code and assuming we could achieve a 1000% boost on this portion
+(which is highly unlikely given the shallowness of the Python loops),
+we would not gain more than a 3x speed-up globally.
+
+Hence major improvements can only be achieved by algorithmic improvements
+in this particular example (e.g. trying to find operation that are both
+costly and useless to avoid computing then rather than trying to optimize
+their implementation).
+
+It is however still interesting to check what's happening inside the
+``_nls_subproblem`` function which is the hotspot if we only consider
+Python code: it takes around 100% of the cumulated time of the module. In
+order to better understand the profile of this specific function, let
+us install ``line-prof`` and wire it to IPython::
 
   $ pip install line-prof
   $ vim ~/.ipython/ipy_user_conf.py
@@ -119,7 +171,7 @@ Towards the end of the file, define the ``%lprun`` magic::
   import line_profiler
   ip.expose_magic('lprun', line_profiler.magic_lprun)
 
-Now restart ipython and let us use this new toy::
+Now restart IPython and let us use this new toy::
 
   In [1]: from scikits.learn.datasets import load_digits
 
@@ -174,13 +226,16 @@ pin-point the most expensive expressions that would deserve additional care.
 Profiling compiled extensions
 =============================
 
-TODO: sample profiling session using YEP
+When working with compiled extensions (written in C/C++ with a wrapper or
+directly as Cython extension), the default Python profiler is useless:
+we need a dedicated tool to instrospect what's happening inside the
+compiled extension it-self.
 
 - https://github.com/fabianp/yep
 - http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
 
 
-Performance tips for the cython developer
+Performance tips for the Cython developer
 =========================================
 
 TODO: html report, type declarations, bound checks, division by zero checks,
