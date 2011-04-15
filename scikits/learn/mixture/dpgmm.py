@@ -6,6 +6,8 @@ from scikits.learn import cluster
 
 from scipy.special import digamma, gammaln
 
+from scipy import linalg
+
 # Author: Alexandre Passos (alexandre.tp@gmail.com)
 #
 # Based on mixture.py by:
@@ -135,10 +137,10 @@ class DPGMM(mixture.GMM):
         self._covars = covars
 
     def _get_covars(self):
-        return [np.linalg.pinv(c) for c in self._get_precisions()]
+        return [linalg.pinv(c) for c in self._get_precisions()]
 
     def _set_covars(self, covars):
-        self._covars = [np.linalg.pinv(c) for c in covars]
+        self._covars = [linalg.pinv(c) for c in covars]
 
     precisions = property(_get_precisions, _set_covars)
     covars = property(_get_covars, _set_covars)
@@ -246,7 +248,7 @@ class DPGMM(mixture.GMM):
                 for i in xrange(1, self._X.shape[0]):
                     num += self._X[i] * self._z[i, k]
                 num = np.dot(cov, num)
-                self._means[k] = np.linalg.lstsq(den, num)[0]
+                self._means[k] = linalg.lstsq(den, num)[0]
 
     def _update_ab(self):
         if self.cvtype == 'spherical':
@@ -276,9 +278,9 @@ class DPGMM(mixture.GMM):
                     dif = self._X[i] - self._means[k]
                     self._B += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
                                                       dif.reshape((1, -1)))
-            self._B = np.linalg.pinv(self._B)
+            self._B = linalg.pinv(self._B)
             self._covars = self._a * self._B
-            self._detB = np.linalg.det(self._B)
+            self._detB = linalg.det(self._B)
         elif self.cvtype == 'full':
             for k in xrange(self.n_states):
                 T = np.sum(self._z.T[k])
@@ -288,9 +290,9 @@ class DPGMM(mixture.GMM):
                     dif = self._X[i] - self._means[k]
                     self._B[k] += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
                                                          dif.reshape((1, -1)))
-                self._B[k] = np.linalg.pinv(self._B[k])
+                self._B[k] = linalg.pinv(self._B[k])
                 self._covars[k] = self._a[k] * self._B[k]
-                self._detB[k] = np.linalg.det(self._B[k])
+                self._detB[k] = linalg.det(self._B[k])
 
     def _monitor(self, monitor, n, end=False):
         if monitor:
