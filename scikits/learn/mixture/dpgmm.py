@@ -62,11 +62,11 @@ class DPGMM(mixture.GMM):
 
     alpha : float, optional
         Real number representing the concentration parameter of
-        the dirichlet process. Intuitively, the DP is as likely
-        to start a new cluster for a point as it is to add that
-        point to a cluster with alpha elements. A higher alpha
-        means more clusters, as the expected number of clusters
-        is alpha*log(N). Defaults to 1.
+        the dirichlet process. Intuitively, the Dirichler Process
+        is as likely to start a new cluster for a point as it is 
+        to add that point to a cluster with alpha elements. A 
+        higher alpha means more clusters, as the expected number 
+        of clusters is alpha*log(N). Defaults to 1.
 
 
     Attributes
@@ -531,11 +531,10 @@ class VBGMM(DPGMM):
 
     alpha : float, optional
         Real number representing the concentration parameter of
-        the dirichlet distribution. Intuitively, the DP is as likely
-        to start a new cluster for a point as it is to add that
-        point to a cluster with alpha elements. A higher alpha
-        means more clusters, as the expected number of clusters
-        is alpha*log(N). Defaults to 1.
+        the dirichlet distribution. Intuitively, the higher the
+        value of alpha the more likely the variational mixture of
+        gaussians model will use all components it can. Defaults 
+        to 1.
 
 
     Attributes

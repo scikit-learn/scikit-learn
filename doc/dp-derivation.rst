@@ -4,10 +4,10 @@ Variational Gaussian Mixture Models
 
 This implementation seems to work.
 
-The DP variational GMM has the following advantages:
+The Dirichlet Process variational GMM has the following advantages:
 
-  1. You don't need to specify a priori the number of components (just an
-     upper bound on its value) 
+  1. You don't need to specify a priori the number of components (just
+     an upper bound on its value)
   2. The covariance matrix never diverges, so the
      full model is safe even with one or two examples per cluster 
   3. All estimates are regularized 
@@ -20,8 +20,8 @@ It has the following disadvantages:
      restarts might be a good idea
 
 For (1) and (3), however, you can use the VBGMM implementation which
-doesn't use the DP but has reasonably exchangeable components. You do
-lose advantage (1) as well, unfortunately.
+doesn't use the Dirichlet Process but has reasonably exchangeable
+components. You do lose advantage (1) as well, unfortunately.
 
 The API is identical to that of gmm with the main difference that this
 returns precision instead of covariance matrices, as these are a lot
