@@ -27,7 +27,7 @@ X = np.r_[np.dot(np.random.randn(n, 2), C),
           np.random.randn(n, 2) + np.array([3, 3])]
 
 for p, alpha in enumerate([0.01, 1.]):
-    # fit a give-component dirichlet process mixture model on the
+    # fit a five-component dirichlet process mixture model on the
     # data.
     clf = mixture.DPGMM(n_states=5, cvtype='diag', alpha=alpha)
     clf.fit(X)
