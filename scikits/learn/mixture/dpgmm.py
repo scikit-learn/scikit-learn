@@ -120,6 +120,14 @@ class DPGMM(mixture.GMM):
     score(X)
         Compute the log likelihood of `X` under the model.
 
+    See Also
+    --------
+    GMM : Finite gaussian mixture model fit with EM
+
+    VBGMM : Finite gaussian mixture model fit with a variational
+    algorithm, better for situations where there might be too little
+    data to get a good estimate of the covariance matrix.
+
     """
 
     def __init__(self, n_states=1, cvtype='diag', alpha=1.0):
@@ -587,6 +595,14 @@ class VBGMM(DPGMM):
         Generate `n` samples from the posterior for the model.
     score(X)
         Compute the log likelihood of `X` under the model.
+
+
+    See Also
+    --------
+    GMM : Finite gaussian mixture model fit with EM
+
+    DPGMM : Ininite gaussian mixture model, using the dirichlet
+    process, fit with a variational algorithm
     """
 
     def __init__(self, n_states=1, cvtype='diag', alpha=1.0):
