@@ -15,14 +15,21 @@ from ..grid_search import GridSearchCV
 
 def _solve(A, b, solver):
     # helper method for ridge_regression, A is symmetric positive
-    if solver == 'cg':
-        # this solver cannot handle a 2-d b.
+
+    if solver == 'auto':
+        # sparse_cg cannot handle a 2-d b.
+        if hasattr(A, 'todense') and b.ndim < 2:
+            solver = 'sparse_cg'
+        else:
+            solver = 'dense_cholesky'
+
+    if solver == 'sparse_cg':
         from scipy.sparse import linalg as sp_linalg
         sol, error = sp_linalg.cg(A, b)
         if error:
             raise ValueError("Failed with error code %d" % error)
         return sol
-    elif solver == 'default':
+    elif solver == 'dense_cholesky':
         from scipy import linalg
         if hasattr(A, 'todense'):
             A = A.todense()
@@ -31,7 +38,7 @@ def _solve(A, b, solver):
         raise NotImplementedError('Solver %s not implemented' % solver)
 
 
-def ridge_regression(X, y, alpha, sample_weight=1.0, solver='default'):
+def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto'):
     """
     Solve the ridge equation by the method of normal equations.
 
@@ -49,11 +56,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='default'):
     sample_weight : float or numpy array of shape [n_samples]
         Individual weights for each sample
 
-    solver : {'default', 'cg'}
-        Solver to use in the computational routines. 'default'
-        will use the standard scipy.linalg.solve function, 'cg'
+    solver : {'auto', 'dense_cholesky', 'sparse_cg'}, optional
+        Solver to use in the computational routines. 'delse_cholesky'
+        will use the standard scipy.linalg.solve function, 'sparse_cg'
         will use the a conjugate gradient solver as found in
-        scipy.sparse.linalg.cg.
+        scipy.sparse.linalg.cg while 'auto' will chose the most
+        appropiate depending on the matrix X.
     """
 
     n_samples, n_features = X.shape
@@ -128,7 +136,7 @@ class Ridge(LinearModel):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
 
-    def fit(self, X, y, sample_weight=1.0, solver='default', **params):
+    def fit(self, X, y, sample_weight=1.0, solver='auto', **params):
         """
         Fit Ridge regression model
 
@@ -143,11 +151,13 @@ class Ridge(LinearModel):
         sample_weight : float or numpy array of shape [n_samples]
             Individual weights for each sample
 
-        solver : {'default', 'cg'}
-            Solver to use in the computational routines. 'default'
-            will use the standard scipy.linalg.solve function, 'cg'
-            will use the a conjugate gradient solver as found in
-            scipy.sparse.linalg.cg.
+        solver : {'auto', 'dense_cholesky', 'sparse_cg'}
+            Solver to use in the computational
+            routines. 'delse_cholesky' will use the standard
+            scipy.linalg.solve function, 'sparse_cg' will use the a
+            conjugate gradient solver as found in
+            scipy.sparse.linalg.cg while 'auto' will chose the most
+            appropiate depending on the matrix X.
 
         Returns
         -------
@@ -188,7 +198,7 @@ class RidgeClassifier(Ridge):
     a one-versus-all approach.
     """
 
-    def fit(self, X, y):
+    def fit(self, X, y, solver='auto'):
         """
         Fit Ridge regression model.
 
@@ -200,13 +210,21 @@ class RidgeClassifier(Ridge):
         y : numpy array of shape [n_samples]
             Target values
 
+        solver : {'auto', 'dense_cholesky', 'sparse_cg'}
+            Solver to use in the computational
+            routines. 'delse_cholesky' will use the standard
+            scipy.linalg.solve function, 'sparse_cg' will use the a
+            conjugate gradient solver as found in
+            scipy.sparse.linalg.cg while 'auto' will chose the most
+            appropiate depending on the matrix X.
+
         Returns
         -------
         self : returns an instance of self.
         """
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
-        Ridge.fit(self, X, Y)
+        Ridge.fit(self, X, Y, solver=solver)
         return self
 
     def decision_function(self, X):
