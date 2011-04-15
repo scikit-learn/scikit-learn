@@ -41,7 +41,14 @@ def lognormalize(v):
 
 
 class DPGMM(mixture.GMM):
-    """Variational Inference for the Infinite Gaussian Mixture Model
+    """Variational Inference for the Infinite Gaussian Mixture Model.
+
+    DPGMM stands for Dirichlet Process Gaussian Mixture Model, and it
+    is an infinite mixture model with the Dirichlet Process as a prior
+    distribution on the number of clusters. In practice the
+    approximate inference algorithm uses a truncated distribution with
+    a fixed maximum number of components, but almost always the number
+    of components actually used depends on the data.
 
     Stick-breaking Representation of a Gaussian mixture model
     probability distribution. This class allows for easy and efficient
