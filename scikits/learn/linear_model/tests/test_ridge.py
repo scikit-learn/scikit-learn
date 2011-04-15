@@ -166,7 +166,7 @@ def _test_ridge_loo(filter_):
     y_pred = ridge_gcv.predict(filter_(X_diabetes))
 
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
-                              Y_pred)
+                              Y_pred, decimal=5)
 
     return ret
 
@@ -202,7 +202,7 @@ def _test_multi_ridge_diabetes(filter_):
     ridge.fit(filter_(X_diabetes), y_diabetes)
     y_pred = ridge.predict(filter_(X_diabetes))
     assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
-                              Y_pred)
+                              Y_pred, decimal=3)
 
 def _test_ridge_classifiers(filter_):
     for clf in (RidgeClassifier(), RidgeClassifierCV()):
