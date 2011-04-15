@@ -13,7 +13,6 @@ import numpy as np
 
 from scikits.learn.cluster import MiniBatchKMeans, KMeans
 from scikits.learn.datasets import load_digits
-from scikits.learn.pca import PCA
 from scikits.learn.preprocessing import scale
 
 np.random.seed(42)
@@ -22,7 +21,7 @@ digits = load_digits()
 data = scale(digits.data)
 
 n_samples, n_features = data.shape
-k = len(np.unique(digits.target))
+n_digits = len(np.unique(digits.target))
 
 def mini_batch(X, batch_size, k = 10, iterations = 300):
     km = MiniBatchKMeans(init='k-means++',
@@ -39,21 +38,21 @@ def mini_batch(X, batch_size, k = 10, iterations = 300):
     return km
 
 
-print "n_digits: %d" % k 
+print "n_digits: %d" % n_digits
 print "n_features: %d" % n_features
 print "n_samples: %d" % n_samples
 print
 
 print "Raw k-means with k-means++ init..."
 t0 = time()
-km = KMeans(init='k-means++', k=k, n_init=10).fit(data)
+km = KMeans(init='k-means++', k=n_digits, n_init=10).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
 print "Mini batch k-means with k-means++ init, chunk 600..."
 t0 = time()
-km = mini_batch(data, 600)
+km = mini_batch(data, 600, k=n_digits)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
@@ -61,21 +60,21 @@ print
 
 print "Mini batch k-means with k-means++ init, chunk 300..."
 t0 = time()
-km = mini_batch(data, 300, k = k)
+km = mini_batch(data, 300, k=n_digits)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
 print "Mini batch k-means with k-means++ init, chunk 150..."
 t0 = time()
-km = mini_batch(data, 150, k = k)
+km = mini_batch(data, 150, k=n_digits)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
 print "Mini batch k-means with k-means++ init, chunk 100..."
 t0 = time()
-km = mini_batch(data, 100, k=k)
+km = mini_batch(data, 100, k=n_digits)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
