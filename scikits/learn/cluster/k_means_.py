@@ -115,7 +115,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
 # K-means estimation by EM (expectation maximisation)
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
-                    tol=1e-4, rng=None, copy_x=True, batch=False, chunk=300):
+                    tol=1e-4, rng=None, copy_x=True):
     """ K-means clustering algorithm.
 
     Parameters
@@ -212,14 +212,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         # iterations
         for i in range(max_iter):
             centers_old = centers.copy()
-            if batch:
-                centers = _mini_batch_step(X, centers, i, chunk, v,
+            labels, inertia = _e_step(X, centers,
                                         x_squared_norms=x_squared_norms)
-
-            else:
-                labels, inertia = _e_step(X, centers,
-                                            x_squared_norms=x_squared_norms)
-                centers = _m_step(X, labels, k)
+            centers = _m_step(X, labels, k)
 
             if verbose:
                 print 'Iteration %i, inertia %s' % (i, inertia)
@@ -245,7 +240,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
 def _calculate_labels_inertia(X, centers):
     """
-    I return the inertia and the labels of the dataset and centers I am given
+    Compute the inertia and the labels of the given samples and centers.
     """
     norm = (X**2).sum(axis=1)
     distance = euclidean_distances(centers, X, norm, squared=True)
@@ -339,6 +334,27 @@ def _m_step(x, z, k):
 
 
 def _init_centroids(X, k, init, rng=None, x_squared_norms=None):
+    """
+    Compute the initial centroids
+
+    Parameters
+    ----------
+
+    X: array, shape (n_samples, n_features)
+
+    k: int
+        number of centroids
+
+    init: {'k-means++', 'random' or ndarray or callable}n optional
+        Method for initialisation
+    
+    rng: numpy.RandomState, optional
+        The generator used to initialise the centers. Defaults to numpy.random
+
+    x_squared_norms:  array, shape (n_samples,), optional
+        Squared euclidean norm of each data point. Pass it if you have it at
+        hands already to avoid it being recomputed here. Default: None
+    """
     if rng is None:
         rng = np.random
 
@@ -635,7 +651,7 @@ class MiniBatchKMeans(KMeans):
                                             rng=self.rng,
                                             x_squared_norms=x_squared_norms)
             self.v = np.zeros(self.k)
-        self.cluster_centers, self.v = _mini_batch_step(X, 
+        self.cluster_centers, self.v = _mini_batch_step(X,
                                                 self.cluster_centers,
                                                 self.v,
                                                 x_squared_norms=x_squared_norms)

@@ -13,7 +13,6 @@ import numpy as np
 
 from scikits.learn.cluster import MiniBatchKMeans, KMeans
 from scikits.learn.datasets import load_digits
-from scikits.learn.pca import PCA
 from scikits.learn.preprocessing import scale
 
 np.random.seed(42)
@@ -24,18 +23,17 @@ data = scale(digits.data)
 n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
 
-def mini_batch(X, chunk, iterations):
+def mini_batch(X, batch_size, k = 10, iterations = 300):
     km = MiniBatchKMeans(init='k-means++',
-                         k=n_digits,
-                         n_init=10)
+                         k=k)
 
     for i in xrange(iterations):
-        j = i * chunk % len(data)
-        sample = data[j:j+chunk]
+        j = i * batch_size % len(data)
+        sample = X[j:j+batch_size]
         km.partial_fit(sample)
 
-    # That last calculation is done only to get the inertia, to be able to compare
-    # to the previous calculation
+    # That last calculation is done only to get the inertia, to be able to
+    # compare to the previous calculation
     km.partial_fit(data)
     return km
 
@@ -54,7 +52,7 @@ print
 
 print "Mini batch k-means with k-means++ init, chunk 600..."
 t0 = time()
-km = mini_batch(data, 600, 300)
+km = mini_batch(data, 600, k=n_digits)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
@@ -62,21 +60,21 @@ print
 
 print "Mini batch k-means with k-means++ init, chunk 300..."
 t0 = time()
-km = mini_batch(data, 600, 300)
+km = mini_batch(data, 300, k=n_digits)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
 print "Mini batch k-means with k-means++ init, chunk 150..."
 t0 = time()
-km = mini_batch(data, 600, 300)
+km = mini_batch(data, 150, k=n_digits)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
 print "Mini batch k-means with k-means++ init, chunk 100..."
 t0 = time()
-km = mini_batch(data, 600, 300)
+km = mini_batch(data, 100, k=n_digits)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print

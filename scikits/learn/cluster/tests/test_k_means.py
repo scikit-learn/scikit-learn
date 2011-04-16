@@ -27,17 +27,19 @@ def test_k_means_pp_init():
     # check error on dataset being too small
     assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
 
+
 def test_mini_batch_k_means_pp_init():
     np.random.seed(1)
-    sample = X[0:X.shape[0]/2]
+    sample = X[0:X.shape[0] / 2]
     km = MiniBatchKMeans(init="random").partial_fit(sample)
     # Let's recalculate the inertia on the whole dataset
     km.partial_fit(X)
     inertia = km.inertia_
-    km.partial_fit(X[X.shape[0]/2:])
+    km.partial_fit(X[X.shape[0] / 2:])
     # And again
     km.partial_fit(X)
     assert(km.inertia_ < inertia)
+
 
 def test_k_means_pp_random_init():
     np.random.seed(1)
