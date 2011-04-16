@@ -80,17 +80,17 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
     for c in xrange(1, k):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
-        rand_vals       = rng.random(n_local_trials) * current_pot
-        candidate_ids   = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
+        rand_vals = rng.random(n_local_trials) * current_pot
+        candidate_ids = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
 
         # Compute distances to center candidates
         distance_to_candidates = euclidean_distances(
             X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
         # Decide which candidate is the best
-        best_candidate  = None
-        best_pot        = None
-        best_dist_sq    = None
+        best_candidate = None
+        best_pot = None
+        best_dist_sq = None
         for trial in xrange(n_local_trials):
             # Compute potential when including center candidate
             new_dist_sq = np.minimum(closest_dist_sq,
@@ -99,13 +99,13 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
 
             # Store result if it is the best local trial so far
             if (best_candidate is None) or (new_pot < best_pot):
-                best_candidate  = candidate_ids[trial]
-                best_pot        = new_pot
-                best_dist_sq    = new_dist_sq
+                best_candidate = candidate_ids[trial]
+                best_pot = new_pot
+                best_dist_sq = new_dist_sq
 
         # Permanently add best center candidate found in local tries
-        centers[c]      = X[best_candidate]
-        current_pot     = best_pot
+        centers[c] = X[best_candidate]
+        current_pot = best_pot
         closest_dist_sq = best_dist_sq
 
     return centers
@@ -116,7 +116,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                     tol=1e-4, rng=None, copy_x=True):
-    """ K-means clustering algorithm.
+    """K-means clustering algorithm
 
     Parameters
     ----------
@@ -126,9 +126,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     k: int or ndarray
         The number of clusters to form as well as the number of
-        centroids to generate. If minit initialization string is
-        'matrix', or if a ndarray is given instead, it is
-        interpreted as initial cluster to use instead.
+        centroids to generate.
 
     max_iter: int, optional, default 300
         Maximum number of iterations of the k-means algorithm to run.
@@ -193,12 +191,14 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
             warnings.warn('Explicit initial center position passed: '
                           'performing only one init in the k-means')
             n_init = 1
-    'subtract of mean of x for more accurate distance computations'
-    Xmean = X.mean(axis=0)
+
+    # subtract of mean of x for more accurate distance computations
+    X_mean = X.mean(axis=0)
     if copy_x:
         X = X.copy()
-    X -= Xmean
-    'precompute squared norms of data points'
+    X -= X_mean
+
+    # precompute squared norms of data points
     x_squared_norms = X.copy()
     x_squared_norms **= 2
     x_squared_norms = x_squared_norms.sum(axis=1)
@@ -234,22 +234,19 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         best_centers = centers
         best_inertia = inertia
     if not copy_x:
-        X += Xmean
-    return best_centers + Xmean, best_labels, best_inertia
+        X += X_mean
+    return best_centers + X_mean, best_labels, best_inertia
 
 
 def _calculate_labels_inertia(X, centers):
-    """
-    Compute the inertia and the labels of the given samples and centers.
-    """
-    norm = (X**2).sum(axis=1)
+    """Compute the inertia and the labels of the given samples and centers"""
+    norm = (X ** 2).sum(axis=1)
     distance = euclidean_distances(centers, X, norm, squared=True)
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
-def _mini_batch_step(X, centers, v,  x_squared_norms=None):
-    """
-    Computation of the new centers for the Batch K Means algorithm
+def _mini_batch_step(X, centers, counts, x_squared_norms=None):
+    """Incrental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
     ----------
@@ -263,11 +260,7 @@ def _mini_batch_step(X, centers, v,  x_squared_norms=None):
          The iterator: it is used to calculate which section of the data to
          use for the computation of the new centers
 
-    chunk: int
-         The size of chunks of data to run the computation of the new
-           centers on
-
-    v: array, shape (k, )
+    counts: array, shape (k, )
          The vector in which we keep track of the numbers of elements in a
          cluster
 
@@ -279,32 +272,31 @@ def _mini_batch_step(X, centers, v,  x_squared_norms=None):
     centers: array, shape (k, n_features)
         The resulting centers
 
-
     """
-    # Let's split the data into chunks
-    m_norm = (X**2).sum(axis=1)
-    cache = euclidean_distances(centers, X, m_norm,
-                                squared=True).argmin(axis=0)
+    m_norm = (X ** 2).sum(axis=1)
+    cache = euclidean_distances(centers, X, m_norm, squared=True).argmin(
+        axis=0)
 
     k = centers.shape[0]
     for q in range(k):
-        mask = (cache == q)
-        c = mask.sum()
-        if np.any(mask):
-            centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + np.sum(X[mask],
-                                                                  axis=0))
-            v[q] += c
-    return centers, v
+        center_mask = (cache == q)
+        c = center_mask.sum()
+        if np.any(center_mask):
+            centers[q] = (1. / (counts[q] + c)) * (
+                counts[q] * centers[q] + np.sum(X[center_mask], axis=0))
+            counts[q] += c
+
+    return centers, counts
 
 
-def _m_step(x, z, k):
-    """ M step of the K-means EM algorithm
+def _m_step(X, z, k):
+    """M step of the K-means EM algorithm
 
     Computation of cluster centers/means
 
     Parameters
     ----------
-    x: array, shape (n_samples, n_features)
+    X: array, shape (n_samples, n_features)
 
     z: array, shape (n_samples)
         Current assignment
@@ -317,25 +309,24 @@ def _m_step(x, z, k):
     centers: array, shape (k, n_features)
         The resulting centers
     """
-    dim = x.shape[1]
+    dim = X.shape[1]
     centers = np.empty((k, dim))
     X_center = None
     for q in range(k):
-        this_center_mask = (z == q)
-        if not np.any(this_center_mask):
+        center_mask = (z == q)
+        if not np.any(center_mask):
             # The centroid of empty clusters is set to the center of
             # everything
             if X_center is None:
-                X_center = x.mean(axis=0)
+                X_center = X.mean(axis=0)
             centers[q] = X_center
         else:
-            centers[q] = np.mean(x[this_center_mask], axis=0)
+            centers[q] = np.mean(X[center_mask], axis=0)
     return centers
 
 
 def _init_centroids(X, k, init, rng=None, x_squared_norms=None):
-    """
-    Compute the initial centroids
+    """Compute the initial centroids
 
     Parameters
     ----------
@@ -345,9 +336,9 @@ def _init_centroids(X, k, init, rng=None, x_squared_norms=None):
     k: int
         number of centroids
 
-    init: {'k-means++', 'random' or ndarray or callable}n optional
+    init: {'k-means++', 'random' or ndarray or callable} optional
         Method for initialisation
-    
+
     rng: numpy.RandomState, optional
         The generator used to initialise the centers. Defaults to numpy.random
 
@@ -372,24 +363,6 @@ def _init_centroids(X, k, init, rng=None, x_squared_norms=None):
         raise ValueError("the init parameter for the k-means should "
             "be 'k-means++' or 'random' or an ndarray, "
             "'%s' (type '%s') was passed.")
-    return centers
-
-
-def _batch_m_step(x, z, k, centers, v):
-    """ M step of the Batch K-Means EM algorithm
-
-    Computation of cluster centers/means
-    """
-    dim = x.shape[1]
-    X_center = None
-    for q in range(k):
-        # This is the new center. Now let's weight the old center compared to
-        # that.
-        this_center_mask = (z == q)
-        c = this_center_mask.sum()
-        centers[q] = (1./(v[q] + c))*(v[q]*centers[q] + c*np.mean(x[this_center_mask],
-                                                              axis=0))
-        v[q] += c
     return centers
 
 
@@ -444,16 +417,14 @@ def _e_step(x, centers, precompute_distances=True, x_squared_norms=None):
 
 
 class KMeans(BaseEstimator):
-    """ K-Means clustering
+    """K-Means clustering
 
     Parameters
     ----------
 
     k : int or ndarray
         The number of clusters to form as well as the number of
-        centroids to generate. If init initialization string is
-        'matrix', or if a ndarray is given instead, it is
-        interpreted as initial cluster to use instead.
+        centroids to generate.
 
     max_iter : int
         Maximum number of iterations of the k-means algorithm for a
@@ -464,21 +435,17 @@ class KMeans(BaseEstimator):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    init : {'k-means++', 'random', 'points', 'matrix'}
+    init : {'k-means++', 'random' or an ndarray}
         Method for initialization, defaults to 'random':
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': generate k centroids from a Gaussian with mean and
-        variance estimated from the data.
-
-        'points': choose k observations (rows) at random from data for
+        'random': choose k observations (rows) at random from data for
         the initial centroids.
 
-        'matrix': interpret the k parameter as a k by M (or length k
-        array for one-dimensional data) array of initial centroids.
+        if init is an 2d array, it is used as a seed for the centroids
 
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
@@ -564,9 +531,6 @@ class MiniBatchKMeans(KMeans):
         'matrix', or if a ndarray is given instead, it is
         interpreted as initial cluster to use instead.
 
-    chunk: int
-        The size of the data to run the computation of the centers on.
-
     max_iter : int
         Maximum number of iterations of the k-means algorithm for a
         single run.
@@ -576,21 +540,17 @@ class MiniBatchKMeans(KMeans):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    init : {'k-means++', 'random', 'points', 'matrix'}
+    init : {'k-means++', 'random' or an ndarray}
         Method for initialization, defaults to 'random':
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': generate k centroids from a Gaussian with mean and
-        variance estimated from the data.
-
-        'points': choose k observations (rows) at random from data for
+        'random': choose k observations (rows) at random from data for
         the initial centroids.
 
-        'matrix': interpret the k parameter as a k by M (or length k
-        array for one-dimensional data) array of initial centroids.
+        if init is an 2d array, it is used as a seed for the centroids
 
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
@@ -632,31 +592,29 @@ class MiniBatchKMeans(KMeans):
         self.v = None
         self.cluster_centers = None
 
-    def partial_fit(self, X, **params):
-        """
-        Compute batch k means
-        """
+    def partial_fit(self, X, y=None, **params):
+        """Update k means estimate on a single mini-batch X"""
         X = self._check_data(X, **params)
         if hasattr(self.init, '__array__'):
             self.init = np.asarray(self.init)
 
         x_squared_norms = X.copy()
-        x_squared_norms **=2
+        x_squared_norms **= 2
         x_squared_norms = x_squared_norms.sum(axis=1)
 
         if self.v is None:
-            # This is the first time I call partial_fit on this object.
-            # Therefore, I need to initialise the cluster centers
-            self.cluster_centers = _init_centroids(X, self.k, self.init,
-                                            rng=self.rng,
-                                            x_squared_norms=x_squared_norms)
+            # this is the first call partial_fit on this object:
+            # initialise the cluster centers
+            self.cluster_centers = _init_centroids(
+                X, self.k, self.init, rng=self.rng,
+                x_squared_norms=x_squared_norms)
+
             self.v = np.zeros(self.k)
-        self.cluster_centers, self.v = _mini_batch_step(X,
-                                                self.cluster_centers,
-                                                self.v,
-                                                x_squared_norms=x_squared_norms)
-        self.inertia_, self.labels_ = _calculate_labels_inertia(X,
-                                                                self.cluster_centers)
+
+        self.cluster_centers, self.v = _mini_batch_step(
+            X, self.cluster_centers, self.v, x_squared_norms=x_squared_norms)
+
+        self.inertia_, self.labels_ = _calculate_labels_inertia(
+            X, self.cluster_centers)
+
         return self
-
-
