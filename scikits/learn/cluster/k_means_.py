@@ -588,8 +588,8 @@ class MiniBatchKMeans(KMeans):
         super(MiniBatchKMeans, self).__init__(k, init, n_init,
               verbose, rng=None, copy_x=True)
         # FIXME
-        # v is an array used to keep track of who went where
-        self.v = None
+        # counts is an array used to keep track of who went where
+        self.counts = None
         self.cluster_centers = None
 
     def partial_fit(self, X, y=None, **params):
@@ -602,17 +602,18 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms **= 2
         x_squared_norms = x_squared_norms.sum(axis=1)
 
-        if self.v is None:
+        if self.counts is None:
             # this is the first call partial_fit on this object:
             # initialise the cluster centers
             self.cluster_centers = _init_centroids(
                 X, self.k, self.init, rng=self.rng,
                 x_squared_norms=x_squared_norms)
 
-            self.v = np.zeros(self.k)
+            self.counts = np.zeros(self.k)
 
-        self.cluster_centers, self.v = _mini_batch_step(
-            X, self.cluster_centers, self.v, x_squared_norms=x_squared_norms)
+        self.cluster_centers, self.counts = _mini_batch_step(
+            X, self.cluster_centers, self.counts,
+            x_squared_norms=x_squared_norms)
 
         self.inertia_, self.labels_ = _calculate_labels_inertia(
             X, self.cluster_centers)
