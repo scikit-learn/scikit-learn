@@ -28,12 +28,11 @@ def test_l1_min_c():
         for X_label, X in Xs.items():
             for Y_label, Y in Ys.items():
                 for intercept_label, intercept_params in intercepts.items():
-                    desc = 'Test l1_min_c loss=%r %s %s %s' % \
-                           (loss, X_label, Y_label, intercept_label)
-                    check = lambda X, Y, loss, intercept_ps: \
-                                   check_l1_min_c(X, Y, loss, **intercept_ps)
-                    check.description = desc
-                    yield check, X, Y, loss, intercept_params
+                    check = lambda: check_l1_min_c(X, Y, loss,
+                                                   **intercept_params)
+                    check.description = 'Test l1_min_c loss=%r %s %s %s' % \
+                                      (loss, X_label, Y_label, intercept_label)
+                    yield check
 
 
 def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
