@@ -61,9 +61,7 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
 
     classes = np.unique(y)
     n_classes = np.size(classes)
-    if n_classes < 2:
-        raise ValueError('only one class')
-    elif n_classes == 2:
+    if n_classes <= 2:
         c = classes[0]
         y = y.reshape((1, -1))
         _y = np.empty(y.shape)
