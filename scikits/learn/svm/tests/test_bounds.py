@@ -47,8 +47,7 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     }[loss, sp.issparse(X)]
 
     clf.fit_intercept = fit_intercept
-    if clf.intercept_scaling is not None:
-        clf.intercept_scaling = intercept_scaling
+    clf.intercept_scaling = intercept_scaling
 
     clf.C = min_c
     clf.fit(X, y)

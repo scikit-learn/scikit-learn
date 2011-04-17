@@ -1,3 +1,4 @@
+import operator
 import numpy as np
 
 
@@ -48,7 +49,7 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
     if sp.issparse(X):
         X = sp.csc_matrix(X)
         hstack = sp.hstack
-        dot = lambda x, y: x * y
+        dot = operator.mul
     else:
         X = np.asanyarray(X)
         hstack = np.hstack
