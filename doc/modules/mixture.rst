@@ -42,9 +42,28 @@ using the :meth:`GMM.predict` method.
     * See :ref:`example_mixture_plot_gmm_classifier.py` for an example of
       using a GMM as a classifier on the iris dataset.
 
-    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
-      confidence ellipsoids.
-
     * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
       density estimation.
 
+DPGMM classifier
+==============
+
+.. currentmodule:: scikits.learn.mixture
+
+The :class:`DPGMM` object implements a variant of the Gaussian mixture
+model with a variable (but bounded) number of components using the
+Dirichlet Process. The API is identical to :class:`GMM`. 
+
+
+.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_2.png
+   :target: ../auto_examples/cluster/plot_gmm_classifier.html
+   :align: center
+   :scale: 75%
+
+.. topic:: Examples:
+
+    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
+      confidence ellipsoids for both :class:`GMM` and :class:`DPGMM`.
+
+For the full mathematical derivation of the algorithm, see
+ * :ref:`dp-derivation`
