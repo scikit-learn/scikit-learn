@@ -5,20 +5,22 @@ import numpy as np
 def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
     """
     Return the maximum value for C that yields a model with coefficients
-    and intercept set to zero for l1 penalized liblinear classifiers.
+    and intercept set to zero for l1 penalized classifiers,
+    such as LinearSVC with penalty='l1' and linear_model.LogisticRegression
+    with penalty='l1'.
 
     This value is valid if class_weight parameter in fit() is not set.
 
     Parameters
     ----------
-    X : matrix, shape = [n_samples, n_features]
+    X : array-like or sparse matrix, shape = [n_samples, n_features]
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
     y : array, shape = [n_samples]
         Target vector relative to X
 
-    loss : string, 'l2' or 'log' (default 'l2')
+    loss : {'l2', 'log'}, default to 'l2'
         Specifies the loss function.
         With 'l2' it is the l2 loss (a.k.a. squared hinge loss).
         With 'log' it is the loss of logistic regression models.
