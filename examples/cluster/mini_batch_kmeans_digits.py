@@ -1,9 +1,9 @@
 """
-===========================================================================
-A comparison of batch K-Means and normal K-Means on handwritten digits data
-===========================================================================
+========================================================================
+A comparison of minibatch K-Means and K-Means on handwritten digits data
+========================================================================
 
-Comparing the batch K-Means with the normal K-Means algorithm in terms of
+Comparing the minibatch K-Means with the normal K-Means algorithm in terms of
 runtime and quality of the results.
 """
 print __doc__
@@ -65,13 +65,6 @@ print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
-print "Mini batch k-means with k-means++ init, chunk 150..."
-t0 = time()
-km = mini_batch(data, 150, k=n_digits)
-print "done in %0.3fs" % (time() - t0)
-print "inertia: %f" % km.inertia_
-print
-
 print "Mini batch k-means with k-means++ init, chunk 100..."
 t0 = time()
 km = mini_batch(data, 100, k=n_digits)
@@ -79,4 +72,9 @@ print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print
 
-
+print "Mini batch k-means with k-means++ init, chunk 20..."
+t0 = time()
+km = mini_batch(data, 20, k=n_digits)
+print "done in %0.3fs" % (time() - t0)
+print "inertia: %f" % km.inertia_
+print
