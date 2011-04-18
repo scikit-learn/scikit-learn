@@ -37,7 +37,7 @@ cimport libsvm
 
 ################################################################################
 # Internal variables
-_libsvm_kernel_types = ('linear', 'poly', 'rbf', 'sigmoid', 'precomputed')
+LIBSVM_KERNEL_TYPES = ('linear', 'poly', 'rbf', 'sigmoid', 'precomputed')
 
 
 ################################################################################
@@ -137,7 +137,7 @@ def fit(
                (sample_weight.shape[0], X.shape[0])
 
     # set libsvm problem
-    kernel_index = _libsvm_kernel_types.index(kernel)
+    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     problem = set_problem(
         X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     param = set_parameter(
@@ -283,7 +283,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef svm_parameter *param
     cdef svm_model *model
 
-    kernel_index = _libsvm_kernel_types.index(kernel)
+    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     param = set_parameter(svm_type, kernel_index, degree, gamma, coef0,
                           nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0],
@@ -358,7 +358,7 @@ def predict_proba(
     cdef svm_parameter *param
     cdef svm_model *model
 
-    kernel_index = _libsvm_kernel_types.index(kernel)
+    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     param = set_parameter(svm_type, kernel_index, degree, gamma,
                           coef0, nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
@@ -411,7 +411,7 @@ def decision_function(
     cdef svm_model *model
     cdef np.npy_intp n_class
 
-    kernel_index = _libsvm_kernel_types.index(kernel)
+    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     param = set_parameter(svm_type, kernel_index, degree, gamma,
                           coef0, nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
@@ -514,7 +514,7 @@ def cross_validation(
         raise ValueError("Number of samples is less than number of folds")
 
     # set libsvm problem
-    kernel_index = _libsvm_kernel_types.index(kernel)
+    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     problem = set_problem(
         X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     param = set_parameter(

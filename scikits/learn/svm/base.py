@@ -4,7 +4,7 @@ from . import libsvm, liblinear
 from ..base import BaseEstimator
 
 
-_libsvm_impl = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
+LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
 
 def _get_class_weight(class_weight, y):
@@ -37,9 +37,9 @@ class BaseLibSVM(BaseEstimator):
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
                  tol, C, nu, epsilon, shrinking, probability):
 
-        if not impl in _libsvm_impl:
+        if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
-                _libsvm_impl, impl))
+                LIBSVM_IMPL, impl))
         if hasattr(kernel, '__call__'):
             self.kernel_function = kernel
             self.kernel = 'precomputed'
@@ -116,7 +116,7 @@ class BaseLibSVM(BaseEstimator):
                      _get_class_weight(class_weight, y)
 
         # check dimensions
-        solver_type = _libsvm_impl.index(self.impl)
+        solver_type = LIBSVM_IMPL.index(self.impl)
         if solver_type != 2 and X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
                              "X has %s features, but y has %s." % \
@@ -132,9 +132,12 @@ class BaseLibSVM(BaseEstimator):
 
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
-        self.probB_ = libsvm.fit(X, y, svm_type=solver_type,
-        sample_weight=sample_weight, class_weight=class_weight,
-        class_weight_label=class_weight_label, **self._get_params())
+        self.probB_ = libsvm.fit(
+            X, y, svm_type=solver_type, sample_weight=sample_weight,
+            class_weight=class_weight,
+            class_weight_label=class_weight_label,
+            **self._get_params())
+
         return self
 
 
@@ -169,7 +172,7 @@ class BaseLibSVM(BaseEstimator):
             raise ValueError("X.shape[1] should be equal to the number of "
                              "features at training time!")
 
-        svm_type = _libsvm_impl.index(self.impl)
+        svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.dual_coef_,
             self.n_support_, self.intercept_, 
@@ -208,7 +211,7 @@ class BaseLibSVM(BaseEstimator):
         if self.impl not in ('c_svc', 'nu_svc'):
             raise NotImplementedError("predict_proba only implemented for SVC and NuSVC")
 
-        svm_type = _libsvm_impl.index(self.impl)
+        svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_vectors_, self.dual_coef_,
             self.intercept_, self.n_support_, self.support_,
@@ -263,7 +266,7 @@ class BaseLibSVM(BaseEstimator):
             X, self.support_vectors_, self.dual_coef_,
             self.intercept_, self.n_support_, self.support_,
             self.label_, self.probA_, self.probB_,
-            svm_type=_libsvm_impl.index(self.impl),
+            svm_type=LIBSVM_IMPL.index(self.impl),
             **self._get_params())
 
         if self.impl != 'one_class':
