@@ -636,10 +636,12 @@ class MiniBatchKMeans(KMeans):
         """
         Compute batch k means
         """
-        X = self._check_data(X, **params)
         if hasattr(self.init, '__array__'):
+            X = self._check_data(X, **params)
             self.init = np.asarray(self.init)
 
+        if len(X) == 0:
+            return self
         x_squared_norms = X.copy()
         x_squared_norms **=2
         x_squared_norms = x_squared_norms.sum(axis=1)
