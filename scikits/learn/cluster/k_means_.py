@@ -246,7 +246,7 @@ def _calculate_labels_inertia(X, centers):
 
 
 def _mini_batch_step(X, centers, counts, x_squared_norms=None):
-    """Incrental update of the centers for the Minibatch K-Means algorithm
+    """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
     ----------
@@ -561,6 +561,9 @@ class MiniBatchKMeans(KMeans):
     fit(X):
         Compute K-Means clustering
 
+    partial_fit(X):
+        Compute a partial K-Means clustering
+
     Attributes
     ----------
 
@@ -606,7 +609,7 @@ class MiniBatchKMeans(KMeans):
 
         if self.counts is None:
             # this is the first call partial_fit on this object:
-            # initialise the cluster centers
+            # initialize the cluster centers
             self.cluster_centers = _init_centroids(
                 X, self.k, self.init, rng=self.rng,
                 x_squared_norms=x_squared_norms)
