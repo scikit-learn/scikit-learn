@@ -45,8 +45,8 @@ using the :meth:`GMM.predict` method.
     * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
       density estimation.
 
-DPGMM classifier
-==============
+Infinite Gaussian mixtures: DPGMM classifier
+=============================================
 
 .. currentmodule:: scikits.learn.mixture
 
@@ -65,5 +65,7 @@ Dirichlet Process. The API is identical to :class:`GMM`.
     * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
       confidence ellipsoids for both :class:`GMM` and :class:`DPGMM`.
 
-For the full mathematical derivation of the algorithm, see
- * :ref:`dp-derivation`
+.. toctree::
+
+    dp-derivation.rst
+

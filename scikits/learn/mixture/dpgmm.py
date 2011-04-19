@@ -526,7 +526,7 @@ class DPGMM(mixture.GMM):
 
 
 class VBGMM(DPGMM):
-    """Variational Inference for the Infinite Gaussian Mixture Model
+    """Variational Inference for the Gaussian Mixture Model
 
     Variational inference for a Gaussian mixture model probability
     distribution. This class allows for easy and efficient inference
