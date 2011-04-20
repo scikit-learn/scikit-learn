@@ -296,7 +296,7 @@ def test_dense_vectorizer_pipeline_grid_selection():
     # to 100% accurracy models
     assert_equal(grid_search.best_score, 1.0)
     best_vectorizer = grid_search.best_estimator.named_steps['vect']
-    assert_equal(best_vectorizer.analyzer.max_n, 2)
+    assert_equal(best_vectorizer.analyzer.max_n, 1)
 
 
 def test_pickle():

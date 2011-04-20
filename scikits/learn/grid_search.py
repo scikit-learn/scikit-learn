@@ -290,10 +290,12 @@ class GridSearchCV(BaseEstimator):
                 best_score = score
                 best_estimator = estimator
             else:
-                if score >= best_score:
+                if score > best_score:
                     best_score = score
                     best_estimator = estimator
 
+        if best_score is None:
+            raise ValueError('Best score could not be found')
         self.best_score = best_score
 
         if self.refit:
