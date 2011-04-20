@@ -174,7 +174,6 @@ class OneClassSVM (SparseBaseLibSVM):
             X, [], class_weight=class_weight, ample_weight=sample_weight)
 
 
-
 class LinearSVC(SparseBaseLibLinear, ClassifierMixin,
                 CoefSelectTransformerMixin):
     """
