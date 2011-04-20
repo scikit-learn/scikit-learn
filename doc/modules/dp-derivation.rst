@@ -22,7 +22,10 @@ are concerned with the structure of the dirichlet process, it does not
 go into detail in the mixture modeling part, which can be just as
 complex, or even more. For this reason we present here a full
 derivation of the inference algorithm and all the update and
-lower-bound equations.
+lower-bound equations. If you're not interested in learning how to
+derive similar algorithms yourself and you're not interested in
+changing/debugging the implementation in the scikits this document is
+not for you.
 
 The complexity of this implementation is quadratic in the number of
 mixture components and data points. With regards to the
