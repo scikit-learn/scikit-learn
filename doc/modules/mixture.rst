@@ -215,6 +215,19 @@ the :meth:`GMM.predict` method.
     * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
       density estimation.
 
+Variational Gaussian mixtures: VBGMM classifier
+=============================================
+
+.. currentmodule:: scikits.learn.mixture
+
+The :class:`VBGMM` object implements a variant of the Gaussian mixture
+model with variational inference algorithms. The API is identical to
+:class:`GMM`. It is essentially a middle-ground between :class:`GMM`
+and :class:`DPGMM`, as it has some of the properties of the dirichlet
+process.
+
+
+
 Infinite Gaussian mixtures: DPGMM classifier
 =============================================
 
