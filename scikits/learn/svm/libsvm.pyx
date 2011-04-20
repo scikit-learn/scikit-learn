@@ -55,7 +55,7 @@ def fit(
         class_weight=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c']
         sample_weight=np.empty(0),
-    int shrinking=0, int probability=0,
+    int shrinking=1, int probability=0,
     double cache_size=100.):
     """
     Train the model using libsvm (low-level method)
@@ -208,6 +208,9 @@ def fit(
             probA = np.empty(1, dtype=np.float64)
             probB = np.empty(0, dtype=np.float64)
         copy_probA(probA.data, model, probA.shape)
+    else:
+        probA = np.empty(0, dtype=np.float64)
+        probA = np.empty(0, dtype=np.float64)
 
     # memory deallocation
     svm_free_and_destroy_model(&model)
@@ -221,8 +224,8 @@ def fit(
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.int32_t, ndim=1, mode='c'] support,
             np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
+            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
             np.ndarray[np.int32_t, ndim=1, mode='c'] label,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
@@ -306,11 +309,11 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
 def predict_proba(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
     np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
     np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
@@ -381,11 +384,11 @@ def predict_proba(
 
 def decision_function(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
     np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
     np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),

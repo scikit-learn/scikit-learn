@@ -52,6 +52,16 @@ def test_libsvm_iris():
     assert_array_equal(clf.label_, np.sort(clf.label_))
 
 
+    # check also the low-level API
+    model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
+    pred = svm.libsvm.predict(iris.data, *model)
+    assert np.mean(pred == iris.target) > .95
+
+    model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64), kernel='linear')
+    pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
+    assert np.mean(pred == iris.target) > .95
+
+
 def test_precomputed():
     """
     SVC with a precomputed kernel.
@@ -123,20 +133,6 @@ def test_precomputed():
     clf.fit(iris.data, iris.target)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
-def test_sanity_checks_fit():
-    clf = svm.SVC(kernel='precomputed')
-    assert_raises(ValueError, clf.fit, X, Y)
-
-def test_sanity_checks_predict():
-    Xt = np.array(X).T
-
-    clf = svm.SVC(kernel='precomputed')
-    clf.fit(np.dot(X, Xt), Y)
-    assert_raises(ValueError, clf.predict, X)
-
-    clf = svm.SVC()
-    clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)
 
 def test_SVR():
     """
@@ -310,7 +306,7 @@ def test_auto_weight():
         assert metrics.f1_score(y, y_pred) <= metrics.f1_score(y, y_pred_balanced)
 
 
-def test_error():
+def test_bad_input():
     """
     Test that it gives proper exception on deficient input
     """
@@ -329,6 +325,20 @@ def test_error():
     clf = svm.SVC()
     clf.fit(Xf, Y)
     assert_array_equal(clf.predict(T), true_result)
+
+    # error for precomputed kernelsx
+    clf = svm.SVC(kernel='precomputed')
+    assert_raises(ValueError, clf.fit, X, Y)
+
+    Xt = np.array(X).T
+
+    clf = svm.SVC(kernel='precomputed')
+    clf.fit(np.dot(X, Xt), Y)
+    assert_raises(ValueError, clf.predict, X)
+
+    clf = svm.SVC()
+    clf.fit(X, Y)
+    assert_raises(ValueError, clf.predict, Xt)
 
 
 def test_LinearSVC():
