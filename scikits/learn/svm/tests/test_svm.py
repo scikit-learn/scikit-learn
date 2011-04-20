@@ -295,8 +295,11 @@ def test_auto_weight():
     # we take as dataset a the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1
+    from scikits.learn.svm.base import _get_class_weight
     X, y = iris.data[:, :2], iris.target
     unbalanced = np.delete(np.arange(y.size), np.where(y > 1)[0][::2])
+
+    assert np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(), LogisticRegression()):
         # check that score is better when class='auto' is set.
@@ -304,7 +307,6 @@ def test_auto_weight():
                          class_weight={}).predict(X)
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],
                                   class_weight='auto').predict(X)
-        assert np.argmin(clf.class_weight) == 0
         assert metrics.f1_score(y, y_pred) <= metrics.f1_score(y, y_pred_balanced)
 
 
@@ -321,7 +323,6 @@ def test_error():
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
-    assert_raises(ValueError, svm.SVC, X, Y2)
 
     # Test with arrays that are non-contiguous.
     Xf = np.asfortranarray(X)
