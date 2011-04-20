@@ -187,6 +187,17 @@ class GMM(BaseEstimator):
     score(X)
         Compute the log likelihood of `X` under the model.
 
+    See Also
+    --------
+
+    DPGMM : Ininite gaussian mixture model, using the dirichlet
+    process, fit with a variational algorithm
+
+
+    VBGMM : Finite gaussian mixture model fit with a variational
+    algorithm, better for situations where there might be too little
+    data to get a good estimate of the covariance matrix.
+
     Examples
     --------
     >>> import numpy as np

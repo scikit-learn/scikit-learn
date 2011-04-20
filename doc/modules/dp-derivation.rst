@@ -1,31 +1,15 @@
 
+.. _dpgmm:
+
+.. currentmodule:: scikits.learn.mixture
+
+
 Variational Gaussian Mixture Models
-=================================
+===================================
 
-This implementation seems to work.
-
-The DP variational GMM has the following advantages:
-
-  1. You don't need to specify a priori the number of components (just an
-     upper bound on its value) 
-  2. The covariance matrix never diverges, so the
-     full model is safe even with one or two examples per cluster 
-  3. All estimates are regularized 
-
-It has the following disadvantages:
-
-  1. It tends to create uneven distributions between the clusters
-  2. It might take longer than EM
-  3. Intializing is harder (the components are not exchangeable), so
-     restarts might be a good idea
-
-For (1) and (3), however, you can use the VBGMM implementation which
-doesn't use the DP but has reasonably exchangeable components. You do
-lose advantage (1) as well, unfortunately.
-
-The API is identical to that of gmm with the main difference that this
-returns precision instead of covariance matrices, as these are a lot
-cheaper to keep around in inference time.
+The API is identical to that of the :class:`GMM` class, the main
+difference being that it offers access to precision matrices as well
+as covariance matrices.
 
 The inference algorithm is the one from the following paper:
 
@@ -33,12 +17,38 @@ The inference algorithm is the one from the following paper:
       <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.61.4467&rep=rep1&type=pdf>`_ 
       David Blei, Michael Jordan. Bayesian Analysis, 2006
 
+While this paper presents the parts of the inference algorithm that
+are concerned with the structure of the dirichlet process, it does not
+go into detail in the mixture modeling part, which can be just as
+complex, or even more. For this reason we present here a full
+derivation of the inference algorithm and all the update and
+lower-bound equations. If you're not interested in learning how to
+derive similar algorithms yourself and you're not interested in
+changing/debugging the implementation in the scikits this document is
+not for you.
 
+The complexity of this implementation is quadratic in the number of
+mixture components and data points. With regards to the
+dimensionality, it is linear when using `spherical` or `diag` and
+quadratic/cubic when using `tied` or `full`. For `spherical` or `diag`
+it is O(n_states * n_points * dimension) and for `tied` or `full` it
+is O(n_states * n_points * dimension^2 + n_states * dimension^3) (it
+is necessary to invert the covariance/precision matrices and compute
+its determinant, hence the cubic term).
+
+This implementation is expected to scale at least as well as EM for
+the mixture of Gaussians.
+
+Update rules for VB inference
+==============================
+
+Here the full mathematical derivation of the Variational Bayes update
+rules for Gaussian Mixture Models is given.
 
 The spherical model
-===================
+---------------------
 
- The model then is
+The model then is
 
 .. math::
 
@@ -50,7 +60,7 @@ The spherical model
     X_t &\sim& Normal(\mu_{z_i}, \frac{1}{\sigma_{z_i}} \mathbf{I})
     \end{array}
 
-Tha variational distribution we'll use is
+The variational distribution we'll use is
 
 .. math::
 
@@ -63,9 +73,10 @@ Tha variational distribution we'll use is
   
 
 The bound
---------
+...........
 
 The variational bound is
+
 .. math::
 
     \begin{array}{rcl}
@@ -82,7 +93,7 @@ The variational bound is
     \end{array}
   
   
-**The bound for :math:`\phi_k`**
+**The bound for :math:`\phi_k` :**
 
 .. math::
 
@@ -101,7 +112,7 @@ The variational bound is
     \end{array}
   
 
-**The bound for :math:`\mu_k`**
+**The bound for :math:`\mu_k` :**
 
 .. math::
 
@@ -116,7 +127,7 @@ The variational bound is
   \end{array}
 
 
-**The bound for :math:`\sigma_k`**
+**The bound for :math:`\sigma_k` :**
 
 Here I'll use the inverse scale parametrization of the gamma
 distribution.
@@ -143,7 +154,7 @@ distribution.
   \end{array}
 
 
-**The bound for :math:`X`**
+**The bound for :math:`X` :**
 
 Recall that there is no need for a :math:`Q(X)` so this bound is just
 
@@ -159,9 +170,9 @@ Recall that there is no need for a :math:`Q(X)` so this bound is just
 For simplicity I'll later call the term inside the parenthesis :math:`E_q[\log P(X_i|z_i=k)]`
 
 The updates
-----------
+............
 
-**Updating :math:`\gamma`**
+**Updating** :math:`\gamma`
 
 .. math::
 
@@ -171,7 +182,7 @@ The updates
   \end{array}
 
 
-**Updating :math:`\mu`**
+**Updating** :math:`\mu`
 
 The updates for mu essentially are just weighted expectations of
 :math:`X` regularized by the prior. We can see this by taking the
@@ -184,13 +195,14 @@ gradient is
 
 
 so the update is
+
 .. math::  
 
     \nu_{\mu_k} = \frac{\sum_i \frac{\nu_{z_{i,k}}b_k}{a_k}X_i}{1+\sum_i \frac{\nu_{z_{i,k}}b_k}{a_k}}
 
 
 
-**Updating :math:`a` and :math:`b`**
+**Updating** :math:`a` **and** :math:`b`
 
 
 For some odd reason it doesn't really work when you derive the updates
@@ -221,7 +233,7 @@ This is the log of a gamma distribution, with :math:`a_k = 1+\frac{D}{2}\sum_i \
 
 You can verify this by normalizing the previous term.
 
-**Updating :math:`z`**
+**Updating** :math:`z`
 
 .. math::
 
@@ -232,7 +244,7 @@ You can verify this by normalizing the previous term.
 
 
 The diagonal model
-=================
+--------------------
 
 
 The model then is
@@ -259,7 +271,7 @@ Tha variational distribution we'll use is
   \end{array}
 
 The lower bound
---------------
+...................
 
 The changes in this lower bound from the previous model are in the
 distributions of :math:`\sigma` (as there are a lot more :math:`\sigma`s now) and :math:`X`.
@@ -267,7 +279,7 @@ distributions of :math:`\sigma` (as there are a lot more :math:`\sigma`s now) an
 The bound for :math:`\sigma_{k,d}` is the same bound for :math:`\sigma_k` and can
 be safelly ommited.
 
-**The bound for :math:`X`**
+**The bound for :math:`X` :**
 
 The main difference here is that the precision matrix :math:`\bm{\sigma_k}`
 scales the norm, so we have an extra term after computing the
@@ -286,13 +298,13 @@ have
 
 
 The updates
------------
+............
 
 The updates only chance for :math:`\mu` (to weight them with the new
 :math:`\sigma`), :math:`z` (but the change is all folded into the
 :math:`E_q[P(X_i|z_i=k)]` term), and the :math:`a` and :math:`b` variables themselves.
 
-**The update for :math:`\mu`**
+**The update for** :math:`\mu`
 
 .. math::  
 
@@ -312,6 +324,7 @@ of the bound:
 
 
 Hence 
+
 .. math:: 
 
   a_{k,d} = 1 + \frac{1}{2} \sum_i \nu_{z_{i,k}}
@@ -322,7 +335,7 @@ Hence
 
 
 The tied model
-=============
+----------------
 
  The model then is
 .. math::
@@ -347,7 +360,7 @@ Tha variational distribution we'll use is
   \end{array}
 
 The lower bound
----------------
+..................
 
 There are two changes in the lower-bound: for :math:`\Sigma` and for :math:`X`.
 
@@ -377,19 +390,19 @@ There are two changes in the lower-bound: for :math:`\Sigma` and for :math:`X`.
    \end{array}
 
 The updates
------------
+.............
 
 As in the last setting, what changes are the trivial update for :math:`z`,
 the update for :math:`\mu` and the update for :math:`a` and :math:`\mathbf{B}`.
 
-**The update for :math:`\mu`**
+**The update for** :math:`\mu`
 
 .. math::
 
     \nu_{\mu_k} = \left(\mathbf{I}+ a\mathbf{B}\sum_i \nu_{z_{i,k}}\right)^{-1}
     \left(a\mathbf{B}\sum_i \nu_{z_{i,k}} X_i\right)
 
-**The update for :math:`a` and :math:`B`**
+**The update for** :math:`a` **and** :math:`B`
 
 As this distribution is far too complicated I'm not even going to try
 going at it the gradient way.
@@ -421,10 +434,8 @@ and
    \mathbf{B} = \left(\mathbf{I} + \sum_i \sum_k \nu_{z_{i,k}}(X_i-\nu_{\mu_k})(X_i-\nu_{\mu_k})^T\right)^{-1}
 
 
-
-
 The full model
-=============
+----------------
 
  The model then is
 
@@ -434,11 +445,12 @@ The full model
   \phi_k   &\sim& Beta(1, \alpha_1) \\
   \mu_k   &\sim& Normal(0,  \mathbf{I}) \\
   \Sigma_k &\sim& Wishart(D, \mathbf{I}) \\
-*  z_{i}     &\sim& SBP(\phi) \\
+  z_{i}     &\sim& SBP(\phi) \\
   X_t &\sim& Normal(\mu_{z_i},  \Sigma_{z,i}^{-1})
   \end{array}
 
-Tha variational distribution we'll use is
+
+The variational distribution we'll use is
 
 .. math::
 
@@ -450,14 +462,14 @@ Tha variational distribution we'll use is
   \end{array}
 
 The lower bound
---------------
+.................
 
 All that changes in this lower bound in comparison to the previous one
 is that there are K priors on different :math:`\Sigma` precision matrices
 and there are the correct indices on the bound for X.
 
 The updates
------------
+..............
 
 All that changes in the updates is that the update for mu uses only
 the proper sigma and the updates for a and B don't have a sum over K, so 
@@ -472,6 +484,7 @@ the proper sigma and the updates for a and B don't have a sum over K, so
     a_k = 2 + D + \sum_i \nu_{z_{i,k}}
 
 and
+
 .. math::
 
        \mathbf{B} = \left(\left(\sum_i\nu_{z_{i,k}}+1\right)\mathbf{I} + \sum_i  \nu_{z_{i,k}}(X_i-\nu_{\mu_k})(X_i-\nu_{\mu_k})^T\right)^{-1}
