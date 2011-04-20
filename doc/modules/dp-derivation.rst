@@ -7,29 +7,9 @@
 Variational Gaussian Mixture Models
 ===================================
 
-The Dirichlet Process variational GMM has the following advantages:
-
-  1. You don't need to specify a priori the number of components (just
-     an upper bound on its value)
-  2. The covariance matrix never diverges, so the
-     full model is safe even with one or two examples per cluster 
-  3. All estimates are regularized 
-
-It has the following disadvantages:
-
-  1. It tends to create uneven distributions between the clusters
-  2. It might take longer than Expectation Maximization (EM)
-  3. Intializing is harder (the components are not exchangeable), so
-     restarts might be a good idea
-
-For (1) and (3), however, you can use the Variational Bayes GMM (VBGMM)
-implementation which doesn't use the Dirichlet Process but has reasonably
-exchangeable components. You do lose advantage (1) as well,
-unfortunately.
-
-The API is identical to that of :class:`GMM` with the main difference
-that this returns precision instead of covariance matrices, as these are
-a lot cheaper to keep around in inference time.
+The API is identical to that of the :class:`GMM` class, the main
+difference being that it offers access to precision matrices as well
+as covariance matrices.
 
 The inference algorithm is the one from the following paper:
 
@@ -37,7 +17,14 @@ The inference algorithm is the one from the following paper:
       <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.61.4467&rep=rep1&type=pdf>`_ 
       David Blei, Michael Jordan. Bayesian Analysis, 2006
 
-The complexity of this implementation is linear in the number of
+While this paper presents the parts of the inference algorithm that
+are concerned with the structure of the dirichlet process, it does not
+go into detail in the mixture modeling part, which can be just as
+complex, or even more. For this reason we present here a full
+derivation of the inference algorithm and all the update and
+lower-bound equations.
+
+The complexity of this implementation is quadratic in the number of
 mixture components and data points. With regards to the
 dimensionality, it is linear when using `spherical` or `diag` and
 quadratic/cubic when using `tied` or `full`. For `spherical` or `diag`
