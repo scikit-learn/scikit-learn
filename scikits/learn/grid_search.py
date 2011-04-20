@@ -311,9 +311,8 @@ class GridSearchCV(BaseEstimator):
         # Store the computed scores
         # XXX: the name is too specific, it shouldn't have
         # 'grid' in it. Also, we should be retrieving/storing variance
-        self.grid_points_scores_ = dict((tuple(clf_params.items()), score)
-                    for clf_params, (score, _) in zip(grid, scores))
-
+        self.grid_scores_ = [
+            (clf_params, score) for clf_params, (score, _) in zip(grid, scores)]
         return self
 
     def score(self, X, y=None):
