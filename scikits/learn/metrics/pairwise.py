@@ -9,6 +9,8 @@ sets of points.
 
 import numpy as np
 
+from ..utils.extmath import safe_sparse_dot
+
 def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
@@ -142,3 +144,75 @@ def rbf_kernel(X, Y, sigma=1.0):
     K /= (2 * (sigma ** 2))
     np.exp(K, K)
     return K
+
+
+def cosine_similarity(X, Y):
+    """Compute pairwise cosine similarities between rows in X and Y
+
+    Cosine similarity is a normalized linear kernel with value ranging
+      - -1: similar vectors with opposite signs
+      - 0: completely dissimilar (orthogonal) vectors
+      - 1: similar vectors (same sign)
+
+    In practice, cosine similarity is often used to measure the
+    relatedness of text documents represented by sparse vectors of word
+    counts, frequencies or TF-IDF weights. In this cases all features
+    are non negative and the similarities range from 0 to 1 instead.
+
+    Cosine similarity can be used as an affinity matrix for spectral
+    and power iteration clustering algorithms.
+
+    Parameters
+    ----------
+
+    X: array or sparse matrix of shape (n_samples_1, n_features)
+
+    Y: array or sparse matrix of shape (n_samples_2, n_features)
+
+    Returns
+    -------
+
+    array or sparse matrix of shape (n_samples_1, n_samples_2)
+
+    Examples
+    --------
+
+    >>> from scikits.learn.metrics.pairwise import cosine_similarity
+    >>> X = np.asarray([[0, 1], [1, 1], [0, -1], [0, 0]], dtype=np.float64)
+    >>> cosine_similarity(X, X).round(decimals=2)
+    array([[ 1.  ,  0.71, -1.  ,  0.  ],
+           [ 0.71,  1.  , -0.71,  0.  ],
+           [-1.  , -0.71,  1.  ,  0.  ],
+           [ 0.  ,  0.  ,  0.  ,  0.  ]])
+
+    >>> from scipy.sparse import csr_matrix
+    >>> X_sparse = csr_matrix(X)
+    >>> cosine_similarity(X_sparse, X_sparse).toarray().round(decimals=2)
+
+    It is possible to use the cosine similarity to perform similarity
+    queries:
+
+    >>> query = [[0.5, 0.9]]
+    >>> cosine_similarity(X, query)
+
+    """
+    similarities = safe_sparse_dot(X, Y.T)
+
+    if hasattr(X, 'multiply'):
+        norms_x = np.sqrt((X.multiply(X)).sum(axis=1))
+    else:
+        norms_x = np.sqrt((X ** 2).sum(axis=1))
+    nnzeros_x = np.where(norms_x > 0)
+    similarities[nnzeros_x, :] /= norms_x[nnzeros_x].reshape(
+        (nnzeros_x[0].sum(), -1))
+
+    if hasattr(Y, 'multiply'):
+        norms_y = np.sqrt((Y.multiply(Y)).sum(axis=1))
+    else:
+        norms_y = np.sqrt((Y ** 2).sum(axis=1))
+    nnzeros_y = np.where(norms_y > 0)
+    similarities[:, nnzeros_y,] /= norms_y[nnzeros_y].reshape(
+        (-1, nnzeros_y[0].sum()))
+
+    return similarities
+
