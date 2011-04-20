@@ -238,8 +238,8 @@ model with a variable (but bounded) number of components using the
 Dirichlet Process. The API is identical to :class:`GMM`. 
 
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_2.png
-   :target: ../auto_examples/cluster/plot_gmm_classifier.html
+.. figure:: ../../_images/plot_gmm_11.png
+   :target: ../auto_examples/mixture/plot_gmm.html
    :align: center
    :scale: 75%
 
@@ -248,7 +248,8 @@ Dirichlet Process. The API is identical to :class:`GMM`.
     * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
       confidence ellipsoids for both :class:`GMM` and :class:`DPGMM`.
 
-.. toctree::
+.. topic:: Derivation:
 
-    dp-derivation.rst
+   * See `here <dp-derivation.html>`_ the full derivation of this
+     algorithm.
 
