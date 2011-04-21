@@ -470,16 +470,6 @@ support vectors and training errors. The parameter :math:`\nu \in (0,
 bound of the fraction of support vectors.
 
 
-Frequently Asked Questions
-==========================
-
-     * Q: Can I get the indices of the support vectors instead of the
-       support vectors ?
-
-       A: The underlying C implementation does not provide this
-       information.
-
-
 Implementation details
 ======================
 
