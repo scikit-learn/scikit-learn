@@ -44,7 +44,7 @@ expect a numpy array as input ``X``.  The expected shape of ``X`` is
 :``n_samples``:
 
   The number of samples: each sample is an item to process (e.g.
-  classifiy). A sample can be a document, a picture, a sound, a
+  classify). A sample can be a document, a picture, a sound, a
   video, a row in database or CSV file, or whatever you can
   describe with a fixed set of quantitative traits.
 
@@ -287,7 +287,7 @@ of thereof)::
 ``clf`` is a statistical model that has parameters that control the
 learning algorithm (those parameters are sometimes called the
 hyper-parameters). Those hyperparameters can be supplied by the
-user in the constructore of the model. We will explain later choose
+user in the constructor of the model. We will explain later how to choose
 a good combination either using simple empirical rules or data
 driven selection::
 
@@ -295,7 +295,7 @@ driven selection::
   LinearSVC(loss='l2', C=1.0, intercept_scaling=1, fit_intercept=True,
        eps=0.0001, penalty='l2', multi_class=False, dual=True)
 
-By default the real model parameters are not initialized. They will be
+By default the real model parameters are not initialized. They will
 automatically be tuned from the data by calling the ``fit`` method::
 
   >>> clf = clf.fit(X, y)
@@ -309,7 +309,7 @@ automatically be tuned from the data by calling the ``fit`` method::
   array([ 0.10956015,  1.6738296 , -1.70973044])
 
 Once the model is trained, it can be used to predict the most likely outcome on
-unseen data. For instance let us define a list of a simple sample that looks
+unseen data. For instance let us define a list of simple sample that looks
 like the first sample of the iris dataset::
 
   >>> X_new = [[ 5.0,  3.6,  1.3,  0.25]]
@@ -317,13 +317,13 @@ like the first sample of the iris dataset::
   >>> clf.predict(X_new)
   array([0], dtype=int32)
 
-The outcome is ``0`` which the id of the first iris class namely
+The outcome is ``0`` which is the id of the first iris class namely
 'setosa'.
 
-The following figure places the location of the fit and predict
+The following figure places the location of the ``fit`` and ``predict``
 calls on the previous flow diagram. The ``vec`` object is a vectorizer
-used for feature extractor that is not used in the case of the iris
-data which already comes as vectors of features:
+used for feature extraction that is not used in the case of the iris
+data (it already comes as vectors of features):
 
 .. figure:: images/supervised_scikit_learn.png
    :scale: 75 %
@@ -471,7 +471,7 @@ algorithms namely dimensionality reduction and clustering.
 Dimensionality Reduction and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Dimensionality reduction the task to derive a set of **new artificial
+Dimensionality reduction is the task to derive a set of **new artificial
 features** that is **smaller** than the original feature set while
 retaining **most of the variance** of the original data.
 
@@ -493,7 +493,7 @@ visualize the dataset::
   >>> from scikits.learn.pca import PCA
   >>> pca = PCA(n_components=2, whiten=True).fit(X)
 
-Once fitted, the ``pca`` model exposes the singular vectors as in the
+Once fitted, the ``pca`` model exposes the singular vectors in the
 ``components_`` attribute::
 
   >>> pca.components_.T
