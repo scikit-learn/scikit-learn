@@ -8,6 +8,7 @@ import numpy as np
 from scipy import stats
 
 from scikits.learn import mixture
+from scikits.learn.mixture import GMM, DPGMM
 
 np.random.seed(0)
 
@@ -179,6 +180,7 @@ class GMMTester():
     weights = np.random.rand(n_states)
     weights = weights / weights.sum()
     means = np.random.randint(-20, 20, (n_states, n_features))
+    threshold = -0.5
     I = np.eye(n_features)
     covars = {'spherical': (0.1 + 2 * np.random.rand(n_states)) ** 2,
               'tied': _generate_random_spd_matrix(n_features) + 5 * I,
@@ -187,7 +189,16 @@ class GMMTester():
                                 for x in xrange(n_states)])}
 
     def test_eval(self):
-        g = mixture.GMM(self.n_states, self.cvtype)
+        if self.model == DPGMM: return # DPGMM does not support
+                                       # setting the means and
+                                       # covariances before fitting
+                                       #
+                                       # There is no way of fixing
+                                       # this due to the variational
+                                       # parameters being more
+                                       # expressive than covariance
+                                       # matrices
+        g = self.model(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -206,7 +217,7 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = mixture.GMM(self.n_states, self.cvtype)
+        g = self.model(self.n_states, self.cvtype)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -217,15 +228,15 @@ class GMMTester():
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
-        g = mixture.GMM(self.n_states, self.cvtype)
+        g = GMM(self.n_states, self.cvtype)
         g.weights = self.weights
         g.means = self.means
         g._covars = 20 * self.covars[self.cvtype]
 
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n_samples=100)
-
-        g.fit(train_obs, n_iter=0, init_params=params)
+        g = self.model(self.n_states, self.cvtype)
+        g.fit(train_obs, n_iter=1, init_params=params)
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each
@@ -234,30 +245,65 @@ class GMMTester():
         for iter in xrange(5):
             g.fit(train_obs, n_iter=1, params=params, init_params='',
                   min_covar=1e-1)
-            trainll.append(g.score(train_obs).sum())
+            trainll.append(self.score(g, train_obs))
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to
         # the addition of min_covar to the covariance (to prevent
         # underflow).  This is why the threshold is set to -0.5
         # instead of 0.
-        self.assertTrue(np.all(np.diff(trainll) > -0.5))
+        self.assertTrue(np.all(np.diff(trainll) > self.threshold))
+
+    def score(self, g, train_obs):
+        return g.score(train_obs).sum()
 
 
 class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):
     cvtype = 'spherical'
+    model = GMM
 
 
 class TestGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
     cvtype = 'diag'
+    model = GMM
 
 
 class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
     cvtype = 'tied'
+    model = GMM
 
 
 class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     cvtype = 'full'
+    model = GMM
 
+
+class TestDPGMMWithSphericalCovars(unittest.TestCase, GMMTester):
+    cvtype = 'spherical'
+    model = DPGMM
+
+    def score(self, g, train_obs):
+        return g.lower_bound()
+
+class TestDPGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
+    cvtype = 'diag'
+    model = DPGMM
+
+    def score(self, g, train_obs):
+        return g.lower_bound()
+
+class TestDPGMMWithTiedCovars(unittest.TestCase, GMMTester):
+    cvtype = 'tied'
+    model = DPGMM
+
+    def score(self, g, train_obs):
+        return g.lower_bound()
+
+class TestDPGMMWithFullCovars(unittest.TestCase, GMMTester):
+    cvtype = 'full'
+    model = DPGMM
+
+    def score(self, g, train_obs):
+        return g.lower_bound()
 
 if __name__ == '__main__':
     nose.runmodule()

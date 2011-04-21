@@ -73,7 +73,7 @@ class DPGMM(mixture.GMM):
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichler Process
         is as likely to start a new cluster for a point as it is 
-        to add that point to a cluster with alpha elements. A 
+        to add that point to a cluster with alpha elements. A
         higher alpha means more clusters, as the expected number 
         of clusters is alpha*log(N). Defaults to 1.
 
@@ -311,7 +311,7 @@ class DPGMM(mixture.GMM):
 
     def _monitor(self, monitor, n, end=False):
         if monitor:
-            print n, self._lower_bound()
+            print n, self.lower_bound()
             if end == True:
                 print self._gamma.T[1]
 
@@ -418,7 +418,7 @@ class DPGMM(mixture.GMM):
         logprior += self._bound_z()
         return logprior
 
-    def _lower_bound(self):
+    def lower_bound(self):
         c = 0.
         for i in xrange(self._X.shape[0]):
             for k in xrange(self.n_states):
@@ -426,7 +426,7 @@ class DPGMM(mixture.GMM):
         return c + self._logprior()
 
     def fit(self, X, n_iter=30, thresh=1e-2, params='wmc',
-            init_params='wmc', monitor=False):
+            init_params='wmc', monitor=False, min_covar=None):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -473,7 +473,8 @@ class DPGMM(mixture.GMM):
         self._z = np.ones((self._X.shape[0], self.n_states))
         self._z /= self.n_states
 
-        self._initialize_gamma()
+        if init_params != '':
+            self._initialize_gamma()
 
         if 'm' in init_params or not hasattr(self, 'means'):
             self._means = cluster.KMeans(
@@ -679,6 +680,6 @@ class VBGMM(DPGMM):
 
     def _monitor(self, monitor, n, end=False):
         if monitor:
-            print n, self._lower_bound()
+            print n, self.lower_bound()
             if end == True:
                 print self._gamma
