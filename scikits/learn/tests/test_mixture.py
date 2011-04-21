@@ -12,6 +12,8 @@ from scikits.learn.mixture import GMM, DPGMM
 
 np.random.seed(0)
 
+def setup_func():
+    np.random.seed(0)
 
 def _generate_random_spd_matrix(ndim):
     """Return a random symmetric, positive-definite matrix."""
