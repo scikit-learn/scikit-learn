@@ -9,12 +9,6 @@ from scipy import linalg
 from .metrics import r2_score
 
 
-def norm(v):
-    v = np.asarray(v)
-    __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
-    return __nrm2(v)**2
-
-
 ###############################################################################
 def clone(estimator, safe=True):
     """ Constructs a new estimator with the same parameters.

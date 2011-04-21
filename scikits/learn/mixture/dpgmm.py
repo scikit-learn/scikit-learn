@@ -3,7 +3,7 @@
 import numpy as np
 from . import gmm as mixture
 from .. import cluster
-from ..base import norm
+from ..utils.extmath import norm
 from scipy.special import digamma, gammaln
 from scipy import linalg
 
