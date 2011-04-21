@@ -238,7 +238,7 @@ model with a variable (but bounded) number of components using the
 Dirichlet Process. The API is identical to :class:`GMM`. 
 
 
-.. figure:: ../../_images/plot_gmm_11.png
+.. figure:: ../../_images/plot_gmm_1.png
    :target: ../auto_examples/mixture/plot_gmm.html
    :align: center
    :scale: 75%
