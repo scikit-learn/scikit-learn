@@ -14,7 +14,6 @@ from scikits.learn.mixture import GMM, DPGMM
 #print "setup"
 
 def setup_module():
-    print "setup"
     np.random.seed(0)
 
 
