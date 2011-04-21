@@ -3,6 +3,7 @@
 import numpy as np
 from . import gmm as mixture
 from .. import cluster
+from ..base import norm
 from scipy.special import digamma, gammaln
 from scipy import linalg
 
@@ -12,12 +13,6 @@ from scipy import linalg
 #         Ron Weiss <ronweiss@gmail.com>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
-
-
-def norm(v):
-    """The squared norm of vector v, as a scalar. As dot is not always
-    scalar, using np.sum."""
-    return np.sum(v * v)
 
 
 def lognormalize(v):
