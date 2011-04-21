@@ -20,11 +20,18 @@ sys.path.insert(0, os.path.abspath('sphinxext'))
 
 # -- General configuration -----------------------------------------------------
 
+# Try to override the matplotlib configuration as early as possible
+try:
+    import gen_rst
+except:
+    pass
+
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+extensions = ['gen_rst',
+              'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.pngmath',
-              'gen_rst']
+              ]
 try:
     import numpy_ext.numpydoc
     extensions.append('numpy_ext.numpydoc')

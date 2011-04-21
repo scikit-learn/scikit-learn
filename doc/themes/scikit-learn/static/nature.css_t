@@ -9,7 +9,7 @@
  *
  */
 /* @import url("minimalist.css") /\* google custom search  *\/ */
-@import url("basic.css");
+
 /* -- page layout ----------------------------------------------------------- */
  
 body {
@@ -94,17 +94,6 @@ div.navbar ul li a:hover {
 div.navbar ul li a:hover {
     color: #EEE;
 }
-
-/* #search_top { */
-/*     margin-top: 12px; */
-/*     margin-right: 20px; */
-/*     display: inline; */
-/* } */
-
-/* div.search { */
-/*     margin-left: 15px; */
-/*     display: inline; */
-/* } */
 
 .gsc-input {
     width: 180px;
@@ -364,8 +353,17 @@ div.seealso {
  
 div.topic {
     background-color: #eee;
+    border: 1px solid #CCC;
+    margin: 10px 0px;
+    padding: 7px 7px 0px;
 }
- 
+
+div.admonition {
+    margin-bottom: 10px;
+    margin-top: 10px;
+    padding: 7px;
+}
+
 div.warning {
     background-color: #ffe4e4;
     border: 1px solid #f66;
