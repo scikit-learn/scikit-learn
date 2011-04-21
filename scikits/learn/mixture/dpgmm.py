@@ -149,8 +149,7 @@ class DPGMM(mixture.GMM):
 
     def _wishart_detlogw(self, a, b, detB):
         l = 0.
-        for i in xrange(self.n_features):
-            l += digamma(0.5 * (a - i + 1))
+        l += np.sum(digamma(0.5 * (a - np.arange(self.n_features) + 1)))
         l += self.n_features * np.log(2)
         return l + detB
 
@@ -214,31 +213,35 @@ class DPGMM(mixture.GMM):
         obs = np.asanyarray(obs)
         p = np.zeros(self.n_states)
         bound = np.zeros(obs.shape[0])
+        sd = digamma(self._gamma.T[1] + self._gamma.T[2])
+        dgamma1 = digamma(self._gamma.T[1])-sd
+        dgamma2 = np.zeros(self.n_states)
+        dgamma2[0] = digamma(self._gamma[0,2]) - digamma(self._gamma[0,1]+
+                                                         self._gamma[0,2])
+        for j in xrange(1, self._n_states):
+            dgamma2[j] = dgamma2[j-1] + digamma(self._gamma[j-1,2])
+            dgamma2[j] -= sd[j-1]
+        dgamma = dgamma1 + dgamma2
         for i in xrange(obs.shape[0]):
             for k in xrange(self.n_states):
                 p[k] = z[i, k] = self._bound_pxgivenz(obs[i], k)
-                z[i, k] += digamma(self._gamma[k, 1])
-                z[i, k] -= digamma(self._gamma[k, 1] + self._gamma[k, 2])
-                for j in xrange(k):
-                    z[i, k] += digamma(self._gamma[j, 2])
-                    z[i, k] -= digamma(self._gamma[j, 1] + self._gamma[j, 2])
+            z[i] += dgamma
             z[i] = lognormalize(z[i])
             bound[i] = np.sum(z[i] * p)
         return bound, z
 
     def _update_gamma(self):
-        for i in xrange(self.n_states):
-            self._gamma[i, 1] = 1. + np.sum(self._z.T[i])
-            self._gamma[i, 2] = self.alpha
-            for k in xrange(i + 1, self.n_states):
-                self._gamma[i, 2] += np.sum(self._z.T[k])
+        sz = np.sum(self._z, axis=0)
+        self._gamma.T[1] = 1. + sz
+        self._gamma.T[2].fill(0)
+        for i in xrange(self.n_states-2, -1, -1):
+            self._gamma[i, 2] = self._gamma[i+1, 2] + sz[i]
+        self._gamma.T[2] += self.alpha
 
     def _update_mu(self):
         for k in xrange(self.n_states):
             if self.cvtype == 'spherical' or self.cvtype == 'diag':
-                num = self._X[0] * self._z[0, k]
-                for i in xrange(1, self._X.shape[0]):
-                    num += self._X[i] * self._z[i, k]
+                num = np.sum(self._z.T[k].reshape((-1,1))*self._X, axis=0)
                 num *= self._covars[k]
                 den = 1. + self._covars[k] * np.sum(self._z.T[k])
                 self._means[k] = num / den
@@ -248,9 +251,7 @@ class DPGMM(mixture.GMM):
                 else:
                     cov = self._covars[k]
                 den = np.identity(self.n_features) + cov * np.sum(self._z.T[k])
-                num = self._X[0] * self._z[0, k]
-                for i in xrange(1, self._X.shape[0]):
-                    num += self._X[i] * self._z[i, k]
+                num = np.sum(self._z.T[k].reshape((-1,1))*self._X, axis=0)
                 num = np.dot(cov, num)
                 self._means[k] = linalg.lstsq(den, num)[0]
 
