@@ -20,17 +20,6 @@ def norm(v):
     return np.sum(v * v)
 
 
-def diagnorm(x, Sigma):
-    """The x^T Sigma x norm when x is a vector representing a diagonal
-    matrix."""
-    return np.sum(x * Sigma * x)
-
-
-def squarenorm(x, Sigma):
-    """The x^T Sigma x norm when Sigma is a matrix."""
-    return np.sum(np.dot(np.dot(x, Sigma), x))
-
-
 def lognormalize(v):
     """Given a vector of unnormalized log-probabilites v returns a
  vector of normalized probabilities"""
@@ -175,7 +164,8 @@ class DPGMM(mixture.GMM):
                                                 + self.n_features)
         elif self.cvtype == 'diag':
             bound += 0.5 * np.sum(digamma(self._a[k]) - np.log(self._b[k]))
-            bound -= 0.5 * diagnorm(x - self._means[k], self._covars[k])
+            d = x - self._means[k]
+            bound -= 0.5 * np.sum(d * d * self._covars[k])
             bound -= 0.5 * np.sum(self._covars[k])
         elif self.cvtype == 'tied' or self.cvtype == 'full':
             if self.cvtype == 'tied':
@@ -184,7 +174,8 @@ class DPGMM(mixture.GMM):
                 a, B, detB, c = (self._a[k], self._B[k],
                                  self._detB[k], self._covars[k])
             bound += 0.5 * self._wishart_detlogw(a, B, detB)
-            bound -= 0.5 * squarenorm(x - self._means[k], c)
+            d = x - self._means[k]
+            bound -= 0.5 * np.sum(np.dot(np.dot(d, c), d))
             bound -= 0.5 * a * np.trace(B)
         else:
             raise NotImplementedError("This ctype is not implemented: "
