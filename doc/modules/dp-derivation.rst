@@ -27,7 +27,7 @@ derive similar algorithms yourself and you're not interested in
 changing/debugging the implementation in the scikits this document is
 not for you.
 
-The complexity of this implementation is quadratic in the number of
+The complexity of this implementation is linear in the number of
 mixture components and data points. With regards to the
 dimensionality, it is linear when using `spherical` or `diag` and
 quadratic/cubic when using `tied` or `full`. For `spherical` or `diag`

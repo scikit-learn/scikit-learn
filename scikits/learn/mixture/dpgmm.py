@@ -339,8 +339,8 @@ class DPGMM(mixture.GMM):
 
     def _bound_mu(self):
         logprior = 0.
-        for k in xrange(self.n_states):
-            logprior -= 0.5 * norm(self._means[k]) + 0.5 * self.n_features
+        logprior -= 0.5 * norm(self._means) 
+        logprior -= 0.5 * self.n_features * self.n_states
         return logprior
 
     def _wishart_logz(self, v, s, dets):
@@ -349,8 +349,7 @@ class DPGMM(mixture.GMM):
             z += (0.25 * (self.n_features * (self.n_features - 1))
                   * np.log(np.pi))
             z += 0.5 * v * np.log(dets)
-            for i in xrange(self.n_features):
-                z += gammaln(0.5 * (v - i + 1))
+            z += np.sum(gammaln(0.5 * (v - np.arange(self.n_features) + 1)))
             return z
 
     def _bound_wishart(self, a, B, detB):
@@ -388,13 +387,13 @@ class DPGMM(mixture.GMM):
     def _bound_z(self):
         logprior = 0.
         for i in xrange(self._z.shape[0]):
+            cz = np.zeros(self.n_states)
+            for k in xrange(self.n_states-2,-1,-1):
+                cz[k] = cz[k + 1] + self._z[i, k + 1]
             for k in xrange(self.n_states):
-                a = 0.
-                for j in xrange(k + 1, self.n_states):
-                    a += self._z[i, j]
-                logprior += a * (digamma(self._gamma[k, 2])
-                                 - digamma(self._gamma[k, 1]
-                                           + self._gamma[k, 2]))
+                logprior += cz[k] * (digamma(self._gamma[k, 2])
+                                     - digamma(self._gamma[k, 1]
+                                               + self._gamma[k, 2]))
                 logprior += self._z[i, k] * (digamma(self._gamma[k, 1])
                                              - digamma(self._gamma[k, 1] +
                                                        self._gamma[k, 2]))
