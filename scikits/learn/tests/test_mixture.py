@@ -10,24 +10,22 @@ from scipy import stats
 from scikits.learn import mixture
 from scikits.learn.mixture import GMM, DPGMM
 
-#np.random.seed(0)
-#print "setup"
 
-def setup_module():
-    np.random.seed(0)
+rng = np.random.RandomState(0)
+
 
 
 def _generate_random_spd_matrix(ndim):
     """Return a random symmetric, positive-definite matrix."""
-    A = np.random.rand(ndim, ndim)
+    A = rng.rand(ndim, ndim)
     U, s, V = np.linalg.svd(np.dot(A.T, A))
-    randspd = np.dot(np.dot(U, 1.0 + np.diag(np.random.rand(ndim))), V)
+    randspd = np.dot(np.dot(U, 1.0 + np.diag(rng.rand(ndim))), V)
     return randspd
 
 
 
 def test_logsum_1D():
-    A = np.random.rand(2) + 1.0
+    A = rng.rand(2) + 1.0
     for axis in range(1):
         Asum = mixture.logsum(A, axis)
         assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))
@@ -37,21 +35,21 @@ def test_logsum_3D():
     """
     Test also on a 3D matrix
     """
-    A = np.random.rand(2, 2, 2) + 1.0
+    A = rng.rand(2, 2, 2) + 1.0
     for axis in range(3):
         Asum = mixture.logsum(A, axis)
         assert_array_almost_equal(np.exp(Asum), np.sum(np.exp(A), axis))
 
 
 def test_normalize_1D():
-    A = np.random.rand(2) + 1.0
+    A = rng.rand(2) + 1.0
     for axis in range(1):
         Anorm = mixture.normalize(A, axis)
         assert np.all(np.allclose(Anorm.sum(axis), 1.0))
 
 
 def test_normalize_3D():
-    A = np.random.rand(2, 2, 2) + 1.0
+    A = rng.rand(2, 2, 2) + 1.0
     for axis in range(3):
         Anorm = mixture.normalize(A, axis)
         assert np.all(np.allclose(Anorm.sum(axis), 1.0))
@@ -65,17 +63,17 @@ def test_sample_gaussian():
 
     n_features, n_samples = 2, 300
     axis = 1
-    mu = np.random.randint(10) * np.random.rand(n_features)
-    cv = (np.random.rand(n_features) + 1.0) ** 2
+    mu = rng.randint(10) * rng.rand(n_features)
+    cv = (rng.rand(n_features) + 1.0) ** 2
 
     samples = mixture.sample_gaussian(
         mu, cv, cvtype='diag', n_samples=n_samples)
 
     assert np.allclose(samples.mean(axis), mu, atol=0.3)
-    assert np.allclose(samples.var(axis),  cv, atol=0.5)
+    assert np.allclose(samples.var(axis),  cv, atol=1.5)
 
     # the same for spherical covariances
-    cv = (np.random.rand() + 1.0) ** 2
+    cv = (rng.rand() + 1.0) ** 2
     samples = mixture.sample_gaussian(
         mu, cv, cvtype='spherical', n_samples=n_samples)
 
@@ -84,7 +82,7 @@ def test_sample_gaussian():
         samples.var(axis), np.repeat(cv, n_features), atol=1.5)
 
     # and for full covariances
-    A = np.random.randn(n_features, n_features)
+    A = rng.randn(n_features, n_features)
     cv = np.dot(A.T, A) + np.eye(n_features)
     samples = mixture.sample_gaussian(
         mu, cv, cvtype='full', n_samples=n_samples)
@@ -108,9 +106,9 @@ def test_lmvnpdf_diag():
     for correctness
     """
     n_features, n_states, n_obs = 2, 3, 10
-    mu = np.random.randint(10) * np.random.rand(n_states, n_features)
-    cv = (np.random.rand(n_states, n_features) + 1.0) ** 2
-    obs = np.random.randint(10) * np.random.rand(n_obs, n_features)
+    mu = rng.randint(10) * rng.rand(n_states, n_features)
+    cv = (rng.rand(n_states, n_features) + 1.0) ** 2
+    obs = rng.randint(10) * rng.rand(n_obs, n_features)
 
     ref = _naive_lmvnpdf_diag(obs, mu, cv)
     lpr = mixture.lmvnpdf(obs, mu, cv, 'diag')
@@ -120,9 +118,9 @@ def test_lmvnpdf_diag():
 def test_lmvnpdf_spherical():
     n_features, n_states, n_obs = 2, 3, 10
 
-    mu = np.random.randint(10) * np.random.rand(n_states, n_features)
-    spherecv = np.random.rand(n_states, 1) ** 2 + 1
-    obs = np.random.randint(10) * np.random.rand(n_obs, n_features)
+    mu = rng.randint(10) * rng.rand(n_states, n_features)
+    spherecv = rng.rand(n_states, 1) ** 2 + 1
+    obs = rng.randint(10) * rng.rand(n_obs, n_features)
 
     cv = np.tile(spherecv, (n_features, 1))
     reference = _naive_lmvnpdf_diag(obs, mu, cv)
@@ -133,9 +131,9 @@ def test_lmvnpdf_spherical():
 def test_lmvnpdf_full():
     n_features, n_states, n_obs = 2, 3, 10
 
-    mu = np.random.randint(10) * np.random.rand(n_states, n_features)
-    cv = (np.random.rand(n_states, n_features) + 1.0) ** 2
-    obs = np.random.randint(10) * np.random.rand(n_obs, n_features)
+    mu = rng.randint(10) * rng.rand(n_states, n_features)
+    cv = (rng.rand(n_states, n_features) + 1.0) ** 2
+    obs = rng.randint(10) * rng.rand(n_obs, n_features)
 
     fullcv = np.array([np.diag(x) for x in cv])
 
@@ -147,10 +145,10 @@ def test_lmvnpdf_full():
 def test_GMM_attributes():
     n_states, n_features = 10, 4
     cvtype = 'diag'
-    g = mixture.GMM(n_states, cvtype)
-    weights = np.random.rand(n_states)
+    g = mixture.GMM(n_states, cvtype, rng=rng)
+    weights = rng.rand(n_states)
     weights = weights / weights.sum()
-    means = np.random.randint(-20, 20, (n_states, n_features))
+    means = rng.randint(-20, 20, (n_states, n_features))
 
     assert g.n_states == n_states
     assert g.cvtype == cvtype
@@ -169,7 +167,7 @@ def test_GMM_attributes():
     assert_raises(ValueError, g.__setattr__, 'means',
                       np.zeros((n_states - 2, n_features)))
 
-    covars = (0.1 + 2 * np.random.rand(n_states, n_features)) ** 2
+    covars = (0.1 + 2 * rng.rand(n_states, n_features)) ** 2
     g._covars = covars
     assert_array_almost_equal(g._covars, covars)
     assert_raises(ValueError, g.__setattr__, 'covars', [])
@@ -182,14 +180,14 @@ def test_GMM_attributes():
 class GMMTester():
     n_states = 10
     n_features = 4
-    weights = np.random.rand(n_states)
+    weights = rng.rand(n_states)
     weights = weights / weights.sum()
-    means = np.random.randint(-20, 20, (n_states, n_features))
+    means = rng.randint(-20, 20, (n_states, n_features))
     threshold = -0.5
     I = np.eye(n_features)
-    covars = {'spherical': (0.1 + 2 * np.random.rand(n_states)) ** 2,
+    covars = {'spherical': (0.1 + 2 * rng.rand(n_states)) ** 2,
               'tied': _generate_random_spd_matrix(n_features) + 5 * I,
-              'diag': (0.1 + 2 * np.random.rand(n_states, n_features)) ** 2,
+              'diag': (0.1 + 2 * rng.rand(n_states, n_features)) ** 2,
               'full': np.array([_generate_random_spd_matrix(n_features) + 5 * I
                                 for x in xrange(n_states)])}
 
@@ -203,7 +201,7 @@ class GMMTester():
                                        # parameters being more
                                        # expressive than covariance
                                        # matrices
-        g = self.model(self.n_states, self.cvtype)
+        g = self.model(self.n_states, self.cvtype, rng=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -212,7 +210,7 @@ class GMMTester():
 
         gaussidx = np.repeat(range(self.n_states), 5)
         nobs = len(gaussidx)
-        obs = np.random.randn(nobs, self.n_features) + g.means[gaussidx]
+        obs = rng.randn(nobs, self.n_features) + g.means[gaussidx]
 
         ll, posteriors = g.eval(obs)
 
@@ -222,7 +220,7 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = self.model(self.n_states, self.cvtype)
+        g = self.model(self.n_states, self.cvtype, rng=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -240,7 +238,7 @@ class GMMTester():
 
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n_samples=100)
-        g = self.model(self.n_states, self.cvtype)
+        g = self.model(self.n_states, self.cvtype, rng=rng)
         g.fit(train_obs, n_iter=1, init_params=params)
 
         # Do one training iteration at a time so we can keep track of
