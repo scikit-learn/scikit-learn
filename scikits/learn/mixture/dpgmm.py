@@ -130,9 +130,9 @@ class DPGMM(mixture.GMM):
 
     """
 
-    def __init__(self, n_states=1, cvtype='diag', alpha=1.0):
+    def __init__(self, n_states=1, cvtype='diag', alpha=1.0, rng=np.random):
         self.alpha = alpha
-        super(DPGMM, self).__init__(n_states, cvtype)
+        super(DPGMM, self).__init__(n_states, cvtype, rng=rng)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -478,7 +478,7 @@ class DPGMM(mixture.GMM):
 
         if 'm' in init_params or not hasattr(self, 'means'):
             self._means = cluster.KMeans(
-                k=self._n_states).fit(X).cluster_centers_[::-1]
+                k=self._n_states,rng=self.rng).fit(X).cluster_centers_[::-1]
 
         if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self._n_states, self._n_states)

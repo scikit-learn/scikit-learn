@@ -79,7 +79,7 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
     return lmvnpdf_dict[cvtype](obs, means, covars)
 
 
-def sample_gaussian(mean, covar, cvtype='diag', n_samples=1):
+def sample_gaussian(mean, covar, cvtype='diag', n_samples=1, rng=np.random):
     """Generate random samples from a Gaussian distribution.
 
     Parameters
@@ -106,7 +106,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n_samples=1):
         Randomly generated sample
     """
     n_dim = len(mean)
-    rand = np.random.randn(n_dim, n_samples)
+    rand = rng.randn(n_dim, n_samples)
     if n_samples == 1:
         rand.shape = (n_dim,)
 
@@ -144,6 +144,9 @@ class GMM(BaseEstimator):
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
+
+    rng : numpy.random object, optional
+        Must support the full numpy random number generator API.
 
 
     Attributes
@@ -240,9 +243,10 @@ class GMM(BaseEstimator):
     array([ 0.5,  0.5])
     """
 
-    def __init__(self, n_states=1, cvtype='diag'):
+    def __init__(self, n_states=1, cvtype='diag', rng=np.random):
         self._n_states = n_states
         self._cvtype = cvtype
+        self.rng = rng
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype')
@@ -298,6 +302,9 @@ class GMM(BaseEstimator):
         self.n_features = self._means.shape[1]
 
     means = property(_get_means, _set_means)
+
+    def __repr__(self):
+        return "GMM(cvtype='%s', n_states=%s)"%(self._cvtype, self._n_states)
 
     def _get_weights(self):
         """Mixing weights for each mixture component."""
@@ -425,7 +432,7 @@ class GMM(BaseEstimator):
         weight_cdf = np.cumsum(weight_pdf)
 
         obs = np.empty((n_samples, self.n_features))
-        rand = np.random.rand(n_samples)
+        rand = self.rng.rand(n_samples)
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
         # for each component, generate all needed samples
@@ -439,8 +446,10 @@ class GMM(BaseEstimator):
                     cv = self._covars
                 else:
                     cv = self._covars[comp]
-                obs[comp_in_obs] = sample_gaussian(
-                    self._means[comp], cv, self._cvtype, num_comp_in_obs).T
+                obs[comp_in_obs] = sample_gaussian(self._means[comp], cv,
+                                                   self._cvtype, 
+                                                   num_comp_in_obs,
+                                                   rng=self.rng).T
         return obs
 
     def fit(self, X, n_iter=10, min_covar=1e-3, thresh=1e-2, params='wmc',
