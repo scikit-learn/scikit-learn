@@ -1,11 +1,9 @@
+"""Dirichlet Process Gaussian Mixture Models"""
+
 import numpy as np
-
 from . import gmm as mixture
-
-from scikits.learn import cluster
-
+from .. import cluster
 from scipy.special import digamma, gammaln
-
 from scipy import linalg
 
 # Author: Alexandre Passos (alexandre.tp@gmail.com)
