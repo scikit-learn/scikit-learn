@@ -3,12 +3,12 @@ Machine Learning 101
 
 Machine Learning is about building **programs with tunable parameters**
 (typically an array of floating point values) that are adjusted
-automatically so as to improve its behavior by **adapting to
+automatically so as to improve their behavior by **adapting to
 previously seen data**.
 
 Machine Learning can be considered a **subfield of Artificial
 Intelligence** since those algorithms can be seen as building blocks
-to make computer learn to behave more intelligently by somehow
+to make computers learn to behave more intelligently by somehow
 **generalizing** rather that just storing and retrieving data items
 like a database system would do.
 
@@ -57,7 +57,7 @@ expect a numpy array as input ``X``.  The expected shape of ``X`` is
 The number of features must be fixed in advance. However it can be
 very high dimensional (e.g. millions of features) with most of them
 being zeros for a given sample. In this case we use ``scipy.sparse``
-matrices instead of ``numpy`` arrays so has to make the data fit
+matrices instead of ``numpy`` arrays so as to make the data fit
 in memory.
 
 
@@ -65,7 +65,7 @@ A simple example: the iris dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The machine learning community often uses a simple flowers database
-were each row in the database (or CSV file) is a set of measurements
+where each row in the database (or CSV file) is a set of measurements
 of an individual iris flower.
 
 .. figure:: images/Virginia_Iris.png
@@ -105,7 +105,7 @@ helper function to load it into numpy arrays::
   ``>>>`` and ``...`` prompt signs, enable the ipython doctest mode with:
   ``%doctest_mode``
 
-The features of each sample flower is stored in the ``data`` attribute
+The features of each sample flower are stored in the ``data`` attribute
 of the dataset::
 
   >>> n_samples, n_features = iris.data.shape
@@ -135,7 +135,7 @@ The information about the class of each sample is stored in the
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
-The names of the classes is stored in the last attribute, namely
+The names of the classes are stored in the last attribute, namely
 ``target_names``::
 
   >>> list(iris.target_names)
@@ -172,7 +172,7 @@ Extracting features from unstructured data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The previous example deals with features that are readily available
-in a structured datasets with rows and columns of numerical or
+in a structured dataset with rows and columns of numerical or
 categorical values.
 
 However, **most of the produced data is not readily available in a
@@ -185,9 +185,9 @@ into arrays of numerical features.
   :Text documents:
 
     Count the frequency of each word or pair of consecutive words
-    in each document. This approach is called the **Bag of Words**.
+    in each document. This approach is called **Bag of Words**.
 
-    Note: we include other files formats such as HTML and PDF in
+    Note: we include other file formats such as HTML and PDF in
     this category: an ad-hoc preprocessing step is required to
     extract the plain text in UTF-8 encoding for instance.
 
@@ -203,7 +203,7 @@ into arrays of numerical features.
     - Compute the Euclidean, Manhattan or cosine **similarities of
       the sample to a set reference prototype images** aranged in a
       code book.  The code book may have been previously extracted
-      on the same dataset using an unsupervised learning algorithms
+      from the same dataset using an unsupervised learning algorithm
       on the raw pixel signal.
 
       Each feature value is the distance to one element of the code
@@ -213,12 +213,12 @@ into arrays of numerical features.
       small regions and perform feature extraction locally in each
       area.
 
-      Then combine all the feature of the individual areas into a
+      Then combine all the features of the individual areas into a
       single array.
 
   :Sounds:
 
-    Same strategy as for images with in a 1D space instead of 2D
+    Same strategy as for images within a 1D space instead of 2D
 
 
 Practical implementations of such feature extraction strategies
@@ -272,31 +272,31 @@ petals and sepals. This is a classification task, hence we have::
 
 Once the data has this format it is trivial to train a classifier,
 for instance a support vector machine with a linear kernel (or lack
-of thereof)::
+thereof)::
 
   >>> from scikits.learn.svm import LinearSVC
   >>> clf = LinearSVC()
 
 .. note::
 
-    Whenever you import a scikit-learn class or function of the first time,
+    Whenever you import a scikit-learn class or function for the first time,
     you are advised to read the docstring by using the ``?`` magic suffix
     of ipython, for instance type: ``LinearSVC?``.
 
 
 ``clf`` is a statistical model that has parameters that control the
 learning algorithm (those parameters are sometimes called the
-hyper-parameters). Those hyperparameters can be supplied by the
+hyperparameters). Those hyperparameters can be supplied by the
 user in the constructor of the model. We will explain later how to choose
-a good combination either using simple empirical rules or data
+a good combination using either simple empirical rules or data
 driven selection::
 
   >>> clf
   LinearSVC(loss='l2', C=1.0, intercept_scaling=1, fit_intercept=True,
        eps=0.0001, penalty='l2', multi_class=False, dual=True)
 
-By default the real model parameters are not initialized. They will
-automatically be tuned from the data by calling the ``fit`` method::
+By default the real model parameters are not initialized. They will be
+tuned automatically from the data by calling the ``fit`` method::
 
   >>> clf = clf.fit(X, y)
 
@@ -317,7 +317,7 @@ like the first sample of the iris dataset::
   >>> clf.predict(X_new)
   array([0], dtype=int32)
 
-The outcome is ``0`` which is the id of the first iris class namely
+The outcome is ``0`` which is the id of the first iris class, namely
 'setosa'.
 
 The following figure places the location of the ``fit`` and ``predict``
@@ -333,7 +333,7 @@ data (it already comes as vectors of features):
    Supervised Learning with scikit-learn
 
 
-Some ``scikit-learn`` classifiers can further predicts probabilities
+Some ``scikit-learn`` classifiers can further predict probabilities
 of the outcome.  This is the case of logistic regression models::
 
   >>> from scikits.learn.linear_model import LogisticRegression
@@ -347,13 +347,13 @@ of the outcome.  This is the case of logistic regression models::
 
 This means that the model estimates that the sample in ``X_new`` has:
 
-  - 90% likelyhood to be belong to the 'setosa' class
+  - 90% likelyhood to belong to the 'setosa' class
 
-  - 9% likelyhood to be belong to the 'versicolor' class
+  - 9% likelyhood to belong to the 'versicolor' class
 
-  - 1% likelyhood to be belong to the 'virginica' class
+  - 1% likelyhood to belong to the 'virginica' class
 
-Of course the ``predict`` method that output the label id of the
+Of course, the ``predict`` method that outputs the label id of the
 most likely outcome is also available::
 
   >>> clf2.predict(X_new)
@@ -401,21 +401,21 @@ Language identification in text documents    en, es, de, fr, ja, zh, ar, ru...
 -------------------------------------------- ---------------------------------
 News articles categorization                 Business, technology, sports...
 -------------------------------------------- ---------------------------------
-Sentiment Analysis in customer feedback      Negative, neutral, positive
+Sentiment analysis in customer feedback      Negative, neutral, positive
 -------------------------------------------- ---------------------------------
-Face verification in pictures                Same / different persons
+Face verification in pictures                Same / different person
 -------------------------------------------- ---------------------------------
-Speaker verification on voice recordings     Same / different persons
+Speaker verification in voice recordings     Same / different person
 ============================================ =================================
 
 
 Regression
 ~~~~~~~~~~
 
-Regression is the task to predict the value of a continuously varying
+Regression is the task of predicting the value of a continuously varying
 variable (e.g. a price, a temperature, a conversion rate...) given
 some input variables (a.k.a. the features, "predictors" or
-"regressors"). Some notable implementations of regression model in
+"regressors"). Some notable implementations of regression models in
 ``scikit-learn`` include:
 
 :``scikits.learn.linear_model.Ridge``:
@@ -465,13 +465,13 @@ An unsupervised learning model will try to fit its parameters so
 as to best summarize regularities found in the data.
 
 The following introduces the main variants of unsupervised learning
-algorithms namely dimensionality reduction and clustering.
+algorithms, namely dimensionality reduction and clustering.
 
 
 Dimensionality Reduction and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Dimensionality reduction is the task to derive a set of **new artificial
+Dimensionality reduction is the task of deriving a set of **new artificial
 features** that is **smaller** than the original feature set while
 retaining **most of the variance** of the original data.
 
@@ -541,6 +541,7 @@ following utility function::
   ...         pl.scatter(data[target == i, 0], data[target == i, 1],
   ...                    c=c, label=label)
   ...     pl.legend()
+  ...     pl.show()
   ...
 
 Calling ``plot_2D(X_pca, iris.target, iris.target_names)`` will
@@ -558,11 +559,11 @@ display the following:
 .. note::
 
   The default implementation of PCA computes the SVD of the full
-  data matrix which is not scalable when both ``n_samples`` and
+  data matrix, which is not scalable when both ``n_samples`` and
   ``n_features`` are big (more that a few thousands).
 
   If you are interested in a number of components that is much
-  smaller than both ``n_samples`` and ``n_features`` consider using
+  smaller than both ``n_samples`` and ``n_features``, consider using
   ``scikits.learn.pca.RandomizedPCA`` instead.
 
 
@@ -572,7 +573,7 @@ Other applications of dimensionality reduction
 Dimensionality Reduction is not just useful for visualization of
 high dimensional datasets. It can also be used as a preprocessing
 step (often called data normalization) to help speed up supervised
-machine learning that are not computationally efficient with high
+machine learning methods that are not computationally efficient with high
 ``n_features`` such as SVM classifiers with gaussian kernels for
 instance or that do not work well with linearly correlated features.
 
@@ -591,7 +592,7 @@ samples according to some predefined similarity or dissimilarity
 measure (such as the Euclidean distance).
 
 For instance let us reuse the output of the 2D PCA of the iris
-dataset and try to find 3 groups of samples using the slimplest
+dataset and try to find 3 groups of samples using the simplest
 clustering algorithm (KMeans)::
 
   >>> from scikits.learn.cluster import KMeans
@@ -629,14 +630,14 @@ with::
 Notable implementations of clustering models
 ++++++++++++++++++++++++++++++++++++++++++++
 
-The following are two well known clustering algorithms. Like most
+The following are two well-known clustering algorithms. Like most
 unsupervised learning models in the scikit, they expect the data
-to be cluster to have shape ``(n_samples, n_features)``:
+to be clustered to have the shape ``(n_samples, n_features)``:
 
 :``scikits.learn.cluster.KMeans``:
 
-  The simplest yet effective clustering algorithm. Need to be
-  provided the number of clusters in advance and assume that the
+  The simplest yet effective clustering algorithm. Needs to be
+  provided with the number of clusters in advance, and assumes that the
   data is normalized as input (but use a PCA model as preprocessor).
 
 :``scikits.learn.cluster.MeanShift``:
@@ -688,7 +689,7 @@ Some supervised learning problems can be solved by very simple
 models (called generalized linear models) depending on the data.
 Others simply don't.
 
-To grasp the difference between the two cases run the interactive
+To grasp the difference between the two cases, run the interactive
 example from the ``examples`` folder of the ``scikit-learn`` source
 distribution::
 
@@ -705,14 +706,14 @@ distribution::
    The accurracy of the model is displayed on stdout.
 
 The following figures demonstrate one case where a linear model can
-perflectly separate the two classes while the other is not linearly
+perfectly separate the two classes while the other is not linearly
 separable (a model with a gaussian kernel is required in that case).
 
 .. figure:: images/linearly_separable_data.png
    :scale: 75 %
    :align: center
 
-   Linear Support Vector Machine trained to perflectly separate 2
+   Linear Support Vector Machine trained to perfectly separate 2
    sets of data points labeled as white and black in a 2D space.
 
 .. figure:: images/non_linearly_separable_data.png
@@ -738,7 +739,7 @@ separable (a model with a gaussian kernel is required in that case).
 :Exercise:
 
    Construct a problem with less than 10 points where the predictive
-   accurracy of the best linear model is 50%.
+   accuracy of the best linear model is 50%.
 
 .. note:
 
@@ -752,7 +753,7 @@ Training set, test set and overfitting
 
 The most common mistake beginners do when training statistical
 models is to evaluate the quality of the model on the same data
-using for fitting the model:
+used for fitting the model:
 
   If you do this, **you are doing it wrong!**
 
@@ -835,16 +836,16 @@ We can now re-train a new linear classifier on the training set only::
   >>> clf = LinearSVC().fit(X_train, y_train)
 
 To evaluate its quality we can compute the average number of correct
-classification on the test set::
+classifications on the test set::
 
   >>> np.mean(clf.predict(X_test) == y_test)
   1.0
 
 This shows that the model has a predictive accurracy of 100% which
-means that the classification model was perfectly capable on
+means that the classification model was perfectly capable of
 generalizing what was learned from the training set to the test
 set: this is rarely so easy on real life datasets as we will see
-on the following chapter.
+in the following chapter.
 
 
 Key takeaway points
@@ -875,7 +876,7 @@ Key takeaway points
 - Simple linear models often very useful in practice (esp. with
   large ``n_features``)
 
-- Before starting to training a model: split train / test data:
+- Before starting to train a model: split train / test data:
 
   - use training set for model selection and fitting
 
