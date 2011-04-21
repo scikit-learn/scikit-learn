@@ -259,21 +259,22 @@ class DPGMM(mixture.GMM):
         if self.cvtype == 'spherical':
             self._a = 0.5 * self.n_features * np.sum(self._z, axis=0)
             for k in xrange(self.n_states):
+                dif = (self._X - self._means[k]) # one might want to
+                                                 # avoid this huge
+                                                 # temporary matrix if
+                                                 # memory is tight
                 self._b[k] = 1.
-                for i in xrange(self._X.shape[0]):
-                    dif = norm((self._X[i] - self._means[k]))
-                    dif += self.n_features
-                    self._b[k] += 0.5 * self._z[i, k] * dif
+                d = np.sum(dif*dif,axis=1)
+                self._b[k] += 0.5 * np.sum(self._z.T[k]*(d+self.n_features))
             self._covars = self._a / self._b
         elif self.cvtype == 'diag':
             for k in xrange(self.n_states):
                 self._a[k].fill(1. + 0.5 * np.sum(self._z.T[k], axis=0))
+                ddif = (self._X - self._means[k]) # see comment above
                 for d in xrange(self.n_features):
                     self._b[k, d] = 1.
-                    for i in xrange(self._X.shape[0]):
-                        dif = self._X[i, d] - self._means[k, d]
-                        self._b[k, d] += 0.5 * self._z[i, k] * (dif * dif + 1)
-                self._b[k, d] = min(10 * self._a[k, d], self._b[k, d])
+                    dd = ddif.T[d]*ddif.T[d]
+                    self._b[k,d] += 0.5 * np.sum(self._z.T[k]*(dd + 1))
                 self._covars[k] = self._a[k] / self._b[k]
         elif self.cvtype == 'tied':
             self._a = 2 + self._X.shape[0] + self.n_features
