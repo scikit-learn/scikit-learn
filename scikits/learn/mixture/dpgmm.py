@@ -399,7 +399,7 @@ class DPGMM(mixture.GMM):
                 cz[k] = cz[k + 1] + self._z[i, k + 1]
             dg1 = digamma(self._gamma.T[1])
             dg2 = digamma(self._gamma.T[2])
-            dg12 = digamma(self._gamma.T[1] + self._gamma.T[1])
+            dg12 = digamma(self._gamma.T[1] + self._gamma.T[2])
             logprior += np.sum(cz*(dg2-dg12))
             logprior += np.sum(self._z[i]*(dg1-dg12))
             for k in xrange(self.n_states):
