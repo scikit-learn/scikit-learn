@@ -172,11 +172,9 @@ The advantages of using a dirichlet process mixture model are:
      to fit structures that generalize better to unseen data.
 
 The main disadvantages of using the dirichlet process are:
- - **Speed** the scikit implementation is quadratic in the number of
-     components. While this can be improved, the extra parametrization
-     necessary for variational inference and for the structure of the
-     dirichlet process can and will make inference slower, although
-     not by much.
+ - **Speed** the extra parametrization necessary for variational
+     inference and for the structure of the dirichlet process can and
+     will make inference slower, although not by much.
  - **Bias**: as in variational techniques, but only more so, there are
      many implicit biases in the dirichlet process and the inference
      algorithms, and whenever there is a mismatch between these biases
