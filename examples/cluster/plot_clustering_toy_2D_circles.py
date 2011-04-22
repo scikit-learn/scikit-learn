@@ -51,9 +51,9 @@ pl.title("Original dataset")
 
 # Build a heat kernel of euclidean distances as affinity matrix
 distances = euclidean_distances(X, X)
-affinity = np.exp(- (distances ** 2) / (distances.mean() ** 2))
+affinity = np.exp(- (distances ** 2) / (0.1 * distances.mean() ** 2))
 
-labels = spectral_clustering(affinity, k=3)
+labels = spectral_clustering(affinity, k=3, mode='amg')
 
 pl.figure()
 for l, c in zip(np.unique(labels), 'rgbcmyk'):
