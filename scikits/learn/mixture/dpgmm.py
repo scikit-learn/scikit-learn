@@ -152,22 +152,22 @@ class DPGMM(mixture.GMM):
         bound = -0.5 * self.n_features * np.log(2 * np.pi)
         bound -= np.log(2 * np.pi * np.e)
         if self.cvtype == 'spherical':
-            bound += 0.5 * self.n_features * (digamma(self._a[k])
-                                              - np.log(self._b[k]))
+            bound += self._bound_covar[k]
             bound -= 0.5 * (self._covars[k]) * (norm(x - self._means[k])
                                                 + self.n_features)
         elif self.cvtype == 'diag':
-            bound += 0.5 * np.sum(digamma(self._a[k]) - np.log(self._b[k]))
+            bound += self._bound_covar[k]
             d = x - self._means[k]
             bound -= 0.5 * np.sum(d * d * self._covars[k])
             bound -= 0.5 * np.sum(self._covars[k])
         elif self.cvtype == 'tied' or self.cvtype == 'full':
             if self.cvtype == 'tied':
                 a, B, detB, c = self._a, self._B, self._detB, self._covars
+                bound += self._bound_covar
             else:
                 a, B, detB, c = (self._a[k], self._B[k],
                                  self._detB[k], self._covars[k])
-            bound += 0.5 * self._wishart_detlogw(a, B, detB)
+                bound += self._bound_covar[k]
             d = x - self._means[k]
             bound -= 0.5 * np.sum(np.dot(np.dot(d, c), d))
             bound -= 0.5 * a * np.trace(B)
@@ -261,6 +261,9 @@ class DPGMM(mixture.GMM):
                 self._b[k] = 1.
                 d = np.sum(dif*dif,axis=1)
                 self._b[k] += 0.5 * np.sum(self._z.T[k]*(d+self.n_features))
+                self._bound_covar[k] = (0.5 * self.n_features *
+                                        (digamma(self._a[k]) -
+                                         np.log(self._b[k])))
             self._covars = self._a / self._b
         elif self.cvtype == 'diag':
             for k in xrange(self.n_states):
@@ -271,6 +274,8 @@ class DPGMM(mixture.GMM):
                     dd = ddif.T[d]*ddif.T[d]
                     self._b[k,d] += 0.5 * np.sum(self._z.T[k]*(dd + 1))
                 self._covars[k] = self._a[k] / self._b[k]
+                self._bound_covar[k] = 0.5 * np.sum(digamma(self._a[k])
+                                                    - np.log(self._b[k]))
         elif self.cvtype == 'tied':
             self._a = 2 + self._X.shape[0] + self.n_features
             self._B = (self._X.shape[0] + 1) * np.identity(self.n_features)
@@ -282,6 +287,9 @@ class DPGMM(mixture.GMM):
             self._B = linalg.pinv(self._B)
             self._covars = self._a * self._B
             self._detB = linalg.det(self._B)
+            self._bound_covar = 0.5 * self._wishart_detlogw(self._a,
+                                                            self._B,
+                                                            self._detB)
         elif self.cvtype == 'full':
             for k in xrange(self.n_states):
                 T = np.sum(self._z.T[k])
@@ -294,7 +302,10 @@ class DPGMM(mixture.GMM):
                 self._B[k] = linalg.pinv(self._B[k])
                 self._covars[k] = self._a[k] * self._B[k]
                 self._detB[k] = linalg.det(self._B[k])
-
+                self._bound_covar[k] = 0.5*self._wishart_detlogw(self._a[k],
+                                                                 self._B[k],
+                                                                 self._detB[k])
+                
     def _monitor(self, monitor, n, end=False):
         if monitor:
             print n, self.lower_bound()
@@ -385,14 +396,15 @@ class DPGMM(mixture.GMM):
             cz = np.zeros(self.n_states)
             for k in xrange(self.n_states-2,-1,-1):
                 cz[k] = cz[k + 1] + self._z[i, k + 1]
+            dg1 = digamma(self._gamma.T[1])
+            dg2 = digamma(self._gamma.T[2])
+            dg12 = digamma(self._gamma.T[1] + self._gamma.T[1])
+            logprior += np.sum(cz*(dg2-dg12))
+            logprior += np.sum(self._z[i]*(dg1-dg12))
             for k in xrange(self.n_states):
-                logprior += cz[k] * (digamma(self._gamma[k, 2])
-                                     - digamma(self._gamma[k, 1]
-                                               + self._gamma[k, 2]))
-                logprior += self._z[i, k] * (digamma(self._gamma[k, 1])
-                                             - digamma(self._gamma[k, 1] +
-                                                       self._gamma[k, 2]))
-                if self._z[i, k] != 0:
+                if self._z[i, k] != 0: # don't know how to optimize
+                                       # this without getting nans due
+                                       # to 0*log(0)
                     logprior -= self._z[i, k] * np.log(self._z[i, k])
         return logprior
 
@@ -473,16 +485,26 @@ class DPGMM(mixture.GMM):
                 self._a = np.ones(self.n_states)
                 self._b = np.ones(self.n_states)
                 self._covars = np.ones(self.n_states)
+                self._bound_covar[k] = (0.5 * self.n_features *
+                                        (digamma(self._a) -
+                                         np.log(self._b)))
             elif self.cvtype == 'diag':
                 self._a = 1 + 0.5 * self.n_features
                 self._a *= np.ones((self.n_states, self.n_features))
                 self._b = np.ones((self.n_states, self.n_features))
                 self._covars = np.ones((self.n_states, self.n_features))
+                self._bound_covar = np.zeros(self.n_states)
+                for k in xrange(self.n_states):
+                    self._bound_covar[k] = 0.5 * np.sum(digamma(self._a[k])
+                                                        - np.log(self._b[k]))
             elif self.cvtype == 'tied':
                 self._a = 1.
                 self._B = np.identity(self.n_features)
                 self._covars = np.identity(self.n_features)
                 self._detB = 1.
+                self._bound_covar = 0.5 * self._wishart_detlogw(self._a,
+                                                                self._B,
+                                                                self._detB)
             elif self.cvtype == 'full':
                 self._a = (1 + self.n_states + self._X.shape[0])
                 self._a *= np.ones(self.n_states)
@@ -491,6 +513,12 @@ class DPGMM(mixture.GMM):
                 self._covars = [np.identity(self.n_features)
                                 for i in xrange(self.n_states)]
                 self._detB = np.ones(self.n_states)
+                self._bound_covar = np.zeros(self.n_states)
+                for k in xrange(self.n_states):
+                    self._bound_covar[k] = self._wishart_detlogw(self._a[k],
+                                                                 self._B[k],
+                                                                 self._detB[k])
+                    self._bound_covar[k] /= 2
 
         logprob = []
         # reset self.converged_ to False
