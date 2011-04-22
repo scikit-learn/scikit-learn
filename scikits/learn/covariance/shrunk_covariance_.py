@@ -11,9 +11,10 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 #
 # License: BSD Style.
 
+from __future__ import division
 import numpy as np
 
-from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
+from .empirical_covariance_ import EmpiricalCovariance
 
 ###############################################################################
 # ShrunkCovariance estimator
@@ -58,13 +59,23 @@ class ShrunkCovariance(EmpiricalCovariance):
     
     Parameters
     ----------
+    store_precision : bool
+      Specify if the estimated precision is stored
+      
     shrinkage: float, 0 <= shrinkage <= 1
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
     
     Attributes
     ----------
-    `shrinkage_`: float, 0 <= shrinkage <= 1
+    `covariance_` : 2D ndarray, shape (n_features, n_features)
+        Estimated covariance matrix
+
+    `precision_` : 2D ndarray, shape (n_features, n_features)
+        Estimated pseudo inverse matrix.
+        (stored only if store_precision is True)
+        
+    `shrinkage`: float, 0 <= shrinkage <= 1
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
     
@@ -79,13 +90,17 @@ class ShrunkCovariance(EmpiricalCovariance):
     
     """
     def __init__(self, store_precision=True, shrinkage=0.1):
-        super(ShrunkCovariance, self).__init__(store_precision)
-        self.shrinkage_ = shrinkage
+        self.store_precision = store_precision
+        self.shrinkage = shrinkage
 
 
-    def fit(self, X, **params):
+    def fit(self, X, assume_centered=False, **params):
         self._set_params(**params)
-        covariance = shrunk_covariance(empirical_covariance(X), self.shrinkage_)
+        if assume_centered:
+            empirical_cov = np.dot(X.T, X) / X.shape[0]
+        else:
+            empirical_cov = np.cov(X.T, bias=1)
+        covariance = shrunk_covariance(empirical_cov, self.shrinkage)
         self._set_estimates(covariance)
         
         return self
@@ -93,7 +108,7 @@ class ShrunkCovariance(EmpiricalCovariance):
 ################################################################################
 # Ledoit-Wolf estimator
 
-def ledoit_wolf(X):
+def ledoit_wolf(X, assume_centered=False):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
     Parameters
@@ -105,6 +120,7 @@ def ledoit_wolf(X):
     -------
     shrunk_cov: 2D ndarray, shape (n_features, n_features)
       Shrunk covariance
+      
     shrinkage: float
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
@@ -119,13 +135,22 @@ def ledoit_wolf(X):
     where mu = trace(cov) / n_features
     
     """
-    X = np.asanyarray(X, dtype=np.float)
+    X = np.asanyarray(X)
     # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
+        if not assume_centered:
+            X = X - X.mean()
+            print np.atleast_2d((X**2).mean())
         return np.atleast_2d((X**2).mean()), 0.
     n_samples, n_features = X.shape
     
-    emp_cov = empirical_covariance(X)
+    # optionaly center data
+    if not assume_centered:
+        emp_cov = np.cov(X.T, bias=1)
+        X = X - X.mean(0)
+    else:
+        emp_cov = np.dot(X.T, X) / n_samples
+    
     mu = np.trace(emp_cov) / n_features
     delta_ = emp_cov.copy()
     delta_.flat[::n_features + 1] -= mu
@@ -142,7 +167,7 @@ def ledoit_wolf(X):
     return shrunk_cov, shrinkage
 
 
-class LedoitWolf(ShrunkCovariance):
+class LedoitWolf(EmpiricalCovariance):
     """LedoitWolf Estimator
     
     Ledoit-Wolf is a particular form of shrinkage, where the shrinkage
@@ -150,6 +175,24 @@ class LedoitWolf(ShrunkCovariance):
     described in "A Well-Conditioned Estimator for Large-Dimensional
     Covariance Matrices", Ledoit and Wolf, Journal of Multivariate
     Analysis, Volume 88, Issue 2, February 2004, pages 365-411.
+    
+    Parameters
+    ----------
+    store_precision : bool
+        Specify if the estimated precision is stored
+    
+    Attributes
+    ----------
+    `covariance_` : 2D ndarray, shape (n_features, n_features)
+        Estimated covariance matrix
+
+    `precision_` : 2D ndarray, shape (n_features, n_features)
+        Estimated pseudo inverse matrix.
+        (stored only if store_precision is True)
+
+    `shrinkage_`: float, 0 <= shrinkage <= 1
+      coefficient in the convex combination used for the computation
+      of the shrunk estimate.
 
     Notes
     -----
@@ -167,15 +210,9 @@ class LedoitWolf(ShrunkCovariance):
     Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
     February 2004, pages 365-411.
     
-    """
-
-    def __init__(self, store_precision=True):
-        super(LedoitWolf, self).__init__(store_precision)
-
-
-    def fit(self, X):
-        X = np.asanyarray(X)
-        covariance, shrinkage = ledoit_wolf(X)
+    """        
+    def fit(self, X, assume_centered=False):
+        covariance, shrinkage = ledoit_wolf(X, assume_centered=assume_centered)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
         
@@ -184,8 +221,8 @@ class LedoitWolf(ShrunkCovariance):
 ################################################################################
 # OAS estimator
 
-def oas(X):
-    """Estimates the shrunk OAS covariance matrix.
+def oas(X, assume_centered=False):
+    """Estimates the covariance matrix with the Oracle Approximating Shrinkage.
 
     Parameters
     ----------
@@ -196,6 +233,7 @@ def oas(X):
     -------
     shrunk_cov: 2D ndarray, shape (n_features, n_features)
       Shrunk covariance
+      
     shrinkage: float
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
@@ -210,13 +248,18 @@ def oas(X):
     where mu = trace(cov) / n_features
     
     """
-    X = np.asanyarray(X, dtype=np.float)
+    X = np.asanyarray(X)
     # for only one feature, the result is the same whatever the shrinkage
     if X.ndim == 1:
+        if not assume_centered:
+            X = X - X.mean()
         return np.atleast_2d((X**2).mean()), 0.
     n_samples, n_features = X.shape
     
-    emp_cov = empirical_covariance(X)
+    if not assume_centered:
+        emp_cov = np.cov(X.T, bias=1)
+    else:
+        emp_cov = np.dot(X.T, X) / n_samples
     mu = np.trace(emp_cov) / n_features
     
     # formula from Chen et al.'s **implementation**
@@ -231,9 +274,9 @@ def oas(X):
     return shrunk_cov, shrinkage
 
 
-class OAS(ShrunkCovariance):
+class OAS(EmpiricalCovariance):
     """
-    OAS Estimator
+    Oracle Approximating Shrinkage Estimator
 
     OAS is a particular form of shrinkage described in
     "Shrinkage Algorithms for MMSE Covariance Estimation"
@@ -242,6 +285,24 @@ class OAS(ShrunkCovariance):
     The formula used here does not correspond to the one given in the
     article. It has been taken from the matlab programm available from the
     authors webpage (https://tbayes.eecs.umich.edu/yilun/covestimation).
+    
+    Parameters
+    ----------
+    store_precision : bool
+        Specify if the estimated precision is stored
+    
+    Attributes
+    ----------
+    `covariance_` : 2D ndarray, shape (n_features, n_features)
+        Estimated covariance matrix
+
+    `precision_` : 2D ndarray, shape (n_features, n_features)
+        Estimated pseudo inverse matrix.
+        (stored only if store_precision is True)
+        
+    `shrinkage_`: float, 0 <= shrinkage <= 1
+      coefficient in the convex combination used for the computation
+      of the shrunk estimate.
     
     Notes
     -----
@@ -259,13 +320,8 @@ class OAS(ShrunkCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
     
     """
-
-    def __init__(self, store_precision=True):
-        super(OAS, self).__init__(store_precision)
-
-
-    def fit(self, X):
-        covariance, shrinkage = oas(X)
+    def fit(self, X, assume_centered=False):
+        covariance, shrinkage = oas(X, assume_centered=assume_centered)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
         

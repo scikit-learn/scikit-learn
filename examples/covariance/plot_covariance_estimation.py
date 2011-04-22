@@ -42,24 +42,27 @@ X_test = np.dot(base_X_test, coloring_matrix)
 # Compute Ledoit-Wolf and Covariances on a grid of shrinkages
 
 from scikits.learn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
-    log_likelihood, empirical_covariance
+    log_likelihood
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate
 lw = LedoitWolf()
-loglik_lw = lw.fit(X_train).score(X_test)
+loglik_lw = lw.fit(X_train, assume_centered=True).score(
+    X_test, assume_centered=True)
 
 # OAS coefficient estimate
 oa = OAS()
-loglik_oa = oa.fit(X_train).score(X_test)
+loglik_oa = oa.fit(X_train, assume_centered=True).score(
+    X_test, assume_centered=True)
 
 # spanning a range of possible shrinkage coefficient values
 shrinkages = np.logspace(-3, 0, 30)
-negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(X_train).score(X_test) \
-                                                        for s in shrinkages]
+negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(
+        X_train, assume_centered=True).score(X_test, assume_centered=True) \
+                         for s in shrinkages]
 
 # getting the likelihood under the real model
 real_cov = np.dot(coloring_matrix.T, coloring_matrix)
-emp_cov = empirical_covariance(X_train)
+emp_cov = np.cov(X_train.T, bias=1)
 loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################
@@ -76,8 +79,8 @@ pl.hlines(loglik_real, pl.xlim()[0], pl.xlim()[1], color='red',
 # adjust view
 lik_max = np.amax(negative_logliks)
 lik_min = np.amin(negative_logliks)
-ylim0 = pl.ylim()[0] - np.log((pl.ylim()[1]-pl.ylim()[0]))
-ylim1 = lik_max + np.log(lik_max-lik_min)*10.
+ylim0 = lik_min - 5.*np.log((pl.ylim()[1]-pl.ylim()[0]))
+ylim1 = lik_max + 10.*np.log(lik_max-lik_min)
 # LW likelihood
 pl.vlines(lw.shrinkage_, ylim0, -loglik_lw, color='g',
           linewidth=3, label='Ledoit-Wolf estimate')

@@ -47,12 +47,12 @@ for i, n_samples in enumerate(n_samples_range):
             np.random.normal(size=(n_samples, n_features)), coloring_matrix.T)
         
         lw = LedoitWolf(store_precision=False)
-        lw.fit(X)
+        lw.fit(X, assume_centered=True)
         lw_mse[i,j] = lw.mse(real_cov)
         lw_shrinkage[i,j] = lw.shrinkage_
 
         oa = OAS(store_precision=False)
-        oa.fit(X)
+        oa.fit(X, assume_centered=True)
         oa_mse[i,j] = oa.mse(real_cov)
         oa_shrinkage[i,j] = oa.shrinkage_
 
