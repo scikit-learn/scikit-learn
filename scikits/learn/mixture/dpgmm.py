@@ -485,9 +485,9 @@ class DPGMM(mixture.GMM):
                 self._a = np.ones(self.n_states)
                 self._b = np.ones(self.n_states)
                 self._covars = np.ones(self.n_states)
-                self._bound_covar[k] = (0.5 * self.n_features *
-                                        (digamma(self._a) -
-                                         np.log(self._b)))
+                self._bound_covar = (0.5 * self.n_features *
+                                     (digamma(self._a) -
+                                      np.log(self._b)))
             elif self.cvtype == 'diag':
                 self._a = 1 + 0.5 * self.n_features
                 self._a *= np.ones((self.n_states, self.n_features))
