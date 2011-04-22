@@ -627,11 +627,11 @@ class VBGMM(DPGMM):
         obs = np.asanyarray(obs)
         p = np.zeros(self.n_states)
         bound = np.zeros(obs.shape[0])
+        dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
         for i in xrange(obs.shape[0]):
             for k in xrange(self.n_states):
                 p[k] = z[i, k] = self._bound_pxgivenz(obs[i], k)
-                z[i, k] += digamma(self._gamma[k])
-                z[i, k] -= digamma(np.sum(self._gamma))
+            z[i] += dg
             z[i] = lognormalize(z[i])
             bound[i] = np.sum(z[i] * p)
         return bound, z
@@ -645,22 +645,18 @@ class VBGMM(DPGMM):
 
     def _bound_z(self):
         logprior = 0.
-        for i in xrange(self._z.shape[0]):
-            for k in xrange(self.n_states):
-                logprior += self._z[i, k] * (digamma(self._gamma[k])
-                                             - digamma(np.sum(self._gamma)))
-                logprior -= self._z[i, k] * np.log(self._z[i, k])
+        dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
+        logprior += np.sum(dg.reshape((-1,1))*self._z)
+        logprior -= np.sum(self._z*np.log(self._z))
         return logprior
 
     def _bound_gamma(self):
         logprior = 0.
         logprior = gammaln(np.sum(self._gamma)) - gammaln(self.n_states
                                                           * self.alpha)
-        for k in xrange(self.n_states):
-            logprior -= gammaln(self._gamma[k]) - gammaln(self.alpha)
-            a = (self._gamma[k] - self.alpha) * (digamma(self._gamma[k]) -
-                                                 digamma(np.sum(self._gamma)))
-            logprior += a
+        logprior -= np.sum(gammaln(self._gamma)-gammaln(self.alpha))
+        sg = digamma(np.sum(self._gamma))
+        logprior += np.sum((self._gamma-self._alpha)*(digamma(self._gamma)-sg))
         return logprior
 
     def _monitor(self, monitor, n, end=False):
