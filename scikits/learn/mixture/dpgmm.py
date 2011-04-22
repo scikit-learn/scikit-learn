@@ -521,7 +521,7 @@ class DPGMM(mixture.GMM):
                                                                  self._B[k],
                                                                  self._detB[k])
                     self._bound_covar[k] -= self._a[k] * np.trace(self._B[k])
-                    self._bound_covar[k] /= 2
+                    self._bound_covar[k] *= 0.5
 
         logprob = []
         # reset self.converged_ to False
