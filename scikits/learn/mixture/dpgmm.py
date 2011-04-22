@@ -170,7 +170,6 @@ class DPGMM(mixture.GMM):
                 bound += self._bound_covar[k]
             d = x - self._means[k]
             bound -= 0.5 * np.sum(np.dot(np.dot(d, c), d))
-            bound -= 0.5 * a * np.trace(B)
         else:
             raise NotImplementedError("This ctype is not implemented: "
                                       + self.cvtype)
@@ -290,6 +289,7 @@ class DPGMM(mixture.GMM):
             self._bound_covar = 0.5 * self._wishart_detlogw(self._a,
                                                             self._B,
                                                             self._detB)
+            self._bound_covar -= 0.5 * self._a * np.trace(self._B)
         elif self.cvtype == 'full':
             for k in xrange(self.n_states):
                 T = np.sum(self._z.T[k])
@@ -305,6 +305,7 @@ class DPGMM(mixture.GMM):
                 self._bound_covar[k] = 0.5*self._wishart_detlogw(self._a[k],
                                                                  self._B[k],
                                                                  self._detB[k])
+                self._bound_covar -= 0.5 * self._a[k] * np.trace(self._B[k])
                 
     def _monitor(self, monitor, n, end=False):
         if monitor:
@@ -505,6 +506,7 @@ class DPGMM(mixture.GMM):
                 self._bound_covar = 0.5 * self._wishart_detlogw(self._a,
                                                                 self._B,
                                                                 self._detB)
+                self._bound_covar -= 0.5 * self._a * np.trace(self._B)
             elif self.cvtype == 'full':
                 self._a = (1 + self.n_states + self._X.shape[0])
                 self._a *= np.ones(self.n_states)
@@ -518,6 +520,7 @@ class DPGMM(mixture.GMM):
                     self._bound_covar[k] = self._wishart_detlogw(self._a[k],
                                                                  self._B[k],
                                                                  self._detB[k])
+                    self._bound_covar[k] -= self._a[k] * np.trace(self._B[k])
                     self._bound_covar[k] /= 2
 
         logprob = []
