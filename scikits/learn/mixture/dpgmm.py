@@ -146,8 +146,7 @@ class DPGMM(mixture.GMM):
         return l + detB
 
     def _bound_pxgivenz(self, x, k):
-        bound = -0.5 * self.n_features * np.log(2 * np.pi)
-        bound -= np.log(2 * np.pi * np.e)
+        bound = self._initial_bound
         if self.cvtype == 'spherical':
             bound += self._bound_covar[k]
             bound -= 0.5 * (self._covars[k]) * (sqnorm(x - self._means[k])
@@ -468,6 +467,9 @@ class DPGMM(mixture.GMM):
         self.n_features = self._X.shape[1]
         self._z = np.ones((self._X.shape[0], self.n_states))
         self._z /= self.n_states
+
+        self._initial_bound = -0.5 * self.n_features * np.log(2 * np.pi)
+        self._initial_bound -= np.log(2 * np.pi * np.e)
 
         if init_params != '':
             self._initialize_gamma()
