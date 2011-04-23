@@ -129,17 +129,12 @@ class DPGMM(mixture.GMM):
         elif self.cvtype == 'spherical':
             return [np.eye(self.n_features) * f for f in self._covars]
 
-    def _set_precisions(self, covars):
-        covars = np.asanyarray(covars)
-        mixture._validate_covars(covars, self._cvtype, 
-                                 self._n_states, self.n_features)
-        self._covars = covars
-
     def _get_covars(self):
         return [linalg.pinv(c) for c in self._get_precisions()]
 
     def _set_covars(self, covars):
-        self._covars = [linalg.pinv(c) for c in covars]
+        raise NotImplementedError("""The variational algorithm does
+        not support setting the covariance parameters.""")
 
     precisions = property(_get_precisions, _set_covars)
     covars = property(_get_covars, _set_covars)
