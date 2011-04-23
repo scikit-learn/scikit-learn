@@ -307,22 +307,22 @@ class DPGMM(mixture.GMM):
                                                                  self._detB[k])
                 self._bound_covar -= 0.5 * self._a[k] * np.trace(self._B[k])
                 
-    def _monitor(self, monitor, n, end=False):
-        if monitor:
-            print n, self.lower_bound()
+    def _monitor(self, verbose, n, end=False):
+        if verbose:
+            print "Bound after updating %8s"%n, self.lower_bound()
             if end == True:
-                print self._gamma.T[1]
+                print "Cluster proportions:", self._gamma.T[1]
 
-    def _do_mstep(self, params, monitor=False):
-        self._monitor(monitor, 1)
+    def _do_mstep(self, params, verbose=False):
+        self._monitor(verbose, "z")
         self._update_gamma()
-        self._monitor(monitor, 2)
+        self._monitor(verbose, "gamma")
         if 'm' in params:
             self._update_mu()
-        self._monitor(monitor, 3)
+        self._monitor(verbose, "mu")
         if 'c' in params:
             self._update_ab()
-        self._monitor(monitor, 4, end=True)
+        self._monitor(verbose, "a and b", end=True)
 
     def _initialize_gamma(self):
         self._gamma = self.alpha * np.ones((self.n_states, 3))
@@ -399,7 +399,7 @@ class DPGMM(mixture.GMM):
                 cz[k] = cz[k + 1] + self._z[i, k + 1]
             dg1 = digamma(self._gamma.T[1])
             dg2 = digamma(self._gamma.T[2])
-            dg12 = digamma(self._gamma.T[1] + self._gamma.T[1])
+            dg12 = digamma(self._gamma.T[1] + self._gamma.T[2])
             logprior += np.sum(cz*(dg2-dg12))
             logprior += np.sum(self._z[i]*(dg1-dg12))
             for k in xrange(self.n_states):
@@ -424,7 +424,7 @@ class DPGMM(mixture.GMM):
         return c + self._logprior()
 
     def fit(self, X, n_iter=30, thresh=1e-2, params='wmc',
-            init_params='wmc', monitor=False, min_covar=None):
+            init_params='wmc', verbose=False, min_covar=None):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -454,7 +454,7 @@ class DPGMM(mixture.GMM):
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-        monitor: boolean
+        verbose: boolean
             Prints the lower bound at every step, to help monitor
             convergence.
         """
@@ -521,7 +521,7 @@ class DPGMM(mixture.GMM):
                                                                  self._B[k],
                                                                  self._detB[k])
                     self._bound_covar[k] -= self._a[k] * np.trace(self._B[k])
-                    self._bound_covar[k] /= 2
+                    self._bound_covar[k] *= 0.5
 
         logprob = []
         # reset self.converged_ to False
@@ -537,7 +537,7 @@ class DPGMM(mixture.GMM):
                 break
 
             # Maximization step
-            self._do_mstep(params, monitor)
+            self._do_mstep(params, verbose)
 
         return self
 
@@ -690,8 +690,8 @@ class VBGMM(DPGMM):
         logprior += np.sum((self._gamma-self._alpha)*(digamma(self._gamma)-sg))
         return logprior
 
-    def _monitor(self, monitor, n, end=False):
-        if monitor:
+    def _monitor(self, verbose, n, end=False):
+        if verbose:
             print n, self.lower_bound()
             if end == True:
                 print self._gamma
