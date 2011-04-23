@@ -17,7 +17,7 @@ from scipy import linalg
 def sqnorm(v):
     return norm(v)**2
 
-def lognormalize(v):
+def log_normalize(v):
     """Given a vector of unnormalized log-probabilites v returns a
  vector of normalized probabilities"""
     v = np.exp(v - np.logaddexp.reduce(v))
@@ -215,7 +215,7 @@ class DPGMM(mixture.GMM):
             for k in xrange(self.n_states):
                 p[k] = z[i, k] = self._bound_pxgivenz(obs[i], k)
             z[i] += dgamma
-            z[i] = lognormalize(z[i])
+            z[i] = log_normalize(z[i])
             bound[i] = np.sum(z[i] * p)
         return bound, z
 
@@ -664,7 +664,7 @@ class VBGMM(DPGMM):
             for k in xrange(self.n_states):
                 p[k] = z[i, k] = self._bound_pxgivenz(obs[i], k)
             z[i] += dg
-            z[i] = lognormalize(z[i])
+            z[i] = log_normalize(z[i])
             bound[i] = np.sum(z[i] * p)
         return bound, z
 
