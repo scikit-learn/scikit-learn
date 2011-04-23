@@ -8,7 +8,7 @@ Scalable alternative to Spectral Clustering for small number of centers.
 
 import numpy as np
 
-from .k_means_ import k_means_
+from .k_means_ import k_means
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -60,8 +60,10 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
     # row normalize the affinity matrix
     sums = affinity.sum(axis=1)
     volume = sums.sum()
+
+    scales = sums.copy()
     nnzeros = np.where(scales > 0)
-    scales[nnzeros] = 1 / sums[nnzeros]
+    scales[nnzeros] = 1 / scales[nnzeros]
 
     if hasattr(affinity, 'tocsr'):
         # inplace row normalization for sparse matrices
@@ -84,7 +86,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
                        normalized.data, scales)
     else:
         # inplace row normalization for ndarray
-        normalized = affinity / scales.reshape((s.shape[0], -1))
+        normalized = affinity / scales[:, np.newaxis]
 
     n_samples = affinity.shape[0]
 
@@ -103,17 +105,22 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         previous_vectors[:] = vectors
         previous_delta = delta
 
-        vectors[:] = safe_sparse_dot(normalized, vectors.T)
-        vectors /= np.abs(vectors).sum()
+        vectors[:] = safe_sparse_dot(normalized, vectors.T).T
+        vectors /= np.abs(vectors).sum(axis=1)[:, np.newaxis]
 
         delta = np.abs(previous_vectors - vectors).mean()
 
-        if verbose and i % 50 == 0:
-            print "Iteration %04d/%04d: delta=%f" % (i + 1, max_iter, delta)
+        if verbose and i % 10 == 0:
+            print "Power Iteration %04d/%04d: delta=%f" % (
+                i + 1, max_iter, delta)
 
         if np.abs(previous_delta - delta) < tol:
             break
+    if verbose:
+        print "Converged at iteration: %04d/%04d with delta=%f" % (
+            i + 1, max_iter, delta)
 
-    _, labels, inertia = k_means(vectors, k, rng=rng, verbose=verbose)
-    return labels, inertia
+    # TODO: pass the rng correctly
+    _, labels, inertia = k_means(vectors.T, k, verbose=verbose)
+    return labels, inertia, vectors
 

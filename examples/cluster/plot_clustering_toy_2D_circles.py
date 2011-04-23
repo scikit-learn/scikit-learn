@@ -13,6 +13,7 @@ import numpy as np
 import pylab as pl
 
 from scikits.learn.cluster import spectral_clustering
+from scikits.learn.cluster import power_iteration_clustering
 from scikits.learn.metrics.pairwise import euclidean_distances
 from scikits.learn.neighbors import kneighbors_graph
 
@@ -64,4 +65,15 @@ for l, c in zip(np.unique(labels), 'rgbcmyk'):
     X_l = X[labels == l, :]
     pl.scatter(X_l[:, 0], X_l[:, 1], color=c)
 pl.title("Data clustered by spectral clustering")
+
+
+labels, inertia, vectors = power_iteration_clustering(
+    affinity, k=3, n_vectors=2, verbose=True)
+print "Power Iteration Clustering inertia: %f" % inertia
+
+pl.figure()
+for l, c in zip(np.unique(labels), 'rgbcmyk'):
+    X_l = X[labels == l, :]
+    pl.scatter(X_l[:, 0], X_l[:, 1], color=c)
+pl.title("Data clustered by Power Iteration Clustering")
 pl.show()
