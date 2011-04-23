@@ -155,7 +155,6 @@ class DPGMM(mixture.GMM):
             bound += self._bound_covar[k]
             d = x - self._means[k]
             bound -= 0.5 * np.sum(d * d * self._covars[k])
-            bound -= 0.5 * np.sum(self._covars[k])
         elif self.cvtype == 'tied' or self.cvtype == 'full':
             if self.cvtype == 'tied':
                 a, B, detB, c = self._a, self._B, self._detB, self._covars
@@ -271,6 +270,7 @@ class DPGMM(mixture.GMM):
                 self._covars[k] = self._a[k] / self._b[k]
                 self._bound_covar[k] = 0.5 * np.sum(digamma(self._a[k])
                                                     - np.log(self._b[k]))
+                self._bound_covar[k] -= 0.5 * np.sum(self._covars[k])
         elif self.cvtype == 'tied':
             self._a = 2 + self._X.shape[0] + self.n_features
             self._B = (self._X.shape[0] + 1) * np.identity(self.n_features)
@@ -498,6 +498,7 @@ class DPGMM(mixture.GMM):
                 for k in xrange(self.n_states):
                     self._bound_covar[k] = 0.5 * np.sum(digamma(self._a[k])
                                                         - np.log(self._b[k]))
+                    self._bound_covar[k] -= 0.5 * np.sum(self._covars[k])
             elif self.cvtype == 'tied':
                 self._a = 1.
                 self._B = np.identity(self.n_features)
