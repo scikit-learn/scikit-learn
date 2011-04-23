@@ -142,8 +142,7 @@ class DPGMM(GMM):
     covars = property(_get_covars, _set_covars)
 
     def _wishart_detlogw(self, a, b, detB):
-        l = 0.
-        l += np.sum(digamma(0.5 * (a - np.arange(self.n_features) + 1)))
+        l = np.sum(digamma(0.5 * (a - np.arange(-1, self.n_features - 1))))
         l += self.n_features * np.log(2)
         return l + detB
 
@@ -232,7 +231,7 @@ class DPGMM(GMM):
     def _update_mu(self):
         for k in xrange(self.n_states):
             if self.cvtype == 'spherical' or self.cvtype == 'diag':
-                num = np.sum(self._z.T[k].reshape((-1,1))*self._X, axis=0)
+                num = np.sum(self._z.T[k].reshape((-1, 1))*self._X, axis=0)
                 num *= self._covars[k]
                 den = 1. + self._covars[k] * np.sum(self._z.T[k])
                 self._means[k] = num / den
@@ -242,7 +241,7 @@ class DPGMM(GMM):
                 else:
                     cov = self._covars[k]
                 den = np.identity(self.n_features) + cov * np.sum(self._z.T[k])
-                num = np.sum(self._z.T[k].reshape((-1,1))*self._X, axis=0)
+                num = np.sum(self._z.T[k].reshape((-1, 1))*self._X, axis=0)
                 num = np.dot(cov, num)
                 self._means[k] = linalg.lstsq(den, num)[0]
 
@@ -531,7 +530,7 @@ class DPGMM(GMM):
         self.converged_ = False
         for i in xrange(n_iter):
             # Expectation step
-            curr_logprob, z = self.eval()
+            curr_logprob, _ = self.eval()
             logprob.append(curr_logprob.sum() + self._logprior())
 
             # Check for convergence.
