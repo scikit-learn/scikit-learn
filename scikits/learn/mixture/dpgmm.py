@@ -1,7 +1,7 @@
 """Dirichlet Process Gaussian Mixture Models"""
 
 import numpy as np
-from . import gmm as mixture
+from . gmm import GMM
 from .. import cluster
 from ..utils.extmath import norm
 from scipy.special import digamma, gammaln
@@ -24,7 +24,7 @@ def log_normalize(v):
     return v / np.sum(v)
 
 
-class DPGMM(mixture.GMM):
+class DPGMM(GMM):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
     DPGMM stands for Dirichlet Process Gaussian Mixture Model, and it
