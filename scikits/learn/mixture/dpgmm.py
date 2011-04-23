@@ -1,18 +1,19 @@
 """Dirichlet Process Gaussian Mixture Models"""
 
-import numpy as np
-from . gmm import GMM
-from .. import cluster
-from ..utils.extmath import norm
-from scipy.special import digamma, gammaln
-from scipy import linalg
-
 # Author: Alexandre Passos (alexandre.tp@gmail.com)
 #
 # Based on mixture.py by:
 #         Ron Weiss <ronweiss@gmail.com>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
+
+import numpy as np
+from scipy.special import digamma, gammaln
+from scipy import linalg
+
+from ..utils.extmath import norm
+from .. import cluster
+from . gmm import GMM
 
 def sqnorm(v):
     return norm(v)**2
