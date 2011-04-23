@@ -14,6 +14,7 @@ import pylab as pl
 
 from scikits.learn.cluster import spectral_clustering
 from scikits.learn.metrics.pairwise import euclidean_distances
+from scikits.learn.neighbors import kneighbors_graph
 
 # Generate random samples roughly arranged as nested circles
 
@@ -50,8 +51,11 @@ pl.scatter(X[:, 0], X[:, 1])
 pl.title("Original dataset")
 
 # Build a heat kernel of euclidean distances as affinity matrix
-distances = euclidean_distances(X, X)
-affinity = np.exp(- (distances ** 2) / (0.1 * distances.mean() ** 2))
+#distances = euclidean_distances(X, X)
+#affinity = np.exp(- (distances ** 2) / (0.1 * distances.mean() ** 2))
+
+# Build a knn graph as affinity matrix
+affinity = kneighbors_graph(X, n_neighbors=100).toarray()
 
 labels = spectral_clustering(affinity, k=3, mode='amg')
 
