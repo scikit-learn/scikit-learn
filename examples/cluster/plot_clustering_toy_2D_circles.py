@@ -50,14 +50,11 @@ pl.figure()
 pl.scatter(X[:, 0], X[:, 1])
 pl.title("Original dataset")
 
-# Build a heat kernel of euclidean distances as affinity matrix
-#distances = euclidean_distances(X, X)
-#affinity = np.exp(- (distances ** 2) / (0.1 * distances.mean() ** 2))
-
 # Build a knn graph as affinity matrix
-affinity = kneighbors_graph(X, n_neighbors=100).toarray()
+affinity = kneighbors_graph(X, n_neighbors=10)
+affinity = 0.5 * (affinity + affinity.T) # make affinity symmetric
 
-labels = spectral_clustering(affinity, k=3, mode='amg')
+labels = spectral_clustering(affinity, k=3)
 
 pl.figure()
 for l, c in zip(np.unique(labels), 'rgbcmyk'):
