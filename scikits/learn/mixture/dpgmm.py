@@ -14,6 +14,8 @@ from scipy import linalg
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
+def sqnorm(v):
+    return norm(v)**2
 
 def lognormalize(v):
     """Given a vector of unnormalized log-probabilites v returns a
@@ -153,7 +155,7 @@ class DPGMM(mixture.GMM):
         bound -= np.log(2 * np.pi * np.e)
         if self.cvtype == 'spherical':
             bound += self._bound_covar[k]
-            bound -= 0.5 * (self._covars[k]) * (norm(x - self._means[k])
+            bound -= 0.5 * (self._covars[k]) * (sqnorm(x - self._means[k])
                                                 + self.n_features)
         elif self.cvtype == 'diag':
             bound += self._bound_covar[k]
@@ -347,7 +349,7 @@ class DPGMM(mixture.GMM):
 
     def _bound_mu(self):
         logprior = 0.
-        logprior -= 0.5 * norm(self._means) 
+        logprior -= 0.5 * sqnorm(self._means) 
         logprior -= 0.5 * self.n_features * self.n_states
         return logprior
 
