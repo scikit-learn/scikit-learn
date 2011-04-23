@@ -22,7 +22,7 @@ circle_parameters = (
     # (center_x, center_y, radius, n_points)
     (0, 0, 10, 100),
     (8, 0, 25, 300),
-    (8, 4, 35, 300),
+    (8, 4, 55, 300),
 )
 noise_level = 0.02
 rng = np.random.RandomState(42)
