@@ -167,8 +167,8 @@ class DPGMM(GMM):
             d = x - self._means[k]
             bound -= 0.5 * np.sum(np.dot(np.dot(d, c), d))
         else:
-            raise NotImplementedError("This ctype is not implemented: "
-                                      + self.cvtype)
+            raise NotImplementedError("This ctype is not implemented: %s"
+                                      % self.cvtype)
         return bound
 
     def eval(self, obs=None):
