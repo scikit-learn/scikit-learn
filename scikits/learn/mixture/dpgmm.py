@@ -305,13 +305,14 @@ class DPGMM(mixture.GMM):
                 self._bound_covar[k] = 0.5*self._wishart_detlogw(self._a[k],
                                                                  self._B[k],
                                                                  self._detB[k])
-                self._bound_covar -= 0.5 * self._a[k] * np.trace(self._B[k])
+                self._bound_covar[k] -= 0.5 * self._a[k] * np.trace(self._B[k])
                 
     def _monitor(self, verbose, n, end=False):
         if verbose:
             print "Bound after updating %8s"%n, self.lower_bound()
             if end == True:
                 print "Cluster proportions:", self._gamma.T[1]
+                print "cvtype:", self._cvtype
 
     def _do_mstep(self, params, verbose=False):
         self._monitor(verbose, "z")
