@@ -254,7 +254,11 @@ class GMMTester():
         # the addition of min_covar to the covariance (to prevent
         # underflow).  This is why the threshold is set to -0.5
         # instead of 0.
-        self.assertTrue(np.all(np.diff(trainll) > self.threshold))
+        delta_min = np.diff(trainll).min()
+        self.assertTrue(
+            delta_min > self.threshold,
+            "The min nll increase is %f which is lower than the admissible"
+            "threshold of %f" % (delta_min, self.threshold))
 
     def score(self, g, train_obs):
         return g.score(train_obs).sum()
