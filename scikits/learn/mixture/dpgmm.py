@@ -323,6 +323,9 @@ class DPGMM(GMM):
             self._update_ab()
         self._monitor(verbose, "a and b", end=True)
 
+    def _initialize_gamma(self):
+        self._gamma = self.alpha * np.ones((self.n_states, 3))
+
     def _bound_gamma(self):
         logprior = 0.
         for k in xrange(self.n_states):
@@ -471,7 +474,7 @@ class DPGMM(GMM):
         self._initial_bound -= np.log(2 * np.pi * np.e)
 
         if init_params != '':
-            self._gamma = self.alpha * np.ones((self.n_states, 3))
+            self._initialize_gamma()
 
         if 'm' in init_params or not hasattr(self, 'means'):
             self._means = cluster.KMeans(
