@@ -258,7 +258,7 @@ class GMMTester():
         self.assertTrue(
             delta_min > self.threshold,
             "The min nll increase is %f which is lower than the admissible"
-            "threshold of %f" % (delta_min, self.threshold))
+            " threshold of %f" % (delta_min, self.threshold))
 
     def score(self, g, train_obs):
         return g.score(train_obs).sum()
