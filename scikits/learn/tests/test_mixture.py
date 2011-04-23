@@ -69,7 +69,7 @@ def test_sample_gaussian():
     samples = mixture.sample_gaussian(
         mu, cv, cvtype='diag', n_samples=n_samples)
 
-    assert np.allclose(samples.mean(axis), mu, atol=0.3)
+    assert np.allclose(samples.mean(axis), mu, atol=1.3)
     assert np.allclose(samples.var(axis),  cv, atol=1.5)
 
     # the same for spherical covariances
@@ -77,7 +77,7 @@ def test_sample_gaussian():
     samples = mixture.sample_gaussian(
         mu, cv, cvtype='spherical', n_samples=n_samples)
 
-    assert np.allclose(samples.mean(axis), mu, atol=0.5)
+    assert np.allclose(samples.mean(axis), mu, atol=1.5)
     assert np.allclose(
         samples.var(axis), np.repeat(cv, n_features), atol=1.5)
 
@@ -86,7 +86,7 @@ def test_sample_gaussian():
     cv = np.dot(A.T, A) + np.eye(n_features)
     samples = mixture.sample_gaussian(
         mu, cv, cvtype='full', n_samples=n_samples)
-    assert np.allclose(samples.mean(axis), mu, atol=0.3)
+    assert np.allclose(samples.mean(axis), mu, atol=1.3)
     assert np.allclose(np.cov(samples), cv, atol=1.)
 
 
