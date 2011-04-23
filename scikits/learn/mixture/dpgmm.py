@@ -19,9 +19,10 @@ def sqnorm(v):
 
 def log_normalize(v):
     """Given a vector of unnormalized log-probabilites v returns a
- vector of normalized probabilities"""
+    vector of normalized probabilities"""
     v = np.exp(v - np.logaddexp.reduce(v))
-    return v / np.sum(v)
+    v /= np.sum(v)
+    return v
 
 
 class DPGMM(GMM):
