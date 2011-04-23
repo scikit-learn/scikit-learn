@@ -18,12 +18,14 @@ per cluster than there are dimensions in the data, due to
 regularization properties of the inference algorithm.
 """
 
-import numpy as np
-from scikits.learn import mixture
 import itertools
 
+import numpy as np
+from scipy import linalg
 import pylab as pl
 import matplotlib as mpl
+
+from scikits.learn import mixture
 
 n, m = 300, 2
 
@@ -45,12 +47,12 @@ dpclf.fit(X)
 color_iter = itertools.cycle (['r', 'g', 'b', 'c', 'm'])
 
 
-for i,c in enumerate([clf, dpclf]):
-    splot = pl.subplot(211+i, aspect='equal')
+for i, c in enumerate([clf, dpclf]):
+    splot = pl.subplot(2, 1, 1+i, aspect='equal')
     Y_ = c.predict(X)
     for i, (mean, covar, color) in enumerate(zip(c.means, c.covars, color_iter)):
-        v, w = np.linalg.eigh(covar)
-        u = w[0] / np.linalg.norm(w[0])
+        v, w = linalg.eigh(covar)
+        u = w[0] / linalg.norm(w[0])
         # as the DP will not use every component it has access to
         # unless it needs it, we shouldn't plot the redundant
         # components.
@@ -59,7 +61,7 @@ for i,c in enumerate([clf, dpclf]):
         pl.scatter(X[Y_==i, 0], X[Y_==i, 1], .8, color=color)
         angle = np.arctan(u[1]/u[0])
         angle = 180 * angle / np.pi # convert to degrees
-        ell = mpl.patches.Ellipse (mean, v[0], v[1], 180 + angle, color=color)
+        ell = mpl.patches.Ellipse(mean, v[0], v[1], 180 + angle, color=color)
         ell.set_clip_box(splot.bbox)
         ell.set_alpha(0.5)
         splot.add_artist(ell)
