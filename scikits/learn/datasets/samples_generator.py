@@ -375,3 +375,12 @@ def swiss_roll(n_samples, noise=0.0):
     X = np.transpose(X)
     t = np.squeeze(t)
     return X
+
+
+def generate_random_spd_matrix(ndim, rng=np.random.RandomState(0)):
+    """Return a random symmetric, positive-definite matrix."""
+    A = rng.rand(ndim, ndim)
+    U, s, V = np.linalg.svd(np.dot(A.T, A))
+    randspd = np.dot(np.dot(U, 1.0 + np.diag(rng.rand(ndim))), V)
+    return randspd
+

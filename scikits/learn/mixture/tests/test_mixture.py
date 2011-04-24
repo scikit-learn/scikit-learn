@@ -8,19 +8,11 @@ import numpy as np
 from scipy import stats
 
 from scikits.learn import mixture
+from scikits.learn.dataset.samples_generator import generate_random_spd_matrix
 from scikits.learn.mixture import GMM, DPGMM
 
 
 rng = np.random.RandomState(0)
-
-
-
-def _generate_random_spd_matrix(ndim):
-    """Return a random symmetric, positive-definite matrix."""
-    A = rng.rand(ndim, ndim)
-    U, s, V = np.linalg.svd(np.dot(A.T, A))
-    randspd = np.dot(np.dot(U, 1.0 + np.diag(rng.rand(ndim))), V)
-    return randspd
 
 
 

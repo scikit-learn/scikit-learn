@@ -9,7 +9,10 @@ and variational dirichlet process.
 Both models have access to five components with which to fit the
 data. Note that the EM model will necessarily use all five components
 while the DP model will effectively only use as many as are needed for
-a good fit. This is a property of the Dirichlet Process prior.
+a good fit. This is a property of the Dirichlet Process prior. Here we
+can see that the EM model splits some components arbitrarily, because it
+is trying to fit too many components, while the Dirichlet Process model
+adapts it number of state automatically.
 
 This example doesn't show it, as we're in a low-dimensional space, but
 another advantage of the dirichlet process model is that it can fit
@@ -27,38 +30,41 @@ import matplotlib as mpl
 
 from scikits.learn import mixture
 
-n, m = 300, 2
+# Number of samples per component
+n_samples = 500
 
-# generate random sample, two components
+# Generate random sample, two components
 np.random.seed(0)
-C = np.array([[0., -0.7], [3.5, .7]])
-X = np.r_[np.dot(np.random.randn(n, 2), C),
-          np.random.randn(n, 2) + np.array([3, 3])]
+C = np.array([[0., -0.1], [1.7, .4]])
+X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
+          .7*np.random.randn(n_samples, 2) + np.array([-6, 3])]
 
+# Fit a mixture of gaussians with EM using five components
+gmm = mixture.GMM(n_states=5, cvtype='full')
+gmm.fit(X)
 
-# fit a mixture of gaussians with EM using five components
-clf = mixture.GMM(n_states=5, cvtype='diag')
-clf.fit(X)
-
-# fit a dirichlet process mixture of gaussians using five components
-dpclf = mixture.DPGMM(n_states=5, cvtype='diag')
-dpclf.fit(X)
+# Fit a dirichlet process mixture of gaussians using five components
+dpgmm = mixture.DPGMM(n_states=5, cvtype='full')
+dpgmm.fit(X)
 
 color_iter = itertools.cycle (['r', 'g', 'b', 'c', 'm'])
 
-
-for i, c in enumerate([clf, dpclf]):
-    splot = pl.subplot(2, 1, 1+i, aspect='equal')
-    Y_ = c.predict(X)
-    for i, (mean, covar, color) in enumerate(zip(c.means, c.covars, color_iter)):
+for i, (clf, title) in enumerate([(gmm, 'GMM'), 
+                                  (dpgmm, 'Dirichlet Process GMM')]):
+    splot = pl.subplot(2, 1, 1+i)
+    Y_ = clf.predict(X)
+    for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars, 
+                                                 color_iter)):
         v, w = linalg.eigh(covar)
         u = w[0] / linalg.norm(w[0])
         # as the DP will not use every component it has access to
         # unless it needs it, we shouldn't plot the redundant
         # components.
-        if not sum(Y_ == i) > 1:
+        if not np.any(Y_ == i):
             continue
-        pl.scatter(X[Y_==i, 0], X[Y_==i, 1], .8, color=color)
+        pl.scatter(X[Y_== i, 0], X[Y_== i, 1], .8, color=color)
+
+        # Plot an ellipse to show the Gaussian component
         angle = np.arctan(u[1]/u[0])
         angle = 180 * angle / np.pi # convert to degrees
         ell = mpl.patches.Ellipse(mean, v[0], v[1], 180 + angle, color=color)
@@ -66,8 +72,9 @@ for i, c in enumerate([clf, dpclf]):
         ell.set_alpha(0.5)
         splot.add_artist(ell)
 
-# Note that the GMM will use all components it has access to, while
-# the dirichlet process model will only use as many are needed to
-# explain the data
+    pl.xlim(-10, 10)
+    pl.ylim(-3, 6)
+    pl.title(title)
+
 pl.show()
 

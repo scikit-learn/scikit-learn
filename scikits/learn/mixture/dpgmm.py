@@ -13,20 +13,83 @@ from scipy import linalg
 
 from ..utils.extmath import norm
 from .. import cluster
+from ..metrics import euclidean_distances
 from . gmm import GMM
 
 def sqnorm(v):
     return norm(v)**2
 
 
-def log_normalize(v):
+def log_normalize(v, axis=0):
     """Given a vector of unnormalized log-probabilites v returns a
-    vector of normalized probabilities"""
-    v = np.exp(v - np.logaddexp.reduce(v))
-    v /= np.sum(v)
-    return v
+       vector of normalized probabilities"""
+    v = np.rollaxis(v, axis)
+    v = np.exp(v - np.logaddexp.reduce(v, axis=0))
+    v /= np.sum(v, axis=0)
+    return np.swapaxes(v, 0, axis)
 
 
+################################################################################
+# Variational bound on the log likelihood of each class
+
+def _bound_pxgivenz_spherical(X, initial_bound, bound_covar, covars, means):
+    n_states, n_features = means.shape
+    n_samples = X.shape[0]
+    bound = np.empty((n_samples, n_states))
+    bound[:] = bound_covar + initial_bound
+    for k in xrange(n_states):
+        bound[:, k] -= 0.5 * covars[k] * (((X - means[k])**2).sum(axis=-1) + n_features)
+    return bound
+
+
+def _bound_pxgivenz_diag(X, initial_bound, bound_covar, covars, means):
+    n_states, n_features = means.shape
+    n_samples = X.shape[0]
+    bound = np.empty((n_samples, n_states))
+    bound[:] = bound_covar + initial_bound
+    for k in xrange(n_states):
+        d = X - means[k]
+        d **= 2
+        bound[:, k] -= 0.5 * np.sum(d * covars[k], axis=1)
+    return bound
+
+
+def _bound_pxgivenz_tied(X, initial_bound, bound_covar, covars, means):
+    n_states, n_features = means.shape
+    n_samples = X.shape[0]
+    bound = np.empty((n_samples, n_states))
+    bound[:] = bound_covar + initial_bound
+    # Transform the data to be able to apply standard Euclidean distance,
+    # rather than Mahlanobis distance
+    sqrt_cov = linalg.cholesky(covars)
+    means = np.dot(means, sqrt_cov.T)
+    X = np.dot(X, sqrt_cov.T)
+    bound -= 0.5 * euclidean_distances(X, means, squared=True)
+    return bound
+
+
+def _bound_pxgivenz_full(X, initial_bound, bound_covar, covars, means):
+    n_states, n_features = means.shape
+    n_samples = X.shape[0]
+    bound = np.empty((n_samples, n_states))
+    bound[:] = bound_covar + initial_bound
+    for k in xrange(n_states):
+        d = X - means[k]
+        sqrt_cov = linalg.cholesky(covars[k])
+        d = np.dot(d, sqrt_cov.T)
+        d **= 2
+        bound[:, k] -= 0.5 * d.sum(axis=-1)
+    return bound
+
+
+_BOUND_PXGIVENZ_DICT = dict(
+    spherical=_bound_pxgivenz_spherical,
+    diag=_bound_pxgivenz_diag,
+    tied=_bound_pxgivenz_tied,
+    full=_bound_pxgivenz_full)
+
+
+################################################################################
 class DPGMM(GMM):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
@@ -48,15 +111,15 @@ class DPGMM(GMM):
 
     Parameters
     ----------
-    n_states : int, optional
+    n_states: int, optional
         Number of mixture components. Defaults to 1.
 
-    cvtype : string (read-only), optional
+    cvtype: string (read-only), optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    alpha : float, optional
+    alpha: float, optional
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichler Process
         is as likely to start a new cluster for a point as it is 
@@ -152,30 +215,6 @@ class DPGMM(GMM):
         l += self.n_features * np.log(2)
         return l + detB
 
-    def _bound_pxgivenz(self, x):
-        bound = np.empty(self.n_states)
-        bound[:] = self._bound_covar + self._initial_bound
-        if self.cvtype == 'spherical':
-            bound -= 0.5 * self._covars * (((x - self._means)**2).sum(axis=-1)
-                                                + self.n_features)
-        elif self.cvtype == 'diag':
-            d = x - self._means
-            d **= 2
-            bound -= 0.5 * np.sum(d * self._covars, axis=1)
-
-        elif self.cvtype == 'tied' or self.cvtype == 'full':
-            for k in xrange(self.n_states):
-                if self.cvtype == 'tied':
-                    c = self._covars
-                else:
-                    c = self._covars[k]
-                d = x - self._means[k]
-                bound[k] -= 0.5 * np.sum(np.dot(np.dot(d, c), d))
-        else:
-            raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self.cvtype)
-        return bound
-
     def eval(self, obs=None):
         """Evaluate the model on data
 
@@ -206,22 +245,29 @@ class DPGMM(GMM):
         else:
             z = np.zeros((obs.shape[0], self.n_states))
         obs = np.asanyarray(obs)
-        p = np.zeros(self.n_states)
-        bound = np.zeros(obs.shape[0])
         sd = digamma(self._gamma.T[1] + self._gamma.T[2])
-        dgamma1 = digamma(self._gamma.T[1])-sd
+        dgamma1 = digamma(self._gamma.T[1]) - sd
         dgamma2 = np.zeros(self.n_states)
-        dgamma2[0] = digamma(self._gamma[0,2]) - digamma(self._gamma[0,1]+
-                                                         self._gamma[0,2])
+        dgamma2[0] = digamma(self._gamma[0, 2]) - digamma(self._gamma[0, 1]+
+                                                          self._gamma[0, 2])
         for j in xrange(1, self._n_states):
-            dgamma2[j] = dgamma2[j-1] + digamma(self._gamma[j-1,2])
+            dgamma2[j] = dgamma2[j-1] + digamma(self._gamma[j-1, 2])
             dgamma2[j] -= sd[j-1]
         dgamma = dgamma1 + dgamma2
-        for i in xrange(obs.shape[0]):
-            p = z[i] = self._bound_pxgivenz(obs[i])
-            z[i] += dgamma
-            z[i] = log_normalize(z[i])
-            bound[i] = np.sum(z[i] * p)
+        # Free memory and developers cognitive load:
+        del dgamma1, dgamma2, sd
+
+        try:
+            _bound_pxgivenz = _BOUND_PXGIVENZ_DICT[self.cvtype]
+        except KeyError:
+            raise NotImplementedError("This ctype is not implemented: %s"
+                                      % self.cvtype)
+
+        p = _bound_pxgivenz(obs, self._initial_bound, 
+                        self._bound_covar, self._covars, self._means)
+        z = p + dgamma
+        self._z = z = log_normalize(z, axis=-1)
+        bound = np.sum(z * p, axis=-1)
         return bound, z
 
     def _update_gamma(self):
@@ -394,21 +440,15 @@ class DPGMM(GMM):
         return logprior
 
     def _bound_z(self):
-        logprior = 0.
-        for i in xrange(self._z.shape[0]):
-            cz = np.zeros(self.n_states)
-            for k in xrange(self.n_states-2,-1,-1):
-                cz[k] = cz[k + 1] + self._z[i, k + 1]
-            dg1 = digamma(self._gamma.T[1])
-            dg2 = digamma(self._gamma.T[2])
-            dg12 = digamma(self._gamma.T[1] + self._gamma.T[2])
-            logprior += np.sum(cz*(dg2-dg12))
-            logprior += np.sum(self._z[i]*(dg1-dg12))
-            for k in xrange(self.n_states):
-                if self._z[i, k] != 0: # don't know how to optimize
-                                       # this without getting nans due
-                                       # to 0*log(0)
-                    logprior -= self._z[i, k] * np.log(self._z[i, k])
+        dg12 = digamma(self._gamma.T[1] + self._gamma.T[2])
+        dg1 = digamma(self._gamma.T[1]) - dg12
+        dg2 = digamma(self._gamma.T[2]) - dg12
+
+        cz = np.cumsum(self._z[:, ::-1], axis=-1)[:, -2::-1]
+        logprior = np.sum(cz * dg2[:-1]) + np.sum(self._z * dg1)
+        del cz # Save memory
+        z_non_zeros = self._z[self._z != 0]
+        logprior -= np.sum(z_non_zeros*np.log(z_non_zeros))
         return logprior
 
     def _logprior(self):
@@ -419,9 +459,15 @@ class DPGMM(GMM):
         return logprior
 
     def lower_bound(self):
-        c = 0.
-        for i in xrange(self._X.shape[0]):
-            c += np.sum(self._z[i] * self._bound_pxgivenz(self._X[i]))
+        try:
+            _bound_pxgivenz = _BOUND_PXGIVENZ_DICT[self.cvtype]
+        except KeyError:
+            raise NotImplementedError("This ctype is not implemented: %s"
+                                      % self.cvtype)
+
+        c = np.sum(self._z * _bound_pxgivenz(self._X, self._initial_bound, 
+                        self._bound_covar, self._covars, self._means))
+
         return c + self._logprior()
 
     def fit(self, X, n_iter=10, params='wmc', init_params='wmc'):
@@ -541,6 +587,7 @@ class DPGMM(GMM):
         return self
 
 
+################################################################################
 class VBGMM(DPGMM):
     """Variational Inference for the Gaussian Mixture Model
 
@@ -554,15 +601,15 @@ class VBGMM(DPGMM):
 
     Parameters
     ----------
-    n_states : int, optional
+    n_states: int, optional
         Number of mixture components. Defaults to 1.
 
-    cvtype : string (read-only), optional
+    cvtype: string (read-only), optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    alpha : float, optional
+    alpha: float, optional
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of
@@ -658,11 +705,17 @@ class VBGMM(DPGMM):
         p = np.zeros(self.n_states)
         bound = np.zeros(obs.shape[0])
         dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
-        for i in xrange(obs.shape[0]):
-            p = z[i] = self._bound_pxgivenz(obs[i])
-            z[i] += dg
-            z[i] = log_normalize(z[i])
-            bound[i] = np.sum(z[i] * p)
+        try:
+            _bound_pxgivenz = _BOUND_PXGIVENZ_DICT[self.cvtype]
+        except KeyError:
+            raise NotImplementedError("This ctype is not implemented: %s"
+                                      % self.cvtype)
+
+        p = _bound_pxgivenz(obs, self._initial_bound, 
+                        self._bound_covar, self._covars, self._means)
+        z = p + dg
+        self._z = z = log_normalize(z, axis=-1)
+        bound = np.sum(z * p, axis=-1)
         return bound, z
 
     def _update_gamma(self):
@@ -674,8 +727,9 @@ class VBGMM(DPGMM):
 
     def _bound_z(self):
         logprior = 0.
-        dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
-        logprior += np.sum(dg.reshape((-1,1))*self._z)
+        dg = digamma(self._gamma) 
+        dg -= digamma(np.sum(self._gamma))
+        logprior += np.sum(dg.reshape((-1, 1))*self._z)
         logprior -= np.sum(self._z*np.log(self._z))
         return logprior
 
