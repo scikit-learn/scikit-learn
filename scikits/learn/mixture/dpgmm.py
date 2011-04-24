@@ -64,6 +64,8 @@ class DPGMM(GMM):
         higher alpha means more clusters, as the expected number 
         of clusters is alpha*log(N). Defaults to 1.
 
+    thresh : float, optional
+            Convergence threshold.
 
     Attributes
     ----------
@@ -117,9 +119,12 @@ class DPGMM(GMM):
 
     """
 
-    def __init__(self, n_states=1, cvtype='diag', alpha=1.0, rng=np.random):
+    def __init__(self, n_states=1, cvtype='diag', alpha=1.0, rng=np.random, 
+                 thresh=1e-2, verbose=False, min_covar=None):
         self.alpha = alpha
-        super(DPGMM, self).__init__(n_states, cvtype, rng=rng)
+        self.verbose = verbose
+        super(DPGMM, self).__init__(n_states, cvtype, rng=rng, thresh=thresh, 
+                                    min_covar=min_covar)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -303,23 +308,23 @@ class DPGMM(GMM):
                                                                  self._detB[k])
                 self._bound_covar[k] -= 0.5 * self._a[k] * np.trace(self._B[k])
                 
-    def _monitor(self, verbose, n, end=False):
-        if verbose:
+    def _monitor(self, n, end=False):
+        if self.verbose:
             print "Bound after updating %8s"%n, self.lower_bound()
             if end == True:
                 print "Cluster proportions:", self._gamma.T[1]
                 print "cvtype:", self._cvtype
 
-    def _do_mstep(self, params, verbose=False):
-        self._monitor(verbose, "z")
+    def _do_mstep(self, params):
+        self._monitor("z")
         self._update_gamma()
-        self._monitor(verbose, "gamma")
+        self._monitor("gamma")
         if 'm' in params:
             self._update_mu()
-        self._monitor(verbose, "mu")
+        self._monitor("mu")
         if 'c' in params:
             self._update_ab()
-        self._monitor(verbose, "a and b", end=True)
+        self._monitor("a and b", end=True)
 
     def _initialize_gamma(self):
         self._gamma = self.alpha * np.ones((self.n_states, 3))
@@ -419,8 +424,7 @@ class DPGMM(GMM):
             c += np.sum(self._z[i] * self._bound_pxgivenz(self._X[i]))
         return c + self._logprior()
 
-    def fit(self, X, n_iter=30, thresh=1e-2, params='wmc',
-            init_params='wmc', verbose=False, min_covar=None):
+    def fit(self, X, n_iter=10, params='wmc', init_params='wmc'):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -439,20 +443,15 @@ class DPGMM(GMM):
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
         n_iter : int, optional
-            Number of EM iterations to perform.
-        thresh : float, optional
-            Convergence threshold.
-        params : string, optional
+             Maximum number of iterations to perform before convergence.
+       params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-        init_params : string, optional
+       init_params : string, optional
             Controls which parameters are updated in the initialization
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-        verbose: boolean
-            Prints the lower bound at every step, to help monitor
-            convergence.
         """
 
         ## initialization step
@@ -532,12 +531,12 @@ class DPGMM(GMM):
             logprob.append(curr_logprob.sum() + self._logprior())
 
             # Check for convergence.
-            if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
+            if i > 0 and abs(logprob[-1] - logprob[-2]) < self.thresh:
                 self.converged_ = True
                 break
 
             # Maximization step
-            self._do_mstep(params, verbose)
+            self._do_mstep(params)
 
         return self
 
@@ -622,8 +621,8 @@ class VBGMM(DPGMM):
     process, fit with a variational algorithm
     """
 
-    def __init__(self, n_states=1, cvtype='diag', alpha=1.0):
-        super(VBGMM, self).__init__(n_states, cvtype)
+    def __init__(self, n_states=1, cvtype='diag', alpha=1.0, **kwds):
+        super(VBGMM, self).__init__(n_states, cvtype, **kwds)
         self.alpha = float(alpha) / n_states
 
     def eval(self, obs=None):
@@ -689,8 +688,8 @@ class VBGMM(DPGMM):
         logprior += np.sum((self._gamma-self._alpha)*(digamma(self._gamma)-sg))
         return logprior
 
-    def _monitor(self, verbose, n, end=False):
-        if verbose:
+    def _monitor(self, n, end=False):
+        if self.verbose:
             print n, self.lower_bound()
             if end == True:
                 print self._gamma

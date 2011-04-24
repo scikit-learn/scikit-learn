@@ -148,6 +148,12 @@ class GMM(BaseEstimator):
     rng : numpy.random object, optional
         Must support the full numpy random number generator API.
 
+    min_covar : float, optional
+        Floor on the diagonal of the covariance matrix to prevent
+        overfitting.  Defaults to 1e-3.
+
+    thresh : float, optional
+        Convergence threshold.
 
     Attributes
     ----------
@@ -243,9 +249,12 @@ class GMM(BaseEstimator):
     array([ 0.5,  0.5])
     """
 
-    def __init__(self, n_states=1, cvtype='diag', rng=np.random):
+    def __init__(self, n_states=1, cvtype='diag', rng=np.random, thresh=1e-2,
+                 min_covar=1e-3):
         self._n_states = n_states
         self._cvtype = cvtype
+        self.thresh = thresh
+        self.min_covar = min_covar
         self.rng = rng
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
@@ -452,7 +461,7 @@ class GMM(BaseEstimator):
                                                    rng=self.rng).T
         return obs
 
-    def fit(self, X, n_iter=10, min_covar=1e-3, thresh=1e-2, params='wmc',
+    def fit(self, X, n_iter=10, thresh=1e-2, params='wmc',
             init_params='wmc'):
         """Estimate model parameters with the expectation-maximization
         algorithm.
@@ -470,11 +479,6 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         n_iter : int, optional
             Number of EM iterations to perform.
-        min_covar : float, optional
-            Floor on the diagonal of the covariance matrix to prevent
-            overfitting.  Defaults to 1e-3.
-        thresh : float, optional
-            Convergence threshold.
         params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
@@ -524,12 +528,12 @@ class GMM(BaseEstimator):
             logprob.append(curr_logprob.sum())
 
             # Check for convergence.
-            if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
+            if i > 0 and abs(logprob[-1] - logprob[-2]) < self.thresh:
                 self.converged_ = True
                 break
 
             # Maximization step
-            self._do_mstep(X, posteriors, params, min_covar)
+            self._do_mstep(X, posteriors, params, self.min_covar)
 
         return self
 

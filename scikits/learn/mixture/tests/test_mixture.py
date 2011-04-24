@@ -238,7 +238,7 @@ class GMMTester():
 
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n_samples=100)
-        g = self.model(self.n_states, self.cvtype, rng=rng)
+        g = self.model(self.n_states, self.cvtype, rng=rng, min_covar=1e-1)
         g.fit(train_obs, n_iter=1, init_params=params)
 
         # Do one training iteration at a time so we can keep track of
@@ -246,8 +246,7 @@ class GMMTester():
         # iteration.
         trainll = []
         for iter in xrange(5):
-            g.fit(train_obs, n_iter=1, params=params, init_params='',
-                  min_covar=1e-1)
+            g.fit(train_obs, n_iter=1, params=params, init_params='')
             trainll.append(self.score(g, train_obs))
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to
