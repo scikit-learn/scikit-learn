@@ -28,6 +28,7 @@ coverages
 samples
 doc/coverages
 doc/samples
+power_iteration_*.png
 
 lfw_preprocessed/
 nips2010_pdf/
