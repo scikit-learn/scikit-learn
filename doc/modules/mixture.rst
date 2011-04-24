@@ -10,14 +10,22 @@ matrices supported), sample them, and estimate them from
 data. Facilities to help determine the appropriate number of
 components are also provided.
 
-A gaussian mixture model is a probabilistic model that assumes all the
+ .. figure:: ../auto_examples/mixture/images/plot_gmm_pdf_1.png
+   :target: ../auto_examples/cluster/plot_gmm_pdf.html
+   :align: left
+   :scale: 75%
+
+   **Two-component Gaussian mixture model:** *data points, and equi-probability surfaces of 
+   the model.*
+
+A Gaussian mixture model is a probabilistic model that assumes all the
 data points are generated from a mixture of a finite number of
-gaussian distributions with unknown parameters. One can think of
+Gaussian distributions with unknown parameters. One can think of
 mixture models as generalizing k-means clustering to incorporate
 information about the covariance structure of the data as well as the
-centers of the latent gaussians.
+centers of the latent Gaussians.
 
-Unfortunately, fitting the best mixture of gaussians possible on a
+Unfortunately, fitting the best mixture of Gaussians possible on a
 given dataset (as measured by the likelihood criterion) is exponential
 in the assumed number of latent gaussian distributions. For this
 reason most of the time one uses approximate inference techniques in
@@ -236,10 +244,15 @@ model with a variable (but bounded) number of components using the
 Dirichlet Process. The API is identical to :class:`GMM`. 
 
 
-.. figure:: ../../_images/plot_gmm_1.png
+.. figure:: ../auto_examples/mixture/images/plot_gmm_1.png
    :target: ../auto_examples/mixture/plot_gmm.html
    :align: center
-   :scale: 75%
+   :scale: 70%
+
+The example above compares a Gaussian mixture model fitted with 5
+components on a dataset, to a DPGMM model. We can see that the DPGMM is
+able to limit itself to only 2 components. With very little observations,
+the DPGMM can take a conservative stand, and fit only one component.
 
 .. topic:: Examples:
 
@@ -251,3 +264,7 @@ Dirichlet Process. The API is identical to :class:`GMM`.
    * See `here <dp-derivation.html>`_ the full derivation of this
      algorithm.
 
+.. toctree::
+    :hidden:
+
+    dp-derivation.rst
