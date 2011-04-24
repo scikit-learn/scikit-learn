@@ -18,6 +18,7 @@ from . gmm import GMM
 def sqnorm(v):
     return norm(v)**2
 
+
 def log_normalize(v):
     """Given a vector of unnormalized log-probabilites v returns a
     vector of normalized probabilities"""
@@ -146,26 +147,25 @@ class DPGMM(GMM):
         l += self.n_features * np.log(2)
         return l + detB
 
-    def _bound_pxgivenz(self, x, k):
-        bound = self._initial_bound
+    def _bound_pxgivenz(self, x):
+        bound = np.empty(self.n_states)
+        bound[:] = self._bound_covar + self._initial_bound
         if self.cvtype == 'spherical':
-            bound += self._bound_covar[k]
-            bound -= 0.5 * (self._covars[k]) * (sqnorm(x - self._means[k])
+            bound -= 0.5 * self._covars * (((x - self._means)**2).sum(axis=-1)
                                                 + self.n_features)
         elif self.cvtype == 'diag':
-            bound += self._bound_covar[k]
-            d = x - self._means[k]
-            bound -= 0.5 * np.sum(d * d * self._covars[k])
+            d = x - self._means
+            d **= 2
+            bound -= 0.5 * np.sum(d * self._covars, axis=1)
+
         elif self.cvtype == 'tied' or self.cvtype == 'full':
-            if self.cvtype == 'tied':
-                a, B, detB, c = self._a, self._B, self._detB, self._covars
-                bound += self._bound_covar
-            else:
-                a, B, detB, c = (self._a[k], self._B[k],
-                                 self._detB[k], self._covars[k])
-                bound += self._bound_covar[k]
-            d = x - self._means[k]
-            bound -= 0.5 * np.sum(np.dot(np.dot(d, c), d))
+            for k in xrange(self.n_states):
+                if self.cvtype == 'tied':
+                    c = self._covars
+                else:
+                    c = self._covars[k]
+                d = x - self._means[k]
+                bound[k] -= 0.5 * np.sum(np.dot(np.dot(d, c), d))
         else:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.cvtype)
@@ -213,8 +213,7 @@ class DPGMM(GMM):
             dgamma2[j] -= sd[j-1]
         dgamma = dgamma1 + dgamma2
         for i in xrange(obs.shape[0]):
-            for k in xrange(self.n_states):
-                p[k] = z[i, k] = self._bound_pxgivenz(obs[i], k)
+            p = z[i] = self._bound_pxgivenz(obs[i])
             z[i] += dgamma
             z[i] = log_normalize(z[i])
             bound[i] = np.sum(z[i] * p)
@@ -417,8 +416,7 @@ class DPGMM(GMM):
     def lower_bound(self):
         c = 0.
         for i in xrange(self._X.shape[0]):
-            for k in xrange(self.n_states):
-                c += self._z[i, k] * self._bound_pxgivenz(self._X[i], k)
+            c += np.sum(self._z[i] * self._bound_pxgivenz(self._X[i]))
         return c + self._logprior()
 
     def fit(self, X, n_iter=30, thresh=1e-2, params='wmc',
@@ -662,8 +660,7 @@ class VBGMM(DPGMM):
         bound = np.zeros(obs.shape[0])
         dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
         for i in xrange(obs.shape[0]):
-            for k in xrange(self.n_states):
-                p[k] = z[i, k] = self._bound_pxgivenz(obs[i], k)
+            p = z[i] = self._bound_pxgivenz(obs[i])
             z[i] += dg
             z[i] = log_normalize(z[i])
             bound[i] = np.sum(z[i] * p)
