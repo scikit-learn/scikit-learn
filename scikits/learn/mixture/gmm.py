@@ -185,7 +185,7 @@ class GMM(BaseEstimator):
     predict(X)
         Like decode, find most likely mixtures components for each
         observation in `X`.
-    rvs(n=1)
+    rvs(n=1, prng=None)
         Generate `n` samples from the model.
     score(X)
         Compute the log likelihood of `X` under the model.
@@ -320,7 +320,7 @@ class GMM(BaseEstimator):
 
     weights = property(_get_weights, _set_weights)
 
-    def eval(self, obs):
+    def eval(self, obs, return_log=False):
         """Evaluate the model on data
 
         Compute the log probability of `obs` under the model and
@@ -329,13 +329,15 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n_samples, n_features)
+        obs: array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        return_log: boolean, optional
+            If True, the posteriors returned are log-probabilities
 
         Returns
         -------
-        logprob : array_like, shape (n_samples,)
+        logprob: array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
         posteriors: array_like, shape (n_samples, n_states)
             Posterior probabilities of each mixture component for each
@@ -345,7 +347,9 @@ class GMM(BaseEstimator):
         lpr = (lmvnpdf(obs, self._means, self._covars, self._cvtype)
                + self._log_weights)
         logprob = logsum(lpr, axis=1)
-        posteriors = np.exp(lpr - logprob[:, np.newaxis])
+        posteriors = lpr - logprob[:, np.newaxis]
+        if not return_log:
+            posteriors = np.exp(posteriors)
         return logprob, posteriors
 
     def score(self, obs):
@@ -415,7 +419,7 @@ class GMM(BaseEstimator):
         logprob, posteriors = self.eval(X)
         return posteriors
 
-    def rvs(self, n_samples=1):
+    def rvs(self, n_samples=1, prng=None):
         """Generate random samples from the model.
 
         Parameters
@@ -428,11 +432,13 @@ class GMM(BaseEstimator):
         obs : array_like, shape (n_samples, n_features)
             List of samples
         """
+        if prng is None:
+            prng = self.rng
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
         obs = np.empty((n_samples, self.n_features))
-        rand = self.rng.rand(n_samples)
+        rand = prng.rand(n_samples)
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
         # for each component, generate all needed samples
@@ -536,10 +542,11 @@ class GMM(BaseEstimator):
     def _do_mstep(self, X, posteriors, params, min_covar=0):
             w = posteriors.sum(axis=0)
             avg_obs = np.dot(posteriors.T, X)
-            norm = 1.0 / (w[:, np.newaxis] + 1e-200)
+            norm = 1.0 / (w[:, np.newaxis] + 10*np.finfo(np.float).eps)
 
             if 'w' in params:
-                self._log_weights = np.log(w / w.sum())
+                self._log_weights = np.log(w / (w.sum() + 10*np.finfo(np.float).eps)
+                                           + np.finfo(np.float).eps)
             if 'm' in params:
                 self._means = avg_obs * norm
             if 'c' in params:
@@ -681,7 +688,8 @@ def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     cv = np.empty((gmm._n_states, gmm.n_features, gmm.n_features))
     for c in xrange(gmm._n_states):
         post = posteriors[:, c]
-        avg_cv = np.dot(post * obs.T, obs) / post.sum()
+        avg_cv = np.dot(post * obs.T, obs) / (post.sum() +
+                                10*np.finfo(np.float).eps)
         mu = gmm._means[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu)
                  + min_covar * np.eye(gmm.n_features))

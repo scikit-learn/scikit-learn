@@ -8,7 +8,7 @@ import numpy as np
 from scipy import stats
 
 from scikits.learn import mixture
-from scikits.learn.dataset.samples_generator import generate_random_spd_matrix
+from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
 from scikits.learn.mixture import GMM, DPGMM
 
 
@@ -178,9 +178,9 @@ class GMMTester():
     threshold = -0.5
     I = np.eye(n_features)
     covars = {'spherical': (0.1 + 2 * rng.rand(n_states)) ** 2,
-              'tied': _generate_random_spd_matrix(n_features) + 5 * I,
+              'tied': generate_random_spd_matrix(n_features) + 5 * I,
               'diag': (0.1 + 2 * rng.rand(n_states, n_features)) ** 2,
-              'full': np.array([_generate_random_spd_matrix(n_features) + 5 * I
+              'full': np.array([generate_random_spd_matrix(n_features) + 5 * I
                                 for x in xrange(n_states)])}
 
     def test_eval(self):
