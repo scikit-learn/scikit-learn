@@ -6,7 +6,7 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 import numpy as np
-import numpy.random as nr
+from scipy import linalg
 
 
 def test_dataset_classif(n_samples=100, n_features=100, param=[1, 1],
@@ -123,8 +123,9 @@ def sparse_uncorrelated(n_samples=100, n_features=10):
 
     cf.Celeux et al. 2009,  Bayesian regularization in regression)
 
-    X = NR.normal(0, 1)
-    Y = NR.normal(X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3])
+    import numpy as np
+    X = np.random.normal(0, 1)
+    Y = np.random.normal(X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3])
     The number of features is at least 10.
 
     Parameters
@@ -139,8 +140,8 @@ def sparse_uncorrelated(n_samples=100, n_features=10):
     X : numpy array of shape (n_samples, n_features) for input samples
     y : numpy array of shape (n_samples) for labels
     """
-    X = nr.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = nr.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3],
+    X = np.random.normal(loc=0, scale=1, size=(n_samples, n_features))
+    y = np.random.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3],
                   scale=np.ones(n_samples))
     return X, y
 
@@ -166,17 +167,17 @@ def friedman(n_samples=100, n_features=10, noise_std=1):
         number of features (default is 10).
 
     noise_std : float
-        std of the noise, which is added as noise_std*NR.normal(0,1)
+        std of the noise, which is added as noise_std*np.random.normal(0,1)
 
     Returns
     -------
     X : numpy array of shape (n_samples, n_features) for input samples
     y : numpy array of shape (n_samples,) for labels
     """
-    X = nr.normal(loc=0, scale=1, size=(n_samples, n_features))
+    X = np.random.normal(loc=0, scale=1, size=(n_samples, n_features))
     y = 10 * np.sin(X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
             + 10 * X[:, 3] + 5 * X[:, 4]
-    y += noise_std * nr.normal(loc=0, scale=1, size=n_samples)
+    y += noise_std * np.random.normal(loc=0, scale=1, size=n_samples)
     return X, y
 
 
@@ -377,10 +378,10 @@ def swiss_roll(n_samples, noise=0.0):
     return X
 
 
-def generate_random_spd_matrix(ndim, rng=np.random.RandomState(0)):
+def generate_random_spd_matrix(ndim, prng=np.random.RandomState(0)):
     """Return a random symmetric, positive-definite matrix."""
-    A = rng.rand(ndim, ndim)
-    U, s, V = np.linalg.svd(np.dot(A.T, A))
-    randspd = np.dot(np.dot(U, 1.0 + np.diag(rng.rand(ndim))), V)
-    return randspd
+    A = prng.rand(ndim, ndim)
+    U, s, V = linalg.svd(np.dot(A.T, A))
+    rand_spd = np.dot(np.dot(U, 1.0 + np.diag(prng.rand(ndim))), V)
+    return rand_spd
 
