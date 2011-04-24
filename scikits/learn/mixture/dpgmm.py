@@ -389,21 +389,15 @@ class DPGMM(GMM):
         return logprior
 
     def _bound_z(self):
-        logprior = 0.
-        for i in xrange(self._z.shape[0]):
-            cz = np.zeros(self.n_states)
-            for k in xrange(self.n_states-2,-1,-1):
-                cz[k] = cz[k + 1] + self._z[i, k + 1]
-            dg1 = digamma(self._gamma.T[1])
-            dg2 = digamma(self._gamma.T[2])
-            dg12 = digamma(self._gamma.T[1] + self._gamma.T[2])
-            logprior += np.sum(cz*(dg2-dg12))
-            logprior += np.sum(self._z[i]*(dg1-dg12))
-            for k in xrange(self.n_states):
-                if self._z[i, k] != 0: # don't know how to optimize
-                                       # this without getting nans due
-                                       # to 0*log(0)
-                    logprior -= self._z[i, k] * np.log(self._z[i, k])
+        dg12 = digamma(self._gamma.T[1] + self._gamma.T[2])
+        dg1 = digamma(self._gamma.T[1]) - dg12
+        dg2 = digamma(self._gamma.T[2]) - dg12
+
+        cz = np.cumsum(self._z[:, ::-1], axis=-1)[:, -2::-1]
+        logprior = np.sum(cz * dg2[:-1]) + np.sum(self._z * dg1)
+        del cz # Save memory
+        z_non_zeros = self._z[self._z != 0]
+        logprior -= np.sum(z_non_zeros*np.log(z_non_zeros))
         return logprior
 
     def _logprior(self):
@@ -675,8 +669,9 @@ class VBGMM(DPGMM):
 
     def _bound_z(self):
         logprior = 0.
-        dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
-        logprior += np.sum(dg.reshape((-1,1))*self._z)
+        dg = digamma(self._gamma) 
+        dg -= digamma(np.sum(self._gamma))
+        logprior += np.sum(dg.reshape((-1, 1))*self._z)
         logprior -= np.sum(self._z*np.log(self._z))
         return logprior
 
