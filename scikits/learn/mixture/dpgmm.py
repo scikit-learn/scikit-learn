@@ -32,50 +32,50 @@ def log_normalize(v, axis=0):
 ################################################################################
 # Variational bound on the log likelihood of each class
 
-def _bound_state_loglik_spherical(X, initial_bound, bound_covar, covars, means):
+def _bound_state_loglik_spherical(X, initial_bound, bound_prec, precs, means):
     n_states, n_features = means.shape
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_states))
-    bound[:] = bound_covar + initial_bound
+    bound[:] = bound_prec + initial_bound
     for k in xrange(n_states):
-        bound[:, k] -= 0.5 * covars[k] * (((X - means[k])**2).sum(axis=-1) + n_features)
+        bound[:, k] -= 0.5 * precs[k] * (((X - means[k])**2).sum(axis=-1) + n_features)
     return bound
 
 
-def _bound_state_loglik_diag(X, initial_bound, bound_covar, covars, means):
+def _bound_state_loglik_diag(X, initial_bound, bound_prec, precs, means):
     n_states, n_features = means.shape
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_states))
-    bound[:] = bound_covar + initial_bound
+    bound[:] = bound_prec + initial_bound
     for k in xrange(n_states):
         d = X - means[k]
         d **= 2
-        bound[:, k] -= 0.5 * np.sum(d * covars[k], axis=1)
+        bound[:, k] -= 0.5 * np.sum(d * precs[k], axis=1)
     return bound
 
 
-def _bound_state_loglik_tied(X, initial_bound, bound_covar, covars, means):
+def _bound_state_loglik_tied(X, initial_bound, bound_prec, precs, means):
     n_states, n_features = means.shape
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_states))
-    bound[:] = bound_covar + initial_bound
+    bound[:] = bound_prec + initial_bound
     # Transform the data to be able to apply standard Euclidean distance,
     # rather than Mahlanobis distance
-    sqrt_cov = linalg.cholesky(covars)
+    sqrt_cov = linalg.cholesky(precs)
     means = np.dot(means, sqrt_cov.T)
     X = np.dot(X, sqrt_cov.T)
     bound -= 0.5 * euclidean_distances(X, means, squared=True)
     return bound
 
 
-def _bound_state_loglik_full(X, initial_bound, bound_covar, covars, means):
+def _bound_state_loglik_full(X, initial_bound, bound_prec, precs, means):
     n_states, n_features = means.shape
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_states))
-    bound[:] = bound_covar + initial_bound
+    bound[:] = bound_prec + initial_bound
     for k in xrange(n_states):
         d = X - means[k]
-        sqrt_cov = linalg.cholesky(covars[k])
+        sqrt_cov = linalg.cholesky(precs[k])
         d = np.dot(d, sqrt_cov.T)
         d **= 2
         bound[:, k] -= 0.5 * d.sum(axis=-1)
@@ -192,13 +192,13 @@ class DPGMM(GMM):
     def _get_precisions(self):
         """Return precisions as a full matrix."""
         if self.cvtype == 'full':
-            return self._covars
+            return self._precs
         elif self.cvtype == 'diag':
-            return [np.diag(cov) for cov in self._covars]
+            return [np.diag(cov) for cov in self._precs]
         elif self.cvtype == 'tied':
-            return [self._covars] * self._n_states
+            return [self._precs] * self._n_states
         elif self.cvtype == 'spherical':
-            return [np.eye(self.n_features) * f for f in self._covars]
+            return [np.eye(self.n_features) * f for f in self._precs]
 
     def _get_covars(self):
         return [linalg.pinv(c) for c in self._get_precisions()]
@@ -264,7 +264,7 @@ class DPGMM(GMM):
                                       % self.cvtype)
 
         p = _bound_state_loglik(obs, self._initial_bound, 
-                        self._bound_covar, self._covars, self._means)
+                        self._bound_prec, self._precs, self._means)
         z = p + dgamma
         self._z = z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)
@@ -282,14 +282,14 @@ class DPGMM(GMM):
         for k in xrange(self.n_states):
             if self.cvtype == 'spherical' or self.cvtype == 'diag':
                 num = np.sum(self._z.T[k].reshape((-1, 1))*self._X, axis=0)
-                num *= self._covars[k]
-                den = 1. + self._covars[k] * np.sum(self._z.T[k])
+                num *= self._precs[k]
+                den = 1. + self._precs[k] * np.sum(self._z.T[k])
                 self._means[k] = num / den
             elif self.cvtype == 'tied' or self.cvtype == 'full':
                 if self.cvtype == 'tied':
-                    cov = self._covars
+                    cov = self._precs
                 else:
-                    cov = self._covars[k]
+                    cov = self._precs[k]
                 den = np.identity(self.n_features) + cov * np.sum(self._z.T[k])
                 num = np.sum(self._z.T[k].reshape((-1, 1))*self._X, axis=0)
                 num = np.dot(cov, num)
@@ -306,10 +306,10 @@ class DPGMM(GMM):
                 self._b[k] = 1.
                 d = np.sum(dif*dif,axis=1)
                 self._b[k] += 0.5 * np.sum(self._z.T[k]*(d+self.n_features))
-                self._bound_covar[k] = (0.5 * self.n_features *
+                self._bound_prec[k] = (0.5 * self.n_features *
                                         (digamma(self._a[k]) -
                                          np.log(self._b[k])))
-            self._covars = self._a / self._b
+            self._precs = self._a / self._b
         elif self.cvtype == 'diag':
             for k in xrange(self.n_states):
                 self._a[k].fill(1. + 0.5 * np.sum(self._z.T[k], axis=0))
@@ -318,10 +318,10 @@ class DPGMM(GMM):
                     self._b[k, d] = 1.
                     dd = ddif.T[d]*ddif.T[d]
                     self._b[k,d] += 0.5 * np.sum(self._z.T[k]*(dd + 1))
-                self._covars[k] = self._a[k] / self._b[k]
-                self._bound_covar[k] = 0.5 * np.sum(digamma(self._a[k])
+                self._precs[k] = self._a[k] / self._b[k]
+                self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
                                                     - np.log(self._b[k]))
-                self._bound_covar[k] -= 0.5 * np.sum(self._covars[k])
+                self._bound_prec[k] -= 0.5 * np.sum(self._precs[k])
         elif self.cvtype == 'tied':
             self._a = 2 + self._X.shape[0] + self.n_features
             self._B = (self._X.shape[0] + 1) * np.identity(self.n_features)
@@ -331,12 +331,12 @@ class DPGMM(GMM):
                     self._B += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
                                                       dif.reshape((1, -1)))
             self._B = linalg.pinv(self._B)
-            self._covars = self._a * self._B
+            self._precs = self._a * self._B
             self._detB = linalg.det(self._B)
-            self._bound_covar = 0.5 * self._wishart_detlogw(self._a,
+            self._bound_prec = 0.5 * self._wishart_detlogw(self._a,
                                                             self._B,
                                                             self._detB)
-            self._bound_covar -= 0.5 * self._a * np.trace(self._B)
+            self._bound_prec -= 0.5 * self._a * np.trace(self._B)
         elif self.cvtype == 'full':
             for k in xrange(self.n_states):
                 T = np.sum(self._z.T[k])
@@ -347,12 +347,12 @@ class DPGMM(GMM):
                     self._B[k] += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
                                                          dif.reshape((1, -1)))
                 self._B[k] = linalg.pinv(self._B[k])
-                self._covars[k] = self._a[k] * self._B[k]
+                self._precs[k] = self._a[k] * self._B[k]
                 self._detB[k] = linalg.det(self._B[k])
-                self._bound_covar[k] = 0.5*self._wishart_detlogw(self._a[k],
+                self._bound_prec[k] = 0.5*self._wishart_detlogw(self._a[k],
                                                                  self._B[k],
                                                                  self._detB[k])
-                self._bound_covar[k] -= 0.5 * self._a[k] * np.trace(self._B[k])
+                self._bound_prec[k] -= 0.5 * self._a[k] * np.trace(self._B[k])
                 
     def _monitor(self, n, end=False):
         if self.verbose:
@@ -422,14 +422,14 @@ class DPGMM(GMM):
             for k in xrange(self.n_states):
                 logprior += gammaln(self._a[k])
                 logprior -= (self._a[k] - 1) * digamma(self._a[k])
-                logprior += - np.log(self._b[k]) + self._a[k] - self._covars[k]
+                logprior += - np.log(self._b[k]) + self._a[k] - self._precs[k]
         elif self.cvtype == 'diag':
             for k in xrange(self.n_states):
                 for d in xrange(self.n_features):
                     logprior += gammaln(self._a[k, d])
                     logprior -= (self._a[k, d] - 1) * digamma(self._a[k, d])
                     logprior -= np.log(self._b[k, d])
-                    logprior += self._a[k, d] - self._covars[k, d]
+                    logprior += self._a[k, d] - self._precs[k, d]
         elif self.cvtype == 'tied':
             logprior += self._bound_wishart(self._a, self._B, self._detB)
         elif self.cvtype == 'full':
@@ -466,7 +466,7 @@ class DPGMM(GMM):
                                       % self.cvtype)
 
         c = np.sum(self._z * _bound_state_loglik(self._X, self._initial_bound, 
-                        self._bound_covar, self._covars, self._means))
+                        self._bound_prec, self._precs, self._means))
 
         return c + self._logprior()
 
@@ -529,44 +529,44 @@ class DPGMM(GMM):
             if self.cvtype == 'spherical':
                 self._a = np.ones(self.n_states)
                 self._b = np.ones(self.n_states)
-                self._covars = np.ones(self.n_states)
-                self._bound_covar = (0.5 * self.n_features *
+                self._precs = np.ones(self.n_states)
+                self._bound_prec = (0.5 * self.n_features *
                                      (digamma(self._a) -
                                       np.log(self._b)))
             elif self.cvtype == 'diag':
                 self._a = 1 + 0.5 * self.n_features
                 self._a *= np.ones((self.n_states, self.n_features))
                 self._b = np.ones((self.n_states, self.n_features))
-                self._covars = np.ones((self.n_states, self.n_features))
-                self._bound_covar = np.zeros(self.n_states)
+                self._precs = np.ones((self.n_states, self.n_features))
+                self._bound_prec = np.zeros(self.n_states)
                 for k in xrange(self.n_states):
-                    self._bound_covar[k] = 0.5 * np.sum(digamma(self._a[k])
+                    self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
                                                         - np.log(self._b[k]))
-                    self._bound_covar[k] -= 0.5 * np.sum(self._covars[k])
+                    self._bound_prec[k] -= 0.5 * np.sum(self._precs[k])
             elif self.cvtype == 'tied':
                 self._a = 1.
                 self._B = np.identity(self.n_features)
-                self._covars = np.identity(self.n_features)
+                self._precs = np.identity(self.n_features)
                 self._detB = 1.
-                self._bound_covar = 0.5 * self._wishart_detlogw(self._a,
+                self._bound_prec = 0.5 * self._wishart_detlogw(self._a,
                                                                 self._B,
                                                                 self._detB)
-                self._bound_covar -= 0.5 * self._a * np.trace(self._B)
+                self._bound_prec -= 0.5 * self._a * np.trace(self._B)
             elif self.cvtype == 'full':
                 self._a = (1 + self.n_states + self._X.shape[0])
                 self._a *= np.ones(self.n_states)
                 self._B = [2 * np.identity(self.n_features)
                            for i in xrange(self.n_states)]
-                self._covars = [np.identity(self.n_features)
+                self._precs = [np.identity(self.n_features)
                                 for i in xrange(self.n_states)]
                 self._detB = np.ones(self.n_states)
-                self._bound_covar = np.zeros(self.n_states)
+                self._bound_prec = np.zeros(self.n_states)
                 for k in xrange(self.n_states):
-                    self._bound_covar[k] = self._wishart_detlogw(self._a[k],
+                    self._bound_prec[k] = self._wishart_detlogw(self._a[k],
                                                                  self._B[k],
                                                                  self._detB[k])
-                    self._bound_covar[k] -= self._a[k] * np.trace(self._B[k])
-                    self._bound_covar[k] *= 0.5
+                    self._bound_prec[k] -= self._a[k] * np.trace(self._B[k])
+                    self._bound_prec[k] *= 0.5
 
         logprob = []
         # reset self.converged_ to False
@@ -712,7 +712,7 @@ class VBGMM(DPGMM):
                                       % self.cvtype)
 
         p = _bound_state_loglik(obs, self._initial_bound, 
-                                self._bound_covar, self._covars, self._means)
+                                self._bound_prec, self._precs, self._means)
         z = p + dg
         self._z = z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)
