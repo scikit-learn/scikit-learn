@@ -12,7 +12,11 @@ print __doc__
 import numpy as np
 import pylab as pl
 
+from scikits.learn.cluster import k_means
+from scikits.learn.cluster import affinity_propagation
+from scikits.learn.cluster import mean_shift
 from scikits.learn.cluster import spectral_clustering
+from scikits.learn.cluster import Ward
 from scikits.learn.metrics.pairwise import euclidean_distances
 from scikits.learn.neighbors import kneighbors_graph
 
@@ -21,10 +25,10 @@ from scikits.learn.neighbors import kneighbors_graph
 circle_parameters = (
     # (center_x, center_y, radius, n_points)
     (0, 0, 10, 100),
-    (8, 0, 25, 300),
+    (8, 0, 25, 200),
     (8, 4, 55, 300),
 )
-noise_level = 0.02
+noise_level = 0.05
 rng = np.random.RandomState(42)
 circles = []
 
@@ -45,21 +49,52 @@ indices = np.arange(X.shape[0])
 rng.shuffle(indices)
 X = X[indices]
 
+# Utility function to plot the results of the various strategies
+
+def plot_labels(labels, title):
+    for l, c in zip(np.unique(labels), 'rgbcmyk'):
+        X_l = X[labels == l, :]
+        pl.scatter(X_l[:, 0], X_l[:, 1], color=c)
+    pl.title(title)
+
 # Plot the raw dataset
 
 pl.figure()
+pl.subplot(331)
 pl.scatter(X[:, 0], X[:, 1])
 pl.title("Original dataset")
+
+
+# K-Means
+_, labels, inertia = k_means(X, k=3)
+pl.subplot(332)
+plot_labels(labels, "K-Means")
+print "K-Means inertia: %f" % inertia
+
+# Mean Shift
+_, labels = mean_shift(X, bandwidth=28.0)
+pl.subplot(333)
+plot_labels(labels, "Mean Shift")
 
 # Build a knn graph as affinity matrix
 affinity = kneighbors_graph(X, n_neighbors=10)
 affinity = 0.5 * (affinity + affinity.T) # make affinity symmetric
 
-labels = spectral_clustering(affinity, k=3)
+# Affinity propagation
+# XXX: I cannot get it to work as expected
+#_, labels = affinity_propagation(affinity.toarray(), p=0.5)
+#pl.subplot(334)
+#plot_labels(labels, "Affinity propagation")
 
-pl.figure()
-for l, c in zip(np.unique(labels), 'rgbcmyk'):
-    X_l = X[labels == l, :]
-    pl.scatter(X_l[:, 0], X_l[:, 1], color=c)
-pl.title("Data clustered by spectral clustering")
+# Ward clustering
+labels =Ward(n_clusters=3, connectivity=affinity).fit(X).labels_
+pl.subplot(335)
+plot_labels(labels, "Ward with connectivity")
+
+# Affinity propagation
+# XXX: the spectral clustering results is unstable with the amg-based method
+# XXX: we should implement the fast_svd method too
+labels = spectral_clustering(affinity, k=3, mode='arpack')
+pl.subplot(336)
+plot_labels(labels, "Spectral Clustering")
 pl.show()
