@@ -10,6 +10,7 @@ from scipy import stats
 from scikits.learn import mixture
 from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
 from scikits.learn.mixture import GMM, DPGMM, VBGMM
+from scikits.learn.mixture.dpgmm import log_normalize
 
 
 rng = np.random.RandomState(0)
@@ -43,6 +44,11 @@ def test_normalize_3D():
     for axis in range(3):
         Anorm = mixture.normalize(A, axis)
         assert np.all(np.allclose(Anorm.sum(axis), 1.0))
+
+def test_log_normalize():
+    v = np.array([0.1, 0.8, 0.01, 0.09])
+    a = np.log(2*v)
+    assert np.allclose(v, log_normalize(a))
 
 
 def test_sample_gaussian():
