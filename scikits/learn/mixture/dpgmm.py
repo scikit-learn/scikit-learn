@@ -32,7 +32,7 @@ def log_normalize(v, axis=0):
 ################################################################################
 # Variational bound on the log likelihood of each class
 
-def _bound_pxgivenz_spherical(X, initial_bound, bound_covar, covars, means):
+def _bound_state_loglik_spherical(X, initial_bound, bound_covar, covars, means):
     n_states, n_features = means.shape
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_states))
@@ -42,7 +42,7 @@ def _bound_pxgivenz_spherical(X, initial_bound, bound_covar, covars, means):
     return bound
 
 
-def _bound_pxgivenz_diag(X, initial_bound, bound_covar, covars, means):
+def _bound_state_loglik_diag(X, initial_bound, bound_covar, covars, means):
     n_states, n_features = means.shape
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_states))
@@ -54,7 +54,7 @@ def _bound_pxgivenz_diag(X, initial_bound, bound_covar, covars, means):
     return bound
 
 
-def _bound_pxgivenz_tied(X, initial_bound, bound_covar, covars, means):
+def _bound_state_loglik_tied(X, initial_bound, bound_covar, covars, means):
     n_states, n_features = means.shape
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_states))
@@ -68,7 +68,7 @@ def _bound_pxgivenz_tied(X, initial_bound, bound_covar, covars, means):
     return bound
 
 
-def _bound_pxgivenz_full(X, initial_bound, bound_covar, covars, means):
+def _bound_state_loglik_full(X, initial_bound, bound_covar, covars, means):
     n_states, n_features = means.shape
     n_samples = X.shape[0]
     bound = np.empty((n_samples, n_states))
@@ -82,11 +82,11 @@ def _bound_pxgivenz_full(X, initial_bound, bound_covar, covars, means):
     return bound
 
 
-_BOUND_PXGIVENZ_DICT = dict(
-    spherical=_bound_pxgivenz_spherical,
-    diag=_bound_pxgivenz_diag,
-    tied=_bound_pxgivenz_tied,
-    full=_bound_pxgivenz_full)
+_BOUND_STATE_LOGLIK_DICT = dict(
+    spherical=_bound_state_loglik_spherical,
+    diag=_bound_state_loglik_diag,
+    tied=_bound_state_loglik_tied,
+    full=_bound_state_loglik_full)
 
 
 ################################################################################
@@ -258,12 +258,12 @@ class DPGMM(GMM):
         del dgamma1, dgamma2, sd
 
         try:
-            _bound_pxgivenz = _BOUND_PXGIVENZ_DICT[self.cvtype]
+            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.cvtype]
         except KeyError:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.cvtype)
 
-        p = _bound_pxgivenz(obs, self._initial_bound, 
+        p = _bound_state_loglik(obs, self._initial_bound, 
                         self._bound_covar, self._covars, self._means)
         z = p + dgamma
         self._z = z = log_normalize(z, axis=-1)
@@ -460,12 +460,12 @@ class DPGMM(GMM):
 
     def lower_bound(self):
         try:
-            _bound_pxgivenz = _BOUND_PXGIVENZ_DICT[self.cvtype]
+            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.cvtype]
         except KeyError:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.cvtype)
 
-        c = np.sum(self._z * _bound_pxgivenz(self._X, self._initial_bound, 
+        c = np.sum(self._z * _bound_state_loglik(self._X, self._initial_bound, 
                         self._bound_covar, self._covars, self._means))
 
         return c + self._logprior()
@@ -706,13 +706,13 @@ class VBGMM(DPGMM):
         bound = np.zeros(obs.shape[0])
         dg = digamma(self._gamma) - digamma(np.sum(self._gamma))
         try:
-            _bound_pxgivenz = _BOUND_PXGIVENZ_DICT[self.cvtype]
+            _bound_state_loglik = _BOUND_STATE_LOGLIK_DICT[self.cvtype]
         except KeyError:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.cvtype)
 
-        p = _bound_pxgivenz(obs, self._initial_bound, 
-                        self._bound_covar, self._covars, self._means)
+        p = _bound_state_loglik(obs, self._initial_bound, 
+                                self._bound_covar, self._covars, self._means)
         z = p + dg
         self._z = z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)
