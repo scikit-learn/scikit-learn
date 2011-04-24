@@ -3,7 +3,8 @@ import numpy as np
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from unittest import TestCase
-from .test_mixture import _generate_random_spd_matrix
+
+from scikits.learn.datasets.sample_generator import _generate_random_spd_matrix
 
 from .. import hmm
 
