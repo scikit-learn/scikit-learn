@@ -12,6 +12,21 @@ from .k_means_ import k_means
 from ..utils.extmath import safe_sparse_dot
 
 
+def make_plot(title):
+    """Build a plot instance suitable for saving on the filesystem"""
+    from pylab import Figure
+    plot = Figure(figsize=(7, 5)).add_subplot(111)
+    plot.grid(True)
+    plot.set_title(title)
+    return plot
+
+
+def save_plot(plot, filename):
+    """Save plot as a png file"""
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    FigureCanvasAgg(plot.get_figure()).print_figure(filename, dpi=80)
+
+
 def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
                                rng=0, max_iter=1000, verbose=False):
     """Power Iteration Clustering: simple variant of spectral clustering
@@ -77,8 +92,8 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
             normalized = normalized.copy()
 
         # convert matrices to arrays
-        scales = np.array(scales)[0]
-        sums = np.array(sums)[0]
+        scales = scales.A.flatten()
+        sums = sums.A.flatten()
 
         # inplace rescaling of the CSR matrix
         csr_scale_rows(normalized.shape[0], normalized.shape[1],
@@ -106,13 +121,17 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         previous_delta = delta
 
         vectors[:] = safe_sparse_dot(normalized, vectors.T).T
+        #vectors /= np.sqrt(np.sum(vectors ** 2, axis=1))[:, np.newaxis]
         vectors /= np.abs(vectors).sum(axis=1)[:, np.newaxis]
 
         delta = np.abs(previous_vectors - vectors).mean()
 
-        if verbose and i % 10 == 0:
+        if verbose:
             print "Power Iteration %04d/%04d: delta=%f" % (
                 i + 1, max_iter, delta)
+            p = make_plot("First vector %04d" % (i + 1))
+            p.plot(vectors[0])
+            save_plot(p, "power_iteration_%04d.png" % (i + 1))
 
         if np.abs(previous_delta - delta) < tol:
             break
@@ -121,6 +140,6 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
             i + 1, max_iter, delta)
 
     # TODO: pass the rng correctly
-    _, labels, inertia = k_means(vectors.T, k, verbose=verbose)
+    _, labels, inertia = k_means(vectors.T, k, n_init=3, verbose=False)
     return labels, inertia, vectors
 

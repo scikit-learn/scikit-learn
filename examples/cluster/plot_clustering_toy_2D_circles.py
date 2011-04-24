@@ -41,9 +41,9 @@ for (c_x, c_y, r, n_points) in circle_parameters:
 X = np.concatenate(circles)
 
 # Shuffle the samples to ensure that the algo has no way of cheating
-indices = np.arange(X.shape[0])
-rng.shuffle(indices)
-X = X[indices]
+#indices = np.arange(X.shape[0])
+#rng.shuffle(indices)
+#X = X[indices]
 
 # Plot the raw dataset
 
@@ -65,7 +65,7 @@ pl.title("Data clustered by spectral clustering")
 
 
 labels, inertia, vectors = power_iteration_clustering(
-    affinity, k=3, n_vectors=2, verbose=True)
+    affinity, k=3, n_vectors=1, tol=1e-5, verbose=True)
 print "Power Iteration Clustering inertia: %f" % inertia
 
 pl.figure()
