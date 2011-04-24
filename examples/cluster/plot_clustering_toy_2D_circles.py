@@ -28,14 +28,15 @@ noise_level = 0.02
 rng = np.random.RandomState(42)
 circles = []
 
-for (c_x, c_y, r, n_points) in circle_parameters:
+for (center_x, center_y, radius, n_points) in circle_parameters:
     t = rng.uniform(12 * np.pi, size=n_points)
-    noise_x = rng.normal(loc=0.0, scale=noise_level * r, size=n_points)
-    noise_y = rng.normal(loc=0.0, scale=noise_level * r, size=n_points)
 
-    circle_x = r * np.cos(t) + c_x + noise_x
-    circle_y = r * np.sin(t) + c_y + noise_y
-    circles.append(np.array([circle_x, circle_y]).T)
+    circle_x = center_x + radius * np.cos(t)
+    circle_y = center_y + radius * np.sin(t)
+    circle = np.array([circle_x, circle_y]).T
+    noise = rng.normal(scale=noise_level * radius, size=(n_points, 2))
+
+    circles.append(circle + noise)
 
 X = np.concatenate(circles)
 
