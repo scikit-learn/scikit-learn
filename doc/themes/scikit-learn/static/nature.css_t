@@ -9,6 +9,7 @@
  *
  */
 /* @import url("minimalist.css") /\* google custom search  *\/ */
+@import url("basic.css");
 
 /* -- page layout ----------------------------------------------------------- */
 
