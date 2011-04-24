@@ -111,15 +111,15 @@ class DPGMM(GMM):
 
     Parameters
     ----------
-    n_states : int, optional
+    n_states: int, optional
         Number of mixture components. Defaults to 1.
 
-    cvtype : string (read-only), optional
+    cvtype: string (read-only), optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    alpha : float, optional
+    alpha: float, optional
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichler Process
         is as likely to start a new cluster for a point as it is 
@@ -602,15 +602,15 @@ class VBGMM(DPGMM):
 
     Parameters
     ----------
-    n_states : int, optional
+    n_states: int, optional
         Number of mixture components. Defaults to 1.
 
-    cvtype : string (read-only), optional
+    cvtype: string (read-only), optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    alpha : float, optional
+    alpha: float, optional
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of
