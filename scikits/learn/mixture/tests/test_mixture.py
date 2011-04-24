@@ -9,12 +9,10 @@ from scipy import stats
 
 from scikits.learn import mixture
 from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
-from scikits.learn.mixture import GMM, DPGMM
+from scikits.learn.mixture import GMM, DPGMM, VBGMM
 
 
 rng = np.random.RandomState(0)
-
-
 
 def test_logsum_1D():
     A = rng.rand(2) + 1.0
@@ -184,15 +182,11 @@ class GMMTester():
                                 for x in xrange(n_states)])}
 
     def test_eval(self):
-        if self.model == DPGMM: return # DPGMM does not support
-                                       # setting the means and
-                                       # covariances before fitting
-                                       #
-                                       # There is no way of fixing
-                                       # this due to the variational
-                                       # parameters being more
-                                       # expressive than covariance
-                                       # matrices
+        if self.model == DPGMM or self.model == VBGMM:
+            return # DPGMM does not support setting the means and
+        # covariances before fitting There is no way of fixing this
+        # due to the variational parameters being more expressive than
+        # covariance matrices
         g = self.model(self.n_states, self.cvtype, rng=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
@@ -240,6 +234,9 @@ class GMMTester():
         for iter in xrange(5):
             g.fit(train_obs, n_iter=1, params=params, init_params='')
             trainll.append(self.score(g, train_obs))
+        g.fit(train_obs, n_iter=10, params=params, init_params='') # finish
+                                                                   # fitting
+
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to
         # the addition of min_covar to the covariance (to prevent
@@ -300,6 +297,35 @@ class TestDPGMMWithTiedCovars(unittest.TestCase, GMMTester):
 class TestDPGMMWithFullCovars(unittest.TestCase, GMMTester):
     cvtype = 'full'
     model = DPGMM
+
+    def score(self, g, train_obs):
+        return g.lower_bound()
+
+
+class TestVBGMMWithSphericalCovars(unittest.TestCase, GMMTester):
+    cvtype = 'spherical'
+    model = VBGMM
+
+    def score(self, g, train_obs):
+        return g.lower_bound()
+
+class TestVBGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
+    cvtype = 'diag'
+    model = VBGMM
+
+    def score(self, g, train_obs):
+        return g.lower_bound()
+
+class TestVBGMMWithTiedCovars(unittest.TestCase, GMMTester):
+    cvtype = 'tied'
+    model = VBGMM
+
+    def score(self, g, train_obs):
+        return g.lower_bound()
+
+class TestVBGMMWithFullCovars(unittest.TestCase, GMMTester):
+    cvtype = 'full'
+    model = VBGMM
 
     def score(self, g, train_obs):
         return g.lower_bound()

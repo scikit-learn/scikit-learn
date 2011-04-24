@@ -748,8 +748,9 @@ class VBGMM(DPGMM):
         logprior = 0.
         dg = digamma(self._gamma) 
         dg -= digamma(np.sum(self._gamma))
-        logprior += np.sum(dg.reshape((-1, 1))*self._z)
-        logprior -= np.sum(self._z*np.log(self._z))
+        logprior += np.sum(dg.reshape((-1, 1))*self._z.T)
+        z_non_zeros = self._z[self._z != 0]
+        logprior -= np.sum(z_non_zeros*np.log(z_non_zeros))
         return logprior
 
     def _bound_concentration(self):
@@ -758,7 +759,7 @@ class VBGMM(DPGMM):
                                                           * self.alpha)
         logprior -= np.sum(gammaln(self._gamma)-gammaln(self.alpha))
         sg = digamma(np.sum(self._gamma))
-        logprior += np.sum((self._gamma-self._alpha)*(digamma(self._gamma)-sg))
+        logprior += np.sum((self._gamma-self.alpha)*(digamma(self._gamma)-sg))
         return logprior
 
     def _monitor(self, n, end=False):
