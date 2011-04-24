@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from unittest import TestCase
 
-from scikits.learn.datasets.sample_generator import _generate_random_spd_matrix
+from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
 
 from .. import hmm
 
@@ -223,11 +223,11 @@ class GaussianHMMParams(object):
     transmat /= np.tile(transmat.sum(axis=1)[:,np.newaxis], (1, n_states))
     means = np.random.randint(-20, 20, (n_states, n_features))
     covars = {'spherical': (1.0 + 2 * np.random.rand(n_states)) ** 2,
-              'tied': (_generate_random_spd_matrix(n_features)
+              'tied': (generate_random_spd_matrix(n_features)
                        + np.eye(n_features)),
               'diag': (1.0 + 2 * np.random.rand(n_states, n_features)) ** 2,
               'full': np.array(
-                  [_generate_random_spd_matrix(n_features) + np.eye(n_features)
+                  [generate_random_spd_matrix(n_features) + np.eye(n_features)
                    for x in xrange(n_states)])}
     expanded_covars = {'spherical': [np.eye(n_features) * cov
                                      for cov in covars['spherical']],
@@ -519,11 +519,11 @@ def create_random_gmm(n_mix, n_features, cvtype):
     mincv = 0.1
     g.covars = {'spherical': (mincv
                               + mincv * np.random.rand(n_mix)) ** 2,
-                'tied': _generate_random_spd_matrix(n_features)
+                'tied': generate_random_spd_matrix(n_features)
                        + mincv * np.eye(n_features),
                 'diag': (mincv
                          + mincv * np.random.rand(n_mix, n_features)) ** 2,
-                'full': np.array([_generate_random_spd_matrix(n_features)
+                'full': np.array([generate_random_spd_matrix(n_features)
                                   + mincv * np.eye(n_features)
                                   for x in xrange(n_mix)])}[cvtype]
     g.weights = hmm.normalize(np.random.rand(n_mix))

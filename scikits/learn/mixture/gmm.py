@@ -12,23 +12,13 @@ from ..base import BaseEstimator
 from .. import cluster
 
 
-def logsum(A, axis=None):
+def logsum(A, axis=0):
     """Computes the sum of A assuming A is in the log domain.
 
     Returns log(sum(exp(A), axis)) while minimizing the possibility of
     over/underflow.
     """
-    Amax = A.max(axis)
-    if axis and A.ndim > 1:
-        shape = list(A.shape)
-        shape[axis] = 1
-        Amax.shape = shape
-    Asum = np.log(np.sum(np.exp(A - Amax), axis))
-    Asum += Amax.reshape(Asum.shape)
-    if axis:
-        # Look out for underflow.
-        Asum[np.isnan(Asum)] = - np.Inf
-    return Asum
+    return np.logaddexp.reduce(A, axis=axis)
 
 
 # TODO: this lacks a docstring
