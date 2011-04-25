@@ -31,6 +31,39 @@ def save_plot(plot, filename):
     FigureCanvasAgg(plot.get_figure()).print_figure(filename, dpi=80)
 
 
+def row_normalize(X):
+    """Inplace row normalization of the 2D array or scipy.sparse matrix"""
+
+    scales = X.sum(axis=1)
+    nnzeros = np.where(scales > 0)
+    scales[nnzeros] = 1 / scales[nnzeros]
+
+    if hasattr(X, 'tocsr'):
+        # inplace row normalization for sparse matrices
+
+        # TODO: extract me as utility function and compare the speed with the
+        # existing cython implementation available in the preprocessing
+        # package
+
+        # lazy import of scipy.sparse for performance
+        from scipy.sparse.sparsetools import csr_scale_rows
+
+        # ensure the sparse matrix is in Compressed Sparse Rows format
+        X = X.tocsr()
+
+        # convert matrix to array
+        scales = scales.A.flatten()
+
+        # inplace rescaling of the CSR matrix
+        csr_scale_rows(X.shape[0], X.shape[1], X.indptr, X.indices, X.data,
+                       scales)
+    else:
+        # in-place row normalization for ndarray
+        X *= scales[:, np.newaxis]
+
+    return X
+
+
 def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
                                rng=0, max_iter=1000, verbose=False,
                                plot_vector=False):
@@ -107,41 +140,16 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         # this is not a sparse matrix: check that this is an array like
         affinity = np.asanyarray(affinity)
 
-    # row normalize the affinity matrix
-    sums = affinity.sum(axis=1)
-    volume = sums.sum()
-
-    scales = sums.copy()
-    nnzeros = np.where(scales > 0)
-    scales[nnzeros] = 1 / scales[nnzeros]
-
-    if hasattr(affinity, 'tocsr'):
-        # inplace row normalization for sparse matrices
-
-        # late import of scipy.sparse for performance
-        from scipy.sparse.sparsetools import csr_scale_rows
-
-        # ensure the sparse matrix is in Compressed Sparse Rows format
-        normalized = affinity.tocsr()
-        if normalized is affinity:
-            normalized = normalized.copy()
-
-        # convert matrices to arrays
-        scales = scales.A.flatten()
-        sums = sums.A.flatten()
-
-        # inplace rescaling of the CSR matrix
-        csr_scale_rows(normalized.shape[0], normalized.shape[1],
-                       normalized.indptr, normalized.indices,
-                       normalized.data, scales)
-    else:
-        # row normalization for ndarray
-        normalized = affinity * scales[:, np.newaxis]
+    normalized = row_normalize(affinity.copy())
 
     n_samples = affinity.shape[0]
 
     if n_vectors == 1:
         # initialize a single vector deterministically
+        sums = affinity.sum(axis=1)
+        if hasattr(sums, 'A'):
+            sums = sums.A.flatten()
+        volume = sums.sum()
         vectors = (sums / volume).reshape((n_vectors, n_samples))
     else:
         # random init
