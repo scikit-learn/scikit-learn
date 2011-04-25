@@ -1,12 +1,11 @@
-"""
-Testing for Clustering methods
-
-"""
+"""Testing for Spectral Clustering methods"""
 
 import numpy as np
 from numpy.testing import assert_equal
 from scipy import sparse
 import nose
+from cPickle import loads
+from cPickle import dumps
 
 from .. import SpectralClustering
 
@@ -22,11 +21,18 @@ def test_spectral_clustering():
                  ])
 
     for mat in (S, sparse.csr_matrix(S)):
-        labels = SpectralClustering(rng=0).fit(mat, k=2).labels_
+        model = SpectralClustering(rng=0).fit(mat, k=2)
+        labels = model.labels_
         if labels[0] == 0:
             labels = 1 - labels
 
         assert_equal(labels, [1, 1, 1, 0, 0, 0, 0])
+
+        model_copy = loads(dumps(model))
+        assert_equal(model_copy.k, model.k)
+        assert_equal(model_copy.mode, model.mode)
+        assert_equal(model_copy.rng.get_state(), model.rng.get_state())
+        assert_equal(model_copy.labels_, model.labels_)
 
 
 def test_spectral_clustering_sparse():
@@ -52,4 +58,3 @@ def test_spectral_clustering_sparse():
         labels = 1 - labels
 
     assert np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]) > .9
-
