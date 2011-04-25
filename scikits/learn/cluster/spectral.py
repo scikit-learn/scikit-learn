@@ -8,11 +8,12 @@ import numpy as np
 
 
 from ..base import BaseEstimator
+from ..utils import make_rng
 from ..utils.graph import graph_laplacian
 from .k_means_ import k_means
 
 
-def spectral_embedding(adjacency, n_components=8, mode=None):
+def spectral_embedding(adjacency, n_components=8, mode=None, rng=None):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -42,6 +43,10 @@ def spectral_embedding(adjacency, n_components=8, mode=None):
         MultiGrid) is much faster, but requires pyamg to be
         installed.
 
+    rng: int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when mode == 'amg'.
+
     Returns
     --------
     embedding: array, shape: (n_samples, n_components)
@@ -61,6 +66,8 @@ def spectral_embedding(adjacency, n_components=8, mode=None):
         amg_loaded = True
     except ImportError:
         amg_loaded = False
+
+    rng = make_rng(rng)
 
     n_nodes = adjacency.shape[0]
     # XXX: Should we check that the matrices given is symmetric
@@ -101,7 +108,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None):
         # problem.
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         ml = smoothed_aggregation_solver(laplacian.tocsr())
-        X = np.random.rand(laplacian.shape[0], n_components)
+        X = rng.rand(laplacian.shape[0], n_components)
         X[:, 0] = 1. / dd.ravel()
         M = ml.aspreconditioner()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
@@ -115,7 +122,8 @@ def spectral_embedding(adjacency, n_components=8, mode=None):
     return embedding
 
 
-def spectral_clustering(affinity, k=8, n_components=None, mode=None):
+def spectral_clustering(affinity, k=8, n_components=None, mode=None,
+                        rng=None):
     """Apply k-means to a projection to the normalized laplacian
 
     In practice Spectral Clustering is very useful when the structure of
@@ -149,8 +157,13 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None):
         MultiGrid) is much faster, but requires pyamg to be
         installed.
 
+    rng: int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when mode == 'amg'
+        and by the K-Means initialization.
+
     Returns
-    --------
+    -------
     labels: array of integers, shape: n_samples
         The labels of the clusters.
 
@@ -175,10 +188,12 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None):
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
+    rng = make_rng(rng)
     n_components = k if n_components is None else n_components
-    maps = spectral_embedding(affinity, n_components=n_components, mode=mode)
+    maps = spectral_embedding(affinity, n_components=n_components,
+                              mode=mode, rng=rng)
     maps = maps[1:]
-    _, labels, _ = k_means(maps.T, k)
+    _, labels, _ = k_means(maps.T, k, rng=rng)
     return labels
 
 
@@ -203,6 +218,11 @@ class SpectralClustering(BaseEstimator):
         The eigenvalue decomposition strategy to use. AMG (Algebraic
         MultiGrid) is much faster, but requires pyamg to be installed.
 
+    rng: int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when mode == 'amg'
+        and by the K-Means initialization.
+
     Methods
     -------
 
@@ -226,9 +246,10 @@ class SpectralClustering(BaseEstimator):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, k=8, mode=None):
+    def __init__(self, k=8, mode=None, rng=None):
         self.k = k
         self.mode = mode
+        self.rng = make_rng(rng)
 
     def fit(self, X, **params):
         """Compute the spectral clustering from the affinity matrix
@@ -259,5 +280,6 @@ class SpectralClustering(BaseEstimator):
         speeds up computation.
         """
         self._set_params(**params)
-        self.labels_ = spectral_clustering(X, k=self.k, mode=self.mode)
+        self.labels_ = spectral_clustering(X, k=self.k, mode=self.mode,
+                                           rng=self.rng)
         return self
