@@ -79,4 +79,5 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
 
-# Build the affinity matrix using the cosnie similarity between documents
+# Build the affinity matrix using the cosine similarity between documents
+#TODO
