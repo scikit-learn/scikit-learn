@@ -1,5 +1,4 @@
-""" Algorithms for  spectral clustering.
-"""
+"""Algorithms for spectral clustering"""
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD
