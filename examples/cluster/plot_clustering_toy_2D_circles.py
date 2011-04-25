@@ -52,10 +52,14 @@ X = X[indices]
 # Utility function to plot the results of the various strategies
 
 def plot_labels(labels, title):
-    for l, c in zip(np.unique(labels), 'rgbcmyk'):
+    unique_labels = np.unique(labels)
+    for l in unique_labels:
         X_l = X[labels == l, :]
-        pl.scatter(X_l[:, 0], X_l[:, 1], color=c)
+        color = pl.cm.hsv(float(l) / unique_labels.shape[0])
+        pl.scatter(X_l[:, 0], X_l[:, 1], color=color)
     pl.title(title)
+    pl.xticks(())
+    pl.yticks(())
 
 # Plot the raw dataset
 
@@ -63,6 +67,9 @@ pl.figure()
 pl.subplot(331)
 pl.scatter(X[:, 0], X[:, 1])
 pl.title("Original dataset")
+pl.xticks(())
+pl.yticks(())
+
 
 
 # K-Means
