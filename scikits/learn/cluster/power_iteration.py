@@ -11,6 +11,7 @@ import numpy as np
 
 from .k_means_ import k_means
 from ..utils.extmath import safe_sparse_dot
+from ..utils import inplace_row_normalize
 
 
 def make_plot(title):
@@ -29,39 +30,6 @@ def save_plot(plot, filename):
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
     FigureCanvasAgg(plot.get_figure()).print_figure(filename, dpi=80)
-
-
-def row_normalize(X):
-    """Inplace row normalization of the 2D array or scipy.sparse matrix"""
-
-    scales = X.sum(axis=1)
-    nnzeros = np.where(scales > 0)
-    scales[nnzeros] = 1 / scales[nnzeros]
-
-    if hasattr(X, 'tocsr'):
-        # inplace row normalization for sparse matrices
-
-        # TODO: extract me as utility function and compare the speed with the
-        # existing cython implementation available in the preprocessing
-        # package
-
-        # lazy import of scipy.sparse for performance
-        from scipy.sparse.sparsetools import csr_scale_rows
-
-        # ensure the sparse matrix is in Compressed Sparse Rows format
-        X = X.tocsr()
-
-        # convert matrix to array
-        scales = scales.A.flatten()
-
-        # inplace rescaling of the CSR matrix
-        csr_scale_rows(X.shape[0], X.shape[1], X.indptr, X.indices, X.data,
-                       scales)
-    else:
-        # in-place row normalization for ndarray
-        X *= scales[:, np.newaxis]
-
-    return X
 
 
 def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
@@ -140,7 +108,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         # this is not a sparse matrix: check that this is an array like
         affinity = np.asanyarray(affinity)
 
-    normalized = row_normalize(affinity.copy())
+    normalized = inplace_row_normalize(affinity.copy())
 
     n_samples = affinity.shape[0]
 

@@ -10,6 +10,8 @@ sets of points.
 import numpy as np
 
 from ..utils.extmath import safe_sparse_dot
+from ..utils import inplace_row_normalize
+
 
 def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
@@ -146,7 +148,7 @@ def rbf_kernel(X, Y, sigma=1.0):
     return K
 
 
-def cosine_similarity(X, Y):
+def cosine_similarity(X, Y, copy=True):
     """Compute pairwise cosine similarities between rows in X and Y
 
     Cosine similarity is a normalized linear kernel with value ranging
@@ -169,6 +171,10 @@ def cosine_similarity(X, Y):
 
     Y: array or sparse matrix of shape (n_samples_2, n_features)
 
+    copy: boolean, optional, True by default
+        For memory efficiency, set to False to avoid copies of X and Y and
+        accept them to be modified (inplace row normalization).
+
     Returns
     -------
 
@@ -188,31 +194,29 @@ def cosine_similarity(X, Y):
     >>> from scipy.sparse import csr_matrix
     >>> X_sparse = csr_matrix(X)
     >>> cosine_similarity(X_sparse, X_sparse).toarray().round(decimals=2)
+    array([[ 1.  ,  0.71, -1.  ,  0.  ],
+           [ 0.71,  1.  , -0.71,  0.  ],
+           [-1.  , -0.71,  1.  ,  0.  ],
+           [ 0.  ,  0.  ,  0.  ,  0.  ]])
 
     It is possible to use the cosine similarity to perform similarity
     queries:
 
     >>> query = [[0.5, 0.9]]
     >>> cosine_similarity(X, query)
-
+    array([[ 0.87415728],
+           [ 0.96152395],
+           [-0.87415728],
+           [ 0.        ]])
     """
-    similarities = safe_sparse_dot(X, Y.T)
+    if not hasattr(X, 'todense'):
+        X = np.asanyarray(X)
+    if not hasattr(Y, 'todense'):
+        Y = np.asanyarray(Y)
 
-    if hasattr(X, 'multiply'):
-        norms_x = np.sqrt((X.multiply(X)).sum(axis=1))
-    else:
-        norms_x = np.sqrt((X ** 2).sum(axis=1))
-    nnzeros_x = np.where(norms_x > 0)
-    similarities[nnzeros_x, :] /= norms_x[nnzeros_x].reshape(
-        (nnzeros_x[0].sum(), -1))
+    if copy:
+        X, Y = X.copy(), Y.copy()
 
-    if hasattr(Y, 'multiply'):
-        norms_y = np.sqrt((Y.multiply(Y)).sum(axis=1))
-    else:
-        norms_y = np.sqrt((Y ** 2).sum(axis=1))
-    nnzeros_y = np.where(norms_y > 0)
-    similarities[:, nnzeros_y,] /= norms_y[nnzeros_y].reshape(
-        (-1, nnzeros_y[0].sum()))
-
-    return similarities
-
+    inplace_row_normalize(X, norm=2)
+    inplace_row_normalize(Y, norm=2)
+    return safe_sparse_dot(X, Y.T)
