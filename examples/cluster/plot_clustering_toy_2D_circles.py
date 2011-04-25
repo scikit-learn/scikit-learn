@@ -46,9 +46,9 @@ for (center_x, center_y, radius, n_points) in circle_parameters:
 X = np.concatenate(circles)
 
 # Shuffle the samples to ensure that the algo has no way of cheating
-#indices = np.arange(X.shape[0])
-#rng.shuffle(indices)
-#X = X[indices]
+indices = np.arange(X.shape[0])
+rng.shuffle(indices)
+X = X[indices]
 
 # Utility function to plot the results of the various strategies
 
@@ -93,22 +93,23 @@ affinity = 0.5 * (affinity + affinity.T) # make affinity symmetric
 #plot_labels(labels, "Affinity propagation")
 
 # Ward clustering
-labels =Ward(n_clusters=3, connectivity=affinity).fit(X).labels_
+labels = Ward(n_clusters=3, connectivity=affinity).fit(X).labels_
 pl.subplot(335)
 plot_labels(labels, "Ward Clustering")
 
 # Spectral Clustering
 # XXX: the spectral clustering results is unstable with the amg-based method
 # XXX: we should implement the fast_svd method too
-labels = spectral_clustering(affinity, k=3, mode='arpack')
-pl.subplot(336)
+labels = spectral_clustering(affinity, k=3, mode='arpack', rng=rng)
+pl.subplot(337)
 plot_labels(labels, "Spectral Clustering")
 
 # Power iteration
-labels, inertia, vectors = power_iteration_clustering(
-    affinity, k=3, n_vectors=1, tol=1e-5, verbose=True)
+labels = power_iteration_clustering(
+    affinity, k=3, n_vectors=10, tol=1e-5, rng=rng, verbose=False,
+    plot_vector=False)
 print "Power Iteration Clustering inertia: %f" % inertia
-pl.subplot(334)
+pl.subplot(338)
 plot_labels(labels, "Power Iteration")
 
 pl.show()
