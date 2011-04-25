@@ -1,8 +1,8 @@
 .. _clustering:
 
-===================================================
+==========
 Clustering
-===================================================
+==========
 
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
 unlabeled data can be performed with the module :mod:`scikits.learn.cluster`.
@@ -83,7 +83,7 @@ of cluster. It will have difficulties scaling to thousands of samples.
 
 
 Spectral clustering
-====================
+===================
 
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
@@ -163,13 +163,13 @@ connectivity constraints are added between samples: it considers at each step
 all the possible merges.
 
 
-Adding connectivity constraints 
-----------------------------------
+Adding connectivity constraints
+-------------------------------
 
 An interesting aspect of the :class:`Ward` object is that connectivity
 constraints can be added to this algorithm (only adjacent clusters can be
 merged together), through an connectivity matrix that defines for each
-sample the neighboring samples following a given structure of the data. For 
+sample the neighboring samples following a given structure of the data. For
 instance, in the swiss-roll example below, the connectivity constraints
 forbid the merging of points that are not adjacent on the swiss roll, and
 thus avoid forming clusters that extend across overlapping folds of the
@@ -201,10 +201,10 @@ enable only merging of neighboring pixels on an image, as in the
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering 
+ * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering
    to split the image of lena in regions.
 
- * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of 
+ * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
    versus unstructured approaches.
 
