@@ -461,7 +461,10 @@ that doesn't try to minimize the sum of square residuals, as in regression,
 but rather a "hit or miss" cost.
 
 The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
-logistic regression, in order to have sparse predicting weights.
+logistic regression. L1 penalization yields sparse predicting weights.
+For L1 penalization `scikits.learn.svm.l1_min_c` allows to calculate
+the lower bound for C in order to get a non "null" (all feature weights to
+zero) model.
 
 .. topic:: Examples:
 
