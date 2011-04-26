@@ -1,3 +1,5 @@
+import nose
+
 import numpy as np
 from scipy import sparse as sp
 
@@ -57,3 +59,15 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     clf.fit(X, y)
     assert (np.asanyarray(clf.coef_) != 0).any() or \
            (np.asanyarray(clf.intercept_) != 0).any()
+
+
+@nose.tools.raises(ValueError)
+def test_ill_posed_min_c():
+    X = [[0, 0], [0, 0]]
+    y = [0, 1]
+    l1_min_c(X, y)
+
+
+@nose.tools.raises(ValueError)
+def test_unsupported_loss():
+    l1_min_c(dense_X, Y1, 'l1')

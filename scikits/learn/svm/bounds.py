@@ -80,5 +80,5 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
         raise ValueError('Ill-posed l1_min_c calculation')
     if loss == 'l2':
         return 0.5 / den
-    else: # loss == 'log':
+    else:  # loss == 'log':
         return 2.0 / den
