@@ -28,6 +28,14 @@ Support Vector Machines
    svm.NuSVR
    svm.OneClassSVM
 
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   svm.l1_min_c
+
+
 For sparse data
 ---------------
 

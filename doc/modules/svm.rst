@@ -311,7 +311,7 @@ Tips on Practical Use
     feature weights is different from zero and contribute to the decision
     function.  Increasing C yields a more complex model (more feature are
     selected).  The C value that yields a "null" model (all weights equal to
-    zero) can be calculated using :func:`scikits.learn.svm.l1_min_c`.
+    zero) can be calculated using :func:`l1_min_c`.
 
 
 .. _svm_kernels:
