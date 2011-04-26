@@ -20,6 +20,7 @@ is asymptotic and we are working with a small number of observations.
 The OAS estimate deviates from the likelihood criterion optimal value
 but better approximate the MSE optimal value, especially for a small
 number a observations.
+
 """
 print __doc__
 
@@ -62,7 +63,7 @@ negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(
 
 # getting the likelihood under the real model
 real_cov = np.dot(coloring_matrix.T, coloring_matrix)
-emp_cov = np.cov(X_train.T, bias=1)
+emp_cov = empirical_covariance(X_train)
 loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################

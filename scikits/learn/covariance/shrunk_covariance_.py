@@ -8,13 +8,15 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
+#         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD Style.
 
+# avoid division truncation
 from __future__ import division
 import numpy as np
 
-from .empirical_covariance_ import EmpiricalCovariance
+from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
 
 ###############################################################################
 # ShrunkCovariance estimator
@@ -95,11 +97,29 @@ class ShrunkCovariance(EmpiricalCovariance):
 
 
     def fit(self, X, assume_centered=False, **params):
+        """ Fits the shrunk covariance model
+        according to the given training data and parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+          Training data, where n_samples is the number of samples
+          and n_features is the number of features.
+          
+        assume_centered: Boolean
+          If True, data are not centered before computation.
+          Usefull to work with data whose mean is significantly equal to
+          zero but is not exactly zero.
+          If False, data are centered before computation.
+          
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        """
         self._set_params(**params)
-        if assume_centered:
-            empirical_cov = np.dot(X.T, X) / X.shape[0]
-        else:
-            empirical_cov = np.cov(X.T, bias=1)
+        empirical_cov = empirical_covariance(X, assume_centered=assume_centered)
         covariance = shrunk_covariance(empirical_cov, self.shrinkage)
         self._set_estimates(covariance)
         
@@ -115,6 +135,12 @@ def ledoit_wolf(X, assume_centered=False):
     ----------
     X: 2D ndarray, shape (n_samples, n_features)
       Data from which to compute the covariance estimate
+    
+    assume_centered: Boolean
+      If True, data are not centered before computation.
+      Usefull to work with data whose mean is significantly equal to
+      zero but is not exactly zero.
+      If False, data are centered before computation.
     
     Returns
     -------
@@ -140,17 +166,14 @@ def ledoit_wolf(X, assume_centered=False):
     if X.ndim == 1:
         if not assume_centered:
             X = X - X.mean()
-            print np.atleast_2d((X**2).mean())
         return np.atleast_2d((X**2).mean()), 0.
     n_samples, n_features = X.shape
     
-    # optionaly center data
+    # optionaly center data        
     if not assume_centered:
-        emp_cov = np.cov(X.T, bias=1)
         X = X - X.mean(0)
-    else:
-        emp_cov = np.dot(X.T, X) / n_samples
     
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
     mu = np.trace(emp_cov) / n_features
     delta_ = emp_cov.copy()
     delta_.flat[::n_features + 1] -= mu
@@ -212,6 +235,27 @@ class LedoitWolf(EmpiricalCovariance):
     
     """        
     def fit(self, X, assume_centered=False):
+        """ Fits the Ledoit-Wolf shrunk covariance model
+        according to the given training data and parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+          Training data, where n_samples is the number of samples
+          and n_features is the number of features.
+          
+        assume_centered: Boolean
+          If True, data are not centered before computation.
+          Usefull to work with data whose mean is significantly equal to
+          zero but is not exactly zero.
+          If False, data are centered before computation.
+          
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        """
         covariance, shrinkage = ledoit_wolf(X, assume_centered=assume_centered)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
@@ -228,6 +272,12 @@ def oas(X, assume_centered=False):
     ----------
     X: 2D ndarray, shape (n_samples, n_features)
       Data from which to compute the covariance estimate
+      
+    assume_centered: Boolean
+      If True, data are not centered before computation.
+      Usefull to work with data whose mean is significantly equal to
+      zero but is not exactly zero.
+      If False, data are centered before computation.
     
     Returns
     -------
@@ -256,10 +306,7 @@ def oas(X, assume_centered=False):
         return np.atleast_2d((X**2).mean()), 0.
     n_samples, n_features = X.shape
     
-    if not assume_centered:
-        emp_cov = np.cov(X.T, bias=1)
-    else:
-        emp_cov = np.dot(X.T, X) / n_samples
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
     mu = np.trace(emp_cov) / n_features
     
     # formula from Chen et al.'s **implementation**
@@ -321,6 +368,27 @@ class OAS(EmpiricalCovariance):
     
     """
     def fit(self, X, assume_centered=False):
+        """ Fits the Oracle Approximating Shrinkage covariance model
+        according to the given training data and parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+          Training data, where n_samples is the number of samples
+          and n_features is the number of features.
+          
+        assume_centered: Boolean
+          If True, data are not centered before computation.
+          Usefull to work with data whose mean is significantly equal to
+          zero but is not exactly zero.
+          If False, data are centered before computation.
+          
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        """
         covariance, shrinkage = oas(X, assume_centered=assume_centered)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)

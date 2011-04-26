@@ -5,9 +5,12 @@ Maximum likelihood covariance estimator.
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
+#         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD Style.
 
+# avoid division truncation
+from __future__ import division
 import numpy as np
 from scipy import linalg
 
@@ -27,6 +30,39 @@ def log_likelihood(emp_cov, precision):
 
     """
     return -np.sum(emp_cov*precision) + exact_logdet(precision)
+
+
+def empirical_covariance(X, assume_centered=False):
+    """Computes the Maximum likelihood covariance estimator
+    
+    Parameters
+    ----------
+    X: 2D ndarray, shape (n_samples, n_features)
+      Data from which to compute the covariance estimate
+    
+    assume_centered: Boolean
+      If True, data are not centered before computation.
+      Usefull to work with data whose mean is significantly equal to
+      zero but is not exactly zero.
+      If False, data are centered before computation.
+      
+    Returns
+    -------
+    covariance: 2D ndarray, shape (n_features, n_features)
+      Empirical covariance (Maximum Likelihood Estimator)
+      
+
+    """
+    X = np.asanyarray(X)
+    if X.ndim == 1:
+        X = np.atleast_2d(X).T
+    
+    if assume_centered:
+        covariance = np.dot(X.T, X) / X.shape[0]
+    else:
+        covariance = np.cov(X.T, bias=1)
+    
+    return covariance
 
 
 class EmpiricalCovariance(BaseEstimator):
@@ -59,8 +95,8 @@ class EmpiricalCovariance(BaseEstimator):
         Params
         ------
         covariance: 2D ndarray, shape (n_features, n_features)
-          Estimated covariance matrix to be stored, and from which the precision
-          is computed.
+          Estimated covariance matrix to be stored, and from which
+          the precision is computed.
 
         """
         covariance = np.atleast_2d(covariance)
@@ -73,21 +109,53 @@ class EmpiricalCovariance(BaseEstimator):
             self.precision_ = None
     
     def fit(self, X, assume_centered=False, **params):
+        """ Fits the Maximum Likelihood Estimator covariance model
+        according to the given training data and parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+          Training data, where n_samples is the number of samples
+          and n_features is the number of features.
+          
+        assume_centered: Boolean
+          If True, data are not centered before computation.
+          Usefull to work with data whose mean is significantly equal to
+          zero but is not exactly zero.
+          If False, data are centered before computation.
+          
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        """
         self._set_params(**params)
-        if assume_centered:
-            covariance = np.dot(X.T, X) / X.shape[0]
-        else:
-            covariance = np.cov(X.T, bias=1)
+        covariance = empirical_covariance(X, assume_centered=assume_centered)
         self._set_estimates(covariance)
         
         return self
 
     def score(self, X_test, assume_centered=False):
+        """Computes the likelihood of a gaussian data set with
+        `self.covariance_` as an estimator of its covariance matrix.
+
+        Parameters
+        ----------
+        X_test : array-like, shape = [n_samples, n_features]
+          Test data of which we compute the likelihood,
+          where n_samples is the number of samples and n_features is
+          the number of features.
+          
+        Returns
+        -------
+        res: float
+          The likelihood of the data set with self.covariance_ as an estimator
+          of its covariance matrix.
+          
+        """
         # compute empirical covariance of the test set
-        if assume_centered:
-            test_cov = np.dot(X_test.T, X_test) / X_test.shape[0]
-        else:
-            test_cov = np.cov(X_test.T, bias=1)
+        test_cov = empirical_covariance(X_test, assume_centered=assume_centered)
         # compute log likelihood
         if self.store_precision:
             res = log_likelihood(test_cov, self.precision_)
@@ -96,7 +164,21 @@ class EmpiricalCovariance(BaseEstimator):
         
         return res
         
-    def mse(self, real_cov):
-        diff = real_cov - self.covariance_
+    def mse(self, comp_cov):
+        """Computes the Mean Squared Error between two covariance estimators.
+        (In the sense of the Frobenius norm)
+
+        Parameters
+        ----------
+        comp_cov: array-like, shape = [n_features, n_features]
+          The covariance which to be compared to.
+
+        Returns
+        -------
+        The Mean Squared Error (in the sense of the Frobenius norm) between
+        `self` and `comp_cov` covariance estimators.
+
+        """
+        diff = comp_cov - self.covariance_
         
         return np.sum(diff**2)
