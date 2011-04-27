@@ -81,7 +81,7 @@ class Normalizer(BaseEstimator):
     def transform(self, X, copy=True):
         if copy:
             X = X.copy()
-        norms = X.sum(axis=1)[:, np.newaxis]
+        norms = np.abs(X).sum(axis=1)[:, np.newaxis]
         norms[norms == 0.0] = 1.0
         X /= norms
 
