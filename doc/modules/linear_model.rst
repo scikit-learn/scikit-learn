@@ -462,7 +462,7 @@ but rather a "hit or miss" cost.
 
 The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
 logistic regression. L1 penalization yields sparse predicting weights.
-For L1 penalization `scikits.learn.svm.l1_min_c` allows to calculate
+For L1 penalization :func:`scikits.learn.svm.l1_min_c` allows to calculate
 the lower bound for C in order to get a non "null" (all feature weights to
 zero) model.
 
