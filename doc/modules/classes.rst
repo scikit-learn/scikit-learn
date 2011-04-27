@@ -291,6 +291,8 @@ Covariance Estimators
    :template: function.rst
 
    covariance.ledoit_wolf
+   covariance.shrunk_covariance
+   covariance.oas
 
 
 Signal Decomposition

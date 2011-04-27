@@ -137,7 +137,7 @@ class EmpiricalCovariance(BaseEstimator):
         return self
 
     def score(self, X_test, assume_centered=False):
-        """Computes the likelihood of a gaussian data set with
+        """Computes the log-likelihood of a gaussian data set with
         `self.covariance_` as an estimator of its covariance matrix.
 
         Parameters

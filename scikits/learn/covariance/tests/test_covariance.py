@@ -73,7 +73,7 @@ def test_shrunk_covariance():
     assert(cov.precision_ is None)
 
 
-def test_lw():
+def test_ledoit_wolf():
     """Tests LedoitWolf module on a simple dataset.
 
     """

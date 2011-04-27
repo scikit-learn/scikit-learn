@@ -14,6 +14,7 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 from __future__ import division
+
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
@@ -26,16 +27,17 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     
     Params
     ------
-    emp_cov: 2D ndarray, shape (n_features, n_features)
+    emp_cov: array-like, shape (n_features, n_features)
       Covariance matrix to be shrunk
+
     shrinkage: float, 0 <= shrinkage <= 1
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
     
     Returns
     -------
-    shrunk_cov: 2D ndarray
-      Shrunk covariance
+    shrunk_cov: array-like
+      shrunk covariance
     
     Notes
     -----
@@ -70,10 +72,10 @@ class ShrunkCovariance(EmpiricalCovariance):
     
     Attributes
     ----------
-    `covariance_` : 2D ndarray, shape (n_features, n_features)
+    `covariance_` : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : 2D ndarray, shape (n_features, n_features)
+    `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
         
@@ -133,7 +135,7 @@ def ledoit_wolf(X, assume_centered=False):
 
     Parameters
     ----------
-    X: 2D ndarray, shape (n_samples, n_features)
+    X: array-like, shape (n_samples, n_features)
       Data from which to compute the covariance estimate
     
     assume_centered: Boolean
@@ -144,7 +146,7 @@ def ledoit_wolf(X, assume_centered=False):
     
     Returns
     -------
-    shrunk_cov: 2D ndarray, shape (n_features, n_features)
+    shrunk_cov: array-like, shape (n_features, n_features)
       Shrunk covariance
       
     shrinkage: float
@@ -206,10 +208,10 @@ class LedoitWolf(EmpiricalCovariance):
     
     Attributes
     ----------
-    `covariance_` : 2D ndarray, shape (n_features, n_features)
+    `covariance_` : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : 2D ndarray, shape (n_features, n_features)
+    `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
@@ -266,14 +268,14 @@ class LedoitWolf(EmpiricalCovariance):
 # OAS estimator
 
 def oas(X, assume_centered=False):
-    """Estimates the covariance matrix with the Oracle Approximating Shrinkage.
+    """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
     Parameters
     ----------
-    X: 2D ndarray, shape (n_samples, n_features)
+    X: array-like, shape (n_samples, n_features)
       Data from which to compute the covariance estimate
       
-    assume_centered: Boolean
+    assume_centered: boolean
       If True, data are not centered before computation.
       Usefull to work with data whose mean is significantly equal to
       zero but is not exactly zero.
@@ -281,7 +283,7 @@ def oas(X, assume_centered=False):
     
     Returns
     -------
-    shrunk_cov: 2D ndarray, shape (n_features, n_features)
+    shrunk_cov: array-like, shape (n_features, n_features)
       Shrunk covariance
       
     shrinkage: float
@@ -340,10 +342,10 @@ class OAS(EmpiricalCovariance):
     
     Attributes
     ----------
-    `covariance_` : 2D ndarray, shape (n_features, n_features)
+    `covariance_` : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : 2D ndarray, shape (n_features, n_features)
+    `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
         
@@ -377,7 +379,7 @@ class OAS(EmpiricalCovariance):
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
           
-        assume_centered: Boolean
+        assume_centered: boolean
           If True, data are not centered before computation.
           Usefull to work with data whose mean is significantly equal to
           zero but is not exactly zero.
