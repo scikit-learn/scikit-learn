@@ -58,6 +58,22 @@ For sparse data
    svm.sparse.LinearSVC
 
 
+
+Low-level methods
+-----------------
+
+.. autosummary::
+
+   :toctree: generated
+   :template: function.rst
+
+   svm.libsvm.fit
+   svm.libsvm.decision_function
+   svm.libsvm.predict
+   svm.libsvm.predict_proba
+   svm.libsvm.cross_validation
+
+
 Generalized Linear Models
 =========================
 
