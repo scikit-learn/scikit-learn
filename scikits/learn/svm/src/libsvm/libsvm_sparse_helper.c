@@ -10,15 +10,14 @@ struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, 
 {
     struct svm_csr_node **sparse, *temp;
     int i, j=0, k=0, n;
-    sparse = (struct svm_csr_node **) malloc (n_samples * sizeof(struct svm_csr_node *));
+    sparse = malloc (n_samples * sizeof(struct svm_csr_node *));
 
     if (sparse == NULL)
         return NULL;
 
     for (i=0; i<n_samples; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
-        temp = (struct svm_csr_node *) malloc ((n+1) * 
-                                 sizeof(struct svm_csr_node));
+        temp = malloc ((n+1) * sizeof(struct svm_csr_node));
 
         if (temp == NULL) {
             for (j=0; j<i; j++)

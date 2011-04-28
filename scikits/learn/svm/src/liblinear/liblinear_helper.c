@@ -23,11 +23,11 @@ struct feature_node **dense_to_sparse (double *x, npy_intp *dims, double bias)
     struct feature_node *T;             /* pointer to the top of the stack */
     int count;
 
-    sparse = (struct feature_node **) malloc (dims[0] * sizeof(struct feature_node *));
+    sparse = malloc (dims[0] * sizeof(struct feature_node *));
     if (sparse == NULL)
         goto sparse_error;
 
-    temp = (struct feature_node *) malloc ((dims[1]+2) * sizeof(struct feature_node));
+    temp = malloc ((dims[1]+2) * sizeof(struct feature_node));
     if (temp == NULL)
         goto temp_error;
 
@@ -56,7 +56,7 @@ struct feature_node **dense_to_sparse (double *x, npy_intp *dims, double bias)
 
         /* allocate memory and copy collected items*/
         count = T - temp;
-        sparse[i] = (struct feature_node *) malloc(count * sizeof(struct feature_node));
+        sparse[i] = malloc(count * sizeof(struct feature_node));
         if (sparse[i] == NULL) {
             int k;
             for (k=0; k<i; k++)
@@ -88,14 +88,14 @@ struct feature_node **csr_to_sparse (double *values, npy_intp *shape_indices,
     struct feature_node **sparse, *temp;
     int i, j=0, k=0, n;
 
-    sparse = (struct feature_node **) malloc ((shape_indptr[0]-1)* sizeof(struct feature_node *));
+    sparse = malloc ((shape_indptr[0]-1)* sizeof(struct feature_node *));
     if (sparse == NULL)
         return NULL;
 
     for (i=0; i<shape_indptr[0]-1; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
 
-        sparse[i] = (struct feature_node *) malloc ((n+2) * sizeof(struct feature_node));
+        sparse[i] = malloc ((n+2) * sizeof(struct feature_node));
         if (sparse[i] == NULL) {
             int l;
             for (l=0; l<i; l++)
@@ -127,7 +127,7 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
 {
     struct problem *problem;
     /* not performant but simple */
-    problem = (struct problem *) malloc(sizeof(struct problem));
+    problem = malloc(sizeof(struct problem));
     if (problem == NULL) return NULL;
     problem->l = (int) dims[0];
 
@@ -153,7 +153,7 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
         npy_intp n_features, double bias) {
 
     struct problem *problem;
-    problem = (struct problem *) malloc (sizeof (struct problem));
+    problem = malloc (sizeof (struct problem));
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] -1;
 
@@ -181,7 +181,7 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
 struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp nr_weight, char *weight_label, char *weight)
 {
     struct parameter *param;
-    param = (struct parameter *) malloc(sizeof(struct parameter));
+    param = malloc(sizeof(struct parameter));
     if (param == NULL) return NULL;
     param->solver_type = solver_type;
     param->eps = eps;
@@ -200,9 +200,12 @@ struct model * set_model(struct parameter *param, char *coef, npy_intp *dims,
     struct model *model;
 
     if (m == 1) m = 2; /* liblinear collapses the weight vector in the case of two classes */
-    model = (struct model *)      malloc(sizeof(struct model));
-    model->w =       (double *)   malloc( len_w * sizeof(double)); 
-    model->label =   (int *)      malloc( m * sizeof(int));
+    if ((model = malloc(sizeof(struct model))) == NULL)
+        goto model_error;
+    if ((model->w = malloc( len_w * sizeof(double))) == NULL)
+        goto w_error;
+    if ((model->label = malloc( m * sizeof(int))) == NULL)
+        goto label_error;
 
     memcpy(model->label, label, m * sizeof(int));
     memcpy(model->w, coef, len_w * sizeof(double));
@@ -214,6 +217,13 @@ struct model * set_model(struct parameter *param, char *coef, npy_intp *dims,
     model->bias = bias;
 
     return model;
+
+label_error:
+    free(model->w);
+w_error:
+    free(model);
+model_error:
+    return NULL;
 }
 
 
