@@ -31,12 +31,12 @@ void TRON::info(const char *fmt,...)
 	// (*tron_print_string)(buf);
 }
 
-TRON::TRON(const function *fun_obj, double eps, int max_iter)
+TRON::TRON(function &fun_obj, double eps, int max_iter)
+ : fun_obj(fun_obj),
+   eps(eps),
+   max_iter(max_iter),
+   tron_print_string(&default_print)
 {
-	this->fun_obj=const_cast<function *>(fun_obj);
-	this->eps=eps;
-	this->max_iter=max_iter;
-	tron_print_string = default_print;
 }
 
 TRON::~TRON()
@@ -51,7 +51,7 @@ void TRON::tron(double *w)
 	// Parameters for updating the trust region size delta.
 	double sigma1 = 0.25, sigma2 = 0.5, sigma3 = 4;
 
-	int n = fun_obj->get_nr_variable();
+	int n = fun_obj.get_nr_variable();
 	int i, cg_iter;
 	double delta, snorm, one=1.0;
 	double alpha, f, fnew, prered, actred, gs;
@@ -69,8 +69,8 @@ void TRON::tron(double *w)
 	for (i=0; i<n; i++)
 		w[i] = 0;
 
-        f = fun_obj->fun(w);
-	fun_obj->grad(w, g);
+	f = fun_obj.fun(w);
+	fun_obj.grad(w, g);
 	delta = dnrm2_(&n, g, &inc);
 	double gnorm1 = delta;
 	double gnorm = gnorm1;
@@ -89,7 +89,7 @@ void TRON::tron(double *w)
 
 		gs = ddot_(&n, g, &inc, s, &inc);
 		prered = -0.5*(gs-ddot_(&n, s, &inc, r, &inc));
-                fnew = fun_obj->fun(w_new);
+		fnew = fun_obj.fun(w_new);
 
 		// Compute the actual reduction.
 	        actred = f - fnew;
@@ -122,7 +122,7 @@ void TRON::tron(double *w)
 			iter++;
 			memcpy(w, w_new, sizeof(double)*n);
 			f = fnew;
-		        fun_obj->grad(w, g);
+		        fun_obj.grad(w, g);
 
 			gnorm = dnrm2_(&n, g, &inc);
 			if (gnorm <= eps*gnorm1)
@@ -150,7 +150,7 @@ void TRON::tron(double *w)
 int TRON::trcg(double delta, double *g, double *s, double *r)
 {
 	int i, inc = 1;
-	int n = fun_obj->get_nr_variable();
+	int n = fun_obj.get_nr_variable();
 	double one = 1;
 	std::vector<double> v_d(n),
 						v_Hd(n);
@@ -173,7 +173,7 @@ int TRON::trcg(double delta, double *g, double *s, double *r)
 		if (dnrm2_(&n, r, &inc) <= cgtol)
 			break;
 		cg_iter++;
-		fun_obj->Hv(d, Hd);
+		fun_obj.Hv(d, Hd);
 
 		alpha = rTr/ddot_(&n, d, &inc, Hd, &inc);
 		daxpy_(&n, &alpha, d, &inc, s, &inc);

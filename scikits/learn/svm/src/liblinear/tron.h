@@ -15,7 +15,7 @@ public:
 class TRON
 {
 public:
-	TRON(const function *fun_obj, double eps = 0.1, int max_iter = 1000);
+	TRON(function &fun_obj, double eps = 0.1, int max_iter = 1000);
 	~TRON();
 
 	void tron(double *w);
@@ -27,7 +27,7 @@ private:
 
 	double eps;
 	int max_iter;
-	function *fun_obj;
+	function &fun_obj;
 	void info(const char *fmt,...);
 	void (*tron_print_string)(const char *buf);
 };
