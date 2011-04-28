@@ -87,11 +87,22 @@ struct feature_node **csr_to_sparse (double *values, npy_intp *shape_indices,
 {
     struct feature_node **sparse, *temp;
     int i, j=0, k=0, n;
+
     sparse = (struct feature_node **) malloc ((shape_indptr[0]-1)* sizeof(struct feature_node *));
+    if (sparse == NULL)
+        return NULL;
 
     for (i=0; i<shape_indptr[0]-1; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
+
         sparse[i] = (struct feature_node *) malloc ((n+2) * sizeof(struct feature_node));
+        if (sparse[i] == NULL) {
+            int l;
+            for (l=0; l<i; l++)
+                free(sparse[i]);
+            break;
+        }
+
         temp = sparse[i];
         for (j=0; j<n; ++j) {
             temp[j].value = values[k];
