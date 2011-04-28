@@ -208,7 +208,7 @@ From occurrences to frequencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Occurrence count is a good start but there is an issue: longer
-documents will have higher average count values than shorter document,
+documents will have higher average count values than shorter documents,
 even though they might talk about the same topics.
 
 To avoid these potential discrepancies it suffices to divide the
