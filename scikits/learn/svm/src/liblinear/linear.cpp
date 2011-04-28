@@ -1776,16 +1776,16 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 	{
 		case L2R_LR:
 		{
-			std::auto_ptr<function> fun_obj(new l2r_lr_fun(prob, Cp, Cn));
-			TRON tron_obj(fun_obj.get(), eps*std::min(pos,neg)/prob->l);
+			l2r_lr_fun fun(prob, Cp, Cn);
+			TRON tron_obj(fun, eps*std::min(pos,neg)/prob->l);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
 			break;
 		}
 		case L2R_L2LOSS_SVC:
 		{
-			std::auto_ptr<function> fun_obj(new l2r_l2_svc_fun(prob, Cp, Cn));
-			TRON tron_obj(fun_obj.get(), eps*std::min(pos,neg)/prob->l);
+			l2r_l2_svc_fun fun(prob, Cp, Cn);
+			TRON tron_obj(fun, eps*std::min(pos,neg)/prob->l);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
 			break;
