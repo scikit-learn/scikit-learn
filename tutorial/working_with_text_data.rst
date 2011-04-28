@@ -177,7 +177,7 @@ instead of single words::
 These tools are wrapped into a higher level component that is able to build a
 dictionary of features::
 
-  >>> from scikits.learn.feature_extraction.text.sparse import CountVectorizer
+  >>> from scikits.learn.feature_extraction.text import CountVectorizer
   >>> count_vect = CountVectorizer()
   >>> docs_train = [open(f).read() for f in twenty_train.filenames]
   >>> _ = count_vect.fit(docs_train)
@@ -229,7 +229,7 @@ Inverse Document Frequency".
 
 Both TF and TF-IDF can be computed as follows::
 
-  >>> from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
+  >>> from scikits.learn.feature_extraction.text import TfidfTransformer
   >>> tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
   >>> X_train_tf = tf_transformer.transform(X_train_counts)
   >>> X_train_tf.shape
