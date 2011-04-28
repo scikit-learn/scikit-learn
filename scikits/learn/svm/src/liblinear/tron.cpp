@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <vector>
 #include "tron.h"
 
 #ifndef min
@@ -66,10 +67,15 @@ void TRON::tron(double *w)
 	double delta, snorm, one=1.0;
 	double alpha, f, fnew, prered, actred, gs;
 	int search = 1, iter = 1, inc = 1;
-	double *s = new double[n];
-	double *r = new double[n];
-	double *w_new = new double[n];
-	double *g = new double[n];
+
+	std::vector<double> v_s(n),
+						v_r(n),
+						v_w_new(n),
+						v_g(n);
+	double *s = &v_s[0];
+	double *r = &v_r[0];
+	double *w_new = &v_w_new[0];
+	double *g = &v_g[0];
 
 	for (i=0; i<n; i++)
 		w[i] = 0;
@@ -150,11 +156,6 @@ void TRON::tron(double *w)
 			break;
 		}
 	}
-
-	delete[] g;
-	delete[] r;
-	delete[] w_new;
-	delete[] s;
 }
 
 int TRON::trcg(double delta, double *g, double *s, double *r)
@@ -162,8 +163,10 @@ int TRON::trcg(double delta, double *g, double *s, double *r)
 	int i, inc = 1;
 	int n = fun_obj->get_nr_variable();
 	double one = 1;
-	double *d = new double[n];
-	double *Hd = new double[n];
+	std::vector<double> v_d(n),
+						v_Hd(n);
+	double *d = &v_d[0];
+	double *Hd = &v_Hd[0];
 	double rTr, rnewTrnew, alpha, beta, cgtol;
 
 	for (i=0; i<n; i++)
@@ -213,9 +216,6 @@ int TRON::trcg(double delta, double *g, double *s, double *r)
 		daxpy_(&n, &one, r, &inc, d, &inc);
 		rTr = rnewTrnew;
 	}
-
-	delete[] d;
-	delete[] Hd;
 
 	return(cg_iter);
 }
