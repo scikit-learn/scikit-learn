@@ -26,9 +26,9 @@ description, quoted from the `website
 
   The 20 Newsgroups data set is a collection of approximately 20,000
   newsgroup documents, partitioned (nearly) evenly across 20 different
-  newsgroups. To the best of my knowledge, it was originally collected
-  by Ken Lang, probably for his "Newsweeder: Learning to filter
-  netnews" paper, though he does not explicitly mention this collection.
+  newsgroups. To the best of our knowledge, it was originally collected
+  by Ken Lang, probably for his paper "Newsweeder: Learning to filter
+  netnews," though he does not explicitly mention this collection.
   The 20 newsgroups collection has become a popular data set for
   experiments in text applications of machine learning techniques,
   such as text classification and text clustering.
@@ -60,7 +60,7 @@ keys or ``object`` attributes for convenience, for instance the
   >>> twenty_train.target_names
   ['alt.atheism', 'comp.graphics', 'sci.med', 'soc.religion.christian']
 
-The files them-selves are not loaded in memory yet::
+The files themselves are not loaded in memory yet::
 
   >>> twenty_train.filenames.shape
   (2257,)
@@ -139,11 +139,11 @@ is barely manageable on today's computers.
 Furtunately, **most values in X will be zeros** since for a given
 document less than a couple thousands of distinct words will be
 used. For this reason we say that bags of words are typically
-**high-dimensional sparse datasets**.
+**high-dimensional sparse datasets**. We can save a lot of memory by
+only storing the non-zero parts of the feature vectors in memory.
 
-Hence it is highly recommended to use ``scipy.sparse`` matrices
-instead of numpy arrays to store the extracted features of a text
-corpus.
+``scipy.sparse`` matrices are data structures that do exactly this,
+and ``scikit-learn`` has built-in support for these structures.
 
 
 Tokenizing text with ``scikit-learn``
