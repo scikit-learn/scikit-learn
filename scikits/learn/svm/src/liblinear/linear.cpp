@@ -10,8 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <vector>
 #include "linear.h"
 #include "tron.h"
+
 typedef signed char schar;
 template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
 #ifndef min
@@ -1381,14 +1383,23 @@ static void solve_l1r_lr(
 	double sum2, appxcond2;
 	double cond;
 
-	int *index = new int[w_size];
-	schar *y = new schar[l];
-	double *exp_wTx = new double[l];
-	double *exp_wTx_new = new double[l];
-	double *xj_max = new double[w_size];
-	double *C_sum = new double[w_size];
-	double *xjneg_sum = new double[w_size];
-	double *xjpos_sum = new double[w_size];
+	std::vector<int> v_index(w_size);
+	std::vector<schar> v_y(l);
+	std::vector<double> v_exp_wTx(l);
+	std::vector<double> v_exp_wTx_new(l);
+	std::vector<double> v_xj_max(w_size);
+	std::vector<double> v_C_sum(w_size);
+	std::vector<double> v_xjneg_sum(w_size);
+	std::vector<double> v_xjpos_sum(w_size);
+
+	int *index = &v_index[0];
+	schar *y = &v_y[0];
+	double *exp_wTx = &v_exp_wTx[0];
+	double *exp_wTx_new = &v_exp_wTx_new[0];
+	double *xj_max = &v_xj_max[0];
+	double *C_sum = &v_C_sum[0];
+	double *xjneg_sum = &v_xjneg_sum[0];
+	double *xjpos_sum = &v_xjpos_sum[0];
 	feature_node *x;
 
 	double C[3] = {Cn,0,Cp};
@@ -1619,15 +1630,6 @@ static void solve_l1r_lr(
 
 	info("Objective value = %lf\n", v);
 	info("#nonzeros/#features = %d/%d\n", nnz, w_size);
-
-	delete [] index;
-	delete [] y;
-	delete [] exp_wTx;
-	delete [] exp_wTx_new;
-	delete [] xj_max;
-	delete [] C_sum;
-	delete [] xjneg_sum;
-	delete [] xjpos_sum;
 }
 
 // transpose matrix X from row format to column format
@@ -1637,7 +1639,8 @@ static void transpose(const problem *prob, feature_node **x_space_ret, problem *
 	int l = prob->l;
 	int n = prob->n;
 	int nnz = 0;
-	int *col_ptr = new int[n+1];
+	std::vector<int> v_col_ptr(n+1);
+	int *col_ptr = &v_col_ptr[0];
 	feature_node *x_space;
 	prob_col->l = l;
 	prob_col->n = n;
@@ -1682,8 +1685,6 @@ static void transpose(const problem *prob, feature_node **x_space_ret, problem *
 		x_space[col_ptr[i]].index = -1;
 
 	*x_space_ret = x_space;
-
-	delete [] col_ptr;
 }
 
 // label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
@@ -1972,9 +1973,11 @@ model* train(const problem *prob, const parameter *param)
 void cross_validation(const problem *prob, const parameter *param, int nr_fold, int *target)
 {
 	int i;
-	int *fold_start = Malloc(int,nr_fold+1);
 	int l = prob->l;
-	int *perm = Malloc(int,l);
+	std::vector<int> v_fold_start(nr_fold+1),
+					 v_perm(l);
+	int *fold_start = &v_fold_start[0];
+	int *perm = &v_perm[0];
 
 	for(i=0;i<l;i++) perm[i]=i;
 	for(i=0;i<l;i++)
@@ -2018,8 +2021,6 @@ void cross_validation(const problem *prob, const parameter *param, int nr_fold, 
 		free(subprob.x);
 		free(subprob.y);
 	}
-	free(fold_start);
-	free(perm);
 }
 
 int predict_values(const struct model *model_, const struct feature_node *x, double *dec_values)
@@ -2068,9 +2069,8 @@ int predict_values(const struct model *model_, const struct feature_node *x, dou
 
 int predict(const model *model_, const feature_node *x)
 {
-	double *dec_values = Malloc(double, model_->nr_class);
-	int label=predict_values(model_, x, dec_values);
-	free(dec_values);
+	std::vector<double> dec_values(model_->nr_class);
+	int label=predict_values(model_, x, &dec_values[0]);
 	return label;
 }
 
