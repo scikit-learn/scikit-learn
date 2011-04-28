@@ -16,7 +16,7 @@ the right algorithm when facing a practical problem.
   with ``whiten=True``). Try various values for ``n_components`` with grid
   search to be sure no to truncate the data too hard.
 
-- There is no free lunch: the best algorithm is data dependant. If
+- There is no free lunch: the best algorithm is data-dependent. If
   you try many different models, reserve a held out evaluation set
   that is not used during the model selection process.
 

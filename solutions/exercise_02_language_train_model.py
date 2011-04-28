@@ -4,8 +4,8 @@
 
 import sys
 
-from scikits.learn.feature_extraction.text.sparse import CountVectorizer
-from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
+from scikits.learn.feature_extraction.text import CountVectorizer
+from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.feature_extraction.text import CharNGramAnalyzer
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.pipeline import Pipeline
