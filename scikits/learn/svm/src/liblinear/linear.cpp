@@ -5,7 +5,9 @@
    
  */
 
+#include <algorithm>
 #include <math.h>
+#include <memory>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,13 +17,7 @@
 #include "tron.h"
 
 typedef signed char schar;
-template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
-#ifndef min
-template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }
-#endif
-#ifndef max
-template <class T> static inline T max(T x,T y) { return (x>y)?x:y; }
-#endif
+
 template <class S, class T> static inline void clone(T*& dst, S* src, int n)
 {   
 	dst = new T[n];
@@ -442,15 +438,6 @@ Solver_MCSVM_CS::~Solver_MCSVM_CS()
 	delete[] G;
 }
 
-int compare_double(const void *a, const void *b)
-{
-	if(*(double *)a > *(double *)b)
-		return -1;
-	if(*(double *)a < *(double *)b)
-		return 1;
-	return 0;
-}
-
 void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new)
 {
 	int r;
@@ -459,7 +446,7 @@ void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int act
 	clone(D, B, active_i);
 	if(yi < active_i)
 		D[yi] += A_i*C_yi;
-	qsort(D, active_i, sizeof(double), compare_double);
+	std::sort(D, D + active_i);
 
 	double beta = D[0] - A_i*C_yi;
 	for(r=1;r<active_i && beta<r*D[r];r++)
@@ -469,9 +456,9 @@ void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int act
 	for(r=0;r<active_i;r++)
 	{
 		if(r == yi)
-			alpha_new[r] = min(C_yi, (beta-B[r])/A_i);
+			alpha_new[r] = std::min(C_yi, (beta-B[r])/A_i);
 		else
-			alpha_new[r] = min((double)0, (beta - B[r])/A_i);
+			alpha_new[r] = std::min((double)0, (beta - B[r])/A_i);
 	}
 	delete[] D;
 }
@@ -500,7 +487,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 	int *y_index = new int[l];
 	int active_size = l;
 	int *active_size_i = new int[l];
-	double eps_shrink = max(10.0*eps, 1.0); // stopping tolerance for shrinking
+	double eps_shrink = std::max(10.0*eps, 1.0); // stopping tolerance for shrinking
 	bool start_from_all = true;
 	// initial
 	for(i=0;i<l*nr_class;i++)
@@ -529,7 +516,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 		for(i=0;i<active_size;i++)
 		{
 			int j = i+rand()%(active_size-i);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 		for(s=0;s<active_size;s++)
 		{
@@ -577,8 +564,8 @@ void Solver_MCSVM_CS::Solve(double *w)
 							if(!be_shrunk(i, active_size_i[i], y_index[i], 
 											alpha_i[alpha_index_i[active_size_i[i]]], minG))
 							{
-								swap(alpha_index_i[m], alpha_index_i[active_size_i[i]]);
-								swap(G[m], G[active_size_i[i]]);
+                                std::swap(alpha_index_i[m], alpha_index_i[active_size_i[i]]);
+                                std::swap(G[m], G[active_size_i[i]]);
 								if(y_index[i] == active_size_i[i])
 									y_index[i] = m;
 								else if(y_index[i] == m) 
@@ -593,15 +580,15 @@ void Solver_MCSVM_CS::Solve(double *w)
 				if(active_size_i[i] <= 1)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
-					s--;	
+                    std::swap(index[s], index[active_size]);
+					s--;
 					continue;
 				}
 
 				if(maxG-minG <= 1e-12)
 					continue;
 				else
-					stopping = max(maxG - minG, stopping);
+					stopping = std::max(maxG - minG, stopping);
 
 				for(m=0;m<active_size_i[i];m++)
 					B[m] = G[m] - Ai*alpha_i[alpha_index_i[m]] ;
@@ -647,7 +634,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 				for(i=0;i<l;i++)
 					active_size_i[i] = nr_class;
 				info("*");
-				eps_shrink = max(eps_shrink/2, eps);
+				eps_shrink = std::max(eps_shrink/2, eps);
 				start_from_all = true;
 			}
 		}
@@ -781,7 +768,7 @@ static void solve_l2r_l1l2_svc(
 		for (i=0; i<active_size; i++)
 		{
 			int j = i+rand()%(active_size-i);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 
 		for (s=0; s<active_size; s++)
@@ -807,7 +794,7 @@ static void solve_l2r_l1l2_svc(
 				if (G > PGmax_old)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
+                    std::swap(index[s], index[active_size]);
 					s--;
 					continue;
 				}
@@ -819,7 +806,7 @@ static void solve_l2r_l1l2_svc(
 				if (G < PGmin_old)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
+                    std::swap(index[s], index[active_size]);
 					s--;
 					continue;
 				}
@@ -829,13 +816,13 @@ static void solve_l2r_l1l2_svc(
 			else
 				PG = G;
 
-			PGmax_new = max(PGmax_new, PG);
-			PGmin_new = min(PGmin_new, PG);
+			PGmax_new = std::max(PGmax_new, PG);
+			PGmin_new = std::min(PGmin_new, PG);
 
 			if(fabs(PG) > 1.0e-12)
 			{
 				double alpha_old = alpha[i];
-				alpha[i] = min(max(alpha[i] - G/QD[i], 0.0), C);
+				alpha[i] = std::min(std::max(alpha[i] - G/QD[i], 0.0), C);
 				d = (alpha[i] - alpha_old)*yi;
 				xi = prob->x[i];
 				while (xi->index != -1)
@@ -930,7 +917,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 	schar *y = new schar[l];	
 	int max_inner_iter = 100; // for inner Newton
 	double innereps = 1e-2; 
-	double innereps_min = min(1e-8, eps);
+	double innereps_min = std::min(1e-8, eps);
 	double upper_bound[3] = {Cn, 0, Cp};
 
 	for(i=0; i<w_size; i++)
@@ -945,7 +932,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 		{
 			y[i] = -1;
 		}
-		alpha[2*i] = min(0.001*upper_bound[GETI(i)], 1e-8);
+		alpha[2*i] = std::min(0.001*upper_bound[GETI(i)], 1e-8);
 		alpha[2*i+1] = upper_bound[GETI(i)] - alpha[2*i];
 
 		xTx[i] = 0;
@@ -964,7 +951,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 		for (i=0; i<l; i++)
 		{
 			int j = i+rand()%(l-i);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 		int newton_iter = 0;
 		double Gmax = 0;
@@ -998,7 +985,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 			if(C - z < 0.5 * C) 
 				z = 0.1*z;
 			double gp = a*(z-alpha_old)+sign*b+log(z/(C-z));
-			Gmax = max(Gmax, fabs(gp));
+			Gmax = std::max(Gmax, fabs(gp));
 
 			// Newton method on the sub-problem
 			const double eta = 0.1; // xi in the paper
@@ -1039,7 +1026,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 			break;
 
 		if(newton_iter < l/10) 
-			innereps = max(innereps_min, 0.1*innereps);
+			innereps = std::max(innereps_min, 0.1*innereps);
 
 	}
 
@@ -1140,7 +1127,7 @@ static void solve_l1r_l2_svc(
 		for(j=0; j<active_size; j++)
 		{
 			int i = j+rand()%(active_size-j);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 
 		for(s=0; s<active_size; s++)
@@ -1166,7 +1153,7 @@ static void solve_l1r_l2_svc(
 
 			G = G_loss;
 			H *= 2;
-			H = max(H, 1e-12);
+			H = std::max(H, 1e-12);
 
 			double Gp = G+1;
 			double Gn = G-1;
@@ -1180,7 +1167,7 @@ static void solve_l1r_l2_svc(
 				else if(Gp>Gmax_old/l && Gn<-Gmax_old/l)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
+                    std::swap(index[s], index[active_size]);
 					s--;
 					continue;
 				}
@@ -1190,7 +1177,7 @@ static void solve_l1r_l2_svc(
 			else
 				violation = fabs(Gn);
 
-			Gmax_new = max(Gmax_new, violation);
+			Gmax_new = std::max(Gmax_new, violation);
 
 			// obtain Newton direction d
 			if(Gp <= H*w[j])
@@ -1425,8 +1412,8 @@ static void solve_l1r_lr(
 		{
 			int ind = x->index-1;
 			double val = x->value;
-			x_min = min(x_min, val);
-			xj_max[j] = max(xj_max[j], val);
+			x_min = std::min(x_min, val);
+			xj_max[j] = std::max(xj_max[j], val);
 			C_sum[j] += C[GETI(ind)];
 			if(y[ind] == -1)
 				xjneg_sum[j] += C[GETI(ind)]*val;
@@ -1443,7 +1430,7 @@ static void solve_l1r_lr(
 		for(j=0; j<active_size; j++)
 		{
 			int i = j+rand()%(active_size-j);
-			swap(index[i], index[j]);
+            std::swap(index[i], index[j]);
 		}
 
 		for(s=0; s<active_size; s++)
@@ -1481,7 +1468,7 @@ static void solve_l1r_lr(
 				else if(Gp>Gmax_old/l && Gn<-Gmax_old/l)
 				{
 					active_size--;
-					swap(index[s], index[active_size]);
+                    std::swap(index[s], index[active_size]);
 					s--;
 					continue;
 				}
@@ -1491,7 +1478,7 @@ static void solve_l1r_lr(
 			else
 				violation = fabs(Gn);
 
-			Gmax_new = max(Gmax_new, violation);
+			Gmax_new = std::max(Gmax_new, violation);
 
 			// obtain Newton direction d
 			if(Gp <= H*w[j])
@@ -1504,7 +1491,7 @@ static void solve_l1r_lr(
 			if(fabs(d) < 1.0e-12)
 				continue;
 
-			d = min(max(d,-10.0),10.0);
+			d = std::min(std::max(d,-10.0),10.0);
 
 			double delta = fabs(w[j]+d)-fabs(w[j]) + G*d;
 			int num_linesearch;
@@ -1517,7 +1504,7 @@ static void solve_l1r_lr(
 					double tmp = exp(d*xj_max[j]);
 					appxcond1 = log(1+sum1*(tmp-1)/xj_max[j]/C_sum[j])*C_sum[j] + cond - d*xjpos_sum[j];
 					appxcond2 = log(1+sum2*(1/tmp-1)/xj_max[j]/C_sum[j])*C_sum[j] + cond + d*xjneg_sum[j];
-					if(min(appxcond1,appxcond2) <= 0)
+					if(std::min(appxcond1,appxcond2) <= 0)
 					{
 						x = prob_col->x[j];
 						while(x->index != -1)
@@ -1787,25 +1774,22 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			pos++;
 	neg = prob->l - pos;
 
-	function *fun_obj=NULL;
 	switch(param->solver_type)
 	{
 		case L2R_LR:
 		{
-			fun_obj=new l2r_lr_fun(prob, Cp, Cn);
-			TRON tron_obj(fun_obj, eps*min(pos,neg)/prob->l);
+			std::auto_ptr<function> fun_obj(new l2r_lr_fun(prob, Cp, Cn));
+			TRON tron_obj(fun_obj.get(), eps*std::min(pos,neg)/prob->l);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
-			delete fun_obj;
 			break;
 		}
 		case L2R_L2LOSS_SVC:
 		{
-			fun_obj=new l2r_l2_svc_fun(prob, Cp, Cn);
-			TRON tron_obj(fun_obj, eps*min(pos,neg)/prob->l);
+			std::auto_ptr<function> fun_obj(new l2r_l2_svc_fun(prob, Cp, Cn));
+			TRON tron_obj(fun_obj.get(), eps*std::min(pos,neg)/prob->l);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
-			delete fun_obj;
 			break;
 		}
 		case L2R_L2LOSS_SVC_DUAL:
@@ -1819,7 +1803,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			solve_l1r_l2_svc(&prob_col, w, eps*min(pos,neg)/prob->l, Cp, Cn);
+			solve_l1r_l2_svc(&prob_col, w, eps*std::min(pos,neg)/prob->l, Cp, Cn);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] x_space;
@@ -1830,7 +1814,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			solve_l1r_lr(&prob_col, w, eps*min(pos,neg)/prob->l, Cp, Cn);
+			solve_l1r_lr(&prob_col, w, eps*std::min(pos,neg)/prob->l, Cp, Cn);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] x_space;
@@ -1983,7 +1967,7 @@ void cross_validation(const problem *prob, const parameter *param, int nr_fold, 
 	for(i=0;i<l;i++)
 	{
 		int j = i+rand()%(l-i);
-		swap(perm[i],perm[j]);
+        std::swap(perm[i],perm[j]);
 	}
 	for(i=0;i<=nr_fold;i++)
 		fold_start[i]=i*l/nr_fold;
@@ -2335,4 +2319,3 @@ void set_print_string_function(void (*print_func)(const char*))
 	else
 		liblinear_print_string = print_func;
 }
-
