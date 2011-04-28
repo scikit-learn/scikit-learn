@@ -18,15 +18,18 @@
 struct feature_node **dense_to_sparse (double *x, npy_intp *dims, double bias)
 {
     struct feature_node **sparse;
-    register int i, j;              /* number of nonzero elements in row i */
+    int i, j;                           /* number of nonzero elements in row i */
     struct feature_node *temp;          /* stack for nonzero elements */
     struct feature_node *T;             /* pointer to the top of the stack */
     int count;
 
     sparse = (struct feature_node **) malloc (dims[0] * sizeof(struct feature_node *));
-    temp = (struct feature_node *) malloc ((dims[1]+2) * sizeof(struct feature_node));
+    if (sparse == NULL)
+        goto sparse_error;
 
-    if (sparse == NULL || temp == NULL) return NULL;
+    temp = (struct feature_node *) malloc ((dims[1]+2) * sizeof(struct feature_node));
+    if (temp == NULL)
+        goto temp_error;
 
     for (i=0; i<dims[0]; ++i) {
         T = temp; /* reset stack pointer */
@@ -54,12 +57,24 @@ struct feature_node **dense_to_sparse (double *x, npy_intp *dims, double bias)
         /* allocate memory and copy collected items*/
         count = T - temp;
         sparse[i] = (struct feature_node *) malloc(count * sizeof(struct feature_node));
-        if (sparse[i] == NULL) return NULL;
+        if (sparse[i] == NULL) {
+            int k;
+            for (k=0; k<i; k++)
+                free(sparse[i]);
+            goto sparse_i_error;
+        }
         memcpy(sparse[i], temp, count * sizeof(struct feature_node));
     }
 
     free(temp);
     return sparse;
+
+sparse_i_error:
+    free(temp);
+temp_error:
+    free(sparse);
+sparse_error:
+    return NULL;
 }
 
 
