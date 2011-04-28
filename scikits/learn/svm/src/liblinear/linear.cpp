@@ -446,7 +446,7 @@ void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int act
 	clone(D, B, active_i);
 	if(yi < active_i)
 		D[yi] += A_i*C_yi;
-	std::sort(D, D + active_i);
+	std::sort(D, D + active_i, std::greater<double>());
 
 	double beta = D[0] - A_i*C_yi;
 	for(r=1;r<active_i && beta<r*D[r];r++)
