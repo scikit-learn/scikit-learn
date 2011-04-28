@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <functional>
 #include <math.h>
 #include <memory>
 #include <stdio.h>
@@ -440,15 +441,13 @@ Solver_MCSVM_CS::~Solver_MCSVM_CS()
 
 void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new)
 {
-	int r;
-	double *D;
-
-	clone(D, B, active_i);
+	std::vector<double> D(B, B + active_i);
 	if(yi < active_i)
 		D[yi] += A_i*C_yi;
-	std::sort(D, D + active_i, std::greater<double>());
+	std::sort(D.begin(), D.end(), std::greater<double>());
 
 	double beta = D[0] - A_i*C_yi;
+	int r;
 	for(r=1;r<active_i && beta<r*D[r];r++)
 		beta += D[r];
 
@@ -460,7 +459,6 @@ void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int act
 		else
 			alpha_new[r] = std::min((double)0, (beta - B[r])/A_i);
 	}
-	delete[] D;
 }
 
 bool Solver_MCSVM_CS::be_shrunk(int i, int m, int yi, double alpha_i, double minG)
