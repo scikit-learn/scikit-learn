@@ -271,8 +271,7 @@ petals and sepals. This is a classification task, hence we have::
   >>> X, y = iris.data, iris.target
 
 Once the data has this format it is trivial to train a classifier,
-for instance a support vector machine with a linear kernel (or lack
-thereof)::
+for instance a support vector machine with a linear kernel::
 
   >>> from scikits.learn.svm import LinearSVC
   >>> clf = LinearSVC()
@@ -636,7 +635,7 @@ to be clustered to have the shape ``(n_samples, n_features)``:
 
 :``scikits.learn.cluster.KMeans``:
 
-  The simplest yet effective clustering algorithm. Needs to be
+  The simplest, yet effective clustering algorithm. Needs to be
   provided with the number of clusters in advance, and assumes that the
   data is normalized as input (but use a PCA model as preprocessor).
 
@@ -768,8 +767,8 @@ without generalizing. The symptoms are:
   - the predictive accurracy on the data used for training can be excellent
     (sometimes 100%)
 
-  - however they do little better than random prediction when facing
-    new data not part of the training set
+  - however, the models do little better than random prediction when facing
+    new data that was not part of the training set
 
 If you evaluate your model on your training data you won't be able to tell
 whether your model is overfitting or not.
@@ -790,6 +789,18 @@ The solution to this issue is twofold:
      instead of gaussian kernel SVM) or by increasing the regularization
      parameter of the model if available (see the docstring of the
      model for details)
+
+An even better option when experimenting with classifiers is to divide
+the data into three sets: training, testing and holdout. You can then
+optimize your features, settings and algorithms for the testing set until
+they seem good enough, and finally test on the holdout set (perhaps after
+adding the test set to the training set).
+
+When the amount of labeled data available is small, it may not be feasible
+to construct training and test sets. In that case, use **cross validation**:
+divide the dataset into ten parts of (roughly) equal size, then for each of
+these ten parts, train the classifier on the other nine and test on the
+held-out part.
 
 
 Measuring classification performance on a test set
@@ -881,6 +892,8 @@ Key takeaway points
   - use training set for model selection and fitting
 
   - use test set for model evaluation
+
+  - use cross-validation when your dataset is small
 
 - Complex models can overfit (learn by heart) the training data and
   fail to generalize correctly on test data:
