@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <vector>
 #include "linear.h"
+#include "scoped_array.h"
 #include "tron.h"
 
 typedef signed char schar;
@@ -62,28 +63,25 @@ public:
 	int get_nr_variable(void);
 
 private:
+	l2r_lr_fun(l2r_lr_fun const &);			// non-copyable
+	void operator=(l2r_lr_fun const &);		// non-assignable
+
 	void Xv(double *v, double *Xv);
 	void XTv(double *v, double *XTv);
 
-	double *C;
-	double *z;
-	double *D;
-	const problem *prob;
+	const problem &prob;
+	scoped_array<double> C, z, D;
 };
 
 l2r_lr_fun::l2r_lr_fun(const problem *prob, double Cp, double Cn)
+  : prob(*prob),
+    C(new double[prob->l]),
+    z(new double[prob->l]),
+    D(new double[prob->l])
 {
-	int i;
-	int l=prob->l;
 	int *y=prob->y;
 
-	this->prob = prob;
-
-	z = new double[l];
-	D = new double[l];
-	C = new double[l];
-
-	for (i=0; i<l; i++)
+	for (int i=0; i < prob->l; i++)
 	{
 		if (y[i] == 1)
 			C[i] = Cp;
@@ -92,23 +90,16 @@ l2r_lr_fun::l2r_lr_fun(const problem *prob, double Cp, double Cn)
 	}
 }
 
-l2r_lr_fun::~l2r_lr_fun()
-{
-	delete[] z;
-	delete[] D;
-	delete[] C;
-}
-
 
 double l2r_lr_fun::fun(double *w)
 {
 	int i;
 	double f=0;
-	int *y=prob->y;
-	int l=prob->l;
+	int *y=prob.y;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 
-	Xv(w, z);
+	Xv(w, z.get());
 	for(i=0;i<l;i++)
 	{
 		double yz = y[i]*z[i];
@@ -128,8 +119,8 @@ double l2r_lr_fun::fun(double *w)
 void l2r_lr_fun::grad(double *w, double *g)
 {
 	int i;
-	int *y=prob->y;
-	int l=prob->l;
+	int *y=prob.y;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 
 	for(i=0;i<l;i++)
@@ -138,7 +129,7 @@ void l2r_lr_fun::grad(double *w, double *g)
 		D[i] = z[i]*(1-z[i]);
 		z[i] = C[i]*(z[i]-1)*y[i];
 	}
-	XTv(z, g);
+	XTv(z.get(), g);
 
 	for(i=0;i<w_size;i++)
 		g[i] = w[i] + g[i];
@@ -146,13 +137,13 @@ void l2r_lr_fun::grad(double *w, double *g)
 
 int l2r_lr_fun::get_nr_variable(void)
 {
-	return prob->n;
+	return prob.n;
 }
 
 void l2r_lr_fun::Hv(double *s, double *Hs)
 {
 	int i;
-	int l=prob->l;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 	double *wa = new double[l];
 
@@ -169,8 +160,8 @@ void l2r_lr_fun::Hv(double *s, double *Hs)
 void l2r_lr_fun::Xv(double *v, double *Xv)
 {
 	int i;
-	int l=prob->l;
-	feature_node **x=prob->x;
+	int l=prob.l;
+	feature_node **x=prob.x;
 
 	for(i=0;i<l;i++)
 	{
@@ -187,9 +178,9 @@ void l2r_lr_fun::Xv(double *v, double *Xv)
 void l2r_lr_fun::XTv(double *v, double *XTv)
 {
 	int i;
-	int l=prob->l;
+	int l=prob.l;
 	int w_size=get_nr_variable();
-	feature_node **x=prob->x;
+	feature_node **x=prob.x;
 
 	for(i=0;i<w_size;i++)
 		XTv[i]=0;
@@ -217,57 +208,46 @@ public:
 	int get_nr_variable(void);
 
 private:
+	l2r_l2_svc_fun(l2r_l2_svc_fun const &);		// non-copyable
+	void operator=(l2r_l2_svc_fun const &);		// non-assignable
+
 	void Xv(double *v, double *Xv);
 	void subXv(double *v, double *Xv);
 	void subXTv(double *v, double *XTv);
 
-	double *C;
-	double *z;
-	double *D;
-	int *I;
+	const problem &prob;
 	int sizeI;
-	const problem *prob;
+	scoped_array<double> C, z, D;
+	scoped_array<int> I;
 };
 
 l2r_l2_svc_fun::l2r_l2_svc_fun(const problem *prob, double Cp, double Cn)
+  : prob(*prob),
+	sizeI(0),
+    C(new double[prob->l]),
+    z(new double[prob->l]),
+    D(new double[prob->l]),
+    I(new int[prob->l])
 {
-	int i;
-	int l=prob->l;
-	int *y=prob->y;
-
-	this->prob = prob;
-
-	z = new double[l];
-	D = new double[l];
-	C = new double[l];
-	I = new int[l];
-
-	for (i=0; i<l; i++)
+	for (int i=0; i < prob->l; i++)
 	{
-		if (y[i] == 1)
+		if (prob->y[i] == 1)
 			C[i] = Cp;
 		else
 			C[i] = Cn;
 	}
 }
 
-l2r_l2_svc_fun::~l2r_l2_svc_fun()
-{
-	delete[] z;
-	delete[] D;
-	delete[] C;
-	delete[] I;
-}
 
 double l2r_l2_svc_fun::fun(double *w)
 {
 	int i;
 	double f=0;
-	int *y=prob->y;
-	int l=prob->l;
+	int *y=prob.y;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 
-	Xv(w, z);
+	Xv(w, z.get());
 	for(i=0;i<l;i++)
 	{
 		z[i] = y[i]*z[i];
@@ -286,8 +266,8 @@ double l2r_l2_svc_fun::fun(double *w)
 void l2r_l2_svc_fun::grad(double *w, double *g)
 {
 	int i;
-	int *y=prob->y;
-	int l=prob->l;
+	int *y=prob.y;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 
 	sizeI = 0;
@@ -298,7 +278,7 @@ void l2r_l2_svc_fun::grad(double *w, double *g)
 			I[sizeI] = i;
 			sizeI++;
 		}
-	subXTv(z, g);
+	subXTv(z.get(), g);
 
 	for(i=0;i<w_size;i++)
 		g[i] = w[i] + 2*g[i];
@@ -306,13 +286,13 @@ void l2r_l2_svc_fun::grad(double *w, double *g)
 
 int l2r_l2_svc_fun::get_nr_variable(void)
 {
-	return prob->n;
+	return prob.n;
 }
 
 void l2r_l2_svc_fun::Hv(double *s, double *Hs)
 {
 	int i;
-	int l=prob->l;
+	int l=prob.l;
 	int w_size=get_nr_variable();
 	double *wa = new double[l];
 
@@ -329,8 +309,8 @@ void l2r_l2_svc_fun::Hv(double *s, double *Hs)
 void l2r_l2_svc_fun::Xv(double *v, double *Xv)
 {
 	int i;
-	int l=prob->l;
-	feature_node **x=prob->x;
+	int l=prob.l;
+	feature_node **x=prob.x;
 
 	for(i=0;i<l;i++)
 	{
@@ -347,7 +327,7 @@ void l2r_l2_svc_fun::Xv(double *v, double *Xv)
 void l2r_l2_svc_fun::subXv(double *v, double *Xv)
 {
 	int i;
-	feature_node **x=prob->x;
+	feature_node **x=prob.x;
 
 	for(i=0;i<sizeI;i++)
 	{
@@ -365,7 +345,7 @@ void l2r_l2_svc_fun::subXTv(double *v, double *XTv)
 {
 	int i;
 	int w_size=get_nr_variable();
-	feature_node **x=prob->x;
+	feature_node **x=prob.x;
 
 	for(i=0;i<w_size;i++)
 		XTv[i]=0;
@@ -400,48 +380,49 @@ void l2r_l2_svc_fun::subXTv(double *v, double *XTv)
 //
 // See Appendix of LIBLINEAR paper, Fan et al. (2008)
 
-#define GETI(i) (prob->y[i])
+#define GETI(i) (prob.y[i])
 // To support weights for instances, use GETI(i) (i)
 
 class Solver_MCSVM_CS
 {
-	public:
-		Solver_MCSVM_CS(const problem *prob, int nr_class, double *C, double eps=0.1, int max_iter=100000);
-		~Solver_MCSVM_CS();
-		void Solve(double *w);
-	private:
-		void solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new);
-		bool be_shrunk(int i, int m, int yi, double alpha_i, double minG);
-		double *B, *C, *G;
-		int w_size, l;
-		int nr_class;
-		int max_iter;
-		double eps;
-		const problem *prob;
+	double *C;
+	scoped_array<double> B, G;
+	int w_size, l;
+	int nr_class;
+	int max_iter;
+	double eps;
+	const problem &prob;
+
+public:
+	Solver_MCSVM_CS(const problem *prob, int nr_class, double *C, double eps=0.1, int max_iter=100000);
+	~Solver_MCSVM_CS();
+	void Solve(double *w);
+
+private:
+	Solver_MCSVM_CS(Solver_MCSVM_CS const &);	// non-copyable
+	void operator=(Solver_MCSVM_CS const &);	// non-assignable
+
+	void solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new);
+	bool be_shrunk(int i, int m, int yi, double alpha_i, double minG);
 };
 
 Solver_MCSVM_CS::Solver_MCSVM_CS(const problem *prob, int nr_class, double *weighted_C, double eps, int max_iter)
+  : C(weighted_C),
+    B(new double[nr_class]),
+	G(new double[nr_class]),
+	w_size(prob->n),
+	l(prob->l),
+	nr_class(nr_class),
+	max_iter(max_iter),
+	eps(eps),
+	prob(*prob)
 {
-	this->w_size = prob->n;
-	this->l = prob->l;
-	this->nr_class = nr_class;
-	this->eps = eps;
-	this->max_iter = max_iter;
-	this->prob = prob;
-	this->B = new double[nr_class];
-	this->G = new double[nr_class];
-	this->C = weighted_C;
 }
 
-Solver_MCSVM_CS::~Solver_MCSVM_CS()
-{
-	delete[] B;
-	delete[] G;
-}
 
 void Solver_MCSVM_CS::solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new)
 {
-	std::vector<double> D(B, B + active_i);
+	std::vector<double> D(B.get(), B.get() + active_i);
 	if(yi < active_i)
 		D[yi] += A_i*C_yi;
 	std::sort(D.begin(), D.end(), std::greater<double>());
@@ -496,7 +477,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 	{
 		for(m=0;m<nr_class;m++)
 			alpha_index[i*nr_class+m] = m;
-		feature_node *xi = prob->x[i];
+		feature_node *xi = prob.x[i];
 		QD[i] = 0;
 		while(xi->index != -1)
 		{
@@ -504,7 +485,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 			xi++;
 		}
 		active_size_i[i] = nr_class;
-		y_index[i] = prob->y[i];
+		y_index[i] = prob.y[i];
 		index[i] = i;
 	}
 
@@ -530,7 +511,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 				if(y_index[i] < active_size_i[i])
 					G[y_index[i]] = 0;
 
-				feature_node *xi = prob->x[i];
+				feature_node *xi = prob.x[i];
 				while(xi->index!= -1)
 				{
 					double *w_i = &w[(xi->index-1)*nr_class];
@@ -549,7 +530,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 						maxG = G[m];
 				}
 				if(y_index[i] < active_size_i[i])
-					if(alpha_i[prob->y[i]] < C[GETI(i)] && G[y_index[i]] < minG)
+					if(alpha_i[prob.y[i]] < C[GETI(i)] && G[y_index[i]] < minG)
 						minG = G[y_index[i]];
 
 				for(m=0;m<active_size_i[i];m++)
@@ -605,7 +586,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 					}
 				}
 
-				xi = prob->x[i];
+				xi = prob.x[i];
 				while(xi->index != -1)
 				{
 					double *w_i = &w[(xi->index-1)*nr_class];
@@ -657,7 +638,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 			nSV++;
 	}
 	for(i=0;i<l;i++)
-		v -= alpha[i*nr_class+prob->y[i]];
+		v -= alpha[i * nr_class + prob.y[i]];
 	info("Objective value = %lf\n",v);
 	info("nSV = %d\n",nSV);
 

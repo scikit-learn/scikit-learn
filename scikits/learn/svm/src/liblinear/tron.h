@@ -25,9 +25,9 @@ private:
 	int trcg(double delta, double *g, double *s, double *r);
 	double norm_inf(int n, double *x);
 
+	function &fun_obj;
 	double eps;
 	int max_iter;
-	function &fun_obj;
 	void info(const char *fmt,...);
 	void (*tron_print_string)(const char *buf);
 };
