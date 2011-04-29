@@ -231,7 +231,7 @@ rules. However, following these rules when submitting new code makes
 the review easier so new code can be integrated in less time.
 
 Uniformly formated code makes it easier to share code ownership. The
-scikit learn tries to follow closely the officiel Python guidelines
+scikit learn tries to follow closely the official Python guidelines
 detailed in `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ that
 details how code should be formatted, and indented. Please read it and
 follow it.
