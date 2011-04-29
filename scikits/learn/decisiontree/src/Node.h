@@ -25,7 +25,8 @@ class Node
 {
     public:
         
-        Node():
+        Node(bool root = false):
+            root(root),
             left_child(0),
             right_child(0),
             attribute(-1),
@@ -37,6 +38,22 @@ class Node
         {
             delete this->left_child;
             delete this->right_child;
+            if (this->root)
+                this->clear_samples();
+        }
+
+        void clear_samples()
+        {
+            vector<Object*>::iterator it(this->signal.begin());
+            for (; it != this->signal.end(); ++it)
+            {
+                delete *it;
+            }
+            it = this->background.begin();
+            for (; it != this->background.end(); ++it)
+            {
+                delete *it;
+            }
         }
 
         void calc_response();
@@ -89,6 +106,7 @@ class Node
     
     private:
 
+        bool root;
         vector<Object*> signal;
         vector<Object*> background;
         Node* left_child;

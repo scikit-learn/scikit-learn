@@ -44,3 +44,13 @@ class Bagged(BaseEnsemble):
             prediction += estimator.predict(X)
         prediction /= len(self)
         return prediction
+    
+    def predict_single(self, x):
+
+        if len(self) == 0:
+            return None
+        prediction = 0.
+        for estimator in self:
+            prediction += estimator.predict_single(x)
+        prediction /= len(self)
+        return prediction

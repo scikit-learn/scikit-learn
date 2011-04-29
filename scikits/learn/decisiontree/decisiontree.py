@@ -18,12 +18,12 @@ class DecisionTree(BaseEstimator, ClassifierMixin):
         self.root = None
         self.nfeatures = 0
 
-    def fit(self, X, y, sample_weight = [], **params):
+    def fit(self, X, Y, sample_weight = [], **params):
         
         self._set_params(**params)
 
         X = np.atleast_2d(np.asanyarray(X, dtype = np.float64, order = 'C'))
-        y = np.asanyarray(y, dtype = np.float64, order = 'C')
+        y = np.asanyarray(Y, dtype = np.float64, order = 'C')
         sample_weight = np.asanyarray(sample_weight, dtype = np.float64, order = 'C')
 
         if X.shape[0] != y.shape[0]:
@@ -38,8 +38,8 @@ class DecisionTree(BaseEstimator, ClassifierMixin):
                              "sample_weight has %s samples while X has %s" % \
                              (sample_weight.shape[0], X.shape[0]))
        
-        labels = np.unique(y)
-        if not (labels == (-1, 1)).all():
+        labels = tuple(np.unique(y))
+        if not labels == (-1, 1):
             raise ValueError("Only binary classificiation is supported.\n" +
                              "y must only contain -1 and 1.")
 
@@ -48,7 +48,8 @@ class DecisionTree(BaseEstimator, ClassifierMixin):
         if minleafsize < 1:
             minleafsize = max(20, X.shape[0] / X.shape[1]**2 / 10)
 
-        self.root = libdecisiontree.fit(X, y, sample_weight,
+        self.root = libdecisiontree.PyNode()
+        libdecisiontree.fit(X, y, sample_weight, self.root,
                                               minleafsize,
                                               self.nbins,
                                               self.maxdepth)
@@ -67,7 +68,23 @@ class DecisionTree(BaseEstimator, ClassifierMixin):
                              "features at training time!")
 
         return libdecisiontree.predict(X, self.root)
+    
+    def predict_single(self, x):
+
+        if self.root is None:
+            return None
+
+        x = np.asanyarray(x, dtype = np.float64, order = 'C')
+
+        if len(x.shape) != 1:
+            raise TypeError("x must be 1-dimensional")
         
+        if len(x) != self.nfeatures:
+            raise ValueError("len(x) must be equal to the number of "
+                             "features at training time!")
+
+        return libdecisiontree.predict_single(x, self.root)
+   
 """
 class DecisionTreeRegressor(BaseEstimator, RegressorMixin): pass
 

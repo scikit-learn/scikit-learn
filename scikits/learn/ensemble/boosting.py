@@ -66,6 +66,17 @@ class AdaBoost(BaseEnsemble):
         if norm > 0:
             prediction /= norm
         return prediction
+    
+    def predict_single(self, x):
+
+        prediction = 0.
+        norm = 0.
+        for alpha, estimator in self:
+            prediction += alpha * estimator.predict_single(x)
+            norm += alpha
+        if norm > 0:
+            prediction /= norm
+        return prediction
 
 """
 YET TO BE IMPLEMENTED

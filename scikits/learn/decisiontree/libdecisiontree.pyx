@@ -18,19 +18,20 @@ cimport numpy as np
 
 cdef extern from "Node.h":
     cdef cppclass Node:
-        Node()
+        Node(bool)
         void recursive_split(unsigned int, unsigned int, unsigned int)
 
 cdef class PyNode:
     cdef Node *thisptr
     def __cinit__(self):
-        self.thisptr = new Node()
+        self.thisptr = new Node(True)
     def __dealloc__(self):
         del self.thisptr
 
 cdef extern from "libdecisiontree_helper.cpp":
     void copy_predict (char*, Node*, np.npy_intp*, char*)
     void init_root(char*, char*, char*, np.npy_intp*, Node*)
+    double predict_sing(char*, Node*)
 
 ################################################################################
 # Wrapper functions
@@ -38,6 +39,7 @@ cdef extern from "libdecisiontree_helper.cpp":
 def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
+        PyNode root,
         unsigned int minleafsize = 10,
         unsigned int nbins = 0,
         unsigned int maxdepth = 0):
@@ -56,13 +58,9 @@ def fit(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     classification : resulting classification of the training set
     """
-    cdef PyNode root
 
-    root = PyNode()
     init_root(X.data, Y.data, sample_weight.data, X.shape, root.thisptr)
     root.thisptr.recursive_split(minleafsize, nbins, maxdepth)
-    
-    return root
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             PyNode root):
@@ -85,3 +83,21 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     dec_values = np.empty(X.shape[0])
     copy_predict(X.data, root.thisptr, X.shape, dec_values.data)
     return dec_values
+
+def predict_single(np.ndarray[np.float64_t, ndim=1, mode='c'] x,
+            PyNode root):
+    """
+    Predict target values of X given a model (low-level method)
+
+    Parameters
+    ----------
+    X: array-like, dtype=float, size=[n_samples, n_features]
+
+    root: decision tree root Node
+
+    Return
+    ------
+    dec_values : float
+        predicted value.
+    """
+    return predict_sing(x.data, root.thisptr)

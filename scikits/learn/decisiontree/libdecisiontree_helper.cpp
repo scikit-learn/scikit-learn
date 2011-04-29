@@ -52,3 +52,16 @@ void copy_predict(char* predict, Node* root, npy_intp* predict_dims, char* dec_v
     for(i=0; i<predict_dims[0]; ++i)
         *(t++) = root->predict(&p[i*predict_dims[1]]);
 }
+
+/* 
+ * Predict using model.
+ *
+ *  It will return -1 if we run out of memory.
+ */
+double predict_sing(char* predict, Node* root)
+{
+    double* p = (double *) predict;
+    if (root == NULL)
+        return 0.;
+    return root->predict(p);
+}

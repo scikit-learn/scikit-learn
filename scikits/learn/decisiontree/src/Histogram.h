@@ -17,15 +17,16 @@ class Histogram
             max(max)
         {
             if (min >= max || nbins == 0) throw 0;
-            bins = new vector<pair<T,T> >(nbins,pair<T,T>(0,0));
+            this->bins = new vector<pair<T,T> >(nbins,pair<T,T>(0,0));
         }
 
-        ~Histogram() { delete bins; }
+        ~Histogram() { delete this->bins; }
 
         void fill(U value, T weight = 1)
         {
             if (value < this->min || value >= this->max) return;
-            int bin = this->nbins * float(value - this->min) / float(this->max - this->min);
+            unsigned int bin = this->nbins * float(value - this->min) / float(this->max - this->min);
+            if (bin >= this->nbins) return; // BUG
             this->bins->at(bin).first += weight;
             this->bins->at(bin).second += 1;
         }

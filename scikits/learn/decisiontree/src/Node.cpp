@@ -31,8 +31,6 @@ void Node::recursive_split(unsigned int minleafsize, unsigned int nbins, unsigne
     {
         this->calc_response();
     }
-    this->signal.clear();
-    this->background.clear();
 }
 
 void Node::calc_response()
