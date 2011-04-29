@@ -10,12 +10,22 @@ struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, 
 {
     struct svm_csr_node **sparse, *temp;
     int i, j=0, k=0, n;
-    sparse = (struct svm_csr_node **) malloc (n_samples * sizeof(struct svm_csr_node *));
+    sparse = malloc (n_samples * sizeof(struct svm_csr_node *));
+
+    if (sparse == NULL)
+        return NULL;
 
     for (i=0; i<n_samples; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
-        temp = (struct svm_csr_node *) malloc ((n+1) * 
-                                 sizeof(struct svm_csr_node));
+        temp = malloc ((n+1) * sizeof(struct svm_csr_node));
+
+        if (temp == NULL) {
+            for (j=0; j<i; j++)
+                free(sparse[j]);
+            free(sparse);
+            return NULL;
+        }
+
         for (j=0; j<n; ++j) {
             temp[j].value = values[k];
             temp[j].index = indices[k] + 1; /* libsvm uses 1-based indexing */
@@ -37,7 +47,7 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
 		char *weight_label, char *weight)
 {
     struct svm_parameter *param;
-    param = (struct svm_parameter *) malloc(sizeof(struct svm_parameter));
+    param = malloc(sizeof(struct svm_parameter));
     if (param == NULL) return NULL;
     param->svm_type = svm_type;
     param->kernel_type = kernel_type;
@@ -70,7 +80,7 @@ struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
 
     struct svm_csr_problem *problem;
     int i;
-    problem = (struct svm_csr_problem *) malloc (sizeof (struct svm_csr_problem));
+    problem = malloc (sizeof (struct svm_csr_problem));
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] - 1;
     problem->y = (double *) Y;
@@ -100,11 +110,16 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
 
     m = nr_class * (nr_class-1)/2;
 
-    model = (struct svm_csr_model *)  malloc(sizeof(struct svm_csr_model));
-    model->nSV =     (int *)      malloc(nr_class * sizeof(int));
-    model->label =   (int *)      malloc(nr_class * sizeof(int));;
-    model->sv_coef = (double **)  malloc((nr_class-1)*sizeof(double *));
-    model->rho =     (double *)   malloc( m * sizeof(double));
+    if ((model = malloc(sizeof(struct svm_csr_model))) == NULL)
+        goto model_error;
+    if ((model->nSV = malloc(nr_class * sizeof(int))) == NULL)
+        goto nsv_error;
+    if ((model->label = malloc(nr_class * sizeof(int))) == NULL)
+        goto label_error;
+    if ((model->sv_coef = malloc((nr_class-1)*sizeof(double *))) == NULL)
+        goto sv_coef_error;
+    if ((model->rho = malloc( m * sizeof(double))) == NULL)
+        goto rho_error;
 
     /* in the case of precomputed kernels we do not use
        dense_to_precomputed because we don't want the leading 0. As
@@ -117,7 +132,6 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
 
     /*
      * regression and one-class does not use nSV, label.
-     * TODO: does this provoke memory leaks (we just malloc'ed them)?
      */
     if (param->svm_type < 2) {
         memcpy(model->nSV,   nSV,   model->nr_class * sizeof(int));
@@ -129,7 +143,12 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
          * We cannot squash all this mallocs in a single call since
          * svm_destroy_model will free each element of the array.
          */
-        model->sv_coef[i] = (double *) malloc((model->l) * sizeof(double));
+        if ((model->sv_coef[i] = malloc((model->l) * sizeof(double))) == NULL) {
+            int j;
+            for (j=0; j<i; j++)
+                free(model->sv_coef[j]);
+            goto sv_coef_i_error;
+        }
         memcpy(model->sv_coef[i], dsv_coef, (model->l) * sizeof(double));
         dsv_coef += model->l;
     }
@@ -144,9 +163,11 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
      */
 
     if (param->probability) {
-        model->probA = (double *) malloc(m * sizeof(double));
+        if ((model->probA = malloc(m * sizeof(double))) == NULL)
+            goto probA_error;
         memcpy(model->probA, probA, m * sizeof(double));
-        model->probB = (double *) malloc(m * sizeof(double));
+        if ((model->probB = malloc(m * sizeof(double))) == NULL)
+            goto probB_error;
         memcpy(model->probB, probB, m * sizeof(double));
     } else {
         model->probA = NULL;
@@ -156,6 +177,24 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
     /* We'll free SV ourselves */
     model->free_sv = 0;
     return model;
+
+probB_error:
+    free(model->probA);
+probA_error:
+    for (i=0; i < model->nr_class-1; i++)
+        free(model->sv_coef[i]);
+sv_coef_i_error:
+    free(model->rho);
+rho_error:
+    free(model->sv_coef);
+sv_coef_error:
+    free(model->label);
+label_error:
+    free(model->nSV);
+nsv_error:
+    free(model);
+model_error:
+    return NULL;
 }
 
 
