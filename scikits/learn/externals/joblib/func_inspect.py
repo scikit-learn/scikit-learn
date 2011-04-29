@@ -194,7 +194,6 @@ def filter_args(func, ignore_lst, *args, **kwargs):
                                     for k, v in kwargs.iteritems())
                            )
                         )
-                    
 
 
     varkwargs = dict()
