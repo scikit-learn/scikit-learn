@@ -37,7 +37,7 @@ struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
     double *tx = x;
     int i;
 
-    node = (struct svm_node *) malloc (dims[0] * sizeof(struct svm_node));
+    node = malloc (dims[0] * sizeof(struct svm_node));
 
     if (node == NULL) return NULL;
     for (i=0; i<dims[0]; ++i) {
@@ -53,7 +53,7 @@ struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
 
 
 /*
- * Create a svm_paramater struct and return it. It is up to the user to
+ * Create a svm_parameter struct and return it. It is up to the user to
  * free the resulting object.
  */
 struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
@@ -62,7 +62,7 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
 		char *weight_label, char *weight)
 {
     struct svm_parameter *param;
-    param = (struct svm_parameter *) malloc(sizeof(struct svm_parameter));
+    param = malloc(sizeof(struct svm_parameter));
     if (param == NULL) return NULL;
     param->svm_type = svm_type;
     param->kernel_type = kernel_type;
@@ -89,9 +89,8 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
 struct svm_problem * set_problem(char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type)
 {
     struct svm_problem *problem;
-    int i;
 
-    problem = (struct svm_problem *) malloc(sizeof(struct svm_problem));
+    problem = malloc(sizeof(struct svm_problem));
     if (problem == NULL) return NULL;
     problem->l = (int) dims[0]; /* number of samples */
     problem->y = (double *) Y;
@@ -131,18 +130,24 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
 
     m = nr_class * (nr_class-1)/2;
 
-    model = (struct svm_model *)  malloc(sizeof(struct svm_model));
-    model->nSV =     (int *)      malloc(nr_class * sizeof(int));
-    model->label =   (int *)      malloc(nr_class * sizeof(int));;
-    model->sv_coef = (double **)  malloc((nr_class-1)*sizeof(double *));
-    model->rho =     (double *)   malloc( m * sizeof(double));
+    if ((model = malloc(sizeof(struct svm_model))) == NULL)
+        goto model_error;
+    if ((model->nSV = malloc(nr_class * sizeof(int))) == NULL)
+        goto nsv_error;
+    if ((model->label = malloc(nr_class * sizeof(int))) == NULL)
+        goto label_error;
+    if ((model->sv_coef = malloc((nr_class-1)*sizeof(double *))) == NULL)
+        goto sv_coef_error;
+    if ((model->rho = malloc( m * sizeof(double))) == NULL)
+        goto rho_error;
 
     model->nr_class = nr_class;
     model->param = *param;
     model->l = (int) support_dims[0];
 
     if (param->kernel_type == PRECOMPUTED) {
-        model->SV = (struct svm_node *) malloc ((model->l) * sizeof(struct svm_node));
+        if ((model->SV = malloc ((model->l) * sizeof(struct svm_node))) == NULL)
+            goto SV_error;
         for (i=0; i<model->l; ++i) {
             model->SV[i].ind = ((int *) support)[i];
             model->SV[i].values = NULL;
@@ -173,9 +178,11 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
      */
 
     if (param->probability) {
-        model->probA = (double *) malloc(m * sizeof(double));
+        if ((model->probA = malloc(m * sizeof(double))) == NULL)
+            goto probA_error;
         memcpy(model->probA, probA, m * sizeof(double));
-        model->probB = (double *) malloc(m * sizeof(double));
+        if ((model->probB = malloc(m * sizeof(double))) == NULL)
+            goto probB_error;
         memcpy(model->probB, probB, m * sizeof(double));
     } else {
         model->probA = NULL;
@@ -185,6 +192,23 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     /* We'll free SV ourselves */
     model->free_sv = 0;
     return model;
+
+probB_error:
+    free(model->probA);
+probA_error:
+    free(model->SV);
+SV_error:
+    free(model->rho);
+rho_error:
+    free(model->sv_coef);
+sv_coef_error:
+    free(model->label);
+label_error:
+    free(model->nSV);
+nsv_error:
+    free(model);
+model_error:
+    return NULL;
 }
 
 
@@ -241,7 +265,7 @@ void copy_intercept(char *data, struct svm_model *model, npy_intp *dims)
  */
 void copy_SV(char *data, struct svm_model *model, npy_intp *dims)
 {
-    int i, j, k, n = model->l;
+    int i, n = model->l;
     double *tdata = (double *) data;
     int dim = model->SV[0].dim;
     for (i=0; i<n; ++i) {
@@ -250,9 +274,9 @@ void copy_SV(char *data, struct svm_model *model, npy_intp *dims)
     }
 }
 
-int copy_support (char *data, struct svm_model *model)
+void copy_support (char *data, struct svm_model *model)
 {
-        memcpy (data, model->sv_ind, (model->l) * sizeof(int));
+    memcpy (data, model->sv_ind, (model->l) * sizeof(int));
 }
 
 /* 
@@ -354,7 +378,6 @@ int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict
  */
 int free_problem(struct svm_problem *problem)
 {
-    register int i;
     if (problem == NULL) return -1;
     free (problem->x);
     free (problem);
