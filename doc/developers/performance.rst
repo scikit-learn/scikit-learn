@@ -173,7 +173,7 @@ Python code: it takes around 100% of the cumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 
-  $ pip install line-prof
+  $ pip install line-profiler
   $ vim ~/.ipython/ipy_user_conf.py
 
 Ensure the following lines are present::
