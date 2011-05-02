@@ -74,6 +74,8 @@ for i, (clf, title) in enumerate([(gmm, 'GMM'),
 
     pl.xlim(-10, 10)
     pl.ylim(-3, 6)
+    pl.xticks(())
+    pl.yticks(())
     pl.title(title)
 
 pl.show()
