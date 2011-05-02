@@ -59,7 +59,7 @@ for score_name, score_func in scores:
         score_name, score_func(y_true, y_pred))
     print classification_report(y_true, y_pred)
     print "Grid scores:"
-    pprint(clf.grid_points_scores_)
+    pprint(clf.grid_scores_)
     print
 
 # Note the problem is too easy: the hyperparameter plateau is too flat and the

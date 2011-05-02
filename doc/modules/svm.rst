@@ -306,6 +306,13 @@ Tips on Practical Use
     thus not uncommon, to have slightly different results for the same
     input data. If that happens, try with a smaller tol parameter.
 
+  * Using L1 penalization as provided by LinearSVC(loss='l2',
+    penalty='l1', dual=False) yields a sparse solution, i.e. only a subset of
+    feature weights is different from zero and contribute to the decision
+    function.  Increasing C yields a more complex model (more feature are
+    selected).  The C value that yields a "null" model (all weights equal to
+    zero) can be calculated using :func:`l1_min_c`.
+
 
 .. _svm_kernels:
 
@@ -468,16 +475,6 @@ We introduce a new parameter :math:`\nu` which controls the number of
 support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
-
-
-Frequently Asked Questions
-==========================
-
-     * Q: Can I get the indices of the support vectors instead of the
-       support vectors ?
-
-       A: The underlying C implementation does not provide this
-       information.
 
 
 Implementation details

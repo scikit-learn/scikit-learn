@@ -12,6 +12,7 @@ import numpy as np
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
+from ..utils import make_rng
 
 
 ###############################################################################
@@ -52,8 +53,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
     which is the implementation used in the aforementioned paper.
     """
     n_samples, n_features = X.shape
-    if rng is None:
-        rng = np.random
+    rng = make_rng(rng)
 
     centers = np.empty((k, n_features))
 
@@ -80,7 +80,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
     for c in xrange(1, k):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
-        rand_vals = rng.random(n_local_trials) * current_pot
+        rand_vals = rng.random_sample(n_local_trials) * current_pot
         candidate_ids = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
 
         # Compute distances to center candidates
@@ -179,8 +179,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         The final value of the inertia criterion
 
     """
-    if rng is None:
-        rng = np.random
+    rng = make_rng(rng)
     n_samples = X.shape[0]
 
     vdata = np.mean(np.var(X, 0))

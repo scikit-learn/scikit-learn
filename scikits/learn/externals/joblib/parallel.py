@@ -1,10 +1,11 @@
 """
-Helpers for embarassingly parallel code.
+Helpers for embarrassingly parallel code.
 """
 # Author: Gael Varoquaux < gael dot varoquaux at normalesup dot org >
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
 
+import os
 import sys
 import functools
 import time
@@ -15,10 +16,15 @@ try:
 except:
     import pickle
 
-try:
-    import multiprocessing
-except ImportError:
-    multiprocessing = None
+# Obtain possible configuration from the environment, assuming 1 (on)
+# by default, upon 0 set to None. Should instructively fail if some non
+# 0/1 value is set.
+multiprocessing = int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)) or None
+if multiprocessing:
+    try:
+        import multiprocessing
+    except ImportError:
+        multiprocessing = None
 
 from .format_stack import format_exc, format_outer_frames
 from .logger import Logger, short_format_time
@@ -151,18 +157,18 @@ class Parallel(Logger):
             output is sent to stdout.
         pre_dispatch: {'all', integer, or expression, as in '3*n_jobs'}
             The amount of jobs to be pre-dispatched. Default is 'all',
-            but it may be memory consuming, for instance if each job 
+            but it may be memory consuming, for instance if each job
             involves a lot of a data.
-        
+
         Notes
         -----
 
         This object uses the multiprocessing module to compute in
         parallel the application of a function to many different
-        arguments. The main functionnality it brings in addition to 
+        arguments. The main functionality it brings in addition to
         using the raw multiprocessing API are (see examples for details):
 
-            * More readable code, in particular since it avoids 
+            * More readable code, in particular since it avoids
               constructing list of arguments.
 
             * Easier debuging:
@@ -188,7 +194,7 @@ class Parallel(Logger):
 
         Reshaping the output when the function has several return
         values:
-        
+
         >>> from math import modf
         >>> from scikits.learn.externals.joblib import Parallel, delayed
         >>> r = Parallel(n_jobs=1)(delayed(modf)(i/2.) for i in range(10))
@@ -201,7 +207,7 @@ class Parallel(Logger):
         The progress meter::
 
             >>> from time import sleep
-            >>> from scikits.learn.externals.joblib import Parallel, delayed
+            >>> from scikits.learn.joblib import Parallel, delayed
             >>> r = Parallel(n_jobs=2, verbose=1)(delayed(sleep)(.1) for _ in range(10)) #doctest: +SKIP
             [Parallel(n_jobs=2)]: Done   1 out of  10 |elapsed:    0.1s remaining:    0.9s
             [Parallel(n_jobs=2)]: Done   3 out of  10 |elapsed:    0.2s remaining:    0.5s
@@ -209,9 +215,9 @@ class Parallel(Logger):
             [Parallel(n_jobs=2)]: Done   7 out of  10 |elapsed:    0.4s remaining:    0.2s
             [Parallel(n_jobs=2)]: Done   9 out of  10 |elapsed:    0.5s remaining:    0.1s
 
-        Traceback example, note how the ligne of the error is indicated 
+        Traceback example, note how the line of the error is indicated
         as well as the values of the parameter passed to the function that
-        triggered the exception, eventhough the traceback happens in the 
+        triggered the exception, even though the traceback happens in the
         child process::
 
          >>> from string import atoi
@@ -246,7 +252,7 @@ class Parallel(Logger):
         number of iterations reported is underestimated::
 
          >>> from math import sqrt
-         >>> from scikits.learn.externals.joblib import Parallel, delayed
+         >>> from scikits.learn.joblib import Parallel, delayed
 
          >>> def producer():
          ...     for i in range(6):
@@ -254,7 +260,7 @@ class Parallel(Logger):
          ...         yield i
          
          >>> out = Parallel(n_jobs=2, verbose=100, pre_dispatch='1.5*n_jobs')(
-         ...                         delayed(sqrt)(i) for i in producer()) #doctest: +ELLIPSIS
+         ...                         delayed(sqrt)(i) for i in producer()) #doctest: +SKIP
          Produced 0
          Produced 1
          Produced 2

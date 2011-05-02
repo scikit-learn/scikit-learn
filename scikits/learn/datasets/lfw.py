@@ -91,7 +91,8 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 url = BASE_URL + target_filename
                 logging.warn("Downloading LFW metadata: %s", url)
                 downloader = urllib.urlopen(BASE_URL + target_filename)
-                open(target_filepath, 'wb').write(downloader.read())
+                data = downloader.read()
+                open(target_filepath, 'wb').write(data)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -101,7 +102,9 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
             if download_if_missing:
                 logging.warn("Downloading LFW data (~200MB): %s", archive_url)
                 downloader = urllib.urlopen(archive_url)
-                open(archive_path, 'wb').write(downloader.read())
+                data = downloader.read()
+                # don't open file until download is complete
+                open(archive_path, 'wb').write(data)
             else:
                 raise IOError("%s is missing" % target_filepath)
 

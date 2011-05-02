@@ -53,9 +53,6 @@ FIRST_LINE_TEXT = "# first line:"
 # TODO: Same remark for the logger, and probably use the Python logging
 # mechanism.
 
-# TODO: Track history as objects are called, to be able to garbage
-# collect them.
-
 
 def extract_first_line(func_code):
     """ Extract the first line information from the function code
@@ -76,7 +73,7 @@ class JobLibCollisionWarning(UserWarning):
 
 
 ################################################################################
-# class `Memory`
+# class `MemorizedFunc`
 ################################################################################
 class MemorizedFunc(Logger):
     """ Callable object decorating a function for caching its return value 
@@ -170,7 +167,14 @@ class MemorizedFunc(Logger):
             return self.call(*args, **kwargs)
         else:
             try:
-                return self.load_output(output_dir)
+                t0 = time.time()
+                out = self.load_output(output_dir)
+                if self._verbose > 4:
+                    t = time.time() - t0
+                    _, name = get_func_name(self.func)
+                    msg = '%s cache loaded - %s' % (name, format_time(t))
+                    print max(0, (80 - len(msg)))*'_' + msg
+                return out
             except Exception:
                 # XXX: Should use an exception logger
                 self.warn(
@@ -181,6 +185,15 @@ class MemorizedFunc(Logger):
 
                 shutil.rmtree(output_dir, ignore_errors=True)
                 return self.call(*args, **kwargs)
+
+
+    def __reduce__(self):
+        """ We don't store the timestamp when pickling, to avoid the hash
+            depending from it.
+            In addition, when unpickling, we run the __init__
+        """
+        return (self.__class__, (self.func, self.cachedir, self.ignore, 
+                self.save_npy, self.mmap_mode, self._verbose))
 
     #-------------------------------------------------------------------------
     # Private interface
@@ -451,7 +464,7 @@ class Memory(Logger):
         All values are cached on the filesystem, in a deep directory
         structure.
 
-        see :ref:`memory`
+        see :ref:`memory_reference`
     """
     #-------------------------------------------------------------------------
     # Public interface

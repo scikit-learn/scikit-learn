@@ -70,13 +70,15 @@ def test_normalizer():
         X_norm = normalizer.transform(X, copy=True)
         assert X_norm is not X
         X_norm = toarray(X_norm)
-        assert_array_almost_equal(X_norm.sum(axis=1), np.ones(X.shape[0]))
+        assert_array_almost_equal(
+            np.abs(X_norm).sum(axis=1), np.ones(X.shape[0]))
 
         normalizer = klass()
         X_norm = normalizer.transform(X, copy=False)
         assert X_norm is X
         X_norm = toarray(X_norm)
-        assert_array_almost_equal(X_norm.sum(axis=1), np.ones(X.shape[0]))
+        assert_array_almost_equal(
+            np.abs(X_norm).sum(axis=1), np.ones(X.shape[0]))
 
 
 def test_length_normalizer():

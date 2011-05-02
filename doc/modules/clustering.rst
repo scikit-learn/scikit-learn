@@ -1,8 +1,8 @@
 .. _clustering:
 
-===================================================
+==========
 Clustering
-===================================================
+==========
 
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
 unlabeled data can be performed with the module :mod:`scikits.learn.cluster`.
@@ -15,7 +15,7 @@ data can be found in the `labels_` attribute.
 
 .. currentmodule:: scikits.learn.cluster
 
-.. topic:: Input data 
+.. topic:: Input data
 
     One important thing to note is that the algorithms implemented in
     this module take different kinds of matrix as input.  On one hand,
@@ -39,7 +39,6 @@ in n groups of equal variance, minimizing a criterion known as the
 'inertia' of the groups. This algorithm requires the number of cluster to
 be specified. It scales well to large number of samples, however its
 results may be dependent on an initialisation.
-
 
 
 Affinity propagation
@@ -84,7 +83,7 @@ of cluster. It will have difficulties scaling to thousands of samples.
 
 
 Spectral clustering
-====================
+===================
 
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
@@ -121,6 +120,24 @@ function of the gradient of the image.
  * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
    to split the image of lena in regions.
 
+.. topic:: References:
+
+ * `"A Tutorial on Spectral Clustering"
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+   Ulrike von Luxburg, 2007
+
+ * `"Normalized cuts and image segmentation"
+   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+   Jianbo Shi, Jitendra Malik, 2000
+
+ * `"A Random Walks View of Spectral Segmentation"
+   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.33.1501>`_
+   Marina Meila, Jianbo Shi, 2001
+
+ * `"On Spectral Clustering: Analysis and an algorithm"
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
+   Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
+
 
 .. _hierarchical_clustering:
 
@@ -132,27 +149,27 @@ build nested clusters by merging them successively. This hierarchy of
 clusters represented as a tree (or dendrogram). The root of the tree is
 the unique cluster that gathers all the samples, the leaves being the
 clusters with only one sample. See the `Wikipedia page
-<http://en.wikipedia.org/wiki/Hierarchical_clustering for more
-details>`_.
+<http://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more
+details.
 
-
-The :class:`Ward` object performs a hierarchical clustering based on Ward
-algorithm, that is a variance-minimizing approach. At each step, it
-minimizes the sum of squared differences within all clusters (inertia
-criterion). 
+The :class:`Ward` object performs a hierarchical clustering based on
+the Ward algorithm, that is a variance-minimizing approach. At each
+step, it minimizes the sum of squared differences within all clusters
+(inertia criterion).
 
 This algorithm can scale to large number of samples when it is used jointly
 with an connectivity matrix, but can be computationally expensive when no
 connectivity constraints are added between samples: it considers at each step
 all the possible merges.
 
-Adding connectivity constraints 
-----------------------------------
+
+Adding connectivity constraints
+-------------------------------
 
 An interesting aspect of the :class:`Ward` object is that connectivity
 constraints can be added to this algorithm (only adjacent clusters can be
 merged together), through an connectivity matrix that defines for each
-sample the neighboring samples following a given structure of the data. For 
+sample the neighboring samples following a given structure of the data. For
 instance, in the swiss-roll example below, the connectivity constraints
 forbid the merging of points that are not adjacent on the swiss roll, and
 thus avoid forming clusters that extend across overlapping folds of the
@@ -184,10 +201,10 @@ enable only merging of neighboring pixels on an image, as in the
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering 
+ * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering
    to split the image of lena in regions.
 
- * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of 
+ * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
    versus unstructured approaches.
 

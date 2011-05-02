@@ -7,6 +7,21 @@ How to optimize for speed
 The following gives some practical guidelines to help you write efficient
 code for the scikit-learn project.
 
+.. note::
+
+  While it is always useful to profile your code so as to **check
+  performance assumptions**, it is also highly recommended
+  to **review the literature** to ensure that the implemented algorithm
+  is the state of the art for the task before investing into costly
+  implementation optimization.
+
+  Times and times, hours of efforts invested in optimizing complicated
+  implementation details have been rended irrelevant by the late discovery
+  of simple **algorithmic tricks**, or by using another algorithm altogether
+  that is better suited to the problem.
+
+  The section :ref:`warm-restarts` gives an example of such a trick.
+
 
 Python, Cython or C/C++?
 ========================
@@ -27,7 +42,7 @@ Python interpreter rather than crunching numbers to fit your statistical
 model.
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
-vectorized numpy code. In this case, the recommended strategy is the
+vectorized Numpy code. In this case, the recommended strategy is the
 following:
 
   1. **Profile** the Python implementation to find the main bottleneck and
@@ -145,12 +160,12 @@ this case out of the 1.7s total execution time, almost 0.7s are spent
 in compiled code we can consider optimal. By rewriting the rest of the
 Python code and assuming we could achieve a 1000% boost on this portion
 (which is highly unlikely given the shallowness of the Python loops),
-we would not gain more than a 3x speed-up globally.
+we would not gain more than a 2.4x speed-up globally.
 
-Hence major improvements can only be achieved by algorithmic improvements
-in this particular example (e.g. trying to find operation that are both
-costly and useless to avoid computing then rather than trying to optimize
-their implementation).
+Hence major improvements can only be achieved by **algorithmic
+improvements** in this particular example (e.g. trying to find operation
+that are both costly and useless to avoid computing then rather than
+trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
@@ -158,7 +173,7 @@ Python code: it takes around 100% of the cumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 
-  $ pip install line-prof
+  $ pip install line-profiler
   $ vim ~/.ipython/ipy_user_conf.py
 
 Ensure the following lines are present::
@@ -221,6 +236,34 @@ By looking at the top values of the ``% Time`` column it is really easy to
 pin-point the most expensive expressions that would deserve additional care.
 
 
+Performance tips for the Cython developer
+=========================================
+
+If the profiling of the python code reveals that the python interpreter
+overhead is larger by one order of magnitude or more than the cost of the
+actual numerical computation (e.g. ``for`` loops over vector components,
+nested evaluation of conditional expression, scalar arithmetics...), it
+is probably adequate to extract the hotspot portion of the code as a
+standalone function in a ``.pyx`` file and add static type declarations
+and then use cython_ to generate a C program suitable to be compiled as
+a Python extension module.
+
+The official documentation available http://docs.cython.org/ contains
+tutorial and reference guide for developing such a module. In the
+following we will just highlight a couple of tricks that we found
+important in practice on the existing cython codebase in the scikit-learn
+project.
+
+TODO: html report, type declarations, bound checks, division by zero checks,
+memory alignement, direct blas calls...
+
+.. _cython:: http://cython.org
+
+- http://www.euroscipy.org/file/3696?vid=download
+- http://conference.scipy.org/proceedings/SciPy2009/paper_1/
+- http://conference.scipy.org/proceedings/SciPy2009/paper_2/
+
+
 .. _profiling-compiled-extension:
 
 Profiling compiled extensions
@@ -231,20 +274,37 @@ directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to instrospect what's happening inside the
 compiled extension it-self.
 
+In order to profile compiled Python extensions one could use ``gprof``
+after having recompiled the project with ``gcc -pg`` and using the
+``python-dbg`` variant of the interpreter on debian / ubuntu: however
+this approach requires to also have ``numpy`` and ``scipy`` recompiled
+with ``-pg`` which is rather complicated to get working.
+
+Fortunately there exist two alternative profilers that don't require you to
+recompile everything.
+
+
+Using google-perftools
+----------------------
+
+TODO
+
 - https://github.com/fabianp/yep
 - http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
 
+.. note::
 
-Performance tips for the Cython developer
-=========================================
+  google-perftools provides a nice 'line by line' report mode that
+  can be triggered with the ``--lines`` option. However this
+  does not seem to work correctly at the time of writing. This
+  issue can be tracked on the `project issue tracker
+  <https://code.google.com/p/google-perftools/issues/detail?id=326>`_.
 
-TODO: html report, type declarations, bound checks, division by zero checks,
-memory alignement, direct blas calls...
 
-- http://docs.cython.org/
-- http://www.euroscipy.org/file/3696?vid=download
-- http://conference.scipy.org/proceedings/SciPy2009/paper_1/
-- http://conference.scipy.org/proceedings/SciPy2009/paper_2/
+Using valgrind / callgrind / kcachegrind
+----------------------------------------
+
+TODO
 
 
 Multi-core parallelism using ``joblib.Parallel``
@@ -255,3 +315,13 @@ TODO: give a simple teaser example here.
 Checkout the official joblib documentation:
 
 - http://packages.python.org/joblib/
+
+
+.. _warm-restarts:
+
+A sample algorithmic trick: warm restarts for cross validation
+==============================================================
+
+TODO: demonstrate the warm restart tricks for cross validation of linear
+regression with Coordinate Descent.
+
