@@ -205,8 +205,14 @@ def load_iris():
                  DESCR=fdescr.read())
 
 
-def load_digits():
+def load_digits(n_class=10):
     """load the digits dataset and returns it.
+
+
+    Parameters
+    ----------
+    n_class : integer, between 0 and 10
+        Number of classes to return, defaults to 10
 
     Returns
     -------
@@ -237,6 +243,12 @@ def load_digits():
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
+
+    if n_class < 10:
+        idx = target < n_class
+        flat_data, target = flat_data[idx], target[idx]
+        images = images[idx]
+
     return Bunch(data=flat_data, target=target.astype(np.int),
                  target_names=np.arange(10),
                  images=images,
