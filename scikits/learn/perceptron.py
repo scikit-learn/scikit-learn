@@ -115,7 +115,7 @@ class Perceptron(BaseEstimator):
         y = np.empty(X.shape[0])
 
         for i, x in enumerate(X):
-            y[i] = self._classify(x)[0]
+            y[i] = self._classify(x)
         return y
 
     def _classify(self, x):
@@ -123,9 +123,9 @@ class Perceptron(BaseEstimator):
 
         x: A np vector of the dimensionality of our input space.
 
-        Returns a pair of (label, score) for the most likely outcome.
+        Returns the label for the most likely outcome.
         '''
-        return self._max_outcome(self._weights, x)
+        return self._max_outcome(self._weights, x)[0]
 
     def _fit(self, X, y, learning_rate, n_iter, averaged):
         X = np.asanyarray(X)
@@ -181,11 +181,18 @@ class Perceptron(BaseEstimator):
         x : array
         label : int
         rate : float
+
+        Returns the prediction for x and whether an update has occurred (bool)
         '''
-        pred, _ = self._classify(x)
-        if pred != label:
+
+        # always predict as ordinary perceptron
+        pred = Perceptron._classify(self, x)
+        rate = .5 * rate    # we're going to update twice
+        must_update = (pred != label)
+        if must_update:
             self._update_weights(pred, x, -rate)
             self._update_weights(label, x, rate)
+        return (pred, must_update)
 
     def _update_weights(self, class_index, x, delta):
         '''Update the weights for an index based on an event.
@@ -197,7 +204,7 @@ class Perceptron(BaseEstimator):
         self._weights[class_index] += delta * x
 
     def _max_outcome(self, weights, x):
-        '''Return the maximum scoring label for a set of weights.
+        '''Return the maximum scoring label for a set of weights and its score
 
         weights: An array of weight vectors, one per label.
         x: An event vector.
@@ -238,7 +245,7 @@ class AveragedPerceptron(Perceptron):
         super(AveragedPerceptron, self).__init__(kernel)
 
     def _classify(self, x):
-        return self._max_outcome(self._history, x)
+        return self._max_outcome(self._history, x)[0]
 
     def fit(self, X, y, learning_rate=1., n_iter=1):
         """Fit classifier according to inputs X with labels y
@@ -268,14 +275,13 @@ class AveragedPerceptron(Perceptron):
 
     def _learn(self, x, label, rate):
         self._iterations[label] += 1
-        pred, score = self._max_outcome(self._weights, x)
-        if pred == label:
-            self._survived[label] += 1
-        else:
+        (pred, update) = super(AveragedPerceptron, self)._learn(x, label, rate)
+        if update:
             self._update_history(pred)
             self._update_history(label)
-            self._update_weights(pred, x, -rate)
-            self._update_weights(label, x, rate)
+        else:
+            self._survived[label] += 1
+        return (pred, update)
 
     def _update_history(self, class_index):
         '''Update the history for a particular class.'''
