@@ -1,3 +1,9 @@
+scikit-learn (0.8.0.dfsg~pre1-1) UNRELEASED; urgency=low
+
+  * New tentative upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 03 May 2011 09:25:10 -0400
+
 scikit-learn (0.7.1.dfsg-3) unstable; urgency=low
 
   * Do not build documentation in -a mode, to prevent timeouts on buildd
