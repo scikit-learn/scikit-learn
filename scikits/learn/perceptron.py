@@ -115,6 +115,26 @@ class Perceptron(BaseEstimator):
         '''
         return self._max_outcome(self._weights, event)
 
+    def _fit(self, X, y, n_iter, averaged):
+        X = np.asanyarray(X)
+        y = np.asanyarray(y)
+
+        n_samples, n_features = X.shape
+        n_labels = len(np.unique(y))
+
+        self._weights = np.zeros((n_labels, n_features), 'd')
+        if averaged:
+            self._iterations = np.zeros((n_labels, ), 'i')
+            self._survived = np.zeros((n_labels, ), 'i')
+            self._history = np.zeros(self._weights.shape, 'd')
+            self._acc = np.zeros(self._weights.shape, 'd')
+
+        for i in xrange(n_iter):
+            for j in xrange(n_samples):
+                self._learn(X[j], y[j])
+
+        return self
+
     def fit(self, X, y, n_iter=1):
         """Fit classifier according to inputs X with labels y
 
@@ -136,19 +156,7 @@ class Perceptron(BaseEstimator):
         self
         """
 
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
-
-        n_samples, n_features = X.shape
-        n_labels = len(np.unique(y))
-
-        self._weights = np.zeros((n_labels, n_features), 'd')
-
-        for i in xrange(n_iter):
-            for j in xrange(n_samples):
-                self._learn(X[j], y[j])
-
-        return self
+        return self._fit(X, y, n_iter=n_iter, averaged=False)
 
     def _learn(self, event, outcome):
         '''Adjust the hyperplane based on a classification attempt.
@@ -187,10 +195,10 @@ class Perceptron(BaseEstimator):
 
 
 class AveragedPerceptron(Perceptron):
-    '''A weighted sum of individual perceptrons.
+    '''Classifier based on a weighted sum of perceptrons.
 
     This perceptron algorithm performs similarly to the basic perceptron when
-    learning from labeled data : Whenever the predicted outcome for an event
+    learning from labeled data: whenever the predicted outcome for an event
     differs from the true outcome, the weights of the perceptron are updated to
     classify this new event correctly.
 
@@ -211,10 +219,6 @@ class AveragedPerceptron(Perceptron):
 
     def __init__(self, kernel=None):
         super(AveragedPerceptron, self).__init__(kernel)
-        #self._iterations = np.zeros((outcome_size, ), 'i')
-        #self._survived = np.zeros((outcome_size, ), 'i')
-        #self._history = np.zeros(self._weights.shape, 'd')
-        #self._acc = np.zeros(self._weights.shape, 'd')
 
     def _classify(self, event):
         return self._max_outcome(self._history, event)
@@ -240,23 +244,7 @@ class AveragedPerceptron(Perceptron):
         self
         """
 
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
-
-        n_samples, n_features = X.shape
-        n_labels = len(np.unique(y))
-
-        self._weights = np.zeros((n_labels, n_features), 'd')
-        self._iterations = np.zeros((n_labels, ), 'i')
-        self._survived = np.zeros((n_labels, ), 'i')
-        self._history = np.zeros(self._weights.shape, 'd')
-        self._acc = np.zeros(self._weights.shape, 'd')
-
-        for i in xrange(n_iter):
-            for j in xrange(n_samples):
-                self._learn(X[j], y[j])
-
-        return self
+        return self._fit(X, y, n_iter=n_iter, averaged=True)
 
     def _learn(self, event, outcome):
         self._iterations[outcome] += 1
