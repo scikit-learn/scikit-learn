@@ -28,12 +28,13 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test: in
-	$(NOSETESTS) scikits/learn
+	$(NOSETESTS) -s scikits/learn
 test-doc:
-	$(NOSETESTS) --with-doctest --doctest-tests --doctest-extension=rst doc/ doc/modules/
+	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
+	--doctest-fixtures=_fixture doc/modules/
 
 test-coverage:
-	$(NOSETESTS) --with-coverage
+	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage
 
 
 trailing-spaces:

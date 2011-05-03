@@ -78,7 +78,9 @@ class SphinxDocString(NumpyDocString):
                     others.append((param, param_type, desc))
 
             if autosum:
-                out += ['.. autosummary::', '   :toctree:', '']
+                # GAEL: Toctree commented out below because it creates
+                # hundreds of sphinx warnings
+                out += ['.. autosummary::', ]#'   :toctree:', '']
                 out += autosum
 
             if others:

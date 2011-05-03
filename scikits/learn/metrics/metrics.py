@@ -369,7 +369,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     return precision, recall, fscore, support
 
 
-def classification_report(y_true, y_pred, labels=None, class_names=None):
+def classification_report(y_true, y_pred, labels=None, target_names=None):
     """Build a text report showing the main classification metrics
 
     Parameters
@@ -383,7 +383,7 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
     labels : array, shape = [n_labels]
         optional list of label indices to include in the report
 
-    class_names : list of strings
+    target_names : list of strings
         optional display names matching the labels (same order)
 
     Returns
@@ -400,11 +400,11 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
 
     last_line_heading = 'avg / total'
 
-    if class_names is None:
+    if target_names is None:
         width = len(last_line_heading)
-        class_names = ['%d' % l for l in labels]
+        target_names = ['%d' % l for l in labels]
     else:
-        width = max(len(cn) for cn in class_names)
+        width = max(len(cn) for cn in target_names)
         width = max(width, len(last_line_heading))
 
 
@@ -421,7 +421,7 @@ def classification_report(y_true, y_pred, labels=None, class_names=None):
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels)
     for i, label in enumerate(labels):
-        values = [class_names[i]]
+        values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):
             values += ["%0.2f" % float(v)]
         values += ["%d" % int(s[i])]

@@ -2,6 +2,7 @@
 
 import numpy as np
 from numpy.testing import assert_equal
+from nose.tools import assert_raises
 
 from ..k_means_ import KMeans
 from .common import generate_clustered_data
@@ -23,6 +24,8 @@ def test_k_means_pp_init():
     assert_equal(np.unique(labels[20:40]).size, 1)
     assert_equal(np.unique(labels[40:]).size, 1)
 
+    # check error on dataset being too small
+    assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
 
 def test_k_means_pp_random_init():
     np.random.seed(1)
@@ -36,6 +39,9 @@ def test_k_means_pp_random_init():
     assert_equal(np.unique(labels[:20]).size, 1)
     assert_equal(np.unique(labels[20:40]).size, 1)
     assert_equal(np.unique(labels[40:]).size, 1)
+
+    # check error on dataset being too small
+    assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
 
 
 def test_k_means_fixed_array_init():
@@ -52,3 +58,5 @@ def test_k_means_fixed_array_init():
     assert_equal(np.unique(labels[20:40]).size, 1)
     assert_equal(np.unique(labels[40:]).size, 1)
 
+    # check error on dataset being too small
+    assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)

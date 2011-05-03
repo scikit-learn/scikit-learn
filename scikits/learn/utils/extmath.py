@@ -7,6 +7,7 @@ Extended math utilities.
 import sys
 import math
 
+from . import make_rng
 import numpy as np
 
 #XXX: We should have a function with numpy's slogdet API
@@ -154,11 +155,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
     if p == None:
         p = k
 
-    if rng is None:
-        rng = np.random.RandomState()
-    elif isinstance(rng, int):
-        rng = np.random.RandomState(rng)
-
+    rng = make_rng(rng)
     n_samples, n_features = M.shape
 
     if transpose == 'auto' and n_samples > n_features:

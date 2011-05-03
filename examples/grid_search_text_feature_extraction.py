@@ -50,32 +50,18 @@ print __doc__
 from pprint import pprint
 from time import time
 import os
+import logging
 
-from scikits.learn.datasets import load_files
-from scikits.learn.feature_extraction.text.sparse import CountVectorizer
-from scikits.learn.feature_extraction.text.sparse import TfidfTransformer
+from scikits.learn.datasets import fetch_20newsgroups
+from scikits.learn.feature_extraction.text import CountVectorizer
+from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
 
-################################################################################
-# Download the data, if not already on disk
-url = "http://people.csail.mit.edu/jrennie/20Newsgroups/20news-18828.tar.gz"
-archive_name = "20news-18828.tar.gz"
-
-if not os.path.exists(archive_name[:-7]):
-    if not os.path.exists(archive_name):
-        import urllib
-        print "Downloading data, please Wait (14MB)..."
-        print url
-        opener = urllib.urlopen(url)
-        open(archive_name, 'wb').write(opener.read())
-        print
-
-    import tarfile
-    print "Decompressiong the archive: " + archive_name
-    tarfile.open(archive_name, "r:gz").extractall()
-    print
+# Display progress logs on stdout
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(message)s')
 
 
 ################################################################################
@@ -90,7 +76,7 @@ categories = [
 print "Loading 20 newsgroups dataset for categories:"
 print categories
 
-data = load_files('20news-18828', categories=categories)
+data = fetch_20newsgroups(subset='train', categories=categories)
 print "%d documents" % len(data.filenames)
 print "%d categories" % len(data.target_names)
 print

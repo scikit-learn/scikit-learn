@@ -7,7 +7,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal, \
 
 from scikits.learn.preprocessing import Scaler, scale, Normalizer, \
                                         LengthNormalizer, Binarizer, \
-                                        LabelBinarizer
+                                        LabelBinarizer, KernelCenterer
 
 from scikits.learn.preprocessing.sparse import Normalizer as SparseNormalizer
 from scikits.learn.preprocessing.sparse import LengthNormalizer as \
@@ -70,13 +70,15 @@ def test_normalizer():
         X_norm = normalizer.transform(X, copy=True)
         assert X_norm is not X
         X_norm = toarray(X_norm)
-        assert_array_almost_equal(X_norm.sum(axis=1), np.ones(X.shape[0]))
+        assert_array_almost_equal(
+            np.abs(X_norm).sum(axis=1), np.ones(X.shape[0]))
 
         normalizer = klass()
         X_norm = normalizer.transform(X, copy=False)
         assert X_norm is X
         X_norm = toarray(X_norm)
-        assert_array_almost_equal(X_norm.sum(axis=1), np.ones(X.shape[0]))
+        assert_array_almost_equal(
+            np.abs(X_norm).sum(axis=1), np.ones(X.shape[0]))
 
 
 def test_length_normalizer():
@@ -150,6 +152,17 @@ def test_label_binarizer():
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
+def test_label_binarizer_multilabel():
+    lb = LabelBinarizer()
+
+    inp = [(2, 3), (1,), (1, 2)]
+    expected = np.array([[0, 1, 1],
+                         [1, 0, 0],
+                         [1, 1, 0]])
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+    assert_equal(lb.inverse_transform(got), inp)
+
 def test_label_binarizer_iris():
     lb = LabelBinarizer()
     Y = lb.fit_transform(iris.target)
@@ -162,3 +175,24 @@ def test_label_binarizer_iris():
     accuracy2 = np.mean(iris.target == y_pred2)
     assert_almost_equal(accuracy, accuracy2)
 
+def test_center_kernel():
+    """test that KernelCenterer gives same results as Scaler in feature space"""
+    X_fit = np.random.random((5,4))
+    scaler = Scaler(with_std=False)
+    scaler.fit(X_fit)
+    X_fit_centered = scaler.transform(X_fit)
+    K_fit = np.dot(X_fit, X_fit.T)
+
+    # center fit time matrix
+    centerer = KernelCenterer()
+    K_fit_centered = np.dot(X_fit_centered, X_fit_centered.T)
+    K_fit_centered2 = centerer.fit_transform(K_fit)
+    assert_array_almost_equal(K_fit_centered, K_fit_centered2)
+
+    # center predict time matrix
+    X_pred = np.random.random((2,4))
+    K_pred = np.dot(X_pred, X_fit.T)
+    X_pred_centered = scaler.transform(X_pred)
+    K_pred_centered = np.dot(X_pred_centered, X_fit_centered.T)
+    K_pred_centered2 = centerer.transform(K_pred)
+    assert_array_almost_equal(K_pred_centered, K_pred_centered2)

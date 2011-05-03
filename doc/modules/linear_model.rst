@@ -18,7 +18,7 @@ Across the module, we designate the vector :math:`\beta = (\beta_1,
 ..., \beta_D)` as ``coef_`` and :math:`\beta_0` as ``intercept_``.
 
 To perform classification with generalized linear models, see
-:ref:`Logistic regression`.
+:ref:`Logistic_regression`.
 
 .. _ordinary_least_squares:
 
@@ -30,10 +30,8 @@ Ordinary Least Squares (OLS)
 of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation.
 
-
-.. figure:: ../auto_examples/linear_model/images/plot_ols.png
+.. figure:: ../auto_examples/linear_model/images/plot_ols_1.png
    :target: ../auto_examples/linear_model/plot_ols.html
-   :align: center
    :scale: 50%
 
 :class:`LinearRegression` will take in its `fit` method arrays X, y
@@ -87,8 +85,7 @@ of squares,
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls
 the amount of shrinkage: the larger the value of :math:`\alpha`, the
-greater the amount of shrinkage.
-
+greater the amount of shrinkage::
 
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
@@ -99,24 +96,28 @@ greater the amount of shrinkage.
     >>> clf.intercept_ #doctest: +ELLIPSIS
     0.13636...
 
+
 Ridge Complexity
---------------------
+----------------
 
 This method has the same order of complexity than an
 :ref:`ordinary_least_squares`.
 
+
 Generalized Cross-Validation
 ----------------------------
 
-:class:`RidgeCV` implements ridge regression with built-in cross-validation of the alpha parameter.
-The object works in the same way as GridSearchCV except that it defaults to Generalized Cross-Validation (GCV), an efficient form of leave-one-out cross-validation.
+:class:`RidgeCV` implements ridge regression with built-in
+cross-validation of the alpha parameter.  The object works in the same way
+as GridSearchCV except that it defaults to Generalized Cross-Validation
+(GCV), an efficient form of leave-one-out cross-validation.
 
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
-    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
-    RidgeCV(alphas=[0.10000000000000001, 1.0, 10.0], loss_func=None, cv=None,
-        score_func=None, fit_intercept=True)
-    >>> clf.best_alpha
+    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])         # doctest: +SKIP
+    RidgeCV(alphas=[0.1, 1.0, 10.0], loss_func=None, cv=None, score_func=None,
+        fit_intercept=True)
+    >>> clf.best_alpha                                         # doctest: +SKIP
     0.10000000000000001
 
 .. topic:: References
@@ -229,11 +230,12 @@ algorithm, and unlike the implementation based on coordinate_descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
 
-.. figure:: ../auto_examples/linear_model/images/plot_lasso_lars.png
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_lars_1.png
    :target: ../auto_examples/linear_model/plot_lasso_lars.html
    :align: center
    :scale: 50%
 
+::
 
    >>> from scikits.learn import linear_model
    >>> clf = linear_model.LassoLARS(alpha=.1)
@@ -331,7 +333,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`, *i.e
 
 
 
-.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge.png
+.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_1.png
    :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
    :align: center
 
@@ -397,7 +399,7 @@ By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e-6`, *i.e.*
  very slightly informative priors.
 
 
-.. figure:: ../auto_examples/linear_model/images/plot_ard.png
+.. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
    :target: ../auto_examples/linear_model/plot_ard.html
    :align: center
 
@@ -447,6 +449,8 @@ where :math:`\alpha` is the precision of the noise.
  * Original Algorithm is detailed in the  book *Bayesian learning for neural
    networks* by Radford M. Neal
 
+.. _Logistic_regression:
+
 Logisitic regression
 ======================
 
@@ -459,7 +463,10 @@ that doesn't try to minimize the sum of square residuals, as in regression,
 but rather a "hit or miss" cost.
 
 The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
-logistic regression, in order to have sparse predicting weights.
+logistic regression. L1 penalization yields sparse predicting weights.
+For L1 penalization :func:`scikits.learn.svm.l1_min_c` allows to calculate
+the lower bound for C in order to get a non "null" (all feature weights to
+zero) model.
 
 .. topic:: Examples:
 

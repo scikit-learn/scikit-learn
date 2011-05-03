@@ -72,12 +72,8 @@ labels = spectral_clustering(graph, k=4)
 label_im = -np.ones(mask.shape)
 label_im[mask] = labels
 
-pl.figure(1, figsize=(8, 8))
-pl.clf()
-pl.subplot(2, 2, 1)
-pl.imshow(img)
-pl.subplot(2, 2, 3)
-pl.imshow(label_im)
+pl.matshow(img)
+pl.matshow(label_im)
 
 ################################################################################
 # 2 circles
@@ -94,9 +90,7 @@ labels = spectral_clustering(graph, k=2)
 label_im = -np.ones(mask.shape)
 label_im[mask] = labels
 
-pl.subplot(2, 2, 2)
-pl.imshow(img)
-pl.subplot(2, 2, 4)
-pl.imshow(label_im)
+pl.matshow(img)
+pl.matshow(label_im)
 
 pl.show()

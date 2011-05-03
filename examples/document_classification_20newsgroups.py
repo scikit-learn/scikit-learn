@@ -36,15 +36,22 @@ print __doc__
 # License: Simplified BSD
 
 from time import time
+import logging
 import os
 import sys
 
-from scikits.learn.datasets import load_files
-from scikits.learn.feature_extraction.text.sparse import Vectorizer
+from scikits.learn.datasets import fetch_20newsgroups
+from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn import metrics
+
+
+# Display progress logs on stdout
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(message)s')
+
 
 # parse commandline arguments
 argv = sys.argv[1:]
@@ -56,26 +63,6 @@ if "--confusion-matrix" in argv:
     print_cm = True
 else:
     print_cm = False
-
-################################################################################
-# Download the data, if not already on disk
-url = "http://people.csail.mit.edu/jrennie/20Newsgroups/20news-18828.tar.gz"
-archive_name = "20news-18828.tar.gz"
-
-if not os.path.exists(archive_name[:-7]):
-    if not os.path.exists(archive_name):
-        import urllib
-        print "Downloading data, please Wait (14MB)..."
-        print url
-        opener = urllib.urlopen(url)
-        open(archive_name, 'wb').write(opener.read())
-        print
-
-    import tarfile
-    print "Decompressiong the archive: " + archive_name
-    tarfile.open(archive_name, "r:gz").extractall()
-    print
-
 
 ################################################################################
 # Load some categories from the training set
@@ -91,18 +78,20 @@ categories = [
 print "Loading 20 newsgroups dataset for categories:"
 print categories
 
-data = load_files('20news-18828', categories=categories, shuffle=True, rng=42)
-print "%d documents" % len(data.filenames)
-print "%d categories" % len(data.target_names)
+data_train = fetch_20newsgroups(subset='train', categories=categories,
+                               shuffle=True, rng=42)
+
+data_test = fetch_20newsgroups(subset='test', categories=categories,
+                              shuffle=True, rng=42)
+
+print "%d documents (training set)" % len(data_train.filenames)
+print "%d documents (testing set)" % len(data_test.filenames)
+print "%d categories" % len(data_train.target_names)
 print
 
 # split a training set and a test set
-filenames = data.filenames
-y = data.target
-
-n = filenames.shape[0]
-filenames_train, filenames_test = filenames[:-n/2], filenames[-n/2:]
-y_train, y_test = y[:-n/2], y[-n/2:]
+filenames_train, filenames_test = data_train.filenames, data_test.filenames
+y_train, y_test = data_train.target, data_test.target
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
@@ -146,7 +135,7 @@ def benchmark(clf):
     if print_report:
         print "classification report:"
         print metrics.classification_report(y_test, pred,
-                                            class_names=categories)
+                                            target_names=categories)
 
     if print_cm:
         print "confusion matrix:"
@@ -161,18 +150,18 @@ for clf, name in ((RidgeClassifier(), "Ridge Classifier"),):
     results = benchmark(clf)
 
 for penalty in ["l2", "l1"]:
-    print 80*'='
+    print 80 * '='
     print "%s penalty" % penalty.upper()
     # Train Liblinear model
     liblinear_results = benchmark(LinearSVC(loss='l2', penalty=penalty, C=1000,
-                                        dual=False, eps=1e-3))
+                                            dual=False, tol=1e-3))
 
     # Train SGD model
     sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                           penalty=penalty))
 
 # Train SGD with Elastic Net penalty
-print 80*'='
+print 80 * '='
 print "Elastic-Net penalty"
 sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                       penalty="elasticnet"))
