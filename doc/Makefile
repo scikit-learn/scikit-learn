@@ -14,6 +14,8 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
+all: html-noplot
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
@@ -95,3 +97,6 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+download-data:
+	python -c "from scikits.learn.datasets.lfw import check_fetch_lfw; check_fetch_lfw()"

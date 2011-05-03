@@ -46,7 +46,7 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/plot_iris.png
+.. figure:: ../auto_examples/svm/images/plot_iris_1.png
    :target: ../auto_examples/svm/plot_iris.html
    :align: center
 
@@ -72,7 +72,7 @@ training samples::
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
       cache_size=100.0, shrinking=True, gamma=0.5)
 
 After being fitted, the model can then be used to predict new values::
@@ -110,7 +110,7 @@ classifiers are constructed and each one trains data from two classes.
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)
-    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, eps=0.001,
+    SVC(kernel='rbf', C=1.0, probability=False, degree=3, coef0=0.0, tol=0.001,
       cache_size=100.0, shrinking=True, gamma=0.25)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
@@ -124,22 +124,55 @@ two classes, only one model is trained.
 
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
-    LinearSVC(loss='l2', C=1.0, intercept_scaling=1, fit_intercept=True,
-         eps=0.0001, penalty='l2', multi_class=False, dual=True)
+    LinearSVC(loss='l2', C=1.0, dual=True, fit_intercept=True, penalty='l2',
+         multi_class=False, tol=0.0001, intercept_scaling=1)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
-    
+
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+
+
+Unbalanced problems
+--------------------
+
+In problems where it is desired to give more importance to certain
+classes or certain individual samples keywords ``class_weight`` and
+``sample_weight`` can be used.
+
+:class:`SVC` (but not :class:`NuSVC`) implement a keyword
+``class_weight`` in the fit method. It's a dictionary of the form
+``{class_label : value}``, where value is a floating point number > 0
+that sets the parameter C of class ``class_label`` to C * value.
+
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_1.png
+   :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
+   :align: center
+   :scale: 75
+
+
+:class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR` and
+:class:`OneClassSVM` implement also weights for individual samples in method
+``fit`` through keyword sample_weight.
+
+
+.. figure:: ../auto_examples/svm/images/plot_weighted_samples_1.png
+   :target: ../auto_examples/svm/plot_weighted_samples.html
+   :align: center
+   :scale: 75
+
 
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_iris.py`,
  * :ref:`example_svm_plot_separating_hyperplane.py`,
+ * :ref:`example_svm_plot_separating_hyperplane_unbalanced.py`
  * :ref:`example_svm_plot_svm_anova.py`,
  * :ref:`example_svm_plot_svm_nonlinear.py`
+ * :ref:`example_svm_plot_weighted_samples.py`,
+
 
 .. _svm_regression:
 
@@ -169,8 +202,9 @@ floating point values instead of integer values.
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y)
-    SVR(kernel='rbf', C=1.0, probability=False, degree=3, shrinking=True,
-      eps=0.001, p=0.1, cache_size=100.0, coef0=0.0, nu=0.5, gamma=0.5)
+    SVR(kernel='rbf', C=1.0, probability=False, degree=3, epsilon=0.1,
+      shrinking=True, tol=0.001, cache_size=100.0, coef0=0.0, nu=0.5,
+      gamma=0.5)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -194,7 +228,7 @@ In this case, as it is a type of unsupervised learning, the fit method
 will only take as input an array X, as there are no class labels.
 
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass.png
+.. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
@@ -261,16 +295,23 @@ Tips on Practical Use
   * Parameter nu in NuSVC/OneClassSVM/NuSVR approximates the fraction
     of training errors and support vectors.
 
-  * If data for classification are unbalanced (e.g. many positive and
-    few negative), set class_weight='auto' and/or try different
-    penalty parameters C.
+  * In SVC, if data for classification are unbalanced (e.g. many
+    positive and few negative), set class_weight='auto' and/or try
+    different penalty parameters C.
 
   * Specify larger cache size (keyword cache) for huge problems.
 
   * The underlying :class:`LinearSVC` implementation uses a random
     number generator to select features when fitting the model. It is
     thus not uncommon, to have slightly different results for the same
-    input data. If that happens, try with a smaller eps parameter.
+    input data. If that happens, try with a smaller tol parameter.
+
+  * Using L1 penalization as provided by LinearSVC(loss='l2',
+    penalty='l1', dual=False) yields a sparse solution, i.e. only a subset of
+    feature weights is different from zero and contribute to the decision
+    function.  Increasing C yields a more complex model (more feature are
+    selected).  The C value that yields a "null" model (all weights equal to
+    zero) can be calculated using :func:`l1_min_c`.
 
 
 .. _svm_kernels:
@@ -363,7 +404,7 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane.png
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_1.png
    :align: center
    :scale: 75
 
@@ -434,16 +475,6 @@ We introduce a new parameter :math:`\nu` which controls the number of
 support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
-
-
-Frequently Asked Questions
-==========================
-
-     * Q: Can I get the indices of the support vectors instead of the
-       support vectors ?
-
-       A: The underlying C implementation does not provide this
-       information.
 
 
 Implementation details

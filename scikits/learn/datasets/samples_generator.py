@@ -9,7 +9,7 @@ import numpy as np
 import numpy.random as nr
 
 
-def test_dataset_classif(n_samples=100, n_features=100, param=[1,1],
+def test_dataset_classif(n_samples=100, n_features=100, param=[1, 1],
                          n_informative=0, k=0, seed=None):
     """Generate an snp matrix
 
@@ -140,8 +140,8 @@ def sparse_uncorrelated(n_samples=100, n_features=10):
     y : numpy array of shape (n_samples) for labels
     """
     X = nr.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = nr.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:,2] - 1.5 * X[:, 3],
-                  scale = np.ones(n_samples))
+    y = nr.normal(loc=X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3],
+                  scale=np.ones(n_samples))
     return X, y
 
 
@@ -346,3 +346,32 @@ def make_regression_dataset(n_train_samples=100, n_test_samples=100,
     return X_train, Y_train, X_test, Y_test, ground_truth
 
 
+def swiss_roll(n_samples, noise=0.0):
+    """Generate swiss roll dataset
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of points on the swiss roll
+
+    noise : float (optional)
+        Noise level. By default no noise.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 3]
+        The points.
+
+    Notes
+    -----
+    Original code from:
+    http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
+    """
+    np.random.seed(0)
+    t = 1.5 * np.pi * (1 + 2 * np.random.rand(1, n_samples))
+    h = 21 * np.random.rand(1, n_samples)
+    X = np.concatenate((t * np.cos(t), h, t * np.sin(t))) \
+           + noise * np.random.randn(3, n_samples)
+    X = np.transpose(X)
+    t = np.squeeze(t)
+    return X

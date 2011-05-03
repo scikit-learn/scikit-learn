@@ -195,9 +195,9 @@ class KFold(object):
         -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
-        assert k>0, ('cannot have k below 1')
-        assert k<=n, ('cannot have k=%d greater than the number '
-                            'of samples: %d'% (k, n))
+        assert k > 0, ('cannot have k below 1')
+        assert k <= n, ('cannot have k=%d greater than the number '
+                        'of samples: %d' % (k, n))
         self.n = n
         self.k = k
         self.indices = indices
@@ -209,10 +209,10 @@ class KFold(object):
 
         for i in xrange(k):
             test_index = np.zeros(n, dtype=np.bool)
-            if i < k-1:
-                test_index[i*j:(i+1)*j] = True
+            if i < k - 1:
+                test_index[i * j:(i + 1) * j] = True
             else:
-                test_index[i*j:] = True
+                test_index[i * j:] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(n)
@@ -281,9 +281,9 @@ class StratifiedKFold(object):
         """
         y = np.asanyarray(y)
         n = y.shape[0]
-        assert k>0, ValueError('cannot have k below 1')
-        assert k<=n, ValueError('cannot have k=%d greater than the number '
-                               'of samples %d' % (k, n))
+        assert k > 0, ValueError('cannot have k below 1')
+        assert k <= n, ValueError('cannot have k=%d greater than the number '
+                                  'of samples %d' % (k, n))
         _, y_sorted = unique(y, return_inverse=True)
         assert k <= np.min(np.bincount(y_sorted))
         self.y = y
@@ -375,7 +375,7 @@ class LeaveOneLabelOut(object):
         labels = np.array(self.labels, copy=True)
         for i in unique(labels):
             test_index = np.zeros(len(labels), dtype=np.bool)
-            test_index[labels==i] = True
+            test_index[labels == i] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(len(labels))
@@ -643,4 +643,4 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     return score, permutation_scores, pvalue
 
 
-permutation_test_score.__test__ = False # to avoid a pb with nosetests
+permutation_test_score.__test__ = False  # to avoid a pb with nosetests

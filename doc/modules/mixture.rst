@@ -32,7 +32,7 @@ using the :meth:`GMM.predict` method.
     sample beloning to the various Gaussians may be retrieved using the
     :meth:`GMM.predict_proba` method.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier.png
+.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_1.png
    :target: ../auto_examples/cluster/plot_gmm_classifier.html
    :align: center
    :scale: 75%

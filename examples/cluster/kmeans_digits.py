@@ -17,7 +17,7 @@ import numpy as np
 
 from scikits.learn.cluster import KMeans
 from scikits.learn.datasets import load_digits
-from scikits.learn.pca import PCA
+from scikits.learn.decomposition import PCA
 from scikits.learn.preprocessing import scale
 
 np.random.seed(42)
@@ -52,7 +52,7 @@ print "Raw k-means with PCA-based centroid init..."
 # kmeans algorithm only once with n_init=1
 t0 = time()
 pca = PCA(n_components=n_digits).fit(data)
-km = KMeans(init=pca.components_.T, k=n_digits, n_init=1).fit(data)
+km = KMeans(init=pca.components_, k=n_digits, n_init=1).fit(data)
 print "done in %0.3fs" % (time() - t0)
 print "inertia: %f" % km.inertia_
 print

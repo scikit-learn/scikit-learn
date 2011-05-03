@@ -116,7 +116,7 @@ datasets for various tasks (binary & multi label classification, regression,
 document classification, ...) along with a runtime environment to compare
 program performance on those datasets. Please refer to the following example for
 for instructions on the ``mlcomp`` dataset loader:
-:ref:`example_mlcomp_document_classification.py`.
+:ref:`example mlcomp sparse document classification <example_mlcomp_sparse_document_classification.py>`.
 
 
 Learning and Predicting

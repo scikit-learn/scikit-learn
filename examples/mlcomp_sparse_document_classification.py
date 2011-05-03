@@ -45,7 +45,7 @@ import scipy.sparse as sp
 import pylab as pl
 
 from scikits.learn.datasets import load_mlcomp
-from scikits.learn.feature_extraction.text.sparse import Vectorizer
+from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
@@ -109,7 +109,7 @@ print "done in %fs" % (time() - t0)
 print "Classification report on test set for classifier:"
 print clf
 print
-print classification_report(y_test, pred, class_names=news_test.target_names)
+print classification_report(y_test, pred, target_names=news_test.target_names)
 
 cm = confusion_matrix(y_test, pred)
 print "Confusion matrix:"

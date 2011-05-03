@@ -4,13 +4,13 @@
 
 import os
 import numpy as np
-from scikits.learn.datasets.base import load_files
+from scikits.learn.datasets.base import load_filenames
 
 
 def _load_document_classification(dataset_path, metadata, set_=None, **kwargs):
     if set_ is not None:
         dataset_path = os.path.join(dataset_path, set_)
-    return load_files(dataset_path, metadata.get('description'), **kwargs)
+    return load_filenames(dataset_path, metadata.get('description'), **kwargs)
 
 
 LOADERS = {
@@ -101,5 +101,3 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     if loader is None:
         raise ValueError("No loader implemented for format: " + format)
     return loader(dataset_path, metadata, set_=set_, **kwargs)
-
-

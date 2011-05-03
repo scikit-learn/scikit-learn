@@ -1,6 +1,4 @@
-"""
-Fixes for older version of numpy and scipy.
-"""
+"""Compatibility fixes for older version of numpy and scipy"""
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
@@ -8,8 +6,9 @@ Fixes for older version of numpy and scipy.
 
 import numpy as np
 
+
 def _unique(ar, return_index=False, return_inverse=False):
-    """ A replacement for the np.unique that appeared in numpy 1.4.
+    """A replacement for the np.unique that appeared in numpy 1.4.
 
     While np.unique existed long before, keyword return_inverse was
     only added in 1.4.
@@ -57,10 +56,8 @@ else:
     unique = np.unique
 
 
-def _copysign (x1, x2):
-    """
-    (slow) Replacement for np.copysign, which was introduced in numpy 1.4
-    """
+def _copysign(x1, x2):
+    """Slow replacement for np.copysign, which was introduced in numpy 1.4"""
     return np.abs(x1) * np.sign(x2)
 
 if not hasattr(np, 'copysign'):
@@ -70,20 +67,19 @@ else:
 
 
 def _in1d(ar1, ar2, assume_unique=False):
-    """ Replacement for in1d that is provided for numpy >= 1.4
-    """
+    """Replacement for in1d that is provided for numpy >= 1.4"""
     if not assume_unique:
         ar1, rev_idx = unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)
-    ar = np.concatenate( (ar1, ar2) )
+    ar = np.concatenate((ar1, ar2))
     # We need this to be a stable sort, so always use 'mergesort'
     # here. The values from the first array should always come before
     # the values from the second array.
     order = ar.argsort(kind='mergesort')
     sar = ar[order]
     equal_adj = (sar[1:] == sar[:-1])
-    flag = np.concatenate( (equal_adj, [False] ) )
-    indx = order.argsort(kind='mergesort')[:len( ar1 )]
+    flag = np.concatenate((equal_adj, [False]))
+    indx = order.argsort(kind='mergesort')[:len(ar1)]
 
     if assume_unique:
         return flag[indx]
@@ -97,7 +93,8 @@ else:
 
 
 def qr_economic(A, **kwargs):
-    """
+    """Compat function for the QR-decomposition in economic mode
+
     Scipy 0.9 changed the keyword econ=True to mode='economic'
     """
     import scipy.linalg
@@ -109,7 +106,8 @@ def qr_economic(A, **kwargs):
 
 
 def arpack_eigsh(A, **kwargs):
-    """
+    """Compat function for sparse symmetric eigen vectors decomposition
+
     Scipy 0.9 renamed eigen_symmetric to eigsh in
     scipy.sparse.linalg.eigen.arpack
     """
@@ -118,8 +116,3 @@ def arpack_eigsh(A, **kwargs):
         return arpack.eigsh(A, **kwargs)
     else:
         return arpack.eigen_symmetric(A, **kwargs)
-
-
-
-
-
