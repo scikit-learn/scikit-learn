@@ -365,7 +365,8 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
         """
-        logprob, posteriors = self.eval(obs)
+        # We use return_log=True to avoid a useless exponentiation
+        logprob, _ = self.eval(obs, return_log=True)
         return logprob
 
     def decode(self, obs):
