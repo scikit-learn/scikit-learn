@@ -96,7 +96,7 @@ class Perceptron(BaseEstimator):
         Kernel function for mapping non-linear data.
     '''
 
-    def __init__(self, kernel=None):
+    def __init__(self, kernel=None, learning_rate=1.):
         self._kernel = kernel or np.dot
 
     def predict(self, X):
@@ -127,7 +127,7 @@ class Perceptron(BaseEstimator):
         '''
         return self._max_outcome(self._weights, x)
 
-    def _fit(self, X, y, n_iter, averaged):
+    def _fit(self, X, y, learning_rate, n_iter, averaged):
         X = np.asanyarray(X)
         y = np.asanyarray(y)
 
@@ -143,11 +143,11 @@ class Perceptron(BaseEstimator):
 
         for i in xrange(n_iter):
             for j in xrange(n_samples):
-                self._learn(X[j], y[j])
+                self._learn(X[j], y[j], learning_rate)
 
         return self
 
-    def fit(self, X, y, n_iter=1):
+    def fit(self, X, y, learning_rate=1., n_iter=1):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -160,6 +160,8 @@ class Perceptron(BaseEstimator):
 
         y : array-like, shape = [n_samples]
             Target values.
+        learning_rate : float, optional
+            Learning rate: multiplied into weight changes, default 1.
         n_iter : int, optional
             Number of iterations to perform. Default 1.
 
@@ -168,20 +170,22 @@ class Perceptron(BaseEstimator):
         self
         """
 
-        return self._fit(X, y, n_iter=n_iter, averaged=False)
+        return self._fit(X, y, learning_rate=learning_rate, n_iter=n_iter,
+                         averaged=False)
 
-    def _learn(self, x, label):
+    def _learn(self, x, label, rate):
         '''Adjust the hyperplane based on a classification attempt.
 
         Parameters
         ----------
         x : array
         label : int
+        rate : float
         '''
         pred, _ = self._classify(x)
         if pred != label:
-            self._update_weights(pred, x, -1)
-            self._update_weights(label, x, 1)
+            self._update_weights(pred, x, -rate)
+            self._update_weights(label, x, rate)
 
     def _update_weights(self, class_index, x, delta):
         '''Update the weights for an index based on an event.
@@ -236,7 +240,7 @@ class AveragedPerceptron(Perceptron):
     def _classify(self, x):
         return self._max_outcome(self._history, x)
 
-    def fit(self, X, y, n_iter=1):
+    def fit(self, X, y, learning_rate=1., n_iter=1):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -249,6 +253,8 @@ class AveragedPerceptron(Perceptron):
 
         y : array-like, shape = [n_samples]
             Target values.
+        learning_rate : float, optional
+            Learning rate: multiplied into weight changes, default 1.
         n_iter : int, optional
             Number of iterations to perform. Default 1.
 
@@ -257,9 +263,10 @@ class AveragedPerceptron(Perceptron):
         self
         """
 
-        return self._fit(X, y, n_iter=n_iter, averaged=True)
+        return self._fit(X, y, learning_rate=learning_rate, n_iter=n_iter,
+                         averaged=True)
 
-    def _learn(self, x, label):
+    def _learn(self, x, label, rate):
         self._iterations[label] += 1
         pred, score = self._max_outcome(self._weights, x)
         if pred == label:
@@ -267,8 +274,8 @@ class AveragedPerceptron(Perceptron):
         else:
             self._update_history(pred)
             self._update_history(label)
-            self._update_weights(pred, x, -1)
-            self._update_weights(label, x, 1)
+            self._update_weights(pred, x, -rate)
+            self._update_weights(label, x, rate)
 
     def _update_history(self, class_index):
         '''Update the history for a particular class.'''
@@ -308,7 +315,7 @@ class SparseAveragedPerceptron(AveragedPerceptron):
         super(SparseAveragedPerceptron, self).__init__(kernel = SparseDot())
         self._beam_width = beam_width
 
-    def fit(self, X, y, n_iter=1):
+    def fit(self, X, y, learning_rate=1., n_iter=1):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -321,6 +328,8 @@ class SparseAveragedPerceptron(AveragedPerceptron):
 
         y : array-like, shape = [n_samples]
             Target values.
+        learning_rate : float, optional
+            Learning rate: multiplied into weight changes, default 1.
         n_iter : int, optional
             Number of iterations to perform. Default 1.
 
@@ -343,7 +352,7 @@ class SparseAveragedPerceptron(AveragedPerceptron):
 
         for i in xrange(n_iter):
             for j in xrange(n_samples):
-                self._learn(X[j], y[j])
+                self._learn(X[j], y[j], learning_rate)
 
         return self
 
