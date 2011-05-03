@@ -207,13 +207,9 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               double weight_pos, double weight_neg,
-<<<<<<< HEAD
               np.ndarray[double, ndim=1] sample_weight,
               int learning_rate, double eta0,
               double power_t):
-=======
-              np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight):
->>>>>>> master
     """Cython impl. of SGD for generic loss functions and penalties
 
     This implementation assumes X represented as a dense array of floats.

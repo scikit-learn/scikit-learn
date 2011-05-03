@@ -73,16 +73,16 @@ class SGDClassifier(BaseSGDClassifier):
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
-    learning_rate : int
+    learning_rate : string, optional
         The learning rate:
-        (1) constant, eta = eta0
-        (2) optimal, eta = 1.0/(t+t0)
-        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+        constant: eta = eta0
+        optimal: eta = 1.0/(t+t0)
+        invscaling: eta = eta0 / pow(t, power_t)
 
-    eta0 : double
+    eta0 : double, optional
         The initial learning rate [default 0.01].
 
-    power_t : double
+    power_t : double, optional
         The exponent for inverse scaling learning rate [default 0.25].
 
 

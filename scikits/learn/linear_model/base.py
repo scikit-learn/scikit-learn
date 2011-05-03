@@ -418,6 +418,8 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
     """Base class for dense and sparse regression using SGD.
+
+    Uses inverse scaling learning rate as default.
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
@@ -478,7 +480,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             X = np.asanyarray(X)
             n_samples, n_features = X.shape
 
-        if n_samples != len(y):
+        if n_samples != y.shape[0]:
             raise ValueError("Shapes of X and y do not match.")
 
         # Allocate datastructures from input arguments
