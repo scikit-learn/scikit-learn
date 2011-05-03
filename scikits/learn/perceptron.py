@@ -53,32 +53,38 @@ from collections import defaultdict
 import numpy as np
 
 
-def radial_basis_kernel(gamma):
+def RadialBasisKernel(gamma):
     '''This kernel returns the rbf between the input vectors.'''
-    def run(weights, event):
+
+    def __init__(self, gamma):
+        self._minus_gamma = gamma
+
+    def __call__(self, weights, event):
         delta = np.linalg.norm(event - weights)
-        return np.exp(-gamma * delta * delta)
-    return run
+        return np.exp(self._minus_gamma * delta * delta)
 
 
-def polynomial_kernel(degree, alpha=1.0):
+class PolynomialKernel(object):
     '''This kernel returns the dot product raised to some power.'''
-    def run(weights, event):
-        return (np.dot(weights, event) + alpha) ** degree
-    return run
+    def __init__(self, degree, alpha=1.0):
+        self._degree = degree
+        self._alpha = alpha
+
+    def __call__(self, weights, event):
+        return (np.dot(weights, event) + self._alpha) ** self._degree
 
 
 class Perceptron(BaseEstimator):
-    '''A perceptron is a discriminative machine learning algorithm.'''
+    '''Classifier implementing single-layer perceptron with error-driven
+    learning.
+
+    Parameters
+    ----------
+    kernel : callable, optional
+        Kernel function for mapping non-linear data.
+    '''
 
     def __init__(self, kernel=None):
-        '''Initialize this perceptron.
-
-        event_size: An integer indicating the dimensionality of the event space.
-        outcome_size: An integer indicating the number of classes in the data.
-        kernel: A kernel function that we can use to compute the distance between
-          a data point and our weight vector.
-        '''
         self._kernel = kernel or np.dot
 
     def predict(self, X):
@@ -134,9 +140,9 @@ class Perceptron(BaseEstimator):
         y = np.asanyarray(y)
 
         n_samples, n_features = X.shape
-        n_classes = len(np.unique(y))
+        n_labels = len(np.unique(y))
 
-        self._weights = np.zeros((n_classes, n_features), 'd')
+        self._weights = np.zeros((n_labels, n_features), 'd')
 
         for i in xrange(n_iter):
             for j in xrange(n_samples):
@@ -238,11 +244,11 @@ class AveragedPerceptron(Perceptron):
         y = np.asanyarray(y)
 
         n_samples, n_features = X.shape
-        n_classes = len(np.unique(y))
+        n_labels = len(np.unique(y))
 
-        self._weights = np.zeros((n_classes, n_features), 'd')
-        self._iterations = np.zeros((n_classes, ), 'i')
-        self._survived = np.zeros((n_classes, ), 'i')
+        self._weights = np.zeros((n_labels, n_features), 'd')
+        self._iterations = np.zeros((n_labels, ), 'i')
+        self._survived = np.zeros((n_labels, ), 'i')
         self._history = np.zeros(self._weights.shape, 'd')
         self._acc = np.zeros(self._weights.shape, 'd')
 
@@ -273,6 +279,14 @@ class AveragedPerceptron(Perceptron):
             self._survived[class_index] = 0
 
 
+class SparseDot(object):
+    '''Kernel for SparseAveragedPerceptron'''
+    @staticmethod
+    def __call__(weights, event):
+        '''Return the dot product of a sparse vector and an event.'''
+        return sum(weights.get(f, 0) for f in event)
+
+
 class SparseAveragedPerceptron(AveragedPerceptron):
     '''A voted perceptron using sparse vectors for storing weights.
 
@@ -291,10 +305,7 @@ class SparseAveragedPerceptron(AveragedPerceptron):
     def __init__(self, beam_width=1000):
         '''Use sparse vectors to store weights and events.'''
         super(SparseAveragedPerceptron, self).__init__()
-        #self._weights = [defaultdict(float) for _ in xrange(outcome_size)]
-        #self._history = [defaultdict(float) for _ in xrange(outcome_size)]
-        #self._acc = [defaultdict(float) for _ in xrange(outcome_size)]
-        self._kernel = SparseAveragedPerceptron._dot
+        self._kernel = SparseDot()
         self._beam_width = beam_width
 
     def fit(self, X, y, n_iter=1):
@@ -322,11 +333,11 @@ class SparseAveragedPerceptron(AveragedPerceptron):
         y = np.asanyarray(y)
 
         n_samples, n_features = X.shape
-        n_classes = len(np.unique(y))
+        n_labels = len(np.unique(y))
 
-        self._weights = [defaultdict(float) for i in xrange(n_classes)]
-        self._history = [defaultdict(float) for i in xrange(n_classes)]
-        self._acc = [defaultdict(float) for i in xrange(n_classes)]
+        self._weights = [defaultdict(float) for i in xrange(n_labels)]
+        self._history = [defaultdict(float) for i in xrange(n_labels)]
+        self._acc = [defaultdict(float) for i in xrange(n_labels)]
         self._iterations = np.zeros((n_samples, ), 'i')
         self._survived = np.zeros((n_samples, ), 'i')
 
@@ -335,11 +346,6 @@ class SparseAveragedPerceptron(AveragedPerceptron):
                 self._learn(X[j], y[j])
 
         return self
-
-    @staticmethod
-    def _dot(weights, event):
-        '''Return the dot product of a sparse vector and an event.'''
-        return sum(weights.get(f, 0) for f in event)
 
     def _update_history(self, class_index):
         s = self._survived[class_index]
