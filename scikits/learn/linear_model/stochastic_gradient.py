@@ -76,7 +76,7 @@ class SGDClassifier(BaseSGDClassifier):
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0/(t+t0)
+        optimal: eta = 1.0/(t+t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
 
     eta0 : double, optional
@@ -269,16 +269,16 @@ class SGDRegressor(BaseSGDRegressor):
         Epsilon in the epsilon-insensitive huber loss function;
         only if `loss=='huber'`.
 
-    learning_rate : int
+    learning_rate : string, optional
         The learning rate:
-        (1) constant, eta = eta0
-        (2) optimal, eta = 1.0/(t+t0)
-        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+        constant: eta = eta0
+        optimal: eta = 1.0/(t+t0)
+        invscaling: eta = eta0 / pow(t, power_t) [default]
 
-    eta0 : double
+    eta0 : double, optional
         The initial learning rate [default 0.01].
 
-    power_t : double
+    power_t : double, optional
         The exponent for inverse scaling learning rate [default 0.25].
 
     Attributes
