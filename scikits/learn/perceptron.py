@@ -21,27 +21,27 @@
 
 # Adapted for scikit-learn by Lars Buitinck, ILPS, University of Amsterdam.
 
-'''Basic Perceptron library.
+'''Single-layer (averaged) perceptrons.
 
 Perceptrons are supervised discriminative linear models for classification.
 The basic perceptron is simply a vector W in event space that is normal to a
 linear separating surface going through the origin. Data points that fall on
-one side of the surface are in outcome (+), and data points on the other side
-are in outcome (-). To determine the side of the surface on which some event X
+one side of the surface are in class (+), and data points on the other side
+are in class (-). To determine the side of the surface on which some event X
 falls, we compute the dot product of X and W and return the sign of the
 resulting scalar. Learning takes place in the perceptron whenever it makes an
 incorrect classification from labeled data : X is simply added to W to
 minimally correct the output of the perceptron for this data point. This might
 invalidate classifications for other events in the data set, but it is simple.
 
-This particular library generalizes the perceptron to K > 2 outcomes by
-maintaining a decision surface for each of the K possible outcomes. Each
-surface can be thought of as separating events in one outcome from events in
-all other outcomes. At classification time, we compute the kernel value of X
-and each of the Ws. The outcome with the greatest resulting scalar value is
-returned as the prediction for that event.
+This module generalizes the perceptron to K > 2 labels by maintaining a
+decision surface for each of the K possible labels. Each surface can be
+thought of as separating events in one label from events in all other labels.
+At classification time, we compute the kernel value of X and each of the Ws.
+The label with the greatest resulting scalar value is returned as the
+prediction for that event.
 
-This library also incorporates the "kernel trick" to generalize the notion of
+This module also incorporates the "kernel trick" to generalize the notion of
 the dot product to spaces of different dimensionality. Instead of computing the
 dot product between X and W, we use a kernel function that accepts X and W as
 inputs and returns a scalar value indicating their similarity in some mapped
@@ -54,24 +54,36 @@ import numpy as np
 
 
 def RadialBasisKernel(gamma):
-    '''This kernel returns the rbf between the input vectors.'''
+    '''This kernel returns the rbf between the input vectors.
+    
+    Defined as exp(-gamma * delta**2)'''
 
     def __init__(self, gamma):
-        self._minus_gamma = gamma
+        self._minus_gamma = -gamma
 
-    def __call__(self, weights, event):
-        delta = np.linalg.norm(event - weights)
+    def __call__(self, weights, x):
+        delta = np.linalg.norm(x - weights)
         return np.exp(self._minus_gamma * delta * delta)
 
 
 class PolynomialKernel(object):
-    '''This kernel returns the dot product raised to some power.'''
+    '''This kernel returns the dot product raised to some power.
+
+    Also known as homogeneous kernel.
+    
+    Parameters
+    ----------
+    degree : float
+        Degree of polynomial. Should be >1.
+    alpha : float, optional
+        Added to dot product before exponentiation, default 1.
+    '''
     def __init__(self, degree, alpha=1.0):
         self._degree = degree
         self._alpha = alpha
 
-    def __call__(self, weights, event):
-        return (np.dot(weights, event) + self._alpha) ** self._degree
+    def __call__(self, weights, x):
+        return (np.dot(weights, x) + self._alpha) ** self._degree
 
 
 class Perceptron(BaseEstimator):
@@ -106,14 +118,14 @@ class Perceptron(BaseEstimator):
             y[i] = self._classify(x)[0]
         return y
 
-    def _classify(self, event):
-        '''Classify an event into one of our possible outcomes.
+    def _classify(self, x):
+        '''Classify an event into one of our possible labels.
 
-        event: A np vector of the dimensionality of our input space.
+        x: A np vector of the dimensionality of our input space.
 
-        Returns a pair of (outcome, score) for the most likely outcome.
+        Returns a pair of (label, score) for the most likely outcome.
         '''
-        return self._max_outcome(self._weights, event)
+        return self._max_outcome(self._weights, x)
 
     def _fit(self, X, y, n_iter, averaged):
         X = np.asanyarray(X)
@@ -158,34 +170,35 @@ class Perceptron(BaseEstimator):
 
         return self._fit(X, y, n_iter=n_iter, averaged=False)
 
-    def _learn(self, event, outcome):
+    def _learn(self, x, label):
         '''Adjust the hyperplane based on a classification attempt.
 
-        event: A np vector of the dimensionality of our input space.
-        outcome: An integer in [0, outcome_size) indicating the correct outcome
-          for this event.
+        Parameters
+        ----------
+        x : array
+        label : int
         '''
-        pred, _ = self._classify(event)
-        if pred != outcome:
-            self._update_weights(pred, event, -1)
-            self._update_weights(outcome, event, 1)
+        pred, _ = self._classify(x)
+        if pred != label:
+            self._update_weights(pred, x, -1)
+            self._update_weights(label, x, 1)
 
-    def _update_weights(self, class_index, event, delta):
+    def _update_weights(self, class_index, x, delta):
         '''Update the weights for an index based on an event.
 
         class_index: The index of a weight vector to update.
-        event: An event vector to use for the update.
+        x: An event vector to use for the update.
         delta: Weight the update by this value.
         '''
-        self._weights[class_index] += delta * event
+        self._weights[class_index] += delta * x
 
-    def _max_outcome(self, weights, event):
-        '''Return the maximum scoring outcome for a set of weights.
+    def _max_outcome(self, weights, x):
+        '''Return the maximum scoring label for a set of weights.
 
-        weights: An array of weight vectors, one per outcome.
-        event: An event vector.
+        weights: An array of weight vectors, one per label.
+        x: An event vector.
         '''
-        scores = np.array([self._kernel(w, event) for w in weights])
+        scores = np.array([self._kernel(w, x) for w in weights])
         index = scores.argmax()
         # Return the score as a probability computed locally among our possible
         # outcomes. Subtracting the maximum raw score before exponentiating
@@ -198,8 +211,8 @@ class AveragedPerceptron(Perceptron):
     '''Classifier based on a weighted sum of perceptrons.
 
     This perceptron algorithm performs similarly to the basic perceptron when
-    learning from labeled data: whenever the predicted outcome for an event
-    differs from the true outcome, the weights of the perceptron are updated to
+    learning from labeled data: whenever the predicted label for an event
+    differs from the true label, the weights of the perceptron are updated to
     classify this new event correctly.
 
     However, in addition to updating the weights of the perceptron in response
@@ -220,8 +233,8 @@ class AveragedPerceptron(Perceptron):
     def __init__(self, kernel=None):
         super(AveragedPerceptron, self).__init__(kernel)
 
-    def _classify(self, event):
-        return self._max_outcome(self._history, event)
+    def _classify(self, x):
+        return self._max_outcome(self._history, x)
 
     def fit(self, X, y, n_iter=1):
         """Fit classifier according to inputs X with labels y
@@ -246,16 +259,16 @@ class AveragedPerceptron(Perceptron):
 
         return self._fit(X, y, n_iter=n_iter, averaged=True)
 
-    def _learn(self, event, outcome):
-        self._iterations[outcome] += 1
-        pred, score = self._max_outcome(self._weights, event)
-        if pred == outcome:
-            self._survived[outcome] += 1
+    def _learn(self, x, label):
+        self._iterations[label] += 1
+        pred, score = self._max_outcome(self._weights, x)
+        if pred == label:
+            self._survived[label] += 1
         else:
             self._update_history(pred)
-            self._update_history(outcome)
-            self._update_weights(pred, event, -1)
-            self._update_weights(outcome, event, 1)
+            self._update_history(label)
+            self._update_weights(pred, x, -1)
+            self._update_weights(label, x, 1)
 
     def _update_history(self, class_index):
         '''Update the history for a particular class.'''
@@ -270,9 +283,9 @@ class AveragedPerceptron(Perceptron):
 class SparseDot(object):
     '''Kernel for SparseAveragedPerceptron'''
     @staticmethod
-    def __call__(weights, event):
+    def __call__(weights, x):
         '''Return the dot product of a sparse vector and an event.'''
-        return sum(weights.get(f, 0) for f in event)
+        return sum(weights.get(f, 0) for f in x)
 
 
 class SparseAveragedPerceptron(AveragedPerceptron):
@@ -292,8 +305,7 @@ class SparseAveragedPerceptron(AveragedPerceptron):
 
     def __init__(self, beam_width=1000):
         '''Use sparse vectors to store weights and events.'''
-        super(SparseAveragedPerceptron, self).__init__()
-        self._kernel = SparseDot()
+        super(SparseAveragedPerceptron, self).__init__(kernel = SparseDot())
         self._beam_width = beam_width
 
     def fit(self, X, y, n_iter=1):
@@ -347,9 +359,9 @@ class SparseAveragedPerceptron(AveragedPerceptron):
             self._prune(h)
             self._survived[class_index] = 0
 
-    def _update_weights(self, class_index, event, delta):
+    def _update_weights(self, class_index, x, delta):
         w = self._weights[class_index]
-        for f in event:
+        for f in x:
             w[f] += delta
         self._prune(w)
 
