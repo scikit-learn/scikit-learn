@@ -29,8 +29,14 @@ from os import listdir, makedirs, remove
 import urllib
 import logging
 
-from scipy.misc import imread
-from scipy.misc import imresize
+try:
+    try:
+        from scipy.misc import imread
+    except ImportError:
+        from scipy.misc.pilutil import imread
+    from scipy.misc import imresize
+except ImportError:
+    imread, imresize = None, None
 import numpy as np
 
 from scikits.learn.externals.joblib import Memory
@@ -85,7 +91,8 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 url = BASE_URL + target_filename
                 logging.warn("Downloading LFW metadata: %s", url)
                 downloader = urllib.urlopen(BASE_URL + target_filename)
-                open(target_filepath, 'wb').write(downloader.read())
+                data = downloader.read()
+                open(target_filepath, 'wb').write(data)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -95,7 +102,9 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
             if download_if_missing:
                 logging.warn("Downloading LFW data (~200MB): %s", archive_url)
                 downloader = urllib.urlopen(archive_url)
-                open(archive_path, 'wb').write(downloader.read())
+                data = downloader.read()
+                # don't open file until download is complete
+                open(archive_path, 'wb').write(data)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -133,6 +142,8 @@ def _load_imgs(file_paths, slice_, color, resize):
     else:
         faces = np.zeros((n_faces, h, w, 3), dtype=np.float32)
 
+    if imread is None or imresize is None:
+        raise ImporError("PIL is required to load data from jpeg files")
     # iterate over the collected file path to load the jpeg files as numpy
     # arrays
     for i, file_path in enumerate(file_paths):
@@ -198,7 +209,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 
 def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
-                    min_faces_per_person=10, color=False,
+                    min_faces_per_person=None, color=False,
                     slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
@@ -228,7 +239,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     resize: float, optional, default 0.5
         Ratio used to resize the each face picture.
 
-    min_faces_per_person=10: int, optional, default 10
+    min_faces_per_person: int, optional, default None
         The extracted dataset will only retain pictures of people that have at
         least `min_faces_per_person` different pictures.
 

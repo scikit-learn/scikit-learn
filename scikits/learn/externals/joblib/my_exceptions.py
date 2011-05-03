@@ -5,7 +5,7 @@ Exceptions
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
 
-import exceptions
+import sys
 
 class JoblibException(Exception):
     """ A simple exception with an error message that you can get to.
@@ -65,8 +65,17 @@ def _mk_exception(exception, name=None):
 
 def _mk_common_exceptions():
     namespace = dict()
-    for name in dir(exceptions):
-        obj = getattr(exceptions, name)
+    if sys.version_info[0] == 3:
+        import builtins as _builtin_exceptions
+        common_exceptions = filter(
+            lambda x: x.endswith('Error'),
+            dir(_builtin_exceptions))
+    else:
+        import exceptions as _builtin_exceptions
+        common_exceptions = dir(_builtin_exceptions)
+
+    for name in common_exceptions:
+        obj = getattr(_builtin_exceptions, name)
         if isinstance(obj, type) and issubclass(obj, BaseException):
             try:
                 this_obj, this_name = _mk_exception(obj, name=name)

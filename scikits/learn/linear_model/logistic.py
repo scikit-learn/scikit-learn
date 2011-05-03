@@ -3,7 +3,7 @@ import numpy as np
 from ..base import ClassifierMixin
 from ..linear_model.base import CoefSelectTransformerMixin
 from ..svm.base import BaseLibLinear
-from ..svm import _liblinear
+from ..svm import liblinear
 
 class LogisticRegression(BaseLibLinear, ClassifierMixin,
                          CoefSelectTransformerMixin):
@@ -97,7 +97,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin,
             order.
         """
         X = np.asanyarray(X, dtype=np.float64, order='C')
-        probas = _liblinear.predict_prob_wrap(X, self.raw_coef_,
+        probas = liblinear.predict_prob_wrap(X, self.raw_coef_,
                                       self._get_solver_type(),
                                       self.tol, self.C,
                                       self.class_weight_label,

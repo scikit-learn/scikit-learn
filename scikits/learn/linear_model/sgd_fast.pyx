@@ -197,19 +197,23 @@ cdef class Huber(Regression):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def plain_sgd(np.ndarray[double, ndim=1] w,
+def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
               double intercept,
               LossFunction loss,
               int penalty_type,
               double alpha, double rho,
-              np.ndarray[double, ndim=2] X,
-              np.ndarray[double, ndim=1] Y,
+              np.ndarray[np.float64_t, ndim=2, mode='c'] X,
+              np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               double weight_pos, double weight_neg,
+<<<<<<< HEAD
               np.ndarray[double, ndim=1] sample_weight,
               int learning_rate, double eta0,
               double power_t):
+=======
+              np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight):
+>>>>>>> master
     """Cython impl. of SGD for generic loss functions and penalties
 
     This implementation assumes X represented as a dense array of floats.
@@ -284,8 +288,8 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double *sample_weight_data = <double *>sample_weight.data
 
     # Use index array for fast shuffling
-    cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
-                                                             dtype = np.int32)
+    cdef np.ndarray[np.int32_t, ndim=1, mode="c"] index = np.arange(n_samples,
+                                                                    dtype=np.int32)
     cdef int *index_data_ptr = <int *>index.data
 
     # helper variable
@@ -305,10 +309,10 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef int sample_idx = 0
 
     # q vector is only used for L1 regularization
-    cdef np.ndarray[double, ndim=1, mode="c"] q = None
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr
     if penalty_type != L2:
-        q = np.zeros((n_features,), dtype = np.float64, order = "c")
+        q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
 

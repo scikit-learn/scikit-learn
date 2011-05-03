@@ -12,7 +12,6 @@ Generalized Linear models.
 # License: BSD Style.
 
 import numpy as np
-import scipy.sparse as sp
 
 from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
@@ -54,8 +53,9 @@ class LinearModel(BaseEstimator, RegressorMixin):
         because nearly all Linear Models will want it's data to be
         centered.
         """
+        import scipy.sparse # importing scipy.sparse just for this is overkill
         if fit_intercept:
-            if sp.issparse(X):
+            if scipy.sparse.issparse(X):
                 Xmean = np.zeros(X.shape[1])
             else:
                 Xmean = X.mean(axis=0)

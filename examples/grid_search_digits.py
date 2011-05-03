@@ -49,8 +49,7 @@ scores = [
 ]
 
 for score_name, score_func in scores:
-    clf = GridSearchCV(SVC(C=1), tuned_parameters, n_jobs=2,
-                       score_func=score_func)
+    clf = GridSearchCV(SVC(C=1), tuned_parameters, score_func=score_func)
     clf.fit(X[train], y[train], cv=StratifiedKFold(y[train], 5))
     y_true, y_pred = y[test], clf.predict(X[test])
 
@@ -60,7 +59,7 @@ for score_name, score_func in scores:
         score_name, score_func(y_true, y_pred))
     print classification_report(y_true, y_pred)
     print "Grid scores:"
-    pprint(clf.grid_points_scores_)
+    pprint(clf.grid_scores_)
     print
 
 # Note the problem is too easy: the hyperparameter plateau is too flat and the
