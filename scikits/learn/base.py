@@ -1,18 +1,14 @@
-"""
-Base class for all estimators.
-
-"""
+"""Base class for all estimators."""
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-
 # License: BSD Style
-import inspect
+
 import copy
-
+import inspect
 import numpy as np
-
 from .metrics import r2_score
 
-################################################################################
+
+###############################################################################
 def clone(estimator, safe=True):
     """ Constructs a new estimator with the same parameters.
 
@@ -21,9 +17,10 @@ def clone(estimator, safe=True):
     with the same parameters that has not been fit on any data.
 
     Parameters
-    ============
+    ----------
     estimator: estimator object, or list, tuple or set of objects
         The estimator or group of estimators to be cloned
+
     safe: boolean, optional
         If safe is false, clone will fall back to a deepcopy on objects
         that are not estimators.
@@ -32,7 +29,7 @@ def clone(estimator, safe=True):
     estimator_type = type(estimator)
     # XXX: not handling dictionnaries
     if estimator_type in (list, tuple, set, frozenset):
-         return estimator_type([clone(e, safe=safe) for e in estimator])
+        return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, '_get_params'):
         if not safe:
             return copy.deepcopy(estimator)
@@ -54,16 +51,18 @@ def clone(estimator, safe=True):
     return new_object
 
 
-################################################################################
+###############################################################################
 def _pprint(params, offset=0, printer=repr):
     """ Pretty print the dictionnary 'params'
 
         Parameters
-        ==========
+        ----------
         params: dict
             The dictionnary to pretty print
+
         offset: int
             The offset in characters to add at the begin of each line.
+
         printer:
             The function to convert entries to strings, typically
             the builtin str or repr
@@ -79,10 +78,10 @@ def _pprint(params, offset=0, printer=repr):
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.
-            this_repr  = '%s=%s' % (k, str(v))
+            this_repr = '%s=%s' % (k, str(v))
         else:
             # use repr of the rest
-            this_repr  = '%s=%s' % (k, printer(v))
+            this_repr = '%s=%s' % (k, printer(v))
         if len(this_repr) > 500:
             this_repr = this_repr[:300] + '...' + this_repr[-100:]
         if i > 0:
@@ -103,7 +102,7 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-################################################################################
+###############################################################################
 class BaseEstimator(object):
     """ Base class for all estimators in the scikit learn
 
@@ -138,15 +137,15 @@ class BaseEstimator(object):
         """ Get parameters for the estimator
 
             Parameters
-            ==========
+            ----------
             deep: boolean, optional
                 If True, will return the parameters for this estimator and
                 contained subobjects that are estimators.
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr (self, key)
-            if deep and hasattr (value, '_get_params'):
+            value = getattr(self, key)
+            if deep and hasattr(value, '_get_params'):
                 deep_items = value._get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
             out[key] = value
@@ -178,7 +177,7 @@ class BaseEstimator(object):
                     'sub parameter %s' %
                         (sub_name, self.__class__.__name__, sub_name)
                     )
-                sub_object._set_params(**{sub_name:value})
+                sub_object._set_params(**{sub_name: value})
             else:
                 # simple objects case
                 assert key in valid_params, ('Invalid parameter %s '
@@ -207,7 +206,7 @@ class BaseEstimator(object):
             )
 
 
-################################################################################
+###############################################################################
 class ClassifierMixin(object):
     """ Mixin class for all classifiers in the scikit learn
     """
@@ -230,7 +229,7 @@ class ClassifierMixin(object):
         return np.mean(self.predict(X) == y)
 
 
-################################################################################
+###############################################################################
 class RegressorMixin(object):
     """ Mixin class for all regression estimators in the scikit learn
     """
@@ -252,7 +251,7 @@ class RegressorMixin(object):
         return r2_score(y, self.predict(X))
 
 
-################################################################################
+###############################################################################
 class TransformerMixin(object):
     """ Mixin class for all transformers in the scikit learn
     """
@@ -260,9 +259,9 @@ class TransformerMixin(object):
     def fit_transform(self, X, y=None, **fit_params):
         """Fit model to data and subsequently transform the data
 
-        Sometimes, fit and transform can be implemented more efficiently jointly
-        than separately. In those cases, the estimator will typically override
-        the method.
+        Sometimes, fit and transform can be implemented more efficiently
+        jointly than separately. In those cases, the estimator will typically
+        override the method.
 
         Parameters
         ----------
@@ -283,7 +282,8 @@ class TransformerMixin(object):
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
-################################################################################
+
+###############################################################################
 # XXX: Temporary solution to figure out if an estimator is a classifier
 
 def _get_sub_estimator(estimator):
@@ -303,4 +303,3 @@ def is_classifier(estimator):
     """
     estimator = _get_sub_estimator(estimator)
     return isinstance(estimator, ClassifierMixin)
-

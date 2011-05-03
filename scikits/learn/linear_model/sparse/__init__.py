@@ -1,9 +1,6 @@
 """
-Generalized linear models with sparse data
-==========================================
-
-scikits.learn.glm.sparse is the sparse counterpart
-of scikits.learn.glm
+:mod:`scikits.learn.linear_model.sparse` is the sparse counterpart
+of :mod:`scikits.learn.linear_model`.
 
 """
 

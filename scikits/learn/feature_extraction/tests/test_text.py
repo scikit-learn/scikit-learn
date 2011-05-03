@@ -7,16 +7,13 @@ from scikits.learn.feature_extraction.text import CountVectorizer
 from scikits.learn.feature_extraction.text import TfidfTransformer
 from scikits.learn.feature_extraction.text import Vectorizer
 
-import scikits.learn.feature_extraction.text.sparse as st
-
-SparseCountVectorizer = st.CountVectorizer
-SparseTfidfTransformer = st.TfidfTransformer
-SparseVectorizer = st.Vectorizer
+SparseCountVectorizer = CountVectorizer
+SparseTfidfTransformer = TfidfTransformer
+SparseVectorizer = Vectorizer
 
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.pipeline import Pipeline
-from scikits.learn.svm import LinearSVC as DenseLinearSVC
-from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
+from scikits.learn.svm.sparse import LinearSVC as LinearSVC
 
 import numpy as np
 import numpy.linalg as la
@@ -57,8 +54,8 @@ def test_strip_accents():
     assert_equal(strip_accents(a), expected)
 
     # check some arabic
-    a = u'\u0625' # halef with a hamza below
-    expected = u'\u0627' # simple halef
+    a = u'\u0625'  # halef with a hamza below
+    expected = u'\u0627'  # simple halef
     assert_equal(strip_accents(a), expected)
 
     # mix letters accentuated and not
@@ -78,8 +75,8 @@ def test_to_ascii():
     assert_equal(to_ascii(a), expected)
 
     # check some arabic
-    a = u'\u0625' # halef with a hamza below
-    expected = u'' # halef has no direct ascii match
+    a = u'\u0625'  # halef with a hamza below
+    expected = u''  # halef has no direct ascii match
     assert_equal(to_ascii(a), expected)
 
     # mix letters accentuated and not
@@ -116,13 +113,13 @@ def test_word_analyzer_unigrams_and_bigrams():
 def test_char_ngram_analyzer():
     cnga = CharNGramAnalyzer(min_n=3, max_n=6)
 
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
     expected = [u"j'a", u"'ai", u'ai ', u'i m', u' ma']
     assert_equal(cnga.analyze(text)[:5], expected)
     expected = [u's tres', u' tres ', u'tres b', u'res bo', u'es bon']
     assert_equal(cnga.analyze(text)[-5:], expected)
 
-    text = "This \n\tis a test, really.\n\n I met Harry yesterday."
+    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
     expected = [u'thi', u'his', u'is ', u's i', u' is']
     assert_equal(cnga.analyze(text)[:5], expected)
     expected = [u' yeste', u'yester', u'esterd', u'sterda', u'terday']
@@ -228,6 +225,7 @@ def test_vectorizer():
         # return the same results
         assert_array_equal(res_dense[i], res_sparse[i])
 
+
 def test_vectorizer_max_features():
     vec_factories = (
         CountVectorizer,
@@ -251,6 +249,18 @@ def test_vectorizer_max_features():
         assert_equals(vectorizer.vocabulary, expected_vocabulary)
 
 
+def test_vectorizer_max_df():
+    test_data = [u'abc', u'dea']  # the letter a occurs in all strings
+    vect = CountVectorizer(CharNGramAnalyzer(min_n=1, max_n=1), max_df=1.0)
+    vect.fit(test_data)
+    assert u'a' in vect.vocabulary.keys()
+    assert_equals(len(vect.vocabulary.keys()), 5)
+    vect.max_df = 0.5
+    vect.fit(test_data)
+    assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored
+    assert_equals(len(vect.vocabulary.keys()), 4)  # the others remain
+
+
 def test_dense_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -262,14 +272,14 @@ def test_dense_vectorizer_pipeline_grid_selection():
     y = np.ones(len(data))
     y[:6] = -1
     y_train = y[1:-1]
-    y_test = np.array([y[0],y[-1]])
+    y_test = np.array([y[0], y[-1]])
 
     pipeline = Pipeline([('vect', CountVectorizer()),
-                         ('svc', DenseLinearSVC())])
+                         ('svc', LinearSVC())])
 
     parameters = {
         'vect__analyzer__max_n': (1, 2),
-        'svc__loss'  : ('l1', 'l2')
+        'svc__loss': ('l1', 'l2')
     }
 
     # find the best parameters for both the feature extraction and the
@@ -281,12 +291,12 @@ def test_dense_vectorizer_pipeline_grid_selection():
     pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
     assert_array_equal(pred, y_test)
 
-    # on this toy dataset bigram representation which is used in the last of the
-    # grid_search is considered the best estimator since they all converge to
-    # 100% accurracy models
+    # on this toy dataset bigram representation which is used in the last of
+    # the grid_search is considered the best estimator since they all converge
+    # to 100% accurracy models
     assert_equal(grid_search.best_score, 1.0)
     best_vectorizer = grid_search.best_estimator.named_steps['vect']
-    assert_equal(best_vectorizer.analyzer.max_n, 2)
+    assert_equal(best_vectorizer.analyzer.max_n, 1)
 
 
 def test_pickle():
@@ -296,4 +306,3 @@ def test_pickle():
 
         s = pickle.dumps(obj)
         assert_equal(type(pickle.loads(s)), obj.__class__)
-

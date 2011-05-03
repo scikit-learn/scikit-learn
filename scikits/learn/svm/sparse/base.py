@@ -1,11 +1,8 @@
 import numpy as np
 
 from ..base import BaseLibSVM, BaseLibLinear, _get_class_weight
-
-from ._libsvm_sparse import libsvm_sparse_train, \
-     libsvm_sparse_predict, set_verbosity_wrap
-
-from .. import _liblinear
+from . import libsvm
+from .. import liblinear
 
 
 class SparseBaseLibSVM(BaseLibSVM):
@@ -14,7 +11,7 @@ class SparseBaseLibSVM(BaseLibSVM):
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
     def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
-                 eps, C, nu, p, shrinking, probability):
+                 tol, C, nu, epsilon, shrinking, probability):
 
         assert impl in self._svm_types, \
             "impl should be one of %s, %s was given" % (
@@ -30,10 +27,10 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.gamma = gamma
         self.coef0 = coef0
         self.cache_size = cache_size
-        self.eps = eps
+        self.tol = tol
         self.C = C
         self.nu = nu
-        self.p = p
+        self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
 
@@ -49,7 +46,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.intercept_ = np.empty(0, dtype=np.float64, order='C')
 
         # only used in classification
-        self.n_support = np.empty(0, dtype=np.int32, order='C')
+        self.n_support_ = np.empty(0, dtype=np.int32, order='C')
 
     def fit(self, X, y, class_weight={}, sample_weight=[], **params):
         """
@@ -66,7 +63,7 @@ class SparseBaseLibSVM(BaseLibSVM):
             Target values (integers in classification, real numbers in
             regression)
 
-        class_weight : dict | 'auto', optional
+        class_weight : {dict, 'auto'}, optional
             Weights associated with classes in the form
             {class_label : weight}. If not given, all classes are
             supposed to have weight one.
@@ -102,18 +99,18 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.class_weight, self.class_weight_label = \
                      _get_class_weight(class_weight, y)
 
-        if (kernel_type == 2) and (self.gamma == 0):
+        if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
             self.gamma = 1.0 / X.shape[0]
 
-        self.label_, self.probA_, self.probB_ = libsvm_sparse_train(
+        self.label_, self.probA_, self.probB_ = libsvm.libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y,
                  solver_type, kernel_type, self.degree, self.gamma,
-                 self.coef0, self.eps, self.C, self._support_data,
+                 self.coef0, self.tol, self.C, self._support_data,
                  self._support_indices, self._support_indptr,
                  self._dual_coef_data, self.intercept_,
                  self.class_weight_label, self.class_weight, sample_weight,
-                 self.n_support, self.nu, self.cache_size, self.p,
+                 self.n_support_, self.nu, self.cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
 
         n_class = len(self.label_) - 1
@@ -161,16 +158,16 @@ class SparseBaseLibSVM(BaseLibSVM):
         T.data = np.asanyarray(T.data, dtype=np.float64, order='C')
         kernel_type = self._kernel_types.index(self.kernel)
 
-        return libsvm_sparse_predict(T.data, T.indices, T.indptr,
+        return libsvm.libsvm_sparse_predict(T.data, T.indices, T.indptr,
                       self.support_vectors_.data,
                       self.support_vectors_.indices,
                       self.support_vectors_.indptr,
                       self.dual_coef_.data, self.intercept_,
                       self._svm_types.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.eps,
+                      self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label, self.class_weight,
-                      self.nu, self.cache_size, self.p, self.shrinking,
-                      self.probability, self.n_support, self.label_,
+                      self.nu, self.cache_size, self.epsilon, self.shrinking,
+                      self.probability, self.n_support_, self.label_,
                       self.probA_, self.probB_)
 
 
@@ -204,10 +201,10 @@ class SparseBaseLibLinear(BaseLibLinear):
                      _get_class_weight(class_weight, y)
 
         self.raw_coef_, self.label_ = \
-                       _liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
+                       liblinear.csr_train_wrap(X.shape[1], X.data, X.indices,
                        X.indptr, y,
                        self._get_solver_type(),
-                       self.eps, self._get_bias(), self.C,
+                       self.tol, self._get_bias(), self.C,
                        self.class_weight_label, self.class_weight)
 
         return self
@@ -229,11 +226,11 @@ class SparseBaseLibLinear(BaseLibLinear):
         self._check_n_features(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
 
-        return _liblinear.csr_predict_wrap(X.shape[1], X.data,
+        return liblinear.csr_predict_wrap(X.shape[1], X.data,
                                       X.indices, X.indptr,
                                       self.raw_coef_,
                                       self._get_solver_type(),
-                                      self.eps, self.C,
+                                      self.tol, self.C,
                                       self.class_weight_label,
                                       self.class_weight, self.label_,
                                       self._get_bias())
@@ -258,9 +255,9 @@ class SparseBaseLibLinear(BaseLibLinear):
         self._check_n_features(X)
         X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
 
-        dec_func = _liblinear.csr_decision_function_wrap(
+        dec_func = liblinear.csr_decision_function_wrap(
             X.shape[1], X.data, X.indices, X.indptr, self.raw_coef_,
-            self._get_solver_type(), self.eps, self.C,
+            self._get_solver_type(), self.tol, self.C,
             self.class_weight_label, self.class_weight, self.label_,
             self._get_bias())
 
@@ -271,4 +268,4 @@ class SparseBaseLibLinear(BaseLibLinear):
         else:
             return dec_func
 
-set_verbosity_wrap(0)
+libsvm.set_verbosity_wrap(0)

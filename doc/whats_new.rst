@@ -43,7 +43,8 @@ Changelog
     the k-Nearest Neighbor Search and implemented a more stable
     algorithm for finding barycenter weigths. Also added some
     developer documentation for this module, see
-    :ref:`notes_neighbors` for more information [`Fabian Pedregosa`_].
+    `notes_neighbors
+    <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].
 
   - Documentation improvements: Added :class:`pca.RandomizedPCA` and
     :class:`linear_model.LogisticRegression` to the class
@@ -102,19 +103,19 @@ inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
 
-.. |banner1| image:: auto_examples/applications/images/plot_face_recognition.png
+.. |banner1| image:: images/plot_face_recognition_1.png
    :height: 150
-   :target: auto_examples/applications/plot_face_recognition.html
+   :target: auto_examples/applications/face_recognition.html
 
-.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling.png
+.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
    :height: 150
    :target: auto_examples/linear_model/plot_species_distribution.html
 
-.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression.png
+.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
    :height: 150
    :target: auto_examples/gaussian_process/plot_gp_regression.html
 
-.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris.png
+.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris_1.png
    :height: 150
    :target: auto_examples/linear_model/plot_lasso_lars.html
 
@@ -367,8 +368,8 @@ Major changes in this release include:
     - Documentation improvements (both docstring and rst).
 
     - Improvement of the build system to (optionally) link with MKL. 
- Also, provide a lite BLAS implementation in case no system-wide BLAS is 
- found.
+      Also, provide a lite BLAS implementation in case no system-wide BLAS is 
+      found.
 
     - Lots of new examples.
 

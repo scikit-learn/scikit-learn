@@ -35,7 +35,18 @@ scipy, setuptools, python development headers and a working C++
 compiler. Under debian-like systems you can get all this by executing
 with root privileges::
 
-    sudo apt-get install python-dev python-numpy python-setuptools python-scipy libatlas-dev g++
+    sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
+
+.. note::
+
+    In Order to build the documentation and run the example code contains in
+    this documentation you will need matplotlib::
+
+        sudo apt-get install python-matplotlib
+
+.. note::
+
+    On Ubuntu LTS (10.04) the package `libatlas-dev` is called `libatlas-headers`
 
 Easy install
 ~~~~~~~~~~~~
@@ -75,6 +86,44 @@ project's web page. Note that must also have installed the packages
 numpy and setuptools.
 
 This package is also expected to work with python(x,y) as of 2.6.5.5.
+
+
+.. _build_on_windows
+
+Building on windows
+-------------------
+
+To build scikits.learn on windows you will need a C/C++ compiler in
+addition to numpy, scipy and setuptools. At least
+`MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and the
+Microsoft Visual C++ 2008 should work out of the box. To force the use
+of a particular compiler, write a file named ``setup.cfg`` in the
+source directory with the content::
+
+    [build_ext]
+    compiler=my_compiler
+
+    [build]
+    compiler=my_compiler
+
+where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+
+When the appropriate compiler has been set, and assuming Python is
+in your PATH (see
+`Python FAQ for windows <http://docs.python.org/faq/windows.html>`_
+for more details), installation is done by
+executing the command::
+
+    python setup.py install
+
+
+To build a precompiled package like the ones distributed at 
+`the downloads section <https://sourceforge.net/projects/scikit-learn/files/>`_,
+the command to execute is::
+
+    python setup.py bdist_wininst -b doc/logos/scikit-learn-logo.bmp
+
+This will create an installable binary under directory ``dist/``.
 
 
 .. _install_by_distribution:

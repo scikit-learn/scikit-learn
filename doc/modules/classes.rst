@@ -9,9 +9,15 @@ Class reference
 Support Vector Machines
 =======================
 
+
+.. automodule:: scikits.learn.svm
+   :no-members:
+   :no-inherited-members:
+
 .. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -22,10 +28,25 @@ Support Vector Machines
    svm.NuSVR
    svm.OneClassSVM
 
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   svm.l1_min_c
+
+
 For sparse data
------------------
+---------------
+
+.. automodule:: scikits.learn.svm.sparse
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -37,10 +58,33 @@ For sparse data
    svm.sparse.LinearSVC
 
 
+
+Low-level methods
+-----------------
+
+.. autosummary::
+
+   :toctree: generated
+   :template: function.rst
+
+   svm.libsvm.fit
+   svm.libsvm.decision_function
+   svm.libsvm.predict
+   svm.libsvm.predict_proba
+   svm.libsvm.cross_validation
+
+
 Generalized Linear Models
 =========================
 
+.. automodule:: scikits.learn.linear_model
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -56,9 +100,12 @@ Generalized Linear Models
    linear_model.LogisticRegression
    linear_model.SGDClassifier
    linear_model.SGDRegressor
+   linear_model.BayesianRidge
+   linear_model.ARDRegression
 
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
@@ -69,7 +116,14 @@ Generalized Linear Models
 For sparse data
 ---------------
 
+.. automodule:: scikits.learn.linear_model.sparse
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -77,22 +131,19 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
-        
 
-Bayesian Regression
-===================
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   linear_model.BayesianRidge
-   linear_model.ARDRegression   
 
 Naive Bayes
 ===========
 
+.. automodule:: scikits.learn.naive_bayes
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -102,7 +153,14 @@ Naive Bayes
 Nearest Neighbors
 =================
 
+.. automodule:: scikits.learn.neighbors
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -111,16 +169,24 @@ Nearest Neighbors
    ball_tree.BallTree
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
    neighbors.kneighbors_graph
-   ball_tree.knn_brute
+
 
 Gaussian Mixture Models
 =======================
 
+.. automodule:: scikits.learn.mixture
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -130,7 +196,14 @@ Gaussian Mixture Models
 Hidden Markov Models
 ====================
 
+.. automodule:: scikits.learn.hmm
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -142,7 +215,14 @@ Hidden Markov Models
 Clustering
 ==========
 
+.. automodule:: scikits.learn.cluster
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -150,18 +230,24 @@ Clustering
    cluster.MeanShift
    cluster.SpectralClustering
    cluster.AffinityPropagation
+   cluster.Ward
 
 
 Metrics
 =======
 
+.. automodule:: scikits.learn.metrics
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
    metrics.euclidean_distances
-   metrics.unique_labels
    metrics.confusion_matrix
    metrics.roc_curve
    metrics.auc
@@ -177,12 +263,37 @@ Metrics
    metrics.zero_one
    metrics.mean_square_error
 
+Pairwise metrics
+------------------
+
+.. automodule:: scikits.learn.metrics.pairwise
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.pairwise.euclidean_distances
+   metrics.pairwise.linear_kernel
+   metrics.pairwise.polynomial_kernel
+   metrics.pairwise.rbf_kernel
+
 
 Covariance Estimators
 =====================
 
+.. automodule:: scikits.learn.covariance
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -191,38 +302,57 @@ Covariance Estimators
    covariance.LedoitWolf
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
    covariance.ledoit_wolf
-
+   covariance.shrunk_covariance
+   covariance.oas
 
 
 Signal Decomposition
-=======================
+====================
+
+.. automodule:: scikits.learn.decomposition
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
-   pca.PCA
-   pca.ProbabilisticPCA
-   pca.RandomizedPCA
-   fastica.FastICA
+   decomposition.PCA
+   decomposition.ProbabilisticPCA
+   decomposition.RandomizedPCA
+   decomposition.KernelPCA
+   decomposition.FastICA
+   decomposition.NMF
 
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
-   fastica.fastica
+   decomposition.fastica
 
 Cross Validation
-===================
+================
+
+.. automodule:: scikits.learn.cross_val
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
-   
+
    cross_val.LeaveOneOut
    cross_val.LeavePOut
    cross_val.KFold
@@ -234,7 +364,14 @@ Cross Validation
 Grid Search
 ===========
 
+.. automodule:: scikits.learn.grid_search
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -243,10 +380,18 @@ Grid Search
 
 .. _feature_selection_ref:
 
+
 Feature Selection
 =================
 
+.. automodule:: scikits.learn.feature_selection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -256,16 +401,45 @@ Feature Selection
 
 .. _feature_extraction_ref:
 
+
 Feature Extraction
 ==================
 
+.. automodule:: scikits.learn.feature_extraction
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+From images
+-------------
+
+.. automodule:: scikits.learn.feature_extraction.image
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: function.rst
 
    feature_extraction.image.img_to_graph
+   feature_extraction.image.grid_to_graph
+
+
+From text
+-------------
+
+.. automodule:: scikits.learn.feature_extraction.text
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
 
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
@@ -276,23 +450,40 @@ Feature Extraction
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.Vectorizer
 
-For sparse data
----------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   feature_extraction.text.sparse.TfidfTransformer
-   feature_extraction.text.sparse.CountVectorizer 
-   feature_extraction.text.sparse.Vectorizer 
-
 
 Pipeline
 ========
 
+.. automodule:: scikits.learn.pipeline
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
 .. autosummary::
+
    :toctree: generated/
    :template: class.rst
 
    pipeline.Pipeline
+
+
+Partial Least Squares
+=====================
+
+.. automodule:: scikits.learn.pls
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: class.rst
+
+   pls.PLSRegression
+   pls.PLSCanonical
+   pls.CCA
+   pls.PLSSVD
+

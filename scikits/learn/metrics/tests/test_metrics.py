@@ -186,7 +186,7 @@ avg / total       0.62      0.61      0.56        75
 """
     report = classification_report(
         y_true, y_pred, labels=range(len(iris.target_names)),
-        class_names=iris.target_names)
+        target_names=iris.target_names)
     assert_equal(report, expected_report)
 
     # print classification report with label detection

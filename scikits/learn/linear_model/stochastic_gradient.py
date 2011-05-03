@@ -53,13 +53,17 @@ class SGDClassifier(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int
+    n_iter: int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle: bool
+    shuffle: bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
+
+    seed: int, optional
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
 
     verbose: integer, optional
         The verbosity level
@@ -71,9 +75,9 @@ class SGDClassifier(BaseSGDClassifier):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] if n_classes == 2 else [n_classes,
+    `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
     n_features]
-        Weights asigned to the features.
+        Weights assigned to the features.
 
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
@@ -87,7 +91,7 @@ class SGDClassifier(BaseSGDClassifier):
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', rho=1.0, alpha=0.0001)
+           fit_intercept=True, penalty='l2', seed=0, rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -97,73 +101,15 @@ class SGDClassifier(BaseSGDClassifier):
 
     """
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight={}, **params):
-        """Fit linear model with Stochastic Gradient Descent.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-            Training data
-        y : numpy array of shape [n_samples]
-            Target values
-        coef_init : array, shape = [n_features] if n_classes == 2 else [n_classes,
-        n_features]
-            The initial coeffients to warm-start the optimization.
-        intercept_init : array, shape = [1] if n_classes == 2 else [n_classes]
-            The initial intercept to warm-start the optimization.
-        class_weight : dict, {class_label : weight} or "auto"
-            Weights associated with classes. If not given, all classes
-            are supposed to have weight one.
-
-            The "auto" mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params(**params)
-        X = np.asanyarray(X, dtype=np.float64)
-        y = np.asanyarray(y, dtype=np.float64)
-
-        # largest class id is positive class
-        self.classes = np.unique(y)
-
-        self.weight = self._get_class_weight(class_weight, self.classes, y)
-
-        if self.classes.shape[0] > 2:
-            self._fit_multiclass(X, y, coef_init, intercept_init)
-        elif self.classes.shape[0] == 2:
-            self._fit_binary(X, y, coef_init, intercept_init)
-        else:
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
-        # return self for chaining fit and predict calls
-        return self
-
-    def _fit_binary(self, X, y, coef_init, intercept_init):
+    def _fit_binary(self, X, y):
         """Fit a single binary classifier"""
+        # interprete X as dense array
+        X = np.asanyarray(X, dtype=np.float64, order='C')
+
         # encode original class labels as 1 (classes[1]) or -1 (classes[0]).
-        y_new = np.ones(y.shape, dtype=np.float64) * -1.0
+        y_new = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
         y_new[y == self.classes[1]] = 1.0
         y = y_new
-
-        n_samples, n_features = X.shape[0], X.shape[1]
-        self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
-        self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
-        if coef_init is not None:
-            coef_init = np.asanyarray(coef_init)
-            if coef_init.shape != (n_features,):
-                raise ValueError("Provided coef_init does not match dataset.")
-            self.coef_ = coef_init
-        if intercept_init is not None:
-            intercept_init = np.asanyarray(intercept_init)
-            if intercept_init.shape != (1,):
-                raise ValueError("Provided intercept_init " \
-                                 "does not match dataset.")
-            else:
-                self.intercept_ = intercept_init
 
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
@@ -175,37 +121,23 @@ class SGDClassifier(BaseSGDClassifier):
                                       int(self.fit_intercept),
                                       int(self.verbose),
                                       int(self.shuffle),
-                                      self.weight[1], self.weight[0])
+                                      self.seed,
+                                      self.class_weight[1],
+                                      self.class_weight[0],
+                                      self.sample_weight)
 
-        self.coef_ = coef_
+        self.coef_ = np.atleast_2d(coef_)
         self.intercept_ = np.asarray(intercept_)
 
-    def _fit_multiclass(self, X, y, coef_init, intercept_init):
+    def _fit_multiclass(self, X, y):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        n_classes = self.classes.shape[0]
-        n_samples, n_features = X.shape[0], X.shape[1]
-        self.coef_ = np.zeros((n_classes, n_features),
-                         dtype=np.float64, order="C")
-        self.intercept_ = np.zeros(n_classes, dtype=np.float64, order="C")
+        X = np.asanyarray(X, dtype=np.float64, order='C')
 
-        if coef_init is not None:
-            coef_init = np.asanyarray(coef_init)
-            if coef_init.shape != (n_classes, n_features):
-                raise ValueError("Provided coef_ does not match dataset. ")
-            else:
-                self.coef_ = coef_init
-        if intercept_init is not None:
-            intercept_init = np.asanyarray(intercept_init)
-            if intercept_init.shape != (n_classes, ):
-                raise ValueError("Provided intercept_init " \
-                                 "does not match dataset.")
-            else:
-                self.intercept_ = intercept_init
-
+        # Use joblib to run OVA in parallel.
         res = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_train_ova_classifier)(i, c, X, y, self.coef_[i],
                                                self.intercept_[i],
@@ -214,7 +146,9 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.rho, self.n_iter,
                                                self.fit_intercept,
                                                self.verbose, self.shuffle,
-                                               self.weight[i])
+                                               self.seed,
+                                               self.class_weight[i],
+                                               self.sample_weight)
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
@@ -243,14 +177,16 @@ class SGDClassifier(BaseSGDClassifier):
 
 def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,
                           penalty_type, alpha, rho, n_iter, fit_intercept,
-                          verbose, shuffle, weight_pos):
+                          verbose, shuffle, seed, class_weight_pos,
+                          sample_weight):
     """Inner loop for One-vs.-All scheme"""
-    y_i = np.ones(y.shape, dtype=np.float64) * -1.0
+    y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
     y_i[y == c] = 1.0
     coef, intercept = plain_sgd(coef_, intercept_, loss_function,
                                 penalty_type, alpha, rho,
                                 X, y_i, n_iter, fit_intercept,
-                                verbose, shuffle, weight_pos, 1.0)
+                                verbose, shuffle, seed, class_weight_pos, 1.0,
+                                sample_weight)
     return (i, coef, intercept)
 
 
@@ -295,13 +231,17 @@ class SGDRegressor(BaseSGDRegressor):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int
+    n_iter: int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle: bool
+    shuffle: bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
+
+    seed: int, optional
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
 
     verbose: integer, optional
         The verbosity level.
@@ -329,7 +269,8 @@ class SGDRegressor(BaseSGDRegressor):
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
     SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', p=0.1, rho=1.0, alpha=0.0001)
+           fit_intercept=True, penalty='l2', p=0.1, seed=0, rho=1.0,
+           alpha=0.0001)
 
     See also
     --------
@@ -337,45 +278,8 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            **params):
-        """Fit linear model with Stochastic Gradient Descent.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-            Training data
-        y : numpy array of shape [n_samples]
-            Target values
-        coef_init : array, shape = [n_features]
-            The initial coeffients to warm-start the optimization.
-        intercept_init : array, shape = [1]
-            The initial intercept to warm-start the optimization.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params(**params)
-        X = np.asanyarray(X, dtype=np.float64)
-        y = np.asanyarray(y, dtype=np.float64)
-
-        n_samples, n_features = X.shape[0], X.shape[1]
-        self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
-        self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
-        if coef_init is not None:
-            coef_init = np.asanyarray(coef_init)
-            if coef_init.shape != (n_features,):
-                raise ValueError("Provided coef_init does not match dataset.")
-            self.coef_ = coef_init
-        if intercept_init is not None:
-            intercept_init = np.asanyarray(intercept_init)
-            if intercept_init.shape != (1,):
-                raise ValueError("Provided intercept_init " \
-                                 "does not match dataset.")
-            else:
-                self.intercept_ = intercept_init
-
+    def _fit_regressor(self, X, y):
+        X = np.asanyarray(X, dtype=np.float64, order='C')
         coef_, intercept_ = plain_sgd(self.coef_,
                                       self.intercept_,
                                       self.loss_function,
@@ -386,8 +290,9 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.fit_intercept),
                                       int(self.verbose),
                                       int(self.shuffle),
-                                      1.0, 1.0)
+                                      self.seed,
+                                      1.0, 1.0,
+                                      self.sample_weight)
 
         self.coef_ = coef_
         self.intercept_ = np.asarray(intercept_)
-        return self

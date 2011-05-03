@@ -8,7 +8,7 @@ from scipy import ndimage
 
 import nose
 
-from ..image import img_to_graph
+from ..image import img_to_graph, grid_to_graph
 from ...utils.graph import cs_graph_components
 
 def test_img_to_graph():
@@ -29,6 +29,18 @@ def test_connect_regions():
         mask = lena > thr
         graph = img_to_graph(lena, mask)
         nose.tools.assert_equal(ndimage.label(mask)[1],
-                                cs_graph_components(graph)[0]
-                               )
+                                cs_graph_components(graph)[0])
+
+
+def test_connect_regions_with_grid():
+    lena = sp.lena()
+    mask = lena > 50
+    graph = grid_to_graph(*lena.shape, mask=mask)
+    nose.tools.assert_equal(ndimage.label(mask)[1],
+                            cs_graph_components(graph)[0])
+
+    mask = lena > 150
+    graph = grid_to_graph(*lena.shape, mask=mask, dtype=None)
+    nose.tools.assert_equal(ndimage.label(mask)[1],
+                            cs_graph_components(graph)[0])
 

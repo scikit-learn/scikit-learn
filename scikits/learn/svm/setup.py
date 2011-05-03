@@ -27,15 +27,16 @@ def configuration(parent_package='', top_path=None):
                                 join('src', 'libsvm', 'svm.h')],
                        )
 
-    libsvm_sources = [join('src', 'libsvm', '_libsvm.c')]
+    libsvm_sources = ['libsvm.c']
     libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c'),
                       join('src', 'libsvm', 'libsvm_template.cpp'),
                       join('src', 'libsvm', 'svm.cpp'),
                       join('src', 'libsvm', 'svm.h')]
 
-    config.add_extension('_libsvm',
+    config.add_extension('libsvm',
                          sources=libsvm_sources,
-                         include_dirs=[numpy.get_include()],
+                         include_dirs=[numpy.get_include(),
+                                       join('src', 'libsvm')],
                          libraries=['libsvm-skl'],
                          depends=libsvm_depends,
                          )
@@ -46,7 +47,7 @@ def configuration(parent_package='', top_path=None):
                     join('src', 'blas', 'dnrm2.c'),
                     join('src', 'blas', 'dscal.c')]
 
-    liblinear_sources = [join('src', 'liblinear', '_liblinear.c'),
+    liblinear_sources = ['liblinear.c',
                          join('src', 'liblinear', '*.cpp')]
 
     liblinear_depends = [join('src', 'liblinear', '*.h'),
@@ -59,7 +60,7 @@ def configuration(parent_package='', top_path=None):
         config.add_library('blas', blas_sources)
         warnings.warn(BlasNotFoundError.__doc__)
 
-    config.add_extension('_liblinear',
+    config.add_extension('liblinear',
                          sources=liblinear_sources,
                          libraries = blas_info.pop('libraries', ['blas']),
                          include_dirs=['src',
