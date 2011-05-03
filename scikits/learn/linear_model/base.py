@@ -132,8 +132,6 @@ class LinearRegression(LinearModel):
 ##
 ## Stochastic Gradient Descent (SGD) abstract base classes
 ##
-## TODO add sample_weights to signature (see LibSVM)
-## TODO adher to svm signature (return values of score etc.)
 
 
 class BaseSGD(BaseEstimator):
@@ -141,7 +139,8 @@ class BaseSGD(BaseEstimator):
 
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, seed=0):
+                 verbose=0, seed=0, learning_rate="optimal", eta0=0.0,
+                 power_t=0.5):
         self.loss = str(loss)
         self.penalty = str(penalty)
         self.alpha = float(alpha)
@@ -158,6 +157,22 @@ class BaseSGD(BaseEstimator):
         self._set_loss_function(self.loss)
         self._set_penalty_type(self.penalty)
 
+        self.learning_rate = str(learning_rate)
+        self._set_learning_rate(self.learning_rate)
+        self.eta0 = float(eta0)
+        self.power_t = float(power_t)
+        if self.learning_rate != "optimal":
+            if eta0 <= 0.0:
+                raise ValueError("eta0 must be greater than 0.0")
+
+    def _set_learning_rate(self, learning_rate):
+        learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
+        try:
+            self.learning_rate_code = learning_rate_codes[learning_rate]
+        except KeyError:
+            raise ValueError("learning rate %s"
+            "is not supported. " % learning_rate)
+
     def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
         raise NotImplementedError("BaseSGD is an abstract class.")
@@ -171,7 +186,7 @@ class BaseSGD(BaseEstimator):
             elif self.penalty_type == 1:
                 self.rho = 0.0
         except KeyError:
-            raise ValueError("Penalty %s is not supported. " % self.penalty)
+            raise ValueError("Penalty %s is not supported. " % penalty)
 
     def _set_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
@@ -239,13 +254,15 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, n_jobs=1, seed=0):
+                 verbose=0, n_jobs=1, seed=0, learning_rate="optimal",
+                 eta0=0.0, power_t=0.5):
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, rho=rho,
                                                 fit_intercept=fit_intercept,
                                                 n_iter=n_iter, shuffle=shuffle,
-                                                verbose=verbose,
-                                                seed=seed)
+                                                verbose=verbose, seed=seed,
+                                                learning_rate=learning_rate,
+                                                eta0=eta0, power_t=power_t)
         self.n_jobs = int(n_jobs)
 
     def _set_loss_function(self, loss):
@@ -401,16 +418,21 @@ class BaseSGDClassifier(BaseSGD, ClassifierMixin):
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
     """Base class for dense and sparse regression using SGD.
+
+    Uses inverse scaling learning rate as default.
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, p=0.1, seed=0):
+                 verbose=0, p=0.1, seed=0, learning_rate="invscaling",
+                 eta0=0.01, power_t=0.25):
         self.p = float(p)
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, rho=rho,
                                                fit_intercept=fit_intercept,
                                                n_iter=n_iter, shuffle=shuffle,
-                                               verbose=verbose, seed=seed)
+                                               verbose=verbose, seed=seed,
+                                               learning_rate=learning_rate,
+                                               eta0=eta0, power_t=power_t)
 
     def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
@@ -458,7 +480,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             X = np.asanyarray(X)
             n_samples, n_features = X.shape
 
-        if n_samples != len(y):
+        if n_samples != y.shape[0]:
             raise ValueError("Shapes of X and y do not match.")
 
         # Allocate datastructures from input arguments

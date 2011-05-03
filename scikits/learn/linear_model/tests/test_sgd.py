@@ -320,6 +320,43 @@ class DenseSGDClassifierTestCase(unittest.TestCase):
         # provided sample_weight too long
         clf.fit(X, Y, sample_weight=range(7))
 
+    def test_learning_rate_optimal(self):
+        params = {"penalty": 'l2', "alpha": 0.01, "fit_intercept": True,
+                  "n_iter": 10, "shuffle": True, }
+        clf = self.factory(**params)
+        clf.fit(X, Y, learning_rate="optimal")
+        assert_array_equal(clf.predict(T), true_result)
+
+    def test_learning_rate_invscaling(self):
+        params = {"penalty": 'l2', "alpha": 0.01, "fit_intercept": True,
+                  "n_iter": 10, "shuffle": True, }
+        clf = self.factory(**params)
+        clf.fit(X, Y, learning_rate="invscaling", eta0=0.01, power_t=0.25)
+        assert_array_equal(clf.predict(T), true_result)
+
+    def test_learning_rate_constant(self):
+        params = {"penalty": 'l2', "alpha": 0.01, "fit_intercept": True,
+                  "n_iter": 10, "shuffle": True, }
+        clf = self.factory(**params)
+        clf.fit(X, Y, learning_rate="constant", eta0=0.01)
+        assert_array_equal(clf.predict(T), true_result)
+
+    @raises(ValueError)
+    def test_learning_rate_bad(self):
+        params = {"penalty": 'l2', "alpha": 0.01, "fit_intercept": True,
+                  "n_iter": 10, "shuffle": True, "learning_rate": "foobar",
+                  "eta0": 0.01}
+        clf = self.factory(**params)
+        clf.fit(X, Y)
+
+    @raises(ValueError)
+    def test_shape_bad(self):
+        y_bad = [1, 1, 1, 2, 2]
+        params = {"penalty": 'l2', "alpha": 0.01, "fit_intercept": True,
+                  "n_iter": 10,}
+        clf = self.factory(**params)
+        clf.fit(X, y_bad)
+        
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
@@ -444,6 +481,36 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            "results for alpha=%f and rho=%f" % (alpha, rho))
                 assert_almost_equal(cd.coef_, sgd.coef_, decimal=2,
                                     err_msg=err_msg)
+
+    def test_learning_rate_optimal(self):
+        params = {"loss": 'squared_loss', "alpha": 0.1, "n_iter": 20,
+                  "fit_intercept": False, }
+        xmin, xmax = -5, 5
+        n_samples = 100
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+        
+        clf = self.factory(**params)
+        clf.fit(X, y, learning_rate="optimal")
+
+        score = clf.score(X, y)
+        assert  score > 0.5
+
+    @raises(ValueError)
+    def test_learning_rate_bad(self):
+        params = {"loss": 'squared_loss', "alpha": 0.1, "n_iter": 20,
+                  "fit_intercept": False, "learning_rate": "foobar"}
+        xmin, xmax = -5, 5
+        n_samples = 100
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+        
+        clf = self.factory(**params)
+        clf.fit(X, y, )
 
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):

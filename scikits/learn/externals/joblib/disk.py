@@ -2,7 +2,7 @@
 Disk management utilities.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2010 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -13,7 +13,7 @@ import shutil
 import time
 
 def disk_used(path):
-    """ Return the disk usage in a directory. 
+    """ Return the disk usage in a directory.
     """
     size = 0
     for file in os.listdir(path) + ['.']:
@@ -49,7 +49,7 @@ RM_SUBDIRS_RETRY_TIME = 0.1
 
 def rm_subdirs(path, onerror=None):
     """Remove all subdirectories in this path.
-    
+
     The directory indicated by `path` is left in place, and its subdirectories
     are erased.
 

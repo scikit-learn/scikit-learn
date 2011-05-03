@@ -14,9 +14,15 @@ from time import time
 cimport numpy as np
 cimport cython
 
+# Penalty constans
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
+
+# Learning rate constants
+DEF CONSTANT = 1
+DEF OPTIMAL = 2
+DEF INVSCALING = 3
 
 # ----------------------------------------
 # Extension Types for Loss Functions
@@ -201,7 +207,9 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               double weight_pos, double weight_neg,
-              np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight):
+              np.ndarray[double, ndim=1] sample_weight,
+              int learning_rate, double eta0,
+              double power_t):
     """Cython impl. of SGD for generic loss functions and penalties
 
     This implementation assumes X represented as a dense array of floats.
@@ -241,6 +249,15 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         shuffling the data
     sample_weight : array, shape = [n_samples]
         The importance weight of each sample.
+    learning_rate : int
+        The learning rate:
+        (1) constant, eta = eta0
+        (2) optimal, eta = 1.0/(t+t0)
+        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+    eta0 : double
+        The initial learning rate.
+    power_t : double
+        The exponent for inverse scaling learning rate.
 
     Returns
     -------
@@ -295,12 +312,20 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
 
-    # computing eta0, the initial learning rate
     cdef double typw = sqrt(1.0 / sqrt(alpha))
-    cdef double eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
 
-    # initialize the 1 / t learning rate schedule from eta0
-    t = 1.0 / (eta0 * alpha)
+    if learning_rate == OPTIMAL:
+        # computing eta0, the initial learning rate
+        eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
+    else:
+        eta = eta0
+
+    if learning_rate == OPTIMAL:
+        # initialize t such that eta at first example equals eta0
+        t = 1.0 / (eta0 * alpha)
+    else:
+        t = 1.0
+    
     t_start = time()
     for epoch from 0 <= epoch < n_iter:
         if verbose > 0:
@@ -311,7 +336,10 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
             sample_idx = index_data_ptr[i]
             offset = row_stride * sample_idx / elem_stride # row offset in elem
             y = Y_data_ptr[sample_idx]
-            eta = 1.0 / (alpha * t)
+            if learning_rate == OPTIMAL:
+                eta = 1.0 / (alpha * t)
+            elif learning_rate == INVSCALING:
+                eta = eta0 / pow(t, power_t)
             p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
                 ) + intercept
             sumloss += loss.loss(p, y)
