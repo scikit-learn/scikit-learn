@@ -80,7 +80,7 @@ class SGDClassifier(BaseSGDClassifier):
         The learning rate:
         constant: eta = eta0
         optimal: eta = 1.0/(t+t0) [default]
-        invscaling: eta = eta0 / pow(t, power_t) 
+        invscaling: eta = eta0 / pow(t, power_t)
 
     eta0 : double, optional
         The initial learning rate [default 0.01].
