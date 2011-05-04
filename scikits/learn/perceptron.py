@@ -55,7 +55,7 @@ import numpy as np
 
 def RadialBasisKernel(gamma):
     '''This kernel returns the rbf between the input vectors.
-    
+
     Defined as exp(-gamma * delta**2)'''
 
     def __init__(self, gamma):
@@ -70,7 +70,7 @@ class PolynomialKernel(object):
     '''This kernel returns the dot product raised to some power.
 
     Also known as homogeneous kernel.
-    
+
     Parameters
     ----------
     degree : float
@@ -127,9 +127,13 @@ class Perceptron(BaseEstimator):
         '''
         return self._max_outcome(self._weights, x)[0]
 
-    def _fit(self, X, y, learning_rate, n_iter, averaged):
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
+    def _fit(self, X, y, learning_rate, n_iter, shuffle, averaged):
+        if shuffle:                 # copy X and y
+            X = np.array(X)
+            y = np.array(y)
+        else:
+            X = np.asanyarray(X)
+            y = np.asanyarray(y)
 
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
@@ -141,13 +145,22 @@ class Perceptron(BaseEstimator):
             self._history = np.zeros(self._weights.shape, 'd')
             self._acc = np.zeros(self._weights.shape, 'd')
 
-        for i in xrange(n_iter):
-            for j in xrange(n_samples):
-                self._learn(X[j], y[j], learning_rate)
+        self._run_iters(n_iter, X, y, learning_rate, shuffle)
 
         return self
 
-    def fit(self, X, y, learning_rate=1., n_iter=1):
+    def _run_iters(self, n, X, y, learning_rate, shuffle):
+        '''Run n iterations of training'''
+        n_samples = len(y)
+        order = range(n_samples) if shuffle else xrange(n_samples)
+
+        for i in xrange(n):
+            if shuffle:
+                np.random.shuffle(order)
+            for j in order:
+                self._learn(X[j], y[j], learning_rate)
+
+    def fit(self, X, y, learning_rate=1., n_iter=1, shuffle=False):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -162,8 +175,10 @@ class Perceptron(BaseEstimator):
             Target values.
         learning_rate : float, optional
             Learning rate: multiplied into weight changes, default 1.
-        n_iter : int, optional
-            Number of iterations to perform. Default 1.
+        n_iter : int, optional, default 1
+            Number of iterations to perform.
+        shuffle : bool, optional, default False
+            Randomize input sequence between iterations.
 
         Returns
         -------
@@ -171,7 +186,7 @@ class Perceptron(BaseEstimator):
         """
 
         return self._fit(X, y, learning_rate=learning_rate, n_iter=n_iter,
-                         averaged=False)
+                         shuffle=shuffle, averaged=False)
 
     def _learn(self, x, label, rate):
         '''Adjust the hyperplane based on a classification attempt.
@@ -247,7 +262,7 @@ class AveragedPerceptron(Perceptron):
     def _classify(self, x):
         return self._max_outcome(self._history, x)[0]
 
-    def fit(self, X, y, learning_rate=1., n_iter=1):
+    def fit(self, X, y, learning_rate=1., n_iter=1, shuffle=False):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -264,6 +279,8 @@ class AveragedPerceptron(Perceptron):
             Learning rate: multiplied into weight changes, default 1.
         n_iter : int, optional
             Number of iterations to perform. Default 1.
+        shuffle : bool, optional, default False
+            Randomize input sequence between iterations.
 
         Returns
         -------
@@ -271,7 +288,7 @@ class AveragedPerceptron(Perceptron):
         """
 
         return self._fit(X, y, learning_rate=learning_rate, n_iter=n_iter,
-                         averaged=True)
+                         shuffle=shuffle, averaged=True)
 
     def _learn(self, x, label, rate):
         self._iterations[label] += 1
@@ -318,9 +335,10 @@ class SparseAveragedPerceptron(AveragedPerceptron):
 
     def __init__(self):
         '''Use sparse vectors to store weights and events.'''
-        super(SparseAveragedPerceptron, self).__init__(kernel = SparseDot())
+        super(SparseAveragedPerceptron, self).__init__(kernel=SparseDot())
 
-    def fit(self, X, y, beam_width=None, learning_rate=1., n_iter=1):
+    def fit(self, X, y, beam_width=None, learning_rate=1., n_iter=1,
+            shuffle=False):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -334,30 +352,39 @@ class SparseAveragedPerceptron(AveragedPerceptron):
             Target values.
 
         beam_width : int, optional
-            Width of beam for beam search.
+            Width of beam for beam search. This parameter is given to fit
+            because it implies pruning of the feature set.
         learning_rate : float, optional
             Learning rate: multiplied into weight changes, default 1.
-        n_iter : int, optional
-            Number of iterations to perform. Default 1.
+        n_iter : int, optional, default 1
+            Number of iterations to perform.
+        shuffle : bool, optional, default False
+            Randomize input sequence between iterations.
 
         Returns
         -------
         self
         """
 
-        self._beam_width = beam_width
-
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
+        if shuffle:                 # copy X and y
+            X = np.array(X)
+            y = np.array(y)
+        else:
+            X = np.asanyarray(X)
+            y = np.asanyarray(y)
 
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
+
+        self._beam_width = beam_width
 
         self._weights = [defaultdict(float) for i in xrange(n_labels)]
         self._history = [defaultdict(float) for i in xrange(n_labels)]
         self._acc = [defaultdict(float) for i in xrange(n_labels)]
         self._iterations = np.zeros((n_samples, ), 'i')
         self._survived = np.zeros((n_samples, ), 'i')
+
+        self._run_iters(n_iter, X, y, learning_rate, shuffle)
 
         for i in xrange(n_iter):
             for j in xrange(n_samples):
