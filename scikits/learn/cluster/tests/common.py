@@ -22,6 +22,6 @@ def generate_clustered_data(seed=0, n_clusters=3, n_features=2,
     X = np.empty((0, n_features))
     for i in range(n_clusters):
         X = np.r_[X, means[i][:n_features]
-                    + std*prng.randn(n_samples_per_cluster, n_features)]
+                  + std * prng.randn(n_samples_per_cluster, n_features)]
     return X
 
