@@ -18,6 +18,7 @@ from ..utils import check_random_state
 ###############################################################################
 # Initialisation heuristic
 
+
 def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
     """Init k seeds according to kmeans++
 
@@ -113,6 +114,7 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
 ###############################################################################
 # K-means estimation by EM (expectation maximisation)
+
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
                     tol=1e-4, random_state=None, copy_x=True):
@@ -350,7 +352,9 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
 
     n_samples = X.shape[0]
     if init == 'k-means++':
-        centers = k_init(X, k, random_state=random_state, x_squared_norms=x_squared_norms)
+        centers = k_init(X, k,
+                        random_state=random_state,
+                        x_squared_norms=x_squared_norms)
     elif init == 'random':
         seeds = np.argsort(random_state.rand(n_samples))[:k]
         centers = X[seeds]
@@ -500,8 +504,6 @@ class KMeans(BaseEstimator):
         """
         Set parameters and check the sample given is larger than k
         """
-        X = np.asarray(X)
- 
         X = np.asanyarray(X)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be larger than k=%d" % (
