@@ -248,7 +248,7 @@ class GMM(BaseEstimator):
         self.rng = rng
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
-            raise ValueError('bad cvtype')
+            raise ValueError('bad cvtype: '+str(cvtype))
 
         self.weights = np.ones(self._n_states) / self._n_states
 

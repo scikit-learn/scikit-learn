@@ -168,6 +168,7 @@ def test_GMM_attributes():
 
 
 class GMMTester():
+    do_test_eval = True
     n_states = 10
     n_features = 4
     weights = rng.rand(n_states)
@@ -182,12 +183,12 @@ class GMMTester():
                                 for x in xrange(n_states)])}
 
     def test_eval(self):
-        if self.model == DPGMM or self.model == VBGMM:
+        if not self.do_test_eval:
             return # DPGMM does not support setting the means and
         # covariances before fitting There is no way of fixing this
         # due to the variational parameters being more expressive than
         # covariance matrices
-        g = self.model(self.n_states, self.cvtype, rng=rng)
+        g = self.model(n_states=self.n_states, cvtype=self.cvtype, rng=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -206,7 +207,7 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = self.model(self.n_states, self.cvtype, rng=rng)
+        g = self.model(n_states=self.n_states, cvtype=self.cvtype, rng=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -217,14 +218,14 @@ class GMMTester():
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
-        g = GMM(self.n_states, self.cvtype)
+        g = GMM(n_states=self.n_states, cvtype=self.cvtype)
         g.weights = self.weights
         g.means = self.means
         g._covars = 20 * self.covars[self.cvtype]
 
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n_samples=100)
-        g = self.model(self.n_states, self.cvtype, rng=rng, min_covar=1e-1)
+        g = self.model(n_states=self.n_states, cvtype=self.cvtype, rng=rng, min_covar=1e-1)
         g.fit(train_obs, n_iter=1, init_params=params)
 
         # Do one training iteration at a time so we can keep track of

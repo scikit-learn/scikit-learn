@@ -8,7 +8,7 @@
 #
 
 import numpy as np
-from scipy.special import digamma, gammaln
+from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 
 from ..utils.extmath import norm
@@ -19,12 +19,19 @@ from . gmm import GMM
 def sqnorm(v):
     return norm(v)**2
 
+def digamma(x):
+    return _digamma(x + np.finfo(np.float32).eps)
+
+def gammaln(x):
+    return _gammaln(x + np.finfo(np.float32).eps)
+
 
 def log_normalize(v, axis=0):
     """Given a vector of unnormalized log-probabilites v returns a
        vector of normalized probabilities"""
     v = np.rollaxis(v, axis)
     v = np.exp(v - np.logaddexp.reduce(v, axis=0))
+    v += np.finfo(np.float32).eps
     v /= np.sum(v, axis=0)
     return np.swapaxes(v, 0, axis)
 
@@ -42,8 +49,7 @@ def wishart_logz(v, s, dets, n_features):
     z += (0.25 * (n_features * (n_features - 1))
           * np.log(np.pi))
     z += 0.5 * v * np.log(dets)
-    z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)
-                        + np.finfo(np.float32).eps))
+    z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)))
     return z
 
 ################################################################################
@@ -439,7 +445,7 @@ class DPGMM(GMM):
         if self.cvtype == 'spherical':
             for k in xrange(self.n_states):
                 logprior += gammaln(self._a[k])
-                logprior -= (self._a[k] - 1) * digamma(self._a[k])
+                logprior -= (self._a[k] - 1) * digamma(max(0.5, self._a[k]))
                 logprior += - np.log(self._b[k]) + self._a[k] - self._precs[k]
         elif self.cvtype == 'diag':
             for k in xrange(self.n_states):
@@ -764,7 +770,10 @@ class VBGMM(DPGMM):
         return logprior
 
     def _monitor(self, n, end=False):
+        """Monitors the lower bound during iteration, to see exactly
+        when it is failing to converge as expected."""
         if self.verbose:
-            print n, self.lower_bound()
+            print "Bound after updating %8s"%n, self.lower_bound()
             if end == True:
-                print self._gamma
+                print "Cluster proportions:", self._gamma
+                print "cvtype:", self._cvtype
