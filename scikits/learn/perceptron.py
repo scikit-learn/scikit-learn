@@ -235,10 +235,10 @@ class AveragedPerceptron(Perceptron):
     At classification time, the AveragedPerceptron uses both the current weight
     matrix and the weighted sum of past matrices to make its decision.
 
-    This is equivalent to the "voted perceptron" algorithm described by Freund
-    and Schapire (1999). The averaging approach improves on the basic perceptron
-    algorithm by providing a "large margin" approach to handling datasets that
-    are not linearly separable.
+    This is an approximation to the "voted perceptron" algorithm described by
+    Freund and Schapire (1999). The averaging approach improves on the basic
+    perceptron algorithm by providing a "large margin" approach to handling
+    datasets that are not linearly separable.
     '''
 
     def __init__(self, kernel=None):
