@@ -62,42 +62,42 @@ if __name__ == "__main__":
             clf = ElasticNet(alpha=alpha, rho=0.5, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
-            elnet_results[i,j,0] = mean_square_error(clf.predict(X_test),
-                                                     y_test)
-            elnet_results[i,j,1] = time() - tstart
+            elnet_results[i, j, 0] = mean_square_error(clf.predict(X_test),
+                                                       y_test)
+            elnet_results[i, j, 1] = time() - tstart
 
             gc.collect()
             print "- benching SGD"
-            n_iter = np.ceil(10**4.0 / n_train)
+            n_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha, fit_intercept=False,
                                n_iter=n_iter, learning_rate="invscaling",
                                eta0=.01, power_t=0.25)
 
             tstart = time()
             clf.fit(X_train, y_train)
-            sgd_results[i,j,0] = mean_square_error(clf.predict(X_test),
-                                                   y_test)
-            sgd_results[i,j,1] = time() - tstart
+            sgd_results[i, j, 0] = mean_square_error(clf.predict(X_test),
+                                                     y_test)
+            sgd_results[i, j, 1] = time() - tstart
 
             gc.collect()
             print "- benching RidgeRegression"
             clf = Ridge(alpha=alpha, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
-            ridge_results[i,j,0] = mean_square_error(clf.predict(X_test),
-                                                    y_test)
-            ridge_results[i,j,1] = time() - tstart
+            ridge_results[i, j, 0] = mean_square_error(clf.predict(X_test),
+                                                       y_test)
+            ridge_results[i, j, 1] = time() - tstart
 
     # Plot results
     i = 0
     m = len(list_n_features)
     for j in range(m):
-        pl.subplot(m,2,i+1)
-        pl.plot(list_n_samples, np.sqrt(elnet_results[:,j,0]),
+        pl.subplot(m, 2, i + 1)
+        pl.plot(list_n_samples, np.sqrt(elnet_results[:, j, 0]),
                 label="ElasticNet")
-        pl.plot(list_n_samples, np.sqrt(sgd_results[:,j,0]),
+        pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 0]),
                 label="SGDRegressor")
-        pl.plot(list_n_samples, np.sqrt(ridge_results[:,j,0]),
+        pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 0]),
                 label="Ridge")
         pl.legend()
         pl.xlabel("n_train")
@@ -105,12 +105,12 @@ if __name__ == "__main__":
         pl.title("Test error - %d features" % list_n_features[j])
         i += 1
 
-        pl.subplot(m,2,i+1)
-        pl.plot(list_n_samples, np.sqrt(elnet_results[:,j,1]),
+        pl.subplot(m, 2, i + 1)
+        pl.plot(list_n_samples, np.sqrt(elnet_results[:, j, 1]),
                 label="ElasticNet")
-        pl.plot(list_n_samples, np.sqrt(sgd_results[:,j,1]),
+        pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 1]),
                 label="SGDRegressor")
-        pl.plot(list_n_samples, np.sqrt(ridge_results[:,j,1]),
+        pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 1]),
                 label="Ridge")
         pl.legend()
         pl.xlabel("n_train")
