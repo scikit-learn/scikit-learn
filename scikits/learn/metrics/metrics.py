@@ -66,17 +66,18 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-def roc_curve(y, pred):
+def roc_curve(y_true, y_score):
     """compute Receiver operating characteristic (ROC)
 
     Parameters
     ----------
 
-    y : array, shape = [n_samples]
-        true targets
+    y_true : array, shape = [n_samples]
+        true binary labels
 
-    pred : array, shape = [n_samples]
-        predictions, either probability estimates
+    y_scores : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
 
     Returns
     -------
@@ -89,29 +90,39 @@ def roc_curve(y, pred):
     thresholds : array, shape = [>2]
         Thresholds on proba_ used to compute fpr and tpr
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> y = np.array([1, 1, 2, 2])
+    >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = roc_curve(y, scores)
+    >>> fpr
+    array([ 0. ,  0.5,  0.5,  1. ])
+    
+
     References
     ----------
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
     """
-    y = y.ravel()
-    classes = np.unique(y)
+    y_true = y_true.ravel()
+    classes = np.unique(y_true)
 
     # ROC only for binary classification
     if classes.shape[0] != 2:
         raise ValueError("ROC is defined for binary classification only")
 
-    pred = pred.ravel()
-    thresholds = np.sort(np.unique(pred))[::-1]
+    y_score = y_score.ravel()
+    thresholds = np.sort(np.unique(y_score))[::-1]
     n_thresholds = thresholds.size
 
     tpr = np.empty(n_thresholds)  # True positive rate
     fpr = np.empty(n_thresholds)  # False positive rate
-    n_pos = float(np.sum(y == classes[1]))  # nb of true positive
-    n_neg = float(np.sum(y == classes[0]))  # nb of true negative
+    n_pos = float(np.sum(y_true == classes[1]))  # nb of true positive
+    n_neg = float(np.sum(y_true == classes[0]))  # nb of true negative
 
     for i, t in enumerate(thresholds):
-        tpr[i] = np.sum(y[pred >= t] == 1) / n_pos
-        fpr[i] = np.sum(y[pred >= t] == 0) / n_neg
+        tpr[i] = np.sum(y_true[y_score >= t] == classes[1]) / n_pos
+        fpr[i] = np.sum(y_true[y_score >= t] == classes[0]) / n_neg
 
     # hard decisions, add (0,0)
     if fpr.shape[0] == 2:
@@ -124,34 +135,43 @@ def roc_curve(y, pred):
     return fpr, tpr, thresholds
 
 
-def auc(x, y):
+def auc(fpr, tpr):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     Parameters
     ----------
-    x : array, shape = [n]
+    fpr : array, shape = [n]
         x coordinates
 
-    y : array, shape = [n]
+    tpr : array, shape = [n]
         y coordinates
 
     Returns
     -------
     auc : float
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> y = np.array([1, 1, 2, 2])
+    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, _ = roc_curve(y, pred)
+    >>> print auc(fpr, tpr)
+    0.75
+
     """
-    x = np.asanyarray(x)
-    y = np.asanyarray(y)
-    assert x.shape[0] == y.shape[0]
-    assert x.shape[0] >= 3
+    fpr = np.asanyarray(fpr)
+    tpr = np.asanyarray(tpr)
+    assert fpr.shape[0] == tpr.shape[0]
+    assert fpr.shape[0] >= 3
 
     # reorder the data points according to the x axis
-    order = np.argsort(x)
-    x = x[order]
-    y = y[order]
+    order = np.argsort(fpr)
+    fpr = fpr[order]
+    tpr = tpr[order]
 
-    h = np.diff(x)
-    area = np.sum(h * (y[1:] + y[:-1])) / 2.0
+    h = np.diff(fpr)
+    area = np.sum(h * (tpr[1:] + tpr[:-1])) / 2.0
     return area
 
 
@@ -546,8 +566,8 @@ def r2_score(y_true, y_pred):
 
     y_pred : array-like
     """
-    return 1 - (((y_true - y_pred)**2).sum() /
-                ((y_true - y_true.mean())**2).sum())
+    return 1 - (((y_true - y_pred) ** 2).sum() /
+                ((y_true - y_true.mean()) ** 2).sum())
 
 
 def zero_one_score(y_true, y_pred):
