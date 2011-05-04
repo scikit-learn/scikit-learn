@@ -53,7 +53,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
         because nearly all Linear Models will want it's data to be
         centered.
         """
-        import scipy.sparse # importing scipy.sparse just for this is overkill
+        import scipy.sparse  # importing scipy.sparse just for this is overkill
         if fit_intercept:
             if scipy.sparse.issparse(X):
                 Xmean = np.zeros(X.shape[1])

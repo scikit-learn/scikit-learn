@@ -55,10 +55,10 @@ cdef class LossFunction:
 cdef class Regression(LossFunction):
     """Base class for loss functions for regression"""
 
-    cpdef double loss(self,double p, double y):
+    cpdef double loss(self, double p, double y):
         raise NotImplementedError()
 
-    cpdef double dloss(self,double p, double y):
+    cpdef double dloss(self, double p, double y):
         raise NotImplementedError()
 
 
@@ -169,7 +169,7 @@ cdef class Huber(Regression):
     http://en.wikipedia.org/wiki/Huber_Loss_Function
     """
 
-    def __init__(self,c):
+    def __init__(self, c):
         self.c = c
 
     cpdef double loss(self, double p, double y):
@@ -191,7 +191,7 @@ cdef class Huber(Regression):
             return -self.c
 
     def __reduce__(self):
-        return Huber,(self.c,)
+        return Huber, (self.c,)
 
 
 @cython.boundscheck(False)
@@ -243,7 +243,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     weight_pos : float
         The weight of the positive class.
     weight_neg : float
-        The weight of the negative class. 
+        The weight of the negative class.
     seed : int
         The seed of the pseudo random number generator to use when
         shuffling the data
@@ -262,11 +262,10 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     Returns
     -------
     w : array, shape [n_features]
-        The fitted weight vector. 
+        The fitted weight vector.
     intercept : float
-        The fitted intercept term. 
+        The fitted intercept term.
 
-    
     """
 
     # get the data information into easy vars
@@ -284,8 +283,9 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     cdef double *sample_weight_data = <double *>sample_weight.data
 
     # Use index array for fast shuffling
-    cdef np.ndarray[np.int32_t, ndim=1, mode="c"] index = np.arange(n_samples,
-                                                                    dtype=np.int32)
+    cdef np.ndarray[np.int32_t, ndim=1,
+                    mode="c"] index = np.arange(n_samples,
+                                                dtype=np.int32)
     cdef int *index_data_ptr = <int *>index.data
 
     # helper variable
@@ -325,7 +325,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         t = 1.0 / (eta0 * alpha)
     else:
         t = 1.0
-    
+
     t_start = time()
     for epoch from 0 <= epoch < n_iter:
         if verbose > 0:
@@ -334,7 +334,9 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
             np.random.RandomState(seed).shuffle(index)
         for i from 0 <= i < n_samples:
             sample_idx = index_data_ptr[i]
-            offset = row_stride * sample_idx / elem_stride # row offset in elem
+
+            # row offset in elem
+            offset = row_stride * sample_idx / elem_stride
             y = Y_data_ptr[sample_idx]
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
@@ -372,7 +374,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
                                                     w.nonzero()[0].shape[0],
                                                     intercept, count,
                                                     sumloss / count))
-            print("Total training time: %.2f seconds." % (time()-t_start))
+            print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
         if np.any(np.isinf(w)) or np.any(np.isnan(w)) \
@@ -435,10 +437,8 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
         z = w_data_ptr[j]
         if (wscale * w_data_ptr[j]) > 0.0:
             w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
-                                                        / wscale) )
+                                                        / wscale))
         elif (wscale * w_data_ptr[j]) < 0.0:
             w_data_ptr[j] = min(0.0, w_data_ptr[j] + ((u - q_data_ptr[j])
-                                                        / wscale) )
+                                                        / wscale))
         q_data_ptr[j] += (wscale * (w_data_ptr[j] - z))
-
-

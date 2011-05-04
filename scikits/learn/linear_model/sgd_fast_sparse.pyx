@@ -27,6 +27,7 @@ DEF CONSTANT = 1
 DEF OPTIMAL = 2
 DEF INVSCALING = 3
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -65,7 +66,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     rho : float
         The elastic net hyperparameter.
     X : csr_matrix[double, ndim=2]
-        The dataset as a Compressed Sparse Row matrix 
+        The dataset as a Compressed Sparse Row matrix
         (see scipy.sparse.csr_matrix).
     Y : ndarray[double, ndim=1]
         The labels.
@@ -80,7 +81,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     weight_pos : float
         The weight of the positive class.
     weight_neg : float
-        The weight of the negative class. 
+        The weight of the negative class.
     seed : int
         The seed of the pseudo random number generator to use when
         shuffling the data
@@ -99,9 +100,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     Returns
     -------
     w : array, shape [n_features]
-        The fitted weight vector. 
+        The fitted weight vector.
     intercept : float
-        The fitted intercept term. 
+        The fitted intercept term.
     """
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
@@ -116,7 +117,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double *sample_weight_data = <double *>sample_weight.data
 
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
-                                                             dtype = np.int32)
+                                                             dtype=np.int32)
     cdef int *index_data_ptr = <int *>index.data
     cdef int offset = 0
     cdef int xnnz = 0
@@ -136,13 +137,13 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr
     if penalty_type != L2:
-        q = np.zeros((n_features,), dtype = np.float64, order = "c")
+        q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
     cdef double typw = sqrt(1.0 / sqrt(alpha))
 
     if learning_rate == OPTIMAL:
-        # computing eta0, the initial learning rate    
+        # computing eta0, the initial learning rate
         eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
     else:
         eta = eta0
@@ -202,7 +203,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                                                     w.nonzero()[0].shape[0],
                                                     intercept, count,
                                                     sumloss / count))
-            print("Total training time: %.2f seconds." % (time()-t_start))
+            print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
         if np.any(np.isinf(w)) or np.any(np.isnan(w)) \
