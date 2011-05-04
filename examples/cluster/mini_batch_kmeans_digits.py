@@ -23,13 +23,14 @@ data = scale(digits.data)
 n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
 
-def mini_batch(X, batch_size, k = 10, iterations = 300):
+
+def mini_batch(X, batch_size, k=10, iterations=300):
     km = MiniBatchKMeans(init='k-means++',
                          k=k)
 
     for i in xrange(iterations):
         j = i * batch_size % len(data)
-        sample = X[j:j+batch_size]
+        sample = X[j:j + batch_size]
         km.partial_fit(sample)
 
     # That last calculation is done only to get the inertia, to be able to

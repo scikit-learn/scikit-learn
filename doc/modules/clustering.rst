@@ -53,8 +53,8 @@ quality of the results, measured by the inertia, the sum of the distance of
 each points to the nearest centroid, is not as good as the :class:`KMeans`
 algorithm.
 
-.. figure:: ../auto_examples/cluster/images/plot_minibatchkmeans_1.png
-   :target: ../auto_examples/cluster/plot_minibatchkmeans.html
+.. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_1.png
+   :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
    :align: center
    :scale: 50
 
