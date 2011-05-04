@@ -600,7 +600,7 @@ class MiniBatchKMeans(KMeans):
         # FIXME
         # counts is an array used to keep track of who went where
         self.counts = None
-        self.cluster_centers = None
+        self.cluster_centers_ = None
 
     def partial_fit(self, X, y=None, **params):
         """Update k means estimate on a single mini-batch X"""
@@ -620,17 +620,17 @@ class MiniBatchKMeans(KMeans):
         if self.counts is None:
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
-            self.cluster_centers = _init_centroids(
+            self.cluster_centers_ = _init_centroids(
                 X, self.k, self.init, random_state=self.random_state,
                 x_squared_norms=x_squared_norms)
 
             self.counts = np.zeros(self.k)
 
-        self.cluster_centers, self.counts = _mini_batch_step(
-            X, self.cluster_centers, self.counts,
+        self.cluster_centers_, self.counts = _mini_batch_step(
+            X, self.cluster_centers_, self.counts,
             x_squared_norms=x_squared_norms)
 
         self.inertia_, self.labels_ = _calculate_labels_inertia(
-            X, self.cluster_centers)
+            X, self.cluster_centers_)
 
         return self
