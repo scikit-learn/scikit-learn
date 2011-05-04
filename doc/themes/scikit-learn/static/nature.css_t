@@ -113,7 +113,7 @@ blockquote {
     text-align: right;
     line-height: 1.5em;
     font-style: italic;
-    margin: 3em;
+    margin: 2em 3em 1em 3em;
 }
 
 div.content-wrapper {
