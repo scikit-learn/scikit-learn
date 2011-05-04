@@ -38,7 +38,7 @@ def test_simple_precomputed():
     G = np.dot (diabetes.data.T, diabetes.data)
     alphas_, active, coef_path_ = linear_model.lars_path(
         diabetes.data, diabetes.target, Gram=G, method="lar")
-    
+
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
@@ -131,4 +131,4 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
 if __name__ == '__main__':
     import nose
     nose.runmodule()
-    
+
