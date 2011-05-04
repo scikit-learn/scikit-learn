@@ -153,7 +153,7 @@ class OneClassSVM (SparseBaseLibSVM):
     """NuSVR for sparse matrices (csr)
 
     See :class:`scikits.learn.svm.NuSVC` for a complete list of parameters
-    
+
     Notes
     -----
     For best results, this accepts a matrix in csr format
@@ -172,7 +172,6 @@ class OneClassSVM (SparseBaseLibSVM):
     def fit(self, X, class_weight={}, sample_weight=[]):
         super(OneClassSVM, self).fit(
             X, [], class_weight=class_weight, ample_weight=sample_weight)
-
 
 
 class LinearSVC(SparseBaseLibLinear, ClassifierMixin,

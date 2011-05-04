@@ -11,17 +11,17 @@ cimport numpy as np
 # C++ functions
 cdef extern from "BallTreePoint.h":
    cdef cppclass Point:
-       Point(int)
-       int size()
-   void SET(Point *, int, double)
+       Point(size_t)
+       size_t size()
+   void SET(Point *, size_t, double)
 
 ctypedef Point *Point_p
 
 
 cdef extern from "BallTree.h":
     cdef cppclass cBallTree "BallTree<Point>":
-        cBallTree(vector[Point_p] *, int)
-        double query(Point *, vector[long int] &) except +
+        cBallTree(vector[Point_p] *, size_t)
+        double query(Point *, vector[size_t] &) except +
     double Euclidean_Dist(Point *, Point *) except +
 
 
@@ -37,12 +37,14 @@ cdef Point *make_point(vals):
 cdef class BallTree:
     cdef cBallTree *bt_ptr
     cdef vector[Point_p] *ptdata
-    cdef int num_points
-    cdef int num_dims
+    cdef size_t num_points
+    cdef size_t num_dims
     cdef public object data
 
     def __cinit__(self, arr, leafsize=20):
         # copy points into ptdata
+        arr = np.atleast_2d(arr).astype(np.double)
+        assert arr.ndim == 2, "input points must be 2 dimensional (points x dimensions)"
         num_points, num_dims = self.num_points, self.num_dims = arr.shape
         self.ptdata = new vector[Point_p]()
         for i in range(num_points):
@@ -52,12 +54,15 @@ cdef class BallTree:
 
     def __dealloc__(self):
         cdef Point *temp
-        for idx in range(self.ptdata.size()):
-            # Cython won't allow the more direct form
-            temp = self.ptdata.at(idx)
-            del temp
-        del self.ptdata
-        del self.bt_ptr
+        # __dealloc__ is called if __cinit__ fails at any point
+        if self.ptdata:
+            for idx in range(self.ptdata.size()):
+                # Cython won't allow the more direct form
+                temp = self.ptdata.at(idx)
+                del temp
+            del self.ptdata
+        if self.bt_ptr:
+            del self.bt_ptr
 
     def query(self, x, k=1, return_distance=True):
         x = np.atleast_2d(x)
@@ -65,7 +70,7 @@ cdef class BallTree:
         assert k <= self.num_points
 
         cdef Point *temp
-        cdef vector[long] results = vector[long](<int>k)
+        cdef vector[size_t] results = vector[size_t](<size_t>k)
 
         # almost-flatten x for iteration
         orig_shape = x.shape

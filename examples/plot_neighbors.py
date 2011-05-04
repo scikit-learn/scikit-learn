@@ -3,8 +3,8 @@
 Nearest Neighbors
 =================
 
-Sample usage of Support Vector Machines to classify a sample.
-It will plot the decision surface and the support vectors.
+Sample usage of Nearest Neighbors classification.
+It will plot the decision boundaries for each class.
 """
 print __doc__
 
@@ -20,8 +20,7 @@ Y = iris.target
 
 h = .02 # step size in the mesh
 
-# we create an instance of SVM and fit out data. We do not scale our
-# data since we want to plot the support vectors
+# we create an instance of Neighbours Classifier and fit the data.
 clf = neighbors.NeighborsClassifier()
 clf.fit(X, Y)
 
@@ -39,7 +38,6 @@ pl.pcolormesh(xx, yy, Z)
 
 # Plot also the training points
 pl.scatter(X[:,0], X[:,1], c=Y)
-# and the support vectors
 pl.title('3-Class classification using Nearest Neighbors')
 pl.axis('tight')
 pl.show()

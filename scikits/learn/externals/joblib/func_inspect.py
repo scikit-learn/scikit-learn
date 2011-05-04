@@ -2,7 +2,7 @@
 My own variation on function-specific inspect-like features.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -13,7 +13,7 @@ import os
 
 def get_func_code(func):
     """ Attempts to retrieve a reliable function code hash.
-    
+
         The reason we don't use inspect.getsource is that it caches the
         source, whereas we want this to be modified on the fly when the
         function is modified.
@@ -54,7 +54,7 @@ def get_func_code(func):
             return repr(func), source_file, -1
 
 
-def get_func_name(func, resolv_alias=True, win_characters=True):  
+def get_func_name(func, resolv_alias=True, win_characters=True):
     """ Return the function import path (as a list of module names), and
         a name for the function.
 
@@ -94,7 +94,7 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
     module = module.split('.')
     if hasattr(func, 'func_name'):
         name = func.func_name
-    elif hasattr(func, '__name__'): 
+    elif hasattr(func, '__name__'):
         name = func.__name__
     else:
         name = 'unknown'
@@ -105,7 +105,7 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
             if not func.func_globals[name] is func:
                 name = '%s-alias' % name
     if inspect.ismethod(func):
-        # We need to add the name of the class    
+        # We need to add the name of the class
         if hasattr(func, 'im_class'):
             klass = func.im_class
             module.append(klass.__name__)
@@ -126,7 +126,7 @@ def filter_args(func, ignore_lst, *args, **kwargs):
         func: callable
             Function giving the argument specification
         ignore_lst: list of strings
-            List of arguments to ignore (either a name of an argument 
+            List of arguments to ignore (either a name of an argument
             in the function spec, or '*', or '**')
         *args: list
             Positional arguments passed to the function.
@@ -146,7 +146,7 @@ def filter_args(func, ignore_lst, *args, **kwargs):
         raise ValueError('ignore_lst must be a list of parameters to ignore '
             '%s (type %s) was given' % (ignore_lst, type(ignore_lst)))
     # Special case for functools.partial objects
-    if (not inspect.ismethod(func) and not inspect.isfunction(func)): 
+    if (not inspect.ismethod(func) and not inspect.isfunction(func)):
         if ignore_lst:
             warnings.warn('Cannot inspect object %s, ignore list will '
                 'not work.' % func, stacklevel=2)
@@ -165,7 +165,7 @@ def filter_args(func, ignore_lst, *args, **kwargs):
         # First argument is 'self', it has been removed by Python
         # we need to add it back:
         args = [func.im_self, ] + args
-    # XXX: Maybe I need an inspect.isbuiltin to detect C-level methods, such 
+    # XXX: Maybe I need an inspect.isbuiltin to detect C-level methods, such
     # as on ndarrays.
 
     _, name = get_func_name(func, resolv_alias=False)
@@ -186,15 +186,14 @@ def filter_args(func, ignore_lst, *args, **kwargs):
                     # Missing argument
                     raise ValueError('Wrong number of arguments for %s%s:\n'
                                      '     %s(%s, %s) was called.'
-                        % (name, 
+                        % (name,
                            inspect.formatargspec(*inspect.getargspec(func)),
                            name,
                            repr(args)[1:-1],
-                           ', '.join('%s=%s' % (k, v) 
+                           ', '.join('%s=%s' % (k, v)
                                     for k, v in kwargs.iteritems())
                            )
                         )
-                    
 
 
     varkwargs = dict()
@@ -219,7 +218,7 @@ def filter_args(func, ignore_lst, *args, **kwargs):
             arg_dict.pop(item)
         else:
             raise ValueError("Ignore list: argument '%s' is not defined for "
-            "function %s%s" % 
+            "function %s%s" %
                             (item, name,
                              inspect.formatargspec(arg_names,
                                                    arg_varargs,
@@ -227,5 +226,5 @@ def filter_args(func, ignore_lst, *args, **kwargs):
                                                    arg_defaults,
                                                    )))
     # XXX: Return a sorted list of pairs?
-    return arg_dict 
+    return arg_dict
 

@@ -39,7 +39,7 @@ def _sparseness(x):
     return (np.sqrt(n) - np.linalg.norm(x, 1) / norm(x)) / (np.sqrt(n) - 1)
 
 
-def _initialize_nmf(X, n_components, variant=None, eps=1e-6, rng=None):
+def _initialize_nmf(X, n_components, variant=None, eps=1e-6, random_state=None):
     """NNDSVD algorithm for NMF initialization.
 
     Computes a good initial guess for the non-negative
@@ -66,7 +66,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6, rng=None):
     eps:
         Truncate all values less then this in output to zero.
 
-    rng: numpy.RandomState | int, optional
+    random_state: numpy.RandomState | int, optional
         The generator used to fill in the zeros, when using variant='ar'
         Default: numpy.random
 
@@ -135,15 +135,15 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6, rng=None):
         W[W == 0] = avg
         H[H == 0] = avg
     elif variant == "ar":
-        if rng is None:
-            rng = np.random
-        elif isinstance(rng, int):
-            rng = np.random.mtrand.RandomState(rng)
-        elif not isinstance(rng, np.random.mtrand.RandomState):
+        if random_state is None:
+            random_state = np.random
+        elif isinstance(random_state, int):
+            random_state = np.random.mtrand.RandomState(random_state)
+        elif not isinstance(random_state, np.random.mtrand.RandomState):
             raise ValueError('Invalid random state in _nmf_initialize_')
         avg = X.mean()
-        W[W == 0] = abs(avg * rng.randn(len(W[W == 0])) / 100)
-        H[H == 0] = abs(avg * rng.randn(len(H[H == 0])) / 100)
+        W[W == 0] = abs(avg * random_state.randn(len(W[W == 0])) / 100)
+        H[H == 0] = abs(avg * random_state.randn(len(H[H == 0])) / 100)
 
     return W, H
 

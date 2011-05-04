@@ -11,7 +11,7 @@ try:
         """
         return func
 
-except ImportError:    
+except ImportError:
     def with_numpy(func):
         """ A decorator to skip tests requiring numpy.
         """

@@ -22,4 +22,4 @@ def test_gnb():
     y_pred_proba = clf.predict_proba(X)
     y_pred_log_proba = clf.predict_log_proba(X)
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
-    
+

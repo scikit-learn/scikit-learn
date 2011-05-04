@@ -10,5 +10,7 @@ to the theory of Gaussian Graphical Models.
 
 """
 
-from .covariance import Covariance, shrunk_covariance, ShrunkCovariance
-from .ledoit_wolf import ledoit_wolf, LedoitWolf
+from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance, \
+    log_likelihood
+from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
+    ledoit_wolf, LedoitWolf, oas, OAS
