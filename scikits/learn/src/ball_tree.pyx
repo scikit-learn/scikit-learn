@@ -43,6 +43,8 @@ cdef class BallTree:
 
     def __cinit__(self, arr, leafsize=20):
         # copy points into ptdata
+        arr = np.atleast_2d(arr).astype(np.double)
+        assert arr.ndim == 2, "input points must be 2 dimensional (points x dimensions)"
         num_points, num_dims = self.num_points, self.num_dims = arr.shape
         self.ptdata = new vector[Point_p]()
         for i in range(num_points):
@@ -52,12 +54,15 @@ cdef class BallTree:
 
     def __dealloc__(self):
         cdef Point *temp
-        for idx in range(self.ptdata.size()):
-            # Cython won't allow the more direct form
-            temp = self.ptdata.at(idx)
-            del temp
-        del self.ptdata
-        del self.bt_ptr
+        # __dealloc__ is called if __cinit__ fails at any point
+        if self.ptdata:
+            for idx in range(self.ptdata.size()):
+                # Cython won't allow the more direct form
+                temp = self.ptdata.at(idx)
+                del temp
+            del self.ptdata
+        if self.bt_ptr:
+            del self.bt_ptr
 
     def query(self, x, k=1, return_distance=True):
         x = np.atleast_2d(x)
