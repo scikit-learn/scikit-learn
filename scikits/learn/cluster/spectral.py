@@ -13,7 +13,8 @@ from ..utils.graph import graph_laplacian
 from .k_means_ import k_means
 
 
-def spectral_embedding(adjacency, n_components=8, mode=None, random_state=None):
+def spectral_embedding(adjacency, n_components=8, mode=None,
+                       random_state=None):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -249,7 +250,7 @@ class SpectralClustering(BaseEstimator):
     def __init__(self, k=8, mode=None, random_state=None):
         self.k = k
         self.mode = mode
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
     def fit(self, X, **params):
         """Compute the spectral clustering from the affinity matrix
@@ -279,6 +280,7 @@ class SpectralClustering(BaseEstimator):
         If the pyamg package is installed, it is used: this greatly
         speeds up computation.
         """
+        self.random_state = check_random_state(self.random_state)
         self._set_params(**params)
         self.labels_ = spectral_clustering(X, k=self.k, mode=self.mode,
                                            random_state=self.random_state)

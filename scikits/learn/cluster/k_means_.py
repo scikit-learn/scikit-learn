@@ -420,6 +420,7 @@ class KMeans(BaseEstimator):
 
     def fit(self, X, **params):
         """Compute k-means"""
+        self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be larger than k=%d" % (
