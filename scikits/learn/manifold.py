@@ -7,6 +7,7 @@ import numpy as np
 from .base import BaseEstimator
 from .neighbors import kneighbors_graph
 
+
 def locally_linear_embedding(
     X, n_neighbors, out_dim, reg=1e-3, eigen_solver='lobpcg', tol=1e-6,
     max_iter=100):
@@ -62,10 +63,10 @@ def locally_linear_embedding(
     if eigen_solver == 'dense':
         import scipy.linalg
         M = (np.dot(W.T, W) - (W.T + W)).todense()
-        M.flat[::M.shape[0] + 1] += 1 # W = W - I
+        M.flat[::M.shape[0] + 1] += 1  # W = W - I
 
         eigen_values, eigen_vectors = scipy.linalg.eigh(
-            M, eigvals=(1, out_dim+1), overwrite_a=True)
+            M, eigvals=(1, out_dim + 1), overwrite_a=True)
         index = np.argsort(np.abs(eigen_values))
         return eigen_vectors[:, index], np.sum(eigen_values)
 
@@ -88,8 +89,7 @@ def locally_linear_embedding(
         return eigen_vectors[:, index], np.sum(eigen_values)
 
     else:
-        raise NotImplementedError('Method %s not implemented'% eigen_solver)
-
+        raise NotImplementedError('Method %s not implemented' % eigen_solver)
 
 
 class LocallyLinearEmbedding(BaseEstimator):
@@ -131,8 +131,8 @@ class LocallyLinearEmbedding(BaseEstimator):
             number of coordinates for the manifold
 
         reg : float
-            regularization constant, multiplies the trace of the local covariance
-            matrix of the distances
+            regularization constant, multiplies the trace of the local
+            covariance matrix of the distances
 
         eigen_solver : {'lobpcg', 'dense'}
             use the lobpcg eigensolver or a dense eigensolver based on LAPACK
