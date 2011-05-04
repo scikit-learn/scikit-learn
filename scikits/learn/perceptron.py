@@ -310,18 +310,17 @@ class SparseAveragedPerceptron(AveragedPerceptron):
     suppose event 'foo' can take on N possible discrete values ; you might
     convert 'foo' into N separate events, 'foo=1' .. 'foo=N'.
 
-    In addition, the classifier only retains the top-weighted features for
-    each class, making this a sort of beam search version of the general
-    Perceptron. This reduces the space requirements for the classifier, at the
-    cost of lower accuracy.
+    In addition, this class may be configured to retain only the top-weighted
+    features for each label, making this a sort of beam search version of the
+    general Perceptron. This reduces the space requirements for the classifier,
+    at the cost of lower accuracy.
     '''
 
-    def __init__(self, beam_width=1000):
+    def __init__(self):
         '''Use sparse vectors to store weights and events.'''
         super(SparseAveragedPerceptron, self).__init__(kernel = SparseDot())
-        self._beam_width = beam_width
 
-    def fit(self, X, y, learning_rate=1., n_iter=1):
+    def fit(self, X, y, beam_width=None, learning_rate=1., n_iter=1):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -331,9 +330,11 @@ class SparseAveragedPerceptron(AveragedPerceptron):
         X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
-
         y : array-like, shape = [n_samples]
             Target values.
+
+        beam_width : int, optional
+            Width of beam for beam search.
         learning_rate : float, optional
             Learning rate: multiplied into weight changes, default 1.
         n_iter : int, optional
@@ -343,6 +344,8 @@ class SparseAveragedPerceptron(AveragedPerceptron):
         -------
         self
         """
+
+        self._beam_width = beam_width
 
         X = np.asanyarray(X)
         y = np.asanyarray(y)
@@ -382,8 +385,8 @@ class SparseAveragedPerceptron(AveragedPerceptron):
 
     def _prune(self, weights):
         '''Prune the weights in a sparse vector to our beam width.'''
-        if len(weights) < 1.3 * self._beam_width:
-            return
-        fws = sorted(weights.iteritems(), key=lambda x: -abs(x[1]))
-        for f, _ in fws[self._beam_width:]:
-            del weights[f]
+        beamwidth = self._beam_width
+        if beamwidth is not None and len(weights) < 1.3 * beamwidth:
+            fws = sorted(weights.iteritems(), key=lambda x: -abs(x[1]))
+            for f, _ in fws[beamwidth:]:
+                del weights[f]
