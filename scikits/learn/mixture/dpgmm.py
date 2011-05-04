@@ -465,7 +465,7 @@ class DPGMM(GMM):
         cz = np.cumsum(self._z[:, ::-1], axis=-1)[:, -2::-1]
         logprior = np.sum(cz * dg2[:-1]) + np.sum(self._z * dg1)
         del cz # Save memory
-        z_non_zeros = self._z[self._z != 0]
+        z_non_zeros = self._z[self._z > np.finfo(np.float32).eps]
         logprior -= np.sum(z_non_zeros*np.log(z_non_zeros))
         return logprior
 
@@ -750,7 +750,7 @@ class VBGMM(DPGMM):
         dg = digamma(self._gamma) 
         dg -= digamma(np.sum(self._gamma))
         logprior += np.sum(dg.reshape((-1, 1))*self._z.T)
-        z_non_zeros = self._z[self._z != 0]
+        z_non_zeros = self._z[self._z > np.finfo(np.float32).eps]
         logprior -= np.sum(z_non_zeros*np.log(z_non_zeros))
         return logprior
 

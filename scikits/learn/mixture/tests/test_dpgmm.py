@@ -8,6 +8,8 @@ from scikits.learn.mixture import DPGMM, VBGMM
 from scikits.learn.mixture.dpgmm import log_normalize
 from .test_gmm import GMMTester
 
+np.seterr(all='warn')
+np.random.seed(0)
 
 
 def test_log_normalize():
