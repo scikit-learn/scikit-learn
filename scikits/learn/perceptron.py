@@ -49,6 +49,7 @@ comparison space.
 '''
 
 from .base import BaseEstimator
+from .utils import safe_asanyarray
 from collections import defaultdict
 import numpy as np
 
@@ -132,8 +133,8 @@ class Perceptron(BaseEstimator):
             X = np.array(X)
             y = np.array(y)
         else:
-            X = np.asanyarray(X)
-            y = np.asanyarray(y)
+            X = safe_asanyarray(X)
+            y = safe_asanyarray(y)
 
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
@@ -370,8 +371,8 @@ class SparseAveragedPerceptron(AveragedPerceptron):
             X = np.array(X)
             y = np.array(y)
         else:
-            X = np.asanyarray(X)
-            y = np.asanyarray(y)
+            X = safe_asanyarray(X)
+            y = safe_asanyarray(y)
 
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
