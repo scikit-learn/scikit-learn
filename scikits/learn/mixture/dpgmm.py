@@ -42,7 +42,8 @@ def wishart_logz(v, s, dets, n_features):
     z += (0.25 * (n_features * (n_features - 1))
           * np.log(np.pi))
     z += 0.5 * v * np.log(dets)
-    z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)))
+    z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)
+                        + np.finfo(np.float32).eps))
     return z
 
 ################################################################################
