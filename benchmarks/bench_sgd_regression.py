@@ -91,6 +91,7 @@ if __name__ == "__main__":
     # Plot results
     i = 0
     m = len(list_n_features)
+    pl.figure(figsize=(5 * 2, 4 * m))
     for j in range(m):
         pl.subplot(m, 2, i + 1)
         pl.plot(list_n_samples, np.sqrt(elnet_results[:, j, 0]),
@@ -99,7 +100,7 @@ if __name__ == "__main__":
                 label="SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 0]),
                 label="Ridge")
-        pl.legend()
+        pl.legend(prop={"size": 10})
         pl.xlabel("n_train")
         pl.ylabel("RMSE")
         pl.title("Test error - %d features" % list_n_features[j])
@@ -112,10 +113,12 @@ if __name__ == "__main__":
                 label="SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 1]),
                 label="Ridge")
-        pl.legend()
+        pl.legend(prop={"size": 10})
         pl.xlabel("n_train")
         pl.ylabel("Time [sec]")
         pl.title("Training time - %d features" % list_n_features[j])
         i += 1
+
+    pl.subplots_adjust(hspace=.30)
 
     pl.show()
