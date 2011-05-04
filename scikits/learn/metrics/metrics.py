@@ -66,7 +66,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-def roc_curve(y, probas_):
+def roc_curve(y, pred):
     """compute Receiver operating characteristic (ROC)
 
     Parameters
@@ -75,18 +75,18 @@ def roc_curve(y, probas_):
     y : array, shape = [n_samples]
         true targets
 
-    probas_ : array, shape = [n_samples]
-        estimated probabilities
+    pred : array, shape = [n_samples]
+        predictions, either probability estimates
 
     Returns
     -------
-    fpr : array, shape = [n]
+    fpr : array, shape = [>2]
         False Positive Rates
 
-    tpr : array, shape = [n]
+    tpr : array, shape = [>2]
         True Positive Rates
 
-    thresholds : array, shape = [n]
+    thresholds : array, shape = [>2]
         Thresholds on proba_ used to compute fpr and tpr
 
     References
@@ -94,19 +94,33 @@ def roc_curve(y, probas_):
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
     """
     y = y.ravel()
-    probas_ = probas_.ravel()
-    thresholds = np.sort(np.unique(probas_))[::-1]
+    classes = np.unique(y)
+
+    # ROC only for binary classification
+    if classes.shape[0] != 2:
+        raise ValueError("ROC is defined for binary classification only")
+
+    pred = pred.ravel()
+    thresholds = np.sort(np.unique(pred))[::-1]
     n_thresholds = thresholds.size
 
-    tpr = np.empty(n_thresholds) # True positive rate
-    fpr = np.empty(n_thresholds) # False positive rate
-    n_pos = float(np.sum(y == 1)) # nb of true positive
-    n_neg = float(np.sum(y == 0)) # nb of true negative
+    tpr = np.empty(n_thresholds)  # True positive rate
+    fpr = np.empty(n_thresholds)  # False positive rate
+    n_pos = float(np.sum(y == classes[1]))  # nb of true positive
+    n_neg = float(np.sum(y == classes[0]))  # nb of true negative
 
     for i, t in enumerate(thresholds):
-        tpr[i] = np.sum(y[probas_ >= t] == 1) / n_pos
-        fpr[i] = np.sum(y[probas_ >= t] == 0) / n_neg
+        tpr[i] = np.sum(y[pred >= t] == 1) / n_pos
+        fpr[i] = np.sum(y[pred >= t] == 0) / n_neg
 
+    # hard decisions, add (0,0)
+    if fpr.shape[0] == 2:
+        fpr = np.array([0.0, fpr[0], fpr[1]])
+        tpr = np.array([0.0, tpr[0], tpr[1]])
+    # trivial decisions, add (0,0) and (1,1)
+    elif fpr.shape[0] == 1:
+        fpr = np.array([0.0, fpr[0], 1.0])
+        tpr = np.array([0.0, tpr[0], 1.0])
     return fpr, tpr, thresholds
 
 
@@ -128,6 +142,8 @@ def auc(x, y):
     """
     x = np.asanyarray(x)
     y = np.asanyarray(y)
+    assert x.shape[0] == y.shape[0]
+    assert x.shape[0] >= 3
 
     # reorder the data points according to the x axis
     order = np.argsort(x)
@@ -407,9 +423,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
         width = max(len(cn) for cn in target_names)
         width = max(width, len(last_line_heading))
 
-
     headers = ["precision", "recall", "f1-score", "support"]
-    fmt = '%% %ds' % width # first column: class name
+    fmt = '%% %ds' % width  # first column: class name
     fmt += '  '
     fmt += ' '.join(['% 9s' for _ in headers])
     fmt += '\n'
