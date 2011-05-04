@@ -62,7 +62,7 @@ def clear_data_home(data_home=None):
 
 
 def load_filenames(container_path, description=None, categories=None,
-                   shuffle=True, rng=42):
+                   shuffle=True, random_state=42):
     """Load filenames with categories as subfolder names
 
     Individual samples are assumed to be files stored a two levels folder
@@ -112,7 +112,7 @@ def load_filenames(container_path, description=None, categories=None,
       make the assumption that the samples are independent and identically
       distributed (i.i.d.) such as stochastic gradient descent for instance.
 
-    rng : a numpy random number generator or a seed integer, 42 by default
+    random_state : a numpy random number generator or a seed integer, 42 by default
       used to shuffle the dataset
 
     Returns
@@ -149,10 +149,10 @@ def load_filenames(container_path, description=None, categories=None,
     target = np.array(target)
 
     if shuffle:
-        if isinstance(rng, int):
-            rng = np.random.RandomState(rng)
+        if isinstance(random_state, int):
+            random_state = np.random.RandomState(random_state)
         indices = np.arange(filenames.shape[0])
-        rng.shuffle(indices)
+        random_state.shuffle(indices)
         filenames = filenames[indices]
         target = target[indices]
 
