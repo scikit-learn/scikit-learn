@@ -35,7 +35,7 @@ from scikits.learn.datasets.samples_generator import swiss_roll
 # Generate data (swiss roll dataset)
 n_samples = 1000
 noise = 0.05
-X = swiss_roll(n_samples, noise)
+X, _ = swiss_roll(n_samples, noise)
 # Make it thinner
 X[:, 1] *= .5
 

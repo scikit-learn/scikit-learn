@@ -374,4 +374,4 @@ def swiss_roll(n_samples, noise=0.0):
            + noise * np.random.randn(3, n_samples)
     X = np.transpose(X)
     t = np.squeeze(t)
-    return X
+    return X, t
