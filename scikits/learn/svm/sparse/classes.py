@@ -153,7 +153,7 @@ class OneClassSVM (SparseBaseLibSVM):
     """NuSVR for sparse matrices (csr)
 
     See :class:`scikits.learn.svm.NuSVC` for a complete list of parameters
-    
+
     Notes
     -----
     For best results, this accepts a matrix in csr format

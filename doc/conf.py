@@ -219,3 +219,5 @@ latex_preamble = """
 # If false, no module index is generated.
 #latex_use_modindex = True
 
+trim_doctests_flags = True
+

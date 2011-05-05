@@ -35,7 +35,7 @@ pl.semilogx(rfecv.n_features_, rfecv.cv_scores_)
 pl.xlabel('Number of features selected')
 pl.ylabel('Cross validation score (nb of misclassifications)')
 # 15 ticks regularly-space in log
-x_ticks = np.unique(np.logspace(np.log10(2), 
+x_ticks = np.unique(np.logspace(np.log10(2),
                                 np.log10(rfecv.n_features_.max()),
                                 15,
                     ).astype(np.int))
