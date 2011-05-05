@@ -130,6 +130,8 @@ class _BaseHMM(BaseEstimator):
         # So, we will normalize each frame explicitly in case we
         # pruned too aggressively.
         posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
+        posteriors += np.finfo(np.float32).eps
+        posteriors /= np.sum(posteriors, axis=1).reshape((-1,1))
         return logprob, posteriors
 
     def score(self, obs, maxrank=None, beamlogprob=-np.Inf):

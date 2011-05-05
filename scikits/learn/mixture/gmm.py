@@ -353,7 +353,7 @@ class GMM(BaseEstimator):
         if not return_log:
             posteriors = np.exp(posteriors)
             posteriors += np.finfo(np.float32).eps
-            posteriors /= np.sum(posteriors)
+            posteriors /= np.sum(posteriors, axis=1)
         return logprob, posteriors
 
     def score(self, obs):

@@ -8,7 +8,7 @@ from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
 
 from .. import hmm
 
-np.seterr(all='raise')
+np.seterr(all='warn')
 
 class SeedRandomNumberGeneratorTestCase(TestCase):
     seed = 9
