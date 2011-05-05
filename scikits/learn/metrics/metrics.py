@@ -69,13 +69,15 @@ def confusion_matrix(y_true, y_pred, labels=None):
 def roc_curve(y_true, y_score):
     """compute Receiver operating characteristic (ROC)
 
+    Note: this implementation is restricted to the binary classification task.
+
     Parameters
     ----------
 
     y_true : array, shape = [n_samples]
         true binary labels
 
-    y_scores : array, shape = [n_samples]
+    y_score : array, shape = [n_samples]
         target scores, can either be probability estimates of
         the positive class, confidence values, or binary decisions.
 
@@ -98,7 +100,7 @@ def roc_curve(y_true, y_score):
     >>> fpr, tpr, thresholds = roc_curve(y, scores)
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
-    
+
 
     References
     ----------
