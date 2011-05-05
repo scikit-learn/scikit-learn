@@ -8,6 +8,7 @@ cdef extern from "math.h":
     cdef extern double exp(double x)
     cdef extern double log(double x)
     cdef extern double sqrt(double x)
+    cdef extern double pow(double x, double y)
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
