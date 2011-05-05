@@ -73,7 +73,7 @@ def _pprint(params, offset=0, printer=repr):
     np.set_printoptions(precision=5, threshold=64, edgeitems=2)
     params_list = list()
     this_line_length = offset
-    line_sep = ',\n' + (1 + offset / 2) * ' '
+    line_sep = ',\n' + (1 + offset // 2) * ' '
     for i, (k, v) in enumerate(params.iteritems()):
         if type(v) is float:
             # use str for representing floating point numbers

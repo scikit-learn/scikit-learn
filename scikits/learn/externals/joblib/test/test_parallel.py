@@ -2,7 +2,7 @@
 Test the parallel module.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2010-2011 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -14,7 +14,8 @@ except:
     import pickle
     PickleError = pickle.PicklingError
 
-from ..parallel import Parallel, delayed, SafeFunction, WorkerInterrupt
+from ..parallel import Parallel, delayed, SafeFunction, WorkerInterrupt, \
+        multiprocessing
 from ..my_exceptions import JoblibException
 
 import nose
@@ -56,12 +57,12 @@ def test_parallel_kwargs():
     """
     lst = range(10)
     for n_jobs in (1, 4):
-        yield (nose.tools.assert_equal, 
-               [f(x, y=1) for x in lst], 
+        yield (nose.tools.assert_equal,
+               [f(x, y=1) for x in lst],
                Parallel(n_jobs=n_jobs)(delayed(f)(x, y=1) for x in lst)
               )
 
-        
+
 def test_parallel_pickling():
     """ Check that pmap captures the errors when it is passed an object
         that cannot be pickled.
@@ -69,7 +70,7 @@ def test_parallel_pickling():
     def g(x):
         return x**2
     nose.tools.assert_raises(PickleError,
-                             Parallel(), 
+                             Parallel(),
                              (delayed(g)(x) for x in range(10))
                             )
 
@@ -78,10 +79,6 @@ def test_error_capture():
     """ Check that error are captured, and that correct exceptions
         are raised.
     """
-    try:
-        import multiprocessing
-    except ImportError:
-        multiprocessing = None
     if multiprocessing is not None:
         # A JoblibException will be raised only if there is indeed
         # multiprocessing
@@ -120,18 +117,50 @@ class Counter(object):
         nose.tools.assert_equal(len(self.list1), len(self.list2))
 
 
+def consumer(queue, item):
+    queue.append('Consumed %s' % item)
+
+
 def test_dispatch_one_job():
     """ Test that with only one job, Parallel does act as a iterator.
     """
-    produced = list()
-    consumed = list()
+    queue = list()
     def producer():
         for i in range(6):
-            produced.append(i)
+            queue.append('Produced %i' % i)
             yield i
-    consumer = Counter(list1=consumed, list2=consumed)
 
-    Parallel(n_jobs=1)(delayed(consumer)(x) for x in producer())
+    Parallel(n_jobs=1)(delayed(consumer)(queue, x) for x in producer())
+    nose.tools.assert_equal(queue,
+                              ['Produced 0', 'Consumed 0',
+                               'Produced 1', 'Consumed 1',
+                               'Produced 2', 'Consumed 2',
+                               'Produced 3', 'Consumed 3',
+                               'Produced 4', 'Consumed 4',
+                               'Produced 5', 'Consumed 5']
+                               )
+    nose.tools.assert_equal(len(queue), 12)
+
+
+def test_dispatch_multiprocessing():
+    """ Check that using pre_dispatch Parallel does indeed dispatch items
+        lazily.
+    """
+    if multiprocessing is None:
+        return
+    manager = multiprocessing.Manager()
+    queue = manager.list()
+    def producer():
+        for i in range(6):
+            queue.append('Produced %i' % i)
+            yield i
+
+    Parallel(n_jobs=2, pre_dispatch=3)(delayed(consumer)(queue, i)
+                                       for i in producer())
+    nose.tools.assert_equal(list(queue)[:4],
+            ['Produced 0', 'Produced 1', 'Produced 2',
+             'Consumed 0', ])
+    nose.tools.assert_equal(len(queue), 12)
 
 
 def test_exception_dispatch():

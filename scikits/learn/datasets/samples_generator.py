@@ -375,7 +375,7 @@ def swiss_roll(n_samples, noise=0.0):
            + noise * np.random.randn(3, n_samples)
     X = np.transpose(X)
     t = np.squeeze(t)
-    return X
+    return X, t
 
 
 def generate_random_spd_matrix(ndim, prng=np.random.RandomState(0)):
@@ -384,4 +384,3 @@ def generate_random_spd_matrix(ndim, prng=np.random.RandomState(0)):
     U, s, V = linalg.svd(np.dot(A.T, A))
     rand_spd = np.dot(np.dot(U, 1.0 + np.diag(prng.rand(ndim))), V)
     return rand_spd
-

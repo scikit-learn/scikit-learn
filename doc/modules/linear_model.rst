@@ -107,15 +107,17 @@ This method has the same order of complexity than an
 Generalized Cross-Validation
 ----------------------------
 
-:class:`RidgeCV` implements ridge regression with built-in cross-validation of the alpha parameter.
-The object works in the same way as GridSearchCV except that it defaults to Generalized Cross-Validation (GCV), an efficient form of leave-one-out cross-validation.
+:class:`RidgeCV` implements ridge regression with built-in
+cross-validation of the alpha parameter.  The object works in the same way
+as GridSearchCV except that it defaults to Generalized Cross-Validation
+(GCV), an efficient form of leave-one-out cross-validation.
 
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
-    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
-    RidgeCV(alphas=[0.10000000000000001, 1.0, 10.0], loss_func=None, cv=None,
-        score_func=None, fit_intercept=True)
-    >>> clf.best_alpha
+    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])         # doctest: +SKIP
+    RidgeCV(alphas=[0.1, 1.0, 10.0], loss_func=None, cv=None, score_func=None,
+        fit_intercept=True)
+    >>> clf.best_alpha                                         # doctest: +SKIP
     0.10000000000000001
 
 .. topic:: References
@@ -461,7 +463,10 @@ that doesn't try to minimize the sum of square residuals, as in regression,
 but rather a "hit or miss" cost.
 
 The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
-logistic regression, in order to have sparse predicting weights.
+logistic regression. L1 penalization yields sparse predicting weights.
+For L1 penalization :func:`scikits.learn.svm.l1_min_c` allows to calculate
+the lower bound for C in order to get a non "null" (all feature weights to
+zero) model.
 
 .. topic:: Examples:
 

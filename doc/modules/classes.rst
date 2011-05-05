@@ -28,6 +28,14 @@ Support Vector Machines
    svm.NuSVR
    svm.OneClassSVM
 
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   svm.l1_min_c
+
+
 For sparse data
 ---------------
 
@@ -48,6 +56,22 @@ For sparse data
    svm.sparse.NuSVR
    svm.sparse.OneClassSVM
    svm.sparse.LinearSVC
+
+
+
+Low-level methods
+-----------------
+
+.. autosummary::
+
+   :toctree: generated
+   :template: function.rst
+
+   svm.libsvm.fit
+   svm.libsvm.decision_function
+   svm.libsvm.predict
+   svm.libsvm.predict_proba
+   svm.libsvm.cross_validation
 
 
 Generalized Linear Models
@@ -283,6 +307,8 @@ Covariance Estimators
    :template: function.rst
 
    covariance.ledoit_wolf
+   covariance.shrunk_covariance
+   covariance.oas
 
 
 Signal Decomposition

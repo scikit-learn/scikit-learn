@@ -174,8 +174,8 @@ class BaseLibSVM(BaseEstimator):
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
-            X, self.support_, self.support_vectors_, self.dual_coef_,
-            self.n_support_, self.intercept_, 
+            X, self.support_, self.support_vectors_, self.n_support_,
+            self.dual_coef_, self.intercept_,
             self.label_, self.probA_, self.probB_,
             svm_type=svm_type, **self._get_params())
 
@@ -213,9 +213,9 @@ class BaseLibSVM(BaseEstimator):
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
-            X, self.support_vectors_, self.dual_coef_,
-            self.intercept_, self.n_support_, self.support_,
-            self.label_, self.probA_, self.probB_,
+            X, self.support_, self.support_vectors_, self.n_support_,
+            self.dual_coef_, self.intercept_, self.label_,
+            self.probA_, self.probB_,
             svm_type=svm_type, **self._get_params())
 
         return pprob
@@ -263,9 +263,9 @@ class BaseLibSVM(BaseEstimator):
         X = self._compute_kernel(X)
 
         dec_func = libsvm.decision_function(
-            X, self.support_vectors_, self.dual_coef_,
-            self.intercept_, self.n_support_, self.support_,
-            self.label_, self.probA_, self.probB_,
+            X, self.support_, self.support_vectors_, self.n_support_,
+            self.dual_coef_, self.intercept_, self.label_,
+            self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
             **self._get_params())
 
