@@ -8,10 +8,10 @@ from scikits.learn.datasets.samples_generator import generate_random_spd_matrix
 
 from .. import hmm
 
-
+np.seterr(all='raise')
 
 class SeedRandomNumberGeneratorTestCase(TestCase):
-    seed = 10
+    seed = 9
 
     def __init__(self, *args, **kwargs):
         self.setUp()

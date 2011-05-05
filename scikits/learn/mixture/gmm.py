@@ -352,6 +352,8 @@ class GMM(BaseEstimator):
         posteriors = lpr - logprob[:, np.newaxis]
         if not return_log:
             posteriors = np.exp(posteriors)
+            posteriors += np.finfo(np.float32).eps
+            posteriors /= np.sum(posteriors)
         return logprob, posteriors
 
     def score(self, obs):
@@ -585,7 +587,7 @@ def _lmvnpdftied(obs, means, covars):
     n_obs, n_dim = obs.shape
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
     icv = linalg.pinv(covars)
-    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars))
+    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars)+0.1)
                   + np.sum(obs * np.dot(obs, icv), 1)[:, np.newaxis]
                   - 2 * np.dot(np.dot(obs, icv), means.T)
                   + np.sum(means * np.dot(means, icv), 1))

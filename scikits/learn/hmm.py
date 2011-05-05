@@ -13,7 +13,6 @@ from .mixture import (GMM, lmvnpdf, logsum, normalize, sample_gaussian,
 from . import cluster
 ZEROLOGPROB = -1e200
 
-
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
 
@@ -464,7 +463,6 @@ class _BaseHMM(BaseEstimator):
         """
         # Beam pruning
         threshlogprob = logsum(lattice_frame) + beamlogprob
-
         # Rank pruning
         if maxrank:
             # How big should our rank pruning histogram be?
