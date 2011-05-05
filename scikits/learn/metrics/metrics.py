@@ -137,15 +137,15 @@ def roc_curve(y_true, y_score):
     return fpr, tpr, thresholds
 
 
-def auc(fpr, tpr):
+def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     Parameters
     ----------
-    fpr : array, shape = [n]
+    x : array, shape = [n]
         x coordinates
 
-    tpr : array, shape = [n]
+    y : array, shape = [n]
         y coordinates
 
     Returns
@@ -162,18 +162,18 @@ def auc(fpr, tpr):
     0.75
 
     """
-    fpr = np.asanyarray(fpr)
-    tpr = np.asanyarray(tpr)
-    assert fpr.shape[0] == tpr.shape[0]
-    assert fpr.shape[0] >= 3
+    x = np.asanyarray(x)
+    y = np.asanyarray(y)
+    assert x.shape[0] == y.shape[0]
+    assert x.shape[0] >= 3
 
     # reorder the data points according to the x axis
-    order = np.argsort(fpr)
-    fpr = fpr[order]
-    tpr = tpr[order]
+    order = np.argsort(x)
+    x = x[order]
+    y = y[order]
 
-    h = np.diff(fpr)
-    area = np.sum(h * (tpr[1:] + tpr[:-1])) / 2.0
+    h = np.diff(x)
+    area = np.sum(h * (y[1:] + y[:-1])) / 2.0
     return area
 
 
