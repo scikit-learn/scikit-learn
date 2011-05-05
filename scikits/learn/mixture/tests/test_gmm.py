@@ -77,7 +77,7 @@ def test_sample_gaussian():
     samples = mixture.sample_gaussian(
         mu, cv, cvtype='full', n_samples=n_samples)
     assert np.allclose(samples.mean(axis), mu, atol=1.3)
-    assert np.allclose(np.cov(samples), cv, atol=1.)
+    assert np.allclose(np.cov(samples), cv, atol=2.5)
 
 
 def _naive_lmvnpdf_diag(obs, mu, cv):
@@ -250,8 +250,8 @@ class GMMTester():
         self.assertTrue(
             delta_min > self.threshold,
             "The min nll increase is %f which is lower than the admissible"
-            " threshold of %f, for model %s" 
-                % (delta_min, self.threshold, self.cvtype))
+            " threshold of %f, for model %s. The likelihoods are %s." 
+                % (delta_min, self.threshold, self.cvtype, trainll))
 
     def score(self, g, train_obs):
         return g.score(train_obs).sum()

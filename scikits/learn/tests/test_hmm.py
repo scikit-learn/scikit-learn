@@ -337,7 +337,12 @@ class GaussianHMMTester(GaussianHMMParams):
             print
             print ('Test train: %s (%s)\n  %s\n  %s'
                    % (self.cvtype, params, trainll, np.diff(trainll)))
-        self.assertTrue(np.all(np.diff(trainll) > -0.5))
+        delta_min = np.diff(trainll).min()
+        self.assertTrue(
+            delta_min > -0.8,
+            "The min nll increase is %f which is lower than the admissible"
+            " threshold of %f, for model %s. The likelihoods are %s." 
+                % (delta_min, -0.8, self.cvtype, trainll))
 
     def test_fit_works_on_sequences_of_different_length(self):
         obs = [self.prng.rand(3, self.n_features),
