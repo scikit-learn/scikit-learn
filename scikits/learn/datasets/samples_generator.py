@@ -8,6 +8,7 @@ Generate samples of synthetic data sets.
 import numpy as np
 from scipy import linalg
 
+from ..utils import check_random_state
 
 def test_dataset_classif(n_samples=100, n_features=100, param=[1, 1],
                          n_informative=0, k=0, seed=None):
@@ -378,8 +379,9 @@ def swiss_roll(n_samples, noise=0.0):
     return X, t
 
 
-def generate_random_spd_matrix(ndim, prng=np.random.RandomState(0)):
+def generate_random_spd_matrix(ndim, random_state=0):
     """Return a random symmetric, positive-definite matrix."""
+    prng = check_random_state(random_state)
     A = prng.rand(ndim, ndim)
     U, s, V = linalg.svd(np.dot(A.T, A))
     rand_spd = np.dot(np.dot(U, 1.0 + np.diag(prng.rand(ndim))), V)

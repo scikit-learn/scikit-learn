@@ -226,18 +226,22 @@ class GaussianHMMParams(object):
     transmat = prng.rand(n_states, n_states)
     transmat /= np.tile(transmat.sum(axis=1)[:,np.newaxis], (1, n_states))
     means = prng.randint(-20, 20, (n_states, n_features))
-    covars = {'spherical': (1.0 + 2 * prng.rand(n_states)) ** 2,
-              'tied': (generate_random_spd_matrix(n_features, prng=prng)
-                       + np.eye(n_features)),
-              'diag': (1.0 + 2 * prng.rand(n_states, n_features)) ** 2,
-              'full': np.array(
-                  [generate_random_spd_matrix(n_features, prng=prng) + np.eye(n_features)
-                   for x in xrange(n_states)])}
-    expanded_covars = {'spherical': [np.eye(n_features) * cov
-                                     for cov in covars['spherical']],
-                       'diag': [np.diag(cov) for cov in covars['diag']],
-                       'tied': [covars['tied']] * n_states,
-                       'full': covars['full']}
+    covars = {
+        'spherical': (1.0 + 2 * prng.rand(n_states)) ** 2,
+        'tied': (generate_random_spd_matrix(n_features, random_state=prng)
+                 + np.eye(n_features)),
+        'diag': (1.0 + 2 * prng.rand(n_states, n_features)) ** 2,
+        'full': np.array(
+            [generate_random_spd_matrix(n_features, random_state=prng)
+             + np.eye(n_features) for x in xrange(n_states)])
+    }
+    expanded_covars = {
+        'spherical': [np.eye(n_features)
+                      * cov for cov in covars['spherical']],
+        'diag': [np.diag(cov) for cov in covars['diag']],
+        'tied': [covars['tied']] * n_states,
+        'full': covars['full']
+    }
 
 
 class GaussianHMMTester(GaussianHMMParams):
@@ -521,15 +525,16 @@ def create_random_gmm(n_mix, n_features, cvtype, prng=prng):
     g = mixture.GMM(n_mix, cvtype=cvtype)
     g.means = prng.randint(-20, 20, (n_mix, n_features))
     mincv = 0.1
-    g.covars = {'spherical': (mincv
-                              + mincv * prng.rand(n_mix)) ** 2,
-                'tied': generate_random_spd_matrix(n_features, prng=prng)
-                       + mincv * np.eye(n_features),
-                'diag': (mincv
-                         + mincv * prng.rand(n_mix, n_features)) ** 2,
-                'full': np.array([generate_random_spd_matrix(n_features, prng=prng)
-                                  + mincv * np.eye(n_features)
-                                  for x in xrange(n_mix)])}[cvtype]
+    g.covars = {
+        'spherical': (mincv
+                      + mincv * prng.rand(n_mix)) ** 2,
+        'tied': (generate_random_spd_matrix(n_features, random_state=prng)
+                 + mincv * np.eye(n_features)),
+        'diag': (mincv + mincv * prng.rand(n_mix, n_features)) ** 2,
+        'full': np.array(
+            [generate_random_spd_matrix(n_features, random_state=prng)
+             + mincv * np.eye(n_features) for x in xrange(n_mix)])
+    }[cvtype]
     g.weights = hmm.normalize(prng.rand(n_mix))
     return g
 
@@ -605,12 +610,12 @@ class TestGMMHMM(GMMHMMParams, SeedRandomNumberGeneratorTestCase):
     def test_fit(self, params='stmwc', n_iter=5, verbose=True, **kwargs):
         h = hmm.GMMHMM(self.n_states)
         h.startprob = self.startprob
-        h.transmat = hmm.normalize(self.transmat
-                                   + np.diag(self.prng.rand(self.n_states)), 1)
+        h.transmat = hmm.normalize(
+            self.transmat + np.diag(self.prng.rand(self.n_states)), 1)
         h.gmms = self.gmms
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.rvs(n=10, prng=self.prng) for x in xrange(10)]
+        train_obs = [h.rvs(n=10, random_state=self.prng) for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.fit(train_obs, n_iter=0)

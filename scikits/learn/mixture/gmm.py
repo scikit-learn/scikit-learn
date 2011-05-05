@@ -8,6 +8,7 @@ Gaussian Mixture Models
 
 import numpy as np
 
+from ..utils import check_random_state
 from ..base import BaseEstimator
 from .. import cluster
 
@@ -69,7 +70,8 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
     return lmvnpdf_dict[cvtype](obs, means, covars)
 
 
-def sample_gaussian(mean, covar, cvtype='diag', n_samples=1, rng=np.random):
+def sample_gaussian(mean, covar, cvtype='diag', n_samples=1,
+                    random_state=None):
     """Generate random samples from a Gaussian distribution.
 
     Parameters
@@ -95,6 +97,7 @@ def sample_gaussian(mean, covar, cvtype='diag', n_samples=1, rng=np.random):
     obs : array, shape (n_features, n_samples)
         Randomly generated sample
     """
+    rng = check_random_state(random_state)
     n_dim = len(mean)
     rand = rng.randn(n_dim, n_samples)
     if n_samples == 1:
@@ -181,7 +184,7 @@ class GMM(BaseEstimator):
     predict(X)
         Like decode, find most likely mixtures components for each
         observation in `X`.
-    rvs(n=1, prng=None)
+    rvs(n=1, random_state=None)
         Generate `n` samples from the model.
     score(X)
         Compute the log likelihood of `X` under the model.
@@ -239,13 +242,13 @@ class GMM(BaseEstimator):
     array([ 0.5,  0.5])
     """
 
-    def __init__(self, n_states=1, cvtype='diag', rng=np.random, thresh=1e-2,
-                 min_covar=1e-3):
+    def __init__(self, n_states=1, cvtype='diag', random_state=None,
+                 thresh=1e-2, min_covar=1e-3):
         self._n_states = n_states
         self._cvtype = cvtype
         self.thresh = thresh
         self.min_covar = min_covar
-        self.rng = rng
+        self.random_state = random_state
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad cvtype: '+str(cvtype))
@@ -419,7 +422,7 @@ class GMM(BaseEstimator):
         logprob, posteriors = self.eval(X)
         return posteriors
 
-    def rvs(self, n_samples=1, prng=None):
+    def rvs(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
 
         Parameters
@@ -432,13 +435,14 @@ class GMM(BaseEstimator):
         obs : array_like, shape (n_samples, n_features)
             List of samples
         """
-        if prng is None:
-            prng = self.rng
+        if random_state is None:
+            random_state = self.random_state
+        random_state = check_random_state(random_state)
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
         obs = np.empty((n_samples, self.n_features))
-        rand = prng.rand(n_samples)
+        rand = random_state.rand(n_samples)
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
         # for each component, generate all needed samples
@@ -452,10 +456,10 @@ class GMM(BaseEstimator):
                     cv = self._covars
                 else:
                     cv = self._covars[comp]
-                obs[comp_in_obs] = sample_gaussian(self._means[comp], cv,
-                                                   self._cvtype, 
-                                                   num_comp_in_obs,
-                                                   rng=self.rng).T
+                obs[comp_in_obs] = sample_gaussian(
+                    self._means[comp], cv, self._cvtype, num_comp_in_obs,
+                    random_state=random_state
+                ).T
         return obs
 
     def fit(self, X, n_iter=10, thresh=1e-2, params='wmc',

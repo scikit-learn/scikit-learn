@@ -135,7 +135,7 @@ def test_lmvnpdf_full():
 def test_GMM_attributes():
     n_states, n_features = 10, 4
     cvtype = 'diag'
-    g = mixture.GMM(n_states, cvtype, rng=rng)
+    g = mixture.GMM(n_states, cvtype, random_state=rng)
     weights = rng.rand(n_states)
     weights = weights / weights.sum()
     means = rng.randint(-20, 20, (n_states, n_features))
@@ -188,7 +188,8 @@ class GMMTester():
         # covariances before fitting There is no way of fixing this
         # due to the variational parameters being more expressive than
         # covariance matrices
-        g = self.model(n_states=self.n_states, cvtype=self.cvtype, rng=rng)
+        g = self.model(n_states=self.n_states, cvtype=self.cvtype,
+                       random_state=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -207,7 +208,8 @@ class GMMTester():
         assert_array_equal(posteriors.argmax(axis=1), gaussidx)
 
     def test_rvs(self, n=100):
-        g = self.model(n_states=self.n_states, cvtype=self.cvtype, rng=rng)
+        g = self.model(n_states=self.n_states, cvtype=self.cvtype,
+                       random_state=rng)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
         g.means = 20 * self.means
@@ -225,7 +227,8 @@ class GMMTester():
 
         # Create a training set by sampling from the predefined distribution.
         train_obs = g.rvs(n_samples=100)
-        g = self.model(n_states=self.n_states, cvtype=self.cvtype, rng=rng, min_covar=1e-1)
+        g = self.model(n_states=self.n_states, cvtype=self.cvtype,
+                       random_state=rng, min_covar=1e-1)
         g.fit(train_obs, n_iter=1, init_params=params)
 
         # Do one training iteration at a time so we can keep track of
@@ -272,7 +275,6 @@ class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
 class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     cvtype = 'full'
     model = GMM
-
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ import string
 
 import numpy as np
 
+from .utils import check_random_state
 from .base import BaseEstimator
 from .mixture import (GMM, lmvnpdf, logsum, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
@@ -249,7 +250,7 @@ class _BaseHMM(BaseEstimator):
         logprob, posteriors = self.eval(obs, **kwargs)
         return posteriors
 
-    def rvs(self, n=1, prng=np.random):
+    def rvs(self, n=1, random_state=None):
         """Generate random samples from the model.
 
         Parameters
@@ -262,6 +263,7 @@ class _BaseHMM(BaseEstimator):
         obs : array_like, length `n`
             List of samples
         """
+        random_state = check_random_state(random_state)
 
         startprob_pdf = self.startprob
         startprob_cdf = np.cumsum(startprob_pdf)
@@ -269,15 +271,16 @@ class _BaseHMM(BaseEstimator):
         transmat_cdf = np.cumsum(transmat_pdf, 1)
 
         # Initial state.
-        rand = prng.rand()
+        rand = random_state.rand()
         currstate = (startprob_cdf > rand).argmax()
-        obs = [self._generate_sample_from_state(currstate, prng=prng)]
+        obs = [self._generate_sample_from_state(
+            currstate, random_state=random_state)]
 
         for x in xrange(n - 1):
-            rand = prng.rand()
+            rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
-            obs.append(self._generate_sample_from_state(currstate,
-                       prng=prng))
+            obs.append(self._generate_sample_from_state(
+                currstate, random_state=random_state))
 
         return np.array(obs)
 
@@ -488,7 +491,7 @@ class _BaseHMM(BaseEstimator):
     def _compute_log_likelihood(self, obs):
         pass
 
-    def _generate_sample_from_state(self, state, prng=np.random):
+    def _generate_sample_from_state(self, state, random_state=None):
         pass
 
     def _init(self, obs, params):
@@ -669,13 +672,13 @@ class GaussianHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return lmvnpdf(obs, self._means, self._covars, self._cvtype)
 
-    def _generate_sample_from_state(self, state, prng=np.random):
+    def _generate_sample_from_state(self, state, random_state=None):
         if self._cvtype == 'tied':
             cv = self._covars
         else:
             cv = self._covars[state]
         return sample_gaussian(self._means[state], cv, self._cvtype,
-                                rng=prng)
+                               random_state=random_state)
 
     def _init(self, obs, params='stmc'):
         super(GaussianHMM, self)._init(obs, params=params)
@@ -870,9 +873,10 @@ class MultinomialHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return self._log_emissionprob[:, obs].T
 
-    def _generate_sample_from_state(self, state, prng=np.random):
+    def _generate_sample_from_state(self, state, random_state=None):
         cdf = np.cumsum(self.emissionprob[state, :])
-        rand = prng.rand()
+        random_state = check_random_state(random_state)
+        rand = random_state.rand()
         symbol = (cdf > rand).argmax()
         return symbol
 
@@ -987,8 +991,8 @@ class GMMHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return np.array([g.score(obs) for g in self.gmms]).T
 
-    def _generate_sample_from_state(self, state, prng=np.random):
-        return self.gmms[state].rvs(1, prng=prng).flatten()
+    def _generate_sample_from_state(self, state, random_state=None):
+        return self.gmms[state].rvs(1, random_state=random_state).flatten()
 
     def _init(self, obs, params='stwmc'):
         super(GMMHMM, self)._init(obs, params=params)

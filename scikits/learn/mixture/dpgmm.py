@@ -11,36 +11,43 @@ import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 
+from ..utils import check_random_state
 from ..utils.extmath import norm
 from .. import cluster
 from ..metrics import euclidean_distances
 from . gmm import GMM
 
+
 def sqnorm(v):
-    return norm(v)**2
+    return norm(v) ** 2
+
 
 def digamma(x):
     return _digamma(x + np.finfo(np.float32).eps)
+
 
 def gammaln(x):
     return _gammaln(x + np.finfo(np.float32).eps)
 
 
 def log_normalize(v, axis=0):
-    """Given a vector of unnormalized log-probabilites v returns a
-       vector of normalized probabilities"""
+    """Normalized probabilities from unnormalized log-probabilites"""
     v = np.rollaxis(v, axis)
     v = np.exp(v - np.logaddexp.reduce(v, axis=0))
     v += np.finfo(np.float32).eps
     v /= np.sum(v, axis=0)
     return np.swapaxes(v, 0, axis)
 
+
 def detlog_wishart(a, b, detB, n_features):
-    """The expected value of the logarithm of the determinant of a
-    wishart-distributed random value with the specified parameters."""
+    """Expected value of the log of the determinant of a Wishart
+
+    The expected value of the logarithm of the determinant of a
+    wishart-distributed random variable with the specified parameters."""
     l = np.sum(digamma(0.5 * (a - np.arange(-1, n_features - 1))))
     l += n_features * np.log(2)
     return l + detB
+
 
 def wishart_logz(v, s, dets, n_features):
     "The logarithm of the normalization constant for the wishart distribution"
@@ -52,7 +59,8 @@ def wishart_logz(v, s, dets, n_features):
     z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)))
     return z
 
-################################################################################
+
+##############################################################################
 # Variational bound on the log likelihood of each class
 
 def _bound_state_loglik_spherical(X, initial_bound, bound_prec, precs, means):
@@ -61,7 +69,8 @@ def _bound_state_loglik_spherical(X, initial_bound, bound_prec, precs, means):
     bound = np.empty((n_samples, n_states))
     bound[:] = bound_prec + initial_bound
     for k in xrange(n_states):
-        bound[:, k] -= 0.5 * precs[k] * (((X - means[k])**2).sum(axis=-1) + n_features)
+        bound[:, k] -= 0.5 * precs[k] * (((X - means[k]) ** 2).sum(axis=-1)
+                                         + n_features)
     return bound
 
 
@@ -112,7 +121,6 @@ _BOUND_STATE_LOGLIK_DICT = dict(
     full=_bound_state_loglik_full)
 
 
-################################################################################
 class DPGMM(GMM):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
@@ -145,9 +153,9 @@ class DPGMM(GMM):
     alpha: float, optional
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichler Process
-        is as likely to start a new cluster for a point as it is 
+        is as likely to start a new cluster for a point as it is
         to add that point to a cluster with alpha elements. A
-        higher alpha means more clusters, as the expected number 
+        higher alpha means more clusters, as the expected number
         of clusters is alpha*log(N). Defaults to 1.
 
     thresh : float, optional
@@ -205,12 +213,14 @@ class DPGMM(GMM):
 
     """
 
-    def __init__(self, n_states=1, cvtype='diag', alpha=1.0, rng=np.random, 
-                 thresh=1e-2, verbose=False, min_covar=None):
+    def __init__(self, n_states=1, cvtype='diag', alpha=1.0,
+                 random_state=None, thresh=1e-2, verbose=False,
+                 min_covar=None):
         self.alpha = alpha
         self.verbose = verbose
-        super(DPGMM, self).__init__(n_states, cvtype, rng=rng, thresh=thresh, 
-                                    min_covar=min_covar)
+        super(DPGMM, self).__init__(n_states, cvtype,
+                                    random_state=random_state,
+                                    thresh=thresh, min_covar=min_covar)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -266,11 +276,11 @@ class DPGMM(GMM):
         sd = digamma(self._gamma.T[1] + self._gamma.T[2])
         dgamma1 = digamma(self._gamma.T[1]) - sd
         dgamma2 = np.zeros(self.n_states)
-        dgamma2[0] = digamma(self._gamma[0, 2]) - digamma(self._gamma[0, 1]+
+        dgamma2[0] = digamma(self._gamma[0, 2]) - digamma(self._gamma[0, 1] +
                                                           self._gamma[0, 2])
         for j in xrange(1, self._n_states):
-            dgamma2[j] = dgamma2[j-1] + digamma(self._gamma[j-1, 2])
-            dgamma2[j] -= sd[j-1]
+            dgamma2[j] = dgamma2[j - 1] + digamma(self._gamma[j - 1, 2])
+            dgamma2[j] -= sd[j - 1]
         dgamma = dgamma1 + dgamma2
         # Free memory and developers cognitive load:
         del dgamma1, dgamma2, sd
@@ -281,7 +291,7 @@ class DPGMM(GMM):
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.cvtype)
 
-        p = _bound_state_loglik(obs, self._initial_bound, 
+        p = _bound_state_loglik(obs, self._initial_bound,
                         self._bound_prec, self._precs, self._means)
         z = p + dgamma
         self._z = z = log_normalize(z, axis=-1)
@@ -289,20 +299,19 @@ class DPGMM(GMM):
         return bound, z
 
     def _update_concentration(self):
-        """Updates the concentration parameters for each cluster."""
+        """Update the concentration parameters for each cluster"""
         sz = np.sum(self._z, axis=0)
         self._gamma.T[1] = 1. + sz
         self._gamma.T[2].fill(0)
-        for i in xrange(self.n_states-2, -1, -1):
-            self._gamma[i, 2] = self._gamma[i+1, 2] + sz[i]
+        for i in xrange(self.n_states - 2, -1, -1):
+            self._gamma[i, 2] = self._gamma[i + 1, 2] + sz[i]
         self._gamma.T[2] += self.alpha
 
     def _update_means(self):
-        """Updates the variational distributions for the means of the
-        mixture components"""
+        """Update the variational distributions for the means"""
         for k in xrange(self.n_states):
             if self.cvtype == 'spherical' or self.cvtype == 'diag':
-                num = np.sum(self._z.T[k].reshape((-1, 1))*self._X, axis=0)
+                num = np.sum(self._z.T[k].reshape((-1, 1)) * self._X, axis=0)
                 num *= self._precs[k]
                 den = 1. + self._precs[k] * np.sum(self._z.T[k])
                 self._means[k] = num / den
@@ -312,39 +321,39 @@ class DPGMM(GMM):
                 else:
                     cov = self._precs[k]
                 den = np.identity(self.n_features) + cov * np.sum(self._z.T[k])
-                num = np.sum(self._z.T[k].reshape((-1, 1))*self._X, axis=0)
+                num = np.sum(self._z.T[k].reshape((-1, 1)) * self._X, axis=0)
                 num = np.dot(cov, num)
                 self._means[k] = linalg.lstsq(den, num)[0]
 
     def _update_precisions(self):
-        """Updates the variational distributions for the precisions of
-        the mixture components"""
+        """Update the variational distributions for the precisions"""
         if self.cvtype == 'spherical':
             self._a = 0.5 * self.n_features * np.sum(self._z, axis=0)
             for k in xrange(self.n_states):
-                dif = (self._X - self._means[k]) # one might want to
-                                                 # avoid this huge
-                                                 # temporary matrix if
-                                                 # memory is tight
+                # XXX: how to avoid this huge temporary matrix in memory
+                dif = (self._X - self._means[k])
                 self._b[k] = 1.
-                d = np.sum(dif*dif,axis=1)
-                self._b[k] += 0.5 * np.sum(self._z.T[k]*(d+self.n_features))
-                self._bound_prec[k] = (0.5 * self.n_features *
-                                        (digamma(self._a[k]) -
-                                         np.log(self._b[k])))
+                d = np.sum(dif * dif, axis=1)
+                self._b[k] += 0.5 * np.sum(
+                    self._z.T[k] * (d + self.n_features))
+                self._bound_prec[k] = (
+                    0.5 * self.n_features * (
+                        digamma(self._a[k]) - np.log(self._b[k])))
             self._precs = self._a / self._b
+
         elif self.cvtype == 'diag':
             for k in xrange(self.n_states):
                 self._a[k].fill(1. + 0.5 * np.sum(self._z.T[k], axis=0))
-                ddif = (self._X - self._means[k]) # see comment above
+                ddif = (self._X - self._means[k])  # see comment above
                 for d in xrange(self.n_features):
                     self._b[k, d] = 1.
-                    dd = ddif.T[d]*ddif.T[d]
-                    self._b[k,d] += 0.5 * np.sum(self._z.T[k]*(dd + 1))
+                    dd = ddif.T[d] * ddif.T[d]
+                    self._b[k, d] += 0.5 * np.sum(self._z.T[k] * (dd + 1))
                 self._precs[k] = self._a[k] / self._b[k]
                 self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
                                                     - np.log(self._b[k]))
                 self._bound_prec[k] -= 0.5 * np.sum(self._precs[k])
+
         elif self.cvtype == 'tied':
             self._a = 2 + self._X.shape[0] + self.n_features
             self._B = (self._X.shape[0] + 1) * np.identity(self.n_features)
@@ -356,11 +365,10 @@ class DPGMM(GMM):
             self._B = linalg.pinv(self._B)
             self._precs = self._a * self._B
             self._detB = linalg.det(self._B)
-            self._bound_prec = 0.5 * detlog_wishart(self._a,
-                                                    self._B,
-                                                    self._detB,
-                                                    self.n_features)
+            self._bound_prec = 0.5 * detlog_wishart(
+                self._a, self._B, self._detB, self.n_features)
             self._bound_prec -= 0.5 * self._a * np.trace(self._B)
+
         elif self.cvtype == 'full':
             for k in xrange(self.n_states):
                 T = np.sum(self._z.T[k])
@@ -378,19 +386,24 @@ class DPGMM(GMM):
                                                            self._detB[k],
                                                            self.n_features)
                 self._bound_prec[k] -= 0.5 * self._a[k] * np.trace(self._B[k])
-                
+
     def _monitor(self, n, end=False):
-        """Monitors the lower bound during iteration, to see exactly
-        when it is failing to converge as expected."""
+        """Monitor the lower bound during iteration
+
+        Debug method to help see exactly when it is failing to converge as
+        expected.
+
+        Note: this is very expensive and should not be used by default."""
         if self.verbose:
-            print "Bound after updating %8s"%n, self.lower_bound()
+            print "Bound after updating %8s: %f" % (n, self.lower_bound())
             if end == True:
                 print "Cluster proportions:", self._gamma.T[1]
                 print "cvtype:", self._cvtype
 
     def _do_mstep(self, params):
-        """Maximizes the variational lower bound with regard to each
-        of the parameters."""
+        """Maximize the variational lower bound
+
+        Update each of the parameters to maximize the lower bound."""
         self._monitor("z")
         self._update_concentration()
         self._monitor("gamma")
@@ -426,10 +439,9 @@ class DPGMM(GMM):
     def _bound_means(self):
         "The variational lower bound for the mean parameters"
         logprior = 0.
-        logprior -= 0.5 * sqnorm(self._means) 
+        logprior -= 0.5 * sqnorm(self._means)
         logprior -= 0.5 * self.n_features * self.n_states
         return logprior
-
 
     def _bound_wishart(self, a, B, detB):
         logprior = wishart_logz(a, B, detB, self.n_features)
@@ -470,9 +482,9 @@ class DPGMM(GMM):
 
         cz = np.cumsum(self._z[:, ::-1], axis=-1)[:, -2::-1]
         logprior = np.sum(cz * dg2[:-1]) + np.sum(self._z * dg1)
-        del cz # Save memory
+        del cz  # Save memory
         z_non_zeros = self._z[self._z > np.finfo(np.float32).eps]
-        logprior -= np.sum(z_non_zeros*np.log(z_non_zeros))
+        logprior -= np.sum(z_non_zeros * np.log(z_non_zeros))
         return logprior
 
     def _logprior(self):
@@ -489,7 +501,7 @@ class DPGMM(GMM):
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.cvtype)
 
-        c = np.sum(self._z * _bound_state_loglik(self._X, self._initial_bound, 
+        c = np.sum(self._z * _bound_state_loglik(self._X, self._initial_bound,
                         self._bound_prec, self._precs, self._means))
 
         return c + self._logprior()
@@ -523,6 +535,7 @@ class DPGMM(GMM):
             process.  Can contain any combination of 'w' for weights,
             'm' for means, and 'c' for covars.  Defaults to 'wmc'.
         """
+        self.random_state = check_random_state(self.random_state)
 
         ## initialization step
 
@@ -544,7 +557,8 @@ class DPGMM(GMM):
 
         if 'm' in init_params or not hasattr(self, 'means'):
             self._means = cluster.KMeans(
-                k=self._n_states,rng=self.rng).fit(X).cluster_centers_[::-1]
+                k=self._n_states, random_state=self.random_state
+            ).fit(X).cluster_centers_[::-1]
 
         if 'w' in init_params or not hasattr(self, 'weights'):
             self.weights = np.tile(1.0 / self._n_states, self._n_states)
@@ -572,10 +586,8 @@ class DPGMM(GMM):
                 self._B = np.identity(self.n_features)
                 self._precs = np.identity(self.n_features)
                 self._detB = 1.
-                self._bound_prec = 0.5 * detlog_wishart(self._a,
-                                                        self._B,
-                                                        self._detB,
-                                                        self.n_features)
+                self._bound_prec = 0.5 * detlog_wishart(
+                    self._a, self._B, self._detB, self.n_features)
                 self._bound_prec -= 0.5 * self._a * np.trace(self._B)
             elif self.cvtype == 'full':
                 self._a = (1 + self.n_states + self._X.shape[0])
@@ -587,10 +599,8 @@ class DPGMM(GMM):
                 self._detB = np.ones(self.n_states)
                 self._bound_prec = np.zeros(self.n_states)
                 for k in xrange(self.n_states):
-                    self._bound_prec[k] = detlog_wishart(self._a[k],
-                                                         self._B[k],
-                                                         self._detB[k],
-                                                         self.n_features)
+                    self._bound_prec[k] = detlog_wishart(
+                        self._a[k], self._B[k], self._detB[k], self.n_features)
                     self._bound_prec[k] -= self._a[k] * np.trace(self._B[k])
                     self._bound_prec[k] *= 0.5
 
@@ -613,7 +623,6 @@ class DPGMM(GMM):
         return self
 
 
-################################################################################
 class VBGMM(DPGMM):
     """Variational Inference for the Gaussian Mixture Model
 
@@ -639,7 +648,7 @@ class VBGMM(DPGMM):
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of
-        gaussians model will use all components it can. Defaults 
+        gaussians model will use all components it can. Defaults
         to 1.
 
 
@@ -694,8 +703,12 @@ class VBGMM(DPGMM):
     process, fit with a variational algorithm
     """
 
-    def __init__(self, n_states=1, cvtype='diag', alpha=1.0, **kwds):
-        super(VBGMM, self).__init__(n_states, cvtype, **kwds)
+    def __init__(self, n_states=1, cvtype='diag', alpha=1.0,
+                 random_state=None, thresh=1e-2, verbose=False,
+                 min_covar=None):
+        super(VBGMM, self).__init__(
+            n_states, cvtype, random_state=random_state, thresh=thresh,
+            verbose=verbose, min_covar=min_covar)
         self.alpha = float(alpha) / n_states
 
     def eval(self, obs=None):
@@ -737,7 +750,7 @@ class VBGMM(DPGMM):
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.cvtype)
 
-        p = _bound_state_loglik(obs, self._initial_bound, 
+        p = _bound_state_loglik(obs, self._initial_bound,
                                 self._bound_prec, self._precs, self._means)
         z = p + dg
         self._z = z = log_normalize(z, axis=-1)
@@ -753,27 +766,32 @@ class VBGMM(DPGMM):
 
     def _bound_proportions(self):
         logprior = 0.
-        dg = digamma(self._gamma) 
+        dg = digamma(self._gamma)
         dg -= digamma(np.sum(self._gamma))
-        logprior += np.sum(dg.reshape((-1, 1))*self._z.T)
+        logprior += np.sum(dg.reshape((-1, 1)) * self._z.T)
         z_non_zeros = self._z[self._z > np.finfo(np.float32).eps]
-        logprior -= np.sum(z_non_zeros*np.log(z_non_zeros))
+        logprior -= np.sum(z_non_zeros * np.log(z_non_zeros))
         return logprior
 
     def _bound_concentration(self):
         logprior = 0.
         logprior = gammaln(np.sum(self._gamma)) - gammaln(self.n_states
                                                           * self.alpha)
-        logprior -= np.sum(gammaln(self._gamma)-gammaln(self.alpha))
+        logprior -= np.sum(gammaln(self._gamma) - gammaln(self.alpha))
         sg = digamma(np.sum(self._gamma))
-        logprior += np.sum((self._gamma-self.alpha)*(digamma(self._gamma)-sg))
+        logprior += np.sum((self._gamma - self.alpha)
+                           * (digamma(self._gamma) - sg))
         return logprior
 
     def _monitor(self, n, end=False):
-        """Monitors the lower bound during iteration, to see exactly
-        when it is failing to converge as expected."""
+        """Monitor the lower bound during iteration
+
+        Debug method to help see exactly when it is failing to converge as
+        expected.
+
+        Note: this is very expensive and should not be used by default."""
         if self.verbose:
-            print "Bound after updating %8s"%n, self.lower_bound()
+            print "Bound after updating %8s: %f" % (n, self.lower_bound())
             if end == True:
                 print "Cluster proportions:", self._gamma
                 print "cvtype:", self._cvtype
