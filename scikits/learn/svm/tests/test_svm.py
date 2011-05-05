@@ -56,7 +56,7 @@ def test_libsvm_iris():
     assert np.mean(pred == iris.target) > .95
 
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64), kernel='linear')
-    pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
+    pred = svm.libsvm.predict(iris.data, *model, **{'kernel' : 'linear'})
     assert np.mean(pred == iris.target) > .95
 
     pred = svm.libsvm.cross_validation(iris.data, iris.target.astype(np.float64), 5, kernel='linear')
