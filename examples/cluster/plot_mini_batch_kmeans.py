@@ -19,7 +19,7 @@ n_points = n_points_per_cluster * n_clusters
 means = np.array([[1, 1], [-1, -1], [1, -1]])
 std = .6
 iterations = 100
-batch_size = 35
+batch_size = 50
 
 X = np.empty((0, 2))
 for i in range(n_clusters):
@@ -28,14 +28,9 @@ for i in range(n_clusters):
 ##############################################################################
 # Compute clustering with MiniBatchKMeans
 mbk = MiniBatchKMeans(init='k-means++',
-                      k=3)
-
-for i in xrange(iterations):
-    j = i * batch_size % len(X)
-    sample = X[j:j + batch_size]
-    mbk.partial_fit(sample)
-
-mbk.partial_fit(X)
+                      k=3,
+                      chunk_size=batch_size)
+mbk.fit(X)
 labels = mbk.labels_
 cluster_centers = mbk.cluster_centers_
 
