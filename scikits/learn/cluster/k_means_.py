@@ -604,7 +604,7 @@ class MiniBatchKMeans(KMeans):
         super(MiniBatchKMeans, self).__init__(k, init, n_init,
               max_iter, tol,
               verbose, random_state=None, copy_x=True)
- 
+
         self.counts = None
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
@@ -616,7 +616,7 @@ class MiniBatchKMeans(KMeans):
         params
         ------
 
-        X: array, [n_features, n_samples] 
+        X: array, [n_features, n_samples]
             Coordinates of the data points to cluster
 
         shuffle: boolean, default to False
