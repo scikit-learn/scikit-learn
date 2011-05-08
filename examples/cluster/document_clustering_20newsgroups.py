@@ -32,6 +32,8 @@ from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.cluster import power_iteration_clustering
 from scikits.learn.cluster import spectral_clustering
 from scikits.learn.metrics.pairwise import cosine_similarity
+from scikits.learn.neighbors import kneighbors_graph
+from scikits.learn.metrics import homogeneity_completeness_v_measure
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
@@ -52,7 +54,7 @@ print "Loading 20 newsgroups dataset for categories:"
 print categories
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
-                                shuffle=True, rng=42)
+                                shuffle=True, random_state=42)
 
 print "%d documents (training set)" % len(data_train.filenames)
 print "%d categories" % len(data_train.target_names)
@@ -66,6 +68,7 @@ t0 = time()
 vectorizer = Vectorizer()
 X_train = vectorizer.fit_transform((open(f).read() for f in filenames_train))
 X_train = X_train[:800] # try to reproduce the settings of the PIC paper
+labels_true = data_train.target[:800]
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape
 print
@@ -75,26 +78,33 @@ print
 print "Extracting the pairwise cosine similarity between documents"
 t0 = time()
 affinity = cosine_similarity(X_train, X_train)
+#affinity = kneighbors_graph(X_train, n_neighbors=10)
+#affinity = 0.5 * (affinity + affinity.T)  # make affinity symmetric
 print "done in %fs" % (time() - t0)
 print
 
 n_clusters = len(data_train.target_names)
 
+
+def report(labels_true, labels_pred, duration):
+    """Print lustering report on stdout"""
+    h, c, v = homogeneity_completeness_v_measure(labels_true, labels_pred)
+    print "Homogeneity: %0.3f" % h
+    print "Completeness: %0.3f" % c
+    print "V-Measure: %0.3f" % v
+    print "Duration: %0.3fs" % duration
+    print
+
+
 print "Clustering the documents using the Power Iteration Clustering method"
 t0 = time()
-labels = power_iteration_clustering(affinity, k=n_clusters, n_vectors=5)
-print "done in %fs" % (time() - t0)
-for i in range(20):
-    print "Doc %d from category '%s' assigned to cluster %d" % (
-        i, data_train.target_names[data_train.target[i]], labels[i])
-print
-
+labels_pred = power_iteration_clustering(affinity, k=n_clusters,
+                                         n_vectors=10, tol=1e-5)
+duration = time() - t0
+report(labels_true, labels_pred, duration)
 
 print "Clustering the documents using the Spectral Clustering method"
 t0 = time()
-labels = spectral_clustering(affinity, k=n_clusters, mode='arpack')
-print "done in %fs" % (time() - t0)
-for i in range(20):
-    print "Doc %d from category '%s' assigned to cluster %d" % (
-        i, data_train.target_names[data_train.target[i]], labels[i])
-print
+labels_pred = spectral_clustering(affinity, k=n_clusters, mode='arpack')
+duration = time() - t0
+report(labels_true, labels_pred, duration)
