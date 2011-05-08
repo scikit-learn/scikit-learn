@@ -280,7 +280,7 @@ We can turn those concept as positive scores bounded by 1.0 as follows:
 
 .. math:: h = 1 - \frac{H(C|K)}{H(C)}
 
-.. math:: c = 1 - \frac{H(C|K)}{H(K)}
+.. math:: c = 1 - \frac{H(K|C)}{H(K)}
 
 where the conditional entropy of the ground truth classes given the cluster
 assignements is:
