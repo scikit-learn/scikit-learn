@@ -31,8 +31,7 @@ def test_error_messages_on_wrong_input():
                          completeness_score, [0, 1, 0], [[1, 1], [0, 0]])
 
 
-def test_all_at_once():
-
+def test_homogenous_but_not_complete_labeling():
     # homogenous but not complete clustering
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 0, 1, 1, 1],
@@ -41,6 +40,8 @@ def test_all_at_once():
     assert_almost_equal(c, 0.69, 2)
     assert_almost_equal(v, 0.81, 2)
 
+
+def test_complete_but_not_homogenous_labeling():
     # complete but not homogenous clustering
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 1, 1, 2, 2],
@@ -49,6 +50,8 @@ def test_all_at_once():
     assert_almost_equal(c, 1.00, 2)
     assert_almost_equal(v, 0.73, 2)
 
+
+def test_not_complete_and_not_homogenous_labeling():
     # neither complete nor homogenous but not so bad either
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 0, 1, 1, 1],
