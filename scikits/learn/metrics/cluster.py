@@ -64,8 +64,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
             "labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
     if labels_true.shape != labels_pred.shape:
         raise ValueError(
-            "labels_true and labels_true must have same shape, got %r and %r"
-            % (labels_true.shape, labels_pred.shape))
+            "labels_true and labels_pred must have same size, got %d and %d"
+            % (labels_true.shape[0], labels_pred.shape[0]))
 
     n_samples = labels_true.shape[0]
 
