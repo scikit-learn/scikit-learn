@@ -12,13 +12,13 @@ import numpy as np
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
-from ..utils import make_rng
+from ..utils import check_random_state
 
 
 ###############################################################################
 # Initialisation heuristic
 
-def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
+def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
     """Init k seeds according to kmeans++
 
     Parameters
@@ -35,7 +35,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
-    rng: numpy.RandomState, optional
+    random_state: numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
 
     x_squared_norms: array, shape (n_samples,), optional
@@ -53,7 +53,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
     which is the implementation used in the aforementioned paper.
     """
     n_samples, n_features = X.shape
-    rng = make_rng(rng)
+    random_state = check_random_state(random_state)
 
     centers = np.empty((k, n_features))
 
@@ -65,7 +65,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
         n_local_trials = 2 + int(np.log(k))
 
     # Pick first center randomly
-    center_id = rng.randint(n_samples)
+    center_id = random_state.randint(n_samples)
     centers[0] = X[center_id]
 
     # Initialize list of closest distances and calculate current potential
@@ -80,7 +80,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
     for c in xrange(1, k):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
-        rand_vals = rng.random_sample(n_local_trials) * current_pot
+        rand_vals = random_state.random_sample(n_local_trials) * current_pot
         candidate_ids = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
 
         # Compute distances to center candidates
@@ -115,7 +115,7 @@ def k_init(X, k, n_local_trials=None, rng=None, x_squared_norms=None):
 # K-means estimation by EM (expectation maximisation)
 
 def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
-                    tol=1e-4, rng=None, copy_x=True):
+                    tol=1e-4, random_state=None, copy_x=True):
     """ K-means clustering algorithm.
 
     Parameters
@@ -157,7 +157,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     verbose: boolean, optional
         Terbosity mode
 
-    rng: numpy.RandomState, optional
+    random_state: numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
 
     copy_x: boolean, optional
@@ -181,7 +181,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
         The final value of the inertia criterion
 
     """
-    rng = make_rng(rng)
+    random_state = check_random_state(random_state)
     n_samples = X.shape[0]
 
     vdata = np.mean(np.var(X, 0))
@@ -204,14 +204,14 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     for it in range(n_init):
         # init
         if init == 'k-means++':
-            centers = k_init(X, k, rng=rng, x_squared_norms=x_squared_norms)
+            centers = k_init(X, k, random_state=random_state, x_squared_norms=x_squared_norms)
         elif init == 'random':
-            seeds = np.argsort(rng.rand(n_samples))[:k]
+            seeds = np.argsort(random_state.rand(n_samples))[:k]
             centers = X[seeds]
         elif hasattr(init, '__array__'):
             centers = np.asanyarray(init).copy()
         elif callable(init):
-            centers = init(X, k, rng=rng)
+            centers = init(X, k, random_state=random_state)
         else:
             raise ValueError("the init parameter for the k-means should "
                 "be 'k-means++' or 'random' or an ndarray, "
@@ -408,18 +408,19 @@ class KMeans(BaseEstimator):
     """
 
     def __init__(self, k=8, init='random', n_init=10, max_iter=300, tol=1e-4,
-            verbose=0, rng=None, copy_x=True):
+            verbose=0, random_state=None, copy_x=True):
         self.k = k
         self.init = init
         self.max_iter = max_iter
         self.tol = tol
         self.n_init = n_init
         self.verbose = verbose
-        self.rng = rng
+        self.random_state = random_state
         self.copy_x = copy_x
 
     def fit(self, X, **params):
         """Compute k-means"""
+        self.random_state = check_random_state(self.random_state)
         X = np.asanyarray(X)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be larger than k=%d" % (
@@ -428,5 +429,5 @@ class KMeans(BaseEstimator):
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
-            tol=self.tol, rng=self.rng, copy_x=self.copy_x)
+            tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self

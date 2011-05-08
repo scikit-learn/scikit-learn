@@ -44,13 +44,11 @@ def test_libsvm_iris():
     """
 
     # shuffle the dataset so that labels are not ordered
-
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
 
     assert_array_equal(clf.label_, np.sort(clf.label_))
-
 
     # check also the low-level API
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
@@ -58,7 +56,10 @@ def test_libsvm_iris():
     assert np.mean(pred == iris.target) > .95
 
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64), kernel='linear')
-    pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
+    pred = svm.libsvm.predict(iris.data, *model, **{'kernel' : 'linear'})
+    assert np.mean(pred == iris.target) > .95
+
+    pred = svm.libsvm.cross_validation(iris.data, iris.target.astype(np.float64), 5, kernel='linear')
     assert np.mean(pred == iris.target) > .95
 
 
@@ -211,7 +212,7 @@ def test_probability():
     prob_predict = clf.predict_proba(iris.data)
     assert_array_almost_equal(
         np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
-    assert np.mean(np.argmax(prob_predict, 1) 
+    assert np.mean(np.argmax(prob_predict, 1)
                    == clf.predict(iris.data)) > 0.9
 
     assert_almost_equal(clf.predict_proba(iris.data),

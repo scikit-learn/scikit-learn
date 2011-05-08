@@ -40,6 +40,10 @@ in n groups of equal variance, minimizing a criterion known as the
 be specified. It scales well to large number of samples, however its
 results may be dependent on an initialisation.
 
+.. topic:: Examples:
+
+ * :ref:`example_cluster_kmeans_digits.py`: Clustering handwritten digits
+
 
 Affinity propagation
 ====================
@@ -213,3 +217,163 @@ enable only merging of neighboring pixels on an image, as in the
    Ward hierarchical clustering.
 
 
+Clustering performance evaluation
+=================================
+
+Evaluating the performance of a clustering algorithm is not as trivial as
+counting the number of errors or the precision and recall of a supervised
+classification algorithm. In particular any evaluation metric should not
+take the absolute values of the cluster labels into account but rather
+if this clustering define separations of the data similar to some ground
+truth set of classes or satisfying some assumption such that members
+belong to the same class are more similar that members of different
+classes according to some similarity metric.
+
+
+Inertia
+-------
+
+Presentation and usage
+~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: factorize intertia computation out of kmeans and then write me!
+
+
+Advantages
+~~~~~~~~~~
+
+- No need for the ground truth knowledge of the "real" classes.
+
+Drawbacks
+~~~~~~~~~
+
+- Inertia makes the assumption that clusters are convex and isotropic
+  which is not always the case especially of the clusters are manifolds
+  with weird shapes: for instance inertia is a useless metrics to evaluate
+  clustering algorithm that tries to identify nested circles on a 2D plane.
+
+- Inertia is not a normalized metrics: we just know that lower values are
+  better and bounded by zero. One potential solution would be to adjust
+  inertia for random clustering (assuming the number of ground truth classes
+  is known).
+
+
+Homogeneity, completeness and V-measure
+---------------------------------------
+
+Presentation
+~~~~~~~~~~~~
+
+Given the knowledge of the ground truth class assignements of the samples,
+it is possible to define some intuitive metric using conditional entropy
+analysis.
+
+In particular Rosenberg and Hirschberg (2007) define homogeneity and
+completeness as follows:
+
+- **homogeneity**: each cluster contains only members of a single class.
+
+- **completeness**: all members of a given class are assigned to the same
+  cluster.
+
+We can turn those concept as positive scores bounded by 1.0 as follows:
+
+.. math:: h = 1 - \frac{H(C|K)}{H(C)}
+
+.. math:: c = 1 - \frac{H(K|C)}{H(K)}
+
+where the conditional entropy of the ground truth classes given the cluster
+assignements is:
+
+.. math:: H(C|K) = - \sum_{c=1}^{|C|} \sum_{k=1}^{|K|} \frac{n_{c,k}}{n}
+          \cdot log(\frac{n_{c,k}}{n_k})
+
+and the entropy of the classes is:
+
+.. math:: H(C) = - \sum_{c=1}^{|C|} \frac{n_c}{n} \cdot log(\frac{n_c}{n})
+
+with :math:`n` the total number of samples, :math:`n_c` and :math:`n_k`
+the number of samples respectively belonging to class :math:`c` and
+cluster :math:`k`, and finally :math:`n_{c,k}` the number of samples
+from class :math:`c` assigned to cluster :math:`k`.
+
+:math:`H(K|C)` and :math:`H(K)` are defined in a symmetric manner.
+
+Rosenberg and Hirschberg further define **V-measure** as the **harmonic
+mean of homogeneity and completeness**:
+
+.. math:: v = 2 \cdot \frac{h \cdot c}{h + c}
+
+.. topic:: References
+
+ * `"V-Measure: A conditional entropy-based external cluster evaluation
+   measure" <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+   Andrew Rosenberg and Julia Hirschberg, 2007
+
+
+Usage
+~~~~~
+
+All three metrics can be computed at once as follows. For instance the
+following clustering assignement is homogenous but not complete::
+
+  >>> from scikits.learn.metrics import homogeneity_completeness_v_measure
+
+  >>> labels_true = [0, 0, 0, 1, 1, 1]
+  >>> labels_pred = [0, 0, 0, 1, 2, 2]
+  >>> homogeneity_completeness_v_measure(labels_true, labels_pred)
+  ...                                                     # doctest: +ELLIPSIS
+  (1.0, 0.68..., 0.81...)
+
+Here is an example of clustering that is neither complete nor homogenous::
+
+  >>> labels_pred = [0, 0, 1, 1, 2, 2]
+  >>> homogeneity_completeness_v_measure(labels_true, labels_pred)
+  ...                                                     # doctest: +ELLIPSIS
+  (0.66..., 0.42..., 0.51...)
+
+It is also possible to use each of this individual metrics as a score
+function::
+
+  >>> from scikits.learn.metrics import homogeneity_score
+  >>> from scikits.learn.metrics import completeness_score
+  >>> from scikits.learn.metrics import v_measure_score
+
+  >>> homogeneity_score(labels_true, labels_pred)         # doctest: +ELLIPSIS
+  0.66...
+
+  >>> completeness_score(labels_true, labels_pred)        # doctest: +ELLIPSIS
+  0.42...
+
+  >>> v_measure_score(labels_true, labels_pred)           # doctest: +ELLIPSIS
+  0.51...
+
+
+Advantages
+~~~~~~~~~~
+
+- Bounded scores: 0.0 is as bad as it can be, 1.0 is a perfect score
+
+- Intuitive interpretation: clustering with bad V-measure can be
+  qualitatively analysed in terms of homogeneity and completeness to
+  better feel what 'kind' of mistakes is done by the assigmenent.
+
+- No assumption is made on the similarity metric and the cluster
+  structure.
+
+
+Drawbacks
+~~~~~~~~~
+
+- These metrics require the knowlege of the ground truth classes whih
+  almost never available in practice or requires manual assignement by
+  human annotators (as in the supervised learning setting).
+
+- The previously introduced metrics are not normalized w.r.t. random
+  labeling: this means that depending on the number of samples,
+  clusters and ground truth classes, a completely random labeling will
+  not always yield the same values for homogeneity, completeness and
+  hence v-measure. In particular random labeling won't yield zero scores.
+
+  TODO: check the values we get for random labeling on various problem
+  sizes to know whether this is a real problem in practice.

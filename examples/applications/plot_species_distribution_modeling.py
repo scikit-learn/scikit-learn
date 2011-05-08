@@ -123,7 +123,7 @@ print "---------"
 print "xmin, xmax:", xmin, xmax
 print "ymin, ymax:", ymin, ymax
 print "grid size:", grid_size
-print 
+print
 
 ################################################################################
 # Load data
