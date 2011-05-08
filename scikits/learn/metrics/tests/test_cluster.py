@@ -32,6 +32,24 @@ def test_error_messages_on_wrong_input():
 
 
 def test_all_at_once():
+
+    # homogenous but not complete clustering
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 1, 2, 2])
+    assert_almost_equal(h, 1.00, 2)
+    assert_almost_equal(c, 0.69, 2)
+    assert_almost_equal(v, 0.81, 2)
+
+    # complete but not homogenous clustering
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 1, 1, 2, 2],
+        [0, 0, 1, 1, 1, 1])
+    assert_almost_equal(h, 0.58, 2)
+    assert_almost_equal(c, 1.00, 2)
+    assert_almost_equal(v, 0.73, 2)
+
+    # neither complete nor homogenous but not so bad either
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 0, 1, 1, 1],
         [0, 1, 0, 1, 2, 2])
