@@ -12,6 +12,7 @@ import numpy as np
 from .k_means_ import k_means
 from ..utils.extmath import safe_sparse_dot
 from ..utils import inplace_row_normalize
+from ..utils import check_random_state
 
 
 def make_plot(title):
@@ -33,7 +34,7 @@ def save_plot(plot, filename):
 
 
 def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
-                               rng=0, max_iter=1000, verbose=False,
+                               random_state=0, max_iter=1000, verbose=False,
                                plot_vector=False):
     """Power Iteration Clustering: simple variant of spectral clustering
 
@@ -68,7 +69,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
     max_iter: int, optional, default is 1000
         Stops after max_iter even if the convergence criterion is not met.
 
-    rng: a RandomState instance or an int seed (default is 0)
+    random_state: a RandomState instance or an int seed (default is 0)
         Pseudo Random Number Generator used to initialize the random vectors
         and the K-Means algorithm.
 
@@ -99,10 +100,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
     spectral clustering: this remains to be checked in practice
 
     """
-    if rng is None:
-        rng = np.random.RandomState()
-    elif isinstance(rng, int):
-        rng = np.random.RandomState(rng)
+    random_state = check_random_state(random_state)
 
     if not hasattr(affinity, 'todense'):
         # this is not a sparse matrix: check that this is an array like
@@ -121,7 +119,7 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         vectors = (sums / volume).reshape((n_vectors, n_samples))
     else:
         # random init
-        vectors = rng.normal(size=(n_vectors, n_samples))
+        vectors = random_state.normal(size=(n_vectors, n_samples))
 
     previous_vectors = vectors.copy()
     delta = np.ones(vectors.size).reshape(vectors.shape)
@@ -153,4 +151,5 @@ def power_iteration_clustering(affinity, k=8, n_vectors=1, tol=1e-5,
         print "Converged at iteration: %04d/%04d with delta=%f" % (
             i + 1, max_iter, delta.max())
 
-    return k_means(vectors.T, k, verbose=verbose, rng=rng)[1]
+    return k_means(vectors.T, k, verbose=verbose,
+                   random_state=random_state)[1]
