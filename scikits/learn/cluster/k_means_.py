@@ -549,6 +549,9 @@ class MiniBatchKMeans(KMeans):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
+    chunk_size: int, optional, default: 300
+        Size of the mini batches
+
     init : {'k-means++', 'random' or an ndarray}
         Method for initialization, defaults to 'random':
 
@@ -601,7 +604,7 @@ class MiniBatchKMeans(KMeans):
         super(MiniBatchKMeans, self).__init__(k, init, n_init,
               max_iter, tol,
               verbose, random_state=None, copy_x=True)
-        
+ 
         self.counts = None
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
@@ -609,6 +612,15 @@ class MiniBatchKMeans(KMeans):
     def fit(self, X, y=None, shuffle=False, **params):
         """
         Calculates the centroids on a batch X
+
+        params
+        ------
+
+        X: array, [n_features, n_samples] 
+            Coordinates of the data points to cluster
+
+        shuffle: boolean, default to False
+            Shuffle the data points to cluster
         """
 
         self.random_state = check_random_state(self.random_state)
@@ -631,16 +643,17 @@ class MiniBatchKMeans(KMeans):
         self.counts = np.zeros(self.k)
         tol = np.mean(np.var(X, 0)) * self.tol
         try:
-            split_X = np.array_split(X, floor(float(len(X))/self.chunk_size))
+            split_X = np.array_split(X, floor(float(len(X)) / self.chunk_size))
         except ValueError:
             split_X = [X]
 
-        squared_norms = [ (x ** 2).sum(axis=0) for x in split_X]
+        squared_norms = [(x ** 2).sum(axis=1) for x in split_X]
         data = zip(split_X, squared_norms)
+        old_centers = []
 
         for i in xrange(self.max_iter):
             j = i % len(data)
-            old_centers = self.cluster_centers_.copy()
+            old_centers[:] = self.cluster_centers_.copy()
             self.cluster_centers_, self.counts = _mini_batch_step(
                 data[j][0], self.cluster_centers_, self.counts,
                 x_squared_norms=data[j][1])
