@@ -427,7 +427,7 @@ class KMeans(BaseEstimator):
     Parameters
     ----------
 
-    k : int or ndarray
+    k : int, optional, default: 8
         The number of clusters to form as well as the number of
         centroids to generate.
 
@@ -493,6 +493,10 @@ class KMeans(BaseEstimator):
 
     def __init__(self, k=8, init='random', n_init=10, max_iter=300, tol=1e-4,
             verbose=0, random_state=None, copy_x=True):
+
+        if hasattr(init, '__array__'):
+            k = init.shape[0]
+
         self.k = k
         self.init = init
         self.max_iter = max_iter
@@ -534,11 +538,9 @@ class MiniBatchKMeans(KMeans):
     Parameters
     ----------
 
-    k : int or ndarray
+    k : int, optional, default: 8
         The number of clusters to form as well as the number of
-        centroids to generate. If init initialization string is
-        'matrix', or if a ndarray is given instead, it is
-        interpreted as initial cluster to use instead.
+        centroids to generate.
 
     max_iter : int
         Maximum number of iterations of the k-means algorithm for a
@@ -601,6 +603,7 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, k=8, init='random', n_init=10, max_iter=300,
                  chunk_size=300, tol=1e-4,
                  verbose=0, random_state=None, copy_x=True):
+
         super(MiniBatchKMeans, self).__init__(k, init, n_init,
               max_iter, tol,
               verbose, random_state=None, copy_x=True)
@@ -609,7 +612,8 @@ class MiniBatchKMeans(KMeans):
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
 
-    def fit(self, X, y=None, shuffle=False, **params):
+
+    def fit(self, X, y=None, shuffle=True, **params):
         """
         Calculates the centroids on a batch X
 
@@ -619,18 +623,18 @@ class MiniBatchKMeans(KMeans):
         X: array, [n_features, n_samples]
             Coordinates of the data points to cluster
 
-        shuffle: boolean, default to False
+        shuffle: boolean, optional, default: True
             Shuffle the data points to cluster
         """
 
         self.random_state = check_random_state(self.random_state)
 
         if hasattr(self.init, '__array__'):
-            X = self._check_date(X, **params)
+            X = self._check_data(X, **params)
             self.init = np.asarray(self.init)
 
         if shuffle:
-            shuffle(X)
+            self.random_state.shuffle(X)
 
         x_squared_norms = X.copy()
         x_squared_norms **= 2
