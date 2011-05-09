@@ -138,19 +138,18 @@ class Perceptron(BaseEstimator):
         '''
         return self._max_outcome(weights, x)[0]
 
-    def fit(self, X, y, averaged=False, learning_rate=1., n_iter=1, shuffle=False):
-        """Fit classifier according to inputs X with labels y
-
-        Can be run multiple times for online learning.
+    def fit(self, X, y, averaged=False, learning_rate=1., n_iter=1,
+            shuffle=False):
+        """Fit classifier according to inputs X with labels y (batch learning)
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
-
         y : array-like, shape = [n_samples]
             Target values.
+
         averaged : bool, optional, default False
             Train as averaged perceptron.
         learning_rate : float, optional
@@ -164,18 +163,39 @@ class Perceptron(BaseEstimator):
         -------
         self
         """
-        self._averaged = averaged
-        self._learning_rate = learning_rate
-
-        if shuffle:                 # copy X and y
-            X = np.array(X)
-            y = np.array(y)
-        else:
-            X = safe_asanyarray(X)
-            y = safe_asanyarray(y)
-
+        X = safe_asanyarray(X)
+        y = safe_asanyarray(y)
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
+
+        self.partial_setup(n_features, n_labels, averaged, learning_rate)
+        return self.partial_fit(X, y, n_iter, shuffle)
+
+    def partial_setup(self, n_features, n_labels, averaged=False,
+                      learning_rate=1.):
+        """Setup classifier for online learning.
+
+        Must be run before partial_fit.
+
+        Parameters
+        ----------
+        n_features : int
+            Number of features in (length of) training vectors.
+        n_labels : int
+            Number of output labels.
+        averaged : bool, optional, default False
+            Train as averaged perceptron.
+        learning_rate : float, optional
+            Learning rate: multiplied into weight changes, default 1.
+
+        Returns
+        -------
+        self
+        """
+        self._averaged = averaged
+        self._learning_rate = learning_rate
+        self._n_features = n_features
+        self._n_labels = n_labels
 
         self._weights = np.zeros((n_labels, n_features), 'd')
         if averaged:
@@ -184,20 +204,51 @@ class Perceptron(BaseEstimator):
             self._history = np.zeros(self._weights.shape, 'd')
             self._acc = np.zeros(self._weights.shape, 'd')
 
-        self._run_iters(n_iter, X, y, shuffle)
-
         return self
 
-    def _run_iters(self, n, X, y, shuffle):
-        '''Run n iterations of training'''
+    def partial_fit(self, X, y, n_iter=1, shuffle=False):
+        """Partially fit classifier according to inputs X with labels y.
+
+        Can be run multiple times to perform online learning. Must be run
+        after partial_setup.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+        y : array-like, shape = [n_samples]
+            Target values.
+        n_iter : int, optional, default 1
+            Number of iterations to perform on this set.
+        shuffle : bool, optional, default False
+            Randomize input sequence between iterations.
+
+        Returns
+        -------
+        self
+        """
+        if shuffle:                 # copy X and y
+            X = np.array(X)
+            y = np.array(y)
+        else:
+            X = safe_asanyarray(X)
+            y = safe_asanyarray(y)
+
+        assert X.shape[1] == self._n_features
+        assert len(np.unique(y)) == self._n_labels
+
         n_samples = len(y)
+        assert X.shape[0] == n_samples
         order = range(n_samples) if shuffle else xrange(n_samples)
 
-        for i in xrange(n):
+        for i in xrange(n_iter):
             if shuffle:
                 np.random.shuffle(order)
             for j in order:
                 self._learn(X[j], y[j])
+
+        return self
 
     def _learn(self, x, label):
         lrn = self._learn_averaged if self._averaged else self._learn_ordinary
@@ -213,7 +264,7 @@ class Perceptron(BaseEstimator):
             self._update_history(label)
         else:
             self._survived[label] += 1
-        return (pred, update)
+        #return (pred, update)
 
     def _learn_ordinary(self, x, label):
         '''Learn as ordinary perceptron.
@@ -235,23 +286,23 @@ class Perceptron(BaseEstimator):
             self._update_weights(label, x, rate)
         return (pred, must_update)
 
-    def _update_history(self, class_index):
+    def _update_history(self, label):
         '''Update the history for a particular class (averaged perceptron).'''
-        s = self._survived[class_index]
+        s = self._survived[label]
         if s > 0:
-            acc = self._acc[class_index]
-            acc += s * self._weights[class_index]
-            self._history[class_index] = acc / self._iterations[class_index]
-            self._survived[class_index] = 0
+            acc = self._acc[label]
+            acc += s * self._weights[label]
+            self._history[label] = acc / self._iterations[label]
+            self._survived[label] = 0
 
-    def _update_weights(self, class_index, x, delta):
+    def _update_weights(self, label, x, delta):
         '''Update the weights for an index based on an event.
 
-        class_index: The index of a weight vector to update.
+        label: The index of a weight vector to update.
         x: An event vector to use for the update.
         delta: Weight the update by this value.
         '''
-        self._weights[class_index] += delta * x
+        self._weights[label] += delta * x
 
     def _max_outcome(self, weights, x):
         '''Return the maximum scoring label for a set of weights and its score
@@ -276,8 +327,8 @@ class SparseDot(object):
         return sum(weights.get(f, 0) for f in x)
 
 
-class SparseAveragedPerceptron(Perceptron):
-    '''A voted perceptron using sparse vectors for storing weights.
+class SparsePerceptron(Perceptron):
+    '''(Averaged) perceptron using sparse weight vectors.
 
     This class achieves sparseness by assuming that all events are
     binary-valued. To use this class with a non-binary event space, you will
@@ -293,10 +344,10 @@ class SparseAveragedPerceptron(Perceptron):
 
     def __init__(self):
         '''Use sparse vectors to store weights and events.'''
-        super(SparseAveragedPerceptron, self).__init__(kernel=SparseDot())
+        super(SparsePerceptron, self).__init__(kernel=SparseDot())
 
-    def fit(self, X, y, beam_width=None, learning_rate=1., n_iter=1,
-            shuffle=False):
+    def fit(self, X, y, averaged=False, beam_width=None, learning_rate=1.,
+            n_iter=1, shuffle=False):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -309,6 +360,8 @@ class SparseAveragedPerceptron(Perceptron):
         y : array-like, shape = [n_samples]
             Target values.
 
+        averaged : bool, optional, default False
+            Train as averaged perceptron.
         beam_width : int, optional
             Width of beam for beam search. This parameter is given to fit
             because it implies pruning of the feature set.
@@ -323,50 +376,71 @@ class SparseAveragedPerceptron(Perceptron):
         -------
         self
         """
-
-        if shuffle:                 # copy X and y
-            X = np.array(X)
-            y = np.array(y)
-        else:
-            X = safe_asanyarray(X)
-            y = safe_asanyarray(y)
-
-        self._averaged = True
-        self._learning_rate = learning_rate
-
+        X = safe_asanyarray(X)
+        y = safe_asanyarray(y)
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
 
+        self.partial_setup(n_features, n_labels, averaged, beam_width,
+                           learning_rate)
+        return self.partial_fit(X, y, n_iter, shuffle)
+
+    def partial_setup(self, n_features, n_labels, averaged=False,
+                      beam_width=None, learning_rate=1.):
+        """Setup classifier for online learning.
+
+        Must be run before partial_fit.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+        y : array-like, shape = [n_samples]
+            Target values.
+        beam_width : int, optional
+            Width of beam for beam search. This parameter is given to
+            partial_fit because it implies pruning of the feature set.
+        learning_rate : float, optional
+            Learning rate: multiplied into weight changes, default 1.
+        n_iter : int, optional, default 1
+            Number of iterations to perform.
+        shuffle : bool, optional, default False
+            Randomize input sequence between iterations.
+
+        Returns
+        -------
+        self
+        """
+        self._averaged = averaged
         self._beam_width = beam_width
+        self._learning_rate = learning_rate
+        self._n_features = n_features
+        self._n_labels = n_labels
 
         self._weights = [defaultdict(float) for i in xrange(n_labels)]
-        self._history = [defaultdict(float) for i in xrange(n_labels)]
-        self._acc = [defaultdict(float) for i in xrange(n_labels)]
-        self._iterations = np.zeros((n_samples, ), 'i')
-        self._survived = np.zeros((n_samples, ), 'i')
-
-        self._run_iters(n_iter, X, y, shuffle)
-
-        for i in xrange(n_iter):
-            for j in xrange(n_samples):
-                self._learn(X[j], y[j])
+        if averaged:
+            self._history = [defaultdict(float) for i in xrange(n_labels)]
+            self._acc = [defaultdict(float) for i in xrange(n_labels)]
+            self._iterations = np.zeros((n_labels, ), 'i')
+            self._survived = np.zeros((n_labels, ), 'i')
 
         return self
 
-    def _update_history(self, class_index):
-        s = self._survived[class_index]
+    def _update_history(self, label):
+        s = self._survived[label]
         if s > 0:
-            i = self._iterations[class_index]
-            a = self._acc[class_index]
-            h = self._history[class_index]
-            for f, w in self._weights[class_index].iteritems():
+            i = self._iterations[label]
+            a = self._acc[label]
+            h = self._history[label]
+            for f, w in self._weights[label].iteritems():
                 a[f] += s * w
                 h[f] = a[f] / i
             self._prune(h)
-            self._survived[class_index] = 0
+            self._survived[label] = 0
 
-    def _update_weights(self, class_index, x, delta):
-        w = self._weights[class_index]
+    def _update_weights(self, label, x, delta):
+        w = self._weights[label]
         for f in x:
             w[f] += delta
         self._prune(w)
