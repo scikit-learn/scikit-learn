@@ -110,7 +110,7 @@ class Perceptron(BaseEstimator):
     '''
 
     def __init__(self, kernel=None):
-        self._kernel = kernel or safe_sparse_dot
+        self.kernel = kernel or safe_sparse_dot
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
@@ -236,7 +236,7 @@ class Perceptron(BaseEstimator):
             y = safe_asanyarray(y)
 
         assert X.shape[1] == self._n_features
-        assert len(np.unique(y)) == self._n_labels
+        assert len(np.unique(y)) <= self._n_labels
 
         n_samples = len(y)
         assert X.shape[0] == n_samples
@@ -310,7 +310,7 @@ class Perceptron(BaseEstimator):
         weights: An array of weight vectors, one per label.
         x: An event vector.
         '''
-        scores = np.array([self._kernel(w, x) for w in weights])
+        scores = np.array([self.kernel(w, x) for w in weights])
         index = scores.argmax()
         # Return the score as a probability computed locally among our possible
         # outcomes. Subtracting the maximum raw score before exponentiating
@@ -320,7 +320,7 @@ class Perceptron(BaseEstimator):
 
 
 class SparseDot(object):
-    '''Kernel for SparseAveragedPerceptron'''
+    '''Kernel for SparsePerceptron'''
     @staticmethod
     def __call__(weights, x):
         '''Return the dot product of a sparse vector and an event.'''
