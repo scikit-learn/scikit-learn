@@ -9,22 +9,25 @@ def test_perceptron():
     Test perceptrons on digit recognition task.
     '''
 
+    X = digits.data
+    y = digits.target
+
     # Test self-returning from fit etc. while we're at it
     clf_batch = perceptron.Perceptron() \
-              . fit(digits.data[1:], digits.target[1:], averaged=True)
+              . fit(X[1:], y[1:], averaged=True)
 
-    n_features = digits.data.shape[1]
-    n_samples = digits.data.shape[0] - 1
+    n_features = X.shape[1]
+    n_samples  = X.shape[0] - 1
     half = n_samples // 2
     clf_online = perceptron.Perceptron() \
-               . partial_setup(n_features, len(np.unique(digits.target)),
+               . partial_setup(n_features, len(np.unique(y)),
                                averaged=True) \
-               . partial_fit(digits.data[: half], digits.target[: half]) \
-               . partial_fit(digits.data[n_samples - half : -1],
-                             digits.target[n_samples - half : -1])
+               . partial_fit(X[: half], y[: half]) \
+               . partial_fit(X[n_samples - half : -1],
+                             y[n_samples - half : -1])
 
-    assert_array_equal(clf_batch.predict(digits.data[-1]),
-                       clf_online.predict(digits.data[-1]))
+    assert_array_equal(clf_batch.predict(y[-1]),
+                       clf_online.predict(y[-1]))
 
 
 if __name__ == '__main__':
