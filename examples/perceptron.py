@@ -29,10 +29,10 @@ n_features = X.shape[1]
 n_labels   = len(np.unique(y))
 
 clf1 = Perceptron()
-clf2 = Perceptron()
+clf2 = Perceptron(averaged=True)
 
 clf1.partial_setup(n_features, n_labels).partial_fit(X, y)
-clf2.partial_setup(n_features, n_labels, averaged=True).partial_fit(X, y)
+clf2.fit(X, y)  # equivalent to above but with batch learning interface
 
 y_pred1 = clf1.predict(X)
 y_pred2 = clf2.predict(X)

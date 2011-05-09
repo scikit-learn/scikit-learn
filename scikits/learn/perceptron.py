@@ -105,12 +105,25 @@ class Perceptron(BaseEstimator):
 
     Parameters
     ----------
+    averaged : bool, optional, default False
+        Train as averaged perceptron.
     kernel : callable, optional
         Kernel function for mapping non-linear data.
+    learning_rate : float, optional
+        Learning rate: multiplied into weight changes, default 1.
+    n_iter : int, optional, default 1
+        Number of iterations to perform per (partial) training set.
+    shuffle : bool, optional, default False
+        Randomize input sequence between iterations.
     '''
 
-    def __init__(self, kernel=None):
+    def __init__(self, averaged=False, kernel=None, learning_rate=1.,
+                 n_iter=1, shuffle=False):
+        self.averaged = averaged
+        self.learning_rate = learning_rate
         self.kernel = kernel or safe_sparse_dot
+        self.n_iter = n_iter
+        self.shuffle = shuffle
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
@@ -127,7 +140,7 @@ class Perceptron(BaseEstimator):
         X = np.atleast_2d(X)
         y = np.empty(X.shape[0])
 
-        w = self._history if self._averaged else self._weights
+        w = self._history if self.averaged else self._weights
         for i, x in enumerate(X):
             y[i] = self._classify(x, w)
         return y
@@ -138,8 +151,7 @@ class Perceptron(BaseEstimator):
         '''
         return self._max_outcome(weights, x)[0]
 
-    def fit(self, X, y, averaged=False, learning_rate=1., n_iter=1,
-            shuffle=False):
+    def fit(self, X, y):
         """Fit classifier according to inputs X with labels y (batch learning)
 
         Parameters
@@ -150,15 +162,6 @@ class Perceptron(BaseEstimator):
         y : array-like, shape = [n_samples]
             Target values.
 
-        averaged : bool, optional, default False
-            Train as averaged perceptron.
-        learning_rate : float, optional
-            Learning rate: multiplied into weight changes, default 1.
-        n_iter : int, optional, default 1
-            Number of iterations to perform.
-        shuffle : bool, optional, default False
-            Randomize input sequence between iterations.
-
         Returns
         -------
         self
@@ -168,11 +171,9 @@ class Perceptron(BaseEstimator):
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
 
-        self.partial_setup(n_features, n_labels, averaged, learning_rate)
-        return self.partial_fit(X, y, n_iter, shuffle)
+        return self.partial_setup(n_features, n_labels).partial_fit(X, y)
 
-    def partial_setup(self, n_features, n_labels, averaged=False,
-                      learning_rate=1.):
+    def partial_setup(self, n_features, n_labels):
         """Setup classifier for online learning.
 
         Must be run before partial_fit.
@@ -183,22 +184,16 @@ class Perceptron(BaseEstimator):
             Number of features in (length of) training vectors.
         n_labels : int
             Number of output labels.
-        averaged : bool, optional, default False
-            Train as averaged perceptron.
-        learning_rate : float, optional
-            Learning rate: multiplied into weight changes, default 1.
 
         Returns
         -------
         self
         """
-        self._averaged = averaged
-        self._learning_rate = learning_rate
         self._n_features = n_features
         self._n_labels = n_labels
 
         self._weights = np.zeros((n_labels, n_features), 'd')
-        if averaged:
+        if self.averaged:
             self._iterations = np.zeros((n_labels, ), 'i')
             self._survived = np.zeros((n_labels, ), 'i')
             self._history = np.zeros(self._weights.shape, 'd')
@@ -206,7 +201,7 @@ class Perceptron(BaseEstimator):
 
         return self
 
-    def partial_fit(self, X, y, n_iter=1, shuffle=False):
+    def partial_fit(self, X, y):
         """Partially fit classifier according to inputs X with labels y.
 
         Can be run multiple times to perform online learning. Must be run
@@ -219,16 +214,12 @@ class Perceptron(BaseEstimator):
             and n_features is the number of features.
         y : array-like, shape = [n_samples]
             Target values.
-        n_iter : int, optional, default 1
-            Number of iterations to perform on this set.
-        shuffle : bool, optional, default False
-            Randomize input sequence between iterations.
 
         Returns
         -------
         self
         """
-        if shuffle:                 # copy X and y
+        if self.shuffle:            # copy X and y
             X = np.array(X)
             y = np.array(y)
         else:
@@ -240,10 +231,10 @@ class Perceptron(BaseEstimator):
 
         n_samples = len(y)
         assert X.shape[0] == n_samples
-        order = range(n_samples) if shuffle else xrange(n_samples)
+        order = range(n_samples) if self.shuffle else xrange(n_samples)
 
-        for i in xrange(n_iter):
-            if shuffle:
+        for i in xrange(self.n_iter):
+            if self.shuffle:
                 np.random.shuffle(order)
             for j in order:
                 self._learn(X[j], y[j])
@@ -251,7 +242,7 @@ class Perceptron(BaseEstimator):
         return self
 
     def _learn(self, x, label):
-        lrn = self._learn_averaged if self._averaged else self._learn_ordinary
+        lrn = self._learn_averaged if self.averaged else self._learn_ordinary
         lrn(x, label)
 
     def _learn_averaged(self, x, label):
@@ -279,7 +270,7 @@ class Perceptron(BaseEstimator):
 
         # always predict as ordinary perceptron
         pred = self._classify(x, self._weights)
-        rate = .5 * self._learning_rate     # we're going to update twice
+        rate = .5 * self.learning_rate      # we're going to update twice
         must_update = (pred != label)
         if must_update:
             self._update_weights(pred, x, -rate)
@@ -340,14 +331,33 @@ class SparsePerceptron(Perceptron):
     features for each label, making this a sort of beam search version of the
     general Perceptron. This reduces the space requirements for the classifier,
     at the cost of lower accuracy.
+
+    Parameters
+    ----------
+    averaged : bool, optional, default False
+        Train as averaged perceptron.
+    beam_width : int, optional
+        Width of beam for beam search. This parameter is given to fit
+        because it implies pruning of the feature set.
+    learning_rate : float, optional
+        Learning rate: multiplied into weight changes, default 1.
+    n_iter : int, optional, default 1
+        Number of iterations to perform per (partial) training set.
+    shuffle : bool, optional, default False
+        Randomize input sequence between iterations.
     '''
 
-    def __init__(self):
+    def __init__(self, averaged=False, beam_width=None, learning_rate=1.,
+                 n_iter=1, shuffle=False):
         '''Use sparse vectors to store weights and events.'''
-        super(SparsePerceptron, self).__init__(kernel=SparseDot())
+        super(SparsePerceptron, self).__init__(averaged=averaged,
+                                               kernel=SparseDot(),
+                                               learning_rate=learning_rate,
+                                               n_iter=n_iter,
+                                               shuffle=shuffle)
+        self.beam_width=beam_width
 
-    def fit(self, X, y, averaged=False, beam_width=None, learning_rate=1.,
-            n_iter=1, shuffle=False):
+    def fit(self, X, y):
         """Fit classifier according to inputs X with labels y
 
         Can be run multiple times for online learning.
@@ -360,18 +370,6 @@ class SparsePerceptron(Perceptron):
         y : array-like, shape = [n_samples]
             Target values.
 
-        averaged : bool, optional, default False
-            Train as averaged perceptron.
-        beam_width : int, optional
-            Width of beam for beam search. This parameter is given to fit
-            because it implies pruning of the feature set.
-        learning_rate : float, optional
-            Learning rate: multiplied into weight changes, default 1.
-        n_iter : int, optional, default 1
-            Number of iterations to perform.
-        shuffle : bool, optional, default False
-            Randomize input sequence between iterations.
-
         Returns
         -------
         self
@@ -381,12 +379,9 @@ class SparsePerceptron(Perceptron):
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
 
-        self.partial_setup(n_features, n_labels, averaged, beam_width,
-                           learning_rate)
-        return self.partial_fit(X, y, n_iter, shuffle)
+        return self.partial_setup(n_features, n_labels).partial_fit(X, y)
 
-    def partial_setup(self, n_features, n_labels, averaged=False,
-                      beam_width=None, learning_rate=1.):
+    def partial_setup(self, n_features, n_labels):
         """Setup classifier for online learning.
 
         Must be run before partial_fit.
@@ -398,28 +393,16 @@ class SparsePerceptron(Perceptron):
             and n_features is the number of features.
         y : array-like, shape = [n_samples]
             Target values.
-        beam_width : int, optional
-            Width of beam for beam search. This parameter is given to
-            partial_fit because it implies pruning of the feature set.
-        learning_rate : float, optional
-            Learning rate: multiplied into weight changes, default 1.
-        n_iter : int, optional, default 1
-            Number of iterations to perform.
-        shuffle : bool, optional, default False
-            Randomize input sequence between iterations.
 
         Returns
         -------
         self
         """
-        self._averaged = averaged
-        self._beam_width = beam_width
-        self._learning_rate = learning_rate
         self._n_features = n_features
         self._n_labels = n_labels
 
         self._weights = [defaultdict(float) for i in xrange(n_labels)]
-        if averaged:
+        if self.averaged:
             self._history = [defaultdict(float) for i in xrange(n_labels)]
             self._acc = [defaultdict(float) for i in xrange(n_labels)]
             self._iterations = np.zeros((n_labels, ), 'i')
@@ -447,8 +430,8 @@ class SparsePerceptron(Perceptron):
 
     def _prune(self, weights):
         '''Prune the weights in a sparse vector to our beam width.'''
-        width = self._beam_width
-        if width is not None and len(weights) < 1.3 * width:
+        if self.beam_width is not None \
+          and len(weights) < 1.3 * self.beam_width:
             fws = sorted(weights.iteritems(), key=lambda x: -abs(x[1]))
-            for f, _ in fws[width:]:
+            for f, _ in fws[self.beam_width:]:
                 del weights[f]
