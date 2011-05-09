@@ -54,7 +54,7 @@ def setup_module():
     if not os.path.exists(LFW_HOME):
         os.makedirs(LFW_HOME)
 
-    rng = random.Random(42)
+    random_state = random.Random(42)
     np_rng = np.random.RandomState(42)
 
     # generate some random jpeg files for each person
@@ -86,14 +86,14 @@ def setup_module():
     more_than_two = [name for name, count in counts.iteritems()
                      if count >= 2]
     for i in range(5):
-        name = rng.choice(more_than_two)
-        first, second = rng.sample(range(counts[name]), 2)
+        name = random_state.choice(more_than_two)
+        first, second = random_state.sample(range(counts[name]), 2)
         f.write('%s\t%d\t%d\n' % (name, first, second))
 
     for i in range(5):
-        first_name, second_name = rng.sample(FAKE_NAMES, 2)
-        first_index = rng.choice(range(counts[first_name]))
-        second_index = rng.choice(range(counts[second_name]))
+        first_name, second_name = random_state.sample(FAKE_NAMES, 2)
+        first_index = random_state.choice(range(counts[first_name]))
+        second_index = random_state.choice(range(counts[second_name]))
         f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index,
                                       second_name, second_index))
     f.close()
