@@ -37,6 +37,7 @@ Data Set Characteristics:
     :Date: July, 1988
 
 This is a copy of UCI ML iris datasets.
+http://archive.ics.uci.edu/ml/datasets/Iris
 
 The famous Iris database, first used by Sir R.A Fisher
 
