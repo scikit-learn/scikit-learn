@@ -50,6 +50,7 @@ comparison space.
 
 from .base import BaseEstimator
 from .utils import safe_asanyarray
+from .utils.extmath import safe_sparse_dot
 from collections import defaultdict
 import numpy as np
 
@@ -84,12 +85,23 @@ class PolynomialKernel(object):
         self._alpha = alpha
 
     def __call__(self, weights, x):
-        return (np.dot(weights, x) + self._alpha) ** self._degree
+        return (safe_sparse_dot(weights, x) + self._alpha) ** self._degree
 
 
 class Perceptron(BaseEstimator):
-    '''Classifier implementing single-layer perceptron with error-driven
+    '''Single-layer (averaged) perceptron classifier with error-driven
     learning.
+
+    If the `averaged` parameter is true, this classifier maintains a running
+    sum of past weight matrices, weighted by the number of iterations that each
+    weight matrix survived before making an error. At classification time, the
+    averaged perceptron uses both the current weight matrix and the weighted
+    sum of past matrices to make its decision.
+
+    This is an approximation to the "voted perceptron" algorithm described by
+    Freund and Schapire (1999). The averaging approach improves on the basic
+    perceptron algorithm by providing a "large margin" approach to handling
+    datasets that are not linearly separable.
 
     Parameters
     ----------
@@ -97,8 +109,8 @@ class Perceptron(BaseEstimator):
         Kernel function for mapping non-linear data.
     '''
 
-    def __init__(self, kernel=None, learning_rate=1.):
-        self._kernel = kernel or np.dot
+    def __init__(self, kernel=None):
+        self._kernel = kernel or safe_sparse_dot
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
@@ -115,20 +127,46 @@ class Perceptron(BaseEstimator):
         X = np.atleast_2d(X)
         y = np.empty(X.shape[0])
 
+        w = self._history if self._averaged else self._weights
         for i, x in enumerate(X):
-            y[i] = self._classify(x)
+            y[i] = self._classify(x, w)
         return y
 
-    def _classify(self, x):
-        '''Classify an event into one of our possible labels.
-
-        x: A np vector of the dimensionality of our input space.
-
+    def _classify(self, x, weights):
+        '''Classify x into one of our possible labels.
         Returns the label for the most likely outcome.
         '''
-        return self._max_outcome(self._weights, x)[0]
+        return self._max_outcome(weights, x)[0]
 
-    def _fit(self, X, y, learning_rate, n_iter, shuffle, averaged):
+    def fit(self, X, y, averaged=False, learning_rate=1., n_iter=1, shuffle=False):
+        """Fit classifier according to inputs X with labels y
+
+        Can be run multiple times for online learning.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+        averaged : bool, optional, default False
+            Train as averaged perceptron.
+        learning_rate : float, optional
+            Learning rate: multiplied into weight changes, default 1.
+        n_iter : int, optional, default 1
+            Number of iterations to perform.
+        shuffle : bool, optional, default False
+            Randomize input sequence between iterations.
+
+        Returns
+        -------
+        self
+        """
+        self._averaged = averaged
+        self._learning_rate = learning_rate
+
         if shuffle:                 # copy X and y
             X = np.array(X)
             y = np.array(y)
@@ -146,11 +184,11 @@ class Perceptron(BaseEstimator):
             self._history = np.zeros(self._weights.shape, 'd')
             self._acc = np.zeros(self._weights.shape, 'd')
 
-        self._run_iters(n_iter, X, y, learning_rate, shuffle)
+        self._run_iters(n_iter, X, y, shuffle)
 
         return self
 
-    def _run_iters(self, n, X, y, learning_rate, shuffle):
+    def _run_iters(self, n, X, y, shuffle):
         '''Run n iterations of training'''
         n_samples = len(y)
         order = range(n_samples) if shuffle else xrange(n_samples)
@@ -159,56 +197,52 @@ class Perceptron(BaseEstimator):
             if shuffle:
                 np.random.shuffle(order)
             for j in order:
-                self._learn(X[j], y[j], learning_rate)
+                self._learn(X[j], y[j])
 
-    def fit(self, X, y, learning_rate=1., n_iter=1, shuffle=False):
-        """Fit classifier according to inputs X with labels y
+    def _learn(self, x, label):
+        lrn = self._learn_averaged if self._averaged else self._learn_ordinary
+        lrn(x, label)
 
-        Can be run multiple times for online learning.
+    def _learn_averaged(self, x, label):
+        '''Learn as averaged perceptron.'''
 
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        self._iterations[label] += 1
+        (pred, update) = self._learn_ordinary(x, label)
+        if update:
+            self._update_history(pred)
+            self._update_history(label)
+        else:
+            self._survived[label] += 1
+        return (pred, update)
 
-        y : array-like, shape = [n_samples]
-            Target values.
-        learning_rate : float, optional
-            Learning rate: multiplied into weight changes, default 1.
-        n_iter : int, optional, default 1
-            Number of iterations to perform.
-        shuffle : bool, optional, default False
-            Randomize input sequence between iterations.
-
-        Returns
-        -------
-        self
-        """
-
-        return self._fit(X, y, learning_rate=learning_rate, n_iter=n_iter,
-                         shuffle=shuffle, averaged=False)
-
-    def _learn(self, x, label, rate):
-        '''Adjust the hyperplane based on a classification attempt.
+    def _learn_ordinary(self, x, label):
+        '''Learn as ordinary perceptron.
 
         Parameters
         ----------
         x : array
         label : int
-        rate : float
 
         Returns the prediction for x and whether an update has occurred (bool)
         '''
 
         # always predict as ordinary perceptron
-        pred = Perceptron._classify(self, x)
-        rate = .5 * rate    # we're going to update twice
+        pred = self._classify(x, self._weights)
+        rate = .5 * self._learning_rate     # we're going to update twice
         must_update = (pred != label)
         if must_update:
             self._update_weights(pred, x, -rate)
             self._update_weights(label, x, rate)
         return (pred, must_update)
+
+    def _update_history(self, class_index):
+        '''Update the history for a particular class (averaged perceptron).'''
+        s = self._survived[class_index]
+        if s > 0:
+            acc = self._acc[class_index]
+            acc += s * self._weights[class_index]
+            self._history[class_index] = acc / self._iterations[class_index]
+            self._survived[class_index] = 0
 
     def _update_weights(self, class_index, x, delta):
         '''Update the weights for an index based on an event.
@@ -234,83 +268,6 @@ class Perceptron(BaseEstimator):
         return index, 1.0 / np.exp(scores - scores[index]).sum()
 
 
-class AveragedPerceptron(Perceptron):
-    '''Classifier based on a weighted sum of perceptrons.
-
-    This perceptron algorithm performs similarly to the basic perceptron when
-    learning from labeled data: whenever the predicted label for an event
-    differs from the true label, the weights of the perceptron are updated to
-    classify this new event correctly.
-
-    However, in addition to updating the weights of the perceptron in response
-    to errors during learning, the AveragedPerceptron also makes a copy of the
-    old weight matrix and adds it to a running sum of all past weight matrices.
-    The sums are weighted by the number of iterations that each constituent
-    weight matrix survived before making an error.
-
-    At classification time, the AveragedPerceptron uses both the current weight
-    matrix and the weighted sum of past matrices to make its decision.
-
-    This is an approximation to the "voted perceptron" algorithm described by
-    Freund and Schapire (1999). The averaging approach improves on the basic
-    perceptron algorithm by providing a "large margin" approach to handling
-    datasets that are not linearly separable.
-    '''
-
-    def __init__(self, kernel=None):
-        super(AveragedPerceptron, self).__init__(kernel)
-
-    def _classify(self, x):
-        return self._max_outcome(self._history, x)[0]
-
-    def fit(self, X, y, learning_rate=1., n_iter=1, shuffle=False):
-        """Fit classifier according to inputs X with labels y
-
-        Can be run multiple times for online learning.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values.
-        learning_rate : float, optional
-            Learning rate: multiplied into weight changes, default 1.
-        n_iter : int, optional
-            Number of iterations to perform. Default 1.
-        shuffle : bool, optional, default False
-            Randomize input sequence between iterations.
-
-        Returns
-        -------
-        self
-        """
-
-        return self._fit(X, y, learning_rate=learning_rate, n_iter=n_iter,
-                         shuffle=shuffle, averaged=True)
-
-    def _learn(self, x, label, rate):
-        self._iterations[label] += 1
-        (pred, update) = super(AveragedPerceptron, self)._learn(x, label, rate)
-        if update:
-            self._update_history(pred)
-            self._update_history(label)
-        else:
-            self._survived[label] += 1
-        return (pred, update)
-
-    def _update_history(self, class_index):
-        '''Update the history for a particular class.'''
-        s = self._survived[class_index]
-        if s > 0:
-            acc = self._acc[class_index]
-            acc += s * self._weights[class_index]
-            self._history[class_index] = acc / self._iterations[class_index]
-            self._survived[class_index] = 0
-
-
 class SparseDot(object):
     '''Kernel for SparseAveragedPerceptron'''
     @staticmethod
@@ -319,7 +276,7 @@ class SparseDot(object):
         return sum(weights.get(f, 0) for f in x)
 
 
-class SparseAveragedPerceptron(AveragedPerceptron):
+class SparseAveragedPerceptron(Perceptron):
     '''A voted perceptron using sparse vectors for storing weights.
 
     This class achieves sparseness by assuming that all events are
@@ -374,6 +331,9 @@ class SparseAveragedPerceptron(AveragedPerceptron):
             X = safe_asanyarray(X)
             y = safe_asanyarray(y)
 
+        self._averaged = True
+        self._learning_rate = learning_rate
+
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
 
@@ -385,11 +345,11 @@ class SparseAveragedPerceptron(AveragedPerceptron):
         self._iterations = np.zeros((n_samples, ), 'i')
         self._survived = np.zeros((n_samples, ), 'i')
 
-        self._run_iters(n_iter, X, y, learning_rate, shuffle)
+        self._run_iters(n_iter, X, y, shuffle)
 
         for i in xrange(n_iter):
             for j in xrange(n_samples):
-                self._learn(X[j], y[j], learning_rate)
+                self._learn(X[j], y[j])
 
         return self
 
@@ -413,8 +373,8 @@ class SparseAveragedPerceptron(AveragedPerceptron):
 
     def _prune(self, weights):
         '''Prune the weights in a sparse vector to our beam width.'''
-        beamwidth = self._beam_width
-        if beamwidth is not None and len(weights) < 1.3 * beamwidth:
+        width = self._beam_width
+        if width is not None and len(weights) < 1.3 * width:
             fws = sorted(weights.iteritems(), key=lambda x: -abs(x[1]))
-            for f, _ in fws[beamwidth:]:
+            for f, _ in fws[width:]:
                 del weights[f]
