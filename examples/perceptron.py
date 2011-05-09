@@ -34,8 +34,9 @@ clf2 = Perceptron(averaged=True)
 clf1.partial_setup(n_features, n_labels).partial_fit(X, y)
 clf2.fit(X, y)  # equivalent to above but with batch learning interface
 
-y_pred1 = clf1.predict(X)
-y_pred2 = clf2.predict(X)
+def accuracy(clf):
+    y_pred = clf.predict(X)
+    return (y == y_pred).sum() / float(len(y))
 
-print "Num. of mislabeled points (perceptron)      : %d" % (y != y_pred1).sum()
-print "Num. of mislabeled points (avg. perceptron) : %d" % (y != y_pred2).sum()
+print('Accuracy of perceptron:          %.2f' % (accuracy(clf1) * 100.))
+print('Accuracy of averaged perceptron: %.2f' % (accuracy(clf2) * 100.))
