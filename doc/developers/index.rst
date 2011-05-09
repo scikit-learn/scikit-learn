@@ -112,7 +112,7 @@ complies with the following rules:
     * Code with a good unittest coverage (at least 80%), check with::
 
         $ pip install nose coverage
-        $ nosetests --with-coverage path/to/package
+        $ nosetests --with-coverage path/to/tests_for_package
 
     * All other tests pass when everything is rebuilt from scrath, under Unix,
       check with (from the toplevel source folder)::
@@ -368,13 +368,17 @@ reference to X, y. There are however some exceptions to this, as in
 the case of precomputed kernels where you need to store access these
 data in the predict method.
 
-  Parameters
+============= ======================================================
+Parameters
+============= ======================================================
+X             array-like, with shape = [N, D], where N is the number 
+              of samples and D is the number of features.
 
-    * X : array-like, with shape = [N, D], where N is the number of
-      samples and D is the number of features.
-    * Y : array, with shape = [N], where N is the number of samples.
+Y             array, with shape = [N], where N is the number of 
+              samples.
 
-    * args, kwargs. Parameters can also be set in the fit method.
+args, kwargs  Parameters can also be set in the fit method.
+============= ======================================================
 
 X.shape[0] should be the same as Y.shape[0]. If this requisite is not
 met, an exception should be raised.
