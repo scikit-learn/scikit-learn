@@ -4,6 +4,9 @@
 Covariance estimation
 ===================================================
 
+.. currentmodule:: scikits.learn.covariance
+
+
 Many statistical problems require at some point the estimation of a
 population's covariance matrix, which can be seen as an estimation of
 data set scatter plot shape. Most of the time, such an estimation has
@@ -20,7 +23,6 @@ observations are independant and identically distributed.
 Empirical covariance
 ====================
 
-.. currentmodule:: scikits.learn.covariance
 
 The covariance matrix of a data set is known to be well approximated
 with the classical `Maximum Likelihood Estimator` (or `empirical
@@ -38,7 +40,7 @@ whether the data are centered or not, the result will be different, so
 one may want to use the `assume_centered` parameter accurately.
 
 .. topic:: Examples:
-   
+
    * See :ref:`example_covariance_plot_covariance_estimation.py` for
      an example on how to fit an :class:`EmpiricalCovariance` object
      to data.
@@ -46,7 +48,6 @@ one may want to use the `assume_centered` parameter accurately.
 Shrunk Covariance
 =================
 
-.. curentmodule:: scikits.learn.covariance
 
 Basic shrinkage
 ---------------
@@ -77,7 +78,7 @@ whether the data are centered or not, the result will be different, so
 one may want to use the `assume_centered` parameter accurately.
 
 .. topic:: Examples:
-   
+
    * See :ref:`example_covariance_plot_covariance_estimation.py` for
      an example on how to fit a :class:`ShrunkCovariance` object
      to data.
@@ -101,7 +102,7 @@ fitting a :class:`LedoitWolf` object to the same sample.
     Volume 88, Issue 2, February 2004, pages 365-411.
 
 .. topic:: Examples:
-   
+
    * See :ref:`example_covariance_plot_covariance_estimation.py` for
      an example on how to fit a :class:`LedoitWolf` object to data and
      for visualizing the performances of the Ledoit-Wolf estimator in
@@ -111,6 +112,9 @@ fitting a :class:`LedoitWolf` object to the same sample.
    :target: ../auto_examples/covariance/plot_covariance_estimation.html
    :align: center
    :scale: 75%
+
+
+.. _oracle_apprroximating_shrinkage:
 
 Oracle Approximating Shrinkage
 ------------------------------
@@ -132,13 +136,13 @@ from the matlab programm available from the authors webpage
 
 [2] "Shrinkage Algorithms for MMSE Covariance Estimation" Chen et al.,
     IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
-    
+
 .. topic:: Examples:
-   
+
    * See :ref:`example_covariance_plot_covariance_estimation.py` for
      an example on how to fit an :class:`OAS` object
      to data.
-     
+
    * See :ref:`example_covariance_plot_lw_vs_oas.py` to visualize the
      Mean Squared Error difference between a :class:`LedoitWolf` and
      an :class:`OAS` estimator of the covariance.

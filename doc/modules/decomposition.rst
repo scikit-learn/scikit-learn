@@ -102,6 +102,8 @@ is not the exact inverse transform of `transform` even when
       <http://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
+.. _kernel_PCA:
+
 Kernel PCA
 ----------
 
@@ -173,14 +175,14 @@ sparse components found by :class:`NMF` on the digits dataset.
 
 
 The :attr:`init` attribute determines the initialization method applied, which
-has a great impact on the performance of the method. :class:`NMF` implements 
+has a great impact on the performance of the method. :class:`NMF` implements
 the method Nonnegative Double Singular Value Decomposition. NNDSVD is based on
-two SVD processes, one approximating the data matrix, the other approximating 
-positive sections of the resulting partial SVD factors utilizing an algebraic 
+two SVD processes, one approximating the data matrix, the other approximating
+positive sections of the resulting partial SVD factors utilizing an algebraic
 property of unit rank matrices. The basic NNDSVD algorithm is better fit for
-sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to 
-the mean of all elements of the data), and NNDSVDar (in which the zeros are set 
-to random perturbations less than the mean of the data divided by 100) are 
+sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to
+the mean of all elements of the data), and NNDSVDar (in which the zeros are set
+to random perturbations less than the mean of the data divided by 100) are
 recommended in the dense case.
 
 :class:`NMF` can also be initialized with random non-negative matrices, by
@@ -189,7 +191,7 @@ passing an integer seed or a `RandomState` to :attr:`init`.
 In :class:`NMF`, sparseness can be enforced by setting the attribute
 :attr:`sparseness` to `data` or `components`. Sparse components lead to
 localized features, and sparse data leads to a more efficient representation
-of the data. 
+of the data.
 
 .. topic:: Examples:
 
@@ -212,4 +214,4 @@ of the data.
     * `"SVD based initialization: A head start for nonnegative
       matrix factorization"
       <http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf>`_
-      C. Boutsidis, E. Gallopoulos, 2008 
+      C. Boutsidis, E. Gallopoulos, 2008

@@ -39,7 +39,7 @@ Dataset generators
 
 TODO
 
-
+.. _labeled_faces_in_the_wild:
 
 The Labeled Faces in the Wild face recognition dataset
 ======================================================
