@@ -26,7 +26,7 @@ def _gen_even_slices(n, n_packs):
     """
     start = 0
     for pack_num in range(n_packs):
-        this_n = n//n_packs
+        this_n = n // n_packs
         if pack_num < n % n_packs:
             this_n += 1
         if this_n > 0:
@@ -55,7 +55,7 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars'):
         err_mgt = np.seterr()
         np.seterr(all='ignore')
         n_samples = U.shape[0]
-        alpha = alpha*n_samples
+        alpha = alpha * n_samples
         XY = np.dot(U.T, Y)
         for k in range(V.shape[1]):
             # A huge amount of time is spent in this loop. It needs to be
@@ -70,8 +70,8 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars'):
         for k in range(V.shape[1]):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
-            clf.coef_ = V[:,k] # Init with previous value of Vk
-            clf.fit(U, Y[:,k], maxit=1000, tol=1e-8)
+            clf.coef_ = V[:, k] # Init with previous value of Vk
+            clf.fit(U, Y[:, k], max_iter=1000, tol=1e-8) #FIXED
             coef[:, k] = clf.coef_
     return coef
 
@@ -85,10 +85,11 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
     R = np.asfortranarray(R)
     ger, = linalg.get_blas_funcs(('ger',), (U, V))
     for k in xrange(n_atoms):
+        # R += u_k v_k^T
         R = ger(1.0, U[:, k], V[k, :], a=R, overwrite_a=True)
         U[:, k] = np.dot(R, V[k, :].T)
         # Scale Uk
-        if (U[:, k]**2).sum() < 1e-20:
+        if (U[:, k] ** 2).sum() < 1e-20:
             if verbose == 1:
                 sys.stdout.write("+")
                 sys.stdout.flush()
@@ -136,7 +137,7 @@ def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
     V = V[:n_atoms, :]
 
     def cost_function():
-        return 0.5 * np.sum((Y - np.dot(U, V))**2) \
+        return 0.5 * np.sum((Y - np.dot(U, V)) ** 2) \
                     + alpha * np.sum(np.abs(V))
 
     E = []
@@ -153,7 +154,7 @@ def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
         elif verbose:
             print ("Iteration % 3i " 
                 "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" % 
-                    (ii, dt, dt/60, current_cost))
+                    (ii, dt, dt / 60, current_cost))
         
         # Update V
         Gram = np.dot(U.T, U)
@@ -174,9 +175,8 @@ def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
 
         if ii > 0:
             dE = E[-2] - E[-1]
-            print dE
-            assert(dE >= 0)
-            if dE < tol*E[-1]:
+            #assert(dE >= 0)
+            if dE < tol * E[-1]:
                 if verbose == 1:
                     # A line return
                     print ""
@@ -201,14 +201,14 @@ if __name__ == '__main__':
     U = np.random.randn(n_samples, n_atoms)
     V = np.random.randn(n_atoms, n_features)
 
-    centers = [(3,3),(6,7),(8,1)]
-    sz = [1,2,1]
+    centers = [(3, 3), (6, 7), (8, 1)]
+    sz = [1, 2, 1]
     for k in range(n_atoms):
         img = np.zeros(img_sz)
-        xmin, xmax = centers[k][0]-sz[k], centers[k][0]+sz[k]
-        ymin, ymax = centers[k][1]-sz[k], centers[k][1]+sz[k]
-        img[xmin:xmax][:,ymin:ymax] = 1.0
-        V[k,:] = img.ravel()
+        xmin, xmax = centers[k][0] - sz[k], centers[k][0] + sz[k]
+        ymin, ymax = centers[k][1] - sz[k], centers[k][1] + sz[k]
+        img[xmin:xmax][:, ymin:ymax] = 1.0
+        V[k, :] = img.ravel()
 
     # Y is defined by : Y = UV + noise
     Y = np.dot(U, V)
@@ -217,15 +217,15 @@ if __name__ == '__main__':
     # Estimate U,V
     alpha = 0.5
     U_estimated, V_estimated, E = sparse_pca(Y, n_atoms, alpha, maxit=100,
-                                             method='lars', n_jobs=1,
-                                             verbose=2)
+                                             method='lasso', n_jobs=1,
+                                             verbose=2, tol=1e-20)
 
     # View results
     import pylab as pl
     pl.close('all')
 
     for k in range(n_atoms):
-        pl.matshow(np.reshape(V_estimated[k,:], img_sz))
+        pl.matshow(np.reshape(V_estimated[k, :], img_sz))
         pl.title('Atom %d' % k)
         pl.colorbar()
 
