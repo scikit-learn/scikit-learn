@@ -81,11 +81,6 @@ class Perceptron(BaseEstimator):
 
         return np.dot(X, w.T).argmax(axis=1)
 
-    def _predict(self, X, weights):
-        '''Predict label for a single feature vector x according to weights'''
-
-        return np.dot(X, weights.T).argmax()
-
     def fit(self, X, y):
         """Fit classifier according to inputs X with labels y (batch learning)
 
@@ -155,7 +150,7 @@ class Perceptron(BaseEstimator):
         self
         """
         if self.shuffle:
-            Xy = np.concatenate((X, y.T),axis=1)
+            Xy = np.concatenate((X, np.atleast_2d(y).T), axis=1)
             X = Xy[:, :-1]
             y = Xy[:, -1]
         else:
@@ -168,17 +163,15 @@ class Perceptron(BaseEstimator):
         n_samples = len(y)
         assert X.shape[0] == n_samples
 
+        lrn = self._learn_averaged if self.averaged else self._learn_ordinary
+
         for i in xrange(self.n_iter):
             if self.shuffle:
                 np.random.shuffle(Xy)
             for j in xrange(n_samples):
-                self._learn(X[j], y[j])
+                lrn(X[j], y[j])
 
         return self
-
-    def _learn(self, x, label):
-        lrn = self._learn_averaged if self.averaged else self._learn_ordinary
-        lrn(x, label)
 
     def _learn_averaged(self, x, label):
         '''Learn as averaged perceptron.'''
@@ -203,7 +196,7 @@ class Perceptron(BaseEstimator):
         '''
 
         # always predict as ordinary perceptron
-        pred = self._predict(x, self._weights)
+        pred = np.dot(x, self._weights.T).argmax()
         rate = .5 * self.learning_rate      # we're going to update twice
         must_update = (pred != label)
         if must_update:
