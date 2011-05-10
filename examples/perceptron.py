@@ -24,7 +24,7 @@ import numpy as np
 # Although not required for the digits dataset (which is loaded into memory in
 # its entirety), this snippet demonstrates the online learning API. We derive
 # the number of features and labels/classes from the dataset, but usually you'd
-# need to manually specify these when doing online learning.
+# need to know these beforehand when doing online learning.
 n_features = X.shape[1]
 n_labels   = len(np.unique(y))
 
@@ -38,5 +38,5 @@ def accuracy(clf):
     y_pred = clf.predict(X)
     return (y == y_pred).sum() / float(len(y))
 
-print('Accuracy of perceptron:          %.2f' % (accuracy(clf1) * 100.))
-print('Accuracy of averaged perceptron: %.2f' % (accuracy(clf2) * 100.))
+print('Accuracy of perceptron:          %.2f%%' % (accuracy(clf1) * 100.))
+print('Accuracy of averaged perceptron: %.2f%%' % (accuracy(clf2) * 100.))

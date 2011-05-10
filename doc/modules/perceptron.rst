@@ -45,12 +45,6 @@ from events in all other labels. At classification time, we compute the kernel
 value of X and each of the Ws. The label with the greatest resulting scalar
 value is returned as the prediction for that event.
 
-This module also incorporates the "kernel trick" to generalize the notion of
-the dot product to spaces of different dimensionality. Instead of computing the
-dot product between X and W, we use a kernel function that accepts X and W as
-inputs and returns a scalar value indicating their similarity in some mapped
-comparison space.
-
 
 Online learning
 ===============
@@ -75,20 +69,6 @@ This is an approximation to the "voted perceptron" algorithm described by
 Freund and Schapire (1999). The averaging approach improves on the basic
 perceptron algorithm by providing a "large margin" approach to handling
 datasets that are not linearly separable.
-
-
-Sparse perceptrons
-==================
-
-The :class:`SparsePerceptron` stores its weight vectors in sparse arrays.
-It assumes that all events are binary-valued. To use this class with a
-non-binary event space, you will need to chop up the event space into binary
-events.
-
-In addition, this class may be configured to retain only the top-weighted
-features for each label, making this a sort of beam search version of the
-general Perceptron. This reduces the space requirements for the classifier,
-at the cost of lower accuracy.
 
 
 .. topic:: References:

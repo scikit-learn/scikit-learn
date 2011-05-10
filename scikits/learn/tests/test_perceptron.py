@@ -1,5 +1,4 @@
 from .. import datasets, perceptron
-from ..preprocessing import Binarizer, Normalizer
 import numpy as np
 from numpy.testing import assert_array_equal
 
@@ -22,34 +21,6 @@ def test_perceptron():
     n_samples  = X.shape[0] - 1
     half = n_samples // 2
     clf_online = perceptron.Perceptron(averaged=True) \
-               . partial_setup(n_features, len(np.unique(y))) \
-               . partial_fit(X[: half], y[: half]) \
-               . partial_fit(X[n_samples - half : -1],
-                             y[n_samples - half : -1])
-
-    assert_array_equal(clf_batch.predict(X[-1]),
-                       clf_online.predict(X[-1]))
-
-
-def test_sparse_perceptron():
-    '''
-    Test sparse perceptron on digit recognition task
-    '''
-
-    X = digits.data
-    y = digits.target
-
-    # Sparse perceptron wants binary features
-    X = Binarizer().fit(X).transform(X)
-    X = Normalizer().fit(X).transform(X)
-
-    clf_batch = perceptron.SparsePerceptron(averaged=True, beam_width=100) \
-              . fit(X[1:], y[1:])
-
-    n_features = X.shape[1]
-    n_samples  = X.shape[0] - 1
-    half = n_samples // 2
-    clf_online = perceptron.SparsePerceptron(averaged=True, beam_width=100) \
                . partial_setup(n_features, len(np.unique(y))) \
                . partial_fit(X[: half], y[: half]) \
                . partial_fit(X[n_samples - half : -1],
