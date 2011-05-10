@@ -110,7 +110,7 @@ div.navbar ul li a:hover {
     display: none;
 }
 
-blockquote {
+.quote blockquote {
     text-align: right;
     line-height: 1.5em;
     font-style: italic;
