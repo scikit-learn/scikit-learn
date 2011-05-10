@@ -28,22 +28,26 @@ Perceptrons
 .. currentmodule:: scikits.learn.perceptron
 
 Perceptrons are supervised discriminative linear models for classification.
-The basic perceptron is simply a vector W in event space that is normal to a
-linear separating surface going through the origin. Data points that fall on
-one side of the surface are in class (+), and data points on the other side
-are in class (-). To determine the side of the surface on which some event X
-falls, we compute the dot product of X and W and return the sign of the
-resulting scalar. Learning takes place in the perceptron whenever it makes an
-incorrect classification from labeled data : X is simply added to W to
-minimally correct the output of the perceptron for this data point. This might
-invalidate classifications for other events in the data set, but it is simple.
+The basic perceptron is simply a vector w in feature vector space that is
+normal to a linear separating surface going through the origin. Data points
+that fall on one side of the surface are in class (+), and data points on the
+other side are in class (-). To determine the side of the surface on which some
+feature vector x falls, we compute the dot product of x and w and return the
+sign of the resulting scalar. Learning takes place in the perceptron whenever
+it makes an incorrect classification from labeled data (error-driven learning):
+x is simply added to w to minimally correct the output of the perceptron for
+this data point.
+
+It can be shown that the perceptron eventually converges when run on linearly
+separable data. However, for the sake of efficiency and because it never
+converges on datasets that are not linearly separable, the perceptrons in this
+module only run for an `n_iter` number of iterations, to be set by the user.
 
 This module generalizes the perceptron to K > 2 labels by maintaining a
 decision surface for each of the K possible labels, a strategy known as "one
-versus all." Each surface can be thought of as separating events in one label
-from events in all other labels. At classification time, we compute the kernel
-value of X and each of the Ws. The label with the greatest resulting scalar
-value is returned as the prediction for that event.
+versus all." Each surface can be thought of as separating feature vectors in
+one label from feature vectors in all other labels. The label with the greatest
+resulting scalar value is returned as the prediction for that feature vector.
 
 
 Online learning
@@ -69,6 +73,10 @@ This is an approximation to the "voted perceptron" algorithm described by
 Freund and Schapire (1999). The averaging approach improves on the basic
 perceptron algorithm by providing a "large margin" approach to handling
 datasets that are not linearly separable.
+
+By averaging instead of voting, we gain the benefit that previous weight
+vectors are effectively summarized in two `n_labels` * `n_features` matrices,
+saving memory and computation time compared to the voted perceptron.
 
 
 .. topic:: References:

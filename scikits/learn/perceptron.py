@@ -21,28 +21,9 @@
 
 # Adapted for scikit-learn by Lars Buitinck, ILPS, University of Amsterdam.
 
-'''Single-layer (averaged) perceptrons.
-
-Perceptrons are supervised discriminative linear models for classification.
-The basic perceptron is simply a vector W in event space that is normal to a
-linear separating surface going through the origin. Data points that fall on
-one side of the surface are in class (+), and data points on the other side
-are in class (-). To determine the side of the surface on which some event X
-falls, we compute the dot product of X and W and return the sign of the
-resulting scalar. Learning takes place in the perceptron whenever it makes an
-incorrect classification from labeled data : X is simply added to W to
-minimally correct the output of the perceptron for this data point. This might
-invalidate classifications for other events in the data set, but it is simple.
-
-This module generalizes the perceptron to K > 2 labels by maintaining a
-decision surface for each of the K possible labels. Each surface can be
-thought of as separating events in one label from events in all other labels.
-The label with the greatest resulting scalar value is returned as the
-prediction for that event.
-'''
+'''Single-layer (averaged) perceptrons.'''
 
 from .base import BaseEstimator
-from .metrics.pairwise import linear_kernel
 from .utils import safe_asanyarray
 from .utils.extmath import safe_sparse_dot
 from collections import defaultdict
@@ -99,7 +80,6 @@ class Perceptron(BaseEstimator):
         w = self._history if self.averaged else self._weights
 
         return np.dot(X, w.T).argmax(axis=1)
-        #return np.apply_along_axis(lambda x: self._predict(x, w), 1, X)
 
     def _predict(self, X, weights):
         '''Predict label for a single feature vector x according to weights'''
