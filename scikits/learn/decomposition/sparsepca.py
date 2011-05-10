@@ -47,7 +47,7 @@ def cpu_count():
 
 ################################################################################
 # sparsePCA
-def _update_V(U, Y, V, alpha, Gram=None, method='lars'):
+def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
     """ Update V in sparse_pca loop.
     """
     coef = np.empty_like(V)
@@ -55,7 +55,7 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars'):
         err_mgt = np.seterr()
         np.seterr(all='ignore')
         n_samples = U.shape[0]
-        alpha = alpha * n_samples
+        #alpha = alpha * n_samples
         XY = np.dot(U.T, Y)
         for k in range(V.shape[1]):
             # A huge amount of time is spent in this loop. It needs to be
@@ -71,7 +71,7 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars'):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
             clf.coef_ = V[:, k] # Init with previous value of Vk
-            clf.fit(U, Y[:, k], max_iter=1000, tol=1e-8) #FIXED
+            clf.fit(U, Y[:, k], max_iter=1000, tol=tol) #FIXED
             coef[:, k] = clf.coef_
     return coef
 
@@ -103,7 +103,7 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
             U[:, k] /= linalg.norm(U[:, k])
             R = ger(-1.0, U[:, k], V[k, :], a=R, overwrite_a=True)
     if return_r2:
-        R **=2
+        R **= 2
         R = np.sum(R)
         return U, R
     return U
@@ -162,7 +162,7 @@ def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
         V_views = Parallel(n_jobs=n_jobs)(
                     delayed(_update_V)(U, Y[:, this_slice], V[:, this_slice], 
                                     alpha=alpha / n_samples, 
-                                    Gram=Gram, method=method)
+                                    Gram=Gram, method=method, tol=tol)
                     for this_slice in slices)
         for this_slice, this_view in zip(slices, V_views):
             V[:, this_slice] = this_view
@@ -175,7 +175,7 @@ def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
 
         if ii > 0:
             dE = E[-2] - E[-1]
-            #assert(dE >= 0)
+            assert(dE >= -tol * E[-1])
             if dE < tol * E[-1]:
                 if verbose == 1:
                     # A line return
@@ -193,11 +193,11 @@ if __name__ == '__main__':
 
     # Generate toy data
     n_atoms = 3
-    n_samples = 5
+    n_samples = 100
     img_sz = (10, 10)
     n_features = img_sz[0] * img_sz[1]
 
-    np.random.seed(10)
+    np.random.seed(0)
     U = np.random.randn(n_samples, n_atoms)
     V = np.random.randn(n_atoms, n_features)
 
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     alpha = 0.5
     U_estimated, V_estimated, E = sparse_pca(Y, n_atoms, alpha, maxit=100,
                                              method='lasso', n_jobs=1,
-                                             verbose=2, tol=1e-20)
+                                             verbose=2, tol=1e-18)
 
     # View results
     import pylab as pl
