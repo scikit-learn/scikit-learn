@@ -6,7 +6,8 @@ from scipy import linalg
 from scikits.learn.linear_model import Lasso, lars_path
 from scikits.learn.externals.joblib import Parallel, delayed
 
-################################################################################
+
+##################################
 # Utilities to spread load on CPUs
 def _gen_even_slices(n, n_packs):
     """Generator to create n_packs slices going up to n.
@@ -16,13 +17,13 @@ def _gen_even_slices(n, n_packs):
 
     >>> list(_gen_even_slices(10, 1))
     [slice(0, 10, None)]
-    >>> list(_gen_even_slices(10, 10))
-    [slice(0, 1, None), slice(1, 2, None), slice(2, 3, None), slice(3, 4, None), slice(4, 5, None), slice(5, 6, None), slice(6, 7, None), slice(7, 8, None), slice(8, 9, None), slice(9, 10, None)]
-    >>> list(_gen_even_slices(10, 5))
-    [slice(0, 2, None), slice(2, 4, None), slice(4, 6, None), slice(6, 8, None), slice(8, 10, None)]
+    >>> list(_gen_even_slices(10, 10)) #doctest: +ELLIPSIS
+    [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
+    >>> list(_gen_even_slices(10, 5)) #doctest: +ELLIPSIS
+    [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
     >>> list(_gen_even_slices(10, 3))
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-    
+
     """
     start = 0
     for pack_num in range(n_packs):
@@ -33,6 +34,7 @@ def _gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
+
 
 def cpu_count():
     """ Return the number of CPUs.
@@ -45,7 +47,7 @@ def cpu_count():
     return multiprocessing.cpu_count()
 
 
-################################################################################
+###########
 # sparsePCA
 def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
     """ Update V in sparse_pca loop.
@@ -60,8 +62,7 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
         for k in range(V.shape[1]):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
-            #Xy = np.dot(U.T, Y[:, k])
-            _, _, coef_path_ = lars_path(U, Y[:, k], Xy=XY[:, k], Gram=Gram, 
+            _, _, coef_path_ = lars_path(U, Y[:, k], Xy=XY[:, k], Gram=Gram,
                                          alpha_min=alpha, method='lasso')
             coef[:, k] = coef_path_[:, -1]
         np.seterr(**err_mgt)
@@ -70,17 +71,18 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
         for k in range(V.shape[1]):
             # A huge amount of time is spent in this loop. It needs to be
             # tight.
-            clf.coef_ = V[:, k] # Init with previous value of Vk
-            clf.fit(U, Y[:, k], max_iter=1000, tol=tol) #FIXED
+            clf.coef_ = V[:, k]  # Init with previous value of Vk
+            clf.fit(U, Y[:, k], max_iter=1000, tol=tol)
             coef[:, k] = clf.coef_
     return coef
 
+
 def _update_U(U, Y, V, verbose=False, return_r2=False):
     """ Update U in sparse_pca loop. This function modifies in-place U.
-    """  
+    """
     n_atoms = len(V)
-    n_samples = Y.shape[0] 
-    R = -np.dot(U, V) # Residuals, computed 'in-place' for efficiency
+    n_samples = Y.shape[0]
+    R = -np.dot(U, V)  # Residuals, computed 'in-place' for efficiency
     R += Y
     R = np.asfortranarray(R)
     ger, = linalg.get_blas_funcs(('ger',), (U, V))
@@ -93,7 +95,7 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
             if verbose == 1:
                 sys.stdout.write("+")
                 sys.stdout.flush()
-            elif verbose: 
+            elif verbose:
                 print "Adding new random atom"
             U[:, k] = np.random.randn(n_samples)
             # Setting corresponding coefs to 0
@@ -152,16 +154,16 @@ def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
             sys.stdout.write(".")
             sys.stdout.flush()
         elif verbose:
-            print ("Iteration % 3i " 
-                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" % 
+            print ("Iteration % 3i "
+                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" %
                     (ii, dt, dt / 60, current_cost))
-        
+
         # Update V
         Gram = np.dot(U.T, U)
         slices = list(_gen_even_slices(V.shape[1], n_jobs))
         V_views = Parallel(n_jobs=n_jobs)(
-                    delayed(_update_V)(U, Y[:, this_slice], V[:, this_slice], 
-                                    alpha=alpha / n_samples, 
+                    delayed(_update_V)(U, Y[:, this_slice], V[:, this_slice],
+                                    alpha=alpha / n_samples,
                                     Gram=Gram, method=method, tol=tol)
                     for this_slice in slices)
         for this_slice, this_view in zip(slices, V_views):
@@ -212,7 +214,7 @@ if __name__ == '__main__':
 
     # Y is defined by : Y = UV + noise
     Y = np.dot(U, V)
-    Y += 0.1 * np.random.randn(Y.shape[0], Y.shape[1]) # Add noise
+    Y += 0.1 * np.random.randn(Y.shape[0], Y.shape[1])  # Add noise
 
     # Estimate U,V
     alpha = 0.5
