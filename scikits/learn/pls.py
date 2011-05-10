@@ -668,7 +668,7 @@ class CCA(_PLS):
     Examples
     --------
     >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
-    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA()
     >>> cca.fit(X, Y, n_components=2)
