@@ -51,7 +51,7 @@ def cpu_count():
 ###########
 # sparsePCA
 def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
-    """ Update V (coefficients) in sparse_pca loop.
+    """ Update V (dictionary) in sparse_pca loop.
     """
     coef = np.empty_like(V)
     if method == 'lars':
@@ -79,7 +79,7 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
 
 
 def _update_U(U, Y, V, verbose=False, return_r2=False):
-    """ Update U (dictionary) in sparse_pca loop in place.
+    """ Update U (data) in sparse_pca loop in place.
     """
     n_atoms = len(V)
     n_samples = Y.shape[0]
@@ -211,13 +211,18 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         U, V, E = sparse_pca(X, self.n_components, self.alpha, tol=self.tol,
                              max_iter=self.max_iter, method=self.method,
                              n_jobs=self.n_jobs)
-        self.components_ = U
+        self.components_ = V
         self.error_ = E
-        return V
+        return U
 
     def fit(self, X, y=None, **params):
         self.fit_transform(X, y, **params)
         return self
+
+    def transform(self, X):
+        U = np.zeros((X.shape[0], self.n_components))
+        U = _update_U(U, X, self.components_)
+        return U
 
 
 def generate_toy_data(n_atoms, n_samples, image_size):
@@ -257,7 +262,8 @@ if __name__ == '__main__':
 #                                             verbose=2, tol=1e-18)
 
     SPCA = SparsePCA(n_atoms, alpha, max_iter=100, method='lasso', n_jobs=1)
-    V_estimated = SPCA.fit_transform(Y)
+    SPCA.fit(Y)
+    V_estimated = SPCA.components_
 
     # View results
     import pylab as pl
