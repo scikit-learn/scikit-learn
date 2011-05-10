@@ -5,6 +5,7 @@ import numpy as np
 from scipy import linalg
 from scikits.learn.linear_model import Lasso, lars_path
 from scikits.learn.externals.joblib import Parallel, delayed
+from scikits.learn.base import BaseEstimator, TransformerMixin
 
 
 ##################################
@@ -50,7 +51,7 @@ def cpu_count():
 ###########
 # sparsePCA
 def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
-    """ Update V in sparse_pca loop.
+    """ Update V (coefficients) in sparse_pca loop.
     """
     coef = np.empty_like(V)
     if method == 'lars':
@@ -78,7 +79,7 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
 
 
 def _update_U(U, Y, V, verbose=False, return_r2=False):
-    """ Update U in sparse_pca loop. This function modifies in-place U.
+    """ Update U (dictionary) in sparse_pca loop in place.
     """
     n_atoms = len(V)
     n_samples = Y.shape[0]
@@ -87,7 +88,7 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
     R = np.asfortranarray(R)
     ger, = linalg.get_blas_funcs(('ger',), (U, V))
     for k in xrange(n_atoms):
-        # R += u_k v_k^T
+        # R += UkVk^T
         R = ger(1.0, U[:, k], V[k, :], a=R, overwrite_a=True)
         U[:, k] = np.dot(R, V[k, :].T)
         # Scale Uk
@@ -111,7 +112,7 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
     return U
 
 
-def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
+def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         n_jobs=1, U_init=None, V_init=None, callback=None, verbose=False):
     """
     Compute sparse PCA with n_atoms components
@@ -148,7 +149,7 @@ def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
     if verbose == 1:
         print '[sparse_pca]',
 
-    for ii in xrange(maxit):
+    for ii in xrange(max_iter):
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -191,12 +192,35 @@ def sparse_pca(Y, n_atoms, alpha, maxit=100, tol=1e-8, method='lars',
     return U, V, E
 
 
-if __name__ == '__main__':
+class SparsePCA(BaseEstimator, TransformerMixin):
+    """Sparse Principal Components Analysis (SparsePCA)
+    """
+    def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
+                 method='lars', n_jobs=1, U_init=None, V_init=None):
+        self.n_components = n_components
+        self.alpha = alpha
+        self.max_iter = max_iter
+        self.tol = tol
+        self.method = method
+        self.n_jobs = n_jobs
+        self.U_init = U_init
+        self.V_init = V_init
 
-    # Generate toy data
-    n_atoms = 3
-    n_samples = 100
-    img_sz = (10, 10)
+    def fit_transform(self, X, y=None, **params):
+        self._set_params(**params)
+        U, V, E = sparse_pca(X, self.n_components, self.alpha, tol=self.tol,
+                             max_iter=self.max_iter, method=self.method,
+                             n_jobs=self.n_jobs)
+        self.components_ = U
+        self.error_ = E
+        return V
+
+    def fit(self, X, y=None, **params):
+        self.fit_transform(X, y, **params)
+        return self
+
+
+def generate_toy_data(n_atoms, n_samples, image_size):
     n_features = img_sz[0] * img_sz[1]
 
     np.random.seed(0)
@@ -215,12 +239,25 @@ if __name__ == '__main__':
     # Y is defined by : Y = UV + noise
     Y = np.dot(U, V)
     Y += 0.1 * np.random.randn(Y.shape[0], Y.shape[1])  # Add noise
+    return Y, U, V
+
+
+if __name__ == '__main__':
+
+    # Generate toy data
+    n_atoms = 3
+    n_samples = 100
+    img_sz = (10, 10)
+    Y, U, V = generate_toy_data(n_atoms, n_samples, img_sz)
 
     # Estimate U,V
     alpha = 0.5
-    U_estimated, V_estimated, E = sparse_pca(Y, n_atoms, alpha, maxit=100,
-                                             method='lasso', n_jobs=1,
-                                             verbose=2, tol=1e-18)
+#    U_estimated, V_estimated, E = sparse_pca(Y, n_atoms, alpha, max_iter=100,
+#                                             method='lasso', n_jobs=1,
+#                                             verbose=2, tol=1e-18)
+
+    SPCA = SparsePCA(n_atoms, alpha, max_iter=100, method='lasso', n_jobs=1)
+    V_estimated = SPCA.fit_transform(Y)
 
     # View results
     import pylab as pl
@@ -232,7 +269,7 @@ if __name__ == '__main__':
         pl.colorbar()
 
     pl.figure()
-    pl.plot(E)
+    pl.plot(SPCA.error_)
     pl.xlabel('Iteration')
     pl.ylabel('Cost function')
     pl.show()
