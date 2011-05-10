@@ -95,9 +95,10 @@ def roc_curve(y_true, y_score):
     Examples
     --------
     >>> import numpy as np
+    >>> from scikits.learn import metrics
     >>> y = np.array([1, 1, 2, 2])
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = roc_curve(y, scores)
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores)
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
 
@@ -155,9 +156,10 @@ def auc(x, y):
     Examples
     --------
     >>> import numpy as np
+    >>> from scikits.learn import metrics
     >>> y = np.array([1, 1, 2, 2])
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, _ = roc_curve(y, pred)
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> print auc(fpr, tpr)
     0.75
 
