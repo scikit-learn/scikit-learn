@@ -97,9 +97,14 @@ People
   * `Vlad Niculae <http://vene.ro>`_ joined the project in March 2011 and
     contributed the non-negative matrix factorization module.
 
+  * Edouard Duchesnay joined the project in February 2011 and contributed the
+    Partial Least Squares module.
 
-  * Thouis (Ray) Jones joined the project in contributed the Cython bindings
-  for the BallTree class.
+  * Thouis (Ray) Jones joined the project in April 2011 and contributed the
+    Cython bindings for the BallTree class.
+
+  * Lars Buitinck joined the project in May 2011 and contributed important
+    fixes for Cython/C/C++ code as well as documentation improvements.
 
 
 If I forgot anyone, do not hesitate to send me an email to
