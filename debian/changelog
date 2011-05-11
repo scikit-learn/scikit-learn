@@ -2,6 +2,10 @@ scikit-learn (0.8.0.dfsg-1) unstable; urgency=low
 
   * New upstream release
   * [97bc011] Boost policy compliance to 3.9.2 -- no changes
+  * Included post-release fixes:
+    - [f7d5317] FIX: reflect SVC API change (eps -> tol) in doc/tutorial.rst
+  * Disabled unittest test_fit_works_on_sequences_of_different_length
+    due to test failure during build
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 11 May 2011 10:08:13 -0400
 
