@@ -9,7 +9,7 @@ import numpy as np
 from ...base import BaseEstimator, ClassifierMixin
 
 
-class MNNB(BaseEstimator, ClassifierMixin):
+class MultinomialNB(BaseEstimator, ClassifierMixin):
     """
     Multinomial Naive Bayes for sparse matrices
 
@@ -47,10 +47,10 @@ class MNNB(BaseEstimator, ClassifierMixin):
     >>> import numpy as np
     >>> X = np.random.randint( 5, size=(6, 100) )
     >>> Y = np.array([1, 2, 3, 4, 5, 6])
-    >>> from scikits.learn.naive_bayes import MNNB
-    >>> clf = MNNB()
+    >>> from scikits.learn.naive_bayes import MultinomialNB
+    >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MNNB(alpha_i=1.0)
+    MultinomialNB(alpha_i=1.0)
     >>> print clf.predict(X[2])
     3
 
@@ -81,7 +81,6 @@ class MNNB(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-
 
         #
         # N_c is the count of all words in all documents of class c.
@@ -171,7 +170,7 @@ class MNNB(BaseEstimator, ClassifierMixin):
         """
 
         joint_log_likelihood = self._joint_log_likelihood(X)
-        
+
         #
         # The _joint_log_likelihood has very low values that create underflow
         # in the computation of the exponent. Therefore I 'fix' it by adding
@@ -201,7 +200,7 @@ class MNNB(BaseEstimator, ClassifierMixin):
         """
 
         joint_log_likelihood = self._joint_log_likelihood(X)
-        
+
         #
         # The _joint_log_likelihood has very low values that create underflow
         # in the computation of the exponent. Therefore I 'fix' it by adding
@@ -211,5 +210,5 @@ class MNNB(BaseEstimator, ClassifierMixin):
         loga_fix = joint_log_likelihood - fix
         proba_fix = np.exp(loga_fix)
         log_proba = loga_fix - np.log(np.sum(proba_fix, axis=1))[:, np.newaxis]
-        
+
         return log_proba

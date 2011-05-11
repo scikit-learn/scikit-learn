@@ -9,7 +9,7 @@ See http://scikit-learn.sourceforge.net/modules/naive_bayes.html for
 complete documentation.
 """
 
-from .naive_bayes import GNB, MNNB
+from .naive_bayes import GNB, MultinomialNB
 
 from . import sparse
 

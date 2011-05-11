@@ -45,7 +45,7 @@ from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.linear_model import RidgeClassifier
 from scikits.learn.svm.sparse import LinearSVC
 from scikits.learn.linear_model.sparse import SGDClassifier
-from scikits.learn.naive_bayes.sparse import MNNB
+from scikits.learn.naive_bayes.sparse import MultinomialNB
 from scikits.learn import metrics
 
 
@@ -168,7 +168,7 @@ print "Elastic-Net penalty"
 sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                       penalty="elasticnet"))
 
-# Train sparse MNNB
+# Train sparse MultinomialNB
 print 80 * '='
-print "MNNB penalty"
-mnnb_results = benchmark(MNNB(alpha_i=.01))
+print "MultinomialNB penalty"
+mnnb_results = benchmark(MultinomialNB(alpha_i=.01))
