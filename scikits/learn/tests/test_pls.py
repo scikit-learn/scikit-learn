@@ -163,5 +163,5 @@ def test_pls():
            [  1.09495154e+01,   1.75568297e+02,   8.07654128e+01]])
 
     assert_array_almost_equal(pls2.predict(X), ypred)
-    
+
 

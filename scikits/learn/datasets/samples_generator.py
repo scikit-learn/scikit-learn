@@ -362,6 +362,10 @@ def swiss_roll(n_samples, noise=0.0):
     X : array of shape [n_samples, 3]
         The points.
 
+    t : array of shape [n_samples]
+        The univariate possition of the sample according to the main dimension
+        of the points in the manifold.
+
     Notes
     -----
     Original code from:
@@ -374,4 +378,4 @@ def swiss_roll(n_samples, noise=0.0):
            + noise * np.random.randn(3, n_samples)
     X = np.transpose(X)
     t = np.squeeze(t)
-    return X
+    return X, t

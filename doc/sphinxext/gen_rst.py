@@ -52,7 +52,7 @@ HLIST_HEADER = """
 """
 
 HLIST_IMAGE_TEMPLATE = """
-    * 
+    *
 
       .. image:: images/%s
             :scale: 50
@@ -166,9 +166,9 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     this_template = rst_template
     last_dir = os.path.split(src_dir)[-1]
     # to avoid leading . in file names, and wrong names in links
-    if last_dir == '.' or last_dir == 'examples': 
+    if last_dir == '.' or last_dir == 'examples':
         last_dir = ''
-    else: 
+    else:
         last_dir += '_'
     short_fname = last_dir + fname
     src_file = os.path.join(src_dir, fname)
@@ -225,7 +225,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
             finally:
                 os.chdir(cwd)
         else:
-            figure_list = [f[len(image_dir):] 
+            figure_list = [f[len(image_dir):]
                             for f in glob.glob(image_path % '[1-9]')]
                             #for f in glob.glob(image_path % '*')]
         this_template = plot_rst_template

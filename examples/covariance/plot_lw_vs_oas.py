@@ -45,7 +45,7 @@ for i, n_samples in enumerate(n_samples_range):
     for j in range(repeat):
         X = np.dot(
             np.random.normal(size=(n_samples, n_features)), coloring_matrix.T)
-        
+
         lw = LedoitWolf(store_precision=False)
         lw.fit(X, assume_centered=True)
         lw_mse[i,j] = lw.mse(real_cov)
