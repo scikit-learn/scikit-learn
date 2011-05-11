@@ -146,7 +146,7 @@ class LocallyLinearEmbedding(BaseEstimator):
         self : returns an instance of self.
         """
         self._set_params(**params)
-        self.embedding_vectors_, self.reconstruction_error_ = \
+        self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
                 X, self.n_neighbors, self.out_dim, reg=reg,\
                 eigen_solver=eigen_solver, tol=tol, max_iter=max_iter)
