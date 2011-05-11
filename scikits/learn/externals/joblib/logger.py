@@ -4,7 +4,7 @@ Helpers for logging.
 This module needs much love to become useful.
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org> 
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2008 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
@@ -16,10 +16,22 @@ import shutil
 import logging
 import pprint
 
+def _squeeze_time(t):
+    """Remove .1s to the time under Windows: this is the time it take to
+    stat files. This is needed to make results similar to timings under
+    Unix, for tests
+    """
+    if sys.platform.startswith('win'):
+        return max(0, t - .1)
+    else:
+        return t
+
 def format_time(t):
+    t = _squeeze_time(t)
     return "%.1fs, %.1fmin" % (t, t/60.)
 
 def short_format_time(t):
+    t = _squeeze_time(t)
     if t > 60:
         return "%4.1fmin" % (t/60.)
     else:
@@ -31,7 +43,7 @@ def short_format_time(t):
 class Logger(object):
     """ Base class for logging messages.
     """
-    
+
     def __init__(self, depth=3):
         """
             Parameters
@@ -87,7 +99,7 @@ class PrintTime(object):
                 for i in range(1, 9):
                     if os.path.exists(logfile+'.%i' % i):
                         try:
-                            shutil.move(logfile+'.%i' % i, 
+                            shutil.move(logfile+'.%i' % i,
                                         logfile+'.%i' % (i+1))
                         except:
                             "No reason failing here"

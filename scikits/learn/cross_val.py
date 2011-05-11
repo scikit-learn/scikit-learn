@@ -195,9 +195,9 @@ class KFold(object):
         -----
         All the folds have size trunc(n/k), the last one has the complementary
         """
-        assert k>0, ('cannot have k below 1')
-        assert k<=n, ('cannot have k=%d greater than the number '
-                            'of samples: %d'% (k, n))
+        assert k > 0, ('cannot have k below 1')
+        assert k <= n, ('cannot have k=%d greater than the number '
+                        'of samples: %d' % (k, n))
         self.n = n
         self.k = k
         self.indices = indices
@@ -209,10 +209,10 @@ class KFold(object):
 
         for i in xrange(k):
             test_index = np.zeros(n, dtype=np.bool)
-            if i < k-1:
-                test_index[i*j:(i+1)*j] = True
+            if i < k - 1:
+                test_index[i * j:(i + 1) * j] = True
             else:
-                test_index[i*j:] = True
+                test_index[i * j:] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(n)
@@ -281,9 +281,9 @@ class StratifiedKFold(object):
         """
         y = np.asanyarray(y)
         n = y.shape[0]
-        assert k>0, ValueError('cannot have k below 1')
-        assert k<=n, ValueError('cannot have k=%d greater than the number '
-                               'of samples %d' % (k, n))
+        assert k > 0, ValueError('cannot have k below 1')
+        assert k <= n, ValueError('cannot have k=%d greater than the number '
+                                  'of samples %d' % (k, n))
         _, y_sorted = unique(y, return_inverse=True)
         assert k <= np.min(np.bincount(y_sorted))
         self.y = y
@@ -375,7 +375,7 @@ class LeaveOneLabelOut(object):
         labels = np.array(self.labels, copy=True)
         for i in unique(labels):
             test_index = np.zeros(len(labels), dtype=np.bool)
-            test_index[labels==i] = True
+            test_index[labels == i] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(len(labels))
@@ -557,22 +557,22 @@ def _permutation_test_score(estimator, X, y, cv, score_func):
     return score_func(np.ravel(y_test), np.ravel(y_pred))
 
 
-def _shuffle(y, labels, rng):
+def _shuffle(y, labels, random_state):
     """Return a shuffled copy of y eventually shuffle among same labels.
     """
     if labels is None:
-        ind = rng.permutation(y.size)
+        ind = random_state.permutation(y.size)
     else:
         ind = np.arange(labels.size)
         for label in np.unique(labels):
             this_mask = (labels == label)
-            ind[this_mask] = rng.permutation(ind[this_mask])
+            ind[this_mask] = random_state.permutation(ind[this_mask])
     return y[ind]
 
 
 def permutation_test_score(estimator, X, y, score_func, cv=None,
                       n_permutations=100, n_jobs=1, labels=None,
-                      rng=0, verbose=0):
+                      random_state=0, verbose=0):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
@@ -597,7 +597,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     labels: array-like of shape [n_samples] (optional)
         Labels constrain the permutation among groups of samples with
         a same label.
-    rng: RandomState or an int seed (0 by default)
+    random_state: RandomState or an int seed (0 by default)
         A random number generator instance to define the state of the
         random permutations generator.
     verbose: integer, optional
@@ -625,17 +625,17 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         else:
             cv = KFold(n_samples, k=3)
 
-    if rng is None:
-        rng = np.random.RandomState()
-    elif isinstance(rng, int):
-        rng = np.random.RandomState(rng)
+    if random_state is None:
+        random_state = np.random.RandomState()
+    elif isinstance(random_state, int):
+        random_state = np.random.RandomState(random_state)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     score = _permutation_test_score(clone(estimator), X, y, cv, score_func)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_permutation_test_score)(clone(estimator), X,
-                                            _shuffle(y, labels, rng),
+                                            _shuffle(y, labels, random_state),
                                             cv, score_func)
                 for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
@@ -643,4 +643,4 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     return score, permutation_scores, pvalue
 
 
-permutation_test_score.__test__ = False # to avoid a pb with nosetests
+permutation_test_score.__test__ = False  # to avoid a pb with nosetests

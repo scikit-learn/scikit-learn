@@ -1,6 +1,104 @@
 
 .. currentmodule:: scikits.learn
 
+.. _changes_0_8:
+
+0.8
+===
+
+scikits.learn 0.8 was released on May 2011, one month after the first
+"international" `scikit-learn coding sprint
+<https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
+marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
+:ref:`pls`, :ref:`NMF`, initial support for Python 3 and by important
+enhacements and bug fixes.
+
+
+Changelog
+---------
+
+Several new modules where introduced during this release:
+
+  - New :ref:`hierarchical_clustering` module by Vincent Michel,
+    `Bertrand Thirion`_, `Alexandre Gramfort`_ and `Gael Varoquaux`_.
+
+  - :ref:`kernel_pca` implementation by `Mathieu Blondel`_
+
+  - :ref:`labeled_faces_in_the_wild` by `Olivier Grisel`_.
+
+  - New :ref:`pls` module by `Edouard Duchesnay`_.
+
+  - :ref:`NMF` module `Vlad Niculae`_
+
+  - Implementation of the :ref:`oracle_apprroximating_shrinkage` algorithm by
+    `Virgile Fritsch`_ in the :ref:`covariance` module.
+
+
+Some other modules benefited from significant improvements or cleanups.
+
+
+  - Initial support for Python 3: builds and imports cleanly,
+    some modules are usable while others have failing tests by `Fabian Pedregosa`_.
+
+  - :class:`decomposition.PCA` is now usable from the Pipeline object by `Olivier Grisel`_.
+
+  - Guide :ref:`performance-howto` by `Olivier Grisel`_.
+
+  - Fixes for memory leaks in libsvm bindings, 64-bit safer BallTree by Lars Buitinck.
+
+  - bug and style fixing in :ref:`k_means` algorithm by Jan Schlüter.
+
+  - Add attribute coverged to Gaussian Mixture Models by Vincent Schut.
+
+  - Implement `transform`, `predict_log_proba` in :class:`lda.LDA` by `Mathieu Blondel`_.
+
+  - Refactoring in the :ref:`svm` module and bug fixes by `Fabian Pedregosa`_,
+    `Gael Varoquaux`_ and Amit Aides.
+
+  - Refactored SGD module (removed code duplication, better variable naming),
+    added interface for sample weight by `Peter Prettenhofer`_.
+
+  - Wrapped BallTree with Cython by Thouis (Ray) Jones.
+
+  - Added function :func:`svm.l1_min_c` by Paolo Losi.
+
+  - Typos, doc style, etc. by `Yaroslav Halchenko`_, `Gael Varoquaux`_,
+    `Olivier Grisel`_, Yann Malet, `Nicolas Pinto`_, Lars Buitinck and
+    `Fabian Pedregosa`_.
+
+
+People
+-------
+
+People that made this release possible preceeded by number of commits:
+
+
+   - 159  `Olivier Grisel`_
+   - 96  `Gael Varoquaux`_
+   - 96  `Vlad Niculae`_
+   - 94  `Fabian Pedregosa`_
+   - 36  `Alexandre Gramfort`_
+   - 32  Paolo Losi
+   - 31  `Edouard Duchesnay`_
+   - 30  `Mathieu Blondel`_
+   - 25  `Peter Prettenhofer`_
+   - 22  `Nicolas Pinto`_
+   - 11  `Virgile Fritsch`_
+   -  7  Lars Buitinck
+   -  6  Vincent Michel
+   -  5  `Bertrand Thirion`_
+   -  4  Thouis (Ray) Jones
+   -  4  Vincent Schut
+   -  3  Jan Schlüter
+   -  2  Julien Miotte
+   -  2  `Matthieu Perrot`_
+   -  2  Yann Malet
+   -  2  `Yaroslav Halchenko`_
+   -  1  Amit Aides
+   -  1  `Andreas Müller`_
+   -  1  Feth Arezki
+   -  1  Meng Xinfan
+
 
 .. _changes_0_7:
 
@@ -43,7 +141,8 @@ Changelog
     the k-Nearest Neighbor Search and implemented a more stable
     algorithm for finding barycenter weigths. Also added some
     developer documentation for this module, see
-    :ref:`notes_neighbors` for more information [`Fabian Pedregosa`_].
+    `notes_neighbors
+    <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].
 
   - Documentation improvements: Added :class:`pca.RandomizedPCA` and
     :class:`linear_model.LogisticRegression` to the class
@@ -102,19 +201,19 @@ inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
 
-.. |banner1| image:: auto_examples/applications/images/plot_face_recognition.png
+.. |banner1| image:: images/plot_face_recognition_1.png
    :height: 150
-   :target: auto_examples/applications/plot_face_recognition.html
+   :target: auto_examples/applications/face_recognition.html
 
-.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling.png
+.. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
    :height: 150
    :target: auto_examples/linear_model/plot_species_distribution.html
 
-.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression.png
+.. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
    :height: 150
    :target: auto_examples/gaussian_process/plot_gp_regression.html
 
-.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris.png
+.. |banner4| image:: auto_examples/linear_model/images/plot_sgd_iris_1.png
    :height: 150
    :target: auto_examples/linear_model/plot_lasso_lars.html
 
@@ -128,7 +227,7 @@ applications to real-world datasets.
     </div>
 
 
-|center-div| |banner1| |banner2| |banner3| |banner4| |end-div| 
+|center-div| |banner1| |banner2| |banner3| |banner4| |end-div|
 
 
 Changelog
@@ -154,7 +253,7 @@ Changelog
     multi_class in :class:`svm.LinearSVC`)
 
   - New features and performance improvements of text feature
-    extraction. 
+    extraction.
 
   - Improved sparse matrix support, both in main classes
     (:class:`grid_search.GridSearchCV`) as in modules
@@ -191,17 +290,17 @@ People
 
 People that made this release possible preceeded by number of commits:
 
-   * 207  `Olivier Grisel <http://twitter.com/ogrisel>`_
+   * 207  `Olivier Grisel`_
 
-   * 167 `Fabian Pedregosa <http://fseoane.net/blog/>`_
+   * 167 `Fabian Pedregosa`_
 
-   * 97 `Peter Prettenhofer <http://sites.google.com/site/peterprettenhofer/>`_
+   * 97 `Peter Prettenhofer`_
 
-   * 68 `Alexandre Gramfort <http://www-sop.inria.fr/members/Alexandre.Gramfort/>`_
+   * 68 `Alexandre Gramfort`_
 
-   * 59  `Mathieu Blondel <http://www.mblondel.org/journal/>`_
+   * 59  `Mathieu Blondel`_
 
-   * 55  `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
+   * 55  `Gael Varoquaux`_
 
    * 33  Vincent Dubourg
 
@@ -209,7 +308,7 @@ People that made this release possible preceeded by number of commits:
 
    * 9  Bertrand Thirion
 
-   * 3  `Alexandre Passos <http://atpassos.posterous.com>`_
+   * 3  `Alexandre Passos`_
 
    * 3  Anne-Laure Fouque
 
@@ -342,7 +441,7 @@ Changelog
 
 Major changes in this release include:
 
-    - Coordinate Descent algorithm (Lasso, ElasticNet) refactoring & 
+    - Coordinate Descent algorithm (Lasso, ElasticNet) refactoring &
       speed improvements (roughly 100x times faster).
 
     - Coordinate Descent Refactoring (and bug fixing) for consistency
@@ -366,9 +465,9 @@ Major changes in this release include:
 
     - Documentation improvements (both docstring and rst).
 
-    - Improvement of the build system to (optionally) link with MKL. 
- Also, provide a lite BLAS implementation in case no system-wide BLAS is 
- found.
+    - Improvement of the build system to (optionally) link with MKL.
+      Also, provide a lite BLAS implementation in case no system-wide BLAS is
+      found.
 
     - Lots of new examples.
 
@@ -378,7 +477,7 @@ Major changes in this release include:
 Authors
 -------
 
-The committer list for this release is the following (preceded by number 
+The committer list for this release is the following (preceded by number
 of commits):
 
     * 143  Fabian Pedregosa
@@ -389,6 +488,11 @@ of commits):
     *  2  Vincent Michel
     *  1  Chris Filo Gorgolewski
 
+
+
+.. _Olivier Grisel: http://twitter.com/ogrisel
+
+.. _Gael Varoquaux: http://gael-varoquaux.info
 
 .. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/
 
@@ -401,3 +505,21 @@ of commits):
 .. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. _Yaroslav Halchenko: http://www.onerussian.com/
+
+.. _Vlad Niculae: http://vene.ro
+
+.. _Edouard Duchesnay: http://www.lnao.fr/spip.php?rubrique30
+
+.. _Peter Prettenhofer: <http://sites.google.com/site/peterprettenhofer/>
+
+.. _Alexandre Passos: <http://atpassos.posterous.com>
+
+.. _Nicolas Pinto: http://pinto.scripts.mit.edu/
+
+.. _Virgile Fritsch: http://parietal.saclay.inria.fr/Members/virgile-fritsch
+
+.. _Bertrand Thirion: http://parietal.saclay.inria.fr/Members/bertrand-thirion
+
+.. _Andreas Müller: http://www.ais.uni-bonn.de/~amueller/
+
+.. _Matthieu Perrot: http://www.lnao.fr/spip.php?rubrique19

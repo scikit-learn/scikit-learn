@@ -1,11 +1,11 @@
 .. _clustering:
 
-===================================================
+==========
 Clustering
-===================================================
+==========
 
 `Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
-unlabeled data can be performed with the module `scikits.learn.cluster`.
+unlabeled data can be performed with the module :mod:`scikits.learn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements
 the `fit` method to learn the clusters on train data, and a function,
@@ -15,17 +15,32 @@ data can be found in the `labels_` attribute.
 
 .. currentmodule:: scikits.learn.cluster
 
-One important thing to note is that the algorithms implemented in this module
-take different kinds of matrix as input.  On one hand, :class:`MeanShift` and
-:class:`KMeans` take data matrices of shape [n_samples, n_features]. These can
-be obtained from the classes in the `scikits.learn.feature_extraction` module.
-On the other hand, :class:`AffinityPropagation` and :class:`SpectralClustering`
-take similarity matrices of shape [n_samples, n_samples].  These can be
-obtained from the functions in the `scikits.learn.metrics.pairwise` module.
-In other words, :class:`MeanShift` and :class:`KMeans` work with points in a
-vector space, whereas :class:`AffinityPropagation` and
-:class:`SpectralClustering` can work with arbitrary objects, as long as a
-similarity measure exists for such objects.
+.. topic:: Input data
+
+    One important thing to note is that the algorithms implemented in
+    this module take different kinds of matrix as input.  On one hand,
+    :class:`MeanShift` and :class:`KMeans` take data matrices of shape
+    [n_samples, n_features]. These can be obtained from the classes in
+    the :mod:`scikits.learn.feature_extraction` module. On the other hand,
+    :class:`AffinityPropagation` and :class:`SpectralClustering` take
+    similarity matrices of shape [n_samples, n_samples].  These can be
+    obtained from the functions in the :mod:`scikits.learn.metrics.pairwise`
+    module. In other words, :class:`MeanShift` and :class:`KMeans` work
+    with points in a vector space, whereas :class:`AffinityPropagation`
+    and :class:`SpectralClustering` can work with arbitrary objects, as
+    long as a similarity measure exists for such objects.
+
+
+.. _k_means:
+
+K-means
+=======
+
+The :class:`KMeans` algorithm clusters data by trying to separate samples
+in n groups of equal variance, minimizing a criterion known as the
+'inertia' of the groups. This algorithm requires the number of cluster to
+be specified. It scales well to large number of samples, however its
+results may be dependent on an initialisation.
 
 
 Affinity propagation
@@ -35,7 +50,7 @@ Affinity propagation
 matrix. This algorithm automatically sets its numbers of cluster. It
 will have difficulties scaling to thousands of samples.
 
-.. figure:: ../auto_examples/cluster/images/plot_affinity_propagation.png
+.. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_1.png
    :target: ../auto_examples/cluster/plot_affinity_propagation.html
    :align: center
    :scale: 50
@@ -57,7 +72,7 @@ density of points matrix. This algorithm automatically sets its numbers
 of cluster. It will have difficulties scaling to thousands of samples.
 
 
-.. figure:: ../auto_examples/cluster/images/plot_mean_shift.png
+.. figure:: ../auto_examples/cluster/images/plot_mean_shift_1.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
    :align: center
    :scale: 50
@@ -69,18 +84,8 @@ of cluster. It will have difficulties scaling to thousands of samples.
    on a synthetic 2D datasets with 3 classes.
 
 
-K-means
-=======
-
-The :class:`KMeans` algorithm clusters data by trying to separate samples
-in n groups of equal variance, minimizing a criterion known as the
-'inertia' of the groups. This algorithm requires the number of cluster to
-be specified. It scales well to large number of samples, however its
-results may be dependent on an initialisation.
-
-
 Spectral clustering
-====================
+===================
 
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
@@ -98,17 +103,115 @@ cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
 
-.. figure:: ../auto_examples/cluster/images/plot_segmentation_toy.png
-   :target: ../auto_examples/cluster/plot_segmentation_toy.html
-   :align: center
-   :scale: 50
 
+.. |noisy_img| image:: ../auto_examples/cluster/images/plot_segmentation_toy_1.png
+    :target: ../auto_examples/cluster/plot_segmentation_toy.html
+    :scale: 50
+
+.. |segmented_img| image:: ../auto_examples/cluster/images/plot_segmentation_toy_2.png
+    :target: ../auto_examples/cluster/plot_segmentation_toy.html
+    :scale: 50
+
+.. centered:: |noisy_img| |segmented_img|
 
 .. topic:: Examples:
+
+ * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
+   from a noisy background using spectral clustering.
 
  * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
    to split the image of lena in regions.
 
- * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
-   from a noisy background using spectral clustering.
+.. topic:: References:
+
+ * `"A Tutorial on Spectral Clustering"
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+   Ulrike von Luxburg, 2007
+
+ * `"Normalized cuts and image segmentation"
+   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+   Jianbo Shi, Jitendra Malik, 2000
+
+ * `"A Random Walks View of Spectral Segmentation"
+   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.33.1501>`_
+   Marina Meila, Jianbo Shi, 2001
+
+ * `"On Spectral Clustering: Analysis and an algorithm"
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
+   Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
+
+
+.. _hierarchical_clustering:
+
+Hierarchical clustering
+=======================
+
+Hierarchical clustering is a general family of clustering algorithms that
+build nested clusters by merging them successively. This hierarchy of
+clusters represented as a tree (or dendrogram). The root of the tree is
+the unique cluster that gathers all the samples, the leaves being the
+clusters with only one sample. See the `Wikipedia page
+<http://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more
+details.
+
+The :class:`Ward` object performs a hierarchical clustering based on
+the Ward algorithm, that is a variance-minimizing approach. At each
+step, it minimizes the sum of squared differences within all clusters
+(inertia criterion).
+
+This algorithm can scale to large number of samples when it is used jointly
+with an connectivity matrix, but can be computationally expensive when no
+connectivity constraints are added between samples: it considers at each step
+all the possible merges.
+
+
+Adding connectivity constraints
+-------------------------------
+
+An interesting aspect of the :class:`Ward` object is that connectivity
+constraints can be added to this algorithm (only adjacent clusters can be
+merged together), through an connectivity matrix that defines for each
+sample the neighboring samples following a given structure of the data. For
+instance, in the swiss-roll example below, the connectivity constraints
+forbid the merging of points that are not adjacent on the swiss roll, and
+thus avoid forming clusters that extend across overlapping folds of the
+roll.
+
+.. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
+        :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
+        :scale: 50
+
+.. |structured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
+        :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
+        :scale: 50
+
+.. centered:: |unstructured| |structured|
+
+
+The connectivity constraints are imposed via an connectivity matrix: a
+scipy sparse matrix that has elements only at the intersection of a row
+and a column with indices of the dataset that should be connected. This
+matrix can be constructed from apriori information, for instance if you
+whish to cluster web pages, but only merging pages with a link pointing
+from one to another. It can also be learned from the data, for instance
+using :func:`scikits.learn.neighbors.kneighbors_graph` to restrict
+merging to nearest neighbors as in the :ref:`swiss roll
+<example_cluster_plot_ward_structured_vs_unstructured.py>` example, or
+using :func:`scikits.learn.feature_extraction.image.grid_to_graph` to
+enable only merging of neighboring pixels on an image, as in the
+:ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering
+   to split the image of lena in regions.
+
+ * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of
+   Ward algorithm on a swiss-roll, comparison of structured approaches
+   versus unstructured approaches.
+
+ * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
+   Example of dimensionality reduction with feature agglomeration based on
+   Ward hierarchical clustering.
+
 

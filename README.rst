@@ -13,13 +13,16 @@ the AUTHORS.rst file for a complete list of contributors.
 It is currently maintained by a team of volunteers.
 
 
-Download
-========
+Important links
+===============
 
-You can download source code and Windows binaries from SourceForge:
-
-http://sourceforge.net/projects/scikit-learn/files/
-
+- Official source code repo: https://github.com/scikit-learn/scikit-learn
+- HTML documentation (stable release): http://scikit-learn.sourceforge.net/
+- HTML documentation (development version): http://scikit-learn.sourceforge.net/dev/
+- Download releases: http://sourceforge.net/projects/scikit-learn/files/
+- Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
+- Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+- IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
 
 Dependencies
 ============
@@ -34,26 +37,14 @@ Install
 =======
 
 This packages uses distutils, which is the default way of installing
-python modules. The install command is::
+python modules. To install in your home directory, use::
 
-  python setup.py install
+  python setup.py install --home
 
+To install for all users on Unix/Linux::
 
-Mailing list
-============
-
-There's a general and development mailing list, visit
-https://lists.sourceforge.net/lists/listinfo/scikit-learn-general to
-subscribe to the mailing list.
-
-
-IRC channel
-===========
-
-Some developers tend to hang around the channel ``#scikit-learn``
-at ``irc.freenode.net``, especially during the week preparing a new
-release. If nobody is available to answer your questions there don't
-hesitate to ask it on the mailing list to reach a wider audience.
+  python setup.py build
+  sudo python setup.py install
 
 
 Development
@@ -73,13 +64,6 @@ or if you have write privileges::
 
     git clone git@github.com:scikit-learn/scikit-learn.git
 
-Bugs
-----
-
-Please submit bugs you might encounter, as well as patches and feature
-requests to the tracker located at github
-https://github.com/scikit-learn/scikit-learn/issues
-
 
 Testing
 -------
@@ -91,6 +75,3 @@ source directory (you will need to have nosetest installed)::
 
 See web page http://scikit-learn.sourceforge.net/install.html#testing
 for more information.
-
-
-

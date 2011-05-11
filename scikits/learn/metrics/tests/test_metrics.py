@@ -1,7 +1,7 @@
 import random
 import numpy as np
-import nose
 
+from nose.tools import raises
 from nose.tools import assert_true
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -75,6 +75,45 @@ def test_roc_curve():
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.80, decimal=2)
+
+
+@raises(ValueError)
+def test_roc_curve_multi():
+    """roc_curve not applicable for multi-class problems"""
+    y_true, _, probas_pred = make_prediction(binary=False)
+
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+
+
+def test_roc_curve_confidence():
+    """roc_curve for confidence scores"""
+    y_true, _, probas_pred = make_prediction(binary=True)
+
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred - 0.5)
+    roc_auc = auc(fpr, tpr)
+    assert_array_almost_equal(roc_auc, 0.80, decimal=2)
+
+
+def test_roc_curve_hard():
+    """roc_curve for hard decisions"""
+    y_true, pred, probas_pred = make_prediction(binary=True)
+
+    # always predict one
+    trivial_pred = np.ones(y_true.shape)
+    fpr, tpr, thresholds = roc_curve(y_true, trivial_pred)
+    roc_auc = auc(fpr, tpr)
+    assert_array_almost_equal(roc_auc, 0.50, decimal=2)
+
+    # always predict zero
+    trivial_pred = np.zeros(y_true.shape)
+    fpr, tpr, thresholds = roc_curve(y_true, trivial_pred)
+    roc_auc = auc(fpr, tpr)
+    assert_array_almost_equal(roc_auc, 0.50, decimal=2)
+
+    # hard decisions
+    fpr, tpr, thresholds = roc_curve(y_true, pred)
+    roc_auc = auc(fpr, tpr)
+    assert_array_almost_equal(roc_auc, 0.74, decimal=2)
 
 
 def test_precision_recall_f1_score_binary():
@@ -242,6 +281,3 @@ def test_symmetry():
     assert_true(r2_score(y_true, y_pred) != \
             r2_score(y_pred, y_true))
     # FIXME: precision and recall aren't symmetric either
-
-
-

@@ -1,3 +1,5 @@
+.. _datasets:
+
 =========================
 Dataset loading utilities
 =========================
@@ -16,13 +18,28 @@ This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithm on data
 that comes from the 'real world'.
 
+Datasets shipped with the scikit learn
+========================================
+
+The scikit learn comes with a few standard datasets:
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   load_iris
+   load_diabetes
+   load_digits
+   load_linnerud
+
 
 Dataset generators
 ==================
 
 TODO
 
-
+.. _labeled_faces_in_the_wild:
 
 The Labeled Faces in the Wild face recognition dataset
 ======================================================
@@ -64,15 +81,17 @@ The first loader is used for the Face Identification task: a multi-class
 classification task (hence supervised learning)::
 
   >>> from scikits.learn.datasets import fetch_lfw_people
-  >>> lfw_people = fetch_lfw_people(min_faces_per_person=100)
+  >>> lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
   >>> for name in lfw_people.target_names:
   ...     print name
   ...
+  Ariel Sharon
   Colin Powell
   Donald Rumsfeld
   George W Bush
   Gerhard Schroeder
+  Hugo Chavez
   Tony Blair
 
 The default slice is a rectangular shape around the face, removing
@@ -82,16 +101,16 @@ most of the background::
   dtype('float32')
 
   >>> lfw_people.data.shape
-  (1140, 62, 47)
+  (1288, 50, 37)
 
 Each of the ``1140`` faces is assigned to a single person id in the ``target``
 array::
 
   >>> lfw_people.target.shape
-  (1140,)
+  (1288,)
 
   >>> list(lfw_people.target[:10])
-  [2, 3, 1, 4, 1, 0, 2, 0, 2, 1]
+  [5, 6, 3, 1, 0, 1, 3, 4, 3, 0]
 
 The second loader is typically used for the face verification task: each sample
 is a pair of two picture belonging or not to the same person::
@@ -110,11 +129,8 @@ is a pair of two picture belonging or not to the same person::
 
 Both for the ``fetch_lfw_people`` and ``fetch_lfw_pairs`` function it is
 possible to get an additional dimension with the RGB color channels by
-passing ``color=True``::
-
-  >>> lfw_pairs_train = fetch_lfw_pairs(subset='train', color=True)
-  >>> lfw_pairs_train.data.shape
-  (2200, 2, 62, 47, 3)
+passing ``color=True``, in that case the shape will be
+``(2200, 2, 62, 47, 3)``.
 
 The ``fetch_lfw_pairs`` datasets is subdived in 3 subsets: the development
 ``train`` set, the development ``test`` set and an evaluation ``10_folds``
@@ -133,7 +149,7 @@ validation scheme.
 Examples
 --------
 
-:ref:`example_applications_plot_face_recognition.py`
+:ref:`example_applications_face_recognition.py`
 
 
 
@@ -215,12 +231,12 @@ for statistical analysis. This can be achieved with the utilities of the
 example that extract `TF-IDF`_ vectors of unigram tokens::
 
 
-  >>> from scikits.learn.feature_extraction.text.sparse import Vectorizer
+  >>> from scikits.learn.feature_extraction.text import Vectorizer
   >>> documents = [open(f).read() for f in newsgroups_train.filenames]
   >>> vectorizer = Vectorizer()
   >>> vectors = vectorizer.fit_transform(documents)
   >>> vectors.shape
-  (1073, 21107)
+  (1073, 21108)
 
 The extracted TF-IDF vectors are very sparse with an average of 118 non zero
 components by sample in a more than 20000 dimensional space (less than 1% non

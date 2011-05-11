@@ -5,7 +5,7 @@ Exceptions
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
 
-import exceptions
+import sys
 
 class JoblibException(Exception):
     """ A simple exception with an error message that you can get to.
@@ -32,7 +32,7 @@ class TransportableException(JoblibException):
     """ An exception containing all the info to wrap an original
         exception and recreate it.
     """
-    
+
     def __init__(self, message, etype):
         self.message = message
         self.etype   = etype
@@ -41,7 +41,7 @@ class TransportableException(JoblibException):
         # For pickling
         return self.__class__, (self.message, self.etype), {}
 
-    
+
 
 _exception_mapping = dict()
 
@@ -55,7 +55,7 @@ def _mk_exception(exception, name=None):
         # Avoid creating twice the same exception
         this_exception = _exception_mapping[this_name]
     else:
-        this_exception = type(this_name, (exception, JoblibException), 
+        this_exception = type(this_name, (exception, JoblibException),
                     dict(__repr__=JoblibException.__repr__,
                          __str__=JoblibException.__str__),
                     )
@@ -65,8 +65,17 @@ def _mk_exception(exception, name=None):
 
 def _mk_common_exceptions():
     namespace = dict()
-    for name in dir(exceptions):
-        obj = getattr(exceptions, name)
+    if sys.version_info[0] == 3:
+        import builtins as _builtin_exceptions
+        common_exceptions = filter(
+            lambda x: x.endswith('Error'),
+            dir(_builtin_exceptions))
+    else:
+        import exceptions as _builtin_exceptions
+        common_exceptions = dir(_builtin_exceptions)
+
+    for name in common_exceptions:
+        obj = getattr(_builtin_exceptions, name)
         if isinstance(obj, type) and issubclass(obj, BaseException):
             try:
                 this_obj, this_name = _mk_exception(obj, name=name)
@@ -79,7 +88,7 @@ def _mk_common_exceptions():
     return namespace
 
 
-# Updating module locals so that the exceptions pickle right. AFAIK this 
+# Updating module locals so that the exceptions pickle right. AFAIK this
 # works only at module-creation time
 locals().update(_mk_common_exceptions())
 

@@ -1,7 +1,7 @@
 """
 Sparse Logistic Regression module
 
-This module has the same API as scikits.learn.glm.logistic, but is
+This module has the same API as scikits.learn.linear_model.logistic, but is
 designed to handle efficiently data in sparse matrix format.
 """
 
@@ -10,7 +10,7 @@ import numpy as np
 from ...base import ClassifierMixin
 from ...svm.sparse.base import SparseBaseLibLinear
 from ...linear_model.sparse.base import CoefSelectTransformerMixin
-from ...svm._liblinear import csr_predict_prob
+from ...svm.liblinear import csr_predict_prob
 
 class LogisticRegression(SparseBaseLibLinear, ClassifierMixin,
                          CoefSelectTransformerMixin):

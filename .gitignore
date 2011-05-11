@@ -3,8 +3,10 @@
 *~
 .#*
 *.swp
+.DS_Store
 build
 scikits/learn/datasets/__config__.py
+scikits/learn/**/*.html
 
 dist/
 doc/_build/

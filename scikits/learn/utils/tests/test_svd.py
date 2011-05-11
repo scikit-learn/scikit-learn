@@ -123,9 +123,9 @@ def test_fast_svd_transpose_consistency():
                           tail_strength=0.5, seed=0)
     assert_equal(X.shape, (n_samples, n_features))
 
-    U1, s1, V1 = fast_svd(X, k, q=3, transpose=False, rng=0)
-    U2, s2, V2 = fast_svd(X, k, q=3, transpose=True, rng=0)
-    U3, s3, V3 = fast_svd(X, k, q=3, transpose='auto', rng=0)
+    U1, s1, V1 = fast_svd(X, k, q=3, transpose=False, random_state=0)
+    U2, s2, V2 = fast_svd(X, k, q=3, transpose=True, random_state=0)
+    U3, s3, V3 = fast_svd(X, k, q=3, transpose='auto', random_state=0)
     U4, s4, V4 = linalg.svd(X, full_matrices=False)
 
     assert_almost_equal(s1, s4[:k], decimal=3)

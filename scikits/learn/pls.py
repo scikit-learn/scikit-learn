@@ -29,7 +29,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
             if X_pinv is None:
                 X_pinv = linalg.pinv(X)   # compute once pinv(X)
             u = np.dot(X_pinv, y_score)
-        else: # mode A
+        else:  # mode A
         # Mode A regress each X column on y_score
             u = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
         # 1.2 Normalize u
@@ -228,9 +228,8 @@ class _PLS(BaseEstimator):
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
         if self.algorithm is "svd" and self.mode is "B":
-            raise ValueError(
-                'Incompatible configuration: mode B is not implemented with svd'
-                'algorithm')
+            raise ValueError('Incompatible configuration: mode B is not '
+                             'implemented with svd algorithm')
         if not self.deflation_mode in ["canonical", "regression"]:
             raise ValueError('The deflation mode is unknown')
         # Scale (in place)
@@ -282,13 +281,13 @@ class _PLS(BaseEstimator):
                 # - regress Yk's on x_score, then substract rank-one approx.
                 y_loadings = np.dot(Yk.T, x_score) / np.dot(x_score.T, x_score)
                 Yk -= np.dot(x_score, y_loadings.T)
-            # 3) Store weights, scores and loadings     # Notation:
-            self.x_scores_[:, k] = x_score.ravel()      # T
-            self.y_scores_[:, k] = y_score.ravel()      # U
-            self.x_weights_[:, k] = u.ravel()           # W
-            self.y_weights_[:, k] = v.ravel()           # C
-            self.x_loadings_[:, k] = x_loadings.ravel() # P
-            self.y_loadings_[:, k] = y_loadings.ravel() # Q
+            # 3) Store weights, scores and loadings # Notation:
+            self.x_scores_[:, k] = x_score.ravel()  # T
+            self.y_scores_[:, k] = y_score.ravel()  # U
+            self.x_weights_[:, k] = u.ravel()  # W
+            self.y_weights_[:, k] = v.ravel()  # C
+            self.x_loadings_[:, k] = x_loadings.ravel()  # P
+            self.y_loadings_[:, k] = y_loadings.ravel()  # Q
         # Such that: X = TP' + Err and Y = UQ' + Err
 
         # 4) rotations from input space to transformed space (scores)
@@ -310,7 +309,8 @@ class _PLS(BaseEstimator):
             # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
             self.coefs = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self.coefs = 1. / self.x_std_.reshape((p, 1)) * self.coefs * self.y_std_
+            self.coefs = 1. / self.x_std_.reshape((p, 1)) * \
+                    self.coefs * self.y_std_
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -668,11 +668,11 @@ class CCA(_PLS):
     Examples
     --------
     >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
-    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA()
-    >>> cca.fit(X, Y, n_components=2)
-    CCA(scale=True, algorithm='nipals', max_iter=500, n_components=2, tol=1e-06,
+    >>> cca.fit(X, Y, n_components=1)
+    CCA(scale=True, algorithm='nipals', max_iter=500, n_components=1, tol=1e-06,
       copy=True)
     >>> X_c, Y_c = cca.transform(X, Y)
 

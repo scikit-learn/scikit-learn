@@ -55,13 +55,13 @@ class Scaler(BaseEstimator):
     def __init__(self, with_std=True):
         self.with_std = with_std
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self._set_params(**params)
         self.mean_, self.std_ = _mean_and_std(X, axis=0,
                                               with_std=self.with_std)
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
         # We are taking a view of the X array and modifying it
@@ -74,14 +74,14 @@ class Scaler(BaseEstimator):
 class Normalizer(BaseEstimator):
     """Normalize vectors such that they sum to 1"""
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
-        norms = X.sum(axis=1)[:, np.newaxis]
+        norms = np.abs(X).sum(axis=1)[:, np.newaxis]
         norms[norms == 0.0] = 1.0
         X /= norms
 
@@ -91,11 +91,11 @@ class Normalizer(BaseEstimator):
 class LengthNormalizer(BaseEstimator):
     """Normalize vectors to unit vectors"""
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
 
@@ -112,11 +112,11 @@ class Binarizer(BaseEstimator):
     def __init__(self, threshold=0.0):
         self.threshold = threshold
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
 
@@ -126,6 +126,10 @@ class Binarizer(BaseEstimator):
         X[not_cond] = 0
 
         return X
+
+
+def _is_multilabel(y):
+    return isinstance(y[0], tuple) or isinstance(y[0], list)
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
@@ -160,6 +164,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> clf.transform([1, 6])
     array([[ 1.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  1.]])
+
+    >>> clf.fit_transform([(1,2),(3,)])
+    array([[ 1.,  1.,  0.],
+           [ 0.,  0.,  1.]])
     """
 
     def fit(self, y):
@@ -174,7 +182,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        self.classes_ = np.unique(y)
+        self.multilabel = _is_multilabel(y)
+        if self.multilabel:
+            self.classes_ = np.unique(reduce(lambda a,b:a+b, y))
+        else:
+            self.classes_ = np.unique(y)
         return self
 
     def transform(self, y):
@@ -192,13 +204,30 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         Y : numpy array of shape [n_samples, n_classes]
         """
+
         if len(self.classes_) == 2:
             Y = np.zeros((len(y), 1))
+        else:
+            Y = np.zeros((len(y), len(self.classes_)))
+
+        if self.multilabel:
+            if not _is_multilabel(y):
+                raise ValueError, "y should be a list of label lists/tuples"
+
+            # inverse map: label => column index
+            imap = dict((v,k) for k,v in enumerate(self.classes_))
+
+            for i, label_tuple in enumerate(y):
+                for label in label_tuple:
+                    Y[i, imap[label]] = 1
+
+            return Y
+
+        elif len(self.classes_) == 2:
             Y[y == self.classes_[1], 0] = 1
             return Y
 
         elif len(self.classes_) >= 2:
-            Y = np.zeros((len(y), len(self.classes_)))
             for i, k in enumerate(self.classes_):
                 Y[y == k, i] = 1
             return Y
@@ -225,8 +254,62 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         this allows to use the output of a linear model's decision_function
         method directly as the input of inverse_transform.
         """
+        if self.multilabel:
+            Y = np.array(Y > 0, dtype=int)
+            return [tuple(self.classes_[np.flatnonzero(Y[i])])
+                    for i in range(Y.shape[0])]
+
         if len(Y.shape) == 1 or Y.shape[1] == 1:
             y = np.array(Y.ravel() > 0, dtype=int)
+
         else:
             y = Y.argmax(axis=1)
+
         return self.classes_[y]
+
+class KernelCenterer(BaseEstimator, TransformerMixin):
+    """
+    Centers a kernel. This is equivalent to centering phi(X) with
+    scikits.learn.preprocessing.Scaler(with_std=False).
+    """
+
+    def fit(self, K):
+        """Fit KernelCenterer
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples, n_samples]
+            Kernel matrix
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        n_samples = K.shape[0]
+        self.K_fit_rows = np.sum(K, axis=0) / n_samples
+        self.K_fit_all = K.sum() / (n_samples ** 2)
+        return self
+
+    def transform(self, K, copy=True):
+        """Center kernel
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples1, n_samples2]
+            Kernel matrix
+
+        Returns
+        -------
+        K_new : numpy array of shape [n_samples1, n_samples2]
+        """
+
+        if copy: K = K.copy()
+
+        K_pred_cols = (np.sum(K, axis=1) /
+                       self.K_fit_rows.shape[0])[:, np.newaxis]
+
+        K -= self.K_fit_rows
+        K -= K_pred_cols
+        K += self.K_fit_all
+
+        return K

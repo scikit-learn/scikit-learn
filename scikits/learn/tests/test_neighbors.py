@@ -88,7 +88,7 @@ def test_kneighbors_graph():
     """
     Test kneighbors_graph to build the k-Nearest Neighbor graph.
     """
-    X = [[0, 1], [1.01, 1.], [2, 0]]
+    X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     # n_neighbors = 1
     A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
@@ -126,17 +126,24 @@ def test_kneighbors_graph():
     A = neighbors.kneighbors_graph(X, 2, mode='barycenter')
     # check that columns sum to one
     assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
-    assert_array_almost_equal(
-        A.todense(),
-        [[ 0.        ,  1.5049745 , -0.5049745 ],
-        [ 0.596     ,  0.        ,  0.404     ],
-        [-0.98019802,  1.98019802,  0.        ]])
+    pred = np.dot(A.todense(), X)
+    assert np.linalg.norm(pred - X) / X.shape[0] < 1
 
     # n_neighbors = 3
     A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
     assert_array_almost_equal(
         A.todense(),
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+
+
+def test_kneighbors_iris():
+
+    # make sure reconstruction error is kept small using a real datasets
+    # note that we choose neighbors < n_dim and n_neighbors > n_dim
+    for i in range(1, 8):
+        A = neighbors.kneighbors_graph(iris.data, i, mode='barycenter')
+        pred_data = np.dot(A.todense(), iris.data)
+        assert np.linalg.norm(pred_data - iris.data) / iris.data.shape[0] < 0.1
 
 
 if __name__ == '__main__':

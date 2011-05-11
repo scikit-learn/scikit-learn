@@ -13,11 +13,12 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('datasets')
     config.add_subpackage('feature_extraction')
     config.add_subpackage('feature_extraction/tests')
-    config.add_subpackage('feature_extraction/text')
     config.add_subpackage('cluster')
     config.add_subpackage('cluster/tests')
     config.add_subpackage('covariance')
     config.add_subpackage('covariance/tests')
+    config.add_subpackage('decomposition')
+    config.add_subpackage('decomposition/tests')
     config.add_subpackage('feature_selection')
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('preprocessing')
@@ -38,9 +39,10 @@ def configuration(parent_package='', top_path=None):
         warnings.warn(BlasNotFoundError.__doc__)
 
     config.add_extension('ball_tree',
-                         sources=[join('src', 'BallTree.cpp')],
+                         sources=[join('src', 'ball_tree.cpp')],
+                         depends=[join('src', 'BallTree.h'),
+                                  join('src', 'BallTreePoint.h')],
                          include_dirs=[numpy.get_include()])
-
 
     # the following packages depend on cblas, so they have to be build
     # after the above.

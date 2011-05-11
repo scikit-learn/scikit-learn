@@ -71,7 +71,7 @@ def test_permutation_score():
     score_label, _, pvalue_label = permutation_test_score(svm, X, y,
                                                     zero_one_score,
                                                     cv, labels=np.ones(y.size),
-                                                    rng=0)
+                                                    random_state=0)
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
 

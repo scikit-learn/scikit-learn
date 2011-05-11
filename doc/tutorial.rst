@@ -1,3 +1,5 @@
+.. _getting_started:
+
 Getting started: an introduction to machine learning with scikits.learn
 =======================================================================
 
@@ -67,7 +69,9 @@ the `digits dataset
 A dataset is a dictionary-like object that holds all the data and some
 metadata about the data. This data is stored in the `.data` member, which
 is a `n_samples, n_features` array. In the case of supervised problem,
-explanatory variables are stored in the `.target` member.
+explanatory variables are stored in the `.target` member. More details on
+the different datasets can be found in the 
+:ref:`dedicated section <datasets>`.
 
 For instance, in the case of the digits dataset, `digits.data` gives
 access to the features that can be used to classify the digits samples::
@@ -116,7 +120,7 @@ datasets for various tasks (binary & multi label classification, regression,
 document classification, ...) along with a runtime environment to compare
 program performance on those datasets. Please refer to the following example for
 for instructions on the ``mlcomp`` dataset loader:
-:ref:`example_mlcomp_document_classification.py`.
+:ref:`example mlcomp sparse document classification <example_mlcomp_sparse_document_classification.py>`.
 
 
 Learning and Predicting

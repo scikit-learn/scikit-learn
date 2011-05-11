@@ -1,4 +1,4 @@
-.. include:: big_toc_css.rst
+.. include:: includes/big_toc_css.rst
 
 .. _unsupervised-learning:
 
@@ -9,6 +9,7 @@ Unsupervised learning
 
     modules/mixture
     modules/clustering
-    modules/decompositions
+    modules/decomposition
+    modules/covariance
 
 

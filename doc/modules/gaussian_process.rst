@@ -57,7 +57,7 @@ data. Depending on the number of parameters provided at instanciation, the
 fitting procedure may recourse to maximum likelihood estimation for the
 parameters or alternatively it uses the given parameters.
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression.png
+.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_1.png
    :target: ../auto_examples/gaussian_process/plot_gp_regression.html
    :align: center
 
@@ -205,7 +205,7 @@ where we have introduced:
     R_{i\,j} = R(|X_i - X_j|, \theta), \; i,\,j = 1, ..., m
 
 * the vector of cross-correlations between the point where the prediction is
-made and the points in the DOE:
+  made and the points in the DOE:
 
 .. math::
 
@@ -285,7 +285,7 @@ Processes for Machine Learning, please refer to the references below:
 
 
 
-.. correlation_models::
+.. _correlation_models:
 
 Correlation Models
 ==================
@@ -306,7 +306,7 @@ original experiment from which the observations come. For instance:
 For a more detailed discussion on the selection of appropriate correlation
 models, see the book by Rasmussen & Williams in references.
 
-.. regression_models::
+.. _regression_models:
 
 
 Regression Models

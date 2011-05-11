@@ -50,13 +50,16 @@ People
 
   * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
 
-  * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_ 
+  * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_
     contributed the BallTree module in February 2010.
 
   * `Alexandre Gramfort
     <http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html>`_
 
   * `Olivier Grisel <http://twitter.com/ogrisel>`_
+
+  * Bertrand Thirion, contributed the hierarchical clustering module together
+    with Gael Varoquaux, Alexandre Gramfort and Vincent Michel.
 
   * Vincent Michel.
 
@@ -90,6 +93,18 @@ People
 
   * `Alexandre Passos <http://atpassos.posterous.com>`_ joined the
     project in November 2010 contributed the fast SVD variant.
+
+  * `Vlad Niculae <http://vene.ro>`_ joined the project in March 2011 and
+    contributed the non-negative matrix factorization module.
+
+  * Edouard Duchesnay joined the project in February 2011 and contributed the
+    Partial Least Squares module.
+
+  * Thouis (Ray) Jones joined the project in April 2011 and contributed the
+    Cython bindings for the BallTree class.
+
+  * Lars Buitinck joined the project in May 2011 and contributed important
+    fixes for Cython/C/C++ code as well as documentation improvements.
 
 
 If I forgot anyone, do not hesitate to send me an email to
