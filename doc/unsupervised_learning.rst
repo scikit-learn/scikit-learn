@@ -10,5 +10,6 @@ Unsupervised learning
     modules/mixture
     modules/clustering
     modules/decomposition
+    modules/covariance
 
 

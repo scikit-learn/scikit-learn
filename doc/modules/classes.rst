@@ -339,6 +339,18 @@ Signal Decomposition
 
    decomposition.fastica
 
+
+Linear Discriminant Analysis
+============================
+
+.. autosummary::
+
+   :toctree: generated
+   :template: class.rst
+
+   lda.LDA
+
+
 Cross Validation
 ================
 
