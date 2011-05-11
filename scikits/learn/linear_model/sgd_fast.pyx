@@ -138,7 +138,7 @@ cdef class Log(Classification):
         if z > 18.0:
             return exp(-z) * y
         if z < -18.0:
-            return -1.0
+            return y
         return y / (exp(z) + 1.0)
 
     def __reduce__(self):
