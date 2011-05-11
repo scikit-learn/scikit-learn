@@ -65,8 +65,9 @@ class Perceptron(BaseEstimator):
 
         X = np.atleast_2d(X)
         w = self._history if self.averaged else self._weights
+        bias = self._biashist if self.averaged else self._bias
 
-        return np.dot(X, w.T).argmax(axis=1)
+        return (np.dot(X, w.T) + bias).argmax(axis=1)
 
     def fit(self, X, y):
         """Fit classifier according to inputs X with labels y (batch learning)
@@ -94,19 +95,26 @@ class Perceptron(BaseEstimator):
         n_labels = len(np.unique(y))
 
         self._weights = np.zeros((n_labels, n_features), 'd')
-        self._history = np.zeros(self._weights.shape, 'd')
+        self._bias = np.zeros(n_labels, 'd')
+        if self.averaged:
+            self._history = np.zeros(self._weights.shape, 'd')
+            self._biashist = np.zeros(n_labels, 'd')
 
         for i in xrange(self.n_iter):
             if self.shuffle:
                 np.random.shuffle(Xy)
             for j in xrange(n_samples):
-                pred = np.dot(X[j], self._weights.T).argmax()
+                pred = (np.dot(X[j], self._weights.T) + self._bias).argmax()
                 if pred != y[j]:
                     delta = self._update_weights(X[j], pred, y[j])
-                    delta *= self.n_iter * n_samples - (i * n_samples + j)
-                    self._history[pred] -= delta
-                    self._history[y[j]] += delta
-        self._history /= self.n_iter * n_samples
+                    if self.averaged:
+                        delta *= self.n_iter * n_samples - (i * n_samples + j)
+                        self._history[pred] -= X[j] * delta
+                        self._history[y[j]] += X[j] * delta
+                        self._biashist[pred] -= delta
+                        self._biashist[y[j]] += delta
+        if self.averaged:
+            self._history /= self.n_iter * n_samples
 
         return self
 
@@ -130,11 +138,14 @@ class Perceptron(BaseEstimator):
         self._n_labels = n_labels
 
         self._weights = np.zeros((n_labels, n_features), 'd')
+        self._bias = np.zeros(n_labels, 'd')
         if self.averaged:
             self._iterations = np.zeros((n_labels, ), 'i')
             self._survived = np.zeros((n_labels, ), 'i')
             self._history = np.zeros(self._weights.shape, 'd')
+            self._biashist = np.zeros(n_labels, 'd')
             self._acc = np.zeros(self._weights.shape, 'd')
+            self._biasacc = np.zeros(n_labels, 'd')
 
         return self
 
@@ -180,9 +191,6 @@ class Perceptron(BaseEstimator):
 
         return self
 
-    def _as_arrays(self, X, y):
-        return X, y
-
     def _learn_averaged(self, x, label):
         '''Learn as averaged perceptron.'''
 
@@ -206,7 +214,7 @@ class Perceptron(BaseEstimator):
         '''
 
         # always predict as ordinary perceptron
-        pred = np.dot(x, self._weights.T).argmax()
+        pred = (np.dot(x, self._weights.T) + self._bias).argmax()
         must_update = (pred != label)
         if must_update:
             self._update_weights(x, pred, label)
@@ -218,12 +226,18 @@ class Perceptron(BaseEstimator):
         if s > 0:
             acc = self._acc[label]
             acc += s * self._weights[label]
+            biasacc = self._biasacc[label]
+            biasacc += s * self._bias[label]
             self._history[label] = acc / self._iterations[label]
+            self._biashist[label] = biasacc / self._iterations[label]
             self._survived[label] = 0
 
     def _update_weights(self, x, pred, label):
         # .5 since we're going to update twice
-        delta = .5 * self.learning_rate * x
-        self._weights[pred] -= delta
-        self._weights[label] += delta
+        delta = .5 * self.learning_rate
+        xdelta = x * delta
+        self._weights[pred] -= xdelta
+        self._weights[label] += xdelta
+        self._bias[pred] -= delta
+        self._bias[label] += delta
         return delta
