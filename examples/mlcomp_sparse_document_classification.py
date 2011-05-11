@@ -49,7 +49,7 @@ from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
-from scikits.learn.naive_bayes.sparse import MNNB
+from scikits.learn.naive_bayes.sparse import MultinomialNB
 
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
@@ -131,11 +131,11 @@ parameters = {
 
 benchmark(SGDClassifier, parameters, 'SGD')
 
-print "Testbenching a MNNB classifier..."
+print "Testbenching a MultinomialNB classifier..."
 parameters = {
     'alpha_i': 0.01
 }
 
-benchmark(MNNB, parameters, 'MNNB')
+benchmark(MultinomialNB, parameters, 'MultinomialNB')
 
 pl.show()

@@ -34,14 +34,14 @@ def test_mnnb():
     """
     Multinomial Naive Bayes classification.
 
-    This checks that MNNB implements fit and predict and returns
+    This checks that MultinomialNB implements fit and predict and returns
     correct values for a simple toy dataset.
     """
 
     #
     # Check the ability to predict the learning set.
     #
-    clf =  naive_bayes.MNNB()
+    clf =  naive_bayes.MultinomialNB()
     y_pred = clf.fit(X2, y2).predict(X2)
 
     assert_array_equal(y_pred, y2)
@@ -59,7 +59,7 @@ def test_sparse_mnnb():
     """
     Multinomial Naive Bayes classification for sparse data.
 
-    This checks that sparse MNNB implements fit and predict and returns
+    This checks that sparse MultinomialNB implements fit and predict and returns
     correct values for a simple toy dataset.
     """
 
@@ -68,7 +68,7 @@ def test_sparse_mnnb():
     #
     # Check the ability to predict the learning set.
     #
-    clf =  naive_bayes_sparse.MNNB()
+    clf =  naive_bayes_sparse.MultinomialNB()
     y_pred = clf.fit(X2S, y2).predict(X2S)
 
     assert_array_equal(y_pred, y2)

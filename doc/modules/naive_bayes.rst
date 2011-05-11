@@ -65,7 +65,7 @@ estimated using maximum likelihood.
 Multinomial Naive Bayes
 -----------------------
 
-:class:`MNNB` implements the Multinomial Naive Bayes algorithm for classification.
+:class:`MultinomialNB` implements the Multinomial Naive Bayes algorithm for classification.
 Multinomial Naive Bayes models the distribution of words in a document as a
 multinomial. The distribution is parametrized by the vector
 :math:`\overline{\theta_c} = (\theta_{c1},\ldots,\theta_{cn})` where :math:`c`
