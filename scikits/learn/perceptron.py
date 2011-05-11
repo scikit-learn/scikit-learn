@@ -25,8 +25,6 @@
 
 from .base import BaseEstimator
 from .utils import safe_asanyarray
-from .utils.extmath import safe_sparse_dot
-from collections import defaultdict
 import numpy as np
 
 
@@ -34,26 +32,15 @@ class Perceptron(BaseEstimator):
     '''Single-layer (averaged) perceptron classifier with error-driven
     learning.
 
-    If the `averaged` parameter is true, this classifier maintains a running
-    sum of past weight matrices, weighted by the number of iterations that each
-    weight matrix survived before making an error. At classification time, the
-    averaged perceptron uses both the current weight matrix and the weighted
-    sum of past matrices to make its decision.
-
-    This is an approximation to the "voted perceptron" algorithm described by
-    Freund and Schapire (1999). The averaging approach improves on the basic
-    perceptron algorithm by providing a "large margin" approach to handling
-    datasets that are not linearly separable.
-
     Parameters
     ----------
-    averaged : bool, optional, default False
+    averaged : bool, default False
         Train as averaged perceptron.
-    learning_rate : float, optional
-        Learning rate: multiplied into weight changes, default 1.
-    n_iter : int, optional, default 1
+    learning_rate : float, default 1.
+        Learning rate: multiplied into weight changes.
+    n_iter : int, default 1
         Number of iterations to perform per (partial) training set.
-    shuffle : bool, optional, default False
+    shuffle : bool, default False
         Randomize input sequence between iterations.
     '''
 
@@ -96,12 +83,32 @@ class Perceptron(BaseEstimator):
         -------
         self
         """
-        X = safe_asanyarray(X)
-        y = safe_asanyarray(y)
+        if self.shuffle:
+            Xy = np.concatenate((X, np.atleast_2d(y).T), axis=1)
+            X = Xy[:, :-1]
+            y = Xy[:, -1]
+        else:
+            X = safe_asanyarray(X)
+            y = safe_asanyarray(y)
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
 
-        return self.partial_setup(n_features, n_labels).partial_fit(X, y)
+        self._weights = np.zeros((n_labels, n_features), 'd')
+        self._history = np.zeros(self._weights.shape, 'd')
+
+        for i in xrange(self.n_iter):
+            if self.shuffle:
+                np.random.shuffle(Xy)
+            for j in xrange(n_samples):
+                pred = np.dot(X[j], self._weights.T).argmax()
+                if pred != y[j]:
+                    delta = self._update_weights(X[j], pred, y[j])
+                    delta *= self.n_iter * n_samples - (i * n_samples + j)
+                    self._history[pred] -= delta
+                    self._history[y[j]] += delta
+        self._history /= self.n_iter * n_samples
+
+        return self
 
     def partial_setup(self, n_features, n_labels):
         """Setup classifier for online learning.
@@ -173,6 +180,9 @@ class Perceptron(BaseEstimator):
 
         return self
 
+    def _as_arrays(self, X, y):
+        return X, y
+
     def _learn_averaged(self, x, label):
         '''Learn as averaged perceptron.'''
 
@@ -197,15 +207,13 @@ class Perceptron(BaseEstimator):
 
         # always predict as ordinary perceptron
         pred = np.dot(x, self._weights.T).argmax()
-        rate = .5 * self.learning_rate      # we're going to update twice
         must_update = (pred != label)
         if must_update:
-            self._update_weights(pred, x, -rate)
-            self._update_weights(label, x, rate)
+            self._update_weights(x, pred, label)
         return (pred, must_update)
 
     def _update_history(self, label):
-        '''Update the history for a particular class (averaged perceptron).'''
+        '''Update running average for averaged perceptron (online only).'''
         s = self._survived[label]
         if s > 0:
             acc = self._acc[label]
@@ -213,11 +221,9 @@ class Perceptron(BaseEstimator):
             self._history[label] = acc / self._iterations[label]
             self._survived[label] = 0
 
-    def _update_weights(self, label, x, delta):
-        '''Update the weights for an index based on an event.
-
-        label: The index of a weight vector to update.
-        x: An event vector to use for the update.
-        delta: Weight the update by this value.
-        '''
-        self._weights[label] += delta * x
+    def _update_weights(self, x, pred, label):
+        # .5 since we're going to update twice
+        delta = .5 * self.learning_rate * x
+        self._weights[pred] -= delta
+        self._weights[label] += delta
+        return delta
