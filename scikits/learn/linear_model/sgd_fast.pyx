@@ -129,7 +129,7 @@ cdef class Log(Classification):
         if z > 18:
             return exp(-z)
         if z < -18:
-            return -z * y
+            return -z
         return log(1.0 + exp(-z))
 
     cpdef double dloss(self, double p, double y):
@@ -138,7 +138,7 @@ cdef class Log(Classification):
         if z > 18.0:
             return exp(-z) * y
         if z < -18.0:
-            return y
+            return -1.0
         return y / (exp(z) + 1.0)
 
     def __reduce__(self):
