@@ -7,7 +7,7 @@ Extended math utilities.
 import sys
 import math
 
-from . import make_rng
+from . import check_random_state
 import numpy as np
 
 #XXX: We should have a function with numpy's slogdet API
@@ -100,7 +100,7 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a,b)
 
 
-def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
+def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
     """Computes the k-truncated randomized SVD
 
     Parameters
@@ -126,7 +126,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
         implementation of randomized SVD tend to be a little faster in that
         case).
 
-    rng: RandomState or an int seed (0 by default)
+    random_state: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
 
     Notes
@@ -155,7 +155,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
     if p == None:
         p = k
 
-    rng = make_rng(rng)
+    random_state = check_random_state(random_state)
     n_samples, n_features = M.shape
 
     if transpose == 'auto' and n_samples > n_features:
@@ -165,7 +165,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
         M = M.T
 
    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
-    r = rng.normal(size=(M.shape[1], k + p))
+    r = random_state.normal(size=(M.shape[1], k + p))
 
     # sampling the range of M using by linear projection of r
     Y = safe_sparse_dot(M, r)

@@ -2,7 +2,7 @@ import numpy as np
 from .. import nmf
 from nose.tools import assert_true, assert_false, raises
 
-rng = np.random.mtrand.RandomState(0)
+random_state = np.random.mtrand.RandomState(0)
 
 
 @raises(ValueError)
@@ -13,7 +13,7 @@ def test_initialize_nn_input():
 
 def test_initialize_nn_output():
     """Test that NNDSVD does not return negative values"""
-    data = np.abs(rng.randn(10, 10))
+    data = np.abs(random_state.randn(10, 10))
     for var in (None, 'a', 'ar'):
         W, H = nmf._initialize_nmf(data, 10)
         assert_false((W < 0).any() or (H < 0).any())
@@ -25,7 +25,7 @@ def test_initialize_close():
     Test that _initialize_nmf error is less than the standard deviation of the
     entries in the matrix.
     """
-    A = np.abs(rng.randn(10, 10))
+    A = np.abs(random_state.randn(10, 10))
     W, H = nmf._initialize_nmf(A, 10)
     error = np.linalg.norm(np.dot(W, H) - A)
     sdev = np.linalg.norm(A - A.mean())
@@ -38,7 +38,7 @@ def test_initialize_variants():
     Test that the variants 'a' and 'ar' differ from basic NNDSVD only where
     the basic version has zeros.
     """
-    data = np.abs(rng.randn(10, 10))
+    data = np.abs(random_state.randn(10, 10))
     W0, H0 = nmf._initialize_nmf(data, 10, variant=None)
     Wa, Ha = nmf._initialize_nmf(data, 10, variant='a')
     War, Har = nmf._initialize_nmf(data, 10, variant='ar')
@@ -69,7 +69,7 @@ def test_projgrad_nmf_fit_nn_output():
 def test_projgrad_nmf_fit_close():
     """Test that the fit is not too far away"""
     assert nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
-      rng.randn(6, 5))).reconstruction_err_ < 0.05
+      random_state.randn(6, 5))).reconstruction_err_ < 0.05
 
 
 @raises(ValueError)
@@ -99,7 +99,7 @@ def test_projgrad_nmf_transform():
 
     (transform uses scipy.optimize.nnls for now)
     """
-    A = np.abs(rng.randn(6, 5))
+    A = np.abs(random_state.randn(6, 5))
     m = nmf.ProjectedGradientNMF(n_components=5, init='nndsvd')
     transf = m.fit_transform(A)
     assert_true(np.allclose(transf, m.transform(A), atol=1e-2, rtol=0))
@@ -112,7 +112,7 @@ def test_projgrad_nmf_sparseness():
     part where they are applied.
     """
 
-    A = np.abs(rng.randn(10, 10))
+    A = np.abs(random_state.randn(10, 10))
     m = nmf.ProjectedGradientNMF(n_components=5).fit(A)
     data_sp = nmf.ProjectedGradientNMF(n_components=5,
                   sparseness='data').fit(A).data_sparseness_

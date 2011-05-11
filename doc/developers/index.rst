@@ -31,13 +31,13 @@ or if you have write privileges::
 
 If you run the development version, it is cumbersome to re-install the
 package each time you update the sources. It is thus preferred that
-you add the scikit-directory to your PYTHONPATH and build the
+you add the scikit-directory to your ``PYTHONPATH`` and build the
 extension in place::
 
     python setup.py build_ext --inplace
 
 On Unix you can simply type ``make`` in the top-level folder to build
-inplace and launch all the tests. Have a look at the ``Makefile`` for
+in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
 
 
@@ -112,7 +112,7 @@ complies with the following rules:
     * Code with a good unittest coverage (at least 80%), check with::
 
         $ pip install nose coverage
-        $ nosetests --with-coverage path/to/package
+        $ nosetests --with-coverage path/to/tests_for_package
 
     * All other tests pass when everything is rebuilt from scrath, under Unix,
       check with (from the toplevel source folder)::
@@ -230,34 +230,34 @@ course, there are special cases and there will be exceptions to these
 rules. However, following these rules when submitting new code makes
 the review easier so new code can be integrated in less time.
 
-Uniformly formated code makes it easier to share code ownership. The
-scikit learn tries to follow closely the officiel Python guidelines
+Uniformly formatted code makes it easier to share code ownership. The
+scikit learn tries to follow closely the official Python guidelines
 detailed in `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ that
 details how code should be formatted, and indented. Please read it and
 follow it.
 
 In addition, we add the following guidelines:
 
-    * Use underscores to separate words in non class names: `n_samples`
-      rather than `nsamples`.
+    * Use underscores to separate words in non class names: ``n_samples``
+      rather than ``nsamples``.
 
     * Avoid multiple statements on one line. Prefer a line return after
-      a control flow statement (`if`/`for`).
+      a control flow statement (``if``/``for``).
 
     * Use relative imports for references inside scikits.learn.
 
     * **Please don't use `import *` in any case**. It is considered harmful
-      by the `official Python recommandations
+      by the `official Python recommendations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
       It makes the code harder to read as the origin of symbols is no
-      longer explicitely referenced, but most important, it prevents
+      longer explicitly referenced, but most important, it prevents
       using a static analysis tool like `pyflakes
       <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
-      find bugs in the scikit.
+      find bugs in scikit.
 
     * Use the `numpy docstring standard
       <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ 
-      in all your docstrings
+      in all your docstrings.
 
 A good example of code that we like can be found `here
 <https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
@@ -286,7 +286,7 @@ multiple interfaces):
 
 :Predictor:
 
-    For suppervised learning, or some unsupervised problems, implements::
+    For supervised learning, or some unsupervised problems, implements::
 
       prediction = obj.predict(data)
 
@@ -324,7 +324,7 @@ classifier or a regressor. All estimators implement the fit method::
 Instantiation
 ^^^^^^^^^^^^^^
 
-This concerns the object creation. The object's __init__ method might
+This concerns the object creation. The object's ``__init__`` method might
 accept as arguments constants that determine the estimator behavior
 (like the C constant in SVMs).
 
@@ -335,7 +335,7 @@ this is left to the ``fit()`` method::
     clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
 
 
-The arguments that go in the `__init__` should all be keyword arguments
+The arguments that go in the ``__init__`` should all be keyword arguments
 with a default value. In other words, a user should be able to instanciate
 an estimator without passing to it any arguments.
 
@@ -343,14 +343,14 @@ The arguments in given at instanciation of an estimator should all
 correspond to hyper parameters describing the model or the optimisation
 problem that estimator tries to solve. They should however not be
 parameters of the estimation routine: these are passed directly to the
-`fit` method.
+``fit`` method.
 
-In addition, **every keyword argument given to the `__init__` should
+In addition, **every keyword argument given to the ``__init__`` should
 correspond to an attribute on the instance**. The scikit relies on this
 to find what are the relevent attributes to set on an estimator when
 doing model selection.
 
-All estimators should inherit from `scikit.learn.base.BaseEstimator`
+All estimators should inherit from ``scikit.learn.base.BaseEstimator``.
 
 
 Fitting
@@ -368,28 +368,32 @@ reference to X, y. There are however some exceptions to this, as in
 the case of precomputed kernels where you need to store access these
 data in the predict method.
 
-  Parameters
+============= ======================================================
+Parameters
+============= ======================================================
+X             array-like, with shape = [N, D], where N is the number 
+              of samples and D is the number of features.
 
-    * X : array-like, with shape = [N, D], where N is the number of
-      samples and D is the number of features.
-    * Y : array, with shape = [N], where N is the number of samples.
+Y             array, with shape = [N], where N is the number of 
+              samples.
 
-    * args, kwargs. Parameters can also be set in the fit method.
+args, kwargs  Parameters can also be set in the fit method.
+============= ======================================================
 
 X.shape[0] should be the same as Y.shape[0]. If this requisite is not
 met, an exception should be raised.
 
 Y might be dropped in the case of unsupervised learning.
 
-The method should return the object (self).
+The method should return the object (``self``).
 
 
 Python tuples
 ^^^^^^^^^^^^^^
 
 In addition to numpy arrays, all methods should be able to accept
-python tuples as arguments. In practice, this means you should call
-numpy.asanyarray at the beginning at each public method that accepts
+Python tuples as arguments. In practice, this means you should call
+``numpy.asanyarray`` at the beginning at each public method that accepts
 arrays.
 
 
