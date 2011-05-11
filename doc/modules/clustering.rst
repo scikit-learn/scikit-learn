@@ -31,6 +31,8 @@ data can be found in the `labels_` attribute.
     long as a similarity measure exists for such objects.
 
 
+.. _k_means:
+
 K-means
 =======
 

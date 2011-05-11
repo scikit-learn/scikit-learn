@@ -79,10 +79,10 @@ print "Loading 20 newsgroups dataset for categories:"
 print categories
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
-                               shuffle=True, rng=42)
+                               shuffle=True, random_state=42)
 
 data_test = fetch_20newsgroups(subset='test', categories=categories,
-                              shuffle=True, rng=42)
+                              shuffle=True, random_state=42)
 
 print "%d documents (training set)" % len(data_train.filenames)
 print "%d documents (testing set)" % len(data_test.filenames)
