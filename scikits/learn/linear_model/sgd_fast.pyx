@@ -34,21 +34,35 @@ cdef class LossFunction:
     cpdef double loss(self, double p, double y):
         """Evaluate the loss function.
 
-        :arg p: The prediction.
-        :type p: double
-        :arg y: The true value.
-        :type y: double
-        :returns: double"""
+        Parameters
+        ----------
+        p : double
+            The prediction, p = w^T x
+        y : double
+            The true value (aka target)
+
+        Returns
+        -------
+        double
+            The loss evaluated at `p` and `y`.
+        """
         raise NotImplementedError()
 
     cpdef double dloss(self, double p, double y):
-        """Evaluate the derivative of the loss function.
-
-        :arg p: The prediction.
-        :type p: double
-        :arg y: The true value.
-        :type y: double
-        :returns: double"""
+        """Evaluate the derivative of the loss function with respect to
+        the prediction `p`.
+        
+        Parameters
+        ----------
+        p : double
+            The prediction, p = w^T x
+        y : double
+            The true value (aka target)
+        Returns
+        -------
+        double
+            The derivative of the loss function w.r.t. `p`.
+        """
         raise NotImplementedError()
 
 
@@ -94,9 +108,9 @@ cdef class ModifiedHuber(Classification):
         if z >= 1.0:
             return 0.0
         elif z >= -1.0:
-            return 2.0 * (1.0 - z) * y
+            return 2.0 * (1.0 - z) * -y
         else:
-            return 4.0 * y
+            return -4.0 * y
 
     def __reduce__(self):
         return ModifiedHuber, ()
@@ -113,7 +127,7 @@ cdef class Hinge(Classification):
     cpdef double dloss(self, double p, double y):
         cdef double z = p * y
         if z < 1.0:
-            return y
+            return -y
         return 0.0
 
     def __reduce__(self):
@@ -136,10 +150,10 @@ cdef class Log(Classification):
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18.0:
-            return exp(-z) * y
+            return exp(-z) * -y
         if z < -18.0:
-            return -1.0
-        return y / (exp(z) + 1.0)
+            return -y
+        return -y / (exp(z) + 1.0)
 
     def __reduce__(self):
         return Log, ()
@@ -151,7 +165,7 @@ cdef class SquaredLoss(Regression):
         return 0.5 * (p - y) * (p - y)
 
     cpdef double dloss(self, double p, double y):
-        return y - p
+        return p - y
 
     def __reduce__(self):
         return SquaredLoss, ()
@@ -181,7 +195,7 @@ cdef class Huber(Regression):
             return self.c * abs_r - (0.5 * self.c * self.c)
 
     cpdef double dloss(self, double p, double y):
-        cdef double r = y - p
+        cdef double r = p - y  # FIXME y - p
         cdef double abs_r = abs(r)
         if abs_r <= self.c:
             return r
@@ -352,9 +366,9 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
             update = eta * loss.dloss(p, y) * class_weight * \
                 sample_weight_data[sample_idx]
             if update != 0.0:
-                add(w_data_ptr, wscale, X_data_ptr, offset, n_features, update)
+                add(w_data_ptr, wscale, X_data_ptr, offset, n_features, -update)
                 if fit_intercept == 1:
-                    intercept += update
+                    intercept -= update
             if penalty_type != L1:
                 wscale *= (1.0 - (rho * eta * alpha))
                 if wscale < 1e-9:
