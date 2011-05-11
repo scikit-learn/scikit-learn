@@ -264,7 +264,7 @@ Homogeneity, completeness and V-measure
 Presentation
 ~~~~~~~~~~~~
 
-Given the knowledge of the ground truth class assignements of the samples,
+Given the knowledge of the ground truth class assignments of the samples,
 it is possible to define some intuitive metric using conditional entropy
 analysis.
 
@@ -283,7 +283,7 @@ We can turn those concept as positive scores bounded by 1.0 as follows:
 .. math:: c = 1 - \frac{H(K|C)}{H(K)}
 
 where the conditional entropy of the ground truth classes given the cluster
-assignements is:
+assignments is:
 
 .. math:: H(C|K) = - \sum_{c=1}^{|C|} \sum_{k=1}^{|K|} \frac{n_{c,k}}{n}
           \cdot log(\frac{n_{c,k}}{n_k})
@@ -315,7 +315,7 @@ Usage
 ~~~~~
 
 All three metrics can be computed at once as follows. For instance the
-following clustering assignement is homogenous but not complete::
+following clustering assignment is homogeneous but not complete::
 
   >>> from scikits.learn.metrics import homogeneity_completeness_v_measure
 
@@ -325,7 +325,7 @@ following clustering assignement is homogenous but not complete::
   ...                                                     # doctest: +ELLIPSIS
   (1.0, 0.68..., 0.81...)
 
-Here is an example of clustering that is neither complete nor homogenous::
+Here is an example of clustering that is neither complete nor homogeneous::
 
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
   >>> homogeneity_completeness_v_measure(labels_true, labels_pred)
@@ -366,7 +366,7 @@ Drawbacks
 ~~~~~~~~~
 
 - These metrics require the knowlege of the ground truth classes whih
-  almost never available in practice or requires manual assignement by
+  almost never available in practice or requires manual assignment by
   human annotators (as in the supervised learning setting).
 
 - The previously introduced metrics are not normalized w.r.t. random

@@ -38,7 +38,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     Returns
     -------
     homogeneity: float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogenous labeling
+       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
     completeness: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
@@ -92,7 +92,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
             n_CK = float(np.sum((labels_true == c) * (labels_pred == k)))
 
             if n_CK != 0.0:
-                # turn label assignements into contribution to entropies
+                # turn label assignments into contribution to entropies
                 entropy_C_given_K -= n_CK / n_samples * log(n_CK / n_K[k])
                 entropy_K_given_C -= n_CK / n_samples * log(n_CK / n_C[c])
 
@@ -125,7 +125,7 @@ def homogeneity_score(labels_true, labels_pred):
     Returns
     -------
     homogeneity: float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogenous labeling
+       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
     References
     ----------
@@ -147,7 +147,7 @@ def homogeneity_score(labels_true, labels_pred):
       1.0
 
     Non-pefect labelings that futher split classes into more clusters can be
-    perfectly homogenous:
+    perfectly homogeneous:
 
       >>> homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2])
       1.0
@@ -155,7 +155,7 @@ def homogeneity_score(labels_true, labels_pred):
       1.0
 
     Clusters that include samples from different classes do not make for an
-    homogenous labeling::
+    homogeneous labeling::
 
       >>> homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1])
       0.0
@@ -213,7 +213,7 @@ def completeness_score(labels_true, labels_pred):
       1.0
 
     If classes members are splitted accross different clusters, the
-    assignement cannot be complete::
+    assignment cannot be complete::
 
       >>> completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
       0.0
@@ -258,7 +258,7 @@ def v_measure_score(labels_true, labels_pred):
     Examples
     --------
 
-    Perfect labelings are both homogenous and complete, hence have score 1.0::
+    Perfect labelings are both homogeneous and complete, hence have score 1.0::
 
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 1])
       1.0
@@ -266,13 +266,13 @@ def v_measure_score(labels_true, labels_pred):
       1.0
 
     Labelings that assign all classes members to the same clusters
-    are complete be not homogenous, hence penalized::
+    are complete be not homogeneous, hence penalized::
 
       >>> round(v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]), 2)
       0.67
 
     Labelings that have pure clusters with members comming from the same
-    classes are homogenous but un-necessary splitts harms completeness
+    classes are homogeneous but un-necessary splitts harms completeness
     and thus penalize V-measure as well::
 
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 2])
@@ -281,7 +281,7 @@ def v_measure_score(labels_true, labels_pred):
       0.67
 
     If classes members are completly splitted accross different clusters,
-    the assignement is totally in-complete, hence the v-measure is null::
+    the assignment is totally in-complete, hence the v-measure is null::
 
       >>> v_measure_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
