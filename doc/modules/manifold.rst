@@ -49,6 +49,18 @@ those points embedded in a manifold of dimension specified by parameter
       locally linear embedding on the swiss roll.
 
 
+Complexity
+----------
+
+The complete algorithm scales using the `dense` eigensolver scales as::
+
+..math:: O(N log(N)) + O(D N K^3) + O(d N^2)
+
+where N is the number of samples, D is the input dimension, d the output
+dimension and K the number of neighbors. If the `lobcpg` solver is used, the
+last term can be reduced to sub-quadratic in N.
+
+
 Tips on practical use
 ---------------------
 
