@@ -238,7 +238,7 @@ Inertia
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: factorize intertia computation out of kmeans and then write me!
+TODO: factorize inertia computation out of kmeans and then write me!
 
 
 Advantages
@@ -357,7 +357,7 @@ Advantages
 - Bounded scores: 0.0 is as bad as it can be, 1.0 is a perfect score
 
 - Intuitive interpretation: clustering with bad V-measure can be
-  qualitatively analysed in terms of homogeneity and completeness to
+  qualitatively analyzed in terms of homogeneity and completeness to
   better feel what 'kind' of mistakes is done by the assigmenent.
 
 - No assumption is made on the similarity metric and the cluster
@@ -367,7 +367,7 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- These metrics require the knowlege of the ground truth classes whih
+- These metrics require the knowlege of the ground truth classes while
   almost never available in practice or requires manual assignment by
   human annotators (as in the supervised learning setting).
 
