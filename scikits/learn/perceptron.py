@@ -191,6 +191,24 @@ class Perceptron(BaseEstimator):
 
         return self
 
+    def finalize(self):
+        """Stop online learning.
+
+        Returns
+        -------
+        self
+        """
+
+        # del what we don't want to pickle
+        if self.averaged:
+            del self._weights
+            del self._bias
+            del self._iterations
+            del self._survived
+            del self._acc
+            del self._biasacc
+        return self
+
     def _learn_averaged(self, x, label):
         '''Learn as averaged perceptron.'''
 

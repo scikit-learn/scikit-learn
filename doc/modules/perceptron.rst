@@ -59,6 +59,9 @@ and `partial_fit`. The former must be called to initialize online learning;
 the second can then be called as often as required to learn from partial
 datasets. This is useful if the dataset is too large to fit in memory at once.
 
+After online learning, it is wise to call the `finalize` method, as this will
+trim down the class for more compact pickling.
+
 The online learning API can in principle *not* be mixed with the regular batch
 learning API. Also note that the averaged perceptron might give slightly
 different results when using the online and batch APIs, because the batch API

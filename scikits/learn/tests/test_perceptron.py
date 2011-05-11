@@ -26,7 +26,8 @@ def test_perceptron():
                . partial_setup(n_features, len(np.unique(y))) \
                . partial_fit(X[: half], y[: half]) \
                . partial_fit(X[n_samples - half : -1],
-                             y[n_samples - half : -1])
+                             y[n_samples - half : -1]) \
+               . finalize()
 
     # almost_equal because the weighting scheme is slightly different
     assert_array_almost_equal(clf_batch.predict(X[-1]),

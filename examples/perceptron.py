@@ -31,7 +31,7 @@ n_labels = len(np.unique(y))
 clf1 = Perceptron()
 clf2 = Perceptron(averaged=True)
 
-clf1.partial_setup(n_features, n_labels).partial_fit(X, y)
+clf1.partial_setup(n_features, n_labels).partial_fit(X, y).finalize()
 clf2.fit(X, y)  # equivalent to above but with batch learning interface
 
 def accuracy(clf):
