@@ -665,17 +665,6 @@ class CCA(_PLS):
     The residual matrix of Y (Yk+1) block is obtained by deflation on the
     current Y score.
 
-    Examples
-    --------
-    >>> from scikits.learn.pls import PLSCanonical, PLSRegression, CCA
-    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
-    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
-    >>> cca = CCA()
-    >>> cca.fit(X, Y, n_components=1)
-    CCA(scale=True, algorithm='nipals', max_iter=500, n_components=1, tol=1e-06,
-      copy=True)
-    >>> X_c, Y_c = cca.transform(X, Y)
-
     References
     ----------
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
