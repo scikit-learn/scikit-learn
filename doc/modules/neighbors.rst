@@ -67,6 +67,8 @@ both classifier for a simple regression task.
   * :ref:`example_plot_neighbors_regression.py`: an example of regression
     using nearest neighbor.
 
+.. _ball_tree:
+
 Efficient implementation: the ball tree
 ==========================================
 
@@ -105,6 +107,6 @@ function :func:`knn_brute`.
      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.91.8209&rep=rep1&type=pdf>`_,
      Omohundro, S.M., International Computer Science Institute
      Technical Report
-     
+
 
 
