@@ -25,7 +25,13 @@
 
 from .base import BaseEstimator
 from .utils import safe_asanyarray
+from .utils.extmath import safe_sparse_dot
 import numpy as np
+from scipy.sparse import isspmatrix
+
+
+def safe_2d(X):
+    return X if isspmatrix(X) else np.atleast_2d(X)
 
 
 class Perceptron(BaseEstimator):
@@ -63,11 +69,8 @@ class Perceptron(BaseEstimator):
         C : array, shape = [n_samples]
         """
 
-        X = np.atleast_2d(X)
-        w = self._history if self.averaged else self._weights
-        bias = self._biashist if self.averaged else self._bias
-
-        return (np.dot(X, w.T) + bias).argmax(axis=1)
+        X = safe_2d(X)
+        return (safe_sparse_dot(X, self.coef_.T) + self.intercept_).argmax(axis=1)
 
     def fit(self, X, y):
         """Fit classifier according to inputs X with labels y (batch learning)
@@ -100,11 +103,13 @@ class Perceptron(BaseEstimator):
             self._history = np.zeros(self._weights.shape, 'd')
             self._biashist = np.zeros(n_labels, 'd')
 
+        self._setup_linear()
+
         for i in xrange(self.n_iter):
             if self.shuffle:
                 np.random.shuffle(Xy)
             for j in xrange(n_samples):
-                pred = (np.dot(X[j], self._weights.T) + self._bias).argmax()
+                pred = (safe_sparse_dot(X[j], self._weights.T) + self._bias).argmax()
                 if pred != y[j]:
                     delta = self._update_weights(X[j], pred, y[j])
                     if self.averaged:
@@ -147,6 +152,8 @@ class Perceptron(BaseEstimator):
             self._acc = np.zeros(self._weights.shape, 'd')
             self._biasacc = np.zeros(n_labels, 'd')
 
+        self._setup_linear()
+
         return self
 
     def partial_fit(self, X, y):
@@ -168,7 +175,7 @@ class Perceptron(BaseEstimator):
         self
         """
         if self.shuffle:
-            Xy = np.concatenate((X, np.atleast_2d(y).T), axis=1)
+            Xy = np.concatenate((X, safe_2d(y).T), axis=1)
             X = Xy[:, :-1]
             y = Xy[:, -1]
         else:
@@ -209,6 +216,15 @@ class Perceptron(BaseEstimator):
             del self._biasacc
         return self
 
+    def _setup_linear(self):
+        '''Set up as linear model'''
+        if self.averaged:
+            self.coef_ = self._history
+            self.intercept_ = self._biashist
+        else:
+            self.coef_ = self._weights
+            self.intercept_ = self._bias
+
     def _learn_averaged(self, x, label):
         '''Learn as averaged perceptron.'''
 
@@ -232,7 +248,7 @@ class Perceptron(BaseEstimator):
         '''
 
         # always predict as ordinary perceptron
-        pred = (np.dot(x, self._weights.T) + self._bias).argmax()
+        pred = (safe_sparse_dot(x, self._weights.T) + self._bias).argmax()
         must_update = (pred != label)
         if must_update:
             self._update_weights(x, pred, label)

@@ -29,14 +29,13 @@ Perceptrons
 
 Perceptrons are supervised discriminative linear models for classification.
 The basic perceptron is simply a vector w in feature vector space that is
-normal to a linear separating surface going through the origin. Data points
-that fall on one side of the surface are in class (+), and data points on the
-other side are in class (-). To determine the side of the surface on which some
-feature vector x falls, we compute the dot product of x and w and return the
-sign of the resulting scalar. Learning takes place in the perceptron whenever
-it makes an incorrect classification from labeled data (error-driven learning):
-x is simply added to w to minimally correct the output of the perceptron for
-this data point.
+normal to a linear separating surface. Data points that fall on one side of the
+surface are in class (+), and data points on the other side are in class (-).
+To determine the side of the surface on which some feature vector x falls, we
+compute the dot product of x and w and return the sign of the resulting scalar.
+Learning takes place in the perceptron whenever it makes an incorrect
+classification from labeled data (error-driven learning): x is simply added to
+w to minimally correct the output of the perceptron for this data point.
 
 It can be shown that the perceptron eventually converges when run on linearly
 separable data. However, for the sake of efficiency and because it never
