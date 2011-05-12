@@ -25,7 +25,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
     # Inner loop of the Wold algo.
     while True:
         # 1.1 Update u: the X weights
-        if mode is "B":
+        if mode == "B":
             if X_pinv is None:
                 X_pinv = linalg.pinv(X)   # compute once pinv(X)
             u = np.dot(X_pinv, y_score)
@@ -38,7 +38,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
         x_score = np.dot(X, u)
 
         # 2.1 Update v: the Y weights
-        if mode is "B":
+        if mode == "B":
             if Y_pinv is None:
                 Y_pinv = linalg.pinv(Y)    # compute once pinv(Y)
             v = np.dot(Y_pinv, x_score)
@@ -227,7 +227,7 @@ class _PLS(BaseEstimator):
                 'has %s' % (X.shape[0], Y.shape[0]))
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
-        if self.algorithm is "svd" and self.mode is "B":
+        if self.algorithm == "svd" and self.mode == "B":
             raise ValueError('Incompatible configuration: mode B is not '
                              'implemented with svd algorithm')
         if not self.deflation_mode in ["canonical", "regression"]:
@@ -250,12 +250,15 @@ class _PLS(BaseEstimator):
         for k in xrange(self.n_components):
             #1) weights estimation (inner loop)
             # -----------------------------------
-            if self.algorithm is "nipals":
+            if self.algorithm == "nipals":
                 u, v = _nipals_twoblocks_inner_loop(
                         X=Xk, Y=Yk, mode=self.mode,
                         max_iter=self.max_iter, tol=self.tol)
-            if self.algorithm is "svd":
+            elif self.algorithm == "svd":
                 u, v = _svd_cross_product(X=Xk, Y=Yk)
+            else:
+                raise ValueError("Got algorithm %s when only 'svd' "
+                                 "and 'nipals' are known" % self.algorithm)
             # compute scores
             x_score = np.dot(Xk, u)
             y_score = np.dot(Yk, v)
@@ -273,11 +276,11 @@ class _PLS(BaseEstimator):
             x_loadings = np.dot(Xk.T, x_score) / np.dot(x_score.T, x_score)
             # - substract rank-one approximations to obtain remainder matrix
             Xk -= np.dot(x_score, x_loadings.T)
-            if self.deflation_mode is "canonical":
+            if self.deflation_mode == "canonical":
                 # - regress Yk's on y_score, then substract rank-one approx.
                 y_loadings = np.dot(Yk.T, y_score) / np.dot(y_score.T, y_score)
                 Yk -= np.dot(y_score, y_loadings.T)
-            if self.deflation_mode is "regression":
+            if self.deflation_mode == "regression":
                 # - regress Yk's on x_score, then substract rank-one approx.
                 y_loadings = np.dot(Yk.T, x_score) / np.dot(x_score.T, x_score)
                 Yk -= np.dot(x_score, y_loadings.T)
@@ -301,8 +304,8 @@ class _PLS(BaseEstimator):
         else:
             self.y_rotations_ = np.ones(1)
 
-        if True or self.deflation_mode is "regression":
-            # Estimate regression coeficient
+        if True or self.deflation_mode == "regression":
+            # Estimate regression coefficient
             # Regress Y on T
             # Y = TQ' + Err,
             # Then express in function of X
