@@ -4,8 +4,8 @@
 # License: BSD, (C) INRIA 2011
 
 import numpy as np
-from .base import BaseEstimator
-from .neighbors import kneighbors_graph
+from ..base import BaseEstimator
+from ..neighbors import kneighbors_graph
 
 
 def locally_linear_embedding(
