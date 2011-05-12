@@ -36,11 +36,11 @@ ax = pl.subplot(111)
 for i in range(digits.data.shape[0]):
     pl.text(X_r[i, 0], X_r[i, 1], str(digits.target[i]),
             color=pl.cm.Set1(digits.target[i] / 10.),
-            fontdict={'weight': 'bold', 'size' : 9})
+            fontdict={'weight': 'bold', 'size': 9})
 
-shown_images = np.array([[1., 1.]]) # just something big
+shown_images = np.array([[1., 1.]])  # just something big
 for i in range(digits.data.shape[0]):
-    dist = np.sum((X_r[i] - shown_images)**2, 1)
+    dist = np.sum((X_r[i] - shown_images) ** 2, 1)
     if np.min(dist) < 4e-3:
         # don't show points that are too close
         continue
