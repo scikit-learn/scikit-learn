@@ -356,6 +356,7 @@ def test_kernel_pca_linear_kernel():
     assert_array_almost_equal(np.abs(KernelPCA().fit(X_fit).transform(X_pred)),
                               np.abs(PCA().fit(X_fit).transform(X_pred)))
 
+
 def test_kernel_pca_n_components():
     X_fit = np.random.random((5, 4))
     X_pred = np.random.random((2, 4))
@@ -365,6 +366,7 @@ def test_kernel_pca_n_components():
         shape = kpca.fit(X_fit).transform(X_pred).shape
 
         assert_equal(shape, (2, c))
+
 
 def test_kernel_pca_precomputed():
     X_fit = np.random.random((5, 4))
