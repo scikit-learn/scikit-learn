@@ -37,7 +37,7 @@ cimport libsvm
 
 ################################################################################
 # Internal variables
-LIBSVM_KERNEL_TYPES = ('linear', 'poly', 'rbf', 'sigmoid', 'precomputed')
+LIBSVM_KERNEL_TYPES = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 
 
 ################################################################################
@@ -124,7 +124,7 @@ def fit(
     cdef svm_problem *problem
     cdef svm_model *model
     cdef char *error_msg
-    cdef np.npy_intp SV_len    
+    cdef np.npy_intp SV_len
     cdef np.npy_intp nr
 
 
@@ -296,7 +296,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
                       label.data, probA.data, probB.data)
-    
+
     #TODO: use check_model
     dec_values = np.empty(X.shape[0])
     if copy_predict(X.data, model, X.shape, dec_values.data) < 0:
@@ -372,7 +372,7 @@ def predict_proba(
                       sv_coef.data, intercept.data, nSV.data,
                       label.data, probA.data, probB.data)
 
-    cdef np.npy_intp n_class = get_nr(model)    
+    cdef np.npy_intp n_class = get_nr(model)
     dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
     if copy_predict_proba(X.data, model, X.shape, dec_values.data) < 0:
         raise MemoryError("We've run out of of memory")
@@ -430,7 +430,7 @@ def decision_function(
     else:
         n_class = get_nr(model)
         n_class = n_class * (n_class - 1) / 2
-    
+
     dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
     if copy_predict_values(X.data, model, X.shape, dec_values.data, n_class) < 0:
         raise MemoryError("We've run out of of memory")
@@ -502,7 +502,7 @@ def cross_validation(
     cdef svm_problem *problem
     cdef svm_model *model
     cdef char *error_msg
-    cdef np.npy_intp SV_len    
+    cdef np.npy_intp SV_len
     cdef np.npy_intp nr
 
     if len(sample_weight) == 0:

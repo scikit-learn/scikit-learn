@@ -9,6 +9,8 @@
 import warnings
 
 import numpy as np
+from math import floor
+import itertools
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -425,7 +427,7 @@ class KMeans(BaseEstimator):
     Parameters
     ----------
 
-    k : int or ndarray
+    k : int, optional, default: 8
         The number of clusters to form as well as the number of
         centroids to generate.
 
@@ -491,6 +493,10 @@ class KMeans(BaseEstimator):
 
     def __init__(self, k=8, init='random', n_init=10, max_iter=300, tol=1e-4,
             verbose=0, random_state=None, copy_x=True):
+
+        if hasattr(init, '__array__'):
+            k = init.shape[0]
+
         self.k = k
         self.init = init
         self.max_iter = max_iter
@@ -532,11 +538,9 @@ class MiniBatchKMeans(KMeans):
     Parameters
     ----------
 
-    k : int or ndarray
+    k : int, optional, default: 8
         The number of clusters to form as well as the number of
-        centroids to generate. If init initialization string is
-        'matrix', or if a ndarray is given instead, it is
-        interpreted as initial cluster to use instead.
+        centroids to generate.
 
     max_iter : int
         Maximum number of iterations of the k-means algorithm for a
@@ -546,6 +550,9 @@ class MiniBatchKMeans(KMeans):
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
+
+    chunk_size: int, optional, default: 300
+        Size of the mini batches
 
     init : {'k-means++', 'random' or an ndarray}
         Method for initialization, defaults to 'random':
@@ -593,17 +600,82 @@ class MiniBatchKMeans(KMeans):
 
     """
 
-    def __init__(self, k=8, init='random', n_init=10,
+    def __init__(self, k=8, init='random', n_init=10, max_iter=300,
+                 chunk_size=300, tol=1e-4,
                  verbose=0, random_state=None, copy_x=True):
+
         super(MiniBatchKMeans, self).__init__(k, init, n_init,
+              max_iter, tol,
               verbose, random_state=None, copy_x=True)
-        # FIXME
-        # counts is an array used to keep track of who went where
+
         self.counts = None
         self.cluster_centers_ = None
+        self.chunk_size = chunk_size
+
+
+    def fit(self, X, y=None, shuffle=True, **params):
+        """
+        Calculates the centroids on a batch X
+
+        params
+        ------
+
+        X: array, [n_features, n_samples]
+            Coordinates of the data points to cluster
+
+        shuffle: boolean, optional, default: True
+            Shuffle the data points to cluster
+        """
+
+        self.random_state = check_random_state(self.random_state)
+
+        if hasattr(self.init, '__array__'):
+            X = self._check_data(X, **params)
+            self.init = np.asarray(self.init)
+
+        if shuffle:
+            self.random_state.shuffle(X)
+
+        x_squared_norms = X.copy()
+        x_squared_norms **= 2
+        x_squared_norms = x_squared_norms.sum(axis=1)
+
+        self.cluster_centers_ = _init_centroids(
+                X, self.k, self.init, random_state=self.random_state,
+                x_squared_norms=x_squared_norms)
+
+        self.counts = np.zeros(self.k)
+        tol = np.mean(np.var(X, 0)) * self.tol
+        try:
+            split_X = np.array_split(X, floor(float(len(X)) / self.chunk_size))
+        except ValueError:
+            split_X = [X]
+
+        squared_norms = [(x ** 2).sum(axis=1) for x in split_X]
+        data = zip(split_X, squared_norms)
+        old_centers = []
+
+        for i in xrange(self.max_iter):
+            j = i % len(data)
+            old_centers[:] = self.cluster_centers_.copy()
+            self.cluster_centers_, self.counts = _mini_batch_step(
+                data[j][0], self.cluster_centers_, self.counts,
+                x_squared_norms=data[j][1])
+
+            if np.sum(old_centers - self.cluster_centers_) ** 2 < tol:
+                if self.verbose:
+                    print 'Converged to similar centers at iteration', i
+                break
+
+        self.inertia_, self.labels_ = _calculate_labels_inertia(
+            X, self.cluster_centers_)
+
+        return self
 
     def partial_fit(self, X, y=None, **params):
-        """Update k means estimate on a single mini-batch X"""
+        """
+        Update k means estimate on a single mini-batch X
+        """
 
         self.random_state = check_random_state(self.random_state)
 
