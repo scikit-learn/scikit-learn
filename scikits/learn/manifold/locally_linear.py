@@ -1,4 +1,4 @@
-"""Manifold learning module"""
+"""Locally Linear Embedding"""
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 # License: BSD, (C) INRIA 2011
