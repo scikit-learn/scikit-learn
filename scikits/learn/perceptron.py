@@ -121,7 +121,7 @@ class Perceptron(BaseEstimator):
         if self.averaged:
             self._history /= self.n_iter * n_samples
 
-        return self
+        return self.finalize()
 
     def partial_setup(self, n_features, n_labels):
         """Setup classifier for online learning.
@@ -206,14 +206,20 @@ class Perceptron(BaseEstimator):
         self
         """
 
-        # del what we don't want to pickle
+        # del what we don't want to pickle;
+        # we only need coef_ and intercept_ to do prediction.
+        del self._weights
+        del self._bias
         if self.averaged:
-            del self._weights
-            del self._bias
-            del self._iterations
-            del self._survived
-            del self._acc
-            del self._biasacc
+            del self._history
+            del self._biashist
+            try:
+                del self._iterations
+                del self._survived
+                del self._acc
+                del self._biasacc
+            except AttributeError:
+                pass
         return self
 
     def _setup_linear(self):
