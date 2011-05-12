@@ -95,16 +95,16 @@ def _center_scale_xy(X, Y, scale=True):
 class _PLS(BaseEstimator):
     """Partial Least Square (PLS)
 
-    We use the therminology defined by [Wegelin et al. 2000].
+    We use the terminology defined by [Wegelin et al. 2000].
     This implementation uses the PLS Wold 2 blocks algorithm or NIPALS which is
     based on two nested loops:
-    (i) The outer loop iterate over compoments.
+    (i) The outer loop iterate over components.
         (ii) The inner loop estimates the loading vectors. This can be done
         with two algo. (a) the inner loop of the original NIPALS algo or (b) a
         SVD on residuals cross-covariance matrices.
 
     This implementation provides:
-    - PLS regression, ie., PLS 2 blocks, mode A, with asymetric deflation.
+    - PLS regression, ie., PLS 2 blocks, mode A, with asymmetric deflation.
       A.k.a. PLS2, with multivariate response or PLS1 with univariate response.
     - PLS canonical, ie., PLS 2 blocks, mode A, with symetric deflation.
     - CCA, ie.,  PLS 2 blocks, mode B, with symetric deflation.
@@ -167,7 +167,7 @@ class _PLS(BaseEstimator):
         Y block to latents rotations.
 
     coefs: array, [p, q]
-        The coeficients of the linear model: Y = X coefs + Err
+        The coefficients of the linear model: Y = X coefs + Err
 
     References
     ----------
