@@ -99,6 +99,12 @@ class BaseLibSVM(BaseEstimator):
         -------
         self : object
             Returns self.
+
+        Notes
+        ------
+        If X and y are not C-ordered and contiguous arrays, they are
+        copied.
+
         """
         self._set_params(**params)
 
@@ -133,7 +139,8 @@ class BaseLibSVM(BaseEstimator):
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = libsvm.fit(
-            X, y, svm_type=solver_type, sample_weight=sample_weight,
+            np.ascontiguousarray(X), np.ascontiguousarray(y), 
+            svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
             **self._get_params())
