@@ -10,7 +10,7 @@ class SparseBaseLibSVM(BaseLibSVM):
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
-    def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
+    def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability):
 
         assert impl in self._svm_types, \
@@ -26,7 +26,6 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
-        self.cache_size = cache_size
         self.tol = tol
         self.C = C
         self.nu = nu
@@ -48,7 +47,7 @@ class SparseBaseLibSVM(BaseLibSVM):
         # only used in classification
         self.n_support_ = np.empty(0, dtype=np.int32, order='C')
 
-    def fit(self, X, y, class_weight={}, sample_weight=[], **params):
+    def fit(self, X, y, class_weight={}, sample_weight=[], cache_size=100., **params):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -110,7 +109,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                  self._support_indices, self._support_indptr,
                  self._dual_coef_data, self.intercept_,
                  self.class_weight_label, self.class_weight, sample_weight,
-                 self.n_support_, self.nu, self.cache_size, self.epsilon,
+                 self.n_support_, self.nu, cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
 
         n_class = len(self.label_) - 1
@@ -166,7 +165,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label, self.class_weight,
-                      self.nu, self.cache_size, self.epsilon, self.shrinking,
+                      self.nu, self.epsilon, self.shrinking,
                       self.probability, self.n_support_, self.label_,
                       self.probA_, self.probB_)
 

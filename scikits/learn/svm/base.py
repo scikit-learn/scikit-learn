@@ -34,7 +34,7 @@ class BaseLibSVM(BaseEstimator):
     Should not be used directly, use derived classes instead
     """
 
-    def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
+    def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability):
 
         if not impl in LIBSVM_IMPL:
@@ -49,7 +49,6 @@ class BaseLibSVM(BaseEstimator):
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
-        self.cache_size = cache_size
         self.tol = tol
         self.C = C
         self.nu = nu
@@ -70,7 +69,7 @@ class BaseLibSVM(BaseEstimator):
         return X
 
 
-    def fit(self, X, y, class_weight={}, sample_weight=[], **params):
+    def fit(self, X, y, class_weight={}, sample_weight=[], cache_size=100., **params):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -94,6 +93,9 @@ class BaseLibSVM(BaseEstimator):
 
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
+
+        cache_size: float, optional
+            Specify the size of the cache (in MB)
 
         Returns
         -------
