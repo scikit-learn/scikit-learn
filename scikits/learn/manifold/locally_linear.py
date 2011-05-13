@@ -74,7 +74,7 @@ def locally_linear_embedding(
         from scipy.sparse import linalg, eye
         # M = (I-W)' (I-W)
         A = eye(*W.shape, format=W.format) - W
-        A = (A.T).dot(A).tocsr()
+        A = np.dot(A.T, A).tocsr()
 
         # initial approximation to the eigenvectors
         X = np.random.rand(W.shape[0], out_dim)

@@ -13,7 +13,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+from matplotlib import offsetbox
 
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
@@ -38,17 +38,19 @@ for i in range(digits.data.shape[0]):
             color=pl.cm.Set1(digits.target[i] / 10.),
             fontdict={'weight': 'bold', 'size': 9})
 
-shown_images = np.array([[1., 1.]])  # just something big
-for i in range(digits.data.shape[0]):
-    dist = np.sum((X_r[i] - shown_images) ** 2, 1)
-    if np.min(dist) < 4e-3:
-        # don't show points that are too close
-        continue
-    shown_images = np.r_[shown_images, [X_r[i]]]
-    imagebox = AnnotationBbox(
-        OffsetImage(digits.images[i], cmap=pl.cm.gray_r),
-        X_r[i])
-    ax.add_artist(imagebox)
+if hasattr(offsetbox, 'AnnotationBbox'):
+    # only print thumbnails with matplotlib > 1.0
+    shown_images = np.array([[1., 1.]])  # just something big
+    for i in range(digits.data.shape[0]):
+        dist = np.sum((X_r[i] - shown_images) ** 2, 1)
+        if np.min(dist) < 4e-3:
+            # don't show points that are too close
+            continue
+        shown_images = np.r_[shown_images, [X_r[i]]]
+        imagebox = AnnotationBbox(
+            OffsetImage(digits.images[i], cmap=pl.cm.gray_r),
+            X_r[i])
+        ax.add_artist(imagebox)
 
 pl.xticks([]), pl.yticks([])
 pl.show()

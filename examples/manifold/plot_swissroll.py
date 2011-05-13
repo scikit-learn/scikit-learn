@@ -16,7 +16,6 @@ import pylab as pl
 # This import is needed to modify the way figure behaves
 from mpl_toolkits.mplot3d import Axes3D
 
-
 #----------------------------------------------------------------------
 # Locally linear embedding of the swiss roll
 
@@ -31,8 +30,14 @@ print "Done. Reconstruction error: %g" % err
 # Plot result
 
 fig = pl.figure()
-ax = fig.add_subplot(211, projection='3d')
-ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color)
+try:
+    # compatibility matplotlib < 1.0
+    ax = fig.add_subplot(211, projection='3d')
+    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color)
+except:
+    ax = fig.add_subplot(211)
+    ax.scatter(X[:, 0], X[:, 2], c=color)
+
 ax.set_title("Original data")
 ax = fig.add_subplot(212)
 ax.scatter(X_r[:,0], X_r[:,1], c=color)
