@@ -128,7 +128,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         assert error < 0.01
 
 def test_lars_add_features(verbose=False):
-    linear_model.LARS(verbose=False, fit_intercept=True).fit(
+    linear_model.LARS(verbose=verbose, fit_intercept=True).fit(
         np.array([[ 0.02863763,  0.88144085, -0.02052429, -0.10648066, -0.06396584, -0.18338974],
                   [ 0.02038287,  0.51463335, -0.31734681, -0.12830467,  0.16870657, 0.02169503],
                   [ 0.14411476,  0.37666599,  0.2764702 ,  0.0723859 , -0.03812009, 0.03663579],
