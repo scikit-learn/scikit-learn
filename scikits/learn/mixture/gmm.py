@@ -8,27 +8,18 @@ Gaussian Mixture Models
 
 import numpy as np
 
-from .base import BaseEstimator
-from . import cluster
+from ..utils import check_random_state
+from ..base import BaseEstimator
+from .. import cluster
 
 
-def logsum(A, axis=None):
+def logsum(A, axis=0):
     """Computes the sum of A assuming A is in the log domain.
 
     Returns log(sum(exp(A), axis)) while minimizing the possibility of
     over/underflow.
     """
-    Amax = A.max(axis)
-    if axis and A.ndim > 1:
-        shape = list(A.shape)
-        shape[axis] = 1
-        Amax.shape = shape
-    Asum = np.log(np.sum(np.exp(A - Amax), axis))
-    Asum += Amax.reshape(Asum.shape)
-    if axis:
-        # Look out for underflow.
-        Asum[np.isnan(Asum)] = - np.Inf
-    return Asum
+    return np.logaddexp.reduce(A, axis=axis)
 
 
 # TODO: this lacks a docstring
@@ -79,7 +70,8 @@ def lmvnpdf(obs, means, covars, cvtype='diag'):
     return lmvnpdf_dict[cvtype](obs, means, covars)
 
 
-def sample_gaussian(mean, covar, cvtype='diag', n_samples=1):
+def sample_gaussian(mean, covar, cvtype='diag', n_samples=1,
+                    random_state=None):
     """Generate random samples from a Gaussian distribution.
 
     Parameters
@@ -105,8 +97,9 @@ def sample_gaussian(mean, covar, cvtype='diag', n_samples=1):
     obs : array, shape (n_features, n_samples)
         Randomly generated sample
     """
+    rng = check_random_state(random_state)
     n_dim = len(mean)
-    rand = np.random.randn(n_dim, n_samples)
+    rand = rng.randn(n_dim, n_samples)
     if n_samples == 1:
         rand.shape = (n_dim,)
 
@@ -145,6 +138,15 @@ class GMM(BaseEstimator):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
+    rng : numpy.random object, optional
+        Must support the full numpy random number generator API.
+
+    min_covar : float, optional
+        Floor on the diagonal of the covariance matrix to prevent
+        overfitting.  Defaults to 1e-3.
+
+    thresh : float, optional
+        Convergence threshold.
 
     Attributes
     ----------
@@ -182,10 +184,21 @@ class GMM(BaseEstimator):
     predict(X)
         Like decode, find most likely mixtures components for each
         observation in `X`.
-    rvs(n=1)
+    rvs(n=1, random_state=None)
         Generate `n` samples from the model.
     score(X)
         Compute the log likelihood of `X` under the model.
+
+    See Also
+    --------
+
+    DPGMM : Ininite gaussian mixture model, using the dirichlet
+    process, fit with a variational algorithm
+
+
+    VBGMM : Finite gaussian mixture model fit with a variational
+    algorithm, better for situations where there might be too little
+    data to get a good estimate of the covariance matrix.
 
     Examples
     --------
@@ -229,12 +242,16 @@ class GMM(BaseEstimator):
     array([ 0.5,  0.5])
     """
 
-    def __init__(self, n_states=1, cvtype='diag'):
+    def __init__(self, n_states=1, cvtype='diag', random_state=None,
+                 thresh=1e-2, min_covar=1e-3):
         self._n_states = n_states
         self._cvtype = cvtype
+        self.thresh = thresh
+        self.min_covar = min_covar
+        self.random_state = random_state
 
         if not cvtype in ['spherical', 'tied', 'diag', 'full']:
-            raise ValueError('bad cvtype')
+            raise ValueError('bad cvtype: '+str(cvtype))
 
         self.weights = np.ones(self._n_states) / self._n_states
 
@@ -288,6 +305,9 @@ class GMM(BaseEstimator):
 
     means = property(_get_means, _set_means)
 
+    def __repr__(self):
+        return "GMM(cvtype='%s', n_states=%s)"%(self._cvtype, self._n_states)
+
     def _get_weights(self):
         """Mixing weights for each mixture component."""
         return np.exp(self._log_weights)
@@ -302,7 +322,7 @@ class GMM(BaseEstimator):
 
     weights = property(_get_weights, _set_weights)
 
-    def eval(self, obs):
+    def eval(self, obs, return_log=False):
         """Evaluate the model on data
 
         Compute the log probability of `obs` under the model and
@@ -311,13 +331,15 @@ class GMM(BaseEstimator):
 
         Parameters
         ----------
-        obs : array_like, shape (n_samples, n_features)
+        obs: array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        return_log: boolean, optional
+            If True, the posteriors returned are log-probabilities
 
         Returns
         -------
-        logprob : array_like, shape (n_samples,)
+        logprob: array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
         posteriors: array_like, shape (n_samples, n_states)
             Posterior probabilities of each mixture component for each
@@ -327,7 +349,11 @@ class GMM(BaseEstimator):
         lpr = (lmvnpdf(obs, self._means, self._covars, self._cvtype)
                + self._log_weights)
         logprob = logsum(lpr, axis=1)
-        posteriors = np.exp(lpr - logprob[:, np.newaxis])
+        posteriors = lpr - logprob[:, np.newaxis]
+        if not return_log:
+            posteriors = np.exp(posteriors)
+            posteriors += np.finfo(np.float32).eps
+            posteriors /= np.sum(posteriors, axis=1)
         return logprob, posteriors
 
     def score(self, obs):
@@ -344,7 +370,8 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in `obs`
         """
-        logprob, posteriors = self.eval(obs)
+        # We use return_log=True to avoid a useless exponentiation
+        logprob, _ = self.eval(obs, return_log=True)
         return logprob
 
     def decode(self, obs):
@@ -397,7 +424,7 @@ class GMM(BaseEstimator):
         logprob, posteriors = self.eval(X)
         return posteriors
 
-    def rvs(self, n_samples=1):
+    def rvs(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
 
         Parameters
@@ -410,11 +437,14 @@ class GMM(BaseEstimator):
         obs : array_like, shape (n_samples, n_features)
             List of samples
         """
+        if random_state is None:
+            random_state = self.random_state
+        random_state = check_random_state(random_state)
         weight_pdf = self.weights
         weight_cdf = np.cumsum(weight_pdf)
 
         obs = np.empty((n_samples, self.n_features))
-        rand = np.random.rand(n_samples)
+        rand = random_state.rand(n_samples)
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
         # for each component, generate all needed samples
@@ -429,10 +459,12 @@ class GMM(BaseEstimator):
                 else:
                     cv = self._covars[comp]
                 obs[comp_in_obs] = sample_gaussian(
-                    self._means[comp], cv, self._cvtype, num_comp_in_obs).T
+                    self._means[comp], cv, self._cvtype, num_comp_in_obs,
+                    random_state=random_state
+                ).T
         return obs
 
-    def fit(self, X, n_iter=10, min_covar=1e-3, thresh=1e-2, params='wmc',
+    def fit(self, X, n_iter=10, thresh=1e-2, params='wmc',
             init_params='wmc'):
         """Estimate model parameters with the expectation-maximization
         algorithm.
@@ -450,11 +482,6 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         n_iter : int, optional
             Number of EM iterations to perform.
-        min_covar : float, optional
-            Floor on the diagonal of the covariance matrix to prevent
-            overfitting.  Defaults to 1e-3.
-        thresh : float, optional
-            Convergence threshold.
         params : string, optional
             Controls which parameters are updated in the training
             process.  Can contain any combination of 'w' for weights,
@@ -504,22 +531,23 @@ class GMM(BaseEstimator):
             logprob.append(curr_logprob.sum())
 
             # Check for convergence.
-            if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
+            if i > 0 and abs(logprob[-1] - logprob[-2]) < self.thresh:
                 self.converged_ = True
                 break
 
             # Maximization step
-            self._do_mstep(X, posteriors, params, min_covar)
+            self._do_mstep(X, posteriors, params, self.min_covar)
 
         return self
 
     def _do_mstep(self, X, posteriors, params, min_covar=0):
             w = posteriors.sum(axis=0)
             avg_obs = np.dot(posteriors.T, X)
-            norm = 1.0 / (w[:, np.newaxis] + 1e-200)
+            norm = 1.0 / (w[:, np.newaxis] + 10*np.finfo(np.float).eps)
 
             if 'w' in params:
-                self._log_weights = np.log(w / w.sum())
+                self._log_weights = np.log(w / (w.sum() + 10*np.finfo(np.float).eps)
+                                           + np.finfo(np.float).eps)
             if 'm' in params:
                 self._means = avg_obs * norm
             if 'c' in params:
@@ -559,7 +587,7 @@ def _lmvnpdftied(obs, means, covars):
     n_obs, n_dim = obs.shape
     # (x-y).T A (x-y) = x.T A x - 2x.T A y + y.T A y
     icv = linalg.pinv(covars)
-    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars))
+    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars)+0.1)
                   + np.sum(obs * np.dot(obs, icv), 1)[:, np.newaxis]
                   - 2 * np.dot(np.dot(obs, icv), means.T)
                   + np.sum(means * np.dot(means, icv), 1))
@@ -661,7 +689,8 @@ def _covar_mstep_full(gmm, obs, posteriors, avg_obs, norm, min_covar):
     cv = np.empty((gmm._n_states, gmm.n_features, gmm.n_features))
     for c in xrange(gmm._n_states):
         post = posteriors[:, c]
-        avg_cv = np.dot(post * obs.T, obs) / post.sum()
+        avg_cv = np.dot(post * obs.T, obs) / (post.sum() +
+                                10*np.finfo(np.float).eps)
         mu = gmm._means[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu)
                  + min_covar * np.eye(gmm.n_features))

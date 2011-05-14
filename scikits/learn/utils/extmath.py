@@ -10,6 +10,14 @@ import math
 from . import check_random_state
 import numpy as np
 
+from scipy import linalg
+
+def norm(v):
+    v = np.asarray(v)
+    __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
+    return __nrm2(v)
+
+
 #XXX: We should have a function with numpy's slogdet API
 def _fast_logdet(A):
     """

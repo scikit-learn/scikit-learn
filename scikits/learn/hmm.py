@@ -6,12 +6,12 @@ import string
 
 import numpy as np
 
+from .utils import check_random_state
 from .base import BaseEstimator
 from .mixture import (GMM, lmvnpdf, logsum, normalize, sample_gaussian,
                  _distribute_covar_matrix_to_match_cvtype, _validate_covars)
 from . import cluster
 ZEROLOGPROB = -1e200
-
 
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
@@ -130,6 +130,8 @@ class _BaseHMM(BaseEstimator):
         # So, we will normalize each frame explicitly in case we
         # pruned too aggressively.
         posteriors = np.exp(gamma.T - logsum(gamma, axis=1)).T
+        posteriors += np.finfo(np.float32).eps
+        posteriors /= np.sum(posteriors, axis=1).reshape((-1,1))
         return logprob, posteriors
 
     def score(self, obs, maxrank=None, beamlogprob=-np.Inf):
@@ -249,7 +251,7 @@ class _BaseHMM(BaseEstimator):
         logprob, posteriors = self.eval(obs, **kwargs)
         return posteriors
 
-    def rvs(self, n=1):
+    def rvs(self, n=1, random_state=None):
         """Generate random samples from the model.
 
         Parameters
@@ -262,6 +264,7 @@ class _BaseHMM(BaseEstimator):
         obs : array_like, length `n`
             List of samples
         """
+        random_state = check_random_state(random_state)
 
         startprob_pdf = self.startprob
         startprob_cdf = np.cumsum(startprob_pdf)
@@ -269,14 +272,16 @@ class _BaseHMM(BaseEstimator):
         transmat_cdf = np.cumsum(transmat_pdf, 1)
 
         # Initial state.
-        rand = np.random.rand()
+        rand = random_state.rand()
         currstate = (startprob_cdf > rand).argmax()
-        obs = [self._generate_sample_from_state(currstate)]
+        obs = [self._generate_sample_from_state(
+            currstate, random_state=random_state)]
 
         for x in xrange(n - 1):
-            rand = np.random.rand()
+            rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
-            obs.append(self._generate_sample_from_state(currstate))
+            obs.append(self._generate_sample_from_state(
+                currstate, random_state=random_state))
 
         return np.array(obs)
 
@@ -460,7 +465,6 @@ class _BaseHMM(BaseEstimator):
         """
         # Beam pruning
         threshlogprob = logsum(lattice_frame) + beamlogprob
-
         # Rank pruning
         if maxrank:
             # How big should our rank pruning histogram be?
@@ -487,7 +491,7 @@ class _BaseHMM(BaseEstimator):
     def _compute_log_likelihood(self, obs):
         pass
 
-    def _generate_sample_from_state(self, state):
+    def _generate_sample_from_state(self, state, random_state=None):
         pass
 
     def _init(self, obs, params):
@@ -668,12 +672,13 @@ class GaussianHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return lmvnpdf(obs, self._means, self._covars, self._cvtype)
 
-    def _generate_sample_from_state(self, state):
+    def _generate_sample_from_state(self, state, random_state=None):
         if self._cvtype == 'tied':
             cv = self._covars
         else:
             cv = self._covars[state]
-        return sample_gaussian(self._means[state], cv, self._cvtype)
+        return sample_gaussian(self._means[state], cv, self._cvtype,
+                               random_state=random_state)
 
     def _init(self, obs, params='stmc'):
         super(GaussianHMM, self)._init(obs, params=params)
@@ -868,9 +873,10 @@ class MultinomialHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return self._log_emissionprob[:, obs].T
 
-    def _generate_sample_from_state(self, state):
+    def _generate_sample_from_state(self, state, random_state=None):
         cdf = np.cumsum(self.emissionprob[state, :])
-        rand = np.random.rand()
+        random_state = check_random_state(random_state)
+        rand = random_state.rand()
         symbol = (cdf > rand).argmax()
         return symbol
 
@@ -985,8 +991,8 @@ class GMMHMM(_BaseHMM):
     def _compute_log_likelihood(self, obs):
         return np.array([g.score(obs) for g in self.gmms]).T
 
-    def _generate_sample_from_state(self, state):
-        return self.gmms[state].rvs(1).flatten()
+    def _generate_sample_from_state(self, state, random_state=None):
+        return self.gmms[state].rvs(1, random_state=random_state).flatten()
 
     def _init(self, obs, params='stwmc'):
         super(GMMHMM, self)._init(obs, params=params)
@@ -1010,26 +1016,31 @@ class GMMHMM(_BaseHMM):
             params)
 
         for state, g in enumerate(self.gmms):
-            gmm_logprob, gmm_posteriors = g.eval(obs)
-            gmm_posteriors *= posteriors[:, state][:, np.newaxis]
-            tmpgmm = GMM(g.n_states, cvtype=g.cvtype)
-            tmpgmm.n_features = g.n_features
-            tmpgmm.covars = _distribute_covar_matrix_to_match_cvtype(
-                np.eye(g.n_features), g.cvtype, g.n_states)
-            norm = tmpgmm._do_mstep(obs, gmm_posteriors, params)
+            _, lgmm_posteriors = g.eval(obs, return_log=True)
+            lgmm_posteriors += np.log(posteriors[:, state][:, np.newaxis] 
+                                      + np.finfo(np.float).eps)
+            gmm_posteriors = np.exp(lgmm_posteriors)
+            tmp_gmm = GMM(g.n_states, cvtype=g.cvtype)
+            tmp_gmm.n_features = g.n_features
+            tmp_gmm.covars = _distribute_covar_matrix_to_match_cvtype(
+                                np.eye(g.n_features), g.cvtype, g.n_states)
+            norm = tmp_gmm._do_mstep(obs, gmm_posteriors, params)
+
+            if np.any(np.isnan(tmp_gmm.covars)):
+                raise ValueError
 
             stats['norm'][state] += norm
             if 'm' in params:
-                stats['means'][state] += tmpgmm.means * norm[:, np.newaxis]
+                stats['means'][state] += tmp_gmm.means * norm[:, np.newaxis]
             if 'c' in params:
-                if tmpgmm.cvtype == 'tied':
-                    stats['covars'][state] += tmpgmm._covars * norm.sum()
+                if tmp_gmm.cvtype == 'tied':
+                    stats['covars'][state] += tmp_gmm._covars * norm.sum()
                 else:
                     cvnorm = np.copy(norm)
-                    shape = np.ones(tmpgmm._covars.ndim)
-                    shape[0] = np.shape(tmpgmm._covars)[0]
+                    shape = np.ones(tmp_gmm._covars.ndim)
+                    shape[0] = np.shape(tmp_gmm._covars)[0]
                     cvnorm.shape = shape
-                    stats['covars'][state] += tmpgmm._covars * cvnorm
+                    stats['covars'][state] += tmp_gmm._covars * cvnorm
 
     def _do_mstep(self, stats, params, covars_prior=1e-2, **kwargs):
         super(GMMHMM, self)._do_mstep(stats, params)
