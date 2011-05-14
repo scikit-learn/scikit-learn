@@ -159,7 +159,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     --------
     >>> from scikits.learn import preprocessing
     >>> clf = preprocessing.LabelBinarizer()
-    >>> clf.fit([1,2,6,4,2])
+    >>> clf.fit([1, 2, 6, 4, 2])
     LabelBinarizer()
     >>> clf.classes_
     array([1, 2, 4, 6])
@@ -167,9 +167,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([[ 1.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  1.]])
 
-    >>> clf.fit_transform([(1,2),(3,)])
+    >>> clf.fit_transform([(1, 2), (3,)])
     array([[ 1.,  1.,  0.],
            [ 0.,  0.,  1.]])
+    >>> clf.classes_
+    array([1, 2, 3])
     """
 
     def fit(self, y):
@@ -177,8 +179,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
-            Target values
+        y : numpy array of shape [n_samples] or sequence of sequences
+            Target values. In the multilabel case the nested sequences can
+            have variable lengths.
 
         Returns
         -------
@@ -186,6 +189,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """
         self.multilabel = _is_multilabel(y)
         if self.multilabel:
+            # concatenation of the sub-sequences
             self.classes_ = np.unique(reduce(lambda a, b: a + b, y))
         else:
             self.classes_ = np.unique(y)
@@ -199,8 +203,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
-            Target values
+        y : numpy array of shape [n_samples] or sequence of sequences
+            Target values. In the multilabel case the nested sequences can
+            have variable lengths.
 
         Returns
         -------
@@ -236,7 +241,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             return Y
 
         else:
-            raise ValueError
+            raise ValueError("Wrong number of classes: %d"
+                             % len(self.classes_))
 
     def inverse_transform(self, Y):
         """Transform binary labels back to multi-class labels
@@ -248,14 +254,17 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples] or sequence of sequences
+            Target values. In the multilabel case the nested sequences can
+            have variable lengths.
 
         Note
         -----
-        In the case when the binary labels are fractional (probabilistic),
-        inverse_transform chooses the class with the greatest value. Typically,
-        this allows to use the output of a linear model's decision_function
-        method directly as the input of inverse_transform.
+        In the case when the binary labels are fractional
+        (probabilistic), inverse_transform chooses the class with the
+        greatest value. Typically, this allows to use the output of a
+        linear model's decision_function method directly as the input
+        of inverse_transform.
         """
         if self.multilabel:
             Y = np.array(Y > 0, dtype=int)
