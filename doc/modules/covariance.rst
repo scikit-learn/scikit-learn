@@ -33,7 +33,7 @@ sample is an unbiased estimator of the corresponding population
 covariance matrix.
 
 The empirical covariance matrix of a sample can be computed using the
-:meth:`empirical_covariance` function of the package, or by fitting an
+:func:`empirical_covariance` function of the package, or by fitting an
 :class:`EmpiricalCovariance` object to the data sample with the
 :meth:`EmpiricalCovariance.fit` method.  Be careful that depending
 whether the data are centered or not, the result will be different, so
@@ -71,7 +71,7 @@ implemented in scikit-learn.
 
 A convex transformation (with a user-defined shrinkage coefficient)
 can be directly applied to a pre-computed covariance with the
-:meth:`shrunk_covariance` method. Also, a shrunk estimator of the
+:func:`shrunk_covariance` method. Also, a shrunk estimator of the
 covariance can be fitted to data with a :class:`ShrunkCovariance`
 object and its :meth:`ShrunkCovariance.fit` method.  Again, depending
 whether the data are centered or not, the result will be different, so
