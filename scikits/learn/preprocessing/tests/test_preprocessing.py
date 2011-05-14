@@ -10,14 +10,10 @@ from numpy.testing import assert_equal
 from scikits.learn.preprocessing import Binarizer
 from scikits.learn.preprocessing import KernelCenterer
 from scikits.learn.preprocessing import LabelBinarizer
-from scikits.learn.preprocessing import LengthNormalizer
-from scikits.learn.preprocessing import Normalizer
+from scikits.learn.preprocessing import SampleNormalizer
 from scikits.learn.preprocessing import Scaler
 from scikits.learn.preprocessing import scale
 
-from scikits.learn.preprocessing.sparse import Normalizer as SparseNormalizer
-from scikits.learn.preprocessing.sparse import LengthNormalizer as \
-                                               SparseLengthNormalizer
 from scikits.learn.preprocessing.sparse import Binarizer as SparseBinarizer
 
 from scikits.learn import datasets
@@ -67,50 +63,55 @@ def test_scaler():
     assert X_scaled is not X
 
 
-def test_normalizer():
-    X_ = np.random.randn(4, 5)
+def test_normalizer_l1():
+    np.random.seed(0)
+    X_orig = np.random.randn(4, 5)
+    X_orig[3, :] = 0.0
 
-    for klass, init in ((Normalizer, np.array),
-                        (SparseNormalizer, sp.csr_matrix)):
+    for init in (np.array,):  # sp.csr_matrix):
 
-        X = init(X_.copy())
+        X = init(X_orig.copy())
 
-        normalizer = klass()
-        X_norm = normalizer.transform(X, copy=True)
+        normalizer = SampleNormalizer(norm='l1', copy=True)
+        X_norm = normalizer.transform(X)
         assert X_norm is not X
-        X_norm = toarray(X_norm)
-        assert_array_almost_equal(
-            np.abs(X_norm).sum(axis=1), np.ones(X.shape[0]))
+        X_norm1 = toarray(X_norm)
 
-        normalizer = klass()
-        X_norm = normalizer.transform(X, copy=False)
+        normalizer = SampleNormalizer(norm='l1', copy=False)
+        X_norm = normalizer.transform(X)
         assert X_norm is X
-        X_norm = toarray(X_norm)
-        assert_array_almost_equal(
-            np.abs(X_norm).sum(axis=1), np.ones(X.shape[0]))
+        X_norm2 = toarray(X_norm)
+
+        for X_norm in (X_norm1, X_norm2):
+            row_sums = np.abs(X_norm).sum(axis=1)
+            for i in range(3):
+                assert_almost_equal(row_sums[i], 1.0)
+            assert_almost_equal(row_sums[3], 0.0)
 
 
-def test_length_normalizer():
-    X_ = np.random.randn(4, 5)
+def test_normalizer_l2():
+    np.random.seed(0)
+    X_orig = np.random.randn(4, 5)
+    X_orig[3, :] = 0.0
 
-    for klass, init in ((LengthNormalizer, np.array),
-                        (SparseLengthNormalizer, sp.csr_matrix)):
+    for init in (np.array,):  # sp.csr_matrix):
 
-        X = init(X_.copy())
+        X = init(X_orig.copy())
 
-        normalizer = klass()
-        X_norm1 = normalizer.transform(X, copy=True)
+        normalizer = SampleNormalizer(norm='l2', copy=True)
+        X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
         X_norm1 = toarray(X_norm1)
 
-        normalizer = klass()
-        X_norm2 = normalizer.transform(X, copy=False)
+        normalizer = SampleNormalizer(norm='l2', copy=False)
+        X_norm2 = normalizer.transform(X)
         assert X_norm2 is X
         X_norm2 = toarray(X_norm2)
 
         for X_norm in (X_norm1, X_norm2):
-            for i in xrange(len(X_norm)):
+            for i in xrange(3):
                 assert_almost_equal(la.norm(X_norm[i]), 1.0)
+            assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
 
 def test_binarizer():

@@ -71,36 +71,61 @@ class Scaler(BaseEstimator):
         return X
 
 
-class Normalizer(BaseEstimator):
-    """Normalize vectors such that they sum to 1"""
+class SampleNormalizer(BaseEstimator):
+    """Normalize samples individually to unit norm
 
-    def fit(self, X, y=None, **params):
-        self._set_params(**params)
+    Each sample (e.g. each row) with at least one non zero component is
+    rescaled independently of other samples so that its norm (l1 or l2)
+    equals one.
+
+    This transformer is able to work both with dense numpy arrays and
+    scipy.sparse matrix (most efficiently in CSR format).
+
+    Parameters
+    ----------
+    copy : boolean, optional, default is True
+        set to False to perform inplace row normalization
+
+    norm : 'l1' or 'l2', optional ('l2' by default)
+        the norm to use to normalize each non zero sample
+
+    Note: this estimator is stateless (besides constructor parameters),
+    the fit method does nothing but is useful when used in a pipeline:
+    """
+
+    def __init__(self, norm='l2', copy=True):
+        self.norm = norm
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        """Do nothing and return the estimator unchanged
+
+        This method is just there to implement the usual API and hence
+        work in pipelines.
+        """
         return self
 
-    def transform(self, X, y=None, copy=True):
-        if copy:
-            X = X.copy()
-        norms = np.abs(X).sum(axis=1)[:, np.newaxis]
-        norms[norms == 0.0] = 1.0
-        X /= norms
+    def transform(self, X, y=None):
+        """Scale each non zero row of X to unit norm
 
-        return X
-
-
-class LengthNormalizer(BaseEstimator):
-    """Normalize vectors to unit vectors"""
-
-    def fit(self, X, y=None, **params):
-        self._set_params(**params)
-        return self
-
-    def transform(self, X, y=None, copy=True):
-        if copy:
+        Parameters
+        ----------
+        X : array or scipy.sparse matrix with shape [n_samples, n_features]
+            The data to normalize, row by row. scipy.sparse matrices should be
+            in CSR format to avoid an un-necessary copy.
+        """
+        if self.copy:
             X = X.copy()
 
-        norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
-        norms[norms == 0.0] = 1.0
+        if self.norm == 'l1':
+            norms = np.abs(X).sum(axis=1)[:, np.newaxis]
+            norms[norms == 0.0] = 1.0
+        elif self.norm == 'l2':
+            norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
+            norms[norms == 0.0] = 1.0
+        else:
+            raise ValueError("'%s' is not a supported norm" % self.norm)
+
         X /= norms
 
         return X

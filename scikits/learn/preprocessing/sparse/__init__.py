@@ -5,8 +5,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from .. import Normalizer as DenseNormalizer
-from .. import LengthNormalizer as DenseLengthNormalizer
+from .. import SampleNormalizer as DenseNormalizer
 from .. import Binarizer as DenseBinarizer
 
 from ._preprocessing import normalize_axis1_sparse
