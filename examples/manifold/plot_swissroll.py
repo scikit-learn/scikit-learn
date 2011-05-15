@@ -12,9 +12,7 @@ with locally linear embedding
 
 print __doc__
 
-import numpy as np
 import pylab as pl
-from mpl_toolkits.mplot3d import Axes3D
 
 
 #----------------------------------------------------------------------
