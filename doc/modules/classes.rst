@@ -131,6 +131,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
+   linear_model.sparse.LogisticRegression
 
 
 Naive Bayes
