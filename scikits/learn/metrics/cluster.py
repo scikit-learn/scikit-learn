@@ -27,6 +27,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     Both scores have positive values between 0.0 and 1.0, larger values
     being desirable.
 
+    Those 3 metrics are symmetric in the sense that a permutation of
+    the class or cluster label values won't change the score values in
+    any way.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -114,6 +118,9 @@ def homogeneity_score(labels_true, labels_pred):
     A clustering result satisfies homogeneity if all of its clusters
     contain only data points which are members of a single class.
 
+    This metric is symmetric in the sense that a permutation of the
+    class or cluster label values won't change the score value in any way.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -171,6 +178,9 @@ def completeness_score(labels_true, labels_pred):
 
     A clustering result satisfies completeness if all the data points
     that are members of a given class are elements of the same cluster.
+
+    This metric is symmetric in the sense that a permutation of the
+    class or cluster label values won't change the score value in any way.
 
     Parameters
     ----------
@@ -230,6 +240,9 @@ def v_measure_score(labels_true, labels_pred):
     The V-Measure is the hormonic mean between homogeneity and completeness:
 
       v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
+
+    This metric is symmetric in the sense that a permutation of the
+    class or cluster label values won't change the score value in any way.
 
     Parameters
     ----------
