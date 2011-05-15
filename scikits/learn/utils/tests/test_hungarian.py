@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from scikits.learn.utils.hungarian import _Hungarian
+from scikits.learn.utils.hungarian import _Hungarian, find_permutation
 
 def test_hungarian():
     matrices = [
@@ -46,4 +46,11 @@ def test_hungarian():
             x = cost_matrix[r, c]
             total_cost += x
         assert expected_total == total_cost
+
+
+def test_find_permutation():
+    A = np.random.random((10, 100))
+    B = A[::-1]
+    np.testing.assert_array_equal(find_permutation(B, A),
+                                  np.arange(10)[::-1])
 
