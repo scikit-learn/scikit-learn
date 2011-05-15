@@ -236,6 +236,10 @@ Clustering
 Metrics
 =======
 
+
+Classification metrics
+----------------------
+
 .. automodule:: scikits.learn.metrics
    :no-members:
    :no-inherited-members:
@@ -247,7 +251,6 @@ Metrics
    :toctree: generated/
    :template: function.rst
 
-   metrics.euclidean_distances
    metrics.confusion_matrix
    metrics.roc_curve
    metrics.auc
@@ -258,17 +261,49 @@ Metrics
    metrics.precision_recall_fscore_support
    metrics.classification_report
    metrics.precision_recall_curve
-   metrics.r2_score
    metrics.zero_one_score
    metrics.zero_one
+
+
+Regression metrics
+------------------
+
+.. automodule:: scikits.learn.metrics
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.r2_score
    metrics.mean_square_error
+
+
+Clustering metrics
+------------------
+
+.. automodule:: scikits.learn.metrics.cluster
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.completeness_score
    metrics.v_measure_score
 
 Pairwise metrics
-------------------
+----------------
 
 .. automodule:: scikits.learn.metrics.pairwise
    :no-members:
