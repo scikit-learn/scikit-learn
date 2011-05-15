@@ -302,7 +302,7 @@ Their harmonic mean called **V-measure** is computed by
 All three metrics can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
-  >>> homogeneity_completeness_v_measure(labels_true, labels_pred)
+  >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
   ...                                                      # doctest: +ELLIPSIS
   (0.66..., 0.42..., 0.51...)
 
