@@ -268,17 +268,17 @@ def v_measure_score(labels_true, labels_pred):
     Labelings that assign all classes members to the same clusters
     are complete be not homogeneous, hence penalized::
 
-      >>> round(v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]), 2)
-      0.67
+      >>> v_measure_score([0, 1, 2, 3], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      0.66...
 
     Labelings that have pure clusters with members comming from the same
     classes are homogeneous but un-necessary splitts harms completeness
     and thus penalize V-measure as well::
 
-      >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 2])
-      0.8
-      >>> round(v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]), 2)
-      0.67
+      >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 2])     # doctest: +ELLIPSIS
+      0.8...
+      >>> v_measure_score([0, 0, 1, 1], [0, 1, 2, 3])     # doctest: +ELLIPSIS
+      0.66...
 
     If classes members are completly splitted accross different clusters,
     the assignment is totally in-complete, hence the v-measure is null::
