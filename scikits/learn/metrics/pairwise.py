@@ -1,13 +1,11 @@
-"""Utilities to evaluate pairwise distances or metrics between 2
-sets of points.
-
-"""
+"""Utilities to evaluate pairwise distances or affinity of sets of samples"""
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD Style.
 
 import numpy as np
+
 
 def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     """
