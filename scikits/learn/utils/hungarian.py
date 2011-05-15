@@ -43,20 +43,16 @@ class _Hungarian(object):
         columns in the database. Returns a list of (row, column) tuples
         that can be used to traverse the matrix.
 
-        :Parameters:
-            cost_matrix : list of lists
-                The cost matrix. If this cost matrix is not square, it
-                will be padded with zeros, via a call to ``pad_matrix()``.
-                (This method does *not* modify the caller's matrix. It
-                operates on a copy of the matrix.)
+        Parameters
+        ===========
+        cost_matrix: 2D square matrix
+                The cost matrix. 
 
-                **WARNING**: This code handles square and rectangular
-                matrices. It does *not* handle irregular matrices.
-
-        :rtype: list
-        :return: A list of ``(row, column)`` tuples that describe the lowest
-                 cost path through the matrix
-
+        Returns
+        ========
+        indices: 2D array of indices
+            The pairs of (col, row) indices in the original array giving
+            the original ordering.
         """
         self.C = cost_matrix.copy()
         self.n = n = self.C.shape[0]
@@ -89,7 +85,7 @@ class _Hungarian(object):
         for i in range(n):
             for j in range(n):
                 if self.marked[i, j] == 1:
-                    results += [(i, j)]
+                    results.extend([(i, j)])
 
         return results
 
@@ -161,16 +157,18 @@ class _Hungarian(object):
                 step = 6
             else:
                 self.marked[row, col] = 2
-                star_col = self._find_star_in_row(row)
-                if star_col >= 0:
-                    col = star_col
-                    self.row_covered[row] = True
-                    self.col_covered[col] = False
-                else:
+                # Find the first starred element in the row
+                star_col = np.argmax(self.marked[row] == 1)
+                if not self.marked[row, star_col] == 1:
+                    # Could not find one
                     done = True
                     self.Z0_r = row
                     self.Z0_c = col
                     step = 5
+                else:
+                    col = star_col
+                    self.row_covered[row] = True
+                    self.col_covered[col] = False
 
         return step
 
@@ -191,21 +189,34 @@ class _Hungarian(object):
         path[count, 1] = self.Z0_c
         done = False
         while not done:
-            row = self._find_star_in_col(path[count, 1])
-            if row >= 0:
+            # Find the first starred element in the col defined by
+            # the path.
+            row = np.argmax(self.marked[:, path[count, 1]] == 1)
+            if not self.marked[row, path[count, 1]] == 1:
+                # Could not find one
+                done = True
+            else:
                 count += 1
                 path[count, 0] = row
                 path[count, 1] = path[count-1, 1]
-            else:
-                done = True
 
             if not done:
-                col = self._find_prime_in_row(path[count, 0])
+                # Find the first prime element in the row defined by the
+                # first path step
+                col = np.argmax(self.marked[path[count, 0]] == 2)
+                if self.marked[row, col] != 2:
+                    col = -1
                 count += 1
                 path[count, 0] = path[count-1, 0]
                 path[count, 1] = col
 
-        self._convert_path(path, count)
+        # Convert paths
+        for i in range(count+1):
+            if self.marked[path[i, 0], path[i, 1]] == 1:
+                self.marked[path[i, 0], path[i, 1]] = 0
+            else:
+                self.marked[path[i, 0], path[i, 1]] = 1
+
         self._clear_covers()
         # Erase all prime markings
         self.marked[self.marked == 2] = 0
@@ -218,7 +229,9 @@ class _Hungarian(object):
         Return to Step 4 without altering any stars, primes, or covered
         lines.
         """
-        minval = self._find_smallest()
+        # the smallest uncovered value in the matrix
+        minval = np.min(self.C[np.logical_not(self.col_covered)
+                            *np.logical_not(self.row_covered[:, np.newaxis])])
         for i in range(self.n):
             for j in range(self.n):
                 if self.row_covered[i]:
@@ -226,11 +239,6 @@ class _Hungarian(object):
                 if not self.col_covered[j]:
                     self.C[i, j] -= minval
         return 4
-
-    def _find_smallest(self):
-        """Find the smallest uncovered value in the matrix."""
-        return np.min(self.C[np.logical_not(self.col_covered)
-                            *np.logical_not(self.row_covered[:, np.newaxis])])
 
     def _find_a_zero(self):
         """Find the first uncovered element with value 0"""
@@ -242,46 +250,16 @@ class _Hungarian(object):
         if C[row, col] == 0:
             return -1, -1
         return row, col
-
-    def _find_star_in_row(self, row):
-        """
-        Find the first starred element in the specified row. Returns
-        the column index, or -1 if no starred element was found.
-        """
-        col = np.argmax(self.marked[row] == 1)
-        if not self.marked[row, col] == 1:
-            col = -1
-        return col
-
-    def _find_star_in_col(self, col):
-        """
-        Find the first starred element in the specified row. Returns
-        the row index, or -1 if no starred element was found.
-        """
-        row = np.argmax(self.marked[:, col] == 1)
-        if not self.marked[row, col] == 1:
-            row = -1
-        return row
  
     def _find_prime_in_row(self, row):
         """
         Find the first prime element in the specified row. Returns
         the column index, or -1 if no starred element was found.
         """
-        col = -1
-        for j in range(self.n):
-            if self.marked[row, j] == 2:
-                col = j
-                break
-
+        col = np.argmax(self.marked[row] == 2)
+        if self.marked[row, col] != 2:
+            col = -1
         return col
-
-    def _convert_path(self, path, count):
-        for i in range(count+1):
-            if self.marked[path[i, 0], path[i, 1]] == 1:
-                self.marked[path[i, 0], path[i, 1]] = 0
-            else:
-                self.marked[path[i, 0], path[i, 1]] = 1
 
     def _clear_covers(self):
         """Clear all covered matrix cells"""
