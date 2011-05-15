@@ -78,7 +78,10 @@ def locally_linear_embedding(
 
         # initial approximation to the eigenvectors
         X = np.random.rand(W.shape[0], out_dim)
-        ml = pyamg.smoothed_aggregation_solver(A, symmetry='symmetric')
+        try:
+            ml = pyamg.smoothed_aggregation_solver(A, symmetry='symmetric')
+        except TypeError:
+            ml = pyamg.smoothed_aggregation_solver(A, mat_flag='symmetric')
         prec = ml.aspreconditioner()
 
         # compute eigenvalues and eigenvectors with LOBPCG
