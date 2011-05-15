@@ -13,16 +13,18 @@ with locally linear embedding
 print __doc__
 
 import pylab as pl
+# This import is needed to modify the way figure behaves
+from mpl_toolkits.mplot3d import Axes3D
 
 
 #----------------------------------------------------------------------
 # Locally linear embedding of the swiss roll
 
 from scikits.learn import manifold, datasets
-X, color = datasets.samples_generator.swiss_roll(1500)
+X, color = datasets.samples_generator.swiss_roll(n_samples=1500)
 
 print "Computing LLE embedding"
-X_r, err = manifold.locally_linear_embedding(X, 12, 2)
+X_r, err = manifold.locally_linear_embedding(X, n_neighbors=12, out_dim=2)
 print "Done. Reconstruction error: %g" % err
 
 #----------------------------------------------------------------------
@@ -34,5 +36,7 @@ ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color)
 ax.set_title("Original data")
 ax = fig.add_subplot(212)
 ax.scatter(X_r[:,0], X_r[:,1], c=color)
+pl.axis('tight')
 pl.xticks([]), pl.yticks([])
+pl.title('Projected data')
 pl.show()
