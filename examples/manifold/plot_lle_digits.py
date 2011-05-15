@@ -18,7 +18,7 @@ from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
 
-from scikits.learn import manifold, metrics, datasets
+from scikits.learn import manifold, datasets
 digits = datasets.load_digits(n_class=6)
 
 print "Computing LLE embedding"
