@@ -27,9 +27,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     Both scores have positive values between 0.0 and 1.0, larger values
     being desirable.
 
-    Those 3 metrics are symmetric in the sense that a permutation of
-    the class or cluster label values won't change the score values in
-    any way.
+    Those 3 metrics are independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score values in any way.
+
+    V-Measure is furthermore symmetric: swapping `labels_true` and
+    `label_pred` will give the same score. This does not hold for
+    homogeneity and completeness.
 
     Parameters
     ----------
@@ -118,8 +122,12 @@ def homogeneity_score(labels_true, labels_pred):
     A clustering result satisfies homogeneity if all of its clusters
     contain only data points which are members of a single class.
 
-    This metric is symmetric in the sense that a permutation of the
-    class or cluster label values won't change the score value in any way.
+    This metric is independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score value in any way.
+
+    This metric is not symmetric: switching `label_true` with `label_pred`
+    will return the completeness_score which will be different in general.
 
     Parameters
     ----------
@@ -179,8 +187,12 @@ def completeness_score(labels_true, labels_pred):
     A clustering result satisfies completeness if all the data points
     that are members of a given class are elements of the same cluster.
 
-    This metric is symmetric in the sense that a permutation of the
-    class or cluster label values won't change the score value in any way.
+    This metric is independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score value in any way.
+
+    This metric is not symmetric: switching `label_true` with `label_pred`
+    will return the homogeneity_score which will be different in general.
 
     Parameters
     ----------
@@ -241,8 +253,14 @@ def v_measure_score(labels_true, labels_pred):
 
       v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
 
-    This metric is symmetric in the sense that a permutation of the
-    class or cluster label values won't change the score value in any way.
+    This metric is independent of the absolute values of the labels:
+    a permutation of the class or cluster label values won't change the
+    score value in any way.
+
+    This metric is furthermore symmetric: switching `label_true` with
+    `label_pred` will return the same score value. This can be useful to
+    measure the agreement of two independent label assignments strategies
+    on the same dataset when the real ground truth is not known.
 
     Parameters
     ----------
@@ -281,11 +299,13 @@ def v_measure_score(labels_true, labels_pred):
     Labelings that assign all classes members to the same clusters
     are complete be not homogeneous, hence penalized::
 
+      >>> v_measure_score([0, 0, 1, 2], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      0.8...
       >>> v_measure_score([0, 1, 2, 3], [0, 0, 1, 1])     # doctest: +ELLIPSIS
       0.66...
 
-    Labelings that have pure clusters with members comming from the same
-    classes are homogeneous but un-necessary splitts harms completeness
+    Labelings that have pure clusters with members coming from the same
+    classes are homogeneous but un-necessary splits harms completeness
     and thus penalize V-measure as well::
 
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 2])     # doctest: +ELLIPSIS
