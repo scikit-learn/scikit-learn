@@ -88,21 +88,21 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     n_C = [float(np.sum(labels_true == c)) for c in classes]
     n_K = [float(np.sum(labels_pred == k)) for k in clusters]
 
-    for c in classes:
-        entropy_C -= n_C[c] / n_samples * log(n_C[c] / n_samples)
+    for i, _ in enumerate(classes):
+        entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
 
-    for k in clusters:
-        entropy_K -= n_K[k] / n_samples * log(n_K[k] / n_samples)
+    for j, _ in enumerate(clusters):
+        entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
 
-    for c in classes:
-        for k in clusters:
+    for i, c in enumerate(classes):
+        for j, k in enumerate(clusters):
             # count samples at the intersection of class c and cluster k
             n_CK = float(np.sum((labels_true == c) * (labels_pred == k)))
 
             if n_CK != 0.0:
                 # turn label assignments into contribution to entropies
-                entropy_C_given_K -= n_CK / n_samples * log(n_CK / n_K[k])
-                entropy_K_given_C -= n_CK / n_samples * log(n_CK / n_C[c])
+                entropy_C_given_K -= n_CK / n_samples * log(n_CK / n_K[j])
+                entropy_K_given_C -= n_CK / n_samples * log(n_CK / n_C[i])
 
     homogeneity = 1.0 - entropy_C_given_K / entropy_C if entropy_C else 1.0
     completeness = 1.0 - entropy_K_given_C / entropy_K if entropy_K else 1.0
