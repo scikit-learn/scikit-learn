@@ -629,6 +629,9 @@ class MiniBatchKMeans(KMeans):
 
         self.random_state = check_random_state(self.random_state)
 
+        if self.copy_x:
+            X = X.copy()
+
         if hasattr(self.init, '__array__'):
             X = self._check_data(X, **params)
             self.init = np.asarray(self.init)
