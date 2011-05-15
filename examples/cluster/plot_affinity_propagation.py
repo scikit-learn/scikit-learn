@@ -12,9 +12,7 @@ print __doc__
 
 import numpy as np
 from scikits.learn.cluster import AffinityPropagation
-from scikits.learn.metrics import v_measure_score
-from scikits.learn.metrics import homogeneity_score
-from scikits.learn.metrics import completeness_score
+from scikits.learn import metrics
 
 ##############################################################################
 # Generate sample data
@@ -42,7 +40,7 @@ X = np.concatenate(clusters)
 ##############################################################################
 # Compute similarities
 ##############################################################################
-X_norms = np.sum(X * X, axis=1)
+X_norms = np.sum(X ** 2, axis=1)
 S = - X_norms[:, np.newaxis] - X_norms[np.newaxis, :] + 2 * np.dot(X, X.T)
 p = 10 * np.median(S)
 
@@ -57,9 +55,9 @@ labels = af.labels_
 n_clusters_ = len(cluster_centers_indices)
 
 print 'Estimated number of clusters: %d' % n_clusters_
-print "Homogeneity: %0.3f" % homogeneity_score(labels_true, labels)
-print "Completeness: %0.3f" % completeness_score(labels_true, labels)
-print "V-measure: %0.3f" % v_measure_score(labels_true, labels)
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels)
+print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
+print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
 
 
 ##############################################################################
