@@ -262,6 +262,10 @@ Metrics
    metrics.zero_one_score
    metrics.zero_one
    metrics.mean_square_error
+   metrics.homogeneity_completeness_v_measure
+   metrics.homogeneity_score
+   metrics.completeness_score
+   metrics.v_measure_score
 
 Pairwise metrics
 ------------------

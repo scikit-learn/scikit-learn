@@ -231,6 +231,7 @@ truth set of classes or satisfying some assumption such that members
 belong to the same class are more similar that members of different
 classes according to some similarity metric.
 
+.. currentmodule:: scikits.learn.metrics
 
 Inertia
 -------
@@ -335,7 +336,8 @@ Here is an example of clustering that is neither complete nor homogeneous::
   (0.66..., 0.42..., 0.51...)
 
 It is also possible to use each of this individual metrics as a score
-function::
+function (namely :func:`homogeneity_score`, :func:`completeness_score`
+and :func:`v_measure_score`)::
 
   >>> from scikits.learn.metrics import homogeneity_score
   >>> from scikits.learn.metrics import completeness_score
