@@ -47,8 +47,8 @@ if hasattr(offsetbox, 'AnnotationBbox'):
             # don't show points that are too close
             continue
         shown_images = np.r_[shown_images, [X_r[i]]]
-        imagebox = AnnotationBbox(
-            OffsetImage(digits.images[i], cmap=pl.cm.gray_r),
+        imagebox = offsetbox.AnnotationBbox(
+            offsetbox.OffsetImage(digits.images[i], cmap=pl.cm.gray_r),
             X_r[i])
         ax.add_artist(imagebox)
 
