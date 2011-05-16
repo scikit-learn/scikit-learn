@@ -33,7 +33,10 @@ cdef extern from "libsvm_sparse_helper.c":
     int csr_copy_predict (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
         	char *index, np.npy_intp *intptr_size, char *size,
                 svm_csr_model *model, char *dec_values)
-    int  copy_predict_proba (char *, svm_csr_model *, np.npy_intp *, char *)
+    int csr_copy_predict_proba (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
+        	char *index, np.npy_intp *intptr_size, char *size,
+                svm_csr_model *model, char *dec_values)
+
     int  copy_predict_values(char *, svm_csr_model *, np.npy_intp *, char *, int)
     int  csr_copy_SV (char *values, np.npy_intp *n_indices,
         	char *indices, np.npy_intp *n_indptr, char *indptr,
@@ -177,6 +180,7 @@ def libsvm_sparse_train ( int n_features,
         else:
             probA = np.empty(1, dtype=np.float64)
             probB = np.empty(0, dtype=np.float64)
+        copy_probA(probA.data, model, probA.shape)
 
     svm_csr_free_and_destroy_model (&model)
     free_problem(problem)
@@ -247,6 +251,60 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     #TODO: use check_model
     dec_values = np.empty(T_indptr.shape[0]-1)
     if csr_copy_predict(T_data.shape, T_data.data,
+                        T_indices.shape, T_indices.data,
+                        T_indptr.shape, T_indptr.data,
+                        model, dec_values.data) < 0:
+        raise MemoryError("We've run out of of memory")
+    # free model and param
+    free_model_SV(model)
+    free_model(model)
+    free_param(param)
+    return dec_values
+
+
+
+
+def libsvm_sparse_predict_proba(
+    np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] SV_data,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indices,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indptr,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] sv_coef,
+    np.ndarray[np.float64_t, ndim=1, mode='c']
+    intercept, int svm_type, int kernel_type, int
+    degree, double gamma, double coef0, double
+    eps, double C,
+    np.ndarray[np.int32_t, ndim=1] weight_label,
+    np.ndarray[np.float64_t, ndim=1] weight,
+    double nu, double p, int shrinking, int probability,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
+    """
+    Predict values T given a model.
+    """
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef svm_parameter *param
+    cdef svm_csr_model *model
+    param = set_parameter(svm_type, kernel_type, degree, gamma,
+                          coef0, nu,
+			  100., # cache size has no effect on predict
+			  C, eps, p, shrinking,
+                          probability, <int> weight.shape[0], weight_label.data,
+                          weight.data)
+
+    model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
+                          SV_indices.shape, SV_indices.data,
+                          SV_indptr.shape, SV_indptr.data,
+                          sv_coef.data, intercept.data,
+                          nSV.data, label.data, probA.data, probB.data)
+    #TODO: use check_model
+    cdef np.npy_intp n_class = get_nr(model)
+    dec_values = np.empty((T_indptr.shape[0]-1, n_class), dtype=np.float64)
+    if csr_copy_predict_proba(T_data.shape, T_data.data,
                         T_indices.shape, T_indices.data,
                         T_indptr.shape, T_indptr.data,
                         model, dec_values.data) < 0:

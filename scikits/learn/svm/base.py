@@ -140,7 +140,7 @@ class BaseLibSVM(BaseEstimator):
 
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
-        self.probB_ = libsvm.fit(X, y, 
+        self.probB_ = libsvm.fit(X, y,
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
@@ -190,7 +190,7 @@ class BaseLibSVM(BaseEstimator):
 
     def predict_proba(self, X):
         """
-        This function does classification or regression on a test vector T
+        This function does classification or regression on a test vector X
         given a model with probability information.
 
         Parameters

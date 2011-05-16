@@ -206,17 +206,23 @@ def test_probability():
     This uses cross validation, so we use a slightly bigger testing set.
     """
 
-    clf = svm.SVC(probability=True)
-    clf.fit(iris.data, iris.target)
+    for clf in (
+        svm.SVC(probability=True),
+        svm.NuSVC(probability=True),
+        svm.sparse.SVC(probability=True),
+        svm.sparse.NuSVC(probability=True)
+        ):
 
-    prob_predict = clf.predict_proba(iris.data)
-    assert_array_almost_equal(
-        np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
-    assert np.mean(np.argmax(prob_predict, 1)
-                   == clf.predict(iris.data)) > 0.9
+        clf.fit(iris.data, iris.target)
 
-    assert_almost_equal(clf.predict_proba(iris.data),
-                        np.exp(clf.predict_log_proba(iris.data)), 8)
+        prob_predict = clf.predict_proba(iris.data)
+        assert_array_almost_equal(
+            np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
+        assert np.mean(np.argmax(prob_predict, 1)
+                       == clf.predict(iris.data)) > 0.9
+
+        assert_almost_equal(clf.predict_proba(iris.data),
+                            np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
 def test_decision_function():
