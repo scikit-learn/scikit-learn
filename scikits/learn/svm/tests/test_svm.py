@@ -322,17 +322,22 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    Xf = np.asfortranarray(X)
-    clf = svm.SVC()
-    clf.fit(Xf, Y)
-    assert_array_equal(clf.predict(T), true_result)
+    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC(),
+                svm.sparse.LinearSVC()):
+        Xf = np.asfortranarray(X)
+        assert Xf.flags['C_CONTIGUOUS'] == False
+        yf = np.ascontiguousarray(np.tile(Y, (2,1)).T)
+        yf = yf[:, -1]
+        assert yf.flags['F_CONTIGUOUS'] == False
+        assert yf.flags['C_CONTIGUOUS'] == False
+        clf.fit(Xf, yf)
+        assert_array_equal(clf.predict(T), true_result)
 
     # error for precomputed kernelsx
     clf = svm.SVC(kernel='precomputed')
     assert_raises(ValueError, clf.fit, X, Y)
 
     Xt = np.array(X).T
-
     clf = svm.SVC(kernel='precomputed')
     clf.fit(np.dot(X, Xt), Y)
     assert_raises(ValueError, clf.predict, X)
