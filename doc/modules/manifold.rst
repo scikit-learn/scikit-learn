@@ -14,7 +14,7 @@ Manifold learning
                  | Old Mother Nature's recipes
                  | That bring the bare necessities of life
                  |
-                 |             -- Ballo's song [The Jungle Book]
+                 |             -- Baloo's song [The Jungle Book]
 
 
 
