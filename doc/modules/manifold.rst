@@ -66,3 +66,6 @@ Tips on practical use
 
 * Make sure the same scale is used over all features. Being this a
   nearest-neighbors method it will behave poorly otherwise.
+
+* On certain problems, the `lobcpg` solver might converge slowly. Supply a
+generous value for `max_iter` if big oscillations are detected between runs.
