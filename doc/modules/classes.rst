@@ -131,6 +131,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
+   linear_model.sparse.LogisticRegression
 
 
 Naive Bayes
@@ -336,15 +337,17 @@ Covariance Estimators
    :toctree: generated/
    :template: class.rst
 
-   covariance.Covariance
+   covariance.EmpiricalCovariance
    covariance.ShrunkCovariance
    covariance.LedoitWolf
+   covariance.OAS
 
 .. autosummary::
 
    :toctree: generated/
    :template: function.rst
 
+   covariance.empirical_covariance
    covariance.ledoit_wolf
    covariance.shrunk_covariance
    covariance.oas

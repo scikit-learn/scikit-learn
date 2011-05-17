@@ -37,6 +37,13 @@ The disadvantages of Support Vector Machines include:
 
 .. TODO: add reference to probability estimates
 
+.. note:: **Avoiding data copy**
+
+    If the data passed to certain methods is not C-ordered and
+    contiguous, it will be copied before calling the underlying C
+    implementation. You can check whether a give numpy array is
+    C-contiguous by inspecting its `flags` dictionnary.
+
 .. _svm_classification:
 
 Classification

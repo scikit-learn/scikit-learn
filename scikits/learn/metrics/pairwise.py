@@ -54,7 +54,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
         raise ValueError("Incompatible dimension for X and Y matrices")
 
     XX = np.sum(X * X, axis=1)[:, np.newaxis]
-    if X is Y: # shortcut in the common case euclidean_distances(X, X)
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is None:
         YY = Y.copy()
@@ -70,7 +70,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     # a faster cython implementation would do the dot product first,
     # and then add XX, add YY, and do the clipping of negative values in
     # a single pass over the output matrix.
-    distances = XX + YY # Using broadcasting
+    distances = XX + YY  # Using broadcasting
     distances -= 2 * np.dot(X, Y.T)
     distances = np.maximum(distances, 0)
     if squared:
@@ -78,7 +78,7 @@ def euclidean_distances(X, Y, Y_norm_squared=None, squared=False):
     else:
         return np.sqrt(distances)
 
-euclidian_distances = euclidean_distances # both spelling for backward compat
+euclidian_distances = euclidean_distances  # both spelling for backward compat
 
 
 def linear_kernel(X, Y):
