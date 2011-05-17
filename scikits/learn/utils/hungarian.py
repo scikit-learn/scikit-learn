@@ -56,8 +56,8 @@ class _Hungarian(object):
         """
         self.C = cost_matrix.copy()
         self.n = n = self.C.shape[0]
-        self.row_covered = np.zeros(n, dtype=np.bool)
-        self.col_covered = np.zeros(n, dtype=np.bool)
+        self.row_uncovered = np.ones(n, dtype=np.bool)
+        self.col_uncovered = np.ones(n, dtype=np.bool)
         self.Z0_r = 0
         self.Z0_c = 0
         self.path = np.zeros((2*n, 2), dtype=int)
@@ -94,10 +94,10 @@ class _Hungarian(object):
         # starred zero in its row or column, star Z. Repeat for each element 
         # in the matrix.
         for i, j in zip(*np.where(self.C == 0)):
-            if (not self.col_covered[j]) and (not self.row_covered[i]):
+            if self.col_uncovered[j] and self.row_uncovered[i]:
                 self.marked[i, j] = 1
-                self.col_covered[j] = True
-                self.row_covered[i] = True
+                self.col_uncovered[j] = False
+                self.row_uncovered[i] = False
 
         self._clear_covers()
         return 3
@@ -109,7 +109,7 @@ class _Hungarian(object):
         assignments. In this case, Go to DONE, otherwise, Go to Step 4.
         """
         marked = (self.marked == 1)
-        self.col_covered[np.any(marked, axis=0)] = True
+        self.col_uncovered[np.any(marked, axis=0)] = False
 
         if marked.sum() >= self.n:
             return 7 # done
@@ -124,12 +124,13 @@ class _Hungarian(object):
         zero. Continue in this manner until there are no uncovered zeros
         left. Save the smallest uncovered value and Go to Step 6.
         """
-        C = (self.C == 0)
+        # We convert to int as numpy operations are faster on int
+        C = (self.C == 0).astype(np.int)
         n = self.n
         while True:
             # Find an uncovered zero
-            covered_C = C*(1-self.row_covered[:, np.newaxis])
-            covered_C *= (1-self.col_covered)
+            covered_C = C*self.row_uncovered[:, np.newaxis]
+            covered_C *= self.col_uncovered.astype(np.int)
             raveled_idx = np.argmax(covered_C)
             col = raveled_idx % n
             row = raveled_idx // n
@@ -146,8 +147,8 @@ class _Hungarian(object):
                     return 5
                 else:
                     col = star_col
-                    self.row_covered[row] = True
-                    self.col_covered[col] = False
+                    self.row_uncovered[row] = False
+                    self.col_uncovered[col] = True
 
     def _step5(self):
         """
@@ -207,10 +208,10 @@ class _Hungarian(object):
         lines.
         """
         # the smallest uncovered value in the matrix
-        minval = np.min(self.C[np.logical_not(self.row_covered)], axis=0)
-        minval = np.min(minval[np.logical_not(self.col_covered)])
-        self.C[self.row_covered] += minval
-        self.C[:, np.logical_not(self.col_covered)] -= minval
+        minval = np.min(self.C[self.row_uncovered], axis=0)
+        minval = np.min(minval[self.col_uncovered])
+        self.C[np.logical_not(self.row_uncovered)] += minval
+        self.C[:, self.col_uncovered] -= minval
         return 4
 
     def _find_prime_in_row(self, row):
@@ -225,8 +226,8 @@ class _Hungarian(object):
 
     def _clear_covers(self):
         """Clear all covered matrix cells"""
-        self.row_covered[:] = False
-        self.col_covered[:] = False
+        self.row_uncovered[:] = True
+        self.col_uncovered[:] = True
 
 
 
