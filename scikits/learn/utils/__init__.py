@@ -29,19 +29,15 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 
-def shuffle(*args, **kwargs):
+def shuffle(*arrays, **options):
     """Shuffle arrays or sparse matrices in a consistent way
 
     Parameters
     ----------
-    *args : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
-
-    copy : boolean (True by default)
-        If False, perform inplace shuffling unless the collection is a python
-        list or scipy.sparse matrix in a format other than CSR.
 
     Return
     ------
@@ -76,27 +72,26 @@ def shuffle(*args, **kwargs):
       array([2, 1, 0])
 
     """
-    copy = kwargs.get('copy', True)
-    random_state = check_random_state(kwargs.get('random_state'))
+    random_state = check_random_state(options.pop('random_state', None))
+    if options:
+        raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
-    if len(args) == 0:
-        return args
+    if len(arrays) == 0:
+        return arrays
 
-    first = args[0]
+    first = arrays[0]
     n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
     indices = np.arange(n_samples)
     random_state.shuffle(indices)
 
     shuffled = []
 
-    for arg in args:
-        if hasattr(arg, 'tocsr'):
-            arg = arg.tocsr()
+    for array in arrays:
+        if hasattr(array, 'tocsr'):
+            array = array.tocsr()
         else:
-            arg = np.asanyarray(arg)
-        if copy:
-            arg = arg.copy()
-        arg = arg[indices]
-        shuffled.append(arg)
+            array = np.asanyarray(array)
+        array = array[indices]
+        shuffled.append(array)
 
     return shuffled
