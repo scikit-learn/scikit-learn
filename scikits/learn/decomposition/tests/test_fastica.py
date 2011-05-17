@@ -4,6 +4,9 @@ Test the fastica algorithm.
 
 import numpy as np
 from numpy.testing import assert_almost_equal
+
+from scipy import stats
+
 from .. import FastICA, fastica
 from ..fastica_ import _gs_decorrelation
 
@@ -29,11 +32,12 @@ def test_gs():
     Test gram schmidt orthonormalization
     """
     # generate a random orthogonal  matrix
-    W, _, _ = np.linalg.svd(np.random.randn(10, 10))
-    w = np.random.randn(10)
+    rng = np.random.RandomState(0)
+    W, _, _ = np.linalg.svd(rng.randn(10, 10))
+    w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
     assert (w ** 2).sum() < 1.e-10
-    w = np.random.randn(10)
+    w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
     assert((tmp[:5] ** 2).sum() < 1.e-10)
@@ -42,12 +46,12 @@ def test_gs():
 def test_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
     """
-    import scipy.stats as st
+    # scipy.stats uses the global RNG:
+    np.random.seed(0)
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
-    #s1 = 2*(np.random.rand(n_samples)>.5) - 1
-    s2 = st.t.rvs(1, size=n_samples)
+    s2 = stats.t.rvs(1, size=n_samples)
     s = np.c_[s1, s2].T
     center_and_norm(s)
     s1, s2 = s
@@ -98,6 +102,7 @@ def test_fastica(add_noise=False):
 def test_non_square_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
     """
+    rng = np.random.RandomState(0)
 
     n_samples = 1000
     # Generate two sources:
@@ -109,11 +114,11 @@ def test_non_square_fastica(add_noise=False):
     s1, s2 = s
 
     # Mixing matrix
-    mixing = np.random.randn(6, 2)
+    mixing = rng.randn(6, 2)
     m = np.dot(mixing, s)
 
     if add_noise:
-        m += 0.1 * np.random.randn(6, n_samples)
+        m += 0.1 * rng.randn(6, n_samples)
 
     center_and_norm(m)
 
