@@ -23,11 +23,10 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     window_size : int, optional
         Window size passed to BallTree
 
-    algorithm : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
-        Algorithm used to compute the nearest neighbors. 'ball_tree'
-        will construct a BallTree, 'brute' and 'brute_inplace' will
-        perform brute-force search.'auto' will guess the most
-        appropriate based on current dataset.
+    algorithm : {'auto', 'ball_tree', 'brute'}, optional
+       Algorithm used to compute the nearest neighbors. 'ball_tree' will
+       construct a BallTree while 'brute'will perform brute-force
+       search. 'auto' will guess the most appropriate based on current dataset.
 
     Examples
     --------
@@ -136,12 +135,9 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         self._set_params(**params)
         X = np.atleast_2d(X)
         if self.ball_tree is None:
-            if self.algorithm == 'brute_inplace' and not return_distance:
-                return knn_brute(self._fit_X, X, self.n_neighbors)
-            else:
-                dist = euclidean_distances(X, self._fit_X, squared=True)
-                # XXX: should be implemented with a partial sort
-                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+            dist = euclidean_distances(X, self._fit_X, squared=True)
+            # XXX: should be implemented with a partial sort
+            neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
             if not return_distance:
                 return neigh_ind
             else:
@@ -205,11 +201,11 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     mode : {'mean', 'barycenter'}, optional
         Weights to apply to labels.
 
-    algorithm : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
-        Algorithm used to compute the nearest neighbors. 'ball_tree'
-        will construct a BallTree, 'brute' and 'brute_inplace' will
-        perform brute-force search.'auto' will guess the most
-        appropriate based on current dataset.
+    algorithm : {'auto', 'ball_tree', 'brute'}, optional
+        Algorithm used to compute the nearest neighbors. 'ball_tree' will
+        construct a BallTree, while 'brute' will perform brute-force
+        search. 'auto' will guess the most appropriate based on current
+        dataset.
 
     Examples
     --------
@@ -316,12 +312,14 @@ def barycenter_weights(X, Z, reg=1e-3):
     # this might raise a LinalgError if G is singular and has trace
     # zero
     for i, A in enumerate(Z.transpose(0, 2, 1)):
-        C = A.T - X[i] # broadcasting
+        C = A.T - X[i]  # broadcasting
         G = np.dot(C, C.T)
         trace = np.trace(G)
-        if trace > 0: R = reg * trace
-        else: R = reg
-        G.flat[::Z.shape[1]+1] += R
+        if trace > 0:
+            R = reg * trace
+        else:
+            R = reg
+        G.flat[::Z.shape[1] + 1] += R
         w = linalg.solve(G, v, sym_pos=True)
         B[i, :] = w / np.sum(w)
     return B

@@ -52,7 +52,7 @@ TEST_FOLDER = "20news-bydate-test"
 
 
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
-                      shuffle=True, rng=42, download_if_missing=True):
+                      shuffle=True, random_state=42, download_if_missing=True):
     """Load the filenames of the 20 newsgroups dataset
 
     Parameters
@@ -77,7 +77,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         identically distributed (i.i.d.) such as stochastic gradient
         descent for instance.
 
-    rng: a numpy random number generator or a seed integer, 42 by default
+    random_state: a numpy random number generator or a seed integer, 42 by default
         used to shuffle the dataset
 
     download_if_missing: optional, True by default
@@ -118,7 +118,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     description = subset + ' subset of the 20 newsgroups by date dataset'
     return load_filenames(folder_path, description=description,
-                          categories=categories, shuffle=shuffle, rng=rng)
+                          categories=categories, shuffle=shuffle, random_state=random_state)
 
 
 def load_20newsgroups(download_if_missing=False, **kwargs):

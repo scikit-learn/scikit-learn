@@ -7,7 +7,7 @@ from time import time
 import numpy as np
 from collections import defaultdict
 
-from scikits.learn.decomposition.nmf import NMF, _initialize_nmf_
+from scikits.learn.decomposition.nmf import NMF, _initialize_nmf
 from scikits.learn.datasets.samples_generator import low_rank_fat_tail
 
 
@@ -48,7 +48,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     eps = 1e-5
     n, m = V.shape
     if R == "svd":
-        W, H = _initialize_nmf_(V, r)
+        W, H = _initialize_nmf(V, r)
     elif R == None:
         R = np.random.mtrand._rand
         W = np.abs(R.standard_normal((n, r)))

@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <sstream>
-#include <exception>
+#include <stdexcept>
 
 /************************************************************
  * templated Ball Tree class
@@ -22,19 +22,19 @@
  *     typedef double value_type;          //type of the data
  *                                         // (can be any numerical type)
  *
- *     Point::Point(int size);             //constructor of new point
+ *     Point::Point(size_t size);          //constructor of new point
  *
  *     Point::Point(const Point&);         //copy constructor
  *     Point& operator=(const Point&);     //assignment operator
  *                                         //  may either copy or view
  *                                         //   the other data
  *
- *     value_type& operator[](int i);      //element access
- *     value_type& at(int i);
- *     const value_type& operator[](int i) const;
- *     const value_type& at(int i) const;
+ *     value_type& operator[](size_t i);   //element access
+ *     value_type& at(size_t i);
+ *     const value_type& operator[](size_t i) const;
+ *     const value_type& at(size_t i) const;
  *
- *     int size() const;                   //size (dimension) of the point
+ *     size_t size() const;                //size (dimension) of the point
  *  }
  *
  *  Note that all these requirements are satisfied by the
@@ -43,13 +43,10 @@
 
 
 /* Custom exception to allow Python to catch C++ exceptions */
-class BallTreeException : public std::exception {
-public:
-    BallTreeException(std::string msg) { message = msg; }
+class BallTreeException : public std::runtime_error {
+  public:
+    BallTreeException(std::string msg) : std::runtime_error(msg) {}
     ~BallTreeException() throw() {};
-    virtual const char* what() const throw() { return message.c_str(); }
-private:
-    std::string message;
 };
 
 
@@ -62,7 +59,7 @@ private:
 template<class P1_Type,class P2_Type>
  typename P1_Type::value_type Euclidean_Dist(const P1_Type& p1,
                                              const P2_Type& p2){
-    int D = p1.size();
+    size_t D = p1.size();
     if(p2.size() != D){
         std::stringstream oss;
         oss << "Euclidean_Dist : point sizes must match (" << D << " != " << p2.size() << ").\n";
@@ -70,7 +67,7 @@ template<class P1_Type,class P2_Type>
     }
     typename P1_Type::value_type dist = 0;
     typename P1_Type::value_type diff;
-    for(int i=0;i<D;i++){
+    for(size_t i=0;i<D;i++){
         diff = p1[i] - p2[i];
         dist += diff*diff;
     }
@@ -393,7 +390,7 @@ struct Node{
   //query all points within a radius r of pt
     int query_ball(const Point& pt,
         value_type r,
-        std::vector<long int>& nbrs){
+        std::vector<size_t>& nbrs){
         value_type dist_LB = calc_dist_LB(pt);
 
     //--------------------------------------------------
@@ -521,20 +518,20 @@ public:
   //     nearest neighbors.  The distance to the furthest neighbor
   //     is also returned.
     value_type query(const Point& pt,
-                     std::vector<long int>& nbrs) const{
-        query(pt,nbrs.size(),&(nbrs[0]));
+                     std::vector<size_t>& nbrs) const{
+        return query(pt, nbrs.size(), &nbrs[0]);
     }
 
     value_type query(const Point* pt,
-                     std::vector<long int>& nbrs) const{
-        query(*pt,nbrs.size(),&(nbrs[0]));
+                     std::vector<size_t>& nbrs) const{
+        return query(*pt, nbrs.size(), &nbrs[0]);
     }
 
     value_type query(const Point& pt,
-                     int num_nbrs,
-                     long int* nbrs,
-                     double* dist = NULL) const{
-        if(num_nbrs > (int)(Points_.size()) ){
+                     size_t num_nbrs,
+                     size_t* nbrs,
+                     double* dist = 0) const{
+        if(num_nbrs > Points_.size() ){
             std::stringstream oss;
             oss << "query: k must be less than or equal to N Points (" << num_nbrs << " > " << (int)(Points_.size()) << ")\n";
             throw BallTreeException(oss.str());
@@ -544,13 +541,13 @@ public:
         value_type Dmax = head_node_->query(pt,num_nbrs,PointSet);
 
 
-        for(int i=0;i<num_nbrs;i++){
+        for(size_t i=0;i<num_nbrs;i++){
             nbrs[i] = PointSet[i].index;
         }
 
-        if(dist != NULL)
-            for(int i=0;i<num_nbrs;i++)
-            dist[i] = PointSet[i].dist;
+        if(dist != 0)
+            for(size_t i=0;i<num_nbrs;i++)
+                dist[i] = PointSet[i].dist;
         return Dmax;
     }
 
@@ -560,7 +557,7 @@ public:
   // if nbrs is not supplied, just count points within radius
     int query_ball(const Point& pt,
                    value_type r,
-                   std::vector<long int>& nbrs){
+                   std::vector<size_t>& nbrs){
         return head_node_->query_ball(pt,r,nbrs);
     }
 
@@ -587,8 +584,8 @@ private:
 template<class Point>
 void BruteForceNeighbors(std::vector<Point*> Points,
              const Point& pt,
-             long int k,
-             long int* neighbors){
+             size_t k,
+             size_t* neighbors){
   int N = Points.size();
   typedef pd_tuple<typename Point::value_type> PD;
   std::vector<PD> distances;
@@ -600,15 +597,15 @@ void BruteForceNeighbors(std::vector<Point*> Points,
              distances.begin()+k,
              distances.end()      );
 
-  for(int i=0; i<k; i++)
+  for(size_t i=0; i<k; i++)
     neighbors[i] = distances[i].index;
 }
 
 template<class Point>
 void BruteForceNeighbors(std::vector<Point*> Points,
              const Point& pt,
-             std::vector<long int>& neighbors){
-  long int k = neighbors.size();
+             std::vector<size_t>& neighbors){
+  size_t k = neighbors.size();
   BruteForceNeighbors(Points,pt,k,&(neighbors[0]));
 }
 

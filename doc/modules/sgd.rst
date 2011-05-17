@@ -20,7 +20,7 @@ SGD has been successfully applied to large-scale and sparse machine
 learning problems often encountered in text classification and natural
 language processing.  Given that the data is sparse, the classifiers
 in this module easily scale to problems with more than 10^5 training
-examples and more than 10^4 features.
+examples and more than 10^5 features.
 
 The advantages of Stochastic Gradient Descent are:
 
@@ -30,7 +30,7 @@ The advantages of Stochastic Gradient Descent are:
 
 The disadvantages of Stochastic Gradient Descent include:
 
-    - SGD requires a number of hyperparameters including the regularization
+    - SGD requires a number of hyperparameters such as the regularization
       parameter and the number of iterations.
 
     - SGD is sensitive to feature scaling.
@@ -60,7 +60,8 @@ for the training samples::
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', seed=0, rho=1.0, alpha=0.0001)
+           learning_rate='optimal', fit_intercept=True, penalty='l2',
+           power_t=0.5, seed=0, eta0=0.0, rho=1.0, alpha=0.0001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -75,8 +76,8 @@ the model parameters::
 
 Member `intercept_` holds the intercept (aka offset or bias)::
 
-    >>> clf.intercept_
-    array(-9.9900299301496904)
+    >>> clf.intercept_                                    # doctest: +ELLIPSIS
+    array(-9.990...)
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter `fit_intercept`.
@@ -249,6 +250,11 @@ Tips on Practical Use
     for the number of iterations is `n_iter = np.ceil(10**6 / n)`,
     where `n` is the size of the training set.
 
+  * If you apply SGD to features extracted using PCA we found that
+    it is often wise to scale the feature values by some constant `c`
+    such that the average L2 norm of the training data equals one.
+    
+
 .. topic:: References:
 
  * `"Efficient BackProp" <yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
@@ -323,6 +329,29 @@ example updates the model parameters according to the update rule given by
 where :math:`\eta` is the learning rate which controls the step-size in
 the parameter space.  The intercept :math:`b` is updated similarly but
 without regularization.
+
+The learning rate :math:`\eta` can be either constant or gradually decaying. For
+classification, the default learning rate schedule (`learning_rate='optimal'`) 
+is given by
+
+.. math::
+
+    \eta^{(t)} = \frac {1.0}{t+t0}
+
+where :math:`t0` is the time step (there are a total of `n_samples*epochs` 
+time steps), :math:`t0` is choosen automatically assuming that the norm of
+the training samples is approx. 1. 
+For regression, the default learning rate schedule, inverse scaling 
+(`learning_rate='invscaling'`), is given by
+
+.. math::
+
+    \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
+
+where :math:`eta_0` and :math:`power\_t` are hyperparameters choosen by the
+user.
+For a constant learning rate use `learning_rate='constant'` and use `eta0`
+to specify the learning rate. 
 
 The model parameters can be accessed through the members coef\_ and
 intercept\_:

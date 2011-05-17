@@ -1,3 +1,5 @@
+.. _datasets:
+
 =========================
 Dataset loading utilities
 =========================
@@ -16,13 +18,28 @@ This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithm on data
 that comes from the 'real world'.
 
+Datasets shipped with the scikit learn
+========================================
+
+The scikit learn comes with a few standard datasets:
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   load_iris
+   load_diabetes
+   load_digits
+   load_linnerud
+
 
 Dataset generators
 ==================
 
 TODO
 
-
+.. _labeled_faces_in_the_wild:
 
 The Labeled Faces in the Wild face recognition dataset
 ======================================================

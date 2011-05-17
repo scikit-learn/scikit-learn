@@ -173,7 +173,7 @@ Python code: it takes around 100% of the cumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 
-  $ pip install line-prof
+  $ pip install line-profiler
   $ vim ~/.ipython/ipy_user_conf.py
 
 Ensure the following lines are present::
@@ -239,17 +239,17 @@ pin-point the most expensive expressions that would deserve additional care.
 Performance tips for the Cython developer
 =========================================
 
-If the profiling of the python code reveals that the python interpreter
+If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
 actual numerical computation (e.g. ``for`` loops over vector components,
 nested evaluation of conditional expression, scalar arithmetics...), it
 is probably adequate to extract the hotspot portion of the code as a
-standalone function in a ``.pyx`` file and add static type declarations
-and then use cython_ to generate a C program suitable to be compiled as
-a Python extension module.
+standalone function in a ``.pyx`` file, add static type declarations and
+then use Cython to generate a C program suitable to be compiled as a
+Python extension module.
 
-The official documentation available http://docs.cython.org/ contains
-tutorial and reference guide for developing such a module. In the
+The official documentation available at http://docs.cython.org/ contains
+a tutorial and reference guide for developing such a module. In the
 following we will just highlight a couple of tricks that we found
 important in practice on the existing cython codebase in the scikit-learn
 project.

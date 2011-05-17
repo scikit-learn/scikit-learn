@@ -15,11 +15,18 @@ cimport numpy as np
 cimport cython
 cimport sgd_fast
 
-from sgd_fast cimport LossFunction, exp, log, sqrt
+from sgd_fast cimport LossFunction, exp, log, sqrt, pow
 
+# Penalty constants
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
+
+# Learning rate constants
+DEF CONSTANT = 1
+DEF OPTIMAL = 2
+DEF INVSCALING = 3
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -36,7 +43,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               double weight_pos, double weight_neg,
-              np.ndarray[double, ndim=1] sample_weight):
+              np.ndarray[double, ndim=1] sample_weight,
+              int learning_rate, double eta0,
+              double power_t):
     """Cython impl. of SGD with different loss functions and penalties
 
     This representation assumes X represented using the Compressed Sparse Row
@@ -57,7 +66,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     rho : float
         The elastic net hyperparameter.
     X : csr_matrix[double, ndim=2]
-        The dataset as a Compressed Sparse Row matrix 
+        The dataset as a Compressed Sparse Row matrix
         (see scipy.sparse.csr_matrix).
     Y : ndarray[double, ndim=1]
         The labels.
@@ -72,19 +81,28 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     weight_pos : float
         The weight of the positive class.
     weight_neg : float
-        The weight of the negative class. 
+        The weight of the negative class.
     seed : int
         The seed of the pseudo random number generator to use when
         shuffling the data
     sample_weight : array, shape = [n_samples]
         The importance weight of each sample.
+    learning_rate : int
+        The learning rate:
+        (1) constant, eta = eta0
+        (2) optimal, eta = 1.0/(t+t0)
+        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+    eta0 : double
+        The initial learning rate.
+    power_t : double
+        The exponent for inverse scaling learning rate.
 
     Returns
     -------
     w : array, shape [n_features]
-        The fitted weight vector. 
+        The fitted weight vector.
     intercept : float
-        The fitted intercept term. 
+        The fitted intercept term.
     """
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
@@ -99,7 +117,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double *sample_weight_data = <double *>sample_weight.data
 
     cdef np.ndarray[int, ndim=1, mode="c"] index = np.arange(n_samples,
-                                                             dtype = np.int32)
+                                                             dtype=np.int32)
     cdef int *index_data_ptr = <int *>index.data
     cdef int offset = 0
     cdef int xnnz = 0
@@ -119,13 +137,23 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr
     if penalty_type != L2:
-        q = np.zeros((n_features,), dtype = np.float64, order = "c")
+        q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
-    # computing eta0
     cdef double typw = sqrt(1.0 / sqrt(alpha))
-    cdef double eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
-    t = 1.0 / (eta0 * alpha)
+
+    if learning_rate == OPTIMAL:
+        # computing eta0, the initial learning rate
+        eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
+    else:
+        eta = eta0
+
+    if learning_rate == OPTIMAL:
+        # initialize t such that eta at first example equals eta0
+        t = 1.0 / (eta0 * alpha)
+    else:
+        t = 1.0
+
     t_start = time()
     for epoch from 0 <= epoch < n_iter:
         if verbose > 0:
@@ -137,7 +165,10 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
             offset = X_indptr_ptr[sample_idx]
             xnnz = X_indptr_ptr[sample_idx + 1] - offset
             y = Y_data_ptr[sample_idx]
-            eta = 1.0 / (alpha * t)
+            if learning_rate == OPTIMAL:
+                eta = 1.0 / (alpha * t)
+            elif learning_rate == INVSCALING:
+                eta = eta0 / pow(t, power_t)
             p = (dot(w_data_ptr, X_data_ptr, X_indices_ptr,
                      offset, xnnz) * wscale) + intercept
             sumloss += loss.loss(p, y)
@@ -149,9 +180,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                 sample_weight_data[sample_idx]
             if update != 0.0:
                 add(w_data_ptr, wscale, X_data_ptr, X_indices_ptr,
-                    offset, xnnz, update)
+                    offset, xnnz, -update)
                 if fit_intercept == 1:
-                    intercept += update * 0.01
+                    intercept -= update * 0.01
             if penalty_type != L1:
                 wscale *= (1.0 - (rho * eta * alpha))
                 if wscale < 1e-9:
@@ -172,7 +203,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                                                     w.nonzero()[0].shape[0],
                                                     intercept, count,
                                                     sumloss / count))
-            print("Total training time: %.2f seconds." % (time()-t_start))
+            print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
         if np.any(np.isinf(w)) or np.any(np.isnan(w)) \

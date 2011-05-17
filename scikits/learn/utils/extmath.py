@@ -7,8 +7,9 @@ Extended math utilities.
 import sys
 import math
 
-from . import make_rng
+from . import check_random_state
 import numpy as np
+
 
 #XXX: We should have a function with numpy's slogdet API
 def _fast_logdet(A):
@@ -22,12 +23,13 @@ def _fast_logdet(A):
     # http://projects.scipy.org/numpy/browser/trunk/numpy/linalg/linalg.py#L1559
     from scipy import linalg
     ld = np.sum(np.log(np.diag(A)))
-    a = np.exp(ld/A.shape[0])
-    d = np.linalg.det(A/a)
+    a = np.exp(ld / A.shape[0])
+    d = np.linalg.det(A / a)
     ld += np.log(d)
     if not np.isfinite(ld):
         return -np.inf
     return ld
+
 
 def _fast_logdet_numpy(A):
     """
@@ -51,10 +53,9 @@ else:
 
 if sys.version_info[1] < 6:
     # math.factorial is only available in 2.6
-    def factorial(x) :
-        # simple recursive implementation
-        if x == 0: return 1
-        return x * factorial(x-1)
+    import operator
+    def factorial(x):
+        return reduce(operator.mul, xrange(2, x+1), 1)
 else:
     factorial = math.factorial
 
@@ -100,7 +101,7 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a,b)
 
 
-def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
+def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
     """Computes the k-truncated randomized SVD
 
     Parameters
@@ -126,7 +127,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
         implementation of randomized SVD tend to be a little faster in that
         case).
 
-    rng: RandomState or an int seed (0 by default)
+    random_state: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
 
     Notes
@@ -155,7 +156,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
     if p == None:
         p = k
 
-    rng = make_rng(rng)
+    random_state = check_random_state(random_state)
     n_samples, n_features = M.shape
 
     if transpose == 'auto' and n_samples > n_features:
@@ -165,7 +166,7 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
         M = M.T
 
    # generating random gaussian vectors r with shape: (M.shape[1], k + p)
-    r = rng.normal(size=(M.shape[1], k + p))
+    r = random_state.normal(size=(M.shape[1], k + p))
 
     # sampling the range of M using by linear projection of r
     Y = safe_sparse_dot(M, r)
@@ -195,4 +196,3 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', rng=0):
         return V[:k, :].T, s[:k], U[:, :k].T
     else:
         return U[:, :k], s[:k], V[:k, :]
-

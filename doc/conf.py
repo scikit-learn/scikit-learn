@@ -67,7 +67,7 @@ copyright = u'2010, scikits.learn developers (BSD License)'
 # built documents.
 #
 # The short X.Y version.
-version = '0.8'
+version = '0.9'
 # The full version, including alpha/beta/rc tags.
 import scikits.learn as skl
 release = skl.__version__
@@ -218,4 +218,6 @@ latex_preamble = """
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+trim_doctests_flags = True
 
