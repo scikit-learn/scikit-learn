@@ -182,7 +182,7 @@ class Perceptron(BaseEstimator):
 
         for i in xrange(self.n_iter):
             if self.shuffle:
-                shuffle(X, y)
+                X, y = shuffle(X, y)
             for j in xrange(n_samples):
                 lrn(X[j], y[j])
 
