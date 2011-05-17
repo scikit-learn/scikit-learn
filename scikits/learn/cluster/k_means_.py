@@ -4,13 +4,13 @@
 #          Thomas Rueckstiess <ruecksti@in.tum.de>
 #          James Bergstra <james.bergstra@umontreal.ca>
 #          Jan Schlueter <scikit-learn@jan-schlueter.de>
+#          Nelle Varoquaux
 # License: BSD
 
 import warnings
 
 import numpy as np
 from math import floor
-import itertools
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -184,7 +184,6 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     """
     random_state = check_random_state(random_state)
-    n_samples = X.shape[0]
 
     vdata = np.mean(np.var(X, 0))
     best_inertia = np.infty
@@ -363,7 +362,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     elif hasattr(init, '__array__'):
         centers = np.asanyarray(init).copy()
     elif callable(init):
-        centers = init(X, k, random_state=randome_state)
+        centers = init(X, k, random_state=random_state)
     else:
         raise ValueError("the init parameter for the k-means should "
             "be 'k-means++' or 'random' or an ndarray, "
@@ -648,7 +647,7 @@ class MiniBatchKMeans(KMeans):
                 x_squared_norms=x_squared_norms)
 
         self.counts = np.zeros(self.k)
-        tol = np.mean(np.var(X, 0)) * self.tol
+        tol = np.mean(np.var(X, axis=0)) * self.tol
         try:
             split_X = np.array_split(X, floor(float(len(X)) / self.chunk_size))
         except ValueError:
