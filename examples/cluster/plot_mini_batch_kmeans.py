@@ -87,7 +87,7 @@ for k, col in zip(range(n_clusters), colors):
             markerfacecolor=col, marker='.')
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
                                     markeredgecolor='k', markersize=6)
-ax.set_title('Clustering with BatchKMeans')
+ax.set_title('KMeans')
 
 # MiniBatchKMeans
 ax = fig.add_subplot(1, 3, 2)
@@ -98,7 +98,7 @@ for k, col in zip(range(n_clusters), colors):
             markerfacecolor=col, marker='.')
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
                                     markeredgecolor='k', markersize=6)
-ax.set_title('Clustering with MiniBatchKMeans')
+ax.set_title('MiniBatchKMeans')
 
 # Initialise the different array to all False
 different = (mbk_means_labels == 4)

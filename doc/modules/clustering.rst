@@ -56,7 +56,13 @@ algorithm.
 .. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_1.png
    :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
    :align: center
-   :scale: 50
+   :scale: 100
+
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_mini_batch_kmeans.py`: Comparison of the KMeans and
+   BatchKMeans
 
 
 .. topic:: References:
