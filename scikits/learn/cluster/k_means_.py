@@ -631,8 +631,8 @@ class MiniBatchKMeans(KMeans):
         if self.copy_x:
             X = X.copy()
 
+        X = self._check_data(X, **params)
         if hasattr(self.init, '__array__'):
-            X = self._check_data(X, **params)
             self.init = np.asarray(self.init)
 
         if shuffle:
