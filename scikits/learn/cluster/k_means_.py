@@ -4,13 +4,14 @@
 #          Thomas Rueckstiess <ruecksti@in.tum.de>
 #          James Bergstra <james.bergstra@umontreal.ca>
 #          Jan Schlueter <scikit-learn@jan-schlueter.de>
+#          Nelle Varoquaux
 # License: BSD
 
 import warnings
+import itertools
 
 import numpy as np
 from math import floor
-import itertools
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -73,7 +74,9 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
     # Initialize list of closest distances and calculate current potential
     if x_squared_norms is None:
-        x_squared_norms = (X ** 2).sum(axis=1)
+        x_squared_norms = X.copy()
+        x_squared_norms **= 2
+        x_squared_norms = x_squared_norms.sum(axis=1)
     closest_dist_sq = euclidean_distances(
         np.atleast_2d(centers[0]), X, Y_norm_squared=x_squared_norms,
         squared=True)
@@ -184,7 +187,6 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     """
     random_state = check_random_state(random_state)
-    n_samples = X.shape[0]
 
     vdata = np.mean(np.var(X, 0))
     best_inertia = np.infty
@@ -351,7 +353,6 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     """
     random_state = check_random_state(random_state)
 
-
     n_samples = X.shape[0]
     if init == 'k-means++':
         centers = k_init(X, k,
@@ -363,7 +364,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     elif hasattr(init, '__array__'):
         centers = np.asanyarray(init).copy()
     elif callable(init):
-        centers = init(X, k, random_state=randome_state)
+        centers = init(X, k, random_state=random_state)
     else:
         raise ValueError("the init parameter for the k-means should "
             "be 'k-means++' or 'random' or an ndarray, "
@@ -629,43 +630,37 @@ class MiniBatchKMeans(KMeans):
 
         self.random_state = check_random_state(self.random_state)
 
+        X = self._check_data(X, **params)
+
         if self.copy_x:
             X = X.copy()
 
         if hasattr(self.init, '__array__'):
-            X = self._check_data(X, **params)
             self.init = np.asarray(self.init)
 
         if shuffle:
             self.random_state.shuffle(X)
 
-        x_squared_norms = X.copy()
-        x_squared_norms **= 2
-        x_squared_norms = x_squared_norms.sum(axis=1)
-
         self.cluster_centers_ = _init_centroids(
-                X, self.k, self.init, random_state=self.random_state,
-                x_squared_norms=x_squared_norms)
+                X, self.k, self.init, random_state=self.random_state)
 
         self.counts = np.zeros(self.k)
-        tol = np.mean(np.var(X, 0)) * self.tol
+        tol = np.mean(np.var(X, axis=0)) * self.tol
         try:
             split_X = np.array_split(X, floor(float(len(X)) / self.chunk_size))
         except ValueError:
             split_X = [X]
 
-        squared_norms = [(x ** 2).sum(axis=1) for x in split_X]
-        data = zip(split_X, squared_norms)
-        old_centers = []
-
-        for i in xrange(self.max_iter):
-            j = i % len(data)
-            old_centers[:] = self.cluster_centers_.copy()
+        for i, (this_x, this_squared_norm) in zip(
+                                    xrange(self.max_iter),
+                                    itertools.cycle((x, (x ** 2).sum(axis=1)) 
+                                                    for x in split_X)):
+            old_centers = self.cluster_centers_.copy()
             self.cluster_centers_, self.counts = _mini_batch_step(
-                data[j][0], self.cluster_centers_, self.counts,
-                x_squared_norms=data[j][1])
+                this_x, self.cluster_centers_, self.counts,
+                x_squared_norms=this_squared_norm)
 
-            if np.sum(old_centers - self.cluster_centers_) ** 2 < tol:
+            if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
                 if self.verbose:
                     print 'Converged to similar centers at iteration', i
                 break
@@ -682,8 +677,8 @@ class MiniBatchKMeans(KMeans):
 
         self.random_state = check_random_state(self.random_state)
 
+        X = self._check_data(X, **params)
         if hasattr(self.init, '__array__'):
-            X = self._check_data(X, **params)
             self.init = np.asarray(self.init)
 
         if len(X) == 0:

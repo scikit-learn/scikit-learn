@@ -43,7 +43,8 @@
 
 
 /* Custom exception to allow Python to catch C++ exceptions */
-struct BallTreeException : public std::runtime_error {
+class BallTreeException : public std::runtime_error {
+  public:
     BallTreeException(std::string msg) : std::runtime_error(msg) {}
     ~BallTreeException() throw() {};
 };

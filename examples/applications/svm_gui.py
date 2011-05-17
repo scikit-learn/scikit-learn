@@ -12,15 +12,6 @@ negative examples click the right button.
 
 If all examples are from the same class, it uses a one-class SVM.
 
-TODO add labels to the panel.
-
-Requirements
-------------
-
- - Tkinter
- - scikits.learn
- - matplotlib with TkAgg
-
 """
 from __future__ import division
 

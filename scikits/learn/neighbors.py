@@ -312,12 +312,14 @@ def barycenter_weights(X, Z, reg=1e-3):
     # this might raise a LinalgError if G is singular and has trace
     # zero
     for i, A in enumerate(Z.transpose(0, 2, 1)):
-        C = A.T - X[i] # broadcasting
+        C = A.T - X[i]  # broadcasting
         G = np.dot(C, C.T)
         trace = np.trace(G)
-        if trace > 0: R = reg * trace
-        else: R = reg
-        G.flat[::Z.shape[1]+1] += R
+        if trace > 0:
+            R = reg * trace
+        else:
+            R = reg
+        G.flat[::Z.shape[1] + 1] += R
         w = linalg.solve(G, v, sym_pos=True)
         B[i, :] = w / np.sum(w)
     return B
