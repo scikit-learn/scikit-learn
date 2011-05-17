@@ -1,7 +1,4 @@
-"""Utilities to evaluate pairwise distances or metrics between 2
-sets of points.
-
-"""
+"""Utilities to evaluate pairwise distances or affinity of sets of samples"""
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
