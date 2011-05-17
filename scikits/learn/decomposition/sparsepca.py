@@ -208,6 +208,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     def fit_transform(self, X, y=None, **params):
         self._set_params(**params)
+        X = np.asanyarray(X)
+
         U, V, E = sparse_pca(X, self.n_components, self.alpha, tol=self.tol,
                              max_iter=self.max_iter, method=self.method,
                              n_jobs=self.n_jobs)
@@ -220,10 +222,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        U = np.zeros((X.shape[0], self.n_components))
-        U = _update_U(U, X, self.components_)
+        # n_components = np.min((X.shape[0], self.n_components))  # if wide
+        # U = np.zeros((X.shape[0], n_components))
+        U = np.linalg.lstsq(self.components_.T, X.T)[0].T
+        U /= np.apply_along_axis(linalg.norm, 0, U)
+        # U = _update_U(U, X, self.components_)
         return U
-
+ 
 
 def generate_toy_data(n_atoms, n_samples, image_size):
     n_features = img_sz[0] * img_sz[1]
