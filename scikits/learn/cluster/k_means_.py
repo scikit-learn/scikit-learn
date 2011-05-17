@@ -661,7 +661,7 @@ class MiniBatchKMeans(KMeans):
                 data[j][0], self.cluster_centers_, self.counts,
                 x_squared_norms=data[j][1])
 
-            if np.sum(old_centers - self.cluster_centers_) ** 2 < tol:
+            if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
                 if self.verbose:
                     print 'Converged to similar centers at iteration', i
                 break
