@@ -1,8 +1,9 @@
 from os.path import join
-from numpy.distutils.system_info import get_info, get_standard_file, BlasNotFoundError
+from numpy.distutils.system_info import get_info, get_standard_file, \
+     BlasNotFoundError
 
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     import numpy
     from numpy.distutils.misc_util import Configuration
 
@@ -13,7 +14,7 @@ def configuration(parent_package='',top_path=None):
     # cd fast needs CBLAS
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (
-        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])) :
+        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
         cblas_libs = ['cblas']
         blas_info.pop('libraries', None)
     else:
@@ -31,4 +32,3 @@ def configuration(parent_package='',top_path=None):
                          )
 
     return config
-
