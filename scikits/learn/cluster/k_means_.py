@@ -613,7 +613,6 @@ class MiniBatchKMeans(KMeans):
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
 
-
     def fit(self, X, y=None, shuffle=True, **params):
         """
         Calculates the centroids on a batch X
@@ -653,7 +652,7 @@ class MiniBatchKMeans(KMeans):
 
         for i, (this_x, this_squared_norm) in zip(
                                     xrange(self.max_iter),
-                                    itertools.cycle((x, (x ** 2).sum(axis=1)) 
+                                    itertools.cycle((x, (x ** 2).sum(axis=1))
                                                     for x in split_X)):
             old_centers = self.cluster_centers_.copy()
             self.cluster_centers_, self.counts = _mini_batch_step(
