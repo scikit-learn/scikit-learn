@@ -81,13 +81,9 @@ class _Hungarian(object):
                 done = True
 
         # Look for the starred columns
-        results = []
-        for i in range(n):
-            for j in range(n):
-                if self.marked[i, j] == 1:
-                    results.extend([(i, j)])
+        results = np.array(np.where(self.marked == 1)).T
 
-        return results
+        return results.tolist()
 
     def _step1(self):
         """
