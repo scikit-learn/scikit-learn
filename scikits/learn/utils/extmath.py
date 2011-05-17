@@ -55,7 +55,7 @@ if sys.version_info[1] < 6:
     # math.factorial is only available in 2.6
     import operator
     def factorial(x):
-        return reduce(operator.mul, range(2, x+1), 1)
+        return reduce(operator.mul, xrange(2, x+1), 1)
 else:
     factorial = math.factorial
 
