@@ -126,11 +126,11 @@ class _Hungarian(object):
         """
         # We convert to int as numpy operations are faster on int
         C = (self.C == 0).astype(np.int)
+        covered_C = C*self.row_uncovered[:, np.newaxis]
+        covered_C *= self.col_uncovered.astype(np.int)
         n = self.n
         while True:
             # Find an uncovered zero
-            covered_C = C*self.row_uncovered[:, np.newaxis]
-            covered_C *= self.col_uncovered.astype(np.int)
             raveled_idx = np.argmax(covered_C)
             col = raveled_idx % n
             row = raveled_idx // n
@@ -149,6 +149,10 @@ class _Hungarian(object):
                     col = star_col
                     self.row_uncovered[row] = False
                     self.col_uncovered[col] = True
+                    covered_C[:, col] = C[:, col]*(
+                                self.row_uncovered.astype(np.int))
+                    covered_C[row] = 0
+
 
     def _step5(self):
         """
