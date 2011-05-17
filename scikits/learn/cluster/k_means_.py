@@ -73,7 +73,9 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
     # Initialize list of closest distances and calculate current potential
     if x_squared_norms is None:
-        x_squared_norms = (X ** 2).sum(axis=1)
+        x_squared_norms = X.copy()
+        x_squared_norms **= 2
+        x_squared_norms = x_squared_norms.sum(axis=1)
     closest_dist_sq = euclidean_distances(
         np.atleast_2d(centers[0]), X, Y_norm_squared=x_squared_norms,
         squared=True)
@@ -638,13 +640,8 @@ class MiniBatchKMeans(KMeans):
         if shuffle:
             self.random_state.shuffle(X)
 
-        x_squared_norms = X.copy()
-        x_squared_norms **= 2
-        x_squared_norms = x_squared_norms.sum(axis=1)
-
         self.cluster_centers_ = _init_centroids(
-                X, self.k, self.init, random_state=self.random_state,
-                x_squared_norms=x_squared_norms)
+                X, self.k, self.init, random_state=self.random_state)
 
         self.counts = np.zeros(self.k)
         tol = np.mean(np.var(X, axis=0)) * self.tol
