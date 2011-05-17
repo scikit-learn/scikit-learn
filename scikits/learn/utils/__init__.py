@@ -2,12 +2,14 @@
 import numpy as np
 import scipy.sparse as sp
 
+
 def safe_asanyarray(X, dtype=None, order=None):
     if sp.issparse(X):
         return X
         #return type(X)(X, dtype)
     else:
         return np.asanyarray(X, dtype, order)
+
 
 def check_random_state(seed):
     """Turn seed into a np.random.RandomState instance
@@ -87,14 +89,14 @@ def shuffle(*args, **kwargs):
 
     shuffled = []
 
-    for   arg in args:
-          if hasattr(arg, 'tocsr'):
-              arg = arg.tocsr()
-          else:
-              arg = np.asanyarray(arg)
-          if copy:
-              arg = arg.copy()
-          arg = arg[indices]
-          shuffled.append(arg)
+    for arg in args:
+        if hasattr(arg, 'tocsr'):
+            arg = arg.tocsr()
+        else:
+            arg = np.asanyarray(arg)
+        if copy:
+            arg = arg.copy()
+        arg = arg[indices]
+        shuffled.append(arg)
 
     return shuffled

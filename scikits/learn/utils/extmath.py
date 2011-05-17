@@ -10,6 +10,7 @@ import math
 from . import check_random_state
 import numpy as np
 
+
 #XXX: We should have a function with numpy's slogdet API
 def _fast_logdet(A):
     """
@@ -22,12 +23,13 @@ def _fast_logdet(A):
     # http://projects.scipy.org/numpy/browser/trunk/numpy/linalg/linalg.py#L1559
     from scipy import linalg
     ld = np.sum(np.log(np.diag(A)))
-    a = np.exp(ld/A.shape[0])
-    d = np.linalg.det(A/a)
+    a = np.exp(ld / A.shape[0])
+    d = np.linalg.det(A / a)
     ld += np.log(d)
     if not np.isfinite(ld):
         return -np.inf
     return ld
+
 
 def _fast_logdet_numpy(A):
     """
@@ -51,10 +53,9 @@ else:
 
 if sys.version_info[1] < 6:
     # math.factorial is only available in 2.6
-    def factorial(x) :
-        # simple recursive implementation
-        if x == 0: return 1
-        return x * factorial(x-1)
+    import operator
+    def factorial(x):
+        return reduce(operator.mul, range(2, x+1), 1)
 else:
     factorial = math.factorial
 
@@ -195,4 +196,3 @@ def fast_svd(M, k, p=None, q=0, transpose='auto', random_state=0):
         return V[:k, :].T, s[:k], U[:, :k].T
     else:
         return U[:, :k], s[:k], V[:k, :]
-
