@@ -228,6 +228,7 @@ Clustering
    :template: class.rst
 
    cluster.KMeans
+   cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.SpectralClustering
    cluster.AffinityPropagation

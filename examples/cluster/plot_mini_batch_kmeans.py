@@ -3,7 +3,9 @@
 A demo of the K Means clustering algorithm
 =====================================================
 
-We want to compare the performance of the MiniBatchKMeans and KMeans.
+We want to compare the performance of the MiniBatchKMeans and KMeans:
+the MiniBatchKMeans is faster, but gives slightly different results (see 
+:ref:`mini_batch_kmeans`).
 
 We will cluster a set of data, first with KMeans and then with
 MiniBatchKMeans, and plot the results.

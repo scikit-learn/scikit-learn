@@ -43,17 +43,23 @@ be specified. It scales well to large number of samples, however its
 results may be dependent on an initialisation. As a result, the computation is
 often done several times, with different initialisation of the centroids.
 
+.. topic:: Examples:
+
+ * :ref:`example_cluster_kmeans_digits.py`: Clustering handwritten digits
+
+
+.. _mini_batch_kmeans:
 
 Mini Batch K-Means
-==================
+-------------------
 
 The :class:`MiniBatchKMeans` is a variant of the :class:`K-Means` algorithm
 using mini-batches, random subset of the dataset, to compute the centroids.
 
-If the :class:`MiniBatchKMeans` converge faster than the KMeans version, the
-quality of the results, measured by the inertia, the sum of the distance of
-each points to the nearest centroid, is not as good as the :class:`KMeans`
-algorithm.
+Althought the :class:`MiniBatchKMeans` converge faster than the KMeans 
+version, the quality of the results, measured by the inertia, the sum of 
+the distance of each points to the nearest centroid, is not as good as 
+the :class:`KMeans` algorithm.
 
 .. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_1.png
    :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
@@ -71,12 +77,8 @@ algorithm.
 
  * `"Web Scale K-Means clustering"
    <http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
-   D. Sculley
-
-
-.. topic:: Examples:
-
- * :ref:`example_cluster_kmeans_digits.py`: Clustering handwritten digits
+   D. Sculley, *Proceedings of the 19th international conference on World 
+   wide web* (2010)
 
 
 Affinity propagation
