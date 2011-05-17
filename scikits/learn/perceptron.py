@@ -24,7 +24,7 @@
 '''Single-layer (averaged) perceptrons.'''
 
 from .base import BaseEstimator
-from .utils import safe_asanyarray
+from .utils import safe_asanyarray, shuffle
 from .utils.extmath import safe_sparse_dot
 import numpy as np
 from scipy.sparse import isspmatrix
@@ -87,13 +87,8 @@ class Perceptron(BaseEstimator):
         -------
         self
         """
-        if self.shuffle:
-            Xy = np.concatenate((X, np.atleast_2d(y).T), axis=1)
-            X = Xy[:, :-1]
-            y = Xy[:, -1]
-        else:
-            X = safe_asanyarray(X)
-            y = safe_asanyarray(y)
+        X = safe_asanyarray(X)
+        y = safe_asanyarray(y)
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
 
@@ -107,7 +102,7 @@ class Perceptron(BaseEstimator):
 
         for i in xrange(self.n_iter):
             if self.shuffle:
-                np.random.shuffle(Xy)
+                X, y = shuffle(X, y)
             for j in xrange(n_samples):
                 pred = (safe_sparse_dot(X[j], self._weights.T) + self._bias).argmax()
                 if pred != y[j]:
@@ -174,13 +169,8 @@ class Perceptron(BaseEstimator):
         -------
         self
         """
-        if self.shuffle:
-            Xy = np.concatenate((X, safe_2d(y).T), axis=1)
-            X = Xy[:, :-1]
-            y = Xy[:, -1]
-        else:
-            X = safe_asanyarray(X)
-            y = safe_asanyarray(y)
+        X = safe_asanyarray(X)
+        y = safe_asanyarray(y)
 
         assert X.shape[1] == self._n_features
         assert len(np.unique(y)) <= self._n_labels
@@ -192,7 +182,7 @@ class Perceptron(BaseEstimator):
 
         for i in xrange(self.n_iter):
             if self.shuffle:
-                np.random.shuffle(Xy)
+                shuffle(X, y)
             for j in xrange(n_samples):
                 lrn(X[j], y[j])
 
