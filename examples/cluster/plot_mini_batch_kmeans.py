@@ -12,7 +12,11 @@ algorithms.
 """
 print __doc__
 
+import time
+
 import numpy as np
+import pylab as pl
+
 from scikits.learn.cluster import MiniBatchKMeans, KMeans
 from scikits.learn.metrics.pairwise import euclidian_distances
 
@@ -37,9 +41,10 @@ np.random.shuffle(X)
 
 ##############################################################################
 # Compute clustering with Means
-k_means = KMeans(init='k-means++',
-                 k=3)
+k_means = KMeans(init='k-means++', k=3)
+t0 = time.time()
 k_means.fit(X)
+t_batch = time.time() - t0
 k_means_labels = k_means.labels_
 k_means_cluster_centers = k_means.cluster_centers_
 k_means_labels_unique = np.unique(k_means_labels)
@@ -52,21 +57,19 @@ k_means_labels_unique = np.unique(k_means_labels)
 # KMeans algorithm have been calculated with X.
 # It is also unecessary to copy X.
 
-mbk = MiniBatchKMeans(init='k-means++',
-                      k=3,
-                      chunk_size=batch_size,
+mbk = MiniBatchKMeans(init='k-means++', k=3, chunk_size=batch_size,
                       copy_x=False)
+t0 = time.time()
 mbk.fit(X, shuffle=False)
+t_mini_batch = time.time() - t0
 mbk_means_labels = mbk.labels_
 mbk_means_cluster_centers = mbk.cluster_centers_
 mbk_means_labels_unique = np.unique(mbk_means_labels)
 
 ##############################################################################
 # Plot result
-import matplotlib.pyplot as plt
-from itertools import cycle
 
-fig = plt.figure()
+fig = pl.figure()
 colors = ['#4EACC5', '#FF9C34', '#4E9A06']
 
 # We want to have the same colors for the same cluster from the
@@ -88,6 +91,7 @@ for k, col in zip(range(n_clusters), colors):
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
                                     markeredgecolor='k', markersize=6)
 ax.set_title('KMeans')
+pl.text(-3.5, 2.7,  'train time: %.2fs' % t_batch)
 
 # MiniBatchKMeans
 ax = fig.add_subplot(1, 3, 2)
@@ -99,6 +103,7 @@ for k, col in zip(range(n_clusters), colors):
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
                                     markeredgecolor='k', markersize=6)
 ax.set_title('MiniBatchKMeans')
+pl.text(-3.5, 2.7,  'train time: %.2fs' % t_mini_batch)
 
 # Initialise the different array to all False
 different = (mbk_means_labels == 4)
@@ -114,4 +119,4 @@ ax.plot(X[different, 0], X[different, 1], 'w',
         markerfacecolor='m', marker='.')
 ax.set_title('Difference')
 
-plt.show()
+pl.show()
