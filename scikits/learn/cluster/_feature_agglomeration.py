@@ -8,6 +8,7 @@ agglomeration.
 import numpy as np
 from ..base import TransformerMixin
 
+
 ###############################################################################
 # Mixin class for feature agglomeration.
 
@@ -65,5 +66,3 @@ class AgglomerationTransform(TransformerMixin):
                 X[:, self.labels_ == unil[i]] = np.tile(np.atleast_2d(Xred
                                                         [:, i]).T, ncol)
         return X
-
-

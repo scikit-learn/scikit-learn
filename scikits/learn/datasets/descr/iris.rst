@@ -1,12 +1,43 @@
 Iris Plants Database
 
-Source
+Notes
 ------
-Creator: R.A. Fisher 
-Donor: Michael Marshall (MARSHALL%PLU@io.arc.nasa.gov)
-Date: July, 1988
+Data Set Characteristics:  
+
+    :Number of Instances: 150 (50 in each of three classes)
+
+    :Number of Attributes: 4 numeric, predictive attributes and the class
+
+    :Attribute Information:
+        - sepal length in cm
+        - sepal width in cm
+        - petal length in cm
+        - petal width in cm
+        - class: 
+                - Iris-Setosa
+                - Iris-Versicolour
+                - Iris-Virginica
+
+    :Summary Statistics: 
+    ============== ==== ==== ======= ===== ====================
+                    Min  Max   Mean    SD   Class Correlation
+    ============== ==== ==== ======= ===== ====================
+    sepal length:   4.3  7.9   5.84   0.83    0.7826   
+    sepal width:    2.0  4.4   3.05   0.43   -0.4194
+    petal length:   1.0  6.9   3.76   1.76    0.9490  (high!)
+    petal width:    0.1  2.5   1.20  0.76     0.9565  (high!)
+    ============== ==== ==== ======= ===== ====================
+
+    :Missing Attribute Values: None
+
+    :Class Distribution: 33.3% for each of 3 classes.
+
+    :Creator: R.A. Fisher 
+    :Donor: Michael Marshall (MARSHALL%PLU@io.arc.nasa.gov)
+    :Date: July, 1988
 
 This is a copy of UCI ML iris datasets.
+http://archive.ics.uci.edu/ml/datasets/Iris
 
 The famous Iris database, first used by Sir R.A Fisher
 
@@ -37,28 +68,4 @@ References
    - Many, many more ...
 
 
-Number of Instances: 150 (50 in each of three classes)
-
-Number of Attributes: 4 numeric, predictive attributes and the class
-
-Attribute Information:
-   - sepal length in cm
-   - sepal width in cm
-   - petal length in cm
-   - petal width in cm
-   - class: 
-        - Iris-Setosa
-        - Iris-Versicolour
-        - Iris-Virginica
-
-Summary Statistics:
-                 Min  Max   Mean    SD   Class Correlation
-   sepal length: 4.3  7.9   5.84  0.83    0.7826   
-    sepal width: 2.0  4.4   3.05  0.43   -0.4194
-   petal length: 1.0  6.9   3.76  1.76    0.9490  (high!)
-    petal width: 0.1  2.5   1.20  0.76    0.9565  (high!)
-
-Missing Attribute Values: None
-
-Class Distribution: 33.3% for each of 3 classes.
 

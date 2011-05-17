@@ -29,7 +29,7 @@ def log_likelihood(emp_cov, precision):
       The precision matrix of the covariance model to be tested
 
     """
-    return -np.sum(emp_cov*precision) + exact_logdet(precision)
+    return -np.sum(emp_cov * precision) + exact_logdet(precision)
 
 
 def empirical_covariance(X, assume_centered=False):
@@ -155,7 +155,8 @@ class EmpiricalCovariance(BaseEstimator):
 
         """
         # compute empirical covariance of the test set
-        test_cov = empirical_covariance(X_test, assume_centered=assume_centered)
+        test_cov = empirical_covariance(X_test,
+                                        assume_centered=assume_centered)
         # compute log likelihood
         if self.store_precision:
             res = log_likelihood(test_cov, self.precision_)
@@ -181,4 +182,4 @@ class EmpiricalCovariance(BaseEstimator):
         """
         diff = comp_cov - self.covariance_
 
-        return np.sum(diff**2)
+        return np.sum(diff ** 2)

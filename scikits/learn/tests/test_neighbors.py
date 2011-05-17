@@ -19,28 +19,28 @@ def test_neighbors_1D():
     # some constants
     n = 6
     X = [[x] for x in range(0, n)]
-    Y = [0]*(n/2) + [1]*(n/2)
+    Y = [0] * (n / 2) + [1] * (n / 2)
 
     for s in ('auto', 'ball_tree', 'brute', 'inplace'):
         # n_neighbors = 1
         knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         knn.fit(X, Y)
-        test = [[i + 0.01] for i in range(0, n/2)] + \
-               [[i - 0.01] for i in range(n/2, n)]
-        assert_array_equal(knn.predict(test), [0]*3 + [1]*3)
+        test = [[i + 0.01] for i in range(0, n / 2)] + \
+               [[i - 0.01] for i in range(n / 2, n)]
+        assert_array_equal(knn.predict(test), [0] * 3 + [1] * 3)
 
         # n_neighbors = 2
         knn = neighbors.NeighborsClassifier(n_neighbors=2, algorithm=s)
         knn.fit(X, Y)
-        assert_array_equal(knn.predict(test), [0]*4 + [1]*2)
+        assert_array_equal(knn.predict(test), [0] * 4 + [1] * 2)
 
         # n_neighbors = 3
         knn = neighbors.NeighborsClassifier(n_neighbors=3, algorithm=s)
         knn.fit(X, Y)
-        assert_array_equal(knn.predict([[i +0.01] for i in range(0, n/2)]),
-                            [0 for i in range(n/2)])
-        assert_array_equal(knn.predict([[i-0.01] for i in range(n/2, n)]),
-                            [1 for i in range(n/2)])
+        assert_array_equal(knn.predict([[i + 0.01] for i in range(0, n / 2)]),
+                            [0 for i in range(n / 2)])
+        assert_array_equal(knn.predict([[i - 0.01] for i in range(n / 2, n)]),
+                            [1 for i in range(n / 2)])
 
 
 def test_neighbors_high_dimension():
@@ -49,16 +49,16 @@ def test_neighbors_high_dimension():
     # some constants
     n = 20
     p = 40
-    X = 2*np.random.random(size=(n, p)) - 1
-    Y = ((X**2).sum(axis=1) < .25).astype(np.int)
+    X = 2 * np.random.random(size=(n, p)) - 1
+    Y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
     for s in ('auto', 'ball_tree', 'brute', 'inplace'):
         knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         knn.fit(X, Y)
         for i, (x, y) in enumerate(zip(X[:10], Y[:10])):
-            epsilon = 1e-5*(2*np.random.random(size=p)-1)
-            assert_array_equal(knn.predict(x+epsilon), y)
-            dist, idxs = knn.kneighbors(x+epsilon, n_neighbors=1)
+            epsilon = 1e-5 * (2 * np.random.random(size=p) - 1)
+            assert_array_equal(knn.predict(x + epsilon), y)
+            dist, idxs = knn.kneighbors(x + epsilon, n_neighbors=1)
 
 
 def test_neighbors_iris():
@@ -75,7 +75,7 @@ def test_neighbors_iris():
         assert_array_equal(clf.predict(iris.data), iris.target)
 
         clf.fit(iris.data, iris.target, n_neighbors=9, algorithm=s)
-        assert np.mean(clf.predict(iris.data)== iris.target) > 0.95
+        assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
         for m in ('barycenter', 'mean'):
             rgs = neighbors.NeighborsRegressor()

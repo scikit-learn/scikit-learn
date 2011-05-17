@@ -522,7 +522,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, kernel="linear", sigma=1.0, degree=3,
                 alpha=1.0, fit_inverse_transform=False):
-        self.n_components = None
+        self.n_components = n_components
         self.kernel = kernel.lower()
         self.sigma = sigma
         self.degree = degree
@@ -548,8 +548,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                              % self.kernel)
 
     def _fit_transform(self, X):
-        n_samples, n_components = X.shape
-
         # compute kernel and eigenvectors
         K = self.centerer.fit_transform(self._get_kernel(X))
         self.lambdas_, self.alphas_ = linalg.eigh(K)
@@ -557,7 +555,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # sort eignenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
         if self.n_components is not None:
-            indices = indices[:n_components]
+            indices = indices[:self.n_components]
         self.lambdas_ = self.lambdas_[indices]
         self.alphas_ = self.alphas_[:, indices]
 

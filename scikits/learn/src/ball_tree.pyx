@@ -130,7 +130,7 @@ cdef class BallTree:
 
         # almost-flatten x for iteration
         orig_shape = x.shape
-        x.reshape((-1, self.num_dims))
+        x = x.reshape((-1, self.num_dims))
 
         # allocate output
         out_indices = np.zeros((x.shape[0], k), np.int64)
