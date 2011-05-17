@@ -67,7 +67,6 @@ class _Hungarian(object):
         step = 1
 
         steps = { 1 : self._step1,
-                  #2 : self._step2,
                   3 : self._step3,
                   4 : self._step4,
                   5 : self._step5,
@@ -109,15 +108,13 @@ class _Hungarian(object):
         covered, the starred zeros describe a complete set of unique
         assignments. In this case, Go to DONE, otherwise, Go to Step 4.
         """
-        marked = self.marked == 1
+        marked = (self.marked == 1)
         self.col_covered[np.any(marked, axis=0)] = True
 
         if marked.sum() >= self.n:
-            step = 7 # done
+            return 7 # done
         else:
-            step = 4
-
-        return step
+            return 4
 
     def _step4(self):
         """
@@ -127,14 +124,9 @@ class _Hungarian(object):
         zero. Continue in this manner until there are no uncovered zeros
         left. Save the smallest uncovered value and Go to Step 6.
         """
-        step = 0
-        done = False
-        row = -1
-        col = -1
-        star_col = -1
         C = (self.C == 0)
         n = self.n
-        while not done:
+        while True:
             # Find an uncovered zero
             covered_C = C*(1-self.row_covered[:, np.newaxis])
             covered_C *= (1-self.col_covered)
@@ -142,24 +134,20 @@ class _Hungarian(object):
             col = raveled_idx % n
             row = raveled_idx // n
             if covered_C[row, col] == 0:
-                done = True
-                step = 6
+                return 6
             else:
                 self.marked[row, col] = 2
                 # Find the first starred element in the row
                 star_col = np.argmax(self.marked[row] == 1)
                 if not self.marked[row, star_col] == 1:
                     # Could not find one
-                    done = True
                     self.Z0_r = row
                     self.Z0_c = col
-                    step = 5
+                    return 5
                 else:
                     col = star_col
                     self.row_covered[row] = True
                     self.col_covered[col] = False
-
-        return step
 
     def _step5(self):
         """
@@ -219,8 +207,8 @@ class _Hungarian(object):
         lines.
         """
         # the smallest uncovered value in the matrix
-        minval = np.min(self.C[np.logical_not(self.col_covered)
-                            *np.logical_not(self.row_covered[:, np.newaxis])])
+        minval = np.min(self.C[np.logical_not(self.row_covered)], axis=0)
+        minval = np.min(minval[np.logical_not(self.col_covered)])
         self.C[self.row_covered] += minval
         self.C[:, np.logical_not(self.col_covered)] -= minval
         return 4
