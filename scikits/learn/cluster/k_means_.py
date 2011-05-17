@@ -8,6 +8,7 @@
 # License: BSD
 
 import warnings
+import itertools
 
 import numpy as np
 from math import floor
@@ -352,7 +353,6 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     """
     random_state = check_random_state(random_state)
 
-
     n_samples = X.shape[0]
     if init == 'k-means++':
         centers = k_init(X, k,
@@ -630,10 +630,11 @@ class MiniBatchKMeans(KMeans):
 
         self.random_state = check_random_state(self.random_state)
 
+        X = self._check_data(X, **params)
+
         if self.copy_x:
             X = X.copy()
 
-        X = self._check_data(X, **params)
         if hasattr(self.init, '__array__'):
             self.init = np.asarray(self.init)
 
@@ -650,16 +651,14 @@ class MiniBatchKMeans(KMeans):
         except ValueError:
             split_X = [X]
 
-        squared_norms = [(x ** 2).sum(axis=1) for x in split_X]
-        data = zip(split_X, squared_norms)
-        old_centers = []
-
-        for i in xrange(self.max_iter):
-            j = i % len(data)
-            old_centers[:] = self.cluster_centers_.copy()
+        for i, (this_x, this_squared_norm) in zip(
+                                    xrange(self.max_iter),
+                                    itertools.cycle((x, (x ** 2).sum(axis=1)) 
+                                                    for x in split_X)):
+            old_centers = self.cluster_centers_.copy()
             self.cluster_centers_, self.counts = _mini_batch_step(
-                data[j][0], self.cluster_centers_, self.counts,
-                x_squared_norms=data[j][1])
+                this_x, self.cluster_centers_, self.counts,
+                x_squared_norms=this_squared_norm)
 
             if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
                 if self.verbose:
@@ -678,8 +677,8 @@ class MiniBatchKMeans(KMeans):
 
         self.random_state = check_random_state(self.random_state)
 
+        X = self._check_data(X, **params)
         if hasattr(self.init, '__array__'):
-            X = self._check_data(X, **params)
             self.init = np.asarray(self.init)
 
         if len(X) == 0:
