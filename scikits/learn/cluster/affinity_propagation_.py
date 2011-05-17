@@ -68,10 +68,10 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     random_state = np.random.RandomState(0)
 
     # Place preferences on the diagonal of S
-    S.flat[::(n_points+1)] = p
+    S.flat[::(n_points + 1)] = p
 
     A = np.zeros((n_points, n_points))
-    R = np.zeros((n_points, n_points)) # Initialize messages
+    R = np.zeros((n_points, n_points))  # Initialize messages
 
     # Remove degeneracies
     S += (np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) * \
@@ -88,7 +88,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         AS = A + S
 
         I = np.argmax(AS, axis=1)
-        Y = AS[np.arange(n_points), I]#np.max(AS, axis=1)
+        Y = AS[np.arange(n_points), I]  # np.max(AS, axis=1)
 
         AS[ind, I[ind]] = - np.finfo(np.double).max
 
@@ -97,21 +97,21 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
 
         R[ind, I[ind]] = S[ind, I[ind]] - Y2[ind]
 
-        R = (1-damping)*R + damping*Rold # Damping
+        R = (1 - damping) * R + damping * Rold  # Damping
 
         # Compute availabilities
         Aold = A
         Rp = np.maximum(R, 0)
-        Rp.flat[::n_points+1] = R.flat[::n_points+1]
+        Rp.flat[::n_points + 1] = R.flat[::n_points + 1]
 
         A = np.sum(Rp, axis=0)[np.newaxis, :] - Rp
 
         dA = np.diag(A)
         A = np.minimum(A, 0)
 
-        A.flat[::n_points+1] = dA
+        A.flat[::n_points + 1] = dA
 
-        A = (1-damping)*A + damping*Aold # Damping
+        A = (1 - damping) * A + damping * Aold  # Damping
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
@@ -121,7 +121,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         if it >= convit:
             se = np.sum(e, axis=1)
             unconverged = np.sum((se == convit) + (se == 0)) != n_points
-            if (not unconverged and (K>0)) or (it==max_iter):
+            if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
                     print "Converged after %d iterations." % it
                 break
@@ -129,16 +129,16 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         if verbose:
             print "Did not converged"
 
-    I = np.where(np.diag(A+R) > 0)[0]
-    K = I.size # Identify exemplars
+    I = np.where(np.diag(A + R) > 0)[0]
+    K = I.size  # Identify exemplars
 
     if K > 0:
         c = np.argmax(S[:, I], axis=1)
-        c[I] = np.arange(K) # Identify clusters
+        c[I] = np.arange(K)  # Identify clusters
         # Refine the final set of exemplars and clusters and return results
         for k in range(K):
-            ii = np.where(c==k)[0]
-            j = np.argmax(np.sum(S[ii[:,np.newaxis], ii], axis=0))
+            ii = np.where(c == k)[0]
+            j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
             I[k] = ii[j]
 
         c = np.argmax(S[:, I], axis=1)
@@ -153,6 +153,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         labels.fill(np.nan)
 
     return cluster_centers_indices, labels
+
 
 ###############################################################################
 

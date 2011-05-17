@@ -19,6 +19,7 @@ import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
 
+
 ###############################################################################
 # ShrunkCovariance estimator
 
@@ -53,10 +54,11 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     n_features = emp_cov.shape[0]
 
     mu = np.trace(emp_cov) / n_features
-    shrunk_cov = (1.-shrinkage)*emp_cov
-    shrunk_cov.flat[::n_features + 1] += shrinkage*mu
+    shrunk_cov = (1. - shrinkage) * emp_cov
+    shrunk_cov.flat[::n_features + 1] += shrinkage * mu
 
     return shrunk_cov
+
 
 class ShrunkCovariance(EmpiricalCovariance):
     """Covariance estimator with shrinkage
@@ -97,7 +99,6 @@ class ShrunkCovariance(EmpiricalCovariance):
         self.store_precision = store_precision
         self.shrinkage = shrinkage
 
-
     def fit(self, X, assume_centered=False, **params):
         """ Fits the shrunk covariance model
         according to the given training data and parameters.
@@ -121,13 +122,15 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         """
         self._set_params(**params)
-        empirical_cov = empirical_covariance(X, assume_centered=assume_centered)
+        empirical_cov = empirical_covariance(X,
+                                             assume_centered=assume_centered)
         covariance = shrunk_covariance(empirical_cov, self.shrinkage)
         self._set_estimates(covariance)
 
         return self
 
-################################################################################
+
+###############################################################################
 # Ledoit-Wolf estimator
 
 def ledoit_wolf(X, assume_centered=False):
@@ -168,7 +171,7 @@ def ledoit_wolf(X, assume_centered=False):
     if X.ndim == 1:
         if not assume_centered:
             X = X - X.mean()
-        return np.atleast_2d((X**2).mean()), 0.
+        return np.atleast_2d((X ** 2).mean()), 0.
     n_samples, n_features = X.shape
 
     # optionaly center data
@@ -179,15 +182,15 @@ def ledoit_wolf(X, assume_centered=False):
     mu = np.trace(emp_cov) / n_features
     delta_ = emp_cov.copy()
     delta_.flat[::n_features + 1] -= mu
-    delta = (delta_**2).sum() / n_features
-    X2 = X**2
-    beta_ = 1./(n_features*n_samples) \
-        * np.sum(np.dot(X2.T, X2)/n_samples - emp_cov**2)
+    delta = (delta_ ** 2).sum() / n_features
+    X2 = X ** 2
+    beta_ = 1. / (n_features * n_samples) \
+        * np.sum(np.dot(X2.T, X2) / n_samples - emp_cov ** 2)
 
     beta = min(beta_, delta)
-    shrinkage = beta/delta
-    shrunk_cov = (1.-shrinkage)*emp_cov
-    shrunk_cov.flat[::n_features + 1] += shrinkage*mu
+    shrinkage = beta / delta
+    shrunk_cov = (1. - shrinkage) * emp_cov
+    shrunk_cov.flat[::n_features + 1] += shrinkage * mu
 
     return shrunk_cov, shrinkage
 
@@ -264,7 +267,8 @@ class LedoitWolf(EmpiricalCovariance):
 
         return self
 
-################################################################################
+
+###############################################################################
 # OAS estimator
 
 def oas(X, assume_centered=False):
@@ -305,20 +309,20 @@ def oas(X, assume_centered=False):
     if X.ndim == 1:
         if not assume_centered:
             X = X - X.mean()
-        return np.atleast_2d((X**2).mean()), 0.
+        return np.atleast_2d((X ** 2).mean()), 0.
     n_samples, n_features = X.shape
 
     emp_cov = empirical_covariance(X, assume_centered=assume_centered)
     mu = np.trace(emp_cov) / n_features
 
     # formula from Chen et al.'s **implementation**
-    alpha = np.mean(emp_cov**2)
-    num = alpha + mu**2
-    den = (n_samples+1.) * (alpha - (mu**2)/n_features)
+    alpha = np.mean(emp_cov ** 2)
+    num = alpha + mu ** 2
+    den = (n_samples + 1.) * (alpha - (mu ** 2) / n_features)
 
-    shrinkage = min(num/den, 1.)
-    shrunk_cov = (1.-shrinkage)*emp_cov
-    shrunk_cov.flat[::n_features+1] += shrinkage*mu
+    shrinkage = min(num / den, 1.)
+    shrunk_cov = (1. - shrinkage) * emp_cov
+    shrunk_cov.flat[::n_features + 1] += shrinkage * mu
 
     return shrunk_cov, shrinkage
 

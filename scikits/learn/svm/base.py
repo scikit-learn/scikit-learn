@@ -56,7 +56,6 @@ class BaseLibSVM(BaseEstimator):
         self.shrinking = shrinking
         self.probability = probability
 
-
     def _compute_kernel(self, X):
         """ Return the data transformed by the kernel (if the kernel
             is a callable).
@@ -68,8 +67,8 @@ class BaseLibSVM(BaseEstimator):
                                dtype=np.float64, order='C')
         return X
 
-
-    def fit(self, X, y, class_weight={}, sample_weight=[], cache_size=100., **params):
+    def fit(self, X, y, class_weight={}, sample_weight=[], cache_size=100.,
+            **params):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -148,7 +147,6 @@ class BaseLibSVM(BaseEstimator):
 
         return self
 
-
     def predict(self, X):
         """
         This function does classification or regression on an array of
@@ -187,7 +185,6 @@ class BaseLibSVM(BaseEstimator):
             self.label_, self.probA_, self.probB_,
             svm_type=svm_type, **self._get_params())
 
-
     def predict_proba(self, X):
         """
         This function does classification or regression on a test vector X
@@ -217,7 +214,8 @@ class BaseLibSVM(BaseEstimator):
         X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
         X = self._compute_kernel(X)
         if self.impl not in ('c_svc', 'nu_svc'):
-            raise NotImplementedError("predict_proba only implemented for SVC and NuSVC")
+            raise NotImplementedError("predict_proba only implemented for SVC "
+                                      "and NuSVC")
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
@@ -288,7 +286,8 @@ class BaseLibSVM(BaseEstimator):
     @property
     def coef_(self):
         if self.kernel != 'linear':
-            raise NotImplementedError('coef_ is only available when using a linear kernel')
+            raise NotImplementedError('coef_ is only available when using a '
+                                      'linear kernel')
         return np.dot(self.dual_coef_, self.support_vectors_)
 
 

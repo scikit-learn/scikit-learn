@@ -21,7 +21,8 @@ from os import makedirs
 
 import numpy as np
 
-################################################################################
+
+###############################################################################
 
 class Bunch(dict):
     """ Container object for datasets: dictionnary-like object that
@@ -304,7 +305,8 @@ def load_linnerud():
                  header_physiological=header_physiological,
                  DESCR=fdescr.read())
 
-################################################################################
+
+###############################################################################
 # Add the description in the docstring
 
 def _add_notes(function, filename):
@@ -322,10 +324,9 @@ def _add_notes(function, filename):
 
 
 for function, filename in ((load_iris, 'iris.rst'),
-                           (load_linnerud, 'linnerud.rst'), 
+                           (load_linnerud, 'linnerud.rst'),
                            (load_digits, 'digits.rst')):
     #try:
         _add_notes(function, filename)
     #except:
     #    pass
-

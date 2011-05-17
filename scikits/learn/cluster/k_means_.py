@@ -88,9 +88,9 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
             X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
         # Decide which candidate is the best
-        best_candidate  = None
-        best_pot        = None
-        best_dist_sq    = None
+        best_candidate = None
+        best_pot = None
+        best_dist_sq = None
         for trial in xrange(n_local_trials):
             # Compute potential when including center candidate
             new_dist_sq = np.minimum(closest_dist_sq,
@@ -99,13 +99,13 @@ def k_init(X, k, n_local_trials=None, random_state=None, x_squared_norms=None):
 
             # Store result if it is the best local trial so far
             if (best_candidate is None) or (new_pot < best_pot):
-                best_candidate  = candidate_ids[trial]
-                best_pot        = new_pot
-                best_dist_sq    = new_dist_sq
+                best_candidate = candidate_ids[trial]
+                best_pot = new_pot
+                best_dist_sq = new_dist_sq
 
         # Permanently add best center candidate found in local tries
-        centers[c]      = X[best_candidate]
-        current_pot     = best_pot
+        centers[c] = X[best_candidate]
+        current_pot = best_pot
         closest_dist_sq = best_dist_sq
 
     return centers
@@ -204,7 +204,8 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     for it in range(n_init):
         # init
         if init == 'k-means++':
-            centers = k_init(X, k, random_state=random_state, x_squared_norms=x_squared_norms)
+            centers = k_init(X, k, random_state=random_state,
+                             x_squared_norms=x_squared_norms)
         elif init == 'random':
             seeds = np.argsort(random_state.rand(n_samples))[:k]
             centers = X[seeds]
