@@ -67,7 +67,7 @@ class _Hungarian(object):
         step = 1
 
         steps = { 1 : self._step1,
-                  2 : self._step2,
+                  #2 : self._step2,
                   3 : self._step3,
                   4 : self._step4,
                   5 : self._step5,
@@ -86,28 +86,19 @@ class _Hungarian(object):
         return results.tolist()
 
     def _step1(self):
+        """ Steps 1 and 2 in the wikipedia page.
         """
-        For each row of the matrix, find the smallest element and
-        subtract it from every element in its row. Go to Step 2.
-        """
+        # Step1: For each row of the matrix, find the smallest element and
+        # subtract it from every element in its row.
         self.C -= self.C.min(axis=1)[:, np.newaxis]
-        return 2
-
-    def _step2(self):
-        """
-        Find a zero (Z) in the resulting matrix. If there is no starred
-        zero in its row or column, star Z. Repeat for each element in the
-        matrix. Go to Step 3.
-        """
-        n = self.n
-        for i in range(n):
-            for j in range(n):
-                if (self.C[i, j] == 0) and \
-                                (not self.col_covered[j]) and \
-                                (not self.row_covered[i]):
-                    self.marked[i, j] = 1
-                    self.col_covered[j] = True
-                    self.row_covered[i] = True
+        # Step2: Find a zero (Z) in the resulting matrix. If there is no 
+        # starred zero in its row or column, star Z. Repeat for each element 
+        # in the matrix.
+        for i, j in zip(*np.where(self.C == 0)):
+            if (not self.col_covered[j]) and (not self.row_covered[i]):
+                self.marked[i, j] = 1
+                self.col_covered[j] = True
+                self.row_covered[i] = True
 
         self._clear_covers()
         return 3
@@ -118,15 +109,10 @@ class _Hungarian(object):
         covered, the starred zeros describe a complete set of unique
         assignments. In this case, Go to DONE, otherwise, Go to Step 4.
         """
-        n = self.n
-        count = 0
-        for i in range(n):
-            for j in range(n):
-                if self.marked[i, j] == 1:
-                    self.col_covered[j] = True
-                    count += 1
+        marked = self.marked == 1
+        self.col_covered[np.any(marked, axis=0)] = True
 
-        if count >= n:
+        if marked.sum() >= self.n:
             step = 7 # done
         else:
             step = 4
@@ -146,9 +132,16 @@ class _Hungarian(object):
         row = -1
         col = -1
         star_col = -1
+        C = (self.C == 0)
+        n = self.n
         while not done:
-            row, col = self._find_a_zero()
-            if row < 0:
+            # Find an uncovered zero
+            covered_C = C*(1-self.row_covered[:, np.newaxis])
+            covered_C *= (1-self.col_covered)
+            raveled_idx = np.argmax(covered_C)
+            col = raveled_idx % n
+            row = raveled_idx // n
+            if covered_C[row, col] == 0:
                 done = True
                 step = 6
             else:
@@ -228,25 +221,10 @@ class _Hungarian(object):
         # the smallest uncovered value in the matrix
         minval = np.min(self.C[np.logical_not(self.col_covered)
                             *np.logical_not(self.row_covered[:, np.newaxis])])
-        for i in range(self.n):
-            for j in range(self.n):
-                if self.row_covered[i]:
-                    self.C[i, j] += minval
-                if not self.col_covered[j]:
-                    self.C[i, j] -= minval
+        self.C[self.row_covered] += minval
+        self.C[:, np.logical_not(self.col_covered)] -= minval
         return 4
 
-    def _find_a_zero(self):
-        """Find the first uncovered element with value 0"""
-        C = ((self.C==0)*(1-self.col_covered)
-                        *(1-self.row_covered[:, np.newaxis]))
-        raveled_idx = np.argmax(C)
-        col = raveled_idx % self.n
-        row = raveled_idx // self.n
-        if C[row, col] == 0:
-            return -1, -1
-        return row, col
- 
     def _find_prime_in_row(self, row):
         """
         Find the first prime element in the specified row. Returns
