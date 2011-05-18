@@ -41,7 +41,8 @@ def shuffle(*arrays, **options):
 
     Return
     ------
-    Sequence of shuffled collections.
+    Sequence of shuffled views of the collections. The original arrays are
+    not impacted.
 
     Example
     -------
@@ -77,7 +78,7 @@ def shuffle(*arrays, **options):
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
     if len(arrays) == 0:
-        return arrays
+        return None
 
     first = arrays[0]
     n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
@@ -94,4 +95,8 @@ def shuffle(*arrays, **options):
         array = array[indices]
         shuffled.append(array)
 
-    return shuffled
+    if len(shuffled) == 1:
+        # syntactic sugar for the unit argument case
+        return shuffled[0]
+    else:
+        return shuffled
