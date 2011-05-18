@@ -375,3 +375,32 @@ def swiss_roll(n_samples, noise=0.0):
     X = np.transpose(X)
     t = np.squeeze(t)
     return X, t
+
+
+def S_curve(n_samples, noise=0.0):
+    """Generate S curve dataset
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of points on the S curve
+
+    noise : float (optional)
+        Noise level. By default no noise.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 3]
+        The points.
+    """
+    np.random.seed(0)
+
+    t = 3*np.pi * (np.random.rand(1,n_samples) - 0.5)
+    x = np.sin(t)
+    y = np.random.rand(1,n_samples)*2.0
+    z = np.sign(t)*(np.cos(t)-1)
+
+    X = np.concatenate((x,y,z)).T
+    t = np.squeeze(t)
+
+    return X, t
