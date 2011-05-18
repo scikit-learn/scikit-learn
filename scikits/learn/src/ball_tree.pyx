@@ -19,7 +19,8 @@ cdef extern from "BallTreePoint.h":
        Point(size_t)
        size_t size()
    void SET(Point *, size_t, double)
-
+   
+ctypedef double Point_dtype
 ctypedef Point *Point_p
 
 
@@ -27,6 +28,8 @@ cdef extern from "BallTree.h":
     cdef cppclass cBallTree "BallTree<Point>":
         cBallTree(vector[Point_p] *, size_t)
         double query(Point *, vector[size_t] &) except +
+        double query_ball(Point *, Point_dtype) except +
+        double query_ball(Point *, Point_dtype, vector[size_t] &) except +
     double Euclidean_Dist(Point *, Point *) except +
 
     cdef void BruteForceNeighbors(vector[Point_p]*,
@@ -158,6 +161,70 @@ cdef class BallTree:
                     out_indices.reshape((orig_shape[:-1]) + (k,)))
         else:
             return out_indices.reshape((orig_shape[:-1]) + (k,))
+
+    def query_ball(self, x, r, count_only = False):
+        """
+        query_ball(self, x, r, count_only = False):
+
+        query the Ball Tree for neighbors within a ball of size r
+
+        Parameters
+        ----------
+        x : array-like, last dimension self.dim
+              An array of points to query
+        r : distance within which neighbors are returned
+        count_only : boolean (default = False)
+              if True,  return only the count of points
+                         within distance r
+              if False, return the indices of all points
+                         within distance r
+
+        Returns
+        -------
+        n    : if count_only == True
+        i    : if count_only == False
+
+        n : array of integers - shape: x.shape[:-1]
+            each entry gives the number of neighbors within
+            a distance r of the corresponding point.
+
+        i : array - shape: x.shape[:-1]
+            each element is a numpy integer array
+            listing the indices of neighbors
+            of the corresponding point
+            (note that neighbors are not sorted by distance)
+        """
+        x = np.atleast_2d(x)
+        assert x.shape[-1] == self.num_dims
+
+        cdef Point *temp
+        cdef vector[size_t] results = vector[size_t](0)
+
+        # almost-flatten x for iteration
+        orig_shape = x.shape
+        x = x.reshape((-1, self.num_dims))
+
+        # allocate output
+        if count_only:
+            output = np.zeros(x.shape[0],np.int64)
+        else:
+            #output = [None for i in range(x.shape[0])]
+            output = np.empty(x.shape[0],dtype='object')
+
+        for pt_idx, pt in enumerate(x):
+            temp = make_point(pt)
+            if count_only:
+                output[pt_idx] = self.bt_ptr.query_ball(temp,r)
+            else:
+                self.bt_ptr.query_ball(temp, r, results)
+                output[pt_idx] = np.zeros(results.size())
+                for neighbor_idx in range(results.size()):
+                    output[pt_idx][neighbor_idx] = results[neighbor_idx]
+                results.resize(0)
+            del temp
+
+        # deflatten results
+        return output.reshape(orig_shape[:-1])
 
 
 ################################################################################

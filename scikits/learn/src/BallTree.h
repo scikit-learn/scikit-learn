@@ -566,6 +566,18 @@ public:
 		   value_type r){
         return head_node_->query_ball(pt,r);
     }
+    
+    int query_ball(const Point* pt,
+                   value_type r,
+                   std::vector<size_t>& nbrs){
+        return head_node_->query_ball(*pt,r,nbrs);
+    }
+
+    int query_ball(const Point* pt,
+		   value_type r){
+        return head_node_->query_ball(*pt,r);
+    }
+    
 private:
   //----------------------------------------------------------------------
   // BallTree : Data Members

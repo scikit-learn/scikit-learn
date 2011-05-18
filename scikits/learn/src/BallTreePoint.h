@@ -4,6 +4,7 @@
 #include <vector>
 
 typedef std::vector<double> Point;
+typedef double Point_dtype;
 
 // Needed because cython doesn't handle operator[] as an lvalue
 // http://osdir.com/ml/python.cython.devel/2008-03/msg00007.html
