@@ -43,6 +43,7 @@ np.random.shuffle(X)
 
 ##############################################################################
 # Compute clustering with Means
+
 k_means = KMeans(init='k-means++', k=3)
 t0 = time.time()
 k_means.fit(X)
@@ -54,15 +55,10 @@ k_means_labels_unique = np.unique(k_means_labels)
 
 ##############################################################################
 # Compute clustering with MiniBatchKMeans
-#
-# We do not want to shuffle the X when clustering here, as the labels from the
-# KMeans algorithm have been calculated with X.
-# It is also unecessary to copy X.
 
-mbk = MiniBatchKMeans(init='k-means++', k=3, chunk_size=batch_size,
-                      copy_x=False)
+mbk = MiniBatchKMeans(init='k-means++', k=3, chunk_size=batch_size)
 t0 = time.time()
-mbk.fit(X, shuffle=False)
+mbk.fit(X)
 t_mini_batch = time.time() - t0
 mbk_means_labels = mbk.labels_
 mbk_means_cluster_centers = mbk.cluster_centers_

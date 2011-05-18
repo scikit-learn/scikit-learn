@@ -8,7 +8,7 @@
 # License: BSD
 
 import warnings
-import itertools
+from itertools import cycle
 
 import numpy as np
 from math import floor
@@ -16,6 +16,7 @@ from math import floor
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
 from ..utils import check_random_state
+from ..utils import shuffle
 
 
 ###############################################################################
@@ -592,72 +593,61 @@ class MiniBatchKMeans(KMeans):
         The value of the inertia criterion associated with the chosen
         partition.
 
-    Notes
-    ------
-
-    The batch k-means problem is solved using the Lloyd algorithm.
-
+    Reference
+    ---------
     http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
-
     """
 
     def __init__(self, k=8, init='random', n_init=10, max_iter=300,
-                 chunk_size=300, tol=1e-4,
-                 verbose=0, random_state=None, copy_x=True):
+                 chunk_size=300, tol=1e-4, verbose=0, random_state=None):
 
         super(MiniBatchKMeans, self).__init__(k, init, n_init,
-              max_iter, tol,
-              verbose, random_state=None, copy_x=True)
+              max_iter, tol, verbose, random_state=None)
 
         self.counts = None
         self.cluster_centers_ = None
         self.chunk_size = chunk_size
 
-    def fit(self, X, y=None, shuffle=True, **params):
+    def fit(self, X, y=None, **params):
         """
         Calculates the centroids on a batch X
 
         params
         ------
-
-        X: array, [n_features, n_samples]
+        X: array, [n_samples, n_features]
             Coordinates of the data points to cluster
-
-        shuffle: boolean, optional, default: True
-            Shuffle the data points to cluster
         """
 
         self.random_state = check_random_state(self.random_state)
 
         X = self._check_data(X, **params)
 
-        if self.copy_x:
-            X = X.copy()
-
         if hasattr(self.init, '__array__'):
             self.init = np.asarray(self.init)
 
-        if shuffle:
-            self.random_state.shuffle(X)
+        X_shuffled = shuffle(X, random_state=self.random_state)
 
         self.cluster_centers_ = _init_centroids(
-                X, self.k, self.init, random_state=self.random_state)
+                X_shuffled, self.k, self.init, random_state=self.random_state)
 
         self.counts = np.zeros(self.k)
         tol = np.mean(np.var(X, axis=0)) * self.tol
         try:
-            split_X = np.array_split(X, floor(float(len(X)) / self.chunk_size))
+            n_batches = floor(float(len(X)) / self.chunk_size)
+            batches = np.array_split(X_shuffled, n_batches)
+            n_batches = len(batches)
         except ValueError:
-            split_X = [X]
+            batches = [X]
+            n_batches = 1
 
-        for i, (this_x, this_squared_norm) in zip(
-                                    xrange(self.max_iter),
-                                    itertools.cycle((x, (x ** 2).sum(axis=1))
-                                                    for x in split_X)):
+        batches_and_norms = cycle((b, (b ** 2).sum(axis=1)) for b in batches)
+        n_iterations = xrange(self.max_iter * n_batches)
+
+        for i, (batch, norms) in zip(n_iterations, batches_and_norms):
             old_centers = self.cluster_centers_.copy()
             self.cluster_centers_, self.counts = _mini_batch_step(
-                this_x, self.cluster_centers_, self.counts,
-                x_squared_norms=this_squared_norm)
+                batch, self.cluster_centers_, self.counts,
+                x_squared_norms=norms)
 
             if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
                 if self.verbose:
@@ -670,9 +660,7 @@ class MiniBatchKMeans(KMeans):
         return self
 
     def partial_fit(self, X, y=None, **params):
-        """
-        Update k means estimate on a single mini-batch X
-        """
+        """Update k means estimate on a single mini-batch X"""
 
         self.random_state = check_random_state(self.random_state)
 
@@ -682,22 +670,21 @@ class MiniBatchKMeans(KMeans):
 
         if len(X) == 0:
             return self
-        x_squared_norms = X.copy()
-        x_squared_norms **= 2
-        x_squared_norms = x_squared_norms.sum(axis=1)
+
+        squared_norms = (X ** 2).sum(axis=1)
 
         if self.counts is None:
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
                 X, self.k, self.init, random_state=self.random_state,
-                x_squared_norms=x_squared_norms)
+                x_squared_norms=squared_norms)
 
             self.counts = np.zeros(self.k)
 
         self.cluster_centers_, self.counts = _mini_batch_step(
             X, self.cluster_centers_, self.counts,
-            x_squared_norms=x_squared_norms)
+            x_squared_norms=squared_norms)
 
         self.inertia_, self.labels_ = _calculate_labels_inertia(
             X, self.cluster_centers_)
