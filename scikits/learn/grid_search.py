@@ -242,13 +242,17 @@ class GridSearchCV(BaseEstimator):
         self._set_params(**params)
         estimator = self.estimator
         cv = self.cv
+        if hasattr(X, 'shape'):
+            n_samples = X.shape[0]
+        else:
+            # support list of unstructured objects on which feature
+            # extraction will be applied later in the tranformer chain
+            n_samples = len(X)
+        if y is not None and len(y) != n_samples:
+            raise ValueError('Target variable (y) has a different number '
+                    'of samples (%i) than data (X: %i samples)' %
+                        (len(y), n_samples))
         if cv is None:
-            if hasattr(X, 'shape'):
-                n_samples = X.shape[0]
-            else:
-                # support list of unstructured objects on which feature
-                # extraction will be applied later in the tranformer chain
-                n_samples = len(X)
             if y is not None and is_classifier(estimator):
                 cv = StratifiedKFold(y, k=3)
             else:
