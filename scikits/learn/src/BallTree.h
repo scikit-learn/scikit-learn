@@ -345,7 +345,7 @@ struct Node{
                 if(dist > Dsofar)
                     continue;
 
-      //If there are less than k points in PointSet,
+      //If there are fewer than k points in PointSet,
       //  add this point to PointSet
                 if(PointSet.size() < (size_t)k){
                     PointSet.push_back( pd_tuple<value_type>(indices[i_pt],
@@ -538,6 +538,7 @@ public:
         }
 
         std::vector<pd_tuple<value_type> > PointSet;
+	PointSet.reserve(num_nbrs);
         value_type Dmax = head_node_->query(pt,num_nbrs,PointSet);
 
 
@@ -562,7 +563,7 @@ public:
     }
 
     int query_ball(const Point& pt,
-    value_type r){
+		   value_type r){
         return head_node_->query_ball(pt,r);
     }
 private:
@@ -607,6 +608,14 @@ void BruteForceNeighbors(std::vector<Point*> Points,
              std::vector<size_t>& neighbors){
   size_t k = neighbors.size();
   BruteForceNeighbors(Points,pt,k,&(neighbors[0]));
+}
+
+template<class Point>
+void BruteForceNeighbors(std::vector<Point*>* Points,
+			 const Point* pt,
+			 std::vector<size_t>& neighbors){
+  size_t k = neighbors.size();
+  BruteForceNeighbors(*Points,*pt,k,&(neighbors[0]));
 }
 
 
