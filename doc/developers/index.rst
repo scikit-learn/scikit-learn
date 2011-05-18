@@ -46,13 +46,10 @@ Contributing code
 
 .. note:
 
-  Before to starting to work on a non trivial new feature, it highly advised
-  to discuss it on the developer mailing list.
+  To avoid duplicated work it is highly advised to contact the developers
+  mailing list before starting work on a non-trivial feature.
 
   https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
-
-  The goal is to avoid duplicated work (this has occurred several times in the
-  past).
 
 
 How to contribute
@@ -96,38 +93,23 @@ this case, replace step 4 by step 5:
         $ git commit
         $ git push origin my-feature
 
-When you are ready, and you have pushed your changes on your github repo,
-go the web page of the repo, and click on 'Pull request' to send us a
-pull request. Send us a mail with your pull request, and we can look at
-your changes, and integrate them.
+When you are ready, and you have pushed your changes on your github repo, go
+the web page of the repo, and click on 'Pull request' to send us a pull
+request. This will send an email to the commiters, but might also send an
+email to the mailing list in order to get more visibility.
 
-**Before asking for a pull or a review**, please check that your contribution
-complies with the following rules:
+It is recommented to check that your contribution complies with the following
+rules before submitting a pull request::
 
     * Follow the `coding-guidelines`_ (see below).
 
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
-    * Code with a good unittest coverage (at least 80%), check with::
-
-        $ pip install nose coverage
-        $ nosetests --with-coverage path/to/tests_for_package
-
     * All other tests pass when everything is rebuilt from scrath, under Unix,
       check with (from the toplevel source folder)::
 
         $ make
-
-    * No pyflakes warnings, check with::
-
-        $ pip install pyflakes
-        $ pyflakes path/to/module.py
-
-    * No PEP8 warnings, check with::
-
-        $ pip install pep8
-        $ pep8 path/to/module.py
 
     * At least one example script in the ``examples/`` folder. Have a look at
       other examples for reference. Example should demonstrate why this method
@@ -144,6 +126,24 @@ complies with the following rules:
       dimensionality: n_features is expected to be lower than 100".
 
       To build the documentation see `documentation`_ below.
+
+You can also check for common programming errors with the following tools::
+
+    * Code with a good unittest coverage (at least 80%), check with::
+
+        $ pip install nose coverage
+        $ nosetests --with-coverage path/to/tests_for_package
+
+    * No pyflakes warnings, check with::
+
+        $ pip install pyflakes
+        $ pyflakes path/to/module.py
+
+    * No PEP8 warnings, check with::
+
+        $ pip install pep8
+        $ pep8 path/to/module.py
+
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
@@ -256,7 +256,7 @@ In addition, we add the following guidelines:
       find bugs in scikit.
 
     * Use the `numpy docstring standard
-      <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ 
+      <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
       in all your docstrings.
 
 A good example of code that we like can be found `here
@@ -371,10 +371,10 @@ data in the predict method.
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, with shape = [N, D], where N is the number 
+X             array-like, with shape = [N, D], where N is the number
               of samples and D is the number of features.
 
-Y             array, with shape = [N], where N is the number of 
+Y             array, with shape = [N], where N is the number of
               samples.
 
 args, kwargs  Parameters can also be set in the fit method.
