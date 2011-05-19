@@ -3,8 +3,8 @@
 About
 =====
 
-scikits.learn is a python module for machine learning built on top of
-scipy.
+scikits.learn is a Python module for machine learning built on top of
+SciPy.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
@@ -27,8 +27,8 @@ Important links
 Dependencies
 ============
 
-The required dependencies to build the software are python >= 2.5,
-setuptools, NumPy >= 1.2, SciPy >= 0.7 and a working C++ compiler.
+The required dependencies to build the software are Python >= 2.5,
+setuptools, Numpy >= 1.2, SciPy >= 0.7 and a working C++ compiler.
 
 To run the tests you will also need nose >= 0.10.
 
@@ -36,7 +36,7 @@ To run the tests you will also need nose >= 0.10.
 Install
 =======
 
-This packages uses distutils, which is the default way of installing
+This package uses distutils, which is the default way of installing
 python modules. To install in your home directory, use::
 
   python setup.py install --home
