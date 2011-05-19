@@ -4,7 +4,7 @@ A demo of the K Means clustering algorithm
 =====================================================
 
 We want to compare the performance of the MiniBatchKMeans and KMeans:
-the MiniBatchKMeans is faster, but gives slightly different results (see 
+the MiniBatchKMeans is faster, but gives slightly different results (see
 :ref:`mini_batch_kmeans`).
 
 We will cluster a set of data, first with KMeans and then with
@@ -21,25 +21,16 @@ import pylab as pl
 
 from scikits.learn.cluster import MiniBatchKMeans, KMeans
 from scikits.learn.metrics.pairwise import euclidian_distances
+from scikits.learn.datasets.samples_generator import make_blobs
 
 ##############################################################################
 # Generate sample data
 np.random.seed(0)
 
-n_points_per_cluster = 400
-n_clusters = 3
-n_points = n_points_per_cluster * n_clusters
-means = np.array([[1, 1], [-1, -1], [1, -1]])
-std = 0.7
 batch_size = 45
-
-X = np.empty((0, 2))
-
-for i in range(n_clusters):
-    X = np.r_[X, means[i] + std * np.random.randn(n_points_per_cluster, 2)]
-
-# Let's shuffle the data
-np.random.shuffle(X)
+centers = [[1, 1], [-1, -1], [1, -1]]
+n_clusters = len(centers)
+X, labels_true = make_blobs(n_samples=1200, centers=centers, cluster_std=0.7)
 
 ##############################################################################
 # Compute clustering with Means
@@ -51,7 +42,6 @@ t_batch = time.time() - t0
 k_means_labels = k_means.labels_
 k_means_cluster_centers = k_means.cluster_centers_
 k_means_labels_unique = np.unique(k_means_labels)
-
 
 ##############################################################################
 # Compute clustering with MiniBatchKMeans
