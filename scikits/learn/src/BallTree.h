@@ -388,10 +388,10 @@ struct Node{
     }
 
   //query all points within a radius r of pt
-    int query_ball(const Point& pt,
-        value_type r,
-        std::vector<size_t>& nbrs){
-        value_type dist_LB = calc_dist_LB(pt);
+    int query_radius(const Point& pt,
+		     value_type r,
+		     std::vector<size_t>& nbrs){
+      value_type dist_LB = calc_dist_LB(pt);
 
     //--------------------------------------------------
     //  Case 1: balls do not intersect.  return
@@ -420,14 +420,14 @@ struct Node{
     //  Case 4: node is not a leaf.  Recursively search
     //          subnodes
         else{
-            SubNodes[0]->query_ball(pt,r,nbrs);
-            SubNodes[1]->query_ball(pt,r,nbrs);
+            SubNodes[0]->query_radius(pt,r,nbrs);
+            SubNodes[1]->query_radius(pt,r,nbrs);
         }
         return nbrs.size();
     }
 
   //count all points within a radius r of p
-    int query_ball(const Point& pt,
+    int query_radius(const Point& pt,
     value_type r){
         value_type dist_LB = calc_dist_LB(pt);
 
@@ -460,8 +460,8 @@ struct Node{
     //          subnodes
         else{
             int count = 0;
-            count += SubNodes[0]->query_ball(pt,r);
-            count += SubNodes[1]->query_ball(pt,r);
+            count += SubNodes[0]->query_radius(pt,r);
+            count += SubNodes[1]->query_radius(pt,r);
             return count;
         }
     }
@@ -556,26 +556,26 @@ public:
   // return number of points.
   // on return, nbrs is an array of indices of nearest points
   // if nbrs is not supplied, just count points within radius
-    int query_ball(const Point& pt,
+    int query_radius(const Point& pt,
                    value_type r,
                    std::vector<size_t>& nbrs){
-        return head_node_->query_ball(pt,r,nbrs);
+        return head_node_->query_radius(pt,r,nbrs);
     }
 
-    int query_ball(const Point& pt,
+    int query_radius(const Point& pt,
 		   value_type r){
-        return head_node_->query_ball(pt,r);
+        return head_node_->query_radius(pt,r);
     }
     
-    int query_ball(const Point* pt,
+    int query_radius(const Point* pt,
                    value_type r,
                    std::vector<size_t>& nbrs){
-        return head_node_->query_ball(*pt,r,nbrs);
+        return head_node_->query_radius(*pt,r,nbrs);
     }
 
-    int query_ball(const Point* pt,
+    int query_radius(const Point* pt,
 		   value_type r){
-        return head_node_->query_ball(*pt,r);
+        return head_node_->query_radius(*pt,r);
     }
     
 private:
@@ -587,48 +587,5 @@ private:
     DistFunc Dist;
     int leaf_size_;
 };
-
-/************************************************************
- * BruteForceNeighbors
- *  determine neighbors using a brute-force algorithm.  This
- *  is for comparison with results from BallTree
- ************************************************************/
-
-template<class Point>
-void BruteForceNeighbors(std::vector<Point*> Points,
-             const Point& pt,
-             size_t k,
-             size_t* neighbors){
-  int N = Points.size();
-  typedef pd_tuple<typename Point::value_type> PD;
-  std::vector<PD> distances;
-
-  for(int i=0;i<N;i++)
-    distances.push_back( PD(i,Euclidean_Dist(pt,*(Points[i])) ) );
-
-  std::partial_sort( distances.begin(),
-             distances.begin()+k,
-             distances.end()      );
-
-  for(size_t i=0; i<k; i++)
-    neighbors[i] = distances[i].index;
-}
-
-template<class Point>
-void BruteForceNeighbors(std::vector<Point*> Points,
-             const Point& pt,
-             std::vector<size_t>& neighbors){
-  size_t k = neighbors.size();
-  BruteForceNeighbors(Points,pt,k,&(neighbors[0]));
-}
-
-template<class Point>
-void BruteForceNeighbors(std::vector<Point*>* Points,
-			 const Point* pt,
-			 std::vector<size_t>& neighbors){
-  size_t k = neighbors.size();
-  BruteForceNeighbors(*Points,*pt,k,&(neighbors[0]));
-}
-
 
 #endif //BALL_TREE_H

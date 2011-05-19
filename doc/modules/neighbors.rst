@@ -127,9 +127,6 @@ depends on the size and structure of the data.  Currently, the
 This is the simplest and fastest construction algorithm, but is
 sub-optimal for some datasets.
 
-Along with the :class:`BallTree` implementation, a pure C++ implementation 
-of brute-force search is also provided in function :func:`knn_brute`.
-
 .. topic:: References:
 
    * `"Five balltree construction algorithms"

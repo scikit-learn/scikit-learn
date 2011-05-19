@@ -28,13 +28,10 @@ cdef extern from "BallTree.h":
     cdef cppclass cBallTree "BallTree<Point>":
         cBallTree(vector[Point_p] *, size_t)
         double query(Point *, vector[size_t] &) except +
-        double query_ball(Point *, Point_dtype) except +
-        double query_ball(Point *, Point_dtype, vector[size_t] &) except +
+        double query_radius(Point *, Point_dtype) except +
+        double query_radius(Point *, Point_dtype, vector[size_t] &) except +
     double Euclidean_Dist(Point *, Point *) except +
 
-    cdef void BruteForceNeighbors(vector[Point_p]*,
-                                  Point*,
-                                  vector[size_t]&)
 
 
 cdef Point *make_point(vals):
@@ -162,9 +159,9 @@ cdef class BallTree:
         else:
             return out_indices.reshape((orig_shape[:-1]) + (k,))
 
-    def query_ball(self, x, r, count_only = False):
+    def query_radius(self, x, r, count_only = False):
         """
-        query_ball(self, x, r, count_only = False):
+        query_radius(self, x, r, count_only = False):
 
         query the Ball Tree for neighbors within a ball of size r
 
@@ -214,9 +211,9 @@ cdef class BallTree:
         for pt_idx, pt in enumerate(x):
             temp = make_point(pt)
             if count_only:
-                output[pt_idx] = self.bt_ptr.query_ball(temp,r)
+                output[pt_idx] = self.bt_ptr.query_radius(temp,r)
             else:
-                self.bt_ptr.query_ball(temp, r, results)
+                self.bt_ptr.query_radius(temp, r, results)
                 output[pt_idx] = np.zeros(results.size())
                 for neighbor_idx in range(results.size()):
                     output[pt_idx][neighbor_idx] = results[neighbor_idx]
@@ -226,53 +223,3 @@ cdef class BallTree:
         # deflatten results
         return output.reshape(orig_shape[:-1])
 
-
-################################################################################
-# BruteForce wrapper
-def knn_brute(X,Y,k):
-    """
-    knn_brute(X,Y,k)
-    
-    Find the nearest neighbors of points Y within X 
-    using a brute-force search.
-
-    Paramteters
-    -----------
-      X: array-like, dimension (n_samples,n_dims)
-      Y: array-like, last dimension is n_dims
-      k: number of neighbors
-
-    Returns
-    -------
-      i: array-like, shape Y.shape[:-1]+(k,)
-         the array of indices in X of nearest neighbors of points Y
-    """
-    assert X.ndim == 2
-    NX,D = X.shape
-    
-    assert Y.shape[-1] == D
-    
-    orig_shape = Y.shape
-    Y = np.atleast_2d(Y)
-    Y = Y.reshape((-1, D))
-
-    #convert X to a vector of Points
-    X_points = new vector[Point_p]()
-    for i in range(NX):
-        X_points.push_back(make_point(X[i, :]))
-
-    cdef Point *temp
-    cdef vector[size_t] results = vector[size_t](<size_t>k)
-
-    # allocate output
-    out_indices = np.zeros((Y.shape[0], k), np.int64)
-    for pt_idx, pt in enumerate(Y):
-        temp = make_point(pt)
-        BruteForceNeighbors(X_points,
-                            temp, results)
-        for neighbor_idx in range(k):
-            out_indices[pt_idx, neighbor_idx] = results[neighbor_idx]
-        del temp
-
-    # deflatten results
-    return out_indices.reshape((orig_shape[:-1]) + (k,))
