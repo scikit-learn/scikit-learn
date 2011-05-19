@@ -16,8 +16,6 @@ from scikits.learn.datasets.samples_generator import make_blobs
 
 ################################################################################
 # Generate sample data
-np.random.seed(0)
-
 centers = [[1, 1], [-1, -1], [1, -1]]
 X, _ = make_blobs(n_samples=750, centers=centers, cluster_std=0.6)
 
