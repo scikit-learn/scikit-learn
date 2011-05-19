@@ -47,8 +47,8 @@ categories out of the 20 available in the dataset::
 
 We can now load the list of files matching those categories as follows::
 
-  >>> from scikits.learn.datasets import load_files
-  >>> twenty_train = load_files('data/twenty_newsgroups/20news-bydate-train',
+  >>> from scikits.learn.datasets import load_filenames
+  >>> twenty_train = load_filenames('data/twenty_newsgroups/20news-bydate-train',
   ...                           categories=categories)
 
 
