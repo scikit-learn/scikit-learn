@@ -141,9 +141,13 @@ def test_kneighbors_iris():
     # make sure reconstruction error is kept small using a real datasets
     # note that we choose neighbors < n_dim and n_neighbors > n_dim
     for i in range(1, 8):
-        A = neighbors.kneighbors_graph(iris.data, i, mode='barycenter')
-        pred_data = np.dot(A.todense(), iris.data)
-        assert np.linalg.norm(pred_data - iris.data) / iris.data.shape[0] < 0.1
+        for data in (iris.data, neighbors.BallTree(iris.data)):
+            # check for both input as numpy array and as BallTree
+            A = neighbors.kneighbors_graph(data, i, mode='barycenter')
+            if hasattr(data, 'query'):
+                data = data.data
+            pred_data = np.dot(A.todense(), data)
+            assert np.linalg.norm(pred_data - data) / data.shape[0] < 0.1
 
 
 if __name__ == '__main__':
