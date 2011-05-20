@@ -82,7 +82,6 @@ class GNB(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples]
             Target values.
 
-
         Returns
         -------
         self : object
@@ -189,17 +188,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-    y : array, shape = [n_samples]
-        Target vector relative to X
-
-    Parameters
-    ----------
     alpha: float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
+    use_prior: boolean
+        Whether to use label prior probabilities or not.
 
     Methods
     -------
@@ -210,10 +203,10 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         Predict using the model.
 
     predict_proba(X) : array
-        Predict the probability of each class using the model.
+        Predict the probability of each label using the model.
 
     predict_log_proba(X) : array
-        Predict the log probability of each class using the model.
+        Predict the log probability of each label using the model.
 
     Examples
     --------
@@ -228,10 +221,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     3
     """
 
-    def __init__(self, alpha=1.0):
+    def __init__(self, alpha=1.0, use_prior=True):
         self.alpha = alpha
+        self.use_prior = use_prior
 
-    def fit(self, X, y):
+    def fit(self, X, y, theta=None):
         """Fit Multinomial Naive Bayes according to X, y
 
         Parameters
@@ -243,27 +237,32 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples]
             Target values.
 
+        theta : array, shape [n_labels * n_features]
+            Prior probability per label.
 
         Returns
         -------
-        self : object
+            self : object
             Returns self.
         """
+        compute_priors = theta is None
 
         #
-        # N_c is the count of all words in all documents of class c.
-        # N_c_i is the a count of word i in all documents of class c.
-        # theta_c is the prior empirical probability of a document of class c.
-        # theta_c_i is the (smoothened) empirical likelihood of word i
-        # given a document of class c.
+        # N_c is the count of all words in all documents of label c.
+        # N_c_i is the a count of word i in all documents of label c.
+        # theta[c] is the prior empirical probability of a document of label c.
+        # theta_c_i is the (smoothed) empirical likelihood of word i
+        # given a document of label c.
         #
         N_c_i_temp = []
-        theta_c = []
+        if compute_priors:
+            theta = []
         self.unique_y = np.unique(y)
 
         for yi in self.unique_y:
             N_c_i_temp.append(np.sum(X[y == yi, :], 0))
-            theta_c.append(np.float(np.sum(y == yi)) / y.size)
+            if compute_priors:
+                theta.append(np.float(np.sum(y == yi)) / y.size)
 
         N_c_i = np.array(N_c_i_temp)
         N_c = np.sum(N_c_i, axis=1)
@@ -278,7 +277,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         # Estimate the parameters of the distribution
         #
         self.theta_c_i = (N_c_i + alpha_i) / (N_c.reshape(-1, 1) + alpha)
-        self.theta_c = np.array(theta_c)
+        self.theta = np.array(theta)
 
         return self
 
@@ -305,9 +304,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         joint_log_likelihood = []
         for i in range(self.unique_y.size):
-            jointi = np.log(self.theta_c[i])
             n_ij = np.dot(np.log(self.theta_c_i[i]), X.T)
-            joint_log_likelihood.append(jointi + n_ij)
+            if self.use_prior:
+                jointi = np.log(self.theta[i])
+                n_ij += jointi
+            joint_log_likelihood.append(n_ij)
 
         joint_log_likelihood = np.array(joint_log_likelihood)
 
@@ -330,9 +331,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
+        C : array-like, shape = [n_samples, n_labels]
+            Returns the probability of the sample for each label in
+            the model, where labels are ordered by arithmetical
             order.
         """
 
@@ -360,9 +361,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each class
-            in the model, where classes are ordered by arithmetical
+        C : array-like, shape = [n_samples, n_labels]
+            Returns the log-probability of the sample for each label
+            in the model, where labels are ordered by arithmetical
             order.
         """
 
