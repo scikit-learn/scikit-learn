@@ -49,7 +49,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> X = np.random.randint( 5, size=(6, 100) )
+    >>> X = np.random.randint(5, size=(6, 100))
     >>> Y = np.array([1, 2, 3, 4, 5, 6])
     >>> from scikits.learn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
@@ -75,6 +75,8 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples]
             Target values.
 
+        theta : array, shape [n_labels * n_features]
+            Prior probability per label.
 
         Returns
         -------
@@ -90,7 +92,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         # N_c is the count of all words in all documents of label c.
         # N_c_i is the a count of word i in all documents of label c.
         # theta[c] is the prior empirical probability of a document of label c.
-        # theta_c_i is the (smoothened) empirical likelihood of word i
+        # theta_c_i is the (smoothed) empirical likelihood of word i
         # given a document of label c.
         #
         N_c_i_temp = []

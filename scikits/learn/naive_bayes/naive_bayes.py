@@ -8,9 +8,9 @@
 #         Yehuda Finkelstein <yehudaf@tx.technion.ac.il>
 #
 # License: BSD Style.
-import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
+import numpy as np
 
 
 class GNB(BaseEstimator, ClassifierMixin):
@@ -36,7 +36,6 @@ class GNB(BaseEstimator, ClassifierMixin):
 
     sigma : array, shape [n_classes * n_features]
         variance of each feature for the different class
-
 
     Methods
     -------
@@ -216,7 +215,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha_i=1.0)
+    MultinomialNB(alpha=1.0)
     >>> print clf.predict(X[2])
     3
     """
@@ -242,7 +241,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-            self : object
+        self : object
             Returns self.
         """
         compute_priors = theta is None
