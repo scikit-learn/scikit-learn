@@ -24,6 +24,8 @@ def test_lle_simple_grid():
         assert reconstruction_error < tol
         assert_array_almost_equal(clf.reconstruction_error_, reconstruction_error)
 
+    np.linalg.norm(clf.transform(X) - clf.embedding_) < tol
+
 
 def test_lle_manifold():
     # similar test on a slightly more complex manifold
