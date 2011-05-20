@@ -1,4 +1,12 @@
-""" Naive Bayes classifiers.
+"""
+Naive Bayes models
+==================
+
+Naive Bayes algorithms are a set of supervised learning methods based on
+applying Bayes' theorem with strong (naive) independence assumptions. 
+
+See http://scikit-learn.sourceforge.net/modules/naive_bayes.html for
+complete documentation.
 """
 
 # Author: Vincent Michel <vincent.michel@inria.fr>
@@ -9,8 +17,10 @@
 #
 # License: BSD Style.
 
-from ..base import BaseEstimator, ClassifierMixin
+from .base import BaseEstimator, ClassifierMixin
+from .utils import safe_asanyarray
 import numpy as np
+from scipy.sparse import issparse
 
 
 class GNB(BaseEstimator, ClassifierMixin):
@@ -179,9 +189,16 @@ class GNB(BaseEstimator, ClassifierMixin):
         return log_proba
 
 
+def asanyarray_or_csr(X):
+    if issparse(X):
+        return X.tocsr(), True
+    else:
+        return np.asanyarray(X), False
+
+
 class MultinomialNB(BaseEstimator, ClassifierMixin):
     """
-    Multinomial Naive Bayes (MultinomialNB)
+    Naive Bayes classifier for multinomial models
 
     The Multinomial Naive Bayes classifier is suitable for text classification.
 
@@ -244,6 +261,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
+        X, self.sparse = asanyarray_or_csr(X)
+        y = safe_asanyarray(y)
+
         compute_priors = theta is None
 
         #
@@ -259,7 +279,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self.unique_y = np.unique(y)
 
         for yi in self.unique_y:
-            N_c_i_temp.append(np.sum(X[y == yi, :], 0))
+            if self.sparse:
+                row_ind = np.nonzero(y == yi)[0]
+                N_c_i_temp.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
+            else:
+                N_c_i_temp.append(np.sum(X[y == yi, :], 0))
             if compute_priors:
                 theta.append(np.float(np.sum(y == yi)) / y.size)
 
@@ -292,6 +316,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
         """
+        X, _ = asanyarray_or_csr(X)
 
         joint_log_likelihood = self._joint_log_likelihood(X)
         y_pred = self.unique_y[np.argmax(joint_log_likelihood, axis=0)]
@@ -303,7 +328,10 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         joint_log_likelihood = []
         for i in range(self.unique_y.size):
-            n_ij = np.dot(np.log(self.theta_c_i[i]), X.T)
+            if self.sparse:
+                n_ij = np.log(self.theta_c_i[i]) * X.T
+            else:
+                n_ij = np.dot(np.log(self.theta_c_i[i]), X.T)
             if self.use_prior:
                 jointi = np.log(self.theta[i])
                 n_ij += jointi
@@ -335,6 +363,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             the model, where labels are ordered by arithmetical
             order.
         """
+        X, _ = asanyarray_or_csr(X)
 
         joint_log_likelihood = self._joint_log_likelihood(X)
 
@@ -365,6 +394,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             in the model, where labels are ordered by arithmetical
             order.
         """
+        X, _ = asanyarray_or_csr(X)
 
         joint_log_likelihood = self._joint_log_likelihood(X)
 
