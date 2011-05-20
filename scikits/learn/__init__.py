@@ -2,8 +2,8 @@
 Machine Learning module in python
 =================================
 
-scikits.learn is a Python module integrating classique machine
-learning algorithms in the tightly-nit world of scientific Python
+scikits.learn is a Python module integrating classical machine
+learning algorithms in the tightly-knit world of scientific Python
 packages (numpy, scipy, matplotlib).
 
 It aims to provide simple and efficient solutions to learning problems
