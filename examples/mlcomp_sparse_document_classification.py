@@ -49,6 +49,8 @@ from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
+from scikits.learn.naive_bayes.sparse import MultinomialNB
+
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
     print "Please follow those instructions to get started:"
@@ -71,20 +73,6 @@ print "n_samples: %d, n_features: %d" % X_train.shape
 assert sp.issparse(X_train)
 y_train = news_train.target
 
-print "Training a linear classifier..."
-parameters = {
-    'loss': 'hinge',
-    'penalty': 'l2',
-    'n_iter': 50,
-    'alpha': 0.00001,
-    'fit_intercept': True,
-}
-print "parameters:", parameters
-t0 = time()
-clf = SGDClassifier(**parameters).fit(X_train, y_train)
-print "done in %fs" % (time() - t0)
-print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
-
 print "Loading 20 newsgroups test set... "
 news_test = load_mlcomp('20news-18828', 'test')
 t0 = time()
@@ -101,22 +89,53 @@ y_test = news_test.target
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 
-print "Predicting the outcomes of the testing set"
-t0 = time()
-pred = clf.predict(X_test)
-print "done in %fs" % (time() - t0)
+################################################################################
+# Benchmark classifiers
+def benchmark(clf_class, params, name):
+    print "parameters:", params
+    t0 = time()
+    clf = clf_class(**params).fit(X_train, y_train)
+    print "done in %fs" % (time() - t0)
 
-print "Classification report on test set for classifier:"
-print clf
-print
-print classification_report(y_test, pred, target_names=news_test.target_names)
+    if hasattr(clf, 'coef_'):
+        print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
 
-cm = confusion_matrix(y_test, pred)
-print "Confusion matrix:"
-print cm
+    print "Predicting the outcomes of the testing set"
+    t0 = time()
+    pred = clf.predict(X_test)
+    print "done in %fs" % (time() - t0)
+    
+    print "Classification report on test set for classifier:"
+    print clf
+    print
+    print classification_report(y_test, pred, target_names=news_test.target_names)
+    
+    cm = confusion_matrix(y_test, pred)
+    print "Confusion matrix:"
+    print cm
+    
+    # Show confusion matrix
+    pl.matshow(cm)
+    pl.title('Confusion matrix of the %s classifier' % name)
+    pl.colorbar()
+    
+    
+print "Testbenching a linear classifier..."
+parameters = {
+    'loss': 'hinge',
+    'penalty': 'l2',
+    'n_iter': 50,
+    'alpha': 0.00001,
+    'fit_intercept': True,
+}
 
-# Show confusion matrix
-pl.matshow(cm)
-pl.title('Confusion matrix')
-pl.colorbar()
+benchmark(SGDClassifier, parameters, 'SGD')
+
+print "Testbenching a MultinomialNB classifier..."
+parameters = {
+    'alpha_i': 0.01
+}
+
+benchmark(MultinomialNB, parameters, 'MultinomialNB')
+
 pl.show()
