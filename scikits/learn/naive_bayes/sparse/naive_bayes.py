@@ -1,4 +1,4 @@
-""" Naives Bayes classifiers for sparse data.
+""" Naive Bayes classifiers for sparse data.
 """
 
 # Author: Amit Aides <amitibo@tx.technion.ac.il>
@@ -25,8 +25,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    alpha_i: float, optional (default=1.0)
-        smoothness prior.
+    alpha: float, optional (default=1.0)
+        Additive (Laplace/Lidstone) smoothing parameter
+        (0 for no smoothing).
 
     Methods
     -------
@@ -50,18 +51,14 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha_i=1.0)
+    MultinomialNB(alpha=1.0)
     >>> print clf.predict(X[2])
     3
 
-    See also
-    --------
-
     """
 
-    def __init__(self, alpha_i=1.0):
-
-        self.alpha_i = alpha_i
+    def __init__(self, alpha=1.0):
+        self.alpha = alpha
 
     def fit(self, X, y):
         """Fit Multinomial Naive Bayes according to X, y
@@ -104,7 +101,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         #
         # Smoothing coefficients
         #
-        alpha_i = self.alpha_i
+        alpha_i = self.alpha
         alpha = alpha_i * X.shape[1]
 
         #
