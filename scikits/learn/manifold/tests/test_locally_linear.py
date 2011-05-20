@@ -23,8 +23,8 @@ def test_lle_simple_grid():
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         assert reconstruction_error < tol
         assert_array_almost_equal(clf.reconstruction_error_, reconstruction_error)
-
-    np.linalg.norm(clf.transform(X) - clf.embedding_) < tol
+    noise = np.random.randn(*X.shape) / 100
+    assert np.linalg.norm(clf.transform(X + noise) - clf.embedding_) < tol
 
 
 def test_lle_manifold():
