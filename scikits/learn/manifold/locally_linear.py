@@ -5,7 +5,7 @@
 
 import numpy as np
 from ..base import BaseEstimator
-from ..neighbors import kneighbors_graph
+from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
 
 
 def locally_linear_embedding(
@@ -16,7 +16,9 @@ def locally_linear_embedding(
 
     Parameters
     ----------
-    X : array-like, shape [n_samples, n_features]
+    X : array-like or BallTree, shape [n_samples, n_features]
+        Input data, in the form of a numpy array or a precomputed
+        :class:`BallTree`.
 
     n_neighbors : integer
         number of neighbors to consider for each point.
@@ -149,7 +151,32 @@ class LocallyLinearEmbedding(BaseEstimator):
         self : returns an instance of self.
         """
         self._set_params(**params)
+        self.ball_tree = BallTree(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
-                X, self.n_neighbors, self.out_dim, reg=reg,\
+                self.ball_tree, self.n_neighbors, self.out_dim, reg=reg,\
                 eigen_solver=eigen_solver, tol=tol, max_iter=max_iter)
+
+    def transform(self, X, reg=1e-3, **params):
+        """
+        Transform new points into embedding space.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        reg : float
+            regularization constant, multiplies the trace of the local
+            covariance matrix of the distances
+
+        Returns
+        -------
+        X_new : array, shape = [n_samples, out_dim]
+        """
+        self._set_params(**params)
+        X = np.atleast_2d(X)
+        if not hasattr(self, 'ball_tree'):
+            raise ValueError('The model is not fitted')
+        ind = self.ball_tree.query(X,  return_distance=False)
+        weights = barycenter_weights(X, self.ball_tree.data[ind])
+        return np.dot(weights, self.embedding_[ind])
