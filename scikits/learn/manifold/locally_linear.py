@@ -156,6 +156,7 @@ class LocallyLinearEmbedding(BaseEstimator):
             locally_linear_embedding(
                 self.ball_tree, self.n_neighbors, self.out_dim, reg=reg,\
                 eigen_solver=eigen_solver, tol=tol, max_iter=max_iter)
+        return self
 
     def transform(self, X, reg=1e-3, **params):
         """
@@ -179,4 +180,4 @@ class LocallyLinearEmbedding(BaseEstimator):
             raise ValueError('The model is not fitted')
         ind = self.ball_tree.query(X,  return_distance=False)
         weights = barycenter_weights(X, self.ball_tree.data[ind])
-        return np.dot(weights, self.embedding_[ind])
+        return np.sum(np.dot(weights, self.embedding_[ind]), axis=1)
