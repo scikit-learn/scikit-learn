@@ -27,7 +27,7 @@ ctypedef Point *Point_p
 cdef extern from "BallTree.h":
     cdef cppclass cBallTree "BallTree<Point>":
         cBallTree(vector[Point_p] *, size_t)
-        double query(Point *, vector[size_t] &) except +
+        void query(Point *, vector[size_t] &) except +
         double query_radius(Point *, Point_dtype) except +
         double query_radius(Point *, Point_dtype, vector[size_t] &) except +
     double Euclidean_Dist(Point *, Point *) except +
