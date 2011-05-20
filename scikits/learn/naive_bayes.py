@@ -132,7 +132,7 @@ class GNB(BaseEstimator, ClassifierMixin):
 
     def _joint_log_likelihood(self, X):
         joint_log_likelihood = []
-        for i in range(np.size(self.unique_y)):
+        for i in xrange(np.size(self.unique_y)):
             jointi = np.log(self.proba_y[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta[i, :]) ** 2) / \
@@ -200,7 +200,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     """
     Naive Bayes classifier for multinomial models
 
-    The Multinomial Naive Bayes classifier is suitable for text classification.
+    The multinomial Naive Bayes classifier is suitable for text classification.
+    This class is designed to handle both dense and sparse data; it will enter
+    "sparse mode" if its training matrix (X) is a sparse matrix.
 
     Parameters
     ----------
@@ -266,7 +268,6 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         compute_priors = theta is None
 
-        #
         # N_c is the count of all words in all documents of label c.
         # N_c_i is the a count of word i in all documents of label c.
         # theta[c] is the prior empirical probability of a document of label c.
@@ -290,13 +291,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         N_c_i = np.array(N_c_i_temp)
         N_c = np.sum(N_c_i, axis=1)
 
-        #
         # Smoothing coefficients
         #
         alpha_i = self.alpha
         alpha = alpha_i * X.shape[1]
 
-        #
         # Estimate the parameters of the distribution
         #
         self.theta_c_i = (N_c_i + alpha_i) / (N_c.reshape(-1, 1) + alpha)
@@ -327,7 +326,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         """Calculate the posterior log probability of the samples X"""
 
         joint_log_likelihood = []
-        for i in range(self.unique_y.size):
+        for i in xrange(self.unique_y.size):
             if self.sparse:
                 n_ij = np.log(self.theta_c_i[i]) * X.T
             else:
@@ -337,9 +336,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
                 n_ij += jointi
             joint_log_likelihood.append(n_ij)
 
-        joint_log_likelihood = np.array(joint_log_likelihood)
-
-        return joint_log_likelihood
+        return np.array(joint_log_likelihood)
 
     def _mininf(self, X, axis=None):
         """Calculate the minimum of a matrix ignoring -inf values"""
@@ -367,7 +364,6 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         joint_log_likelihood = self._joint_log_likelihood(X)
 
-        #
         # The _joint_log_likelihood has very low values that create underflow
         # in the computation of the exponent. Therefore I 'fix' it by adding
         # a minimal value.
@@ -398,7 +394,6 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         joint_log_likelihood = self._joint_log_likelihood(X)
 
-        #
         # The _joint_log_likelihood has very low values that create underflow
         # in the computation of the exponent. Therefore I 'fix' it by adding
         # a minimal value.
