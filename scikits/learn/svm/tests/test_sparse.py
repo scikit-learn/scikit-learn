@@ -171,7 +171,7 @@ def test_sparse_realdata():
     This catchs some bugs if input is not correctly converted into
     sparse format or weights are not correctly initialized.
     """
-    
+
     data = np.array([ 0.03771744,  0.1003567,  0.01174647,  0.027069  ])
     indices = np.array([6, 5, 35, 31])
     indptr = np.array(

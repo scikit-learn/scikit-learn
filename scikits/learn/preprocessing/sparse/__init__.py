@@ -9,8 +9,9 @@ from .. import Normalizer as DenseNormalizer
 from .. import LengthNormalizer as DenseLengthNormalizer
 from .. import Binarizer as DenseBinarizer
 
-from ._preprocessing import normalize_axis1_sparse, \
-                            normalize_length_axis1_sparse
+from ._preprocessing import normalize_axis1_sparse
+from ._preprocessing import normalize_length_axis1_sparse
+
 
 class Normalizer(DenseNormalizer):
 
@@ -24,6 +25,7 @@ class Normalizer(DenseNormalizer):
 
         return X
 
+
 class LengthNormalizer(DenseNormalizer):
 
     def transform(self, X, y=None, copy=True):
@@ -36,10 +38,9 @@ class LengthNormalizer(DenseNormalizer):
 
         return X
 
+
 class Binarizer(DenseBinarizer):
-    """
-    Binarize data according to a threshold.
-    """
+    """Binarize data according to a threshold"""
 
     def __init__(self, threshold=0.0):
         if threshold < 0:
@@ -62,4 +63,3 @@ class Binarizer(DenseBinarizer):
         X.data[not_cond] = 0
 
         return X
-

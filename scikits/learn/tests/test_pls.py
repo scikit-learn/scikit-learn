@@ -79,7 +79,6 @@ def test_pls():
     assert_array_almost_equal(Yr, plsca.y_scores_,
         err_msg="rotation on Y failed")
 
-
     # "Non regression test" on canonical PLS
     # --------------------------------------
     pls_bynipals = pls.PLSCanonical()
@@ -109,7 +108,6 @@ def test_pls():
            [ 0.74697171,  0.11930342],
            [ 0.25668516, -0.95924284]])
     assert_array_almost_equal(pls_ca.y_weights_, y_weights)
-
 
     # 2) Regression PLS (PLS2): "Non regression test"
     # ===============================================
@@ -163,5 +161,3 @@ def test_pls():
            [  1.09495154e+01,   1.75568297e+02,   8.07654128e+01]])
 
     assert_array_almost_equal(pls2.predict(X), ypred)
-    
-

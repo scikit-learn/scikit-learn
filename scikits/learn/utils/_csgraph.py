@@ -18,6 +18,7 @@ from scipy.sparse import isspmatrix
 _msg0 = 'x must be a symmetric square matrix!'
 _msg1 = _msg0 + '(has shape %s)'
 
+
 def cs_graph_components(x):
     """
     Determine connected compoments of a graph stored as a compressed sparse row
@@ -77,5 +78,3 @@ def cs_graph_components(x):
     n_components = _cs_graph_components(shape[0], x.indptr, x.indices, label)
 
     return n_components, label
-
-

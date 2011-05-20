@@ -29,39 +29,39 @@ def log_likelihood(emp_cov, precision):
       The precision matrix of the covariance model to be tested
 
     """
-    return -np.sum(emp_cov*precision) + exact_logdet(precision)
+    return -np.sum(emp_cov * precision) + exact_logdet(precision)
 
 
 def empirical_covariance(X, assume_centered=False):
     """Computes the Maximum likelihood covariance estimator
-    
+
     Parameters
     ----------
     X: 2D ndarray, shape (n_samples, n_features)
       Data from which to compute the covariance estimate
-    
+
     assume_centered: Boolean
       If True, data are not centered before computation.
       Usefull to work with data whose mean is significantly equal to
       zero but is not exactly zero.
       If False, data are centered before computation.
-      
+
     Returns
     -------
     covariance: 2D ndarray, shape (n_features, n_features)
       Empirical covariance (Maximum Likelihood Estimator)
-      
+
 
     """
     X = np.asanyarray(X)
     if X.ndim == 1:
         X = np.atleast_2d(X).T
-    
+
     if assume_centered:
         covariance = np.dot(X.T, X) / X.shape[0]
     else:
         covariance = np.cov(X.T, bias=1)
-    
+
     return covariance
 
 
@@ -85,10 +85,10 @@ class EmpiricalCovariance(BaseEstimator):
     """
     def __init__(self, store_precision=True):
         self.store_precision = store_precision
-    
+
     def _set_estimates(self, covariance):
         """Saves the covariance and precision estimates
-        
+
         Storage is done accordingly to `self.store_precision`.
         Precision stored only if invertible.
 
@@ -107,7 +107,7 @@ class EmpiricalCovariance(BaseEstimator):
             self.precision_ = linalg.pinv(covariance)
         else:
             self.precision_ = None
-    
+
     def fit(self, X, assume_centered=False, **params):
         """ Fits the Maximum Likelihood Estimator covariance model
         according to the given training data and parameters.
@@ -117,13 +117,13 @@ class EmpiricalCovariance(BaseEstimator):
         X : array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
-          
+
         assume_centered: Boolean
           If True, data are not centered before computation.
           Usefull to work with data whose mean is significantly equal to
           zero but is not exactly zero.
           If False, data are centered before computation.
-          
+
         Returns
         -------
         self : object
@@ -133,7 +133,7 @@ class EmpiricalCovariance(BaseEstimator):
         self._set_params(**params)
         covariance = empirical_covariance(X, assume_centered=assume_centered)
         self._set_estimates(covariance)
-        
+
         return self
 
     def score(self, X_test, assume_centered=False):
@@ -146,24 +146,25 @@ class EmpiricalCovariance(BaseEstimator):
           Test data of which we compute the likelihood,
           where n_samples is the number of samples and n_features is
           the number of features.
-          
+
         Returns
         -------
         res: float
           The likelihood of the data set with self.covariance_ as an estimator
           of its covariance matrix.
-          
+
         """
         # compute empirical covariance of the test set
-        test_cov = empirical_covariance(X_test, assume_centered=assume_centered)
+        test_cov = empirical_covariance(X_test,
+                                        assume_centered=assume_centered)
         # compute log likelihood
         if self.store_precision:
             res = log_likelihood(test_cov, self.precision_)
         else:
             res = log_likelihood(test_cov, linalg.pinv(self.covariance_))
-        
+
         return res
-        
+
     def mse(self, comp_cov):
         """Computes the Mean Squared Error between two covariance estimators.
         (In the sense of the Frobenius norm)
@@ -180,5 +181,5 @@ class EmpiricalCovariance(BaseEstimator):
 
         """
         diff = comp_cov - self.covariance_
-        
-        return np.sum(diff**2)
+
+        return np.sum(diff ** 2)

@@ -11,5 +11,6 @@ Unsupervised learning
     modules/manifold
     modules/clustering
     modules/decomposition
+    modules/covariance
 
 

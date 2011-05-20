@@ -33,17 +33,17 @@ class SGDClassifier(BaseSGDClassifier):
     Parameters
     ----------
     loss : str, 'hinge' or 'log' or 'modified_huber'
-        The loss function to be used. Defaults to 'hinge'. The hinge loss is a
-        margin loss used by standard linear SVM models. The 'log' loss is the
-        loss of logistic regression models and can be used for probability
+        The loss function to be used. Defaults to 'hinge'. The hinge loss is
+        a margin loss used by standard linear SVM models. The 'log' loss is
+        the loss of logistic regression models and can be used for probability
         estimation in binary classifiers. 'modified_huber' is another smooth
         loss that brings tolerance to outliers.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
-        The penalty (aka regularization term) to be used. Defaults to 'l2' which
-        is the standard regularizer for linear SVM models. 'l1' and 'elasticnet'
-        migh bring sparsity to the model (feature selection) not achievable with
-        'l2'.
+        The penalty (aka regularization term) to be used. Defaults to 'l2'
+        which is the standard regularizer for linear SVM models. 'l1' and
+        'elasticnet' migh bring sparsity to the model (feature selection)
+        not achievable with 'l2'.
 
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
@@ -76,6 +76,19 @@ class SGDClassifier(BaseSGDClassifier):
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
+    learning_rate : string, optional
+        The learning rate:
+        constant: eta = eta0
+        optimal: eta = 1.0/(t+t0) [default]
+        invscaling: eta = eta0 / pow(t, power_t)
+
+    eta0 : double, optional
+        The initial learning rate [default 0.01].
+
+    power_t : double, optional
+        The exponent for inverse scaling learning rate [default 0.25].
+
+
     Attributes
     ----------
     `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
@@ -98,7 +111,8 @@ class SGDClassifier(BaseSGDClassifier):
     >>> clf = linear_model.sparse.SGDClassifier()
     >>> clf.fit(X, y)
     SGDClassifier(loss='hinge', n_jobs=1, shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', seed=0, rho=1.0, alpha=0.0001)
+           learning_rate='optimal', fit_intercept=True, penalty='l2',
+           power_t=0.5, seed=0, eta0=0.0, rho=1.0, alpha=0.0001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -146,7 +160,9 @@ class SGDClassifier(BaseSGDClassifier):
                                       int(self.seed),
                                       self.class_weight[1],
                                       self.class_weight[0],
-                                      self.sample_weight)
+                                      self.sample_weight,
+                                      self.learning_rate_code,
+                                      self.eta0, self.power_t)
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(np.atleast_2d(self.coef_))
@@ -176,7 +192,9 @@ class SGDClassifier(BaseSGDClassifier):
                                                self.verbose, self.shuffle,
                                                self.seed,
                                                self.class_weight[i],
-                                               self.sample_weight)
+                                               self.sample_weight,
+                                               self.learning_rate_code,
+                                               self.eta0, self.power_t)
             for i, c in enumerate(self.classes))
 
         for i, coef, intercept in res:
@@ -195,7 +213,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         Returns
         -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples, n_classes]
+        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
           The signed 'distances' to the hyperplane(s).
         """
         # np.dot only works correctly if both arguments are sparse matrices
@@ -212,7 +230,8 @@ class SGDClassifier(BaseSGDClassifier):
 def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, y, coef_,
                           intercept_, loss_function, penalty_type, alpha,
                           rho, n_iter, fit_intercept, verbose, shuffle,
-                          seed, class_weight_pos, sample_weight):
+                          seed, class_weight_pos, sample_weight,
+                          learning_rate, eta0, power_t):
     """Inner loop for One-vs.-All scheme"""
     y_i = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
     y_i[y == c] = 1.0
@@ -223,7 +242,8 @@ def _train_ova_classifier(i, c, X_data, X_indices, X_indptr, y, coef_,
                                 int(fit_intercept), int(verbose),
                                 int(shuffle), int(seed),
                                 class_weight_pos, 1.0,
-                                sample_weight)
+                                sample_weight, learning_rate, eta0,
+                                power_t)
     return (i, coef, intercept)
 
 
@@ -287,6 +307,18 @@ class SGDRegressor(BaseSGDRegressor):
         Epsilon in the epsilon insensitive huber loss function;
         only if `loss=='huber'`.
 
+    learning_rate : string, optional
+        The learning rate:
+        constant: eta = eta0
+        optimal: eta = 1.0/(t+t0)
+        invscaling: eta = eta0 / pow(t, power_t) [default]
+
+    eta0 : double, optional
+        The initial learning rate [default 0.01].
+
+    power_t : double, optional
+        The exponent for inverse scaling learning rate [default 0.25].
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -305,9 +337,9 @@ class SGDRegressor(BaseSGDRegressor):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = linear_model.sparse.SGDRegressor()
     >>> clf.fit(X, y)
-    SGDRegressor(loss='squared_loss', shuffle=False, verbose=0, n_iter=5,
-           fit_intercept=True, penalty='l2', p=0.1, seed=0, rho=1.0,
-           alpha=0.0001)
+    SGDRegressor(loss='squared_loss', power_t=0.25, shuffle=False, verbose=0,
+           n_iter=5, learning_rate='invscaling', fit_intercept=True,
+           penalty='l2', p=0.1, seed=0, eta0=0.01, rho=1.0, alpha=0.0001)
 
     See also
     --------
@@ -345,7 +377,9 @@ class SGDRegressor(BaseSGDRegressor):
                                       int(self.shuffle),
                                       int(self.seed),
                                       1.0, 1.0,
-                                      self.sample_weight)
+                                      self.sample_weight,
+                                      self.learning_rate_code,
+                                      self.eta0, self.power_t)
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(self.coef_)

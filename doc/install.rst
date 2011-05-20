@@ -30,7 +30,7 @@ Installing an official release
 Installing from source
 ----------------------
 
-Installing from source requires you to have installed numpy, 
+Installing from source requires you to have installed numpy,
 scipy, setuptools, python development headers and a working C++
 compiler. Under debian-like systems you can get all this by executing
 with root privileges::
@@ -117,7 +117,7 @@ executing the command::
     python setup.py install
 
 
-To build a precompiled package like the ones distributed at 
+To build a precompiled package like the ones distributed at
 `the downloads section <https://sourceforge.net/projects/scikit-learn/files/>`_,
 the command to execute is::
 
@@ -132,7 +132,7 @@ Third party distributions of scikits.learn
 ==========================================
 
 Some third-party distributions are now providing versions of
-scikits.learn integrated with their package-management systems. 
+scikits.learn integrated with their package-management systems.
 
 These can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install
@@ -149,6 +149,14 @@ The Debian package is named python-scikits-learn and can be install
 using the following commands with root privileges::
 
       apt-get install python-scikits-learn
+
+
+Python(x, y)
+------------
+
+The `Python(x, y) <http://pythonxy.com>`_ distributes scikit-learn as an additional plugin, which can
+be found in the `Additional plugins <http://code.google.com/p/pythonxy/wiki/AdditionalPlugins>`_
+page.
 
 
 Enthought python distribution
@@ -189,7 +197,7 @@ Testing
 
 Testing requires having the `nose
 <http://somethingaboutorange.com/mrl/projects/nose/>`_ library. After
-installation, the package can be tested by executing from outside the
+installation, the package can be tested by executing *from outside* the
 source directory::
 
     python -c "import scikits.learn as skl; skl.test()"
@@ -200,8 +208,9 @@ eventually should finish with the a text similar to::
            Ran 601 tests in 27.920s
            OK (SKIP=2)
 
-otherwise please consider submitting a bug in the :ref:`bug_tracker`
-or to the :ref:`mailing_lists`.
+otherwise please consider posting an issue into the `bug tracker
+<https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
+:ref:`mailing_lists`.
 
 scikits.learn can also be tested without having the package
 installed. For this you must compile the sources inplace from the
