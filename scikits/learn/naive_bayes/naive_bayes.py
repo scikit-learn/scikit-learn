@@ -1,4 +1,4 @@
-""" Naives Bayes classifiers.
+""" Naive Bayes classifiers.
 """
 
 # Author: Vincent Michel <vincent.michel@inria.fr>
@@ -197,8 +197,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    alpha_i: float, optional (default=1.0)
-        smoothness prior.
+    alpha: float, optional (default=1.0)
+        Additive (Laplace/Lidstone) smoothing parameter
+        (0 for no smoothing).
 
     Methods
     -------
@@ -217,7 +218,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> X = np.random.randint( 5, size=(6, 100) )
+    >>> X = np.random.randint(5, size=(6, 100))
     >>> Y = np.array([1, 2, 3, 4, 5, 6])
     >>> from scikits.learn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
@@ -225,15 +226,10 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     MultinomialNB(alpha_i=1.0)
     >>> print clf.predict(X[2])
     3
-
-    See also
-    --------
-
     """
 
-    def __init__(self, alpha_i=1.0):
-
-        self.alpha_i = alpha_i
+    def __init__(self, alpha=1.0):
+        self.alpha = alpha
 
     def fit(self, X, y):
         """Fit Multinomial Naive Bayes according to X, y
@@ -275,7 +271,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         #
         # Smoothing coefficients
         #
-        alpha_i = self.alpha_i
+        alpha_i = self.alpha
         alpha = alpha_i * X.shape[1]
 
         #
