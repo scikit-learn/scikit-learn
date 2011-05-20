@@ -541,8 +541,8 @@ public:
 	  dist[i] = Pts_dist[i];
     }
 
-  //count number of points within a distance r of the point
-  // return number of points.
+    //count number of points within a distance r of the point
+    // return number of points.
   // on return, nbrs is an array of indices of nearest points
   // if nbrs is not supplied, just count points within radius
     int query_radius(const Point& pt,

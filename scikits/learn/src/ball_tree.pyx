@@ -28,6 +28,7 @@ cdef extern from "BallTree.h":
     cdef cppclass cBallTree "BallTree<Point>":
         cBallTree(vector[Point_p] *, size_t)
         void query(Point *, vector[size_t] &) except +
+        void query(Point *, vector[size_t] &, vector[Point_dtype] &) except +
         double query_radius(Point *, Point_dtype) except +
         double query_radius(Point *, Point_dtype, vector[size_t] &) except +
     double Euclidean_Dist(Point *, Point *) except +
@@ -131,7 +132,8 @@ cdef class BallTree:
         assert k <= self.num_points
 
         cdef Point *temp
-        cdef vector[size_t] results = vector[size_t](<size_t>k)
+        cdef vector[size_t] ind = vector[size_t](<size_t>k)
+        cdef vector[Point_dtype] dist = vector[Point_dtype](<size_t>k)
 
         # almost-flatten x for iteration
         orig_shape = x.shape
@@ -143,13 +145,11 @@ cdef class BallTree:
             out_distances = np.zeros((x.shape[0], k), np.float64)
         for pt_idx, pt in enumerate(x):
             temp = make_point(pt)
-            self.bt_ptr.query(temp, results)
+            self.bt_ptr.query(temp, ind, dist)
             for neighbor_idx in range(k):
-                out_indices[pt_idx, neighbor_idx] = results[neighbor_idx]
+                out_indices[pt_idx, neighbor_idx] = ind[neighbor_idx]
                 if return_distance:
-                    # It would be better to use self.bt_ptr.Dist(), but it's private.
-                    out_distances[pt_idx, neighbor_idx] = Euclidean_Dist(<Point *> self.ptdata.at(results[neighbor_idx]),
-                                                                         temp)
+                    out_distances[pt_idx, neighbor_idx] = dist[neighbor_idx]
             del temp
 
         # deflatten results
