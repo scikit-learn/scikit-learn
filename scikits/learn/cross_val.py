@@ -6,7 +6,6 @@
 
 from math import ceil
 import numpy as np
-import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_random_state
