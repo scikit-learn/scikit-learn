@@ -503,13 +503,13 @@ public:
     }
     void query(const Point& pt,
 	       std::vector<size_t>& nbrs,
-	       std::vector<value_type> dist) const{
+	       std::vector<value_type>& dist) const{
       query(pt, nbrs.size(), &nbrs[0], &dist[0]);
     }
     
     void query(const Point* pt,
 	       std::vector<size_t>& nbrs,
-	       std::vector<value_type> dist) const{
+	       std::vector<value_type>& dist) const{
       query(*pt, nbrs.size(), &nbrs[0], &dist[0]);
     }
     
@@ -539,12 +539,13 @@ public:
       if(dist != 0)
 	for(size_t i=0;i<num_nbrs;i++)
 	  dist[i] = Pts_dist[i];
+      
     }
-
+    
     //count number of points within a distance r of the point
     // return number of points.
-  // on return, nbrs is an array of indices of nearest points
-  // if nbrs is not supplied, just count points within radius
+    // on return, nbrs is an array of indices of nearest points
+    // if nbrs is not supplied, just count points within radius
     int query_radius(const Point& pt,
                    value_type r,
                    std::vector<size_t>& nbrs){
