@@ -494,7 +494,7 @@ class Bootstrap(object):
         resampling the input n_bootstraps times (with replacement).
 
         Note: contrary to other cross-validation strategies, bootstrapping
-        will allow some example to occurr both in the train and test
+        will allow some samples to occur both in the train and test
         splits.
 
         Parameters
