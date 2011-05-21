@@ -203,3 +203,38 @@ Example of Leave-2-Label Out::
   [False False  True  True False False] [ True  True False False  True  True]
   [ True  True False False False False] [False False  True  True  True  True]
 
+
+Bootstrapping cross-validation
+==============================
+
+:class:`Bootstrap`
+
+Bootstrapping_ is a general statistics technique that iterates the
+computation of an estimator on a resampled dataset.
+
+The :class:`Bootstrap` iterator will generate a user defined number
+of independent train / test dataset splits. Samples are then drawn
+(with replacement) on each side of the split. It furthermore possible
+to control the size of the train and test subset to make their union
+smaller than the total dataset if it is very large.
+
+.. note::
+
+  Contrary to other cross-validation strategies, bootstrapping
+  will allow some samples to occur several times in each splits.
+
+.. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
+
+  >>> from scikits.learn import cross_val
+  >>> bs = cross_val.Bootstrap(9, random_state=0)
+  >>> len(bs)
+  3
+  >>> print bs
+  Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
+  >>> for train_index, test_index in bs:
+  ...    print train_index, test_index
+  ...
+  [1 8 7 7 8] [0 3 0 5]
+  [5 4 2 4 2] [6 7 1 0]
+  [4 7 0 1 1] [5 3 6 5]
+

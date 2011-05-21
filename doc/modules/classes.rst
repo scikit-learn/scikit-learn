@@ -434,6 +434,7 @@ Cross Validation
    cross_val.StratifiedKFold
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
+   cross_val.Bootstrap
 
 
 Grid Search
