@@ -16,9 +16,7 @@ from ..cross_val import permutation_test_score
 
 
 class MockClassifier(BaseEstimator):
-    """Dummy classifier to test the cross-validation
-
-    """
+    """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0):
         self.a = a
@@ -35,7 +33,7 @@ class MockClassifier(BaseEstimator):
 
 
 X = np.ones((10, 2))
-y = np.arange(10)/2
+y = np.arange(10) / 2
 
 ##############################################################################
 # Tests
