@@ -490,8 +490,8 @@ class Bootstrap(object):
                  random_state=None):
         """Bootstrapping cross validation
 
-        Provides train/test indices to split data in train test sets why
-        resampling the input n_bootstraps times (with replacement).
+        Provides train/test indices to split data in train test sets
+        while resampling the input n_bootstraps times (with replacement).
 
         Note: contrary to other cross-validation strategies, bootstrapping
         will allow some samples to occur both in the train and test
@@ -506,7 +506,7 @@ class Bootstrap(object):
             Number of bootstrapping iterations
 
         train : int or float (default is 0.5)
-            If int, number of samples to included in the training split
+            If int, number of samples to include in the training split
             (should be smaller than the total number of samples passed
             in the dataset).
 
@@ -514,7 +514,7 @@ class Bootstrap(object):
             proportion of the dataset to include in the train split.
 
         test : int or float (default is 0.5)
-            If int, number of samples to included in the training set
+            If int, number of samples to include in the training set
             (should be smaller than the total number of samples passed
             in the dataset).
 
