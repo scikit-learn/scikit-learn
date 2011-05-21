@@ -30,7 +30,7 @@ def check_random_state(seed):
 
 
 def resample(*arrays, **options):
-    """Shuffle arrays or sparse matrices in a consistent way
+    """Resample arrays or sparse matrices in a consistent way
 
     The default strategy implements one step of the bootstrapping
     procedure.
@@ -89,7 +89,6 @@ def resample(*arrays, **options):
 
     See also
     --------
-    :class:`scikits.learn.cross_val.BootstrapCV`
     :func:`scikits.learn.utils.shuffle`
 
     """
@@ -115,8 +114,9 @@ def resample(*arrays, **options):
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
     else:
-        indices = np.arange(max_n_samples)
+        indices = np.arange(n_samples)
         random_state.shuffle(indices)
+        indices = indices[:max_n_samples]
 
     resampled_arrays = []
 
@@ -143,7 +143,8 @@ def resample(*arrays, **options):
 def shuffle(*arrays, **options):
     """Shuffle arrays or sparse matrices in a consistent way
 
-    This is a convenience alias to resample(*arrays, replace=False).
+    This is a convenience alias to resample(*arrays, replace=False) to do
+    random permutations of the collections.
 
     Parameters
     ----------
@@ -151,6 +152,10 @@ def shuffle(*arrays, **options):
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
+
+    n_samples : int, None by default
+        Number of samples to generate. If left to None this is
+        automatically set to the first dimension of the arrays.
 
     Return
     ------
@@ -184,6 +189,9 @@ def shuffle(*arrays, **options):
 
       >>> y
       array([2, 1, 0])
+
+      >>> shuffle(y, n_samples=2, random_state=0)
+      array([0, 1])
 
     See also
     --------

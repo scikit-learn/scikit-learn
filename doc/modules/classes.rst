@@ -394,6 +394,26 @@ Linear Discriminant Analysis
    lda.LDA
 
 
+Partial Least Squares
+=====================
+
+.. automodule:: scikits.learn.pls
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: class.rst
+
+   pls.PLSRegression
+   pls.PLSCanonical
+   pls.CCA
+   pls.PLSSVD
+
+
 Cross Validation
 ================
 
@@ -485,7 +505,7 @@ From images
 
 
 From text
--------------
+---------
 
 .. automodule:: scikits.learn.feature_extraction.text
    :no-members:
@@ -523,10 +543,10 @@ Pipeline
    pipeline.Pipeline
 
 
-Partial Least Squares
-=====================
+Utilities
+=========
 
-.. automodule:: scikits.learn.pls
+.. automodule:: scikits.learn.utils
    :no-members:
    :no-inherited-members:
 
@@ -535,10 +555,8 @@ Partial Least Squares
 .. autosummary::
 
    :toctree: generated/
-   :template: class.rst
+   :template: function.rst
 
-   pls.PLSRegression
-   pls.PLSCanonical
-   pls.CCA
-   pls.PLSSVD
-
+   utils.check_random_state
+   utils.resample
+   utils.shuffle

@@ -31,3 +31,4 @@ def test_resample_value_errors():
     """Check that invalid arguments yield ValueError"""
     assert_raises(ValueError, resample, [0], [0, 1])
     assert_raises(ValueError, resample, [0, 1], [0, 1], n_samples=3)
+    assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
