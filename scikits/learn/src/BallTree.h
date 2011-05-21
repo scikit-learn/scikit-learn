@@ -138,27 +138,11 @@ private:
 
 template<class Point,class IndexVec>
 void argsort(const std::vector<Point*>& x ,
-    IndexVec& indices,
-    int elem = 0)
+	     IndexVec& indices,
+	     int elem = 0)
 {
     std::sort(indices.begin(), indices.end(), LT_Indices<Point>(x,elem));
 }
-
-/**********************************************************************
- * pd_tuple
- *  struct used to hold point indices and distances
- *   while querying the ball tree
- **********************************************************************/
-template<typename value_type>
-struct pd_tuple{
-    pd_tuple(int i, value_type d) : index(i), dist(d){}
-    int index;
-    value_type dist;
-
-    bool operator< (const pd_tuple<value_type>& RHS) const{
-        return ( this->dist < RHS.dist );
-    }
-};
 
 /**********************************************************************
  *  Node
@@ -179,18 +163,19 @@ template<class Point>
 struct Node{
   //----------------------------------------------------------------------
   // Node : typedefs
-    typedef typename Point::value_type value_type;
-    typedef value_type (*DistFunc)(const Point&, const Point&);
-
+  typedef typename Point::value_type value_type;
+  typedef typename std::vector<value_type>::iterator value_iterator;
+  typedef value_type (*DistFunc)(const Point&, const Point&);
+  
   //----------------------------------------------------------------------
   // Node : Data Members
-    const std::vector<Point*>& Points;
-    VectorView<int> indices;
-    std::vector<Node<Point>*> SubNodes;
-    bool is_leaf;
-    value_type radius;
-    Point centroid;
-    DistFunc Dist;
+  const std::vector<Point*>& Points;
+  VectorView<int> indices;
+  std::vector<Node<Point>*> SubNodes;
+  bool is_leaf;
+  value_type radius;
+  Point centroid;
+  DistFunc Dist;
 
   //----------------------------------------------------------------------
   // Node::Node
@@ -301,170 +286,160 @@ struct Node{
   //  Parameters:
   //    pt       : the point being queried
   //    k        : the number of nearest neighbors desired
-  //    PointSet : the points found so far
-  //    Dsofar   : the distance within which new points are of interest
-  //                that is, if k points have already been found, then
-  //                Dsofar is the distance to the furthest point.
+  //    Pts_dist : distances to the points found so far (length k)
+  //    Pts_ind  : indices of the points found so far   (length k)
   //    dist_LB  : the lower-bound distance.  This is passed as a parameter
   //                to keep from calculating it multiple times.
-    value_type query(const Point& pt,
-                int k,
-                std::vector< pd_tuple<value_type> >& PointSet,
-                value_type Dsofar = std::numeric_limits<value_type>::max(),
-                value_type dist_LB = -1){
-        if(dist_LB < 0){
-            dist_LB = calc_dist_LB(pt);
-        }
-
+  void query(const Point& pt,
+	     int k,
+	     std::vector<value_type>& Pts_dist,
+	     std::vector<int>& Pts_ind,
+	     value_type dist_LB = -1){
+    
+    if(dist_LB < 0)
+      dist_LB = calc_dist_LB(pt);
+    
+    
     //--------------------------------------------------
     //Case 1: all points in the node are further than
-    //        the furthest point in PointSet
+    //        the furthest point
     // We don't need to search this node or its subnodes
-        if(dist_LB >= Dsofar)
-        {
-            return Dsofar;
-        }
-
-
+    if(dist_LB >= Pts_dist[k-1]){return;}
+    
     //--------------------------------------------------
     //Case 2: this is a leaf node
     // we've found a leaf node containing points that are
     //  closer than those we've found so far.
-    // Update the PointSet and Dsofar
-        else if(is_leaf)
-        {
-    //Do a brute-force search through the points.
-            for(int i_pt=0; i_pt<indices.size(); i_pt++){
+    // Update the Pts_dist, Pts_ind and Dsofar
+    else if(is_leaf)
+      {
+	value_iterator iter1;
+	int position;
+	value_type dist;
+	//Do a brute-force search through the points.
+	for(int i_pt=0; i_pt<indices.size(); i_pt++){
+	  
+	  //determine distance to this point
+	  if( indices.size()==1 )
+	    dist = dist_LB;
+	  else
+	    dist = Dist(pt, *(Points[ indices[i_pt] ]));
+	  if(dist > Pts_dist[k-1])
+	    continue;
 
-      //determine distance to this point
-                value_type dist;
-                if( indices.size()==1 )
-                    dist = dist_LB;
-                else
-                    dist = Dist(pt, *(Points[ indices[i_pt] ]));
-                if(dist > Dsofar)
-                    continue;
+	  //Determine where this point fits in the list
+	  iter1 = std::lower_bound(Pts_dist.begin(),
+				   Pts_dist.end(),
+				   dist);
+	  position = iter1 - Pts_dist.begin();
 
-      //If there are less than k points in PointSet,
-      //  add this point to PointSet
-                if(PointSet.size() < (size_t)k){
-                    PointSet.push_back( pd_tuple<value_type>(indices[i_pt],
-                                                             dist) );
-        //determine new Dsofar, if necessary
-                    if(PointSet.size() == (size_t)k){
-                        std::sort( PointSet.begin(),PointSet.end() );
-                        Dsofar = PointSet[k-1].dist;
-                    }
-                }
-      //If there are already k points in PointSet, we
-      //  must replace the most distant with this
-                else{
-                    PointSet[k-1] = pd_tuple<value_type>(indices[i_pt],dist);
-                    std::sort( PointSet.begin(),PointSet.end() );
-                    Dsofar = PointSet[k-1].dist;
-                }
-            }
-            return Dsofar;
-        }
-
-
+	  //Insert point into the list
+	  for(int i=k-1; i>position; i--){
+	    Pts_dist[i] = Pts_dist[i-1];
+	    Pts_ind[i]  = Pts_ind[i-1];
+	  }
+	  Pts_dist[position] = dist;
+	  Pts_ind[position]  = indices[i_pt];  
+	}
+      }
+    
+    
     //--------------------------------------------------
     //Case 3:
     //   Node is not a leaf, so we recursively query each
     //    of its subnodes
-        else
-        {
-            value_type dist_LB_0 = SubNodes[0]->calc_dist_LB(pt);
-            value_type dist_LB_1 = SubNodes[1]->calc_dist_LB(pt);
-            if(dist_LB_0 <= dist_LB_1){
-                Dsofar = SubNodes[0]->query(pt,k,PointSet,Dsofar,dist_LB_0);
-                Dsofar = SubNodes[1]->query(pt,k,PointSet,Dsofar,dist_LB_1);
-            }else{
-                Dsofar = SubNodes[1]->query(pt,k,PointSet,Dsofar,dist_LB_1);
-                Dsofar = SubNodes[0]->query(pt,k,PointSet,Dsofar,dist_LB_0);
-            }
-            return Dsofar;
-        }
-    }
-
+    else
+      {
+	value_type dist_LB_0 = SubNodes[0]->calc_dist_LB(pt);
+	value_type dist_LB_1 = SubNodes[1]->calc_dist_LB(pt);
+	if(dist_LB_0 <= dist_LB_1){
+	  SubNodes[0]->query(pt,k,Pts_dist,Pts_ind,dist_LB_0);
+	  SubNodes[1]->query(pt,k,Pts_dist,Pts_ind,dist_LB_1);
+	}else{
+	  SubNodes[1]->query(pt,k,Pts_dist,Pts_ind,dist_LB_1);
+	  SubNodes[0]->query(pt,k,Pts_dist,Pts_ind,dist_LB_0);
+	}
+      }
+  }
+  
   //query all points within a radius r of pt
-    int query_ball(const Point& pt,
-        value_type r,
-        std::vector<size_t>& nbrs){
-        value_type dist_LB = calc_dist_LB(pt);
-
+  int query_radius(const Point& pt,
+		   value_type r,
+		   std::vector<size_t>& nbrs){
+    value_type dist_LB = calc_dist_LB(pt);
+    
     //--------------------------------------------------
     //  Case 1: balls do not intersect.  return
-        if( dist_LB > r ){}
-
+    if( dist_LB > r ){}
+    
     //--------------------------------------------------
     //  Case 2: this node is inside ball.  Add all pts to nbrs
-        else if(dist_LB + 2*radius <= r){
-            for(int i=0; i<indices.size(); i++)
-                nbrs.push_back(indices[i]);
-        }
-
+    else if(dist_LB + 2*radius <= r){
+      for(int i=0; i<indices.size(); i++)
+	nbrs.push_back(indices[i]);
+    }
+    
     //--------------------------------------------------
     //  Case 3: node is a leaf.  Go through points and
     //          determine if they're in the ball
-        else if(is_leaf){
-            for(int i=0; i<indices.size(); i++){
-                value_type D = Dist( pt,*(Points[indices[i]]) );
-                if( D<=r )
-                    nbrs.push_back(indices[i]);
-            }
-            return nbrs.size();
-        }
-
+    else if(is_leaf){
+      for(int i=0; i<indices.size(); i++){
+	value_type D = Dist( pt,*(Points[indices[i]]) );
+	if( D<=r )
+	  nbrs.push_back(indices[i]);
+      }
+      return nbrs.size();
+    }
+    
     //--------------------------------------------------
     //  Case 4: node is not a leaf.  Recursively search
     //          subnodes
-        else{
-            SubNodes[0]->query_ball(pt,r,nbrs);
-            SubNodes[1]->query_ball(pt,r,nbrs);
-        }
-        return nbrs.size();
+    else{
+      SubNodes[0]->query_radius(pt,r,nbrs);
+      SubNodes[1]->query_radius(pt,r,nbrs);
     }
-
+    return nbrs.size();
+  }
+  
   //count all points within a radius r of p
-    int query_ball(const Point& pt,
-    value_type r){
-        value_type dist_LB = calc_dist_LB(pt);
-
+  int query_radius(const Point& pt,
+		   value_type r){
+    value_type dist_LB = calc_dist_LB(pt);
+    
     //--------------------------------------------------
     //  Case 1: balls do not intersect. return 0
-        if( dist_LB > r )
-            return 0;
-
+    if( dist_LB > r )
+      return 0;
+    
     //--------------------------------------------------
     //  Case 2: this node is inside ball.  Add all pts to nbrs
-        else if(dist_LB + 2*radius <= r){
-            return indices.size();
-        }
-
+    else if(dist_LB + 2*radius <= r){
+      return indices.size();
+    }
+    
     //--------------------------------------------------
     //  Case 3: node is a leaf.  Go through points and
     //          determine if they're in the ball
-        else if(is_leaf){
-            int count = 0;
-            for(int i=0; i<indices.size(); i++){
-                value_type D = Dist( pt,*(Points[indices[i]]) );
-                if( D<=r )
-                    ++count;
-            }
-            return count;
-        }
-
+    else if(is_leaf){
+      int count = 0;
+      for(int i=0; i<indices.size(); i++){
+	value_type D = Dist( pt,*(Points[indices[i]]) );
+	if( D<=r )
+	  ++count;
+      }
+      return count;
+    }
+    
     //--------------------------------------------------
     //  Case 4: node is not a leaf.  Recursively search
     //          subnodes
-        else{
-            int count = 0;
-            count += SubNodes[0]->query_ball(pt,r);
-            count += SubNodes[1]->query_ball(pt,r);
-            return count;
-        }
+    else{
+      int count = 0;
+      count += SubNodes[0]->query_radius(pt,r);
+      count += SubNodes[1]->query_radius(pt,r);
+      return count;
     }
+  }
 };
 
 
@@ -517,54 +492,82 @@ public:
   //   on return, nbrs contains the unsorted indices of the k
   //     nearest neighbors.  The distance to the furthest neighbor
   //     is also returned.
-    value_type query(const Point& pt,
-                     std::vector<size_t>& nbrs) const{
-        return query(pt, nbrs.size(), &nbrs[0]);
+    void query(const Point& pt,
+	       std::vector<size_t>& nbrs) const{
+      query(pt, nbrs.size(), &nbrs[0]);
     }
-
-    value_type query(const Point* pt,
-                     std::vector<size_t>& nbrs) const{
-        return query(*pt, nbrs.size(), &nbrs[0]);
+    
+    void query(const Point* pt,
+	       std::vector<size_t>& nbrs) const{
+      query(*pt, nbrs.size(), &nbrs[0]);
     }
-
-    value_type query(const Point& pt,
-                     size_t num_nbrs,
-                     size_t* nbrs,
-                     double* dist = 0) const{
-        if(num_nbrs > Points_.size() ){
-            std::stringstream oss;
-            oss << "query: k must be less than or equal to N Points (" << num_nbrs << " > " << (int)(Points_.size()) << ")\n";
-            throw BallTreeException(oss.str());
-        }
-
-        std::vector<pd_tuple<value_type> > PointSet;
-        value_type Dmax = head_node_->query(pt,num_nbrs,PointSet);
-
-
-        for(size_t i=0;i<num_nbrs;i++){
-            nbrs[i] = PointSet[i].index;
-        }
-
-        if(dist != 0)
-            for(size_t i=0;i<num_nbrs;i++)
-                dist[i] = PointSet[i].dist;
-        return Dmax;
+    void query(const Point& pt,
+	       std::vector<size_t>& nbrs,
+	       std::vector<value_type>& dist) const{
+      query(pt, nbrs.size(), &nbrs[0], &dist[0]);
     }
-
-  //count number of points within a distance r of the point
-  // return number of points.
-  // on return, nbrs is an array of indices of nearest points
-  // if nbrs is not supplied, just count points within radius
-    int query_ball(const Point& pt,
+    
+    void query(const Point* pt,
+	       std::vector<size_t>& nbrs,
+	       std::vector<value_type>& dist) const{
+      query(*pt, nbrs.size(), &nbrs[0], &dist[0]);
+    }
+    
+    void query(const Point& pt,
+	       size_t num_nbrs,
+	       size_t* nbrs,
+	       double* dist = 0) const{
+      if(num_nbrs > Points_.size() ){
+	std::stringstream oss;
+	oss << "query: k must be less than or equal to N Points (" 
+	    << num_nbrs << " > " << (int)(Points_.size()) << ")\n";
+	throw BallTreeException(oss.str());
+      }
+      
+      std::vector<value_type> 
+	Pts_dist(num_nbrs, std::numeric_limits<value_type>::max());
+      
+      std::vector<int> Pts_ind(num_nbrs, 0);
+      
+      head_node_->query(pt,num_nbrs,Pts_dist,Pts_ind);
+      
+      
+      for(size_t i=0;i<num_nbrs;i++){
+	nbrs[i] = Pts_ind[i];
+      }
+      
+      if(dist != 0)
+	for(size_t i=0;i<num_nbrs;i++)
+	  dist[i] = Pts_dist[i];
+      
+    }
+    
+    //count number of points within a distance r of the point
+    // return number of points.
+    // on return, nbrs is an array of indices of nearest points
+    // if nbrs is not supplied, just count points within radius
+    int query_radius(const Point& pt,
                    value_type r,
                    std::vector<size_t>& nbrs){
-        return head_node_->query_ball(pt,r,nbrs);
+        return head_node_->query_radius(pt,r,nbrs);
     }
 
-    int query_ball(const Point& pt,
-    value_type r){
-        return head_node_->query_ball(pt,r);
+    int query_radius(const Point& pt,
+		   value_type r){
+        return head_node_->query_radius(pt,r);
     }
+    
+    int query_radius(const Point* pt,
+                   value_type r,
+                   std::vector<size_t>& nbrs){
+        return head_node_->query_radius(*pt,r,nbrs);
+    }
+
+    int query_radius(const Point* pt,
+		   value_type r){
+        return head_node_->query_radius(*pt,r);
+    }
+    
 private:
   //----------------------------------------------------------------------
   // BallTree : Data Members
@@ -574,40 +577,5 @@ private:
     DistFunc Dist;
     int leaf_size_;
 };
-
-/************************************************************
- * BruteForceNeighbors
- *  determine neighbors using a brute-force algorithm.  This
- *  is for comparison with results from BallTree
- ************************************************************/
-
-template<class Point>
-void BruteForceNeighbors(std::vector<Point*> Points,
-             const Point& pt,
-             size_t k,
-             size_t* neighbors){
-  int N = Points.size();
-  typedef pd_tuple<typename Point::value_type> PD;
-  std::vector<PD> distances;
-
-  for(int i=0;i<N;i++)
-    distances.push_back( PD(i,Euclidean_Dist(pt,*(Points[i])) ) );
-
-  std::partial_sort( distances.begin(),
-             distances.begin()+k,
-             distances.end()      );
-
-  for(size_t i=0; i<k; i++)
-    neighbors[i] = distances[i].index;
-}
-
-template<class Point>
-void BruteForceNeighbors(std::vector<Point*> Points,
-             const Point& pt,
-             std::vector<size_t>& neighbors){
-  size_t k = neighbors.size();
-  BruteForceNeighbors(Points,pt,k,&(neighbors[0]));
-}
-
 
 #endif //BALL_TREE_H
