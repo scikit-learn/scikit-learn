@@ -491,10 +491,10 @@ class Bootstrap(object):
         """Bootstrapping cross validation
 
         Provides train/test indices to split data in train test sets
-        while resampling the input n_bootstraps times:
-        each time a new random split of the data is performed and then
-        samples are drawn (with replacement) on each side of the split to build
-        the training and test sets.
+        while resampling the input n_bootstraps times: each time a new
+        random split of the data is performed and then samples are drawn
+        (with replacement) on each side of the split to build the training
+        and test sets.
 
         Note: contrary to other cross-validation strategies, bootstrapping
         will allow some samples to occur several times in each splits.
