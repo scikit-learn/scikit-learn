@@ -6,6 +6,7 @@ from scipy.sparse import coo_matrix
 
 import nose
 from nose.tools import assert_true
+from nose.tools import assert_raises
 
 from ..base import BaseEstimator
 from ..datasets import load_iris
@@ -43,9 +44,9 @@ y = np.arange(10) / 2
 
 def test_kfold():
     # Check that errors are raise if there is not enough samples
-    nose.tools.assert_raises(AssertionError, cross_val.KFold, 3, 4)
+    assert_raises(AssertionError, cross_val.KFold, 3, 4)
     y = [0, 0, 1, 1, 2]
-    nose.tools.assert_raises(AssertionError, cross_val.StratifiedKFold, y, 3)
+    assert_raises(AssertionError, cross_val.StratifiedKFold, y, 3)
 
 
 def test_cross_val_score():
@@ -114,3 +115,10 @@ def test_cross_val_generator_with_indices():
         for train, test in cv:
             X_train, X_test = X[train], X[test]
             y_train, y_test = y[train], y[test]
+
+
+def test_bootstrap_errors():
+    assert_raises(ValueError, cross_val.Bootstrap, 10, n_train=100)
+    assert_raises(ValueError, cross_val.Bootstrap, 10, n_test=100)
+    assert_raises(ValueError, cross_val.Bootstrap, 10, n_train=1.1)
+    assert_raises(ValueError, cross_val.Bootstrap, 10, n_test=1.1)

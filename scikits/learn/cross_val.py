@@ -554,6 +554,9 @@ class Bootstrap(object):
             self.n_train = n_train
         else:
             raise ValueError("Invalid value for n_train: %r" % n_train)
+        if self.n_train > n:
+            raise ValueError("n_train=%d should not be larger than n=%d" %
+                             (self.n_train, n))
 
         if isinstance(n_test, float) and n_test >= 0.0 and n_test <= 1.0:
             self.n_test = ceil(test * n)
@@ -563,6 +566,9 @@ class Bootstrap(object):
             self.n_test = self.n - self.n_train
         else:
             raise ValueError("Invalid value for n_test: %r" % n_test)
+        if self.n_test > n:
+            raise ValueError("n_test=%d should not be larger than n=%d" %
+                             (self.n_test, n))
 
         self.random_state = random_state
 
