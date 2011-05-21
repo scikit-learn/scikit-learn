@@ -185,7 +185,7 @@ cdef class BallTree:
             each entry gives the number of neighbors within
             a distance r of the corresponding point.
 
-        i : array - shape: x.shape[:-1]
+        i : array of objects  - shape: x.shape[:-1]
             each element is a numpy integer array
             listing the indices of neighbors
             of the corresponding point
