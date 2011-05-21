@@ -609,7 +609,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test, iid):
 
 
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
-                n_jobs=1, verbose=0):
+                    n_jobs=1, verbose=0):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -654,7 +654,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     # independent, and that it is pickle-able.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                                        train, test, iid)
+                                          train, test, iid)
                 for train, test in cv)
     return np.array(scores)
 
