@@ -535,7 +535,7 @@ class Bootstrap(object):
         >>> len(bs)
         3
         >>> print bs
-        Bootstrap(9, n_bootstraps=3, n_train=4, n_test=5, random_state=0)
+        Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
         >>> for train_index, test_index in bs:
         ...    print "TRAIN:", train_index, "TEST:", test_index
         ...
