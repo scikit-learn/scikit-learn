@@ -8,6 +8,7 @@ from math import ceil
 import numpy as np
 
 from .base import is_classifier, clone
+from .utils import check_random_state
 from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
@@ -477,6 +478,102 @@ class LeavePLabelOut(object):
     def __len__(self):
         return factorial(self.n_labels) / factorial(self.n_labels - self.p) \
                / factorial(self.p)
+
+
+class Bootstrap(object):
+    """Bootstrapping cross-validation iterator
+
+    Provides train/test indices to split data in train test sets
+    """
+
+    def __init__(self, n, n_bootstraps=3, train=0.5, test=0.5,
+                 random_state=None):
+        """Bootstrapping cross validation
+
+        Provides train/test indices to split data in train test sets why
+        resampling the input n_bootstraps times (with replacement).
+
+        Note: contrary to other cross-validation strategies, bootstrapping
+        will allow some example to occurr both in the train and test
+        splits.
+
+        Parameters
+        ----------
+        n : int
+            Total number of elements in the dataset.
+
+        n_bootstraps : int (default is 3)
+            Number of bootstrapping iterations
+
+        train : int or float (default is 0.5)
+            If int, number of samples to included in the training split
+            (should be smaller than the total number of samples passed
+            in the dataset).
+
+            If float, should be between 0.0 and 1.0 and represent the
+            proportion of the dataset to include in the train split.
+
+        test : int or float (default is 0.5)
+            If int, number of samples to included in the training set
+            (should be smaller than the total number of samples passed
+            in the dataset).
+
+            If float, should be between 0.0 and 1.0 and represent the
+            proportion of the dataset to include in the test split.
+
+        random_state : int or RandomState
+            Pseudo number generator state used for random sampling.
+
+        Examples
+        ----------
+        >>> from scikits.learn import cross_val
+        >>> bs = cross_val.Bootstrap(4, random_state=0)
+        >>> len(bs)
+        3
+        >>> print bs
+        Bootstrap(4, n_bootstraps=3, train=2, test=2, random_state=0)
+        >>> for train_index, test_index in bs:
+        ...    print "TRAIN:", train_index, "TEST:", test_index
+        ...
+        TRAIN: [0 3] TEST: [1 0]
+        TRAIN: [3 3] TEST: [3 3]
+        TRAIN: [1 3] TEST: [1 2]
+        """
+        self.n = n
+        self.n_bootstraps = n_bootstraps
+        if isinstance(train, float):
+            self.n_train = int(train * n)
+        elif isinstance(train, int):
+            self.n_train = train
+        else:
+            raise ValueError("Invalid value for train: %r" % train)
+        if isinstance(test, float):
+            self.n_test = int(test * n)
+        elif isinstance(train, int):
+            self.n_test = test
+        else:
+            raise ValueError("Invalid value for train: %r" % train)
+        self.random_state = random_state
+
+    def __iter__(self):
+        self.random_state = check_random_state(self.random_state)
+        for i in range(self.n_bootstraps):
+            train = self.random_state.randint(0, self.n, size=(self.n_train,))
+            test = self.random_state.randint(0, self.n, size=(self.n_test,))
+            yield train, test
+
+    def __repr__(self):
+        return ('%s(%d, n_bootstraps=%d, train=%d, test=%d, random_state=%d)'
+                % (self.__class__.__name__,
+                   self.n,
+                   self.n_bootstraps,
+                   self.n_train,
+                   self.n_test,
+                   self.random_state,
+                  ))
+
+    def __len__(self):
+        return self.n_bootstraps
 
 
 def _cross_val_score(estimator, X, y, score_func, train, test, iid):
