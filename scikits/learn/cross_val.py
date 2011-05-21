@@ -486,16 +486,18 @@ class Bootstrap(object):
     Provides train/test indices to split data in train test sets
     """
 
-    def __init__(self, n, n_bootstraps=3, train=0.5, test=0.5,
+    def __init__(self, n, n_bootstraps=3, n_train=0.5, n_test=None,
                  random_state=None):
         """Bootstrapping cross validation
 
         Provides train/test indices to split data in train test sets
-        while resampling the input n_bootstraps times (with replacement).
+        while resampling the input n_bootstraps times:
+        each time a new random split of the data is performed and then
+        samples are drawn (with replacement) on each side of the split to build
+        the training and test sets.
 
         Note: contrary to other cross-validation strategies, bootstrapping
-        will allow some samples to occur both in the train and test
-        splits.
+        will allow some samples to occur several times in each splits.
 
         Parameters
         ----------
@@ -505,7 +507,7 @@ class Bootstrap(object):
         n_bootstraps : int (default is 3)
             Number of bootstrapping iterations
 
-        train : int or float (default is 0.5)
+        n_train : int or float (default is 0.5)
             If int, number of samples to include in the training split
             (should be smaller than the total number of samples passed
             in the dataset).
@@ -513,13 +515,15 @@ class Bootstrap(object):
             If float, should be between 0.0 and 1.0 and represent the
             proportion of the dataset to include in the train split.
 
-        test : int or float (default is 0.5)
+        n_test : int or float or None (default is None)
             If int, number of samples to include in the training set
             (should be smaller than the total number of samples passed
             in the dataset).
 
             If float, should be between 0.0 and 1.0 and represent the
             proportion of the dataset to include in the test split.
+
+            If None, n_test is set as the complement of n_train.
 
         random_state : int or RandomState
             Pseudo number generator state used for random sampling.
@@ -531,46 +535,55 @@ class Bootstrap(object):
         >>> len(bs)
         3
         >>> print bs
-        Bootstrap(4, n_bootstraps=3, train=2, test=2, random_state=0)
+        Bootstrap(4, n_bootstraps=3, n_train=2, n_test=2, random_state=0)
         >>> for train_index, test_index in bs:
         ...    print "TRAIN:", train_index, "TEST:", test_index
         ...
-        TRAIN: [0 3] TEST: [1 0]
-        TRAIN: [3 3] TEST: [3 3]
-        TRAIN: [1 3] TEST: [1 2]
+        TRAIN: [3 3] TEST: [0 0]
+        TRAIN: [2 0] TEST: [3 3]
+        TRAIN: [2 1] TEST: [0 0]
         """
         self.n = n
         self.n_bootstraps = n_bootstraps
-        if isinstance(train, float):
-            self.n_train = int(train * n)
-        elif isinstance(train, int):
-            self.n_train = train
+        if isinstance(n_train, float):
+            self.n_train = int(n_train * n)
+        elif isinstance(n_train, int):
+            self.n_train = n_train
         else:
-            raise ValueError("Invalid value for train: %r" % train)
-        if isinstance(test, float):
+            raise ValueError("Invalid value for n_train: %r" % n_train)
+        if isinstance(n_test, float):
             self.n_test = int(test * n)
-        elif isinstance(train, int):
-            self.n_test = test
+        elif isinstance(n_test, int):
+            self.n_test = n_test
+        elif n_test is None:
+            self.n_test = self.n - self.n_train
         else:
-            raise ValueError("Invalid value for train: %r" % train)
+            raise ValueError("Invalid value for n_test: %r" % n_test)
         self.random_state = random_state
 
     def __iter__(self):
-        self.random_state = check_random_state(self.random_state)
+        rng = self.random_state = check_random_state(self.random_state)
         for i in range(self.n_bootstraps):
-            train = self.random_state.randint(0, self.n, size=(self.n_train,))
-            test = self.random_state.randint(0, self.n, size=(self.n_test,))
-            yield train, test
+            # random partition
+            permutation = rng.permutation(self.n)
+            ind_train = permutation[:self.n_train]
+            ind_test = permutation[self.n_train:self.n_train + self.n_test]
+
+            # bootstrap in each split individually
+            train = rng.randint(0, self.n_train, size=(self.n_train,))
+            test = rng.randint(0, self.n_test, size=(self.n_test,))
+            yield ind_train[train], ind_test[test]
 
     def __repr__(self):
-        return ('%s(%d, n_bootstraps=%d, train=%d, test=%d, random_state=%d)'
-                % (self.__class__.__name__,
-                   self.n,
-                   self.n_bootstraps,
-                   self.n_train,
-                   self.n_test,
-                   self.random_state,
-                  ))
+        return ('%s(%d, n_bootstraps=%d, n_train=%d, n_test=%d, '
+                'random_state=%d)' % (
+                    self.__class__.__name__,
+                    self.n,
+                    self.n_bootstraps,
+                    self.n_train,
+                    self.n_test,
+                    self.random_state,
+                ))
 
     def __len__(self):
         return self.n_bootstraps
