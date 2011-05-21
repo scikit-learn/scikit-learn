@@ -29,6 +29,58 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 
+def check_arrays(*arrays, **options):
+    """Checked that all arrays have consistent first dimensions
+
+    Parameters
+    ----------
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+        Python lists or tuples occurring in arrays are converted to 1D numpy
+        arrays.
+
+    force_csr : boolean, False by default
+        If force_csr is True, any scipy.sparse matrix is converted to
+        Compressed Sparse Row representation.
+    """
+    force_csr = options.pop('force_csr', False)
+    if options:
+        raise ValueError("Unexpected kw arguments: %r" % options.keys())
+
+    if len(arrays) == 0:
+        return None
+
+    first = arrays[0]
+    if not hasattr(first, '__len__') and not hasattr(first, 'shape'):
+        raise ValueError("Expected python sequence or array, got %r" % first)
+    n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
+
+    checked_arrays = []
+    for array in arrays:
+        if array is None:
+            # special case: ignore optional y=None kwarg pattern
+            checked_arrays.append(array)
+            continue
+
+        if not hasattr(array, '__len__') and not hasattr(array, 'shape'):
+            raise ValueError("Expected python sequence or array, got %r"
+                             % array)
+        size = array.shape[0] if hasattr(array, 'shape') else len(array)
+
+        if size != n_samples:
+            raise ValueError("Found array with dim %d. Expected %d" % (
+                size, n_samples))
+
+        if hasattr(array, 'tocsr'):
+            if force_csr:
+                array = array.tocsr()
+        else:
+            array = np.asanyarray(array)
+
+        checked_arrays.append(array)
+
+    return checked_arrays
+
+
 def resample(*arrays, **options):
     """Resample arrays or sparse matrices in a consistent way
 
@@ -111,6 +163,8 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
+    arrays = check_arrays(*arrays, force_csr=True)
+
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
     else:
@@ -121,15 +175,6 @@ def resample(*arrays, **options):
     resampled_arrays = []
 
     for array in arrays:
-        if hasattr(array, 'tocsr'):
-            array = array.tocsr()
-        else:
-            array = np.asanyarray(array)
-
-        if array.shape[0] != n_samples:
-            raise ValueError("Found array with dim %d. Expected %d" % (
-                array.shape[0], n_samples))
-
         array = array[indices]
         resampled_arrays.append(array)
 

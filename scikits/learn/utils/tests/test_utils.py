@@ -1,5 +1,6 @@
 import numpy as np
 
+from scikits.learn.utils import check_arrays
 from scikits.learn.utils import check_random_state
 from scikits.learn.utils import resample
 from nose.tools import assert_raises
@@ -25,6 +26,14 @@ def test_make_rng():
 def test_resample_noarg():
     """Border case not worth mentioning in doctests"""
     assert resample() is None
+
+
+def test_check_arrays_value_errors():
+    """Check that invalid arguments yield ValueError"""
+    assert_raises(ValueError, check_arrays, [0], [0, 1])
+    assert_raises(ValueError, check_arrays, 0, [0, 1])
+    assert_raises(ValueError, check_arrays, [0], 0)
+    assert_raises(ValueError, check_arrays, [0, 1], [0, 1], meaning_of_life=42)
 
 
 def test_resample_value_errors():

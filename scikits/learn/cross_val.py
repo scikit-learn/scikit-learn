@@ -6,10 +6,13 @@
 
 from math import ceil
 import numpy as np
+import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
+from .utils import check_arrays
+from .utils import check_random_state
 from .externals.joblib import Parallel, delayed
 
 
@@ -526,12 +529,14 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     verbose: integer, optional
         The verbosity level
     """
-    n_samples = len(X)
+    X, y = check_arrays(X, y, force_csr=True)
+    n_samples = X.shape[0]
     if cv is None:
+        indices = hasattr(X, 'tocsr')
         if y is not None and is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3)
+            cv = StratifiedKFold(y, k=3, indices=True)
         else:
-            cv = KFold(n_samples, k=3)
+            cv = KFold(n_samples, k=3, indices=True)
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
@@ -547,8 +552,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
 
 
 def _permutation_test_score(estimator, X, y, cv, score_func):
-    """Auxilary function for permutation_test_score
-    """
+    """Auxilary function for permutation_test_score"""
     y_test = list()
     y_pred = list()
     for train, test in cv:
@@ -618,17 +622,16 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     Ojala and Garriga. Permutation Tests for Studying Classifier Performance.
     The Journal of Machine Learning Research (2010) vol. 11
     """
-    n_samples = len(X)
+    X, y = check_arrays(X, y, force_csr=True)
+    n_samples = X.shape[0]
     if cv is None:
+        indices = hasattr(X, 'tocsr')
         if is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3)
+            cv = StratifiedKFold(y, k=3, indices=indices)
         else:
-            cv = KFold(n_samples, k=3)
+            cv = KFold(n_samples, k=3, indices=indices)
 
-    if random_state is None:
-        random_state = np.random.RandomState()
-    elif isinstance(random_state, int):
-        random_state = np.random.RandomState(random_state)
+    random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
