@@ -2,6 +2,7 @@
 """
 
 import numpy as np
+from scipy.sparse import coo_matrix
 
 import nose
 from nose.tools import assert_true
@@ -33,6 +34,7 @@ class MockClassifier(BaseEstimator):
 
 
 X = np.ones((10, 2))
+X_sparse = coo_matrix(X)
 y = np.arange(10) / 2
 
 ##############################################################################
@@ -52,6 +54,9 @@ def test_cross_val_score():
         # Smoke test
         score = cross_val.cross_val_score(clf, X, y)
         np.testing.assert_array_equal(score, clf.score(X, y))
+
+        score = cross_val.cross_val_score(clf, X_sparse, y)
+        np.testing.assert_array_equal(score, clf.score(X_sparse, y))
 
 
 def test_permutation_score():
