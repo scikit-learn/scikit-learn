@@ -29,8 +29,121 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 
+def resample(*arrays, **options):
+    """Shuffle arrays or sparse matrices in a consistent way
+
+    The default strategy implements one step of the bootstrapping
+    procedure.
+
+    Parameters
+    ----------
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+
+    replace : boolean, True by default
+        Implements resampling with replacement. If False, this will implement
+        (sliced) random permutations.
+
+    n_samples : int, None by default
+        Number of samples to generate. If left to None this is
+        automatically set to the first dimension of the arrays.
+
+    random_state : int or RandomState instance
+        Control the shuffling for reproducible behavior.
+
+    Return
+    ------
+    Sequence of resampled views of the collections. The original arrays are
+    not impacted.
+
+    Example
+    -------
+    It is possible to mix sparse and dense arrays in the same run::
+
+      >>> X = [[1., 0.], [2., 1.], [0., 0.]]
+      >>> y = np.array([0, 1, 2])
+
+      >>> from scipy.sparse import coo_matrix
+      >>> X_sparse = coo_matrix(X)
+
+      >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
+      >>> X
+      array([[ 1.,  0.],
+             [ 2.,  1.],
+             [ 1.,  0.]])
+
+      >>> X_sparse                            # doctest: +NORMALIZE_WHITESPACE
+      <3x2 sparse matrix of type '<type 'numpy.float64'>'
+          with 4 stored elements in Compressed Sparse Row format>
+
+      >>> X_sparse.toarray()
+      array([[ 1.,  0.],
+             [ 2.,  1.],
+             [ 1.,  0.]])
+
+      >>> y
+      array([0, 1, 0])
+
+      >>> resample(y, n_samples=2, random_state=0)
+      array([0, 1])
+
+
+    See also
+    --------
+    :class:`scikits.learn.cross_val.BootstrapCV`
+    :func:`scikits.learn.utils.shuffle`
+
+    """
+    random_state = check_random_state(options.pop('random_state', None))
+    replace = options.pop('replace', True)
+    max_n_samples = options.pop('n_samples', None)
+    if options:
+        raise ValueError("Unexpected kw arguments: %r" % options.keys())
+
+    if len(arrays) == 0:
+        return None
+
+    first = arrays[0]
+    n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
+
+    if max_n_samples is None:
+        max_n_samples = n_samples
+
+    if max_n_samples > n_samples:
+        raise ValueError("Cannot sample %d out of arrays with dim %d" % (
+            max_n_samples, n_samples))
+
+    if replace:
+        indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+    else:
+        indices = np.arange(max_n_samples)
+        random_state.shuffle(indices)
+
+    resampled_arrays = []
+
+    for array in arrays:
+        if hasattr(array, 'tocsr'):
+            array = array.tocsr()
+        else:
+            array = np.asanyarray(array)
+
+        if array.shape[0] != n_samples:
+            raise ValueError("Found array with dim %d. Expected %d" % (
+                array.shape[0], n_samples))
+
+        array = array[indices]
+        resampled_arrays.append(array)
+
+    if len(resampled_arrays) == 1:
+        # syntactic sugar for the unit argument case
+        return resampled_arrays[0]
+    else:
+        return resampled_arrays
+
+
 def shuffle(*arrays, **options):
     """Shuffle arrays or sparse matrices in a consistent way
+
+    This is a convenience alias to resample(*arrays, replace=False).
 
     Parameters
     ----------
@@ -72,31 +185,9 @@ def shuffle(*arrays, **options):
       >>> y
       array([2, 1, 0])
 
+    See also
+    --------
+    :func:`scikits.learn.utils.resample`
     """
-    random_state = check_random_state(options.pop('random_state', None))
-    if options:
-        raise ValueError("Unexpected kw arguments: %r" % options.keys())
-
-    if len(arrays) == 0:
-        return None
-
-    first = arrays[0]
-    n_samples = first.shape[0] if hasattr(first, 'shape') else len(first)
-    indices = np.arange(n_samples)
-    random_state.shuffle(indices)
-
-    shuffled = []
-
-    for array in arrays:
-        if hasattr(array, 'tocsr'):
-            array = array.tocsr()
-        else:
-            array = np.asanyarray(array)
-        array = array[indices]
-        shuffled.append(array)
-
-    if len(shuffled) == 1:
-        # syntactic sugar for the unit argument case
-        return shuffled[0]
-    else:
-        return shuffled
+    options['replace'] = False
+    return resample(*arrays, **options)
