@@ -531,34 +531,37 @@ class Bootstrap(object):
         Examples
         ----------
         >>> from scikits.learn import cross_val
-        >>> bs = cross_val.Bootstrap(4, random_state=0)
+        >>> bs = cross_val.Bootstrap(9, random_state=0)
         >>> len(bs)
         3
         >>> print bs
-        Bootstrap(4, n_bootstraps=3, n_train=2, n_test=2, random_state=0)
+        Bootstrap(9, n_bootstraps=3, n_train=4, n_test=5, random_state=0)
         >>> for train_index, test_index in bs:
         ...    print "TRAIN:", train_index, "TEST:", test_index
         ...
-        TRAIN: [3 3] TEST: [0 0]
-        TRAIN: [2 0] TEST: [3 3]
-        TRAIN: [2 1] TEST: [0 0]
+        TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
+        TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
+        TRAIN: [4 7 0 1 1] TEST: [5 3 6 5]
         """
         self.n = n
         self.n_bootstraps = n_bootstraps
-        if isinstance(n_train, float):
-            self.n_train = int(n_train * n)
+
+        if isinstance(n_train, float) and n_train >= 0.0 and n_train <= 1.0:
+            self.n_train = ceil(n_train * n)
         elif isinstance(n_train, int):
             self.n_train = n_train
         else:
             raise ValueError("Invalid value for n_train: %r" % n_train)
-        if isinstance(n_test, float):
-            self.n_test = int(test * n)
+
+        if isinstance(n_test, float) and n_test >= 0.0 and n_test <= 1.0:
+            self.n_test = ceil(test * n)
         elif isinstance(n_test, int):
             self.n_test = n_test
         elif n_test is None:
             self.n_test = self.n - self.n_train
         else:
             raise ValueError("Invalid value for n_test: %r" % n_test)
+
         self.random_state = random_state
 
     def __iter__(self):
