@@ -195,6 +195,12 @@ def asanyarray_or_csr(X):
     else:
         return np.asanyarray(X), False
 
+def atleast2d_or_csr(X):
+    if issparse(X):
+        return X.tocsr()
+    else:
+        return np.atleast_2d(X)
+
 
 class MultinomialNB(BaseEstimator, ClassifierMixin):
     """
@@ -315,7 +321,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
         """
-        X, _ = asanyarray_or_csr(X)
+        X = atleast2d_or_csr(X)
 
         joint_log_likelihood = self._joint_log_likelihood(X)
         y_pred = self.unique_y[np.argmax(joint_log_likelihood, axis=0)]
@@ -360,7 +366,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             the model, where labels are ordered by arithmetical
             order.
         """
-        X, _ = asanyarray_or_csr(X)
+        X = atleast2d_or_csr(X)
 
         joint_log_likelihood = self._joint_log_likelihood(X)
 
@@ -390,7 +396,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             in the model, where labels are ordered by arithmetical
             order.
         """
-        X, _ = asanyarray_or_csr(X)
+        X = atleast2d_or_csr(X)
 
         joint_log_likelihood = self._joint_log_likelihood(X)
 
