@@ -1,14 +1,14 @@
 #ifndef BALL_TREE_H
 #define BALL_TREE_H
 
-#include <math.h>
-#include <vector>
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <limits>
-#include <algorithm>
-#include <cstdlib>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 /************************************************************
  * templated Ball Tree class
@@ -45,7 +45,7 @@
 /* Custom exception to allow Python to catch C++ exceptions */
 class BallTreeException : public std::runtime_error {
   public:
-    BallTreeException(std::string msg) : std::runtime_error(msg) {}
+    BallTreeException(std::string const &msg) : std::runtime_error(msg) {}
     ~BallTreeException() throw() {};
 };
 
@@ -71,7 +71,7 @@ template<class P1_Type,class P2_Type>
         diff = p1[i] - p2[i];
         dist += diff*diff;
     }
-    return sqrt(dist);
+    return std::sqrt(dist);
 }
 
 template<class P1_Type,class P2_Type>
@@ -95,27 +95,23 @@ public:
 
     VectorView(std::vector<T,Alloc>& data)
         : data_(data), istart_(0), size_(data.size()){}
-    VectorView(std::vector<T,Alloc>& data,
-        int istart,
-        int size)
+    VectorView(std::vector<T,Alloc>& data, size_t istart, size_t size)
         : data_(data), istart_(istart), size_(size){}
 
-    VectorView(VectorView<T,Alloc>& V,
-        int istart,
-        int size) : data_(V.data_), istart_(V.istart_+istart),
-        size_(size){}
+    VectorView(VectorView<T,Alloc>& V, size_t istart, size_t size)
+        : data_(V.data_), istart_(V.istart_+istart), size_(size) {}
 
-    int size() const{return size_;}
-    const T& operator[](int i) const{return data_[istart_+i];}
-    T& operator[](int i){return data_[istart_+i];}
+    size_t size() const{ return size_; }
+    const T& operator[](size_t i) const { return data_[istart_+i]; }
+    T& operator[](size_t i) { return data_[istart_+i]; }
 
     iterator begin(){return data_.begin() + istart_;}
     iterator end(){return data_.begin() + istart_ + size_;}
 
 private:
     std::vector<T,Alloc>& data_;
-    int istart_;
-    int size_;
+    size_t istart_;
+    size_t size_;
 };
 
 /************************************************************
@@ -126,20 +122,20 @@ private:
 template <class Point>
 class LT_Indices{
 public:
-    LT_Indices(const std::vector<Point*>&x,
-        int elem=0) : x_ptr(&x), e(elem){}
-    bool operator()(int i1, int i2) const{
-        return ( x_ptr->at(i1)->at(e) < x_ptr->at(i2)->at(e) );
+    LT_Indices(std::vector<Point*> const &x, size_t elem=0) : points(x), e(elem) {}
+    bool operator()(size_t i, size_t j) const
+    {
+        return points.at(i)->at(e) < points.at(j)->at(e);
     }
 private:
-    const std::vector<Point*>* x_ptr;
-    int e;
+    std::vector<Point*> const &points;
+    size_t e;
 };
 
 template<class Point,class IndexVec>
 void argsort(const std::vector<Point*>& x ,
 	     IndexVec& indices,
-	     int elem = 0)
+	     size_t elem = 0)
 {
     std::sort(indices.begin(), indices.end(), LT_Indices<Point>(x,elem));
 }
@@ -150,7 +146,7 @@ void argsort(const std::vector<Point*>& x ,
  *   the following data members:
  *
  *    Points   : a reference to the full data set
- *    SubNodes : an array of subnodes to this node
+ *    sub{1,2} : subnodes to this node
  *    indices  : pointer to the BallTree index array.  Contains
  *               the list of indices in this node
  *    centroid : the centroid of all points within this node
@@ -160,37 +156,40 @@ void argsort(const std::vector<Point*>& x ,
  *               distance from a test point to any point in the node
  **********************************************************************/
 template<class Point>
-struct Node{
+class Node{
+public:
   //----------------------------------------------------------------------
   // Node : typedefs
   typedef typename Point::value_type value_type;
   typedef typename std::vector<value_type>::iterator value_iterator;
   typedef value_type (*DistFunc)(const Point&, const Point&);
-  
+
+private:
   //----------------------------------------------------------------------
   // Node : Data Members
   const std::vector<Point*>& Points;
-  VectorView<int> indices;
-  std::vector<Node<Point>*> SubNodes;
+  VectorView<size_t> indices;
+  std::auto_ptr<Node<Point> > sub1, sub2;
   bool is_leaf;
   value_type radius;
   Point centroid;
   DistFunc Dist;
 
+public:
   //----------------------------------------------------------------------
   // Node::Node
   //  this is called recursively to construct the ball tree
     Node(const std::vector<Point*>& Points,
-        VectorView<int> indices,
-        int leaf_size,
+        VectorView<size_t> indices,
+        size_t leaf_size,
         DistFunc Dist_Func = &(Euclidean_Dist<Point,Point>),
-        int depth=0)
+        size_t depth=0)
         : Points(Points), indices(indices),
-        SubNodes(0), is_leaf(false), radius(-1),
+        is_leaf(false), radius(-1),
         centroid(Points[0]->size()), Dist(Dist_Func)
     {
-        int D = Points[0]->size();
-        int N = indices.size();
+        size_t D = Points[0]->size();
+        size_t N = indices.size();
         if(N==0){
           throw BallTreeException("Node : zero-sized node\n   Abort\n");
         }else if (N==1){
@@ -199,9 +198,9 @@ struct Node{
             centroid = *(Points[indices[0]]);
         }else{
       //determine centroid
-            for(int j=0;j<D;++j){
+            for(size_t j=0;j<D;++j){
                 centroid[j] = 0;
-                for(int i=0;i<N;++i){
+                for(size_t i=0;i<N;++i){
                     centroid[j] += Points[indices[i]]->at(j);
                 }
                 centroid[j] /= N;
@@ -209,7 +208,7 @@ struct Node{
 
       //determine radius of node
             radius = 0;
-            for(int i=0;i<N;i++){
+            for(size_t i=0;i<N;i++){
                 value_type this_R = Dist( *(Points[indices[i]]),centroid);
                 if(this_R > radius)
                     radius = this_R;
@@ -220,13 +219,13 @@ struct Node{
             }else{
     //sort the indices
                 value_type range_max = 0;
-                int imax = -1;
+                size_t imax = 0;
 
     //determine which dimension of M has the largest spread
-                for(int i=0; i<D; ++i){
+                for(size_t i=0; i<D; ++i){
                     value_type rmin = Points[indices[0]]->at(i);
                     value_type rmax = Points[indices[0]]->at(i);
-                    for(int j=1; j<N; ++j){
+                    for(size_t j=1; j<N; ++j){
                         value_type Mij =  Points[indices[j]]->at(i);
                         if(Mij < rmin){
                             rmin = Mij;
@@ -243,23 +242,15 @@ struct Node{
                 argsort(Points,indices,imax);
 
     //divide the points into two groups along this dimension
-                SubNodes.resize(2);
-                SubNodes[0] = new Node<Point> (Points,
-                                        VectorView<int>(indices,0,N/2),
-                                        leaf_size, Dist, depth+1);
-                SubNodes[1] = new Node<Point> (Points,
-                                        VectorView<int>(indices,N/2,N-(N/2)),
-                                        leaf_size, Dist, depth+1);
+                sub1.reset(new Node<Point>(Points,
+                                           VectorView<size_t>(indices,0,N/2),
+                                           leaf_size, Dist, depth+1));
+                sub2.reset(new Node<Point>(Points,
+                                           VectorView<size_t>(indices,
+                                                              N/2,N-(N/2)),
+                                           leaf_size, Dist, depth+1));
             }
         }
-    }
-
-  //----------------------------------------------------------------------
-  // Node::~Node
-    ~Node(){
-    //recursively delete all lower nodes
-        for(size_t i=0; i<SubNodes.size(); ++i)
-            delete SubNodes[i];
     }
 
   //----------------------------------------------------------------------
@@ -291,9 +282,9 @@ struct Node{
   //    dist_LB  : the lower-bound distance.  This is passed as a parameter
   //                to keep from calculating it multiple times.
   void query(const Point& pt,
-	     int k,
+	     size_t k,
 	     std::vector<value_type>& Pts_dist,
-	     std::vector<int>& Pts_ind,
+	     std::vector<size_t>& Pts_ind,
 	     value_type dist_LB = -1){
     
     if(dist_LB < 0)
@@ -314,10 +305,10 @@ struct Node{
     else if(is_leaf)
       {
 	value_iterator iter1;
-	int position;
+	size_t position;
 	value_type dist;
 	//Do a brute-force search through the points.
-	for(int i_pt=0; i_pt<indices.size(); i_pt++){
+	for(size_t i_pt=0; i_pt<indices.size(); i_pt++){
 	  
 	  //determine distance to this point
 	  if( indices.size()==1 )
@@ -334,7 +325,7 @@ struct Node{
 	  position = iter1 - Pts_dist.begin();
 
 	  //Insert point into the list
-	  for(int i=k-1; i>position; i--){
+	  for(size_t i=k-1; i>position; i--){
 	    Pts_dist[i] = Pts_dist[i-1];
 	    Pts_ind[i]  = Pts_ind[i-1];
 	  }
@@ -350,40 +341,40 @@ struct Node{
     //    of its subnodes
     else
       {
-	value_type dist_LB_0 = SubNodes[0]->calc_dist_LB(pt);
-	value_type dist_LB_1 = SubNodes[1]->calc_dist_LB(pt);
+	value_type dist_LB_0 = sub1->calc_dist_LB(pt);
+	value_type dist_LB_1 = sub2->calc_dist_LB(pt);
 	if(dist_LB_0 <= dist_LB_1){
-	  SubNodes[0]->query(pt,k,Pts_dist,Pts_ind,dist_LB_0);
-	  SubNodes[1]->query(pt,k,Pts_dist,Pts_ind,dist_LB_1);
+	  sub1->query(pt,k,Pts_dist,Pts_ind,dist_LB_0);
+	  sub2->query(pt,k,Pts_dist,Pts_ind,dist_LB_1);
 	}else{
-	  SubNodes[1]->query(pt,k,Pts_dist,Pts_ind,dist_LB_1);
-	  SubNodes[0]->query(pt,k,Pts_dist,Pts_ind,dist_LB_0);
+	  sub2->query(pt,k,Pts_dist,Pts_ind,dist_LB_1);
+	  sub1->query(pt,k,Pts_dist,Pts_ind,dist_LB_0);
 	}
       }
   }
-  
+
   //query all points within a radius r of pt
-  int query_radius(const Point& pt,
-		   value_type r,
-		   std::vector<size_t>& nbrs){
+  size_t query_radius(const Point& pt,
+                      value_type r,
+                      std::vector<size_t>& nbrs){
     value_type dist_LB = calc_dist_LB(pt);
-    
+
     //--------------------------------------------------
     //  Case 1: balls do not intersect.  return
     if( dist_LB > r ){}
-    
+
     //--------------------------------------------------
     //  Case 2: this node is inside ball.  Add all pts to nbrs
     else if(dist_LB + 2*radius <= r){
-      for(int i=0; i<indices.size(); i++)
+      for(size_t i=0; i<indices.size(); i++)
 	nbrs.push_back(indices[i]);
     }
-    
+
     //--------------------------------------------------
     //  Case 3: node is a leaf.  Go through points and
     //          determine if they're in the ball
     else if(is_leaf){
-      for(int i=0; i<indices.size(); i++){
+      for(size_t i=0; i<indices.size(); i++){
 	value_type D = Dist( pt,*(Points[indices[i]]) );
 	if( D<=r )
 	  nbrs.push_back(indices[i]);
@@ -395,15 +386,15 @@ struct Node{
     //  Case 4: node is not a leaf.  Recursively search
     //          subnodes
     else{
-      SubNodes[0]->query_radius(pt,r,nbrs);
-      SubNodes[1]->query_radius(pt,r,nbrs);
+      sub1->query_radius(pt,r,nbrs);
+      sub2->query_radius(pt,r,nbrs);
     }
     return nbrs.size();
   }
   
   //count all points within a radius r of p
-  int query_radius(const Point& pt,
-		   value_type r){
+  size_t query_radius(const Point& pt, value_type r)
+  {
     value_type dist_LB = calc_dist_LB(pt);
     
     //--------------------------------------------------
@@ -421,8 +412,8 @@ struct Node{
     //  Case 3: node is a leaf.  Go through points and
     //          determine if they're in the ball
     else if(is_leaf){
-      int count = 0;
-      for(int i=0; i<indices.size(); i++){
+      size_t count = 0;
+      for(size_t i=0; i<indices.size(); i++){
 	value_type D = Dist( pt,*(Points[indices[i]]) );
 	if( D<=r )
 	  ++count;
@@ -434,9 +425,9 @@ struct Node{
     //  Case 4: node is not a leaf.  Recursively search
     //          subnodes
     else{
-      int count = 0;
-      count += SubNodes[0]->query_radius(pt,r);
-      count += SubNodes[1]->query_radius(pt,r);
+      size_t count = 0;
+      count += sub1->query_radius(pt,r);
+      count += sub2->query_radius(pt,r);
       return count;
     }
   }
@@ -461,8 +452,8 @@ public:
   //----------------------------------------------------------------------
   // BallTree::BallTree
     BallTree(std::vector<Point*>* Points,
-        int leaf_size = 1,
-        DistFunc Dist_Func = &(Euclidean_Dist<Point,Point>))
+             size_t leaf_size = 1,
+             DistFunc Dist_Func = &(Euclidean_Dist<Point,Point>))
         : Points_(*Points), indices_(Points_.size()),
     Dist(Dist_Func), leaf_size_(leaf_size){
     //initialize indices
@@ -472,7 +463,7 @@ public:
     //construct head node: this will recursively
     // construct the entire tree
         head_node_ = new Node<Point>(Points_,
-            VectorView<int>(indices_),
+            VectorView<size_t>(indices_),
             leaf_size,
             Dist);
     }
@@ -483,7 +474,7 @@ public:
         delete head_node_; // this will recursively delete all subnodes
     }
 
-    int PointSize() const{
+    size_t PointSize() const{
         return Points_[0]->size();
     }
 
@@ -520,14 +511,14 @@ public:
       if(num_nbrs > Points_.size() ){
 	std::stringstream oss;
 	oss << "query: k must be less than or equal to N Points (" 
-	    << num_nbrs << " > " << (int)(Points_.size()) << ")\n";
+	    << num_nbrs << " > " << Points_.size() << ")\n";
 	throw BallTreeException(oss.str());
       }
-      
+
       std::vector<value_type> 
 	Pts_dist(num_nbrs, std::numeric_limits<value_type>::max());
       
-      std::vector<int> Pts_ind(num_nbrs, 0);
+      std::vector<size_t> Pts_ind(num_nbrs, 0);
       
       head_node_->query(pt,num_nbrs,Pts_dist,Pts_ind);
       
@@ -546,25 +537,23 @@ public:
     // return number of points.
     // on return, nbrs is an array of indices of nearest points
     // if nbrs is not supplied, just count points within radius
-    int query_radius(const Point& pt,
-                   value_type r,
-                   std::vector<size_t>& nbrs){
+    size_t query_radius(const Point& pt, value_type r, std::vector<size_t>& nbrs)
+    {
         return head_node_->query_radius(pt,r,nbrs);
     }
 
-    int query_radius(const Point& pt,
-		   value_type r){
+    size_t query_radius(const Point& pt, value_type r)
+    {
         return head_node_->query_radius(pt,r);
     }
     
-    int query_radius(const Point* pt,
-                   value_type r,
-                   std::vector<size_t>& nbrs){
+    size_t query_radius(const Point* pt, value_type r, std::vector<size_t>& nbrs)
+    {
         return head_node_->query_radius(*pt,r,nbrs);
     }
 
-    int query_radius(const Point* pt,
-		   value_type r){
+    size_t query_radius(const Point* pt, value_type r)
+    {
         return head_node_->query_radius(*pt,r);
     }
     
@@ -573,9 +562,9 @@ private:
   // BallTree : Data Members
     Node<Point>* head_node_;
     const std::vector<Point*>& Points_;
-    std::vector<int> indices_;
+    std::vector<size_t> indices_;
     DistFunc Dist;
-    int leaf_size_;
+    size_t leaf_size_;
 };
 
 #endif //BALL_TREE_H

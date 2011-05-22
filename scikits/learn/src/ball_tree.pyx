@@ -73,7 +73,7 @@ cdef class BallTree:
     cdef size_t num_dims
     cdef public object data
 
-    def __cinit__(self, arr, leafsize=20):
+    def __cinit__(self, arr, size_t leafsize=20):
         # copy points into ptdata
         arr = np.atleast_2d(arr).astype(np.double)
         assert arr.ndim == 2, "input points must be 2 dimensional (points x dimensions)"
