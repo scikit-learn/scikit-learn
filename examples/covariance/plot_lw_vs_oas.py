@@ -48,12 +48,12 @@ for i, n_samples in enumerate(n_samples_range):
 
         lw = LedoitWolf(store_precision=False)
         lw.fit(X, assume_centered=True)
-        lw_mse[i,j] = lw.mse(real_cov)
+        lw_mse[i,j] = lw.error(real_cov)
         lw_shrinkage[i,j] = lw.shrinkage_
 
         oa = OAS(store_precision=False)
         oa.fit(X, assume_centered=True)
-        oa_mse[i,j] = oa.mse(real_cov)
+        oa_mse[i,j] = oa.error(real_cov)
         oa_shrinkage[i,j] = oa.shrinkage_
 
 # plot MSE

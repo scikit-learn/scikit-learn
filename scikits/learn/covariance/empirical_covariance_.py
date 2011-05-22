@@ -165,7 +165,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         return res
 
-    def mse(self, comp_cov):
+    def mse(self, comp_cov, error_type='mse'):
         """Computes the Mean Squared Error between two covariance estimators.
         (In the sense of the Frobenius norm)
 
@@ -173,6 +173,11 @@ class EmpiricalCovariance(BaseEstimator):
         ----------
         comp_cov: array-like, shape = [n_features, n_features]
           The covariance which to be compared to.
+        error_type: str
+          The type of error. Available error types:
+          - 'mse': Mean Squared Error (default) = tr(A^t.A) / n_features
+          - 'rmse': Root Mean Squared Error = sqrt(tr(A^t.A) / n_features
+          - 'sse': Sum of Squared Errors = tr(A^t.A)
 
         Returns
         -------
@@ -181,5 +186,14 @@ class EmpiricalCovariance(BaseEstimator):
 
         """
         diff = comp_cov - self.covariance_
-
-        return np.sum(diff ** 2)
+        sse = np.sum(diff ** 2)
+        if error_type == 'mse':
+            error = sse / diff.shape[0]
+        elif error_type == 'rmse':
+            error = np.sqrt(sse / diff.shape[0])
+        elif error_type == 'sse':
+            error = sse
+        else:
+            raise Exception('Error type \"%s\" not implemented yet' %error_type)
+        
+        return error
