@@ -191,18 +191,20 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     vdata = np.mean(np.var(X, 0))
     best_inertia = np.infty
-    if hasattr(init, '__array__'):
-        init = np.asarray(init)
-        if not n_init == 1:
-            warnings.warn('Explicit initial center position passed: '
-                          'performing only one init in the k-means')
-            n_init = 1
 
     # subtract of mean of x for more accurate distance computations
     X_mean = X.mean(axis=0)
     if copy_x:
         X = X.copy()
     X -= X_mean
+
+    if hasattr(init, '__array__'):
+        init = np.asarray(init).copy()
+        init -= X_mean
+        if not n_init == 1:
+            warnings.warn('Explicit initial center position passed: '
+                          'performing only one init in the k-means')
+            n_init = 1
 
     # precompute squared norms of data points
     x_squared_norms = X.copy()
@@ -363,7 +365,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
         seeds = np.argsort(random_state.rand(n_samples))[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):
-        centers = np.asanyarray(init).copy()
+        centers = init
     elif callable(init):
         centers = init(X, k, random_state=random_state)
     else:
