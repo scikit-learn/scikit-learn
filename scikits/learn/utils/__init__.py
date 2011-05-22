@@ -141,8 +141,8 @@ def resample(*arrays, **options):
 
     See also
     --------
+    :class:`scikits.learn.cross_val.Bootstrap`
     :func:`scikits.learn.utils.shuffle`
-
     """
     random_state = check_random_state(options.pop('random_state', None))
     replace = options.pop('replace', True)
