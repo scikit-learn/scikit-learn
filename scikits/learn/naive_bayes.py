@@ -3,7 +3,7 @@ Naive Bayes models
 ==================
 
 Naive Bayes algorithms are a set of supervised learning methods based on
-applying Bayes' theorem with strong (naive) independence assumptions. 
+applying Bayes' theorem with strong (naive) independence assumptions.
 
 See http://scikit-learn.sourceforge.net/modules/naive_bayes.html for
 complete documentation.
@@ -195,6 +195,7 @@ def asanyarray_or_csr(X):
     else:
         return np.asanyarray(X), False
 
+
 def atleast2d_or_csr(X):
     if issparse(X):
         return X.tocsr()
@@ -272,7 +273,16 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         X, self.sparse = asanyarray_or_csr(X)
         y = safe_asanyarray(y)
 
-        compute_priors = theta is None
+        self.unique_y = np.unique(y)
+        n_labels = self.unique_y.size
+
+        self.theta = None
+        if not self.use_prior:
+            self.theta = np.ones(n_labels) / n_labels
+        if theta:
+            assert len(theta) == n_labels, \
+                   'Number of priors must match number of labels'
+            self.theta = np.array(theta)
 
         # N_c is the count of all words in all documents of label c.
         # N_c_i is the a count of word i in all documents of label c.
@@ -281,9 +291,8 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         # given a document of label c.
         #
         N_c_i_temp = []
-        if compute_priors:
+        if self.theta is None:
             theta = []
-        self.unique_y = np.unique(y)
 
         for yi in self.unique_y:
             if self.sparse:
@@ -291,7 +300,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
                 N_c_i_temp.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
             else:
                 N_c_i_temp.append(np.sum(X[y == yi, :], 0))
-            if compute_priors:
+            if self.theta is None:
                 theta.append(np.float(np.sum(y == yi)) / y.size)
 
         N_c_i = np.array(N_c_i_temp)
@@ -304,8 +313,10 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         # Estimate the parameters of the distribution
         #
-        self.theta_c_i = (N_c_i + alpha_i) / (N_c.reshape(-1, 1) + alpha)
-        self.theta = np.array(theta)
+        self.theta_c_i = (np.log(N_c_i + alpha_i)
+                         - np.log(N_c.reshape(-1, 1) + alpha))
+        if self.theta is None:
+            self.theta = np.array(theta)
 
         return self
 
@@ -321,8 +332,6 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
         """
-        X = atleast2d_or_csr(X)
-
         joint_log_likelihood = self._joint_log_likelihood(X)
         y_pred = self.unique_y[np.argmax(joint_log_likelihood, axis=0)]
 
@@ -331,25 +340,18 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
+        X = atleast2d_or_csr(X)
+
         joint_log_likelihood = []
         for i in xrange(self.unique_y.size):
             if self.sparse:
-                n_ij = np.log(self.theta_c_i[i]) * X.T
+                n_ij = self.theta_c_i[i] * X.T
             else:
-                n_ij = np.dot(np.log(self.theta_c_i[i]), X.T)
-            if self.use_prior:
-                jointi = np.log(self.theta[i])
-                n_ij += jointi
+                n_ij = np.dot(self.theta_c_i[i], X.T)
+            n_ij += np.log(self.theta[i])
             joint_log_likelihood.append(n_ij)
 
         return np.array(joint_log_likelihood)
-
-    def _mininf(self, X, axis=None):
-        """Calculate the minimum of a matrix ignoring -inf values"""
-
-        A = X.copy()
-        A[np.isinf(X)] = np.inf
-        return np.min(X, axis=axis)
 
     def predict_proba(self, X):
         """
@@ -366,20 +368,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             the model, where labels are ordered by arithmetical
             order.
         """
-        X = atleast2d_or_csr(X)
-
-        joint_log_likelihood = self._joint_log_likelihood(X)
-
-        # The _joint_log_likelihood has very low values that create underflow
-        # in the computation of the exponent. Therefore I 'fix' it by adding
-        # a minimal value.
-        #
-        fix = self._mininf(joint_log_likelihood, axis=1)[:, np.newaxis]
-        loga_fix = joint_log_likelihood - fix
-        proba_fix = np.exp(loga_fix)
-        proba = proba_fix / np.sum(proba_fix, 1)[:, np.newaxis]
-
-        return proba
+        return np.exp(self.predict_log_proba(X))
 
     def predict_log_proba(self, X):
         """
@@ -396,17 +385,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             in the model, where labels are ordered by arithmetical
             order.
         """
-        X = atleast2d_or_csr(X)
-
-        joint_log_likelihood = self._joint_log_likelihood(X)
-
-        # The _joint_log_likelihood has very low values that create underflow
-        # in the computation of the exponent. Therefore I 'fix' it by adding
-        # a minimal value.
-        #
-        fix = self._mininf(joint_log_likelihood, axis=1)[:, np.newaxis]
-        loga_fix = joint_log_likelihood - fix
-        proba_fix = np.exp(loga_fix)
-        log_proba = loga_fix - np.log(np.sum(proba_fix, axis=1))[:, np.newaxis]
-
-        return log_proba
+        jll = self._joint_log_likelihood(X)
+        # normalize by P(x) = P(f_1, ..., f_n)
+        normalize = np.logaddexp.reduce(jll[:, np.newaxis])
+        return jll - normalize

@@ -82,3 +82,12 @@ def test_sparse_mnnb():
     y_pred_proba = clf.predict_proba(X2S)
     y_pred_log_proba = clf.predict_log_proba(X2S)
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+
+
+def test_mnnb_predict_proba():
+    '''Test multinomial NB's probability scores'''
+
+    clf = naive_bayes.MultinomialNB().fit([[0,1], [0,1], [1,0]], [0,0,1])
+    assert clf.predict([0,1]) == 0
+    assert np.sum(clf.predict_proba([0,1])) == 1
+    assert np.sum(clf.predict_proba([1,0])) == 1
