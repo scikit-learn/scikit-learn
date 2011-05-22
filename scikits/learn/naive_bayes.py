@@ -12,8 +12,10 @@ complete documentation.
 # Author: Vincent Michel <vincent.michel@inria.fr>
 #         Minor fixes by Fabian Pedregosa
 #         MultinomialNB classifier by:
-#         Amit Aides <amitibo@tx.technion.ac.il> &
+#         Amit Aides <amitibo@tx.technion.ac.il>
 #         Yehuda Finkelstein <yehudaf@tx.technion.ac.il>
+#         Lars Buitinck <L.J.Buitinck@uva.nl>
+#         (parts based on earlier work by Mathieu Blondel)
 #
 # License: BSD Style.
 
@@ -241,9 +243,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0)
+    MultinomialNB(alpha=1.0, use_prior=True)
     >>> print clf.predict(X[2])
-    3
+    [3]
     """
 
     def __init__(self, alpha=1.0, use_prior=True):

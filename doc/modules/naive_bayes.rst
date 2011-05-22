@@ -6,7 +6,7 @@ Naive Bayes
 
 
 **Naive Bayes** algorithms are a set of supervised learning methods
-based on applying Baye's theorem with strong (naive) independence
+based on applying Bayes' theorem with strong (naive) independence
 assumptions. Given a class variable :math:`c` and a dependent set
 of feature variables :math:`f_1` through :math:`f_n`, Bayes' theorem
 states the following relationship:
@@ -27,10 +27,10 @@ Using the naive assumption this relationship is simplified:
 
 where we used the Maximum a Posteriori estimator.
 
-The differnt Naive Bayes classifiers differ by the assumption on the
-distrubtion of :math:`p(f_i \mid c)`:
+The different naive Bayes classifiers differ by the assumption on the
+distribution of :math:`p(f_i \mid c)`:
 
-The advantage of Naive Bayes approaches are:
+The advantages of naive Bayes approaches are:
 
    - It requires a small amount of training data to estimate the
      parameters necessary for classification.
