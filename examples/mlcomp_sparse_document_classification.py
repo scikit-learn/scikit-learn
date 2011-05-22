@@ -12,7 +12,8 @@ downloaded from the http://mlcomp.org (free registration required):
 
   http://mlcomp.org/datasets/379
 
-Once downloaded unzip the arhive somewhere on your filesystem. For instance in::
+Once downloaded unzip the archive somewhere on your filesystem.
+For instance in::
 
   % mkdir -p ~/data/mlcomp
   % cd  ~/data/mlcomp
@@ -49,7 +50,7 @@ from scikits.learn.feature_extraction.text import Vectorizer
 from scikits.learn.linear_model.sparse import SGDClassifier
 from scikits.learn.metrics import confusion_matrix
 from scikits.learn.metrics import classification_report
-from scikits.learn.naive_bayes.sparse import MultinomialNB
+from scikits.learn.naive_bayes import MultinomialNB
 
 
 if 'MLCOMP_DATASETS_HOME' not in os.environ:
@@ -133,7 +134,7 @@ benchmark(SGDClassifier, parameters, 'SGD')
 
 print "Testbenching a MultinomialNB classifier..."
 parameters = {
-    'alpha_i': 0.01
+    'alpha': 0.01
 }
 
 benchmark(MultinomialNB, parameters, 'MultinomialNB')
