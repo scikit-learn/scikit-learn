@@ -156,6 +156,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
         If an ndarray is passed, it should be of shape (k, p) and gives
         the initial centers.
+        
+        If a callable is passed, it should take arguments X, k and
+        and a random state and return an initialization.
 
     tol: float, optional
         The relative increment in the results before declaring convergence.
