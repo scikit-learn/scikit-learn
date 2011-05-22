@@ -448,7 +448,7 @@ class KMeans(BaseEstimator):
         n_init consecutive runs in terms of inertia.
 
     init : {'k-means++', 'random' or an ndarray}
-        Method for initialization, defaults to 'random':
+        Method for initialization, defaults to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
@@ -498,7 +498,7 @@ class KMeans(BaseEstimator):
     it can be useful to restart it several times.
     """
 
-    def __init__(self, k=8, init='random', n_init=10, max_iter=300, tol=1e-4,
+    def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300, tol=1e-4,
             verbose=0, random_state=None, copy_x=True):
 
         if hasattr(init, '__array__'):
