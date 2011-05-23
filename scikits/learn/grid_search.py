@@ -190,21 +190,34 @@ class GridSearchCV(BaseEstimator):
     >>> from scikits.learn import svm, grid_search, datasets
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = svm.SVR()
-    >>> clf = grid_search.GridSearchCV(svr, parameters)
+    >>> svc = svm.SVC()
+    >>> clf = grid_search.GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(n_jobs=1, verbose=0, fit_params={}, loss_func=None,
-                 refit=True, cv=None, iid=True,
-                 estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
-                 ...
-    >>> clf.params_                                       # doctest: +ELLIPSIS
-    [{'kernel': 'linear', 'C': 1},... {'kernel': 'rbf', 'C': 10}]
+    GridSearchCV(n_jobs=1, verbose=0, fit_params={}, loss_func=None...
+           cv=None, iid=True,
+           estimator=SVC(kernel='rbf', C=1.0, probability=False,...
+           ...
 
-    >>> clf.scores_.shape
-    (4, 3)
+    >>> from pprint import pprint
+    >>> pprint(clf.params_)
+    [{'C': 1, 'kernel': 'linear'},
+     {'C': 1, 'kernel': 'rbf'},
+     {'C': 10, 'kernel': 'linear'},
+     {'C': 10, 'kernel': 'rbf'}]
+
+    >>> clf.scores_
+    array([[ 0.96,  0.98,  1.  ],
+           [ 0.92,  0.88,  0.9 ],
+           [ 0.96,  0.98,  0.96],
+           [ 0.96,  0.94,  0.98]])
+
     >>> clf.durations_.shape
     (4, 3)
+
+    >>> clf.best_estimator                                # doctest: +ELLIPSIS
+    SVC(kernel='linear', C=1, probability=False, degree=3, coef0=0.0...
+      shrinking=True, gamma=0.0)
 
     Notes
     ------
