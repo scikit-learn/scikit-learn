@@ -21,6 +21,7 @@ complete documentation.
 
 from .base import BaseEstimator, ClassifierMixin
 from .utils import safe_asanyarray
+from .utils.extmath import safe_sparse_dot
 import numpy as np
 from scipy.sparse import issparse
 
@@ -219,7 +220,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
     use_prior: boolean
-        Whether to use label prior probabilities or not.
+        Whether to learn label prior probabilities or not.
 
     Methods
     -------
@@ -258,13 +259,13 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features. X may be a sparse matrix.
 
         y : array-like, shape = [n_samples]
             Target values.
 
-        theta : array, shape [n_labels * n_features]
+        theta : array, shape [n_classes]
             Prior probability per label.
 
         Returns
@@ -276,13 +277,13 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         y = safe_asanyarray(y)
 
         self.unique_y = np.unique(y)
-        n_labels = self.unique_y.size
+        n_classes = self.unique_y.size
 
         self.theta = None
         if not self.use_prior:
-            self.theta = np.ones(n_labels) / n_labels
+            self.theta = np.ones(n_classes) / n_classes
         if theta:
-            assert len(theta) == n_labels, \
+            assert len(theta) == n_classes, \
                    'Number of priors must match number of labels'
             self.theta = np.array(theta)
 
@@ -344,16 +345,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         X = atleast2d_or_csr(X)
 
-        joint_log_likelihood = []
+        jll = safe_sparse_dot(self.theta_c_i, X.T)
         for i in xrange(self.unique_y.size):
-            if self.sparse:
-                n_ij = self.theta_c_i[i] * X.T
-            else:
-                n_ij = np.dot(self.theta_c_i[i], X.T)
-            n_ij += np.log(self.theta[i])
-            joint_log_likelihood.append(n_ij)
+            jll[i] += np.log(self.theta[i])
 
-        return np.array(joint_log_likelihood)
+        return jll
 
     def predict_proba(self, X):
         """
@@ -365,7 +361,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array-like, shape = [n_samples, n_labels]
+        C : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each label in
             the model, where labels are ordered by arithmetical
             order.
@@ -382,7 +378,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array-like, shape = [n_samples, n_labels]
+        C : array-like, shape = [n_samples, n_classes]
             Returns the log-probability of the sample for each label
             in the model, where labels are ordered by arithmetical
             order.
