@@ -220,7 +220,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
     use_prior: boolean
-        Whether to learn label prior probabilities or not.
+        Whether to learn class prior probabilities or not.
 
     Methods
     -------
@@ -231,10 +231,18 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         Predict using the model.
 
     predict_proba(X) : array
-        Predict the probability of each label using the model.
+        Predict the probability of each class using the model.
 
     predict_log_proba(X) : array
-        Predict the log probability of each label using the model.
+        Predict the log probability of each class using the model.
+
+    Attributes
+    ----------
+    intercept_ : array, shape = [n_classes]
+        Log probability of each class (smoothed).
+
+    coef_ : array, shape = [n_classes, n_features]
+        Empirical log probability of features given a class, P(x_i|y).
 
     Examples
     --------
@@ -247,6 +255,12 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     MultinomialNB(alpha=1.0, use_prior=True)
     >>> print clf.predict(X[2])
     [3]
+
+    References
+    ----------
+    For the rationale behind the names coef_ and intercept_, i.e. naive Bayes
+    as a linear classifier, see J. Rennie et al. (2003), Tackling the poor
+    assumptions of naive Bayes text classifiers, Proc. ICML.
     """
 
     def __init__(self, alpha=1.0, use_prior=True):
@@ -279,22 +293,22 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self.unique_y = np.unique(y)
         n_classes = self.unique_y.size
 
-        self.class_prior = None
+        self.intercept_ = None
         if not self.use_prior:
-            self.class_prior = np.ones(n_classes) / n_classes
+            self.intercept_ = np.ones(n_classes) / n_classes
         if class_prior:
             assert len(class_prior) == n_classes, \
-                   'Number of priors must match number of labels'
-            self.class_prior = np.array(class_prior)
+                   'Number of priors must match number of classs'
+            self.intercept_ = np.array(class_prior)
 
         # N_c is the count of all words in all documents of class c.
         # N_c_i is the a count of word i in all documents of class c.
-        # class_prior[c] is the prior empirical probability of class c.
-        # _prob_c_i is the (smoothed) empirical likelihood of feature i
+        # intercept_[c] is the prior empirical probability of class c.
+        # coef_ is the (smoothed) empirical likelihood of feature i
         # given class c.
         #
         N_c_i_temp = []
-        if self.class_prior is None:
+        if self.intercept_ is None:
             class_prior = []
 
         for yi in self.unique_y:
@@ -303,7 +317,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
                 N_c_i_temp.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
             else:
                 N_c_i_temp.append(np.sum(X[y == yi, :], 0))
-            if self.class_prior is None:
+            if self.intercept_ is None:
                 class_prior.append(np.float(np.sum(y == yi)) / y.size)
 
         N_c_i = np.array(N_c_i_temp)
@@ -311,11 +325,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         # Estimate (and smooth) the parameters of the distribution
         #
-        self._prob_c_i = (np.log(N_c_i + self.alpha)
+        self.coef_ = (np.log(N_c_i + self.alpha)
                           - np.log(N_c.reshape(-1, 1)
                                    + self.alpha * X.shape[1]))
-        if self.class_prior is None:
-            self.class_prior = np.array(class_prior)
+        if self.intercept_ is None:
+            self.intercept_ = np.log(class_prior)
 
         return self
 
@@ -341,11 +355,8 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         X = atleast2d_or_csr(X)
 
-        jll = safe_sparse_dot(self._prob_c_i, X.T)
-        for i in xrange(self.unique_y.size):
-            jll[i] += np.log(self.class_prior[i])
-
-        return jll
+        jll = safe_sparse_dot(self.coef_, X.T)
+        return jll + np.atleast_2d(self.intercept_).T
 
     def predict_proba(self, X):
         """
@@ -358,8 +369,8 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         Returns
         -------
         C : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each label in
-            the model, where labels are ordered by arithmetical
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered by arithmetical
             order.
         """
         return np.exp(self.predict_log_proba(X))
@@ -375,11 +386,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         Returns
         -------
         C : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each label
-            in the model, where labels are ordered by arithmetical
+            Returns the log-probability of the sample for each class
+            in the model, where classes are ordered by arithmetical
             order.
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        normalize = np.logaddexp.reduce(jll[:, np.newaxis])
-        return jll - normalize
+        log_prob_x = np.logaddexp.reduce(jll[:, np.newaxis])
+        return jll - log_prob_x
