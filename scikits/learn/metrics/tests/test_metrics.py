@@ -266,6 +266,13 @@ def test_losses():
     assert_almost_equal(r2_score(y_true, y_true), 1.00, 2)
 
 
+def test_losses_at_limits():
+    # test limit cases
+    assert_almost_equal(mean_square_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
+    assert_almost_equal(r2_score([0.], [0.]), 1.00, 2)
+
+
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
