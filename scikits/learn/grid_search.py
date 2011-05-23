@@ -115,9 +115,15 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         this_score = clf.score(X_test, y_test)
 
     if y is not None:
-        this_n_test_samples = y.shape[0]
+        if hasattr(y, 'shape'):
+            this_n_test_samples = y.shape[0]
+        else:
+            this_n_test_samples = len(y)
     else:
-        this_n_test_samples = X.shape[0]
+        if hasattr(X, 'shape'):
+            this_n_test_samples = X.shape[0]
+        else:
+            this_n_test_samples = len(X)
 
     if verbose > 1:
         end_msg = "%s -%s" % (msg,
