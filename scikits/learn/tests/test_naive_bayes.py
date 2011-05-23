@@ -1,3 +1,5 @@
+import cPickle as pickle
+from cStringIO import StringIO
 import numpy as np
 import scipy.sparse
 from numpy.testing import assert_array_equal, assert_array_almost_equal
@@ -82,6 +84,19 @@ def test_sparse_mnnb():
     y_pred_proba = clf.predict_proba(X2S)
     y_pred_log_proba = clf.predict_log_proba(X2S)
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+
+
+def test_mnnb_pickle():
+    '''Test picklability of multinomial NB'''
+
+    clf = naive_bayes.MultinomialNB(alpha=2, use_prior=False).fit(X, y)
+    y_pred = clf.predict(X)
+
+    store = StringIO()
+    pickle.dump(clf, store)
+    clf = pickle.load(StringIO(store.getvalue()))
+
+    assert_array_equal(y_pred, clf.predict(X))
 
 
 def test_mnnb_predict_proba():
