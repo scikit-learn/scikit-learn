@@ -6,10 +6,10 @@ Naive Bayes
 
 
 **Naive Bayes** algorithms are a set of supervised learning methods
-based on applying Bayes' theorem with strong (naive) independence
-assumptions. Given a class variable :math:`c` and a dependent set
-of feature variables :math:`f_1` through :math:`f_n`, Bayes' theorem
-states the following relationship:
+based on applying Bayes' theorem with the "naive" assumption of independence
+between every pair of features. Given a class variable :math:`c` and a
+dependent set of feature variables :math:`f_1` through :math:`f_n`, Bayes'
+theorem states the following relationship:
 
 .. math::
 
@@ -30,19 +30,15 @@ where we used the Maximum a Posteriori estimator.
 The different naive Bayes classifiers differ by the assumption on the
 distribution of :math:`p(f_i \mid c)`:
 
-The advantages of naive Bayes approaches are:
+In spite of their naive design and apparently over-simplified assumptions,
+naive Bayes classifiers have worked quite well in many real-world situations,
+famously document classification and spam filtering. They requires a small
+amount of training data to estimate the necessary parameters.
 
-   - It requires a small amount of training data to estimate the
-     parameters necessary for classification.
-
-   - In spite of their naive design and apparently over-simplified
-     assumptions, naive Bayes classifiers have worked quite well in
-     many complex real-world situations.
-
-   - The decoupling of the class conditional feature distributions
-     means that each distribution can be independently estimated as a
-     one dimensional distribution. This in turn helps to alleviate
-     problems stemming from the curse of dimensionality.
+The decoupling of the class conditional feature distributions means that each
+distribution can be independently estimated as a one dimensional distribution.
+This in turn helps to alleviate problems stemming from the curse of
+dimensionality.
 
 
 Gaussian Naive Bayes
