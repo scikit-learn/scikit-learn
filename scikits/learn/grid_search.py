@@ -73,8 +73,8 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
 
     Returns the score and the instance of the classifier
     """
+    start_time = time.time()
     if verbose > 1:
-        start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                                      for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
@@ -107,24 +107,23 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
 
     if loss_func is not None:
         y_pred = clf.predict(X_test)
-        this_score = -loss_func(y_test, y_pred)
+        score = -loss_func(y_test, y_pred)
     elif score_func is not None:
         y_pred = clf.predict(X_test)
-        this_score = score_func(y_test, y_pred)
+        score = score_func(y_test, y_pred)
     else:
-        this_score = clf.score(X_test, y_test)
+        score = clf.score(X_test, y_test)
 
     if y is not None:
-        this_n_test_samples = y.shape[0]
+        n_test_samples = y.shape[0]
     else:
-        this_n_test_samples = X.shape[0]
+        n_test_samples = X.shape[0]
 
+    duration = time.time() - start_time
     if verbose > 1:
-        end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
-                                                       start_time))
+        end_msg = "%s - %s" % (msg, logger.short_format_time(duration))
         print "[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg)
-    return this_score, clf, this_n_test_samples
+    return score, duration, clf, n_test_samples
 
 
 class GridSearchCV(BaseEstimator):
@@ -174,6 +173,18 @@ class GridSearchCV(BaseEstimator):
     verbose: integer
         Controls the verbosity: the higher, the more messages.
 
+    Attributes
+    ----------
+    grid_scores_ : list of (dict(), float) pairs
+        Store the (iid) mean score for each parameters dictionary
+
+    scores_ : array with shape [n_grid_points, n_folds]
+        Store the row scores of individual fits. In case a loss_func was used
+        we have score is defined as `score = -loss`
+
+    duration_ : array with shape [n_grid_points, n_folds]
+        Store the recorded durations of the fits in seconds.
+
     Examples
     --------
     >>> from scikits.learn import svm, grid_search, datasets
@@ -181,11 +192,19 @@ class GridSearchCV(BaseEstimator):
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svr = svm.SVR()
     >>> clf = grid_search.GridSearchCV(svr, parameters)
-    >>> clf.fit(iris.data, iris.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    >>> clf.fit(iris.data, iris.target)
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(n_jobs=1, verbose=0, fit_params={}, loss_func=None,
                  refit=True, cv=None, iid=True,
                  estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
                  ...
+    >>> clf.params_                                       # doctest: +ELLIPSIS
+    [{'kernel': 'linear', 'C': 1},... {'kernel': 'rbf', 'C': 10}]
+
+    >>> clf.scores_.shape
+    (4, 3)
+    >>> clf.durations_.shape
+    (4, 3)
 
     Notes
     ------
@@ -199,13 +218,13 @@ class GridSearchCV(BaseEstimator):
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
                  fit_params={}, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0,
-                 ):
+                 verbose=0):
         assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
                         or hasattr(estimator, 'score')), (
             "estimator should a be an estimator implementing 'fit' and "
             "'predict' or 'score' methods, %s (type %s) was passed" %
                     (estimator, type(estimator)))
+
         if loss_func is None and score_func is None:
             assert hasattr(estimator, 'score'), ValueError(
                     "If no loss_func is specified, the estimator passed "
@@ -267,29 +286,35 @@ class GridSearchCV(BaseEstimator):
                 self.score_func, self.verbose, **self.fit_params)
                     for clf_params in grid for train, test in cv)
 
-        # Out is a list of triplet: score, estimator, n_test_samples
+        # out is a list of tuples: score, duration, estimator, n_test_samples
         n_grid_points = len(list(grid))
         n_fits = len(out)
         n_folds = n_fits // n_grid_points
 
-        scores = list()
-        for grid_start in range(0, n_fits, n_folds):
-            n_test_samples = 0
-            score = 0
-            for this_score, estimator, this_n_test_samples in \
-                                    out[grid_start:grid_start + n_folds]:
-                if self.iid:
-                    this_score *= this_n_test_samples
-                score += this_score
-                n_test_samples += this_n_test_samples
-            if self.iid:
-                score /= float(n_test_samples)
-            scores.append((score, estimator))
+        # Group results for consecutive folds on the same parameters set
+        durations = np.empty((n_grid_points, n_folds))
+        scores = np.empty((n_grid_points, n_folds))
+        n_test_samples = np.empty((n_grid_points, n_folds))
+        estimators = list()
+        for i in range(0, n_grid_points):
+            slice_ = slice(i * n_folds, (i + 1) * n_folds)
+            for j, (score, duration, clf, n) in enumerate(out[slice_]):
+                scores[i, j] = score
+                durations[i, j] = duration
+                n_test_samples[i, j] = n
+            estimators.append(clf)
 
-        # Note: we do not use max(out) to make ties deterministic even if
+        # compute the mean score for each estimator
+        if self.iid:
+            n = n_test_samples
+            mean_scores = np.sum(scores * n, axis=1) / n.sum(axis=1)
+        else:
+            mean_scores = scores.mean(axis=1)
+
+        # Note: we do not use max() to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         best_score = None
-        for score, estimator in scores:
+        for score, estimator in zip(mean_scores, estimators):
             if best_score is None:
                 best_score = score
                 best_estimator = estimator
@@ -313,10 +338,13 @@ class GridSearchCV(BaseEstimator):
             self.score = best_estimator.score
 
         # Store the computed scores
-        # XXX: the name is too specific, it shouldn't have
-        # 'grid' in it. Also, we should be retrieving/storing variance
+        # XXX: the name is too specific, it shouldn't have 'grid' in it.
         self.grid_scores_ = [
-            (clf_params, score) for clf_params, (score, _) in zip(grid, scores)]
+            (params, score) for params, score in zip(grid, mean_scores)]
+        self.params_ = list(grid)
+        self.scores_ = scores
+        self.durations_ = durations
+
         return self
 
     def score(self, X, y=None):
