@@ -1,2 +1,3 @@
 from .locally_linear import locally_linear_embedding, LocallyLinearEmbedding
 from .MLLE import modified_locally_linear_embedding
+from .HLLE import hessian_locally_linear_embedding
