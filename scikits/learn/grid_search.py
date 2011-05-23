@@ -185,6 +185,12 @@ class GridSearchCV(BaseEstimator):
     durations_ : array with shape [n_grid_points, n_folds]
         Store the recorded durations of the fits in seconds.
 
+    params_ : list of dict
+        Parameters matching the first axis of scores_ and durations_
+
+    best_params_: dict
+        Combination of parameter values that scored best on average.
+
     Examples
     --------
     >>> from scikits.learn import svm, grid_search, datasets
@@ -215,9 +221,8 @@ class GridSearchCV(BaseEstimator):
     >>> clf.durations_.shape
     (4, 3)
 
-    >>> clf.best_estimator                                # doctest: +ELLIPSIS
-    SVC(kernel='linear', C=1, probability=False, degree=3, coef0=0.0...
-      shrinking=True, gamma=0.0)
+    >>> pprint(clf.best_params_)
+    {'C': 1, 'kernel': 'linear'}
 
     Notes
     ------
@@ -327,18 +332,21 @@ class GridSearchCV(BaseEstimator):
         # Note: we do not use max() to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         best_score = None
-        for score, estimator in zip(mean_scores, estimators):
+        for score, estimator, params in zip(mean_scores, estimators, grid):
             if best_score is None:
                 best_score = score
                 best_estimator = estimator
+                best_params = params
             else:
                 if score > best_score:
                     best_score = score
                     best_estimator = estimator
+                    best_params = params
 
         if best_score is None:
             raise ValueError('Best score could not be found')
         self.best_score = best_score
+        self.best_params_ = best_params
 
         if self.refit:
             # fit the best estimator using the entire dataset
