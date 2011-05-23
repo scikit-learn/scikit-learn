@@ -38,7 +38,7 @@ except:
 __all__ = ['cross_val', 'ball_tree', 'cluster', 'covariance', 'datasets',
            'decomposition', 'feature_extraction', 'feature_selection',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
-           'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-           'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
+           'metrics', 'mixture', 'naive_bayes', 'neighbors', 'perceptron',
+           'pipeline', 'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
 __version__ = '0.9-git'
