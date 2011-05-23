@@ -12,7 +12,7 @@ from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import load_20newsgroups
-from .mldata import fetch_mldata
+from .mldata import fetch_mldata, mldata_filename
 
 # backward compatibility
 def load_files(*args, **kwargs):
