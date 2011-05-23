@@ -8,6 +8,7 @@ from scipy import io
 from os.path import join, exists
 from os import makedirs
 import urllib2
+import string
 
 from .base import get_data_home, Bunch
 
@@ -15,10 +16,7 @@ MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
 def mldata_filename(dataname):
     """Convert a raw name for a data set in a mldata.org filename."""
-    # TODO: replace this with regular expression
-    dataname = dataname.lower().replace(' ', '-').replace('.', '')
-    dataname = dataname.replace('(', '').replace(')', '')
-    return dataname
+    return dataname.lower().replace(' ', '-').translate(None, '().')
 
 def fetch_mldata(dataname, target_name='label', data_name='data',
                  transpose_data=True, data_home=None):

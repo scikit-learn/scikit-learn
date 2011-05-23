@@ -6,12 +6,6 @@ import os
 import shutil
 import tempfile
 
-def setup_module():
-    pass
-
-def teardown_module():
-    pass
-
 def test_mldata_filename():
     cases = [('datasets-UCI iris', 'datasets-uci-iris'),
              ('news20.binary', 'news20binary'),
@@ -23,7 +17,6 @@ def test_mldata_filename():
 
 def test_fetch():
     tmpdir = tempfile.mkdtemp()
-    print '----', tmpdir
 
     dataname = 'iris'
     iris = fetch_mldata(dataname, data_home=tmpdir)
