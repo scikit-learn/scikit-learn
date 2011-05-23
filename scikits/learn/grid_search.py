@@ -324,6 +324,8 @@ class GridSearchCV(BaseEstimator):
 
         # compute the mean score for each estimator
         if self.iid:
+            # XXX: do we really need this special case or should we assume
+            # that all folds have approximately the same size?
             n = n_test_samples
             mean_scores = np.sum(scores * n, axis=1) / n.sum(axis=1)
         else:
