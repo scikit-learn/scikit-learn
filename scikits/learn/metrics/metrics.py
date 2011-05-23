@@ -14,6 +14,8 @@ better
 
 import numpy as np
 
+from ..utils import check_arrays
+
 
 def unique_labels(*list_of_labels):
     """Extract an ordered integer array of unique labels
@@ -163,8 +165,7 @@ def auc(x, y):
     >>> metrics.auc(fpr, tpr)
     0.75
     """
-    x = np.asanyarray(x)
-    y = np.asanyarray(y)
+    x, y = check_arrays(x, y)
     assert x.shape[0] == y.shape[0]
     assert x.shape[0] >= 3
 
@@ -207,7 +208,7 @@ def precision_score(y_true, y_pred, pos_label=1):
         weighted avergage of the precision of each class for the
         multiclass task
 
-     """
+    """
     p, _, _, s = precision_recall_fscore_support(y_true, y_pred)
     if p.shape[0] == 2:
         return p[pos_label]
@@ -371,6 +372,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     ----------
     http://en.wikipedia.org/wiki/Precision_and_recall
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
     assert(beta > 0)
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -551,7 +553,17 @@ def explained_variance_score(y_true, y_pred):
 
     y_pred : array-like
     """
-    return 1 - np.var(y_true - y_pred) / np.var(y_true)
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    numerator = np.var(y_true - y_pred)
+    denominator = np.var(y_true)
+    if denominator == 0.0:
+        if numerator == 0.0:
+            return 1.0
+        else:
+            # arbitary set to zero to avoid -inf scores, having a constant
+            # y_true is not interesting for scoring a regression anyway
+            return 0.0
+    return 1 - numerator / denominator
 
 
 def r2_score(y_true, y_pred):
@@ -569,8 +581,17 @@ def r2_score(y_true, y_pred):
 
     y_pred : array-like
     """
-    return 1 - (((y_true - y_pred) ** 2).sum() /
-                ((y_true - y_true.mean()) ** 2).sum())
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    numerator = ((y_true - y_pred) ** 2).sum()
+    denominator = ((y_true - y_true.mean()) ** 2).sum()
+    if denominator == 0.0:
+        if numerator == 0.0:
+            return 1.0
+        else:
+            # arbitary set to zero to avoid -inf scores, having a constant
+            # y_true is not interesting for scoring a regression anyway
+            return 0.0
+    return 1 - numerator / denominator
 
 
 def zero_one_score(y_true, y_pred):
@@ -591,6 +612,7 @@ def zero_one_score(y_true, y_pred):
     -------
     score : integer
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
     return np.mean(y_pred == y_true)
 
 
@@ -615,6 +637,7 @@ def zero_one(y_true, y_pred):
     -------
     loss : integer
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
     return np.sum(y_pred != y_true)
 
 
@@ -635,4 +658,5 @@ def mean_square_error(y_true, y_pred):
     -------
     loss : float
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
     return np.linalg.norm(y_pred - y_true) ** 2
