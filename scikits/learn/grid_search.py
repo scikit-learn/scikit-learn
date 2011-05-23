@@ -182,7 +182,7 @@ class GridSearchCV(BaseEstimator):
         Store the row scores of individual fits. In case a loss_func was used
         we have score is defined as `score = -loss`
 
-    duration_ : array with shape [n_grid_points, n_folds]
+    durations_ : array with shape [n_grid_points, n_folds]
         Store the recorded durations of the fits in seconds.
 
     Examples
