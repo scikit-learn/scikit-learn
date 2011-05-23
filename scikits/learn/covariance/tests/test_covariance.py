@@ -7,7 +7,8 @@
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from .. import empirical_covariance, EmpiricalCovariance, \
-    ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas
+    ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas \
+    fast_mcd
 
 import numpy as np
 from scikits.learn import datasets
@@ -208,3 +209,15 @@ def test_oas():
     oa.fit(X)
     assert_almost_equal(oa.score(X), 2.079025, 4)
     assert(oa.precision_ is None)
+
+def test_mcd():
+    """Tests the fastMCD algorithm implementation
+
+    """
+    # test without outliers (random independant normal data)
+    data_no_outliers = np.random.randn(100,5)
+    T, S, H = fast_mcd(data_no_outliers, reweight=None)
+    error_location = np.sum((data_no_outlier.mean(0) - T)**2)
+    assert(error_location < 0.5)
+    emp_cov = EmpiricalCovariance().fit(data_no_outliers)
+    assert(emp_cov.error(S) < 0.2)
