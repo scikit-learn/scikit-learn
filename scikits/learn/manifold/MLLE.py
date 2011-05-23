@@ -68,91 +68,87 @@ def modified_locally_linear_embedding(
     k = n_neighbors
     d_out = out_dim
         
-    X = np.asarray(X).T
-
+    X = np.asarray(X)
+    
     assert d_out < d_in
     assert k >= d_out
     assert k < N
-
-    #some variables to hold needed values
-    rho = np.zeros(N)
-    w_reg = np.zeros([N,k])
-    evals = np.zeros([N,k])
+    
+    #find the eigenvectors and eigenvalues of each local covariance matrix
+    # we want V[i] to be a [k x k] matrix, where the columns are eigenvectors
     V = np.zeros((N,k,k))
-
-    Phi = np.zeros( (N,N) )
-
-    #some functions to simplify the code
-    one = lambda d: np.ones((d,1))
-
+    nev = min(d_in,k)
+    evals = np.zeros([N,nev])
     for i in range(N):
-        #find regularized weights: this is like normal LLE
-        Gi = X[:,neighbors[i]] - X[:,i:i+1]
-        Qi = np.dot(Gi.T,Gi)
+        V[i],evals[i],_ = np.linalg.svd(X[neighbors[i]] - X[i])
+    evals**=2
 
-        Qi.flat[::k+1] += 1E-3 * Qi.trace()
+    #find regularized weights: this is like normal LLE.
+    # because we've already computed the SVD of each covariance matrix, 
+    # it's faster to use this rather than np.linalg.solve
+    reg = 1E-3 * evals.sum(1)
 
-        w_reg[i] = np.linalg.solve(Qi,np.ones(k))
-        w_reg[i] /= w_reg[i].sum()
+    tmp = np.dot(V.transpose(0,2,1),np.ones(k))
+    tmp[:,:nev] /= evals+reg[:,None]
+    tmp[:,nev:] /= reg[:,None]
 
-        #find the eigenvectors and eigenvalues of Gi.T*Gi
-        # using SVD
-        # we want V[i] to be a [k x k] matrix, where the columns
-        # are eigenvectors of Gi^T * G
-        V[i],sig,UT = np.linalg.svd(Gi.T)
-        evals[i][:len(sig)] = sig**2
+    w_reg = np.zeros( (N,k) )
+    for i in range(N):
+        w_reg[i] = np.dot(V[i],tmp[i])
+    w_reg /= w_reg.sum(1)[:,None]
+    
+    #calculate eta: the median of the ratio of small to large eigenvalues
+    # across the points.  This is used to determine s_i, below
+    rho = evals[:,d_out:].sum(1) / evals[:,:d_out].sum(1)
+    eta = np.median(rho)
 
-        #compute rho_i : this is used to calculate eta, the
-        # cutoff used to determine the size of the "almost null"
-        # space of the local covariance matrices.
-        rho[i] = (evals[i,d_out:]).sum() / (evals[i,:d_out]).sum()
+    #find s_i, the size of the "almost null space" for each point: 
+    # this is the size of the largest set of eigenvalues
+    # such that Sum[v; v in set]/Sum[v; v not in set] < eta
+    s_range = np.zeros(N,dtype=int)
+    evals_cumsum = np.cumsum(evals,1)
+    eta_range    = evals_cumsum[:,-2:]/evals_cumsum[:,:-1] - 1
+    for i in range(N):
+        s_range[i] = k-2-np.searchsorted(eta_range[i],eta)
 
-    #find eta - the median of the N rho values
-    rho.sort()
-    eta = rho[int(N/2)]
-
-    #The next loop calculates Phi.
+    #Now calculate Phi.
     # This is the [N x N] matrix whose null space is the desired embedding
+    Phi = np.zeros( (N,N),dtype=np.float )
     for i in range(N):
-        #determine si - the size of the largest set of eigenvalues
-        # of Qi such that satisfies:
-        #    sum(in_set)/sum(not_in_set) < eta
-        # with the constraint that 0<si<=k-d_out
+        s_i = s_range[i]
 
-        si = 1
-        while si < k-d_out:
-            this_eta = sum( evals[i,k-si:] ) / sum( evals[i,:k-si] )
-            if this_eta > eta:
-                if(si!=1): si -= 1
-                break
-            else:
-                si+=1
-
-        #select bottom si eigenvectors of Qi
-        # and calculate alpha
-        Vi = V[i][:,k-si:]
-        alpha_i = np.linalg.norm( Vi.sum(0) )/np.sqrt(si)
+        #select bottom s_i eigenvectors and calculate alpha
+        Vi = V[i, :, k-s_i:]
+        alpha_i = np.linalg.norm( Vi.sum(0) )/np.sqrt(s_i)
 
         #compute Householder matrix which satisfies
         #  Hi*Vi.T*ones(k) = alpha_i*ones(s)
         # using prescription from paper
-        h = alpha_i * np.ones(si)[:,None] - np.dot(Vi.T,np.ones(k)[:,None])
+        h = alpha_i * np.ones(s_i) - np.dot(Vi.T,np.ones(k))
 
-        nh = np.linalg.norm(h)
-        if nh < MLLE_tol:
-            h = np.zeros( (si,1) )
-        else:
-            h /= nh
+        norm_h = np.linalg.norm(h)
+        if norm_h < MLLE_tol: h *= 0
+        else:                 h /= norm_h
 
-        Hi = np.identity(si) - 2*np.dot(h,h.T)
+        #Householder matrix is
+        #  >> Hi = np.identity(s_i) - 2*np.outer(h,h)
+        #Then the weight matrix is
+        #  >> Wi = np.dot(Vi,Hi) + (1-alpha_i) * w_reg[i,:,None]
+        #We do this much more efficiently:
+        Wi = Vi - 2*np.outer(np.dot(Vi,h),h) + (1-alpha_i)*w_reg[i,:,None]
 
-        Wi = np.dot(Vi,Hi) + (1-alpha_i) * w_reg[i][:,None]
-
-        W_hat = np.zeros( (N,si) )
-        W_hat[neighbors[i],:] = Wi
-        W_hat[i]-=1
-            
-        Phi += np.dot(W_hat,W_hat.T)
+        #Update Phi as follows:
+        # >> W_hat = np.zeros( (N,s_i) )
+        # >> W_hat[neighbors[i],:] = Wi
+        # >> W_hat[i] -= 1
+        # >> Phi += np.dot(W_hat,W_hat.T)
+        #We can do this much more efficiently:
+        nbrs_x,nbrs_y = np.meshgrid(neighbors[i],neighbors[i])
+        Phi[nbrs_x,nbrs_y]  += np.dot(Wi,Wi.T)
+        Wi_sum1 = Wi.sum(1)
+        Phi[i,neighbors[i]] -= Wi_sum1
+        Phi[neighbors[i],i] -= Wi_sum1
+        Phi[i,i]            += s_i
     
     if eigen_solver == 'dense':
         import scipy.linalg
@@ -164,6 +160,7 @@ def modified_locally_linear_embedding(
 
     elif eigen_solver == 'lobpcg':
         from scipy.sparse import linalg, eye, csr_matrix
+        
         Phi = csr_matrix(Phi)
 
         # initial approximation to the eigenvectors
