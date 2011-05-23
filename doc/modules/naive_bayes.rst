@@ -44,8 +44,8 @@ dimensionality.
 Gaussian Naive Bayes
 --------------------
 
-:class:`GNB` implements the Gaussian Naive Bayes algorithm for classification.
-The likelihood of the features is assumed to be gaussian:
+:class:`GaussianNB` implements the Gaussian Naive Bayes algorithm for
+classification. The likelihood of the features is assumed to be gaussian:
 
 .. math::
 

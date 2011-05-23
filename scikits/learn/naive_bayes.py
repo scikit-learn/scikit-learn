@@ -26,9 +26,9 @@ import numpy as np
 from scipy.sparse import issparse
 
 
-class GNB(BaseEstimator, ClassifierMixin):
+class GaussianNB(BaseEstimator, ClassifierMixin):
     """
-    Gaussian Naive Bayes (GNB)
+    Gaussian Naive Bayes (GaussianNB)
 
     Parameters
     ----------
@@ -41,7 +41,7 @@ class GNB(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    proba_y : array, shape = [n_classes]
+    class_prior : array, shape = [n_classes]
         probability of each class.
 
     theta : array, shape [n_classes * n_features]
@@ -70,10 +70,10 @@ class GNB(BaseEstimator, ClassifierMixin):
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> Y = np.array([1, 1, 1, 2, 2, 2])
-    >>> from scikits.learn.naive_bayes import GNB
-    >>> clf = GNB()
+    >>> from scikits.learn.naive_bayes import GaussianNB
+    >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GNB()
+    GaussianNB()
     >>> print clf.predict([[-0.8, -1]])
     [1]
 
@@ -105,15 +105,15 @@ class GNB(BaseEstimator, ClassifierMixin):
 
         theta = []
         sigma = []
-        proba_y = []
+        class_prior = []
         unique_y = np.unique(y)
         for yi in unique_y:
             theta.append(np.mean(X[y == yi, :], 0))
             sigma.append(np.var(X[y == yi, :], 0))
-            proba_y.append(np.float(np.sum(y == yi)) / np.size(y))
+            class_prior.append(np.float(np.sum(y == yi)) / np.size(y))
         self.theta = np.array(theta)
         self.sigma = np.array(sigma)
-        self.proba_y = np.array(proba_y)
+        self.class_prior = np.array(class_prior)
         self.unique_y = unique_y
         return self
 
@@ -136,7 +136,7 @@ class GNB(BaseEstimator, ClassifierMixin):
     def _joint_log_likelihood(self, X):
         joint_log_likelihood = []
         for i in xrange(np.size(self.unique_y)):
-            jointi = np.log(self.proba_y[i])
+            jointi = np.log(self.class_prior[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta[i, :]) ** 2) / \
                                     (self.sigma[i, :]), 1)
@@ -253,7 +253,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self.alpha = alpha
         self.use_prior = use_prior
 
-    def fit(self, X, y, theta=None):
+    def fit(self, X, y, class_prior=None):
         """Fit Multinomial Naive Bayes according to X, y
 
         Parameters
@@ -265,8 +265,8 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples]
             Target values.
 
-        theta : array, shape [n_classes]
-            Prior probability per label.
+        class_prior : array, shape [n_classes]
+            Prior probability per class.
 
         Returns
         -------
@@ -279,23 +279,23 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self.unique_y = np.unique(y)
         n_classes = self.unique_y.size
 
-        self.theta = None
+        self.class_prior = None
         if not self.use_prior:
-            self.theta = np.ones(n_classes) / n_classes
-        if theta:
-            assert len(theta) == n_classes, \
+            self.class_prior = np.ones(n_classes) / n_classes
+        if class_prior:
+            assert len(class_prior) == n_classes, \
                    'Number of priors must match number of labels'
-            self.theta = np.array(theta)
+            self.class_prior = np.array(class_prior)
 
-        # N_c is the count of all words in all documents of label c.
-        # N_c_i is the a count of word i in all documents of label c.
-        # theta[c] is the prior empirical probability of a document of label c.
-        # theta_c_i is the (smoothed) empirical likelihood of word i
-        # given a document of label c.
+        # N_c is the count of all words in all documents of class c.
+        # N_c_i is the a count of word i in all documents of class c.
+        # class_prior[c] is the prior empirical probability of class c.
+        # _prob_c_i is the (smoothed) empirical likelihood of feature i
+        # given class c.
         #
         N_c_i_temp = []
-        if self.theta is None:
-            theta = []
+        if self.class_prior is None:
+            class_prior = []
 
         for yi in self.unique_y:
             if self.sparse:
@@ -303,23 +303,19 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
                 N_c_i_temp.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
             else:
                 N_c_i_temp.append(np.sum(X[y == yi, :], 0))
-            if self.theta is None:
-                theta.append(np.float(np.sum(y == yi)) / y.size)
+            if self.class_prior is None:
+                class_prior.append(np.float(np.sum(y == yi)) / y.size)
 
         N_c_i = np.array(N_c_i_temp)
         N_c = np.sum(N_c_i, axis=1)
 
-        # Smoothing coefficients
+        # Estimate (and smooth) the parameters of the distribution
         #
-        alpha_i = self.alpha
-        alpha = alpha_i * X.shape[1]
-
-        # Estimate the parameters of the distribution
-        #
-        self.theta_c_i = (np.log(N_c_i + alpha_i)
-                         - np.log(N_c.reshape(-1, 1) + alpha))
-        if self.theta is None:
-            self.theta = np.array(theta)
+        self._prob_c_i = (np.log(N_c_i + self.alpha)
+                          - np.log(N_c.reshape(-1, 1)
+                                   + self.alpha * X.shape[1]))
+        if self.class_prior is None:
+            self.class_prior = np.array(class_prior)
 
         return self
 
@@ -345,9 +341,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         X = atleast2d_or_csr(X)
 
-        jll = safe_sparse_dot(self.theta_c_i, X.T)
+        jll = safe_sparse_dot(self._prob_c_i, X.T)
         for i in xrange(self.unique_y.size):
-            jll[i] += np.log(self.theta[i])
+            jll[i] += np.log(self.class_prior[i])
 
         return jll
 

@@ -148,7 +148,7 @@ Naive Bayes
    :toctree: generated/
    :template: class.rst
 
-   naive_bayes.GNB
+   naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
 
 
