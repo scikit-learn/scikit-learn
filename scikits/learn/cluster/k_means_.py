@@ -520,7 +520,7 @@ class KMeans(BaseEstimator):
         return X
 
     def fit(self, X, **params):
-        """Compute k-means"""
+        """Compute k-means centers and labels"""
 
         self.random_state = check_random_state(self.random_state)
 
@@ -532,9 +532,14 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
-    def predict(X):
+    def fit_predict(self, X, **params):
+        """Compute k-means centers and return label assignements"""
+        self.fit(X)
+        return self.labels_
+
+    def predict(self, X):
         """Assign cluster membership labels to samples"""
-        labels, inertia = _e_step(X, self.centers)
+        labels, _ = _e_step(X, self.centers)
         return labels
 
 
