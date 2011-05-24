@@ -1,7 +1,7 @@
 """Tune the parameters of an estimator by cross-validation"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux    <gael.varoquaux@normalesup.org>
+#         Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
 import copy
@@ -17,7 +17,7 @@ from .base import BaseEstimator, is_classifier, clone
 
 try:
     from itertools import product
-except:
+except ImportError:
     def product(*args, **kwds):
         pools = map(tuple, args) * kwds.get('repeat', 1)
         result = [[]]
