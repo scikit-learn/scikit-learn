@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from scikits.learn import neighbors, datasets
+from scikits.learn import neighbors, datasets, ball_tree
 
 # load and shuffle iris dataset
 iris = datasets.load_iris()
@@ -19,28 +19,28 @@ def test_neighbors_1D():
     # some constants
     n = 6
     X = [[x] for x in range(0, n)]
-    Y = [0]*(n/2) + [1]*(n/2)
+    Y = [0] * (n / 2) + [1] * (n / 2)
 
     for s in ('auto', 'ball_tree', 'brute', 'inplace'):
         # n_neighbors = 1
         knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         knn.fit(X, Y)
-        test = [[i + 0.01] for i in range(0, n/2)] + \
-               [[i - 0.01] for i in range(n/2, n)]
-        assert_array_equal(knn.predict(test), [0]*3 + [1]*3)
+        test = [[i + 0.01] for i in range(0, n / 2)] + \
+               [[i - 0.01] for i in range(n / 2, n)]
+        assert_array_equal(knn.predict(test), [0] * 3 + [1] * 3)
 
         # n_neighbors = 2
         knn = neighbors.NeighborsClassifier(n_neighbors=2, algorithm=s)
         knn.fit(X, Y)
-        assert_array_equal(knn.predict(test), [0]*4 + [1]*2)
+        assert_array_equal(knn.predict(test), [0] * 4 + [1] * 2)
 
         # n_neighbors = 3
         knn = neighbors.NeighborsClassifier(n_neighbors=3, algorithm=s)
         knn.fit(X, Y)
-        assert_array_equal(knn.predict([[i +0.01] for i in range(0, n/2)]),
-                            [0 for i in range(n/2)])
-        assert_array_equal(knn.predict([[i-0.01] for i in range(n/2, n)]),
-                            [1 for i in range(n/2)])
+        assert_array_equal(knn.predict([[i + 0.01] for i in range(0, n / 2)]),
+                            [0 for i in range(n / 2)])
+        assert_array_equal(knn.predict([[i - 0.01] for i in range(n / 2, n)]),
+                            [1 for i in range(n / 2)])
 
 
 def test_neighbors_high_dimension():
@@ -49,16 +49,16 @@ def test_neighbors_high_dimension():
     # some constants
     n = 20
     p = 40
-    X = 2*np.random.random(size=(n, p)) - 1
-    Y = ((X**2).sum(axis=1) < .25).astype(np.int)
+    X = 2 * np.random.random(size=(n, p)) - 1
+    Y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
     for s in ('auto', 'ball_tree', 'brute', 'inplace'):
         knn = neighbors.NeighborsClassifier(n_neighbors=1, algorithm=s)
         knn.fit(X, Y)
         for i, (x, y) in enumerate(zip(X[:10], Y[:10])):
-            epsilon = 1e-5*(2*np.random.random(size=p)-1)
-            assert_array_equal(knn.predict(x+epsilon), y)
-            dist, idxs = knn.kneighbors(x+epsilon, n_neighbors=1)
+            epsilon = 1e-5 * (2 * np.random.random(size=p) - 1)
+            assert_array_equal(knn.predict(x + epsilon), y)
+            dist, idxs = knn.kneighbors(x + epsilon, n_neighbors=1)
 
 
 def test_neighbors_iris():
@@ -75,7 +75,7 @@ def test_neighbors_iris():
         assert_array_equal(clf.predict(iris.data), iris.target)
 
         clf.fit(iris.data, iris.target, n_neighbors=9, algorithm=s)
-        assert np.mean(clf.predict(iris.data)== iris.target) > 0.95
+        assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
         for m in ('barycenter', 'mean'):
             rgs = neighbors.NeighborsRegressor()
@@ -88,7 +88,7 @@ def test_kneighbors_graph():
     """
     Test kneighbors_graph to build the k-Nearest Neighbor graph.
     """
-    X = [[0, 1], [1.01, 1.], [2, 0]]
+    X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     # n_neighbors = 1
     A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
@@ -126,11 +126,8 @@ def test_kneighbors_graph():
     A = neighbors.kneighbors_graph(X, 2, mode='barycenter')
     # check that columns sum to one
     assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
-    assert_array_almost_equal(
-        A.todense(),
-        [[ 0.        ,  1.5049745 , -0.5049745 ],
-        [ 0.596     ,  0.        ,  0.404     ],
-        [-0.98019802,  1.98019802,  0.        ]])
+    pred = np.dot(A.todense(), X)
+    assert np.linalg.norm(pred - X) / X.shape[0] < 1
 
     # n_neighbors = 3
     A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
@@ -138,6 +135,37 @@ def test_kneighbors_graph():
         A.todense(),
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
+
+def test_kneighbors_iris():
+
+    # make sure reconstruction error is kept small using a real datasets
+    # note that we choose neighbors < n_dim and n_neighbors > n_dim
+    for i in range(1, 8):
+        for data in (iris.data, neighbors.BallTree(iris.data)):
+            # check for both input as numpy array and as BallTree
+            A = neighbors.kneighbors_graph(data, i, mode='barycenter')
+            if hasattr(data, 'query'):
+                data = data.data
+            pred_data = np.dot(A.todense(), data)
+            assert np.linalg.norm(pred_data - data) / data.shape[0] < 0.1
+
+    
+def test_ball_tree_query_radius(n_samples=100,n_features=10):
+    X = 2 * np.random.random(size=(n_samples, n_features)) - 1
+    query_pt = np.zeros(n_features,dtype=float)
+    
+    eps = 1E-15 #roundoff error can cause test to fail
+    BT = ball_tree.BallTree(X)
+    rad = np.sqrt( ((X-query_pt) ** 2).sum(1) )
+    
+    for r in np.linspace(rad[0],rad[-1],100):
+        ind = BT.query_radius(query_pt,r+eps)[0]
+        i   = np.where(rad<=r+eps)[0]
+
+        ind.sort()
+        i.sort()
+
+        assert np.all(i==ind)
 
 if __name__ == '__main__':
     import nose

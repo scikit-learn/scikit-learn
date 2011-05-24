@@ -1,10 +1,11 @@
 """
-Helpers for embarassingly parallel code.
+Helpers for embarrassingly parallel code.
 """
 # Author: Gael Varoquaux < gael dot varoquaux at normalesup dot org >
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
 
+import os
 import sys
 import functools
 import time
@@ -15,10 +16,15 @@ try:
 except:
     import pickle
 
-try:
-    import multiprocessing
-except ImportError:
-    multiprocessing = None
+# Obtain possible configuration from the environment, assuming 1 (on)
+# by default, upon 0 set to None. Should instructively fail if some non
+# 0/1 value is set.
+multiprocessing = int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)) or None
+if multiprocessing:
+    try:
+        import multiprocessing
+    except ImportError:
+        multiprocessing = None
 
 from .format_stack import format_exc, format_outer_frames
 from .logger import Logger, short_format_time
@@ -37,7 +43,7 @@ class WorkerInterrupt(Exception):
 class SafeFunction(object):
     """ Wraps a function to make it exception with full traceback in
         their representation.
-        Useful for parallel computing with multiprocessing, for which 
+        Useful for parallel computing with multiprocessing, for which
         exceptions cannot be captured.
     """
 
@@ -92,7 +98,7 @@ class ImmediateApply(object):
 
 ################################################################################
 class CallBack(object):
-    """ Callback used by parallel: it is used for progress reporting, and 
+    """ Callback used by parallel: it is used for progress reporting, and
         to add data to be processed
     """
     def __init__(self, index, parallel):
@@ -128,8 +134,8 @@ class CallBack(object):
             writer = sys.stdout.write
         writer('[%s]: Done %3i out of %s |elapsed: %s remaining: %s\n'
                 % (self.parallel,
-                    self.index+1, 
-                    total, 
+                    self.index+1,
+                    total,
                     short_format_time(elapsed_time),
                     short_format_time(remaining_time),
                     ))
@@ -151,18 +157,18 @@ class Parallel(Logger):
             output is sent to stdout.
         pre_dispatch: {'all', integer, or expression, as in '3*n_jobs'}
             The amount of jobs to be pre-dispatched. Default is 'all',
-            but it may be memory consuming, for instance if each job 
+            but it may be memory consuming, for instance if each job
             involves a lot of a data.
-        
+
         Notes
         -----
 
         This object uses the multiprocessing module to compute in
         parallel the application of a function to many different
-        arguments. The main functionnality it brings in addition to 
+        arguments. The main functionality it brings in addition to
         using the raw multiprocessing API are (see examples for details):
 
-            * More readable code, in particular since it avoids 
+            * More readable code, in particular since it avoids
               constructing list of arguments.
 
             * Easier debuging:
@@ -182,26 +188,26 @@ class Parallel(Logger):
         A simple example:
 
         >>> from math import sqrt
-        >>> from joblib import Parallel, delayed
+        >>> from scikits.learn.externals.joblib import Parallel, delayed
         >>> Parallel(n_jobs=1)(delayed(sqrt)(i**2) for i in range(10))
         [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
 
         Reshaping the output when the function has several return
         values:
-        
+
         >>> from math import modf
-        >>> from joblib import Parallel, delayed
+        >>> from scikits.learn.externals.joblib import Parallel, delayed
         >>> r = Parallel(n_jobs=1)(delayed(modf)(i/2.) for i in range(10))
         >>> res, i = zip(*r)
         >>> res
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
         >>> i
         (0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0)
-       
+
         The progress meter::
 
             >>> from time import sleep
-            >>> from joblib import Parallel, delayed
+            >>> from scikits.learn.externals.joblib import Parallel, delayed
             >>> r = Parallel(n_jobs=2, verbose=1)(delayed(sleep)(.1) for _ in range(10)) #doctest: +SKIP
             [Parallel(n_jobs=2)]: Done   1 out of  10 |elapsed:    0.1s remaining:    0.9s
             [Parallel(n_jobs=2)]: Done   3 out of  10 |elapsed:    0.2s remaining:    0.5s
@@ -209,17 +215,17 @@ class Parallel(Logger):
             [Parallel(n_jobs=2)]: Done   7 out of  10 |elapsed:    0.4s remaining:    0.2s
             [Parallel(n_jobs=2)]: Done   9 out of  10 |elapsed:    0.5s remaining:    0.1s
 
-        Traceback example, note how the ligne of the error is indicated 
+        Traceback example, note how the line of the error is indicated
         as well as the values of the parameter passed to the function that
-        triggered the exception, eventhough the traceback happens in the 
+        triggered the exception, even though the traceback happens in the
         child process::
 
          >>> from string import atoi
-         >>> from joblib import Parallel, delayed
+         >>> from scikits.learn.externals.joblib import Parallel, delayed
          >>> Parallel(n_jobs=2)(delayed(atoi)(n) for n in ('1', '300', 30)) #doctest: +SKIP
          #...
          ---------------------------------------------------------------------------
-         Sub-process traceback: 
+         Sub-process traceback:
          ---------------------------------------------------------------------------
          TypeError                                          Fri Jul  2 20:32:05 2010
          PID: 4151                                     Python 2.6.5: /usr/bin/python
@@ -228,14 +234,14 @@ class Parallel(Logger):
              398     is chosen from the leading characters of s, 0 for octal, 0x or
              399     0X for hexadecimal.  If base is 16, a preceding 0x or 0X is
              400     accepted.
-             401 
+             401
              402     """
          --> 403     return _int(s, base)
-             404 
-             405 
+             404
+             405
              406 # Convert string to long integer
              407 def atol(s, base=10):
-         
+
          TypeError: int() can't convert non-string with explicit base
          ___________________________________________________________________________
 
@@ -246,15 +252,15 @@ class Parallel(Logger):
         number of iterations reported is underestimated::
 
          >>> from math import sqrt
-         >>> from joblib import Parallel, delayed
+         >>> from scikits.learn.externals.joblib import Parallel, delayed
 
          >>> def producer():
          ...     for i in range(6):
          ...         print 'Produced %s' % i
          ...         yield i
-         
+
          >>> out = Parallel(n_jobs=2, verbose=100, pre_dispatch='1.5*n_jobs')(
-         ...                         delayed(sqrt)(i) for i in producer()) #doctest: +ELLIPSIS
+         ...                         delayed(sqrt)(i) for i in producer()) #doctest: +SKIP
          Produced 0
          Produced 1
          Produced 2
@@ -277,7 +283,7 @@ class Parallel(Logger):
 
 
     def dispatch(self, func, args, kwargs):
-        """ Queue the function for computing, with or without multiprocessing 
+        """ Queue the function for computing, with or without multiprocessing
         """
         if self._pool is None:
             job = ImmediateApply(func, args, kwargs)
@@ -308,7 +314,7 @@ class Parallel(Logger):
         self._dispatch_amount += 1
         while self._dispatch_amount:
             try:
-                # XXX: possible race condition shuffling the order of 
+                # XXX: possible race condition shuffling the order of
                 # dispatchs in the next two lines.
                 func, args, kwargs = self._iterable.next()
                 self.dispatch(func, args, kwargs)
@@ -335,7 +341,7 @@ class Parallel(Logger):
             try:
                 self._output.append(job.get())
             except tuple(self.exceptions), exception:
-                if isinstance(exception, 
+                if isinstance(exception,
                         (KeyboardInterrupt, WorkerInterrupt)):
                     # We have captured a user interruption, clean up
                     # everything
@@ -344,7 +350,7 @@ class Parallel(Logger):
                         self._pool.terminate()
                     raise exception
                 elif isinstance(exception, TransportableException):
-                    # Capture exception to add information on 
+                    # Capture exception to add information on
                     # the local stack in addition to the distant
                     # stack
                     this_report = format_outer_frames(
@@ -354,7 +360,7 @@ class Parallel(Logger):
                     report = """Multiprocessing exception:
 %s
 ---------------------------------------------------------------------------
-Sub-process traceback: 
+Sub-process traceback:
 ---------------------------------------------------------------------------
 %s""" % (
                             this_report,
@@ -401,7 +407,7 @@ Sub-process traceback:
         try:
             for function, args, kwargs in iterable:
                 self.dispatch(function, args, kwargs)
-            
+
             self.retrieve()
         finally:
             if n_jobs > 1:

@@ -14,6 +14,8 @@ better
 
 import numpy as np
 
+from ..utils import check_arrays
+
 
 def unique_labels(*list_of_labels):
     """Extract an ordered integer array of unique labels
@@ -66,47 +68,75 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-def roc_curve(y, probas_):
+def roc_curve(y_true, y_score):
     """compute Receiver operating characteristic (ROC)
+
+    Note: this implementation is restricted to the binary classification task.
 
     Parameters
     ----------
 
-    y : array, shape = [n_samples]
-        true targets
+    y_true : array, shape = [n_samples]
+        true binary labels
 
-    probas_ : array, shape = [n_samples]
-        estimated probabilities
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
 
     Returns
     -------
-    fpr : array, shape = [n]
+    fpr : array, shape = [>2]
         False Positive Rates
 
-    tpr : array, shape = [n]
+    tpr : array, shape = [>2]
         True Positive Rates
 
-    thresholds : array, shape = [n]
+    thresholds : array, shape = [>2]
         Thresholds on proba_ used to compute fpr and tpr
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from scikits.learn import metrics
+    >>> y = np.array([1, 1, 2, 2])
+    >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores)
+    >>> fpr
+    array([ 0. ,  0.5,  0.5,  1. ])
+
 
     References
     ----------
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
     """
-    y = y.ravel()
-    probas_ = probas_.ravel()
-    thresholds = np.sort(np.unique(probas_))[::-1]
+    y_true = y_true.ravel()
+    classes = np.unique(y_true)
+
+    # ROC only for binary classification
+    if classes.shape[0] != 2:
+        raise ValueError("ROC is defined for binary classification only")
+
+    y_score = y_score.ravel()
+    thresholds = np.sort(np.unique(y_score))[::-1]
     n_thresholds = thresholds.size
 
-    tpr = np.empty(n_thresholds) # True positive rate
-    fpr = np.empty(n_thresholds) # False positive rate
-    n_pos = float(np.sum(y == 1)) # nb of true positive
-    n_neg = float(np.sum(y == 0)) # nb of true negative
+    tpr = np.empty(n_thresholds)  # True positive rate
+    fpr = np.empty(n_thresholds)  # False positive rate
+    n_pos = float(np.sum(y_true == classes[1]))  # nb of true positive
+    n_neg = float(np.sum(y_true == classes[0]))  # nb of true negative
 
     for i, t in enumerate(thresholds):
-        tpr[i] = np.sum(y[probas_ >= t] == 1) / n_pos
-        fpr[i] = np.sum(y[probas_ >= t] == 0) / n_neg
+        tpr[i] = np.sum(y_true[y_score >= t] == classes[1]) / n_pos
+        fpr[i] = np.sum(y_true[y_score >= t] == classes[0]) / n_neg
 
+    # hard decisions, add (0,0)
+    if fpr.shape[0] == 2:
+        fpr = np.array([0.0, fpr[0], fpr[1]])
+        tpr = np.array([0.0, tpr[0], tpr[1]])
+    # trivial decisions, add (0,0) and (1,1)
+    elif fpr.shape[0] == 1:
+        fpr = np.array([0.0, fpr[0], 1.0])
+        tpr = np.array([0.0, tpr[0], 1.0])
     return fpr, tpr, thresholds
 
 
@@ -125,9 +155,19 @@ def auc(x, y):
     -------
     auc : float
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from scikits.learn import metrics
+    >>> y = np.array([1, 1, 2, 2])
+    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> metrics.auc(fpr, tpr)
+    0.75
     """
-    x = np.asanyarray(x)
-    y = np.asanyarray(y)
+    x, y = check_arrays(x, y)
+    assert x.shape[0] == y.shape[0]
+    assert x.shape[0] >= 3
 
     # reorder the data points according to the x axis
     order = np.argsort(x)
@@ -168,7 +208,7 @@ def precision_score(y_true, y_pred, pos_label=1):
         weighted avergage of the precision of each class for the
         multiclass task
 
-     """
+    """
     p, _, _, s = precision_recall_fscore_support(y_true, y_pred)
     if p.shape[0] == 2:
         return p[pos_label]
@@ -332,6 +372,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     ----------
     http://en.wikipedia.org/wiki/Precision_and_recall
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
     assert(beta > 0)
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -407,9 +448,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
         width = max(len(cn) for cn in target_names)
         width = max(width, len(last_line_heading))
 
-
     headers = ["precision", "recall", "f1-score", "support"]
-    fmt = '%% %ds' % width # first column: class name
+    fmt = '%% %ds' % width  # first column: class name
     fmt += '  '
     fmt += ' '.join(['% 9s' for _ in headers])
     fmt += '\n'
@@ -513,7 +553,17 @@ def explained_variance_score(y_true, y_pred):
 
     y_pred : array-like
     """
-    return 1 - np.var(y_true - y_pred) / np.var(y_true)
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    numerator = np.var(y_true - y_pred)
+    denominator = np.var(y_true)
+    if denominator == 0.0:
+        if numerator == 0.0:
+            return 1.0
+        else:
+            # arbitary set to zero to avoid -inf scores, having a constant
+            # y_true is not interesting for scoring a regression anyway
+            return 0.0
+    return 1 - numerator / denominator
 
 
 def r2_score(y_true, y_pred):
@@ -531,8 +581,17 @@ def r2_score(y_true, y_pred):
 
     y_pred : array-like
     """
-    return 1 - (((y_true - y_pred)**2).sum() /
-                ((y_true - y_true.mean())**2).sum())
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    numerator = ((y_true - y_pred) ** 2).sum()
+    denominator = ((y_true - y_true.mean()) ** 2).sum()
+    if denominator == 0.0:
+        if numerator == 0.0:
+            return 1.0
+        else:
+            # arbitary set to zero to avoid -inf scores, having a constant
+            # y_true is not interesting for scoring a regression anyway
+            return 0.0
+    return 1 - numerator / denominator
 
 
 def zero_one_score(y_true, y_pred):
@@ -553,6 +612,7 @@ def zero_one_score(y_true, y_pred):
     -------
     score : integer
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
     return np.mean(y_pred == y_true)
 
 
@@ -577,6 +637,7 @@ def zero_one(y_true, y_pred):
     -------
     loss : integer
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
     return np.sum(y_pred != y_true)
 
 
@@ -597,4 +658,5 @@ def mean_square_error(y_true, y_pred):
     -------
     loss : float
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
     return np.linalg.norm(y_pred - y_true) ** 2

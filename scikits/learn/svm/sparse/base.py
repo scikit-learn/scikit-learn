@@ -10,8 +10,8 @@ class SparseBaseLibSVM(BaseLibSVM):
     _kernel_types = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
     _svm_types = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
-    def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
-                 tol, C, nu, p, shrinking, probability):
+    def __init__(self, impl, kernel, degree, gamma, coef0,
+                 tol, C, nu, epsilon, shrinking, probability):
 
         assert impl in self._svm_types, \
             "impl should be one of %s, %s was given" % (
@@ -26,11 +26,10 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
-        self.cache_size = cache_size
         self.tol = tol
         self.C = C
         self.nu = nu
-        self.p = p
+        self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
 
@@ -46,9 +45,9 @@ class SparseBaseLibSVM(BaseLibSVM):
         self.intercept_ = np.empty(0, dtype=np.float64, order='C')
 
         # only used in classification
-        self.n_support = np.empty(0, dtype=np.int32, order='C')
+        self.n_support_ = np.empty(0, dtype=np.int32, order='C')
 
-    def fit(self, X, y, class_weight={}, sample_weight=[], **params):
+    def fit(self, X, y, class_weight={}, sample_weight=[], cache_size=100., **params):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -110,7 +109,7 @@ class SparseBaseLibSVM(BaseLibSVM):
                  self._support_indices, self._support_indptr,
                  self._dual_coef_data, self.intercept_,
                  self.class_weight_label, self.class_weight, sample_weight,
-                 self.n_support, self.nu, self.cache_size, self.p,
+                 self.n_support_, self.nu, cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
 
         n_class = len(self.label_) - 1
@@ -166,10 +165,59 @@ class SparseBaseLibSVM(BaseLibSVM):
                       self._svm_types.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label, self.class_weight,
-                      self.nu, self.cache_size, self.p, self.shrinking,
-                      self.probability, self.n_support, self.label_,
+                      self.nu, self.epsilon, self.shrinking,
+                      self.probability, self.n_support_, self.label_,
                       self.probA_, self.probB_)
 
+
+    def predict_proba(self, X):
+        """
+        This function does classification or regression on a test vector X
+        given a model with probability information.
+
+        Parameters
+        ----------
+        X : scipy.sparse.csr, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+
+        Notes
+        -----
+        The probability model is created using cross validation, so
+        the results can be slightly different than those obtained by
+        predict. Also, it will meaningless results on very small
+        datasets.
+        """
+
+        if not self.probability:
+            raise ValueError(
+                    "probability estimates must be enabled to use this method")
+
+        if self.impl not in ('c_svc', 'nu_svc'):
+            raise NotImplementedError("predict_proba only implemented for SVC and NuSVC")
+
+        import scipy.sparse
+        X = scipy.sparse.csr_matrix(X)
+        X.data = np.asanyarray(X.data, dtype=np.float64, order='C')
+        kernel_type = self._kernel_types.index(self.kernel)
+
+        return libsvm.libsvm_sparse_predict_proba(
+            X.data, X.indices, X.indptr,
+            self.support_vectors_.data,
+            self.support_vectors_.indices,
+            self.support_vectors_.indptr,
+            self.dual_coef_.data, self.intercept_,
+            self._svm_types.index(self.impl), kernel_type,
+            self.degree, self.gamma, self.coef0, self.tol,
+            self.C, self.class_weight_label, self.class_weight,
+            self.nu, self.epsilon, self.shrinking,
+            self.probability, self.n_support_, self.label_,
+            self.probA_, self.probB_)
 
 class SparseBaseLibLinear(BaseLibLinear):
 

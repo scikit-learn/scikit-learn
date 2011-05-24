@@ -4,10 +4,11 @@ Pipeline: chain transforms and estimators to build a composite estimator.
 # Author: Edouard Duchesnay
 #         Gael Varoquaux
 #         Virgile Fritsch
+#         Alexandre Gramfort
 # Licence: BSD
 
 from .base import BaseEstimator
-import numpy as np
+
 
 class Pipeline(BaseEstimator):
     """ Pipeline of transforms with a final estimator
@@ -74,15 +75,15 @@ class Pipeline(BaseEstimator):
         >>> # and a parameter 'C' of the svn
         >>> anova_svm.fit(X, y, anova__k=10, svc__C=.1) #doctest: +ELLIPSIS
         Pipeline(steps=[('anova', SelectKBest(k=10, score_func=<function f_regression at ...>)), ('svc', SVC(kernel='linear', C=0.1, probability=False, degree=3, coef0=0.0, tol=0.001,
-          cache_size=100.0, shrinking=True, gamma=0.0))])
+          shrinking=True, gamma=0.0))])
 
         >>> prediction = anova_svm.predict(X)
         >>> score = anova_svm.score(X)
     """
 
-    #---------------------------------------------------------------------------
+    #--------------------------------------------------------------------------
     # BaseEstimator interface
-    #---------------------------------------------------------------------------
+    #--------------------------------------------------------------------------
 
     def __init__(self, steps):
         """
@@ -122,10 +123,9 @@ class Pipeline(BaseEstimator):
                     out['%s__%s' % (name, key)] = value
             return out
 
-    #---------------------------------------------------------------------------
+    #--------------------------------------------------------------------------
     # Estimator interface
-    #---------------------------------------------------------------------------
-
+    #--------------------------------------------------------------------------
 
     def _pre_transform(self, X, y=None, **params):
         self._set_params(**params)
@@ -170,9 +170,16 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].transform(Xt)
 
+    def inverse_transform(self, X):
+        if X.ndim == 1:
+            X = X[None, :]
+        Xt = X
+        for name, step in self.steps[:-1][::-1]:
+            Xt = step.inverse_transform(Xt)
+        return Xt
+
     def score(self, X, y=None):
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
-

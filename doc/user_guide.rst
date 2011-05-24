@@ -8,7 +8,7 @@ User guide: contents
     header, as all the content goes in contens.rst, to enable using the
     toctree directive on it.
 
-.. include:: bigger_toc_css.rst
+.. include:: includes/bigger_toc_css.rst
 
 .. include:: contents.rst
 

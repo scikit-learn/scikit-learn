@@ -20,11 +20,18 @@ sys.path.insert(0, os.path.abspath('sphinxext'))
 
 # -- General configuration -----------------------------------------------------
 
+# Try to override the matplotlib configuration as early as possible
+try:
+    import gen_rst
+except:
+    pass
+
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+extensions = ['gen_rst',
+              'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.pngmath',
-              'gen_rst']
+              ]
 try:
     import numpy_ext.numpydoc
     extensions.append('numpy_ext.numpydoc')
@@ -34,7 +41,7 @@ except:
     # Older version of sphinx
     extensions.append('numpy_ext_old.numpydoc')
 
-autodoc_default_flags=['inherited-members']
+autodoc_default_flags = ['members', 'inherited-members']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
@@ -60,7 +67,7 @@ copyright = u'2010, scikits.learn developers (BSD License)'
 # built documents.
 #
 # The short X.Y version.
-version = '0.8'
+version = '0.9'
 # The full version, including alpha/beta/rc tags.
 import scikits.learn as skl
 release = skl.__version__
@@ -80,13 +87,13 @@ release = skl.__version__
 
 # List of directories, relative to source directory, that shouldn't be searched
 # for source files.
-exclude_trees = ['_build']
+exclude_trees = ['_build', 'templates', 'includes']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-#add_function_parentheses = True
+add_function_parentheses = False
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
@@ -136,7 +143,7 @@ html_favicon = 'logos/favicon.ico'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static', 'images']
+html_static_path = ['images']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -211,4 +218,6 @@ latex_preamble = """
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+trim_doctests_flags = True
 

@@ -99,7 +99,7 @@ class ElasticNet(LinearModel):
         alpha = self.alpha * self.rho * n_samples
         beta = self.alpha * (1.0 - self.rho) * n_samples
 
-        X = np.asfortranarray(X) # make data contiguous in memory
+        X = np.asfortranarray(X)  # make data contiguous in memory
 
         # precompute if n_samples > n_features
         if hasattr(precompute, '__array__'):
@@ -125,7 +125,7 @@ class ElasticNet(LinearModel):
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
-                          ' to increase the number of interations')
+                          ' to increase the number of iterations')
 
         # return self for chaining fit and predict calls
         return self
@@ -184,6 +184,7 @@ class Lasso(ElasticNet):
     def __init__(self, alpha=1.0, fit_intercept=True):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                                     fit_intercept=fit_intercept)
+
 
 ###############################################################################
 # Classes to store linear models along a regularization path
@@ -270,16 +271,16 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     See examples/plot_lasso_coordinate_descent_path.py for an example.
     """
     X, y, Xmean, ymean = LinearModel._center_data(X, y, fit_intercept)
-    X = np.asfortranarray(X) # make data contiguous in memory
+    X = np.asfortranarray(X)  # make data contiguous in memory
 
     n_samples = X.shape[0]
     if alphas is None:
         alpha_max = np.abs(np.dot(X.T, y)).max() / (n_samples * rho)
-        alphas = np.logspace(np.log10(alpha_max*eps), np.log10(alpha_max),
+        alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                              num=n_alphas)[::-1]
     else:
-        alphas = np.sort(alphas)[::-1] # make sure alphas are properly ordered
-    coef_ = None # init coef_
+        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
+    coef_ = None  # init coef_
     models = []
 
     if not 'precompute' in fit_params \

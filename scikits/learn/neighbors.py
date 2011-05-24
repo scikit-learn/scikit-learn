@@ -8,7 +8,7 @@
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .ball_tree import BallTree, knn_brute
+from .ball_tree import BallTree
 from .metrics import euclidean_distances
 
 
@@ -23,11 +23,10 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
     window_size : int, optional
         Window size passed to BallTree
 
-    algorithm : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
-        Algorithm used to compute the nearest neighbors. 'ball_tree'
-        will construct a BallTree, 'brute' and 'brute_inplace' will
-        perform brute-force search.'auto' will guess the most
-        appropriate based on current dataset.
+    algorithm : {'auto', 'ball_tree', 'brute'}, optional
+       Algorithm used to compute the nearest neighbors. 'ball_tree' will
+       construct a BallTree while 'brute'will perform brute-force
+       search. 'auto' will guess the most appropriate based on current dataset.
 
     Examples
     --------
@@ -120,28 +119,25 @@ class NeighborsClassifier(BaseEstimator, ClassifierMixin):
         >>> neigh = NeighborsClassifier(n_neighbors=1)
         >>> neigh.fit(samples, labels)
         NeighborsClassifier(n_neighbors=1, window_size=1, algorithm='auto')
-        >>> print neigh.kneighbors([1., 1., 1.])
-        (array([[ 0.5]]), array([[2]]))
+        >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
+        (array([[ 0.5]]), array([[2]]...))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
         element is at distance 0.5 and is the third element of samples
         (indexes start at 0). You can also query for multiple points:
 
         >>> X = [[0., 1., 0.], [1., 0., 1.]]
-        >>> neigh.kneighbors(X, return_distance=False)
+        >>> neigh.kneighbors(X, return_distance=False) # doctest: +ELLIPSIS
         array([[1],
-               [2]])
+               [2]]...)
 
         """
         self._set_params(**params)
         X = np.atleast_2d(X)
         if self.ball_tree is None:
-            if self.algorithm == 'brute_inplace' and not return_distance:
-                return knn_brute(self._fit_X, X, self.n_neighbors)
-            else:
-                dist = euclidean_distances(X, self._fit_X, squared=True)
-                # XXX: should be implemented with a partial sort
-                neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
+            dist = euclidean_distances(X, self._fit_X, squared=True)
+            # XXX: should be implemented with a partial sort
+            neigh_ind = dist.argsort(axis=1)[:, :self.n_neighbors]
             if not return_distance:
                 return neigh_ind
             else:
@@ -205,11 +201,11 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
     mode : {'mean', 'barycenter'}, optional
         Weights to apply to labels.
 
-    algorithm : {'auto', 'ball_tree', 'brute', 'brute_inplace'}, optional
-        Algorithm used to compute the nearest neighbors. 'ball_tree'
-        will construct a BallTree, 'brute' and 'brute_inplace' will
-        perform brute-force search.'auto' will guess the most
-        appropriate based on current dataset.
+    algorithm : {'auto', 'ball_tree', 'brute'}, optional
+        Algorithm used to compute the nearest neighbors. 'ball_tree' will
+        construct a BallTree, while 'brute' will perform brute-force
+        search. 'auto' will guess the most appropriate based on current
+        dataset.
 
     Examples
     --------
@@ -279,7 +275,7 @@ class NeighborsRegressor(NeighborsClassifier, RegressorMixin):
 ###############################################################################
 # Utils k-NN based Functions
 
-def barycenter_weights(X, Z, cond=None):
+def barycenter_weights(X, Z, reg=1e-3):
     """Compute barycenter weights of X from Y along the first axis
 
     We estimate the weights to assign to each point in Y[i] to recover
@@ -291,10 +287,9 @@ def barycenter_weights(X, Z, cond=None):
 
     Z : array-like, shape (n_samples, n_neighbors, n_dim)
 
-    cond: float, optional
-        Cutoff for small singular values; used to determine effective
-        rank of Z[i]. Singular values smaller than ``rcond *
-        largest_singular_value`` are considered zero.
+    reg: float, optional
+        amount of regularization to add for the problem to be
+        well-posed in the case of n_neighbors > n_dim
 
     Returns
     -------
@@ -309,47 +304,54 @@ def barycenter_weights(X, Z, cond=None):
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
     if X.dtype.kind == 'i':
         X = X.astype(np.float)
+    if Z.dtype.kind == 'i':
+        Z = Z.astype(np.float)
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
     v = np.ones(n_neighbors, dtype=X.dtype)
-    rank_update, = linalg.get_blas_funcs(('ger',), (X,))
 
-    # constrained least squares
-    v[0] -= np.sqrt(n_neighbors)
-    B[:, 0] = 1. / np.sqrt(n_neighbors)
-    if n_neighbors <= 1:
-        return B
-    alpha = - 1. / (n_neighbors - np.sqrt(n_neighbors))
+    # this might raise a LinalgError if G is singular and has trace
+    # zero
     for i, A in enumerate(Z.transpose(0, 2, 1)):
-        C = rank_update(alpha, np.dot(A, v), v, a=A)
-        B[i, 1:] = linalg.lstsq(
-            C[:, 1:], X[i] - C[:, 0] / np.sqrt(n_neighbors), cond=cond,
-            overwrite_a=True, overwrite_b=True)[0].ravel()
-        B[i] = rank_update(alpha, v, np.dot(v.T, B[i]), a=B[i])
-
+        C = A.T - X[i]  # broadcasting
+        G = np.dot(C, C.T)
+        trace = np.trace(G)
+        if trace > 0:
+            R = reg * trace
+        else:
+            R = reg
+        G.flat[::Z.shape[1] + 1] += R
+        w = linalg.solve(G, v, sym_pos=True)
+        B[i, :] = w / np.sum(w)
     return B
 
 
-def kneighbors_graph(X, n_neighbors, mode='connectivity'):
+def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
     """Computes the (weighted) graph of k-Neighbors for points in X
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Coordinates of samples. One sample per row.
+    X : array-like or BallTree, shape = [n_samples, n_features]
+        Sample data, in the form of a numpy array or a precomputed
+        :class:`BallTree`.
 
     n_neighbors : int
         Number of neighbors for each sample.
 
-    mode : {'connectivity', 'distance', 'barycenter'}
+    mode : {'connectivity', 'distance', 'barycenter'}, optional
         Type of returned matrix: 'connectivity' will return the
         connectivity matrix with ones and zeros, in 'distance' the
         edges are euclidian distance between points. In 'barycenter'
-        they are barycenter weights estimated by solving a linear
-        system for each point.
+        they are the weights that best reconstruncts the point from
+        its nearest neighbors.
+
+    reg : float, optional
+        Amount of regularization when solving the least-squares
+        problem. Only relevant if mode='barycenter'. If None, use the
+        default.
 
     Returns
     -------
-    A : CSR sparse matrix, shape = [n_samples, n_samples]
+    A : sparse matrix in CSR format, shape = [n_samples, n_samples]
         A[i,j] is assigned the weight of edge that connects i to j.
 
     Examples
@@ -363,9 +365,15 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
             [ 1.,  0.,  1.]])
     """
     from scipy import sparse
-    X = np.asanyarray(X)
+
+    if isinstance(X, BallTree):
+        ball_tree = X
+        X = ball_tree.data
+    else:
+        X = np.asanyarray(X)
+        ball_tree = BallTree(X)
+
     n_samples = X.shape[0]
-    ball_tree = BallTree(X)
     n_nonzero = n_neighbors * n_samples
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
@@ -383,7 +391,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
         ind = ball_tree.query(
             X, k=n_neighbors + 1, return_distance=False)
         A_ind = ind[:, 1:]
-        A_data = barycenter_weights(X, X[A_ind])
+        A_data = barycenter_weights(X, X[A_ind], reg=reg)
 
     else:
         raise ValueError(

@@ -1,7 +1,7 @@
 """
 Sparse Logistic Regression module
 
-This module has the same API as scikits.learn.glm.logistic, but is
+This module has the same API as scikits.learn.linear_model.logistic, but is
 designed to handle efficiently data in sparse matrix format.
 """
 

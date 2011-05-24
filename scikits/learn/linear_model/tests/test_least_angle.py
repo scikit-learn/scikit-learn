@@ -38,7 +38,7 @@ def test_simple_precomputed():
     G = np.dot (diabetes.data.T, diabetes.data)
     alphas_, active, coef_path_ = linear_model.lars_path(
         diabetes.data, diabetes.target, Gram=G, method="lar")
-    
+
     for (i, coef_) in enumerate(coef_path_.T):
         res =  y - np.dot(X, coef_)
         cov = np.dot(X.T, res)
@@ -127,8 +127,28 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         error = np.linalg.norm(lasso_path[:,-1] - lasso_cd.coef_)
         assert error < 0.01
 
+def test_lars_add_features(verbose=False):
+    """
+    assure that at least some features get added if necessary
+
+    test for 6d2b4c
+    """
+    linear_model.LARS(verbose=verbose, fit_intercept=True).fit(
+        np.array([[ 0.02863763,  0.88144085, -0.02052429, -0.10648066, -0.06396584, -0.18338974],
+                  [ 0.02038287,  0.51463335, -0.31734681, -0.12830467,  0.16870657, 0.02169503],
+                  [ 0.14411476,  0.37666599,  0.2764702 ,  0.0723859 , -0.03812009, 0.03663579],
+                  [-0.29411448,  0.33321005,  0.09429278, -0.10635334,  0.02827505, -0.07307312],
+                  [-0.40929514,  0.57692643, -0.12559217,  0.19001991,  0.07381565, -0.0072319 ],
+                  [-0.01763028,  1.        ,  0.04437242,  0.11870747,  0.1235008 , -0.27375014],
+                  [-0.06482493,  0.1233536 ,  0.15686536,  0.02059646, -0.31723546, 0.42050836],
+                  [-0.18806577,  0.01970053,  0.02258482, -0.03216307,  0.17196751, 0.34123213],
+                  [ 0.11277307,  0.15590351,  0.11231502,  0.22009306,  0.1811108 , 0.51456405],
+                  [ 0.03228484, -0.12317732, -0.34223564,  0.08323492, -0.15770904, 0.39392212],
+                  [-0.00586796,  0.04902901,  0.18020746,  0.04370165, -0.06686751, 0.50099547],
+                  [-0.12951744,  0.21978613, -0.04762174, -0.27227304, -0.02722684, 0.57449581]]),
+        np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]))
 
 if __name__ == '__main__':
     import nose
     nose.runmodule()
-    
+

@@ -9,6 +9,7 @@ Base IO code for all datasets
 
 import csv
 import shutil
+import textwrap
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -20,6 +21,8 @@ from os import makedirs
 
 import numpy as np
 
+
+###############################################################################
 
 class Bunch(dict):
     """ Container object for datasets: dictionnary-like object that
@@ -62,7 +65,7 @@ def clear_data_home(data_home=None):
 
 
 def load_filenames(container_path, description=None, categories=None,
-                   shuffle=True, rng=42):
+                   shuffle=True, random_state=42):
     """Load filenames with categories as subfolder names
 
     Individual samples are assumed to be files stored a two levels folder
@@ -112,7 +115,7 @@ def load_filenames(container_path, description=None, categories=None,
       make the assumption that the samples are independent and identically
       distributed (i.i.d.) such as stochastic gradient descent for instance.
 
-    rng : a numpy random number generator or a seed integer, 42 by default
+    random_state : a numpy random number generator or a seed integer, 42 by default
       used to shuffle the dataset
 
     Returns
@@ -149,10 +152,10 @@ def load_filenames(container_path, description=None, categories=None,
     target = np.array(target)
 
     if shuffle:
-        if isinstance(rng, int):
-            rng = np.random.RandomState(rng)
+        if isinstance(random_state, int):
+            random_state = np.random.RandomState(random_state)
         indices = np.arange(filenames.shape[0])
-        rng.shuffle(indices)
+        random_state.shuffle(indices)
         filenames = filenames[indices]
         target = target[indices]
 
@@ -205,8 +208,13 @@ def load_iris():
                  DESCR=fdescr.read())
 
 
-def load_digits():
+def load_digits(n_class=10):
     """load the digits dataset and returns it.
+
+    Parameters
+    ----------
+    n_class : integer, between 0 and 10
+        Number of classes to return, defaults to 10
 
     Returns
     -------
@@ -237,6 +245,12 @@ def load_digits():
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
+
+    if n_class < 10:
+        idx = target < n_class
+        flat_data, target = flat_data[idx], target[idx]
+        images = images[idx]
+
     return Bunch(data=flat_data, target=target.astype(np.int),
                  target_names=np.arange(10),
                  images=images,
@@ -244,6 +258,17 @@ def load_digits():
 
 
 def load_diabetes():
+    """ Load the diabetes dataset and returns it.
+
+    Returns
+    -------
+    data : Bunch
+        Dictionnary-like object, the interesting attributes are:
+        'data', the data to learn and 'target', the labels for each
+        sample.
+
+
+    """
     base_dir = join(dirname(__file__), 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
@@ -251,6 +276,17 @@ def load_diabetes():
 
 
 def load_linnerud():
+    """ Load the linnerud dataset and returns it.
+
+    Returns
+    -------
+    data : Bunch
+        Dictionnary-like object, the interesting attributes are:
+        'data_exercise' and 'data_physiological', the two multivariate
+        datasets, as well as 'header_exercise' and
+        'header_physiological', the corresponding headers.
+
+    """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
     data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
@@ -268,3 +304,29 @@ def load_linnerud():
                  data_physiological=data_physiological,
                  header_physiological=header_physiological,
                  DESCR=fdescr.read())
+
+
+###############################################################################
+# Add the description in the docstring
+
+def _add_notes(function, filename):
+    """Add a notes section to the docstring of a function reading it from a
+    file"""
+    fdescr = open(join(dirname(__file__), 'descr', filename), 'r')
+    # Dedent the docstring
+    doc = function.__doc__.split('\n')
+    doc = '%s\n%s' % (textwrap.dedent(doc[0]),
+                      textwrap.dedent('\n'.join(doc[1:])))
+    # Remove the first line of the description, which contains the
+    # dataset's name
+    descr = '\n'.join(fdescr.read().split('\n')[1:])
+    function.__doc__ = doc + descr
+
+
+for function, filename in ((load_iris, 'iris.rst'),
+                           (load_linnerud, 'linnerud.rst'),
+                           (load_digits, 'digits.rst')):
+    #try:
+        _add_notes(function, filename)
+    #except:
+    #    pass

@@ -20,9 +20,9 @@ People
 ------
 
 
-  * David Cournapeau, 2007-2009
+  * David Cournapeau
 
-  * Fred Mailhot, 2008, Artificial Neural Networks (ann) module.
+  * Fred Mailhot
 
   * David Cooke
 
@@ -32,64 +32,62 @@ People
 
   * Ed Schofield
 
-  * Eric Jones, 2008, Genetic Algorithms (ga) module. No longer part
-    of scikits.learn.
+  * Eric Jones
 
   * Jarrod Millman
 
-  * `Matthieu Brucher <http://matt.eifelle.com/>`_ contributed the
-    manifold module. It is not currently part of the scikit, althouth
-    it is planned to be newly included in the upcoming 0.7 release.
+  * `Matthieu Brucher <http://matt.eifelle.com/>`_
 
   * Travis Oliphant
 
   * Pearu Peterson
 
-  * `Fabian Pedregosa <http://fseoane.net/blog/>`_ joined the project
-    in January 2010 and is the current maintainer.
+  * `Fabian Pedregosa <http://fseoane.net/blog/>`_ (maintainer)
 
   * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
 
-  * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_ 
-    contributed the BallTree module in February 2010.
+  * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_
 
   * `Alexandre Gramfort
     <http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html>`_
 
   * `Olivier Grisel <http://twitter.com/ogrisel>`_
 
-  * Vincent Michel.
+  * Bertrand Thirion
+
+  * Vincent Michel
 
   * Chris Filo Gorgolewski
 
-  * `Angel Soler Gollonet <http://webylimonada.com>`_ contributed the
-    official logo and web page layout.
+  * `Angel Soler Gollonet <http://webylimonada.com>`_
 
-  * `Yaroslav Halchenko <http://www.onerussian.com/>`_ is the
-    maintainer for Debian OS and has contributed several fixes.
+  * `Yaroslav Halchenko <http://www.onerussian.com/>`_
 
-  * Ron Weiss joined the project in July 2010 and contributed both the
-    mixture and hmm module.
+  * Ron Weiss
 
   * `Virgile Fritsch
-    <http://parietal.saclay.inria.fr/Members/virgile-fritsch>`_. Bug
-    fixes.
+    <http://parietal.saclay.inria.fr/Members/virgile-fritsch>`_
 
-  * `Mathieu Blondel <http://mblondel.org/journal>`_ joined the
-    project in September 2010 and has worked since on the sparse
-    matrix support, Ridge generalized crossval, text feature
-    extraction and general bug fixes.
+  * `Mathieu Blondel <http://mblondel.org>`_
 
   * `Peter Prettenhofer
-    <http://sites.google.com/site/peterprettenhofer/>`_ joined the
-    project in October 2010 and contributed the :ref:`sgd` module as
-    well as several examples and fixes.
+    <http://sites.google.com/site/peterprettenhofer/>`_
 
-  * Vincent Dubourg joined the project in November 2010 and
-    contributed the :ref:`gaussian_process` module.
+  * Vincent Dubourg
 
-  * `Alexandre Passos <http://atpassos.posterous.com>`_ joined the
-    project in November 2010 contributed the fast SVD variant.
+  * `Alexandre Passos <http://atpassos.posterous.com>`_
+
+  * `Vlad Niculae <http://vene.ro>`_
+
+  * Edouard Duchesnay
+
+  * Thouis (Ray) Jones
+
+  * Lars Buitinck
+
+  * Paolo Losi
+
+  * Nelle Varoquaux
 
 
 If I forgot anyone, do not hesitate to send me an email to

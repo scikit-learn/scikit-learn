@@ -8,6 +8,8 @@ Generate samples of synthetic data sets.
 import numpy as np
 import numpy.random as nr
 
+from ..utils import check_random_state
+
 
 def test_dataset_classif(n_samples=100, n_features=100, param=[1, 1],
                          n_informative=0, k=0, seed=None):
@@ -344,3 +346,115 @@ def make_regression_dataset(n_train_samples=100, n_test_samples=100,
         Y_test += random.normal(scale=noise, size=Y_test.shape)
 
     return X_train, Y_train, X_test, Y_test, ground_truth
+
+
+def swiss_roll(n_samples, noise=0.0):
+    """Generate swiss roll dataset
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of points on the swiss roll
+
+    noise : float (optional)
+        Noise level. By default no noise.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 3]
+        The points.
+
+    t : array of shape [n_samples]
+        The univariate possition of the sample according to the main dimension
+        of the points in the manifold.
+
+    Notes
+    -----
+    Original code from:
+    http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
+    """
+    np.random.seed(0)
+    t = 1.5 * np.pi * (1 + 2 * np.random.rand(1, n_samples))
+    h = 21 * np.random.rand(1, n_samples)
+    X = np.concatenate((t * np.cos(t), h, t * np.sin(t))) \
+           + noise * np.random.randn(3, n_samples)
+    X = np.transpose(X)
+    t = np.squeeze(t)
+    return X, t
+
+
+def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
+               center_box=(-10.0, 10.0), shuffle=True, random_state=0):
+    """Generate isotropic Gaussian blobs for clustering
+
+    Parameters
+    ----------
+    n_samples : int (default 100)
+        Total number of points equally divided among clusters
+
+    n_features : int (default 2)
+        Number of dimensions for each sample
+
+    centers : int or array of shape [n_centers, n_features] (default 3)
+        Number of centers to generate or fixed center location
+
+    cluster_std: float or sequace of floats
+        Standard deviation of the clusters
+
+    center_box: pair of floats (min, max)
+        Bounding box for each cluster center when randomly generated
+        positions
+
+    shuffle: boolean (default True)
+        Shuffle the order of the sample
+
+    random_state: int or RandomState instance (default 0)
+        Seed used by the pseudo random number generator
+
+    Return
+    ------
+    samples : array of shape [n_samples, n_features]
+        The generated samples
+
+    labels : array of shape [n_samples]
+        The integer labels for class membership of each sample
+
+    Example
+    -------
+
+      >>> samples, labels = make_blobs(n_samples=10, centers=3, n_features=2)
+      >>> samples.shape
+      (10, 2)
+      >>> labels
+      array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
+
+    """
+    random_state = check_random_state(random_state)
+
+    if isinstance(centers, int):
+        centers = random_state.uniform(center_box[0], center_box[1],
+                                       size=(centers, n_features))
+    else:
+        centers = np.atleast_2d(centers)
+        n_features = centers.shape[1]
+
+    blobs = []
+    labels = []
+
+    n_centers = centers.shape[0]
+    n_samples_per_center = [n_samples / n_centers] * n_centers
+    n_samples_per_center[0] += n_samples % n_centers
+
+    for i, n in enumerate(n_samples_per_center):
+        blobs.append(centers[i] + random_state.normal(scale=cluster_std,
+                                                      size=(n, n_features)))
+        labels += [i] * n
+
+    samples = np.concatenate(blobs)
+    labels = np.array(labels)
+    if shuffle:
+        indices = np.arange(samples.shape[0])
+        random_state.shuffle(indices)
+        samples = samples[indices]
+        labels = labels[indices]
+    return samples, labels

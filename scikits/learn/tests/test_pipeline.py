@@ -11,8 +11,9 @@ from ..pipeline import Pipeline
 from ..svm import SVC
 from ..linear_model import LogisticRegression
 from ..feature_selection import SelectKBest, f_classif
-from ..pca import PCA, RandomizedPCA
+from ..decomposition.pca import PCA, RandomizedPCA
 from ..datasets import load_iris
+from ..preprocessing import Scaler
 
 
 class IncorrectT(BaseEstimator):
@@ -80,7 +81,7 @@ def test_pipeline_init():
 
 
 def test_pipeline_methods_anova():
-    """ Test the various methods of the pipeline.
+    """ Test the various methods of the pipeline (anova).
     """
     iris = load_iris()
     X = iris.data
@@ -97,7 +98,7 @@ def test_pipeline_methods_anova():
 
 
 def test_pipeline_methods_pca_svm():
-    """Test the various methods of the pipeline."""
+    """Test the various methods of the pipeline (pca + svm)."""
     iris = load_iris()
     X = iris.data
     y = iris.target
@@ -113,7 +114,7 @@ def test_pipeline_methods_pca_svm():
 
 
 def test_pipeline_methods_randomized_pca_svm():
-    """Test the various methods of the pipeline."""
+    """Test the various methods of the pipeline (randomized pca + svm)."""
     iris = load_iris()
     X = iris.data
     y = iris.target
@@ -121,6 +122,21 @@ def test_pipeline_methods_randomized_pca_svm():
     clf = SVC(probability=True)
     pca = RandomizedPCA(n_components=2, whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.predict_log_proba(X)
+    pipe.score(X, y)
+
+def test_pipeline_methods_scaler_svm():
+    """Test the various methods of the pipeline (scaler + svm)."""
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    # Test with Scaler + SVC
+    clf = SVC(probability=True)
+    scaler = Scaler()
+    pipe = Pipeline([('scaler', scaler), ('svc', clf)])
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)

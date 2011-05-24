@@ -33,7 +33,7 @@ low-memory settings.  Finally, ``'auto'`` is a simple heuristic that
 will guess the best approach based on the current dataset.
 
 
-.. figure:: ../auto_examples/images/plot_neighbors.png
+.. figure:: ../auto_examples/images/plot_neighbors_1.png
    :target: ../auto_examples/plot_neighbors.html
    :align: center
    :scale: 75
@@ -56,7 +56,7 @@ that best reconstruct the point from its neighbors while ``mean`` will
 apply constant weights to each point. This plot shows the behavior of
 both classifier for a simple regression task.
 
-.. figure:: ../auto_examples/images/plot_neighbors_regression.png
+.. figure:: ../auto_examples/images/plot_neighbors_regression_1.png
    :target: ../auto_examples/plot_neighbors_regression.html
    :align: center
    :scale: 75
@@ -71,33 +71,61 @@ Efficient implementation: the ball tree
 ==========================================
 
 Behind the scenes, nearest neighbor search is done by the object
-:class:`BallTree`. This algorithm makes it possible to rapidly look up
-the nearest neighbors in low-dimensional spaces.
+:class:`BallTree`. This algorithm makes it possible to rapidly find
+the nearest neighbors of a point in N-dimensional spaces.
 
-This class provides an interface to an optimized BallTree
-implementation to rapidly look up the nearest neighbors of any point.
-Ball Trees are particularly useful for low-dimensional data and scales
-better than traditional tree searches (e.g. KD-Trees) as the number of
-dimensions grow. However, on high-dimensional spaces (dim > 50), brute
-force will eventually take on and become more efficient on such spaces.
+The optimal neighbor search algorithm for any problem
+depends on a few factors: the number of candidate points (N), 
+the dimensionality of the parameter space (D),
+the structure of the data, and the number of neighbors desired (K).
+For small N (less than 500 or so), a brute force search is 
+generally adequate.  As N increases, however, the computation time 
+for a neighbor search grows as O[N].  Various tree methods have
+been developed to reduce this to O[log(N)], the simplest of which is the
+KD tree.  A KD tree gains this speedup by recursively partitioning the data,
+each time along a single dimension, so that clusters of candidate
+neighbors can be ruled-out via a single distance calculation.  Unfortunately,
+as D grows large compared to log(N), KD trees become very inefficient:
+this is one manifestation of the so-called "curse of dimensionality".
 
-Compared to a KDTree, the cost is a slightly longer construction time,
-though for repeated queries, this added construction time quickly
-becomes insignificant. A Ball Tree reduces the number of candidate
-points for a neighbor search through use of the triangle inequality:
+Ball trees were developed as an alternative for high-dimensional neighbor
+searches.  Compared to a KDTree, the cost is a slightly longer construction 
+time, though for repeated queries, this added construction time quickly
+becomes insignificant. The advantage of the Ball Tree is that it is 
+efficient even as the dimensionality D becomes large.
+
+A ball tree recursively divides the data into
+nodes defined by a centroid C and radius R, such that each
+point in the node lies within the hyper-sphere of radius R centered
+at C.  The number of candidate points for a neighbor search 
+is reduced through use of the triangle inequality:
 
 .. math::   |x+y| \leq |x| + |y|
 
-Each node of the :class:`BallTree` defines a centroid, C, and a radius r such
-that each point in the node lies within the hyper-sphere of radius r,
-centered at C.  With this setup, a single distance calculation between
-a test point and the centroid is sufficient to determine a lower bound
-on the distance to all points within the node.  Carefully taking
-advantage of this property leads to determining neighbors in O[log(N)]
-time, as opposed to O[N] time for a brute-force search.
+With this setup, a single distance calculation between a test point and
+the centroid is sufficient to determine a lower bound on the distance
+to all points within the node.
+Because of the spherical geometry of the ball tree nodes, its performance
+does not degrade at high dimensions, as long as the distribution of
+points has a lower-dimensional or sparse structure.
+For dense distributions of points that uniformly fill the 
+parameter space, the performance gain of a ball tree will be reduced.
+Because datasets of interest are usually structured, 
+the ball tree is a better choice in practice.
 
-A pure C implementation of brute-force search is also provided in
-function :func:`knn_brute`.
+One final performance note is the effect of the 
+number of neighbors K.  The performance gain over brute force
+for any tree algorithm will degrade as K increases.  Depending on the
+size, dimensionality, and structure of the dataset, a search for 
+very large K may be performed more efficiently with a brute force algorithm
+than with a tree algorithm.
+
+A ball tree can be constructed in a number of ways: the optimal method
+depends on the size and structure of the data.  Currently, the
+:class:`BallTree` implements only the KD construction algorithm
+(see reference below).
+This is the simplest and fastest construction algorithm, but is
+sub-optimal for some datasets.
 
 .. topic:: References:
 

@@ -85,7 +85,6 @@ def test_error():
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
-    assert_raises(ValueError, svm.SVC, X, Y2)
 
     clf = svm.sparse.SVC()
     clf.fit(X, Y)
@@ -163,6 +162,38 @@ def test_sparse_liblinear_intercept_handling():
     Test that sparse liblinear honours intercept_scaling param
     """
     test_svm.test_dense_liblinear_intercept_handling(svm.sparse.LinearSVC)
+
+
+def test_sparse_realdata():
+    """
+    Test on a subset from the 20newsgroups dataset.
+
+    This catchs some bugs if input is not correctly converted into
+    sparse format or weights are not correctly initialized.
+    """
+
+    data = np.array([ 0.03771744,  0.1003567,  0.01174647,  0.027069  ])
+    indices = np.array([6, 5, 35, 31])
+    indptr = np.array(
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4])
+    X = scipy.sparse.csr_matrix((data, indices, indptr))
+    y = np.array(
+        [ 1.,  0.,  2.,  2.,  1.,  1.,  1.,  2.,  2.,  0.,  1.,  2.,  2.,
+        0.,  2.,  0.,  3.,  0.,  3.,  0.,  1.,  1.,  3.,  2.,  3.,  2.,
+        0.,  3.,  1.,  0.,  2.,  1.,  2.,  0.,  1.,  0.,  2.,  3.,  1.,
+        3.,  0.,  1.,  0.,  0.,  2.,  0.,  1.,  2.,  2.,  2.,  3.,  2.,
+        0.,  3.,  2.,  1.,  2.,  3.,  2.,  2.,  0.,  1.,  0.,  1.,  2.,
+        3.,  0.,  0.,  2.,  2.,  1.,  3.,  1.,  1.,  0.,  1.,  2.,  1.,
+        1.,  3.])
+
+    clf = svm.SVC(kernel='linear').fit(X.todense(), y)
+    sp_clf = svm.sparse.SVC(kernel='linear').fit(X, y)
+
+    assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
+    assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
 
 
 if __name__ == '__main__':

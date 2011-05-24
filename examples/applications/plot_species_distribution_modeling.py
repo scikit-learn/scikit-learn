@@ -40,6 +40,11 @@ from __future__ import division
 
 print __doc__
 
+import os
+from os.path import normpath, split, exists
+from glob import glob
+from time import time
+
 import pylab as pl
 import numpy as np
 
@@ -49,14 +54,11 @@ try:
 except ImportError:
     basemap = False
 
-from time import time
-from os.path import normpath, split, exists
-from glob import glob
 from scikits.learn import svm
 from scikits.learn.metrics import roc_curve, auc
 from scikits.learn.datasets.base import Bunch
 
-################################################################################
+###############################################################################
 # Download the data, if not already on disk
 samples_url = "http://www.cs.princeton.edu/~schapire/maxent/datasets/" \
               "samples.zip"
@@ -79,6 +81,9 @@ def download(url, archive_name):
         import zipfile
         print "Decompressiong the archive: " + archive_name
         zipfile.ZipFile(archive_name).extractall()
+        # Remove the archive: we don't need it as we have expanded it
+        # to directory
+        os.unlink(archive_name)
         print
 
 
@@ -87,10 +92,8 @@ download(coverage_url, coverage_archive_name)
 
 t0 = time()
 
-
-
-################################################################################
-# Preprocess data
+###############################################################################
+# Define constants (coordinates, grid cells)
 
 species = ["bradypus_variegatus_0", "microryzomys_minutus_0"]
 species_map = dict([(s, i) for i, s in enumerate(species)])
@@ -98,11 +101,14 @@ species_map = dict([(s, i) for i, s in enumerate(species)])
 # x,y coordinates of study area
 x_left_lower_corner = -94.8
 y_left_lower_corner = -56.05
+
+# number of cells along x axis
 n_cols = 1212
+# number of cells along y axis
 n_rows = 1592
 grid_size = 0.05  # ~5.5 km
 
-# x,y coordinates for each cell
+# x,y coordinates for corner cells
 xmin = x_left_lower_corner + grid_size
 xmax = xmin + (n_cols * grid_size)
 ymin = y_left_lower_corner + grid_size
@@ -113,17 +119,19 @@ xx = np.arange(xmin, xmax, grid_size)
 # y coordinates of the grid cells
 yy = np.arange(ymin, ymax, grid_size)
 
+# The grid in x,y coordinates
+X, Y = np.meshgrid(xx, yy[::-1])
+
 print "Data grid"
 print "---------"
 print "xmin, xmax:", xmin, xmax
 print "ymin, ymax:", ymin, ymax
 print "grid size:", grid_size
-print 
+print
 
-################################################################################
+
+###############################################################################
 # Load data
-
-print "loading data from disk..."
 def read_file(fname):
     """Read coverage grid data; returns array of
     shape [n_rows, n_cols]. """
@@ -135,6 +143,7 @@ def read_file(fname):
     f.close()
     return X.reshape((n_rows, n_cols))
 
+
 def load_dir(directory):
     """Loads each of the coverage grids and returns a
     tensor of shape [14, n_rows, n_cols].
@@ -143,25 +152,11 @@ def load_dir(directory):
     for fpath in glob("%s/*.asc" % normpath(directory)):
         fname = split(fpath)[-1]
         fname = fname[:fname.index(".")]
-        X = read_file(fpath)  #np.loadtxt(fpath, skiprows=6, dtype=np.float32)
+        X = read_file(fpath)
         data.append(X)
     return np.array(data, dtype=np.float32)
 
-def get_coverages(points, coverages, xx, yy):
-    """
-    Returns
-    -------
-    array : shape = [n_points, 14]
-    """
-    rows = []
-    cols = []
-    for n in range(points.shape[0]):
-        i = np.searchsorted(xx, points[n, 0])
-        j = np.searchsorted(yy, points[n, 1])
-        rows.append(-j)
-        cols.append(i)
-    return coverages[:, rows, cols].T
-
+print "loading data from disk..."
 species2id = lambda s: species_map.get(s, -1)
 train = np.loadtxt('samples/alltrain.csv', converters={0: species2id},
                    skiprows=1, delimiter=",")
@@ -172,44 +167,66 @@ coverage = load_dir("coverages")
 
 # Per species data
 bv = Bunch(name=" ".join(species[0].split("_")[:2]),
-           train=train[train[:,0] == 0, 1:],
-           test=test[test[:,0] == 0, 1:])
+           train=train[train[:, 0] == 0, 1:],
+           test=test[test[:, 0] == 0, 1:])
 mm = Bunch(name=" ".join(species[1].split("_")[:2]),
-           train=train[train[:,0] == 1, 1:],
-           test=test[test[:,0] == 1, 1:])
+           train=train[train[:, 0] == 1, 1:],
+           test=test[test[:, 0] == 1, 1:])
 
-# Get features (=coverages)
+
+def get_coverages(points, coverages, xx, yy):
+    """Get coverages (aka features) for each point.
+    Returns
+    -------
+    array : shape = [points.shape[0], coverages.shape[0]]
+        The feature vectors (coverages) for each data point.
+    """
+    rows = []
+    cols = []
+    for n in range(points.shape[0]):
+        i = np.searchsorted(xx, points[n, 0])
+        j = np.searchsorted(yy, points[n, 1])
+        rows.append(-j)
+        cols.append(i)
+    return coverages[:, rows, cols].T
+
+# Get feature vectors (=coverages)
 bv.train_cover = get_coverages(bv.train, coverage, xx, yy)
 bv.test_cover = get_coverages(bv.test, coverage, xx, yy)
 mm.train_cover = get_coverages(mm.train, coverage, xx, yy)
 mm.test_cover = get_coverages(mm.test, coverage, xx, yy)
-
-
-def predict(clf, mean, std):
-    """Predict the density of the land grid cells
-    under the model `clf`.
-
-    Returns
-    -------
-    array : shape [n_rows, n_cols]
-    """
-    Z = np.ones((n_rows, n_cols), dtype=np.float64)
-    # the land points
-    idx = np.where(coverage[2] > -9999)
-    X = coverage[:, idx[0], idx[1]].T
-    pred = clf.decision_function((X-mean)/std)[:,0]
-    Z *= pred.min()
-    Z[idx[0], idx[1]] = pred
-    return Z
 
 # background points (grid coordinates) for evaluation
 np.random.seed(13)
 background_points = np.c_[np.random.randint(low=0, high=n_rows, size=10000),
                           np.random.randint(low=0, high=n_cols, size=10000)].T
 
-# The grid in x,y coordinates
-X, Y = np.meshgrid(xx, yy[::-1])
-#basemap = False
+
+###############################################################################
+# Helper functions
+
+
+def predict(clf, mean, std):
+    """Predict the density for each cell under model `clf`.
+    Only evaluates `clf` on land grid cells.
+    Note: Sea grid cells have coverage[2] equals -9999.
+
+    Returns
+    -------
+    array : shape [n_rows, n_cols]
+        A grid of same shape as X and Y which gives the density.
+    """
+    Z = np.ones((n_rows, n_cols), dtype=np.float64)
+    # the land points
+    idx = np.where(coverage[2] > -9999)
+    X = coverage[:, idx[0], idx[1]].T
+    pred = clf.decision_function((X - mean) / std)[:, 0]
+    Z *= pred.min()
+    Z[idx[0], idx[1]] = pred
+    return Z
+
+###############################################################################
+# Fit, predict, and plot for each species.
 for i, species in enumerate([bv, mm]):
     print "_" * 80
     print "Modeling distribution of species '%s'" % species.name
@@ -237,7 +254,7 @@ for i, species in enumerate([bv, mm]):
         #m.drawrivers()
     else:
         print "plot coastlines from coverage"
-        CS = pl.contour(X, Y, coverage[2,:,:], levels=[-9999], colors="k",
+        CS = pl.contour(X, Y, coverage[2, :, :], levels=[-9999], colors="k",
                         linestyles="solid")
         pl.xticks([])
         pl.yticks([])
@@ -245,12 +262,12 @@ for i, species in enumerate([bv, mm]):
     print "predict species distribution"
     Z = predict(clf, mean, std)
     levels = np.linspace(Z.min(), Z.max(), 25)
-    Z[coverage[2,:,:] == -9999] = -9999
+    Z[coverage[2, :, :] == -9999] = -9999
     CS = pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
     pl.colorbar(format='%.2f')
-    pl.scatter(species.train[:, 0], species.train[:, 1], s=2**2, c='black',
+    pl.scatter(species.train[:, 0], species.train[:, 1], s=2 ** 2, c='black',
                marker='^', label='train')
-    pl.scatter(species.test[:, 0], species.test[:, 1], s=2**2, c='black',
+    pl.scatter(species.test[:, 0], species.test[:, 1], s=2 ** 2, c='black',
                marker='x', label='test')
     pl.legend()
     pl.title(species.name)
@@ -258,7 +275,7 @@ for i, species in enumerate([bv, mm]):
 
     # Compute AUC w.r.t. background points
     pred_background = Z[background_points[0], background_points[1]]
-    pred_test = clf.decision_function((species.test_cover-mean)/std)[:,0]
+    pred_test = clf.decision_function((species.test_cover - mean) / std)[:, 0]
     scores = np.r_[pred_test, pred_background]
     y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
     fpr, tpr, thresholds = roc_curve(y, scores)

@@ -55,13 +55,13 @@ class Scaler(BaseEstimator):
     def __init__(self, with_std=True):
         self.with_std = with_std
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self._set_params(**params)
         self.mean_, self.std_ = _mean_and_std(X, axis=0,
                                               with_std=self.with_std)
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
         # We are taking a view of the X array and modifying it
@@ -74,14 +74,14 @@ class Scaler(BaseEstimator):
 class Normalizer(BaseEstimator):
     """Normalize vectors such that they sum to 1"""
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
-        norms = X.sum(axis=1)[:, np.newaxis]
+        norms = np.abs(X).sum(axis=1)[:, np.newaxis]
         norms[norms == 0.0] = 1.0
         X /= norms
 
@@ -91,11 +91,11 @@ class Normalizer(BaseEstimator):
 class LengthNormalizer(BaseEstimator):
     """Normalize vectors to unit vectors"""
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
 
@@ -112,11 +112,11 @@ class Binarizer(BaseEstimator):
     def __init__(self, threshold=0.0):
         self.threshold = threshold
 
-    def fit(self, X, **params):
+    def fit(self, X, y=None, **params):
         self._set_params(**params)
         return self
 
-    def transform(self, X, copy=True):
+    def transform(self, X, y=None, copy=True):
         if copy:
             X = X.copy()
 
@@ -135,18 +135,20 @@ def _is_multilabel(y):
 class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion.
 
-    Several regression and binary classification algorithms are available in the
-    scikit. A simple way to extend these algorithms to the multi-class
-    classification case is to use the so-called one-vs-all scheme.
+    Several regression and binary classification algorithms are
+    available in the scikit. A simple way to extend these algorithms
+    to the multi-class classification case is to use the so-called
+    one-vs-all scheme.
 
-    At learning time, this simply consists in learning one regressor or binary
-    classifier per class. In doing so, one needs to convert multi-class labels
-    to binary labels (belong or does not belong to the class). LabelBinarizer
-    makes this process easy with the transform method.
+    At learning time, this simply consists in learning one regressor
+    or binary classifier per class. In doing so, one needs to convert
+    multi-class labels to binary labels (belong or does not belong
+    to the class). LabelBinarizer makes this process easy with the
+    transform method.
 
-    At prediction time, one assigns the class for which the corresponding model
-    gave the greatest confidence. LabelBinarizer makes this easy with the
-    inverse_transform method.
+    At prediction time, one assigns the class for which the corresponding
+    model gave the greatest confidence. LabelBinarizer makes this easy
+    with the inverse_transform method.
 
     Attributes
     ----------
@@ -157,7 +159,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     --------
     >>> from scikits.learn import preprocessing
     >>> clf = preprocessing.LabelBinarizer()
-    >>> clf.fit([1,2,6,4,2])
+    >>> clf.fit([1, 2, 6, 4, 2])
     LabelBinarizer()
     >>> clf.classes_
     array([1, 2, 4, 6])
@@ -165,9 +167,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([[ 1.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  1.]])
 
-    >>> clf.fit_transform([(1,2),(3,)])
+    >>> clf.fit_transform([(1, 2), (3,)])
     array([[ 1.,  1.,  0.],
            [ 0.,  0.,  1.]])
+    >>> clf.classes_
+    array([1, 2, 3])
     """
 
     def fit(self, y):
@@ -175,8 +179,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
-            Target values
+        y : numpy array of shape [n_samples] or sequence of sequences
+            Target values. In the multilabel case the nested sequences can
+            have variable lengths.
 
         Returns
         -------
@@ -184,7 +189,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """
         self.multilabel = _is_multilabel(y)
         if self.multilabel:
-            self.classes_ = np.unique(reduce(lambda a,b:a+b, y))
+            # concatenation of the sub-sequences
+            self.classes_ = np.unique(reduce(lambda a, b: a + b, y))
         else:
             self.classes_ = np.unique(y)
         return self
@@ -197,8 +203,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
-            Target values
+        y : numpy array of shape [n_samples] or sequence of sequences
+            Target values. In the multilabel case the nested sequences can
+            have variable lengths.
 
         Returns
         -------
@@ -212,10 +219,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         if self.multilabel:
             if not _is_multilabel(y):
-                raise ValueError, "y should be a list of label lists/tuples"
+                raise ValueError("y should be a list of label lists/tuples,"
+                                 "got %r" % (y,))
 
             # inverse map: label => column index
-            imap = dict((v,k) for k,v in enumerate(self.classes_))
+            imap = dict((v, k) for k, v in enumerate(self.classes_))
 
             for i, label_tuple in enumerate(y):
                 for label in label_tuple:
@@ -233,7 +241,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             return Y
 
         else:
-            raise ValueError
+            raise ValueError("Wrong number of classes: %d"
+                             % len(self.classes_))
 
     def inverse_transform(self, Y):
         """Transform binary labels back to multi-class labels
@@ -245,14 +254,17 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples] or sequence of sequences
+            Target values. In the multilabel case the nested sequences can
+            have variable lengths.
 
         Note
         -----
-        In the case when the binary labels are fractional (probabilistic),
-        inverse_transform chooses the class with the greatest value. Typically,
-        this allows to use the output of a linear model's decision_function
-        method directly as the input of inverse_transform.
+        In the case when the binary labels are fractional
+        (probabilistic), inverse_transform chooses the class with the
+        greatest value. Typically, this allows to use the output of a
+        linear model's decision_function method directly as the input
+        of inverse_transform.
         """
         if self.multilabel:
             Y = np.array(Y > 0, dtype=int)
@@ -266,3 +278,53 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y = Y.argmax(axis=1)
 
         return self.classes_[y]
+
+
+class KernelCenterer(BaseEstimator, TransformerMixin):
+    """Center a kernel matrix
+
+    This is equivalent to centering phi(X) with
+    scikits.learn.preprocessing.Scaler(with_std=False).
+    """
+
+    def fit(self, K):
+        """Fit KernelCenterer
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples, n_samples]
+            Kernel matrix
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        n_samples = K.shape[0]
+        self.K_fit_rows = np.sum(K, axis=0) / n_samples
+        self.K_fit_all = K.sum() / (n_samples ** 2)
+        return self
+
+    def transform(self, K, copy=True):
+        """Center kernel
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples1, n_samples2]
+            Kernel matrix
+
+        Returns
+        -------
+        K_new : numpy array of shape [n_samples1, n_samples2]
+        """
+
+        if copy:
+            K = K.copy()
+
+        K_pred_cols = (np.sum(K, axis=1) /
+                       self.K_fit_rows.shape[0])[:, np.newaxis]
+
+        K -= self.K_fit_rows
+        K -= K_pred_cols
+        K += self.K_fit_all
+
+        return K

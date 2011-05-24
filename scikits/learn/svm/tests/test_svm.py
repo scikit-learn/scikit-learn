@@ -44,12 +44,23 @@ def test_libsvm_iris():
     """
 
     # shuffle the dataset so that labels are not ordered
-
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
 
     assert_array_equal(clf.label_, np.sort(clf.label_))
+
+    # check also the low-level API
+    model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
+    pred = svm.libsvm.predict(iris.data, *model)
+    assert np.mean(pred == iris.target) > .95
+
+    model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64), kernel='linear')
+    pred = svm.libsvm.predict(iris.data, *model, **{'kernel' : 'linear'})
+    assert np.mean(pred == iris.target) > .95
+
+    pred = svm.libsvm.cross_validation(iris.data, iris.target.astype(np.float64), 5, kernel='linear')
+    assert np.mean(pred == iris.target) > .95
 
 
 def test_precomputed():
@@ -123,20 +134,6 @@ def test_precomputed():
     clf.fit(iris.data, iris.target)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
-def test_sanity_checks_fit():
-    clf = svm.SVC(kernel='precomputed')
-    assert_raises(ValueError, clf.fit, X, Y)
-
-def test_sanity_checks_predict():
-    Xt = np.array(X).T
-
-    clf = svm.SVC(kernel='precomputed')
-    clf.fit(np.dot(X, Xt), Y)
-    assert_raises(ValueError, clf.predict, X)
-
-    clf = svm.SVC()
-    clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)
 
 def test_SVR():
     """
@@ -209,17 +206,23 @@ def test_probability():
     This uses cross validation, so we use a slightly bigger testing set.
     """
 
-    clf = svm.SVC(probability=True)
-    clf.fit(iris.data, iris.target)
+    for clf in (
+        svm.SVC(probability=True),
+        svm.NuSVC(probability=True),
+        svm.sparse.SVC(probability=True),
+        svm.sparse.NuSVC(probability=True)
+        ):
 
-    prob_predict = clf.predict_proba(iris.data)
-    assert_array_almost_equal(
-        np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
-    assert np.mean(np.argmax(prob_predict, 1) 
-                   == clf.predict(iris.data)) > 0.9
+        clf.fit(iris.data, iris.target)
 
-    assert_almost_equal(clf.predict_proba(iris.data),
-                        np.exp(clf.predict_log_proba(iris.data)), 8)
+        prob_predict = clf.predict_proba(iris.data)
+        assert_array_almost_equal(
+            np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
+        assert np.mean(np.argmax(prob_predict, 1)
+                       == clf.predict(iris.data)) > 0.9
+
+        assert_almost_equal(clf.predict_proba(iris.data),
+                            np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
 def test_decision_function():
@@ -295,8 +298,11 @@ def test_auto_weight():
     # we take as dataset a the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1
+    from scikits.learn.svm.base import _get_class_weight
     X, y = iris.data[:, :2], iris.target
     unbalanced = np.delete(np.arange(y.size), np.where(y > 1)[0][::2])
+
+    assert np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(), LogisticRegression()):
         # check that score is better when class='auto' is set.
@@ -304,11 +310,10 @@ def test_auto_weight():
                          class_weight={}).predict(X)
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],
                                   class_weight='auto').predict(X)
-        assert np.argmin(clf.class_weight) == 0
         assert metrics.f1_score(y, y_pred) <= metrics.f1_score(y, y_pred_balanced)
 
 
-def test_error():
+def test_bad_input():
     """
     Test that it gives proper exception on deficient input
     """
@@ -321,13 +326,31 @@ def test_error():
 
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
-    assert_raises(ValueError, svm.SVC, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    Xf = np.asfortranarray(X)
+    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC(),
+                svm.sparse.LinearSVC()):
+        Xf = np.asfortranarray(X)
+        assert Xf.flags['C_CONTIGUOUS'] == False
+        yf = np.ascontiguousarray(np.tile(Y, (2,1)).T)
+        yf = yf[:, -1]
+        assert yf.flags['F_CONTIGUOUS'] == False
+        assert yf.flags['C_CONTIGUOUS'] == False
+        clf.fit(Xf, yf)
+        assert_array_equal(clf.predict(T), true_result)
+
+    # error for precomputed kernelsx
+    clf = svm.SVC(kernel='precomputed')
+    assert_raises(ValueError, clf.fit, X, Y)
+
+    Xt = np.array(X).T
+    clf = svm.SVC(kernel='precomputed')
+    clf.fit(np.dot(X, Xt), Y)
+    assert_raises(ValueError, clf.predict, X)
+
     clf = svm.SVC()
-    clf.fit(Xf, Y)
-    assert_array_equal(clf.predict(T), true_result)
+    clf.fit(X, Y)
+    assert_raises(ValueError, clf.predict, Xt)
 
 
 def test_LinearSVC():
