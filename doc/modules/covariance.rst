@@ -17,8 +17,8 @@ an accurate estimation of a population's covariance matrix under
 various settings.
 
 The package does not include robust tools yet, so we assume that the
-data sets do not contain any outlying data. We also assume thah the
-observations are independant and identically distributed.
+data sets do not contain any outlying data. We also assume that the
+observations are independent and identically distributed (i.i.d.).
 
 Empirical covariance
 ====================
@@ -130,7 +130,7 @@ with the :meth:`oas` function of the `scikits.learn.covariance`
 package, or it can be otherwise obtained by fitting an :class:`OAS`
 object to the same sample.  The formula we used to implement the OAS
 does not correspond to the one given in the article. It has been taken
-from the matlab programm available from the authors webpage
+from the MATLAB program available from the author's webpage
 (https://tbayes.eecs.umich.edu/yilun/covestimation).
 
 

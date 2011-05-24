@@ -115,9 +115,15 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         this_score = clf.score(X_test, y_test)
 
     if y is not None:
-        this_n_test_samples = y.shape[0]
+        if hasattr(y, 'shape'):
+            this_n_test_samples = y.shape[0]
+        else:
+            this_n_test_samples = len(y)
     else:
-        this_n_test_samples = X.shape[0]
+        if hasattr(X, 'shape'):
+            this_n_test_samples = X.shape[0]
+        else:
+            this_n_test_samples = len(X)
 
     if verbose > 1:
         end_msg = "%s -%s" % (msg,
@@ -160,6 +166,23 @@ class GridSearchCV(BaseEstimator):
     n_jobs: int, optional
         number of jobs to run in parallel (default 1)
 
+    pre_dispatch: int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+            
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
     iid: boolean, optional
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
@@ -199,7 +222,7 @@ class GridSearchCV(BaseEstimator):
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
                  fit_params={}, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0,
+                 verbose=0, pre_dispatch='2*n_jobs',
                  ):
         assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
                         or hasattr(estimator, 'score')), (
@@ -222,6 +245,7 @@ class GridSearchCV(BaseEstimator):
         self.refit = refit
         self.cv = cv
         self.verbose = verbose
+        self.pre_dispatch = pre_dispatch
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
@@ -242,13 +266,17 @@ class GridSearchCV(BaseEstimator):
         self._set_params(**params)
         estimator = self.estimator
         cv = self.cv
+        if hasattr(X, 'shape'):
+            n_samples = X.shape[0]
+        else:
+            # support list of unstructured objects on which feature
+            # extraction will be applied later in the tranformer chain
+            n_samples = len(X)
+        if y is not None and len(y) != n_samples:
+            raise ValueError('Target variable (y) has a different number '
+                    'of samples (%i) than data (X: %i samples)' %
+                        (len(y), n_samples))
         if cv is None:
-            if hasattr(X, 'shape'):
-                n_samples = X.shape[0]
-            else:
-                # support list of unstructured objects on which feature
-                # extraction will be applied later in the tranformer chain
-                n_samples = len(X)
             if y is not None and is_classifier(estimator):
                 cv = StratifiedKFold(y, k=3)
             else:
@@ -256,8 +284,9 @@ class GridSearchCV(BaseEstimator):
 
         grid = IterGrid(self.param_grid)
         base_clf = clone(self.estimator)
-        # XXX: Need to make use of Parallel's new pre_dispatch
-        out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        pre_dispatch = self.pre_dispatch
+        out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                pre_dispatch=pre_dispatch)(
             delayed(fit_grid_point)(
                 X, y, base_clf, clf_params, train, test, self.loss_func,
                 self.score_func, self.verbose, **self.fit_params)

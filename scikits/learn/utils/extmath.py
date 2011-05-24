@@ -51,16 +51,19 @@ if hasattr(np.linalg, 'slogdet'):
 else:
     fast_logdet = _fast_logdet
 
-if sys.version_info[1] < 6:
-    # math.factorial is only available in 2.6
+try:
+    factorial = math.factorial
+except AttributeError:
+    # math.factorial is only available in Python >= 2.6
     import operator
     def factorial(x):
         return reduce(operator.mul, xrange(2, x+1), 1)
-else:
-    factorial = math.factorial
 
 
-if sys.version_info[1] < 6:
+try:
+    import itertools
+    combinations = itertools.combinations
+except AttributeError:
     def combinations(seq, r=None):
         """Generator returning combinations of items from sequence <seq>
         taken <r> at a time. Order is not significant. If <r> is not given,
@@ -74,10 +77,6 @@ if sys.version_info[1] < 6:
             for i in xrange(len(seq)):
                 for cc in combinations(seq[i+1:], r-1):
                     yield [seq[i]]+cc
-
-else:
-    import itertools
-    combinations = itertools.combinations
 
 
 def density(w, **kwargs):

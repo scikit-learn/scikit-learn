@@ -124,10 +124,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
         # Check for early stopping
         if alphas[n_iter] < alpha_min:  # interpolate
             # interpolation factor 0 <= ss < 1
-            ss = (alphas[n_iter - 1] - alpha_min) / (alphas[n_iter - 1] -
-                                                     alphas[n_iter])
-            coefs[n_iter] = coefs[n_iter - 1] + ss * (coefs[n_iter] -
-                                                      coefs[n_iter - 1])
+            if n_iter > 0:
+                # In the first iteration, all alphas are zero, the formula
+                # below would make ss a NaN
+                ss = (alphas[n_iter-1] - alpha_min) / (alphas[n_iter-1] -
+                                                    alphas[n_iter])
+                coefs[n_iter] = coefs[n_iter-1] + ss*(coefs[n_iter] -
+                                coefs[n_iter-1])
             alphas[n_iter] = alpha_min
             break
 
