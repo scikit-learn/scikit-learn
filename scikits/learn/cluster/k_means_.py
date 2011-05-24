@@ -156,6 +156,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
         If an ndarray is passed, it should be of shape (k, p) and gives
         the initial centers.
+        
+        If a callable is passed, it should take arguments X, k and
+        and a random state and return an initialization.
 
     tol: float, optional
         The relative increment in the results before declaring convergence.
@@ -191,18 +194,20 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
     vdata = np.mean(np.var(X, 0))
     best_inertia = np.infty
-    if hasattr(init, '__array__'):
-        init = np.asarray(init)
-        if not n_init == 1:
-            warnings.warn('Explicit initial center position passed: '
-                          'performing only one init in the k-means')
-            n_init = 1
 
     # subtract of mean of x for more accurate distance computations
     X_mean = X.mean(axis=0)
     if copy_x:
         X = X.copy()
     X -= X_mean
+
+    if hasattr(init, '__array__'):
+        init = np.asarray(init).copy()
+        init -= X_mean
+        if not n_init == 1:
+            warnings.warn('Explicit initial center position passed: '
+                          'performing only one init in the k-means')
+            n_init = 1
 
     # precompute squared norms of data points
     x_squared_norms = X.copy()
@@ -363,7 +368,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
         seeds = np.argsort(random_state.rand(n_samples))[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):
-        centers = np.asanyarray(init).copy()
+        centers = init
     elif callable(init):
         centers = init(X, k, random_state=random_state)
     else:
@@ -443,7 +448,7 @@ class KMeans(BaseEstimator):
         n_init consecutive runs in terms of inertia.
 
     init : {'k-means++', 'random' or an ndarray}
-        Method for initialization, defaults to 'random':
+        Method for initialization, defaults to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
@@ -493,7 +498,7 @@ class KMeans(BaseEstimator):
     it can be useful to restart it several times.
     """
 
-    def __init__(self, k=8, init='random', n_init=10, max_iter=300, tol=1e-4,
+    def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300, tol=1e-4,
             verbose=0, random_state=None, copy_x=True):
 
         if hasattr(init, '__array__'):
