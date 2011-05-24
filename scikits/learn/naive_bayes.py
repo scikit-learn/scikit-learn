@@ -238,11 +238,14 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    intercept_ : array, shape = [n_classes]
+    class_log_prior_, intercept_ : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    coef_ : array, shape = [n_classes, n_features]
+    feature_log_prob_, coef_ : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
+
+    (class_log_prior_ and feature_log_prob_ are properties referring to
+    intercept_ and feature_log_prob_, respectively.)
 
     Examples
     --------
@@ -332,6 +335,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             self.intercept_ = np.log(class_prior)
 
         return self
+
+    class_log_prior_ = property(lambda self: self.intercept__)
+    feature_log_prob_ = property(lambda self: self.coef_)
 
     def predict(self, X):
         """
