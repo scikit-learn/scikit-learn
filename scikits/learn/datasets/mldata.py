@@ -14,15 +14,16 @@ from .base import get_data_home, Bunch
 
 MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
+
 def mldata_filename(dataname):
     """Convert a raw name for a data set in a mldata.org filename."""
     return dataname.lower().replace(' ', '-').translate(None, '().')
 
+
 def fetch_mldata(dataname, target_name='label', data_name='data',
                  transpose_data=True, data_home=None):
-    """
-    Fetch an mldata.org data set.
-    
+    """Fetch an mldata.org data set
+
     If the file does not exist yet, it is downloaded from mldata.org .
 
     mldata.org does not have an enforced convention for storing data or
@@ -38,61 +39,62 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     Keyword arguments allow to adapt these defaults to specific data sets
     (see parameters `target_name`, `data_name`, `transpose_data`, and
     the examples below).
-    
+
     mldata.org data sets may have multiple columns, which are stored in the
     Bunch object with their original name.
 
     Parameters
     ----------
-    
+
     dataname:
         Name of the data set on mldata.org,
         e.g.: "leukemia", "Whistler Daily Snowfall", etc.
         The raw name is automatically converted to a mldata.org URL .
-    
+
     target_name: optional, default: 'label'
         Name or index of the column containing the target values.
-    
+
     data_name: optional, default: 'data'
         Name or index of the column containing the data.
-    
+
     transpose_data: optional, default: True
         If True, transpose the downloaded data array.
-    
+
     data_home: optional, default: None
         Specify another download and cache folder for the data sets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
     Returns
     -------
-    
+
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'DESCR', the full description of the dataset, and
         'COL_NAMES', the original names of the dataset columns.
-    
+
     Example
     -------
-    
+
     Load the 'iris' dataset from mldata.org:
     >>> iris = fetch_mldata('iris')
     >>> print iris.target[0]
     1
     >>> print iris.data[0]
     [-0.555556  0.25     -0.864407 -0.916667]
-    
+
     Load the 'leukemia' dataset from mldata.org, which respects the
     scikits.learn axes convention:
     >>> leuk = fetch_mldata('leukemia', transpose_data=False)
     >>> print leuk.data.shape[0]
     7129
-    
+
     Load an alternative 'iris' dataset, which has different names for the
     columns:
-    >>> iris2 = dt.fetch_mldata('datasets-UCI iris', target_name=1, data_name=0) 
+    >>> iris2 = dt.fetch_mldata('datasets-UCI iris', target_name=1,
+    ...                         data_name=0)
     >>> iris3 = dt.fetch_mldata('datasets-UCI iris',
-    ...                         target_name='class', data_name='double0')   
+    ...                         target_name='class', data_name='double0')
     """
 
     # normalize dataset name
@@ -127,12 +129,13 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     # -- extract data from matlab_dict
 
     # flatten column names
-    col_names = [str(descr[0]) for descr in matlab_dict['mldata_descr_ordering'][0]]
+    col_names = [str(descr[0])
+                 for descr in matlab_dict['mldata_descr_ordering'][0]]
 
     # if target or data names are indices, transform then into names
-    if type(target_name) is int:
+    if isinstance(target_name, int):
         target_name = col_names[target_name]
-    if type(data_name) is int:
+    if isinstance(data_name, int):
         data_name = col_names[data_name]
 
     # rules for making sense of the mldata.org data format
