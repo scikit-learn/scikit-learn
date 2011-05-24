@@ -532,6 +532,11 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
         return self
 
+    def predict(X):
+        """Assign cluster membership labels to samples"""
+        labels, inertia = _e_step(X, self.centers)
+        return labels
+
 
 class MiniBatchKMeans(KMeans):
     """

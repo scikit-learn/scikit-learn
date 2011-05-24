@@ -1,7 +1,8 @@
 """Tune the parameters of an estimator by cross-validation"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux    <gael.varoquaux@normalesup.org>
+#         Gael Varoquaux <gael.varoquaux@normalesup.org>
+#         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
 import copy
@@ -17,7 +18,7 @@ from .base import BaseEstimator, is_classifier, clone
 
 try:
     from itertools import product
-except:
+except ImportError:
     def product(*args, **kwds):
         pools = map(tuple, args) * kwds.get('repeat', 1)
         result = [[]]
@@ -76,15 +77,21 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     start_time = time.time()
     if verbose > 1:
         msg = '%s' % (', '.join('%s=%s' % (k, v)
-                                     for k, v in clf_params.iteritems()))
+                                for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
     # update parameters of the classifier after a copy of its base structure
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
 
     if isinstance(X, list) or isinstance(X, tuple):
-        X_train = [X[i] for i, cond in enumerate(train) if cond]
-        X_test = [X[i] for i, cond in enumerate(test) if cond]
+        if train.dtype == np.bool:
+            # array mask
+            X_train = [X[i] for i, cond in enumerate(train) if cond]
+            X_test = [X[i] for i, cond in enumerate(test) if cond]
+        else:
+            # assume indices
+            X_train = [X[i] for i in train]
+            X_test = [X[i] for i in test]
     else:
         if sp.issparse(X):
             # For sparse matrices, slicing only works with indices
@@ -96,28 +103,73 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             test = ind[test]
         X_train = X[train]
         X_test = X[test]
+
     if y is not None:
+        # supervised learning: score or loss in computed w.r.t. user provided
+        # ground truth
         y_test = y[test]
         y_train = y[train]
-    else:
-        y_test = None
-        y_train = None
 
-    clf.fit(X_train, y_train, **fit_params)
+        clf.fit(X_train, y_train, **fit_params)
 
-    if loss_func is not None:
-        y_pred = clf.predict(X_test)
-        score = -loss_func(y_test, y_pred)
-    elif score_func is not None:
-        y_pred = clf.predict(X_test)
-        score = score_func(y_test, y_pred)
-    else:
-        score = clf.score(X_test, y_test)
+        if loss_func is not None:
+            y_pred = clf.predict(X_test)
+            score = -loss_func(y_test, y_pred)
+        elif score_func is not None:
+            y_pred = clf.predict(X_test)
+            score = score_func(y_test, y_pred)
+        else:
+            score = clf.score(X_test, y_test)
 
-    if y is not None:
         n_test_samples = y.shape[0]
+
     else:
-        n_test_samples = X.shape[0]
+        # unsupervised learning: score or loss is computed w.r.t. ability to
+        # find compatible 'predictions' the test set that is concatenated to
+        # halves of the splitted training set. This is especially useful to
+        # evaluate clustering parameters by measuring the stability of the
+        # label assignments using a symmetric measure such as the
+        # v_measure_score
+        split = X_train.shape[0] / 2
+        n_test_samples = X_test.shape[0]
+
+        if isinstance(X, list) or isinstance(X, tuple):
+            X_a = X_test + X_train[:split]
+            X_b = X_test + X_train[split:]
+        elif sp.issparse(X):
+            # train and test are integer indices
+            X_a = X[np.concatenate((test, train[:split]))]
+            X_b = X[np.concatenate((test, train[split:]))]
+        else:
+            # general array case
+            X_a = np.concatenate((X_test, X_train[:split]))
+            X_b = np.concatenate((X_test, X_train[split:]))
+
+        # fit models on overlapping subsets and evaluate the stability of the
+        # predictions
+        if hasattr(clf, 'fit_predict'):
+            labels_a = clf.fit_predict(X_a)[:n_test_samples]
+            labels_b = copy.deepcopy(clf).fit_predict(X_b)[:n_test_samples]
+        else:
+            clf_a = clf.fit(X_a)
+            clf_b = copy.deepcopy(clf).fit(X_b)
+            if hasattr(clf_a, 'labels_'):
+                # backward compat with generic clustering API
+                labels_a = clf_a.labels_[:n_test_samples]
+                labels_b = clf_b.labels_[:n_test_samples]
+            else:
+                # expect the predict method for clustering models
+                labels_a = clf_a.predict(X_test)
+                labels_b = clf_b.predict(X_test)
+
+        # loss or score functions are expected to be symmetric
+        if loss_func is not None:
+            score = -loss_func(labels_a, labels_b)
+        elif score_func is not None:
+            score = score_func(labels_a, labels_b)
+        else:
+            # XXX: clf_a.predict is probably redundant in that case...
+            score = clf_a.score(X_test, labels_b)
 
     duration = time.time() - start_time
     if verbose > 1:
@@ -352,7 +404,10 @@ class GridSearchCV(BaseEstimator):
 
         if self.refit:
             # fit the best estimator using the entire dataset
-            best_estimator.fit(X, y, **self.fit_params)
+            if y is not None:
+                best_estimator.fit(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
 
         self.best_estimator = best_estimator
         if hasattr(best_estimator, 'predict'):

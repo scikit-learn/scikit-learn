@@ -11,9 +11,12 @@ import scipy.sparse as sp
 from scikits.learn.base import BaseEstimator
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.datasets.samples_generator import test_dataset_classif
+from scikits.learn.datasets.samples_generator import make_blobs
 from scikits.learn.svm import LinearSVC
 from scikits.learn.svm.sparse import LinearSVC as SparseLinearSVC
+from scikits.learn.cluster import KMeans
 from scikits.learn.metrics import f1_score
+from scikits.learn.metrics import v_measure_score
 
 
 class MockClassifier(BaseEstimator):
@@ -102,3 +105,11 @@ def test_grid_search_sparse_score_func():
 
     assert_array_equal(y_pred, y_pred2)
     assert_equal(C, C2)
+
+def test_grid_search_clustering():
+    """Grid search for optimal number of clusters using v_measure_score"""
+    X, labels_true = make_blobs(centers=3, cluster_std=0.2)
+    kmeans = KMeans()
+    cv = GridSearchCV(kmeans, {'k': [2, 3, 4]}, score_func=v_measure_score)
+    cv.fit(X)
+    assert cv.best_params_['k'] == 3
