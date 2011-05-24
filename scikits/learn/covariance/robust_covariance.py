@@ -13,7 +13,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
-from scikits.learn.covariance import empirical_covariance
+from scikits.learn.covariance import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet as exact_logdet
 
 
@@ -208,7 +208,8 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False):
         for j in range(n_trials):
             all_T_sub[j], all_S_sub[j], all_detS_sub[j], all_H_sub[j] = c_step(
                 X, h, remaining_iterations=n_iter,
-                initial_estimates=(estimates_list[0][j], estimates_list[1][j]))
+                initial_estimates=(estimates_list[0][j], estimates_list[1][j]),
+                verbose=verbose)
     
     # find the `n_best` best results among the `n_trials` ones
     mask_best = np.argsort(all_detS_sub)[:select]
@@ -221,6 +222,12 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False):
 
 def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
     """Estimates the Minimum Covariance Determinant matrix.
+    
+    The FastMCD algorithm has been introduced by Rousseuw and Van Driessen
+    in "A Fast Algorithm for the Minimum Covariance Determinant Estimator,
+    1999, American Statistical Association and the American Society
+    for Quality, TECHNOMETRICS".
+    
     
     Parameters
     ----------
@@ -264,12 +271,12 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
     #  Regression and Outlier Detection, John Wiley & Sons, chapter 4)
     if n_features == 1:
         # find the sample shortest halves
-        X_ordered = np.sort(np.ravel(X))
-        diff = X_ordered[h:] - X_ordered[:n_samples-h]
+        # take the middle points' mean to get the robust location estimate
+        X_sorted = np.sort(np.ravel(X))
+        diff = X_sorted[h:] - X_sorted[:n_samples-h]
         shortest_diff = np.min(diff)
         intervals_start = np.where(diff == shortest_diff)[0]
-        # take the middle points' mean to get the robust location estimate
-        T = (X_ordered[h+intervals_start] + X_ordered[intervals_start]).mean()
+        T = (X_sorted[h+intervals_start] + X_sorted[intervals_start]).mean()
         support_aux = np.zeros(n_samples).astype(bool)
         support_aux[np.argsort(np.abs(X - T), axis=0)[:h]] = True
         support = support_aux
@@ -370,3 +377,86 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
         support = H
     
     return T_reweighted, S_reweighted, support
+
+
+class MCD(EmpiricalCovariance):
+    """Minimum Covariance Determinant (MCD) robust estimator of covariance
+    
+    The Minimum Covariance Determinant estimator is a robust estimator
+    of a data set's covariance introduced by P.J.Rousseuw in [1].
+    The idea is to find a given proportion of "good" observations which
+    are not outliers and compute their empirical covariance matrix.
+    This empirical covariance matrix is then rescaled to compensate the
+    performed selection of observations ("consistency step").
+    Having computed the Minimum Covariance Determinant estimator, one
+    can give weights to observations according to their Mahalanobis
+    distance, leading the a reweighted estimate of the covariance
+    matrix of the data set.
+    
+    Rousseuw and Van Driessen [2] developed the FastMCD algorithm in order
+    to compute the Minimum Covariance Determinant. This algorithm is used
+    when fitting an MCD object to data.
+    The FastMCD algorithm also computes a robust estimate of the data set
+    location at the same time.
+    
+    [1] P. J. Rousseeuw. Least median of squares regression. J. Am
+        Stat Ass, 79:871, 1984.
+    [2] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
+        1999, American Statistical Association and the American Society
+        for Quality, TECHNOMETRICS
+    
+    Parameters
+    ----------
+    store_precision: bool
+        Specify if the estimated precision is stored
+
+    Attributes
+    ----------
+    `location_`: array-like, shape (n_features,)
+        Estimated robust location
+        
+    `covariance_`: array-like, shape (n_features, n_features)
+        Estimated robust covariance matrix
+
+    `precision_`: array-like, shape (n_features, n_features)
+        Estimated pseudo inverse matrix.
+        (stored only if store_precision is True)
+    
+    `support_`: array-like, shape (n_samples,)
+        A mask of the observations that have been used to compute
+        the robust estimates of location and shape.
+        
+    """
+    def fit(self, X, assume_centered=False):
+        """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+          Training data, where n_samples is the number of samples
+          and n_features is the number of features.
+
+        assume_centered: Boolean
+          If True, the support of robust location and covariance estimates
+          is computed, and a covariance estimate is recomputed from it,
+          without centering the data.
+          Usefull to work with data whose mean is significantly equal to
+          zero but is not exactly zero.
+          If False, the robust location and covariance are directly computed
+          with the FastMCD algorithm without additional treatment.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        """
+        location, covariance, support = fast_mcd(X)
+        if assume_centered:
+            location = np.zeros(location.shape[0])
+            covariance = empirical_covariance(X[support], assume_centered=True)
+        self._set_estimates(covariance)
+        self.location_ = location
+        self.support_ = support
+
+        return self
