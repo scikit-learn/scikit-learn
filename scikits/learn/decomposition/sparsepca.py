@@ -1,7 +1,8 @@
 import time
 import sys
-
+from math import sqrt
 import numpy as np
+from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
 from scikits.learn.linear_model import Lasso, lars_path
 from scikits.learn.externals.joblib import Parallel, delayed
@@ -88,25 +89,32 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
     R = np.asfortranarray(R)
     ger, = linalg.get_blas_funcs(('ger',), (U, V))
     for k in xrange(n_atoms):
-        # R += UkVk^T
+        # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, U[:, k], V[k, :], a=R, overwrite_a=True)
         U[:, k] = np.dot(R, V[k, :].T)
         # Scale Uk
-        if (U[:, k] ** 2).sum() < 1e-20:
+        norm_square_U = np.dot(U[:, k], U[:, k])
+        if norm_square_U < 1e-20:
             if verbose == 1:
                 sys.stdout.write("+")
                 sys.stdout.flush()
-            elif verbose:
+            elif verbose: 
                 print "Adding new random atom"
             U[:, k] = np.random.randn(n_samples)
             # Setting corresponding coefs to 0
             V[k, :] = 0.0
-            U[:, k] /= linalg.norm(U[:, k])
+            U[:, k] /= sqrt(np.dot(U[:, k], U[:, k]))
         else:
-            U[:, k] /= linalg.norm(U[:, k])
+            U[:, k] /= sqrt(norm_square_U)
+            # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, U[:, k], V[k, :], a=R, overwrite_a=True)
     if return_r2:
         R **= 2
+        # R is fortran-ordered. For numpy version < 1.6, sum does not
+        # follow the quick striding first, and is thus inefficient on
+        # fortran ordered data. We take a flat view of the data with no
+        # striding
+        R = as_strided(R, shape=(R.size, ), strides=(R.dtype.itemsize,))
         R = np.sum(R)
         return U, R
     return U
@@ -131,17 +139,22 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
 
     # Init U and V with SVD of Y
     if U_init is not None and V_init is not None:
-        U = np.asarray(U_init).copy()
-        V = np.asarray(V_init).copy()
+        U = np.array(U_init, order='F')
+        # Don't copy V, it will happen below
+        V = V_init
     else:
         U, S, V = linalg.svd(Y, full_matrices=False)
         V = S[:, np.newaxis] * V
     U = U[:, :n_atoms]
     V = V[:n_atoms, :]
 
+    # Fortran-order V, as we are going to access its row vectors
+    V = np.array(V, order='F')
+
+    residuals = 0
+
     def cost_function():
-        return 0.5 * np.sum((Y - np.dot(U, V)) ** 2) \
-                    + alpha * np.sum(np.abs(V))
+        return 0.5 * residuals + alpha * np.sum(np.abs(V))
 
     E = []
     current_cost = np.nan
@@ -149,6 +162,7 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     if verbose == 1:
         print '[sparse_pca]',
 
+    slices = list(_gen_even_slices(V.shape[1], n_jobs))
     for ii in xrange(max_iter):
         dt = (time.time() - t0)
         if verbose == 1:
@@ -171,7 +185,7 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
             V[:, this_slice] = this_view
 
         # Update U
-        U = _update_U(U, Y, V, verbose=verbose)
+        U, residuals = _update_U(U, Y, V, verbose=verbose, return_r2=True)
 
         current_cost = cost_function()
         E.append(current_cost)
