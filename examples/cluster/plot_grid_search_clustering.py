@@ -71,7 +71,7 @@ samples = shuffle(samples, random_state=random_state)
 
 scores = np.zeros((n_bootstraps, len(k_range)))
 
-cv = Bootstrap(n_samples, n_bootstraps=5)
+cv = Bootstrap(n_samples, n_bootstraps=3, random_state=random_state)
 gs = GridSearchCV(
     KMeans(init='k-means++', random_state=random_state),
     {'k': k_range},
@@ -86,7 +86,12 @@ scores = gs.scores_
 mean_scores = scores.mean(axis=1)
 std_scores = scores.std(axis=1)
 best_mean_score = mean_scores.max()
-admissible_scores = mean_scores >= best_mean_score - std_scores / 2
+
+# filter out parameters that have highly varying scores
+admissible_scores = std_scores <= std_scores.mean() * 2
+
+# retain only the best scores including a half standard deviation of tolerance
+admissible_scores *= mean_scores >= best_mean_score - std_scores / 2
 
 admissible_k = [k for i, k in enumerate(k_range) if admissible_scores[i]]
 
