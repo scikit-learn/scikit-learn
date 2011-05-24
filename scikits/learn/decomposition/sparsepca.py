@@ -236,16 +236,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        # n_components = np.min((X.shape[0], self.n_components))  # if wide
-        # U = np.zeros((X.shape[0], n_components))
-        U = np.linalg.lstsq(self.components_.T, X.T)[0].T
+        U = linalg.lstsq(self.components_.T, X.T)[0].T
         U /= np.apply_along_axis(linalg.norm, 0, U)
-        # U = _update_U(U, X, self.components_)
         return U
  
 
 def generate_toy_data(n_atoms, n_samples, image_size):
-    n_features = img_sz[0] * img_sz[1]
+    n_features = image_size[0] * image_size[1]
 
     np.random.seed(0)
     U = np.random.randn(n_samples, n_atoms)
@@ -254,7 +251,7 @@ def generate_toy_data(n_atoms, n_samples, image_size):
     centers = [(3, 3), (6, 7), (8, 1)]
     sz = [1, 2, 1]
     for k in range(n_atoms):
-        img = np.zeros(img_sz)
+        img = np.zeros(image_size)
         xmin, xmax = centers[k][0] - sz[k], centers[k][0] + sz[k]
         ymin, ymax = centers[k][1] - sz[k], centers[k][1] + sz[k]
         img[xmin:xmax][:, ymin:ymax] = 1.0
