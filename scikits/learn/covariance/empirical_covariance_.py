@@ -165,7 +165,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         return res
 
-    def mse(self, comp_cov, error_type='mse'):
+    def error(self, comp_cov, error_type='mse'):
         """Computes the Mean Squared Error between two covariance estimators.
         (In the sense of the Frobenius norm)
 
