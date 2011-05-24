@@ -9,6 +9,7 @@
 #         for Quality, TECHNOMETRICS)
 #
 # License: BSD Style.
+import warnings
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
@@ -17,45 +18,52 @@ from ..utils.extmath import fast_logdet as exact_logdet
 
 
 def c_step(X, h, remaining_iterations=30, initial_estimates=None,
-           initial_support=None, verbose=False):
-    """
+           verbose=False):
+    """C_step procedure described in [1] to compute the MCD
+
+    [1] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
+        1999, American Statistical Association and the American Society
+        for Quality, TECHNOMETRICS
 
     Parameters
     ----------
     X: array-like, shape (n_samples, n_features)
-      ?
-    support: ?
-      ?
+      Data set in which we look for the h observations whose scatter matrix
+      has minimum determinant
+    h: int, > n_samples / 2
+      Number of observations to compute the ribust estimates of location
+      and covariance from.
     remaining_iterations: int
-      ?
-    initial_estimates: ?
-      ?
+      Number of iterations to perform.
+      According to Rousseeuw [1], two iterations are sufficient to get close
+      to the minimum, and we never need more than 30 to reach convergence.
+    initial_estimates: 2-tuple
+      Initial estimates of location and shape from which to run the c_step
+      procedure:
+      - initial_estimates[0]: an initial location estimate
+      - initial_estimates[1]: an initial covariance estimate
     verbose: boolean
-      ?
+      Verbose mode
 
     Returns
     -------
-    ?
+    T: array-like, shape (n_features,)
+      Robust location estimates
+    S: array-like, shape (n_features, n_features)
+      Robust covariance estimates
+    H: array-like, shape (n_samples,)
+      A mask for the `h` observations whose scatter matrix has minimum
+      determinant
     
     """
-    # TODO: function parameters checking
     n_samples, n_features = X.shape
     
     # Initialisation
     if initial_estimates is None:
         # compute initial robust location and covariance estimates
-        if initial_support is None:
-            support_aux = np.zeros(n_samples).astype(bool)
-            support_aux[np.random.permutation(n_samples)[:h]] = True
-            support = support_aux
-        else:
-            if support.dtype == 'bool':
-                support = initial_support
-            else:
-                support_aux = np.zeros(n_samples).astype(bool)
-                support_aux[initial_support] = True
-                support = support_aux
-            h = support.size
+        support_aux = np.zeros(n_samples).astype(bool)
+        support_aux[np.random.permutation(n_samples)[:h]] = True
+        support = support_aux
         T = X[support].mean(0)
         S = empirical_covariance(X[support])
     else:
@@ -64,7 +72,7 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         S = initial_estimates[1]
         # run a special iteration for that case
         # (in order to get a meaningful support and to avoid the algorithm
-        #  to be traped in a local minimum)
+        #  to be trapped in a local minimum)
         inv_S = linalg.pinv(S)
         X_centered = X - T
         dist = (np.dot(X_centered,inv_S) * X_centered).sum(1)
@@ -107,9 +115,8 @@ def c_step(X, h, remaining_iterations=30, initial_estimates=None,
         results = T, S, detS, support
     elif detS > previous_detS:
         # determinant has increased (should not happen)
-        # FIXME: Transform in real warning
-        print "Warning! detS > previous_detS (%f > %f)" %(detS, previous_detS)
-        1/0
+        warnings.warn("Warning! detS > previous_detS (%f > %f)" \
+                          %(detS, previous_detS), RuntimeWarning)
         results = previous_T, previous_S, previous_detS, previous_support
     
     # Check early stopping
@@ -147,9 +154,16 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False):
       The number of samples the pure data set must contain.
     select: int, int > 0
       Number of best candidates results to return.
-    n_trials: int, nb_trials > 0
+    n_trials: int, nb_trials > 0 or 2-tuple
       Number of different initial sets of observations from which to
       run the algorithm.
+      Instead of giving a number of trials to perform, one can provide a
+      list of initial estimates that will be used to iteratively run
+      c_step procedures. In this case:
+      - n_trials[0]: array-like, shape (n_trials, n_features)
+        is the list of `n_trials` initial location estimates
+      - n_trials[1]: array-like, shape (n_trials, n_features, n_features)
+        is the list of `n_trials` initial covariances estimates
     n_iter: int, nb_iter > 0
       Maximum number of iterations for the c_step procedure.
       (2 is enough to be close to the final solution. "Never" exceeds 20)
@@ -176,7 +190,7 @@ def select_candidates(X, h, n_trials, select=1, n_iter=30, verbose=False):
     elif isinstance(n_trials, tuple):
         run_from_estimates = True
         estimates_list = n_trials
-        n_trials = estimates_list[0][0].shape[0]
+        n_trials = estimates_list[0].shape[0]
     else:
         raise Exception('Bad \'n_trials\' parameter (wrong type)')
     
@@ -243,10 +257,27 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
     n_samples, n_features = X.shape
 
     # minimum breakdown value
-    h = np.ceil(0.5 * (n_samples + n_features + 1))
+    h = int(np.ceil(0.5 * (n_samples + n_features + 1)))
+    
+    # 1-dimensional case
+    # (Rousseeuw, P. J. and Leroy, A. M. (2005) References, in Robust
+    #  Regression and Outlier Detection, John Wiley & Sons, chapter 4)
+    if n_features == 1:
+        # find the sample shortest halves
+        X_ordered = np.sort(np.ravel(X))
+        diff = X_ordered[h:] - X_ordered[:n_samples-h]
+        shortest_diff = np.min(diff)
+        intervals_start = np.where(diff == shortest_diff)[0]
+        # take the middle points' mean to get the robust location estimate
+        T = (X_ordered[h+intervals_start] + X_ordered[intervals_start]).mean()
+        support_aux = np.zeros(n_samples).astype(bool)
+        support_aux[np.argsort(np.abs(X - T), axis=0)[:h]] = True
+        support = support_aux
+        S = np.asarray([[np.var(X[support])]])
+        T = np.array([T])
 
     ### Starting FastMCD algorithm
-    if n_samples > 500:
+    if (n_samples > 500) and (n_features > 1):
         ## 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
         n_subsets = n_samples / 300
@@ -295,7 +326,7 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
             T = T_full[0]
             S = S_full[0]
             H = H_full[0]
-    else:
+    elif n_features > 1:
         ## 1. Find the 10 best couples (T,S) considering two iterations
         n_trials = 30
         n_best = 10
@@ -310,10 +341,12 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
 
     ## 4. Obtain consistency at Gaussian models
     if correction == "empirical":
-        # c1 correction (theoretical)
-        S_corrected = S * (h/float(n_samples)) / chi2(n_features+2).cdf(chi2(n_features).ppf(h/float(n_samples)))
+        # theoretical correction
+        inliers_ratio = h / float(n_samples)
+        S_corrected = S * (inliers_ratio) \
+            / chi2(n_features+2).cdf(chi2(n_features).ppf(inliers_ratio))
     elif correction == "theoretical":
-        # c2 correction (empirical)
+        # empirical correction
         X_centered = X - T
         dist = (np.dot(X_centered,linalg.inv(S)) * X_centered).sum(1)
         S_corrected = S * (np.median(dist)/chi2(n_features).isf(0.5))
@@ -325,11 +358,11 @@ def fast_mcd(X, correction="empirical", reweight="rousseeuw"):
     if reweight == "rousseeuw":
         X_centered = X - T
         dist = (np.dot(X_centered, linalg.inv(S_corrected)) * X_centered).sum(1)
-        mask = np.where(dist < chi2(n_features).isf(0.025))[0]
+        mask = dist < chi2(n_features).isf(0.025)
         T_reweighted = X[mask].mean(0)
         S_reweighted = empirical_covariance(X[mask])
         support_aux = np.zeros(n_samples).astype(bool)
-        support_aux[np.where(mask)[0]] = True
+        support_aux[mask] = True
         support = support_aux
     else:
         T_reweighted = T

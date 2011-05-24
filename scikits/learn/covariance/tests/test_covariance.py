@@ -7,7 +7,7 @@
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from .. import empirical_covariance, EmpiricalCovariance, \
-    ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas \
+    ShrunkCovariance, shrunk_covariance, LedoitWolf, ledoit_wolf, OAS, oas, \
     fast_mcd
 
 import numpy as np
@@ -210,14 +210,65 @@ def test_oas():
     assert_almost_equal(oa.score(X), 2.079025, 4)
     assert(oa.precision_ is None)
 
+
 def test_mcd():
-    """Tests the fastMCD algorithm implementation
+    """Tests the FastMCD algorithm implementation
 
     """
+    yield generator_mcd, "empirical"
+    yield generator_mcd, "theoretical"
+    
+def generator_mcd(correction):
+    """Tests the fastMCD algorithm implementation with a given correction type
+
+    """
+    ### Small data set
     # test without outliers (random independant normal data)
-    data_no_outliers = np.random.randn(100,5)
-    T, S, H = fast_mcd(data_no_outliers, reweight=None)
+    data_no_outlier = np.random.randn(100, 5)
+    T, S, H = fast_mcd(data_no_outlier, correction=correction)
     error_location = np.sum((data_no_outlier.mean(0) - T)**2)
-    assert(error_location < 0.5)
-    emp_cov = EmpiricalCovariance().fit(data_no_outliers)
-    assert(emp_cov.error(S) < 0.2)
+    assert(error_location < 0.3)
+    emp_cov = EmpiricalCovariance().fit(data_no_outlier)
+    assert(emp_cov.error(S) < 0.15)
+    assert(np.sum(H) > 70)
+    # test with a contaminated data set (medium contamination)
+    mcd_contaminated_dataset(100, 5, 20, 0.1, 0.2, 65, correction)    
+    # test with a contaminated data set (strong contamination)
+    mcd_contaminated_dataset(100, 5, 40, 0.1, 0.1, 50, correction)
+    
+    ### Medium data set
+    mcd_contaminated_dataset(1000, 5, 450, 5e-4, 5e-3, 540, correction)
+    
+    ### Large data set
+    mcd_contaminated_dataset(1700, 5, 800, 1e-3, 1e-3, 870, correction)
+    
+    ### 1D data set
+    mcd_contaminated_dataset(500, 1, 100, 0.1, 0.1, 350, correction)
+
+def mcd_contaminated_dataset(n_samples, n_features, n_outliers,
+                             tol_loc, tol_cov, tol_support, correction):
+    """
+
+    """
+    data = np.random.randn(n_samples, n_features)
+    # add some outliers
+    outliers_index = np.random.permutation(n_samples)[:n_outliers]
+    outliers_offset = 10. * \
+        (np.random.randint(2, size=(n_outliers,n_features)) - 0.5)
+    data[outliers_index] += outliers_offset
+    inliers_mask = np.ones(n_samples).astype(bool)
+    inliers_mask[outliers_index] = False
+    # compute MCD
+    T, S, H = fast_mcd(data, correction=correction)
+    # compare with the estimates learnt from the inliers
+    pure_data = data[inliers_mask]
+    error_location = np.sum((pure_data.mean(0) - T)**2)
+    assert(error_location < tol_loc)
+    emp_cov = EmpiricalCovariance().fit(pure_data)
+    assert(emp_cov.error(S) < tol_cov)
+    assert(np.sum(H) > tol_support)
+    # check improvement
+    error_bad_location = np.sum((data.mean(0) - T)**2)
+    assert(error_bad_location > error_location)
+    bad_emp_cov = EmpiricalCovariance().fit(data)
+    assert(emp_cov.error(S) < bad_emp_cov.error(S))
