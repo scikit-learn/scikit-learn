@@ -210,7 +210,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     """
     Naive Bayes classifier for multinomial models
 
-    The multinomial Naive Bayes classifier is suitable for text classification.
+    The multinomial Naive Bayes classifier is suitable for classification with
+    discrete features (e.g., word counts for text classification). The
+    multinomial distribution normally requires integer feature counts. However,
+    in practice, fractional counts such as tf-idf may also work.
+
     This class is designed to handle both dense and sparse data; it will enter
     "sparse mode" if its training matrix (X) is a sparse matrix.
 
@@ -304,12 +308,8 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
                    'Number of priors must match number of classs'
             self.intercept_ = np.array(class_prior)
 
-        # N_c is the count of all words in all documents of class c.
-        # N_c_i is the a count of word i in all documents of class c.
-        # intercept_[c] is the prior empirical probability of class c.
-        # coef_ is the (smoothed) empirical likelihood of feature i
-        # given class c.
-        #
+        # N_c is the count of all features in all samples of class c.
+        # N_c_i is the a count of feature i in all samples of class c.
         N_c_i_temp = []
         if self.intercept_ is None:
             class_prior = []
