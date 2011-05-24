@@ -7,10 +7,9 @@ from ..base import BaseEstimator
 from ..neighbors import kneighbors_graph
 from ..ball_tree import BallTree
 
-
 def hessian_locally_linear_embedding(
     X, n_neighbors, out_dim, reg=1e-3, eigen_solver='lobpcg', tol=1e-6,
-    max_iter=100):
+    HLLE_tol=1E-4, max_iter=100):
     """
     Perform a Modified Locally Linear Embedding (MLLE) analysis on the data.
     See reference [1]
@@ -84,95 +83,66 @@ def hessian_locally_linear_embedding(
     assert k > d_out + dp #note that dp = d_out*(d_out+1)/2
     assert k < N
 
-    W = np.zeros((N,N*dp),dtype=np.float)
+    Yi = np.empty((k,1+d_out+dp),dtype=np.float)
+    Yi[:,0] = 1
 
-    Yi = np.ones((k,1+d_out+dp),dtype=np.float)
+    Phi = np.zeros((N,N), dtype=np.float)
 
     for i in range(N):
         Gi = X[neighbors[i]]
         Gi -= Gi.mean(0)
 
+        #build hessian estimator
         U,sig,VT = np.linalg.svd(Gi,full_matrices=0)
 
         Yi[:,1:1+d_out] = U[:,:d_out]
 
-        #build hessian estimator
-        ct = 1+d_out
-        for mm in range(d_out):
-            for nn in range(mm,d_out):
-                Yi[:,ct] = U[:,mm]*U[:,nn]
-                ct+=1
+        j = 1+d_out
+        for k in range(d_out):
+            Yi[:,j:j+d_out-k] = U[:,k:k+1]*U[:,k:d_out]
+            j += d_out-k
 
         Q,R = np.linalg.qr(Yi)
-           
+        
         w = Q[:,d_out+1:]
         S = w.sum(0)
 
-        S[np.where(abs(S)<1E-4)] = 1
-        W[neighbors[i],i*dp:(i+1)*dp] = w/S
+        S[np.where(abs(S)<HLLE_tol)] = 1
+        w/=S
+        
+        nbrs_x,nbrs_y = np.meshgrid(neighbors[i],neighbors[i])
+        Phi[nbrs_x,nbrs_y] += np.dot(w,w.T)
 
     if eigen_solver == 'dense':
-        if True:
-            eigen_vectors,sig,VT = np.linalg.svd(W,full_matrices=0)
-            eigen_values = sig**2
-            index = np.argsort(sig)[1:d_out+1]
-        else:
-            import scipy.linalg
-            C = np.dot(W,W.T)
-            eigen_values, eigen_vectors = scipy.linalg.eigh(
-                C, eigvals=(1, out_dim + 1), overwrite_a=True)
-            index = np.argsort(np.abs(eigen_values))
-        Y = eigen_vectors[:,index]
-    
+        import scipy.linalg
+
+        eigen_values, eigen_vectors = scipy.linalg.eigh(
+            Phi, eigvals=(1, out_dim + 1), overwrite_a=True)
+        index = np.argsort(np.abs(eigen_values))
+        return eigen_vectors[:, index], np.sum(eigen_values)
+
     elif eigen_solver == 'lobpcg':
         from scipy.sparse import linalg, eye, csr_matrix
-        C = np.dot(W,W.T)
         
-        C = csr_matrix(C)
-    
+        Phi = csr_matrix(Phi)
+
         # initial approximation to the eigenvectors
-        X = np.random.rand(C.shape[0], out_dim+1)
+        X = np.random.rand(Phi.shape[0], out_dim+1)
         try:
-            ml = pyamg.smoothed_aggregation_solver(C, symmetry='symmetric')
+            ml = pyamg.smoothed_aggregation_solver(Phi, symmetry='symmetric')
         except TypeError:
-            ml = pyamg.smoothed_aggregation_solver(C, mat_flag='symmetric')
+            ml = pyamg.smoothed_aggregation_solver(Phi, mat_flag='symmetric')
         prec = ml.aspreconditioner()
 
         # compute eigenvalues and eigenvectors with LOBPCG
         eigen_values, eigen_vectors = linalg.lobpcg(
-            C, X, M=prec, largest=False, tol=tol, maxiter=max_iter)
+            Phi, X, M=prec, largest=False, tol=tol, maxiter=max_iter)
 
         index = np.argsort(eigen_values)
-        Y = eigen_vectors[:, index[1:]]
-        eigen_values = eigen_values[index[1:]]
+        return eigen_vectors[:, index[1:]], np.sum(eigen_values[index[1:]])
 
     else:
         raise NotImplementedError('Method %s not implemented' % eigen_solver)
-
-    Y *= np.sqrt(N)
-
-    #-----------------------------------------------
-    # Normalize Y
-    #  we need R = (Y.T*Y)^(-1/2)
-    #   do this with an SVD of Y
-    #      Y = U*sig*V.T
-    #      Y.T*Y = (V*sig.T*U.T) * (U*sig*V.T)
-    #            = U*(sig*sig.T)*U.T
-    #   so
-    #      R = V * sig^-1 * V.T
-    #-----------------------------------------------
-    #U,sig,VT = numpy.linalg.svd(Y,full_matrices=0)
-    #del U
-    #S = numpy.matrix(numpy.diag(sig**-1))
-    #R = VT.T * S * VT
-    #return numpy.array(Y*R)
-
-    U,sig,VT = np.linalg.svd(Y.T,full_matrices=0)
-    S = np.diag(sig**-1)
-    R = np.dot(VT.T, np.dot(S,VT))
-    return np.dot(Y.T,R).T, np.sum(eigen_vectors)
-
-
 
 class LocallyLinearEmbedding(BaseEstimator):
     """
