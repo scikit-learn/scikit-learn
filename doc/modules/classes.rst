@@ -152,23 +152,6 @@ Naive Bayes
    naive_bayes.MultinomialNB
 
 
-For sparse data
----------------
-
-.. automodule:: scikits.learn.naive_bayes.sparse
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: scikits.learn
-
-.. autosummary::
-
-   :toctree: generated/
-   :template: class.rst
-
-   naive_bayes.sparse.MultinomialNB
-
-
 Nearest Neighbors
 =================
 
