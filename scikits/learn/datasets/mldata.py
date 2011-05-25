@@ -164,12 +164,14 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
             del dataset[target_name]
             dataset['target'] = matlab_dict[target_name]
         else:
+            del dataset[col_names[0]]
             dataset['target'] = matlab_dict[col_names[0]]
 
         if data_name in col_names:
             del dataset[data_name]
             dataset['data'] = matlab_dict[data_name]
         else:
+            del dataset[col_names[1]]
             dataset['data'] = matlab_dict[col_names[1]]
 
     # set axes to scikits.learn conventions
