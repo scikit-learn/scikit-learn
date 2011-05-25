@@ -1,7 +1,8 @@
 """Test functionality of mldata fetching utilities."""
 
+from scikits.learn import datasets
 from scikits.learn.datasets import mldata_filename, fetch_mldata
-from nose.tools import assert_equal, raises
+from nose.tools import assert_equal, assert_raises
 from nose import SkipTest, with_setup
 from numpy.testing import assert_array_equal
 import os
@@ -69,49 +70,39 @@ def test_mldata_filename():
 @with_setup(setup_tmpdata, teardown_tmpdata)
 def test_download():
     """Test that fetch_mldata is able to download and cache a data set."""
-    # first, check that there is a network connection to mldata.org
+
+    class mock_urllib2(object):
+        @staticmethod
+        def urlopen(urlname):
+            print urlname
+            if urlname == 'http://mldata.org/repository/data/download/matlab/mock':
+                label = sp.ones((150,))
+                data = sp.ones((150, 4))
+                fake_mldata_cache({'label': label, 'data': data},
+                                  '_mock', tmpdir)
+                return open(os.path.join(tmpdir, 'mldata', '_mock.mat'), 'rb')
+            else:
+                raise mock_urllib2.URLError('%s not found.', urlname)
+
+        class URLError(Exception):
+            pass
+
+    _urllib2_ref = datasets.mldata.urllib2
+    datasets.mldata.urllib2 = mock_urllib2
     try:
-        response = urllib2.urlopen('http://mldata.org', timeout=2)
-    except urllib2.URLError as err:
-        raise SkipTest("Network connection not available.")
+        mock = fetch_mldata('mock', data_home=tmpdir)
+        assert 'COL_NAMES' in mock
+        assert 'DESCR' in mock
+        assert 'target' in mock
+        assert 'data' in mock
+    
+        assert_equal(mock.target.shape, (150,))
+        assert_equal(mock.data.shape, (150, 4))
 
-    # download 'iris' data set
-    dataname = 'iris'
-    iris = fetch_mldata(dataname, data_home=tmpdir)
+        assert_raises(IOError, fetch_mldata, 'not_existing_name')
+    finally:
+        datasets.mldata.urllib2 = _urllib2_ref
 
-    # check that cache was created and file complete
-    assert os.path.exists(os.path.join(tmpdir, 'mldata'))
-    assert os.path.exists(os.path.join(tmpdir, 'mldata', 'iris.mat'))
-
-    assert 'COL_NAMES' in iris
-    assert 'DESCR' in iris
-    assert 'target' in iris
-    assert 'data' in iris
-
-    assert_equal(iris.target.shape, (150,))
-    assert_equal(iris.data.shape, (150, 4))
-
-    # data sets with non-standard columns
-    iris = fetch_mldata('datasets-UCI iris', target_name=1,
-                        data_name=0, data_home=tmpdir)
-    assert 'target' in iris
-    assert 'data' in iris
-    assert_equal(iris.target.shape, (150,))
-    assert_equal(iris.data.shape, (150, 4))
-
-    iris = fetch_mldata('datasets-UCI iris', target_name='class',
-                        data_name='double0', data_home=tmpdir)
-    assert 'target' in iris
-    assert 'data' in iris
-    assert_equal(iris.target.shape, (150,))
-    assert_equal(iris.data.shape, (150, 4))
-
-
-@with_setup(setup_tmpdata, teardown_tmpdata)
-@raises(IOError)
-def test_wrong_dataset_name():
-    """Test raising an error for wrong data set name."""
-    fetch_mldata('__????__does_not_exists', data_home=tmpdir)
 
 @with_setup(setup_tmpdata, teardown_tmpdata)
 def test_fetch_one_column():
