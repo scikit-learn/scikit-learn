@@ -48,12 +48,12 @@ for i, n_samples in enumerate(n_samples_range):
 
         lw = LedoitWolf(store_precision=False)
         lw.fit(X, assume_centered=True)
-        lw_mse[i,j] = lw.error(real_cov)
+        lw_mse[i,j] = lw.error_norm(real_cov, scaling=False)
         lw_shrinkage[i,j] = lw.shrinkage_
 
         oa = OAS(store_precision=False)
         oa.fit(X, assume_centered=True)
-        oa_mse[i,j] = oa.error(real_cov)
+        oa_mse[i,j] = oa.error_norm(real_cov, scaling=False)
         oa_shrinkage[i,j] = oa.shrinkage_
 
 # plot MSE
@@ -62,7 +62,7 @@ pl.errorbar(n_samples_range, lw_mse.mean(1), yerr=lw_mse.std(1),
             label='Ledoit-Wolf', color='g')
 pl.errorbar(n_samples_range, oa_mse.mean(1), yerr=oa_mse.std(1),
             label='OAS', color='r')
-pl.ylabel("MSE")
+pl.ylabel("Squared error")
 pl.legend(loc="upper right")
 pl.title("Comparison of covariance estimators")
 pl.xlim(5, 31)
