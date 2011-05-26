@@ -89,7 +89,7 @@ def test_sparse_mnnb():
 def test_mnnb_pickle():
     '''Test picklability of multinomial NB'''
 
-    clf = naive_bayes.MultinomialNB(alpha=2, use_prior=False).fit(X, y)
+    clf = naive_bayes.MultinomialNB(alpha=2, fit_prior=False).fit(X, y)
     y_pred = clf.predict(X)
 
     store = StringIO()
