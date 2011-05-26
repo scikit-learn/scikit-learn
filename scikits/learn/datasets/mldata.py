@@ -8,7 +8,6 @@ from scipy import io
 from os.path import join, exists
 from os import makedirs
 import urllib2
-import string
 
 from .base import get_data_home, Bunch
 
@@ -114,7 +113,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
         urlname = MLDATA_BASE_URL % (dataname)
         try:
             mldata_url = urllib2.urlopen(urlname)
-        except urllib2.URLError as e:
+        except urllib2.URLError:
             msg = "Dataset '%s' not found on mldata.org." % dataname
             raise IOError(msg)
         # store Matlab file
