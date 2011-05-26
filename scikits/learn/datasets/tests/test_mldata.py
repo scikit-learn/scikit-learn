@@ -56,6 +56,39 @@ def fake_mldata_cache(columns_dict, dataname, cachedir, ordering=None):
     savemat(os.path.join(cachedir, 'mldata', dataname), dset)
 
 
+class mock_urllib2(object):
+
+    def __init__(self, mock_datasets, cachedir):
+        """Object that mocks the urllib2 module to fake requests to mldata.
+
+        `mock_datasets` is a dictionary of {dataset_name: data_dict}, and
+        `data_dict` itself is a dictionary of {column_name: data_array}
+
+        When requesting a dataset with a name that is in mock_datasets,
+        this object creates a fake dataset in cachedir,
+        then returns a file handle to it. Otherwise, it raises
+        an URLError.
+        """
+        self.mock_datasets = mock_datasets
+        self.cachedir = cachedir
+
+    class URLError(Exception):
+        pass
+
+    def urlopen(self, urlname):
+        dataset_name = urlname.split('/')[-1]
+        print urlname, dataset_name
+        if dataset_name in self.mock_datasets:
+            resource_name = '_' + dataset_name
+            fake_mldata_cache(self.mock_datasets[dataset_name],
+                              resource_name, self.cachedir)
+            return open(os.path.join(self.cachedir, 'mldata',
+                                     resource_name + '.mat'), 'rb')
+        else:
+            raise mock_urllib2.URLError('%s not found.', urlname)
+
+
+def assert_in(obj, in_=None, out_=None):
 def test_mldata_filename():
     cases = [('datasets-UCI iris', 'datasets-uci-iris'),
              ('news20.binary', 'news20binary'),
@@ -70,25 +103,11 @@ def test_mldata_filename():
 def test_download():
     """Test that fetch_mldata is able to download and cache a data set."""
 
-    class mock_urllib2(object):
-        @staticmethod
-        def urlopen(urlname):
-            print urlname
-            if (urlname ==
-                'http://mldata.org/repository/data/download/matlab/mock'):
-                label = sp.ones((150,))
-                data = sp.ones((150, 4))
-                fake_mldata_cache({'label': label, 'data': data},
-                                  '_mock', tmpdir)
-                return open(os.path.join(tmpdir, 'mldata', '_mock.mat'), 'rb')
-            else:
-                raise mock_urllib2.URLError('%s not found.', urlname)
-
-        class URLError(Exception):
-            pass
-
     _urllib2_ref = datasets.mldata.urllib2
-    datasets.mldata.urllib2 = mock_urllib2
+    datasets.mldata.urllib2 = mock_urllib2({'mock':
+                                            {'label': sp.ones((150,)),
+                                             'data': sp.ones((150, 4))}},
+                                           tmpdir)
     try:
         mock = fetch_mldata('mock', data_home=tmpdir)
         assert 'COL_NAMES' in mock
