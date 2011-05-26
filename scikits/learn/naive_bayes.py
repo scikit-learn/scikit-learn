@@ -223,7 +223,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     alpha: float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    use_prior: boolean
+    fit_prior: boolean
         Whether to learn class prior probabilities or not.
 
     Methods
@@ -259,7 +259,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     >>> from scikits.learn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, use_prior=True)
+    MultinomialNB(alpha=1.0, fit_prior=True)
     >>> print clf.predict(X[2])
     [3]
 
@@ -270,9 +270,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     assumptions of naive Bayes text classifiers, Proc. ICML.
     """
 
-    def __init__(self, alpha=1.0, use_prior=True):
+    def __init__(self, alpha=1.0, fit_prior=True):
         self.alpha = alpha
-        self.use_prior = use_prior
+        self.fit_prior = fit_prior
 
     def fit(self, X, y, class_prior=None):
         """Fit Multinomial Naive Bayes according to X, y
@@ -301,7 +301,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         n_classes = self.unique_y.size
 
         self.intercept_ = None
-        if not self.use_prior:
+        if not self.fit_prior:
             self.intercept_ = np.ones(n_classes) / n_classes
         if class_prior:
             assert len(class_prior) == n_classes, \
