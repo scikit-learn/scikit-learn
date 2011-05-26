@@ -3,12 +3,11 @@
 from scikits.learn import datasets
 from scikits.learn.datasets import mldata_filename, fetch_mldata
 from nose.tools import assert_equal, assert_raises
-from nose import SkipTest, with_setup
+from nose import with_setup
 from numpy.testing import assert_array_equal
 import os
 import shutil
 import tempfile
-import urllib2
 import scipy as sp
 from scipy.io import savemat
 
@@ -27,7 +26,7 @@ def teardown_tmpdata():
 
 def fake_mldata_cache(columns_dict, dataname, cachedir, ordering=None):
     """Create a fake mldata data set in the cache_path.
-    
+
     Parameters
     ----------
     columns_dict: contains data as
@@ -35,7 +34,7 @@ def fake_mldata_cache(columns_dict, dataname, cachedir, ordering=None):
     dataname: name of data set
     cachedir: cache path
     ordering: list of column_names, determines the ordering in the data set
-    
+
     Note: this function transposes all arrays, while fetch_mldata only
     transposes 'data', keep that into account in the tests.
     """
@@ -75,7 +74,8 @@ def test_download():
         @staticmethod
         def urlopen(urlname):
             print urlname
-            if urlname == 'http://mldata.org/repository/data/download/matlab/mock':
+            if (urlname ==
+                'http://mldata.org/repository/data/download/matlab/mock'):
                 label = sp.ones((150,))
                 data = sp.ones((150, 4))
                 fake_mldata_cache({'label': label, 'data': data},
@@ -95,7 +95,7 @@ def test_download():
         assert 'DESCR' in mock
         assert 'target' in mock
         assert 'data' in mock
-    
+
         assert_equal(mock.target.shape, (150,))
         assert_equal(mock.data.shape, (150, 4))
 
@@ -177,4 +177,3 @@ def test_fetch_multiple_column():
     assert 'data' in dset
     assert_array_equal(dset.data, z)
     assert_array_equal(dset.target, y)
-
