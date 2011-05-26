@@ -89,6 +89,16 @@ class mock_urllib2(object):
 
 
 def assert_in(obj, in_=None, out_=None):
+    """Checks that all names in `in_` as in `obj`, but no name
+    in `out_` is."""
+    if in_ is not None:
+        for name in in_:
+            assert name in obj
+    if out_ is not None:
+        for name in out_:
+            assert name not in obj
+
+
 def test_mldata_filename():
     cases = [('datasets-UCI iris', 'datasets-uci-iris'),
              ('news20.binary', 'news20binary'),
@@ -110,10 +120,7 @@ def test_download():
                                            tmpdir)
     try:
         mock = fetch_mldata('mock', data_home=tmpdir)
-        assert 'COL_NAMES' in mock
-        assert 'DESCR' in mock
-        assert 'target' in mock
-        assert 'data' in mock
+        assert_in(mock, in_=['COL_NAMES', 'DESCR', 'target', 'data'])
 
         assert_equal(mock.target.shape, (150,))
         assert_equal(mock.data.shape, (150, 4))
@@ -131,10 +138,7 @@ def test_fetch_one_column():
     fake_mldata_cache({'x': x}, dataname, tmpdir)
 
     dset = fetch_mldata(dataname, data_home=tmpdir)
-    assert 'COL_NAMES' in dset
-    assert 'DESCR' in dset
-    assert 'target' not in dset
-    assert 'data' in dset
+    assert_in(dset, in_=['COL_NAMES', 'DESCR', 'data'], out_=['target'])
 
     assert_equal(dset.data.shape, (2, 3))
     assert_array_equal(dset.data, x)
@@ -157,11 +161,8 @@ def test_fetch_multiple_column():
                       ordering=['z', 'data', 'label'])
 
     dset = fetch_mldata(dataname, data_home=tmpdir)
-    assert 'target' in dset
-    assert 'data' in dset
-    assert 'x' not in dset
-    assert 'y' not in dset
-    assert 'z' in dset
+    assert_in(dset, in_=['COL_NAMES', 'DESCR', 'target', 'data', 'z'],
+              out_=['x', 'y'])
 
     assert_array_equal(dset.data, x)
     assert_array_equal(dset.target, y)
@@ -172,8 +173,8 @@ def test_fetch_multiple_column():
                       ordering=['y', 'x', 'z'])
 
     dset = fetch_mldata(dataname, data_home=tmpdir)
-    assert 'target' in dset
-    assert 'data' in dset
+    assert_in(dset, in_=['COL_NAMES', 'DESCR', 'target', 'data', 'z'],
+              out_=['x', 'y'])
     assert_array_equal(dset.data, x)
     assert_array_equal(dset.target, y)
     assert_array_equal(dset.z, z.T)
@@ -184,15 +185,15 @@ def test_fetch_multiple_column():
 
     dset = fetch_mldata(dataname, data_home=tmpdir,
                         target_name=2, data_name=0)
-    assert 'target' in dset
-    assert 'data' in dset
+    assert_in(dset, in_=['COL_NAMES', 'DESCR', 'target', 'data', 'x'],
+              out_=['z', 'y'])
     assert_array_equal(dset.data, z)
     assert_array_equal(dset.target, y)
 
     # by name
     dset = fetch_mldata(dataname, data_home=tmpdir,
                         target_name='y', data_name='z')
-    assert 'target' in dset
-    assert 'data' in dset
+    assert_in(dset, in_=['COL_NAMES', 'DESCR', 'target', 'data', 'x'],
+              out_=['z', 'y'])
     assert_array_equal(dset.data, z)
     assert_array_equal(dset.target, y)
