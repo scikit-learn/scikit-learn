@@ -123,11 +123,45 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
 def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         n_jobs=1, U_init=None, V_init=None, callback=None, verbose=False):
     """
-    Compute sparse PCA with n_atoms components
+    Compute sparse PCA with n_atoms components.
 
     (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || V ||_1
                  (U,V)
                 with || U_k ||_2 = 1 for all  0<= k < n_atoms
+
+    Parameters
+    ----------
+    Y: array of shape (n_samples, n_features)
+        data matrix
+    n_atoms: int,
+        number of sparse atoms to extract
+    alpha: int,
+        sparsity controlling parameter
+    max_iter: int,
+        maximum number of iterations to perform
+    tol: float,
+        tolerance for numerical error
+    method: 'lars' | 'lasso',
+        method to use for solving the lasso problem
+
+    n_jobs: int,
+        number of parallel jobs to run
+
+    U_init: array of shape (n_samples, n_atoms),
+    V_init: array of shape (n_atoms, n_features),
+        initial values for the decomposition for warm restart scenarios
+    callback:
+        callable that gets invoked every five iterations
+    verbose:
+        degree of output the procedure will print
+
+    Returns
+    -------
+    U: array of shape (n_samples, n_atoms),
+    V: array of shape (n_atoms, n_features),
+        the solutions to the sparse PCA decomposition
+    E: array
+        vector of errors at each iteration
     """
     t0 = time.time()
     n_samples = Y.shape[0]
@@ -210,6 +244,35 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
 
     Finds the best decomposition of the data matrix with sparse components.
+
+    Parameters
+    ----------
+    n_components: int,
+        number of sparse atoms to extract
+    alpha: int,
+        sparsity controlling parameter
+    max_iter: int,
+        maximum number of iterations to perform
+    tol: float,
+        tolerance for numerical error
+    method: 'lars' | 'lasso',
+        method to use for solving the lasso problem
+
+    n_jobs: int,
+        number of parallel jobs to run
+
+    U_init: array of shape (n_samples, n_atoms),
+    V_init: array of shape (n_atoms, n_features),
+        initial values for the decomposition for warm restart scenarios
+
+    Attributes
+    ----------
+    components_: array, [n_components, n_features]
+        sparse components extracted from the data
+    
+    error_: array
+        vector of errors at each iteration
+
     """
     def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
                  method='lars', n_jobs=1, U_init=None, V_init=None):
@@ -223,6 +286,18 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.V_init = V_init
 
     def fit_transform(self, X, y=None, **params):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new array-like, shape (n_samples, n_components)
+        """
         self._set_params(**params)
         X = np.asanyarray(X)
 
@@ -234,10 +309,37 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         return U
 
     def fit(self, X, y=None, **params):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self.fit_transform(X, y, **params)
         return self
 
     def transform(self, X):
+        """Apply the projection onto the learned sparse components
+        to new data.
+
+        Parameters
+        ----------
+        X: array of shape (n_samples, n_features)
+            Test data to be transformed, must have the same number of
+            features as the data used to train the model.
+        
+        Returns
+        -------
+        X_new array, shape (n_samples, n_components)
+            Transformed data
+        """
         U = linalg.lstsq(self.components_.T, X.T)[0].T
         U /= np.apply_along_axis(linalg.norm, 0, U)
         return U
