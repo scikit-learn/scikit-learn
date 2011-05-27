@@ -122,7 +122,7 @@ class LocallyLinearEmbedding(BaseEstimator):
         self.n_neighbors = n_neighbors
         self.out_dim = out_dim
 
-    def fit(self, X, reg=1e-3, eigen_solver='lobpcg', tol=1e-6,
+    def fit(self, X, Y=None, reg=1e-3, eigen_solver='lobpcg', tol=1e-6,
             max_iter=100, **params):
         """
         Compute the embedding vectors for data X.
@@ -173,11 +173,19 @@ class LocallyLinearEmbedding(BaseEstimator):
         Returns
         -------
         X_new : array, shape = [n_samples, out_dim]
+
+        Notes
+        -----
+        Because of scaling performed by this method, it is discouraged to use
+        it together with methods that are not scale-invariant (like SVMs)
         """
         self._set_params(**params)
         X = np.atleast_2d(X)
         if not hasattr(self, 'ball_tree'):
             raise ValueError('The model is not fitted')
-        ind = self.ball_tree.query(X,  return_distance=False)
-        weights = barycenter_weights(X, self.ball_tree.data[ind])
-        return np.sum(np.dot(weights, self.embedding_[ind]), axis=1)
+        ind = self.ball_tree.query(X, k=self.n_neighbors, return_distance=False)
+        weights = barycenter_weights(X, self.ball_tree.data[ind], reg=reg)
+        X_new = np.empty((X.shape[0], self.out_dim))
+        for i in range(X.shape[0]):
+            X_new[i] = np.dot(weights[i], self.embedding_[ind[i]])
+        return X_new
