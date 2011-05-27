@@ -17,13 +17,19 @@ import shutil
 
 def globs(globs):
     # setup mock urllib2 module to avoid downloading from mldata.org
-    mock_datasets = {'mnist-original':
-                         {'data': sp.empty((70000, 784)),
-                          'label': sp.repeat(sp.arange(10, dtype='d'), 7000)},
-                     'iris': {'data': sp.empty((150, 4))},
-                     'datasets-uci-iris': {'double0': sp.empty((150, 4)),
-                                           'class': sp.empty((150,))}
-                    }
+    mock_datasets = {
+        'mnist-original': {
+            'data': sp.empty((70000, 784)),
+            'label': sp.repeat(sp.arange(10, dtype='d'), 7000),
+        },
+        'iris': {
+            'data': sp.empty((150, 4)),
+        },
+        'datasets-uci-iris': {
+            'double0': sp.empty((150, 4)),
+            'class': sp.empty((150,)),
+        },
+    }
 
     global cachedir
     cachedir = tempfile.mkdtemp()
