@@ -76,7 +76,7 @@ naming or formatting convention. ``fetch_mldata`` is able to make sense
 of the most common cases, but allows to tailor the defaults to individual
 datasets:
 
-* The data array is mostly stored as ``(nfeatures x nsamples)`` in
+* The data array is mostly stored as ``(n_features x n_samples)`` in
   `mldata.org <http://mldata.org>`_ . This is the opposite of the
   ``scikits.learn`` convention, so ``fetch_mldata`` transposes the matrix by
   default. The ``transpose_data`` keyword controls this behavior::
