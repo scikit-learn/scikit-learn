@@ -46,10 +46,14 @@ k_range = np.arange(2, 20)
 random_state = check_random_state(0)
 
 
+# make a dataset of 4 top level clusters, all of them being shifted copies of
+# the same base cluster, which is turn is composed of smaller clusters
 base_cluster, _ = make_blobs(n_samples=n_samples / 4, n_features=n_features,
                              centers=n_centers, cluster_std=cluster_std,
                              center_box=(-8, 8), random_state=0)
 
+# shift the clusters more horizontally than vertically so that there is a
+# natural vertical grouping of the clusters
 samples_1 = base_cluster.copy()
 samples_1[:, 0] -= 10
 samples_1[:, 1] -= 3
