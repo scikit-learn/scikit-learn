@@ -48,13 +48,13 @@ def test_lle_manifold():
 
 def test_pipeline():
     # check that LocallyLinearEmbedding works fine as a Pipeline
-    from scikits.learn import linear_model, pipeline, datasets
+    from scikits.learn import pipeline, datasets
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
         [('filter', manifold.LocallyLinearEmbedding()),
-         ('clf', linear_model.LogisticRegression())])
+         ('clf', neighbors.NeighborsClassifier())])
     clf.fit(iris.data, iris.target)
-    assert clf.score(iris.data, iris.target) > .8
+    assert clf.score(iris.data, iris.target) > .7
 
 
 if __name__ == '__main__':
