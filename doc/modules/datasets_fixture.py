@@ -31,15 +31,15 @@ def globs(globs):
         },
     }
 
-    global cachedir
-    cachedir = tempfile.mkdtemp()
-    makedirs(join(cachedir, 'mldata'))
-    globs['cachedir'] = cachedir
+    global custom_data_home
+    custom_data_home = tempfile.mkdtemp()
+    makedirs(join(custom_data_home, 'mldata'))
+    globs['custom_data_home'] = custom_data_home
 
     global _urllib2_ref
     _urllib2_ref = datasets.mldata.urllib2
     globs['_urllib2_ref'] = _urllib2_ref
-    globs['mock_urllib2'] = mock_urllib2(mock_datasets, cachedir)
+    globs['mock_urllib2'] = mock_urllib2(mock_datasets)
     return globs
 
 
@@ -52,4 +52,4 @@ def setup_module(module):
 
 def teardown_module(module):
     datasets.mldata.urllib2 = _urllib2_ref
-    shutil.rmtree(cachedir)
+    shutil.rmtree(custom_data_home)

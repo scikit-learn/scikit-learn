@@ -4,6 +4,7 @@
 # License: Simplified BSD
 
 import os
+from StringIO import StringIO
 import scipy as sp
 from scipy.io import savemat
 
@@ -19,7 +20,7 @@ def assert_in(obj, in_=None, out_=None):
             assert name not in obj
 
 
-def fake_mldata_cache(columns_dict, dataname, cachedir, ordering=None):
+def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set in the cache_path.
 
     Parameters
@@ -27,46 +28,43 @@ def fake_mldata_cache(columns_dict, dataname, cachedir, ordering=None):
     columns_dict: contains data as
                   columns_dict[column_name] = array of data
     dataname: name of data set
-    cachedir: cache path
+    matfile: file-like object or file name
     ordering: list of column_names, determines the ordering in the data set
 
     Note: this function transposes all arrays, while fetch_mldata only
     transposes 'data', keep that into account in the tests.
     """
-    dset = dict(columns_dict)
+    datasets = dict(columns_dict)
 
     # transpose all variables
-    for name in dset:
-        dset[name] = dset[name].T
+    for name in datasets:
+        datasets[name] = datasets[name].T
 
     if ordering is None:
-        ordering = dset.keys()
+        ordering = sorted(list(datasets.keys()))
     # NOTE: setting up this array is tricky, because of the way Matlab
     # re-packages 1D arrays
-    dset['mldata_descr_ordering'] = sp.empty((1, len(ordering)),
-                                             dtype='object')
+    datasets['mldata_descr_ordering'] = sp.empty((1, len(ordering)),
+                                                 dtype='object')
     for i, name in enumerate(ordering):
-        dset['mldata_descr_ordering'][0, i] = name
+        datasets['mldata_descr_ordering'][0, i] = name
 
-    savemat(os.path.join(cachedir, 'mldata', dataname), dset,
-            oned_as='column')
+    savemat(matfile, datasets, oned_as='column')
 
 
 class mock_urllib2(object):
 
-    def __init__(self, mock_datasets, cachedir):
+    def __init__(self, mock_datasets):
         """Object that mocks the urllib2 module to fake requests to mldata.
 
         `mock_datasets` is a dictionary of {dataset_name: data_dict}, and
         `data_dict` itself is a dictionary of {column_name: data_array}
 
         When requesting a dataset with a name that is in mock_datasets,
-        this object creates a fake dataset in cachedir,
-        then returns a file handle to it. Otherwise, it raises
-        an URLError.
+        this object creates a fake dataset in a StringIO object and
+        returns it. Otherwise, it raises an URLError.
         """
         self.mock_datasets = mock_datasets
-        self.cachedir = cachedir
 
     class URLError(Exception):
         pass
@@ -75,9 +73,10 @@ class mock_urllib2(object):
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
+            matfile = StringIO()
             fake_mldata_cache(self.mock_datasets[dataset_name],
-                              resource_name, self.cachedir)
-            return open(os.path.join(self.cachedir, 'mldata',
-                                     resource_name + '.mat'), 'rb')
+                              resource_name, matfile)
+            matfile.seek(0)
+            return matfile
         else:
             raise mock_urllib2.URLError('%s not found.', urlname)
