@@ -43,8 +43,8 @@ k_range = np.arange(2, 20)
 
 random_state = check_random_state(0)
 
-#cv = Bootstrap(n_samples, n_bootstraps=10, n_train=0.66, n_test=0.33,
-#               random_state=random_state)
+cv = Bootstrap(n_samples, n_bootstraps=3, n_train=0.90, n_test=0.10,
+               random_state=random_state)
 gs = GridSearchCV(
     KMeans(init='k-means++', random_state=random_state),
     {'k': k_range},
@@ -79,8 +79,9 @@ pl.ylim(ymin=0.0, ymax=1.0)
 for k in admissible_k:
     pl.vlines(k, 0.0, 1.0, 'g')
 pl.title("V-Measure agreement of K-Means on the intersection of two\n"
-         "overlapping splits for various values of k")
+         "overlapping splits for various values of k\n"
+         "on the digits dataset")
 pl.xlabel("Number of centers 'k' for each run of k-means")
-pl.ylabel("V-Measure")
+pl.ylabel("V-Measure of agreement")
 
 pl.show()
