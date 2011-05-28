@@ -3038,7 +3038,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 				{
 					max_nr_class *= 2;
 					label = (int *)realloc(label,max_nr_class*sizeof(int));
-					count = (double *)realloc(count,max_nr_class*sizeof(int));
+					count = (double *)realloc(count,max_nr_class*sizeof(double));
 
 				}
 				label[nr_class] = this_label;
