@@ -40,7 +40,6 @@ n_features = 2
 n_centers = 3
 n_groups = 4
 cluster_std = 0.3
-n_bootstraps = 5
 k_range = np.arange(2, 20)
 
 random_state = check_random_state(0)
@@ -72,8 +71,6 @@ samples_4[:, 1] += 3
 
 samples = np.concatenate((samples_1, samples_2, samples_3, samples_4))
 samples = shuffle(samples, random_state=random_state)
-
-scores = np.zeros((n_bootstraps, len(k_range)))
 
 cv = Bootstrap(n_samples, n_bootstraps=3, random_state=random_state)
 gs = GridSearchCV(
