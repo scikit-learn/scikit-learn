@@ -294,7 +294,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        X, self.sparse = asanyarray_or_csr(X)
+        X, sparse = asanyarray_or_csr(X)
         y = safe_asanyarray(y)
 
         self.unique_y = np.unique(y)
@@ -315,7 +315,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             class_prior = []
 
         for yi in self.unique_y:
-            if self.sparse:
+            if sparse:
                 row_ind = np.nonzero(y == yi)[0]
                 N_c_i_temp.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
             else:
