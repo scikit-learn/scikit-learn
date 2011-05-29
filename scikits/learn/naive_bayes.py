@@ -333,10 +333,12 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
                                    + self.alpha * X.shape[1]))
         if self.intercept_ is None:
             self.intercept_ = np.log(class_prior)
+        else:
+            self.intercept_ = np.log(self.intercept_)
 
         return self
 
-    class_log_prior_ = property(lambda self: self.intercept__)
+    class_log_prior_ = property(lambda self: self.intercept_)
     feature_log_prob_ = property(lambda self: self.coef_)
 
     def predict(self, X):
