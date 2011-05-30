@@ -5,8 +5,9 @@
 
 from scipy import io
 
+import os
 from os.path import join, exists
-from os import makedirs
+from shutil import copyfileobj
 import urllib2
 
 from .base import get_data_home, Bunch
@@ -103,22 +104,27 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'mldata')
     if not exists(data_home):
-        makedirs(data_home)
+        os.makedirs(data_home)
 
     matlab_name = dataname + '.mat'
     filename = join(data_home, matlab_name)
 
     # if the file does not exist, download it
     if not exists(filename):
-        urlname = MLDATA_BASE_URL % (dataname)
+        urlname = MLDATA_BASE_URL % urllib2.quote(dataname)
         try:
             mldata_url = urllib2.urlopen(urlname)
-        except urllib2.URLError:
-            msg = "Dataset '%s' not found on mldata.org." % dataname
-            raise IOError(msg)
+        except urllib2.HTTPError, e:
+            if e.code == 404:
+                e.msg = "Dataset '%s' not found on mldata.org." % dataname
+            raise
         # store Matlab file
-        with open(filename, 'w+b') as matlab_file:
-            matlab_file.write(mldata_url.read())
+        try:
+            with open(filename, 'w+b') as matlab_file:
+                copyfileobj(mldata_url, matlab_file)
+        except:
+            os.remove(filename)
+            raise
         mldata_url.close()
 
     # load dataset matlab file
