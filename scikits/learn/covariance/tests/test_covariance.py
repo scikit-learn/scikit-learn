@@ -23,22 +23,18 @@ def test_covariance():
     cov = EmpiricalCovariance()
     cov.fit(X)
     assert_array_almost_equal(empirical_covariance(X), cov.covariance_, 4)
-    assert_almost_equal(cov.error(empirical_covariance(X)), 0)
+    assert_almost_equal(cov.error_norm(empirical_covariance(X)), 0)
     assert_almost_equal(
-        cov.error(empirical_covariance(X), error_type='rmse'), 0)
-    assert_almost_equal(
-        cov.error(empirical_covariance(X), error_type='sse'), 0)
+        cov.error_norm(empirical_covariance(X), norm='spectral'), 0)
 
     # test with n_features = 1
     X_1d = X[:,0]
     cov = EmpiricalCovariance()
     cov.fit(X_1d)
     assert_array_almost_equal(empirical_covariance(X_1d), cov.covariance_, 4)
-    assert_almost_equal(cov.error(empirical_covariance(X_1d)), 0)
+    assert_almost_equal(cov.error_norm(empirical_covariance(X_1d)), 0)
     assert_almost_equal(
-        cov.error(empirical_covariance(X_1d), error_type='rmse'), 0)
-    assert_almost_equal(
-        cov.error(empirical_covariance(X_1d), error_type='sse'), 0)
+        cov.error_norm(empirical_covariance(X_1d), norm='spectral'), 0)
 
     # test integer type
     X_integer = np.asarray([[0,1],[1,0]])
