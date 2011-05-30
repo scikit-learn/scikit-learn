@@ -29,6 +29,7 @@ print __doc__
 import numpy as np
 from scikits.learn.datasets import load_digits
 from scikits.learn.utils import check_random_state
+from scikits.learn.utils import shuffle
 from scikits.learn.cross_val import Bootstrap
 from scikits.learn.grid_search import GridSearchCV
 from scikits.learn.cluster import KMeans
@@ -41,15 +42,16 @@ samples = digits.data
 n_samples = samples.shape[0]
 k_range = np.arange(2, 20)
 
-random_state = check_random_state(0)
+random_state = check_random_state(3)
 
-cv = Bootstrap(n_samples, n_bootstraps=3, n_train=0.90, n_test=0.10,
+cv = Bootstrap(n_samples, n_bootstraps=10, n_train=0.67,
                random_state=random_state)
+
 gs = GridSearchCV(
     KMeans(init='k-means++', random_state=random_state),
     {'k': k_range},
     score_func=v_measure_score,
-    cv=None, verbose=1, n_jobs=-1)
+    cv=cv, verbose=1, n_jobs=-1)
 gs.fit(samples)
 scores = gs.scores_
 
