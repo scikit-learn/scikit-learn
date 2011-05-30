@@ -250,7 +250,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         Empirical log probability of features given a class, P(x_i|y).
 
     (`class_log_prior_` and `feature_log_prob_` are properties referring to
-    `intercept_` and `feature_log_prob_`, respectively.)
+    `intercept_` and `coef_`, respectively.)
 
     Examples
     --------
