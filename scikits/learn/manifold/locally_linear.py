@@ -5,12 +5,13 @@
 
 import numpy as np
 from ..base import BaseEstimator
+from ..utils import check_random_state
 from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
 
 
 def locally_linear_embedding(
     X, n_neighbors, out_dim, reg=1e-3, eigen_solver='lobpcg', tol=1e-6,
-    max_iter=100):
+    max_iter=100, random_state=0):
     """
     Perform a Locally Linear Embedding analysis on the data.
 
@@ -37,6 +38,10 @@ def locally_linear_embedding(
     max_iter : integer
         maximum number of iterations for the lobpcg solver.
 
+    random_state : int or RandomState instance
+        Pseudo number generator used for init the eigenvectors when using
+        the lobpcg method.
+
     Returns
     -------
     Y : array-like, shape [n_samples, out_dim]
@@ -50,6 +55,7 @@ def locally_linear_embedding(
     ----------
     "An Introduction to Locally Linear Embedding", Lawrence Saul & Sam Roweis.
     """
+    random_state = check_random_state(random_state)
 
     if eigen_solver == 'lobpcg':
         try:
@@ -79,7 +85,7 @@ def locally_linear_embedding(
         A = np.dot(A.T, A).tocsr()
 
         # initial approximation to the eigenvectors
-        X = np.random.rand(W.shape[0], out_dim)
+        X = random_state.rand(W.shape[0], out_dim)
         try:
             ml = pyamg.smoothed_aggregation_solver(A, symmetry='symmetric')
         except TypeError:
