@@ -12,9 +12,9 @@ An illustration of locally linear embedding on the digits dataset.
 print __doc__
 
 import numpy as np
-from scipy.linalg import qr
 import pylab as pl
 from matplotlib import offsetbox
+from scikits.learn.utils.fixes import qr_economic
 from scikits.learn import manifold, datasets, decomposition
 
 digits = datasets.load_digits(n_class=6)
@@ -26,7 +26,7 @@ n_samples, n_features = X.shape
 
 print "Computing random projection"
 rng = np.random.RandomState(42)
-Q, _ = qr(rng.normal(size=(n_features, 2)), econ=True)
+Q, _ = qr_economic(rng.normal(size=(n_features, 2)))
 X_projected = np.dot(Q.T, X.T).T
 
 #----------------------------------------------------------------------
