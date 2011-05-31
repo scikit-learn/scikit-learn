@@ -45,14 +45,16 @@ print "Computing LLE embedding"
 X_lle, err = manifold.locally_linear_embedding(X, 30, 2, reg=1e-2)
 print "Done. Reconstruction error: %g" % err
 
+
 #----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
 
-def plot_embedding(X, position, title=None):
+def plot_embedding(X, title=None):
     x_min, x_max = np.min(X, 0), np.max(X, 0)
     X = (X - x_min) / (x_max - x_min)
 
-    ax = pl.subplot(position)
+    pl.figure()
+    ax = pl.subplot(111)
     for i in range(digits.data.shape[0]):
         pl.text(X[i, 0], X[i, 1], str(digits.target[i]),
                 color=pl.cm.Set1(digits.target[i] / 10.),
@@ -75,8 +77,8 @@ def plot_embedding(X, position, title=None):
     if title is not None:
         pl.title(title)
 
-plot_embedding(X_projected, 221, "Embedding by random projection")
-plot_embedding(X_pca, 222, "Embedding by PCA")
-plot_embedding(X_lle, 223, "Embedding by LLE")
+plot_embedding(X_projected, "Random Projection of the digits")
+plot_embedding(X_pca, "Principal Components projection of the digits")
+plot_embedding(X_lle, "Locally Linear Embedding of the digits")
 
 pl.show()
