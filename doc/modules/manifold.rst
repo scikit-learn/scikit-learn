@@ -35,7 +35,7 @@ These take as input a set of points in a high-dimensional space and return
 those points embedded in a manifold of dimension specified by parameter
 ``out_dim``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_1.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_3.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
 
