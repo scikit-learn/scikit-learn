@@ -69,7 +69,7 @@ def locally_linear_embedding(
 
         eigen_values, eigen_vectors = scipy.linalg.eigh(
             M, eigvals=(1, out_dim + 1), overwrite_a=True)
-        index = np.argsort(np.abs(eigen_values))
+        index = np.argsort(np.abs(eigen_values))[1:]
         return eigen_vectors[:, index], np.sum(eigen_values)
 
     elif eigen_solver == 'lobpcg':
@@ -187,5 +187,5 @@ class LocallyLinearEmbedding(BaseEstimator):
         weights = barycenter_weights(X, self.ball_tree.data[ind], reg=reg)
         X_new = np.empty((X.shape[0], self.out_dim))
         for i in range(X.shape[0]):
-            X_new[i] = np.dot(weights[i], self.embedding_[ind[i]])
+            X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
         return X_new
