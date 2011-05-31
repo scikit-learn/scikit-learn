@@ -16,7 +16,7 @@ from .base import LinearModel
 from ..utils import arrayfuncs
 
 
-def lars_path(X, y, Xy=None, Gram=None, max_features=None,
+def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
               alpha_min=0, method='lar', overwrite_X=False,
               overwrite_Gram=False, verbose=False):
 
@@ -32,6 +32,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
 
         max_features: integer, optional
             Maximum number of selected features.
+
+        max_iter: integer, optional
+            Maximum number of iterations to perform.
+
 
         Gram: array, shape: (n_features, n_features), optional
             Precomputed Gram matrix (X' * X)
@@ -134,7 +138,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             alphas[n_iter] = alpha_min
             break
 
-        if n_active == max_features:
+        if n_active == max_features or n_iter == max_iter:
             break
 
         if not drop:
@@ -331,8 +335,9 @@ class LARS(LinearModel):
     --------
     lars_path, LassoLARS
     """
-    def __init__(self, fit_intercept=True, verbose=False):
+    def __init__(self, fit_intercept=True, verbose=False, max_iter=500):
         self.fit_intercept = fit_intercept
+        self.max_iter = max_iter
         self.verbose = verbose
         self.method = 'lar'
 
@@ -393,7 +398,7 @@ class LARS(LinearModel):
                   Gram=Gram, overwrite_X=overwrite_X,
                   overwrite_Gram=True, alpha_min=alpha,
                   method=self.method, verbose=self.verbose,
-                  max_features=max_features)
+                  max_features=max_features, max_iter=self.max_iter)
 
         self.coef_ = self.coef_path_[:, -1]
 
