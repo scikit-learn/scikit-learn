@@ -20,17 +20,13 @@ The :class:`NeighborsClassifier` implements the nearest-neighbors
 classification method using a vote heuristic: the class most present
 in the k nearest neighbors of a point is assigned to this point.
 
-It is possible to use different nearest neighbor search algorithms by
-using the keyword ``algorithm``. Possible values are ``'auto'``,
-``'ball_tree'``, ``'brute'`` and ``'brute_inplace'``. ``'ball_tree'``
-will create an instance of :class:`BallTree` to conduct the search,
-which is usually very efficient in low-dimensional spaces. In higher
-dimension, a brute-force approach is prefered thus parameters
-``'brute'`` and ``'brute_inplace'`` can be used . Both conduct a
-brute-force search, the difference being that ``'brute_inplace'`` does
-not perform any precomputations, and thus is better suited for
-low-memory settings.  Finally, ``'auto'`` is a simple heuristic that
-will guess the best approach based on the current dataset.
+It is possible to use different nearest neighbor search algorithms by using
+the keyword ``algorithm``. Possible values are ``'auto'``, ``'ball_tree'``,
+``'brute'``. ``'ball_tree'`` will create an instance of :class:`BallTree` to
+conduct the search, which is usually very efficient in low-dimensional spaces.
+In higher dimension, a brute-force approach is prefered thus parameters
+``'brute'`` can be used. Finally, ``'auto'`` is a simple
+heuristic that will guess the best approach based on the current dataset.
 
 
 .. figure:: ../auto_examples/images/plot_neighbors_1.png
@@ -77,11 +73,11 @@ Behind the scenes, nearest neighbor search is done by the object
 the nearest neighbors of a point in N-dimensional spaces.
 
 The optimal neighbor search algorithm for any problem
-depends on a few factors: the number of candidate points (N), 
+depends on a few factors: the number of candidate points (N),
 the dimensionality of the parameter space (D),
 the structure of the data, and the number of neighbors desired (K).
-For small N (less than 500 or so), a brute force search is 
-generally adequate.  As N increases, however, the computation time 
+For small N (less than 500 or so), a brute force search is
+generally adequate.  As N increases, however, the computation time
 for a neighbor search grows as O[N].  Various tree methods have
 been developed to reduce this to O[log(N)], the simplest of which is the
 KD tree.  A KD tree gains this speedup by recursively partitioning the data,
@@ -91,15 +87,15 @@ as D grows large compared to log(N), KD trees become very inefficient:
 this is one manifestation of the so-called "curse of dimensionality".
 
 Ball trees were developed as an alternative for high-dimensional neighbor
-searches.  Compared to a KDTree, the cost is a slightly longer construction 
+searches.  Compared to a KDTree, the cost is a slightly longer construction
 time, though for repeated queries, this added construction time quickly
-becomes insignificant. The advantage of the Ball Tree is that it is 
+becomes insignificant. The advantage of the Ball Tree is that it is
 efficient even as the dimensionality D becomes large.
 
 A ball tree recursively divides the data into
 nodes defined by a centroid C and radius R, such that each
 point in the node lies within the hyper-sphere of radius R centered
-at C.  The number of candidate points for a neighbor search 
+at C.  The number of candidate points for a neighbor search
 is reduced through use of the triangle inequality:
 
 .. math::   |x+y| \leq |x| + |y|
@@ -110,15 +106,15 @@ to all points within the node.
 Because of the spherical geometry of the ball tree nodes, its performance
 does not degrade at high dimensions, as long as the distribution of
 points has a lower-dimensional or sparse structure.
-For dense distributions of points that uniformly fill the 
+For dense distributions of points that uniformly fill the
 parameter space, the performance gain of a ball tree will be reduced.
-Because datasets of interest are usually structured, 
+Because datasets of interest are usually structured,
 the ball tree is a better choice in practice.
 
-One final performance note is the effect of the 
+One final performance note is the effect of the
 number of neighbors K.  The performance gain over brute force
 for any tree algorithm will degrade as K increases.  Depending on the
-size, dimensionality, and structure of the dataset, a search for 
+size, dimensionality, and structure of the dataset, a search for
 very large K may be performed more efficiently with a brute force algorithm
 than with a tree algorithm.
 
