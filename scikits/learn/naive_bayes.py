@@ -225,6 +225,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         (0 for no smoothing).
     fit_prior: boolean
         Whether to learn class prior probabilities or not.
+        If false, a uniform prior will be used.
 
     Methods
     -------
@@ -242,14 +243,14 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    class_log_prior_, intercept_ : array, shape = [n_classes]
+    `class_log_prior_`, `intercept_` : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    feature_log_prob_, coef_ : array, shape = [n_classes, n_features]
+    `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
-    (class_log_prior_ and feature_log_prob_ are properties referring to
-    intercept_ and feature_log_prob_, respectively.)
+    (`class_log_prior_` and `feature_log_prob_` are properties referring to
+    `intercept_` and `coef_`, respectively.)
 
     Examples
     --------
@@ -265,9 +266,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
     References
     ----------
-    For the rationale behind the names coef_ and intercept_, i.e. naive Bayes
-    as a linear classifier, see J. Rennie et al. (2003), Tackling the poor
-    assumptions of naive Bayes text classifiers, Proc. ICML.
+    For the rationale behind the names `coef_` and `intercept_`, i.e.
+    naive Bayes as a linear classifier, see J. Rennie et al. (2003),
+    Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
     def __init__(self, alpha=1.0, fit_prior=True):
@@ -287,43 +288,44 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             Target values.
 
         class_prior : array, shape [n_classes]
-            Prior probability per class.
+            Custom prior probability per class.
+            Overrides the fit_prior parameter.
 
         Returns
         -------
         self : object
             Returns self.
         """
-        X, self.sparse = asanyarray_or_csr(X)
+        X, sparse = asanyarray_or_csr(X)
         y = safe_asanyarray(y)
 
         self.unique_y = np.unique(y)
         n_classes = self.unique_y.size
 
-        self.intercept_ = None
-        if not self.fit_prior:
-            self.intercept_ = np.ones(n_classes) / n_classes
+        fit_prior = self.fit_prior
         if class_prior:
             assert len(class_prior) == n_classes, \
                    'Number of priors must match number of classs'
-            self.intercept_ = np.array(class_prior)
+            fit_prior = False
+        elif not fit_prior:
+            class_prior = np.ones(n_classes) / n_classes
 
         # N_c is the count of all features in all samples of class c.
         # N_c_i is the a count of feature i in all samples of class c.
-        N_c_i_temp = []
-        if self.intercept_ is None:
+        N_c_i = []
+        if fit_prior:
             class_prior = []
 
         for yi in self.unique_y:
-            if self.sparse:
+            if sparse:
                 row_ind = np.nonzero(y == yi)[0]
-                N_c_i_temp.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
+                N_c_i.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
             else:
-                N_c_i_temp.append(np.sum(X[y == yi, :], 0))
-            if self.intercept_ is None:
+                N_c_i.append(np.sum(X[y == yi, :], 0))
+            if fit_prior:
                 class_prior.append(np.float(np.sum(y == yi)) / y.size)
 
-        N_c_i = np.array(N_c_i_temp)
+        N_c_i = np.array(N_c_i)
         N_c = np.sum(N_c_i, axis=1)
 
         # Estimate (and smooth) the parameters of the distribution
@@ -331,12 +333,11 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self.coef_ = (np.log(N_c_i + self.alpha)
                           - np.log(N_c.reshape(-1, 1)
                                    + self.alpha * X.shape[1]))
-        if self.intercept_ is None:
-            self.intercept_ = np.log(class_prior)
+        self.intercept_ = np.log(class_prior)
 
         return self
 
-    class_log_prior_ = property(lambda self: self.intercept__)
+    class_log_prior_ = property(lambda self: self.intercept_)
     feature_log_prob_ = property(lambda self: self.coef_)
 
     def predict(self, X):

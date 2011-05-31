@@ -106,3 +106,13 @@ def test_mnnb_predict_proba():
     assert clf.predict([0,1]) == 0
     assert np.sum(clf.predict_proba([0,1])) == 1
     assert np.sum(clf.predict_proba([1,0])) == 1
+    assert np.sum(np.exp(clf.class_log_prior_)) == 1
+    assert np.sum(np.exp(clf.intercept_)) == 1
+
+
+def test_mnnb_uniform_prior():
+    clf = naive_bayes.MultinomialNB(fit_prior=False)
+    clf.fit([[0], [0], [1]], [0,0,1])
+    prior = np.exp(clf.class_log_prior_)
+    assert prior[0] == prior[1]
+    assert prior[0] == .5
