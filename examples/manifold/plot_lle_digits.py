@@ -21,13 +21,15 @@ digits = datasets.load_digits(n_class=6)
 X = digits.data
 n_samples, n_features = X.shape
 
+
 #----------------------------------------------------------------------
-# Random projection to the 2D using a random unitary matrix
+# Random 2D projection using a random unitary matrix
 
 print "Computing random projection"
 rng = np.random.RandomState(42)
 Q, _ = qr_economic(rng.normal(size=(n_features, 2)))
 X_projected = np.dot(Q.T, X.T).T
+
 
 #----------------------------------------------------------------------
 # Projection on to the first 2 principal components
@@ -35,9 +37,9 @@ X_projected = np.dot(Q.T, X.T).T
 print "Computing PCA projection"
 X_pca = decomposition.RandomizedPCA(2).fit(X).transform(X)
 
+
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
-
 
 print "Computing LLE embedding"
 X_lle, err = manifold.locally_linear_embedding(X, 30, 2, reg=1e-2)
