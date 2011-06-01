@@ -3,11 +3,17 @@
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
 
 import numpy as np
 
+from ..utils import check_arrays
 from ..base import BaseEstimator, TransformerMixin
+
+from ._preprocessing import normalize_axis1_sparse
+from ._preprocessing import normalize_length_axis1_sparse
+
 
 
 def _mean_and_std(X, axis=0, with_std=True):
@@ -114,19 +120,23 @@ class SampleNormalizer(BaseEstimator):
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
         """
-        if self.copy:
-            X = X.copy()
-
-        if self.norm == 'l1':
-            norms = np.abs(X).sum(axis=1)[:, np.newaxis]
-            norms[norms == 0.0] = 1.0
-        elif self.norm == 'l2':
-            norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
-            norms[norms == 0.0] = 1.0
-        else:
+        X, y = check_arrays(X, y, force_csr=True, copy=self.copy)
+        if self.norm not in ('l1', 'l2'):
             raise ValueError("'%s' is not a supported norm" % self.norm)
 
-        X /= norms
+        if hasattr(X, 'todense'):
+            if self.norm == 'l1':
+                normalize_axis1_sparse(X)
+            elif self.norm == 'l2':
+                normalize_length_axis1_sparse(X)
+        else:
+            if self.norm == 'l1':
+                norms = np.abs(X).sum(axis=1)[:, np.newaxis]
+                norms[norms == 0.0] = 1.0
+            elif self.norm == 'l2':
+                norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
+                norms[norms == 0.0] = 1.0
+            X /= norms
 
         return X
 
