@@ -41,8 +41,13 @@ def check_arrays(*arrays, **options):
     force_csr : boolean, False by default
         If force_csr is True, any scipy.sparse matrix is converted to
         Compressed Sparse Row representation.
+
+    copy : boolean, False by default
+        If copy is True, ensure that returned arrays are copies of the original
+        (if not already converted to another format earlier in the process).
     """
     force_csr = options.pop('force_csr', False)
+    copy = options.pop('copy', False)
     if options:
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
@@ -56,6 +61,7 @@ def check_arrays(*arrays, **options):
 
     checked_arrays = []
     for array in arrays:
+        array_orig = array
         if array is None:
             # special case: ignore optional y=None kwarg pattern
             checked_arrays.append(array)
@@ -76,6 +82,8 @@ def check_arrays(*arrays, **options):
         else:
             array = np.asanyarray(array)
 
+        if copy and array is array_orig:
+            array = array.copy()
         checked_arrays.append(array)
 
     return checked_arrays

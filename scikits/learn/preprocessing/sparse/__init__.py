@@ -8,35 +8,6 @@ import scipy.sparse as sp
 from .. import SampleNormalizer as DenseNormalizer
 from .. import Binarizer as DenseBinarizer
 
-from ._preprocessing import normalize_axis1_sparse
-from ._preprocessing import normalize_length_axis1_sparse
-
-
-class Normalizer(DenseNormalizer):
-
-    def transform(self, X, y=None, copy=True):
-        if not sp.isspmatrix_csr(X):
-            X = sp.csr_matrix(X)
-        elif copy:
-            X = X.copy()
-
-        normalize_axis1_sparse(X)
-
-        return X
-
-
-class LengthNormalizer(DenseNormalizer):
-
-    def transform(self, X, y=None, copy=True):
-        if not sp.isspmatrix_csr(X):
-            X = sp.csr_matrix(X)
-        elif copy:
-            X = X.copy()
-
-        normalize_length_axis1_sparse(X)
-
-        return X
-
 
 class Binarizer(DenseBinarizer):
     """Binarize data according to a threshold"""
