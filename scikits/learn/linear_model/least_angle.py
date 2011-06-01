@@ -35,7 +35,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-
     Gram: array, shape: (n_features, n_features), optional
         Precomputed Gram matrix (X' * X)
 
@@ -309,6 +308,9 @@ class LARS(LinearModel):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -322,7 +324,7 @@ class LARS(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LARS()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    LARS(verbose=False, fit_intercept=True)
+    LARS(max_iter=500, verbose=False, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.81649658]
 
@@ -343,8 +345,7 @@ class LARS(LinearModel):
     def fit(self, X, y, normalize=True, max_features=None,
              precompute='auto', overwrite_X=False, **params):
 
-        """
-        Fit the model using X, y as training data.
+        """Fit the model using X, y as training data.
 
         Parameters
         ----------
@@ -422,6 +423,9 @@ class LassoLARS (LARS):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -435,7 +439,7 @@ class LassoLARS (LARS):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLARS(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(alpha=0.01, verbose=False, fit_intercept=True)
+    LassoLARS(alpha=0.01, max_iter=500, verbose=False, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.72649658]
 
@@ -448,8 +452,10 @@ class LassoLARS (LARS):
     lars_path, Lasso
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False):
+    def __init__(self, alpha=1.0, fit_intercept=True, max_iter=500,
+                 verbose=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.method = 'lasso'
+        self.max_iter = max_iter
