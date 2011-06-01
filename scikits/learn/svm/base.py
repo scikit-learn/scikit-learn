@@ -34,7 +34,7 @@ class BaseLibSVM(BaseEstimator):
     Should not be used directly, use derived classes instead
     """
 
-    def __init__(self, impl, kernel, degree, gamma, coef0, cache_size,
+    def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability):
 
         if not impl in LIBSVM_IMPL:
@@ -49,14 +49,12 @@ class BaseLibSVM(BaseEstimator):
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
-        self.cache_size = cache_size
         self.tol = tol
         self.C = C
         self.nu = nu
         self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
-
 
     def _compute_kernel(self, X):
         """ Return the data transformed by the kernel (if the kernel
@@ -69,8 +67,8 @@ class BaseLibSVM(BaseEstimator):
                                dtype=np.float64, order='C')
         return X
 
-
-    def fit(self, X, y, class_weight={}, sample_weight=[], **params):
+    def fit(self, X, y, class_weight={}, sample_weight=[], cache_size=100.,
+            **params):
         """
         Fit the SVM model according to the given training data and
         parameters.
@@ -94,6 +92,9 @@ class BaseLibSVM(BaseEstimator):
 
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
+
+        cache_size: float, optional
+            Specify the size of the cache (in MB)
 
         Returns
         -------
@@ -138,14 +139,13 @@ class BaseLibSVM(BaseEstimator):
 
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
-        self.probB_ = libsvm.fit(X, y, 
+        self.probB_ = libsvm.fit(X, y,
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
             **self._get_params())
 
         return self
-
 
     def predict(self, X):
         """
@@ -185,10 +185,9 @@ class BaseLibSVM(BaseEstimator):
             self.label_, self.probA_, self.probB_,
             svm_type=svm_type, **self._get_params())
 
-
     def predict_proba(self, X):
         """
-        This function does classification or regression on a test vector T
+        This function does classification or regression on a test vector X
         given a model with probability information.
 
         Parameters
@@ -215,7 +214,8 @@ class BaseLibSVM(BaseEstimator):
         X = np.atleast_2d(np.asanyarray(X, dtype=np.float64, order='C'))
         X = self._compute_kernel(X)
         if self.impl not in ('c_svc', 'nu_svc'):
-            raise NotImplementedError("predict_proba only implemented for SVC and NuSVC")
+            raise NotImplementedError("predict_proba only implemented for SVC "
+                                      "and NuSVC")
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
@@ -286,7 +286,8 @@ class BaseLibSVM(BaseEstimator):
     @property
     def coef_(self):
         if self.kernel != 'linear':
-            raise NotImplementedError('coef_ is only available when using a linear kernel')
+            raise NotImplementedError('coef_ is only available when using a '
+                                      'linear kernel')
         return np.dot(self.dual_coef_, self.support_vectors_)
 
 

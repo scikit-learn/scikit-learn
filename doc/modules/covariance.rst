@@ -17,8 +17,8 @@ an accurate estimation of a population's covariance matrix under
 various settings.
 
 The package does not include robust tools yet, so we assume that the
-data sets do not contain any outlying data. We also assume thah the
-observations are independant and identically distributed.
+data sets do not contain any outlying data. We also assume that the
+observations are independent and identically distributed (i.i.d.).
 
 Empirical covariance
 ====================
@@ -33,7 +33,7 @@ sample is an unbiased estimator of the corresponding population
 covariance matrix.
 
 The empirical covariance matrix of a sample can be computed using the
-:meth:`empirical_covariance` function of the package, or by fitting an
+:func:`empirical_covariance` function of the package, or by fitting an
 :class:`EmpiricalCovariance` object to the data sample with the
 :meth:`EmpiricalCovariance.fit` method.  Be careful that depending
 whether the data are centered or not, the result will be different, so
@@ -71,7 +71,7 @@ implemented in scikit-learn.
 
 A convex transformation (with a user-defined shrinkage coefficient)
 can be directly applied to a pre-computed covariance with the
-:meth:`shrunk_covariance` method. Also, a shrunk estimator of the
+:func:`shrunk_covariance` method. Also, a shrunk estimator of the
 covariance can be fitted to data with a :class:`ShrunkCovariance`
 object and its :meth:`ShrunkCovariance.fit` method.  Again, depending
 whether the data are centered or not, the result will be different, so
@@ -130,7 +130,7 @@ with the :meth:`oas` function of the `scikits.learn.covariance`
 package, or it can be otherwise obtained by fitting an :class:`OAS`
 object to the same sample.  The formula we used to implement the OAS
 does not correspond to the one given in the article. It has been taken
-from the matlab programm available from the authors webpage
+from the MATLAB program available from the author's webpage
 (https://tbayes.eecs.umich.edu/yilun/covestimation).
 
 

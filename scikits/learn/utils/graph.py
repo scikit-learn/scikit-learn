@@ -12,7 +12,8 @@ sparse matrices.
 import numpy as np
 from scipy import sparse
 
-################################################################################
+
+###############################################################################
 # Path and connected component analysis.
 # Code adapted from networkx
 
@@ -48,15 +49,15 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
         graph = graph.tolil()
     else:
         graph = sparse.lil_matrix(graph)
-    seen = {}                  # level (number of hops) when seen in BFS
-    level = 0                  # the current level
-    next_level = [source]    # dict of nodes to check at next level
+    seen = {}                   # level (number of hops) when seen in BFS
+    level = 0                   # the current level
+    next_level = [source]       # dict of nodes to check at next level
     while next_level:
-        this_level = next_level  # advance to next level
-        next_level = set()       # and start a new list (fringe)
+        this_level = next_level     # advance to next level
+        next_level = set()          # and start a new list (fringe)
         for v in this_level:
             if v not in seen:
-                seen[v] = level # set the level of vertex v
+                seen[v] = level     # set the level of vertex v
                 neighbors = np.array(graph.rows[v])
                 # Restrict to the upper triangle
                 neighbors = neighbors[neighbors > v]
@@ -73,7 +74,7 @@ else:
     from ._csgraph import cs_graph_components
 
 
-################################################################################
+###############################################################################
 # Graph laplacian
 def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
     n_nodes = graph.shape[0]
@@ -146,4 +147,3 @@ def graph_laplacian(graph, normed=False, return_diag=False):
         # We have a numpy array
         return _graph_laplacian_dense(graph, normed=normed,
                                        return_diag=return_diag)
-

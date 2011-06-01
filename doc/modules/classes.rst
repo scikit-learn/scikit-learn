@@ -131,6 +131,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
+   linear_model.sparse.LogisticRegression
 
 
 Naive Bayes
@@ -147,7 +148,8 @@ Naive Bayes
    :toctree: generated/
    :template: class.rst
 
-   naive_bayes.GNB
+   naive_bayes.GaussianNB
+   naive_bayes.MultinomialNB
 
 
 Nearest Neighbors
@@ -227,6 +229,7 @@ Clustering
    :template: class.rst
 
    cluster.KMeans
+   cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.SpectralClustering
    cluster.AffinityPropagation
@@ -235,6 +238,10 @@ Clustering
 
 Metrics
 =======
+
+
+Classification metrics
+----------------------
 
 .. automodule:: scikits.learn.metrics
    :no-members:
@@ -247,7 +254,6 @@ Metrics
    :toctree: generated/
    :template: function.rst
 
-   metrics.euclidean_distances
    metrics.confusion_matrix
    metrics.roc_curve
    metrics.auc
@@ -258,13 +264,49 @@ Metrics
    metrics.precision_recall_fscore_support
    metrics.classification_report
    metrics.precision_recall_curve
-   metrics.r2_score
    metrics.zero_one_score
    metrics.zero_one
+
+
+Regression metrics
+------------------
+
+.. automodule:: scikits.learn.metrics
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.r2_score
    metrics.mean_square_error
 
-Pairwise metrics
+
+Clustering metrics
 ------------------
+
+.. automodule:: scikits.learn.metrics.cluster
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.homogeneity_completeness_v_measure
+   metrics.homogeneity_score
+   metrics.completeness_score
+   metrics.v_measure_score
+
+Pairwise metrics
+----------------
 
 .. automodule:: scikits.learn.metrics.pairwise
    :no-members:
@@ -297,15 +339,17 @@ Covariance Estimators
    :toctree: generated/
    :template: class.rst
 
-   covariance.Covariance
+   covariance.EmpiricalCovariance
    covariance.ShrunkCovariance
    covariance.LedoitWolf
+   covariance.OAS
 
 .. autosummary::
 
    :toctree: generated/
    :template: function.rst
 
+   covariance.empirical_covariance
    covariance.ledoit_wolf
    covariance.shrunk_covariance
    covariance.oas
@@ -351,6 +395,26 @@ Linear Discriminant Analysis
    lda.LDA
 
 
+Partial Least Squares
+=====================
+
+.. automodule:: scikits.learn.pls
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: class.rst
+
+   pls.PLSRegression
+   pls.PLSCanonical
+   pls.CCA
+   pls.PLSSVD
+
+
 Cross Validation
 ================
 
@@ -371,6 +435,7 @@ Cross Validation
    cross_val.StratifiedKFold
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
+   cross_val.Bootstrap
 
 
 Grid Search
@@ -442,7 +507,7 @@ From images
 
 
 From text
--------------
+---------
 
 .. automodule:: scikits.learn.feature_extraction.text
    :no-members:
@@ -463,6 +528,25 @@ From text
    feature_extraction.text.Vectorizer
 
 
+Manifold learning
+=================
+
+.. autosummary::
+
+    :toctree: generated
+    :template: class.rst
+
+    manifold.LocallyLinearEmbedding
+
+
+.. autosummary::
+
+    :toctree: generated
+    :template: function.rst
+
+    manifold.locally_linear_embedding
+
+
 Pipeline
 ========
 
@@ -480,10 +564,10 @@ Pipeline
    pipeline.Pipeline
 
 
-Partial Least Squares
-=====================
+Utilities
+=========
 
-.. automodule:: scikits.learn.pls
+.. automodule:: scikits.learn.utils
    :no-members:
    :no-inherited-members:
 
@@ -492,10 +576,8 @@ Partial Least Squares
 .. autosummary::
 
    :toctree: generated/
-   :template: class.rst
+   :template: function.rst
 
-   pls.PLSRegression
-   pls.PLSCanonical
-   pls.CCA
-   pls.PLSSVD
-
+   utils.check_random_state
+   utils.resample
+   utils.shuffle

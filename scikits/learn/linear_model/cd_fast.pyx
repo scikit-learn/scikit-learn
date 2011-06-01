@@ -166,7 +166,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = Q.shape[0]
 
-    # initial value "Q w" which will be kept of up to date in the interations
+    # initial value "Q w" which will be kept of up to date in the iterations
     cdef np.ndarray[DOUBLE, ndim=1] H = np.dot(Q, w)
 
     cdef double tmp

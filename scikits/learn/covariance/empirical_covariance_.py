@@ -29,7 +29,7 @@ def log_likelihood(emp_cov, precision):
       The precision matrix of the covariance model to be tested
 
     """
-    return -np.sum(emp_cov*precision) + exact_logdet(precision)
+    return -np.sum(emp_cov * precision) + exact_logdet(precision)
 
 
 def empirical_covariance(X, assume_centered=False):
@@ -155,7 +155,8 @@ class EmpiricalCovariance(BaseEstimator):
 
         """
         # compute empirical covariance of the test set
-        test_cov = empirical_covariance(X_test, assume_centered=assume_centered)
+        test_cov = empirical_covariance(X_test,
+                                        assume_centered=assume_centered)
         # compute log likelihood
         if self.store_precision:
             res = log_likelihood(test_cov, self.precision_)
@@ -164,7 +165,8 @@ class EmpiricalCovariance(BaseEstimator):
 
         return res
 
-    def mse(self, comp_cov):
+    def error_norm(self, comp_cov, norm='frobenius', scaling=True,
+                   squared=True):
         """Computes the Mean Squared Error between two covariance estimators.
         (In the sense of the Frobenius norm)
 
@@ -172,6 +174,18 @@ class EmpiricalCovariance(BaseEstimator):
         ----------
         comp_cov: array-like, shape = [n_features, n_features]
           The covariance which to be compared to.
+        norm: str
+          The type of norm used to compute the error. Available error types:
+          - 'frobenius' (default): sqrt(tr(A^t.A))
+          - 'spectral': sqrt(max(eigenvalues(A^t.A))
+          where A is the error (comp_cov - self.covariance_).
+        scaling: bool
+          If True (default), the squared error norm is divided by n_features
+          If False, the squared error norm is not rescaled
+        squared: bool
+          Whether to compute the squared error norm or the error norm.
+          If True (default), the squared error norm is returned.
+          If False, the error norm is returned.
 
         Returns
         -------
@@ -179,6 +193,23 @@ class EmpiricalCovariance(BaseEstimator):
         `self` and `comp_cov` covariance estimators.
 
         """
-        diff = comp_cov - self.covariance_
-
-        return np.sum(diff**2)
+        # compute the error
+        error = comp_cov - self.covariance_
+        # compute the error norm
+        if norm == "frobenius":
+            squared_norm = np.sum(error ** 2)
+        elif norm == "spectral":
+            squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error)))
+        else:
+            raise NotImplementedError(
+                "Only spectral and frobenius norms are implemented")
+        # optionaly scale the error norm
+        if scaling:
+            squared_norm = squared_norm / error.shape[0]
+        # finally get either the squared norm or the norm
+        if squared:
+            result = squared_norm
+        else:
+            result = np.sqrt(squared_norm)
+        
+        return result

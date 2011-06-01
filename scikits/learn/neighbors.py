@@ -312,12 +312,14 @@ def barycenter_weights(X, Z, reg=1e-3):
     # this might raise a LinalgError if G is singular and has trace
     # zero
     for i, A in enumerate(Z.transpose(0, 2, 1)):
-        C = A.T - X[i] # broadcasting
+        C = A.T - X[i]  # broadcasting
         G = np.dot(C, C.T)
         trace = np.trace(G)
-        if trace > 0: R = reg * trace
-        else: R = reg
-        G.flat[::Z.shape[1]+1] += R
+        if trace > 0:
+            R = reg * trace
+        else:
+            R = reg
+        G.flat[::Z.shape[1] + 1] += R
         w = linalg.solve(G, v, sym_pos=True)
         B[i, :] = w / np.sum(w)
     return B
@@ -328,8 +330,9 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Coordinates of samples. One sample per row.
+    X : array-like or BallTree, shape = [n_samples, n_features]
+        Sample data, in the form of a numpy array or a precomputed
+        :class:`BallTree`.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -362,9 +365,15 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', reg=1e-3):
             [ 1.,  0.,  1.]])
     """
     from scipy import sparse
-    X = np.asanyarray(X)
+
+    if isinstance(X, BallTree):
+        ball_tree = X
+        X = ball_tree.data
+    else:
+        X = np.asanyarray(X)
+        ball_tree = BallTree(X)
+
     n_samples = X.shape[0]
-    ball_tree = BallTree(X)
     n_nonzero = n_neighbors * n_samples
     A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
