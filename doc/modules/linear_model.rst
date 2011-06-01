@@ -244,7 +244,6 @@ function of the norm of its coefficients.
    >>> clf.coef_
    array([ 0.30710678,  0.        ])
 
-
 .. topic:: Examples:
 
  * :ref:`example_linear_model_plot_lasso_lars.py`
@@ -254,7 +253,6 @@ The LARS algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 consist of retrieving the path with function :func:`lars_path`
 
- 
 
 Mathematical formulation
 ------------------------
