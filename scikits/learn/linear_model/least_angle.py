@@ -19,56 +19,55 @@ from ..utils import arrayfuncs
 def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
               alpha_min=0, method='lar', overwrite_X=False,
               overwrite_Gram=False, verbose=False):
+    """Compute Least Angle Regression and LASSO path
 
-    """ Compute Least Angle Regression and LASSO path
+    Parameters
+    -----------
+    X: array, shape: (n_samples, n_features)
+        Input data
 
-        Parameters
-        -----------
-        X: array, shape: (n_samples, n_features)
-            Input data
+    y: array, shape: (n_samples)
+        Input targets
 
-        y: array, shape: (n_samples)
-            Input targets
+    max_features: integer, optional
+        Maximum number of selected features.
 
-        max_features: integer, optional
-            Maximum number of selected features.
-
-        max_iter: integer, optional
-            Maximum number of iterations to perform.
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
 
 
-        Gram: array, shape: (n_features, n_features), optional
-            Precomputed Gram matrix (X' * X)
+    Gram: array, shape: (n_features, n_features), optional
+        Precomputed Gram matrix (X' * X)
 
-        alpha_min: float, optional
-            Minimum correlation along the path. It corresponds to the
-            regularization parameter alpha parameter in the Lasso.
+    alpha_min: float, optional
+        Minimum correlation along the path. It corresponds to the
+        regularization parameter alpha parameter in the Lasso.
 
-        method: 'lar' | 'lasso'
-            Specifies the returned model. Select 'lar' for Least Angle
-            Regression, 'lasso' for the Lasso.
+    method: 'lar' | 'lasso'
+        Specifies the returned model. Select 'lar' for Least Angle
+        Regression, 'lasso' for the Lasso.
 
-        Returns
-        --------
-        alphas: array, shape: (max_features + 1,)
-            Maximum of covariances (in absolute value) at each
-            iteration.
+    Returns
+    --------
+    alphas: array, shape: (max_features + 1,)
+        Maximum of covariances (in absolute value) at each
+        iteration.
 
-        active: array, shape (max_features,)
-            Indices of active variables at the end of the path.
+    active: array, shape (max_features,)
+        Indices of active variables at the end of the path.
 
-        coefs: array, shape (n_features, max_features+1)
-            Coefficients along the path
+    coefs: array, shape (n_features, max_features+1)
+        Coefficients along the path
 
-        See also
-        --------
-        :ref:`LassoLARS`, :ref:`LARS`
+    See also
+    --------
+    :ref:`LassoLARS`, :ref:`LARS`
 
-        Notes
-        ------
-        * http://en.wikipedia.org/wiki/Least-angle_regression
+    Notes
+    ------
+    * http://en.wikipedia.org/wiki/Least-angle_regression
 
-        * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
+    * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
     """
 
     n_features = X.shape[1]
@@ -408,7 +407,7 @@ class LARS(LinearModel):
 
 
 class LassoLARS (LARS):
-    """ Lasso model fit with Least Angle Regression a.k.a. LARS
+    """Lasso model fit with Least Angle Regression a.k.a. LARS
 
     It is a Linear Model trained with an L1 prior as regularizer.
     lasso).
