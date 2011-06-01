@@ -462,6 +462,9 @@ class BernoulliNB(MultinomialNB):
     A. McCallum and K. Nigam (1998). A comparison of event models for naive
     Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for Text
     Categorization, pp. 41-48.
+
+    V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
+    naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
     def __init__(self, alpha=1.0, fit_prior=True):
