@@ -11,7 +11,6 @@ complete documentation.
 
 # Author: Vincent Michel <vincent.michel@inria.fr>
 #         Minor fixes by Fabian Pedregosa
-#         MultinomialNB classifier by:
 #         Amit Aides <amitibo@tx.technion.ac.il>
 #         Yehuda Finkelstein <yehudaf@tx.technion.ac.il>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
@@ -401,3 +400,91 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         # normalize by P(x) = P(f_1, ..., f_n)
         log_prob_x = np.logaddexp.reduce(jll[:, np.newaxis])
         return jll - log_prob_x
+
+
+class BernoulliNB(MultinomialNB):
+    """Naive Bayes classifier for multivariate Bernoulli models.
+
+    Like MultinomialNB, this classifier is suitable for discrete data. The
+    difference is that while MultinomialNB works with occurrence counts,
+    BernoulliNB is designed for binary/boolean features.
+
+    Note: this class does not check whether features are actually boolean.
+
+    Parameters
+    ----------
+    alpha: float, optional (default=1.0)
+        Additive (Laplace/Lidstone) smoothing parameter
+        (0 for no smoothing).
+    fit_prior: boolean
+        Whether to learn class prior probabilities or not.
+        If false, a uniform prior will be used.
+
+    Methods
+    -------
+    fit(X, y) : self
+        Fit the model
+
+    predict(X) : array
+        Predict using the model.
+
+    predict_proba(X) : array
+        Predict the probability of each class using the model.
+
+    predict_log_proba(X) : array
+        Predict the log probability of each class using the model.
+
+    Attributes
+    ----------
+    `class_log_prior_`, `intercept_` : array, shape = [n_classes]
+        Log probability of each class (smoothed).
+
+    `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
+        Empirical log probability of features given a class, P(x_i|y).
+
+    (`class_log_prior_` and `feature_log_prob_` are properties referring to
+    `intercept_` and `coef_`, respectively.)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.random.randint(2, size=(6, 100))
+    >>> Y = np.array([1, 2, 3, 4])
+    >>> from scikits.learn.naive_bayes import BernoulliNB
+    >>> clf = BernoulliNB()
+    >>> clf.fit(X, Y)
+    BernoulliNB(alpha=1.0, fit_prior=True)
+    >>> print clf.predict(X[2])
+    [3]
+
+    References
+    ----------
+    A. McCallum and K. Nigam (1998). A comparison of event models for naive
+    Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for Text
+    Categorization, pp. 41-48.
+    """
+
+    def __init__(self, alpha=1.0, fit_prior=True):
+        self.alpha = alpha
+        self.fit_prior = True
+
+    def _joint_log_likelihood(self, X):
+        X = atleast2d_or_csr(X)
+        sparse = issparse(X)
+
+        n_classes, n_features = self.coef_.shape
+        n_samples, n_features_X = X.shape
+
+        assert n_features_X == n_features, \
+            "Shape of samples doesn't match shape of training data"
+
+        # XXX: In the dense case, we could vectorize this loop. It might be
+        # worthwhile to check if this is faster.
+        jll = np.empty((n_classes, n_samples))
+        for i, x in enumerate(X):
+            xT = (x.toarray() if sparse else np.atleast_2d(x)).T
+            jll[:, i] = (np.dot(self.coef_, xT)
+                       + np.dot(np.log(1 - np.exp(self.coef_)),
+                                np.logical_not(xT))).flatten()
+
+        return jll + np.atleast_2d(self.intercept_).T
