@@ -7,6 +7,7 @@
 # License: BSD
 
 import numpy as np
+import scipy.sparse as sp
 
 from ..utils import check_arrays
 from ..base import BaseEstimator, TransformerMixin
@@ -76,6 +77,67 @@ class Scaler(BaseEstimator):
         return X
 
 
+def normalize(X, norm='l2', axis=1, copy=True):
+    """Normalize rows of a 2D array or scipy.sparse matrix
+
+    Parameters
+    ----------
+    X : array or scipy.sparse matrix with shape [n_samples, n_features]
+        The data to binarize, element by element.
+        scipy.sparse matrices should be in CSR format to avoid an
+        un-necessary copy.
+
+    norm : 'l1' or 'l2', optional ('l2' by default)
+        the norm to use to normalize each non zero sample
+
+    axis : 0 or 1, optional (1 by default)
+        if 1, normalize the columns instead of the rows
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array or a scipy.sparse
+        CSR matrix and if axis is 1).
+
+    See also
+    --------
+    :class:`SampleNormalizer` to perform normalization using
+    the ``Transformer`` API (e.g. inside a preprocessing
+    :class:scikits.learn.pipeline.Pipeline`)
+    """
+    if norm not in ('l1', 'l2'):
+        raise ValueError("'%s' is not a supported norm" % norm)
+
+    if axis == 0:
+        sparse_format = 'csc'
+    elif axis == 1:
+        sparse_format = 'csr'
+    else:
+        raise ValueError("'%d' is not a supported axis" % axis)
+
+    X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
+    if axis == 0:
+        X = X.T
+
+    if sp.issparse(X):
+        if norm == 'l1':
+            inplace_csr_row_normalize_l1(X)
+        elif norm == 'l2':
+            inplace_csr_row_normalize_l2(X)
+    else:
+        if norm == 'l1':
+            norms = np.abs(X).sum(axis=1)[:, np.newaxis]
+            norms[norms == 0.0] = 1.0
+        elif norm == 'l2':
+            norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
+            norms[norms == 0.0] = 1.0
+        X /= norms
+
+    if axis == 0:
+        X = X.T
+
+    return X
+
+
 class SampleNormalizer(BaseEstimator):
     """Normalize samples individually to unit norm
 
@@ -107,6 +169,10 @@ class SampleNormalizer(BaseEstimator):
     ----
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
+
+    See also
+    --------
+    :func:`normalize` equivalent function without the object oriented API
     """
 
     def __init__(self, norm='l2', copy=True):
@@ -121,7 +187,7 @@ class SampleNormalizer(BaseEstimator):
         """
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y=None, copy=None):
         """Scale each non zero row of X to unit norm
 
         Parameters
@@ -130,25 +196,8 @@ class SampleNormalizer(BaseEstimator):
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
         """
-        X, y = check_arrays(X, y, force_csr=True, copy=self.copy)
-        if self.norm not in ('l1', 'l2'):
-            raise ValueError("'%s' is not a supported norm" % self.norm)
-
-        if hasattr(X, 'todense'):
-            if self.norm == 'l1':
-                inplace_csr_row_normalize_l1(X)
-            elif self.norm == 'l2':
-                inplace_csr_row_normalize_l2(X)
-        else:
-            if self.norm == 'l1':
-                norms = np.abs(X).sum(axis=1)[:, np.newaxis]
-                norms[norms == 0.0] = 1.0
-            elif self.norm == 'l2':
-                norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
-                norms[norms == 0.0] = 1.0
-            X /= norms
-
-        return X
+        copy = copy if copy is not None else self.copy
+        return normalize(X, norm=self.norm, copy=copy)
 
 
 class Binarizer(BaseEstimator):
@@ -195,7 +244,7 @@ class Binarizer(BaseEstimator):
         """
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, y=None, copy=None):
         """Scale each non zero row of X to unit norm
 
         Parameters
@@ -205,9 +254,10 @@ class Binarizer(BaseEstimator):
             scipy.sparse matrices should be in CSR format to avoid an
             un-necessary copy.
         """
-        X, y = check_arrays(X, y, force_csr=True, copy=self.copy)
+        copy = copy if copy is not None else self.copy
+        X, y = check_arrays(X, y, sparse_format='csr', copy=copy)
 
-        if hasattr(X, 'todense'):
+        if sp.issparse(X):
             cond = X.data > self.threshold
             not_cond = np.logical_not(cond)
             X.data[cond] = 1

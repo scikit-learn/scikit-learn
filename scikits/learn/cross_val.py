@@ -646,7 +646,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     verbose: integer, optional
         The verbosity level
     """
-    X, y = check_arrays(X, y, force_csr=True)
+    X, y = check_arrays(X, y, sparse_format='csr')
     n_samples = X.shape[0]
     if cv is None:
         indices = hasattr(X, 'tocsr')
@@ -739,7 +739,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     Ojala and Garriga. Permutation Tests for Studying Classifier Performance.
     The Journal of Machine Learning Research (2010) vol. 11
     """
-    X, y = check_arrays(X, y, force_csr=True)
+    X, y = check_arrays(X, y, sparse_format='csr')
     n_samples = X.shape[0]
     if cv is None:
         indices = hasattr(X, 'tocsr')

@@ -38,15 +38,15 @@ def check_arrays(*arrays, **options):
         Python lists or tuples occurring in arrays are converted to 1D numpy
         arrays.
 
-    force_csr : boolean, False by default
-        If force_csr is True, any scipy.sparse matrix is converted to
-        Compressed Sparse Row representation.
+    sparse_format : 'csr' or 'csc', None by default
+        If not None, any scipy.sparse matrix is converted to
+        Compressed Sparse Rows or Compressed Sparse Columns representations.
 
     copy : boolean, False by default
         If copy is True, ensure that returned arrays are copies of the original
         (if not already converted to another format earlier in the process).
     """
-    force_csr = options.pop('force_csr', False)
+    sparse_format = options.pop('sparse_format', None)
     copy = options.pop('copy', False)
     if options:
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
@@ -76,9 +76,11 @@ def check_arrays(*arrays, **options):
             raise ValueError("Found array with dim %d. Expected %d" % (
                 size, n_samples))
 
-        if hasattr(array, 'tocsr'):
-            if force_csr:
+        if sp.issparse(array):
+            if sparse_format == 'csr':
                 array = array.tocsr()
+            elif sparse_format == 'csc':
+                array = array.tocsc()
         else:
             array = np.asanyarray(array)
 
@@ -171,7 +173,7 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
-    arrays = check_arrays(*arrays, force_csr=True)
+    arrays = check_arrays(*arrays, sparse_format='csr')
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
