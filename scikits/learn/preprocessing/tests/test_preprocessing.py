@@ -14,8 +14,6 @@ from scikits.learn.preprocessing import SampleNormalizer
 from scikits.learn.preprocessing import Scaler
 from scikits.learn.preprocessing import scale
 
-from scikits.learn.preprocessing.sparse import Binarizer as SparseBinarizer
-
 from scikits.learn import datasets
 from scikits.learn.linear_model.stochastic_gradient import SGDClassifier
 
@@ -115,28 +113,26 @@ def test_normalizer_l2():
 
 
 def test_binarizer():
-    X_ = np.array([[1, 0, 5],
-                  [2, 3, 0]])
+    X_ = np.array([[1, 0, 5], [2, 3, 0]])
 
-    for klass, init in ((Binarizer, np.array),
-                        (SparseBinarizer, sp.csr_matrix)):
+    for init in (np.array, sp.csr_matrix):
 
         X = init(X_.copy())
 
-        binarizer = klass(threshold=2.0)
-        X_bin = toarray(binarizer.transform(X, copy=True))
+        binarizer = Binarizer(threshold=2.0, copy=True)
+        X_bin = toarray(binarizer.transform(X))
         assert_equal(np.sum(X_bin == 0), 4)
         assert_equal(np.sum(X_bin == 1), 2)
 
-        binarizer = klass()
-        X_bin = binarizer.transform(X, copy=True)
+        binarizer = Binarizer(copy=True)
+        X_bin = binarizer.transform(X)
         assert X_bin is not X
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin == 0), 2)
         assert_equal(np.sum(X_bin == 1), 4)
 
-        binarizer = klass()
-        X_bin = binarizer.transform(X, copy=False)
+        binarizer = Binarizer(copy=False)
+        X_bin = binarizer.transform(X)
         assert X_bin is X
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin == 0), 2)
