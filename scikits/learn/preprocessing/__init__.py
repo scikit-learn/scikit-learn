@@ -79,12 +79,19 @@ class Scaler(BaseEstimator):
 class SampleNormalizer(BaseEstimator):
     """Normalize samples individually to unit norm
 
-    Each sample (e.g. each row) with at least one non zero component is
-    rescaled independently of other samples so that its norm (l1 or l2)
-    equals one.
+    Each sample (i.e. each row of the data matrix) with at least one
+    non zero component is rescaled independently of other samples so
+    that its norm (l1 or l2) equals one.
 
     This transformer is able to work both with dense numpy arrays and
-    scipy.sparse matrix (most efficiently in CSR format).
+    scipy.sparse matrix (use CSR format if you want to avoid the burden of
+    a copy / conversion).
+
+    Scaling inputs to unit norms is a common operation for text
+    classification or clustering for instance. For instance the dot
+    product of two l2-normalized TF-IDF vectors is the cosine similarity
+    of the vectors and is the base similarity metric for the Vector
+    Space Model commonly used by the Information Retrieval community.
 
     Parameters
     ----------
@@ -92,10 +99,14 @@ class SampleNormalizer(BaseEstimator):
         the norm to use to normalize each non zero sample
 
     copy : boolean, optional, default is True
-        set to False to perform inplace row normalization
+        set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array or a scipy.sparse
+        CSR matrix).
 
-    Note: this estimator is stateless (besides constructor parameters),
-    the fit method does nothing but is useful when used in a pipeline:
+    Note
+    ----
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
     """
 
     def __init__(self, norm='l2', copy=True):
@@ -141,16 +152,35 @@ class SampleNormalizer(BaseEstimator):
 
 
 class Binarizer(BaseEstimator):
-    """Binarize data (set values are 0 or 1) according to a threshold
+    """Binarize data (set feature values to 0 or 1) according to a threshold
 
     The default threshold is 0.0 so that any non-zero values are set to 1.0
     and zeros are left untouched.
 
-    Note: if the input is a sparse matrix, only the non-zero values are subject
+    Binarization is a common operation on text count data where the
+    analyst can decide to only consider the presence or absence of a
+    feature rather than a quantified number of occurences for instance.
+
+    It can also be used as a pre-processing step for estimators that
+    consider boolean random variables (e.g. modeled using the Bernoulli
+    distribution in a Bayesian setting).
+
+    Parameters
+    ----------
+    threshold : float, optional (0.0 by default)
+        Lower bound that triggers feature values to be replaced by 1.0
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace binarization and avoid a copy (if
+        the input is already a numpy array or a scipy.sparse CSR matrix).
+
+    Notes
+    -----
+    If the input is a sparse matrix, only the non-zero values are subject
     to update by the Binarizer class.
 
-    This estimator is stateless (besides constructor parameters),
-    the fit method does nothing but is useful when used in a pipeline:
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
     """
 
     def __init__(self, threshold=0.0, copy=True):
