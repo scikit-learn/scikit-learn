@@ -1,11 +1,9 @@
 from os.path import join
 import numpy
 
+
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info
-    from numpy.distutils.system_info import get_standard_file
-    from numpy.distutils.system_info import BlasNotFoundError
 
     config = Configuration('preprocessing', parent_package, top_path)
 
@@ -16,6 +14,7 @@ def configuration(parent_package='', top_path=None):
     )
 
     return config
+
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup

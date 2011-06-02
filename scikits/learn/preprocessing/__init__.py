@@ -88,11 +88,11 @@ class SampleNormalizer(BaseEstimator):
 
     Parameters
     ----------
-    copy : boolean, optional, default is True
-        set to False to perform inplace row normalization
-
     norm : 'l1' or 'l2', optional ('l2' by default)
         the norm to use to normalize each non zero sample
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace row normalization
 
     Note: this estimator is stateless (besides constructor parameters),
     the fit method does nothing but is useful when used in a pipeline:
@@ -148,6 +148,9 @@ class Binarizer(BaseEstimator):
 
     Note: if the input is a sparse matrix, only the non-zero values are subject
     to update by the Binarizer class.
+
+    This estimator is stateless (besides constructor parameters),
+    the fit method does nothing but is useful when used in a pipeline:
     """
 
     def __init__(self, threshold=0.0, copy=True):
