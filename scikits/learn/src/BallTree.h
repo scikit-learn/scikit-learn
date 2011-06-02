@@ -353,6 +353,50 @@ public:
       }
   }
 
+  //query all points within a radius r of pt, with distances
+  size_t query_radius(const Point& pt,
+                      value_type r,
+                      std::vector<size_t>& nbrs,
+		      std::vector<value_type>& dist){
+    value_type dist_LB = calc_dist_LB(pt);
+
+    //--------------------------------------------------
+    //  Case 1: balls do not intersect.  return
+    if( dist_LB > r ){}
+
+    //--------------------------------------------------
+    //  Case 2: this node is inside ball.  Add all pts to nbrs
+    else if(dist_LB + 2*radius <= r){
+      for(size_t i=0; i<indices.size(); i++){
+	nbrs.push_back(indices[i]);
+	dist.push_back(Dist(pt,*(Points[indices[i]])));
+      }
+    }
+
+    //--------------------------------------------------
+    //  Case 3: node is a leaf.  Go through points and
+    //          determine if they're in the ball
+    else if(is_leaf){
+      for(size_t i=0; i<indices.size(); i++){
+	value_type D = Dist( pt,*(Points[indices[i]]) );
+	if( D<=r ){
+	  nbrs.push_back(indices[i]);
+	  dist.push_back(D);
+	}
+      }
+      return nbrs.size();
+    }
+    
+    //--------------------------------------------------
+    //  Case 4: node is not a leaf.  Recursively search
+    //          subnodes
+    else{
+      sub1->query_radius(pt,r,nbrs,dist);
+      sub2->query_radius(pt,r,nbrs,dist);
+    }
+    return nbrs.size();
+  }
+
   //query all points within a radius r of pt
   size_t query_radius(const Point& pt,
                       value_type r,
@@ -537,24 +581,40 @@ public:
     // return number of points.
     // on return, nbrs is an array of indices of nearest points
     // if nbrs is not supplied, just count points within radius
-    size_t query_radius(const Point& pt, value_type r, std::vector<size_t>& nbrs)
+    size_t query_radius(const Point& pt, value_type r, 
+			std::vector<size_t>& nbrs,
+			std::vector<value_type>& dist)
     {
-        return head_node_->query_radius(pt,r,nbrs);
+      return head_node_->query_radius(pt,r,nbrs,dist);
+    }
+    
+    size_t query_radius(const Point& pt, value_type r, 
+			std::vector<size_t>& nbrs)
+    {
+      return head_node_->query_radius(pt,r,nbrs);
     }
 
     size_t query_radius(const Point& pt, value_type r)
     {
-        return head_node_->query_radius(pt,r);
+      return head_node_->query_radius(pt,r);
     }
     
-    size_t query_radius(const Point* pt, value_type r, std::vector<size_t>& nbrs)
+    size_t query_radius(const Point* pt, value_type r, 
+			std::vector<size_t>& nbrs,
+			std::vector<value_type>& dist)
     {
-        return head_node_->query_radius(*pt,r,nbrs);
+      return head_node_->query_radius(*pt,r,nbrs,dist);
+    }
+    
+    size_t query_radius(const Point* pt, value_type r, 
+			std::vector<size_t>& nbrs)
+    {
+      return head_node_->query_radius(*pt,r,nbrs);
     }
 
     size_t query_radius(const Point* pt, value_type r)
     {
-        return head_node_->query_radius(*pt,r);
+      return head_node_->query_radius(*pt,r);
     }
     
 private:
