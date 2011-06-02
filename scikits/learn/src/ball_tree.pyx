@@ -31,8 +31,9 @@ cdef extern from "BallTree.h":
         void query(Point *, vector[size_t] &, vector[Point_dtype] &) except +
         double query_radius(Point *, Point_dtype) except +
         double query_radius(Point *, Point_dtype, vector[size_t] &) except +
+        double query_radius(Point *, Point_dtype, 
+                            vector[size_t] &, vector[Point_dtype] &) except +
     double Euclidean_Dist(Point *, Point *) except +
-
 
 
 cdef Point *make_point(vals):
@@ -159,7 +160,7 @@ cdef class BallTree:
         else:
             return out_indices.reshape((orig_shape[:-1]) + (k,))
 
-    def query_radius(self, x, r, count_only = False):
+    def query_radius(self, x, r, return_distance = False, count_only = False):
         """
         query_radius(self, x, r, count_only = False):
 
@@ -170,16 +171,28 @@ cdef class BallTree:
         x : array-like, last dimension self.dim
               An array of points to query
         r : distance within which neighbors are returned
+              r can be a single value, or an array of values
+              of shape x.shape[:-1] if different radii are
+              desired for each point.
+        return_distance : boolean (default = False)
+              if True,  return distances to neighbors of each point
+              if False, return only neighbors
+            Note that unlike query() above, setting return_distance=True
+             adds to the computation time.  Not all distances must be 
+             calculated for return_distance=False.
         count_only : boolean (default = False)
               if True,  return only the count of points
                          within distance r
               if False, return the indices of all points
                          within distance r
+            If return_distance==True, setting count_only=True will raise an
+             error.
 
         Returns
         -------
-        n    : if count_only == True
-        i    : if count_only == False
+        n     : if count_only == True
+        i     : if count_only == False and return_distance == False
+        (i,d) : if count_only == False and return_distance == True
 
         n : array of integers - shape: x.shape[:-1]
             each entry gives the number of neighbors within
@@ -190,12 +203,27 @@ cdef class BallTree:
             listing the indices of neighbors
             of the corresponding point
             (note that neighbors are not sorted by distance)
+
+        d : array of objects  - shape: x.shape[:-1]
+            each element is a numpy double array
+            listing the distances corresponding to indices in i.
         """
+        if count_only and return_distance:
+            raise ValueError("count_only and return_distance " 
+                             "cannot both be true")
+        
         x = np.atleast_2d(x)
         assert x.shape[-1] == self.num_dims
 
+        r = np.atleast_1d(r)
+        if r.shape==(1,):
+            r = r[0]*np.ones(x.shape[:-1],dtype=np.double)
+        else:
+            assert r.shape[:-1] == x.shape[:-1]
+
         cdef Point *temp
-        cdef vector[size_t] results = vector[size_t](0)
+        cdef vector[size_t] ind_vec = vector[size_t](0)
+        cdef vector[Point_dtype] dist_vec = vector[Point_dtype](0)
 
         # almost-flatten x for iteration
         orig_shape = x.shape
@@ -203,23 +231,39 @@ cdef class BallTree:
 
         # allocate output
         if count_only:
-            output = np.zeros(x.shape[0],np.int64)
+            count = np.zeros(x.shape[0],np.int64)
+        elif return_distance:
+            indices = np.empty(x.shape[0],dtype='object')
+            distances = np.empty(x.shape[0],dtype='object')
         else:
-            #output = [None for i in range(x.shape[0])]
-            output = np.empty(x.shape[0],dtype='object')
+            indices = np.empty(x.shape[0],dtype='object')
 
         for pt_idx, pt in enumerate(x):
             temp = make_point(pt)
             if count_only:
-                output[pt_idx] = self.bt_ptr.query_radius(temp,r)
+                count[pt_idx] = self.bt_ptr.query_radius(temp,r[pt_idx])
+            elif return_distance:
+                self.bt_ptr.query_radius(temp, r[pt_idx], ind_vec, dist_vec)
+                indices[pt_idx] = np.zeros(ind_vec.size(), dtype=np.int)
+                distances[pt_idx] = np.zeros(dist_vec.size(),dtype=np.double)
+                for neighbor_idx in range(ind_vec.size()):
+                    indices[pt_idx][neighbor_idx] = ind_vec[neighbor_idx]
+                    distances[pt_idx][neighbor_idx] = dist_vec[neighbor_idx]
+                ind_vec.resize(0)
+                dist_vec.resize(0)
             else:
-                self.bt_ptr.query_radius(temp, r, results)
-                output[pt_idx] = np.zeros(results.size())
-                for neighbor_idx in range(results.size()):
-                    output[pt_idx][neighbor_idx] = results[neighbor_idx]
-                results.resize(0)
+                self.bt_ptr.query_radius(temp, r[pt_idx], ind_vec)
+                indices[pt_idx] = np.zeros(ind_vec.size(), dtype=np.int)
+                for neighbor_idx in range(ind_vec.size()):
+                    indices[pt_idx][neighbor_idx] = ind_vec[neighbor_idx]
+                ind_vec.resize(0)
             del temp
 
         # deflatten results
-        return output.reshape(orig_shape[:-1])
+        if count_only:
+            return count.reshape(orig_shape[:-1])
+        elif return_distance:
+            return indices, distances
+        else:
+            return indices
 
