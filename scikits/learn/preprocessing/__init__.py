@@ -11,9 +11,8 @@ import numpy as np
 from ..utils import check_arrays
 from ..base import BaseEstimator, TransformerMixin
 
-from ._preprocessing import normalize_axis1_sparse
-from ._preprocessing import normalize_length_axis1_sparse
-
+from ._preprocessing import inplace_csr_row_normalize_l1
+from ._preprocessing import inplace_csr_row_normalize_l2
 
 
 def _mean_and_std(X, axis=0, with_std=True):
@@ -126,9 +125,9 @@ class SampleNormalizer(BaseEstimator):
 
         if hasattr(X, 'todense'):
             if self.norm == 'l1':
-                normalize_axis1_sparse(X)
+                inplace_csr_row_normalize_l1(X)
             elif self.norm == 'l2':
-                normalize_length_axis1_sparse(X)
+                inplace_csr_row_normalize_l2(X)
         else:
             if self.norm == 'l1':
                 norms = np.abs(X).sum(axis=1)[:, np.newaxis]
