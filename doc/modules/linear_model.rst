@@ -240,10 +240,9 @@ function of the norm of its coefficients.
    >>> from scikits.learn import linear_model
    >>> clf = linear_model.LassoLARS(alpha=.1)
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-   LassoLARS(alpha=0.1, verbose=False, fit_intercept=True)
+   LassoLARS(alpha=0.1, max_iter=500, verbose=False, fit_intercept=True)
    >>> clf.coef_
    array([ 0.30710678,  0.        ])
-
 
 .. topic:: Examples:
 
@@ -254,7 +253,6 @@ The LARS algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 consist of retrieving the path with function :func:`lars_path`
 
- 
 
 Mathematical formulation
 ------------------------
