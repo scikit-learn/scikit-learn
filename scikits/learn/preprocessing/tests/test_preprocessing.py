@@ -68,7 +68,7 @@ def test_normalizer_l1():
     X_orig = np.random.randn(4, 5)
     X_orig[3, :] = 0.0
 
-    for init in (np.array,):  # sp.csr_matrix):
+    for init in (np.array, sp.csr_matrix):
 
         X = init(X_orig.copy())
 
@@ -94,7 +94,7 @@ def test_normalizer_l2():
     X_orig = np.random.randn(4, 5)
     X_orig[3, :] = 0.0
 
-    for init in (np.array,):  # sp.csr_matrix):
+    for init in (np.array, sp.csr_matrix):
 
         X = init(X_orig.copy())
 
