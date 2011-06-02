@@ -142,24 +142,51 @@ class SampleNormalizer(BaseEstimator):
 
 
 class Binarizer(BaseEstimator):
-    """Binarize data according to a threshold"""
+    """Binarize data (set values are 0 or 1) according to a threshold
 
-    def __init__(self, threshold=0.0):
+    The default threshold is 0.0 so that any non-zero values are set to 1.0
+    and zeros are left untouched.
+
+    Note: if the input is a sparse matrix, only the non-zero values are subject
+    to update by the Binarizer class.
+    """
+
+    def __init__(self, threshold=0.0, copy=True):
         self.threshold = threshold
+        self.copy = copy
 
-    def fit(self, X, y=None, **params):
-        self._set_params(**params)
+    def fit(self, X, y=None):
+        """Do nothing and return the estimator unchanged
+
+        This method is just there to implement the usual API and hence
+        work in pipelines.
+        """
         return self
 
     def transform(self, X, y=None, copy=True):
-        if copy:
-            X = X.copy()
+        """Scale each non zero row of X to unit norm
 
-        cond = X > self.threshold
-        not_cond = np.logical_not(cond)
-        X[cond] = 1
-        X[not_cond] = 0
+        Parameters
+        ----------
+        X : array or scipy.sparse matrix with shape [n_samples, n_features]
+            The data to binarize, element by element.
+            scipy.sparse matrices should be in CSR format to avoid an
+            un-necessary copy.
+        """
+        X, y = check_arrays(X, y, force_csr=True, copy=self.copy)
 
+        if hasattr(X, 'todense'):
+            cond = X.data > self.threshold
+            not_cond = np.logical_not(cond)
+            X.data[cond] = 1
+            # FIXME: if enough values became 0, it may be worth changing
+            #        the sparsity structure
+            X.data[not_cond] = 0
+        else:
+            cond = X > self.threshold
+            not_cond = np.logical_not(cond)
+            X[cond] = 1
+            X[not_cond] = 0
         return X
 
 
