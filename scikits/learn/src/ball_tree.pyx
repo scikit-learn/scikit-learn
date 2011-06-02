@@ -219,7 +219,7 @@ cdef class BallTree:
         if r.shape==(1,):
             r = r[0]*np.ones(x.shape[:-1],dtype=np.double)
         else:
-            assert r.shape[:-1] == x.shape[:-1]
+            assert r.shape == x.shape[:-1]
 
         cdef Point *temp
         cdef vector[size_t] ind_vec = vector[size_t](0)
@@ -228,6 +228,7 @@ cdef class BallTree:
         # almost-flatten x for iteration
         orig_shape = x.shape
         x = x.reshape((-1, self.num_dims))
+        r = r.reshape(-1)
 
         # allocate output
         if count_only:
@@ -263,7 +264,8 @@ cdef class BallTree:
         if count_only:
             return count.reshape(orig_shape[:-1])
         elif return_distance:
-            return indices, distances
+            return (indices.reshape(orig_shape[:-1]), 
+                    distances.reshape(orig_shape[:-1]))
         else:
-            return indices
+            return indices.reshape(orig_shape[:-1])
 
