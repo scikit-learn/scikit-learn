@@ -100,7 +100,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
 
     See also
     --------
-    :class:`SampleNormalizer` to perform normalization using
+    :class:`Normalizer` to perform normalization using
     the ``Transformer`` API (e.g. inside a preprocessing
     :class:scikits.learn.pipeline.Pipeline`)
     """
@@ -138,7 +138,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     return X
 
 
-class SampleNormalizer(BaseEstimator):
+class Normalizer(BaseEstimator):
     """Normalize samples individually to unit norm
 
     Each sample (i.e. each row of the data matrix) with at least one
