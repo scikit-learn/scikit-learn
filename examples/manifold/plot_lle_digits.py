@@ -37,8 +37,7 @@ X_projected = np.dot(Q.T, X.T).T
 # Projection on to the first 2 principal components
 
 print "Computing PCA projection"
-X_pca = decomposition.RandomizedPCA(2).fit(X).transform(X)
-
+X_pca = decomposition.RandomizedPCA(n_components=2).fit_transform(X)
 
 #----------------------------------------------------------------------
 # Projection on to the first 2 linear discriminant components
@@ -46,7 +45,7 @@ X_pca = decomposition.RandomizedPCA(2).fit(X).transform(X)
 print "Computing LDA projection"
 X2 = X.copy()
 X2.flat[::X.shape[1] + 1] += 0.01 # Make X invertible
-X_lda = lda.LDA(2).fit(X2, y).transform(X2)
+X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 
 
 #----------------------------------------------------------------------
