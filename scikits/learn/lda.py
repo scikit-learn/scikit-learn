@@ -9,10 +9,10 @@ import warnings
 import numpy as np
 from scipy import linalg, ndimage
 
-from .base import BaseEstimator, ClassifierMixin
+from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 
 
-class LDA(BaseEstimator, ClassifierMixin):
+class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     """
     Linear Discriminant Analysis (LDA)
 
