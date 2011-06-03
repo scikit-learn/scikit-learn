@@ -2,7 +2,7 @@
 Testing for grid search module (scikits.learn.grid_search)
 
 """
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_raises
 from numpy.testing import assert_array_equal
 
 import numpy as np
@@ -49,6 +49,16 @@ def test_grid_search():
 
     for i, foo_i in enumerate([1, 2, 3]):
         assert cross_validation.grid_scores_[i][0] == {'foo_param' : foo_i}
+
+
+def test_grid_search_error():
+    """Test that grid search will capture errors on data with different
+    length"""
+    X_, y_ = test_dataset_classif(n_samples=200, n_features=100, seed=0)
+
+    clf = LinearSVC()
+    cv = GridSearchCV(clf, {'C':[0.1, 1.0]})
+    assert_raises(ValueError, cv.fit, X_[:180], y_)
 
 
 def test_grid_search_sparse():

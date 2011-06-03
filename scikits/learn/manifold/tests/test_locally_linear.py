@@ -23,6 +23,8 @@ def test_lle_simple_grid():
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         assert reconstruction_error < tol
         assert_array_almost_equal(clf.reconstruction_error_, reconstruction_error)
+    noise = np.random.randn(*X.shape) / 100
+    assert np.linalg.norm(clf.transform(X + noise) - clf.embedding_) < tol
 
 
 def test_lle_manifold():
@@ -42,6 +44,17 @@ def test_lle_manifold():
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         assert reconstruction_error < tol
         assert_array_almost_equal(clf.reconstruction_error_, reconstruction_error)
+
+
+def test_pipeline():
+    # check that LocallyLinearEmbedding works fine as a Pipeline
+    from scikits.learn import pipeline, datasets
+    iris = datasets.load_iris()
+    clf = pipeline.Pipeline(
+        [('filter', manifold.LocallyLinearEmbedding()),
+         ('clf', neighbors.NeighborsClassifier())])
+    clf.fit(iris.data, iris.target)
+    assert clf.score(iris.data, iris.target) > .7
 
 
 if __name__ == '__main__':

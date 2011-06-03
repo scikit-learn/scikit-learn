@@ -68,10 +68,10 @@ def mean_shift(X, bandwidth=None):
     n_points, n_features = X.shape
 
     n_clusters = 0
-    bandwidth_squared = bandwidth**2
+    bandwidth_squared = bandwidth ** 2
     points_idx_init = np.arange(n_points)
-    stop_thresh = 1e-3*bandwidth # when mean has converged
-    cluster_centers = [] # center of clusters
+    stop_thresh = 1e-3 * bandwidth  # when mean has converged
+    cluster_centers = []  # center of clusters
     # track if a points been seen already
     been_visited_flag = np.zeros(n_points, dtype=np.bool)
     # number of points to possibly use as initilization points
@@ -86,30 +86,30 @@ def mean_shift(X, bandwidth=None):
         tmp_index = random_state.randint(n_points_init)
         # use this point as start of mean
         start_idx = points_idx_init[tmp_index]
-        my_mean = X[start_idx, :] # intilize mean to this points location
+        my_mean = X[start_idx, :]  # intilize mean to this points location
         # points that will get added to this cluster
         my_members = np.zeros(n_points, dtype=np.bool)
         # used to resolve conflicts on cluster membership
         this_cluster_votes = np.zeros(n_points, dtype=np.uint16)
 
-        while True: # loop until convergence
+        while True:  # loop until convergence
 
             # dist squared from mean to all points still active
-            sqrt_dist_to_all = np.sum((my_mean - X)**2, axis=1)
+            sqrt_dist_to_all = np.sum((my_mean - X) ** 2, axis=1)
 
             # points within bandwidth
             in_idx = sqrt_dist_to_all < bandwidth_squared
             # add a vote for all the in points belonging to this cluster
             this_cluster_votes[in_idx] += 1
 
-            my_old_mean = my_mean # save the old mean
-            my_mean = np.mean(X[in_idx, :], axis=0) # compute the new mean
+            my_old_mean = my_mean  # save the old mean
+            my_mean = np.mean(X[in_idx, :], axis=0)  # compute the new mean
             # add any point within bandwidth to the cluster
             my_members = np.logical_or(my_members, in_idx)
             # mark that these points have been visited
             been_visited_flag[my_members] = True
 
-            if np.linalg.norm(my_mean-my_old_mean) < stop_thresh:
+            if np.linalg.norm(my_mean - my_old_mean) < stop_thresh:
 
                 # check for merge possibilities
                 merge_with = -1
@@ -118,27 +118,27 @@ def mean_shift(X, bandwidth=None):
                     dist_to_other = np.linalg.norm(my_mean -
                                                         cluster_centers[c])
                     # if its within bandwidth/2 merge new and old
-                    if dist_to_other < bandwidth/2:
+                    if dist_to_other < bandwidth / 2:
                         merge_with = c
                         break
 
-                if merge_with >= 0: # something to merge
+                if merge_with >= 0:  # something to merge
                     # record the max as the mean of the two merged
                     # (I know biased twoards new ones)
-                    cluster_centers[merge_with] = 0.5 * (my_mean+
+                    cluster_centers[merge_with] = 0.5 * (my_mean +
                                                 cluster_centers[merge_with])
                     # add these votes to the merged cluster
                     cluster_votes[merge_with] += this_cluster_votes
-                else: # its a new cluster
-                    n_clusters += 1 # increment clusters
-                    cluster_centers.append(my_mean) # record the mean
+                else:  # its a new cluster
+                    n_clusters += 1  # increment clusters
+                    cluster_centers.append(my_mean)  # record the mean
                     cluster_votes.append(this_cluster_votes)
 
                 break
 
         # we can initialize with any of the points not yet visited
         points_idx_init = np.where(been_visited_flag == False)[0]
-        n_points_init = points_idx_init.size # number of active points in set
+        n_points_init = points_idx_init.size  # number of active points in set
 
     # a point belongs to the cluster with the most votes
     labels = np.argmax(cluster_votes, axis=0)

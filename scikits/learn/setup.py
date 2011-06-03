@@ -43,7 +43,6 @@ def configuration(parent_package='', top_path=None):
                          sources=[join('src', 'ball_tree.cpp')],
                          depends=[join('src', 'BallTree.h'),
                                   join('src', 'BallTreePoint.h')],
-                         libraries=["stdc++"],
                          include_dirs=[numpy.get_include()])
 
     # the following packages depend on cblas, so they have to be build

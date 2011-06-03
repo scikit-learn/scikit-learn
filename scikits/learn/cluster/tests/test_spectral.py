@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_equal
 from scipy import sparse
 import nose
-from cPickle import loads
+from pickle import loads # don't use cPickle, compatibility with python2.5
 from cPickle import dumps
 
 from .. import SpectralClustering
@@ -31,7 +31,8 @@ def test_spectral_clustering():
         model_copy = loads(dumps(model))
         assert_equal(model_copy.k, model.k)
         assert_equal(model_copy.mode, model.mode)
-        assert_equal(model_copy.random_state.get_state(), model.random_state.get_state())
+        assert_equal(model_copy.random_state.get_state(),
+                     model.random_state.get_state())
         assert_equal(model_copy.labels_, model.labels_)
 
 
