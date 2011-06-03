@@ -7,10 +7,13 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 
+from nose.tools import assert_raises
+
 from scikits.learn.preprocessing import Binarizer
 from scikits.learn.preprocessing import KernelCenterer
 from scikits.learn.preprocessing import LabelBinarizer
 from scikits.learn.preprocessing import Normalizer
+from scikits.learn.preprocessing import normalize
 from scikits.learn.preprocessing import Scaler
 from scikits.learn.preprocessing import scale
 
@@ -66,6 +69,7 @@ def test_normalizer_l1():
     X_orig = np.random.randn(4, 5)
     X_orig[3, :] = 0.0
 
+    # check inputs that support the no-copy optim
     for init in (np.array, sp.csr_matrix):
 
         X = init(X_orig.copy())
@@ -86,12 +90,26 @@ def test_normalizer_l1():
                 assert_almost_equal(row_sums[i], 1.0)
             assert_almost_equal(row_sums[3], 0.0)
 
+    # check input for which copy=False won't prevent a copy
+    for init in (sp.coo_matrix, sp.csc_matrix, sp.lil_matrix):
+        X = init(X_orig.copy())
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
+
+        assert X_norm is not X
+        assert isinstance(X_norm, sp.csr_matrix)
+
+        X_norm = toarray(X_norm)
+        for i in xrange(3):
+            assert_almost_equal(row_sums[i], 1.0)
+        assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
 
 def test_normalizer_l2():
     np.random.seed(0)
     X_orig = np.random.randn(4, 5)
     X_orig[3, :] = 0.0
 
+    # check inputs that support the no-copy optim
     for init in (np.array, sp.csr_matrix):
 
         X = init(X_orig.copy())
@@ -110,6 +128,25 @@ def test_normalizer_l2():
             for i in xrange(3):
                 assert_almost_equal(la.norm(X_norm[i]), 1.0)
             assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+    # check input for which copy=False won't prevent a copy
+    for init in (sp.coo_matrix, sp.csc_matrix, sp.lil_matrix):
+        X = init(X_orig.copy())
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
+
+        assert X_norm is not X
+        assert isinstance(X_norm, sp.csr_matrix)
+
+        X_norm = toarray(X_norm)
+        for i in xrange(3):
+            assert_almost_equal(la.norm(X_norm[i]), 1.0)
+        assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+
+def test_normalize_errors():
+    """Check that invalid arguments yield ValueError"""
+    assert_raises(ValueError, normalize, [[0]], axis=2)
+    assert_raises(ValueError, normalize, [[0]], norm='l3')
 
 
 def test_binarizer():
