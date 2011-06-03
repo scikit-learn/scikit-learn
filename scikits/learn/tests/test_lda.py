@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import assert_true
+from nose.tools import assert_equal, assert_true
 
 from .. import lda
 
@@ -13,7 +13,7 @@ y3 = np.array([1, 1, 2, 2, 3, 3])
 X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]])
 
 
-def test_lda():
+def test_lda_predict():
     """
     LDA classification.
 
@@ -40,3 +40,8 @@ def test_lda():
     y_pred3 = clf.fit(X, y3).predict(X)
     # LDA shouldn't be able to separate those
     assert_true(np.any(y_pred3 != y3))
+
+def test_lda_transform():
+    clf = lda.LDA()
+    X_transformed = clf.fit(X, y).transform(X)
+    assert_equal(X_transformed.shape[1], 1)
