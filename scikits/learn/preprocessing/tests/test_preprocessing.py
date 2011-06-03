@@ -10,7 +10,7 @@ from numpy.testing import assert_equal
 from scikits.learn.preprocessing import Binarizer
 from scikits.learn.preprocessing import KernelCenterer
 from scikits.learn.preprocessing import LabelBinarizer
-from scikits.learn.preprocessing import SampleNormalizer
+from scikits.learn.preprocessing import Normalizer
 from scikits.learn.preprocessing import Scaler
 from scikits.learn.preprocessing import scale
 
@@ -70,12 +70,12 @@ def test_normalizer_l1():
 
         X = init(X_orig.copy())
 
-        normalizer = SampleNormalizer(norm='l1', copy=True)
+        normalizer = Normalizer(norm='l1', copy=True)
         X_norm = normalizer.transform(X)
         assert X_norm is not X
         X_norm1 = toarray(X_norm)
 
-        normalizer = SampleNormalizer(norm='l1', copy=False)
+        normalizer = Normalizer(norm='l1', copy=False)
         X_norm = normalizer.transform(X)
         assert X_norm is X
         X_norm2 = toarray(X_norm)
@@ -96,12 +96,12 @@ def test_normalizer_l2():
 
         X = init(X_orig.copy())
 
-        normalizer = SampleNormalizer(norm='l2', copy=True)
+        normalizer = Normalizer(norm='l2', copy=True)
         X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
         X_norm1 = toarray(X_norm1)
 
-        normalizer = SampleNormalizer(norm='l2', copy=False)
+        normalizer = Normalizer(norm='l2', copy=False)
         X_norm2 = normalizer.transform(X)
         assert X_norm2 is X
         X_norm2 = toarray(X_norm2)
