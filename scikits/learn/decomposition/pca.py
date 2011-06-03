@@ -330,7 +330,7 @@ class ProbabilisticPCA(PCA):
         return log_like
 
 
-class RandomizedPCA(BaseEstimator):
+class RandomizedPCA(BaseEstimator, TransformerMixin):
     """Principal component analysis (PCA) using randomized SVD
 
     Linear dimensionality reduction using approximated Singular Value
