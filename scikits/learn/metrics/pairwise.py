@@ -98,9 +98,11 @@ def linear_kernel(X, Y):
     return np.dot(X, Y.T)
 
 
-def polynomial_kernel(X, Y, degree=3):
+def polynomial_kernel(X, Y, degree=3, gamma=0, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
+
+    K(X, Y) = (gamma <X, Y> + coef0)^degree
 
     Parameters
     ----------
@@ -114,15 +116,20 @@ def polynomial_kernel(X, Y, degree=3):
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
+    if gamma == 0:
+        gamma = 1.0 / X.shape[1]
+
     K = linear_kernel(X, Y)
-    K += 1
+    K *= gamma
+    K += coef0
     K **= degree
     return K
 
-
-def rbf_kernel(X, Y, sigma=1.0):
+def sigmoid_kernel(X, Y, gamma=0, coef0=1):
     """
-    Compute the rbf (gaussian) kernel between X and Y.
+    Compute the sigmoid kernel between X and Y.
+
+    K(X, Y) = tanh(gamma <X, Y> + coef0)
 
     Parameters
     ----------
@@ -130,13 +137,44 @@ def rbf_kernel(X, Y, sigma=1.0):
 
     Y: array of shape (n_samples_2, n_features)
 
-    sigma: float
+    degree: int
 
     Returns
     -------
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
-    K = -euclidean_distances(X, Y, squared=True)
-    K /= (2 * (sigma ** 2))
-    np.exp(K, K)
+    if gamma == 0:
+        gamma = 1.0 / X.shape[1]
+
+    K = linear_kernel(X, Y)
+    K *= gamma
+    K += coef0
+    np.tanh(K, K) # compute tanh in-place
+    return K
+
+
+def rbf_kernel(X, Y, gamma=0):
+    """
+    Compute the rbf (gaussian) kernel between X and Y.
+
+    K(X, Y) = exp(-gamma ||X-Y||^2)
+
+    Parameters
+    ----------
+    X: array of shape (n_samples_1, n_features)
+
+    Y: array of shape (n_samples_2, n_features)
+
+    gamma: float
+
+    Returns
+    -------
+    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    """
+    if gamma == 0:
+        gamma = 1.0 / X.shape[1]
+
+    K = euclidean_distances(X, Y, squared=True)
+    K *= -gamma
+    np.exp(K, K) # exponentiate K in-place
     return K
