@@ -10,6 +10,7 @@ Independent Component Analysis, by  Hyvarinen et al.
 # License: BSD 3 clause
 
 import types
+import warnings
 import numpy as np
 from scipy import linalg
 
@@ -190,6 +191,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     """
     # make interface compatible with other decompositions
+    warnings.warn("The interface of fastica changed: X is now assumed to be of shape [n_samples, n_features]")
     X = X.T
 
     algorithm_funcs = {'parallel': _ica_par,
