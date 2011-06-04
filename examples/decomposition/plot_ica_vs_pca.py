@@ -37,7 +37,7 @@ from scikits.learn.decomposition import PCA, FastICA
 
 ###############################################################################
 # Generate sample data
-S = np.random.standard_t(1.5, size=(10000,2))
+S = np.random.standard_t(1.5, size=(10000, 2))
 S[0] *= 2.
 
 # Mix data
