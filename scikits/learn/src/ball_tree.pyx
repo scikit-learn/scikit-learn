@@ -15,11 +15,11 @@ cimport numpy as np
 
 # C++ functions
 cdef extern from "BallTreePoint.h":
-   cdef cppclass Point:
-       Point(size_t)
-       size_t size()
-   void SET(Point *, size_t, double)
-   
+    cdef cppclass Point:
+        Point(size_t)
+        size_t size()
+    void SET(Point *, size_t, double)
+
 ctypedef double Point_dtype
 ctypedef Point *Point_p
 
@@ -31,7 +31,7 @@ cdef extern from "BallTree.h":
         void query(Point *, vector[size_t] &, vector[Point_dtype] &) except +
         double query_radius(Point *, Point_dtype) except +
         double query_radius(Point *, Point_dtype, vector[size_t] &) except +
-        double query_radius(Point *, Point_dtype, 
+        double query_radius(Point *, Point_dtype,
                             vector[size_t] &, vector[Point_dtype] &) except +
     double Euclidean_Dist(Point *, Point *) except +
 
@@ -43,7 +43,7 @@ cdef Point *make_point(vals):
     return pt
 
 
-################################################################################
+##############################################################################
 # Cython wrapper
 cdef class BallTree:
     """
@@ -77,7 +77,8 @@ cdef class BallTree:
     def __cinit__(self, arr, size_t leafsize=20):
         # copy points into ptdata
         arr = np.atleast_2d(arr).astype(np.double)
-        assert arr.ndim == 2, "input points must be 2 dimensional (points x dimensions)"
+        assert arr.ndim == 2, ("input points must be 2 dimensional "
+                               "(points x dimensions)")
         num_points, num_dims = self.num_points, self.num_dims = arr.shape
         self.ptdata = new vector[Point_p]()
         for i in range(num_points):
@@ -160,7 +161,7 @@ cdef class BallTree:
         else:
             return out_indices.reshape((orig_shape[:-1]) + (k,))
 
-    def query_radius(self, x, r, return_distance = False, count_only = False):
+    def query_radius(self, x, r, return_distance=False, count_only=False):
         """
         query_radius(self, x, r, count_only = False):
 
@@ -177,16 +178,16 @@ cdef class BallTree:
         return_distance : boolean (default = False)
               if True,  return distances to neighbors of each point
               if False, return only neighbors
-            Note that unlike query() above, setting return_distance=True
-             adds to the computation time.  Not all distances must be 
-             calculated for return_distance=False.
+              Note that unlike query() above, setting return_distance=True
+              adds to the computation time.  Not all distances must be
+              calculated for return_distance=False.
         count_only : boolean (default = False)
               if True,  return only the count of points
                          within distance r
               if False, return the indices of all points
                          within distance r
-            If return_distance==True, setting count_only=True will raise an
-             error.
+              If return_distance==True, setting count_only=True will
+              raise an error.
 
         Returns
         -------
@@ -209,15 +210,14 @@ cdef class BallTree:
             listing the distances corresponding to indices in i.
         """
         if count_only and return_distance:
-            raise ValueError("count_only and return_distance " 
+            raise ValueError("count_only and return_distance "
                              "cannot both be true")
-        
         x = np.atleast_2d(x)
         assert x.shape[-1] == self.num_dims
 
         r = np.atleast_1d(r)
         if r.shape==(1,):
-            r = r[0]*np.ones(x.shape[:-1],dtype=np.double)
+            r = r[0]*np.ones(x.shape[:-1], dtype=np.double)
         else:
             assert r.shape == x.shape[:-1]
 
@@ -232,21 +232,21 @@ cdef class BallTree:
 
         # allocate output
         if count_only:
-            count = np.zeros(x.shape[0],np.int64)
+            count = np.zeros(x.shape[0], np.int64)
         elif return_distance:
-            indices = np.empty(x.shape[0],dtype='object')
-            distances = np.empty(x.shape[0],dtype='object')
+            indices = np.empty(x.shape[0], dtype='object')
+            distances = np.empty(x.shape[0], dtype='object')
         else:
-            indices = np.empty(x.shape[0],dtype='object')
+            indices = np.empty(x.shape[0], dtype='object')
 
         for pt_idx, pt in enumerate(x):
             temp = make_point(pt)
             if count_only:
-                count[pt_idx] = self.bt_ptr.query_radius(temp,r[pt_idx])
+                count[pt_idx] = self.bt_ptr.query_radius(temp, r[pt_idx])
             elif return_distance:
                 self.bt_ptr.query_radius(temp, r[pt_idx], ind_vec, dist_vec)
                 indices[pt_idx] = np.zeros(ind_vec.size(), dtype=np.int)
-                distances[pt_idx] = np.zeros(dist_vec.size(),dtype=np.double)
+                distances[pt_idx] = np.zeros(dist_vec.size(), dtype=np.double)
                 for neighbor_idx in range(ind_vec.size()):
                     indices[pt_idx][neighbor_idx] = ind_vec[neighbor_idx]
                     distances[pt_idx][neighbor_idx] = dist_vec[neighbor_idx]
@@ -264,8 +264,7 @@ cdef class BallTree:
         if count_only:
             return count.reshape(orig_shape[:-1])
         elif return_distance:
-            return (indices.reshape(orig_shape[:-1]), 
+            return (indices.reshape(orig_shape[:-1]),
                     distances.reshape(orig_shape[:-1]))
         else:
             return indices.reshape(orig_shape[:-1])
-
