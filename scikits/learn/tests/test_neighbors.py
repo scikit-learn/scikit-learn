@@ -149,41 +149,42 @@ def test_kneighbors_iris():
             pred_data = np.dot(A.todense(), data)
             assert np.linalg.norm(pred_data - data) / data.shape[0] < 0.1
 
-    
-def test_ball_tree_query_radius(n_samples=100,n_features=10):
+
+def test_ball_tree_query_radius(n_samples=100, n_features=10):
     X = 2 * np.random.random(size=(n_samples, n_features)) - 1
-    query_pt = np.zeros(n_features,dtype=float)
-    
-    eps = 1E-15 #roundoff error can cause test to fail
+    query_pt = np.zeros(n_features, dtype=float)
+
+    eps = 1E-15  # roundoff error can cause test to fail
     BT = ball_tree.BallTree(X)
-    rad = np.sqrt( ((X-query_pt) ** 2).sum(1) )
-    
-    for r in np.linspace(rad[0],rad[-1],100):
-        ind = BT.query_radius(query_pt,r+eps)[0]
-        i   = np.where(rad<=r+eps)[0]
+    rad = np.sqrt(((X - query_pt) ** 2).sum(1))
+
+    for r in np.linspace(rad[0], rad[-1], 100):
+        ind = BT.query_radius(query_pt, r + eps)[0]
+        i = np.where(rad <= r + eps)[0]
 
         ind.sort()
         i.sort()
 
-        assert np.all(i==ind)
-    
-def test_ball_tree_query_radius_distance(n_samples=100,n_features=10):
+        assert np.all(i == ind)
+
+
+def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
     X = 2 * np.random.random(size=(n_samples, n_features)) - 1
-    query_pt = np.zeros(n_features,dtype=float)
-    
-    eps = 1E-15 #roundoff error can cause test to fail
+    query_pt = np.zeros(n_features, dtype=float)
+
+    eps = 1E-15  # roundoff error can cause test to fail
     BT = ball_tree.BallTree(X)
-    rad = np.sqrt( ((X-query_pt) ** 2).sum(1) )
-    
-    for r in np.linspace(rad[0],rad[-1],100):
-        ind,dist = BT.query_radius(query_pt,r+eps,return_distance=True)
+    rad = np.sqrt( ((X - query_pt) ** 2).sum(1) )
+
+    for r in np.linspace(rad[0], rad[-1], 100):
+        ind, dist = BT.query_radius(query_pt, r + eps, return_distance=True)
 
         ind = ind[0]
         dist = dist[0]
 
-        d = np.sqrt( ((query_pt-X[ind])**2).sum(1) )
-        
-        assert_array_almost_equal(d,dist)
+        d = np.sqrt(((query_pt - X[ind]) ** 2).sum(1))
+
+        assert_array_almost_equal(d, dist)
 
 if __name__ == '__main__':
     import nose
