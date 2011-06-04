@@ -191,7 +191,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     """
     # make interface compatible with other decompositions
-    warnings.warn("The interface of fastica changed: X is now assumed to be of shape [n_samples, n_features]")
+    warnings.warn("The interface of fastica changed: X is now 
+        assumed to be of shape [n_samples, n_features]")
     X = X.T
 
     algorithm_funcs = {'parallel': _ica_par,
@@ -366,7 +367,7 @@ class FastICA(BaseEstimator):
 
         S = X * W.T
         """
-        return np.dot(X,self.unmixing_matrix_.T)
+        return np.dot(X, self.unmixing_matrix_.T)
 
     def get_mixing_matrix(self):
         """Compute the mixing matrix
