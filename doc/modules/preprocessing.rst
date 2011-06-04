@@ -6,9 +6,9 @@ Preprocessing data
 
 .. currentmodule:: scikits.learn.preprocessing
 
-The ``scikits.learn.preprocessing`` package provides several common utility
-functions and transformer classes to change raw feature vectors into a
-representation that is more suitable for the downstream estimators.
+The ``scikits.learn.preprocessing`` package provides several common
+utility functions and transformer classes to change raw feature vectors
+into a representation that is more suitable for the downstream estimators.
 
 
 Standardization or Mean Removal and Variance Scaling
@@ -175,7 +175,45 @@ Binarization
 Feature binarization
 --------------------
 
-TODO
+**Feature binarization** is the process of **thresholding numerical
+features to get boolean values**. This can be useful for downsteam
+probabilistic estimators that make assumption that the input data
+is distributed according to a multi-variate `Bernoulli distribution
+<http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance
+this is the case for the most common class of `(Restricted) Boltzmann
+Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_
+(not yet implemented in the scikit).
+
+It is also commmon among the text processing community to use binary
+feature values (probably to simplify the probabilistic reasoning) even
+if normalized counts (a.k.a. term frequencies) or TF-IDF valued features
+often perform slightly better in practice.
+
+As for the :class:`Normalizer`, the utility class
+:class:`Binarizer` is meant to be used in the early stages of
+:class:`scikits.learn.pipeline.Pipeline`. The ``fit`` method does nothing
+as each sample is treated independently of others::
+
+  >>> X = [[ 1., -1.,  2.],
+  ...      [ 2.,  0.,  0.],
+  ...      [ 0.,  1., -1.]]
+
+  >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
+  >>> binarizer
+  Binarizer(threshold=0.0, copy=True)
+
+  >>> binarizer.transform(X)
+  array([[ 1.,  0.,  1.],
+         [ 1.,  0.,  0.],
+         [ 0.,  1.,  0.]])
+
+It is possible to adjust the threshold of the binarizer::
+
+  >>> binarizer = preprocessing.Binarizer(threshold=1.1)
+  >>> binarizer.transform(X)
+  array([[ 0.,  0.,  1.],
+         [ 1.,  0.,  0.],
+         [ 0.,  0.,  0.]])
 
 .. topic:: Notes
 
@@ -187,10 +225,9 @@ TODO
   To avoid un-necessary memory copy it is therefore recommended to choose
   the CSR representation upsteam.
 
-
 .. TODO
 
   Label binarization
   ------------------
 
-  write me!
+  Please @mblondel write me!
