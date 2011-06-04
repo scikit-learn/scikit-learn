@@ -93,6 +93,31 @@ def test_scaler():
     assert X_scaled is not X
 
 
+def test_scaler_without_centering():
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    X[:, 0] = 0.0 # first feature is always of zero
+
+    scaler = Scaler(with_mean=False)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert not np.any(np.isnan(X_scaled))
+
+    assert_array_almost_equal(
+        X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78] , 2)
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    # Check that X has not been copied
+    assert X_scaled is not X
+
+    X_scaled = scale(X, with_mean=False)
+    assert not np.any(np.isnan(X_scaled))
+
+    assert_array_almost_equal(
+        X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78] , 2)
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    # Check that X has not been copied
+    assert X_scaled is not X
+
+
 def test_normalizer_l1():
     np.random.seed(0)
     X_orig = np.random.randn(4, 5)
