@@ -528,6 +528,35 @@ From text
    feature_extraction.text.Vectorizer
 
 
+Preprocessing and normalization
+===============================
+
+.. automodule:: scikits.learn.preprocessing
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: class.rst
+
+   preprocessing.Scaler
+   preprocessing.Normalizer
+   preprocessing.Binarizer
+   preprocessing.LabelBinarizer
+
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   preprocessing.scale
+   preprocessing.normalize
+
+
 Manifold learning
 =================
 
