@@ -46,6 +46,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     Center to the mean and component wise scale to unit variance.
     """
+    if sp.issparse(X):
+        raise NotImplementedError(
+            "Scaling is not yet implement for sparse matrices")
     X = np.asanyarray(X)
     mean_, std_ = _mean_and_std(
         X, axis, with_mean=with_mean, with_std=with_std)
@@ -71,12 +74,18 @@ class Scaler(BaseEstimator):
         self.with_std = with_std
 
     def fit(self, X, y=None, **params):
+        if sp.issparse(X):
+            raise NotImplementedError(
+                "Scaling is not yet implement for sparse matrices")
         self._set_params(**params)
         self.mean_, self.std_ = _mean_and_std(
             X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
         return self
 
     def transform(self, X, y=None, copy=True):
+        if sp.issparse(X):
+            raise NotImplementedError(
+                "Scaling is not yet implement for sparse matrices")
         X = np.asanyarray(X)
         if copy:
             X = X.copy()
