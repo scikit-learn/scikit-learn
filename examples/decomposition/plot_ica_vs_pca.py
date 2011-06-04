@@ -79,7 +79,7 @@ def plot_samples(S, axis_list=None):
 
 pl.subplot(2, 2, 1)
 plot_samples(S / S.std())
-pl.title('True Independant Sources')
+pl.title('True Independent Sources')
 
 axis_list = [pca.components_.T, ica.get_mixing_matrix()]
 pl.subplot(2, 2, 2)
