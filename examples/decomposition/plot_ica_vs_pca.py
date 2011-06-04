@@ -74,8 +74,8 @@ def plot_samples(S, axis_list=None):
     pl.vlines(0, -3, 3)
     pl.xlim(-3, 3)
     pl.ylim(-3, 3)
-    pl.xlabel('x')
-    pl.ylabel('y')
+    pl.xlabel('$x$')
+    pl.ylabel('$y$')
 
 pl.subplot(2, 2, 1)
 plot_samples(S / S.std())
