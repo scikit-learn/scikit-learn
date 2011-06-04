@@ -191,7 +191,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     """
     # make interface compatible with other decompositions
-    warnings.warn("The interface of fastica changed: X is now 
+    warnings.warn("The interface of fastica changed: X is now\
         assumed to be of shape [n_samples, n_features]")
     X = X.T
 
