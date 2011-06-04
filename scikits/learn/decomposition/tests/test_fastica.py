@@ -71,8 +71,8 @@ def test_fastica(add_noise=False):
     non_linearity = ['logcosh', 'exp', 'cube']
     for nl in non_linearity:
         for algo in algorithm:
-            k_, mixing_, s_ = fastica(m, fun=nl, algorithm=algo)
-
+            k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
+            s_ = s_.T
             # Check that the mixing model described in the docstring holds:
             assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
 
@@ -122,7 +122,8 @@ def test_non_square_fastica(add_noise=False):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica(m, n_components=2)
+    k_, mixing_, s_ = fastica(m.T, n_components=2)
+    s_ = s_.T
 
     # Check that the mixing model described in the docstring holds:
     assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
