@@ -117,7 +117,20 @@ Feature binarization
 
 TODO
 
-Label binarization
-------------------
+.. topic:: Notes
 
-TODO
+  :class:`Binarizer` **accepts both dense array-like sparse matrices
+  from scipy.sparse as input**.
+
+  For sparse input the data is **converted to the Compressed Sparse Rows
+  representation** (see ``scipy.sparse.csr_matrix``).
+  To avoid un-necessary memory copy it is therefore recommended to choose
+  the CSR representation upsteam.
+
+
+.. TODO
+
+  Label binarization
+  ------------------
+
+  write me!
