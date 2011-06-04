@@ -105,7 +105,7 @@ of :class:`Scaler`.
   to further remove the linear correlation across features.
 
   Also note that the current implementation of :func:`scale` and
-  :class:`Scaler` **do not yet work with ``scipy.sparse`` matrices**.
+  :class:`Scaler` **do not yet work with scipy.sparse matrices**.
 
 
 Normalization
