@@ -70,7 +70,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     --------
     :class:`Scaler` to perform centering and scaling using
     the ``Transformer`` API (e.g. inside a preprocessing
-    :class:scikits.learn.pipeline.Pipeline`)
+    :class:`scikits.learn.pipeline.Pipeline`)
     """
     if sp.issparse(X):
         raise NotImplementedError(
@@ -191,7 +191,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     --------
     :class:`Normalizer` to perform normalization using
     the ``Transformer`` API (e.g. inside a preprocessing
-    :class:scikits.learn.pipeline.Pipeline`)
+    :class:`scikits.learn.pipeline.Pipeline`)
     """
     if norm not in ('l1', 'l2'):
         raise ValueError("'%s' is not a supported norm" % norm)
