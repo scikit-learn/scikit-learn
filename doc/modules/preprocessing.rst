@@ -11,8 +11,8 @@ functions and transformer classes to change raw feature vectors into a
 representation that is more suitable for the downstream estimators.
 
 
-Mean removal and variance scaling
-=================================
+Standardization or Mean Removal and Variance Scaling
+====================================================
 
 The **Standardazition** of a dataset is a **common requirement for many
 machine learning estimators** implemented in the scikit: they might behave
@@ -54,24 +54,39 @@ Scaled data has zero mean and unit variance::
   >>> X_scaled.std(axis=0)
   array([ 1.,  1.,  1.])
 
-The ``preprocessing`` module further provides a utility class that
-implements the ``Transformer`` API to compute the mean and standard
-deviation on a training set so as to be able to later reapply the same
-transformation on the testing set.  This class is hence suitable for
-use in the eary steps of a :class:`scikits.learn.pipeline.Pipeline`::
+The ``preprocessing`` module further provides a utility class
+:class:`Scaler` that implements the ``Transformer`` API to compute
+the mean and standard deviation on a training set so as to be
+able to later reapply the same transformation on the testing set.
+This class is hence suitable for use in the early steps of a
+:class:`scikits.learn.pipeline.Pipeline`::
 
   >>> scaler = preprocessing.Scaler().fit(X)
+  >>> scaler
+  Scaler(copy=True, with_mean=True, with_std=True)
+
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
 
   >>> scaler.std_                                       # doctest: +ELLIPSIS
   array([ 0.81...,  0.81...,  1.24...])
 
+  >>> scaler.transform(X)                               # doctest: +ELLIPSIS
+  array([[ 0.  ..., -1.22...,  1.33...],
+         [ 1.22...,  0.  ..., -0.26...],
+         [-1.22...,  1.22..., -1.06...]])
+
+
 The scaler instance can then be used on new data to transform it the
 same way it did on the training set::
 
   >>> scaler.transform([[-1.,  1., 0.]])                # doctest: +ELLIPSIS
   array([[-2.44...,  1.22..., -0.26...]])
+
+It is possible to disable either centering or scaling by either
+passing ``with_mean=False`` or ``with_std=False`` to the constructor
+of :class:`Scaler`.
+
 
 .. topic:: References:
 
@@ -96,7 +111,52 @@ same way it did on the training set::
 Normalization
 =============
 
-TODO
+**Normalization is the process or scaling individual samples to have unit
+norm**. This process can be useful if you plan to use a quadratic form
+such as a the dot-product or any other kernel to quantify the similarity
+of any pair of samples.
+
+This assumption is the base of the `Vector Space Model
+<http://en.wikipedia.org/wiki/Vector_Space_Model>`_ often used in text
+classification and clustering contexts.
+
+The function :func:`normalize` provides a quick and easy way to perform this
+operation on a single array-like dataset, either using the ``l1`` or ``l2``
+norms::
+
+  >>> X = [[ 1., -1.,  2.],
+  ...      [ 2.,  0.,  0.],
+  ...      [ 0.,  1., -1.]]
+  >>> X_normalized = preprocessing.normalize(X, norm='l2')
+
+  >>> X_normalized                                      # doctest: +ELLIPSIS
+  array([[ 0.40..., -0.40...,  0.81...],
+         [ 1.  ...,  0.  ...,  0.  ...],
+         [ 0.  ...,  0.70..., -0.70...]])
+
+The ``preprocessing`` module further provides a utility class
+:class:`Normalizer` that implements the same operation using the
+``Transformer`` API even though the ``fit`` method is useless in this case
+(the class is stateless as this operation treats samples independently).
+
+This class is hence suitable for use in the early steps of a
+:class:`scikits.learn.pipeline.Pipeline`::
+
+  >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
+  >>> normalizer
+  Normalizer(copy=True, norm='l2')
+
+
+The normalizer instance can then be used on sample vectors as any transformer::
+
+  >>> normalizer.transform(X)                            # doctest: +ELLIPSIS
+  array([[ 0.40..., -0.40...,  0.81...],
+         [ 1.  ...,  0.  ...,  0.  ...],
+         [ 0.  ...,  0.70..., -0.70...]])
+
+  >>> normalizer.transform([[-1.,  1., 0.]])             # doctest: +ELLIPSIS
+  array([[-0.70...,  0.70...,  0.  ...]])
+
 
 .. topic:: Notes
 
