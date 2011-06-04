@@ -37,28 +37,28 @@ from scikits.learn.decomposition import PCA, FastICA
 
 ###############################################################################
 # Generate sample data
-S = np.random.standard_t(1.5, size=(2, 10000))
+S = np.random.standard_t(1.5, size=(10000,2))
 S[0] *= 2.
 
 # Mix data
-A = [[1, 1], [0, 2]]  # Mixing matrix
+A = np.array([[1, 1], [0, 2]])  # Mixing matrix
 
-X = np.dot(A, S)  # Generate observations
+X = np.dot(S, A.T)  # Generate observations
 
 pca = PCA()
-S_pca_ = pca.fit(X.T).transform(X.T).T
+S_pca_ = pca.fit(X).transform(X)
 
 ica = FastICA()
 S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 
-S_ica_ /= S_ica_.std(axis=1)[:, np.newaxis]
+S_ica_ /= S_ica_.std(axis=0)
 
 
 ###############################################################################
 # Plot results
 
 def plot_samples(S, axis_list=None):
-    pl.scatter(S[0], S[1], s=2, marker='o', linewidths=0, zorder=10)
+    pl.scatter(S[:,0], S[:,1], s=2, marker='o', linewidths=0, zorder=10)
     if axis_list is not None:
         colors = [(0, 0.6, 0), (0.6, 0, 0)]
         for color, axis in zip(colors, axis_list):

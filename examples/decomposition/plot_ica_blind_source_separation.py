@@ -31,7 +31,7 @@ A = [[1, 1], [0.5, 2]] # Mixing matrix
 X = np.dot(A, S) # Generate observations
 # Compute ICA
 ica = FastICA()
-S_ = ica.fit(X).transform(X) # Get the estimated sources
+S_ = ica.fit(X.T).transform(X.T).T # Get the estimated sources
 A_ = ica.get_mixing_matrix() # Get estimated mixing matrix
 
 assert np.allclose(X, np.dot(A_, S_))
