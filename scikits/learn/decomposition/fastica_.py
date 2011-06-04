@@ -189,6 +189,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
       pp. 411-430
 
     """
+    # make interface compatible with other decompositions
+    X = X.T
+
     algorithm_funcs = {'parallel': _ica_par,
                        'deflation': _ica_def}
 
@@ -281,10 +284,10 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if whiten:
         S = np.dot(np.dot(W, K), X)
-        return K, W, S
+        return K, W, S.T
     else:
         S = np.dot(W, X)
-        return W, S
+        return W, S.T
 
 
 class FastICA(BaseEstimator):
@@ -359,9 +362,9 @@ class FastICA(BaseEstimator):
     def transform(self, X):
         """Apply un-mixing matrix "W" to X to recover the sources
 
-        S = W * X
+        S = X * W.T
         """
-        return np.dot(self.unmixing_matrix_, X)
+        return np.dot(X,self.unmixing_matrix_.T)
 
     def get_mixing_matrix(self):
         """Compute the mixing matrix
