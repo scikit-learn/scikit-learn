@@ -89,10 +89,12 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class Scaler(BaseEstimator):
-    """Transformer to standardize a dataset
+    """Standardize features by removing the mean and scaling to unit variance
 
-    It centers the dataset and optionaly scales to fix the variance to
-    1.0 for each feature.
+    Centering and scaling happen indepentently on each feature by
+    computing the statistics on the samples from the training set. Mean
+    and standard deviation are then stored to be used on later data
+    using the `transform` method.
 
     Parameters
     ----------
