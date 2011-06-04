@@ -88,7 +88,7 @@ pl.legend(['PCA', 'ICA'], loc='upper left')
 pl.title('Observations')
 
 pl.subplot(2, 2, 3)
-plot_samples(S_pca_ / np.std(S_pca_, axis=-1)[:, np.newaxis])
+plot_samples(S_pca_ / np.std(S_pca_, axis=0))
 pl.title('PCA scores')
 
 pl.subplot(2, 2, 4)
