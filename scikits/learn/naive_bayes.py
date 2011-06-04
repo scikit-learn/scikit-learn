@@ -19,7 +19,7 @@ complete documentation.
 # License: BSD Style.
 
 from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import Binarizer
+from .preprocessing import binarize
 from .utils import safe_asanyarray
 from .utils.extmath import safe_sparse_dot
 import numpy as np
@@ -403,11 +403,6 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         return jll - log_prob_x
 
 
-class NullTransformer(object):
-    def transform(X):
-        return X
-
-
 class BernoulliNB(MultinomialNB):
     """Naive Bayes classifier for multivariate Bernoulli models.
 
@@ -422,13 +417,9 @@ class BernoulliNB(MultinomialNB):
     alpha: float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    binarize: boolean or float
-        Whether to do binarizing (mapping to booleans) of sample features.
-        If a floating point value is given, use it as a threshold value
-        (x <= binarize -> 0, x > binarize -> 1).
-        If True is given, binarize with threshold 0.
-        If False is given, no binaring is performed.
-        Note that False and 0 do NOT result in the same behavior!
+    binarize: float, optional
+        Threshold for binarizing (mapping to booleans) of sample features.
+        If None, input is presumed to already consist of binary vectors.
     fit_prior: boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
@@ -480,15 +471,10 @@ class BernoulliNB(MultinomialNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=False, fit_prior=True):
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True):
         self.alpha = alpha
+        self.binarize = binarize
         self.fit_prior = True
-
-        if binarize is False:
-            self._binarize = NullTransformer()
-        else:
-            threshold = 0. if binarize is True else binarize
-            self._binarize = Binarizer(threshold)
 
     def fit(self, X, y, class_prior=None):
         """Fit Bernoulli Naive Bayes according to X, y
@@ -511,12 +497,15 @@ class BernoulliNB(MultinomialNB):
         self : object
             Returns self.
         """
-        X = self._binarize(X)
+        X = binarize(X, threshold=self.binarize)
         return super(BernoulliNB, self).fit(X, y, class_prior)
 
     def _joint_log_likelihood(self, X):
         X = atleast2d_or_csr(X)
         sparse = issparse(X)
+
+        if self.binarize is not None:
+            X = binarize(X, threshold=self.binarize)
 
         n_classes, n_features = self.coef_.shape
         n_samples, n_features_X = X.shape
@@ -528,8 +517,7 @@ class BernoulliNB(MultinomialNB):
         # worthwhile to check if this is faster.
         jll = np.empty((n_classes, n_samples))
         for i, x in enumerate(X):
-            x = (x.toarray() if sparse else np.atleast_2d(x))
-            xT = self._binarize(x).T
+            xT = (x.toarray() if sparse else np.atleast_2d(x)).T
             jll[:, i] = (np.dot(self.coef_, xT)
                        + np.dot(np.log(1 - np.exp(self.coef_)),
                                 np.logical_not(xT))).flatten()
