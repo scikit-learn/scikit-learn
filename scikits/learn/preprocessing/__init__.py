@@ -45,6 +45,32 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     """Method to standardize a dataset along any axis
 
     Center to the mean and component wise scale to unit variance.
+
+    Parameters
+    ----------
+    X : array-like
+        The data to center and scale.
+
+    axis : int (0 by default)
+        axis used to compute the means and standard deviations along
+
+    with_mean : boolean, True by default
+        If True, center the data before scaling.
+
+    with_std : boolean, True by default
+        If True, scale the data to unit variance (or equivalently,
+        unit standard deviation).
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array or a scipy.sparse
+        CSR matrix and if axis is 1).
+
+    See also
+    --------
+    :class:`Scaler` to perform centering and scaling using
+    the ``Transformer`` API (e.g. inside a preprocessing
+    :class:scikits.learn.pipeline.Pipeline`)
     """
     if sp.issparse(X):
         raise NotImplementedError(
@@ -63,26 +89,69 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class Scaler(BaseEstimator):
-    """Object to standardize a dataset
+    """Transformer to standardize a dataset
 
-    It centers the dataset and optionaly scales to fix the variance to 1 for
-    each feature.
+    It centers the dataset and optionaly scales to fix the variance to
+    1.0 for each feature.
+
+    Parameters
+    ----------
+    with_mean : boolean, True by default
+        If True, center the data before scaling.
+
+    with_std : boolean, True by default
+        If True, scale the data to unit variance (or equivalently,
+        unit standard deviation).
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array or a scipy.sparse
+        CSR matrix and if axis is 1).
+
+    Attributes
+    ----------
+    mean_ : array of floats with shape [n_features]
+        The mean value for each feature in the training set.
+
+    std_ : array of floats with shape [n_features]
+        The standard deviation for each feature in the training set.
+
+    See also
+    --------
+    :function:`scale` to perform centering and scaling without using
+    the ``Transformer`` object oriented API
     """
 
-    def __init__(self, with_mean=True, with_std=True):
+    def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
+        self.copy = copy
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
+        """Compute the mean and std to be used for later scaling
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            The data used to compute the mean and standard deviation
+            used for later scaling along the features axis.
+        """
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
-        self._set_params(**params)
         self.mean_, self.std_ = _mean_and_std(
             X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
         return self
 
     def transform(self, X, y=None, copy=True):
+        """Perform standardization by centering and scaling
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            The data used to scale along the features axis.
+        """
+        copy = copy if copy is not None else self.copy
         if sp.issparse(X):
             raise NotImplementedError(
                 "Scaling is not yet implement for sparse matrices")
