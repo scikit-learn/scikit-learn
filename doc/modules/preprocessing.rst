@@ -76,7 +76,7 @@ same way it did on the training set::
 .. topic:: References:
 
   Further discussion on the importance of centering and scaling data is
-  available on this FAQ: `Should I normalize/standardize/rescale?
+  available on this FAQ: `Should I normalize/standardize/rescale the data?
   <http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
 
 .. topic:: Notes
