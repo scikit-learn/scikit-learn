@@ -47,7 +47,7 @@ def check_arrays(*arrays, **options):
         (if not already converted to another format earlier in the process).
     """
     sparse_format = options.pop('sparse_format', None)
-    if sparse_format not in ('csr', 'csc'):
+    if sparse_format not in (None, 'csr', 'csc'):
         raise ValueError('Unexpected sparse format: %r' % sparse_format)
     copy = options.pop('copy', False)
     if options:
