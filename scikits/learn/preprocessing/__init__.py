@@ -68,8 +68,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     See also
     --------
-    :class:`Scaler` to perform centering and scaling using
-    the ``Transformer`` API (e.g. inside a preprocessing
+    :class:`scikits.learn.preprocessing.Scaler` to perform centering and
+    scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`scikits.learn.pipeline.Pipeline`)
     """
     if sp.issparse(X):
@@ -120,8 +120,8 @@ class Scaler(BaseEstimator):
 
     See also
     --------
-    :function:`scale` to perform centering and scaling without using
-    the ``Transformer`` object oriented API
+    :func:`scikits.learn.preprocessing.scale` to perform centering and
+    scaling without using the ``Transformer`` object oriented API
     """
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
@@ -191,8 +191,8 @@ def normalize(X, norm='l2', axis=1, copy=True):
 
     See also
     --------
-    :class:`Normalizer` to perform normalization using
-    the ``Transformer`` API (e.g. inside a preprocessing
+    :class:`scikits.learn.preprocessing.Normalizer` to perform normalization
+    using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`scikits.learn.pipeline.Pipeline`)
     """
     if norm not in ('l1', 'l2'):
@@ -263,7 +263,8 @@ class Normalizer(BaseEstimator):
 
     See also
     --------
-    :func:`normalize` equivalent function without the object oriented API
+    :func:`scikits.learn.preprocessing.normalize` equivalent function
+    without the object oriented API
     """
 
     def __init__(self, norm='l2', copy=True):
