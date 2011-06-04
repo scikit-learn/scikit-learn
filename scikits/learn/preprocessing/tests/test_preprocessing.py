@@ -41,6 +41,18 @@ def test_scaler():
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
 
+    # Test with 1D list
+    X = [0., 1., 2, 0.4, 1.]
+    scaler = Scaler()
+    X_scaled = scaler.fit(X).transform(X, copy=False)
+    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
+    assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+
+    X_scaled = scale(X)
+    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
+    assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+
+    # Test with 2D data
     X = np.random.randn(4, 5)
     X[:, 0] = 0.0 # first feature is always of zero
 
@@ -175,6 +187,12 @@ def test_binarizer():
 
         binarizer = Binarizer(threshold=2.0, copy=True)
         X_bin = toarray(binarizer.transform(X))
+        assert_equal(np.sum(X_bin == 0), 4)
+        assert_equal(np.sum(X_bin == 1), 2)
+
+        binarizer = Binarizer(copy=True).fit(X)
+        X_bin = toarray(binarizer.transform(X))
+        assert X_bin is not X
         assert_equal(np.sum(X_bin == 0), 4)
         assert_equal(np.sum(X_bin == 1), 2)
 
