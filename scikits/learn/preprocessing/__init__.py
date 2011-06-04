@@ -21,6 +21,7 @@ def _mean_and_std(X, axis=0, with_std=True):
 
     Zero valued std components are reseted to 1.0 to avoid NaNs when scaling.
     """
+    X = np.asanyarray(X)
     Xr = np.rollaxis(X, axis)
     mean_ = Xr.mean(axis=0)
 
@@ -41,6 +42,7 @@ def scale(X, axis=0, with_std=True, copy=True):
 
     Center to the mean and component wise scale to unit variance.
     """
+    X = np.asanyarray(X)
     mean_, std_ = _mean_and_std(X, axis, with_std)
     if copy:
         X = X.copy()
@@ -55,7 +57,7 @@ class Scaler(BaseEstimator):
     """Object to standardize a dataset
 
     It centers the dataset and optionaly scales to fix the variance to 1 for
-    each feature
+    each feature.
     """
 
     def __init__(self, with_std=True):
@@ -63,11 +65,12 @@ class Scaler(BaseEstimator):
 
     def fit(self, X, y=None, **params):
         self._set_params(**params)
-        self.mean_, self.std_ = _mean_and_std(X, axis=0,
-                                              with_std=self.with_std)
+        self.mean_, self.std_ = _mean_and_std(
+            X, axis=0, with_std=self.with_std)
         return self
 
     def transform(self, X, y=None, copy=True):
+        X = np.asanyarray(X)
         if copy:
             X = X.copy()
         # We are taking a view of the X array and modifying it
