@@ -245,6 +245,15 @@ def test_label_binarizer_multilabel():
     assert_equal(lb.inverse_transform(got), inp)
 
 
+def test_label_binarizer_errors():
+    """Check that invalid arguments yield ValueError"""
+    one_class = np.array([0, 0, 0, 0])
+    lb = LabelBinarizer().fit(one_class)
+
+    multi_label = [(2, 3), (0,), (0, 2)]
+    assert_raises(ValueError, lb.transform, multi_label)
+
+
 def test_label_binarizer_iris():
     lb = LabelBinarizer()
     Y = lb.fit_transform(iris.target)
