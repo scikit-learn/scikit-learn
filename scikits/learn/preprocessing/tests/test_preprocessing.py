@@ -42,25 +42,42 @@ def test_scaler():
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
 
     X = np.random.randn(4, 5)
+    X[:, 0] = 0.0 # first feature is always of zero
 
     scaler = Scaler()
-    X_scaled = scaler.fit(X).transform(X, copy=False)
-    assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
-    assert_array_almost_equal(X_scaled.std(axis=0), 5 * [1.0])
-    # Check that X has not been copied
-    assert X_scaled is X
-
     X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert not np.any(np.isnan(X_scaled))
+
     assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
-    assert_array_almost_equal(X_scaled.std(axis=0), 5 * [1.0])
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert X_scaled is not X
 
     X_scaled = scale(X, axis=1, with_std=False)
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=1), 4 * [0.0])
     X_scaled = scale(X, axis=1, with_std=True)
+    assert not np.any(np.isnan(X_scaled))
+    assert_array_almost_equal(X_scaled.mean(axis=1), 4 * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=1), 4 * [1.0])
     # Check that the data hasn't been modified
+    assert X_scaled is not X
+
+    X_scaled = scaler.fit(X).transform(X, copy=False)
+    assert not np.any(np.isnan(X_scaled))
+    assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    # Check that X has not been copied
+    assert X_scaled is X
+
+    X = np.random.randn(4, 5)
+    X[:, 0] = 1.0 # first feature is a constant, non zero feature
+    scaler = Scaler()
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert not np.any(np.isnan(X_scaled))
+    assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+    # Check that X has not been copied
     assert X_scaled is not X
 
 
