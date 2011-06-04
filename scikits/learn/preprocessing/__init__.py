@@ -96,6 +96,20 @@ class Scaler(BaseEstimator):
     and standard deviation are then stored to be used on later data
     using the `transform` method.
 
+    Standardazition of a dataset is a common requirement for many
+    machine learning estimators implemented in the scikit: they might
+    behave badly if the individual feature do not more or less look like
+    standard normally distributed data (e.g. Gaussian with 0 mean and
+    unit variance).
+
+    For instance many elements used in the objective function of
+    a learning algorithm (such as the RBF kernel of Support Vector
+    Machines or the l1 and l2 regularizers of linear models) assume that
+    all features are centered around 0 and have variance in the same
+    order. If a feature has a variance that is orders of magnitude larger
+    that others, it might dominate the objective function and make the
+    estimator unable to learn from other features correctly as expected.
+
     Parameters
     ----------
     with_mean : boolean, True by default
@@ -122,6 +136,9 @@ class Scaler(BaseEstimator):
     --------
     :func:`scikits.learn.preprocessing.scale` to perform centering and
     scaling without using the ``Transformer`` object oriented API
+
+    :class:`scikits.learn.decomposition.RandomizedPCA` with `whiten=True`
+    to further remove the linear correlation across features.
     """
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
