@@ -309,6 +309,46 @@ class Normalizer(BaseEstimator):
         return normalize(X, norm=self.norm, copy=copy)
 
 
+def binarize(X, threshold=0.0, copy=True):
+    """Boolean thresholding of array-like or scipy.sparse matrix
+
+    Parameters
+    ----------
+    X : array or scipy.sparse matrix with shape [n_samples, n_features]
+        The data to binarize, element by element.
+        scipy.sparse matrices should be in CSR format to avoid an
+        un-necessary copy.
+
+    threshold : float, optional (0.0 by default)
+        The
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace binarization and avoid a copy
+        (if the input is already a numpy array or a scipy.sparse CSR
+        matrix and if axis is 1).
+
+    See also
+    --------
+    :class:`scikits.learn.preprocessing.Binarizer` to perform binarization
+    using the ``Transformer`` API (e.g. as part of a preprocessing
+    :class:`scikits.learn.pipeline.Pipeline`)
+    """
+    X = check_arrays(X, sparse_format='csr', copy=copy)[0]
+    if sp.issparse(X):
+        cond = X.data > threshold
+        not_cond = np.logical_not(cond)
+        X.data[cond] = 1
+        # FIXME: if enough values became 0, it may be worth changing
+        #        the sparsity structure
+        X.data[not_cond] = 0
+    else:
+        cond = X > threshold
+        not_cond = np.logical_not(cond)
+        X[cond] = 1
+        X[not_cond] = 0
+    return X
+
+
 class Binarizer(BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
@@ -364,21 +404,7 @@ class Binarizer(BaseEstimator):
             un-necessary copy.
         """
         copy = copy if copy is not None else self.copy
-        X, y = check_arrays(X, y, sparse_format='csr', copy=copy)
-
-        if sp.issparse(X):
-            cond = X.data > self.threshold
-            not_cond = np.logical_not(cond)
-            X.data[cond] = 1
-            # FIXME: if enough values became 0, it may be worth changing
-            #        the sparsity structure
-            X.data[not_cond] = 0
-        else:
-            cond = X > self.threshold
-            not_cond = np.logical_not(cond)
-            X[cond] = 1
-            X[not_cond] = 0
-        return X
+        return binarize(X, threshold=self.threshold, copy=copy)
 
 
 def _is_multilabel(y):

@@ -215,10 +215,14 @@ It is possible to adjust the threshold of the binarizer::
          [ 1.,  0.,  0.],
          [ 0.,  0.,  0.]])
 
+As for the :class:`Scaler` and :class:`Normalizer` classes, the
+preprocessing module provides a companion function :func:`binarize`
+to be used when the transformer API is not necessary.
+
 .. topic:: Notes
 
-  :class:`Binarizer` **accepts both dense array-like sparse matrices
-  from scipy.sparse as input**.
+  :func:`binarize` and :class:`Binarizer` **accept both dense array-like
+  sparse matrices from scipy.sparse as input**.
 
   For sparse input the data is **converted to the Compressed Sparse Rows
   representation** (see ``scipy.sparse.csr_matrix``).
@@ -230,4 +234,10 @@ It is possible to adjust the threshold of the binarizer::
   Label binarization
   ------------------
 
-  Please @mblondel write me!
+  Please @mblondel or someone else write me!
+
+
+  Kernel centering
+  ================
+
+  Please @mblondel or someone else write me!

@@ -546,6 +546,7 @@ Preprocessing and normalization
    preprocessing.Normalizer
    preprocessing.Binarizer
    preprocessing.LabelBinarizer
+   preprocessing.KernelCenterer
 
 
 .. autosummary::
@@ -555,6 +556,7 @@ Preprocessing and normalization
 
    preprocessing.scale
    preprocessing.normalize
+   preprocessing.binarize
 
 
 Manifold learning
