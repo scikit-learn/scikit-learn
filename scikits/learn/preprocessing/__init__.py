@@ -16,14 +16,18 @@ from ._preprocessing import inplace_csr_row_normalize_l1
 from ._preprocessing import inplace_csr_row_normalize_l2
 
 
-def _mean_and_std(X, axis=0, with_std=True):
+def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std dev for centering, scaling
 
     Zero valued std components are reseted to 1.0 to avoid NaNs when scaling.
     """
     X = np.asanyarray(X)
     Xr = np.rollaxis(X, axis)
-    mean_ = Xr.mean(axis=0)
+
+    if with_mean:
+        mean_ = Xr.mean(axis=0)
+    else:
+        mean_ = None
 
     if with_std:
         std_ = Xr.std(axis=0)
@@ -37,17 +41,19 @@ def _mean_and_std(X, axis=0, with_std=True):
     return mean_, std_
 
 
-def scale(X, axis=0, with_std=True, copy=True):
+def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     """Method to standardize a dataset along any axis
 
     Center to the mean and component wise scale to unit variance.
     """
     X = np.asanyarray(X)
-    mean_, std_ = _mean_and_std(X, axis, with_std)
+    mean_, std_ = _mean_and_std(
+        X, axis, with_mean=with_mean, with_std=with_std)
     if copy:
         X = X.copy()
     Xr = np.rollaxis(X, axis)
-    Xr -= mean_
+    if with_mean:
+        Xr -= mean_
     if with_std:
         Xr /= std_
     return X
@@ -60,13 +66,14 @@ class Scaler(BaseEstimator):
     each feature.
     """
 
-    def __init__(self, with_std=True):
+    def __init__(self, with_mean=True, with_std=True):
+        self.with_mean = with_mean
         self.with_std = with_std
 
     def fit(self, X, y=None, **params):
         self._set_params(**params)
         self.mean_, self.std_ = _mean_and_std(
-            X, axis=0, with_std=self.with_std)
+            X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
         return self
 
     def transform(self, X, y=None, copy=True):
@@ -74,7 +81,8 @@ class Scaler(BaseEstimator):
         if copy:
             X = X.copy()
         # We are taking a view of the X array and modifying it
-        X -= self.mean_
+        if self.with_mean:
+            X -= self.mean_
         if self.with_std:
             X /= self.std_
         return X

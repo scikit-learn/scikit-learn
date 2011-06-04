@@ -193,8 +193,8 @@ def test_binarizer():
         binarizer = Binarizer(copy=True).fit(X)
         X_bin = toarray(binarizer.transform(X))
         assert X_bin is not X
-        assert_equal(np.sum(X_bin == 0), 4)
-        assert_equal(np.sum(X_bin == 1), 2)
+        assert_equal(np.sum(X_bin == 0), 2)
+        assert_equal(np.sum(X_bin == 1), 4)
 
         binarizer = Binarizer(copy=True)
         X_bin = binarizer.transform(X)
