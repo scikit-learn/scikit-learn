@@ -328,6 +328,10 @@ class CountVectorizer(BaseEstimator):
             terms -= stop_words
 
         # convert to a document-token matrix
+
+        # create list of terms from set, so we know the enumeration
+        terms = [term for term in terms]
+        inverse_vocabulary = np.array(terms)
         vocabulary = dict(((t, i) for i, t in enumerate(terms)))  # token: idx
 
         # the term_counts and document_counts might be useful statistics, are
@@ -335,7 +339,7 @@ class CountVectorizer(BaseEstimator):
         # can be useful for corpus introspection
 
         matrix = self._term_count_dicts_to_matrix(term_counts_per_doc, vocabulary)
-        return matrix, vocabulary
+        return matrix, vocabulary, inverse_vocabulary
 
     def _build_vectors(self, raw_documents):
         """Analyze documents and vectorize using existing vocabulary"""
@@ -390,7 +394,7 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        vectors, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
+        vectors, self.vocabulary, self.inverse_vocabulary = self._build_vectors_and_vocab(raw_documents)
         return vectors
 
     def transform(self, raw_documents):
