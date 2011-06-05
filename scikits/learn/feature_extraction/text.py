@@ -415,6 +415,17 @@ class CountVectorizer(BaseEstimator):
 
         return self._build_vectors(raw_documents)
 
+    def inverse_transform(self, X):
+        """
+        Return matrix containing terms with nonzero
+        entries in X.
+        """
+        assert X.shape[1] == self.inverse_vocabulary.shape[0]
+        inverse_transformed_X = []
+        for i in xrange(X.shape[0]):
+            inverse_transformed_X.append(self.inverse_vocabulary[X[i,:].nonzero()[1]])
+        return inverse_transformed_X
+
 
 class TfidfTransformer(BaseEstimator):
     """Transform a count matrix to a TF or TF-IDF representation
@@ -549,7 +560,19 @@ class Vectorizer(BaseEstimator):
         X = self.tc.transform(raw_documents)
         return self.tfidf.transform(X, copy)
 
+    def inverse_transform(self, X):
+        """
+        Return matrix containing terms with nonzero
+        entries in X.
+        """
+        return self.tc.inverse_transform(X)
+
     def _get_vocab(self):
         return self.tc.vocabulary
 
+    def _get_invvocab(self):
+        return self.tc.inverse_vocabulary
+
     vocabulary = property(_get_vocab)
+
+    inverse_vocabulary = property(_get_invvocab)
