@@ -329,9 +329,6 @@ class CountVectorizer(BaseEstimator):
 
         # convert to a document-token matrix
 
-        # create list of terms from set, so we know the enumeration
-        terms = [term for term in terms]
-        inverse_vocabulary = np.array(terms)
         vocabulary = dict(((t, i) for i, t in enumerate(terms)))  # token: idx
 
         # the term_counts and document_counts might be useful statistics, are
@@ -339,7 +336,7 @@ class CountVectorizer(BaseEstimator):
         # can be useful for corpus introspection
 
         matrix = self._term_count_dicts_to_matrix(term_counts_per_doc, vocabulary)
-        return matrix, vocabulary, inverse_vocabulary
+        return matrix, vocabulary
 
     def _build_vectors(self, raw_documents):
         """Analyze documents and vectorize using existing vocabulary"""
@@ -394,7 +391,7 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        vectors, self.vocabulary, self.inverse_vocabulary = self._build_vectors_and_vocab(raw_documents)
+        vectors, self.vocabulary = self._build_vectors_and_vocab(raw_documents)
         return vectors
 
     def transform(self, raw_documents):
@@ -420,10 +417,13 @@ class CountVectorizer(BaseEstimator):
         Return matrix containing terms with nonzero
         entries in X.
         """
-        assert X.shape[1] == self.inverse_vocabulary.shape[0]
+        terms = np.array(self.vocabulary.keys())
+        indices = np.array(self.vocabulary.values())
+        inverse_vocabulary = terms[np.argsort(indices)]
+
         inverse_transformed_X = []
         for i in xrange(X.shape[0]):
-            inverse_transformed_X.append(self.inverse_vocabulary[X[i,:].nonzero()[1]])
+            inverse_transformed_X.append(inverse_vocabulary[X[i,:].nonzero()[1]])
         return inverse_transformed_X
 
 
@@ -570,9 +570,4 @@ class Vectorizer(BaseEstimator):
     def _get_vocab(self):
         return self.tc.vocabulary
 
-    def _get_invvocab(self):
-        return self.tc.inverse_vocabulary
-
     vocabulary = property(_get_vocab)
-
-    inverse_vocabulary = property(_get_invvocab)
