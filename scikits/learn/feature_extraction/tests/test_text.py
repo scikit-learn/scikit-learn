@@ -261,6 +261,18 @@ def test_vectorizer_max_df():
     assert_equals(len(vect.vocabulary.keys()), 4)  # the others remain
 
 
+def test_vectorizer_inverse_transform():
+    # raw documents
+    data = ALL_FOOD_DOCS
+    vectorizer = Vectorizer()
+    transformed_data = vectorizer.fit_transform(data)
+    inversed_data = vectorizer.inverse_transform(transformed_data)
+    for i, doc in enumerate(data):
+        data_vec = np.sort(np.unique(vectorizer.tc.analyzer.analyze(data[0])))
+        inversed_data_vec = np.sort(np.unique(inversed_data[0]))
+        assert((data_vec == inversed_data_vec).all())
+
+
 def test_dense_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
