@@ -56,12 +56,13 @@ class _Hungarian(object):
         """
         self.C = cost_matrix.copy()
         self.n = n = self.C.shape[0]
+        self.m = m = self.C.shape[1]
         self.row_uncovered = np.ones(n, dtype=np.bool)
-        self.col_uncovered = np.ones(n, dtype=np.bool)
+        self.col_uncovered = np.ones(m, dtype=np.bool)
         self.Z0_r = 0
         self.Z0_c = 0
-        self.path = np.zeros((2*n, 2), dtype=int)
-        self.marked = np.zeros((n, n), dtype=int)
+        self.path = np.zeros((n+m, 2), dtype=int)
+        self.marked = np.zeros((n, m), dtype=int)
 
         done = False
         step = 1
@@ -131,9 +132,7 @@ class _Hungarian(object):
         n = self.n
         while True:
             # Find an uncovered zero
-            raveled_idx = np.argmax(covered_C)
-            col = raveled_idx % n
-            row = raveled_idx // n
+            row, col = np.unravel_index(np.argmax(covered_C), (self.n, self.m))
             if covered_C[row, col] == 0:
                 return 6
             else:
