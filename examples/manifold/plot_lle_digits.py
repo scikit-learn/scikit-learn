@@ -6,7 +6,9 @@ Handwritten digits and Locally Linear Embedding
 An illustration of locally linear embedding on the digits dataset.
 """
 
-# Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
+# Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#          Olivier Grisel <olivier.grisel@ensta.org>
+#          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD, (C) INRIA 2011
 
 print __doc__
@@ -15,12 +17,12 @@ import numpy as np
 import pylab as pl
 from matplotlib import offsetbox
 from scikits.learn.utils.fixes import qr_economic
-from scikits.learn import manifold, datasets, decomposition
+from scikits.learn import manifold, datasets, decomposition, lda
 
 digits = datasets.load_digits(n_class=6)
 X = digits.data
+y = digits.target
 n_samples, n_features = X.shape
-
 
 #----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
@@ -35,7 +37,15 @@ X_projected = np.dot(Q.T, X.T).T
 # Projection on to the first 2 principal components
 
 print "Computing PCA projection"
-X_pca = decomposition.RandomizedPCA(2).fit(X).transform(X)
+X_pca = decomposition.RandomizedPCA(n_components=2).fit_transform(X)
+
+#----------------------------------------------------------------------
+# Projection on to the first 2 linear discriminant components
+
+print "Computing LDA projection"
+X2 = X.copy()
+X2.flat[::X.shape[1] + 1] += 0.01 # Make X invertible
+X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 
 
 #----------------------------------------------------------------------
@@ -79,6 +89,7 @@ def plot_embedding(X, title=None):
 
 plot_embedding(X_projected, "Random Projection of the digits")
 plot_embedding(X_pca, "Principal Components projection of the digits")
+plot_embedding(X_lda, "Linear Discriminant projection of the digits")
 plot_embedding(X_lle, "Locally Linear Embedding of the digits")
 
 pl.show()
