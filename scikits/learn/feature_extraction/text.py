@@ -9,7 +9,7 @@ import re
 import unicodedata
 import numpy as np
 from ..base import BaseEstimator
-from ..preprocessing.sparse import Normalizer
+from ..preprocessing import Normalizer
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -479,7 +479,7 @@ class TfidfTransformer(BaseEstimator):
         n_samples, n_features = X.shape
 
         if self.use_tf:
-            X = Normalizer().transform(X)
+            X = Normalizer(norm='l1').transform(X)
 
         if self.use_idf:
             d = sp.lil_matrix((len(self.idf), len(self.idf)))
