@@ -193,8 +193,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def transform(self, X):
         """
-        This function return the decision function values related to each
-        class on an array of test vectors X.
+        Project the data so as to maximize class separation (large separation
+        between projected class means and small variance within each class).
 
         Parameters
         ----------
