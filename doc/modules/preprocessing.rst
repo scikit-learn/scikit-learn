@@ -14,17 +14,17 @@ into a representation that is more suitable for the downstream estimators.
 Standardization or Mean Removal and Variance Scaling
 ====================================================
 
-The **Standardazition** of a dataset is a **common requirement for many
+**Standardization** of datasets is a **common requirement for many
 machine learning estimators** implemented in the scikit: they might behave
 badly if the individual feature do not more or less look like standard
 normally distributed data: Gaussian with **zero mean and unit variance**.
 
 In practice we often ignore the shape of the distribution and just
 transform the data to center it by removing the mean value of each
-feature and then scale it by dividing non constant features by their
+feature, then scale it by dividing non-constant features by their
 standard deviation.
 
-For instance many elements used in the objective function of
+For instance, many elements used in the objective function of
 a learning algorithm (such as the RBF kernel of Support Vector
 Machines or the l1 and l2 regularizers of linear models) assume that
 all features are centered around zero and have variance in the same
@@ -111,9 +111,9 @@ of :class:`Scaler`.
 Normalization
 =============
 
-**Normalization is the process or scaling individual samples to have unit
-norm**. This process can be useful if you plan to use a quadratic form
-such as a the dot-product or any other kernel to quantify the similarity
+**Normalization** is the process of **scaling individual samples to have
+unit norm**. This process can be useful if you plan to use a quadratic form
+such as the dot-product or any other kernel to quantify the similarity
 of any pair of samples.
 
 This assumption is the base of the `Vector Space Model
@@ -136,8 +136,8 @@ norms::
 
 The ``preprocessing`` module further provides a utility class
 :class:`Normalizer` that implements the same operation using the
-``Transformer`` API even though the ``fit`` method is useless in this case
-(the class is stateless as this operation treats samples independently).
+``Transformer`` API (even though the ``fit`` method is useless in this case:
+the class is stateless as this operation treats samples independently).
 
 This class is hence suitable for use in the early steps of a
 :class:`scikits.learn.pipeline.Pipeline`::
@@ -160,13 +160,13 @@ The normalizer instance can then be used on sample vectors as any transformer::
 
 .. topic:: Notes
 
-  :func:`normalize` and :class:`Normalizer` **accept both dense array-like
-  sparse matrices from scipy.sparse as input**.
+  :func:`normalize` and :class:`Normalizer` accept **both dense array-like
+  and sparse matrices from scipy.sparse as input**.
 
   For sparse input the data is **converted to the Compressed Sparse Rows
   representation** (see ``scipy.sparse.csr_matrix``) before being fed to
-  efficient cython routines. To avoid un-necessary memory copy it is
-  therefore recommended to choose the CSR representation upsteam.
+  efficient Cython routines. To avoid unnecessary memory copies, it is
+  recommended to choose the CSR representation upsteam.
 
 
 Binarization
@@ -179,7 +179,7 @@ Feature binarization
 features to get boolean values**. This can be useful for downsteam
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
-<http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance
+<http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
 this is the case for the most common class of `(Restricted) Boltzmann
 Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_
 (not yet implemented in the scikit).
@@ -221,13 +221,13 @@ to be used when the transformer API is not necessary.
 
 .. topic:: Notes
 
-  :func:`binarize` and :class:`Binarizer` **accept both dense array-like
-  sparse matrices from scipy.sparse as input**.
+  :func:`binarize` and :class:`Binarizer` accept **both dense array-like
+  and sparse matrices from scipy.sparse as input**.
 
   For sparse input the data is **converted to the Compressed Sparse Rows
   representation** (see ``scipy.sparse.csr_matrix``).
-  To avoid un-necessary memory copy it is therefore recommended to choose
-  the CSR representation upsteam.
+  To avoid unnecessary memory copies, it is recommended to choose the CSR
+  representation upsteam.
 
 .. TODO
 
