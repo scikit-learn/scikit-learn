@@ -166,7 +166,7 @@ The normalizer instance can then be used on sample vectors as any transformer::
   For sparse input the data is **converted to the Compressed Sparse Rows
   representation** (see ``scipy.sparse.csr_matrix``) before being fed to
   efficient Cython routines. To avoid unnecessary memory copies, it is
-  recommended to choose the CSR representation upsteam.
+  recommended to choose the CSR representation upstream.
 
 
 Binarization
@@ -227,7 +227,7 @@ to be used when the transformer API is not necessary.
   For sparse input the data is **converted to the Compressed Sparse Rows
   representation** (see ``scipy.sparse.csr_matrix``).
   To avoid unnecessary memory copies, it is recommended to choose the CSR
-  representation upsteam.
+  representation upstream.
 
 .. TODO
 
