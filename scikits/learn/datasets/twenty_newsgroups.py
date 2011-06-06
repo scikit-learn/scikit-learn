@@ -95,7 +95,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     test_path = os.path.join(twenty_home, TEST_FOLDER)
 
     if not os.path.exists(twenty_home):
-        os.makedirs(twenty_home)
+        if download_if_missing:
+            os.makedirs(twenty_home)
+        else:
+            raise IOError("%s is missing, and will not be created" % twenty_home)
 
     if not os.path.exists(train_path) or not os.path.exists(test_path):
 
