@@ -266,6 +266,7 @@ Classification metrics
    metrics.precision_recall_curve
    metrics.zero_one_score
    metrics.zero_one
+   metrics.hinge_loss
 
 
 Regression metrics

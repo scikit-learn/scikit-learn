@@ -650,7 +650,7 @@ def mean_square_error(y_true, y_pred):
 
     Parameters
     ----------
-    y_trye : array-like
+    y_true : array-like
 
     y_pred : array-like
 
@@ -660,3 +660,35 @@ def mean_square_error(y_true, y_pred):
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.linalg.norm(y_pred - y_true) ** 2
+
+def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
+    """
+    Cumulated hinge loss (non-regularized).
+
+    Assuming labels in y_true are encoded with +1 and -1,
+    when a prediction mistake is made, margin = y_true * pred_decision
+    is always negative (since the signs disagree), therefore 1 - margin
+    is always greater than 1. The cumulated hinge loss therefore
+    upperbounds the number of mistakes made by the classifier.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True target (integers)
+
+    pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
+        Predicted decisions, as output by decision_function (floats)
+    """
+    # TODO: multi-class hinge-loss
+
+    if pos_label != 1 or neg_label != -1:
+        # the rest of the code assumes that positive and negative labels
+        # are encoded as +1 and -1 respectively
+        y_true = y_true.copy()
+        y_true[y_true == pos_label] = 1
+        y_true[y_true == neg_label] = -1
+
+    margin = y_true * pred_decision
+    losses = 1 - margin
+    losses[losses <= 0] = 0 # the hinge doesn't penalize good enough predictions
+    return np.mean(losses)
