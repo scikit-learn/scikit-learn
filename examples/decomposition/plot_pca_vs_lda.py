@@ -1,7 +1,7 @@
 """
-====================================
+=======================================================
 Comparison of LDA and PCA 2D projection of Iris dataset
-====================================
+=======================================================
 
 The Iris dataset represents 3 kind of Iris flowers (Setosa, Versicolour
 and Virginica) with 4 attributes: sepal length, sepal width, petal length
