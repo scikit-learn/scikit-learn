@@ -183,6 +183,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     matrix. In short ICA attempts to `un-mix' the data by estimating an
     un-mixing matrix W where S = W K X.
 
+    This implementation was originally made for data of shape
+    [n_features, n_samples]. Now the input is transposed
+    before the algorithm is applied. This makes it slightly
+    faster for Fortran-ordered input.
+
     Implemented using FastICA:
 
     * A. Hyvarinen and E. Oja, Independent Component Analysis:
