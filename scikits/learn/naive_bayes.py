@@ -194,9 +194,9 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
 
 def asanyarray_or_csr(X):
     if issparse(X):
-        return X.tocsr(), True
+        return X.tocsr()
     else:
-        return np.asanyarray(X), False
+        return np.asanyarray(X)
 
 
 def atleast2d_or_csr(X):
@@ -249,8 +249,8 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
-    (`class_log_prior_` and `feature_log_prob_` are properties referring to
-    `intercept_` and `coef_`, respectively.)
+        (`class_log_prior_` and `feature_log_prob_` are properties referring to
+        `intercept_` and `coef_`, respectively.)
 
     Examples
     --------
@@ -296,10 +296,10 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        X, sparse = asanyarray_or_csr(X)
+        X = asanyarray_or_csr(X)
         y = safe_asanyarray(y)
 
-        self.unique_y = np.unique(y)
+        self.unique_y, inv_y_ind = np.unique(y, return_inverse=True)
         n_classes = self.unique_y.size
 
         fit_prior = self.fit_prior
@@ -307,35 +307,42 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             assert len(class_prior) == n_classes, \
                    'Number of priors must match number of classs'
             fit_prior = False
-        elif not fit_prior:
-            class_prior = np.ones(n_classes) / n_classes
+            self.intercept_ = np.log(class_prior)
+        elif fit_prior:
+            y_count = np.bincount(inv_y_ind)
+            self.intercept_ = np.log(y_count) - np.log(len(y))
+        else:
+            self.intercept_ = np.zeros(n_classes) - np.log(n_classes)
 
-        # N_c is the count of all features in all samples of class c.
-        # N_c_i is the a count of feature i in all samples of class c.
+        N_c, N_c_i = self._count(X, y)
+
+        self.coef_ = (np.log(N_c_i + self.alpha)
+                    - np.log(N_c.reshape(-1, 1)
+                           + self.alpha * X.shape[1]))
+
+        return self
+
+    def _count(self, X, y):
+        """Count feature occurrences.
+
+        Returns (N_c, N_c_i), where
+            N_c is the count of all features in all samples of class c.
+            N_c_i is the count of feature i in all samples of class c.
+        """
         N_c_i = []
-        if fit_prior:
-            class_prior = []
 
+        sparse = issparse(X)
         for yi in self.unique_y:
             if sparse:
-                row_ind = np.nonzero(y == yi)[0]
+                (row_ind,) = np.nonzero(y == yi)
                 N_c_i.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
             else:
                 N_c_i.append(np.sum(X[y == yi, :], 0))
-            if fit_prior:
-                class_prior.append(np.float(np.sum(y == yi)) / y.size)
 
         N_c_i = np.array(N_c_i)
         N_c = np.sum(N_c_i, axis=1)
 
-        # Estimate (and smooth) the parameters of the distribution
-        #
-        self.coef_ = (np.log(N_c_i + self.alpha)
-                          - np.log(N_c.reshape(-1, 1)
-                                   + self.alpha * X.shape[1]))
-        self.intercept_ = np.log(class_prior)
-
-        return self
+        return N_c, N_c_i
 
     class_log_prior_ = property(lambda self: self.intercept_)
     feature_log_prob_ = property(lambda self: self.coef_)
