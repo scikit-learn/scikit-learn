@@ -112,7 +112,7 @@ class _Hungarian(object):
         marked = (self.marked == 1)
         self.col_uncovered[np.any(marked, axis=0)] = False
 
-        if marked.sum() >= self.n:
+        if marked.sum() >= min(self.m, self.n) :
             return 7 # done
         else:
             return 4
@@ -130,9 +130,10 @@ class _Hungarian(object):
         covered_C = C*self.row_uncovered[:, np.newaxis]
         covered_C *= self.col_uncovered.astype(np.int)
         n = self.n
+        m = self.m
         while True:
             # Find an uncovered zero
-            row, col = np.unravel_index(np.argmax(covered_C), (self.n, self.m))
+            row, col = np.unravel_index(np.argmax(covered_C), (n, m))
             if covered_C[row, col] == 0:
                 return 6
             else:
@@ -211,10 +212,11 @@ class _Hungarian(object):
         lines.
         """
         # the smallest uncovered value in the matrix
-        minval = np.min(self.C[self.row_uncovered], axis=0)
-        minval = np.min(minval[self.col_uncovered])
-        self.C[np.logical_not(self.row_uncovered)] += minval
-        self.C[:, self.col_uncovered] -= minval
+        if np.any(self.row_uncovered) and np.any(self.col_uncovered):
+            minval = np.min(self.C[self.row_uncovered], axis=0)
+            minval = np.min(minval[self.col_uncovered])
+            self.C[np.logical_not(self.row_uncovered)] += minval
+            self.C[:, self.col_uncovered] -= minval
         return 4
 
     def _find_prime_in_row(self, row):
