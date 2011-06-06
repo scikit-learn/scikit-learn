@@ -11,6 +11,9 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('_inertia',
                          sources=['_inertia.c'],
                          include_dirs=[numpy.get_include()])
+
+    config.add_subpackage('sparse')
+    
     return config
 
 if __name__ == '__main__':
