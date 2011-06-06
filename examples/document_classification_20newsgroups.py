@@ -170,5 +170,5 @@ sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
 
 # Train sparse MultinomialNB
 print 80 * '='
-print "MultinomialNB penalty"
+print "Naive Bayes"
 mnnb_results = benchmark(MultinomialNB(alpha=.01))
