@@ -47,7 +47,7 @@ def _mini_batch_step(X, batch, centers, counts):
         The membership counts for each cluster.
 
     """
-    cache = compute_cache(centers, X)
+    cache = compute_cache(centers, X[batch])
 
     _fast_kmeans._mini_batch_step(X.data, X.indices, X.indptr, batch,
                                   centers, counts, cache)

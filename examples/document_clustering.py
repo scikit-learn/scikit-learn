@@ -29,31 +29,6 @@ from scikits.learn.cluster.sparse import randindex
 from scikits.learn.preprocessing.sparse import LengthNormalizer
 
 
-## def randindex(labels_true, labels_pred):
-##     count = np.zeros((2, 2), dtype=np.int32)
-##     assert len(labels_true) == len(labels_pred)
-
-##     n = len(labels_pred)
-##     if n < 2:
-##         raise ValueError("number of samples must be at least 2.")
-
-##     for i in xrange(n):
-##         for j in xrange(i, n):
-##             if labels_true[i] == labels_true[j]:
-##                 if labels_pred[i] == labels_pred[j]:
-##                     count[1, 1] += 1
-##                 else:
-##                     count[1, 0] += 1
-##             else:
-##                 if labels_pred[i] == labels_pred[j]:
-##                     count[0, 1] += 1
-##                 else:
-##                     count[0, 0] += 1
-
-##     return float(count[0, 0] + count[1, 1]) / float((n * (n - 1)) / 2.0)
-
-
-
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
@@ -74,20 +49,24 @@ print categories
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
                                shuffle=True, random_state=42)
+data_test = fetch_20newsgroups(subset='test', categories=categories,
+                               shuffle=True, random_state=42)
 
-print "%d documents (training set)" % len(data_train.filenames)
-print "%d categories" % len(data_train.target_names)
+filenames = np.concatenate((data_train.filenames, data_test.filenames))
+target_names = set(data_train.target_names + data_test.target_names)
+
+print "%d documents" % len(filenames)
+print "%d categories" % len(target_names)
 print
 
 # split a training set and a test set
-filenames_train = data_train.filenames
-labels = data_train.target
+labels = np.concatenate((data_train.target, data_test.target))
 true_k = np.unique(labels).shape[0]
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
 vectorizer = Vectorizer(max_features=10000)
-X = vectorizer.fit_transform((open(f).read() for f in filenames_train))
+X = vectorizer.fit_transform((open(f).read() for f in filenames))
 
 X = LengthNormalizer().transform(X)
 
@@ -95,11 +74,11 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X.shape
 print
 
-chunk_size = 300
+chunk_size = 250
 
 print "_" * 80
 
-mbkm = sparse.MiniBatchKMeans(k=true_k, n_iter=100, random_state=13,
+mbkm = sparse.MiniBatchKMeans(k=true_k, n_iter=50, random_state=13,
                               chunk_size=chunk_size)
 
 print "Clustering data with %s" % str(mbkm)

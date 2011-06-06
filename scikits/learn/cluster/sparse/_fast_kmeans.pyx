@@ -73,7 +73,7 @@ def _mini_batch_step(np.ndarray[DOUBLE, ndim=1] X_data,
         sample_idx = batch[i]
         offset = X_indptr_ptr[sample_idx]
         xnnz = X_indptr_ptr[sample_idx + 1] - offset
-        c = cache[sample_idx]
+        c = cache[i]
         counts[c] = counts[c] + 1
         eta = 1.0 / counts[c]
         center_scales_ptr[c] *= (1.0 - eta)
@@ -116,7 +116,6 @@ cdef double add(DOUBLE *center_data_ptr, DOUBLE center_scale, DOUBLE *X_data_ptr
         xsqnorm += (val * val)
         center_data_ptr[idx] += val * (c / center_scale)
     return (xsqnorm * c * c) + (2.0 * innerprod * c * center_scale)
-
 
 
 ################################################################################
