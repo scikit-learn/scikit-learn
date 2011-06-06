@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Naive Bayes models
 ==================
@@ -417,7 +419,7 @@ class BernoulliNB(MultinomialNB):
     alpha: float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    binarize: float, optional
+    binarize: float or None, optional
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
     fit_prior: boolean
@@ -463,9 +465,12 @@ class BernoulliNB(MultinomialNB):
 
     References
     ----------
+    C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234–265.
+
     A. McCallum and K. Nigam (1998). A comparison of event models for naive
-    Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for Text
-    Categorization, pp. 41-48.
+    Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for
+    Text Categorization, pp. 41–48.
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
@@ -516,10 +521,11 @@ class BernoulliNB(MultinomialNB):
         # XXX: In the dense case, we could vectorize this loop. It might be
         # worthwhile to check if this is faster.
         jll = np.empty((n_classes, n_samples))
+        feature_neg_prob = np.log(1 - np.exp(self.coef_))
         for i, x in enumerate(X):
             xT = (x.toarray() if sparse else np.atleast_2d(x)).T
             jll[:, i] = (np.dot(self.coef_, xT)
-                       + np.dot(np.log(1 - np.exp(self.coef_)),
+                       + np.dot(feature_neg_prob,
                                 np.logical_not(xT))).flatten()
 
         return jll + np.atleast_2d(self.intercept_).T
