@@ -175,7 +175,9 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
-    arrays = check_arrays(*arrays, sparse_format='csr')
+    # To cope with Python 2.5 syntax limitations
+    kwargs = dict(sparse_format='csr')
+    arrays = check_arrays(*arrays, **kwargs)
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
