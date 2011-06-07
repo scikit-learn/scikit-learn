@@ -6,10 +6,6 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
 
-_max_size = cython.declare(cython.Py_ssize_t,
-                           getattr(sys, "maxsize",
-                                   getattr(sys, "maxint", None)))
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -116,43 +112,6 @@ cdef double add(DOUBLE *center_data_ptr, DOUBLE center_scale, DOUBLE *X_data_ptr
         xsqnorm += (val * val)
         center_data_ptr[idx] += val * c / center_scale
     return (xsqnorm * c * c) + (2.0 * innerprod * c * center_scale)
-
-
-################################################################################
-# Distance computation
-
-def compute_cache(np.ndarray[DOUBLE, ndim=2, mode='c'] centers, X,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] x_squared_norms):
-    cdef int i = 0, j = 0, c = 0
-    cdef int n_samples = X.shape[0]
-    cdef int n_clusters = centers.shape[0]
-    cdef int n_features = centers.shape[1]
-
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[INT, ndim=1] X_indices = X.indices
-    cdef np.ndarray[INT, ndim=1] X_indptr = X.indptr
-
-    cdef double dist = 0.0
-    cdef double best = -1
-    cdef int best_c = -1
-    cdef np.ndarray[INT, ndim=1] cache = np.empty((n_samples,),
-                                                  dtype=np.int32)
-    cdef np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.sum(centers ** 2.0,
-                                                                  axis=1)
-    cdef np.ndarray[DOUBLE, ndim=2] dot_product = X * centers.T
-
-    for i from 0 <= i < n_samples:
-        best = _max_size
-        best_c = 0
-        for c from 0 <= c < n_clusters:
-            dist = x_squared_norms[i]
-            dist += center_squared_norms[c]
-            dist -= 2.0 * dot_product[i, c]
-            if dist < best:
-                best = dist
-                best_c = c
-        cache[i] = best_c
-    return cache   
 
 
 ################################################################################

@@ -21,16 +21,20 @@ from . import _fast_kmeans
 
 
 def _compute_cache_dot(centers, X, x_squared_norms):
-    """Cache the center nearest to each x in X."""
+    """Cache the center nearest to each x in X according to
+    dot product. """
     return (X * centers.T).argmax(axis=1).astype(np.int32)
 
+
 def _compute_cache_euclid(centers, X, x_squared_norms):
-    """Cache the center nearest to each x in X."""
+    """Cache the center nearest to each x in X according to euclidean
+    distance.
+    """
     XX = np.sum(centers * centers, axis=1)[:, np.newaxis]
 
     # If added same as compute dot
     #XX = np.ones((centers.shape[0],))[:, np.newaxis]
-    
+
     YY = x_squared_norms[np.newaxis, :]
     
     distances = XX + YY
@@ -39,7 +43,23 @@ def _compute_cache_euclid(centers, X, x_squared_norms):
     return distances.argmin(axis=0).astype(np.int32)
 
 
-compute_cache = _compute_cache_euclid
+def _compute_cache_cosine(centers, X, x_squared_norms):
+    """Cache the center nearest to each x in X according to cosine
+    similarity.
+    """
+    XX = np.sum(centers * centers, axis=1)[:, np.newaxis]
+
+    # If added same as compute dot
+    #XX = np.ones((centers.shape[0],))[:, np.newaxis]
+    
+    YY = x_squared_norms[np.newaxis, :]
+    
+    sim = centers * X.T
+    sim /= (XX * YY)
+    return sim.argmax(axis=0).astype(np.int32)
+
+
+compute_cache = _compute_cache_dot #euclid
 
 
 def _mini_batch_step(X, batch, centers, counts, x_squared_norms):
@@ -74,16 +94,11 @@ def _mini_batch_step(X, batch, centers, counts, x_squared_norms):
 
 def compute_squared_norms(X):
     """Compute squared row norms of CSR matrix."""
-    ## x_squared_norms = np.zeros((X.shape[0],), dtype=np.float64)
-##     for i in xrange(X.shape[0]):
-##         x_squared_norms[i] = (X[i].data**2.0).sum()
-##     return x_squared_norms
-    return np.ones((X.shape[0],), dtype=np.float64)
-
-
-## def compute_cache(centers, X, x_squared_norms):
-##     """Cache the center nearest to each x in X."""
-##     return (X * centers.T).argmax(axis=1).astype(np.int32)
+    x_squared_norms = np.zeros((X.shape[0],), dtype=np.float64)
+    for i in xrange(X.shape[0]):
+        x_squared_norms[i] = (X[i].data**2.0).sum()
+    return x_squared_norms
+    #return np.ones((X.shape[0],), dtype=np.float64)
 
 
 def _init_centroids(X, k, init, random_state):
@@ -206,7 +221,7 @@ class MiniBatchKMeans(BaseEstimator):
 
         batches_cycle = cycle(b for b in batches)
         n_iterations = xrange(self.n_iter * n_batches)
-        print "xnorms:\n", np.unique(x_squared_norms)
+
         for i, batch in izip(n_iterations, batches_cycle):
             # old_centers = self.cluster_centers_.copy()
             _mini_batch_step(X, batch, self.cluster_centers_, self.counts,

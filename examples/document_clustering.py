@@ -23,6 +23,7 @@ from scikits.learn import metrics
 
 from scikits.learn.cluster import MiniBatchKMeans
 from scikits.learn.cluster import KMeans
+from scikits.learn.cluster import SpectralClustering
 from scikits.learn.cluster import sparse
 from scikits.learn.cluster.sparse import randindex
 
@@ -76,6 +77,10 @@ print
 
 chunk_size = 250
 
+
+################################################################################
+# Now sparse MiniBatchKmeans
+
 print "_" * 80
 
 mbkm = sparse.MiniBatchKMeans(k=true_k, n_iter=50, random_state=13,
@@ -87,60 +92,63 @@ print
 t0 = time()
 
 mbkm.fit(X)
-
+ri = randindex(labels, mbkm.labels_)
+vmeasure = metrics.v_measure_score(labels, mbkm.labels_)
 print "done in %0.3fs" % (time() - t0)
 print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, mbkm.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, mbkm.labels_)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels, mbkm.labels_)
-print "Rand-Index: %.3f" % randindex(labels, mbkm.labels_)
+print "V-measure: %0.3f" % vmeasure
+print "Rand-Index: %.3f" % ri
 print "center norms", np.sum(mbkm.cluster_centers_ ** 2.0, axis=1)
 print
 
-## ################################################################################
-## # Now dense Kmeans
 
-## print "_" * 80
+################################################################################
+# Now sparse MiniBatchKmeans
 
-## km = KMeans(k=true_k, init="k-means++", n_init=1, random_state=13, tol=0.001,
-##             copy_x=False)
+print "_" * 80
 
-## X = X.toarray()
+mbkm = MiniBatchKMeans(k=true_k, max_iter=50, random_state=13,
+                       chunk_size=chunk_size, tol=0.0)
 
-## print "Clustering data with %s" % str(km)
-## print
+print "Clustering data with %s" % str(mbkm)
+print
 
-## t0 = time()
+t0 = time()
 
-## km.fit(X)
+mbkm.fit(X.toarray())
+ri = randindex(labels, mbkm.labels_)
+vmeasure = metrics.v_measure_score(labels, mbkm.labels_)
+print "done in %0.3fs" % (time() - t0)
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, mbkm.labels_)
+print "Completeness: %0.3f" % metrics.completeness_score(labels, mbkm.labels_)
+print "V-measure: %0.3f" % vmeasure
+print "Rand-Index: %.3f" % ri
+print "center norms", np.sum(mbkm.cluster_centers_ ** 2.0, axis=1)
+print
 
-## print "done in %0.3fs" % (time() - t0)
-## print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
-## print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
-## print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
-## print "Rand-Index: %.3f" % randindex(labels, km.labels_)
-## print
 
-## ################################################################################
-## # Now dense MiniBatchKmeans
 
-## print "_" * 80
+################################################################################
+# Now sectral clustering
 
-## X = X.toarray()
+print "_" * 80
+sc = SpectralClustering(k=true_k, mode='amg', random_state=13)
 
-## mbkm = MiniBatchKMeans(k=true_k, init="random", n_init=1, max_iter=50,
-##                        random_state=13, chunk_size=chunk_size, tol=0.0)
+t0 = time()
+A = (X * X.T).toarray()
+print "computed A in %0.3fs" % (time() - t0)
 
-## print "Clustering data with %s" % str(mbkm)
-## print
+print "Clustering data with %s" % str(sc)
+print
 
-## t0 = time()
+t0 = time()
 
-## mbkm.fit(X)
+sc.fit(A)
 
-## print "done in %0.3fs" % (time() - t0)
-## print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, mbkm.labels_)
-## print "Completeness: %0.3f" % metrics.completeness_score(labels, mbkm.labels_)
-## print "V-measure: %0.3f" % metrics.v_measure_score(labels, mbkm.labels_)
-## print "Rand-Index: %.3f" % randindex(labels, mbkm.labels_)
-## print "center norms", np.sum(mbkm.cluster_centers_ ** 2.0, axis=1)
-## print
+print "done in %0.3fs" % (time() - t0)
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, sc.labels_)
+print "Completeness: %0.3f" % metrics.completeness_score(labels, sc.labels_)
+print "V-measure: %0.3f" % metrics.v_measure_score(labels, sc.labels_)
+print "Rand-Index: %.3f" % randindex(labels, sc.labels_)
+print 
