@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -5,16 +6,20 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
 
+_max_size = cython.declare(cython.Py_ssize_t,
+                           getattr(sys, "maxsize",
+                                   getattr(sys, "maxint", None)))
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _mini_batch_step(np.ndarray[DOUBLE, ndim=1] X_data,
-                     np.ndarray[INT, ndim=1] X_indices,
-                     np.ndarray[INT, ndim=1] X_indptr,
-                     np.ndarray[INT, ndim=1] batch,
-                     np.ndarray[DOUBLE, ndim=2] centers,
-                     np.ndarray[INT, ndim=1] counts,
-                     np.ndarray[INT, ndim=1] cache):
+def _mini_batch_update(np.ndarray[DOUBLE, ndim=1] X_data,
+                       np.ndarray[INT, ndim=1] X_indices,
+                       np.ndarray[INT, ndim=1] X_indptr,
+                       np.ndarray[INT, ndim=1] batch,
+                       np.ndarray[DOUBLE, ndim=2] centers,
+                       np.ndarray[INT, ndim=1] counts,
+                       np.ndarray[INT, ndim=1] cache):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -42,11 +47,6 @@ def _mini_batch_step(np.ndarray[DOUBLE, ndim=1] X_data,
     cache: array, shape (n_samples,)
          The center nearest to each x.
 
-    Returns
-    -------
-    centers: array, shape (k, n_features)
-        The resulting centers
-
     """
     cdef DOUBLE *X_data_ptr = <DOUBLE *>X_data.data
     cdef INT *X_indptr_ptr = <INT *>X_indptr.data
@@ -54,6 +54,7 @@ def _mini_batch_step(np.ndarray[DOUBLE, ndim=1] X_data,
 
     cdef int c_stride = centers.strides[0] / centers.strides[1]
     cdef DOUBLE *center_data_ptr = <DOUBLE *> centers.data
+
     cdef np.ndarray[DOUBLE, ndim=1] center_scales = np.ones((centers.shape[0],),
                                                             dtype=np.float64)
     cdef DOUBLE *center_scales_ptr = <DOUBLE *> center_scales.data
@@ -67,7 +68,7 @@ def _mini_batch_step(np.ndarray[DOUBLE, ndim=1] X_data,
     cdef int offset = -1
     cdef int xnnz = -1
     cdef int c = -1
-    cdef double eta = 0.0
+    cdef double eta = 0.0, u = 0.0
 
     for i from 0 <= i < n_samples:
         sample_idx = batch[i]
@@ -80,7 +81,8 @@ def _mini_batch_step(np.ndarray[DOUBLE, ndim=1] X_data,
 
         # check for scale underflow
         if center_scales_ptr[c] < 1e-9:
-            scale(center_data_ptr + (c_stride * c), n_features, center_scales_ptr[c])
+            scale(center_data_ptr + (c_stride * c), n_features,
+                  center_scales_ptr[c])
             center_scales_ptr[c] = 1.0
         
         add(center_data_ptr + (c_stride * c), center_scales_ptr[c],
@@ -89,8 +91,6 @@ def _mini_batch_step(np.ndarray[DOUBLE, ndim=1] X_data,
     # finally scale by scaling factors.
     for c from 0 <= c < n_clusters:
         scale(center_data_ptr + (c_stride * c), n_features, center_scales_ptr[c])
-
-    return centers, counts
 
 
 cdef void scale(DOUBLE *dense_vec, int n_features, double c):
@@ -114,8 +114,45 @@ cdef double add(DOUBLE *center_data_ptr, DOUBLE center_scale, DOUBLE *X_data_ptr
         val = X_data_ptr[offset + j]
         innerprod += (center_data_ptr[idx] * val)
         xsqnorm += (val * val)
-        center_data_ptr[idx] += val * (c / center_scale)
+        center_data_ptr[idx] += val * c / center_scale
     return (xsqnorm * c * c) + (2.0 * innerprod * c * center_scale)
+
+
+################################################################################
+# Distance computation
+
+def compute_cache(np.ndarray[DOUBLE, ndim=2, mode='c'] centers, X,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] x_squared_norms):
+    cdef int i = 0, j = 0, c = 0
+    cdef int n_samples = X.shape[0]
+    cdef int n_clusters = centers.shape[0]
+    cdef int n_features = centers.shape[1]
+
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[INT, ndim=1] X_indices = X.indices
+    cdef np.ndarray[INT, ndim=1] X_indptr = X.indptr
+
+    cdef double dist = 0.0
+    cdef double best = -1
+    cdef int best_c = -1
+    cdef np.ndarray[INT, ndim=1] cache = np.empty((n_samples,),
+                                                  dtype=np.int32)
+    cdef np.ndarray[DOUBLE, ndim=1] center_squared_norms = np.sum(centers ** 2.0,
+                                                                  axis=1)
+    cdef np.ndarray[DOUBLE, ndim=2] dot_product = X * centers.T
+
+    for i from 0 <= i < n_samples:
+        best = _max_size
+        best_c = 0
+        for c from 0 <= c < n_clusters:
+            dist = x_squared_norms[i]
+            dist += center_squared_norms[c]
+            dist -= 2.0 * dot_product[i, c]
+            if dist < best:
+                best = dist
+                best_c = c
+        cache[i] = best_c
+    return cache   
 
 
 ################################################################################

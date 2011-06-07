@@ -65,7 +65,7 @@ true_k = np.unique(labels).shape[0]
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = Vectorizer(max_features=10000)
+vectorizer = Vectorizer(max_features=1000)
 X = vectorizer.fit_transform((open(f).read() for f in filenames))
 
 X = LengthNormalizer().transform(X)
@@ -93,6 +93,7 @@ print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, mbkm.labels_)
 print "Completeness: %0.3f" % metrics.completeness_score(labels, mbkm.labels_)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels, mbkm.labels_)
 print "Rand-Index: %.3f" % randindex(labels, mbkm.labels_)
+print "center norms", np.sum(mbkm.cluster_centers_ ** 2.0, axis=1)
 print
 
 ## ################################################################################
@@ -124,8 +125,10 @@ print
 
 ## print "_" * 80
 
-## mbkm = MiniBatchKMeans(k=true_k, init="random", n_init=1, max_iter=100,
-##                        random_state=13, chunk_size=chunk_size)
+## X = X.toarray()
+
+## mbkm = MiniBatchKMeans(k=true_k, init="random", n_init=1, max_iter=50,
+##                        random_state=13, chunk_size=chunk_size, tol=0.0)
 
 ## print "Clustering data with %s" % str(mbkm)
 ## print
@@ -139,4 +142,5 @@ print
 ## print "Completeness: %0.3f" % metrics.completeness_score(labels, mbkm.labels_)
 ## print "V-measure: %0.3f" % metrics.v_measure_score(labels, mbkm.labels_)
 ## print "Rand-Index: %.3f" % randindex(labels, mbkm.labels_)
+## print "center norms", np.sum(mbkm.cluster_centers_ ** 2.0, axis=1)
 ## print

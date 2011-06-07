@@ -20,7 +20,29 @@ from ...utils import check_random_state
 from . import _fast_kmeans
 
 
-def _mini_batch_step(X, batch, centers, counts):
+def _compute_cache_dot(centers, X, x_squared_norms):
+    """Cache the center nearest to each x in X."""
+    return (X * centers.T).argmax(axis=1).astype(np.int32)
+
+def _compute_cache_euclid(centers, X, x_squared_norms):
+    """Cache the center nearest to each x in X."""
+    XX = np.sum(centers * centers, axis=1)[:, np.newaxis]
+
+    # If added same as compute dot
+    #XX = np.ones((centers.shape[0],))[:, np.newaxis]
+    
+    YY = x_squared_norms[np.newaxis, :]
+    
+    distances = XX + YY
+    distances -= 2 * (centers * X.T)
+    distances = np.maximum(distances, 0)
+    return distances.argmin(axis=0).astype(np.int32)
+
+
+compute_cache = _compute_cache_euclid
+
+
+def _mini_batch_step(X, batch, centers, counts, x_squared_norms):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -39,25 +61,29 @@ def _mini_batch_step(X, batch, centers, counts):
          The vector in which we keep track of the numbers of elements in a
          cluster
 
-    Returns
-    -------
-    centers: array, shape (k, n_features)
-        The resulting centers
-    counts: array, shape (k,)
-        The membership counts for each cluster.
-
+    x_squared_norms: array, shape (n_samples,)
+         The squared norms of each sample in `X`.
     """
-    cache = compute_cache(centers, X[batch])
 
-    _fast_kmeans._mini_batch_step(X.data, X.indices, X.indptr, batch,
-                                  centers, counts, cache)
+    cache = compute_cache(centers, X[batch],
+                          x_squared_norms[batch])
 
-    return centers, counts
+    _fast_kmeans._mini_batch_update(X.data, X.indices, X.indptr, batch,
+                                    centers, counts, cache)
 
 
-def compute_cache(centers, X):
-    """Cache the center nearest to each x in X."""
-    return (X * centers.T).argmax(axis=1).astype(np.int32)
+def compute_squared_norms(X):
+    """Compute squared row norms of CSR matrix."""
+    ## x_squared_norms = np.zeros((X.shape[0],), dtype=np.float64)
+##     for i in xrange(X.shape[0]):
+##         x_squared_norms[i] = (X[i].data**2.0).sum()
+##     return x_squared_norms
+    return np.ones((X.shape[0],), dtype=np.float64)
+
+
+## def compute_cache(centers, X, x_squared_norms):
+##     """Cache the center nearest to each x in X."""
+##     return (X * centers.T).argmax(axis=1).astype(np.int32)
 
 
 def _init_centroids(X, k, init, random_state):
@@ -166,8 +192,9 @@ class MiniBatchKMeans(BaseEstimator):
 
         self.cluster_centers_ = _init_centroids(
                 X, self.k, self.init, self.random_state)
-
         self.counts = np.zeros(self.k, dtype=np.int32)
+
+        x_squared_norms = compute_squared_norms(X)
 
         try:
             n_batches = floor(float(X.shape[0]) / self.chunk_size)
@@ -179,13 +206,14 @@ class MiniBatchKMeans(BaseEstimator):
 
         batches_cycle = cycle(b for b in batches)
         n_iterations = xrange(self.n_iter * n_batches)
-
+        print "xnorms:\n", np.unique(x_squared_norms)
         for i, batch in izip(n_iterations, batches_cycle):
             # old_centers = self.cluster_centers_.copy()
-            self.cluster_centers_, self.counts = _mini_batch_step(X,
-                batch, self.cluster_centers_, self.counts)
+            _mini_batch_step(X, batch, self.cluster_centers_, self.counts,
+                             x_squared_norms)
 
-        self.labels_ = compute_cache(self.cluster_centers_, X)
+        self.labels_ = compute_cache(self.cluster_centers_, X,
+                                     x_squared_norms)
 
         return self
 
@@ -206,11 +234,14 @@ class MiniBatchKMeans(BaseEstimator):
                 X, self.k, self.init, self.random_state)
             self.counts = np.zeros(self.k, dtype=np.int32)
 
+        x_squared_norms = compute_squared_norms(X)
+
         batch = np.arange(X.shape[0])
 
-        self.cluster_centers_, self.counts = _mini_batch_step(
-            X, batch, self.cluster_centers_, self.counts)
+        _mini_batch_step(X, batch, self.cluster_centers_, self.counts,
+                         x_squared_norms)
 
-        self.labels_ = compute_cache(self.cluster_centers_, X)
+        self.labels_ = compute_cache(self.cluster_centers_, X,
+                                     x_squared_norms)
 
         return self
