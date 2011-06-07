@@ -156,7 +156,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
         If an ndarray is passed, it should be of shape (k, p) and gives
         the initial centers.
-        
+
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
@@ -249,10 +249,9 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
     return best_centers + X_mean, best_labels, best_inertia
 
 
-def _calculate_labels_inertia(X, centers):
+def _calculate_labels_inertia(X, centers, x_squared_norms=None):
     """Compute the inertia and the labels of the given samples and centers"""
-    norm = (X ** 2).sum(axis=1)
-    distance = euclidean_distances(centers, X, norm, squared=True)
+    distance = euclidean_distances(centers, X, x_squared_norms, squared=True)
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
@@ -691,6 +690,6 @@ class MiniBatchKMeans(KMeans):
             x_squared_norms=squared_norms)
 
         self.inertia_, self.labels_ = _calculate_labels_inertia(
-            X, self.cluster_centers_)
+            X, self.cluster_centers_, squared_norms)
 
         return self
