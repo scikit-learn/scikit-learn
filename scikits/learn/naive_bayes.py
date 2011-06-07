@@ -22,6 +22,7 @@ complete documentation.
 from .base import BaseEstimator, ClassifierMixin
 from .utils import safe_asanyarray
 from .utils.extmath import safe_sparse_dot
+from .utils.fixes import unique
 import numpy as np
 from scipy.sparse import issparse
 
@@ -106,7 +107,7 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         theta = []
         sigma = []
         class_prior = []
-        unique_y = np.unique(y)
+        unique_y = unique(y)
         for yi in unique_y:
             theta.append(np.mean(X[y == yi, :], 0))
             sigma.append(np.var(X[y == yi, :], 0))
@@ -299,7 +300,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         X = asanyarray_or_csr(X)
         y = safe_asanyarray(y)
 
-        self.unique_y, inv_y_ind = np.unique(y, return_inverse=True)
+        self.unique_y, inv_y_ind = unique(y, return_inverse=True)
         n_classes = self.unique_y.size
 
         fit_prior = self.fit_prior
