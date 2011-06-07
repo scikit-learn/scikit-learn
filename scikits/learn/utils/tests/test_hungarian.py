@@ -34,6 +34,11 @@ def test_hungarian():
                   [ 9,  7,  4, 10]],
                  15
                 ),
+
+                ## n == 1, m == 0 matrix
+                ([[]],
+                 0
+                ),
                ]
 
     m = _Hungarian()
