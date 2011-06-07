@@ -607,7 +607,7 @@ class MiniBatchKMeans(KMeans):
                  chunk_size=300, tol=1e-4, verbose=0, random_state=None):
 
         super(MiniBatchKMeans, self).__init__(k, init, n_init,
-              max_iter, tol, verbose, random_state=None)
+              max_iter, tol, verbose, random_state)
 
         self.counts = None
         self.cluster_centers_ = None
