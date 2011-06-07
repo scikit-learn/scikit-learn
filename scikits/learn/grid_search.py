@@ -13,18 +13,7 @@ import scipy.sparse as sp
 from .externals.joblib import Parallel, delayed, logger
 from .cross_val import KFold, StratifiedKFold
 from .base import BaseEstimator, is_classifier, clone
-
-
-try:
-    from itertools import product
-except ImportError:
-    def product(*args, **kwds):
-        pools = map(tuple, args) * kwds.get('repeat', 1)
-        result = [[]]
-        for pool in pools:
-            result = [x + [y] for x in result for y in pool]
-        for prod in result:
-            yield tuple(prod)
+from .utils.fixes import product
 
 
 class IterGrid(object):
