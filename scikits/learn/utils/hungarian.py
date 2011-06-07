@@ -73,6 +73,11 @@ class _Hungarian(object):
                   5 : self._step5,
                   6 : self._step6 }
 
+        if m == 0 or n == 0 :
+            # No need to bother with assignments if one of the dimensions
+            # of the cost matrix is zero-length.
+            done = True
+
         while not done:
             try:
                 func = steps[step]
@@ -245,7 +250,12 @@ def hungarian(cost_matrix):
     H = _Hungarian()
     indices = H.compute(cost_matrix)
     indices.sort()
-    return np.array(indices).T[1]
+    # Re-force dtype to ints in case of empty list
+    indices = np.array(indices, dtype=int)
+    # Make sure the array is 2D with 2 columns.
+    # This is needed when dealing with an empty list
+    indices.shape = (-1, 2)
+    return indices.T[1]
 
 
 def find_permutation(vectors, reference):
