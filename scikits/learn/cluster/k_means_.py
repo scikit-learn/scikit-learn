@@ -284,9 +284,8 @@ def _mini_batch_step(X, centers, counts, x_squared_norms=None):
         The resulting centers
 
     """
-    m_norm = (X ** 2).sum(axis=1)
-    cache = euclidean_distances(centers, X, m_norm, squared=True).argmin(
-        axis=0)
+    cache = euclidean_distances(centers, X, Y_norm_squared=x_squared_norms,
+                                squared=True).argmin(axis=0)
 
     k = centers.shape[0]
     for q in range(k):
