@@ -26,6 +26,15 @@ import numpy as np
 from scipy.sparse import issparse
 
 
+# Get a version of numpy.unique with the return_inverse keyword arg,
+# without triggering a deprecation warning for numpy.unique1d
+_numpyver = map(int, np.version.version.split('.'))
+if _numpyver[0] <= 1 and _numpyver[1] < 3:
+    from numpy import unique1d as unique
+else:
+    from numpy import unique
+
+
 class GaussianNB(BaseEstimator, ClassifierMixin):
     """
     Gaussian Naive Bayes (GaussianNB)
@@ -106,7 +115,7 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         theta = []
         sigma = []
         class_prior = []
-        unique_y = np.unique(y)
+        unique_y = unique(y)
         for yi in unique_y:
             theta.append(np.mean(X[y == yi, :], 0))
             sigma.append(np.var(X[y == yi, :], 0))
@@ -299,7 +308,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         X = asanyarray_or_csr(X)
         y = safe_asanyarray(y)
 
-        self.unique_y, inv_y_ind = np.unique(y, return_inverse=True)
+        self.unique_y, inv_y_ind = unique(y, return_inverse=True)
         n_classes = self.unique_y.size
 
         fit_prior = self.fit_prior
