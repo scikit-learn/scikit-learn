@@ -129,6 +129,7 @@ def resample(*arrays, **options):
       >>> from scipy.sparse import coo_matrix
       >>> X_sparse = coo_matrix(X)
 
+      >>> from scikits.learn.utils import resample
       >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
       >>> X
       array([[ 1.,  0.],
@@ -231,6 +232,7 @@ def shuffle(*arrays, **options):
       >>> from scipy.sparse import coo_matrix
       >>> X_sparse = coo_matrix(X)
 
+      >>> from scikits.learn.utils import shuffle
       >>> X, X_sparse, y = shuffle(X, X_sparse, y, random_state=0)
       >>> X
       array([[ 0.,  0.],
