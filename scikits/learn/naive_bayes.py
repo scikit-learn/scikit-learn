@@ -20,6 +20,7 @@ complete documentation.
 # License: BSD Style.
 
 from .base import BaseEstimator, ClassifierMixin
+from .preprocessing import LabelBinarizer
 from .utils import safe_asanyarray
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import unique
@@ -303,19 +304,18 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self.unique_y, inv_y_ind = unique(y, return_inverse=True)
         n_classes = self.unique_y.size
 
-        fit_prior = self.fit_prior
         if class_prior:
             assert len(class_prior) == n_classes, \
                    'Number of priors must match number of classs'
-            fit_prior = False
             self.intercept_ = np.log(class_prior)
-        elif fit_prior:
+        elif self.fit_prior:
             y_count = np.bincount(inv_y_ind)
             self.intercept_ = np.log(y_count) - np.log(len(y))
         else:
             self.intercept_ = np.zeros(n_classes) - np.log(n_classes)
 
-        N_c, N_c_i = self._count(X, y)
+        Y = LabelBinarizer().fit_transform(y)
+        N_c, N_c_i = self._count(X, Y)
 
         self.coef_ = (np.log(N_c_i + self.alpha)
                     - np.log(N_c.reshape(-1, 1)
@@ -323,24 +323,15 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
 
         return self
 
-    def _count(self, X, y):
+    @staticmethod
+    def _count(X, Y):
         """Count feature occurrences.
 
         Returns (N_c, N_c_i), where
-            N_c is the count of all features in all samples of class c.
+            N_c is the count of all features in all samples of class c;
             N_c_i is the count of feature i in all samples of class c.
         """
-        N_c_i = []
-
-        sparse = issparse(X)
-        for yi in self.unique_y:
-            if sparse:
-                (row_ind,) = np.nonzero(y == yi)
-                N_c_i.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
-            else:
-                N_c_i.append(np.sum(X[y == yi, :], 0))
-
-        N_c_i = np.array(N_c_i)
+        N_c_i = safe_sparse_dot(Y.T, X)
         N_c = np.sum(N_c_i, axis=1)
 
         return N_c, N_c_i
