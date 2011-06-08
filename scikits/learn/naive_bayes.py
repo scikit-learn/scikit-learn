@@ -410,6 +410,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
         log_prob_x = np.logaddexp.reduce(jll[:, np.newaxis])
+
         return jll - log_prob_x
 
 

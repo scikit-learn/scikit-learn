@@ -104,6 +104,7 @@ def test_mnnb_predict_proba():
 
     clf = naive_bayes.MultinomialNB().fit([[0,1], [0,1], [1,0]], [0,0,1])
     assert clf.predict([0,1]) == 0
+    assert clf.predict_proba([0,1]).shape == (1,2)
     assert np.sum(clf.predict_proba([0,1])) == 1
     assert np.sum(clf.predict_proba([1,0])) == 1
     assert np.sum(np.exp(clf.class_log_prior_)) == 1
