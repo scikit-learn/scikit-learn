@@ -510,7 +510,7 @@ of commits):
 
 .. _Edouard Duchesnay: http://www.lnao.fr/spip.php?rubrique30
 
-.. _Peter Prettenhofer: <http://sites.google.com/site/peterprettenhofer/>
+.. _Peter Prettenhofer: http://sites.google.com/site/peterprettenhofer/
 
 .. _Alexandre Passos: <http://atpassos.posterous.com>
 
