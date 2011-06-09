@@ -24,14 +24,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'scikit-learn tutorial'
-copyright = u'2010, scikits.learn developers (BSD License)'
+copyright = u'2010–2011, scikits.learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-# The short X.Y version.
-version = '0.1'
+# The short X.Y version. Should track scikit-learn version.
+version = '0.9'
 # The full version, including alpha/beta/rc tags.
 release = version
 
