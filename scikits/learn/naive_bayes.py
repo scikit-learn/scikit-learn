@@ -315,6 +315,9 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
             self.intercept_ = np.zeros(n_classes) - np.log(n_classes)
 
         Y = LabelBinarizer().fit_transform(y)
+        if Y.shape[1] == 1:
+            Y = np.concatenate((1 - Y, Y), axis=1)
+
         N_c, N_c_i = self._count(X, Y)
 
         self.coef_ = (np.log(N_c_i + self.alpha)
