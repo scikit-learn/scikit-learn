@@ -70,6 +70,14 @@ To build the PDF variant::
 You should get a file named ``scikit_learn_tutorial.pdf`` as output.
 
 
+
+Testing
+=======
+
+To launch the docstests::
+
+  $ nosetests -s --with-doctest --doctest-tests --doctest-extension=rst
+
 Mailing list
 ============
 
