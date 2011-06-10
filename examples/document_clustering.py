@@ -65,7 +65,7 @@ true_k = np.unique(labels).shape[0]
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = Vectorizer(max_features=1000)
+vectorizer = Vectorizer(max_features=10000)
 X = vectorizer.fit_transform((open(f).read() for f in filenames))
 
 X = Normalizer(norm="l2", copy=False).transform(X)
@@ -74,7 +74,7 @@ print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X.shape
 print
 
-chunk_size = 500
+chunk_size = 1000
 
 
 ################################################################################
@@ -82,7 +82,7 @@ chunk_size = 500
 
 print "_" * 80
 
-mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=100, random_state=13,
+mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, random_state=13,
                        chunk_size=chunk_size, tol=0.0, n_init=1)
 
 print "Clustering sparse data with %s" % str(mbkm)
@@ -107,15 +107,15 @@ print
 
 print "_" * 80
 
-mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=100, random_state=13,
+mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=10, random_state=13,
                        chunk_size=chunk_size, tol=0.0, n_init=1)
 
 print "Clustering dense data with %s" % str(mbkm)
 print
 
+X_dense = X.toarray()
 t0 = time()
-
-mbkm.fit(X.toarray())
+mbkm.fit(X_dense)
 ri = randindex(labels, mbkm.labels_)
 vmeasure = metrics.v_measure_score(labels, mbkm.labels_)
 print "done in %0.3fs" % (time() - t0)
@@ -128,26 +128,26 @@ print
 
 
 
-## ################################################################################
-## # Now sectral clustering
+################################################################################
+# Now sectral clustering
 
-## print "_" * 80
-## sc = SpectralClustering(k=true_k, mode='amg', random_state=13)
+print "_" * 80
+sc = SpectralClustering(k=true_k, mode='amg', random_state=13)
 
-## t0 = time()
-## A = (X * X.T).toarray()
-## print "computed A in %0.3fs" % (time() - t0)
+t0 = time()
+A = (X * X.T).toarray()
+print "computed A in %0.3fs" % (time() - t0)
 
-## print "Clustering data with %s" % str(sc)
-## print
+print "Clustering data with %s" % str(sc)
+print
 
-## t0 = time()
+t0 = time()
 
-## sc.fit(A)
+sc.fit(A)
 
-## print "done in %0.3fs" % (time() - t0)
-## print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, sc.labels_)
-## print "Completeness: %0.3f" % metrics.completeness_score(labels, sc.labels_)
-## print "V-measure: %0.3f" % metrics.v_measure_score(labels, sc.labels_)
-## print "Rand-Index: %.3f" % randindex(labels, sc.labels_)
-## print 
+print "done in %0.3fs" % (time() - t0)
+print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, sc.labels_)
+print "Completeness: %0.3f" % metrics.completeness_score(labels, sc.labels_)
+print "V-measure: %0.3f" % metrics.v_measure_score(labels, sc.labels_)
+print "Rand-Index: %.3f" % randindex(labels, sc.labels_)
+print 
