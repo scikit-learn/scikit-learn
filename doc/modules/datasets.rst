@@ -29,7 +29,7 @@ that comes from the 'real world'.
 Datasets shipped with the scikit learn
 ========================================
 
-The scikit learn comes with a few standard datasets:
+scikit-learn comes with a few standard datasets:
 
 .. autosummary::
 
@@ -42,67 +42,34 @@ The scikit learn comes with a few standard datasets:
    load_linnerud
 
 
-Downloading datasets from the mldata.org repository
-===================================================
+Datasets in svmlight / libsvm format
+====================================
 
-`mldata.org <http://mldata.org>`_ is a public repository for machine learning
-data, supported by the `PASCAL network <http://www.pascal-network.org>`_ .
-``scikits.learn.datasets`` package is able to directly download data sets
-from the repository using the function ``fetch_mldata(dataname)``.
-For example, to download the MNIST digit recognition database::
+scikit-learn includes a fast utility function, ``load_svmlight_format``,  to load
+datasets in the svmlight / libsvm format. In this format, each line
+takes the form ``<label> <feature-id>:<feature-value>
+<feature-id>:<feature-value> ...``. This format is especially suitable for sparse datasets.
+Scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
 
-  >>> from scikits.learn.datasets import fetch_mldata
-  >>> mnist = fetch_mldata('MNIST original', data_home=custom_data_home)
+You may load a dataset like this::
 
-The MNIST database contains a total of 70000 examples of handwritten digits
-of size 28x28 pixels, labeled from 0 to 9::
+  >>> from scikits.learn.datasets import load_svmlight_format
+  >>> X_train, y_train = load_svmlight_format("/path/to/train_dataset.txt") # doctest: +SKIP
 
-  >>> mnist.data.shape
-  (70000, 784)
-  >>> mnist.target.shape
-  (70000,)
-  >>> np.unique(mnist.target)
-  array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
+You may also load two datasets at once::
 
-After the first download, the dataset is cached locally in the path
-specified by the ``data_home`` keyword argument, which defaults to
-``~/scikit_learn_data/``::
+  >>> X_train, y_train, X_test, y_test = load_svmlight_format("/path/to/train_dataset.txt", 
+                                                              "/path/to/test_dataset.txt") # doctest: +SKIP
 
-  >>> os.listdir(os.path.join(custom_data_home, 'mldata'))
-  ['mnist-original.mat']
+In this case, ``X_train`` and ``X_test`` are guaranteed to have the same number
+of features. Another way to achieve the same result is to fix the number of
+features::
 
-Data sets in `mldata.org <http://mldata.org>`_ do not adhere to a strict
-naming or formatting convention. ``fetch_mldata`` is able to make sense
-of the most common cases, but allows to tailor the defaults to individual
-datasets:
+  >>> X_test, y_test = load_svmlight_format("/path/to/test_dataset.txt", n_features=X_train.shape[1]) # doctest: +SKIP
 
-* The data arrays in `mldata.org <http://mldata.org>`_ are most often
-  shaped as ``(n_features, n_samples)``. This is the opposite of the
-  ``scikits.learn`` convention, so ``fetch_mldata`` transposes the matrix
-  by default. The ``transpose_data`` keyword controls this behavior::
+.. topic:: Public datasets:
 
-    >>> iris = fetch_mldata('iris', data_home=custom_data_home)
-    >>> iris.data.shape
-    (150, 4)
-    >>> iris = fetch_mldata('iris', transpose_data=False,
-    ...                     data_home=custom_data_home)
-    >>> iris.data.shape
-    (4, 150)
-
-* For datasets with multiple columns, ``fetch_mldata`` tries to identify
-  the target and data columns and rename them to ``target`` and ``data``.
-  This is done by looking for arrays named ``label`` and ``data`` in the
-  dataset, and failing that by choosing the first array to be ``target``
-  and the second to be ``data``. This behavior can be changed with the
-  ``target_name`` and ``data_name`` keywords, setting them to a specific
-  name or index number (the name and order of the columns in the datasets
-  can be found at its `mldata.org <http://mldata.org>`_ under the tab "Data"::
-
-    >>> iris2 = fetch_mldata('datasets-UCI iris', target_name=1, data_name=0,
-    ...                      data_home=custom_data_home)
-    >>> iris3 = fetch_mldata('datasets-UCI iris', target_name='class',
-    ...                      data_name='double0', data_home=custom_data_home)
-
+ _`Public datasets in svmlight / libsvm format`: http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
 
 Dataset generators
 ==================
