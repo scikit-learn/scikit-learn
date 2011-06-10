@@ -9,6 +9,10 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
 
+cdef extern from "math.h":
+    double sqrt(double f)
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -158,3 +162,35 @@ cdef _randindex(np.ndarray[DOUBLE, ndim=1] labels_true,
                     count[0, 0] += 1
 
     return float(count[0, 0] + count[1, 1]) / ((n * (n - 1)) / 2.0)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_row_norm_l2(X, squared=True):
+    """Get L2 norm of each row in X."""
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+    cdef np.ndarray[DOUBLE, ndim=1] norms = np.zeros((n_samples,),
+                                                     dtype=np.float64)
+
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[INT, ndim=1] X_indices = X.indices
+    cdef np.ndarray[INT, ndim=1] X_indptr = X.indptr
+
+    cdef unsigned int i
+    cdef unsigned int j
+    cdef double sum_
+    cdef int withsqrt = not squared
+
+    for i in xrange(n_samples):
+        sum_ = 0.0
+
+        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+            sum_ += (X_data[j] * X_data[j])
+
+        if withsqrt:
+            sum_ = sqrt(sum_)
+
+        norms[i] = sum_
+    return norms

@@ -588,7 +588,7 @@ def _euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
     # XX = np.ones((X.shape[0],))[:, np.newaxis]
 
     if y_squared_norms == None:
-        y_squared_norms = compute_squared_norms_sparse(Y)
+        y_squared_norms = _k_means.csr_row_norm_l2(Y, squared)
     YY = y_squared_norms[np.newaxis, :]
 
     distances = XX + YY
@@ -599,12 +599,12 @@ def _euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
     return distances
 
 
-def compute_squared_norms_sparse(X):
-    """Compute squared row norms of CSR matrix."""
-    x_squared_norms = np.zeros((X.shape[0],), dtype=np.float64)
-    for i in xrange(X.shape[0]):
-        x_squared_norms[i] = (X[i].data ** 2.0).sum()
-    return x_squared_norms
+## def compute_squared_norms_sparse(X):
+##     """Compute squared row norms of CSR matrix."""
+##     x_squared_norms = np.zeros((X.shape[0],), dtype=np.float64)
+##     for i in xrange(X.shape[0]):
+##         x_squared_norms[i] = (X[i].data ** 2.0).sum()
+##     return x_squared_norms
 
 
 class MiniBatchKMeans(KMeans):
@@ -627,7 +627,7 @@ class MiniBatchKMeans(KMeans):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    chunk_size: int, optional, default: 300
+    chunk_size: int, optional, default: 1000
         Size of the mini batches
 
     init : {'k-means++', 'random' or an ndarray}
@@ -672,8 +672,8 @@ class MiniBatchKMeans(KMeans):
     http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
     """
 
-    def __init__(self, k=8, init='random', n_init=10, max_iter=300,
-                 chunk_size=300, tol=1e-4, verbose=0, random_state=None):
+    def __init__(self, k=8, init='random', n_init=10, max_iter=100,
+                 chunk_size=1000, tol=1e-4, verbose=0, random_state=None):
 
         super(MiniBatchKMeans, self).__init__(k, init, n_init,
               max_iter, tol, verbose, random_state)
@@ -698,7 +698,7 @@ class MiniBatchKMeans(KMeans):
             raise ValueError("Number of samples smaller than number "\
                              "of clusters.")
         if sp.issparse(X):
-            x_squared_norms = compute_squared_norms_sparse(X)
+            x_squared_norms = _k_means.csr_row_norm_l2(X)
         else:
             x_squared_norms = np.sum(X ** 2.0, axis=1)
 
@@ -757,7 +757,7 @@ class MiniBatchKMeans(KMeans):
             return self
 
         if sp.issparse(X):
-            x_squared_norms = compute_squared_norms_sparse(X)
+            x_squared_norms = _k_means.csr_row_norm_l2(X)
         else:
             x_squared_norms = (X ** 2).sum(axis=1)
 
