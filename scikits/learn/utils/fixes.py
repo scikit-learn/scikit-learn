@@ -1,10 +1,22 @@
-"""Compatibility fixes for older version of numpy and scipy"""
+"""Compatibility fixes for older version of python, numpy and scipy"""
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
 # License: BSD
 
 import numpy as np
+
+try:
+    from itertools import product
+except ImportError:
+    def product(*args, **kwds):
+        pools = map(tuple, args) * kwds.get('repeat', 1)
+        result = [[]]
+        for pool in pools:
+            result = [x + [y] for x in result for y in pool]
+        for prod in result:
+            yield tuple(prod)
+
 
 
 def _unique(ar, return_index=False, return_inverse=False):
