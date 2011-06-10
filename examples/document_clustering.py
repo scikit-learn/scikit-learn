@@ -83,7 +83,7 @@ chunk_size = 250
 
 print "_" * 80
 
-mbkm = sparse.MiniBatchKMeans(k=true_k, n_iter=50, random_state=13,
+mbkm = sparse.MiniBatchKMeans(k=true_k, n_iter=100, random_state=13,
                               chunk_size=chunk_size)
 
 print "Clustering data with %s" % str(mbkm)
@@ -104,11 +104,11 @@ print
 
 
 ################################################################################
-# Now sparse MiniBatchKmeans
+# Now dense MiniBatchKmeans
 
 print "_" * 80
 
-mbkm = MiniBatchKMeans(k=true_k, max_iter=50, random_state=13,
+mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=100, random_state=13,
                        chunk_size=chunk_size, tol=0.0)
 
 print "Clustering data with %s" % str(mbkm)

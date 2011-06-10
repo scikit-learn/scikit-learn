@@ -59,7 +59,7 @@ def _compute_cache_cosine(centers, X, x_squared_norms):
     return sim.argmax(axis=0).astype(np.int32)
 
 
-compute_cache = _compute_cache_dot #euclid
+compute_cache = _compute_cache_euclid
 
 
 def _mini_batch_step(X, batch, centers, counts, x_squared_norms):
