@@ -628,11 +628,11 @@ class MiniBatchKMeans(KMeans):
         if hasattr(self.init, '__array__'):
             self.init = np.asarray(self.init)
 
-        X_shuffled = shuffle(X, random_state=self.random_state)
-
         self.cluster_centers_ = _init_centroids(
-                X_shuffled, self.k, self.init, random_state=self.random_state)
+                X, self.k, self.init, random_state=self.random_state)
 
+        X_shuffled = shuffle(X, random_state=self.random_state)
+        
         self.counts = np.zeros(self.k)
         tol = np.mean(np.var(X, axis=0)) * self.tol
         try:

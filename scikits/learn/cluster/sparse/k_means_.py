@@ -33,7 +33,7 @@ def _compute_cache_euclid(centers, X, x_squared_norms):
     XX = np.sum(centers * centers, axis=1)[:, np.newaxis]
 
     # If added same as compute dot
-    #XX = np.ones((centers.shape[0],))[:, np.newaxis]
+    # XX = np.ones((centers.shape[0],))[:, np.newaxis]
 
     YY = x_squared_norms[np.newaxis, :]
     
@@ -87,6 +87,9 @@ def _mini_batch_step(X, batch, centers, counts, x_squared_norms):
 
     cache = compute_cache(centers, X[batch],
                           x_squared_norms[batch])
+    #print centers[:,:20]
+    #print cache
+    #print foobar
 
     _fast_kmeans._mini_batch_update(X.data, X.indices, X.indptr, batch,
                                     centers, counts, cache)
@@ -107,6 +110,7 @@ def _init_centroids(X, k, init, random_state):
         n_samples = X.shape[0]
         seeds = np.argsort(random_state.rand(n_samples))[:k]
         centers = X[seeds].toarray()
+        print "seeds:", seeds
     else:
         raise ValueError("Cannot init centroids with %s." % str(init))
 
@@ -201,16 +205,15 @@ class MiniBatchKMeans(BaseEstimator):
         self.random_state = check_random_state(self.random_state)
 
         X = self._check_data(X, **params)
-
-        idx = np.arange(X.shape[0], dtype=np.int32)
-        self.random_state.shuffle(idx)
+        x_squared_norms = compute_squared_norms(X)
 
         self.cluster_centers_ = _init_centroids(
                 X, self.k, self.init, self.random_state)
+        
         self.counts = np.zeros(self.k, dtype=np.int32)
-
-        x_squared_norms = compute_squared_norms(X)
-
+        
+        idx = np.arange(X.shape[0], dtype=np.int32)
+        self.random_state.shuffle(idx)
         try:
             n_batches = floor(float(X.shape[0]) / self.chunk_size)
             batches = np.array_split(idx, n_batches)
