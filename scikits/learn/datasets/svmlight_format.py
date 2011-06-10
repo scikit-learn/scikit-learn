@@ -62,7 +62,12 @@ def load_svmlight_format(file_path, other_file_path=None,
 
     ret = []
 
-    data, indices, indptr, labels = _load_svmlight_format(file_path, buffer_mb)
+    tup = _load_svmlight_format(file_path, buffer_mb)
+
+    if len(tup) == 0:
+        raise ValueError("%s is incorrectly formatted!" % file_path)
+
+    data, indices, indptr, labels = tup
 
     if n_features is not None:
         shape = (indptr.shape[0] - 1, n_features)
@@ -78,8 +83,12 @@ def load_svmlight_format(file_path, other_file_path=None,
         if not os.path.exists(other_file_path):
             raise ValueError("%s doesn't exist!" % other_file_path)
 
-        data, indices, indptr, labels = _load_svmlight_format(other_file_path,
-                                                              buffer_mb)
+        tup = _load_svmlight_format(other_file_path, buffer_mb)
+
+        if len(tup) == 0:
+            raise ValueError("%s is incorrectly formatted!" % other_file_path)
+
+        data, indices, indptr, labels = tup
 
         if n_features is None:
             n_features = X_train.shape[1]
