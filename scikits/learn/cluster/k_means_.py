@@ -5,18 +5,22 @@
 #          James Bergstra <james.bergstra@umontreal.ca>
 #          Jan Schlueter <scikit-learn@jan-schlueter.de>
 #          Nelle Varoquaux
+#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD
 
 import warnings
 from itertools import cycle, izip
 
 import numpy as np
+import scipy.sparse as sp
 from math import floor
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
 from ..utils import check_random_state
-from ..utils import shuffle
+from ..utils import check_arrays
+
+from . import _k_means
 
 
 ###############################################################################
@@ -251,59 +255,13 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 
 def _calculate_labels_inertia(X, centers, x_squared_norms=None):
     """Compute the inertia and the labels of the given samples and centers"""
-    distance = euclidean_distances(centers, X, x_squared_norms, squared=True)
+    if sp.issparse(X):
+        distance = euclidean_distances_sparse(centers, X,
+                                              x_squared_norms, squared=True)
+    else:
+        distance = euclidean_distances(centers, X, x_squared_norms,
+                                       squared=True)
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
-
-
-def _mini_batch_step(X, batch, centers, counts, x_squared_norms=None):
-    """Incremental update of the centers for the Minibatch K-Means algorithm
-
-    Parameters
-    ----------
-
-    X: array, shape (n_samples, n_features)
-        The original data array.
-
-    batch: array shape (chunk_size,)
-        The row indices of the mini batch samples.
-
-    centers: array, shape (k, n_features)
-        The cluster centers
-
-    i: int
-         The iterator: it is used to calculate which section of the data to
-         use for the computation of the new centers
-
-    counts: array, shape (k, )
-         The vector in which we keep track of the numbers of elements in a
-         cluster
-
-    x_squared_norms: array, shape (n_samples,)
-        Squared euclidean norm of each data point.
-
-    Returns
-    -------
-    centers: array, shape (k, n_features)
-        The resulting centers
-
-    """
-    # This is inefficient but saves mem and fits to sparse matrices.
-    X = X[batch]
-    x_squared_norms = x_squared_norms[batch]
-    
-    cache = euclidean_distances(centers, X, Y_norm_squared=x_squared_norms,
-                                squared=True).argmin(axis=0)
-
-    k = centers.shape[0]
-    for q in range(k):
-        center_mask = (cache == q)
-        c = center_mask.sum()
-        if np.any(center_mask):
-            centers[q] = (1. / (counts[q] + c)) * (
-                counts[q] * centers[q] + np.sum(X[center_mask], axis=0))
-            counts[q] += c
-
-    return centers, counts
 
 
 def _m_step(X, z, k):
@@ -362,11 +320,17 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
     x_squared_norms:  array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
         hands already to avoid it being recomputed here. Default: None
+
+    Returns
+    -------
+    centers: array, shape(k, n_features)
     """
     random_state = check_random_state(random_state)
 
     n_samples = X.shape[0]
     if init == 'k-means++':
+        if sp.issparse(X):
+            raise ValueError("Init method 'k-means++' only for dense X.")
         centers = k_init(X, k,
                         random_state=random_state,
                         x_squared_norms=x_squared_norms)
@@ -381,6 +345,9 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None):
         raise ValueError("the init parameter for the k-means should "
             "be 'k-means++' or 'random' or an ndarray, "
             "'%s' (type '%s') was passed.")
+
+    if sp.issparse(centers):
+        centers = centers.toarray()
     return centers
 
 
@@ -544,6 +511,102 @@ class KMeans(BaseEstimator):
         return self
 
 
+def _mini_batch_step_dense(X, batch, centers, counts, x_squared_norms):
+    """Incremental update of the centers for the Minibatch K-Means algorithm
+
+    Parameters
+    ----------
+
+    X: array, shape (n_samples, n_features)
+        The original data array.
+
+    batch: array shape (chunk_size,)
+        The row indices of the mini batch samples.
+
+    centers: array, shape (k, n_features)
+        The cluster centers
+
+    counts: array, shape (k, )
+         The vector in which we keep track of the numbers of elements in a
+         cluster
+
+    x_squared_norms: array, shape (n_samples,)
+        Squared euclidean norm of each data point.
+    """
+    # This is inefficient but saves mem and fits to sparse matrices.
+    X = X[batch]
+    x_squared_norms = x_squared_norms[batch]
+
+    cache = euclidean_distances(centers, X, Y_norm_squared=x_squared_norms,
+                                squared=True).argmin(axis=0)
+
+    k = centers.shape[0]
+    for q in range(k):
+        center_mask = (cache == q)
+        c = center_mask.sum()
+        if np.any(center_mask):
+            centers[q] = (1. / (counts[q] + c)) * (
+                counts[q] * centers[q] + np.sum(X[center_mask], axis=0))
+            counts[q] += c
+
+
+def _mini_batch_step_sparse(X, batch, centers, counts, x_squared_norms):
+    """Incremental update of the centers for the Minibatch K-Means algorithm
+
+    Parameters
+    ----------
+
+    X: csr_matrix, shape (n_samples, n_features)
+        The data matrix in sparse CSR format.
+
+    batch: array, shape (chunk_size)
+        The array of sample indices belonging to the current mini-batch.
+
+    centers: array, shape (k, n_features)
+        The cluster centers
+
+    counts: array, shape (k, )
+         The vector in which we keep track of the numbers of elements in a
+         cluster
+
+    x_squared_norms: array, shape (n_samples,)
+         The squared norms of each sample in `X`.
+    """
+    cache = euclidean_distances_sparse(centers, X[batch],
+              x_squared_norms[batch]).argmin(axis=0).astype(np.int32)
+
+    _k_means._mini_batch_update(X.data, X.indices, X.indptr, batch,
+                                centers, counts, cache)
+
+
+def euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
+    """euclidean distances for dense X and sparse Y.
+    """
+    XX = np.sum(X * X, axis=1)[:, np.newaxis]
+
+    # If added same as compute dot
+    # XX = np.ones((X.shape[0],))[:, np.newaxis]
+
+    if y_squared_norms == None:
+        y_squared_norms = compute_squared_norms_sparse(Y)
+    YY = y_squared_norms[np.newaxis, :]
+
+    distances = XX + YY
+    distances -= 2 * (X * Y.T)
+    distances = np.maximum(distances, 0)
+    if not squared:
+        distances = np.sqrt(distances)
+    return distances
+
+
+def compute_squared_norms_sparse(X):
+    """Compute squared row norms of CSR matrix."""
+    x_squared_norms = np.zeros((X.shape[0],), dtype=np.float64)
+    for i in xrange(X.shape[0]):
+        x_squared_norms[i] = (X[i].data ** 2.0).sum()
+    return x_squared_norms
+
+
 class MiniBatchKMeans(KMeans):
     """
     Batch K-Means clustering
@@ -572,7 +635,7 @@ class MiniBatchKMeans(KMeans):
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+        Notes in k_init for more details. Only for dense `X`.
 
         'random': choose k observations (rows) at random from data for
         the initial centroids.
@@ -628,25 +691,30 @@ class MiniBatchKMeans(KMeans):
         X: array, [n_samples, n_features]
             Coordinates of the data points to cluster
         """
-
         self.random_state = check_random_state(self.random_state)
-
-        X = self._check_data(X, **params)
-        x_squared_norms = np.sum(X ** 2.0, axis=1)
+        X = check_arrays(X, sparse_format="csr", copy=False)[0]
+        n_samples, n_features = X.shape
+        if n_samples < self.k:
+            raise ValueError("Number of samples smaller than number "\
+                             "of clusters.")
+        if sp.issparse(X):
+            x_squared_norms = compute_squared_norms_sparse(X)
+        else:
+            x_squared_norms = np.sum(X ** 2.0, axis=1)
 
         if hasattr(self.init, '__array__'):
             self.init = np.asarray(self.init)
 
         self.cluster_centers_ = _init_centroids(
             X, self.k, self.init, random_state=self.random_state,
-            x_squared_norms=x_squared_norms)
-        self.counts = np.zeros(self.k)
+            x_squared_norms=x_squared_norms) 
+        self.counts = np.zeros(self.k, dtype=np.int32)
 
-        idx = np.arange(X.shape[0], dtype=np.int32)
+        idx = np.arange(n_samples, dtype=np.int32)
         self.random_state.shuffle(idx)
 
         try:
-            n_batches = floor(float(len(X)) / self.chunk_size)
+            n_batches = floor(float(n_samples) / self.chunk_size)
             batches = np.array_split(idx, n_batches)
             n_batches = len(batches)
         except ValueError:
@@ -654,12 +722,17 @@ class MiniBatchKMeans(KMeans):
             n_batches = 1
 
         n_iterations = xrange(self.max_iter * n_batches)
-        tol = np.mean(np.var(X, axis=0)) * self.tol
+        if sp.issparse(X):
+            _mini_batch_step = _mini_batch_step_sparse
+            tol = self.tol
+        else:
+            _mini_batch_step = _mini_batch_step_dense
+            tol = np.mean(np.var(X, axis=0)) * self.tol
+
         for i, batch in izip(n_iterations, cycle(batches)):
             old_centers = self.cluster_centers_.copy()
-            self.cluster_centers_, self.counts = _mini_batch_step(X,
-                batch, self.cluster_centers_, self.counts,
-                x_squared_norms=x_squared_norms)
+            _mini_batch_step(X, batch, self.cluster_centers_, self.counts,
+                             x_squared_norms=x_squared_norms)
 
             if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
                 if self.verbose:
@@ -673,17 +746,20 @@ class MiniBatchKMeans(KMeans):
 
     def partial_fit(self, X, y=None, **params):
         """Update k means estimate on a single mini-batch X"""
-
         self.random_state = check_random_state(self.random_state)
 
-        X = self._check_data(X, **params)
+        X = check_arrays(X, sparse_format="csr", copy=False)[0]
+        n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.asarray(self.init)
 
-        if len(X) == 0:
+        if n_samples == 0:
             return self
 
-        x_squared_norms = (X ** 2).sum(axis=1)
+        if sp.issparse(X):
+            x_squared_norms = compute_squared_norms_sparse(X)
+        else:
+            x_squared_norms = (X ** 2).sum(axis=1)
 
         if self.counts is None:
             # this is the first call partial_fit on this object:
@@ -692,15 +768,18 @@ class MiniBatchKMeans(KMeans):
                 X, self.k, self.init, random_state=self.random_state,
                 x_squared_norms=x_squared_norms)
 
-            self.counts = np.zeros(self.k)
+            self.counts = np.zeros(self.k, dtype=np.int32)
 
-        batch = np.arange(X.shape[0])
+        batch = np.arange(n_samples, dtype=np.int32)
+        if sp.issparse(X):
+            _mini_batch_step = _mini_batch_step_sparse
+        else:
+            _mini_batch_step = _mini_batch_step_dense
 
-        self.cluster_centers_, self.counts = _mini_batch_step(
-            X, batch, self.cluster_centers_, self.counts,
-            x_squared_norms=x_squared_norms)
+        _mini_batch_step(X, batch, self.cluster_centers_, self.counts,
+                         x_squared_norms=x_squared_norms)
 
         self.inertia_, self.labels_ = _calculate_labels_inertia(
-            X, self.cluster_centers_, squared_norms)
+            X, self.cluster_centers_, x_squared_norms)
 
         return self

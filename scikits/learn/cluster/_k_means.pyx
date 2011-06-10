@@ -16,7 +16,7 @@ def _mini_batch_update(np.ndarray[DOUBLE, ndim=1] X_data,
                        np.ndarray[DOUBLE, ndim=2] centers,
                        np.ndarray[INT, ndim=1] counts,
                        np.ndarray[INT, ndim=1] cache):
-    """Incremental update of the centers for the Minibatch K-Means algorithm
+    """Incremental update of the centers for sparse MiniBatchKMeans.
 
     Parameters
     ----------

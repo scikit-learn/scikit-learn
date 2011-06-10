@@ -11,8 +11,10 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('_inertia',
                          sources=['_inertia.c'],
                          include_dirs=[numpy.get_include()])
-
-    config.add_subpackage('sparse')
+    config.add_extension('_k_means',
+                         sources=['_k_means.c'],
+                         include_dirs=[numpy.get_include()]
+                         )
     
     return config
 

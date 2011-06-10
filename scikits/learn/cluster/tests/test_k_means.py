@@ -1,6 +1,7 @@
 """Testing for K-means"""
 
 import numpy as np
+from scipy import sparse as sp
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
@@ -9,6 +10,7 @@ from .common import generate_clustered_data
 
 n_clusters = 3
 X = generate_clustered_data(n_clusters=n_clusters, std=.1)
+S = sp.csr_matrix(X)
 
 
 def test_k_means_pp_init():
@@ -38,6 +40,19 @@ def test_mini_batch_k_means_pp_init():
     km.partial_fit(X[X.shape[0] / 2:])
     # And again
     km.partial_fit(X)
+    assert(km.inertia_ < inertia)
+
+
+def test_sparse_mini_batch_k_means_pp_init():
+    np.random.seed(1)
+    sample = S[0:S.shape[0] / 2]
+    km = MiniBatchKMeans(init="random").partial_fit(sample)
+    # Let's recalculate the inertia on the whole dataset
+    km.partial_fit(S)
+    inertia = km.inertia_
+    km.partial_fit(S[S.shape[0] / 2:])
+    # And again
+    km.partial_fit(S)
     assert(km.inertia_ < inertia)
 
 
@@ -75,6 +90,7 @@ def test_k_means_fixed_array_init():
     # check error on dataset being too small
     assert_raises(ValueError, k_means.fit, [[0., 1.]], k=n_clusters)
 
+
 def test_mbk_means_fixed_array_init():
     np.random.seed(1)
     init_array = np.vstack([X[5], X[25], X[45]])
@@ -87,3 +103,23 @@ def test_mbk_means_fixed_array_init():
     assert_equal(np.unique(labels).size, 3)
 
     assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
+
+
+def test_sparse_mbk_means_fixed_array_init():
+    np.random.seed(1)
+    init_array = np.vstack([X[5], X[25], X[45]])
+    mbk_means = MiniBatchKMeans(init=init_array, n_init=1).fit(S)
+
+    centers = mbk_means.cluster_centers_
+    assert_equal(centers.shape, (n_clusters, 2))
+
+    labels = mbk_means.labels_
+    assert_equal(np.unique(labels).size, 3)
+
+    assert_raises(ValueError, mbk_means.fit, [[0., 1.]], k=n_clusters)
+
+
+def test_sparse_mbk_means_pp_init():
+    np.random.seed(1)
+    mbk_means = MiniBatchKMeans(init="k-means++", n_init=1)
+    assert_raises(ValueError, mbk_means.fit, S, k=n_clusters)
