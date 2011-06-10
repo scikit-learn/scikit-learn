@@ -24,8 +24,7 @@ from scikits.learn import metrics
 from scikits.learn.cluster import MiniBatchKMeans
 from scikits.learn.cluster import KMeans
 from scikits.learn.cluster import SpectralClustering
-from scikits.learn.cluster import sparse
-from scikits.learn.cluster.sparse import randindex
+from scikits.learn.cluster import randindex
 
 from scikits.learn.preprocessing import Normalizer
 
@@ -83,10 +82,10 @@ chunk_size = 500
 
 print "_" * 80
 
-mbkm = sparse.MiniBatchKMeans(k=true_k, max_iter=100, random_state=13,
-                              chunk_size=chunk_size, tol=0.0)
+mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=100, random_state=13,
+                       chunk_size=chunk_size, tol=0.0, n_init=1)
 
-print "Clustering data with %s" % str(mbkm)
+print "Clustering sparse data with %s" % str(mbkm)
 print
 
 t0 = time()
@@ -111,7 +110,7 @@ print "_" * 80
 mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=100, random_state=13,
                        chunk_size=chunk_size, tol=0.0, n_init=1)
 
-print "Clustering data with %s" % str(mbkm)
+print "Clustering dense data with %s" % str(mbkm)
 print
 
 t0 = time()
