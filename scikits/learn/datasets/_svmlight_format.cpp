@@ -7,8 +7,9 @@
  *
  * The function loads the file directly in a CSR sparse matrix without memory
  * copying.  The approach taken is to use 4 C++ vectors (data, indices, indptr
- * and labels) and to incrementally feed them with elements. The vectors
- * are then converted to ndarrays.
+ * and labels) and to incrementally feed them with elements. Ndarrays are then
+ * instanciated by PyArray_SimpleNewFromData, i.e., no memory is
+ * copied.
  *
  * Since the memory is not allocated by the ndarray, the ndarray does own the
  * memory and thus cannot deallocate it. To automatically deallocate memory, the
@@ -23,7 +24,6 @@
 #include <fstream>
 #include <vector>
 #include <string>
-
 #include <numpy/arrayobject.h>
 
 // An object responsible for deallocating the memory
@@ -85,7 +85,7 @@ _to_1d_array(std::vector<T> *data, int typenum)
   PyObject *arr=NULL;
 
   // A C++ vector's first element is guaranteed to point to the internally used
-  // array of memory.
+  // array of memory (memory is contiguous).
   arr = PyArray_SimpleNewFromData(1, dims, typenum, (void *) &(*data)[0]);
 
   if (arr == NULL)
@@ -124,7 +124,7 @@ _parse_line(const std::string& line,
   if (length == 0)
     return false;
 
-  // read label
+  // Parse label
   double y;
 
   if (!sscanf(in_string, "%lf", &y)) {

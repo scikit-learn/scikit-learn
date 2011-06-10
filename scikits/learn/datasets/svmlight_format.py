@@ -46,6 +46,15 @@ def load_svmlight_format(file_path, other_file_path=None,
                             (n_samples1, n_features) and
                             (n_samples2, n_features),
               y1 and y2 are ndarrays of shape (n_samples1,) and (n_samples2,).
+
+    Note
+    ----
+    When fitting a model to a matrix X_train and evaluating it against a matrix
+    X_test, it is essential that X_train and X_test have the same number of
+    features (X_train.shape[1] == X_test.shape[1]). This may not be the case if
+    you load them with load_svmlight_format separately. To address this problem,
+    we recommend to use load_svmlight_format(train_file, test_file) or
+    load_svmlight_format(test_file, n_features=X_train.shape[1]).
     """
 
     if not os.path.exists(file_path):
