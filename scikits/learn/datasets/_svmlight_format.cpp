@@ -82,7 +82,7 @@ to_1d_array(std::vector<T> *data, int typenum)
 {
   npy_intp dims[1] = {data->size()};
 
-  PyObject *arr=NULL;
+  PyObject *arr = NULL;
 
   // A C++ vector's first element is guaranteed to point to the internally used
   // array of memory (memory is contiguous).
@@ -162,6 +162,9 @@ parse_line(const std::string& line,
   return true;
 }
 
+/*
+ * Parse entire file. Returns success/failure.
+ */
 static bool
 parse_file(char const *file_path,
            size_t buffer_size,
@@ -178,7 +181,8 @@ parse_file(char const *file_path,
   if (file_stream) {
     std::string line;
     while (getline(file_stream, line)) {
-      parse_line(line, data, indices, indptr, labels);
+      if (!parse_line(line, data, indices, indptr, labels))
+        return false;
     }
     indptr->push_back(data->size());
   }
@@ -218,16 +222,13 @@ load_svmlight_format(PyObject *self, PyObject *args)
   // FIXME: should check whether buffer_mb >= 0
   size_t buffer_size = buffer_mb * 1024 * 1024;
 
-  // parse file
-  parse_file(file_path, buffer_size, data, indices, indptr, labels);
-
-  // return a tuple of ndarrays
-  return Py_BuildValue("OOOO",
-                       to_1d_array(data, NPY_DOUBLE),
-                       to_1d_array(indices, NPY_INT),
-                       to_1d_array(indptr, NPY_INT),
-                       to_1d_array(labels, NPY_DOUBLE)
-                       );
+  return parse_file(file_path, buffer_size, data, indices, indptr, labels)
+    ?  Py_BuildValue("OOOO",
+                     to_1d_array(data, NPY_DOUBLE),
+                     to_1d_array(indices, NPY_INT),
+                     to_1d_array(indptr, NPY_INT),
+                     to_1d_array(labels, NPY_DOUBLE))
+    : Py_BuildValue("()");
 }
 
 static PyMethodDef svmlight_format_methods[] = {

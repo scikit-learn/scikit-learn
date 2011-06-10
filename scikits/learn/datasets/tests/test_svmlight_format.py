@@ -2,16 +2,18 @@
 import os.path
 
 from numpy.testing import assert_equal, assert_array_equal
+from nose.tools import raises
 
 from scikits.learn.datasets import load_svmlight_format
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
+invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
 
 def test_load_svmlight_format():
     X, y = load_svmlight_format(datafile, buffer_mb=1)
 
-    # test X'shape
+    # test X's shape
     assert_equal(X.indptr.shape[0], 4)
     assert_equal(X.shape[0], 3)
     assert_equal(X.shape[1], 21)
@@ -58,3 +60,6 @@ def test_load_svmlight_format_n_features():
 
         assert_equal(X[i, j], val)
 
+@raises(ValueError)
+def test_load_invalid_file():
+    X, y = load_svmlight_format(invalidfile, buffer_mb=1)
