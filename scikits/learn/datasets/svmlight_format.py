@@ -1,3 +1,8 @@
+""" This module implements a fast and memory-efficient (no memory copying)
+loader for the svmlight / libsvm sparse dataset format.  """
+
+# Author: Mathieu Blondel.
+# License: Simple BSD.
 
 import os.path
 
@@ -5,15 +10,50 @@ import scipy.sparse as sp
 
 from _svmlight_format import _load_svmlight_format
 
-def load_svmlight_format(train_file, test_file=None,
+def load_svmlight_format(file_path, other_file_path=None,
                          n_features=None, buffer_mb=40):
+    """Load datasets in the svmlight / libsvm format directly into
+    scipy sparse CSR matrices.
 
-    if not os.path.exists(train_file):
-        raise ValueError("Training file doesn't exist")
+    Parameters
+    ----------
+    file_path: str
+        Path to a file to load.
+
+    other_file_path: str or None
+        Path to another file to load. scikit-learn will make sure that the
+        number of features in the returned matrix is the same as for the
+        file_path.
+
+    n_features: int or None
+        The number of features to use. If None, it will be inferred.
+
+    buffer_mb: int (default: 40)
+        The size of the buffer used while loading the dataset in mega-bytes.
+
+    Returns
+    -------
+        (X, y)
+
+        where X is a scipy.sparse matrix of shape (n_samples, n_features),
+              y is a ndarray of shape (n_samples,),
+
+        or, if other_file_path is not None,
+
+        (X1, y1, X2, y2)
+
+        where X1 and X2 are scipy.sparse matrices of shape
+                            (n_samples1, n_features) and
+                            (n_samples2, n_features),
+              y1 and y2 are ndarrays of shape (n_samples1,) and (n_samples2,).
+    """
+
+    if not os.path.exists(file_path):
+        raise ValueError("%s doesn't exist!" % file_path)
 
     ret = []
 
-    data, indices, indptr, labels = _load_svmlight_format(train_file, buffer_mb)
+    data, indices, indptr, labels = _load_svmlight_format(file_path, buffer_mb)
 
     if n_features is not None:
         shape = (indptr.shape[0] - 1, n_features)
@@ -25,11 +65,11 @@ def load_svmlight_format(train_file, test_file=None,
     ret.append(X_train)
     ret.append(labels)
 
-    if test_file is not None:
-        if not os.path.exists(test_file):
-            raise ValueError("Test file doesn't exist")
+    if other_file_path is not None:
+        if not os.path.exists(other_file_path):
+            raise ValueError("%s doesn't exist!" % other_file_path)
 
-        data, indices, indptr, labels = _load_svmlight_format(test_file,
+        data, indices, indptr, labels = _load_svmlight_format(other_file_path,
                                                               buffer_mb)
 
         if n_features is None:
