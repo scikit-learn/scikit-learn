@@ -511,14 +511,10 @@ class BernoulliNB(BaseDiscreteNB):
         assert n_features_X == n_features, \
             "Shape of samples doesn't match shape of training data"
 
-        # XXX: In the dense case, we could vectorize this loop. It might be
-        # worthwhile to check if this is faster.
-        jll = np.empty((n_classes, n_samples))
-        feature_neg_prob = np.log(1 - np.exp(self.coef_))
-        for i, x in enumerate(X):
-            xT = (x.toarray() if sparse else np.atleast_2d(x)).T
-            jll[:, i] = (np.dot(self.coef_, xT)
-                       + np.dot(feature_neg_prob,
-                                np.logical_not(xT))).flatten()
+        neg_coef = np.log(1 - np.exp(self.coef_))
+        # Compute  neg_coef · (1 - X).T  as  ∑neg_coef - X · neg_coef
+        X_neg_coef = (neg_coef.sum(axis=1).reshape(-1, 1)
+                    - safe_sparse_dot(neg_coef, X.T))
+        jll = safe_sparse_dot(self.coef_, X.T) + X_neg_coef
 
         return jll + np.atleast_2d(self.intercept_).T
