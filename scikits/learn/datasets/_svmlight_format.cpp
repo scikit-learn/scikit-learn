@@ -82,7 +82,7 @@ _to_1d_array(std::vector<T> *data, int typenum)
 {
   npy_intp dims[1] = {data->size()};
 
-  PyObject *arr=NULL;
+  PyObject *arr = NULL;
 
   // A C++ vector's first element is guaranteed to point to the internally used
   // array of memory (memory is contiguous).
@@ -178,7 +178,9 @@ _parse_file(char *file_path,
   if (file_stream) {
     std::string line;
     while (getline(file_stream, line)) {
-      _parse_line(line, data, indices, indptr, labels);
+      bool succeeded = _parse_line(line, data, indices, indptr, labels);
+      if (!succeeded)
+        return false;
     }
     indptr->push_back(data->size());
   }
@@ -218,15 +220,20 @@ _load_svmlight_format(PyObject *self, PyObject *args)
   long int buffer_size = buffer_mb * 1024 * 1024;
 
   // parse file
-  _parse_file(file_path, buffer_size, data, indices, indptr, labels);
+  bool succeeded = _parse_file(file_path, buffer_size, data, indices, indptr, labels);
 
-  // return a tuple of ndarrays
-  return Py_BuildValue("OOOO",
-                       _to_1d_array(data, NPY_DOUBLE),
-                       _to_1d_array(indices, NPY_INT),
-                       _to_1d_array(indptr, NPY_INT),
-                       _to_1d_array(labels, NPY_DOUBLE)
-                       );
+  if (succeeded) {
+    // return a tuple of ndarrays
+    return Py_BuildValue("OOOO",
+                         _to_1d_array(data, NPY_DOUBLE),
+                         _to_1d_array(indices, NPY_INT),
+                         _to_1d_array(indptr, NPY_INT),
+                         _to_1d_array(labels, NPY_DOUBLE));
+  }
+  else {
+    return Py_BuildValue("()");
+  }
+
 }
 
 static PyMethodDef _svmlight_format_methods[] = {
