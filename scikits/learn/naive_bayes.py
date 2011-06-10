@@ -21,9 +21,10 @@ complete documentation.
 # License: BSD Style.
 
 from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import binarize
+from .preprocessing import binarize, LabelBinarizer
 from .utils import safe_asanyarray
 from .utils.extmath import safe_sparse_dot
+from .utils.fixes import unique
 import numpy as np
 from scipy.sparse import issparse
 
@@ -108,7 +109,7 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
         theta = []
         sigma = []
         class_prior = []
-        unique_y = np.unique(y)
+        unique_y = unique(y)
         for yi in unique_y:
             theta.append(np.mean(X[y == yi, :], 0))
             sigma.append(np.var(X[y == yi, :], 0))
@@ -196,9 +197,9 @@ class GaussianNB(BaseEstimator, ClassifierMixin):
 
 def asanyarray_or_csr(X):
     if issparse(X):
-        return X.tocsr(), True
+        return X.tocsr()
     else:
-        return np.asanyarray(X), False
+        return np.asanyarray(X)
 
 
 def atleast2d_or_csr(X):
@@ -251,8 +252,8 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
     `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
-    (`class_log_prior_` and `feature_log_prob_` are properties referring to
-    `intercept_` and `coef_`, respectively.)
+        (`class_log_prior_` and `feature_log_prob_` are properties referring to
+        `intercept_` and `coef_`, respectively.)
 
     Examples
     --------
@@ -298,46 +299,46 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        X, sparse = asanyarray_or_csr(X)
+        X = asanyarray_or_csr(X)
         y = safe_asanyarray(y)
 
-        self.unique_y = np.unique(y)
+        self.unique_y, inv_y_ind = unique(y, return_inverse=True)
         n_classes = self.unique_y.size
 
-        fit_prior = self.fit_prior
         if class_prior:
             assert len(class_prior) == n_classes, \
                    'Number of priors must match number of classs'
-            fit_prior = False
-        elif not fit_prior:
-            class_prior = np.ones(n_classes) / n_classes
+            self.intercept_ = np.log(class_prior)
+        elif self.fit_prior:
+            y_count = np.bincount(inv_y_ind)
+            self.intercept_ = np.log(y_count) - np.log(len(y))
+        else:
+            self.intercept_ = np.zeros(n_classes) - np.log(n_classes)
 
-        # N_c is the count of all features in all samples of class c.
-        # N_c_i is the a count of feature i in all samples of class c.
-        N_c_i = []
-        if fit_prior:
-            class_prior = []
+        Y = LabelBinarizer().fit_transform(y)
+        if Y.shape[1] == 1:
+            Y = np.concatenate((1 - Y, Y), axis=1)
 
-        for yi in self.unique_y:
-            if sparse:
-                row_ind = np.nonzero(y == yi)[0]
-                N_c_i.append(np.array(X[row_ind, :].sum(axis=0)).ravel())
-            else:
-                N_c_i.append(np.sum(X[y == yi, :], 0))
-            if fit_prior:
-                class_prior.append(np.float(np.sum(y == yi)) / y.size)
+        N_c, N_c_i = self._count(X, Y)
 
-        N_c_i = np.array(N_c_i)
-        N_c = np.sum(N_c_i, axis=1)
-
-        # Estimate (and smooth) the parameters of the distribution
-        #
         self.coef_ = (np.log(N_c_i + self.alpha)
-                          - np.log(N_c.reshape(-1, 1)
-                                   + self.alpha * X.shape[1]))
-        self.intercept_ = np.log(class_prior)
+                    - np.log(N_c.reshape(-1, 1)
+                           + self.alpha * X.shape[1]))
 
         return self
+
+    @staticmethod
+    def _count(X, Y):
+        """Count feature occurrences.
+
+        Returns (N_c, N_c_i), where
+            N_c is the count of all features in all samples of class c;
+            N_c_i is the count of feature i in all samples of class c.
+        """
+        N_c_i = safe_sparse_dot(Y.T, X)
+        N_c = np.sum(N_c_i, axis=1)
+
+        return N_c, N_c_i
 
     class_log_prior_ = property(lambda self: self.intercept_)
     feature_log_prob_ = property(lambda self: self.coef_)
@@ -402,7 +403,7 @@ class MultinomialNB(BaseEstimator, ClassifierMixin):
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
         log_prob_x = np.logaddexp.reduce(jll[:, np.newaxis])
-        return jll - log_prob_x
+        return (jll - log_prob_x).T
 
 
 class BernoulliNB(MultinomialNB):
@@ -502,7 +503,8 @@ class BernoulliNB(MultinomialNB):
         self : object
             Returns self.
         """
-        X = binarize(X, threshold=self.binarize)
+        if self.binarize is not None:
+            X = binarize(X, threshold=self.binarize)
         return super(BernoulliNB, self).fit(X, y, class_prior)
 
     def _joint_log_likelihood(self, X):
