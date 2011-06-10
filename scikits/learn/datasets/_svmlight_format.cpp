@@ -189,6 +189,7 @@ parse_file(char const *file_path,
 static char load_svmlight_format_doc[] =
   "Load file in svmlight format and return a CSR.";
 
+extern "C" {
 static PyObject*
 load_svmlight_format(PyObject *self, PyObject *args)
 {
@@ -224,6 +225,7 @@ load_svmlight_format(PyObject *self, PyObject *args)
                      to_1d_array(labels, NPY_DOUBLE))
     : Py_BuildValue("()");
 }
+}
 
 static PyMethodDef svmlight_format_methods[] = {
   {"_load_svmlight_format", load_svmlight_format,
@@ -232,7 +234,7 @@ static PyMethodDef svmlight_format_methods[] = {
 };
 
 static char svmlight_format_doc[] =
-"Module _svmlight_format.";
+  "Loader for svmlight / libsvm datasets - C++ helper routines";
 
 PyMODINIT_FUNC
 init_svmlight_format(void)
