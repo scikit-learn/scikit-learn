@@ -8,7 +8,7 @@
  * The function loads the file directly in a CSR sparse matrix without memory
  * copying.  The approach taken is to use 4 C++ vectors (data, indices, indptr
  * and labels) and to incrementally feed them with elements. Ndarrays are then
- * instanciated by PyArray_SimpleNewFromData, i.e., no memory is
+ * instantiated by PyArray_SimpleNewFromData, i.e., no memory is
  * copied.
  *
  * Since the memory is not allocated by the ndarray, the ndarray does own the
@@ -113,50 +113,46 @@ fail:
 
 static bool
 parse_line(const std::string& line,
-           std::vector<double> *data,
-           std::vector<int> *indices,
-           std::vector<int> *indptr,
-           std::vector<double> *labels)
+           std::vector<double> &data,
+           std::vector<int> &indices,
+           std::vector<int> &indptr,
+           std::vector<double> &labels)
 {
-  const char *in_string = line.c_str();
-
-  int length = strlen(in_string);
-  if (length == 0)
+  if (line.length() == 0)
     return false;
 
   // Parse label
+  const char *in_string = line.c_str();
   double y;
 
   if (!sscanf(in_string, "%lf", &y)) {
     return false;
   }
 
-  labels->push_back(y);
+  labels.push_back(y);
 
   const char* position;
   position = strchr(in_string, ' ') + 1;
 
-  indptr->push_back(data->size());
+  indptr.push_back(data.size());
 
   // Parse feature-value pairs
   for ( ;
-       (position < in_string + length
-      && position - 1 != NULL
+       (position
+      && position < in_string + line.length()
       && position[0] != '#');
-       position = strchr(position, ' ') + 1) {
+       position = strchr(position, ' ')) {
 
     // Consume multiple spaces, if needed.
-    if (position[0] == ' ' || position[0] == '\n' ||
-        position[0] == '\v' || position[0] == '\r') {
-      continue;
-    };
+    while (isspace(*position))
+      position++;
 
     // Parse the feature-value pair.
     int id = atoi(position);
     position = strchr(position, ':') + 1;
     double value = atof(position);
-    indices->push_back(id);
-    data->push_back(value);
+    indices.push_back(id);
+    data.push_back(value);
   }
 
   return true;
@@ -168,32 +164,30 @@ parse_line(const std::string& line,
 static bool
 parse_file(char const *file_path,
            size_t buffer_size,
-           std::vector<double> *data,
-           std::vector<int> *indices,
-           std::vector<int> *indptr,
-           std::vector<double> *labels)
+           std::vector<double> &data,
+           std::vector<int> &indices,
+           std::vector<int> &indptr,
+           std::vector<double> &labels)
 {
-  char* buffer = new char[buffer_size];
+  std::vector<char> buffer(buffer_size);
 
   std::ifstream file_stream(file_path, std::ifstream::in);
-  file_stream.rdbuf()->pubsetbuf(buffer, buffer_size);
+  file_stream.rdbuf()->pubsetbuf(buffer.data(), buffer_size);
 
   if (file_stream) {
     std::string line;
-    while (getline(file_stream, line)) {
+    while (std::getline(file_stream, line)) {
       if (!parse_line(line, data, indices, indptr, labels))
         return false;
     }
-    indptr->push_back(data->size());
+    indptr.push_back(data.size());
   }
-
-  delete[] buffer;
 
   return true;
 }
 
 static char load_svmlight_format_doc[] =
-"Load file in svmlight format and return a CSR.";
+  "Load file in svmlight format and return a CSR.";
 
 static PyObject*
 load_svmlight_format(PyObject *self, PyObject *args)
@@ -222,7 +216,7 @@ load_svmlight_format(PyObject *self, PyObject *args)
   // FIXME: should check whether buffer_mb >= 0
   size_t buffer_size = buffer_mb * 1024 * 1024;
 
-  return parse_file(file_path, buffer_size, data, indices, indptr, labels)
+  return parse_file(file_path, buffer_size, *data, *indices, *indptr, *labels)
     ?  Py_BuildValue("OOOO",
                      to_1d_array(data, NPY_DOUBLE),
                      to_1d_array(indices, NPY_INT),
