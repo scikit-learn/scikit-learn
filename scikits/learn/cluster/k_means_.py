@@ -8,7 +8,7 @@
 # License: BSD
 
 import warnings
-from itertools import cycle
+from itertools import cycle, izip
 
 import numpy as np
 from math import floor
@@ -255,13 +255,17 @@ def _calculate_labels_inertia(X, centers, x_squared_norms=None):
     return distance.min(axis=0).sum(), distance.argmin(axis=0)
 
 
-def _mini_batch_step(X, centers, counts, x_squared_norms=None):
+def _mini_batch_step(X, batch, centers, counts, x_squared_norms=None):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
     ----------
 
     X: array, shape (n_samples, n_features)
+        The original data array.
+
+    batch: array shape (chunk_size,)
+        The row indices of the mini batch samples.
 
     centers: array, shape (k, n_features)
         The cluster centers
@@ -283,6 +287,10 @@ def _mini_batch_step(X, centers, counts, x_squared_norms=None):
         The resulting centers
 
     """
+    # This is inefficient but saves mem and fits to sparse matrices.
+    X = X[batch]
+    x_squared_norms = x_squared_norms[batch]
+    
     cache = euclidean_distances(centers, X, Y_norm_squared=x_squared_norms,
                                 squared=True).argmin(axis=0)
 
@@ -624,33 +632,34 @@ class MiniBatchKMeans(KMeans):
         self.random_state = check_random_state(self.random_state)
 
         X = self._check_data(X, **params)
+        x_squared_norms = np.sum(X ** 2.0, axis=1)
 
         if hasattr(self.init, '__array__'):
             self.init = np.asarray(self.init)
 
         self.cluster_centers_ = _init_centroids(
-                X, self.k, self.init, random_state=self.random_state)
-
-        X_shuffled = shuffle(X, random_state=self.random_state)
-        
+            X, self.k, self.init, random_state=self.random_state,
+            x_squared_norms=x_squared_norms)
         self.counts = np.zeros(self.k)
-        tol = np.mean(np.var(X, axis=0)) * self.tol
+
+        idx = np.arange(X.shape[0], dtype=np.int32)
+        self.random_state.shuffle(idx)
+
         try:
             n_batches = floor(float(len(X)) / self.chunk_size)
-            batches = np.array_split(X_shuffled, n_batches)
+            batches = np.array_split(idx, n_batches)
             n_batches = len(batches)
         except ValueError:
-            batches = [X]
+            batches = [idx]
             n_batches = 1
 
-        batches_and_norms = cycle((b, (b ** 2).sum(axis=1)) for b in batches)
         n_iterations = xrange(self.max_iter * n_batches)
-
-        for i, (batch, norms) in zip(n_iterations, batches_and_norms):
+        tol = np.mean(np.var(X, axis=0)) * self.tol
+        for i, batch in izip(n_iterations, cycle(batches)):
             old_centers = self.cluster_centers_.copy()
-            self.cluster_centers_, self.counts = _mini_batch_step(
+            self.cluster_centers_, self.counts = _mini_batch_step(X,
                 batch, self.cluster_centers_, self.counts,
-                x_squared_norms=norms)
+                x_squared_norms=x_squared_norms)
 
             if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
                 if self.verbose:
@@ -674,20 +683,22 @@ class MiniBatchKMeans(KMeans):
         if len(X) == 0:
             return self
 
-        squared_norms = (X ** 2).sum(axis=1)
+        x_squared_norms = (X ** 2).sum(axis=1)
 
         if self.counts is None:
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
                 X, self.k, self.init, random_state=self.random_state,
-                x_squared_norms=squared_norms)
+                x_squared_norms=x_squared_norms)
 
             self.counts = np.zeros(self.k)
 
+        batch = np.arange(X.shape[0])
+
         self.cluster_centers_, self.counts = _mini_batch_step(
-            X, self.cluster_centers_, self.counts,
-            x_squared_norms=squared_norms)
+            X, batch, self.cluster_centers_, self.counts,
+            x_squared_norms=x_squared_norms)
 
         self.inertia_, self.labels_ = _calculate_labels_inertia(
             X, self.cluster_centers_, squared_norms)

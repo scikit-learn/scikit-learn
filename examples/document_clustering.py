@@ -27,7 +27,7 @@ from scikits.learn.cluster import SpectralClustering
 from scikits.learn.cluster import sparse
 from scikits.learn.cluster.sparse import randindex
 
-from scikits.learn.preprocessing.sparse import LengthNormalizer
+from scikits.learn.preprocessing import Normalizer
 
 
 # Display progress logs on stdout
@@ -69,13 +69,13 @@ t0 = time()
 vectorizer = Vectorizer(max_features=1000)
 X = vectorizer.fit_transform((open(f).read() for f in filenames))
 
-X = LengthNormalizer().transform(X)
+X = Normalizer(norm="l2", copy=False).transform(X)
 
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X.shape
 print
 
-chunk_size = 250
+chunk_size = 500
 
 
 ################################################################################
@@ -83,8 +83,8 @@ chunk_size = 250
 
 print "_" * 80
 
-mbkm = sparse.MiniBatchKMeans(k=true_k, n_iter=100, random_state=13,
-                              chunk_size=chunk_size)
+mbkm = sparse.MiniBatchKMeans(k=true_k, max_iter=100, random_state=13,
+                              chunk_size=chunk_size, tol=0.0)
 
 print "Clustering data with %s" % str(mbkm)
 print
@@ -109,7 +109,7 @@ print
 print "_" * 80
 
 mbkm = MiniBatchKMeans(init="random", k=true_k, max_iter=100, random_state=13,
-                       chunk_size=chunk_size, tol=0.0)
+                       chunk_size=chunk_size, tol=0.0, n_init=1)
 
 print "Clustering data with %s" % str(mbkm)
 print
@@ -129,26 +129,26 @@ print
 
 
 
-################################################################################
-# Now sectral clustering
+## ################################################################################
+## # Now sectral clustering
 
-print "_" * 80
-sc = SpectralClustering(k=true_k, mode='amg', random_state=13)
+## print "_" * 80
+## sc = SpectralClustering(k=true_k, mode='amg', random_state=13)
 
-t0 = time()
-A = (X * X.T).toarray()
-print "computed A in %0.3fs" % (time() - t0)
+## t0 = time()
+## A = (X * X.T).toarray()
+## print "computed A in %0.3fs" % (time() - t0)
 
-print "Clustering data with %s" % str(sc)
-print
+## print "Clustering data with %s" % str(sc)
+## print
 
-t0 = time()
+## t0 = time()
 
-sc.fit(A)
+## sc.fit(A)
 
-print "done in %0.3fs" % (time() - t0)
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, sc.labels_)
-print "Completeness: %0.3f" % metrics.completeness_score(labels, sc.labels_)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels, sc.labels_)
-print "Rand-Index: %.3f" % randindex(labels, sc.labels_)
-print 
+## print "done in %0.3fs" % (time() - t0)
+## print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, sc.labels_)
+## print "Completeness: %0.3f" % metrics.completeness_score(labels, sc.labels_)
+## print "V-measure: %0.3f" % metrics.v_measure_score(labels, sc.labels_)
+## print "Rand-Index: %.3f" % randindex(labels, sc.labels_)
+## print 

@@ -17,6 +17,7 @@ from math import floor
 from ...base import BaseEstimator
 from ...utils import check_random_state
 
+from ..k_means_ import MiniBatchKMeans as DenseMiniBatchKMeans
 from . import _fast_kmeans
 
 
@@ -87,9 +88,6 @@ def _mini_batch_step(X, batch, centers, counts, x_squared_norms):
 
     cache = compute_cache(centers, X[batch],
                           x_squared_norms[batch])
-    #print centers[:,:20]
-    #print cache
-    #print foobar
 
     _fast_kmeans._mini_batch_update(X.data, X.indices, X.indptr, batch,
                                     centers, counts, cache)
@@ -117,7 +115,7 @@ def _init_centroids(X, k, init, random_state):
     return centers
 
 
-class MiniBatchKMeans(BaseEstimator):
+class MiniBatchKMeans(DenseMiniBatchKMeans):
     """
     Batch K-Means clustering
 
@@ -170,16 +168,10 @@ class MiniBatchKMeans(BaseEstimator):
     http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
     """
 
-    def __init__(self, k=8, init='random', n_iter=300, chunk_size=300,
-                 verbose=0, random_state=None):
-        self.k = k
-        self.init = init
-        self.n_iter = n_iter
-        self.verbose = verbose
-        self.random_state = random_state
-        self.counts = None
-        self.cluster_centers_ = None
-        self.chunk_size = chunk_size
+    def __init__(self, k=8, init='random', n_init=10, max_iter=300,
+                 chunk_size=300, tol=1e-4, verbose=0, random_state=None):
+        super(MiniBatchKMeans, self).__init__(k, init, n_init,
+              max_iter, chunk_size, tol, verbose, random_state)
 
     def _check_data(self, X, **params):
         """ Set parameters and check the sample given is larger than k. """
@@ -223,12 +215,16 @@ class MiniBatchKMeans(BaseEstimator):
             n_batches = 1
 
         batches_cycle = cycle(b for b in batches)
-        n_iterations = xrange(self.n_iter * n_batches)
-
+        n_iterations = xrange(self.max_iter * n_batches)
+        tol = self.tol
         for i, batch in izip(n_iterations, batches_cycle):
-            # old_centers = self.cluster_centers_.copy()
+            old_centers = self.cluster_centers_.copy()
             _mini_batch_step(X, batch, self.cluster_centers_, self.counts,
                              x_squared_norms)
+            if np.sum((old_centers - self.cluster_centers_) ** 2) < tol:
+                if self.verbose:
+                    print 'Converged to similar centers at iteration', i
+                break
 
         self.labels_ = compute_cache(self.cluster_centers_, X,
                                      x_squared_norms)
