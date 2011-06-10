@@ -31,32 +31,32 @@ typedef struct {
   PyObject_HEAD
   void *memory;
   int typenum; // NPY_DOUBLE or NPY_INT
-} _DeallocObject;
+} DeallocObject;
 
 
 static void
-_dealloc(PyObject *self)
+dealloc(PyObject *self)
 {
-  if (((_DeallocObject *)self)->typenum == NPY_DOUBLE) {
+  if (((DeallocObject *)self)->typenum == NPY_DOUBLE) {
     std::vector<double> *v;
-    v = (std::vector<double>*) ((_DeallocObject *)self)->memory;
+    v = (std::vector<double>*) ((DeallocObject *)self)->memory;
     v->clear();
   }
-  if (((_DeallocObject *)self)->typenum == NPY_INT) {
+  if (((DeallocObject *)self)->typenum == NPY_INT) {
     std::vector<int> *v;
-    v = (std::vector<int>*) ((_DeallocObject *)self)->memory;
+    v = (std::vector<int>*) ((DeallocObject *)self)->memory;
     v->clear();
   }
   self->ob_type->tp_free(self);
 }
 
-static PyTypeObject _DeallocType = {
+static PyTypeObject DeallocType = {
   PyObject_HEAD_INIT(NULL)
   0, /*ob_size*/
   "deallocator", /*tp_name*/
-  sizeof(_DeallocObject), /*tp_basicsize*/
+  sizeof(DeallocObject), /*tp_basicsize*/
   0, /*tp_itemsize*/
-  _dealloc, /*tp_dealloc*/
+  dealloc, /*tp_dealloc*/
   0, /*tp_print*/
   0, /*tp_getattr*/
   0, /*tp_setattr*/
@@ -78,7 +78,7 @@ static PyTypeObject _DeallocType = {
 // convert a C++ vector to a 1d-ndarray WITHOUT memory copying
 template <class T>
 static PyObject*
-_to_1d_array(std::vector<T> *data, int typenum)
+to_1d_array(std::vector<T> *data, int typenum)
 {
   npy_intp dims[1] = {data->size()};
 
@@ -91,14 +91,14 @@ _to_1d_array(std::vector<T> *data, int typenum)
   if (arr == NULL)
     goto fail;
 
-  _DeallocObject *newobj;
-  newobj = PyObject_New(_DeallocObject, &_DeallocType);
+  DeallocObject *newobj;
+  newobj = PyObject_New(DeallocObject, &DeallocType);
 
   if (newobj == NULL)
     goto fail;
 
-  ((_DeallocObject *)newobj)->memory = (void *)data;
-  ((_DeallocObject *)newobj)->typenum = typenum;
+  ((DeallocObject *)newobj)->memory = (void *)data;
+  ((DeallocObject *)newobj)->typenum = typenum;
 
   PyArray_BASE(arr) = (PyObject *)newobj;
 
@@ -112,11 +112,11 @@ fail:
 }
 
 static bool
-_parse_line(const std::string& line,
-            std::vector<double> *data,
-            std::vector<int> *indices,
-            std::vector<int> *indptr,
-            std::vector<double> *labels)
+parse_line(const std::string& line,
+           std::vector<double> *data,
+           std::vector<int> *indices,
+           std::vector<int> *indptr,
+           std::vector<double> *labels)
 {
   const char *in_string = line.c_str();
 
@@ -163,12 +163,12 @@ _parse_line(const std::string& line,
 }
 
 static bool
-_parse_file(char *file_path,
-            long int buffer_size,
-            std::vector<double> *data,
-            std::vector<int> *indices,
-            std::vector<int> *indptr,
-            std::vector<double> *labels)
+parse_file(char const *file_path,
+           size_t buffer_size,
+           std::vector<double> *data,
+           std::vector<int> *indices,
+           std::vector<int> *indptr,
+           std::vector<double> *labels)
 {
   char* buffer = new char[buffer_size];
 
@@ -178,7 +178,7 @@ _parse_file(char *file_path,
   if (file_stream) {
     std::string line;
     while (getline(file_stream, line)) {
-      _parse_line(line, data, indices, indptr, labels);
+      parse_line(line, data, indices, indptr, labels);
     }
     indptr->push_back(data->size());
   }
@@ -188,18 +188,18 @@ _parse_file(char *file_path,
   return true;
 }
 
-static char _load_svmlight_format_doc[] =
+static char load_svmlight_format_doc[] =
 "Load file in svmlight format and return a CSR.";
 
 static PyObject*
-_load_svmlight_format(PyObject *self, PyObject *args)
+load_svmlight_format(PyObject *self, PyObject *args)
 {
 
   // initialization
   _import_array();
 
-  _DeallocType.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&_DeallocType) < 0)
+  DeallocType.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&DeallocType) < 0)
     return NULL;
 
   std::vector<double> *data = new std::vector<double>;
@@ -215,27 +215,28 @@ _load_svmlight_format(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  long int buffer_size = buffer_mb * 1024 * 1024;
+  // FIXME: should check whether buffer_mb >= 0
+  size_t buffer_size = buffer_mb * 1024 * 1024;
 
   // parse file
-  _parse_file(file_path, buffer_size, data, indices, indptr, labels);
+  parse_file(file_path, buffer_size, data, indices, indptr, labels);
 
   // return a tuple of ndarrays
   return Py_BuildValue("OOOO",
-                       _to_1d_array(data, NPY_DOUBLE),
-                       _to_1d_array(indices, NPY_INT),
-                       _to_1d_array(indptr, NPY_INT),
-                       _to_1d_array(labels, NPY_DOUBLE)
+                       to_1d_array(data, NPY_DOUBLE),
+                       to_1d_array(indices, NPY_INT),
+                       to_1d_array(indptr, NPY_INT),
+                       to_1d_array(labels, NPY_DOUBLE)
                        );
 }
 
-static PyMethodDef _svmlight_format_methods[] = {
-  {"_load_svmlight_format", _load_svmlight_format,
-    METH_VARARGS, _load_svmlight_format_doc},
+static PyMethodDef svmlight_format_methods[] = {
+  {"_load_svmlight_format", load_svmlight_format,
+    METH_VARARGS, load_svmlight_format_doc},
   {NULL, NULL, 0, NULL}
 };
 
-static char _svmlight_format_doc[] =
+static char svmlight_format_doc[] =
 "Module _svmlight_format.";
 
 PyMODINIT_FUNC
@@ -243,8 +244,6 @@ init_svmlight_format(void)
 {
 
   Py_InitModule3("_svmlight_format",
-                 _svmlight_format_methods,
-                 _svmlight_format_doc);
+                 svmlight_format_methods,
+                 svmlight_format_doc);
 }
-
-
