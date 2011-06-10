@@ -256,7 +256,7 @@ def k_means(X, k, init='k-means++', n_init=10, max_iter=300, verbose=0,
 def _calculate_labels_inertia(X, centers, x_squared_norms=None):
     """Compute the inertia and the labels of the given samples and centers"""
     if sp.issparse(X):
-        distance = euclidean_distances_sparse(centers, X,
+        distance = _euclidean_distances_sparse(centers, X,
                                               x_squared_norms, squared=True)
     else:
         distance = euclidean_distances(centers, X, x_squared_norms,
@@ -471,8 +471,8 @@ class KMeans(BaseEstimator):
     it can be useful to restart it several times.
     """
 
-    def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300, tol=1e-4,
-            verbose=0, random_state=None, copy_x=True):
+    def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300,
+                 tol=1e-4, verbose=0, random_state=None, copy_x=True):
 
         if hasattr(init, '__array__'):
             k = init.shape[0]
@@ -572,14 +572,14 @@ def _mini_batch_step_sparse(X, batch, centers, counts, x_squared_norms):
     x_squared_norms: array, shape (n_samples,)
          The squared norms of each sample in `X`.
     """
-    cache = euclidean_distances_sparse(centers, X[batch],
+    cache = _euclidean_distances_sparse(centers, X[batch],
               x_squared_norms[batch]).argmin(axis=0).astype(np.int32)
 
     _k_means._mini_batch_update(X.data, X.indices, X.indptr, batch,
                                 centers, counts, cache)
 
 
-def euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
+def _euclidean_distances_sparse(X, Y, y_squared_norms=None, squared=False):
     """euclidean distances for dense X and sparse Y.
     """
     XX = np.sum(X * X, axis=1)[:, np.newaxis]
@@ -707,7 +707,7 @@ class MiniBatchKMeans(KMeans):
 
         self.cluster_centers_ = _init_centroids(
             X, self.k, self.init, random_state=self.random_state,
-            x_squared_norms=x_squared_norms) 
+            x_squared_norms=x_squared_norms)
         self.counts = np.zeros(self.k, dtype=np.int32)
 
         idx = np.arange(n_samples, dtype=np.int32)

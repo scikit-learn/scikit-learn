@@ -1,4 +1,7 @@
-import sys
+# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#
+# License: BSD Style.
+
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -80,13 +83,14 @@ def _mini_batch_update(np.ndarray[DOUBLE, ndim=1] X_data,
             scale(center_data_ptr + (c_stride * c), n_features,
                   center_scales_ptr[c])
             center_scales_ptr[c] = 1.0
-        
+
         add(center_data_ptr + (c_stride * c), center_scales_ptr[c],
             X_data_ptr, X_indices_ptr, offset, xnnz, eta)
 
     # finally scale by scaling factors.
     for c from 0 <= c < n_clusters:
-        scale(center_data_ptr + (c_stride * c), n_features, center_scales_ptr[c])
+        scale(center_data_ptr + (c_stride * c), n_features,
+              center_scales_ptr[c])
 
 
 cdef void scale(DOUBLE *dense_vec, int n_features, double c):
@@ -97,8 +101,9 @@ cdef void scale(DOUBLE *dense_vec, int n_features, double c):
 
 
 @cython.cdivision(True)
-cdef double add(DOUBLE *center_data_ptr, DOUBLE center_scale, DOUBLE *X_data_ptr,
-                INT *X_indices_ptr, int offset, int xnnz, double c):
+cdef double add(DOUBLE *center_data_ptr, DOUBLE center_scale,
+                DOUBLE *X_data_ptr, INT *X_indices_ptr, int offset,
+                int xnnz, double c):
     """Scales example x by constant c and adds it to the weight vector w"""
     cdef int j
     cdef int idx
@@ -114,7 +119,7 @@ cdef double add(DOUBLE *center_data_ptr, DOUBLE center_scale, DOUBLE *X_data_ptr
     return (xsqnorm * c * c) + (2.0 * innerprod * c * center_scale)
 
 
-################################################################################
+###############################################################################
 # Rand Index
 
 def randindex(labels_true, labels_pred):
