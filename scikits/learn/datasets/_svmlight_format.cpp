@@ -31,17 +31,18 @@
 #include <vector>
 
 // An object responsible for deallocating the memory
-typedef struct {
+struct VectorOwner {
   PyObject_HEAD
   void *memory;
   int typenum; // NPY_DOUBLE or NPY_INT
-} DeallocObject;
+};
 
 
+extern "C" {
 static void
 dealloc(PyObject *self)
 {
-  DeallocObject &obj = *reinterpret_cast<DeallocObject *>(self);
+  VectorOwner &obj = *reinterpret_cast<VectorOwner *>(self);
   if (obj.typenum == NPY_DOUBLE) {
     std::vector<double> *v = (std::vector<double>*) obj.memory;
     delete v;
@@ -52,12 +53,13 @@ dealloc(PyObject *self)
   }
   obj.ob_type->tp_free(self);
 }
+}
 
-static PyTypeObject DeallocType = {
+static PyTypeObject VectorOwnerType = {
   PyObject_HEAD_INIT(NULL)
   0, /*ob_size*/
   "deallocator", /*tp_name*/
-  sizeof(DeallocObject), /*tp_basicsize*/
+  sizeof(VectorOwner), /*tp_basicsize*/
   0, /*tp_itemsize*/
   dealloc, /*tp_dealloc*/
   0, /*tp_print*/
@@ -85,25 +87,23 @@ to_1d_array(std::vector<T> *data, int typenum)
 {
   npy_intp dims[1] = {data->size()};
 
-  PyObject *arr = NULL;
-
   // A C++ vector's first element is guaranteed to point to the internally used
   // array of memory (memory is contiguous).
-  arr = PyArray_SimpleNewFromData(1, dims, typenum, (void *) &(*data)[0]);
+  PyObject *arr = PyArray_SimpleNewFromData(1, dims, typenum, &(*data)[0]);
 
   if (arr == NULL)
     goto fail;
 
-  DeallocObject *newobj;
-  newobj = PyObject_New(DeallocObject, &DeallocType);
+  VectorOwner *owner;
+  owner = PyObject_New(VectorOwner, &VectorOwnerType);
 
-  if (newobj == NULL)
+  if (owner == NULL)
     goto fail;
 
-  newobj->memory = data;
-  newobj->typenum = typenum;
+  owner->memory = data;
+  owner->typenum = typenum;
 
-  PyArray_BASE(arr) = (PyObject *)newobj;
+  PyArray_BASE(arr) = (PyObject *)owner;
 
   return arr;
 
@@ -189,7 +189,7 @@ parse_file(char const *file_path,
   return true;
 }
 
-static char load_svmlight_format_doc[] =
+static const char load_svmlight_format_doc[] =
   "Load file in svmlight format and return a CSR.";
 
 extern "C" {
@@ -199,8 +199,8 @@ load_svmlight_format(PyObject *self, PyObject *args)
   // initialization
   _import_array();
 
-  DeallocType.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&DeallocType) < 0)
+  VectorOwnerType.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&VectorOwnerType) < 0)
     return NULL;
 
   // FIXME: this is not exception-safe
@@ -213,9 +213,9 @@ load_svmlight_format(PyObject *self, PyObject *args)
   char const *file_path;
   int buffer_mb;
 
-  if (!PyArg_ParseTuple(args, "si", &file_path, &buffer_mb)) {
-    return NULL;
-  }
+  // FIXME: memory leaked
+  if (!PyArg_ParseTuple(args, "si", &file_path, &buffer_mb))
+    return 0;
 
   // FIXME: should check whether buffer_mb >= 0
   size_t buffer_size = buffer_mb * 1024 * 1024;
@@ -236,7 +236,7 @@ static PyMethodDef svmlight_format_methods[] = {
   {NULL, NULL, 0, NULL}
 };
 
-static char svmlight_format_doc[] =
+static const char svmlight_format_doc[] =
   "Loader for svmlight / libsvm datasets - C++ helper routines";
 
 PyMODINIT_FUNC
