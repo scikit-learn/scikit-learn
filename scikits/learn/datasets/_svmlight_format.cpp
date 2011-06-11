@@ -23,11 +23,12 @@
 
 
 #include <Python.h>
+#include <numpy/arrayobject.h>
+
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <string>
-#include <numpy/arrayobject.h>
+#include <vector>
 
 // An object responsible for deallocating the memory
 typedef struct {
@@ -40,17 +41,16 @@ typedef struct {
 static void
 dealloc(PyObject *self)
 {
-  if (((DeallocObject *)self)->typenum == NPY_DOUBLE) {
-    std::vector<double> *v;
-    v = (std::vector<double>*) ((DeallocObject *)self)->memory;
-    v->clear();
+  DeallocObject &obj = *reinterpret_cast<DeallocObject *>(self);
+  if (obj.typenum == NPY_DOUBLE) {
+    std::vector<double> *v = (std::vector<double>*) obj.memory;
+    delete v;
   }
-  if (((DeallocObject *)self)->typenum == NPY_INT) {
-    std::vector<int> *v;
-    v = (std::vector<int>*) ((DeallocObject *)self)->memory;
-    v->clear();
+  if (obj.typenum == NPY_INT) {
+    std::vector<int> *v = (std::vector<int>*) obj.memory;
+    delete v;
   }
-  self->ob_type->tp_free(self);
+  obj.ob_type->tp_free(self);
 }
 
 static PyTypeObject DeallocType = {
@@ -100,8 +100,8 @@ to_1d_array(std::vector<T> *data, int typenum)
   if (newobj == NULL)
     goto fail;
 
-  ((DeallocObject *)newobj)->memory = (void *)data;
-  ((DeallocObject *)newobj)->typenum = typenum;
+  newobj->memory = (void *)data;
+  newobj->typenum = typenum;
 
   PyArray_BASE(arr) = (PyObject *)newobj;
 
