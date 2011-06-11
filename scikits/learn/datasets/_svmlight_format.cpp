@@ -25,94 +25,88 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
-// An object responsible for deallocating the memory
-struct BaseVectorOwner {
-  PyObject_HEAD
-  int typenum; // NPY_DOUBLE or NPY_INT
-};
 
+/*
+ * A Python object responsible for memory management of our vectors.
+ */
 template <typename T>
-struct VectorOwner : public BaseVectorOwner {
+struct VectorOwner {
+  PyObject_HEAD
   std::vector<T> v;
 };
 
+/*
+ * Deallocators (tp_dealloc). Since a template function can't have C linkage,
+ * we define three functions.
+ */
+template <typename T>
+static void destroy_vector_owner(PyObject *self)
+{
+  // Note: in-place call to destructor because of placement new.
+  // Compiler-generated dtor will release memory from vector member.
+  VectorOwner<T> &obj = *reinterpret_cast<VectorOwner<T> *>(self);
+  obj.~VectorOwner();
+}
 
 extern "C" {
-static void dealloc(PyObject *self)
+static void destroy_int_vector(PyObject *self)
 {
-  BaseVectorOwner &obj = *reinterpret_cast<BaseVectorOwner *>(self);
-  if (obj.typenum == NPY_DOUBLE)
-    static_cast<VectorOwner<double> &>(obj).v.~vector<double>();
-  else if (obj.typenum == NPY_INT)
-    static_cast<VectorOwner<int> &>(obj).v.~vector<int>();
-  obj.ob_type->tp_free(self);
+  destroy_vector_owner<int>(self);
+}
+
+static void destroy_double_vector(PyObject *self)
+{
+  destroy_vector_owner<double>(self);
 }
 }
 
-static PyTypeObject IntVectorOwnerType = {
-  PyObject_HEAD_INIT(NULL)
-  0, /*ob_size*/
-  "deallocator", /*tp_name*/
-  sizeof(VectorOwner<int>), /*tp_basicsize*/
-  0, /*tp_itemsize*/
-  dealloc, /*tp_dealloc*/
-  0, /*tp_print*/
-  0, /*tp_getattr*/
-  0, /*tp_setattr*/
-  0, /*tp_compare*/
-  0, /*tp_repr*/
-  0, /*tp_as_number*/
-  0, /*tp_as_sequence*/
-  0, /*tp_as_mapping*/
-  0, /*tp_hash */
-  0, /*tp_call*/
-  0, /*tp_str*/
-  0, /*tp_getattro*/
-  0, /*tp_setattro*/
-  0, /*tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT, /*tp_flags*/
-  "Internal deallocator object", /* tp_doc */
-},
-DoubleVectorOwnerType = {
-  PyObject_HEAD_INIT(NULL)
-  0, /*ob_size*/
-  "deallocator", /*tp_name*/
-  sizeof(VectorOwner<double>), /*tp_basicsize*/
-  0, /*tp_itemsize*/
-  dealloc, /*tp_dealloc*/
-  0, /*tp_print*/
-  0, /*tp_getattr*/
-  0, /*tp_setattr*/
-  0, /*tp_compare*/
-  0, /*tp_repr*/
-  0, /*tp_as_number*/
-  0, /*tp_as_sequence*/
-  0, /*tp_as_mapping*/
-  0, /*tp_hash */
-  0, /*tp_call*/
-  0, /*tp_str*/
-  0, /*tp_getattro*/
-  0, /*tp_setattro*/
-  0, /*tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT, /*tp_flags*/
-  "Internal deallocator object", /* tp_doc */
-};
+
+/*
+ * Type objects for above.
+ */
+static PyTypeObject IntVOwnerType    = { PyObject_HEAD_INIT(NULL) },
+                    DoubleVOwnerType = { PyObject_HEAD_INIT(NULL) };
+
+/*
+ * Set the fields of the owner type objects.
+ */
+static void init_type_objs()
+{
+  IntVOwnerType.tp_flags = DoubleVOwnerType.tp_flags = Py_TPFLAGS_DEFAULT;
+  IntVOwnerType.tp_name  = DoubleVOwnerType.tp_name  = "deallocator";
+  IntVOwnerType.tp_doc   = DoubleVOwnerType.tp_doc   = "deallocator object";
+  IntVOwnerType.tp_new   = DoubleVOwnerType.tp_new   = PyType_GenericNew;
+
+  IntVOwnerType.tp_basicsize     = sizeof(VectorOwner<int>);
+  DoubleVOwnerType.tp_basicsize  = sizeof(VectorOwner<double>);
+  IntVOwnerType.tp_dealloc       = destroy_int_vector;
+  DoubleVOwnerType.tp_dealloc    = destroy_double_vector;
+}
 
 PyTypeObject &vector_owner_type(int typenum)
 {
   switch (typenum) {
-    case NPY_INT: return IntVectorOwnerType;
-    case NPY_DOUBLE: return DoubleVectorOwnerType;
+    case NPY_INT: return IntVOwnerType;
+    case NPY_DOUBLE: return DoubleVOwnerType;
   }
+  throw std::logic_error("invalid argument to vector_owner_type");
 }
 
-// Convert a C++ vector to a 1d-ndarray WITHOUT memory copying.
-// Takes ownership of v's contents.
+
+/*
+ * Convert a C++ vector to a 1d-ndarray WITHOUT memory copying.
+ * Steals v's contents and leaves it empty.
+ */
 template <typename T>
 static PyObject *to_1d_array(std::vector<T> &v, int typenum)
 {
@@ -133,7 +127,7 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
   if (!owner)
     goto fail;
 
-  owner->typenum = typenum;
+  // transfer ownership of v's contents to the VectorOwner
   new (&owner->v) std::vector<T>();
   owner->v.swap(v);
 
@@ -146,6 +140,7 @@ fail:
 
   return 0;
 }
+
 
 static bool
 parse_line(const std::string& line,
@@ -161,14 +156,14 @@ parse_line(const std::string& line,
   const char *in_string = line.c_str();
   double y;
 
-  if (!sscanf(in_string, "%lf", &y)) {
+  if (!std::sscanf(in_string, "%lf", &y)) {
     return false;
   }
 
   labels.push_back(y);
 
   const char* position;
-  position = strchr(in_string, ' ') + 1;
+  position = std::strchr(in_string, ' ') + 1;
 
   indptr.push_back(data.size());
 
@@ -177,16 +172,16 @@ parse_line(const std::string& line,
        (position
       && position < in_string + line.length()
       && position[0] != '#');
-       position = strchr(position, ' ')) {
+       position = std::strchr(position, ' ')) {
 
     // Consume multiple spaces, if needed.
-    while (isspace(*position))
+    while (std::isspace(*position))
       position++;
 
     // Parse the feature-value pair.
-    int id = atoi(position);
-    position = strchr(position, ':') + 1;
-    double value = atof(position);
+    int id = std::atoi(position);
+    position = std::strchr(position, ':') + 1;
+    double value = std::atof(position);
     indices.push_back(id);
     data.push_back(value);
   }
@@ -229,12 +224,8 @@ extern "C" {
 static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
 {
   // initialization
-  _import_array();
-
-  DoubleVectorOwnerType.tp_new = PyType_GenericNew;
-  IntVectorOwnerType.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&DoubleVectorOwnerType) < 0
-   || PyType_Ready(&IntVectorOwnerType) < 0)
+  if (PyType_Ready(&DoubleVOwnerType) < 0
+   || PyType_Ready(&IntVOwnerType)    < 0)
     return 0;
 
   std::vector<double> data, labels;
@@ -261,6 +252,11 @@ static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
 }
 }
 
+
+/*
+ * Python module setup.
+ */
+
 static PyMethodDef svmlight_format_methods[] = {
   {"_load_svmlight_format", load_svmlight_format,
     METH_VARARGS, load_svmlight_format_doc},
@@ -273,6 +269,8 @@ static const char svmlight_format_doc[] =
 extern "C" {
 PyMODINIT_FUNC init_svmlight_format(void)
 {
+  _import_array();
+  init_type_objs();
   Py_InitModule3("_svmlight_format",
                  svmlight_format_methods,
                  svmlight_format_doc);
