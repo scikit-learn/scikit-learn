@@ -29,7 +29,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -106,7 +105,8 @@ PyTypeObject &vector_owner_type(int typenum)
 
 /*
  * Convert a C++ vector to a 1d-ndarray WITHOUT memory copying.
- * Steals v's contents and leaves it empty.
+ * Steals v's contents, leaving it empty.
+ * Throws an exception if an error occurs.
  */
 template <typename T>
 static PyObject *to_1d_array(std::vector<T> &v, int typenum)
@@ -132,10 +132,11 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
     PyArray_BASE(arr) = (PyObject *)owner;
 
     return arr;
-  } catch (std::runtime_error const &e) {
-    // let's assume the exception is set correctly
+
+  } catch (std::exception const &e) {
+    // let's assume the Python exception is already set correctly
     Py_XDECREF(arr);
-    return 0;
+    throw;
   }
 }
 
@@ -256,9 +257,21 @@ static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
                          to_1d_array(indices, NPY_INT),
                          to_1d_array(indptr, NPY_INT),
                          to_1d_array(labels, NPY_DOUBLE));
+
+  } catch (SyntaxError const &e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return 0;
+  } catch (std::bad_alloc const &e) {
+    PyErr_SetString(PyExc_MemoryError, e.what());
+    return 0;
+  } catch (std::ios_base::failure const &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    return 0;
   } catch (std::exception const &e) {
-    // FIXME: we're losing information about the error here.
-    return Py_BuildValue("()");
+    std::string msg("error in SVMlight/libSVM reader: ");
+    msg += e.what();
+    PyErr_SetString(PyExc_RuntimeError, msg.c_str());
+    return 0;
   }
 }
 }
