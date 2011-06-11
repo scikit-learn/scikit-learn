@@ -23,119 +23,161 @@
 
 
 #include <Python.h>
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
 #include <numpy/arrayobject.h>
 
-// An object responsible for deallocating the memory
-typedef struct {
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+
+/*
+ * A Python object responsible for memory management of our vectors.
+ */
+template <typename T>
+struct VectorOwner {
   PyObject_HEAD
-  void *memory;
-  int typenum; // NPY_DOUBLE or NPY_INT
-} DeallocObject;
-
-
-static void
-dealloc(PyObject *self)
-{
-  if (((DeallocObject *)self)->typenum == NPY_DOUBLE) {
-    std::vector<double> *v;
-    v = (std::vector<double>*) ((DeallocObject *)self)->memory;
-    v->clear();
-  }
-  if (((DeallocObject *)self)->typenum == NPY_INT) {
-    std::vector<int> *v;
-    v = (std::vector<int>*) ((DeallocObject *)self)->memory;
-    v->clear();
-  }
-  self->ob_type->tp_free(self);
-}
-
-static PyTypeObject DeallocType = {
-  PyObject_HEAD_INIT(NULL)
-  0, /*ob_size*/
-  "deallocator", /*tp_name*/
-  sizeof(DeallocObject), /*tp_basicsize*/
-  0, /*tp_itemsize*/
-  dealloc, /*tp_dealloc*/
-  0, /*tp_print*/
-  0, /*tp_getattr*/
-  0, /*tp_setattr*/
-  0, /*tp_compare*/
-  0, /*tp_repr*/
-  0, /*tp_as_number*/
-  0, /*tp_as_sequence*/
-  0, /*tp_as_mapping*/
-  0, /*tp_hash */
-  0, /*tp_call*/
-  0, /*tp_str*/
-  0, /*tp_getattro*/
-  0, /*tp_setattro*/
-  0, /*tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT, /*tp_flags*/
-  "Internal deallocator object", /* tp_doc */
+  std::vector<T> v;
 };
 
-// convert a C++ vector to a 1d-ndarray WITHOUT memory copying
-template <class T>
-static PyObject*
-to_1d_array(std::vector<T> *data, int typenum)
+/*
+ * Deallocators (tp_dealloc). Since a template function can't have C linkage,
+ * we define three functions.
+ */
+template <typename T>
+static void destroy_vector_owner(PyObject *self)
 {
-  npy_intp dims[1] = {data->size()};
-
-  PyObject *arr = NULL;
-
-  // A C++ vector's first element is guaranteed to point to the internally used
-  // array of memory (memory is contiguous).
-  arr = PyArray_SimpleNewFromData(1, dims, typenum, (void *) &(*data)[0]);
-
-  if (arr == NULL)
-    goto fail;
-
-  DeallocObject *newobj;
-  newobj = PyObject_New(DeallocObject, &DeallocType);
-
-  if (newobj == NULL)
-    goto fail;
-
-  ((DeallocObject *)newobj)->memory = (void *)data;
-  ((DeallocObject *)newobj)->typenum = typenum;
-
-  PyArray_BASE(arr) = (PyObject *)newobj;
-
-  return arr;
-
-fail:
-  data->clear();
-  Py_XDECREF(arr);
-
-  return NULL;
+  // Note: explicit call to destructor because of placement new;
+  // memory management for VectorOwner is performed by the interpreter.
+  // Compiler-generated dtor will release memory from vector member.
+  VectorOwner<T> &obj = *reinterpret_cast<VectorOwner<T> *>(self);
+  obj.~VectorOwner();
 }
 
-static bool
-parse_line(const std::string& line,
-           std::vector<double> &data,
-           std::vector<int> &indices,
-           std::vector<int> &indptr,
-           std::vector<double> &labels)
+extern "C" {
+static void destroy_int_vector(PyObject *self)
+{
+  destroy_vector_owner<int>(self);
+}
+
+static void destroy_double_vector(PyObject *self)
+{
+  destroy_vector_owner<double>(self);
+}
+}
+
+
+/*
+ * Type objects for above.
+ */
+static PyTypeObject IntVOwnerType    = { PyObject_HEAD_INIT(NULL) },
+                    DoubleVOwnerType = { PyObject_HEAD_INIT(NULL) };
+
+/*
+ * Set the fields of the owner type objects.
+ */
+static void init_type_objs()
+{
+  IntVOwnerType.tp_flags = DoubleVOwnerType.tp_flags = Py_TPFLAGS_DEFAULT;
+  IntVOwnerType.tp_name  = DoubleVOwnerType.tp_name  = "deallocator";
+  IntVOwnerType.tp_doc   = DoubleVOwnerType.tp_doc   = "deallocator object";
+  IntVOwnerType.tp_new   = DoubleVOwnerType.tp_new   = PyType_GenericNew;
+
+  IntVOwnerType.tp_basicsize     = sizeof(VectorOwner<int>);
+  DoubleVOwnerType.tp_basicsize  = sizeof(VectorOwner<double>);
+  IntVOwnerType.tp_dealloc       = destroy_int_vector;
+  DoubleVOwnerType.tp_dealloc    = destroy_double_vector;
+}
+
+PyTypeObject &vector_owner_type(int typenum)
+{
+  switch (typenum) {
+    case NPY_INT: return IntVOwnerType;
+    case NPY_DOUBLE: return DoubleVOwnerType;
+  }
+  throw std::logic_error("invalid argument to vector_owner_type");
+}
+
+
+/*
+ * Convert a C++ vector to a 1d-ndarray WITHOUT memory copying.
+ * Steals v's contents and leaves it empty.
+ */
+template <typename T>
+static PyObject *to_1d_array(std::vector<T> &v, int typenum)
+{
+  npy_intp dims[1] = {v.size()};
+
+  // A C++ vector's contents are guaranteed to be in a contiguous array.
+  PyObject *arr = PyArray_SimpleNewFromData(1, dims, typenum, &v[0]);
+
+  try {
+    if (!arr)
+      throw std::bad_alloc();
+
+    VectorOwner<T> *owner = PyObject_New(VectorOwner<T>,
+                                         &vector_owner_type(typenum));
+    if (!owner)
+      throw std::bad_alloc();
+
+    // transfer ownership of v's contents to the VectorOwner
+    new (&owner->v) std::vector<T>();
+    owner->v.swap(v);
+
+    PyArray_BASE(arr) = (PyObject *)owner;
+
+    return arr;
+  } catch (std::runtime_error const &e) {
+    // let's assume the exception is set correctly
+    Py_XDECREF(arr);
+    return 0;
+  }
+}
+
+
+/*
+ * Parsing.
+ */
+
+class SyntaxError : public std::runtime_error {
+public:
+  SyntaxError(char const *msg)
+   : std::runtime_error(std::string(msg) + " in SVMlight/libSVM file")
+  {
+  }
+};
+
+/*
+ * Parse single line. Throws exception on failure.
+ */
+void parse_line(const std::string& line,
+                std::vector<double> &data,
+                std::vector<int> &indices,
+                std::vector<int> &indptr,
+                std::vector<double> &labels)
 {
   if (line.length() == 0)
-    return false;
+    throw SyntaxError("empty line");
 
   // Parse label
+  // FIXME: this should be done using standard C++ IOstream facilities,
+  // so we don't need to read the lines into strings first and get better
+  // error handling.
   const char *in_string = line.c_str();
   double y;
 
-  if (!sscanf(in_string, "%lf", &y)) {
-    return false;
-  }
+  if (!std::sscanf(in_string, "%lf", &y))
+    throw SyntaxError("non-numeric or missing label");
 
   labels.push_back(y);
 
   const char* position;
-  position = strchr(in_string, ' ') + 1;
+  position = std::strchr(in_string, ' ') + 1;
 
   indptr.push_back(data.size());
 
@@ -144,92 +186,87 @@ parse_line(const std::string& line,
        (position
       && position < in_string + line.length()
       && position[0] != '#');
-       position = strchr(position, ' ')) {
+       position = std::strchr(position, ' ')) {
 
     // Consume multiple spaces, if needed.
-    while (isspace(*position))
+    while (std::isspace(*position))
       position++;
 
     // Parse the feature-value pair.
-    int id = atoi(position);
-    position = strchr(position, ':') + 1;
-    double value = atof(position);
+    int id = std::atoi(position);
+    position = std::strchr(position, ':') + 1;
+    double value = std::atof(position);
     indices.push_back(id);
     data.push_back(value);
   }
-
-  return true;
 }
 
 /*
- * Parse entire file. Returns success/failure.
+ * Parse entire file. Throws exception on failure.
  */
-static bool
-parse_file(char const *file_path,
-           size_t buffer_size,
-           std::vector<double> &data,
-           std::vector<int> &indices,
-           std::vector<int> &indptr,
-           std::vector<double> &labels)
+void parse_file(char const *file_path,
+                size_t buffer_size,
+                std::vector<double> &data,
+                std::vector<int> &indices,
+                std::vector<int> &indptr,
+                std::vector<double> &labels)
 {
   std::vector<char> buffer(buffer_size);
 
-  std::ifstream file_stream(file_path, std::ifstream::in);
+  std::ifstream file_stream;
+  file_stream.exceptions(std::ios::badbit);
   file_stream.rdbuf()->pubsetbuf(buffer.data(), buffer_size);
+  file_stream.open(file_path);
 
-  if (file_stream) {
-    std::string line;
-    while (std::getline(file_stream, line)) {
-      if (!parse_line(line, data, indices, indptr, labels))
-        return false;
-    }
-    indptr.push_back(data.size());
-    return true;
-  }
-  else
-    return false;
+  std::string line;
+  while (std::getline(file_stream, line))
+    parse_line(line, data, indices, indptr, labels);
+  indptr.push_back(data.size());
 }
 
-static char load_svmlight_format_doc[] =
+
+static const char load_svmlight_format_doc[] =
   "Load file in svmlight format and return a CSR.";
 
 extern "C" {
-static PyObject*
-load_svmlight_format(PyObject *self, PyObject *args)
+static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
 {
-
   // initialization
-  _import_array();
+  if (PyType_Ready(&DoubleVOwnerType) < 0
+   || PyType_Ready(&IntVOwnerType)    < 0)
+    return 0;
 
-  DeallocType.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&DeallocType) < 0)
-    return NULL;
+  try {
+    std::vector<double> data, labels;
+    std::vector<int> indices, indptr;
 
-  std::vector<double> *data = new std::vector<double>;
-  std::vector<int> *indices = new std::vector<int>;
-  std::vector<int> *indptr = new std::vector<int>; // of size n_samples + 1
-  std::vector<double> *labels = new std::vector<double>;
+    // read function arguments
+    char const *file_path;
+    int buffer_mb;
 
-  // read function arguments
-  char *file_path;
-  int buffer_mb;
+    if (!PyArg_ParseTuple(args, "si", &file_path, &buffer_mb))
+      return 0;
 
-  if (!PyArg_ParseTuple(args, "si", &file_path, &buffer_mb)) {
-    return NULL;
+    buffer_mb = std::max(buffer_mb, 1);
+    size_t buffer_size = buffer_mb * 1024 * 1024;
+
+    parse_file(file_path, buffer_size, data, indices, indptr, labels);
+    return Py_BuildValue("OOOO",
+                         to_1d_array(data, NPY_DOUBLE),
+                         to_1d_array(indices, NPY_INT),
+                         to_1d_array(indptr, NPY_INT),
+                         to_1d_array(labels, NPY_DOUBLE));
+  } catch (std::exception const &e) {
+    // FIXME: we're losing information about the error here.
+    return Py_BuildValue("()");
   }
-
-  // FIXME: should check whether buffer_mb >= 0
-  size_t buffer_size = buffer_mb * 1024 * 1024;
-
-  return parse_file(file_path, buffer_size, *data, *indices, *indptr, *labels)
-    ?  Py_BuildValue("OOOO",
-                     to_1d_array(data, NPY_DOUBLE),
-                     to_1d_array(indices, NPY_INT),
-                     to_1d_array(indptr, NPY_INT),
-                     to_1d_array(labels, NPY_DOUBLE))
-    : Py_BuildValue("()");
 }
 }
+
+
+/*
+ * Python module setup.
+ */
 
 static PyMethodDef svmlight_format_methods[] = {
   {"_load_svmlight_format", load_svmlight_format,
@@ -237,14 +274,16 @@ static PyMethodDef svmlight_format_methods[] = {
   {NULL, NULL, 0, NULL}
 };
 
-static char svmlight_format_doc[] =
+static const char svmlight_format_doc[] =
   "Loader for svmlight / libsvm datasets - C++ helper routines";
 
-PyMODINIT_FUNC
-init_svmlight_format(void)
+extern "C" {
+PyMODINIT_FUNC init_svmlight_format(void)
 {
-
+  _import_array();
+  init_type_objs();
   Py_InitModule3("_svmlight_format",
                  svmlight_format_methods,
                  svmlight_format_doc);
+}
 }
