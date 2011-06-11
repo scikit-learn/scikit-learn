@@ -1,5 +1,8 @@
 /*
- * Author: Mathieu Blondel.
+ * Authors: Mathieu Blondel <mathieu@mblondel.org>
+ *          Lars Buitinck <L.J.Buitinck@uva.nl>
+ *
+ * License: Simple BSD
  *
  * This module implements _load_svmlight_format, a fast and memory efficient
  * function to load the file format originally created for svmlight and now used
