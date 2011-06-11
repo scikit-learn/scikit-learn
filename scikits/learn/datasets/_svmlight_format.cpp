@@ -52,7 +52,8 @@ struct VectorOwner {
 template <typename T>
 static void destroy_vector_owner(PyObject *self)
 {
-  // Note: in-place call to destructor because of placement new.
+  // Note: explicit call to destructor because of placement new;
+  // memory management for VectorOwner is performed by the interpreter.
   // Compiler-generated dtor will release memory from vector member.
   VectorOwner<T> &obj = *reinterpret_cast<VectorOwner<T> *>(self);
   obj.~VectorOwner();
@@ -112,53 +113,66 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
 {
   npy_intp dims[1] = {v.size()};
 
-  // A C++ vector's first element is guaranteed to point to the internally used
-  // array of memory (memory is contiguous).
+  // A C++ vector's contents are guaranteed to be in a contiguous array.
   PyObject *arr = PyArray_SimpleNewFromData(1, dims, typenum, &v[0]);
 
-  // FIXME: goto is even less safe in C++ than in C.
-  // We should be using exceptions.
-  if (!arr)
-    goto fail;
+  try {
+    if (!arr)
+      throw std::bad_alloc();
 
-  VectorOwner<T> *owner;
-  owner = PyObject_New(VectorOwner<T>, &vector_owner_type(typenum));
+    VectorOwner<T> *owner = PyObject_New(VectorOwner<T>,
+                                         &vector_owner_type(typenum));
+    if (!owner)
+      throw std::bad_alloc();
 
-  if (!owner)
-    goto fail;
+    // transfer ownership of v's contents to the VectorOwner
+    new (&owner->v) std::vector<T>();
+    owner->v.swap(v);
 
-  // transfer ownership of v's contents to the VectorOwner
-  new (&owner->v) std::vector<T>();
-  owner->v.swap(v);
+    PyArray_BASE(arr) = (PyObject *)owner;
 
-  PyArray_BASE(arr) = (PyObject *)owner;
-
-  return arr;
-
-fail:
-  Py_XDECREF(arr);
-
-  return 0;
+    return arr;
+  } catch (std::runtime_error const &e) {
+    // let's assume the exception is set correctly
+    Py_XDECREF(arr);
+    return 0;
+  }
 }
 
 
-static bool
-parse_line(const std::string& line,
-           std::vector<double> &data,
-           std::vector<int> &indices,
-           std::vector<int> &indptr,
-           std::vector<double> &labels)
+/*
+ * Parsing.
+ */
+
+class SyntaxError : public std::runtime_error {
+public:
+  SyntaxError(char const *msg)
+   : std::runtime_error(std::string(msg) + " in SVMlight/libSVM file")
+  {
+  }
+};
+
+/*
+ * Parse single line. Throws exception on failure.
+ */
+void parse_line(const std::string& line,
+                std::vector<double> &data,
+                std::vector<int> &indices,
+                std::vector<int> &indptr,
+                std::vector<double> &labels)
 {
   if (line.length() == 0)
-    return false;
+    throw SyntaxError("empty line");
 
   // Parse label
+  // FIXME: this should be done using standard C++ IOstream facilities,
+  // so we don't need to read the lines into strings first and get better
+  // error handling.
   const char *in_string = line.c_str();
   double y;
 
-  if (!std::sscanf(in_string, "%lf", &y)) {
-    return false;
-  }
+  if (!std::sscanf(in_string, "%lf", &y))
+    throw SyntaxError("non-numeric or missing label");
 
   labels.push_back(y);
 
@@ -185,37 +199,31 @@ parse_line(const std::string& line,
     indices.push_back(id);
     data.push_back(value);
   }
-
-  return true;
 }
 
 /*
- * Parse entire file. Returns success/failure.
+ * Parse entire file. Throws exception on failure.
  */
-static bool
-parse_file(char const *file_path,
-           size_t buffer_size,
-           std::vector<double> &data,
-           std::vector<int> &indices,
-           std::vector<int> &indptr,
-           std::vector<double> &labels)
+void parse_file(char const *file_path,
+                size_t buffer_size,
+                std::vector<double> &data,
+                std::vector<int> &indices,
+                std::vector<int> &indptr,
+                std::vector<double> &labels)
 {
   std::vector<char> buffer(buffer_size);
 
-  std::ifstream file_stream(file_path);
-  if (!file_stream)
-    return false;
-
+  std::ifstream file_stream;
+  file_stream.exceptions(std::ios::badbit);
   file_stream.rdbuf()->pubsetbuf(buffer.data(), buffer_size);
+  file_stream.open(file_path);
 
   std::string line;
-  while (std::getline(file_stream, line)) {
-    if (!parse_line(line, data, indices, indptr, labels))
-      return false;
-  }
+  while (std::getline(file_stream, line))
+    parse_line(line, data, indices, indptr, labels);
   indptr.push_back(data.size());
-  return true;
 }
+
 
 static const char load_svmlight_format_doc[] =
   "Load file in svmlight format and return a CSR.";
@@ -228,27 +236,30 @@ static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
    || PyType_Ready(&IntVOwnerType)    < 0)
     return 0;
 
-  std::vector<double> data, labels;
-  std::vector<int> indices, indptr;
+  try {
+    std::vector<double> data, labels;
+    std::vector<int> indices, indptr;
 
-  // read function arguments
-  char const *file_path;
-  int buffer_mb;
+    // read function arguments
+    char const *file_path;
+    int buffer_mb;
 
-  // FIXME: memory leaked
-  if (!PyArg_ParseTuple(args, "si", &file_path, &buffer_mb))
-    return 0;
+    if (!PyArg_ParseTuple(args, "si", &file_path, &buffer_mb))
+      return 0;
 
-  // FIXME: should check whether buffer_mb >= 0
-  size_t buffer_size = buffer_mb * 1024 * 1024;
+    buffer_mb = std::max(buffer_mb, 1);
+    size_t buffer_size = buffer_mb * 1024 * 1024;
 
-  return parse_file(file_path, buffer_size, data, indices, indptr, labels)
-    ?  Py_BuildValue("OOOO",
-                     to_1d_array(data, NPY_DOUBLE),
-                     to_1d_array(indices, NPY_INT),
-                     to_1d_array(indptr, NPY_INT),
-                     to_1d_array(labels, NPY_DOUBLE))
-    : Py_BuildValue("()");
+    parse_file(file_path, buffer_size, data, indices, indptr, labels);
+    return Py_BuildValue("OOOO",
+                         to_1d_array(data, NPY_DOUBLE),
+                         to_1d_array(indices, NPY_INT),
+                         to_1d_array(indptr, NPY_INT),
+                         to_1d_array(labels, NPY_DOUBLE));
+  } catch (std::exception const &e) {
+    // FIXME: we're losing information about the error here.
+    return Py_BuildValue("()");
+  }
 }
 }
 
