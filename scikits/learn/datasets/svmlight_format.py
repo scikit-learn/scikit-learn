@@ -1,7 +1,8 @@
 """ This module implements a fast and memory-efficient (no memory copying)
 loader for the svmlight / libsvm sparse dataset format.  """
 
-# Author: Mathieu Blondel.
+# Authors: Mathieu Blondel <mathieu@mblondel.org>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: Simple BSD.
 
 import os.path
@@ -9,6 +10,7 @@ import os.path
 import scipy.sparse as sp
 
 from _svmlight_format import _load_svmlight_format
+
 
 def load_svmlight_format(file_path, other_file_path=None,
                          n_features=None, buffer_mb=40):
@@ -52,42 +54,23 @@ def load_svmlight_format(file_path, other_file_path=None,
     When fitting a model to a matrix X_train and evaluating it against a matrix
     X_test, it is essential that X_train and X_test have the same number of
     features (X_train.shape[1] == X_test.shape[1]). This may not be the case if
-    you load them with load_svmlight_format separately. To address this problem,
-    we recommend to use load_svmlight_format(train_file, test_file) or
-    load_svmlight_format(test_file, n_features=X_train.shape[1]).
+    you load them with load_svmlight_format separately. To address this
+    problem, we recommend to use load_svmlight_format(train_file, test_file)
+    or load_svmlight_format(test_file, n_features=X_train.shape[1]).
     """
-
-    if not os.path.exists(file_path):
-        raise ValueError("%s doesn't exist!" % file_path)
-
-    ret = []
-
-    tup = _load_svmlight_format(file_path, buffer_mb)
-
-    if len(tup) == 0:
-        raise ValueError("%s is incorrectly formatted!" % file_path)
-
-    data, indices, indptr, labels = tup
+    data, indices, indptr, labels = _load_svmlight_format(file_path, buffer_mb)
 
     if n_features is not None:
         shape = (indptr.shape[0] - 1, n_features)
     else:
-        shape = None # inferred
+        shape = None    # inferred
 
     X_train = sp.csr_matrix((data, indices, indptr), shape)
 
-    ret.append(X_train)
-    ret.append(labels)
+    ret = [X_train, labels]
 
     if other_file_path is not None:
-        if not os.path.exists(other_file_path):
-            raise ValueError("%s doesn't exist!" % other_file_path)
-
         tup = _load_svmlight_format(other_file_path, buffer_mb)
-
-        if len(tup) == 0:
-            raise ValueError("%s is incorrectly formatted!" % other_file_path)
-
         data, indices, indptr, labels = tup
 
         if n_features is None:
@@ -101,4 +84,3 @@ def load_svmlight_format(file_path, other_file_path=None,
         ret.append(labels)
 
     return tuple(ret)
-
