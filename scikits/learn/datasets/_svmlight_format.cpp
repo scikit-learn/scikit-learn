@@ -100,7 +100,7 @@ to_1d_array(std::vector<T> *data, int typenum)
   if (newobj == NULL)
     goto fail;
 
-  newobj->memory = (void *)data;
+  newobj->memory = data;
   newobj->typenum = typenum;
 
   PyArray_BASE(arr) = (PyObject *)newobj;
@@ -108,7 +108,7 @@ to_1d_array(std::vector<T> *data, int typenum)
   return arr;
 
 fail:
-  data->clear();
+  delete data;
   Py_XDECREF(arr);
 
   return NULL;
@@ -174,20 +174,19 @@ parse_file(char const *file_path,
 {
   std::vector<char> buffer(buffer_size);
 
-  std::ifstream file_stream(file_path, std::ifstream::in);
+  std::ifstream file_stream(file_path);
+  if (!file_stream)
+    return false;
+
   file_stream.rdbuf()->pubsetbuf(buffer.data(), buffer_size);
 
-  if (file_stream) {
-    std::string line;
-    while (std::getline(file_stream, line)) {
-      if (!parse_line(line, data, indices, indptr, labels))
-        return false;
-    }
-    indptr.push_back(data.size());
-    return true;
+  std::string line;
+  while (std::getline(file_stream, line)) {
+    if (!parse_line(line, data, indices, indptr, labels))
+      return false;
   }
-  else
-    return false;
+  indptr.push_back(data.size());
+  return true;
 }
 
 static char load_svmlight_format_doc[] =
@@ -197,7 +196,6 @@ extern "C" {
 static PyObject*
 load_svmlight_format(PyObject *self, PyObject *args)
 {
-
   // initialization
   _import_array();
 
@@ -205,13 +203,14 @@ load_svmlight_format(PyObject *self, PyObject *args)
   if (PyType_Ready(&DeallocType) < 0)
     return NULL;
 
+  // FIXME: this is not exception-safe
   std::vector<double> *data = new std::vector<double>;
   std::vector<int> *indices = new std::vector<int>;
   std::vector<int> *indptr = new std::vector<int>; // of size n_samples + 1
   std::vector<double> *labels = new std::vector<double>;
 
   // read function arguments
-  char *file_path;
+  char const *file_path;
   int buffer_mb;
 
   if (!PyArg_ParseTuple(args, "si", &file_path, &buffer_mb)) {
@@ -243,7 +242,6 @@ static char svmlight_format_doc[] =
 PyMODINIT_FUNC
 init_svmlight_format(void)
 {
-
   Py_InitModule3("_svmlight_format",
                  svmlight_format_methods,
                  svmlight_format_doc);
