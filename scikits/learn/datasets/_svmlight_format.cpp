@@ -31,35 +31,58 @@
 #include <vector>
 
 // An object responsible for deallocating the memory
-struct VectorOwner {
+struct BaseVectorOwner {
   PyObject_HEAD
-  void *memory;
   int typenum; // NPY_DOUBLE or NPY_INT
+};
+
+template <typename T>
+struct VectorOwner : public BaseVectorOwner {
+  std::vector<T> v;
 };
 
 
 extern "C" {
-static void
-dealloc(PyObject *self)
+static void dealloc(PyObject *self)
 {
-  VectorOwner &obj = *reinterpret_cast<VectorOwner *>(self);
-  if (obj.typenum == NPY_DOUBLE) {
-    std::vector<double> *v = (std::vector<double>*) obj.memory;
-    delete v;
-  }
-  if (obj.typenum == NPY_INT) {
-    std::vector<int> *v = (std::vector<int>*) obj.memory;
-    delete v;
-  }
+  BaseVectorOwner &obj = *reinterpret_cast<BaseVectorOwner *>(self);
+  if (obj.typenum == NPY_DOUBLE)
+    static_cast<VectorOwner<double> &>(obj).v.~vector<double>();
+  else if (obj.typenum == NPY_INT)
+    static_cast<VectorOwner<int> &>(obj).v.~vector<int>();
   obj.ob_type->tp_free(self);
 }
 }
 
-static PyTypeObject VectorOwnerType = {
+static PyTypeObject IntVectorOwnerType = {
   PyObject_HEAD_INIT(NULL)
   0, /*ob_size*/
   "deallocator", /*tp_name*/
-  sizeof(VectorOwner), /*tp_basicsize*/
+  sizeof(VectorOwner<int>), /*tp_basicsize*/
+  0, /*tp_itemsize*/
+  dealloc, /*tp_dealloc*/
+  0, /*tp_print*/
+  0, /*tp_getattr*/
+  0, /*tp_setattr*/
+  0, /*tp_compare*/
+  0, /*tp_repr*/
+  0, /*tp_as_number*/
+  0, /*tp_as_sequence*/
+  0, /*tp_as_mapping*/
+  0, /*tp_hash */
+  0, /*tp_call*/
+  0, /*tp_str*/
+  0, /*tp_getattro*/
+  0, /*tp_setattro*/
+  0, /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT, /*tp_flags*/
+  "Internal deallocator object", /* tp_doc */
+},
+DoubleVectorOwnerType = {
+  PyObject_HEAD_INIT(NULL)
+  0, /*ob_size*/
+  "deallocator", /*tp_name*/
+  sizeof(VectorOwner<double>), /*tp_basicsize*/
   0, /*tp_itemsize*/
   dealloc, /*tp_dealloc*/
   0, /*tp_print*/
@@ -80,38 +103,48 @@ static PyTypeObject VectorOwnerType = {
   "Internal deallocator object", /* tp_doc */
 };
 
-// convert a C++ vector to a 1d-ndarray WITHOUT memory copying
-template <class T>
-static PyObject*
-to_1d_array(std::vector<T> *data, int typenum)
+PyTypeObject &vector_owner_type(int typenum)
 {
-  npy_intp dims[1] = {data->size()};
+  switch (typenum) {
+    case NPY_INT: return IntVectorOwnerType;
+    case NPY_DOUBLE: return DoubleVectorOwnerType;
+  }
+}
+
+// Convert a C++ vector to a 1d-ndarray WITHOUT memory copying.
+// Takes ownership of v's contents.
+template <typename T>
+static PyObject *to_1d_array(std::vector<T> &v, int typenum)
+{
+  npy_intp dims[1] = {v.size()};
 
   // A C++ vector's first element is guaranteed to point to the internally used
   // array of memory (memory is contiguous).
-  PyObject *arr = PyArray_SimpleNewFromData(1, dims, typenum, &(*data)[0]);
+  PyObject *arr = PyArray_SimpleNewFromData(1, dims, typenum, &v[0]);
 
-  if (arr == NULL)
+  // FIXME: goto is even less safe in C++ than in C.
+  // We should be using exceptions.
+  if (!arr)
     goto fail;
 
-  VectorOwner *owner;
-  owner = PyObject_New(VectorOwner, &VectorOwnerType);
+  VectorOwner<T> *owner;
+  owner = PyObject_New(VectorOwner<T>, &vector_owner_type(typenum));
 
-  if (owner == NULL)
+  if (!owner)
     goto fail;
 
-  owner->memory = data;
   owner->typenum = typenum;
+  new (&owner->v) std::vector<T>();
+  owner->v.swap(v);
 
   PyArray_BASE(arr) = (PyObject *)owner;
 
   return arr;
 
 fail:
-  delete data;
   Py_XDECREF(arr);
 
-  return NULL;
+  return 0;
 }
 
 static bool
@@ -193,21 +226,19 @@ static const char load_svmlight_format_doc[] =
   "Load file in svmlight format and return a CSR.";
 
 extern "C" {
-static PyObject*
-load_svmlight_format(PyObject *self, PyObject *args)
+static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
 {
   // initialization
   _import_array();
 
-  VectorOwnerType.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&VectorOwnerType) < 0)
-    return NULL;
+  DoubleVectorOwnerType.tp_new = PyType_GenericNew;
+  IntVectorOwnerType.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&DoubleVectorOwnerType) < 0
+   || PyType_Ready(&IntVectorOwnerType) < 0)
+    return 0;
 
-  // FIXME: this is not exception-safe
-  std::vector<double> *data = new std::vector<double>;
-  std::vector<int> *indices = new std::vector<int>;
-  std::vector<int> *indptr = new std::vector<int>; // of size n_samples + 1
-  std::vector<double> *labels = new std::vector<double>;
+  std::vector<double> data, labels;
+  std::vector<int> indices, indptr;
 
   // read function arguments
   char const *file_path;
@@ -220,7 +251,7 @@ load_svmlight_format(PyObject *self, PyObject *args)
   // FIXME: should check whether buffer_mb >= 0
   size_t buffer_size = buffer_mb * 1024 * 1024;
 
-  return parse_file(file_path, buffer_size, *data, *indices, *indptr, *labels)
+  return parse_file(file_path, buffer_size, data, indices, indptr, labels)
     ?  Py_BuildValue("OOOO",
                      to_1d_array(data, NPY_DOUBLE),
                      to_1d_array(indices, NPY_INT),
@@ -239,10 +270,11 @@ static PyMethodDef svmlight_format_methods[] = {
 static const char svmlight_format_doc[] =
   "Loader for svmlight / libsvm datasets - C++ helper routines";
 
-PyMODINIT_FUNC
-init_svmlight_format(void)
+extern "C" {
+PyMODINIT_FUNC init_svmlight_format(void)
 {
   Py_InitModule3("_svmlight_format",
                  svmlight_format_methods,
                  svmlight_format_doc);
+}
 }
