@@ -184,9 +184,10 @@ parse_file(char const *file_path,
         return false;
     }
     indptr.push_back(data.size());
+    return true;
   }
-
-  return true;
+  else
+    return false;
 }
 
 static char load_svmlight_format_doc[] =
