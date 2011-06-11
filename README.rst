@@ -17,7 +17,7 @@ numpy and scipy.
 Downloading the PDF
 -------------------
 
-Prebuilt versions of this tutorial are available from the `github download
+Prebuilt versions of this tutorial are available from the `GitHub download
 page`_.
 
 While following the exercices you might find helpful to use the official
@@ -26,7 +26,7 @@ While following the exercices you might find helpful to use the official
 If you need a numpy refresher please first have a look at the
 `Scientific Python lecture notes (PDF)`_, esp. chapter 4.
 
-.. _`github download page`: https://github.com/scikit-learn/scikit-learn-tutorial/archives/master
+.. _`GitHub download page`: https://github.com/scikit-learn/scikit-learn-tutorial/archives/master
 .. _`scikit-learn User Guide (PDF)`: http://downloads.sourceforge.net/project/scikit-learn/documentation/user_guide-0.7.pdf
 .. _`Scientific Python lecture notes (PDF)`: http://scipy-lectures.github.com/_downloads/PythonScientific.pdf
 
@@ -34,7 +34,7 @@ If you need a numpy refresher please first have a look at the
 Online HTML version
 -------------------
 
-The prebuilt HTML version is published as a github pages:
+The prebuilt HTML version is at:
 
   http://scikit-learn.github.com/scikit-learn-tutorial
 
@@ -42,7 +42,7 @@ The prebuilt HTML version is published as a github pages:
 Source code of the tutorial and exercises
 -----------------------------------------
 
-The project is hosted on github at https://github.com/scikit-learn/scikit-learn-tutorial
+The project is hosted on GitHub at https://github.com/scikit-learn/scikit-learn-tutorial
 
 
 Building the tutorial
@@ -70,24 +70,22 @@ To build the PDF variant::
 You should get a file named ``scikit_learn_tutorial.pdf`` as output.
 
 
-
 Testing
 =======
 
-To launch the docstests::
+The example snippets in the rST source files can be tested with `nose`_::
 
   $ nosetests -s --with-doctest --doctest-tests --doctest-extension=rst
 
-Mailing list
-============
+.. _`nose`: http://somethingaboutorange.com/mrl/projects/nose/
+
+
+Contact the developers
+======================
 
 If you have questions about this tutorial you can ask them on the
 ``scikit-learn`` mailing list on sourceforge:
 https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
-
-
-IRC channel
-===========
 
 Some developers tend to hang around the channel ``#scikit-learn``
 at ``irc.freenode.net``, especially during the week preparing a new
@@ -99,7 +97,7 @@ License
 =======
 
 This tutorial is distributed under the Creative Commons Attribution
-3.0 license. The python source code and exercices solutions are
+3.0 license. The Python example code and solutions to exercises are
 distributed under the same license as the ``scikit-learn`` project
-(Simplidied BSD).
+(Simplified BSD).
 
