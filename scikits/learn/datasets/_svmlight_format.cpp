@@ -14,7 +14,7 @@
  * instantiated by PyArray_SimpleNewFromData, i.e., no memory is
  * copied.
  *
- * Since the memory is not allocated by the ndarray, the ndarray does own the
+ * Since the memory is not allocated by the ndarray, the ndarray doesn't own the
  * memory and thus cannot deallocate it. To automatically deallocate memory, the
  * technique described at http://blog.enthought.com/?p=62 is used. The main idea
  * is to use an additional object that the ndarray does own and that will be
