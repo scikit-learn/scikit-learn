@@ -39,24 +39,31 @@
  */
 template <typename T>
 struct VectorOwner {
+  // Inherit from the base Python object.
   PyObject_HEAD
+  // The vector that VectorOwner is responsible for deallocating.
   std::vector<T> v;
 };
 
 /*
- * Deallocators (tp_dealloc). Since a template function can't have C linkage,
- * we define three functions.
+ * Deallocator template.
  */
 template <typename T>
 static void destroy_vector_owner(PyObject *self)
 {
   // Note: explicit call to destructor because of placement new;
   // memory management for VectorOwner is performed by the interpreter.
-  // Compiler-generated dtor will release memory from vector member.
+  // Compiler-generated destructor will release memory from vector member.
   VectorOwner<T> &obj = *reinterpret_cast<VectorOwner<T> *>(self);
   obj.~VectorOwner<T>();
 }
 
+/*
+ * Since a template function can't have C linkage,
+ * we instantiate the template for the types "int" and "double"
+ * in the following two functions. These are used for the tp_dealloc
+ * attribute of the vector owner types further below.
+ */
 extern "C" {
 static void destroy_int_vector(PyObject *self)
 {
@@ -124,7 +131,7 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
     if (!owner)
       throw std::bad_alloc();
 
-    // transfer ownership of v's contents to the VectorOwner
+    // Transfer ownership of v's contents to the VectorOwner.
     new (&owner->v) std::vector<T>();
     owner->v.swap(v);
 
@@ -133,7 +140,7 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
     return arr;
 
   } catch (std::exception const &e) {
-    // let's assume the Python exception is already set correctly
+    // Let's assume the Python exception is already set correctly.
     Py_XDECREF(arr);
     throw;
   }
@@ -181,7 +188,7 @@ void parse_line(const std::string& line,
 
   indptr.push_back(data.size());
 
-  // Parse feature-value pairs
+  // Parse feature-value pairs.
   for ( ;
        (position
       && position < in_string + line.length()
@@ -231,7 +238,7 @@ static const char load_svmlight_format_doc[] =
 extern "C" {
 static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
 {
-  // initialization
+  // Initialization.
   if (PyType_Ready(&DoubleVOwnerType) < 0
    || PyType_Ready(&IntVOwnerType)    < 0)
     return 0;
@@ -240,7 +247,7 @@ static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
     std::vector<double> data, labels;
     std::vector<int> indices, indptr;
 
-    // read function arguments
+    // Read function arguments.
     char const *file_path;
     int buffer_mb;
 
@@ -263,6 +270,8 @@ static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
                                         indptr_arr,
                                         labels_arr);
 
+    // Py_BuildValue increases the reference count of each array,
+    // so we need to decrease it before returning the tuple.
     Py_DECREF(data_arr);
     Py_DECREF(indices_arr);
     Py_DECREF(indptr_arr);
