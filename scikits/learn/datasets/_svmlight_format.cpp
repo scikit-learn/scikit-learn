@@ -55,7 +55,7 @@ static void destroy_vector_owner(PyObject *self)
   // memory management for VectorOwner is performed by the interpreter.
   // Compiler-generated dtor will release memory from vector member.
   VectorOwner<T> &obj = *reinterpret_cast<VectorOwner<T> *>(self);
-  obj.~VectorOwner();
+  obj.~VectorOwner<T>();
 }
 
 extern "C" {
@@ -216,7 +216,7 @@ void parse_file(char const *file_path,
 
   std::ifstream file_stream;
   file_stream.exceptions(std::ios::badbit);
-  file_stream.rdbuf()->pubsetbuf(buffer.data(), buffer_size);
+  file_stream.rdbuf()->pubsetbuf(&buffer[0], buffer_size);
   file_stream.open(file_path);
 
   std::string line;
