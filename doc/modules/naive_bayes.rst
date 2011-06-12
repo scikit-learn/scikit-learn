@@ -58,6 +58,7 @@ estimated using maximum likelihood.
 
  * :ref:`example_naive_bayes.py`,
 
+
 Multinomial Naive Bayes
 -----------------------
 
@@ -95,6 +96,7 @@ of class :math:`c`. The smoothness priors :math:`\alpha_i` and their sum
 
 Bernoulli Naive Bayes
 ---------------------
+
 :class:`BernoulliNB` implements the naive Bayes training and classification
 algorithms for data that is distributed according to multivariate Bernoulli
 distributions. It requires samples to be represented as binary-valued/boolean
@@ -112,11 +114,15 @@ evaluate both models, if time permits.
 .. topic:: References:
 
  * C.D. Manning, P. Raghavan and H. Sch√ºtze (2008). Introduction to
-   Information Retrieval. Cambridge University Press, pp. 234‚~@~S265.
+   Information Retrieval. Cambridge University Press, pp. 234-265.
 
- * A. McCallum and K. Nigam (1998). A comparison of event models for naive
-   Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for
-   Text Categorization, pp. 41‚~@~S48.
+ * A. McCallum and K. Nigam (1998).
+   `A comparison of event models for naive Bayes text classification.
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.46.1529>`_
+   Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
 
- * V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
-   naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
+ * V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+   `Spam filtering with naive Bayes -- Which naive Bayes?
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
+   3rd Conf. on Email and Anti-Spam (CEAS).
+
