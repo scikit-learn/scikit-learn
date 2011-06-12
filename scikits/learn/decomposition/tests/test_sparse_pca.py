@@ -1,5 +1,5 @@
 import numpy as np
-from ..sparsepca import SparsePCA
+from .. import SparsePCA
 from numpy.testing import assert_array_almost_equal, assert_equal
 
 def generate_toy_data(n_atoms, n_samples, image_size):
