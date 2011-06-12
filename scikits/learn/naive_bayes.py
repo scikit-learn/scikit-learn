@@ -210,6 +210,23 @@ def atleast2d_or_csr(X):
 
 
 class BaseDiscreteNB(BaseEstimator, ClassifierMixin):
+    """Abstract base class for Naive Bayes on discrete/categorical data.
+
+    Any estimator based on this class should provide:
+
+    __init__
+    _count(X, Y)
+        Count feature occurrences per class; see MultinomialNB._count
+        for an example.
+    _joint_log_likelihood(X)
+        Compute the unnormalized posterior log probability of X,
+        i.e. log P(c) + log P(x|c) for all rows x of X,
+        as an array-like of shape [n_classes, n_samples].
+
+    All other methods are implemented in terms of these using the template
+    method pattern.
+    """
+
     def fit(self, X, y, class_prior=None):
         """Fit Naive Bayes classifier according to X, y
 
@@ -499,8 +516,9 @@ class BernoulliNB(BaseDiscreteNB):
         return N_c, N_c_i
 
     def _joint_log_likelihood(self, X):
+        """Calculate the posterior log probability of the samples X"""
+
         X = atleast2d_or_csr(X)
-        sparse = issparse(X)
 
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
@@ -508,8 +526,9 @@ class BernoulliNB(BaseDiscreteNB):
         n_classes, n_features = self.coef_.shape
         n_samples, n_features_X = X.shape
 
-        assert n_features_X == n_features, \
-            "Shape of samples doesn't match shape of training data"
+        if n_features_X != n_features:
+            raise ValueError("Expected input with %d features, got %d instead"
+                             % (n_features, n_features_X))
 
         neg_coef = np.log(1 - np.exp(self.coef_))
         # Compute  neg_coef · (1 - X).T  as  ∑neg_coef - X · neg_coef
