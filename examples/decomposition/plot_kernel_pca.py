@@ -42,7 +42,7 @@ def generate_clusters(n_samples=200):
 X = genenerate_rings()
 #X = generate_clusters()
 
-kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True)
+kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=0.5)
 X_kpca = kpca.fit_transform(X)
 X_back = kpca.inverse_transform(X_kpca)
 pca = PCA()

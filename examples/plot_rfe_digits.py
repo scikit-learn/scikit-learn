@@ -34,6 +34,6 @@ image_ranking_ = rfe.ranking_.reshape(digits.images[0].shape)
 import pylab as pl
 pl.matshow(image_ranking_)
 pl.colorbar()
-pl.title('Ranking of voxels with RFE')
+pl.title('Ranking of pixels with RFE')
 pl.show()
 

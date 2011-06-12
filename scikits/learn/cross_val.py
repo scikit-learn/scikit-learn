@@ -12,7 +12,6 @@ from .utils import check_random_state
 from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
 from .utils import check_arrays
-from .utils import check_random_state
 from .externals.joblib import Parallel, delayed
 
 
@@ -559,7 +558,7 @@ class Bootstrap(object):
                              (self.n_train, n))
 
         if isinstance(n_test, float) and n_test >= 0.0 and n_test <= 1.0:
-            self.n_test = ceil(test * n)
+            self.n_test = ceil(n_test * n)
         elif isinstance(n_test, int):
             self.n_test = n_test
         elif n_test is None:
@@ -647,14 +646,14 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     verbose: integer, optional
         The verbosity level
     """
-    X, y = check_arrays(X, y, force_csr=True)
+    X, y = check_arrays(X, y, sparse_format='csr')
     n_samples = X.shape[0]
     if cv is None:
         indices = hasattr(X, 'tocsr')
         if y is not None and is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3, indices=True)
+            cv = StratifiedKFold(y, k=3, indices=indices)
         else:
-            cv = KFold(n_samples, k=3, indices=True)
+            cv = KFold(n_samples, k=3, indices=indices)
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
@@ -740,7 +739,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     Ojala and Garriga. Permutation Tests for Studying Classifier Performance.
     The Journal of Machine Learning Research (2010) vol. 11
     """
-    X, y = check_arrays(X, y, force_csr=True)
+    X, y = check_arrays(X, y, sparse_format='csr')
     n_samples = X.shape[0]
     if cv is None:
         indices = hasattr(X, 'tocsr')
