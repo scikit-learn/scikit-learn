@@ -1,9 +1,11 @@
 import time
 import sys
 from math import sqrt
+
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import linalg
+
 from ..linear_model import Lasso, lars_path
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, TransformerMixin
@@ -11,6 +13,7 @@ from ..base import BaseEstimator, TransformerMixin
 
 ##################################
 # Utilities to spread load on CPUs
+# XXX: where should this be?
 def _gen_even_slices(n, n_packs):
     """Generator to create n_packs slices going up to n.
 
@@ -58,7 +61,6 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
     if method == 'lars':
         err_mgt = np.seterr()
         np.seterr(all='ignore')
-        n_samples = U.shape[0]
         #alpha = alpha * n_samples
         XY = np.dot(U.T, Y)
         for k in range(V.shape[1]):
@@ -341,5 +343,5 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Transformed data
         """
         U = linalg.lstsq(self.components_.T, X.T)[0].T
-        U /= np.apply_along_axis(linalg.norm, 0, U)
+        U /= np.sqrt((U ** 2).sum(axis=0))
         return U
