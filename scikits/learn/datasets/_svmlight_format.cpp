@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-
 /*
  * A Python object responsible for memory management of our vectors.
  */
@@ -252,12 +251,24 @@ static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
     size_t buffer_size = buffer_mb * 1024 * 1024;
 
     parse_file(file_path, buffer_size, data, indices, indptr, labels);
-    return Py_BuildValue("OOOO",
-                         to_1d_array(data, NPY_DOUBLE),
-                         to_1d_array(indices, NPY_INT),
-                         to_1d_array(indptr, NPY_INT),
-                         to_1d_array(labels, NPY_DOUBLE));
 
+    PyObject *data_arr = to_1d_array(data, NPY_DOUBLE);
+    PyObject *indices_arr = to_1d_array(indices, NPY_INT);
+    PyObject *indptr_arr = to_1d_array(indptr, NPY_INT);
+    PyObject *labels_arr = to_1d_array(labels, NPY_DOUBLE);
+
+    PyObject *ret_tuple = Py_BuildValue("OOOO",
+                                        data_arr,
+                                        indices_arr,
+                                        indptr_arr,
+                                        labels_arr);
+
+    Py_DECREF(data_arr);
+    Py_DECREF(indices_arr);
+    Py_DECREF(indptr_arr);
+    Py_DECREF(labels_arr);
+
+    return ret_tuple;
   } catch (SyntaxError const &e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return 0;
