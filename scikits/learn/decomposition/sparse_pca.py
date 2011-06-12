@@ -342,6 +342,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data
         """
+        # TODO: Ridge
         U = linalg.lstsq(self.components_.T, X.T)[0].T
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U

@@ -36,3 +36,9 @@ def test_fit_transform():
     U1 = SparsePCA(n_components=3).fit_transform(Y)
     U2 = SparsePCA(n_components=3).fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
+    
+def test_lasso_lars():
+    Y, _, _ = generate_toy_data(3, 10, (8, 8))
+    SPCALasso = SparsePCA(n_components=3, method='lasso').fit(Y)
+    SPCALars = SparsePCA(n_components=3, method='lars').fit(Y)
+    assert_array_almost_equal(SPCALasso.components_, SPCALars.components_)
