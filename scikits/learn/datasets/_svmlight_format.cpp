@@ -56,6 +56,8 @@ static void destroy_vector_owner(PyObject *self)
   // Compiler-generated destructor will release memory from vector member.
   VectorOwner<T> &obj = *reinterpret_cast<VectorOwner<T> *>(self);
   obj.~VectorOwner<T>();
+
+  self->ob_type->tp_free(self);
 }
 
 /*
@@ -119,7 +121,7 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
 {
   npy_intp dims[1] = {v.size()};
 
-  // A C++ vector's contents are guaranteed to be in a contiguous array.
+  // A C++ vector's elements are guaranteed to be in a contiguous array.
   PyObject *arr = PyArray_SimpleNewFromData(1, dims, typenum, &v[0]);
 
   try {
