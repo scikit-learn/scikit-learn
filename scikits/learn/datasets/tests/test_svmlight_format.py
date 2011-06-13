@@ -63,3 +63,7 @@ def test_load_svmlight_format_n_features():
 @raises(ValueError)
 def test_load_invalid_file():
     X, y = load_svmlight_format(invalidfile, buffer_mb=1)
+
+@raises(TypeError)
+def test_not_a_filename():
+    load_svmlight_format(1)
