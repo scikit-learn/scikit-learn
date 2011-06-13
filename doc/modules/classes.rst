@@ -377,6 +377,7 @@ Signal Decomposition
    decomposition.KernelPCA
    decomposition.FastICA
    decomposition.NMF
+   decomposition.SparsePCA
 
 .. autosummary::
 
@@ -384,6 +385,7 @@ Signal Decomposition
    :template: function.rst
 
    decomposition.fastica
+   decomposition.sparse_pca
 
 
 Linear Discriminant Analysis
