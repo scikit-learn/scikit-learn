@@ -150,6 +150,7 @@ Naive Bayes
 
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
+   naive_bayes.BernoulliNB
 
 
 Nearest Neighbors
