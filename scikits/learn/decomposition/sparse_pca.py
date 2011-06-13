@@ -100,7 +100,7 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
             if verbose == 1:
                 sys.stdout.write("+")
                 sys.stdout.flush()
-            elif verbose: 
+            elif verbose:
                 print "Adding new random atom"
             U[:, k] = np.random.randn(n_samples)
             # Setting corresponding coefs to 0
@@ -271,7 +271,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     ----------
     components_: array, [n_components, n_features]
         sparse components extracted from the data
-    
+
     error_: array
         vector of errors at each iteration
 
@@ -336,7 +336,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X: array of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
-        
+
         Returns
         -------
         X_new array, shape (n_samples, n_components)
