@@ -9,10 +9,10 @@ import os.path
 
 import scipy.sparse as sp
 
-from _svmlight_format import _load_svmlight_format
+from _svmlight_format import _load_svmlight_file
 
 
-def load_svmlight_format(file_path, other_file_path=None,
+def load_svmlight_file(file_path, other_file_path=None,
                          n_features=None, buffer_mb=40):
     """Load datasets in the svmlight / libsvm format directly into
     scipy sparse CSR matrices.
@@ -24,7 +24,7 @@ def load_svmlight_format(file_path, other_file_path=None,
 
     other_file_path: str or None
         Path to another file to load. scikit-learn will make sure that the
-        number of features in the returned matrix is the same as for the
+        number of features in the returned matrix is the same as for
         file_path.
 
     n_features: int or None
@@ -58,7 +58,7 @@ def load_svmlight_format(file_path, other_file_path=None,
     problem, we recommend to use load_svmlight_format(train_file, test_file)
     or load_svmlight_format(test_file, n_features=X_train.shape[1]).
     """
-    data, indices, indptr, labels = _load_svmlight_format(file_path, buffer_mb)
+    data, indices, indptr, labels = _load_svmlight_file(file_path, buffer_mb)
 
     if n_features is not None:
         shape = (indptr.shape[0] - 1, n_features)
@@ -70,7 +70,7 @@ def load_svmlight_format(file_path, other_file_path=None,
     ret = [X_train, labels]
 
     if other_file_path is not None:
-        tup = _load_svmlight_format(other_file_path, buffer_mb)
+        tup = _load_svmlight_file(other_file_path, buffer_mb)
         data, indices, indptr, labels = tup
 
         if n_features is None:

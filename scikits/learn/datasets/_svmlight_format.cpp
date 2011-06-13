@@ -275,11 +275,11 @@ void parse_file(char const *file_path,
 }
 
 
-static const char load_svmlight_format_doc[] =
+static const char load_svmlight_file_doc[] =
   "Load file in svmlight format and return a CSR.";
 
 extern "C" {
-static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
+static PyObject *load_svmlight_file(PyObject *self, PyObject *args)
 {
   try {
     // Read function arguments.
@@ -322,8 +322,8 @@ static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
  */
 
 static PyMethodDef svmlight_format_methods[] = {
-  {"_load_svmlight_format", load_svmlight_format,
-    METH_VARARGS, load_svmlight_format_doc},
+  {"_load_svmlight_file", load_svmlight_file,
+    METH_VARARGS, load_svmlight_file_doc},
   {NULL, NULL, 0, NULL}
 };
 
