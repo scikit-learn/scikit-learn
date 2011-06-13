@@ -56,6 +56,8 @@ static void destroy_vector_owner(PyObject *self)
   // Compiler-generated destructor will release memory from vector member.
   VectorOwner<T> &obj = *reinterpret_cast<VectorOwner<T> *>(self);
   obj.~VectorOwner<T>();
+
+  self->ob_type->tp_free(self);
 }
 
 /*
@@ -119,7 +121,7 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
 {
   npy_intp dims[1] = {v.size()};
 
-  // A C++ vector's contents are guaranteed to be in a contiguous array.
+  // A C++ vector's elements are guaranteed to be in a contiguous array.
   PyObject *arr = PyArray_SimpleNewFromData(1, dims, typenum, &v[0]);
 
   try {
@@ -144,6 +146,47 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
     Py_XDECREF(arr);
     throw;
   }
+}
+
+
+static PyObject *to_csr(std::vector<double> &data,
+                        std::vector<int> &indices,
+                        std::vector<int> &indptr,
+                        std::vector<double> &labels)
+{
+  // We could do with a smart pointer to Python objects here.
+  std::exception const *exc = 0;
+  PyObject *data_arr = 0,
+           *indices_arr = 0,
+           *indptr_arr = 0,
+           *labels_arr = 0,
+           *ret_tuple = 0;
+
+  try {
+    data_arr    = to_1d_array(data, NPY_DOUBLE);
+    indices_arr = to_1d_array(indices, NPY_INT);
+    indptr_arr  = to_1d_array(indptr, NPY_INT);
+    labels_arr  = to_1d_array(labels, NPY_DOUBLE);
+
+    ret_tuple = Py_BuildValue("OOOO",
+                              data_arr, indices_arr,
+                              indptr_arr, labels_arr);
+  } catch (std::exception const &e) {
+    exc = &e;
+  }
+
+  // Py_BuildValue increases the reference count of each array,
+  // so we need to decrease it before returning the tuple,
+  // regardless of error status.
+  Py_XDECREF(data_arr);
+  Py_XDECREF(indices_arr);
+  Py_XDECREF(indptr_arr);
+  Py_XDECREF(labels_arr);
+
+  if (exc)
+    throw *exc;
+
+  return ret_tuple;
 }
 
 
@@ -238,15 +281,7 @@ static const char load_svmlight_format_doc[] =
 extern "C" {
 static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
 {
-  // Initialization.
-  if (PyType_Ready(&DoubleVOwnerType) < 0
-   || PyType_Ready(&IntVOwnerType)    < 0)
-    return 0;
-
   try {
-    std::vector<double> data, labels;
-    std::vector<int> indices, indptr;
-
     // Read function arguments.
     char const *file_path;
     int buffer_mb;
@@ -257,27 +292,12 @@ static PyObject *load_svmlight_format(PyObject *self, PyObject *args)
     buffer_mb = std::max(buffer_mb, 1);
     size_t buffer_size = buffer_mb * 1024 * 1024;
 
+    std::vector<double> data, labels;
+    std::vector<int> indices, indptr;
     parse_file(file_path, buffer_size, data, indices, indptr, labels);
 
-    PyObject *data_arr = to_1d_array(data, NPY_DOUBLE);
-    PyObject *indices_arr = to_1d_array(indices, NPY_INT);
-    PyObject *indptr_arr = to_1d_array(indptr, NPY_INT);
-    PyObject *labels_arr = to_1d_array(labels, NPY_DOUBLE);
+    return to_csr(data, indices, indptr, labels);
 
-    PyObject *ret_tuple = Py_BuildValue("OOOO",
-                                        data_arr,
-                                        indices_arr,
-                                        indptr_arr,
-                                        labels_arr);
-
-    // Py_BuildValue increases the reference count of each array,
-    // so we need to decrease it before returning the tuple.
-    Py_DECREF(data_arr);
-    Py_DECREF(indices_arr);
-    Py_DECREF(indptr_arr);
-    Py_DECREF(labels_arr);
-
-    return ret_tuple;
   } catch (SyntaxError const &e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return 0;
@@ -314,7 +334,12 @@ extern "C" {
 PyMODINIT_FUNC init_svmlight_format(void)
 {
   _import_array();
+
   init_type_objs();
+  if (PyType_Ready(&DoubleVOwnerType) < 0
+   || PyType_Ready(&IntVOwnerType)    < 0)
+    return;
+
   Py_InitModule3("_svmlight_format",
                  svmlight_format_methods,
                  svmlight_format_doc);
