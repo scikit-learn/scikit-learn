@@ -2,6 +2,7 @@ import numpy as np
 from .. import SparsePCA
 from numpy.testing import assert_array_almost_equal, assert_equal
 
+
 def generate_toy_data(n_atoms, n_samples, image_size):
     n_features = image_size[0] * image_size[1]
 
@@ -22,7 +23,8 @@ def generate_toy_data(n_atoms, n_samples, image_size):
     Y = np.dot(U, V)
     Y += 0.1 * np.random.randn(Y.shape[0], Y.shape[1])  # Add noise
     return Y, U, V
-   
+
+
 def test_correct_shapes():
     np.random.seed(0)
     X = np.random.randn(12, 10)
@@ -31,12 +33,14 @@ def test_correct_shapes():
     assert_equal(pca.components_.shape, (8, 10))
     assert_equal(U.shape, (12, 8))
 
+
 def test_fit_transform():
     Y, _, _ = generate_toy_data(3, 10, (8, 8))
     U1 = SparsePCA(n_components=3).fit_transform(Y)
     U2 = SparsePCA(n_components=3).fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
-    
+
+
 def test_lasso_lars():
     Y, _, _ = generate_toy_data(3, 10, (8, 8))
     SPCALasso = SparsePCA(n_components=3, method='lasso').fit(Y)
