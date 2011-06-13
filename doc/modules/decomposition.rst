@@ -122,6 +122,44 @@ applications including denoising, compression and structured prediction
 
     * :ref:`example_decomposition_plot_kernel_pca.py`
 
+.. _SparsePCA:
+
+Sparse Principal Components Analysis (SparsePCA)
+------------------------------------------------
+:class:`SparsePCA` is a variant of the PCA optimization problem, with the goal
+on extracting the set of sparse components that best reconstruct the data:
+
+.. math::
+   (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
+                ||X-UV||_2^2+\alpha||V||_1 \\
+                \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
+                0 \leq k < n_{atoms}
+
+An inconvenient of principal component analysis (:class:`PCA`) is that the
+components extracter by this method have dense expressions, i. e. they have
+many nonzero coefficients when expressed as linear combinations of the original
+variables. This makes interpretation difficult in high dimensional settings.
+Also, in many cases, the real underlying components can be more naturally
+imagined as sparse vectors. For example in face recognition, components should
+map to parts of faces.
+
+There are many different formulations for the Sparse PCA problem. The one
+implemented here is based on [Mrl09]_ .
+
+.. figure:: ../auto_examples/decomposition/images/plot_sparse_pca_1.png
+   :target: ../auto_examples/decomposition/plot_sparse_pca.html
+   :align: center
+   :scale: 50%
+
+.. topic:: Examples:
+
+   * :ref:`example_decomposition_plot_sparse_pca.py`
+
+.. topic:: References:
+
+   * [Mrl09] `"Online Dictionary Learning for Sparse Coding"
+     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 .. _ICA:
 
@@ -215,3 +253,5 @@ of the data.
       matrix factorization"
       <http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
+
+
