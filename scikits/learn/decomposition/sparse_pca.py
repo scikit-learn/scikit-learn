@@ -52,6 +52,23 @@ def cpu_count():
     return multiprocessing.cpu_count()
 
 
+# a short preview of what will be in fabian's pull request
+def _ridge_regression(X, y, alpha):
+    n_samples, n_features = np.shape(X)
+    if n_features > n_samples:
+        # kernel ridge
+        # w = X.T * inv(X X^t + alpha*Id) y
+        A = np.dot(X, X.T)
+        A.flat[::n_samples + 1] += alpha
+        return np.dot(X.T, linalg.solve(A, y, sym_pos=True, overwrite_a=True))
+    else:
+        # ridge
+        # w = inv(X^t X + alpha*Id) * X.T y
+        A = np.dot(X.T, X)
+        A.flat[::n_features + 1] += alpha
+        return linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
+
+
 def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
     """ Update the sparse factor V in sparse_pca loop.
     Each column of V is the solution to a Lasso problem.
@@ -413,9 +430,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Transformed data
         """
 
-        if alpha != 0:
-            raise NotImplemented('SparsePCA.transform only does OLS for now')
+#        if alpha != 0:
+#            raise NotImplemented('SparsePCA.transform only does OLS for now')
         # TODO: Ridge regression with controllable shrinkage
-        U = linalg.lstsq(self.components_.T, X.T)[0].T
+        n_samples = len(X)
+        U = np.zeros((n_samples, self.n_components))
+        for k in xrange(n_samples):
+            U[k, :] = _ridge_regression(self.components_.T, X[k, :], alpha)
+        # U = linalg.lstsq(self.components_.T, X.T)[0].T
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U
