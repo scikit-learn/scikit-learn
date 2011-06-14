@@ -47,6 +47,35 @@ These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often to
 small to be representative of real world machine learning tasks.
 
+Datasets in svmlight / libsvm format
+====================================
+
+scikit-learn includes a fast utility function, ``load_svmlight_format``,  to load
+datasets in the svmlight / libsvm format. In this format, each line
+takes the form ``<label> <feature-id>:<feature-value>
+<feature-id>:<feature-value> ...``. This format is especially suitable for sparse datasets.
+Scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
+
+You may load a dataset like this::
+
+  >>> from scikits.learn.datasets import load_svmlight_format
+  >>> X_train, y_train = load_svmlight_format("/path/to/train_dataset.txt") # doctest: +SKIP
+
+You may also load two datasets at once::
+
+  >>> X_train, y_train, X_test, y_test = load_svmlight_format("/path/to/train_dataset.txt", 
+                                                              "/path/to/test_dataset.txt") # doctest: +SKIP
+
+In this case, ``X_train`` and ``X_test`` are guaranteed to have the same number
+of features. Another way to achieve the same result is to fix the number of
+features::
+
+  >>> X_test, y_test = load_svmlight_format("/path/to/test_dataset.txt", n_features=X_train.shape[1]) # doctest: +SKIP
+
+.. topic:: Public datasets:
+
+ _`Public datasets in svmlight / libsvm format`: http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
+
 
 Downloading datasets from the mldata.org repository
 ===================================================

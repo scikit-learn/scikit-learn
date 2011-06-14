@@ -14,6 +14,7 @@ from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import load_20newsgroups
 from .mldata import fetch_mldata, mldata_filename
 from .samples_generator import swiss_roll
+from .svmlight_format import load_svmlight_file
 
 # backward compatibility
 def load_files(*args, **kwargs):
