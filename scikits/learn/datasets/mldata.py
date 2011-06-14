@@ -93,10 +93,10 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     Load an alternative 'iris' dataset, which has different names for the
     columns:
-    >>> iris2 = dt.fetch_mldata('datasets-UCI iris', target_name=1,
-    ...                         data_name=0)
-    >>> iris3 = dt.fetch_mldata('datasets-UCI iris',
-    ...                         target_name='class', data_name='double0')
+    >>> iris2 = fetch_mldata('datasets-UCI iris', target_name=1,
+    ...                      data_name=0)
+    >>> iris3 = fetch_mldata('datasets-UCI iris',
+    ...                      target_name='class', data_name='double0')
     """
 
     # normalize dataset name
