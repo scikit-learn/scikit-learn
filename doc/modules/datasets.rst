@@ -17,19 +17,21 @@ Dataset loading utilities
 The ``scikits.learn.datasets`` package embeds some small toy datasets
 as introduced in the "Getting Started" section.
 
-To evaluate the impact of the scale of the dataset (``n_features`` and
-``n_samples``) while controlling the statistical properties of the data
+To evaluate the impact of the scale of the dataset (``n_samples`` and
+``n_features``) while controlling the statistical properties of the data
 (typically the correlation and informativeness of the features), it is
-also possible to generate synthetic data data
+also possible to generate synthetic data.
 
 This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithm on data
 that comes from the 'real world'.
 
+
 Datasets shipped with the scikit learn
 ========================================
 
-The scikit learn comes with a few standard datasets:
+scikit-learn comes with a few small standard datasets that do not
+require to download any file from some external website.
 
 .. autosummary::
 
@@ -41,14 +43,20 @@ The scikit learn comes with a few standard datasets:
    load_digits
    load_linnerud
 
+These datasets are useful to quickly illustrate the behavior of the
+various algorithms implemented in the scikit. They are however often to
+small to be representative of real world machine learning tasks.
+
 
 Downloading datasets from the mldata.org repository
 ===================================================
 
 `mldata.org <http://mldata.org>`_ is a public repository for machine learning
 data, supported by the `PASCAL network <http://www.pascal-network.org>`_ .
-``scikits.learn.datasets`` package is able to directly download data sets
-from the repository using the function ``fetch_mldata(dataname)``.
+
+The ``scikits.learn.datasets`` package is able to directly download data
+sets from the repository using the function ``fetch_mldata(dataname)``.
+
 For example, to download the MNIST digit recognition database::
 
   >>> from scikits.learn.datasets import fetch_mldata
@@ -104,10 +112,118 @@ datasets:
     ...                      data_name='double0', data_home=custom_data_home)
 
 
-Dataset generators
-==================
+The 20 newsgroups text dataset
+==============================
 
-TODO
+The 20 newsgroups dataset comprises around 18000 newsgroups posts on
+20 topics splitted in two subsets: one for training (or development)
+and the other one for testing (or for performance evaluation). The split
+between the train and test set is based upon a messages posted before
+and after a specific date.
+
+The 20 newsgroups dataset is also available through the generic
+``mldata`` dataset loader introduced earlier. However mldata
+provides a version where the data is already vectorized.
+
+This is not the case for this loader. Instead, it returns the list of
+the raw text files that can be fed to  text feature extractors such as
+:class:`scikits.learn.feature_extraction.text.Vectorizer` with custom
+parameters so as to extract feature vectors.
+
+
+Usage
+-----
+
+The ``scikits.learn.datasets.fetch_20newsgroups`` function is a data
+fetching / caching functions that downloads the data archive from
+the original `20 newsgroups website`_, extracts the archive contents
+in the ``~/scikit_learn_data/20news_home`` folder and calls the
+``scikits.learn.datasets.load_filenames`` on either the training or
+testing set folder::
+
+  >>> from scikits.learn.datasets import fetch_20newsgroups
+  >>> newsgroups_train = fetch_20newsgroups(subset='train')
+
+  >>> from pprint import pprint
+  >>> pprint(list(newsgroups_train.target_names))
+  ['alt.atheism',
+   'comp.graphics',
+   'comp.os.ms-windows.misc',
+   'comp.sys.ibm.pc.hardware',
+   'comp.sys.mac.hardware',
+   'comp.windows.x',
+   'misc.forsale',
+   'rec.autos',
+   'rec.motorcycles',
+   'rec.sport.baseball',
+   'rec.sport.hockey',
+   'sci.crypt',
+   'sci.electronics',
+   'sci.med',
+   'sci.space',
+   'soc.religion.christian',
+   'talk.politics.guns',
+   'talk.politics.mideast',
+   'talk.politics.misc',
+   'talk.religion.misc']
+
+The real data lies in the ``filenames`` and ``target`` attributes. The target
+attribute is the integer index of the category::
+
+  >>> newsgroups_train.filenames.shape
+  (11314,)
+  >>> newsgroups_train.target.shape
+  (11314,)
+  >>> newsgroups_train.target[:10]
+  array([12,  6,  9,  8,  6,  7,  9,  2, 13, 19])
+
+It is possible to load only a sub-selection of the categories by passing the
+list of the categories to load to the ``fetch_20newsgroups`` function::
+
+  >>> cats = ['alt.atheism', 'sci.space']
+  >>> newsgroups_train = fetch_20newsgroups(subset='train', categories=cats)
+
+  >>> list(newsgroups_train.target_names)
+  ['alt.atheism', 'sci.space']
+  >>> newsgroups_train.filenames.shape
+  (1073,)
+  >>> newsgroups_train.target.shape
+  (1073,)
+  >>> newsgroups_train.target[:10]
+  array([1, 1, 1, 0, 1, 0, 0, 1, 1, 1])
+
+In order to feed predictive or clustering models with the text data,
+one first need to turn the text into vectors of numerical values suitable
+for statistical analysis. This can be achieved with the utilities of the
+``scikits.learn.feature_extraction.text`` as demonstrated in the following
+example that extract `TF-IDF`_ vectors of unigram tokens::
+
+
+  >>> from scikits.learn.feature_extraction.text import Vectorizer
+  >>> documents = [open(f).read() for f in newsgroups_train.filenames]
+  >>> vectorizer = Vectorizer()
+  >>> vectors = vectorizer.fit_transform(documents)
+  >>> vectors.shape
+  (1073, 21108)
+
+The extracted TF-IDF vectors are very sparse with an average of 118 non zero
+components by sample in a more than 20000 dimensional space (less than 1% non
+zero features)::
+
+  >>> vectors.nnz / vectors.shape[0]
+  118
+
+.. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
+.. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
+
+
+Examples
+--------
+
+:ref:`example_grid_search_text_feature_extraction.py`
+
+:ref:`example_document_classification_20newsgroups.py`
+
 
 .. _labeled_faces_in_the_wild:
 
@@ -222,108 +338,9 @@ Examples
 :ref:`example_applications_face_recognition.py`
 
 
+Dataset generators
+==================
 
-The 20 newsgroups text dataset
-==============================
-
-The 20 newsgroups dataset comprises around 18000 newsgroups posts on
-20 topics splitted in two subsets: one for training (or development)
-and the other one for testing (or for performance evaluation). The split
-between the train and test set is based upon a messages posted before
-and after a specific date.
-
-
-Usage
------
-
-The ``scikits.learn.datasets.fetch_20newsgroups`` function is a data
-fetching / caching functions that downloads the data archive from
-the original `20 newsgroups website`_, extracts the archive contents
-in the ``~/scikit_learn_data/20news_home`` folder and calls the
-``scikits.learn.datasets.load_filenames`` on either the training or
-testing set folder::
-
-  >>> from scikits.learn.datasets import fetch_20newsgroups
-  >>> newsgroups_train = fetch_20newsgroups(subset='train')
-
-  >>> from pprint import pprint
-  >>> pprint(list(newsgroups_train.target_names))
-  ['alt.atheism',
-   'comp.graphics',
-   'comp.os.ms-windows.misc',
-   'comp.sys.ibm.pc.hardware',
-   'comp.sys.mac.hardware',
-   'comp.windows.x',
-   'misc.forsale',
-   'rec.autos',
-   'rec.motorcycles',
-   'rec.sport.baseball',
-   'rec.sport.hockey',
-   'sci.crypt',
-   'sci.electronics',
-   'sci.med',
-   'sci.space',
-   'soc.religion.christian',
-   'talk.politics.guns',
-   'talk.politics.mideast',
-   'talk.politics.misc',
-   'talk.religion.misc']
-
-The real data lies in the ``filenames`` and ``target`` attributes. The target
-attribute is the integer index of the category::
-
-  >>> newsgroups_train.filenames.shape
-  (11314,)
-  >>> newsgroups_train.target.shape
-  (11314,)
-  >>> newsgroups_train.target[:10]
-  array([12,  6,  9,  8,  6,  7,  9,  2, 13, 19])
-
-It is possible to load only a sub-selection of the categories by passing the
-list of the categories to load to the ``fetch_20newsgroups`` function::
-
-  >>> cats = ['alt.atheism', 'sci.space']
-  >>> newsgroups_train = fetch_20newsgroups(subset='train', categories=cats)
-
-  >>> list(newsgroups_train.target_names)
-  ['alt.atheism', 'sci.space']
-  >>> newsgroups_train.filenames.shape
-  (1073,)
-  >>> newsgroups_train.target.shape
-  (1073,)
-  >>> newsgroups_train.target[:10]
-  array([1, 1, 1, 0, 1, 0, 0, 1, 1, 1])
-
-In order to feed predictive or clustering models with the text data,
-one first need to turn the text into vectors of numerical values suitable
-for statistical analysis. This can be achieved with the utilities of the
-``scikits.learn.feature_extraction.text`` as demonstrated in the following
-example that extract `TF-IDF`_ vectors of unigram tokens::
-
-
-  >>> from scikits.learn.feature_extraction.text import Vectorizer
-  >>> documents = [open(f).read() for f in newsgroups_train.filenames]
-  >>> vectorizer = Vectorizer()
-  >>> vectors = vectorizer.fit_transform(documents)
-  >>> vectors.shape
-  (1073, 21108)
-
-The extracted TF-IDF vectors are very sparse with an average of 118 non zero
-components by sample in a more than 20000 dimensional space (less than 1% non
-zero features)::
-
-  >>> vectors.nnz / vectors.shape[0]
-  118
-
-.. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
-.. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
-
-
-Examples
---------
-
-:ref:`example_grid_search_text_feature_extraction.py`
-
-:ref:`example_document_classification_20newsgroups.py`
+TODO
 
 
