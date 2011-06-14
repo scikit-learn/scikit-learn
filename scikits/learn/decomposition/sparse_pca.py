@@ -1,3 +1,8 @@
+""" Matrix factorization with Sparse PCA
+"""
+# Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
+# License: BSD
+
 import time
 import sys
 from math import sqrt
