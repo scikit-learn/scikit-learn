@@ -1,3 +1,6 @@
+# Author: Vlad Niculae
+# License: BSD
+
 import numpy as np
 from .. import SparsePCA
 from numpy.testing import assert_array_almost_equal, assert_equal
