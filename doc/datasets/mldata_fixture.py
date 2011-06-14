@@ -1,18 +1,16 @@
 """Fixture module to skip the datasets loading when offline
 
-Doctests are skipped if the datasets have not already been dowloaded
-and cached in the past.
+Mock urllib2 access to mldata.org
 """
-from os.path import exists
-from os.path import join
+
 from os import makedirs
-from nose import SkipTest
+from os.path import join
 from scikits.learn import datasets
-from scikits.learn.datasets import get_data_home
 from scikits.learn.utils.testing import mock_urllib2
 import tempfile
 import scipy as sp
 import shutil
+
 
 
 def globs(globs):
@@ -41,13 +39,6 @@ def globs(globs):
     globs['_urllib2_ref'] = _urllib2_ref
     globs['mock_urllib2'] = mock_urllib2(mock_datasets)
     return globs
-
-
-def setup_module(module):
-    data_home = get_data_home()
-    if (not exists(join(data_home, 'lfw_home'))
-        or not exists(join(data_home, '20news_home'))):
-        raise SkipTest("Skipping dataset loading doctests")
 
 
 def teardown_module(module):
