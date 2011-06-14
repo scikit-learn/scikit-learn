@@ -143,6 +143,10 @@ Also, in many cases, the real underlying components can be more naturally
 imagined as sparse vectors. For example in face recognition, components should
 map to parts of faces.
 
+Sparse principal components gives a more parsimonious, and therefore a more 
+useful idea on which of the original features contribute to the differences
+between the samples.
+
 There are many different formulations for the Sparse PCA problem. The one
 implemented here is based on [Mrl09]_ .
 

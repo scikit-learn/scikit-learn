@@ -52,10 +52,36 @@ def cpu_count():
     return multiprocessing.cpu_count()
 
 
-###########
-# sparsePCA
 def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
-    """ Update V (dictionary) in sparse_pca loop.
+    """ Update the sparse factor V in sparse_pca loop.
+    Each column of V is the solution to a Lasso problem.
+
+    Parameters
+    ----------
+    U: array of shape (n_samples, n_components)
+        previous iteration of U
+
+    Y: array of shape (n_samples, n_features)
+        data matrix
+
+    V: array of shape (n_components, n_features)
+        previous iteration of V
+
+    alpha: float
+        regularization parameter for the Lasso problem
+
+    Gram: array of shape (n_features, n_features)
+        precomputed Gram matrix, (Y^T * Y)
+
+    method: 'lars' | 'lasso'
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso: uses the stochastic gradient descent method to compute the
+            lasso solution (linear_model.Lasso)
+
+    tol: float
+        numerical tolerance for Lasso convergence.
+        Ignored if `method='lars'`
+
     """
     coef = np.empty_like(V)
     if method == 'lars':
@@ -82,7 +108,26 @@ def _update_V(U, Y, V, alpha, Gram=None, method='lars', tol=1e-8):
 
 
 def _update_U(U, Y, V, verbose=False, return_r2=False):
-    """ Update U (data) in sparse_pca loop in place.
+    """ Update the dense factor U in sparse_pca loop in place.
+
+    Parameters
+    ----------
+    U: array of shape (n_samples, n_components)
+        previous iteration of U
+
+    Y: array of shape (n_samples, n_features)
+        data matrix
+
+    V: array of shape (n_components, n_features)
+        previous iteration of V
+
+    verbose:
+        degree of output the procedure will print
+
+    return_r2: bool
+        compute and return the residual sum of squares corresponding
+        to the computed solution
+
     """
     n_atoms = len(V)
     n_samples = Y.shape[0]
@@ -125,7 +170,7 @@ def _update_U(U, Y, V, verbose=False, return_r2=False):
 def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
         n_jobs=1, U_init=None, V_init=None, callback=None, verbose=False):
     """
-    Compute sparse PCA with n_atoms components.
+    Compute sparse matrix decomposition (PCA) with n_atoms components.
 
     (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || V ||_1
                  (U,V)
@@ -135,14 +180,19 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     ----------
     Y: array of shape (n_samples, n_features)
         data matrix
+
     n_atoms: int,
         number of sparse atoms to extract
+
     alpha: int,
         sparsity controlling parameter
+
     max_iter: int,
         maximum number of iterations to perform
+
     tol: float,
         tolerance for numerical error
+
     method: 'lars' | 'lasso',
         method to use for solving the lasso problem
 
@@ -152,8 +202,10 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
     U_init: array of shape (n_samples, n_atoms),
     V_init: array of shape (n_atoms, n_features),
         initial values for the decomposition for warm restart scenarios
+
     callback:
         callable that gets invoked every five iterations
+
     verbose:
         degree of output the procedure will print
 
@@ -245,18 +297,24 @@ def sparse_pca(Y, n_atoms, alpha, max_iter=100, tol=1e-8, method='lars',
 class SparsePCA(BaseEstimator, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
 
-    Finds the best decomposition of the data matrix with sparse components.
+    Finds the set of sparse components that can optimally reconstruct the data.
+    The amount of sparseness is controllable by the coefficient of the \ell_1
+    penalty, given by the parameter alpha.
 
     Parameters
     ----------
     n_components: int,
         number of sparse atoms to extract
+
     alpha: int,
         sparsity controlling parameter
+
     max_iter: int,
         maximum number of iterations to perform
+
     tol: float,
         tolerance for numerical error
+
     method: 'lars' | 'lasso',
         method to use for solving the lasso problem
 
@@ -267,6 +325,9 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     V_init: array of shape (n_atoms, n_features),
         initial values for the decomposition for warm restart scenarios
 
+    verbose:
+        degree of verbosity of the printed output
+
     Attributes
     ----------
     components_: array, [n_components, n_features]
@@ -275,9 +336,14 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     error_: array
         vector of errors at each iteration
 
+    See also
+    --------
+    PCA
+
     """
     def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
-                 method='lars', n_jobs=1, U_init=None, V_init=None):
+                 method='lars', n_jobs=1, U_init=None, V_init=None,
+                 verbose=False):
         self.n_components = n_components
         self.alpha = alpha
         self.max_iter = max_iter
@@ -286,6 +352,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
         self.U_init = U_init
         self.V_init = V_init
+        self.verbose = verbose
 
     def fit_transform(self, X, y=None, **params):
         """Fit the model from data in X.
@@ -305,7 +372,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
         U, V, E = sparse_pca(X, self.n_components, self.alpha, tol=self.tol,
                              max_iter=self.max_iter, method=self.method,
-                             n_jobs=self.n_jobs)
+                             n_jobs=self.n_jobs, verbose=self.verbose)
         self.components_ = V
         self.error_ = E
         return U
@@ -327,7 +394,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.fit_transform(X, y, **params)
         return self
 
-    def transform(self, X):
+    def transform(self, X, alpha=0):
         """Apply the projection onto the learned sparse components
         to new data.
 
@@ -337,12 +404,18 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
+        alpha: float
+            Amount of ridge shrinkage to apply in order to improve conditioning
+
         Returns
         -------
         X_new array, shape (n_samples, n_components)
             Transformed data
         """
-        # TODO: Ridge
+
+        if alpha != 0:
+            raise NotImplemented('SparsePCA.transform only does OLS for now')
+        # TODO: Ridge regression with controllable shrinkage
         U = linalg.lstsq(self.components_.T, X.T)[0].T
         U /= np.sqrt((U ** 2).sum(axis=0))
         return U
