@@ -1,7 +1,7 @@
 """
-This contains a copy of the future version of 
+This contains a copy of the future version of
 scipy.sparse.linalg.eigen.arpack.eigsh
-It's an upgraded wrapper of the ARPACK library which 
+It's an upgraded wrapper of the ARPACK library which
 allows the use of shift-invert mode for symmetric matrices.
 
 This module should be removed in favor of the scipy version
@@ -849,6 +849,7 @@ def _aslinearoperator_with_dtype(m):
         m.dtype = (m * x).dtype
     return m
 
+
 class SpLuInv(LinearOperator):
     """
     SpLuInv:
@@ -866,13 +867,14 @@ class SpLuInv(LinearOperator):
         self.isreal = not np.issubdtype(self.dtype, np.complexfloating)
 
     def _matvec(self, x):
-        # careful here: splu.solve will throw away imaginary 
+        # careful here: splu.solve will throw away imaginary
         # part of x if M is real
         if self.isreal and np.issubdtype(x.dtype, np.complexfloating):
-            return (self.M_lu.solve(np.real(x)) 
+            return (self.M_lu.solve(np.real(x))
                     + 1j * self.M_lu.solve(np.imag(x)))
         else:
             return self.M_lu.solve(x)
+
 
 class LuInv(LinearOperator):
     """
@@ -930,7 +932,7 @@ class IterOpInv(LinearOperator):
     IterOpInv:
        helper class to repeatedly solve [A-sigma*M]*x = b
        using an iterative method
-    """ 
+    """
     def __init__(self, A, M, sigma, ifunc=gmres, tol=0):
         if tol <= 0:
             # when tol=0, ARPACK uses machine tolerance as calculated
@@ -970,6 +972,7 @@ class IterOpInv(LinearOperator):
                              "%s did not converge (info = %i)."
                              % (self.ifunc.__name__, info))
         return b
+
 
 def get_inv_matvec(M, tol=0):
     if isdense(M):
@@ -1097,7 +1100,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
          - 'LI' : largest imaginary part
          - 'SI' : smallest imaginary part
         When sigma != None, 'which' refers to the shifted eigenvalues w'[i]
-        (see discussion in 'sigma', above).  ARPACK is generally better 
+        (see discussion in 'sigma', above).  ARPACK is generally better
         at finding large values than small values.  If small eigenvalues are
         desired, consider using shift-invert mode for better performance.
     maxiter : integer
@@ -1292,7 +1295,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
         solver if either A or M is a general linear operator.
         Alternatively, the user can supply the matrix or operator OPinv,
         which gives x = OPinv * b = [A - sigma * M]^-1 * b.
-        Note that when sigma is specified, the keyword 'which' refers to 
+        Note that when sigma is specified, the keyword 'which' refers to
         the shifted eigenvalues w'[i] where:
          - if mode == 'normal',
              w'[i] = 1 / (w[i] - sigma)
@@ -1317,7 +1320,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
          - 'BE' : Half (k/2) from each end of the spectrum
                   When k is odd, return one more (k/2+1) from the high end
         When sigma != None, 'which' refers to the shifted eigenvalues w'[i]
-        (see discussion in 'sigma', above).  ARPACK is generally better 
+        (see discussion in 'sigma', above).  ARPACK is generally better
         at finding large values than small values.  If small eigenvalues are
         desired, consider using shift-invert mode for better performance.
     maxiter : integer
@@ -1333,11 +1336,11 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
         Return eigenvectors (True) in addition to eigenvalues
     mode : string ['normal' | 'buckling' | 'cayley']
         Specify strategy to use for shift-invert mode.  This argument applies
-        only for real-valued A and sigma != None.  For shift-invert mode, 
-        ARPACK internally solves the eigenvalue problem 
-        ``OP * x'[i] = w'[i] * B * x'[i]`` 
-        and transforms the resulting Ritz vectors x'[i] and Ritz values w'[i] 
-        into the desired eigenvectors and eigenvalues of the problem 
+        only for real-valued A and sigma != None.  For shift-invert mode,
+        ARPACK internally solves the eigenvalue problem
+        ``OP * x'[i] = w'[i] * B * x'[i]``
+        and transforms the resulting Ritz vectors x'[i] and Ritz values w'[i]
+        into the desired eigenvectors and eigenvalues of the problem
         ``A * x[i] = w[i] * M * x[i]``.
         The modes are as follows:
           - 'normal'   : OP = [A - sigma * M]^-1 * M
@@ -1350,7 +1353,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
                          B = M
                          w'[i] = (w[i] + sigma) / (w[i] - sigma)
         The choice of mode will affect which eigenvalues are selected by
-        the keyword 'which', and can also impact the stability of 
+        the keyword 'which', and can also impact the stability of
         convergence (see [2] for a discussion)
 
     Raises

@@ -27,7 +27,7 @@ out_dim = 2
 
 methods = ['standard', 'hessian', 'modified']
 
-fig = pylab.figure(figsize=(10,8))
+fig = pylab.figure(figsize=(10, 8))
 
 try:
     # compatibility matplotlib < 1.0
@@ -40,15 +40,15 @@ except:
 
 ax.set_title('Original Data')
 
-for i,method in enumerate(methods):
+for i, method in enumerate(methods):
     t0 = time()
-    Y,err  = manifold.locally_linear_embedding(X, n_neighbors, out_dim,
+    Y, err = manifold.locally_linear_embedding(X, n_neighbors, out_dim,
                                                eigen_solver='arpack',
                                                method=method)
     t1 = time()
     print "%s: %.2g sec" % (methods[i], t1 - t0)
     print ' err = %.2e' % err
-    
+
     ax = fig.add_subplot(222 + i)
     ax.scatter(Y[:, 0], Y[:, 1], c=color)
     ax.set_title("method = %s" % methods[i])
