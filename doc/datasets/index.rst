@@ -59,13 +59,13 @@ Scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``
 
 You may load a dataset like this::
 
-  >>> from scikits.learn.datasets import load_svmlight_format
-  >>> X_train, y_train = load_svmlight_format("/path/to/train_dataset.txt")
+  >>> from scikits.learn.datasets import load_svmlight_file
+  >>> X_train, y_train = load_svmlight_file("/path/to/train_dataset.txt")
   ...                                                         # doctest: +SKIP
 
 You may also load two datasets at once::
 
-  >>> X_train, y_train, X_test, y_test = load_svmlight_format(
+  >>> X_train, y_train, X_test, y_test = load_svmlight_file(
   ...     "/path/to/train_dataset.txt",
   ...     "/path/to/test_dataset.txt")                        # doctest: +SKIP
 
@@ -73,7 +73,7 @@ In this case, ``X_train`` and ``X_test`` are guaranteed to have the same number
 of features. Another way to achieve the same result is to fix the number of
 features::
 
-  >>> X_test, y_test = load_svmlight_format(
+  >>> X_test, y_test = load_svmlight_file(
   ...     "/path/to/test_dataset.txt", n_features=X_train.shape[1])
   ...                                                         # doctest: +SKIP
 
