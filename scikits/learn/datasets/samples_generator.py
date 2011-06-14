@@ -382,7 +382,7 @@ def swiss_roll(n_samples, noise=0.0):
     t = np.squeeze(t)
     return X, t
 
-def S_curve(n_samples, noise=0.0):
+def s_curve(n_samples, noise=0.0):
     """Generate S curve dataset
 
     Parameters
