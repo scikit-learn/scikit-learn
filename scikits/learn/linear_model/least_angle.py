@@ -16,55 +16,57 @@ from .base import LinearModel
 from ..utils import arrayfuncs
 
 
-def lars_path(X, y, Xy=None, Gram=None, max_features=None,
+def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
               alpha_min=0, method='lar', overwrite_X=False,
               overwrite_Gram=False, verbose=False):
+    """Compute Least Angle Regression and LASSO path
 
-    """ Compute Least Angle Regression and LASSO path
+    Parameters
+    -----------
+    X: array, shape: (n_samples, n_features)
+        Input data
 
-        Parameters
-        -----------
-        X: array, shape: (n_samples, n_features)
-            Input data
+    y: array, shape: (n_samples)
+        Input targets
 
-        y: array, shape: (n_samples)
-            Input targets
+    max_features: integer, optional
+        Maximum number of selected features.
 
-        max_features: integer, optional
-            Maximum number of selected features.
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
 
-        Gram: array, shape: (n_features, n_features), optional
-            Precomputed Gram matrix (X' * X)
+    Gram: array, shape: (n_features, n_features), optional
+        Precomputed Gram matrix (X' * X)
 
-        alpha_min: float, optional
-            Minimum correlation along the path. It corresponds to the
-            regularization parameter alpha parameter in the Lasso.
+    alpha_min: float, optional
+        Minimum correlation along the path. It corresponds to the
+        regularization parameter alpha parameter in the Lasso.
 
-        method: 'lar' | 'lasso'
-            Specifies the returned model. Select 'lar' for Least Angle
-            Regression, 'lasso' for the Lasso.
+    method: 'lar' | 'lasso'
+        Specifies the returned model. Select 'lar' for Least Angle
+        Regression, 'lasso' for the Lasso.
 
-        Returns
-        --------
-        alphas: array, shape: (max_features + 1,)
-            Maximum of covariances (in absolute value) at each
-            iteration.
+    Returns
+    --------
+    alphas: array, shape: (max_features + 1,)
+        Maximum of covariances (in absolute value) at each
+        iteration.
 
-        active: array, shape (max_features,)
-            Indices of active variables at the end of the path.
+    active: array, shape (max_features,)
+        Indices of active variables at the end of the path.
 
-        coefs: array, shape (n_features, max_features+1)
-            Coefficients along the path
+    coefs: array, shape (n_features, max_features+1)
+        Coefficients along the path
 
-        See also
-        --------
-        :ref:`LassoLARS`, :ref:`LARS`
+    See also
+    --------
+    :ref:`LassoLARS`, :ref:`LARS`
 
-        Notes
-        ------
-        * http://en.wikipedia.org/wiki/Least-angle_regression
+    Notes
+    ------
+    * http://en.wikipedia.org/wiki/Least-angle_regression
 
-        * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
+    * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
     """
 
     n_features = X.shape[1]
@@ -134,7 +136,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None,
             alphas[n_iter] = alpha_min
             break
 
-        if n_active == max_features:
+        if n_active == max_features or n_iter == max_iter:
             break
 
         if not drop:
@@ -306,6 +308,9 @@ class LARS(LinearModel):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -319,7 +324,7 @@ class LARS(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LARS()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    LARS(verbose=False, fit_intercept=True)
+    LARS(max_iter=500, verbose=False, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.81649658]
 
@@ -331,16 +336,16 @@ class LARS(LinearModel):
     --------
     lars_path, LassoLARS
     """
-    def __init__(self, fit_intercept=True, verbose=False):
+    def __init__(self, fit_intercept=True, verbose=False, max_iter=500):
         self.fit_intercept = fit_intercept
+        self.max_iter = max_iter
         self.verbose = verbose
         self.method = 'lar'
 
     def fit(self, X, y, normalize=True, max_features=None,
              precompute='auto', overwrite_X=False, **params):
 
-        """
-        Fit the model using X, y as training data.
+        """Fit the model using X, y as training data.
 
         Parameters
         ----------
@@ -393,7 +398,7 @@ class LARS(LinearModel):
                   Gram=Gram, overwrite_X=overwrite_X,
                   overwrite_Gram=True, alpha_min=alpha,
                   method=self.method, verbose=self.verbose,
-                  max_features=max_features)
+                  max_features=max_features, max_iter=self.max_iter)
 
         self.coef_ = self.coef_path_[:, -1]
 
@@ -403,7 +408,7 @@ class LARS(LinearModel):
 
 
 class LassoLARS (LARS):
-    """ Lasso model fit with Least Angle Regression a.k.a. LARS
+    """Lasso model fit with Least Angle Regression a.k.a. LARS
 
     It is a Linear Model trained with an L1 prior as regularizer.
     lasso).
@@ -418,6 +423,9 @@ class LassoLARS (LARS):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -431,7 +439,7 @@ class LassoLARS (LARS):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLARS(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(alpha=0.01, verbose=False, fit_intercept=True)
+    LassoLARS(alpha=0.01, max_iter=500, verbose=False, fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.72649658]
 
@@ -444,8 +452,10 @@ class LassoLARS (LARS):
     lars_path, Lasso
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False):
+    def __init__(self, alpha=1.0, fit_intercept=True, max_iter=500,
+                 verbose=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.method = 'lasso'
+        self.max_iter = max_iter

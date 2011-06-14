@@ -207,7 +207,7 @@ applications to real-world datasets.
 
 .. |banner2| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
    :height: 150
-   :target: auto_examples/linear_model/plot_species_distribution.html
+   :target: auto_examples/applications/plot_species_distribution_modeling.html
 
 .. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
    :height: 150
@@ -510,7 +510,7 @@ of commits):
 
 .. _Edouard Duchesnay: http://www.lnao.fr/spip.php?rubrique30
 
-.. _Peter Prettenhofer: <http://sites.google.com/site/peterprettenhofer/>
+.. _Peter Prettenhofer: http://sites.google.com/site/peterprettenhofer/
 
 .. _Alexandre Passos: <http://atpassos.posterous.com>
 

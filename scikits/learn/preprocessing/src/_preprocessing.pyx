@@ -20,7 +20,7 @@ ctypedef np.int32_t INTEGER
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def normalize_axis1_sparse(X):
+def inplace_csr_row_normalize_l1(X):
     """Inplace row normalize using the l1 norm"""
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
@@ -50,7 +50,7 @@ def normalize_axis1_sparse(X):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def normalize_length_axis1_sparse(X):
+def inplace_csr_row_normalize_l2(X):
     """Inplace row normalize using the l2 norm"""
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]

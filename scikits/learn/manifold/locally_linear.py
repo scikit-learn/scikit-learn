@@ -5,12 +5,13 @@
 
 import numpy as np
 from ..base import BaseEstimator
+from ..utils import check_random_state
 from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
 
 
 def locally_linear_embedding(
     X, n_neighbors, out_dim, reg=1e-3, eigen_solver='lobpcg', tol=1e-6,
-    max_iter=100):
+    max_iter=100, random_state=0):
     """
     Perform a Locally Linear Embedding analysis on the data.
 
@@ -37,6 +38,10 @@ def locally_linear_embedding(
     max_iter : integer
         maximum number of iterations for the lobpcg solver.
 
+    random_state : int or RandomState instance
+        Pseudo number generator used for init the eigenvectors when using
+        the lobpcg method.
+
     Returns
     -------
     Y : array-like, shape [n_samples, out_dim]
@@ -50,6 +55,7 @@ def locally_linear_embedding(
     ----------
     "An Introduction to Locally Linear Embedding", Lawrence Saul & Sam Roweis.
     """
+    random_state = check_random_state(random_state)
 
     if eigen_solver == 'lobpcg':
         try:
@@ -69,17 +75,17 @@ def locally_linear_embedding(
 
         eigen_values, eigen_vectors = scipy.linalg.eigh(
             M, eigvals=(1, out_dim + 1), overwrite_a=True)
-        index = np.argsort(np.abs(eigen_values))
+        index = np.argsort(np.abs(eigen_values))[1:]
         return eigen_vectors[:, index], np.sum(eigen_values)
 
     elif eigen_solver == 'lobpcg':
         from scipy.sparse import linalg, eye
         # M = (I-W)' (I-W)
-        A = eye(*W.shape, format=W.format) - W
+        A = eye(W.shape[0], W.shape[1], format=W.format) - W
         A = np.dot(A.T, A).tocsr()
 
         # initial approximation to the eigenvectors
-        X = np.random.rand(W.shape[0], out_dim)
+        X = random_state.rand(W.shape[0], out_dim)
         try:
             ml = pyamg.smoothed_aggregation_solver(A, symmetry='symmetric')
         except TypeError:
@@ -187,5 +193,5 @@ class LocallyLinearEmbedding(BaseEstimator):
         weights = barycenter_weights(X, self.ball_tree.data[ind], reg=reg)
         X_new = np.empty((X.shape[0], self.out_dim))
         for i in range(X.shape[0]):
-            X_new[i] = np.dot(weights[i], self.embedding_[ind[i]])
+            X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
         return X_new

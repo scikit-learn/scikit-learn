@@ -158,6 +158,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     Perfect labelings are homegenous::
 
+      >>> from scikits.learn.metrics.cluster import homogeneity_score
       >>> homogeneity_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
@@ -223,6 +224,7 @@ def completeness_score(labels_true, labels_pred):
 
     Perfect labelings are complete::
 
+      >>> from scikits.learn.metrics.cluster import completeness_score
       >>> completeness_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
@@ -291,6 +293,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Perfect labelings are both homogeneous and complete, hence have score 1.0::
 
+      >>> from scikits.learn.metrics.cluster import v_measure_score
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 1])
       1.0
       >>> v_measure_score([0, 0, 1, 1], [1, 1, 0, 0])
