@@ -36,7 +36,6 @@ def test_correct_shapes():
 
 def test_fit_transform():
     Y, _, _ = generate_toy_data(3, 10, (8, 8))  # wide array
-    print Y.shape
     U1 = SparsePCA(n_components=3).fit_transform(Y)
     U2 = SparsePCA(n_components=3).fit(Y).transform(Y, alpha=0.01)
     assert_array_almost_equal(U1, U2)
