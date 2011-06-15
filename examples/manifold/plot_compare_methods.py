@@ -25,17 +25,17 @@ X, color = datasets.samples_generator.s_curve(1000)
 n_neighbors = 8
 out_dim = 2
 
-methods = ['standard', 'hessian', 'modified']
+methods = ['standard', 'ltsa', 'hessian', 'modified']
 
-fig = pylab.figure(figsize=(10, 8))
+fig = pylab.figure(figsize=(8, 12))
 
 try:
     # compatibility matplotlib < 1.0
-    ax = fig.add_subplot(221, projection='3d')
+    ax = fig.add_axes((0.25,0.66,0.4,0.3), projection='3d')
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color)
     ax.view_init(4, -72)
 except:
-    ax = fig.add_subplot(221)
+    ax = fig.add_axes((0.25,0.66,0.5,0.3))
     ax.scatter(X[:, 0], X[:, 2], c=color)
 
 ax.set_title('Original Data')
@@ -49,7 +49,7 @@ for i, method in enumerate(methods):
     print "%s: %.2g sec" % (methods[i], t1 - t0)
     print ' err = %.2e' % err
 
-    ax = fig.add_subplot(222 + i)
+    ax = fig.add_subplot(323 + i)
     ax.scatter(Y[:, 0], Y[:, 1], c=color)
     ax.set_title("method = %s" % methods[i])
 

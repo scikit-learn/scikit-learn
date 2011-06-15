@@ -118,6 +118,8 @@ def locally_linear_embedding(
                    see reference [2]
         modified : use the modified locally linear embedding algorithm.
                    see reference [3]
+        ltsa     : use local tangent space alignment algorithm
+                   see reference [4]
 
     hessian_tol : tolerance used for hessian eigenmapping method
                   only referenced if method == 'hessian'
@@ -142,15 +144,18 @@ def locally_linear_embedding(
       [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally linear embedding
           techniques for high-dimensional data. Proc Natl Acad Sci U S A.
           100:5591 (2003).
-      [3] Zhang,z & Wang, J. MLLE: Modified Locally Linear Embedding
+      [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear Embedding
           Using Multiple Weights.
           http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+      [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear dimensionality
+          reduction via tangent space alignment. Journal of Shanghai Univ.
+          8:406 (2004)
     """
 
     if eigen_solver not in ('arpack', 'lobpcg', 'dense'):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
 
-    if method not in ('standard', 'hessian', 'modified'):
+    if method not in ('standard', 'hessian', 'modified', 'ltsa'):
         raise ValueError("unrecognized method '%s'" % method)
 
     if hasattr(X, 'query'):
@@ -159,7 +164,6 @@ def locally_linear_embedding(
         X = balltree.data
     else:
         balltree = BallTree(X)
-        X = balltree.data
 
     N, d_in = X.shape
 
@@ -169,31 +173,33 @@ def locally_linear_embedding(
     if n_neighbors >= N:
         raise ValueError("n_neighbors must be less than number of points")
 
+    M_sparse = (eigen_solver != 'dense')
+
     if method == 'standard':
         W = kneighbors_graph(
             balltree, n_neighbors=n_neighbors, mode='barycenter', reg=reg)
 
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
-        if eigen_solver == 'dense':
+        if M_sparse:
+            M = eye(*W.shape, format=W.format) - W
+            M = np.dot(M.T, M).tocsr()
+        else:
             M = (np.dot(W.T, W) - (W.T + W)).todense()
             M.flat[::M.shape[0] + 1] += 1  # W = W - I
 
-        elif (eigen_solver == 'lobpcg') or (eigen_solver == 'arpack'):
-            M = eye(*W.shape, format=W.format) - W
-            M = np.dot(M.T, M).tocsr()
 
     elif method == 'hessian':
-        neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
-        neighbors = neighbors[:, 1:]
-
         dp = out_dim * (out_dim + 1) / 2
-
-        X = np.asarray(X)
 
         if n_neighbors <= out_dim + dp:
             raise ValueError("for method='hessian', n_neighbors must be "
                              "greater than out_dim*[1+(out_dim+1)/2]")
+
+        neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
+        neighbors = neighbors[:, 1:]
+
+        X = np.asarray(X)
 
         Yi = np.empty((n_neighbors, 1 + out_dim + dp), dtype=np.float)
         Yi[:, 0] = 1
@@ -224,15 +230,15 @@ def locally_linear_embedding(
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(w, w.T)
 
-        if (eigen_solver == 'lobpcg') or (eigen_solver == 'arpack'):
+        if M_sparse:
             M = csr_matrix(M)
 
     elif method == 'modified':
-        neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
-        neighbors = neighbors[:, 1:]
-
         if n_neighbors < out_dim:
             raise ValueError("modified LLE requires n_neighbors >= out_dim")
+
+        neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
+        neighbors = neighbors[:, 1:]
 
         #find the eigenvectors and eigenvalues of each local covariance
         # matrix we want V[i] to be a [n_neighbors x n_neighbors] matrix,
@@ -314,8 +320,31 @@ def locally_linear_embedding(
             M[neighbors[i], i] -= Wi_sum1
             M[i, i] += s_i
 
-        if (eigen_solver == 'lobpcg') or (eigen_solver == 'arpack'):
+        if M_sparse:
             M = csr_matrix(M)
+
+    elif method == 'ltsa':
+        neighbors = balltree.query(X, k=n_neighbors + 1, return_distance=False)
+        neighbors = neighbors[:, 1:]
+
+        M = np.zeros((N, N))
+        
+        for i in range(N):
+            Xi = X[neighbors[i]]
+
+            # compute out_dim largest eigenvalues of Xi * Xi^T
+            v = np.linalg.svd(Xi - Xi.mean(0), full_matrices=True)[0]
+
+            Gi = np.zeros((n_neighbors, out_dim + 1))
+            Gi[:,1:] = v[:, :out_dim]
+            Gi[:,0] = 1. / np.sqrt(n_neighbors)
+            
+            GiGiT = np.dot(Gi, Gi.T)
+            
+            nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
+            M[nbrs_x, nbrs_y] -= GiGiT
+            M[nbrs_x, nbrs_y] += np.identity(n_neighbors)
+            
 
     return null_space(M, out_dim, k_skip=1,
                       eigen_solver=eigen_solver,
