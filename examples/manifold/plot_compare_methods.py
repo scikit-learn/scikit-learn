@@ -31,11 +31,11 @@ fig = pylab.figure(figsize=(8, 12))
 
 try:
     # compatibility matplotlib < 1.0
-    ax = fig.add_axes((0.25,0.66,0.4,0.3), projection='3d')
+    ax = fig.add_axes((0.25, 0.66, 0.4, 0.3), projection='3d')
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color)
     ax.view_init(4, -72)
 except:
-    ax = fig.add_axes((0.25,0.66,0.5,0.3))
+    ax = fig.add_axes((0.25, 0.66, 0.5, 0.3))
     ax.scatter(X[:, 0], X[:, 2], c=color)
 
 ax.set_title('Original Data')

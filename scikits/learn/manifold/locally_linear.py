@@ -188,7 +188,6 @@ def locally_linear_embedding(
             M = (np.dot(W.T, W) - (W.T + W)).todense()
             M.flat[::M.shape[0] + 1] += 1  # W = W - I
 
-
     elif method == 'hessian':
         dp = out_dim * (out_dim + 1) / 2
 
@@ -328,7 +327,7 @@ def locally_linear_embedding(
         neighbors = neighbors[:, 1:]
 
         M = np.zeros((N, N))
-        
+
         for i in range(N):
             Xi = X[neighbors[i]]
 
@@ -336,15 +335,14 @@ def locally_linear_embedding(
             v = np.linalg.svd(Xi - Xi.mean(0), full_matrices=True)[0]
 
             Gi = np.zeros((n_neighbors, out_dim + 1))
-            Gi[:,1:] = v[:, :out_dim]
-            Gi[:,0] = 1. / np.sqrt(n_neighbors)
-            
+            Gi[:, 1:] = v[:, :out_dim]
+            Gi[:, 0] = 1. / np.sqrt(n_neighbors)
+
             GiGiT = np.dot(Gi, Gi.T)
-            
+
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] -= GiGiT
-            M[nbrs_x, nbrs_y] += np.identity(n_neighbors)
-            
+            M[neighbors[i], neighbors[i]] += 1
 
     return null_space(M, out_dim, k_skip=1,
                       eigen_solver=eigen_solver,
