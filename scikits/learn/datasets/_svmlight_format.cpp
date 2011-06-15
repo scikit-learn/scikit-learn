@@ -51,8 +51,8 @@ struct VectorOwner {
 template <typename T>
 static void destroy_vector_owner(PyObject *self)
 {
-  // Note: explicit call to destructor because of placement new;
-  // memory management for VectorOwner is performed by the interpreter.
+  // Note: explicit call to destructor because of placement new in
+  // to_1d_array. memory management for VectorOwner is performed by Python.
   // Compiler-generated destructor will release memory from vector member.
   VectorOwner<T> &obj = *reinterpret_cast<VectorOwner<T> *>(self);
   obj.~VectorOwner<T>();
@@ -134,6 +134,7 @@ static PyObject *to_1d_array(std::vector<T> &v, int typenum)
       throw std::bad_alloc();
 
     // Transfer ownership of v's contents to the VectorOwner.
+    // Note: placement new.
     new (&owner->v) std::vector<T>();
     owner->v.swap(v);
 
