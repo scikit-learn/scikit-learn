@@ -3,8 +3,8 @@ Orthogonal matching pursuit algorithms based on
 http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
 
 OMP introduced in S. G. Mallat, Z. Zhang, Matching pursuits with time-frequency
-dictionaries, IEEE Transactions on Signal Processing, Vol. 41, No. 12. 
-(December 1993), pp. 3397-3415. 
+dictionaries, IEEE Transactions on Signal Processing, Vol. 41, No. 12.
+(December 1993), pp. 3397-3415.
 http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
 """
 
@@ -14,6 +14,7 @@ http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
 
 import numpy as np
 from scipy import linalg
+
 
 def _cholesky_omp(X, y, n_atoms, eps=None):
     """
@@ -27,10 +28,10 @@ def _cholesky_omp(X, y, n_atoms, eps=None):
 
     y: array, shape: n_samples
         Input targets
-    
+
     n_atoms: int
         Targeted number of non-zero elements
-    
+
     eps: float
         Targeted squared error, if not None overrides n_atoms.
 
@@ -38,7 +39,7 @@ def _cholesky_omp(X, y, n_atoms, eps=None):
     --------
     gamma: array, shape n_atoms
         Non-zero elements of the solution
-    
+
     idx: array, shape n_atoms
         Indices of the positions of the elements in gamma within the solution
         vector
@@ -71,6 +72,7 @@ def _cholesky_omp(X, y, n_atoms, eps=None):
 
     return gamma, idx
 
+
 def _gram_omp(G, Xy, n_atoms, eps_0=None, eps=None):
     """
     Solves a single Orthogonal Matching Pursuit problem using
@@ -84,13 +86,13 @@ def _gram_omp(G, Xy, n_atoms, eps_0=None, eps=None):
 
     Xy: array, shape: n_features
         Input targets
-    
+
     n_atoms: int
         Targeted number of non-zero elements
-    
+
     eps_0: float
         Squared norm of y, required if eps is not None.
-    
+
     eps: float
         Targeted squared error, if not None overrides n_atoms.
 
@@ -98,7 +100,7 @@ def _gram_omp(G, Xy, n_atoms, eps_0=None, eps=None):
     --------
     gamma: array, shape n_atoms
         Non-zero elements of the solution
-    
+
     idx: array, shape n_atoms
         Indices of the positions of the elements in gamma within the solution
         vector
@@ -121,8 +123,8 @@ def _gram_omp(G, Xy, n_atoms, eps_0=None, eps=None):
                       np.atleast_2d(np.append(w, np.sqrt(1 - np.inner(w, w))))]
         idx.append(lam)
         Lc = linalg.solve_triangular(L, Xy[idx], lower=True)
-        gamma = linalg.solve_triangular(L, Lc, trans=1, lower=True) 
-        beta = np.dot(G[:, idx], gamma)        
+        gamma = linalg.solve_triangular(L, Lc, trans=1, lower=True)
+        beta = np.dot(G[:, idx], gamma)
         alpha = Xy - beta
         if eps != None:
             eps_curr += delta
@@ -134,10 +136,11 @@ def _gram_omp(G, Xy, n_atoms, eps_0=None, eps=None):
             break
     return gamma, idx
 
+
 def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
     """Orthogonal Matching Pursuit (OMP)
 
-    Solves n_targets Orthogonal Matching Pursuit problems. 
+    Solves n_targets Orthogonal Matching Pursuit problems.
 
     Parameters:
     -----------
@@ -190,6 +193,7 @@ def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
         x, idx = _cholesky_omp(X, y[:, k], n_atoms, eps)
         coef[idx, k] = x
     return np.squeeze(coef)
+
 
 def orthogonal_mp_gram(G, Xy, n_atoms=None, eps=None, norms_squared=None):
     """Gram Orthogonal Matching Pursuit (OMP)

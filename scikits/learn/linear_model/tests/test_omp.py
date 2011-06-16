@@ -4,9 +4,10 @@
 import numpy as np
 from nose.tools import assert_raises
 from numpy.testing import assert_equal, assert_array_almost_equal
-from nose.plugins.skip import Skip, SkipTest
+from nose.plugins.skip import SkipTest
 
 from .. import orthogonal_mp, orthogonal_mp_gram
+
 
 def generate_data(n_samples, n_features):
     np.random.seed(0)
@@ -58,6 +59,7 @@ def test_with_without_gram():
     assert_array_almost_equal(orthogonal_mp(X, y, n_atoms=6),
                               orthogonal_mp(X, y, n_atoms=6, compute_gram=True))
 
+
 def test_with_without_gram_eps():
     raise SkipTest
     n_samples, n_features = 10, 15
@@ -65,11 +67,13 @@ def test_with_without_gram_eps():
     assert_array_almost_equal(orthogonal_mp(X, y, eps=0.6),
                               orthogonal_mp(X, y, eps=0.6, compute_gram=True))
 
+
 def test_unreachable_accuracy():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
     assert_array_almost_equal(orthogonal_mp(X, y, eps=0),
                               orthogonal_mp(X, y, n_atoms=n_features))
+
 
 def test_bad_input():
     n_samples, n_features = 10, 15
