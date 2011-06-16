@@ -33,8 +33,8 @@ description, quoted from the `website
   experiments in text applications of machine learning techniques,
   such as text classification and text clustering.
 
-To download the dataset, go to ``$TUTORIAL_HOME/twenty_newsgroups``
-run the ``fetch_data.py`` script.
+To download the dataset, go to ``$TUTORIAL_HOME/data/twenty_newsgroups``
+and run the ``fetch_data.py`` script.
 
 Once the data is downloaded, start a Python interpreter (or IPython shell)
 in the ``$TUTORIAL_HOME`` folder and define a variable to hold the list
@@ -297,8 +297,8 @@ Evaluation of the performance on the test set
 Evaluating the predictive accuracy of the model is equally easy::
 
   >>> import numpy as np
-  >>> twenty_test = load_files('data/twenty_newsgroups/20news-bydate-test',
-  ...                           categories=categories)
+  >>> twenty_test = load_filenames('data/twenty_newsgroups/20news-bydate-test',
+  ...                              categories=categories)
   ...
   >>> docs_test = [open(f).read() for f in twenty_test.filenames]
   >>> predicted = text_clf.predict(docs_test)
@@ -337,7 +337,6 @@ analysis of the results::
   
              avg / total       0.93      0.92      0.92      1502
   
-
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
   array([[254,   4,  11,  50],
          [  3, 376,   6,   4],
@@ -387,14 +386,31 @@ to speed up the computation::
 
   >>> gs_clf = gs_clf.fit(docs_train[:400], twenty_train.target[:400])
 
-The best model found during fit is available as a special attribute::
+The result of calling ``fit`` on a ``GridSearchCV`` object is a classifier
+that we can use to ``predict``::
 
-  >>> best_parameters = gs_clf.best_estimator._get_params()
+  >>> twenty_train.target_names[gs_clf.predict(['God is love'])]
+  'alt.atheism'
+
+but otherwise, it's a pretty large and clumsy object. We can, however, get the
+optimal parameters out by inspecting the object's ``grid_scores_`` attribute,
+which is a list of parameters/score pairs. To get the best scoring attributes,
+we can do::
+
+  >>> best_parameters, score = max(gs_clf.grid_scores_, key=lambda x: x[1])
   >>> for param_name in sorted(parameters.keys()):
   ...     print "%s: %r" % (param_name, best_parameters[param_name])
   ...
   clf__C: 100
   tfidf__use_idf: True
   vect__analyzer__max_n: 2
+  >>> score
+  0.92507387872666735
+
+.. note:
+
+  A ``GridSearchCV`` object also stores the best classifier that it trained
+  as its ``best_estimator`` attribute. In this case, that isn't much use as
+  we trained on a small, 400-document subset of our full training set.
 
 
