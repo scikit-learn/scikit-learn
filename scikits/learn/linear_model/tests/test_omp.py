@@ -57,7 +57,7 @@ def test_with_without_gram():
     n_samples, n_features = 10, 15
     X, y = generate_data(n_samples, n_features)
     assert_array_almost_equal(orthogonal_mp(X, y, n_atoms=6),
-                              orthogonal_mp(X, y, n_atoms=6, compute_gram=True))
+                             orthogonal_mp(X, y, n_atoms=6, compute_gram=True))
 
 
 def test_with_without_gram_eps():
@@ -84,7 +84,8 @@ def test_bad_input():
     assert_raises(ValueError, orthogonal_mp, X, y, n_atoms=n_features + 1)
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy, eps=-1)
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_atoms=-1)
-    assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_atoms=n_features + 1)
+    assert_raises(ValueError, orthogonal_mp_gram, G, Xy,
+                  n_atoms=n_features + 1)
 
 
 def test_perfect_signal_recovery():
