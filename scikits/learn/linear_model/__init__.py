@@ -22,6 +22,7 @@ from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV, \
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV
 from .logistic import LogisticRegression
+from .omp import orthogonal_mp, orthogonal_mp_gram
 
 from . import sparse
 
