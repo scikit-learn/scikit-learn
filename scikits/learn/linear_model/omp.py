@@ -1,6 +1,11 @@
 """
 Orthogonal matching pursuit algorithms based on
 http://www.cs.technion.ac.il/~ronrubin/Publications/KSVX-OMP-v2.pdf
+
+OMP introduced in S. G. Mallat, Z. Zhang, Matching pursuits with time-frequency
+dictionaries, IEEE Transactions on Signal Processing, Vol. 41, No. 12. 
+(December 1993), pp. 3397-3415. 
+http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf
 """
 
 # Author: Vlad Niculae
@@ -12,25 +17,41 @@ from scipy import linalg
 
 def _cholesky_omp(X, y, n_atoms, eps=None):
     """
-    X: array of shape (n_samples, n_features)
+    Solves a single Orthogonal Matching Pursuit problem using
+    the Cholesky decomposition.
+
+    Parameters:
+    -----------
+    X: array, shape (n_samples, n_features)
         Input dictionary
 
     y: array, shape: n_samples
         Input targets
-    """
-    if eps == None:
-        stopping_condition = lambda: it == n_atoms  # len(idx) == n_atoms
-    else:
-        stopping_condition = lambda: np.dot(residual.T, residual) <= eps
     
-    # initializations
+    n_atoms: int
+        Targeted number of non-zero elements
+    
+    eps: float
+        Targeted squared error, if not None overrides n_atoms.
+
+    Returns:
+    --------
+    gamma: array, shape n_atoms
+        Non-zero elements of the solution
+    
+    idx: array, shape n_atoms
+        Indices of the positions of the elements in gamma within the solution
+        vector
+
+    """
+
     alpha = np.dot(X.T, y)
     residual = y
     it = 0
     idx = []
     L = np.ones((1, 1))
 
-    while not stopping_condition():
+    for it in xrange(X.shape[1]):
         lam = np.abs(np.dot(X.T, residual)).argmax()
         if len(idx) > 0:
             w = linalg.solve_triangular(L, np.dot(X[:, idx].T, X[:, lam]),
@@ -39,27 +60,59 @@ def _cholesky_omp(X, y, n_atoms, eps=None):
             L = np.r_[np.c_[L, np.zeros(len(L))],
                       np.atleast_2d(np.append(w, np.sqrt(1 - np.dot(w.T, w))))]
         idx.append(lam)
-        it += 1
         # solves LL'x = y as a composition of two triangular systems
         Lc = linalg.solve_triangular(L, alpha[idx], lower=True)
         gamma = linalg.solve_triangular(L, Lc, trans=1, lower=True)
         residual = y - np.dot(X[:, idx], gamma)
-    
+        if eps != None and np.dot(residual.T, residual) <= eps:
+            break
+        elif n_atoms != None and it == n_atoms - 1:
+            break
+
     return gamma, idx
 
 def _gram_omp(G, Xy, n_atoms, eps_0=None, eps=None):
+    """
+    Solves a single Orthogonal Matching Pursuit problem using
+    the Cholesky decomposition, based on the Gram matrix and more
+    precomputations.
+
+    Parameters:
+    -----------
+    G: array, shape (n_features, n_features)
+        Gram matrix of the input data matrix
+
+    Xy: array, shape: n_features
+        Input targets
+    
+    n_atoms: int
+        Targeted number of non-zero elements
+    
+    eps_0: float
+        Squared norm of y, required if eps is not None.
+    
+    eps: float
+        Targeted squared error, if not None overrides n_atoms.
+
+    Returns:
+    --------
+    gamma: array, shape n_atoms
+        Non-zero elements of the solution
+    
+    idx: array, shape n_atoms
+        Indices of the positions of the elements in gamma within the solution
+        vector
+
+    """
+
     idx = []
     L = np.ones((1, 1))
     alpha = Xy
     eps_curr = eps_0
     delta = 0
     it = 0
-    if eps == None:
-        stopping_condition = lambda: it == n_atoms
-    else:
-        stopping_condition = lambda: eps_curr <= eps
 
-    while not stopping_condition():
+    for it in xrange(len(G)):
         lam = np.abs(alpha).argmax()
         if len(idx) > 0:
             w = linalg.solve_triangular(L, G[idx, lam],
@@ -67,7 +120,6 @@ def _gram_omp(G, Xy, n_atoms, eps_0=None, eps=None):
             L = np.r_[np.c_[L, np.zeros(len(L))],
                       np.atleast_2d(np.append(w, np.sqrt(1 - np.inner(w, w))))]
         idx.append(lam)
-        it += 1
         Lc = linalg.solve_triangular(L, Xy[idx], lower=True)
         gamma = linalg.solve_triangular(L, Lc, trans=1, lower=True) 
         beta = np.dot(G[:, idx], gamma)        
@@ -76,10 +128,16 @@ def _gram_omp(G, Xy, n_atoms, eps_0=None, eps=None):
             eps_curr += delta
             delta = np.inner(gamma, beta[idx])
             eps_curr -= delta
+            if eps_curr <= eps:
+                break
+        elif n_atoms != None and it == n_atoms - 1:
+            break
     return gamma, idx
 
 def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
-    """
+    """Orthogonal Matching Pursuit (OMP)
+
+    Solves n_targets Orthogonal Matching Pursuit problems. 
 
     Parameters:
     -----------
@@ -111,6 +169,13 @@ def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
     if n_atoms == None and eps == None:
         raise ValueError('OMP needs either a target number of atoms (n_atoms) \
                          or a target residual error (eps)')
+    if eps != None and eps < 0:
+        raise ValueError("Epsilon must be positive")
+    if eps == None and n_atoms < 0:
+        raise ValueError("The number of atoms must be positive")
+    if eps == None and n_atoms > X.shape[1]:
+        raise ValueError("The number of atoms cannot be more than the number \
+                          of features")
     if compute_gram:
         G = np.dot(X.T, X)
         Xy = np.dot(X.T, y)
@@ -127,7 +192,10 @@ def orthogonal_mp(X, y, n_atoms=None, eps=None, compute_gram=False):
     return np.squeeze(coef)
 
 def orthogonal_mp_gram(G, Xy, n_atoms=None, eps=None, norms_squared=None):
-    """
+    """Gram Orthogonal Matching Pursuit (OMP)
+
+    Solves n_targets Orthogonal Matching Pursuit problems using only
+    the Gram matrix X.T * X and the product X * y.
 
     Parameters:
     -----------
@@ -164,6 +232,13 @@ def orthogonal_mp_gram(G, Xy, n_atoms=None, eps=None, norms_squared=None):
     if eps != None and norms_squared == None:
         raise ValueError('Gram OMP needs the precomputed norms in order \
                           to evaluate the error sum of squares.')
+    if eps != None and eps < 0:
+        raise ValueError("Epsilon must be positive")
+    if eps == None and n_atoms < 0:
+        raise ValueError("The number of atoms must be positive")
+    if eps == None and n_atoms > len(G):
+        raise ValueError("The number of atoms cannot be more than the number \
+                          of features")
     coef = np.zeros((len(G), Xy.shape[1]))
     for k in range(Xy.shape[1]):
         x, idx = _gram_omp(G, Xy[:, k], n_atoms,
