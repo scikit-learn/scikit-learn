@@ -137,7 +137,7 @@ on extracting the set of sparse components that best reconstruct the data:
 
 An inconvenient of principal component analysis (:class:`PCA`) is that the
 components extracter by this method have dense expressions, i. e. they have
-many nonzero coefficients when expressed as linear combinations of the original
+many non-zero coefficients when expressed as linear combinations of the original
 variables. This makes interpretation difficult in high dimensional settings.
 Also, in many cases, the real underlying components can be more naturally
 imagined as sparse vectors. For example in face recognition, components should
