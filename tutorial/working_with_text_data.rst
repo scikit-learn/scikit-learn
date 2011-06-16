@@ -329,14 +329,14 @@ analysis of the results::
   ...
 
                           precision    recall  f1-score   support
-  <BLANKLINE>
+  
              alt.atheism       0.95      0.80      0.87       319
            comp.graphics       0.96      0.97      0.96       389
                  sci.med       0.95      0.95      0.95       396
   soc.religion.christian       0.86      0.96      0.90       398
-  <BLANKLINE>
+  
              avg / total       0.93      0.92      0.92      1502
-  <BLANKLINE>
+  
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
   array([[254,   4,  11,  50],
