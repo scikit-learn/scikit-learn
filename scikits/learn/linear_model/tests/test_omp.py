@@ -85,3 +85,19 @@ def test_bad_input():
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy, eps=-1)
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_atoms=-1)
     assert_raises(ValueError, orthogonal_mp_gram, G, Xy, n_atoms=n_features + 1)
+
+
+def test_perfect_signal_recovery():
+    n_samples, n_features = 10, 15
+    n_atoms = 4
+    X, _ = generate_data(n_samples, n_features)
+    gamma = np.zeros(n_features)
+    idx = np.arange(n_features)
+    np.random.shuffle(idx)
+    idx = idx[:n_atoms]
+    gamma[idx] = np.random.normal(0, 5, n_atoms)
+    y = np.dot(X, gamma)
+    G, Xy = np.dot(X.T, X), np.dot(X.T, y)
+    assert_array_almost_equal(orthogonal_mp(X, y, n_atoms), gamma, decimal=1)
+    assert_array_almost_equal(orthogonal_mp_gram(G, Xy, n_atoms), gamma,
+                              decimal=1)
