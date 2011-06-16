@@ -20,11 +20,12 @@ from matplotlib import offsetbox
 
 from scikits.learn import manifold, datasets
 digits = datasets.load_digits(n_class=6)
+method = 'standard'
 
-print "Computing LLE embedding"
-X_r, err = manifold.locally_linear_embedding(digits.data, 30, 2, reg=1e-2)
+print "Computing LLE embedding (method = %s)" % method
+X_r, err = manifold.locally_linear_embedding(digits.data, 30, 2, reg=1e-2,
+                                             method=method)
 print "Done. Reconstruction error: %g" % err
-
 
 #----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
