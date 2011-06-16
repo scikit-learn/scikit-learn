@@ -82,7 +82,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack',
 
 
 def locally_linear_embedding(
-    X, n_neighbors, out_dim, reg=1e-3, eigen_solver='lobpcg',
+    X, n_neighbors, out_dim, reg=1e-3, eigen_solver='arpack',
     tol=1e-6, max_iter=100, method='standard', H_tol=1E-4, M_tol=1E-12):
     """
     Perform a Locally Linear Embedding analysis on the data.
@@ -240,7 +240,7 @@ def locally_linear_embedding(
         neighbors = neighbors[:, 1:]
 
         #find the eigenvectors and eigenvalues of each local covariance
-        # matrix we want V[i] to be a [n_neighbors x n_neighbors] matrix,
+        # matrix. We want V[i] to be a [n_neighbors x n_neighbors] matrix,
         # where the columns are eigenvectors
         V = np.zeros((N, n_neighbors, n_neighbors))
         nev = min(d_in, n_neighbors)
@@ -273,9 +273,10 @@ def locally_linear_embedding(
         # such that Sum[v; v in set]/Sum[v; v not in set] < eta
         s_range = np.zeros(N, dtype=int)
         evals_cumsum = np.cumsum(evals, 1)
-        eta_range = evals_cumsum[:, -2:] / evals_cumsum[:, :-1] - 1
+        eta_range = evals_cumsum[:, -1:] / evals_cumsum[:, :-1] - 1
         for i in range(N):
-            s_range[i] = n_neighbors - 2 - np.searchsorted(eta_range[i], eta)
+            s_range[i] = np.searchsorted(eta_range[i, ::-1], eta)
+        s_range += n_neighbors - nev  # number of zero eigenvalues
 
         #Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
