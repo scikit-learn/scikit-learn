@@ -93,7 +93,7 @@ pipeline = Pipeline([
 parameters = {
 # uncommenting more parameters will give better exploring power but will
 # increase processing time in a combinatorial way
-    'vect__max_df': (0.5, 0.75, 1.0),
+    'vect__max_df': (0.75, 1.0),
 #    'vect__max_features': (None, 5000, 10000, 50000),
     'vect__analyzer__max_n': (1, 2), # words or bigrams
 #    'tfidf__use_idf': (True, False),
@@ -104,7 +104,7 @@ parameters = {
 
 # find the best parameters for both the feature extraction and the
 # classifier
-grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1)
+grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=True)
 
 # cross-validation doesn't work if the length of the data is not known,
 # hence use lists instead of iterators
@@ -121,6 +121,4 @@ print
 
 print "Best score: %0.3f" % grid_search.best_score
 print "Best parameters set:"
-best_parameters = grid_search.best_estimator._get_params()
-for param_name in sorted(parameters.keys()):
-    print "\t%s: %r" % (param_name, best_parameters[param_name])
+pprint(grid_search.best_params_)

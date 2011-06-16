@@ -2,6 +2,7 @@
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
+#         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
 import copy
@@ -62,18 +63,24 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
 
     Returns the score and the instance of the classifier
     """
+    start_time = time.time()
     if verbose > 1:
-        start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
-                                     for k, v in clf_params.iteritems()))
+                                for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
     # update parameters of the classifier after a copy of its base structure
     clf = copy.deepcopy(base_clf)
     clf._set_params(**clf_params)
 
     if isinstance(X, list) or isinstance(X, tuple):
-        X_train = [X[i] for i, cond in enumerate(train) if cond]
-        X_test = [X[i] for i, cond in enumerate(test) if cond]
+        if train.dtype == np.bool:
+            # array mask
+            X_train = [X[i] for i, cond in enumerate(train) if cond]
+            X_test = [X[i] for i, cond in enumerate(test) if cond]
+        else:
+            # assume indices
+            X_train = [X[i] for i in train]
+            X_test = [X[i] for i in test]
     else:
         if sp.issparse(X):
             # For sparse matrices, slicing only works with indices
@@ -85,41 +92,86 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             test = ind[test]
         X_train = X[train]
         X_test = X[test]
+
     if y is not None:
+        # supervised learning: score or loss in computed w.r.t. user provided
+        # ground truth
         y_test = y[test]
         y_train = y[train]
-    else:
-        y_test = None
-        y_train = None
 
-    clf.fit(X_train, y_train, **fit_params)
+        clf.fit(X_train, y_train, **fit_params)
 
-    if loss_func is not None:
-        y_pred = clf.predict(X_test)
-        this_score = -loss_func(y_test, y_pred)
-    elif score_func is not None:
-        y_pred = clf.predict(X_test)
-        this_score = score_func(y_test, y_pred)
-    else:
-        this_score = clf.score(X_test, y_test)
-
-    if y is not None:
-        if hasattr(y, 'shape'):
-            this_n_test_samples = y.shape[0]
+        if loss_func is not None:
+            y_pred = clf.predict(X_test)
+            score = -loss_func(y_test, y_pred)
+        elif score_func is not None:
+            y_pred = clf.predict(X_test)
+            score = score_func(y_test, y_pred)
         else:
-            this_n_test_samples = len(y)
+            score = clf.score(X_test, y_test)
+
+        if hasattr(y_test, 'shape'):
+            n_test_samples = y_test.shape[0]
+        else:
+            n_test_samples = len(y_test)
+
     else:
+        # unsupervised learning: score or loss is computed w.r.t. ability to
+        # find compatible 'predictions' the test set that is concatenated to
+        # halves of the splitted training set. This is especially useful to
+        # evaluate clustering parameters by measuring the stability of the
+        # label assignments using a symmetric measure such as the
+        # v_measure_score
+        split = X_train.shape[0] / 2
+
         if hasattr(X, 'shape'):
-            this_n_test_samples = X.shape[0]
+            n_test_samples = X_test.shape[0]
         else:
-            this_n_test_samples = len(X)
+            n_test_samples = len(X_test)
 
+        if isinstance(X, list) or isinstance(X, tuple):
+            X_a = X_test + X_train[:split]
+            X_b = X_test + X_train[split:]
+        elif sp.issparse(X):
+            # train and test are integer indices
+            X_a = X[np.concatenate((test, train[:split]))]
+            X_b = X[np.concatenate((test, train[split:]))]
+        else:
+            # general array case
+            X_a = np.concatenate((X_test, X_train[:split]))
+            X_b = np.concatenate((X_test, X_train[split:]))
+
+        # fit models on overlapping subsets and evaluate the stability of the
+        # predictions
+        if hasattr(clf, 'fit_predict'):
+            labels_a = clf.fit_predict(X_a)[:n_test_samples]
+            labels_b = copy.deepcopy(clf).fit_predict(X_b)[:n_test_samples]
+        else:
+            clf_a = clf.fit(X_a)
+            clf_b = copy.deepcopy(clf).fit(X_b)
+            if hasattr(clf_a, 'labels_'):
+                # backward compat with generic clustering API
+                labels_a = clf_a.labels_[:n_test_samples]
+                labels_b = clf_b.labels_[:n_test_samples]
+            else:
+                # expect the predict method for clustering models
+                labels_a = clf_a.predict(X_test)
+                labels_b = clf_b.predict(X_test)
+
+        # loss or score functions are expected to be symmetric
+        if loss_func is not None:
+            score = -loss_func(labels_a, labels_b)
+        elif score_func is not None:
+            score = score_func(labels_a, labels_b)
+        else:
+            # XXX: clf_a.predict is probably redundant in that case...
+            score = clf_a.score(X_test, labels_b)
+
+    duration = time.time() - start_time
     if verbose > 1:
-        end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
-                                                       start_time))
+        end_msg = "%s - %s" % (msg, logger.short_format_time(duration))
         print "[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg)
-    return this_score, clf, this_n_test_samples
+    return score, duration, clf, n_test_samples
 
 
 class GridSearchCV(BaseEstimator):
@@ -160,7 +212,7 @@ class GridSearchCV(BaseEstimator):
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
-            
+
             - None, in which case all the jobs are immediatly
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
@@ -186,18 +238,56 @@ class GridSearchCV(BaseEstimator):
     verbose: integer
         Controls the verbosity: the higher, the more messages.
 
+    Attributes
+    ----------
+    grid_scores_ : list of (dict(), float) pairs
+        Store the (iid) mean score for each parameters dictionary
+
+    scores_ : array with shape [n_grid_points, n_folds]
+        Store the row scores of individual fits. In case a loss_func was used
+        we have score is defined as `score = -loss`
+
+    durations_ : array with shape [n_grid_points, n_folds]
+        Store the recorded durations of the fits in seconds.
+
+    params_ : list of dict
+        Parameters matching the first axis of scores_ and durations_
+
+    best_params_: dict
+        Combination of parameter values that scored best on average.
+
     Examples
     --------
     >>> from scikits.learn import svm, grid_search, datasets
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = svm.SVR()
-    >>> clf = grid_search.GridSearchCV(svr, parameters)
-    >>> clf.fit(iris.data, iris.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(n_jobs=1, verbose=0, fit_params={}, loss_func=None,
-                 refit=True, cv=None, iid=True,
-                 estimator=SVR(kernel='rbf', C=1.0, probability=False, ...
-                 ...
+    >>> svc = svm.SVC()
+    >>> clf = grid_search.GridSearchCV(svc, parameters)
+    >>> clf.fit(iris.data, iris.target)
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    GridSearchCV(n_jobs=1, verbose=0, fit_params={}, loss_func=None...
+           cv=None, iid=True,
+           estimator=SVC(kernel='rbf', C=1.0, probability=False,...
+           ...
+
+    >>> from pprint import pprint
+    >>> pprint(clf.params_)
+    [{'C': 1, 'kernel': 'linear'},
+     {'C': 1, 'kernel': 'rbf'},
+     {'C': 10, 'kernel': 'linear'},
+     {'C': 10, 'kernel': 'rbf'}]
+
+    >>> clf.scores_
+    array([[ 0.96,  0.98,  1.  ],
+           [ 0.92,  0.88,  0.9 ],
+           [ 0.96,  0.98,  0.96],
+           [ 0.96,  0.94,  0.98]])
+
+    >>> clf.durations_.shape
+    (4, 3)
+
+    >>> pprint(clf.best_params_)
+    {'C': 1, 'kernel': 'linear'}
 
     Notes
     ------
@@ -211,13 +301,14 @@ class GridSearchCV(BaseEstimator):
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
                  fit_params={}, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs',
-                 ):
+                 verbose=0, pre_dispatch='2 * n_jobs'):
+
         assert hasattr(estimator, 'fit') and (hasattr(estimator, 'predict')
                         or hasattr(estimator, 'score')), (
             "estimator should a be an estimator implementing 'fit' and "
             "'predict' or 'score' methods, %s (type %s) was passed" %
                     (estimator, type(estimator)))
+
         if loss_func is None and score_func is None:
             assert hasattr(estimator, 'score'), ValueError(
                     "If no loss_func is specified, the estimator passed "
@@ -281,44 +372,58 @@ class GridSearchCV(BaseEstimator):
                 self.score_func, self.verbose, **self.fit_params)
                     for clf_params in grid for train, test in cv)
 
-        # Out is a list of triplet: score, estimator, n_test_samples
+        # out is a list of tuples: score, duration, estimator, n_test_samples
         n_grid_points = len(list(grid))
         n_fits = len(out)
         n_folds = n_fits // n_grid_points
 
-        scores = list()
-        for grid_start in range(0, n_fits, n_folds):
-            n_test_samples = 0
-            score = 0
-            for this_score, estimator, this_n_test_samples in \
-                                    out[grid_start:grid_start + n_folds]:
-                if self.iid:
-                    this_score *= this_n_test_samples
-                score += this_score
-                n_test_samples += this_n_test_samples
-            if self.iid:
-                score /= float(n_test_samples)
-            scores.append((score, estimator))
+        # Group results for consecutive folds on the same parameters set
+        durations = np.empty((n_grid_points, n_folds))
+        scores = np.empty((n_grid_points, n_folds))
+        n_test_samples = np.empty((n_grid_points, n_folds))
+        estimators = list()
+        for i in range(0, n_grid_points):
+            slice_ = slice(i * n_folds, (i + 1) * n_folds)
+            for j, (score, duration, clf, n) in enumerate(out[slice_]):
+                scores[i, j] = score
+                durations[i, j] = duration
+                n_test_samples[i, j] = n
+            estimators.append(clf)
 
-        # Note: we do not use max(out) to make ties deterministic even if
+        # compute the mean score for each estimator
+        if self.iid:
+            # XXX: do we really need this special case or should we assume
+            # that all folds have approximately the same size?
+            n = n_test_samples
+            mean_scores = np.sum(scores * n, axis=1) / n.sum(axis=1)
+        else:
+            mean_scores = scores.mean(axis=1)
+
+        # Note: we do not use max() to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         best_score = None
-        for score, estimator in scores:
+        for score, estimator, params in zip(mean_scores, estimators, grid):
             if best_score is None:
                 best_score = score
                 best_estimator = estimator
+                best_params = params
             else:
                 if score > best_score:
                     best_score = score
                     best_estimator = estimator
+                    best_params = params
 
         if best_score is None:
             raise ValueError('Best score could not be found')
         self.best_score = best_score
+        self.best_params_ = best_params
 
         if self.refit:
             # fit the best estimator using the entire dataset
-            best_estimator.fit(X, y, **self.fit_params)
+            if y is not None:
+                best_estimator.fit(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
 
         self.best_estimator = best_estimator
         if hasattr(best_estimator, 'predict'):
@@ -327,10 +432,13 @@ class GridSearchCV(BaseEstimator):
             self.score = best_estimator.score
 
         # Store the computed scores
-        # XXX: the name is too specific, it shouldn't have
-        # 'grid' in it. Also, we should be retrieving/storing variance
+        # XXX: the name is too specific, it shouldn't have 'grid' in it.
         self.grid_scores_ = [
-            (clf_params, score) for clf_params, (score, _) in zip(grid, scores)]
+            (params, score) for params, score in zip(grid, mean_scores)]
+        self.params_ = list(grid)
+        self.scores_ = scores
+        self.durations_ = durations
+
         return self
 
     def score(self, X, y=None):

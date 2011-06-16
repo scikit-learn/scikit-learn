@@ -49,13 +49,15 @@ scores = [
 ]
 
 for score_name, score_func in scores:
-    clf = GridSearchCV(SVC(C=1), tuned_parameters, score_func=score_func)
+    print "Performing grid search with score function: " + score_name
+    clf = GridSearchCV(SVC(C=1), tuned_parameters, score_func=score_func,
+                       verbose=0)
     clf.fit(X[train], y[train], cv=StratifiedKFold(y[train], 5))
     y_true, y_pred = y[test], clf.predict(X[test])
 
-    print "Classification report for the best estimator: "
-    print clf.best_estimator
-    print "Tuned for '%s' with optimal value: %0.3f" % (
+    print "Classification report for the best set of parameters:"
+    pprint(clf.best_params_)
+    print "with estimator tuned for '%s' with optimal value: %0.3f" % (
         score_name, score_func(y_true, y_pred))
     print classification_report(y_true, y_pred)
     print "Grid scores:"
