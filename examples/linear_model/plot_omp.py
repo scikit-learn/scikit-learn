@@ -50,5 +50,7 @@ pl.subplot(3, 1, 3)
 pl.title("Recovered signal from noisy measurements")
 pl.stem(idx_r, x_r[idx_r])
 
-pl.subplots_adjust(0.06, 0.04, 0.98, 0.94, 0.2, 0.38)
+pl.subplots_adjust(0.06, 0.04, 0.94, 0.90, 0.20, 0.38)
+pl.suptitle('Sparse signal recovery with Orthogonal Matching Pursuit',
+            fontsize=16)
 pl.show()
