@@ -51,10 +51,14 @@ X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
 
-print "Computing LLE embedding"
-X_lle, err = manifold.locally_linear_embedding(X, 30, 2, reg=1e-2)
-print "Done. Reconstruction error: %g" % err
+from scikits.learn import manifold, datasets
+digits = datasets.load_digits(n_class=6)
+method = 'standard'
 
+print "Computing LLE embedding (method = %s)" % method
+X_lle, err = manifold.locally_linear_embedding(digits.data, 30, 2, reg=1e-2,
+                                             method=method)
+print "Done. Reconstruction error: %g" % err
 
 #----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
