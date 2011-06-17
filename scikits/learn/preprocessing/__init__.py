@@ -91,20 +91,19 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 class Scaler(BaseEstimator):
     """Standardize features by removing the mean and scaling to unit variance
 
-    Centering and scaling happen indepentently on each feature by
-    computing the statistics on the samples from the training set. Mean
-    and standard deviation are then stored to be used on later data
-    using the `transform` method.
+    Centering and scaling happen indepently on each feature by computing
+    the relevant statistics on the samples in the training set. Mean and
+    standard deviation are then stored to be used on later data using the
+    `transform` method.
 
-    Standardazition of a dataset is a common requirement for many
-    machine learning estimators implemented in the scikit: they might
-    behave badly if the individual feature do not more or less look like
-    standard normally distributed data (e.g. Gaussian with 0 mean and
-    unit variance).
+    Standardization of a dataset is a common requirement for many
+    machine learning estimators: they might behave badly if the
+    individual feature do not more or less look like standard normally
+    distributed data (e.g. Gaussian with 0 mean and unit variance).
 
     For instance many elements used in the objective function of
     a learning algorithm (such as the RBF kernel of Support Vector
-    Machines or the l1 and l2 regularizers of linear models) assume that
+    Machines or the L1 and L2 regularizers of linear models) assume that
     all features are centered around 0 and have variance in the same
     order. If a feature has a variance that is orders of magnitude larger
     that others, it might dominate the objective function and make the
