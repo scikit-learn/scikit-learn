@@ -392,7 +392,7 @@ class LARS(LinearModel):
         n_samples = X.shape[0]
 
         if self.method == 'lasso':
-            alpha = self.alpha * n_samples  # scale alpha with nb of samples
+            alpha = self.alpha
         else:
             alpha = 0.
 
@@ -471,7 +471,7 @@ class LassoLARS (LARS):
     LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
          precompute='auto', alpha=0.01)
     >>> print clf.coef_
-    [ 0.         -0.72649658]
+    [ 0.         -0.78649658]
 
     References
     ----------
