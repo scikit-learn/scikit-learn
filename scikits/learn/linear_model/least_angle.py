@@ -295,6 +295,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
     return alphas, active, coefs.T
 
 
+################################################################################
+# Estimator classes
+
 class LARS(LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
@@ -307,6 +310,17 @@ class LARS(LinearModel):
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
 
     max_iter: integer, optional
         Maximum number of iterations to perform.
@@ -324,7 +338,8 @@ class LARS(LinearModel):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LARS()
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1], max_features=1)
-    LARS(max_iter=500, verbose=False, fit_intercept=True)
+    LARS(normalize=True, precompute='auto', max_iter=500, verbose=False,
+       fit_intercept=True)
     >>> print clf.coef_
     [ 0.         -0.81649658]
 
@@ -336,15 +351,16 @@ class LARS(LinearModel):
     --------
     lars_path, LassoLARS
     """
-    def __init__(self, fit_intercept=True, verbose=False, max_iter=500):
+    def __init__(self, fit_intercept=True, verbose=False, normalize=True, 
+                 precompute='auto', max_iter=500):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
+        self.normalize = normalize
         self.method = 'lar'
+        self.precompute = precompute 
 
-    def fit(self, X, y, normalize=True, max_features=None,
-             precompute='auto', overwrite_X=False, **params):
-
+    def fit(self, X, y, max_features=None, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -354,11 +370,6 @@ class LARS(LinearModel):
 
         y : array-like, shape = [n_samples]
             Target values.
-
-        precompute : True | False | 'auto' | array-like
-            Whether to use a precomputed Gram matrix to speed up
-            calculations. If set to 'auto' let us decide. The Gram
-            matrix can also be passed as argument.
 
         Returns
         -------
@@ -379,12 +390,13 @@ class LARS(LinearModel):
         else:
             alpha = 0.
 
-        if normalize:
+        if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
             nonzeros = np.flatnonzero(norms)
             X[:, nonzeros] /= norms[nonzeros]
 
         # precompute if n_samples > n_features
+        precompute = self.precompute
         if hasattr(precompute, '__array__'):
             # copy as it's going to be modified
             Gram = precompute.copy()
@@ -415,16 +427,28 @@ class LassoLARS (LARS):
 
     Parameters
     ----------
-    alpha : float, optional
-        Constant that multiplies the L1 term. Defaults to 1.0
+    n_features : int, optional
+        Number of selected active features
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
     max_iter: integer, optional
         Maximum number of iterations to perform.
+
 
     Attributes
     ----------
@@ -439,7 +463,8 @@ class LassoLARS (LARS):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.LassoLARS(alpha=0.01)
     >>> clf.fit([[-1,1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLARS(alpha=0.01, max_iter=500, verbose=False, fit_intercept=True)
+    LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+         precompute='auto', alpha=0.01)
     >>> print clf.coef_
     [ 0.         -0.72649658]
 
@@ -452,10 +477,13 @@ class LassoLARS (LARS):
     lars_path, Lasso
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, max_iter=500,
-                 verbose=False):
+    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False, 
+                 normalize=True, precompute='auto', max_iter=500):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.verbose = verbose
-        self.method = 'lasso'
         self.max_iter = max_iter
+        self.verbose = verbose
+        self.normalize = normalize
+        self.method = 'lasso'
+        self.precompute = precompute 
+
