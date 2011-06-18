@@ -8,8 +8,10 @@ from math import ceil
 import numpy as np
 
 from .base import is_classifier, clone
+from .utils import check_random_state
 from .utils.extmath import factorial, combinations
 from .utils.fixes import unique
+from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 
 
@@ -479,6 +481,124 @@ class LeavePLabelOut(object):
                / factorial(self.p)
 
 
+class Bootstrap(object):
+    """Bootstrapping cross-validation iterator
+
+    Provides train/test indices to split data in train test sets
+    """
+
+    def __init__(self, n, n_bootstraps=3, n_train=0.5, n_test=None,
+                 random_state=None):
+        """Bootstrapping cross validation
+
+        Provides train/test indices to split data in train test sets
+        while resampling the input n_bootstraps times: each time a new
+        random split of the data is performed and then samples are drawn
+        (with replacement) on each side of the split to build the training
+        and test sets.
+
+        Note: contrary to other cross-validation strategies, bootstrapping
+        will allow some samples to occur several times in each splits.
+
+        Parameters
+        ----------
+        n : int
+            Total number of elements in the dataset.
+
+        n_bootstraps : int (default is 3)
+            Number of bootstrapping iterations
+
+        n_train : int or float (default is 0.5)
+            If int, number of samples to include in the training split
+            (should be smaller than the total number of samples passed
+            in the dataset).
+
+            If float, should be between 0.0 and 1.0 and represent the
+            proportion of the dataset to include in the train split.
+
+        n_test : int or float or None (default is None)
+            If int, number of samples to include in the training set
+            (should be smaller than the total number of samples passed
+            in the dataset).
+
+            If float, should be between 0.0 and 1.0 and represent the
+            proportion of the dataset to include in the test split.
+
+            If None, n_test is set as the complement of n_train.
+
+        random_state : int or RandomState
+            Pseudo number generator state used for random sampling.
+
+        Examples
+        ----------
+        >>> from scikits.learn import cross_val
+        >>> bs = cross_val.Bootstrap(9, random_state=0)
+        >>> len(bs)
+        3
+        >>> print bs
+        Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
+        >>> for train_index, test_index in bs:
+        ...    print "TRAIN:", train_index, "TEST:", test_index
+        ...
+        TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
+        TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
+        TRAIN: [4 7 0 1 1] TEST: [5 3 6 5]
+        """
+        self.n = n
+        self.n_bootstraps = n_bootstraps
+
+        if isinstance(n_train, float) and n_train >= 0.0 and n_train <= 1.0:
+            self.n_train = ceil(n_train * n)
+        elif isinstance(n_train, int):
+            self.n_train = n_train
+        else:
+            raise ValueError("Invalid value for n_train: %r" % n_train)
+        if self.n_train > n:
+            raise ValueError("n_train=%d should not be larger than n=%d" %
+                             (self.n_train, n))
+
+        if isinstance(n_test, float) and n_test >= 0.0 and n_test <= 1.0:
+            self.n_test = ceil(n_test * n)
+        elif isinstance(n_test, int):
+            self.n_test = n_test
+        elif n_test is None:
+            self.n_test = self.n - self.n_train
+        else:
+            raise ValueError("Invalid value for n_test: %r" % n_test)
+        if self.n_test > n:
+            raise ValueError("n_test=%d should not be larger than n=%d" %
+                             (self.n_test, n))
+
+        self.random_state = random_state
+
+    def __iter__(self):
+        rng = self.random_state = check_random_state(self.random_state)
+        for i in range(self.n_bootstraps):
+            # random partition
+            permutation = rng.permutation(self.n)
+            ind_train = permutation[:self.n_train]
+            ind_test = permutation[self.n_train:self.n_train + self.n_test]
+
+            # bootstrap in each split individually
+            train = rng.randint(0, self.n_train, size=(self.n_train,))
+            test = rng.randint(0, self.n_test, size=(self.n_test,))
+            yield ind_train[train], ind_test[test]
+
+    def __repr__(self):
+        return ('%s(%d, n_bootstraps=%d, n_train=%d, n_test=%d, '
+                'random_state=%d)' % (
+                    self.__class__.__name__,
+                    self.n,
+                    self.n_bootstraps,
+                    self.n_train,
+                    self.n_test,
+                    self.random_state,
+                ))
+
+    def __len__(self):
+        return self.n_bootstraps
+
+
 def _cross_val_score(estimator, X, y, score_func, train, test, iid):
     """Inner loop for cross validation"""
     if score_func is None:
@@ -496,7 +616,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test, iid):
 
 
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
-                n_jobs=1, verbose=0):
+                    n_jobs=1, verbose=0):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -526,12 +646,14 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     verbose: integer, optional
         The verbosity level
     """
-    n_samples = len(X)
+    X, y = check_arrays(X, y, sparse_format='csr')
+    n_samples = X.shape[0]
     if cv is None:
+        indices = hasattr(X, 'tocsr')
         if y is not None and is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3)
+            cv = StratifiedKFold(y, k=3, indices=indices)
         else:
-            cv = KFold(n_samples, k=3)
+            cv = KFold(n_samples, k=3, indices=indices)
     if score_func is None:
         assert hasattr(estimator, 'score'), ValueError(
                 "If no score_func is specified, the estimator passed "
@@ -541,14 +663,13 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, iid=False,
     # independent, and that it is pickle-able.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                                        train, test, iid)
+                                          train, test, iid)
                 for train, test in cv)
     return np.array(scores)
 
 
 def _permutation_test_score(estimator, X, y, cv, score_func):
-    """Auxilary function for permutation_test_score
-    """
+    """Auxilary function for permutation_test_score"""
     y_test = list()
     y_pred = list()
     for train, test in cv:
@@ -618,17 +739,16 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     Ojala and Garriga. Permutation Tests for Studying Classifier Performance.
     The Journal of Machine Learning Research (2010) vol. 11
     """
-    n_samples = len(X)
+    X, y = check_arrays(X, y, sparse_format='csr')
+    n_samples = X.shape[0]
     if cv is None:
+        indices = hasattr(X, 'tocsr')
         if is_classifier(estimator):
-            cv = StratifiedKFold(y, k=3)
+            cv = StratifiedKFold(y, k=3, indices=indices)
         else:
-            cv = KFold(n_samples, k=3)
+            cv = KFold(n_samples, k=3, indices=indices)
 
-    if random_state is None:
-        random_state = np.random.RandomState()
-    elif isinstance(random_state, int):
-        random_state = np.random.RandomState(random_state)
+    random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.

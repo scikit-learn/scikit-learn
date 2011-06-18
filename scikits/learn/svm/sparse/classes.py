@@ -195,6 +195,9 @@ class LinearSVC(SparseBaseLibLinear, ClassifierMixin,
         is the standard used in SVC. The 'l1' leads to ``coef_``
         vectors that are sparse.
 
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
+
     dual : bool, (default True)
         Select the algorithm to either solve the dual or primal
         optimization problem.

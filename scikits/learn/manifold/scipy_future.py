@@ -1142,7 +1142,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     Find 6 eigenvectors of the identity matrix:
 
     >>> id = np.identity(13)
-    >>> vals, vecs = sp.sparse.linalg.eigs(id, k=6)
+    >>> vals, vecs = eigs(id, k=6)
     >>> vals
     array([ 1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j])
     >>> vecs.shape
@@ -1379,7 +1379,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     Examples
     --------
     >>> id = np.identity(13)
-    >>> vals, vecs = sp.sparse.linalg.eigsh(id, k=6)
+    >>> vals, vecs = eigsh(id, k=6)
     >>> vals
     array([ 1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j])
     >>> vecs.shape

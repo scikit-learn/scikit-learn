@@ -8,8 +8,8 @@ from operator import itemgetter
 import re
 import unicodedata
 import numpy as np
-from ..base import BaseEstimator
-from ..preprocessing.sparse import Normalizer
+from ..base import BaseEstimator, TransformerMixin
+from ..preprocessing import Normalizer
 
 ENGLISH_STOP_WORDS = set([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
@@ -412,7 +412,7 @@ class CountVectorizer(BaseEstimator):
         return self._build_vectors(raw_documents)
 
 
-class TfidfTransformer(BaseEstimator):
+class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a TF or TF-IDF representation
 
     TF means term-frequency while TF-IDF means term-frequency times inverse
@@ -479,7 +479,7 @@ class TfidfTransformer(BaseEstimator):
         n_samples, n_features = X.shape
 
         if self.use_tf:
-            X = Normalizer().transform(X)
+            X = Normalizer(norm='l1').transform(X)
 
         if self.use_idf:
             d = sp.lil_matrix((len(self.idf), len(self.idf)))

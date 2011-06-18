@@ -31,7 +31,7 @@ class BayesianRidge(LinearModel):
         Target values for training vectors
 
     n_iter : int, optional
-        Maximum number of interations.  Default is 300.
+        Maximum number of iterations.  Default is 300.
 
     eps : float, optional
         Stop the algorithm if w has converged. Default is 1.e-3.
@@ -232,7 +232,7 @@ class ARDRegression(LinearModel):
         Target values for training vectors
 
     n_iter : int, optional
-        Maximum number of interations. Default is 300
+        Maximum number of iterations. Default is 300
 
     eps : float, optional
         Stop the algorithm if w has converged. Default is 1.e-3.

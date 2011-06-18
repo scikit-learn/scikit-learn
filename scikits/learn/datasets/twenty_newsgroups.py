@@ -44,6 +44,9 @@ from .base import get_data_home
 from .base import load_filenames
 
 
+logger = logging.getLogger(__name__)
+
+
 URL = ("http://people.csail.mit.edu/jrennie/"
             "20Newsgroups/20news-bydate.tar.gz")
 ARCHIVE_NAME = "20news-bydate.tar.gz"
@@ -98,13 +101,13 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
         if not os.path.exists(archive_path):
             if download_if_missing:
-                logging.warn("Downloading dataset from %s (14 MB)", URL)
+                logger.warn("Downloading dataset from %s (14 MB)", URL)
                 opener = urllib.urlopen(URL)
                 open(archive_path, 'wb').write(opener.read())
             else:
                 raise IOError("%s is missing" % archive_path)
 
-        logging.info("Decompressing %s", archive_path)
+        logger.info("Decompressing %s", archive_path)
         tarfile.open(archive_path, "r:gz").extractall(path=twenty_home)
         os.remove(archive_path)
 

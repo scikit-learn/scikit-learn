@@ -9,10 +9,10 @@ import warnings
 import numpy as np
 from scipy import linalg, ndimage
 
-from .base import BaseEstimator, ClassifierMixin
+from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 
 
-class LDA(BaseEstimator, ClassifierMixin):
+class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     """
     Linear Discriminant Analysis (LDA)
 
@@ -193,8 +193,8 @@ class LDA(BaseEstimator, ClassifierMixin):
 
     def transform(self, X):
         """
-        This function return the decision function values related to each
-        class on an array of test vectors X.
+        Project the data so as to maximize class separation (large separation
+        between projected class means and small variance within each class).
 
         Parameters
         ----------
@@ -208,7 +208,7 @@ class LDA(BaseEstimator, ClassifierMixin):
         # center and scale data
         X = np.dot(X - self.xbar_, self.scaling)
         n_comp = X.shape[1] if self.n_components is None else self.n_components
-        return np.dot(X, self.coef_[:, :n_comp].T) + self.intercept_
+        return np.dot(X, self.coef_[:n_comp].T)
 
     def predict(self, X):
         """

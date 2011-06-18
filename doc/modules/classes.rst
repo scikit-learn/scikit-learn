@@ -148,7 +148,9 @@ Naive Bayes
    :toctree: generated/
    :template: class.rst
 
-   naive_bayes.GNB
+   naive_bayes.GaussianNB
+   naive_bayes.MultinomialNB
+   naive_bayes.BernoulliNB
 
 
 Nearest Neighbors
@@ -265,6 +267,7 @@ Classification metrics
    metrics.precision_recall_curve
    metrics.zero_one_score
    metrics.zero_one
+   metrics.hinge_loss
 
 
 Regression metrics
@@ -394,6 +397,26 @@ Linear Discriminant Analysis
    lda.LDA
 
 
+Partial Least Squares
+=====================
+
+.. automodule:: scikits.learn.pls
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: class.rst
+
+   pls.PLSRegression
+   pls.PLSCanonical
+   pls.CCA
+   pls.PLSSVD
+
+
 Cross Validation
 ================
 
@@ -414,6 +437,7 @@ Cross Validation
    cross_val.StratifiedKFold
    cross_val.LeaveOneLabelOut
    cross_val.LeavePLabelOut
+   cross_val.Bootstrap
 
 
 Grid Search
@@ -485,7 +509,7 @@ From images
 
 
 From text
--------------
+---------
 
 .. automodule:: scikits.learn.feature_extraction.text
    :no-members:
@@ -504,6 +528,37 @@ From text
    feature_extraction.text.CountVectorizer
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.Vectorizer
+
+
+Preprocessing and normalization
+===============================
+
+.. automodule:: scikits.learn.preprocessing
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: scikits.learn
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: class.rst
+
+   preprocessing.Scaler
+   preprocessing.Normalizer
+   preprocessing.Binarizer
+   preprocessing.LabelBinarizer
+   preprocessing.KernelCenterer
+
+
+.. autosummary::
+
+   :toctree: generated/
+   :template: function.rst
+
+   preprocessing.scale
+   preprocessing.normalize
+   preprocessing.binarize
 
 
 Manifold learning
@@ -542,10 +597,10 @@ Pipeline
    pipeline.Pipeline
 
 
-Partial Least Squares
-=====================
+Utilities
+=========
 
-.. automodule:: scikits.learn.pls
+.. automodule:: scikits.learn.utils
    :no-members:
    :no-inherited-members:
 
@@ -554,10 +609,8 @@ Partial Least Squares
 .. autosummary::
 
    :toctree: generated/
-   :template: class.rst
+   :template: function.rst
 
-   pls.PLSRegression
-   pls.PLSCanonical
-   pls.CCA
-   pls.PLSSVD
-
+   utils.check_random_state
+   utils.resample
+   utils.shuffle

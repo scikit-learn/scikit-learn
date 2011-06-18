@@ -449,6 +449,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     Example
     -------
 
+      >>> from scikits.learn.datasets.samples_generator import make_blobs
       >>> samples, labels = make_blobs(n_samples=10, centers=3, n_features=2)
       >>> samples.shape
       (10, 2)

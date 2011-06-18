@@ -9,6 +9,7 @@ from scipy.sparse import linalg, eye, csr_matrix
 from scipy.sparse.linalg import LinearOperator
 from scipy_future import eigsh
 from ..base import BaseEstimator
+from ..utils import check_random_state
 from ..neighbors import kneighbors_graph, BallTree, barycenter_weights
 
 try:
@@ -18,8 +19,8 @@ except ImportError:
     pyamg_available = False
 
 
-def null_space(M, k, k_skip=1, eigen_solver='arpack',
-               tol=1E-6, max_iter=100):
+def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
+              random_state=None):
     """
     Find the null space of a matrix M.
 
@@ -50,6 +51,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack',
     max_iter : maximum number of iterations for 'arpack' or 'lobpcg' methods
           not used if eigen_solver=='dense'
     """
+    random_state = check_random_state(random_state)
 
     if eigen_solver == 'arpack':
         eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
@@ -83,9 +85,9 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack',
 
 def locally_linear_embedding(
     X, n_neighbors, out_dim, reg=1e-3, eigen_solver='arpack',
-    tol=1e-6, max_iter=100, method='standard', H_tol=1E-4, M_tol=1E-12):
-    """
-    Perform a Locally Linear Embedding analysis on the data.
+    tol=1e-6, max_iter=100, method='standard', H_tol=1E-4, M_tol=1E-12,
+    random_state=None):
+    """Perform a Locally Linear Embedding analysis on the data.
 
     Parameters
     ----------
@@ -103,9 +105,9 @@ def locally_linear_embedding(
         regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
-    eigen_solver : {'lobpcg', 'dense'}
-        use the lobpcg eigensolver or a dense eigensolver based on LAPACK
-        routines. The lobpcg solver is usually faster but depends on PyAMG.
+    eigen_solver : {'arpack', 'lobpcg', 'dense'}
+        arpack can handle both dense and sparse data efficiently
+        lobpcg solver is usually faster than dense but depends on PyAMG.
 
     max_iter : integer
         maximum number of iterations for the lobpcg solver.
@@ -126,7 +128,6 @@ def locally_linear_embedding(
 
     modified_tol : tolerance used for modified LLE method
                   only referenced if method == 'modified'
-
 
     Returns
     -------
@@ -345,14 +346,13 @@ def locally_linear_embedding(
             M[nbrs_x, nbrs_y] -= GiGiT
             M[neighbors[i], neighbors[i]] += 1
 
-    return null_space(M, out_dim, k_skip=1,
-                      eigen_solver=eigen_solver,
-                      tol=tol, max_iter=max_iter)
+    return null_space(M, out_dim, k_skip=1, eigen_solver=eigen_solver,
+                      tol=tol, max_iter=max_iter,
+                      random_state=random_state)
 
 
 class LocallyLinearEmbedding(BaseEstimator):
-    """
-    Locally Linear Embedding
+    """Locally Linear Embedding
 
     Parameters
     ----------
@@ -371,14 +371,14 @@ class LocallyLinearEmbedding(BaseEstimator):
         Reconstruction error associated with `embedding_vectors_`
     """
 
-    def __init__(self, n_neighbors=5, out_dim=2):
+    def __init__(self, n_neighbors=5, out_dim=2, random_state=None):
         self.n_neighbors = n_neighbors
         self.out_dim = out_dim
+        self.random_state = random_state
 
     def fit(self, X, Y=None, reg=1e-3, eigen_solver='lobpcg', tol=1e-6,
             max_iter=100, **params):
-        """
-        Compute the embedding vectors for data X.
+        """Compute the embedding vectors for data X
 
         Parameters
         ----------
@@ -403,12 +403,14 @@ class LocallyLinearEmbedding(BaseEstimator):
         -------
         self : returns an instance of self.
         """
+        self.random_state = check_random_state(self.random_state)
         self._set_params(**params)
         self.ball_tree = BallTree(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
-                self.ball_tree, self.n_neighbors, self.out_dim, reg=reg,\
-                eigen_solver=eigen_solver, tol=tol, max_iter=max_iter)
+                self.ball_tree, self.n_neighbors, self.out_dim, reg=reg,
+                eigen_solver=eigen_solver, tol=tol, max_iter=max_iter,
+                random_state=self.random_state)
         return self
 
     def transform(self, X, reg=1e-3, **params):
@@ -441,5 +443,5 @@ class LocallyLinearEmbedding(BaseEstimator):
         weights = barycenter_weights(X, self.ball_tree.data[ind], reg=reg)
         X_new = np.empty((X.shape[0], self.out_dim))
         for i in range(X.shape[0]):
-            X_new[i] = np.dot(weights[i], self.embedding_[ind[i]])
+            X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
         return X_new

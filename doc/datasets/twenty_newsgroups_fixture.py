@@ -8,8 +8,8 @@ from os.path import join
 from nose import SkipTest
 from scikits.learn.datasets import get_data_home
 
+
 def setup_module(module):
     data_home = get_data_home()
-    if (not exists(join(data_home, 'lfw_home'))
-        or not exists(join(data_home,'20news_home'))):
+    if not exists(join(data_home, '20news_home')):
         raise SkipTest("Skipping dataset loading doctests")
