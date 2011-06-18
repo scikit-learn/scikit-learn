@@ -35,8 +35,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    Gram: array, shape: (n_features, n_features), optional
-        Precomputed Gram matrix (X' * X)
+    Gram: None, 'auto', array, shape: (n_features, n_features), optional
+        Precomputed Gram matrix (X' * X), if 'auto', the Gram
+        matrix is precomputed from the given X, if there are more samples 
+        than features
 
     alpha_min: float, optional
         Minimum correlation along the path. It corresponds to the
@@ -96,6 +98,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_features=None, max_iter=500,
             # speeds up the calculation of the (partial) Gram matrix
             # and allows to easily swap columns
             X = X.copy('F')
+    elif Gram == 'auto' and X.shape[0] > X.shape[1]:
+        Gram = np.dot(X.T, X)
     else:
         if not overwrite_Gram:
             Gram = Gram.copy()
@@ -400,9 +404,8 @@ class LARS(LinearModel):
         if hasattr(precompute, '__array__'):
             # copy as it's going to be modified
             Gram = precompute.copy()
-        elif precompute == True or \
-               (precompute == 'auto' and X.shape[0] > X.shape[1]):
-            Gram = np.dot(X.T, X)
+        elif precompute == 'auto':
+            Gram = 'auto'
         else:
             Gram = None
 
@@ -486,4 +489,5 @@ class LassoLARS (LARS):
         self.normalize = normalize
         self.method = 'lasso'
         self.precompute = precompute 
+
 
