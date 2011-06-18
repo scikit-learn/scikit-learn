@@ -29,12 +29,23 @@ class ElasticNet(LinearModel):
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
 
-    coef_: ndarray of shape n_features
-        The initial coeffients to warm-start the optimization
-
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: int, optional
+        The maximum number of iterations
+
+    tol: float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than 'tol', the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than tol.
 
     Notes
     -----
@@ -42,15 +53,17 @@ class ElasticNet(LinearModel):
     should be directly passed as a fortran contiguous numpy array.
     """
 
-    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True):
+    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
+                 precompute='auto', max_iter=1000, tol=1e-4):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
         self.fit_intercept = fit_intercept
+        self.precompute = precompute
+        self.max_iter = max_iter
+        self.tol = tol
 
-    # @profile
-    def fit(self, X, y, precompute='auto', Xy=None, max_iter=1000, tol=1e-4,
-            coef_init=None, **params):
+    def fit(self, X, y, Xy=None, coef_init=None, **params):
         """Fit Elastic Net model with coordinate descent
 
         Parameters
@@ -59,20 +72,11 @@ class ElasticNet(LinearModel):
             Data
         y: ndarray, (n_samples)
             Target
-        precompute : True | False | 'auto' | array-like
-            Whether to use a precomputed Gram matrix to speed up
-            calculations. If set to 'auto' let us decide. The Gram
-            matrix can also be passed as argument.
         Xy : array-like, optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomuted.
-        max_iter: int, optional
-            The maximum number of iterations
-        tol: float, optional
-            The tolerance for the optimization: if the updates are
-            smaller than 'tol', the optimization code checks the
-            dual gap for optimality and continues until it is smaller
-            than tol.
+        coef_init: ndarray of shape n_features
+            The initial coeffients to warm-start the optimization
 
         Notes
         -----
@@ -102,10 +106,10 @@ class ElasticNet(LinearModel):
         X = np.asfortranarray(X)  # make data contiguous in memory
 
         # precompute if n_samples > n_features
-        if hasattr(precompute, '__array__'):
-            Gram = precompute
-        elif precompute == True or \
-               (precompute == 'auto' and X.shape[0] > X.shape[1]):
+        if hasattr(self.precompute, '__array__'):
+            Gram = self.precompute
+        elif self.precompute == True or \
+               (self.precompute == 'auto' and X.shape[0] > X.shape[1]):
             Gram = np.dot(X.T, X)
         else:
             Gram = None
@@ -113,13 +117,14 @@ class ElasticNet(LinearModel):
         if Gram is None:
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
-                                                    X, y, max_iter, tol)
+                                                    X, y, self.max_iter,
+                                                    self.tol)
         else:
             if Xy is None:
                 Xy = np.dot(X.T, y)
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
-                                beta, Gram, Xy, y, max_iter, tol)
+                                beta, Gram, Xy, y, self.max_iter, self.tol)
 
         self._set_intercept(Xmean, ymean)
 
@@ -150,6 +155,21 @@ class Lasso(ElasticNet):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: int, optional
+        The maximum number of iterations
+
+    tol: float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than 'tol', the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than tol.
+
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -163,7 +183,8 @@ class Lasso(ElasticNet):
     >>> from scikits.learn import linear_model
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(alpha=0.1, fit_intercept=True)
+    Lasso(precompute='auto', alpha=0.1, max_iter=1000, tol=0.0001,
+       fit_intercept=True)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
@@ -181,9 +202,12 @@ class Lasso(ElasticNet):
     should be directly passed as a fortran contiguous numpy array.
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True):
+    def __init__(self, alpha=1.0, fit_intercept=True,
+                 precompute='auto', max_iter=1000, tol=1e-4):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
-                                    fit_intercept=fit_intercept)
+                            fit_intercept=fit_intercept,
+                            precompute=precompute, max_iter=max_iter,
+                            tol=tol)
 
 
 ###############################################################################
@@ -307,13 +331,18 @@ class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True):
+                 fit_intercept=True, precompute='auto', max_iter=1000, 
+                 tol=1e-4, cv=None):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
         self.fit_intercept = fit_intercept
+        self.precompute = precompute
+        self.max_iter = max_iter
+        self.tol = tol
+        self.cv = cv
 
-    def fit(self, X, y, cv=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Fit linear model with coordinate descent along decreasing alphas
         using cross-validation
 
@@ -327,9 +356,6 @@ class LinearModelCV(LinearModel):
         y : numpy array of shape [n_samples]
             Target values
 
-        cv : cross-validation generator, optional
-            If None, KFold will be used.
-
         fit_params : kwargs
             keyword arguments passed to the Lasso fit method
 
@@ -342,16 +368,22 @@ class LinearModelCV(LinearModel):
 
         # Start to compute path on full data
         path_params = fit_params.copy()
-        path_params.update(self._get_params())
+        acceptable_params = self.estimator._get_param_names()
+        for param, value in self._get_params().iteritems():
+            if param in acceptable_params:
+                path_params[param] = value
         models = self.path(X, y, **path_params)
 
         alphas = [model.alpha for model in models]
         n_alphas = len(alphas)
 
         # init cross-validation generator
-        cv = cv if cv else KFold(n_samples, 5)
+        cv = self.cv if self.cv else KFold(n_samples, 5)
 
-        params = self._get_params()
+        params = dict()
+        for param, value in self._get_params().iteritems():
+            if param in acceptable_params:
+                params[param] = value
         params['alphas'] = alphas
         params['n_alphas'] = n_alphas
 
@@ -395,6 +427,24 @@ class LassoCV(LinearModelCV):
         List of alphas where to compute the models.
         If None alphas are set automatically
 
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: int, optional
+        The maximum number of iterations
+
+    tol: float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than 'tol', the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than tol.
+
+    cv : crossvalidation generator
+        see scikits.learn.cross_val module
+
+
     Notes
     -----
     See examples/linear_model/lasso_path_with_crossvalidation.py
@@ -405,6 +455,7 @@ class LassoCV(LinearModelCV):
     """
 
     path = staticmethod(lasso_path)
+    estimator = Lasso
 
 
 class ElasticNetCV(LinearModelCV):
@@ -429,6 +480,23 @@ class ElasticNetCV(LinearModelCV):
         List of alphas where to compute the models.
         If None alphas are set automatically
 
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: int, optional
+        The maximum number of iterations
+
+    tol: float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than 'tol', the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than tol.
+
+    cv : crossvalidation generator
+        see scikits.learn.cross_val module
+
     Notes
     -----
     See examples/linear_model/lasso_path_with_crossvalidation.py
@@ -439,11 +507,19 @@ class ElasticNetCV(LinearModelCV):
     """
 
     path = staticmethod(enet_path)
+    estimator = ElasticNet
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True):
+                 fit_intercept=True, precompute='auto', max_iter=1000, 
+                 tol=1e-4, cv=None):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
         self.fit_intercept = fit_intercept
+        self.precompute = precompute
+        self.max_iter = max_iter
+        self.tol = tol
+        self.cv = cv
+
+
