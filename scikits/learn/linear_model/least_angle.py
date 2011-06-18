@@ -653,7 +653,7 @@ class LarsCV(LARS):
         best_alpha = all_alphas[i_best_alpha]
 
         # Store our parameters
-        self.alpha = best_alpha/n_samples
+        self.alpha = best_alpha / n_samples
         self.cv_alphas = all_alphas
         self.cv_mse_path_ = mse_path
 
