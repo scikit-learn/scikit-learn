@@ -152,7 +152,8 @@ the coefficients. See :ref:`least_angle_regression` for another implementation.
 
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-    Lasso(alpha=0.1, fit_intercept=True)
+    Lasso(precompute='auto', alpha=0.1, max_iter=1000, tol=0.0001,
+       fit_intercept=True)
     >>> clf.predict ([[1, 1]])
     array([ 0.8])
 
@@ -240,7 +241,8 @@ function of the norm of its coefficients.
    >>> from scikits.learn import linear_model
    >>> clf = linear_model.LassoLARS(alpha=.1)
    >>> clf.fit ([[0, 0], [1, 1]], [0, 1])
-   LassoLARS(alpha=0.1, max_iter=500, verbose=False, fit_intercept=True)
+   LassoLARS(normalize=True, verbose=False, fit_intercept=True, max_iter=500,
+        precompute='auto', alpha=0.1)
    >>> clf.coef_
    array([ 0.30710678,  0.        ])
 

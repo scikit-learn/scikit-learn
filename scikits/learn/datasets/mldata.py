@@ -3,10 +3,11 @@
 # Copyright (c) 2011 Pietro Berkes
 # License: Simplified BSD
 
-from scipy import io
-
+from __future__ import with_statement
 import os
 from os.path import join, exists
+import re
+from scipy import io
 from shutil import copyfileobj
 import urllib2
 
@@ -17,7 +18,8 @@ MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
 def mldata_filename(dataname):
     """Convert a raw name for a data set in a mldata.org filename."""
-    return dataname.lower().replace(' ', '-').translate(None, '().')
+    dataname = dataname.lower().replace(' ', '-')
+    return re.sub(r'[().]', '', dataname)
 
 
 def fetch_mldata(dataname, target_name='label', data_name='data',
@@ -91,10 +93,10 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     Load an alternative 'iris' dataset, which has different names for the
     columns:
-    >>> iris2 = dt.fetch_mldata('datasets-UCI iris', target_name=1,
-    ...                         data_name=0)
-    >>> iris3 = dt.fetch_mldata('datasets-UCI iris',
-    ...                         target_name='class', data_name='double0')
+    >>> iris2 = fetch_mldata('datasets-UCI iris', target_name=1,
+    ...                      data_name=0)
+    >>> iris3 = fetch_mldata('datasets-UCI iris',
+    ...                      target_name='class', data_name='double0')
     """
 
     # normalize dataset name

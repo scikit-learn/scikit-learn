@@ -320,8 +320,6 @@ class StratifiedKFold(object):
         return self.k
 
 
-##############################################################################
-
 class LeaveOneLabelOut(object):
     """Leave-One-Label_Out cross-validation iterator
 
@@ -598,6 +596,98 @@ class Bootstrap(object):
     def __len__(self):
         return self.n_bootstraps
 
+
+class ShuffleSplit(object):
+    """Random split cross-validation iterator
+
+    Provides train/test indices to split data in train test sets
+    """
+
+    def __init__(self, n, n_splits=20, test_fraction=0.1, 
+                 indices=False, random_state=None):
+        """Random split cross validation
+
+        Provides train/test indices to split data in .
+
+        Note: contrary to other cross-validation strategies, random
+        splits does not garanty that all folds will be different,
+        although this is unlikely for sizeable datasets
+
+        Parameters
+        ----------
+        n : int
+            Total number of elements in the dataset.
+
+        n_splits : int (default is 20)
+            Number of splitting iterations
+
+        test_fraction: float (default is 0.1)
+            should be between 0.0 and 1.0 and represent the proportion of 
+            the dataset to include in the test split.
+
+        indices: boolean, optional (default False)
+            Return train/test split with integer indices or boolean mask.
+            Integer indices are useful when dealing with sparse matrices
+            that cannot be indexed by boolean masks.
+
+        random_state : int or RandomState
+            Pseudo number generator state used for random sampling.
+
+        Examples
+        ----------
+        >>> from scikits.learn import cross_val
+        >>> rs = cross_val.ShuffleSplit(4, n_splits=3, test_fraction=.25, random_state=0)
+        >>> len(rs)
+        3
+        >>> print rs
+        ShuffleSplit(4, n_splits=3, test_fraction=0.25, indices=False, random_state=0)
+        >>> for train_index, test_index in rs:
+        ...    print "TRAIN:", train_index, "TEST:", test_index
+        ...
+        TRAIN: [False  True  True  True] TEST: [ True False False False]
+        TRAIN: [ True  True  True False] TEST: [False False False  True]
+        TRAIN: [ True False  True  True] TEST: [False  True False False]
+        """
+        self.n = n
+        self.n_splits = n_splits
+        self.test_fraction = test_fraction
+        self.random_state = random_state
+        self.indices = indices
+
+    def __iter__(self):
+        rng = self.random_state = check_random_state(self.random_state)
+        n_test = ceil(self.test_fraction * self.n)
+        for i in range(self.n_splits):
+            # random partition
+            permutation = rng.permutation(self.n)
+            ind_train = permutation[:-n_test]
+            ind_test = permutation[-n_test:]
+
+            if self.indices:
+                yield ind_train, ind_test
+            else:
+                train_mask = np.zeros(self.n, dtype=np.bool)
+                train_mask[ind_train] = True
+                test_mask = np.zeros(self.n, dtype=np.bool)
+                test_mask[ind_test] = True
+                yield train_mask, test_mask
+
+    def __repr__(self):
+        return ('%s(%d, n_splits=%d, test_fraction=%s, indices=%s, '
+                'random_state=%d)' % (
+                    self.__class__.__name__,
+                    self.n,
+                    self.n_splits,
+                    str(self.test_fraction),
+                    self.indices,
+                    self.random_state,
+                ))
+
+    def __len__(self):
+        return self.n_splits
+
+
+##############################################################################
 
 def _cross_val_score(estimator, X, y, score_func, train, test, iid):
     """Inner loop for cross validation"""

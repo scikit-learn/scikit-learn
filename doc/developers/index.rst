@@ -2,7 +2,7 @@
 Contributing
 ============
 
-This project is a community effort, and everyone is welcomed to
+This project is a community effort, and everyone is welcome to
 contribute.
 
 The project is hosted on http://github.com/scikit-learn/scikit-learn
@@ -10,11 +10,11 @@ The project is hosted on http://github.com/scikit-learn/scikit-learn
 Submitting a bug report
 =======================
 
-In case you experience difficulties using the package, do not hesitate
+In case you experience issues using the package, do not hesitate
 to submit a ticket to the
 `Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_.
 
-You are also welcomed to post there feature requests and patches.
+You are also welcome to post there feature requests or links to pull-requests.
 
 .. _git_repo:
 
