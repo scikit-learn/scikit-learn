@@ -9,12 +9,14 @@ Generalized Linear Model for a complete discussion.
 # License: BSD Style.
 
 import numpy as np
-from scipy import linalg
+from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils import arrayfuncs
 from ..utils import deprecated
+from ..cross_val import KFold
+from ..externals.joblib import Parallel, delayed
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
@@ -340,7 +342,7 @@ class Lars(LinearModel):
 
     See also
     --------
-    lars_path, LassoLars
+    lars_path, LassoLARS, LarsCV, LassoLarsCV
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500):
@@ -354,15 +356,15 @@ class Lars(LinearModel):
     def fit(self, X, y, overwrite_X=False, **params):
         """Fit the model using X, y as training data.
 
-        Parameters
+        parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training data.
+        x : array-like, shape = [n_samples, n_features]
+            training data.
 
         y : array-like, shape = [n_samples]
-            Target values.
+            target values.
 
-        Returns
+        returns
         -------
         self : object
             returns an instance of self.
@@ -488,3 +490,236 @@ LARS = deprecated("Use Lars instead")(LARS)
 class LassoLARS(LassoLars):
     pass
 LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
+
+################################################################################
+# Cross-validated estimator classes
+
+def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
+                     overwrite_data=False, method='lars', verbose=False, 
+                     fit_intercept=True, max_iter=500):
+    """Compute the residues on left-out data for a full LARS path
+
+    Returns
+    --------
+    alphas: array, shape: (max_features + 1,)
+        Maximum of covariances (in absolute value) at each
+        iteration.
+
+    active: array, shape (max_features,)
+        Indices of active variables at the end of the path.
+
+    coefs: array, shape (n_features, max_features+1)
+        Coefficients along the path
+
+    residues: array, shape (n_features, max_features+1)
+        Residues of the prediction on the test data
+    """
+    if not overwrite_data:
+        X_train = X_train.copy()
+        y_train = y_train.copy()
+        X_test = X_test.copy()
+        y_test = y_test.copy()
+    if fit_intercept:
+        X_mean = X_train.mean(axis=0)
+        X_train -= X_mean
+        X_test -= X_mean
+        y_mean = y_train.mean(axis=0)
+        y_train -= y_mean
+        y_test -= y_mean
+    alphas, active, coefs = lars_path(X_train, y_train, Gram=Gram, 
+                            overwrite_X=True, overwrite_Gram=True,
+                            method=method, verbose=verbose,
+                            max_iter=max_iter)
+    residues = np.array([(np.dot(X_test, coef) - y_test)
+                         for coef in coefs.T])
+    return alphas, active, coefs, residues
+
+
+class LarsCV(LARS):
+    """Cross-validated Least Angle Regression model
+
+    Parameters
+    ----------
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
+    cv : crossvalidation generator, optional
+        see scikits.learn.cross_val module. If None is passed, default to
+        a 5-fold strategy
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If '-1', use
+        all the CPUs
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    `coef_path`: array, shape = [n_features, n_alpha]
+        the varying values of the coefficients along the path
+
+    See also
+    --------
+    lars_path, LassoLARS, LassoLarsCV
+    """
+
+    method = 'lar'
+
+    def __init__(self, fit_intercept=True, verbose=False, max_iter=500, 
+                 normalize=True, precompute='auto', cv=None, n_jobs=1):
+        self.fit_intercept = fit_intercept
+        self.max_iter = max_iter
+        self.verbose = verbose
+        self.normalize = normalize
+        self.precompute = precompute
+        self.cv = cv
+        self.n_jobs = n_jobs
+
+    def fit(self, X, y, **params):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : object
+            returns an instance of self.
+        """
+        self._set_params(**params)
+
+        n_samples = len(X)
+        # init cross-validation generator
+        cv = self.cv if self.cv else KFold(n_samples, 5)
+
+        Gram = 'auto' if self.precompute else None
+
+        cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                    delayed(_lars_path_residues)(X[train], y[train], 
+                            X[test], y[test], Gram=Gram, 
+                            overwrite_data=True, method=self.method, 
+                            verbose=max(0, self.verbose-1),
+                            fit_intercept=self.fit_intercept,
+                            max_iter=self.max_iter)
+                    for train, test in cv)
+        all_alphas = np.concatenate(zip(*cv_paths)[0])
+        all_alphas.sort()
+
+        mse_path = list()
+        #coef_path = list()
+        for alphas, active, coefs, residues in cv_paths:
+            #this_coefs = interpolate.interp1d(alphas, coefs)(all_alphas)
+            #coef_path.append(this_coefs)
+            this_residues = interpolate.interp1d(alphas[::-1], 
+                                                 residues[::-1], 
+                                                 bounds_error=False,
+                                                 fill_value=residues.max(),
+                                                 axis=0)(all_alphas)
+            this_residues **= 2
+            this_residues = this_residues.sum(axis=-1)
+            mse_path.append(this_residues)
+
+        mse_path = np.array(mse_path).T
+        mask = np.all(np.isfinite(mse_path), axis=-1)
+        all_alphas = all_alphas[mask]
+        mse_path = mse_path[mask]
+        # Select the alpha that minimizes left-out error
+        i_best_alpha = np.argmin(mse_path.mean(axis=-1))
+        best_alpha = all_alphas[i_best_alpha]
+
+        # Store our parameters
+        self.alpha = best_alpha/n_samples
+        self.cv_alphas = all_alphas
+        self.cv_mse_path_ = mse_path
+
+        # Now compute the full model
+        LARS.fit(self, X, y)
+        return self
+
+
+class LassoLarsCV(LarsCV):
+    """Cross-validated Lasso, using the LARS algorithm 
+
+    Parameters
+    ----------
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: integer, optional
+        Maximum number of iterations to perform.
+
+    cv : crossvalidation generator, optional
+        see scikits.learn.cross_val module. If None is passed, default to
+        a 5-fold strategy
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If '-1', use
+        all the CPUs
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    `coef_path`: array, shape = [n_features, n_alpha]
+        the varying values of the coefficients along the path
+
+    `alphas_`: array, shape = [n_alpha]
+        the different values of alpha along the path
+
+    `cv_alphas`: array, shape = [n_cv_alphas]
+        all the values of alpha along the path for the different folds
+
+    `cv_mse_path_`: array, shape = [n_folds, n_cv_alphas]
+        the mean square error on left-out for each fold along the path
+        (alpha values given by cv_alphas)
+
+    See also
+    --------
+    lars_path, LassoLARS, LarsCV
+    """
+
+
+    method = 'lasso'
+
