@@ -128,9 +128,13 @@ applications including denoising, compression and structured prediction
 Independent component analysis (ICA)
 ====================================
 
-ICA finds components that are maximally independent. It is classically
-used to separate mixed signals (a problem know as *blind source
-separation*), as in the example below:
+Independent component analysis separates a multivariate signal into
+additive subcomponents that are maximally independent. It is
+implemented in scikit-learn using the :class:`Fast ICA <FastICA>`
+algorithm.
+
+It is classically used to separate mixed signals (a problem known as
+*blind source separation*), as in the example below:
 
 .. figure:: ../auto_examples/decomposition/images/plot_ica_blind_source_separation_1.png
     :target: ../auto_examples/decomposition/plot_ica_blind_source_separation.html
