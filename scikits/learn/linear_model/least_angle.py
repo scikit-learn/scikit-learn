@@ -388,13 +388,7 @@ class LARS(LinearModel):
         y = np.atleast_1d(y)
 
         X, y, Xmean, ymean = LinearModel._center_data(X, y, self.fit_intercept)
-
-        n_samples = X.shape[0]
-
-        if self.method == 'lasso':
-            alpha = self.alpha
-        else:
-            alpha = 0.
+        alpha = getattr(self, 'alpha', 0.)
 
         if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
