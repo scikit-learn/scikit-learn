@@ -266,7 +266,6 @@ def reconstruct_patches(patches, image_size, patch_size):
     """Reconstruct the image from all of its patches"""
 
     # XXX: make it work with colour images too!
-
     i_h, i_w = image_size[:2]
     p_h, p_w = patch_size
     img = np.zeros(image_size)
