@@ -264,6 +264,9 @@ def extract_patches_2d(image, image_size, patch_size, max_patches=None,
 
 def reconstruct_patches(patches, image_size, patch_size):
     """Reconstruct the image from all of its patches"""
+
+    # XXX: make it work with colour images too!
+
     i_h, i_w = image_size[:2]
     p_h, p_w = patch_size
     img = np.zeros(image_size)
@@ -310,6 +313,3 @@ class PatchExtractor(BaseEstimator):
                               self.patch_size, self.max_patches, self.seed)
             patches = np.r_[patches, partial_patches]
         return patches
-
-def _overlap(i, size, patch_size):
-    return min(i + 1, patch_size, size - i)
