@@ -393,6 +393,9 @@ class LARS(LinearModel):
         if self.normalize:
             norms = np.sqrt(np.sum(X ** 2, axis=0))
             nonzeros = np.flatnonzero(norms)
+            if not overwrite_X:
+                X = X.copy()
+                overwrite_X = True
             X[:, nonzeros] /= norms[nonzeros]
 
         # precompute if n_samples > n_features
