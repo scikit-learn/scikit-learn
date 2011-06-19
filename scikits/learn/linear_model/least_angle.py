@@ -496,7 +496,7 @@ LassoLARS = deprecated("Use LassoLars instead")(LassoLARS)
 
 def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                      overwrite_data=False, method='lars', verbose=False, 
-                     fit_intercept=True, max_iter=500):
+                     fit_intercept=True, normalize=True, max_iter=500):
     """Compute the residues on left-out data for a full LARS path
 
     Returns
@@ -519,6 +519,14 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         y_train = y_train.copy()
         X_test = X_test.copy()
         y_test = y_test.copy()
+
+    if normalize:
+        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        nonzeros = np.flatnonzero(norms)
+        if not overwrite_data:
+            X_train = X_train.copy()
+        X_train[:, nonzeros] /= norms[nonzeros]
+
     if fit_intercept:
         X_mean = X_train.mean(axis=0)
         X_train -= X_mean
@@ -624,6 +632,7 @@ class LarsCV(LARS):
                             X[test], y[test], Gram=Gram, 
                             overwrite_data=True, method=self.method, 
                             verbose=max(0, self.verbose-1),
+                            normalize=self.normalize,
                             fit_intercept=self.fit_intercept,
                             max_iter=self.max_iter)
                     for train, test in cv)
